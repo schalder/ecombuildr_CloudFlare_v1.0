@@ -1,9 +1,12 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Menu, X, Store, LogIn } from "lucide-react";
 
 export const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { user } = useAuth();
 
   const navItems = [
     { label: "Features", href: "#features" },
@@ -43,13 +46,23 @@ export const Navbar = () => {
 
           {/* Desktop CTA */}
           <div className="hidden md:flex items-center gap-4">
-            <Button variant="ghost" size="sm">
-              <LogIn className="h-4 w-4 mr-2" />
-              Login
-            </Button>
-            <Button variant="accent" size="sm">
-              ফ্রি শুরু করুন
-            </Button>
+            {user ? (
+              <Button asChild variant="accent" size="sm">
+                <Link to="/dashboard">Dashboard</Link>
+              </Button>
+            ) : (
+              <>
+                <Button asChild variant="ghost" size="sm">
+                  <Link to="/auth">
+                    <LogIn className="h-4 w-4 mr-2" />
+                    Login
+                  </Link>
+                </Button>
+                <Button asChild variant="accent" size="sm">
+                  <Link to="/auth">ফ্রি শুরু করুন</Link>
+                </Button>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -77,13 +90,23 @@ export const Navbar = () => {
               ))}
               
               <div className="pt-4 space-y-3 border-t border-border/50">
-                <Button variant="ghost" className="w-full justify-start">
-                  <LogIn className="h-4 w-4 mr-2" />
-                  Login
-                </Button>
-                <Button variant="accent" className="w-full">
-                  ফ্রি শুরু করুন
-                </Button>
+                {user ? (
+                  <Button asChild variant="accent" className="w-full" onClick={() => setIsMenuOpen(false)}>
+                    <Link to="/dashboard">Dashboard</Link>
+                  </Button>
+                ) : (
+                  <>
+                    <Button asChild variant="ghost" className="w-full justify-start" onClick={() => setIsMenuOpen(false)}>
+                      <Link to="/auth">
+                        <LogIn className="h-4 w-4 mr-2" />
+                        Login
+                      </Link>
+                    </Button>
+                    <Button asChild variant="accent" className="w-full" onClick={() => setIsMenuOpen(false)}>
+                      <Link to="/auth">ফ্রি শুরু করুন</Link>
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
           </div>
