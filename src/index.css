@@ -2,39 +2,67 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
+/* F-Commerce SaaS Design System - Bangladeshi Market Focus
+All colors MUST be HSL. Designed for trust, energy, and conversion.
 */
 
 @layer base {
   :root {
+    /* Base Colors - Clean and Professional */
     --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --foreground: 215 25% 15%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 215 25% 15%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 215 25% 15%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    /* Primary - Deep Teal for Trust & Authority */
+    --primary: 185 85% 25%;
+    --primary-foreground: 0 0% 98%;
+    --primary-glow: 185 85% 35%;
+    --primary-light: 185 75% 88%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    /* Secondary - Rich Blue for Depth */
+    --secondary: 220 65% 95%;
+    --secondary-foreground: 215 25% 15%;
+    --secondary-dark: 220 45% 25%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    /* Accent - Vibrant Orange for CTAs & Energy */
+    --accent: 25 95% 55%;
+    --accent-foreground: 0 0% 98%;
+    --accent-hover: 25 95% 50%;
+    --accent-light: 25 85% 90%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    /* Success - Bangladesh Green */
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 98%;
+    --success-light: 142 60% 92%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --muted: 220 30% 96%;
+    --muted-foreground: 215 20% 50%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 220 25% 90%;
+    --input: 220 25% 90%;
+    --ring: 185 85% 25%;
+
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)));
+    --gradient-hero: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--secondary-dark)) 100%);
+    --gradient-accent: linear-gradient(135deg, hsl(var(--accent)) 0%, hsl(25 100% 60%) 100%);
+    --gradient-success: linear-gradient(135deg, hsl(var(--success)) 0%, hsl(142 76% 45%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%) 0%, hsl(220 30% 98%) 100%);
+    
+    /* Shadows */
+    --shadow-soft: 0 2px 8px -2px hsl(var(--primary) / 0.1);
+    --shadow-medium: 0 8px 25px -5px hsl(var(--primary) / 0.15);
+    --shadow-large: 0 25px 50px -12px hsl(var(--primary) / 0.25);
+    --shadow-accent: 0 8px 30px -8px hsl(var(--accent) / 0.3);
+    --shadow-glow: 0 0 40px hsl(var(--primary-glow) / 0.4);
 
     --radius: 0.5rem;
 
