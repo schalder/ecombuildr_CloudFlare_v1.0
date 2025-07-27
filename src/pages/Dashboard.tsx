@@ -48,17 +48,17 @@ const Dashboard = () => {
   const [createStoreData, setCreateStoreData] = useState({ name: '', slug: '' });
   const [isCreating, setIsCreating] = useState(false);
 
-  // Redirect if not authenticated
-  if (!user && !loading) {
-    return <Navigate to="/auth" replace />;
-  }
-
   useEffect(() => {
     if (user) {
       fetchProfile();
       fetchStores();
     }
   }, [user]);
+
+  // Redirect if not authenticated
+  if (!user && !loading) {
+    return <Navigate to="/auth" replace />;
+  }
 
   const fetchProfile = async () => {
     try {
