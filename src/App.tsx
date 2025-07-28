@@ -9,6 +9,8 @@ import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import Products from "./pages/Products";
 import AddProduct from "./pages/AddProduct";
+import ProductView from "./pages/ProductView";
+import EditProduct from "./pages/EditProduct";
 import Categories from "./pages/Categories";
 import ProductLibrary from "./pages/ProductLibrary";
 import Orders from "./pages/Orders";
@@ -40,6 +42,8 @@ const App = () => (
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/dashboard/products" element={<Products />} />
             <Route path="/dashboard/products/add" element={<AddProduct />} />
+            <Route path="/dashboard/products/:id" element={<ProductView />} />
+            <Route path="/dashboard/products/:id/edit" element={<EditProduct />} />
             <Route path="/dashboard/categories" element={<Categories />} />
             <Route path="/dashboard/product-library" element={<ProductLibrary />} />
             <Route path="/dashboard/orders" element={<Orders />} />
