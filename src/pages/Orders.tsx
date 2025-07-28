@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { useSearchParams } from "react-router-dom";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -40,6 +42,8 @@ interface Order {
   created_at: string;
   payment_method: string;
   shipping_city?: string;
+  shipping_address?: string;
+  notes?: string;
 }
 
 const statusColors = {
@@ -52,16 +56,26 @@ const statusColors = {
 
 export default function Orders() {
   const { user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("");
+  const [statusFilter, setStatusFilter] = useState<string>(searchParams.get("status") || "");
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [isOrderDetailsOpen, setIsOrderDetailsOpen] = useState(false);
 
   useEffect(() => {
     if (user) {
       fetchOrders();
     }
   }, [user]);
+
+  useEffect(() => {
+    const status = searchParams.get("status");
+    if (status) {
+      setStatusFilter(status);
+    }
+  }, [searchParams]);
 
   const fetchOrders = async () => {
     try {
@@ -88,7 +102,9 @@ export default function Orders() {
             total,
             created_at,
             payment_method,
-            shipping_city
+            shipping_city,
+            shipping_address,
+            notes
           `)
           .in('store_id', stores.map(store => store.id))
           .order('created_at', { ascending: false });
@@ -322,7 +338,12 @@ export default function Orders() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem>
+                            <DropdownMenuItem 
+                              onClick={() => {
+                                setSelectedOrder(order);
+                                setIsOrderDetailsOpen(true);
+                              }}
+                            >
                               <Eye className="mr-2 h-4 w-4" />
                               View Details
                             </DropdownMenuItem>
@@ -357,6 +378,45 @@ export default function Orders() {
             )}
           </CardContent>
         </Card>
+
+        {/* Order Details Dialog */}
+        <Dialog open={isOrderDetailsOpen} onOpenChange={setIsOrderDetailsOpen}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Order Details - #{selectedOrder?.order_number}</DialogTitle>
+            </DialogHeader>
+            {selectedOrder && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <h4 className="font-medium">Customer</h4>
+                    <p>{selectedOrder.customer_name}</p>
+                    <p>{selectedOrder.customer_phone}</p>
+                    <p>{selectedOrder.customer_email}</p>
+                  </div>
+                  <div>
+                    <h4 className="font-medium">Shipping</h4>
+                    <p>{selectedOrder.shipping_address}</p>
+                    <p>{selectedOrder.shipping_city}</p>
+                  </div>
+                </div>
+                <div>
+                  <h4 className="font-medium">Order Summary</h4>
+                  <p>Status: <Badge>{selectedOrder.status}</Badge></p>
+                  <p>Total: ৳{selectedOrder.total.toLocaleString()}</p>
+                  <p>Payment: {selectedOrder.payment_method}</p>
+                  <p>Date: {new Date(selectedOrder.created_at).toLocaleString()}</p>
+                </div>
+                {selectedOrder.notes && (
+                  <div>
+                    <h4 className="font-medium">Notes</h4>
+                    <p>{selectedOrder.notes}</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </DashboardLayout>
   );

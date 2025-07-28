@@ -198,11 +198,11 @@ export default function Pages() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => navigate(`/dashboard/pages/builder?id=${page.id}`)}>
                               <Edit className="mr-2 h-4 w-4" />
                               Edit
                             </DropdownMenuItem>
-                            <DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => window.open(`/preview/${page.slug}`, '_blank')}>
                               <Eye className="mr-2 h-4 w-4" />
                               Preview
                             </DropdownMenuItem>
@@ -211,7 +211,11 @@ export default function Pages() {
                             </DropdownMenuItem>
                             <DropdownMenuItem 
                               className="text-destructive"
-                              onClick={() => deletePage(page.id)}
+                              onClick={() => {
+                                if (confirm('Are you sure you want to delete this page?')) {
+                                  deletePage(page.id);
+                                }
+                              }}
                             >
                               <Trash2 className="mr-2 h-4 w-4" />
                               Delete

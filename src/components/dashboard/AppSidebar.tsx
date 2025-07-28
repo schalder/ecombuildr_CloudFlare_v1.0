@@ -211,13 +211,15 @@ export function AppSidebar() {
                                   asChild
                                   isActive={isActive(subItem.url)}
                                 >
-                                  <NavLink 
-                                    to={subItem.url}
-                                    className={({ isActive }) =>
-                                      isActive 
-                                        ? "bg-primary text-primary-foreground hover:bg-primary-glow" 
-                                        : "hover:bg-sidebar-accent"
-                                    }
+                                   <NavLink 
+                                     to={subItem.url}
+                                     className={() => {
+                                       const isActive = location.pathname === subItem.url || 
+                                         (subItem.url.includes('?') && location.pathname + location.search === subItem.url);
+                                       return isActive 
+                                         ? "bg-primary text-primary-foreground hover:bg-primary-glow" 
+                                         : "hover:bg-sidebar-accent";
+                                     }}
                                   >
                                     {subItem.title}
                                   </NavLink>
@@ -230,13 +232,14 @@ export function AppSidebar() {
                     </Collapsible>
                   ) : (
                     <SidebarMenuButton asChild isActive={isActive(item.url!)}>
-                      <NavLink 
-                        to={item.url!}
-                        className={({ isActive }) =>
-                          isActive 
-                            ? "bg-primary text-primary-foreground hover:bg-primary-glow" 
-                            : "hover:bg-sidebar-accent"
-                        }
+                       <NavLink 
+                         to={item.url!}
+                         className={() => {
+                           const isActive = location.pathname === item.url;
+                           return isActive 
+                             ? "bg-primary text-primary-foreground hover:bg-primary-glow" 
+                             : "hover:bg-sidebar-accent";
+                         }}
                       >
                         <item.icon className="mr-3 h-4 w-4" />
                         {!collapsed && <span>{item.title}</span>}
