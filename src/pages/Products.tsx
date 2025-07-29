@@ -134,6 +134,31 @@ export default function Products() {
     }
   };
 
+  const deleteProduct = async (productId: string) => {
+    try {
+      const { error } = await supabase
+        .from('products')
+        .delete()
+        .eq('id', productId);
+
+      if (error) throw error;
+
+      setProducts(products.filter(product => product.id !== productId));
+
+      toast({
+        title: "Success",
+        description: "Product deleted successfully",
+      });
+    } catch (error) {
+      console.error('Error deleting product:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete product",
+        variant: "destructive",
+      });
+    }
+  };
+
   const filteredProducts = products.filter(product =>
     product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     product.sku?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -267,11 +292,7 @@ export default function Products() {
                               className="text-destructive"
                               onClick={() => {
                                 if (confirm('Are you sure you want to delete this product?')) {
-                                  // TODO: Implement delete functionality
-                                  toast({
-                                    title: "Success",
-                                    description: "Product deleted successfully",
-                                  });
+                                  deleteProduct(product.id);
                                 }
                               }}
                             >
