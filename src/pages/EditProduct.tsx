@@ -142,7 +142,7 @@ export default function EditProduct() {
         compare_price: formData.compare_price ? parseFloat(formData.compare_price) : null,
         sku: formData.sku || null,
         inventory_quantity: formData.inventory_quantity ? parseInt(formData.inventory_quantity) : null,
-        category_id: formData.category_id || null,
+        category_id: formData.category_id === 'none' ? null : formData.category_id || null,
         is_active: formData.is_active,
         updated_at: new Date().toISOString(),
       };
@@ -265,7 +265,7 @@ export default function EditProduct() {
                       <SelectValue placeholder="Select a category" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">No category</SelectItem>
+                      <SelectItem value="none">No category</SelectItem>
                       {categories.map((category) => (
                         <SelectItem key={category.id} value={category.id}>
                           {category.name}
