@@ -234,12 +234,11 @@ export function AppSidebar() {
                     <SidebarMenuButton asChild isActive={isActive(item.url!)}>
                        <NavLink 
                          to={item.url!}
-                         className={() => {
-                           const isActive = location.pathname === item.url;
-                           return isActive 
-                             ? "bg-primary text-primary-foreground hover:bg-primary-glow" 
-                             : "hover:bg-sidebar-accent";
-                         }}
+                         className={({ isActive }) => 
+                           isActive 
+                             ? "bg-primary text-primary-foreground hover:bg-primary-glow flex items-center" 
+                             : "hover:bg-sidebar-accent flex items-center"
+                         }
                       >
                         <item.icon className="mr-3 h-4 w-4" />
                         {!collapsed && <span>{item.title}</span>}
