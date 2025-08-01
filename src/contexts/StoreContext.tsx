@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface Store {
@@ -29,7 +29,13 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const loadStore = async (slug: string) => {
+  const loadStore = useCallback(async (slug: string) => {
+    // Prevent loading the same store multiple times
+    if (store?.slug === slug && !error) {
+      console.log('Store already loaded:', slug);
+      return;
+    }
+
     setLoading(true);
     setError(null);
     
@@ -62,7 +68,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     } finally {
       setLoading(false);
     }
-  };
+  }, [store?.slug, error]);
 
   return (
     <StoreContext.Provider value={{

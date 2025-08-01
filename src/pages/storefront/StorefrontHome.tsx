@@ -35,10 +35,11 @@ export const StorefrontHome: React.FC = () => {
   }, [slug, loadStore]);
 
   useEffect(() => {
-    if (store) {
+    if (store?.id) {
       fetchFeaturedProducts();
     }
-  }, [store]);
+  }, [store?.id]);
+
 
   const fetchFeaturedProducts = async () => {
     if (!store) return;
