@@ -190,11 +190,26 @@ export const StorefrontPage: React.FC = () => {
           await loadStore(slug);
         }
 
-        // Fetch the page by slug
+        // Get the current store (it should be loaded by now)
+        const { data: storeData } = await supabase
+          .from('stores')
+          .select('id')
+          .eq('slug', slug)
+          .eq('is_active', true)
+          .single();
+
+        if (!storeData) {
+          setError('Store not found');
+          return;
+        }
+
+        // Fetch the page by slug and store_id
         const { data: pageData, error: pageError } = await supabase
           .from('pages')
           .select('*')
           .eq('slug', pageSlug || '')
+          .eq('store_id', storeData.id)
+          .eq('is_published', true)
           .single();
 
         if (pageError) {

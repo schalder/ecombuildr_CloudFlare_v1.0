@@ -20,6 +20,7 @@ import Customers from "./pages/Customers";
 import Analytics from "./pages/Analytics";
 import Pages from "./pages/Pages";
 import PageBuilder from "./pages/PageBuilder";
+import VisualPageBuilder from "./pages/VisualPageBuilder";
 import Marketing from "./pages/Marketing";
 import FacebookAds from "./pages/FacebookAds";
 import EmailCampaigns from "./pages/EmailCampaigns";
@@ -70,6 +71,7 @@ const App = () => (
                 <Route path="/dashboard/analytics" element={<Analytics />} />
                 <Route path="/dashboard/pages" element={<Pages />} />
                 <Route path="/dashboard/pages/builder" element={<PageBuilder />} />
+                <Route path="/dashboard/pages/visual-builder" element={<VisualPageBuilder />} />
                 <Route path="/dashboard/pages/homepage" element={<PageBuilder />} />
                 <Route path="/dashboard/marketing" element={<Marketing />} />
                 <Route path="/dashboard/marketing/facebook" element={<FacebookAds />} />

@@ -128,7 +128,7 @@ export default function Pages() {
               <Home className="mr-2 h-4 w-4" />
               Homepage
             </Button>
-            <Button onClick={() => navigate('/dashboard/pages/builder')}>
+            <Button onClick={() => navigate('/dashboard/pages/visual-builder')}>
               <Plus className="mr-2 h-4 w-4" />
               New Page
             </Button>
@@ -147,7 +147,7 @@ export default function Pages() {
                 <p>No pages found. Create your first page to get started.</p>
                 <Button 
                   className="mt-4" 
-                  onClick={() => navigate('/dashboard/pages/builder')}
+                  onClick={() => navigate('/dashboard/pages/visual-builder')}
                 >
                   <Plus className="mr-2 h-4 w-4" />
                   Create Page
@@ -198,7 +198,7 @@ export default function Pages() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => navigate(`/dashboard/pages/builder?id=${page.id}`)}>
+                            <DropdownMenuItem onClick={() => navigate(`/dashboard/pages/visual-builder?id=${page.id}`)}>
                               <Edit className="mr-2 h-4 w-4" />
                               Edit
                             </DropdownMenuItem>
