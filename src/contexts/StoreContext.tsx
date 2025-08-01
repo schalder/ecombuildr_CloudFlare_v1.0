@@ -34,17 +34,30 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setError(null);
     
     try {
-      const { data, error } = await supabase
+      // Add timeout to prevent infinite loading
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Request timeout')), 10000)
+      );
+      
+      const queryPromise = supabase
         .from('stores')
-        .select('*')
+        .select('id, name, slug, description, logo_url, favicon_url, primary_color, secondary_color, is_active, settings')
         .eq('slug', slug)
         .eq('is_active', true)
         .single();
 
-      if (error) throw error;
+      const { data, error } = await Promise.race([queryPromise, timeoutPromise]) as any;
+
+      if (error) {
+        if (error.code === 'PGRST116') {
+          throw new Error('Store not found or is inactive');
+        }
+        throw error;
+      }
       setStore(data);
     } catch (err: any) {
-      setError(err.message || 'Store not found');
+      console.error('Store loading error:', err);
+      setError(err.message || 'Failed to load store');
       setStore(null);
     } finally {
       setLoading(false);
