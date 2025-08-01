@@ -210,7 +210,7 @@ export const StorefrontPage: React.FC = () => {
           .eq('slug', pageSlug || '')
           .eq('store_id', storeData.id)
           .eq('is_published', true)
-          .single();
+          .maybeSingle();
 
         if (pageError) {
           if (pageError.code === 'PGRST116') {
