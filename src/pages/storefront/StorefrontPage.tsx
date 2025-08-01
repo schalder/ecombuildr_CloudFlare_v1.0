@@ -172,61 +172,52 @@ const PageContentRenderer: React.FC<{ sections: PageSection[] }> = ({ sections }
 };
 
 export const StorefrontPage: React.FC = () => {
-  const { slug, pageSlug } = useParams<{ slug: string; pageSlug: string }>();
-  const { store, loadStore } = useStore();
+  const { storeSlug, pageSlug } = useParams<{ storeSlug: string; pageSlug: string }>();
+  const { store, loading: storeLoading, error: storeError } = useStore();
   const [page, setPage] = useState<PageData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchPage = async () => {
-      if (!slug || !pageSlug) return;
+      console.log('StorefrontPage: fetchPage called', { storeSlug, pageSlug, storeLoading, store: store?.slug });
+      
+      if (!storeSlug || !pageSlug || storeLoading || !store) {
+        console.log('StorefrontPage: early return', { storeSlug, pageSlug, storeLoading, hasStore: !!store });
+        return;
+      }
 
       try {
         setLoading(true);
         setError(null);
 
-        // Load store if not already loaded
-        if (!store || store.slug !== slug) {
-          await loadStore(slug);
-        }
+        console.log('StorefrontPage: fetching page for store', store.id, 'page slug:', pageSlug);
 
-        // Get the current store (it should be loaded by now)
-        const { data: storeData } = await supabase
-          .from('stores')
-          .select('id')
-          .eq('slug', slug)
-          .eq('is_active', true)
-          .maybeSingle();
-
-        if (!storeData) {
-          setError('Store not found');
-          return;
-        }
-
-        // Fetch the page by slug and store_id
+        // Fetch the page by slug and store_id using store from context
         const { data: pageData, error: pageError } = await supabase
           .from('pages')
           .select('*')
           .eq('slug', pageSlug)
-          .eq('store_id', storeData.id)
+          .eq('store_id', store.id)
           .eq('is_published', true)
           .maybeSingle();
 
         if (pageError) {
-          console.error('Error fetching page:', pageError);
+          console.error('StorefrontPage: Error fetching page:', pageError);
           setError('Failed to load page');
           return;
         }
 
         if (!pageData) {
-          setError('Page not found');
+          console.log('StorefrontPage: Page not found:', pageSlug);
+          setError(`Page "${pageSlug}" not found`);
           return;
         }
 
+        console.log('StorefrontPage: Page loaded successfully:', pageData);
         setPage(pageData);
       } catch (err) {
-        console.error('Error fetching page:', err);
+        console.error('StorefrontPage: Error fetching page:', err);
         setError('Failed to load page');
       } finally {
         setLoading(false);
@@ -234,13 +225,26 @@ export const StorefrontPage: React.FC = () => {
     };
 
     fetchPage();
-  }, [slug, pageSlug, store, loadStore]);
+  }, [storeSlug, pageSlug, storeLoading, store]);
 
-  if (loading) {
+  if (storeLoading || loading) {
     return (
       <StorefrontLayout>
         <div className="container mx-auto px-4 py-8 min-h-[400px] flex items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+      </StorefrontLayout>
+    );
+  }
+
+  if (storeError) {
+    return (
+      <StorefrontLayout>
+        <div className="container mx-auto px-4 py-8 min-h-[400px] flex items-center justify-center">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-destructive mb-2">Store Not Found</h1>
+            <p className="text-muted-foreground">{storeError}</p>
+          </div>
         </div>
       </StorefrontLayout>
     );
@@ -253,6 +257,7 @@ export const StorefrontPage: React.FC = () => {
           <div className="text-center">
             <h1 className="text-2xl font-bold text-destructive mb-2">Page Not Found</h1>
             <p className="text-muted-foreground">{error || 'The requested page could not be found.'}</p>
+            <p className="text-sm text-muted-foreground mt-2">Store: {storeSlug} | Page: {pageSlug}</p>
           </div>
         </div>
       </StorefrontLayout>
