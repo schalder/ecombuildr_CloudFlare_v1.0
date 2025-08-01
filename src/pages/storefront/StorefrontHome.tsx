@@ -45,23 +45,19 @@ export const StorefrontHome: React.FC = () => {
     
     try {
       setLoading(true);
+      console.log('Fetching products for store:', store.id);
       
-      // Add timeout to prevent infinite loading
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Products loading timeout')), 8000)
-      );
-      
-      const queryPromise = supabase
+      const { data, error } = await supabase
         .from('products')
         .select('id, name, slug, description, short_description, price, compare_price, images, is_active')
         .eq('store_id', store.id)
         .eq('is_active', true)
         .limit(8);
 
-      const { data, error } = await Promise.race([queryPromise, timeoutPromise]) as any;
+      console.log('Products query result:', { data, error });
 
       if (error) {
-        console.error('Supabase error:', error);
+        console.error('Products query error:', error);
         setFeaturedProducts([]);
         return;
       }
@@ -70,6 +66,8 @@ export const StorefrontHome: React.FC = () => {
         ...product,
         images: Array.isArray(product.images) ? product.images.filter(img => typeof img === 'string') as string[] : [],
       })) || [];
+      
+      console.log('Processed products:', products);
       setFeaturedProducts(products);
     } catch (error) {
       console.error('Error fetching products:', error);
