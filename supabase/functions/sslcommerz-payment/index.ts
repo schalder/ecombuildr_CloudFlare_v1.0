@@ -35,11 +35,22 @@ serve(async (req) => {
     );
 
     // SSLCommerz API configuration
-    const sslConfig = {
-      store_id: Deno.env.get('SSLCOMMERZ_STORE_ID'),
-      store_passwd: Deno.env.get('SSLCOMMERZ_STORE_PASSWORD'),
-      base_url: Deno.env.get('SSLCOMMERZ_BASE_URL') || 'https://sandbox.sslcommerz.com',
-    };
+  // Get store settings for SSLCommerz configuration
+  const { data: store, error: storeError } = await supabase
+    .from('stores')
+    .select('settings')
+    .eq('id', storeId)
+    .single();
+
+  if (storeError || !store?.settings?.sslcommerz) {
+    throw new Error('SSLCommerz configuration not found for this store');
+  }
+
+  const sslConfig = {
+    store_id: store.settings.sslcommerz.store_id,
+    store_passwd: store.settings.sslcommerz.store_password,
+    base_url: store.settings.sslcommerz.base_url || 'https://sandbox.sslcommerz.com',
+  };
 
     // Prepare payment data
     const paymentData = {

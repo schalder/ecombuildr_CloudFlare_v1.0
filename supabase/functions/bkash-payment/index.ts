@@ -27,13 +27,24 @@ serve(async (req) => {
     );
 
     // bKash API configuration
-    const bkashConfig = {
-      app_key: Deno.env.get('BKASH_APP_KEY'),
-      app_secret: Deno.env.get('BKASH_APP_SECRET'),
-      username: Deno.env.get('BKASH_USERNAME'),
-      password: Deno.env.get('BKASH_PASSWORD'),
-      base_url: Deno.env.get('BKASH_BASE_URL') || 'https://tokenized.sandbox.bka.sh/v1.2.0-beta',
-    };
+  // Get store settings for bKash configuration
+  const { data: store, error: storeError } = await supabase
+    .from('stores')
+    .select('settings')
+    .eq('id', storeId)
+    .single();
+
+  if (storeError || !store?.settings?.bkash) {
+    throw new Error('bKash configuration not found for this store');
+  }
+
+  const bkashConfig = {
+    app_key: store.settings.bkash.app_key,
+    app_secret: store.settings.bkash.app_secret,
+    username: store.settings.bkash.username,
+    password: store.settings.bkash.password,
+    base_url: store.settings.bkash.base_url || 'https://tokenized.sandbox.bka.sh/v1.2.0-beta',
+  };
 
     // Step 1: Get bKash access token
     const tokenResponse = await fetch(`${bkashConfig.base_url}/tokenized/checkout/token/grant`, {

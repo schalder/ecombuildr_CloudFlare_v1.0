@@ -236,7 +236,7 @@ export default function DashboardOverview() {
                           </NavLink>
                         </Button>
                         <Button asChild variant="outline" size="sm">
-                          <a href={`https://${store.domain || `${store.slug}.f-commerce.com`}`} target="_blank" rel="noopener noreferrer">
+                          <a href={`/store/${store.slug}`} target="_blank" rel="noopener noreferrer">
                             <Eye className="h-3 w-3 mr-1" />
                             View
                           </a>

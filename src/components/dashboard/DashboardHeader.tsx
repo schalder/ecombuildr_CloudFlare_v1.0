@@ -1,4 +1,4 @@
-import { Bell, Search, User, LogOut, Settings } from "lucide-react";
+import { Bell, Search, User, LogOut, Settings, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -14,6 +14,8 @@ import { Badge } from "@/components/ui/badge";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useAuth } from "@/hooks/useAuth";
 import { NavLink } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface DashboardHeaderProps {
   title?: string;
@@ -22,6 +24,29 @@ interface DashboardHeaderProps {
 
 export function DashboardHeader({ title, description }: DashboardHeaderProps) {
   const { user, signOut } = useAuth();
+  const [store, setStore] = useState<any>(null);
+
+  useEffect(() => {
+    if (user) {
+      fetchStore();
+    }
+  }, [user]);
+
+  const fetchStore = async () => {
+    try {
+      const { data } = await supabase
+        .from('stores')
+        .select('slug, name')
+        .eq('owner_id', user?.id)
+        .single();
+      
+      if (data) {
+        setStore(data);
+      }
+    } catch (error) {
+      console.error('Error fetching store:', error);
+    }
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -135,6 +160,19 @@ export function DashboardHeader({ title, description }: DashboardHeaderProps) {
                   Store Settings
                 </NavLink>
               </DropdownMenuItem>
+              {store && (
+                <DropdownMenuItem asChild>
+                  <a 
+                    href={`/store/${store.slug}`} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="flex items-center"
+                  >
+                    <ExternalLink className="mr-2 h-4 w-4" />
+                    View Store
+                  </a>
+                </DropdownMenuItem>
+              )}
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={signOut} className="text-destructive">
                 <LogOut className="mr-2 h-4 w-4" />

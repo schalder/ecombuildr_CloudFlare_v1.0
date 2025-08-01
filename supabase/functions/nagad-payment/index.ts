@@ -26,13 +26,23 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Nagad API configuration
+    // Get store settings for Nagad configuration
+    const { data: store, error: storeError } = await supabase
+      .from('stores')
+      .select('settings')
+      .eq('id', storeId)
+      .single();
+
+    if (storeError || !store?.settings?.nagad) {
+      throw new Error('Nagad configuration not found for this store');
+    }
+
     const nagadConfig = {
-      merchant_id: Deno.env.get('NAGAD_MERCHANT_ID'),
-      merchant_number: Deno.env.get('NAGAD_MERCHANT_NUMBER'),
-      public_key: Deno.env.get('NAGAD_PUBLIC_KEY'),
-      private_key: Deno.env.get('NAGAD_PRIVATE_KEY'),
-      base_url: Deno.env.get('NAGAD_BASE_URL') || 'http://sandbox.mynagad.com:10080/remote-payment-gateway-1.0/api/dfs',
+      merchant_id: store.settings.nagad.merchant_id,
+      merchant_number: store.settings.nagad.merchant_number || store.settings.nagad.merchant_id,
+      public_key: store.settings.nagad.public_key,
+      private_key: store.settings.nagad.private_key,
+      base_url: store.settings.nagad.base_url || 'http://sandbox.mynagad.com:10080/remote-payment-gateway-1.0/api/dfs',
     };
 
     // Generate timestamp and random string

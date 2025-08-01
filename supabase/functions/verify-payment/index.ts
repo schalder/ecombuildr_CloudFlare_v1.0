@@ -29,15 +29,26 @@ serve(async (req) => {
     let paymentStatus = 'failed';
     let paymentDetails = {};
 
+    // Get order details to find store ID
+    const { data: order, error: orderError } = await supabase
+      .from('orders')
+      .select('store_id')
+      .eq('id', orderId)
+      .single();
+
+    if (orderError || !order) {
+      throw new Error('Order not found');
+    }
+
     switch (method) {
       case 'bkash':
-        paymentStatus = await verifyBkashPayment(paymentId);
+        paymentStatus = await verifyBkashPayment(paymentId, order.store_id, supabase);
         break;
       case 'nagad':
-        paymentStatus = await verifyNagadPayment(paymentId);
+        paymentStatus = await verifyNagadPayment(paymentId, order.store_id, supabase);
         break;
       case 'sslcommerz':
-        paymentStatus = await verifySSLCommerzPayment(paymentId);
+        paymentStatus = await verifySSLCommerzPayment(paymentId, order.store_id, supabase);
         break;
     }
 
@@ -81,14 +92,26 @@ serve(async (req) => {
   }
 });
 
-async function verifyBkashPayment(paymentId: string): Promise<string> {
+async function verifyBkashPayment(paymentId: string, storeId: string, supabase: any): Promise<string> {
   try {
+    // Get store settings for bKash configuration
+    const { data: store, error: storeError } = await supabase
+      .from('stores')
+      .select('settings')
+      .eq('id', storeId)
+      .single();
+
+    if (storeError || !store?.settings?.bkash) {
+      console.error('bKash configuration not found for store:', storeId);
+      return 'failed';
+    }
+
     const bkashConfig = {
-      app_key: Deno.env.get('BKASH_APP_KEY'),
-      app_secret: Deno.env.get('BKASH_APP_SECRET'),
-      username: Deno.env.get('BKASH_USERNAME'),
-      password: Deno.env.get('BKASH_PASSWORD'),
-      base_url: Deno.env.get('BKASH_BASE_URL') || 'https://tokenized.sandbox.bka.sh/v1.2.0-beta',
+      app_key: store.settings.bkash.app_key,
+      app_secret: store.settings.bkash.app_secret,
+      username: store.settings.bkash.username,
+      password: store.settings.bkash.password,
+      base_url: store.settings.bkash.base_url || 'https://tokenized.sandbox.bka.sh/v1.2.0-beta',
     };
 
     // Get token
@@ -127,11 +150,23 @@ async function verifyBkashPayment(paymentId: string): Promise<string> {
   }
 }
 
-async function verifyNagadPayment(paymentId: string): Promise<string> {
+async function verifyNagadPayment(paymentId: string, storeId: string, supabase: any): Promise<string> {
   try {
+    // Get store settings for Nagad configuration
+    const { data: store, error: storeError } = await supabase
+      .from('stores')
+      .select('settings')
+      .eq('id', storeId)
+      .single();
+
+    if (storeError || !store?.settings?.nagad) {
+      console.error('Nagad configuration not found for store:', storeId);
+      return 'failed';
+    }
+
     const nagadConfig = {
-      merchant_id: Deno.env.get('NAGAD_MERCHANT_ID'),
-      base_url: Deno.env.get('NAGAD_BASE_URL') || 'http://sandbox.mynagad.com:10080/remote-payment-gateway-1.0/api/dfs',
+      merchant_id: store.settings.nagad.merchant_id,
+      base_url: store.settings.nagad.base_url || 'http://sandbox.mynagad.com:10080/remote-payment-gateway-1.0/api/dfs',
     };
 
     const verifyResponse = await fetch(`${nagadConfig.base_url}/verify/payment/${paymentId}`, {
@@ -152,12 +187,24 @@ async function verifyNagadPayment(paymentId: string): Promise<string> {
   }
 }
 
-async function verifySSLCommerzPayment(transactionId: string): Promise<string> {
+async function verifySSLCommerzPayment(transactionId: string, storeId: string, supabase: any): Promise<string> {
   try {
+    // Get store settings for SSLCommerz configuration
+    const { data: store, error: storeError } = await supabase
+      .from('stores')
+      .select('settings')
+      .eq('id', storeId)
+      .single();
+
+    if (storeError || !store?.settings?.sslcommerz) {
+      console.error('SSLCommerz configuration not found for store:', storeId);
+      return 'failed';
+    }
+
     const sslConfig = {
-      store_id: Deno.env.get('SSLCOMMERZ_STORE_ID'),
-      store_passwd: Deno.env.get('SSLCOMMERZ_STORE_PASSWORD'),
-      base_url: Deno.env.get('SSLCOMMERZ_BASE_URL') || 'https://sandbox.sslcommerz.com',
+      store_id: store.settings.sslcommerz.store_id,
+      store_passwd: store.settings.sslcommerz.store_password,
+      base_url: store.settings.sslcommerz.base_url || 'https://sandbox.sslcommerz.com',
     };
 
     const formData = new URLSearchParams();
