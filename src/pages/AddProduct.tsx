@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
@@ -33,7 +33,36 @@ export default function AddProduct() {
     category_id: '',
     seo_title: '',
     seo_description: '',
+    images: [] as string[],
   });
+
+  // Fetch categories for the dropdown
+  useEffect(() => {
+    if (user) {
+      fetchCategories();
+    }
+  }, [user]);
+
+  const fetchCategories = async () => {
+    try {
+      const { data: stores } = await supabase
+        .from('stores')
+        .select('id')
+        .eq('owner_id', user?.id);
+
+      if (stores && stores.length > 0) {
+        const { data: categoriesData } = await supabase
+          .from('categories')
+          .select('id, name')
+          .in('store_id', stores.map(store => store.id))
+          .order('name');
+
+        setCategories(categoriesData || []);
+      }
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,6 +97,7 @@ export default function AddProduct() {
         cost_price: formData.cost_price ? parseFloat(formData.cost_price) : null,
         inventory_quantity: parseInt(formData.inventory_quantity) || 0,
         category_id: formData.category_id || null,
+        images: formData.images,
       });
 
       if (error) throw error;
@@ -220,6 +250,95 @@ export default function AddProduct() {
                 onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_active: checked }))}
               />
               <Label htmlFor="is_active">Product is active</Label>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Media</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="images">Product Images</Label>
+              <div className="space-y-2">
+                {formData.images.map((image, index) => (
+                  <div key={index} className="flex gap-2">
+                    <Input
+                      value={image}
+                      onChange={(e) => {
+                        const newImages = [...formData.images];
+                        newImages[index] = e.target.value;
+                        setFormData(prev => ({ ...prev, images: newImages }));
+                      }}
+                      placeholder="Image URL"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        const newImages = formData.images.filter((_, i) => i !== index);
+                        setFormData(prev => ({ ...prev, images: newImages }));
+                      }}
+                    >
+                      Remove
+                    </Button>
+                  </div>
+                ))}
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setFormData(prev => ({ ...prev, images: [...prev.images, ''] }));
+                  }}
+                >
+                  Add Image URL
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Category & SEO</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="category_id">Category</Label>
+              <Select value={formData.category_id} onValueChange={(value) => setFormData(prev => ({ ...prev, category_id: value }))}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((category) => (
+                    <SelectItem key={category.id} value={category.id}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="seo_title">SEO Title</Label>
+              <Input
+                id="seo_title"
+                value={formData.seo_title}
+                onChange={(e) => setFormData(prev => ({ ...prev, seo_title: e.target.value }))}
+                placeholder="SEO optimized title"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="seo_description">SEO Description</Label>
+              <Textarea
+                id="seo_description"
+                value={formData.seo_description}
+                onChange={(e) => setFormData(prev => ({ ...prev, seo_description: e.target.value }))}
+                placeholder="SEO meta description"
+                rows={3}
+              />
             </div>
           </CardContent>
         </Card>

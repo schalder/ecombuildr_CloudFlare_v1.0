@@ -38,6 +38,12 @@ export default function Categories() {
     image_url: '',
   });
 
+  const [editFormData, setEditFormData] = useState({
+    name: '',
+    description: '',
+    image_url: '',
+  });
+
   useEffect(() => {
     if (user) {
       fetchCategories();
@@ -115,6 +121,42 @@ export default function Categories() {
       toast({
         title: "Error",
         description: error.message || "Failed to create category",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleUpdateCategory = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingCategory) return;
+
+    try {
+      const slug = editFormData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+
+      const { error } = await supabase
+        .from('categories')
+        .update({
+          name: editFormData.name,
+          description: editFormData.description,
+          image_url: editFormData.image_url,
+          slug,
+        })
+        .eq('id', editingCategory.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Category updated successfully!",
+      });
+
+      setIsEditDialogOpen(false);
+      setEditingCategory(null);
+      fetchCategories();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update category",
         variant: "destructive",
       });
     }
@@ -245,10 +287,15 @@ export default function Categories() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem 
-                              onClick={() => {
-                                setEditingCategory(category);
-                                setIsEditDialogOpen(true);
-                              }}
+                             onClick={() => {
+                                 setEditingCategory(category);
+                                 setEditFormData({
+                                   name: category.name,
+                                   description: category.description,
+                                   image_url: category.image_url || '',
+                                 });
+                                 setIsEditDialogOpen(true);
+                               }}
                             >
                               <Edit className="mr-2 h-4 w-4" />
                               Edit
@@ -277,36 +324,41 @@ export default function Categories() {
             <DialogHeader>
               <DialogTitle>Edit Category</DialogTitle>
             </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium">Name</label>
-                <Input 
-                  defaultValue={editingCategory?.name} 
-                  placeholder="Category name"
+            <form onSubmit={handleUpdateCategory} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-name">Name *</Label>
+                <Input
+                  id="edit-name"
+                  value={editFormData.name}
+                  onChange={(e) => setEditFormData(prev => ({ ...prev, name: e.target.value }))}
+                  required
                 />
               </div>
-              <div>
-                <label className="text-sm font-medium">Description</label>
-                <Input 
-                  defaultValue={editingCategory?.description || ""} 
-                  placeholder="Category description"
+              <div className="space-y-2">
+                <Label htmlFor="edit-description">Description</Label>
+                <Textarea
+                  id="edit-description"
+                  value={editFormData.description}
+                  onChange={(e) => setEditFormData(prev => ({ ...prev, description: e.target.value }))}
+                  rows={3}
                 />
               </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button onClick={() => {
-                toast({
-                  title: "Success",
-                  description: "Category updated successfully",
-                });
-                setIsEditDialogOpen(false);
-              }}>
-                Save Changes
-              </Button>
-            </DialogFooter>
+              <div className="space-y-2">
+                <Label htmlFor="edit-image-url">Image URL</Label>
+                <Input
+                  id="edit-image-url"
+                  type="url"
+                  value={editFormData.image_url}
+                  onChange={(e) => setEditFormData(prev => ({ ...prev, image_url: e.target.value }))}
+                />
+              </div>
+              <div className="flex justify-end space-x-2">
+                <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit">Save Changes</Button>
+              </div>
+            </form>
           </DialogContent>
         </Dialog>
       </div>

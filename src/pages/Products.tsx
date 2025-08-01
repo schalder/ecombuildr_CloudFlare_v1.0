@@ -28,7 +28,11 @@ import {
   Edit, 
   Trash2, 
   Eye,
-  Package
+  Package,
+  CheckSquare,
+  Square,
+  Download,
+  Upload
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
@@ -53,6 +57,8 @@ export default function Products() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
+  const [showBulkActions, setShowBulkActions] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -159,6 +165,80 @@ export default function Products() {
     }
   };
 
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedProducts(filteredProducts.map(p => p.id));
+    } else {
+      setSelectedProducts([]);
+    }
+  };
+
+  const handleSelectProduct = (productId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedProducts(prev => [...prev, productId]);
+    } else {
+      setSelectedProducts(prev => prev.filter(id => id !== productId));
+    }
+  };
+
+  const bulkToggleStatus = async (isActive: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('products')
+        .update({ is_active: isActive })
+        .in('id', selectedProducts);
+
+      if (error) throw error;
+
+      setProducts(products.map(product => 
+        selectedProducts.includes(product.id) 
+          ? { ...product, is_active: isActive }
+          : product
+      ));
+
+      setSelectedProducts([]);
+      toast({
+        title: "Success",
+        description: `${selectedProducts.length} products ${isActive ? 'activated' : 'deactivated'} successfully`,
+      });
+    } catch (error) {
+      console.error('Error updating products:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update products",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const bulkDelete = async () => {
+    if (!confirm(`Are you sure you want to delete ${selectedProducts.length} products?`)) return;
+
+    try {
+      const { error } = await supabase
+        .from('products')
+        .delete()
+        .in('id', selectedProducts);
+
+      if (error) throw error;
+
+      setProducts(products.filter(product => !selectedProducts.includes(product.id)));
+      setSelectedProducts([]);
+
+      toast({
+        title: "Success",
+        description: `${selectedProducts.length} products deleted successfully`,
+      });
+    } catch (error) {
+      console.error('Error deleting products:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete products",
+        variant: "destructive",
+      });
+    }
+  };
+
   const filteredProducts = products.filter(product =>
     product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     product.sku?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -182,11 +262,45 @@ export default function Products() {
                 className="pl-10 w-80"
               />
             </div>
+            {selectedProducts.length > 0 && (
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">
+                  {selectedProducts.length} selected
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => bulkToggleStatus(true)}
+                >
+                  Activate
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => bulkToggleStatus(false)}
+                >
+                  Deactivate
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={bulkDelete}
+                >
+                  Delete
+                </Button>
+              </div>
+            )}
           </div>
-          <Button onClick={() => navigate('/dashboard/products/add')}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Product
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline">
+              <Download className="h-4 w-4 mr-2" />
+              Export
+            </Button>
+            <Button onClick={() => navigate('/dashboard/products/add')}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Product
+            </Button>
+          </div>
         </div>
 
         {/* Products Table */}
@@ -216,6 +330,19 @@ export default function Products() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-12">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleSelectAll(selectedProducts.length !== filteredProducts.length)}
+                      >
+                        {selectedProducts.length === filteredProducts.length ? (
+                          <CheckSquare className="h-4 w-4" />
+                        ) : (
+                          <Square className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </TableHead>
                     <TableHead>Product</TableHead>
                     <TableHead>SKU</TableHead>
                     <TableHead>Price</TableHead>
@@ -228,6 +355,19 @@ export default function Products() {
                 <TableBody>
                   {filteredProducts.map((product) => (
                     <TableRow key={product.id}>
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleSelectProduct(product.id, !selectedProducts.includes(product.id))}
+                        >
+                          {selectedProducts.includes(product.id) ? (
+                            <CheckSquare className="h-4 w-4" />
+                          ) : (
+                            <Square className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </TableCell>
                       <TableCell className="font-medium">
                         <div className="flex items-center gap-3">
                           {product.images?.[0] && (
