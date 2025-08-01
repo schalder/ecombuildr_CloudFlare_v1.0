@@ -21,6 +21,7 @@ interface Store {
   favicon_url?: string;
   primary_color: string;
   secondary_color: string;
+  theme_id?: string;
   is_active: boolean;
   settings: any;
 }

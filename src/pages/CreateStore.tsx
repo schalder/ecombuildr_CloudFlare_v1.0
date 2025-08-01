@@ -6,10 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft } from 'lucide-react';
+import { ThemeSelector } from '@/components/ThemeSelector';
 
 const CreateStore = () => {
   const navigate = useNavigate();
@@ -20,7 +21,8 @@ const CreateStore = () => {
     slug: '',
     description: '',
     primary_color: '#10B981',
-    secondary_color: '#059669'
+    secondary_color: '#059669',
+    theme_id: ''
   });
 
   const handleInputChange = (field: string, value: string) => {
@@ -92,6 +94,7 @@ const CreateStore = () => {
           description: formData.description.trim() || null,
           primary_color: formData.primary_color,
           secondary_color: formData.secondary_color,
+          theme_id: formData.theme_id || null,
           owner_id: user.id,
           is_active: true,
           settings: {}
@@ -162,85 +165,110 @@ const CreateStore = () => {
             </div>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="name">Store Name *</Label>
-                <Input
-                  id="name"
-                  placeholder="My Awesome Store"
-                  value={formData.name}
-                  onChange={(e) => handleInputChange('name', e.target.value)}
-                  required
-                />
-              </div>
+            <form onSubmit={handleSubmit}>
+              <Tabs defaultValue="basic" className="space-y-6">
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="basic">Basic Info</TabsTrigger>
+                  <TabsTrigger value="theme">Choose Theme</TabsTrigger>
+                  <TabsTrigger value="colors">Colors</TabsTrigger>
+                </TabsList>
 
-              <div className="space-y-2">
-                <Label htmlFor="slug">Store URL *</Label>
-                <div className="flex items-center">
-                  <span className="text-sm text-muted-foreground mr-2">/store/</span>
-                  <Input
-                    id="slug"
-                    placeholder="my-awesome-store"
-                    value={formData.slug}
-                    onChange={(e) => handleInputChange('slug', e.target.value)}
-                    required
-                  />
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  This will be your store's web address. Only letters, numbers, and hyphens allowed.
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="description">Store Description</Label>
-                <Textarea
-                  id="description"
-                  placeholder="Tell customers what your store is about..."
-                  value={formData.description}
-                  onChange={(e) => handleInputChange('description', e.target.value)}
-                  rows={3}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="primary_color">Primary Color</Label>
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="color"
-                      id="primary_color"
-                      value={formData.primary_color}
-                      onChange={(e) => handleInputChange('primary_color', e.target.value)}
-                      className="w-10 h-10 rounded border"
-                    />
+                <TabsContent value="basic" className="space-y-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Store Name *</Label>
                     <Input
-                      value={formData.primary_color}
-                      onChange={(e) => handleInputChange('primary_color', e.target.value)}
-                      placeholder="#10B981"
+                      id="name"
+                      placeholder="My Awesome Store"
+                      value={formData.name}
+                      onChange={(e) => handleInputChange('name', e.target.value)}
+                      required
                     />
                   </div>
-                </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="secondary_color">Secondary Color</Label>
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="color"
-                      id="secondary_color"
-                      value={formData.secondary_color}
-                      onChange={(e) => handleInputChange('secondary_color', e.target.value)}
-                      className="w-10 h-10 rounded border"
-                    />
-                    <Input
-                      value={formData.secondary_color}
-                      onChange={(e) => handleInputChange('secondary_color', e.target.value)}
-                      placeholder="#059669"
+                  <div className="space-y-2">
+                    <Label htmlFor="slug">Store URL *</Label>
+                    <div className="flex items-center">
+                      <span className="text-sm text-muted-foreground mr-2">/store/</span>
+                      <Input
+                        id="slug"
+                        placeholder="my-awesome-store"
+                        value={formData.slug}
+                        onChange={(e) => handleInputChange('slug', e.target.value)}
+                        required
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      This will be your store's web address. Only letters, numbers, and hyphens allowed.
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="description">Store Description</Label>
+                    <Textarea
+                      id="description"
+                      placeholder="Tell customers what your store is about..."
+                      value={formData.description}
+                      onChange={(e) => handleInputChange('description', e.target.value)}
+                      rows={3}
                     />
                   </div>
-                </div>
-              </div>
+                </TabsContent>
 
-              <div className="flex space-x-4 pt-4">
+                <TabsContent value="theme" className="space-y-6">
+                  <div>
+                    <h3 className="text-lg font-semibold mb-2">Choose Your Store Theme</h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Select a theme that matches your brand. You can change this later.
+                    </p>
+                    <ThemeSelector 
+                      selectedThemeId={formData.theme_id}
+                      onThemeSelect={(themeId) => setFormData(prev => ({ ...prev, theme_id: themeId }))}
+                    />
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="colors" className="space-y-6">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="primary_color">Primary Color</Label>
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="color"
+                          id="primary_color"
+                          value={formData.primary_color}
+                          onChange={(e) => handleInputChange('primary_color', e.target.value)}
+                          className="w-10 h-10 rounded border"
+                        />
+                        <Input
+                          value={formData.primary_color}
+                          onChange={(e) => handleInputChange('primary_color', e.target.value)}
+                          placeholder="#10B981"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="secondary_color">Secondary Color</Label>
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="color"
+                          id="secondary_color"
+                          value={formData.secondary_color}
+                          onChange={(e) => handleInputChange('secondary_color', e.target.value)}
+                          className="w-10 h-10 rounded border"
+                        />
+                        <Input
+                          value={formData.secondary_color}
+                          onChange={(e) => handleInputChange('secondary_color', e.target.value)}
+                          placeholder="#059669"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </TabsContent>
+              </Tabs>
+
+              <div className="flex space-x-4 pt-6 border-t">
                 <Button type="submit" disabled={loading}>
                   {loading ? 'Creating...' : 'Create Store'}
                 </Button>
