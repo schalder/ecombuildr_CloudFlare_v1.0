@@ -32,6 +32,7 @@ import StoreManagement from "./pages/StoreManagement";
 import StoreList from "./pages/StoreList";
 import CreateStore from "./pages/CreateStore";
 import DemoPreview from "./pages/DemoPreview";
+import DashboardOverview from "./pages/DashboardOverview";
 import { StorefrontHome } from "./pages/storefront/StorefrontHome";
 import { StorefrontProducts } from "./pages/storefront/StorefrontProducts";
 import ProductDetail from "./pages/storefront/ProductDetail";
@@ -53,7 +54,10 @@ const App = () => (
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/auth" element={<Auth />} />
+                
+                {/* Single Store Dashboard Routes */}
                 <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/dashboard/overview" element={<DashboardOverview />} />
                 <Route path="/dashboard/products" element={<Products />} />
                 <Route path="/dashboard/products/add" element={<AddProduct />} />
                 <Route path="/dashboard/products/:id" element={<ProductView />} />

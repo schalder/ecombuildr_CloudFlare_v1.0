@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { useUserStore } from "@/hooks/useUserStore";
 import { supabase } from "@/integrations/supabase/client";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { StatsCards } from "@/components/dashboard/StatsCards";
@@ -36,72 +37,62 @@ interface RecentOrder {
 
 export default function DashboardOverview() {
   const { user } = useAuth();
-  const [stores, setStores] = useState<Store[]>([]);
+  const { store, loading: storeLoading } = useUserStore();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (user) {
+    if (store) {
       fetchDashboardData();
+    } else if (!storeLoading) {
+      setLoading(false);
     }
-  }, [user]);
+  }, [store, storeLoading]);
 
   const fetchDashboardData = async () => {
+    if (!store) return;
+
     try {
-      // Fetch stores
-      const { data: storesData } = await supabase
-        .from('stores')
-        .select('*')
-        .eq('owner_id', user?.id)
-        .order('created_at', { ascending: false });
+      setLoading(true);
+      
+      // Get total products
+      const { count: productsCount } = await supabase
+        .from('products')
+        .select('*', { count: 'exact' })
+        .eq('store_id', store.id);
 
-      if (storesData) {
-        setStores(storesData);
+      // Get total orders and revenue
+      const { data: ordersData } = await supabase
+        .from('orders')
+        .select('total')
+        .eq('store_id', store.id);
 
-        // Fetch stats for the first store (or aggregate across all stores)
-        if (storesData.length > 0) {
-          const storeId = storesData[0].id;
-          
-          // Get total products
-          const { count: productsCount } = await supabase
-            .from('products')
-            .select('*', { count: 'exact' })
-            .eq('store_id', storeId);
+      // Get total customers
+      const { count: customersCount } = await supabase
+        .from('customers')
+        .select('*', { count: 'exact' })
+        .eq('store_id', store.id);
 
-          // Get total orders and revenue
-          const { data: ordersData } = await supabase
-            .from('orders')
-            .select('total')
-            .eq('store_id', storeId);
+      // Get recent orders
+      const { data: recentOrdersData } = await supabase
+        .from('orders')
+        .select('id, order_number, customer_name, total, status, created_at')
+        .eq('store_id', store.id)
+        .order('created_at', { ascending: false })
+        .limit(5);
 
-          // Get total customers
-          const { count: customersCount } = await supabase
-            .from('customers')
-            .select('*', { count: 'exact' })
-            .eq('store_id', storeId);
+      const totalRevenue = ordersData?.reduce((sum, order) => sum + Number(order.total), 0) || 0;
+      const totalOrders = ordersData?.length || 0;
 
-          // Get recent orders
-          const { data: recentOrdersData } = await supabase
-            .from('orders')
-            .select('id, order_number, customer_name, total, status, created_at')
-            .eq('store_id', storeId)
-            .order('created_at', { ascending: false })
-            .limit(5);
+      setStats({
+        totalRevenue,
+        totalOrders,
+        totalCustomers: customersCount || 0,
+        totalProducts: productsCount || 0,
+      });
 
-          const totalRevenue = ordersData?.reduce((sum, order) => sum + Number(order.total), 0) || 0;
-          const totalOrders = ordersData?.length || 0;
-
-          setStats({
-            totalRevenue,
-            totalOrders,
-            totalCustomers: customersCount || 0,
-            totalProducts: productsCount || 0,
-          });
-
-          setRecentOrders(recentOrdersData || []);
-        }
-      }
+      setRecentOrders(recentOrdersData || []);
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
     } finally {
@@ -192,74 +183,61 @@ export default function DashboardOverview() {
             </CardContent>
           </Card>
 
-          {/* Your Stores */}
+          {/* Your Store */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
-                <CardTitle>Your Stores</CardTitle>
-                <CardDescription>Manage your F-Commerce stores</CardDescription>
+                <CardTitle>Your Store</CardTitle>
+                <CardDescription>Manage your store</CardDescription>
               </div>
-              <Button asChild size="sm">
-                <NavLink to="/dashboard/stores/create">
-                  <Plus className="h-4 w-4" />
-                </NavLink>
-              </Button>
+              {store && (
+                <Button asChild variant="outline" size="sm">
+                  <NavLink to="/dashboard/settings">
+                    <Edit className="h-4 w-4" />
+                  </NavLink>
+                </Button>
+              )}
             </CardHeader>
             <CardContent>
-              {loading ? (
-                <div className="space-y-3">
-                  {[...Array(2)].map((_, i) => (
-                    <div key={i} className="p-3 border rounded">
-                      <div className="h-4 w-full bg-muted animate-pulse rounded mb-2" />
-                      <div className="h-3 w-20 bg-muted animate-pulse rounded" />
-                    </div>
-                  ))}
+              {storeLoading ? (
+                <div className="p-3 border rounded">
+                  <div className="h-4 w-full bg-muted animate-pulse rounded mb-2" />
+                  <div className="h-3 w-20 bg-muted animate-pulse rounded" />
                 </div>
-              ) : stores.length > 0 ? (
-                <div className="space-y-3">
-                  {stores.slice(0, 3).map((store) => (
-                    <div key={store.id} className="p-3 border rounded">
-                      <div className="flex justify-between items-start mb-2">
-                        <div className="font-medium">{store.name}</div>
-                        <Badge variant={store.is_active ? "default" : "secondary"}>
-                          {store.is_active ? "Active" : "Inactive"}
-                        </Badge>
-                      </div>
-                      <div className="text-sm text-muted-foreground mb-3">
-                        {store.domain || `${store.slug}.f-commerce.com`}
-                      </div>
-                      <div className="flex gap-2">
-                        <Button asChild variant="outline" size="sm">
-                          <NavLink to={`/dashboard/stores/${store.id}`}>
-                            <Edit className="h-3 w-3 mr-1" />
-                            Edit
-                          </NavLink>
-                        </Button>
-                        <Button asChild variant="outline" size="sm">
-                          <a href={`/store/${store.slug}`} target="_blank" rel="noopener noreferrer">
-                            <Eye className="h-3 w-3 mr-1" />
-                            View
-                          </a>
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                  {stores.length > 3 && (
-                    <Button asChild variant="outline" className="w-full">
-                      <NavLink to="/dashboard/stores">
-                        View All Stores ({stores.length})
+              ) : store ? (
+                <div className="p-3 border rounded">
+                  <div className="flex justify-between items-start mb-2">
+                    <div className="font-medium">{store.name}</div>
+                    <Badge variant={store.is_active ? "default" : "secondary"}>
+                      {store.is_active ? "Active" : "Inactive"}
+                    </Badge>
+                  </div>
+                  <div className="text-sm text-muted-foreground mb-3">
+                    {store.domain || `${store.slug}.lovable.app`}
+                  </div>
+                  <div className="flex gap-2">
+                    <Button asChild variant="outline" size="sm">
+                      <NavLink to="/dashboard/settings">
+                        <Edit className="h-3 w-3 mr-1" />
+                        Settings
                       </NavLink>
                     </Button>
-                  )}
+                    <Button asChild variant="outline" size="sm">
+                      <a href={`/store/${store.slug}`} target="_blank" rel="noopener noreferrer">
+                        <Eye className="h-3 w-3 mr-1" />
+                        View Store
+                      </a>
+                    </Button>
+                  </div>
                 </div>
               ) : (
                 <div className="text-center py-6 text-muted-foreground">
                   <Store className="mx-auto h-12 w-12 mb-4 opacity-50" />
-                  <p>No stores created yet</p>
+                  <p>No store created yet</p>
                   <Button asChild className="mt-2">
                     <NavLink to="/dashboard/stores/create">
                       <Plus className="h-4 w-4 mr-2" />
-                      Create Your First Store
+                      Create Your Store
                     </NavLink>
                   </Button>
                 </div>

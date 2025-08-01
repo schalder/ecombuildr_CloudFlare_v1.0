@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,14 +7,16 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useUserStore } from '@/hooks/useUserStore';
+import { supabase } from '@/integrations/supabase/client';
 import { ArrowLeft } from 'lucide-react';
 import { ThemeSelector } from '@/components/ThemeSelector';
 
 const CreateStore = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { store, createStore } = useUserStore();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -24,6 +26,13 @@ const CreateStore = () => {
     secondary_color: '#059669',
     theme_id: ''
   });
+
+  // Redirect to dashboard if user already has a store
+  useEffect(() => {
+    if (store) {
+      navigate('/dashboard');
+    }
+  }, [store, navigate]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
@@ -68,7 +77,7 @@ const CreateStore = () => {
         .from('stores')
         .select('id')
         .eq('slug', formData.slug)
-        .single();
+        .maybeSingle();
 
       if (existingStore) {
         toast({
@@ -79,65 +88,29 @@ const CreateStore = () => {
         return;
       }
 
-      // Get current user
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        throw new Error('Not authenticated');
-      }
-
-      // Create the store
-      const { data: store, error } = await supabase
-        .from('stores')
-        .insert({
-          name: formData.name.trim(),
-          slug: formData.slug.trim(),
-          description: formData.description.trim() || null,
-          primary_color: formData.primary_color,
-          secondary_color: formData.secondary_color,
-          theme_id: formData.theme_id || null,
-          owner_id: user.id,
-          is_active: true,
-          settings: {}
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      // Create a default homepage for the store
-      await supabase
-        .from('pages')
-        .insert({
-          store_id: store.id,
-          title: 'Home',
-          slug: 'home',
-          is_homepage: true,
-          is_published: true,
-          content: {
-            sections: [
-              {
-                type: 'hero',
-                title: `Welcome to ${formData.name}`,
-                subtitle: 'Discover our amazing products',
-                backgroundImage: '',
-                ctaText: 'Shop Now',
-                ctaLink: `/store/${formData.slug}/products`
-              }
-            ]
-          }
-        });
+      // Create the store using the hook (this will auto-generate pages via trigger)
+      await createStore({
+        name: formData.name.trim(),
+        slug: formData.slug.trim(),
+        description: formData.description.trim() || null,
+        primary_color: formData.primary_color,
+        secondary_color: formData.secondary_color,
+        theme_id: formData.theme_id || null,
+        is_active: true,
+        settings: {}
+      });
 
       toast({
         title: "Success",
-        description: "Store created successfully!"
+        description: "Store created successfully! All essential pages have been generated automatically."
       });
 
-      navigate(`/dashboard/stores/${store.id}`);
+      navigate('/dashboard');
     } catch (error: any) {
       console.error('Error creating store:', error);
       toast({
         title: "Error",
-        description: "Failed to create store",
+        description: error.message || "Failed to create store",
         variant: "destructive"
       });
     } finally {
