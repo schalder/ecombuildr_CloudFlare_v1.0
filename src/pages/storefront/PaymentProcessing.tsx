@@ -1,0 +1,247 @@
+import React, { useEffect, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useStore } from '@/contexts/StoreContext';
+import { StorefrontLayout } from '@/components/storefront/StorefrontLayout';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { supabase } from '@/integrations/supabase/client';
+import { CheckCircle, Clock, XCircle, RefreshCw } from 'lucide-react';
+import { toast } from 'sonner';
+
+export const PaymentProcessing: React.FC = () => {
+  const { slug, orderId } = useParams<{ slug: string; orderId: string }>();
+  const navigate = useNavigate();
+  const { store, loadStore } = useStore();
+  const [order, setOrder] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [verifying, setVerifying] = useState(false);
+
+  useEffect(() => {
+    if (slug) {
+      loadStore(slug);
+    }
+  }, [slug, loadStore]);
+
+  useEffect(() => {
+    if (orderId && store) {
+      fetchOrder();
+    }
+  }, [orderId, store]);
+
+  const fetchOrder = async () => {
+    if (!orderId || !store) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('orders')
+        .select('*')
+        .eq('id', orderId)
+        .eq('store_id', store.id)
+        .single();
+
+      if (error) throw error;
+      setOrder(data);
+    } catch (error) {
+      console.error('Error fetching order:', error);
+      toast.error('Failed to load order details');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const verifyPayment = async () => {
+    if (!order) return;
+
+    setVerifying(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('verify-payment', {
+        body: {
+          orderId: order.id,
+          paymentId: order.id, // Using order ID as payment reference
+          method: order.payment_method,
+        }
+      });
+
+      if (error) throw error;
+
+      if (data.paymentStatus === 'success') {
+        toast.success('Payment verified successfully!');
+        navigate(`/store/${store!.slug}/order-confirmation/${order.id}`);
+      } else {
+        toast.error('Payment verification failed. Please contact support.');
+        setOrder(prev => ({ ...prev, status: 'payment_failed' }));
+      }
+    } catch (error) {
+      console.error('Payment verification error:', error);
+      toast.error('Failed to verify payment');
+    } finally {
+      setVerifying(false);
+    }
+  };
+
+  const getStatusIcon = () => {
+    if (!order) return <Clock className="h-8 w-8 text-muted-foreground" />;
+    
+    switch (order.status) {
+      case 'paid':
+        return <CheckCircle className="h-8 w-8 text-green-500" />;
+      case 'payment_failed':
+        return <XCircle className="h-8 w-8 text-red-500" />;
+      case 'processing':
+      default:
+        return <Clock className="h-8 w-8 text-blue-500" />;
+    }
+  };
+
+  const getStatusText = () => {
+    if (!order) return 'Loading...';
+    
+    switch (order.status) {
+      case 'paid':
+        return 'Payment Successful';
+      case 'payment_failed':
+        return 'Payment Failed';
+      case 'processing':
+      default:
+        return 'Payment Processing';
+    }
+  };
+
+  const getStatusDescription = () => {
+    if (!order) return 'Please wait while we load your order details.';
+    
+    switch (order.status) {
+      case 'paid':
+        return 'Your payment has been confirmed and your order is being processed.';
+      case 'payment_failed':
+        return 'Your payment could not be processed. Please try again or contact support.';
+      case 'processing':
+      default:
+        return 'Please complete your payment in the opened window and return here to verify your payment status.';
+    }
+  };
+
+  if (loading) {
+    return (
+      <StorefrontLayout>
+        <div className="container mx-auto px-4 py-8">
+          <div className="flex items-center justify-center min-h-[400px]">
+            <div className="text-center">
+              <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4" />
+              <p>Loading order details...</p>
+            </div>
+          </div>
+        </div>
+      </StorefrontLayout>
+    );
+  }
+
+  if (!order) {
+    return (
+      <StorefrontLayout>
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-destructive mb-2">Order Not Found</h1>
+            <p className="text-muted-foreground mb-4">The requested order could not be found.</p>
+            <Button onClick={() => navigate(`/store/${slug}`)}>
+              Continue Shopping
+            </Button>
+          </div>
+        </div>
+      </StorefrontLayout>
+    );
+  }
+
+  return (
+    <StorefrontLayout>
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-2xl mx-auto">
+          <Card>
+            <CardHeader className="text-center">
+              <div className="flex justify-center mb-4">
+                {getStatusIcon()}
+              </div>
+              <CardTitle className="text-2xl">{getStatusText()}</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="text-center">
+                <p className="text-muted-foreground">{getStatusDescription()}</p>
+              </div>
+
+              <div className="bg-muted p-4 rounded-lg">
+                <h3 className="font-semibold mb-2">Order Details</h3>
+                <div className="space-y-1 text-sm">
+                  <div className="flex justify-between">
+                    <span>Order Number:</span>
+                    <span className="font-medium">{order.order_number}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Payment Method:</span>
+                    <span className="font-medium">
+                      {order.payment_method === 'bkash' && 'bKash'}
+                      {order.payment_method === 'nagad' && 'Nagad'}
+                      {order.payment_method === 'sslcommerz' && 'Credit/Debit Card'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Total Amount:</span>
+                    <span className="font-medium">৳{order.total.toFixed(2)}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-3">
+                {order.status === 'processing' && (
+                  <Button 
+                    onClick={verifyPayment} 
+                    disabled={verifying}
+                    className="w-full"
+                  >
+                    {verifying ? (
+                      <>
+                        <RefreshCw className="h-4 w-4 animate-spin mr-2" />
+                        Verifying Payment...
+                      </>
+                    ) : (
+                      'Verify Payment Status'
+                    )}
+                  </Button>
+                )}
+                
+                {order.status === 'paid' && (
+                  <Button 
+                    onClick={() => navigate(`/store/${store!.slug}/order-confirmation/${order.id}`)}
+                    className="w-full"
+                  >
+                    View Order Details
+                  </Button>
+                )}
+
+                {order.status === 'payment_failed' && (
+                  <Button 
+                    onClick={() => navigate(`/store/${store!.slug}/checkout`)}
+                    className="w-full"
+                  >
+                    Try Again
+                  </Button>
+                )}
+
+                <Button 
+                  variant="outline" 
+                  onClick={() => navigate(`/store/${store!.slug}`)}
+                  className="w-full"
+                >
+                  Continue Shopping
+                </Button>
+              </div>
+
+              <div className="text-center text-sm text-muted-foreground">
+                <p>If you're experiencing issues, please contact our support team.</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </StorefrontLayout>
+  );
+};

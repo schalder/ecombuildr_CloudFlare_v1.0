@@ -22,7 +22,7 @@ interface CheckoutForm {
   shipping_address: string;
   shipping_city: string;
   shipping_area: string;
-  payment_method: 'cod' | 'online';
+  payment_method: 'cod' | 'bkash' | 'nagad' | 'sslcommerz';
   notes: string;
   discount_code: string;
 }
@@ -165,14 +165,14 @@ export const CheckoutPage: React.FC = () => {
         shipping_address: form.shipping_address,
         shipping_city: form.shipping_city,
         shipping_area: form.shipping_area,
-        payment_method: form.payment_method as 'cod',
+        payment_method: form.payment_method,
         notes: form.notes,
         subtotal: total,
         shipping_cost: shippingCost,
         discount_amount: discountAmount,
         discount_code: form.discount_code || null,
         total: total + shippingCost - discountAmount,
-        status: 'pending' as const,
+        status: form.payment_method === 'cod' ? 'pending' as const : 'processing' as const,
         order_number: `ORD-${Date.now()}`,
       };
 
@@ -224,15 +224,80 @@ export const CheckoutPage: React.FC = () => {
         }
       }
 
-      // Clear cart and redirect
-      clearCart();
-      toast.success('Order placed successfully!');
-      navigate(`/store/${store.slug}/order-confirmation/${order.id}`);
+      // Handle payment processing
+      if (form.payment_method === 'cod') {
+        // For COD, just clear cart and redirect
+        clearCart();
+        toast.success('Order placed successfully!');
+        navigate(`/store/${store.slug}/order-confirmation/${order.id}`);
+      } else {
+        // For online payments, initiate payment process
+        await initiatePayment(order.id, finalTotal, form.payment_method);
+      }
     } catch (error) {
       console.error('Error creating order:', error);
       toast.error('Failed to place order. Please try again.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const initiatePayment = async (orderId: string, amount: number, method: string) => {
+    try {
+      let response;
+      
+      switch (method) {
+        case 'bkash':
+          response = await supabase.functions.invoke('bkash-payment', {
+            body: { orderId, amount, storeId: store!.id }
+          });
+          break;
+        case 'nagad':
+          response = await supabase.functions.invoke('nagad-payment', {
+            body: { orderId, amount, storeId: store!.id }
+          });
+          break;
+        case 'sslcommerz':
+          response = await supabase.functions.invoke('sslcommerz-payment', {
+            body: { 
+              orderId, 
+              amount, 
+              storeId: store!.id,
+              customerData: {
+                name: form.customer_name,
+                email: form.customer_email,
+                phone: form.customer_phone,
+                address: form.shipping_address,
+                city: form.shipping_city,
+              }
+            }
+          });
+          break;
+        default:
+          throw new Error('Invalid payment method');
+      }
+
+      if (response.error) {
+        throw new Error(response.error.message);
+      }
+
+      const { paymentURL } = response.data;
+      if (paymentURL) {
+        // Redirect to payment gateway
+        window.open(paymentURL, '_blank');
+        toast.success('Redirecting to payment gateway...');
+        
+        // Clear cart after initiating payment
+        clearCart();
+        
+        // Redirect to a payment processing page
+        navigate(`/store/${store!.slug}/payment-processing/${orderId}`);
+      } else {
+        throw new Error('Payment URL not received');
+      }
+    } catch (error) {
+      console.error('Payment initiation error:', error);
+      toast.error('Failed to initiate payment. Please try again.');
     }
   };
 
@@ -379,8 +444,10 @@ export const CheckoutPage: React.FC = () => {
                         <SelectValue placeholder="Select payment method" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="cod">Cash on Delivery</SelectItem>
-                        <SelectItem value="online">Online Payment</SelectItem>
+                        <SelectItem value="cod">Cash on Delivery (COD)</SelectItem>
+                        <SelectItem value="bkash">bKash</SelectItem>
+                        <SelectItem value="nagad">Nagad</SelectItem>
+                        <SelectItem value="sslcommerz">Credit/Debit Card (SSLCommerz)</SelectItem>
                       </SelectContent>
                     </Select>
                     
@@ -420,7 +487,12 @@ export const CheckoutPage: React.FC = () => {
                     <Separator />
                     <div className="space-y-2">
                       <h3 className="font-semibold">Payment Method:</h3>
-                      <p>{form.payment_method === 'cod' ? 'Cash on Delivery' : 'Online Payment'}</p>
+                      <p>
+                        {form.payment_method === 'cod' && 'Cash on Delivery (COD)'}
+                        {form.payment_method === 'bkash' && 'bKash'}
+                        {form.payment_method === 'nagad' && 'Nagad'}
+                        {form.payment_method === 'sslcommerz' && 'Credit/Debit Card (SSLCommerz)'}
+                      </p>
                     </div>
                     {form.notes && (
                       <>
