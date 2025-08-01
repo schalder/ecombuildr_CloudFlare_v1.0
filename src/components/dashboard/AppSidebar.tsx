@@ -41,6 +41,14 @@ const navigationItems = [
     icon: LayoutDashboard,
   },
   {
+    title: "Stores",
+    icon: Store,
+    items: [
+      { title: "My Stores", url: "/dashboard/stores" },
+      { title: "Create Store", url: "/dashboard/stores/create" },
+    ],
+  },
+  {
     title: "Products",
     icon: Package,
     items: [

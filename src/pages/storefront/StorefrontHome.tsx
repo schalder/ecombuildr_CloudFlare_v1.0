@@ -44,6 +44,7 @@ export const StorefrontHome: React.FC = () => {
     if (!store) return;
     
     try {
+      setLoading(true);
       const { data, error } = await supabase
         .from('products')
         .select('*')
@@ -51,7 +52,13 @@ export const StorefrontHome: React.FC = () => {
         .eq('is_active', true)
         .limit(8);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        // Don't throw error, just set empty products
+        setFeaturedProducts([]);
+        return;
+      }
+      
       const products = data?.map(product => ({
         ...product,
         images: Array.isArray(product.images) ? product.images.filter(img => typeof img === 'string') as string[] : [],
@@ -60,6 +67,7 @@ export const StorefrontHome: React.FC = () => {
       setFeaturedProducts(products);
     } catch (error) {
       console.error('Error fetching products:', error);
+      setFeaturedProducts([]);
     } finally {
       setLoading(false);
     }
@@ -158,10 +166,10 @@ export const StorefrontHome: React.FC = () => {
                     <div className="flex items-center justify-between">
                       <div className="space-y-1">
                         <div className="flex items-center space-x-1">
-                          <span className="font-bold text-sm">${product.price.toFixed(2)}</span>
+                          <span className="font-bold text-sm">৳{product.price.toFixed(2)}</span>
                           {product.compare_price && product.compare_price > product.price && (
                             <span className="text-xs text-muted-foreground line-through">
-                              ${product.compare_price.toFixed(2)}
+                              ৳{product.compare_price.toFixed(2)}
                             </span>
                           )}
                         </div>

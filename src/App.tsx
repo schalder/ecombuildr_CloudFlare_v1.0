@@ -28,6 +28,10 @@ import StoreSettings from "./pages/StoreSettings";
 import ProfileSettings from "./pages/ProfileSettings";
 import BillingSettings from "./pages/BillingSettings";
 import NotFound from "./pages/NotFound";
+import StoreManagement from "./pages/StoreManagement";
+import StoreList from "./pages/StoreList";
+import CreateStore from "./pages/CreateStore";
+import DemoPreview from "./pages/DemoPreview";
 import { StorefrontHome } from "./pages/storefront/StorefrontHome";
 import { StorefrontProducts } from "./pages/storefront/StorefrontProducts";
 import ProductDetail from "./pages/storefront/ProductDetail";
@@ -70,6 +74,14 @@ const App = () => (
                 <Route path="/dashboard/settings/store" element={<StoreSettings />} />
                 <Route path="/dashboard/settings/profile" element={<ProfileSettings />} />
                 <Route path="/dashboard/settings/billing" element={<BillingSettings />} />
+                
+                {/* Store Management Routes */}
+                <Route path="/dashboard/stores" element={<StoreList />} />
+                <Route path="/dashboard/stores/create" element={<CreateStore />} />
+                <Route path="/dashboard/stores/:storeId" element={<StoreManagement />} />
+                
+                {/* Demo and Preview Routes */}
+                <Route path="/preview/demo" element={<DemoPreview />} />
                 
                 {/* Public Storefront Routes */}
                 <Route path="/store/:slug" element={<StorefrontHome />} />
