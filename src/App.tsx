@@ -39,6 +39,7 @@ import ProductDetail from "./pages/storefront/ProductDetail";
 import { CheckoutPage } from "./pages/storefront/CheckoutPage";
 import { PaymentProcessing } from "./pages/storefront/PaymentProcessing";
 import { OrderConfirmation } from "./pages/storefront/OrderConfirmation";
+import { StorefrontPage } from "./pages/storefront/StorefrontPage";
 
 const queryClient = new QueryClient();
 
@@ -94,6 +95,7 @@ const App = () => (
                 <Route path="/store/:slug/checkout" element={<CheckoutPage />} />
                 <Route path="/store/:slug/payment-processing/:orderId" element={<PaymentProcessing />} />
                 <Route path="/store/:slug/order-confirmation/:orderId" element={<OrderConfirmation />} />
+                <Route path="/store/:slug/:pageSlug" element={<StorefrontPage />} />
                 
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />

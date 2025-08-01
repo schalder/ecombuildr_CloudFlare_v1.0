@@ -91,18 +91,18 @@ export const StorefrontFooter: React.FC = () => {
               </li>
               <li>
                 <Link 
-                  to={`/store/${store.slug}/faq`}
-                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  FAQ
-                </Link>
-              </li>
-              <li>
-                <Link 
                   to={`/store/${store.slug}/privacy`}
                   className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
                   Privacy Policy
+                </Link>
+              </li>
+              <li>
+                <Link 
+                  to={`/store/${store.slug}/terms`}
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Terms of Service
                 </Link>
               </li>
             </ul>
