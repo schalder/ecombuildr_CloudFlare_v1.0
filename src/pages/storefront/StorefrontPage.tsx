@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
+import { BlockRenderer } from '@/components/blocks';
 
 interface PageData {
   id: string;
@@ -179,7 +180,7 @@ export const StorefrontPage: React.FC = () => {
 
   useEffect(() => {
     const fetchPage = async () => {
-      if (!slug) return;
+      if (!slug || !pageSlug) return;
 
       try {
         setLoading(true);
@@ -196,7 +197,7 @@ export const StorefrontPage: React.FC = () => {
           .select('id')
           .eq('slug', slug)
           .eq('is_active', true)
-          .single();
+          .maybeSingle();
 
         if (!storeData) {
           setError('Store not found');
@@ -207,17 +208,19 @@ export const StorefrontPage: React.FC = () => {
         const { data: pageData, error: pageError } = await supabase
           .from('pages')
           .select('*')
-          .eq('slug', pageSlug || '')
+          .eq('slug', pageSlug)
           .eq('store_id', storeData.id)
           .eq('is_published', true)
           .maybeSingle();
 
         if (pageError) {
-          if (pageError.code === 'PGRST116') {
-            setError('Page not found');
-          } else {
-            setError('Failed to load page');
-          }
+          console.error('Error fetching page:', pageError);
+          setError('Failed to load page');
+          return;
+        }
+
+        if (!pageData) {
+          setError('Page not found');
           return;
         }
 
@@ -270,7 +273,9 @@ export const StorefrontPage: React.FC = () => {
   return (
     <StorefrontLayout>
       <div className="container mx-auto px-4 py-8">
-        {page.content?.sections ? (
+        {(page.content as any)?.blocks ? (
+          <BlockRenderer blocks={(page.content as any).blocks} />
+        ) : page.content?.sections ? (
           <PageContentRenderer sections={page.content.sections} />
         ) : (
           <div>

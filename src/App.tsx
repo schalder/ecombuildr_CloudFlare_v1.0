@@ -21,6 +21,7 @@ import Analytics from "./pages/Analytics";
 import Pages from "./pages/Pages";
 import PageBuilder from "./pages/PageBuilder";
 import VisualPageBuilderPage from "./pages/VisualPageBuilder";
+import GutenbergPageBuilder from "./pages/GutenbergPageBuilder";
 import Marketing from "./pages/Marketing";
 import FacebookAds from "./pages/FacebookAds";
 import EmailCampaigns from "./pages/EmailCampaigns";
@@ -72,6 +73,7 @@ const App = () => (
                 <Route path="/dashboard/pages" element={<Pages />} />
                 <Route path="/dashboard/pages/builder" element={<PageBuilder />} />
                 <Route path="/dashboard/pages/visual-builder" element={<VisualPageBuilderPage />} />
+                <Route path="/dashboard/pages/gutenberg-builder" element={<GutenbergPageBuilder />} />
                 <Route path="/dashboard/pages/homepage" element={<PageBuilder />} />
                 <Route path="/dashboard/marketing" element={<Marketing />} />
                 <Route path="/dashboard/marketing/facebook" element={<FacebookAds />} />
@@ -91,13 +93,13 @@ const App = () => (
                 <Route path="/preview/demo" element={<DemoPreview />} />
                 
                 {/* Public Storefront Routes */}
-                <Route path="/store/:slug" element={<StorefrontHome />} />
                 <Route path="/store/:slug/products" element={<StorefrontProducts />} />
                 <Route path="/store/:slug/products/:productSlug" element={<ProductDetail />} />
                 <Route path="/store/:slug/checkout" element={<CheckoutPage />} />
                 <Route path="/store/:slug/payment-processing/:orderId" element={<PaymentProcessing />} />
                 <Route path="/store/:slug/order-confirmation/:orderId" element={<OrderConfirmation />} />
                 <Route path="/store/:slug/:pageSlug" element={<StorefrontPage />} />
+                <Route path="/store/:slug" element={<StorefrontHome />} />
                 
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />

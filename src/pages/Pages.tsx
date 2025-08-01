@@ -128,9 +128,13 @@ export default function Pages() {
               <Home className="mr-2 h-4 w-4" />
               Homepage
             </Button>
-            <Button onClick={() => navigate('/dashboard/pages/visual-builder')}>
+            <Button onClick={() => navigate('/dashboard/pages/gutenberg-builder')}>
               <Plus className="mr-2 h-4 w-4" />
-              New Page
+              New Page (Block Editor)
+            </Button>
+            <Button variant="outline" onClick={() => navigate('/dashboard/pages/visual-builder')}>
+              <Plus className="mr-2 h-4 w-4" />
+              Legacy Builder
             </Button>
           </div>
         </div>
