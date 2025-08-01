@@ -85,13 +85,67 @@ export const CheckoutPage: React.FC = () => {
 
     setDiscountLoading(true);
     try {
-      // For now, we'll use a simple discount validation
-      // TODO: Create proper discount validation function
-      toast.success('Discount code feature coming soon!');
-      setDiscountAmount(0);
+      const { data: discountCode, error } = await supabase
+        .from('discount_codes' as any)
+        .select('*')
+        .eq('store_id', store.id)
+        .eq('code', form.discount_code.toUpperCase())
+        .eq('is_active', true)
+        .single();
+
+      if (error || !discountCode) {
+        toast.error('Invalid discount code');
+        setDiscountAmount(0);
+        return;
+      }
+
+      // Type assertion for the discount code object
+      const discount = discountCode as any;
+
+      // Check if discount is expired
+      if (discount.expires_at && new Date(discount.expires_at) < new Date()) {
+        toast.error('Discount code has expired');
+        setDiscountAmount(0);
+        return;
+      }
+
+      // Check if discount hasn't started yet
+      if (discount.starts_at && new Date(discount.starts_at) > new Date()) {
+        toast.error('Discount code is not active yet');
+        setDiscountAmount(0);
+        return;
+      }
+
+      // Check usage limit
+      if (discount.usage_limit && discount.used_count >= discount.usage_limit) {
+        toast.error('Discount code usage limit reached');
+        setDiscountAmount(0);
+        return;
+      }
+
+      // Check minimum amount
+      if (discount.minimum_amount && total < discount.minimum_amount) {
+        toast.error(`Minimum order amount is $${discount.minimum_amount} for this discount`);
+        setDiscountAmount(0);
+        return;
+      }
+
+      // Calculate discount amount
+      let discountValue = 0;
+      if (discount.type === 'percentage') {
+        discountValue = (total * discount.value) / 100;
+      } else if (discount.type === 'fixed') {
+        discountValue = discount.value;
+      }
+
+      // Ensure discount doesn't exceed total
+      discountValue = Math.min(discountValue, total);
+      setDiscountAmount(discountValue);
+      toast.success(`Discount code applied! You saved $${discountValue.toFixed(2)}`);
     } catch (error) {
       console.error('Error applying discount:', error);
       toast.error('Error applying discount code');
+      setDiscountAmount(0);
     } finally {
       setDiscountLoading(false);
     }
@@ -148,8 +202,27 @@ export const CheckoutPage: React.FC = () => {
 
       if (itemsError) throw itemsError;
 
-      // Skip discount code update for now
-      // TODO: Implement discount code usage tracking
+      // Update discount code usage if applied
+      if (discountAmount > 0 && form.discount_code) {
+        // First get the current discount code to increment used_count
+        const { data: currentDiscount } = await supabase
+          .from('discount_codes' as any)
+          .select('used_count')
+          .eq('store_id', store.id)
+          .eq('code', form.discount_code.toUpperCase())
+          .single();
+
+        if (currentDiscount) {
+          await supabase
+            .from('discount_codes' as any)
+            .update({ 
+              used_count: (currentDiscount as any).used_count + 1,
+              updated_at: new Date().toISOString()
+            })
+            .eq('store_id', store.id)
+            .eq('code', form.discount_code.toUpperCase());
+        }
+      }
 
       // Clear cart and redirect
       clearCart();
