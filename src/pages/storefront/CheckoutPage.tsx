@@ -1,0 +1,464 @@
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useStore } from '@/contexts/StoreContext';
+import { useCart } from '@/contexts/CartContext';
+import { StorefrontLayout } from '@/components/storefront/StorefrontLayout';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
+import { Badge } from '@/components/ui/badge';
+import { supabase } from '@/integrations/supabase/client';
+import { CreditCard, Truck, MapPin } from 'lucide-react';
+import { toast } from 'sonner';
+
+interface CheckoutForm {
+  customer_name: string;
+  customer_email: string;
+  customer_phone: string;
+  shipping_address: string;
+  shipping_city: string;
+  shipping_area: string;
+  payment_method: 'cod' | 'online';
+  notes: string;
+  discount_code: string;
+}
+
+export const CheckoutPage: React.FC = () => {
+  const { slug } = useParams<{ slug: string }>();
+  const navigate = useNavigate();
+  const { store, loadStore } = useStore();
+  const { items, total, clearCart } = useCart();
+  
+  const [currentStep, setCurrentStep] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [discountLoading, setDiscountLoading] = useState(false);
+  const [discountAmount, setDiscountAmount] = useState(0);
+  const [shippingCost, setShippingCost] = useState(50); // Default shipping cost
+  
+  const [form, setForm] = useState<CheckoutForm>({
+    customer_name: '',
+    customer_email: '',
+    customer_phone: '',
+    shipping_address: '',
+    shipping_city: '',
+    shipping_area: '',
+    payment_method: 'cod',
+    notes: '',
+    discount_code: '',
+  });
+
+  useEffect(() => {
+    if (slug) {
+      loadStore(slug);
+    }
+  }, [slug, loadStore]);
+
+  useEffect(() => {
+    if (items.length === 0) {
+      navigate(`/store/${slug}`);
+    }
+  }, [items, navigate, slug]);
+
+  const handleInputChange = (field: keyof CheckoutForm, value: string) => {
+    setForm(prev => ({ ...prev, [field]: value }));
+  };
+
+  const validateStep = (step: number): boolean => {
+    switch (step) {
+      case 1:
+        return !!(form.customer_name && form.customer_email && form.customer_phone);
+      case 2:
+        return !!(form.shipping_address && form.shipping_city);
+      case 3:
+        return !!form.payment_method;
+      default:
+        return true;
+    }
+  };
+
+  const applyDiscountCode = async () => {
+    if (!form.discount_code.trim() || !store) return;
+
+    setDiscountLoading(true);
+    try {
+      // For now, we'll use a simple discount validation
+      // TODO: Create proper discount validation function
+      toast.success('Discount code feature coming soon!');
+      setDiscountAmount(0);
+    } catch (error) {
+      console.error('Error applying discount:', error);
+      toast.error('Error applying discount code');
+    } finally {
+      setDiscountLoading(false);
+    }
+  };
+
+  const handleSubmitOrder = async () => {
+    if (!store || items.length === 0) return;
+
+    setLoading(true);
+    try {
+      // Create order
+      const orderData = {
+        store_id: store.id,
+        customer_name: form.customer_name,
+        customer_email: form.customer_email,
+        customer_phone: form.customer_phone,
+        shipping_address: form.shipping_address,
+        shipping_city: form.shipping_city,
+        shipping_area: form.shipping_area,
+        payment_method: form.payment_method as 'cod',
+        notes: form.notes,
+        subtotal: total,
+        shipping_cost: shippingCost,
+        discount_amount: discountAmount,
+        discount_code: form.discount_code || null,
+        total: total + shippingCost - discountAmount,
+        status: 'pending' as const,
+        order_number: `ORD-${Date.now()}`,
+      };
+
+      const { data: order, error: orderError } = await supabase
+        .from('orders')
+        .insert(orderData)
+        .select()
+        .single();
+
+      if (orderError) throw orderError;
+
+      // Create order items
+      const orderItems = items.map(item => ({
+        order_id: order.id,
+        product_id: item.productId,
+        product_name: item.name,
+        product_sku: item.sku,
+        price: item.price,
+        quantity: item.quantity,
+        total: item.price * item.quantity,
+        variation: item.variation || {},
+      }));
+
+      const { error: itemsError } = await supabase
+        .from('order_items')
+        .insert(orderItems);
+
+      if (itemsError) throw itemsError;
+
+      // Skip discount code update for now
+      // TODO: Implement discount code usage tracking
+
+      // Clear cart and redirect
+      clearCart();
+      toast.success('Order placed successfully!');
+      navigate(`/store/${store.slug}/order-confirmation/${order.id}`);
+    } catch (error) {
+      console.error('Error creating order:', error);
+      toast.error('Failed to place order. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!store) {
+    return (
+      <StorefrontLayout>
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center">Store not found</div>
+        </div>
+      </StorefrontLayout>
+    );
+  }
+
+  const finalTotal = total + shippingCost - discountAmount;
+
+  return (
+    <StorefrontLayout>
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold">Checkout</h1>
+            <div className="flex justify-center mt-4 space-x-4">
+              {[1, 2, 3, 4].map((step) => (
+                <div
+                  key={step}
+                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                    currentStep >= step
+                      ? 'bg-primary text-primary-foreground'
+                      : 'bg-muted text-muted-foreground'
+                  }`}
+                >
+                  {step}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Main Content */}
+            <div className="lg:col-span-2 space-y-6">
+              {/* Step 1: Customer Information */}
+              {currentStep === 1 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center">
+                      <MapPin className="h-5 w-5 mr-2" />
+                      Customer Information
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="customer_name">Full Name *</Label>
+                        <Input
+                          id="customer_name"
+                          value={form.customer_name}
+                          onChange={(e) => handleInputChange('customer_name', e.target.value)}
+                          placeholder="Enter your full name"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="customer_phone">Phone Number *</Label>
+                        <Input
+                          id="customer_phone"
+                          value={form.customer_phone}
+                          onChange={(e) => handleInputChange('customer_phone', e.target.value)}
+                          placeholder="Enter your phone number"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <Label htmlFor="customer_email">Email Address *</Label>
+                      <Input
+                        id="customer_email"
+                        type="email"
+                        value={form.customer_email}
+                        onChange={(e) => handleInputChange('customer_email', e.target.value)}
+                        placeholder="Enter your email address"
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Step 2: Shipping Information */}
+              {currentStep === 2 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center">
+                      <Truck className="h-5 w-5 mr-2" />
+                      Shipping Information
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <Label htmlFor="shipping_address">Address *</Label>
+                      <Textarea
+                        id="shipping_address"
+                        value={form.shipping_address}
+                        onChange={(e) => handleInputChange('shipping_address', e.target.value)}
+                        placeholder="Enter your complete address"
+                        rows={3}
+                      />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="shipping_city">City *</Label>
+                        <Input
+                          id="shipping_city"
+                          value={form.shipping_city}
+                          onChange={(e) => handleInputChange('shipping_city', e.target.value)}
+                          placeholder="Enter your city"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="shipping_area">Area</Label>
+                        <Input
+                          id="shipping_area"
+                          value={form.shipping_area}
+                          onChange={(e) => handleInputChange('shipping_area', e.target.value)}
+                          placeholder="Enter your area"
+                        />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Step 3: Payment Method */}
+              {currentStep === 3 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center">
+                      <CreditCard className="h-5 w-5 mr-2" />
+                      Payment Method
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <Select
+                      value={form.payment_method}
+                      onValueChange={(value) => handleInputChange('payment_method', value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select payment method" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="cod">Cash on Delivery</SelectItem>
+                        <SelectItem value="online">Online Payment</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    
+                    <div>
+                      <Label htmlFor="notes">Order Notes (Optional)</Label>
+                      <Textarea
+                        id="notes"
+                        value={form.notes}
+                        onChange={(e) => handleInputChange('notes', e.target.value)}
+                        placeholder="Any special instructions for your order"
+                        rows={3}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Step 4: Order Review */}
+              {currentStep === 4 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Order Review</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                      <h3 className="font-semibold">Customer Information:</h3>
+                      <p>{form.customer_name}</p>
+                      <p>{form.customer_email}</p>
+                      <p>{form.customer_phone}</p>
+                    </div>
+                    <Separator />
+                    <div className="space-y-2">
+                      <h3 className="font-semibold">Shipping Address:</h3>
+                      <p>{form.shipping_address}</p>
+                      <p>{form.shipping_city}, {form.shipping_area}</p>
+                    </div>
+                    <Separator />
+                    <div className="space-y-2">
+                      <h3 className="font-semibold">Payment Method:</h3>
+                      <p>{form.payment_method === 'cod' ? 'Cash on Delivery' : 'Online Payment'}</p>
+                    </div>
+                    {form.notes && (
+                      <>
+                        <Separator />
+                        <div className="space-y-2">
+                          <h3 className="font-semibold">Notes:</h3>
+                          <p>{form.notes}</p>
+                        </div>
+                      </>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Navigation Buttons */}
+              <div className="flex justify-between">
+                <Button
+                  variant="outline"
+                  onClick={() => setCurrentStep(prev => Math.max(1, prev - 1))}
+                  disabled={currentStep === 1}
+                >
+                  Previous
+                </Button>
+                {currentStep < 4 ? (
+                  <Button
+                    onClick={() => setCurrentStep(prev => prev + 1)}
+                    disabled={!validateStep(currentStep)}
+                  >
+                    Next
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={handleSubmitOrder}
+                    disabled={loading}
+                  >
+                    {loading ? 'Placing Order...' : 'Place Order'}
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            {/* Order Summary */}
+            <div className="lg:col-span-1">
+              <Card className="sticky top-4">
+                <CardHeader>
+                  <CardTitle>Order Summary</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* Items */}
+                  <div className="space-y-2">
+                    {items.map((item) => (
+                      <div key={item.id} className="flex justify-between text-sm">
+                        <span>{item.name} × {item.quantity}</span>
+                        <span>${(item.price * item.quantity).toFixed(2)}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <Separator />
+
+                  {/* Discount Code */}
+                  <div className="space-y-2">
+                    <Label htmlFor="discount_code">Discount Code</Label>
+                    <div className="flex space-x-2">
+                      <Input
+                        id="discount_code"
+                        value={form.discount_code}
+                        onChange={(e) => handleInputChange('discount_code', e.target.value.toUpperCase())}
+                        placeholder="Enter code"
+                      />
+                      <Button
+                        variant="outline"
+                        onClick={applyDiscountCode}
+                        disabled={discountLoading}
+                        size="sm"
+                      >
+                        Apply
+                      </Button>
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  {/* Totals */}
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span>Subtotal:</span>
+                      <span>${total.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Shipping:</span>
+                      <span>${shippingCost.toFixed(2)}</span>
+                    </div>
+                    {discountAmount > 0 && (
+                      <div className="flex justify-between text-green-600">
+                        <span>Discount:</span>
+                        <span>-${discountAmount.toFixed(2)}</span>
+                      </div>
+                    )}
+                    <Separator />
+                    <div className="flex justify-between font-bold text-lg">
+                      <span>Total:</span>
+                      <span>${finalTotal.toFixed(2)}</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </div>
+      </div>
+    </StorefrontLayout>
+  );
+};
