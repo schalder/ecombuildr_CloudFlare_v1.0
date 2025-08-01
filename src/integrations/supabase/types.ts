@@ -58,6 +58,39 @@ export type Database = {
           },
         ]
       }
+      cart_sessions: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          items: Json
+          session_id: string
+          store_id: string
+          total: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          items?: Json
+          session_id: string
+          store_id: string
+          total?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          items?: Json
+          session_id?: string
+          store_id?: string
+          total?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       categories: {
         Row: {
           created_at: string | null
@@ -95,6 +128,54 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      customer_addresses: {
+        Row: {
+          address_line_1: string
+          address_line_2: string | null
+          area: string | null
+          city: string
+          created_at: string
+          customer_id: string
+          full_name: string
+          id: string
+          is_default: boolean
+          phone: string | null
+          postal_code: string | null
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          address_line_1: string
+          address_line_2?: string | null
+          area?: string | null
+          city: string
+          created_at?: string
+          customer_id: string
+          full_name: string
+          id?: string
+          is_default?: boolean
+          phone?: string | null
+          postal_code?: string | null
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          address_line_1?: string
+          address_line_2?: string | null
+          area?: string | null
+          city?: string
+          created_at?: string
+          customer_id?: string
+          full_name?: string
+          id?: string
+          is_default?: boolean
+          phone?: string | null
+          postal_code?: string | null
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       customers: {
         Row: {
@@ -151,6 +232,87 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      discount_codes: {
+        Row: {
+          code: string
+          created_at: string
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          minimum_amount: number | null
+          starts_at: string | null
+          store_id: string
+          type: string
+          updated_at: string
+          usage_limit: number | null
+          used_count: number
+          value: number
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          minimum_amount?: number | null
+          starts_at?: string | null
+          store_id: string
+          type: string
+          updated_at?: string
+          usage_limit?: number | null
+          used_count?: number
+          value: number
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          minimum_amount?: number | null
+          starts_at?: string | null
+          store_id?: string
+          type?: string
+          updated_at?: string
+          usage_limit?: number | null
+          used_count?: number
+          value?: number
+        }
+        Relationships: []
+      }
+      navigation_menus: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          items: Json
+          name: string
+          position: string
+          store_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          items?: Json
+          name: string
+          position?: string
+          store_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          items?: Json
+          name?: string
+          position?: string
+          store_id?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       order_items: {
         Row: {
@@ -214,6 +376,8 @@ export type Database = {
           customer_id: string | null
           customer_name: string
           customer_phone: string
+          discount_amount: number | null
+          discount_code: string | null
           facebook_pixel_data: Json | null
           id: string
           notes: string | null
@@ -223,6 +387,7 @@ export type Database = {
           shipping_area: string | null
           shipping_city: string | null
           shipping_cost: number | null
+          shipping_method: string | null
           status: Database["public"]["Enums"]["order_status"] | null
           store_id: string
           subtotal: number
@@ -240,6 +405,8 @@ export type Database = {
           customer_id?: string | null
           customer_name: string
           customer_phone: string
+          discount_amount?: number | null
+          discount_code?: string | null
           facebook_pixel_data?: Json | null
           id?: string
           notes?: string | null
@@ -249,6 +416,7 @@ export type Database = {
           shipping_area?: string | null
           shipping_city?: string | null
           shipping_cost?: number | null
+          shipping_method?: string | null
           status?: Database["public"]["Enums"]["order_status"] | null
           store_id: string
           subtotal?: number
@@ -266,6 +434,8 @@ export type Database = {
           customer_id?: string | null
           customer_name?: string
           customer_phone?: string
+          discount_amount?: number | null
+          discount_code?: string | null
           facebook_pixel_data?: Json | null
           id?: string
           notes?: string | null
@@ -275,6 +445,7 @@ export type Database = {
           shipping_area?: string | null
           shipping_city?: string | null
           shipping_cost?: number | null
+          shipping_method?: string | null
           status?: Database["public"]["Enums"]["order_status"] | null
           store_id?: string
           subtotal?: number
@@ -553,6 +724,7 @@ export type Database = {
           secondary_color: string | null
           settings: Json | null
           slug: string
+          theme_id: string | null
           updated_at: string | null
         }
         Insert: {
@@ -569,6 +741,7 @@ export type Database = {
           secondary_color?: string | null
           settings?: Json | null
           slug: string
+          theme_id?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -585,23 +758,64 @@ export type Database = {
           secondary_color?: string | null
           settings?: Json | null
           slug?: string
+          theme_id?: string | null
           updated_at?: string | null
         }
         Relationships: [
           {
             foreignKeyName: "stores_owner_id_fkey"
             columns: ["owner_id"]
-            isOneToOne: false
+            isOneToOne: true
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
+      }
+      themes: {
+        Row: {
+          config: Json
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          is_premium: boolean
+          name: string
+          preview_image: string | null
+          updated_at: string
+        }
+        Insert: {
+          config?: Json
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          is_premium?: boolean
+          name: string
+          preview_image?: string | null
+          updated_at?: string
+        }
+        Update: {
+          config?: Json
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          is_premium?: boolean
+          name?: string
+          preview_image?: string | null
+          updated_at?: string
+        }
+        Relationships: []
       }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      cleanup_expired_cart_sessions: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       is_store_owner: {
         Args: { store_uuid: string }
         Returns: boolean
