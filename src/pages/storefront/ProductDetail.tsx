@@ -304,3 +304,5 @@ export const ProductDetail: React.FC = () => {
     </StorefrontLayout>
   );
 };
+
+export default ProductDetail;

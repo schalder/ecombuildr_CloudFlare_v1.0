@@ -30,7 +30,7 @@ import BillingSettings from "./pages/BillingSettings";
 import NotFound from "./pages/NotFound";
 import { StorefrontHome } from "./pages/storefront/StorefrontHome";
 import { StorefrontProducts } from "./pages/storefront/StorefrontProducts";
-import { ProductDetail } from "./pages/storefront/ProductDetail";
+import ProductDetail from "./pages/storefront/ProductDetail";
 import { CheckoutPage } from "./pages/storefront/CheckoutPage";
 import { OrderConfirmation } from "./pages/storefront/OrderConfirmation";
 
