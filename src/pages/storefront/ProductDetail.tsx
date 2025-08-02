@@ -177,28 +177,16 @@ export const ProductDetail: React.FC = () => {
       <div className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Product Images */}
-          <div className="space-y-4">
-            <div className="aspect-square relative overflow-hidden rounded-lg border">
-              <img
-                src={product.images[selectedImage] || '/placeholder.svg'}
-                alt={product.name}
-                className="w-full h-full object-cover"
-              />
-              {discountPercentage > 0 && (
-                <Badge variant="destructive" className="absolute top-4 left-4">
-                  -{discountPercentage}%
-                </Badge>
-              )}
-            </div>
-            
+          <div className="flex flex-col lg:flex-row gap-4">
+            {/* Thumbnail Images - Left side on desktop, top on mobile */}
             {product.images.length > 1 && (
-              <div className="grid grid-cols-4 gap-2">
+              <div className="order-2 lg:order-1 flex flex-row lg:flex-col gap-2 overflow-x-auto lg:overflow-x-visible lg:w-20">
                 {product.images.map((image, index) => (
                   <button
                     key={index}
                     onClick={() => setSelectedImage(index)}
-                    className={`aspect-square rounded border-2 overflow-hidden ${
-                      selectedImage === index ? 'border-primary' : 'border-border'
+                    className={`flex-shrink-0 aspect-square w-16 lg:w-full rounded border-2 overflow-hidden transition-all duration-200 ${
+                      selectedImage === index ? 'border-primary ring-2 ring-primary/20' : 'border-border hover:border-primary/50'
                     }`}
                   >
                     <img
@@ -210,6 +198,22 @@ export const ProductDetail: React.FC = () => {
                 ))}
               </div>
             )}
+            
+            {/* Main Image */}
+            <div className="order-1 lg:order-2 flex-1">
+              <div className="aspect-square relative overflow-hidden rounded-lg border bg-muted">
+                <img
+                  src={product.images[selectedImage] || '/placeholder.svg'}
+                  alt={product.name}
+                  className="w-full h-full object-cover transition-opacity duration-300"
+                />
+                {discountPercentage > 0 && (
+                  <Badge variant="destructive" className="absolute top-4 left-4 text-xs">
+                    -{discountPercentage}%
+                  </Badge>
+                )}
+              </div>
+            </div>
           </div>
 
           {/* Product Info */}
