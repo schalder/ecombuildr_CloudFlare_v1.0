@@ -5,7 +5,10 @@ import { Badge } from '@/components/ui/badge';
 import { BlockEditor } from '@/components/blocks/BlockEditor';
 import { BlockRenderer } from '@/components/blocks/BlockRenderer';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Eye, Save, ArrowLeft, Palette, Layout, Settings, ExternalLink } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ColorPicker } from '@/components/ui/color-picker';
+import { ImageUpload } from '@/components/ui/image-upload';
+import { Eye, Save, ArrowLeft, Palette, Layout, Settings, ExternalLink, Type, Space } from 'lucide-react';
 import { Block } from '@/components/blocks/types';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -28,6 +31,17 @@ interface ThemeCustomizerProps {
   onSave: () => void;
 }
 
+const googleFonts = [
+  { name: 'Inter', value: 'Inter' },
+  { name: 'Poppins', value: 'Poppins' },
+  { name: 'Roboto', value: 'Roboto' },
+  { name: 'Open Sans', value: 'Open Sans' },
+  { name: 'Lato', value: 'Lato' },
+  { name: 'Montserrat', value: 'Montserrat' },
+  { name: 'Playfair Display', value: 'Playfair Display' },
+  { name: 'Merriweather', value: 'Merriweather' },
+];
+
 export const ThemeCustomizer: React.FC<ThemeCustomizerProps> = ({
   template,
   storeId,
@@ -35,7 +49,26 @@ export const ThemeCustomizer: React.FC<ThemeCustomizerProps> = ({
   onSave
 }) => {
   const [blocks, setBlocks] = useState<Block[]>([]);
-  const [customConfig, setCustomConfig] = useState(template.config);
+  const [customConfig, setCustomConfig] = useState({
+    colors: {
+      primary: '#10B981',
+      secondary: '#059669',
+      accent: '#3B82F6',
+      background: '#FFFFFF',
+      text: '#1F2937'
+    },
+    typography: {
+      heading: 'Inter',
+      body: 'Inter',
+      headingSize: 'large',
+      bodySize: 'medium'
+    },
+    spacing: {
+      sections: 'large',
+      containers: 'medium'
+    },
+    ...template.config
+  });
   const [activeTab, setActiveTab] = useState<'design' | 'preview'>('design');
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
@@ -61,24 +94,38 @@ export const ThemeCustomizer: React.FC<ThemeCustomizerProps> = ({
         content: block.content
       }));
 
-      // Save or update store customization
+      // First, deactivate any existing active customizations
+      await supabase
+        .from('store_customizations')
+        .update({ is_active: false })
+        .eq('store_id', storeId);
+
+      // Insert new active customization
       const { error } = await supabase
         .from('store_customizations')
-        .upsert({
+        .insert({
           store_id: storeId,
           theme_template_id: template.id,
           sections,
           custom_config: customConfig,
           is_active: true
-        }, {
-          onConflict: 'store_id'
         });
 
       if (error) throw error;
 
+      // Update store homepage to use this theme
+      await supabase
+        .from('pages')
+        .update({ 
+          content: { sections },
+          is_published: true 
+        })
+        .eq('store_id', storeId)
+        .eq('is_homepage', true);
+
       toast({
-        title: "Theme Saved",
-        description: "Your theme customizations have been saved successfully.",
+        title: "Theme Applied",
+        description: "Your theme has been saved and set as your homepage.",
       });
 
       onSave();
@@ -187,6 +234,7 @@ export const ThemeCustomizer: React.FC<ThemeCustomizerProps> = ({
 
               {/* Sidebar */}
               <div className="space-y-6">
+                {/* Color Customization */}
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
@@ -195,28 +243,132 @@ export const ThemeCustomizer: React.FC<ThemeCustomizerProps> = ({
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium">Primary</label>
-                        <div 
-                          className="w-full h-10 rounded border"
-                          style={{ backgroundColor: customConfig.colors?.primary }}
-                        ></div>
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium">Secondary</label>
-                        <div 
-                          className="w-full h-10 rounded border"
-                          style={{ backgroundColor: customConfig.colors?.secondary }}
-                        ></div>
-                      </div>
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      Color customization coming soon. For now, colors are inherited from your store settings.
-                    </p>
+                    <ColorPicker
+                      label="Primary Color"
+                      color={customConfig.colors?.primary || '#10B981'}
+                      onChange={(color) => 
+                        setCustomConfig(prev => ({
+                          ...prev,
+                          colors: { ...prev.colors, primary: color }
+                        }))
+                      }
+                    />
+                    <ColorPicker
+                      label="Secondary Color"
+                      color={customConfig.colors?.secondary || '#059669'}
+                      onChange={(color) => 
+                        setCustomConfig(prev => ({
+                          ...prev,
+                          colors: { ...prev.colors, secondary: color }
+                        }))
+                      }
+                    />
+                    <ColorPicker
+                      label="Accent Color"
+                      color={customConfig.colors?.accent || '#3B82F6'}
+                      onChange={(color) => 
+                        setCustomConfig(prev => ({
+                          ...prev,
+                          colors: { ...prev.colors, accent: color }
+                        }))
+                      }
+                    />
                   </CardContent>
                 </Card>
 
+                {/* Typography */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Type className="w-5 h-5" />
+                      Typography
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <label className="text-sm font-medium">Heading Font</label>
+                      <Select
+                        value={customConfig.typography?.heading || 'Inter'}
+                        onValueChange={(value) =>
+                          setCustomConfig(prev => ({
+                            ...prev,
+                            typography: { ...prev.typography, heading: value }
+                          }))
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {googleFonts.map(font => (
+                            <SelectItem key={font.value} value={font.value}>
+                              {font.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium">Body Font</label>
+                      <Select
+                        value={customConfig.typography?.body || 'Inter'}
+                        onValueChange={(value) =>
+                          setCustomConfig(prev => ({
+                            ...prev,
+                            typography: { ...prev.typography, body: value }
+                          }))
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {googleFonts.map(font => (
+                            <SelectItem key={font.value} value={font.value}>
+                              {font.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Spacing & Layout */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Space className="w-5 h-5" />
+                      Layout & Spacing
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <label className="text-sm font-medium">Section Spacing</label>
+                      <Select
+                        value={customConfig.spacing?.sections || 'large'}
+                        onValueChange={(value) =>
+                          setCustomConfig(prev => ({
+                            ...prev,
+                            spacing: { ...prev.spacing, sections: value }
+                          }))
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="compact">Compact</SelectItem>
+                          <SelectItem value="medium">Medium</SelectItem>
+                          <SelectItem value="large">Large</SelectItem>
+                          <SelectItem value="extra-large">Extra Large</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Theme Info */}
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
@@ -230,16 +382,10 @@ export const ThemeCustomizer: React.FC<ThemeCustomizerProps> = ({
                       <div className="text-sm text-muted-foreground">{blocks.length} sections configured</div>
                     </div>
                     <div>
-                      <div className="text-sm font-medium">Typography</div>
-                      <div className="text-sm text-muted-foreground">
-                        {customConfig.typography?.heading || 'Default'} / {customConfig.typography?.body || 'Default'}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-sm font-medium">Layout Style</div>
-                      <div className="text-sm text-muted-foreground capitalize">
-                        {customConfig.spacing || 'Default'}
-                      </div>
+                      <div className="text-sm font-medium">Status</div>
+                      <Badge variant="secondary" className="text-xs">
+                        Ready to Publish
+                      </Badge>
                     </div>
                   </CardContent>
                 </Card>
