@@ -709,6 +709,42 @@ export type Database = {
         }
         Relationships: []
       }
+      store_customizations: {
+        Row: {
+          created_at: string
+          custom_config: Json
+          custom_css: string | null
+          id: string
+          is_active: boolean
+          sections: Json
+          store_id: string
+          theme_template_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          custom_config?: Json
+          custom_css?: string | null
+          id?: string
+          is_active?: boolean
+          sections?: Json
+          store_id: string
+          theme_template_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          custom_config?: Json
+          custom_css?: string | null
+          id?: string
+          is_active?: boolean
+          sections?: Json
+          store_id?: string
+          theme_template_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       stores: {
         Row: {
           created_at: string | null
@@ -770,6 +806,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      theme_templates: {
+        Row: {
+          config: Json
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          is_premium: boolean
+          name: string
+          preview_image: string | null
+          sections: Json
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          config?: Json
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          is_premium?: boolean
+          name: string
+          preview_image?: string | null
+          sections?: Json
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          config?: Json
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          is_premium?: boolean
+          name?: string
+          preview_image?: string | null
+          sections?: Json
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       themes: {
         Row: {

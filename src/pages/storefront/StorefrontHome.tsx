@@ -2,8 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useStore } from '@/contexts/StoreContext';
 import { StorefrontLayout } from '@/components/storefront/StorefrontLayout';
-import { ProductCard } from '@/components/storefront/ProductCard';
-import { Button } from '@/components/ui/button';
+import { ThemeRenderer } from '@/components/storefront/ThemeRenderer';
 import { useCart } from '@/contexts/CartContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Link } from 'react-router-dom';
@@ -128,120 +127,7 @@ export const StorefrontHome: React.FC = () => {
 
   return (
     <StorefrontLayout>
-      {/* Hero Section */}
-      <section className="bg-gradient-to-r from-primary/10 to-secondary/10 py-16">
-        <div className="container mx-auto px-4 text-center">
-          {homepage?.content?.sections?.find((s: any) => s.type === 'hero') ? (
-            homepage.content.sections.map((section: any, index: number) => {
-              if (section.type === 'hero') {
-                return (
-                  <div key={index}>
-                    <h1 className="text-4xl md:text-6xl font-bold text-foreground mb-4">
-                      {section.content?.title || section.title || `Welcome to ${store.name}`}
-                    </h1>
-                    {(section.content?.subtitle || section.subtitle) && (
-                      <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-                        {section.content?.subtitle || section.subtitle}
-                      </p>
-                    )}
-                    <Link to={(section.content?.ctaLink || section.ctaLink) || `/store/${store.slug}/products`}>
-                      <Button size="lg" className="text-lg px-8 py-3">
-                        {(section.content?.ctaText || section.ctaText) || 'Shop Now'}
-                      </Button>
-                    </Link>
-                  </div>
-                );
-              }
-              return null;
-            })
-          ) : (
-            <div>
-              <h1 className="text-4xl md:text-6xl font-bold text-foreground mb-4">
-                Welcome to {store.name}
-              </h1>
-              {store.description && (
-                <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-                  {store.description}
-                </p>
-              )}
-              <Link to={`/store/${store.slug}/products`}>
-                <Button size="lg" className="text-lg px-8 py-3">
-                  Shop Now
-                </Button>
-              </Link>
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* Featured Products */}
-      <section className="py-16">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-foreground mb-4">Featured Products</h2>
-            <p className="text-muted-foreground">Discover our best-selling items</p>
-          </div>
-
-          {loading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {[...Array(8)].map((_, i) => (
-                <div key={i} className="bg-muted animate-pulse rounded-lg">
-                  <div className="aspect-square bg-muted" />
-                  <div className="p-4 space-y-2">
-                    <div className="h-4 bg-muted-foreground/20 rounded" />
-                    <div className="h-4 bg-muted-foreground/20 rounded w-2/3" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {featuredProducts.map((product) => (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  storeSlug={store.slug}
-                  onAddToCart={handleAddToCart}
-                />
-              ))}
-            </div>
-          )}
-
-          {!loading && featuredProducts.length === 0 && (
-            <div className="text-center py-12">
-              <p className="text-muted-foreground text-lg mb-4">No products available yet.</p>
-              <p className="text-sm text-muted-foreground">Check back soon for amazing products!</p>
-            </div>
-          )}
-
-          {!loading && featuredProducts.length > 0 && (
-            <div className="text-center mt-12">
-              <Link to={`/store/${store.slug}/products`}>
-                <Button variant="outline" size="lg">
-                  View All Products
-                </Button>
-              </Link>
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* Call to Action */}
-      <section className="bg-muted/50 py-16">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl font-bold text-foreground mb-4">
-            Ready to Start Shopping?
-          </h2>
-          <p className="text-muted-foreground mb-8 max-w-xl mx-auto">
-            Browse our complete collection of products and find exactly what you're looking for.
-          </p>
-          <Link to={`/store/${store.slug}/products`}>
-            <Button size="lg">
-              Browse All Products
-            </Button>
-          </Link>
-        </div>
-      </section>
+      <ThemeRenderer />
     </StorefrontLayout>
   );
 };
