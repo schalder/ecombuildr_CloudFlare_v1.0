@@ -131,52 +131,50 @@ export const StorefrontHome: React.FC = () => {
   return (
     <StorefrontLayout>
       {/* Hero Section */}
-      {homepage?.content?.sections?.find((s: any) => s.type === 'hero') ? (
-        <section className="bg-gradient-to-r from-primary/10 to-secondary/10 py-16">
-          <div className="container mx-auto px-4 text-center">
-            {homepage.content.sections.map((section: any, index: number) => {
+      <section className="bg-gradient-to-r from-primary/10 to-secondary/10 py-16">
+        <div className="container mx-auto px-4 text-center">
+          {homepage?.content?.sections?.find((s: any) => s.type === 'hero') ? (
+            homepage.content.sections.map((section: any, index: number) => {
               if (section.type === 'hero') {
                 return (
                   <div key={index}>
                     <h1 className="text-4xl md:text-6xl font-bold text-foreground mb-4">
-                      {section.title || `Welcome to ${store.name}`}
+                      {section.content?.title || section.title || `Welcome to ${store.name}`}
                     </h1>
-                    {section.subtitle && (
+                    {(section.content?.subtitle || section.subtitle) && (
                       <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-                        {section.subtitle}
+                        {section.content?.subtitle || section.subtitle}
                       </p>
                     )}
-                    <Link to={section.ctaLink || `/store/${store.slug}/products`}>
+                    <Link to={(section.content?.ctaLink || section.ctaLink) || `/store/${store.slug}/products`}>
                       <Button size="lg" className="text-lg px-8 py-3">
-                        {section.ctaText || 'Shop Now'}
+                        {(section.content?.ctaText || section.ctaText) || 'Shop Now'}
                       </Button>
                     </Link>
                   </div>
                 );
               }
               return null;
-            })}
-          </div>
-        </section>
-      ) : (
-        <section className="bg-gradient-to-r from-primary/10 to-secondary/10 py-16">
-          <div className="container mx-auto px-4 text-center">
-            <h1 className="text-4xl md:text-6xl font-bold text-foreground mb-4">
-              Welcome to {store.name}
-            </h1>
-            {store.description && (
-              <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-                {store.description}
-              </p>
-            )}
-            <Link to={`/store/${store.slug}/products`}>
-              <Button size="lg" className="text-lg px-8 py-3">
-                Shop Now
-              </Button>
-            </Link>
-          </div>
-        </section>
-      )}
+            })
+          ) : (
+            <div>
+              <h1 className="text-4xl md:text-6xl font-bold text-foreground mb-4">
+                Welcome to {store.name}
+              </h1>
+              {store.description && (
+                <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
+                  {store.description}
+                </p>
+              )}
+              <Link to={`/store/${store.slug}/products`}>
+                <Button size="lg" className="text-lg px-8 py-3">
+                  Shop Now
+                </Button>
+              </Link>
+            </div>
+          )}
+        </div>
+      </section>
 
       {/* Featured Products */}
       <section className="py-16">
@@ -248,6 +246,13 @@ export const StorefrontHome: React.FC = () => {
                   </CardContent>
                 </Card>
               ))}
+            </div>
+          )}
+
+          {!loading && featuredProducts.length === 0 && (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground text-lg mb-4">No products available yet.</p>
+              <p className="text-sm text-muted-foreground">Check back soon for amazing products!</p>
             </div>
           )}
 

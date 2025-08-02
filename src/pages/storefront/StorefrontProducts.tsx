@@ -285,10 +285,10 @@ export const StorefrontProducts: React.FC = () => {
                   <div className="flex items-center justify-between">
                     <div className="space-y-1">
                       <div className="flex items-center space-x-1">
-                        <span className="font-bold text-sm">${product.price.toFixed(2)}</span>
+                        <span className="font-bold text-sm">৳{product.price.toFixed(2)}</span>
                         {product.compare_price && product.compare_price > product.price && (
                           <span className="text-xs text-muted-foreground line-through">
-                            ${product.compare_price.toFixed(2)}
+                            ৳{product.compare_price.toFixed(2)}
                           </span>
                         )}
                       </div>

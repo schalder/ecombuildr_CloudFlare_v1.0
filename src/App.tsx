@@ -38,6 +38,7 @@ import DashboardOverview from "./pages/DashboardOverview";
 import { StorefrontHome } from "./pages/storefront/StorefrontHome";
 import { StorefrontProducts } from "./pages/storefront/StorefrontProducts";
 import ProductDetail from "./pages/storefront/ProductDetail";
+import { SearchResults } from "./pages/storefront/SearchResults";
 import { CheckoutPage } from "./pages/storefront/CheckoutPage";
 import { PaymentProcessing } from "./pages/storefront/PaymentProcessing";
 import { OrderConfirmation } from "./pages/storefront/OrderConfirmation";
@@ -95,6 +96,7 @@ const App = () => (
                 {/* Public Storefront Routes */}
                 <Route path="/store/:slug/products" element={<StorefrontProducts />} />
                 <Route path="/store/:slug/products/:productSlug" element={<ProductDetail />} />
+                <Route path="/store/:slug/search" element={<SearchResults />} />
                 <Route path="/store/:slug/checkout" element={<CheckoutPage />} />
                 <Route path="/store/:slug/payment-processing/:orderId" element={<PaymentProcessing />} />
                 <Route path="/store/:slug/order-confirmation/:orderId" element={<OrderConfirmation />} />
