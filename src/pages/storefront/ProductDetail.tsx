@@ -223,11 +223,11 @@ export const ProductDetail: React.FC = () => {
 
             <div className="flex items-baseline space-x-2">
               <span className="text-3xl font-bold text-foreground">
-                ${product.price.toFixed(2)}
+                ৳{product.price.toFixed(2)}
               </span>
               {product.compare_price && product.compare_price > product.price && (
                 <span className="text-xl text-muted-foreground line-through">
-                  ${product.compare_price.toFixed(2)}
+                  ৳{product.compare_price.toFixed(2)}
                 </span>
               )}
             </div>

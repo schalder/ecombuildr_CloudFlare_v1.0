@@ -2,12 +2,12 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useStore } from '@/contexts/StoreContext';
 import { useCart } from '@/contexts/CartContext';
+import { CartDrawer } from './CartDrawer';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { ShoppingCart, Menu, Search, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { CartDrawer } from './CartDrawer';
 
 export const StorefrontHeader: React.FC = () => {
   const { store } = useStore();

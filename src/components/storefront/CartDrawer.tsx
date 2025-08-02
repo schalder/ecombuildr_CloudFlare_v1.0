@@ -51,7 +51,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ children }) => {
                     )}
                     <div className="flex-1">
                       <h3 className="font-medium text-sm">{item.name}</h3>
-                      <p className="text-sm text-muted-foreground">${item.price.toFixed(2)}</p>
+                      <p className="text-sm text-muted-foreground">৳{item.price.toFixed(2)}</p>
                     </div>
                     <div className="flex items-center space-x-2">
                       <Button
@@ -91,7 +91,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ children }) => {
             <div className="border-t pt-4 space-y-4">
               <div className="flex justify-between items-center">
                 <span className="text-lg font-semibold">Total:</span>
-                <span className="text-lg font-bold">${total.toFixed(2)}</span>
+                <span className="text-lg font-bold">৳{total.toFixed(2)}</span>
               </div>
               <Link to={`/store/${store.slug}/checkout`} className="block">
                 <Button className="w-full" size="lg">

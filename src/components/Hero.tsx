@@ -54,15 +54,19 @@ export const Hero = () => {
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-              <Button variant="accent" size="lg" className="group">
-                ফ্রি শুরু করুন
-                <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
-              </Button>
+              <a href="/auth">
+                <Button variant="accent" size="lg" className="group">
+                  ফ্রি শুরু করুন
+                  <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                </Button>
+              </a>
               
-              <Button variant="outline" size="lg" className="bg-white/10 backdrop-blur-sm border-white/20 text-white hover:bg-white hover:text-primary">
-                <Play className="h-5 w-5" />
-                ডেমো দেখুন
-              </Button>
+              <a href="/store/communityhq" target="_blank" rel="noopener noreferrer">
+                <Button variant="outline" size="lg" className="bg-white/10 backdrop-blur-sm border-white/20 text-white hover:bg-white hover:text-primary">
+                  <Play className="h-5 w-5" />
+                  লাইভ স্টোর দেখুন
+                </Button>
+              </a>
             </div>
 
             {/* Trust Indicators */}
