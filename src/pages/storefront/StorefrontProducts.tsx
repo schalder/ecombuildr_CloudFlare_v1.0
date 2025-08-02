@@ -39,7 +39,7 @@ export const StorefrontProducts: React.FC = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
-  const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || '');
+  const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || 'all');
   const [sortBy, setSortBy] = useState(searchParams.get('sort') || 'name');
 
   useEffect(() => {
@@ -88,7 +88,7 @@ export const StorefrontProducts: React.FC = () => {
       }
 
       // Apply category filter
-      if (selectedCategory) {
+      if (selectedCategory && selectedCategory !== 'all') {
         const category = categories.find(c => c.slug === selectedCategory);
         if (category) {
           query = query.eq('category_id', category.id);
@@ -197,7 +197,7 @@ export const StorefrontProducts: React.FC = () => {
                 <SelectValue placeholder="All Categories" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Categories</SelectItem>
+                <SelectItem value="all">All Categories</SelectItem>
                 {categories.map((category) => (
                   <SelectItem key={category.id} value={category.slug}>
                     {category.name}
@@ -241,12 +241,12 @@ export const StorefrontProducts: React.FC = () => {
         ) : products.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-muted-foreground text-lg">No products found.</p>
-            {(searchQuery || selectedCategory) && (
+            {(searchQuery || (selectedCategory && selectedCategory !== 'all')) && (
               <Button
                 variant="outline"
                 onClick={() => {
                   setSearchQuery('');
-                  setSelectedCategory('');
+                  setSelectedCategory('all');
                   setSearchParams({});
                 }}
                 className="mt-4"

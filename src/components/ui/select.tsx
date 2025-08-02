@@ -80,6 +80,11 @@ const SelectContent = React.forwardRef<
       )}
       position={position}
       {...props}
+      style={{ 
+        zIndex: 9999,
+        backgroundColor: 'hsl(var(--popover))',
+        ...props.style 
+      }}
     >
       <SelectScrollUpButton />
       <SelectPrimitive.Viewport
