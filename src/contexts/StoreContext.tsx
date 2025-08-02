@@ -31,7 +31,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const loadStore = useCallback(async (slug: string) => {
     // Prevent loading the same store multiple times
-    if (store?.slug === slug && !error) {
+    if (store?.slug === slug && !error && !loading) {
       console.log('Store already loaded:', slug);
       return;
     }

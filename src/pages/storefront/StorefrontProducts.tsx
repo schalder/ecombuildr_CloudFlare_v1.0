@@ -60,7 +60,7 @@ export const StorefrontProducts: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { store, loading: storeLoading } = useStore();
+  const { store, loading: storeLoading, loadStore } = useStore();
   const { addItem } = useCart();
   const { toast } = useToast();
   
@@ -100,8 +100,12 @@ export const StorefrontProducts: React.FC = () => {
 
   // Fetch products with filters
   const fetchProducts = async () => {
-    if (!store?.id) return;
+    if (!store?.id) {
+      console.log('No store ID available for product fetch');
+      return;
+    }
     
+    console.log('Fetching products for store:', store.id);
     setLoading(true);
     try {
       let query = supabase
@@ -154,7 +158,12 @@ export const StorefrontProducts: React.FC = () => {
       }
 
       const { data, error } = await query;
-      if (error) throw error;
+      if (error) {
+        console.error('Products query error:', error);
+        throw error;
+      }
+      
+      console.log('Raw products data:', data);
       
       // Transform data to match Product interface
       const transformedProducts: Product[] = (data || []).map(product => ({
@@ -168,6 +177,7 @@ export const StorefrontProducts: React.FC = () => {
         is_active: product.is_active || false
       }));
       
+      console.log('Transformed products:', transformedProducts);
       setProducts(transformedProducts);
     } catch (error) {
       console.error('Error fetching products:', error);
@@ -198,12 +208,14 @@ export const StorefrontProducts: React.FC = () => {
   // Load store and fetch data
   useEffect(() => {
     if (slug) {
-      setLoading(true);
+      console.log('Loading store for products page:', slug);
+      loadStore(slug);
     }
-  }, [slug]);
+  }, [slug, loadStore]);
 
   useEffect(() => {
     if (store?.id) {
+      console.log('Store loaded, fetching data for store:', store.id);
       fetchCategories();
       fetchProducts();
     }
