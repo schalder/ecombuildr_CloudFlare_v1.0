@@ -10,7 +10,7 @@ export interface BlockType {
   name: string;
   title: string;
   icon: React.ComponentType<{ className?: string }>;
-  category: 'text' | 'media' | 'layout' | 'interactive' | 'store';
+  category: 'text' | 'media' | 'layout' | 'interactive' | 'store' | 'marketing';
   supports: {
     alignment?: boolean;
     spacing?: boolean;
