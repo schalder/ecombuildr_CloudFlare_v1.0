@@ -205,6 +205,7 @@ export const FeaturedProductsSave: React.FC<BlockSaveProps> = ({ block }) => {
             <ProductCard
               key={product.id}
               product={{...product, is_active: true, images: Array.isArray(product.images) ? product.images : []}}
+              storeSlug={store?.slug || ''}
               onAddToCart={() => {}}
               onQuickView={() => {}}
             />
