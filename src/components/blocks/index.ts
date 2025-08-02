@@ -13,6 +13,10 @@ import { newsletterBlock } from './theme/NewsletterBlock';
 import { valuesSectionBlock } from './theme/ValuesSection';
 import { promoBannerBlock } from './theme/PromoBannerBlock';
 import { testimonialsBlock } from './theme/TestimonialsBlock';
+import { productGridBlock } from './theme/ProductGridBlock';
+import { categoryCirclesBlock } from './theme/CategoryCirclesBlock';
+import { flashSaleBlock } from './theme/FlashSaleBlock';
+import { weeklyFeaturedBlock } from './theme/WeeklyFeaturedBlock';
 
 // Register core blocks
 blockRegistry.register(paragraphBlock);
@@ -28,6 +32,10 @@ blockRegistry.register(newsletterBlock);
 blockRegistry.register(valuesSectionBlock);
 blockRegistry.register(promoBannerBlock);
 blockRegistry.register(testimonialsBlock);
+blockRegistry.register(productGridBlock);
+blockRegistry.register(categoryCirclesBlock);
+blockRegistry.register(flashSaleBlock);
+blockRegistry.register(weeklyFeaturedBlock);
 
 // Export everything
 export * from './types';
