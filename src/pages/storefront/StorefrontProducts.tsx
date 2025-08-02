@@ -3,14 +3,15 @@ import { useParams, useSearchParams } from 'react-router-dom';
 import { useStore } from '@/contexts/StoreContext';
 import { useCart } from '@/contexts/CartContext';
 import { StorefrontLayout } from '@/components/storefront/StorefrontLayout';
+import { ProductCard } from '@/components/storefront/ProductCard';
+import { ProductQuickView } from '@/components/storefront/ProductQuickView';
+import { ProductFilters } from '@/components/storefront/ProductFilters';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
-import { ShoppingCart, Search, Filter } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Search, Grid, List, SlidersHorizontal } from 'lucide-react';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 
 interface Product {
   id: string;
@@ -27,6 +28,16 @@ interface Category {
   id: string;
   name: string;
   slug: string;
+  count?: number;
+}
+
+interface FilterState {
+  categories: string[];
+  priceRange: [number, number];
+  rating: number;
+  inStock: boolean;
+  onSale: boolean;
+  freeShipping: boolean;
 }
 
 export const StorefrontProducts: React.FC = () => {
@@ -39,8 +50,17 @@ export const StorefrontProducts: React.FC = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
-  const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || 'all');
   const [sortBy, setSortBy] = useState(searchParams.get('sort') || 'name');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
+  const [filters, setFilters] = useState<FilterState>({
+    categories: [],
+    priceRange: [0, 10000],
+    rating: 0,
+    inStock: false,
+    onSale: false,
+    freeShipping: false
+  });
 
   useEffect(() => {
     if (slug) {
@@ -53,7 +73,7 @@ export const StorefrontProducts: React.FC = () => {
       fetchCategories();
       fetchProducts();
     }
-  }, [store, searchQuery, selectedCategory, sortBy]);
+  }, [store, searchQuery, filters, sortBy]);
 
   const fetchCategories = async () => {
     if (!store) return;
@@ -88,11 +108,23 @@ export const StorefrontProducts: React.FC = () => {
       }
 
       // Apply category filter
-      if (selectedCategory && selectedCategory !== 'all') {
-        const category = categories.find(c => c.slug === selectedCategory);
-        if (category) {
-          query = query.eq('category_id', category.id);
+      if (filters.categories.length > 0) {
+        const categoryIds = categories
+          .filter(c => filters.categories.includes(c.slug))
+          .map(c => c.id);
+        if (categoryIds.length > 0) {
+          query = query.in('category_id', categoryIds);
         }
+      }
+
+      // Apply price filter
+      if (filters.priceRange[0] > 0 || filters.priceRange[1] < 10000) {
+        query = query.gte('price', filters.priceRange[0]).lte('price', filters.priceRange[1]);
+      }
+
+      // Apply sale filter
+      if (filters.onSale) {
+        query = query.not('compare_price', 'is', null).gt('compare_price', 'price');
       }
 
       // Apply sorting
@@ -142,13 +174,30 @@ export const StorefrontProducts: React.FC = () => {
     setSearchParams(newParams);
   };
 
-  const handleAddToCart = (product: Product) => {
+  const handleAddToCart = (product: Product, quantity = 1, variation?: any) => {
     addItem({
-      id: `${product.id}-default`,
+      id: `${product.id}-${variation ? JSON.stringify(variation) : 'default'}`,
       productId: product.id,
       name: product.name,
       price: product.price,
+      quantity,
       image: product.images[0],
+      variation,
+    });
+  };
+
+  const handleQuickView = (product: Product) => {
+    setQuickViewProduct(product);
+  };
+
+  const handleClearFilters = () => {
+    setFilters({
+      categories: [],
+      priceRange: [0, 10000],
+      rating: 0,
+      inStock: false,
+      onSale: false,
+      freeShipping: false
     });
   };
 
@@ -171,8 +220,8 @@ export const StorefrontProducts: React.FC = () => {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-4">Products</h1>
           
-          {/* Search and Filters */}
-          <div className="flex flex-col md:flex-row gap-4 mb-6">
+          {/* Search and Controls */}
+          <div className="flex flex-col lg:flex-row gap-4 mb-6">
             <form onSubmit={handleSearchSubmit} className="flex-1">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
@@ -186,128 +235,159 @@ export const StorefrontProducts: React.FC = () => {
               </div>
             </form>
             
-            <Select
-              value={selectedCategory}
-              onValueChange={(value) => {
-                setSelectedCategory(value);
-                updateSearchParams({ category: value });
-              }}
-            >
-              <SelectTrigger className="w-full md:w-48">
-                <SelectValue placeholder="All Categories" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Categories</SelectItem>
-                {categories.map((category) => (
-                  <SelectItem key={category.id} value={category.slug}>
-                    {category.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            
-            <Select
-              value={sortBy}
-              onValueChange={(value) => {
-                setSortBy(value);
-                updateSearchParams({ sort: value });
-              }}
-            >
-              <SelectTrigger className="w-full md:w-48">
-                <SelectValue placeholder="Sort by" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="name">Name A-Z</SelectItem>
-                <SelectItem value="price_low">Price: Low to High</SelectItem>
-                <SelectItem value="price_high">Price: High to Low</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="flex gap-2">
+              {/* Mobile Filter Toggle */}
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button variant="outline" size="sm" className="lg:hidden">
+                    <SlidersHorizontal className="h-4 w-4 mr-2" />
+                    Filters
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="left" className="w-80">
+                  <ProductFilters
+                    categories={categories}
+                    filters={filters}
+                    onFiltersChange={setFilters}
+                    onClearFilters={handleClearFilters}
+                  />
+                </SheetContent>
+              </Sheet>
+
+              {/* View Mode Toggle */}
+              <div className="hidden sm:flex border rounded-lg">
+                <Button
+                  variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setViewMode('grid')}
+                  className="rounded-r-none"
+                >
+                  <Grid className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant={viewMode === 'list' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setViewMode('list')}
+                  className="rounded-l-none"
+                >
+                  <List className="h-4 w-4" />
+                </Button>
+              </div>
+
+              {/* Sort Select */}
+              <Select
+                value={sortBy}
+                onValueChange={(value) => {
+                  setSortBy(value);
+                  updateSearchParams({ sort: value });
+                }}
+              >
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Sort by" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="name">Name A-Z</SelectItem>
+                  <SelectItem value="price_low">Price: Low to High</SelectItem>
+                  <SelectItem value="price_high">Price: High to Low</SelectItem>
+                  <SelectItem value="newest">Newest First</SelectItem>
+                  <SelectItem value="rating">Highest Rated</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
 
-        {/* Products Grid */}
-        {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {[...Array(12)].map((_, i) => (
-              <Card key={i} className="overflow-hidden">
-                <div className="aspect-square bg-muted animate-pulse" />
-                <CardContent className="p-4">
-                  <div className="h-4 bg-muted rounded animate-pulse mb-2" />
-                  <div className="h-4 bg-muted rounded animate-pulse w-2/3" />
-                </CardContent>
-              </Card>
-            ))}
+        <div className="flex gap-8">
+          {/* Desktop Filters Sidebar */}
+          <div className="hidden lg:block w-80 flex-shrink-0">
+            <ProductFilters
+              categories={categories}
+              filters={filters}
+              onFiltersChange={setFilters}
+              onClearFilters={handleClearFilters}
+            />
           </div>
-        ) : products.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground text-lg">No products found.</p>
-            {(searchQuery || (selectedCategory && selectedCategory !== 'all')) && (
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setSearchQuery('');
-                  setSelectedCategory('all');
-                  setSearchParams({});
-                }}
-                className="mt-4"
-              >
-                Clear Filters
-              </Button>
+
+          {/* Products Section */}
+          <div className="flex-1">
+            {/* Products Results */}
+            {loading ? (
+              <div className={`grid gap-6 ${
+                viewMode === 'grid' 
+                  ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' 
+                  : 'grid-cols-1'
+              }`}>
+                {[...Array(12)].map((_, i) => (
+                  <div key={i} className="bg-muted animate-pulse rounded-lg">
+                    <div className={`${viewMode === 'grid' ? 'aspect-square' : 'h-48'} bg-muted`} />
+                    <div className="p-4 space-y-2">
+                      <div className="h-4 bg-muted-foreground/20 rounded" />
+                      <div className="h-4 bg-muted-foreground/20 rounded w-2/3" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : products.length === 0 ? (
+              <div className="text-center py-16">
+                <div className="text-6xl mb-4">🛍️</div>
+                <h3 className="text-xl font-semibold mb-2">No products found</h3>
+                <p className="text-muted-foreground mb-6">
+                  Try adjusting your search or filters to find what you're looking for.
+                </p>
+                <Button
+                  variant="outline"
+                  onClick={handleClearFilters}
+                  className="mr-2"
+                >
+                  Clear Filters
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setSearchQuery('')}
+                >
+                  Clear Search
+                </Button>
+              </div>
+            ) : (
+              <>
+                {/* Results Info */}
+                <div className="flex items-center justify-between mb-6 pb-4 border-b">
+                  <p className="text-sm text-muted-foreground">
+                    Showing {products.length} products
+                  </p>
+                </div>
+
+                {/* Products Grid/List */}
+                <div className={`grid gap-6 ${
+                  viewMode === 'grid' 
+                    ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' 
+                    : 'grid-cols-1'
+                }`}>
+                  {products.map((product) => (
+                    <ProductCard
+                      key={product.id}
+                      product={product}
+                      storeSlug={store.slug}
+                      onAddToCart={handleAddToCart}
+                      onQuickView={handleQuickView}
+                      className={viewMode === 'list' ? 'flex-row' : ''}
+                    />
+                  ))}
+                </div>
+              </>
             )}
           </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {products.map((product) => (
-              <Card key={product.id} className="overflow-hidden group hover:shadow-lg transition-shadow">
-                <div className="aspect-square relative overflow-hidden">
-                  <img
-                    src={product.images[0] || '/placeholder.svg'}
-                    alt={product.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                  {product.compare_price && product.compare_price > product.price && (
-                    <Badge variant="destructive" className="absolute top-2 left-2">
-                      Sale
-                    </Badge>
-                  )}
-                </div>
-                <CardContent className="p-4">
-                  <Link to={`/store/${store.slug}/products/${product.slug}`}>
-                    <h3 className="font-semibold text-sm mb-1 hover:text-primary transition-colors line-clamp-2">
-                      {product.name}
-                    </h3>
-                  </Link>
-                  {product.short_description && (
-                    <p className="text-xs text-muted-foreground mb-2 line-clamp-2">
-                      {product.short_description}
-                    </p>
-                  )}
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-1">
-                      <div className="flex items-center space-x-1">
-                        <span className="font-bold text-sm">৳{product.price.toFixed(2)}</span>
-                        {product.compare_price && product.compare_price > product.price && (
-                          <span className="text-xs text-muted-foreground line-through">
-                            ৳{product.compare_price.toFixed(2)}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <Button
-                      size="sm"
-                      onClick={() => handleAddToCart(product)}
-                      className="shrink-0"
-                    >
-                      <ShoppingCart className="h-3 w-3 mr-1" />
-                      Add
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
+        </div>
       </div>
+
+      {/* Quick View Modal */}
+      <ProductQuickView
+        product={quickViewProduct}
+        isOpen={!!quickViewProduct}
+        onClose={() => setQuickViewProduct(null)}
+        onAddToCart={handleAddToCart}
+        storeSlug={store?.slug || ''}
+      />
     </StorefrontLayout>
   );
 };

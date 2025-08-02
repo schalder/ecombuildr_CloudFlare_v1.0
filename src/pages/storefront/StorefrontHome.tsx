@@ -2,12 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useStore } from '@/contexts/StoreContext';
 import { StorefrontLayout } from '@/components/storefront/StorefrontLayout';
+import { ProductCard } from '@/components/storefront/ProductCard';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { useCart } from '@/contexts/CartContext';
 import { supabase } from '@/integrations/supabase/client';
-import { ShoppingCart, Star } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 interface Product {
@@ -187,64 +185,24 @@ export const StorefrontHome: React.FC = () => {
           {loading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {[...Array(8)].map((_, i) => (
-                <Card key={i} className="overflow-hidden">
-                  <div className="aspect-square bg-muted animate-pulse" />
-                  <CardContent className="p-4">
-                    <div className="h-4 bg-muted rounded animate-pulse mb-2" />
-                    <div className="h-4 bg-muted rounded animate-pulse w-2/3" />
-                  </CardContent>
-                </Card>
+                <div key={i} className="bg-muted animate-pulse rounded-lg">
+                  <div className="aspect-square bg-muted" />
+                  <div className="p-4 space-y-2">
+                    <div className="h-4 bg-muted-foreground/20 rounded" />
+                    <div className="h-4 bg-muted-foreground/20 rounded w-2/3" />
+                  </div>
+                </div>
               ))}
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {featuredProducts.map((product) => (
-                <Card key={product.id} className="overflow-hidden group hover:shadow-lg transition-shadow">
-                  <div className="aspect-square relative overflow-hidden">
-                    <img
-                      src={product.images[0] || '/placeholder.svg'}
-                      alt={product.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                    {product.compare_price && product.compare_price > product.price && (
-                      <Badge variant="destructive" className="absolute top-2 left-2">
-                        Sale
-                      </Badge>
-                    )}
-                  </div>
-                  <CardContent className="p-4">
-                    <Link to={`/store/${store.slug}/products/${product.slug}`}>
-                      <h3 className="font-semibold text-sm mb-1 hover:text-primary transition-colors line-clamp-2">
-                        {product.name}
-                      </h3>
-                    </Link>
-                    {product.short_description && (
-                      <p className="text-xs text-muted-foreground mb-2 line-clamp-2">
-                        {product.short_description}
-                      </p>
-                    )}
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-1">
-                        <div className="flex items-center space-x-1">
-                          <span className="font-bold text-sm">৳{product.price.toFixed(2)}</span>
-                          {product.compare_price && product.compare_price > product.price && (
-                            <span className="text-xs text-muted-foreground line-through">
-                              ৳{product.compare_price.toFixed(2)}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <Button
-                        size="sm"
-                        onClick={() => handleAddToCart(product)}
-                        className="shrink-0"
-                      >
-                        <ShoppingCart className="h-3 w-3 mr-1" />
-                        Add
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  storeSlug={store.slug}
+                  onAddToCart={handleAddToCart}
+                />
               ))}
             </div>
           )}
