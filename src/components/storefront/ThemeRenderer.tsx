@@ -19,21 +19,37 @@ export const ThemeRenderer: React.FC = () => {
     if (!store?.id) return;
 
     try {
+      let sections = [];
+
       // First, try to get custom theme configuration
       const { data: customization } = await supabase
         .from('store_customizations')
-        .select('sections')
+        .select('sections, theme_template_id')
         .eq('store_id', store.id)
         .eq('is_active', true)
         .single();
 
-      let sections = [];
-
       if (customization?.sections && Array.isArray(customization.sections)) {
         // Use customized sections
         sections = customization.sections;
-      } else {
-        // Fallback to default template or create default content
+      } else if (customization?.theme_template_id) {
+        // Load from theme template
+        const { data: template } = await supabase
+          .from('theme_templates')
+          .select('sections')
+          .eq('id', customization.theme_template_id)
+          .eq('is_active', true)
+          .single();
+        
+        if (template?.sections && Array.isArray(template.sections)) {
+          sections = template.sections as any[];
+        }
+      }
+
+      // Remove store.theme_id reference as it doesn't exist in Store type
+
+      // Final fallback to default content
+      if (sections.length === 0) {
         sections = [
           {
             type: 'hero_tech',
