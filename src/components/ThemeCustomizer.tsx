@@ -100,12 +100,47 @@ export const ThemeCustomizer: React.FC<ThemeCustomizerProps> = ({
         .update({ is_active: false })
         .eq('store_id', storeId);
 
+      // Check if we have a valid theme_template_id
+      let themeTemplateId = null;
+      
+      // Try to find an existing theme template by slug
+      const { data: existingTemplate } = await supabase
+        .from('theme_templates')
+        .select('id')
+        .eq('slug', template.slug)
+        .single();
+      
+      if (existingTemplate) {
+        themeTemplateId = existingTemplate.id;
+      } else {
+        // Create a new theme template if it doesn't exist
+        const { data: newTemplate, error: templateError } = await supabase
+          .from('theme_templates')
+          .insert({
+            name: template.name,
+            slug: template.slug,
+            description: template.description,
+            config: template.config,
+            sections: template.sections,
+            is_premium: template.is_premium
+          })
+          .select('id')
+          .single();
+        
+        if (templateError) {
+          console.error('Error creating theme template:', templateError);
+          throw new Error('Failed to create theme template');
+        }
+        
+        themeTemplateId = newTemplate.id;
+      }
+
       // Insert new active customization
       const { error } = await supabase
         .from('store_customizations')
         .insert({
           store_id: storeId,
-          theme_template_id: template.id,
+          theme_template_id: themeTemplateId,
           sections,
           custom_config: customConfig,
           is_active: true
