@@ -5,10 +5,11 @@ import { Badge } from '@/components/ui/badge';
 import { BlockEditor } from '@/components/blocks/BlockEditor';
 import { BlockRenderer } from '@/components/blocks/BlockRenderer';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Eye, Save, ArrowLeft, Palette, Layout, Settings } from 'lucide-react';
+import { Eye, Save, ArrowLeft, Palette, Layout, Settings, ExternalLink } from 'lucide-react';
 import { Block } from '@/components/blocks/types';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useUserStore } from '@/hooks/useUserStore';
 
 interface ThemeTemplate {
   id: string;
@@ -38,6 +39,7 @@ export const ThemeCustomizer: React.FC<ThemeCustomizerProps> = ({
   const [activeTab, setActiveTab] = useState<'design' | 'preview'>('design');
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
+  const { store: currentStore } = useUserStore();
 
   useEffect(() => {
     // Convert template sections to blocks
@@ -96,6 +98,20 @@ export const ThemeCustomizer: React.FC<ThemeCustomizerProps> = ({
     setBlocks(newBlocks);
   };
 
+  const handlePreview = () => {
+    // Open preview in new tab
+    const storeSlug = currentStore?.slug;
+    if (storeSlug) {
+      window.open(`/store/${storeSlug}`, '_blank');
+    } else {
+      toast({
+        title: "Preview Unavailable",
+        description: "Please ensure your store has a valid slug to preview changes.",
+        variant: "destructive"
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -132,6 +148,11 @@ export const ThemeCustomizer: React.FC<ThemeCustomizerProps> = ({
                 </TabsTrigger>
               </TabsList>
             </Tabs>
+            
+            <Button variant="outline" onClick={handlePreview}>
+              <ExternalLink className="w-4 h-4 mr-2" />
+              Preview Store
+            </Button>
             
             <Button onClick={handleSave} disabled={saving}>
               <Save className="w-4 h-4 mr-2" />

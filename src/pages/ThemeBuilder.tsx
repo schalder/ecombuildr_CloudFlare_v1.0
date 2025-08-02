@@ -29,11 +29,9 @@ export const ThemeBuilder = () => {
   };
 
   const handlePreview = (template: ThemeTemplate) => {
-    // TODO: Implement preview functionality
-    toast({
-      title: "Preview Coming Soon",
-      description: "Preview functionality will be available soon.",
-    });
+    // Open demo preview for the template
+    const previewUrl = `/preview/demo?template=${template.slug}`;
+    window.open(previewUrl, '_blank');
   };
 
   const handleBack = () => {

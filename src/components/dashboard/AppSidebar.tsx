@@ -13,7 +13,8 @@ import {
   Plus,
   Search,
   ChevronDown,
-  ChevronRight
+  ChevronRight,
+  Palette
 } from "lucide-react";
 
 import {
@@ -80,6 +81,14 @@ const navigationItems = [
       { title: "All Pages", url: "/dashboard/pages" },
       { title: "Page Builder", url: "/dashboard/pages/builder" },
       { title: "Homepage", url: "/dashboard/pages/homepage" },
+    ],
+  },
+  {
+    title: "Design",
+    icon: Palette,
+    items: [
+      { title: "Theme Builder", url: "/dashboard/design/themes" },
+      { title: "Visual Editor", url: "/dashboard/pages/visual-builder" },
     ],
   },
   {
@@ -176,6 +185,17 @@ export function AppSidebar() {
                 <NavLink to="/dashboard/pages/builder">
                   <FileText className="mr-2 h-4 w-4" />
                   Page Builder
+                </NavLink>
+              </Button>
+              <Button 
+                asChild 
+                variant="outline" 
+                size="sm" 
+                className="w-full justify-start border-sidebar-border"
+              >
+                <NavLink to="/dashboard/design/themes">
+                  <Palette className="mr-2 h-4 w-4" />
+                  Theme Builder
                 </NavLink>
               </Button>
             </div>

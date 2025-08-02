@@ -43,6 +43,7 @@ import { CheckoutPage } from "./pages/storefront/CheckoutPage";
 import { PaymentProcessing } from "./pages/storefront/PaymentProcessing";
 import { OrderConfirmation } from "./pages/storefront/OrderConfirmation";
 import { StorefrontPage } from "./pages/storefront/StorefrontPage";
+import ThemeBuilder from "./pages/ThemeBuilder";
 
 const queryClient = new QueryClient();
 
@@ -76,6 +77,7 @@ const App = () => (
                 <Route path="/dashboard/pages/visual-builder" element={<VisualPageBuilderPage />} />
                 <Route path="/dashboard/pages/gutenberg-builder" element={<GutenbergPageBuilder />} />
                 <Route path="/dashboard/pages/homepage" element={<PageBuilder />} />
+                <Route path="/dashboard/design/themes" element={<ThemeBuilder />} />
                 <Route path="/dashboard/marketing" element={<Marketing />} />
                 <Route path="/dashboard/marketing/facebook" element={<FacebookAds />} />
                 <Route path="/dashboard/marketing/email" element={<EmailCampaigns />} />
