@@ -1,17 +1,33 @@
-import React, { useEffect, useState } from 'react';
-import { useParams, useSearchParams } from 'react-router-dom';
-import { useStore } from '@/contexts/StoreContext';
-import { useCart } from '@/contexts/CartContext';
+import React, { useState, useEffect } from 'react';
+import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { StorefrontLayout } from '@/components/storefront/StorefrontLayout';
+import { StorefrontHeader } from '@/components/storefront/StorefrontHeader';
 import { ProductCard } from '@/components/storefront/ProductCard';
 import { ProductQuickView } from '@/components/storefront/ProductQuickView';
 import { ProductFilters } from '@/components/storefront/ProductFilters';
+import { ProductGridSkeleton } from '@/components/storefront/ProductGridSkeleton';
+import { RecentlyViewed } from '@/components/storefront/RecentlyViewed';
+import { ProductComparison } from '@/components/storefront/ProductComparison';
+import { useStore } from '@/contexts/StoreContext';
+import { useCart } from '@/contexts/CartContext';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { supabase } from '@/integrations/supabase/client';
-import { Search, Grid, List, SlidersHorizontal } from 'lucide-react';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { 
+  Search, 
+  Filter, 
+  Grid3X3, 
+  List, 
+  SlidersHorizontal,
+  ArrowUpDown,
+  Loader2
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 
 interface Product {
   id: string;
@@ -43,14 +59,16 @@ interface FilterState {
 export const StorefrontProducts: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { store, loadStore } = useStore();
+  const navigate = useNavigate();
+  const { store, loading: storeLoading } = useStore();
   const { addItem } = useCart();
+  const { toast } = useToast();
   
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
-  const [sortBy, setSortBy] = useState(searchParams.get('sort') || 'name');
+  const [sortBy, setSortBy] = useState('name');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
   const [filters, setFilters] = useState<FilterState>({
@@ -62,27 +80,16 @@ export const StorefrontProducts: React.FC = () => {
     freeShipping: false
   });
 
-  useEffect(() => {
-    if (slug) {
-      loadStore(slug);
-    }
-  }, [slug, loadStore]);
-
-  useEffect(() => {
-    if (store) {
-      fetchCategories();
-      fetchProducts();
-    }
-  }, [store, searchQuery, filters, sortBy]);
-
+  // Fetch categories
   const fetchCategories = async () => {
-    if (!store) return;
+    if (!store?.id) return;
     
     try {
       const { data, error } = await supabase
         .from('categories')
-        .select('*')
-        .eq('store_id', store.id);
+        .select('id, name, slug')
+        .eq('store_id', store.id)
+        .order('name');
 
       if (error) throw error;
       setCategories(data || []);
@@ -91,8 +98,9 @@ export const StorefrontProducts: React.FC = () => {
     }
   };
 
+  // Fetch products with filters
   const fetchProducts = async () => {
-    if (!store) return;
+    if (!store?.id) return;
     
     setLoading(true);
     try {
@@ -104,36 +112,40 @@ export const StorefrontProducts: React.FC = () => {
 
       // Apply search filter
       if (searchQuery) {
-        query = query.ilike('name', `%${searchQuery}%`);
+        query = query.or(`name.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`);
       }
 
       // Apply category filter
       if (filters.categories.length > 0) {
         const categoryIds = categories
-          .filter(c => filters.categories.includes(c.slug))
-          .map(c => c.id);
+          .filter(cat => filters.categories.includes(cat.slug))
+          .map(cat => cat.id);
+        
         if (categoryIds.length > 0) {
           query = query.in('category_id', categoryIds);
         }
       }
 
-      // Apply price filter
+      // Apply price range filter
       if (filters.priceRange[0] > 0 || filters.priceRange[1] < 10000) {
         query = query.gte('price', filters.priceRange[0]).lte('price', filters.priceRange[1]);
       }
 
-      // Apply sale filter
+      // Apply on sale filter
       if (filters.onSale) {
-        query = query.not('compare_price', 'is', null).gt('compare_price', 'price');
+        query = query.not('compare_price', 'is', null);
       }
 
       // Apply sorting
       switch (sortBy) {
-        case 'price_low':
+        case 'price-low':
           query = query.order('price', { ascending: true });
           break;
-        case 'price_high':
+        case 'price-high':
           query = query.order('price', { ascending: false });
+          break;
+        case 'newest':
+          query = query.order('created_at', { ascending: false });
           break;
         case 'name':
         default:
@@ -142,47 +154,75 @@ export const StorefrontProducts: React.FC = () => {
       }
 
       const { data, error } = await query;
-
       if (error) throw error;
-      const products = data?.map(product => ({
-        ...product,
-        images: Array.isArray(product.images) ? product.images.filter(img => typeof img === 'string') as string[] : [],
-        variations: Array.isArray(product.variations) ? product.variations : []
-      })) || [];
-      setProducts(products);
+      
+      // Transform data to match Product interface
+      const transformedProducts: Product[] = (data || []).map(product => ({
+        id: product.id,
+        name: product.name || '',
+        price: product.price || 0,
+        compare_price: product.compare_price || undefined,
+        short_description: product.short_description || undefined,
+        images: Array.isArray(product.images) ? product.images.filter((img): img is string => typeof img === 'string') : [],
+        slug: product.slug || '',
+        is_active: product.is_active || false
+      }));
+      
+      setProducts(transformedProducts);
     } catch (error) {
       console.error('Error fetching products:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load products. Please try again.",
+        variant: "destructive"
+      });
     } finally {
       setLoading(false);
     }
   };
 
+  // Handle search submission
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    updateSearchParams({ q: searchQuery });
-  };
-
-  const updateSearchParams = (updates: Record<string, string>) => {
-    const newParams = new URLSearchParams(searchParams);
-    Object.entries(updates).forEach(([key, value]) => {
-      if (value) {
-        newParams.set(key, value);
+    setSearchParams(prev => {
+      const newParams = new URLSearchParams(prev);
+      if (searchQuery) {
+        newParams.set('q', searchQuery);
       } else {
-        newParams.delete(key);
+        newParams.delete('q');
       }
+      return newParams;
     });
-    setSearchParams(newParams);
   };
 
-  const handleAddToCart = (product: Product, quantity = 1, variation?: any) => {
+  // Load store and fetch data
+  useEffect(() => {
+    if (slug) {
+      setLoading(true);
+    }
+  }, [slug]);
+
+  useEffect(() => {
+    if (store?.id) {
+      fetchCategories();
+      fetchProducts();
+    }
+  }, [store?.id, searchQuery, sortBy, filters]);
+
+  const handleAddToCart = (product: Product, quantity?: number, variation?: any) => {
     addItem({
-      id: `${product.id}-${variation ? JSON.stringify(variation) : 'default'}`,
+      id: `${product.id}${variation ? `-${JSON.stringify(variation)}` : ''}`,
       productId: product.id,
       name: product.name,
       price: product.price,
-      quantity,
+      quantity: quantity || 1,
       image: product.images[0],
-      variation,
+      variation
+    });
+
+    toast({
+      title: "Added to cart",
+      description: `${product.name} has been added to your cart.`,
     });
   };
 
@@ -199,107 +239,133 @@ export const StorefrontProducts: React.FC = () => {
       onSale: false,
       freeShipping: false
     });
+    setSearchQuery('');
+    setSearchParams({});
   };
+
+  if (storeLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
 
   if (!store) {
     return (
-      <StorefrontLayout>
-        <div className="container mx-auto px-4 py-8">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold">Store not found</h1>
-          </div>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-2">Store Not Found</h1>
+          <p className="text-muted-foreground">The requested store could not be found.</p>
         </div>
-      </StorefrontLayout>
+      </div>
     );
   }
 
   return (
     <StorefrontLayout>
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-4">Products</h1>
-          
-          {/* Search and Controls */}
-          <div className="flex flex-col lg:flex-row gap-4 mb-6">
-            <form onSubmit={handleSearchSubmit} className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                <Input
-                  type="search"
-                  placeholder="Search products..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </form>
-            
-            <div className="flex gap-2">
-              {/* Mobile Filter Toggle */}
-              <Sheet>
-                <SheetTrigger asChild>
-                  <Button variant="outline" size="sm" className="lg:hidden">
-                    <SlidersHorizontal className="h-4 w-4 mr-2" />
-                    Filters
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="left" className="w-80">
+      <div className="container mx-auto px-4 py-8 space-y-8">
+        {/* Page Header */}
+        <div className="animate-fade-in">
+          <h1 className="text-3xl font-bold mb-2">Products</h1>
+          <p className="text-muted-foreground">
+            Discover our amazing collection of products
+          </p>
+        </div>
+
+        {/* Search and Controls */}
+        <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between animate-slide-up">
+          {/* Search */}
+          <form onSubmit={handleSearchSubmit} className="flex-1 max-w-md">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Search products..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 pr-4"
+              />
+            </div>
+          </form>
+
+          {/* Controls */}
+          <div className="flex items-center gap-4">
+            {/* Mobile Filter Trigger */}
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="outline" size="sm" className="lg:hidden">
+                  <SlidersHorizontal className="h-4 w-4 mr-2" />
+                  Filters
+                  {(filters.categories.length > 0 || filters.onSale || filters.inStock) && (
+                    <Badge variant="secondary" className="ml-2">
+                      {[
+                        filters.categories.length > 0,
+                        filters.onSale,
+                        filters.inStock,
+                        filters.rating > 0
+                      ].filter(Boolean).length}
+                    </Badge>
+                  )}
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-80">
+                <SheetHeader>
+                  <SheetTitle>Filters</SheetTitle>
+                </SheetHeader>
+                <div className="mt-6">
                   <ProductFilters
                     categories={categories}
                     filters={filters}
                     onFiltersChange={setFilters}
                     onClearFilters={handleClearFilters}
                   />
-                </SheetContent>
-              </Sheet>
+                </div>
+              </SheetContent>
+            </Sheet>
 
-              {/* View Mode Toggle */}
-              <div className="hidden sm:flex border rounded-lg">
-                <Button
-                  variant={viewMode === 'grid' ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => setViewMode('grid')}
-                  className="rounded-r-none"
-                >
-                  <Grid className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant={viewMode === 'list' ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => setViewMode('list')}
-                  className="rounded-l-none"
-                >
-                  <List className="h-4 w-4" />
-                </Button>
-              </div>
+            {/* Sort */}
+            <Select value={sortBy} onValueChange={setSortBy}>
+              <SelectTrigger className="w-40">
+                <ArrowUpDown className="h-4 w-4 mr-2" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="name">Name</SelectItem>
+                <SelectItem value="price-low">Price: Low to High</SelectItem>
+                <SelectItem value="price-high">Price: High to Low</SelectItem>
+                <SelectItem value="newest">Newest First</SelectItem>
+              </SelectContent>
+            </Select>
 
-              {/* Sort Select */}
-              <Select
-                value={sortBy}
-                onValueChange={(value) => {
-                  setSortBy(value);
-                  updateSearchParams({ sort: value });
-                }}
+            {/* View Mode */}
+            <div className="flex items-center border rounded-lg p-1">
+              <Button
+                variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setViewMode('grid')}
+                className="h-8 px-3"
               >
-                <SelectTrigger className="w-48">
-                  <SelectValue placeholder="Sort by" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="name">Name A-Z</SelectItem>
-                  <SelectItem value="price_low">Price: Low to High</SelectItem>
-                  <SelectItem value="price_high">Price: High to Low</SelectItem>
-                  <SelectItem value="newest">Newest First</SelectItem>
-                  <SelectItem value="rating">Highest Rated</SelectItem>
-                </SelectContent>
-              </Select>
+                <Grid3X3 className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={viewMode === 'list' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setViewMode('list')}
+                className="h-8 px-3"
+              >
+                <List className="h-4 w-4" />
+              </Button>
             </div>
           </div>
         </div>
 
+        <Separator />
+
+        {/* Main Content */}
         <div className="flex gap-8">
           {/* Desktop Filters Sidebar */}
-          <div className="hidden lg:block w-80 flex-shrink-0">
+          <div className="hidden lg:block w-80 flex-shrink-0 animate-slide-up" style={{ animationDelay: '0.1s' }}>
             <ProductFilters
               categories={categories}
               filters={filters}
@@ -310,83 +376,81 @@ export const StorefrontProducts: React.FC = () => {
 
           {/* Products Section */}
           <div className="flex-1">
-            {/* Products Results */}
             {loading ? (
-              <div className={`grid gap-6 ${
-                viewMode === 'grid' 
-                  ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' 
-                  : 'grid-cols-1'
-              }`}>
-                {[...Array(12)].map((_, i) => (
-                  <div key={i} className="bg-muted animate-pulse rounded-lg">
-                    <div className={`${viewMode === 'grid' ? 'aspect-square' : 'h-48'} bg-muted`} />
-                    <div className="p-4 space-y-2">
-                      <div className="h-4 bg-muted-foreground/20 rounded" />
-                      <div className="h-4 bg-muted-foreground/20 rounded w-2/3" />
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <ProductGridSkeleton count={8} />
             ) : products.length === 0 ? (
-              <div className="text-center py-16">
+              <div className="text-center py-16 animate-fade-in">
                 <div className="text-6xl mb-4">🛍️</div>
                 <h3 className="text-xl font-semibold mb-2">No products found</h3>
                 <p className="text-muted-foreground mb-6">
                   Try adjusting your search or filters to find what you're looking for.
                 </p>
-                <Button
-                  variant="outline"
-                  onClick={handleClearFilters}
-                  className="mr-2"
-                >
-                  Clear Filters
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => setSearchQuery('')}
-                >
-                  Clear Search
-                </Button>
+                <div className="flex gap-2 justify-center">
+                  <Button variant="outline" onClick={handleClearFilters}>
+                    Clear Filters
+                  </Button>
+                </div>
               </div>
             ) : (
-              <>
+              <div className="space-y-8">
                 {/* Results Info */}
-                <div className="flex items-center justify-between mb-6 pb-4 border-b">
+                <div className="flex items-center justify-between pb-4 border-b animate-fade-in">
                   <p className="text-sm text-muted-foreground">
                     Showing {products.length} products
                   </p>
                 </div>
 
                 {/* Products Grid/List */}
-                <div className={`grid gap-6 ${
+                <div className={cn(
+                  "transition-all duration-300",
                   viewMode === 'grid' 
-                    ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' 
-                    : 'grid-cols-1'
-                }`}>
-                  {products.map((product) => (
-                    <ProductCard
-                      key={product.id}
-                      product={product}
-                      storeSlug={store.slug}
-                      onAddToCart={handleAddToCart}
-                      onQuickView={handleQuickView}
-                      className={viewMode === 'list' ? 'flex-row' : ''}
-                    />
+                    ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+                    : "space-y-4"
+                )}>
+                  {products.map((product, index) => (
+                    <div 
+                      key={product.id} 
+                      className="animate-fade-in" 
+                      style={{ animationDelay: `${index * 0.05}s` }}
+                    >
+                      <ProductCard
+                        product={product}
+                        storeSlug={store.slug}
+                        onAddToCart={handleAddToCart}
+                        onQuickView={handleQuickView}
+                        className={viewMode === 'list' ? "flex flex-row" : ""}
+                      />
+                    </div>
                   ))}
                 </div>
-              </>
+
+                {/* Recently Viewed Products */}
+                <RecentlyViewed
+                  storeSlug={store.slug}
+                  onAddToCart={handleAddToCart}
+                  onQuickView={handleQuickView}
+                />
+              </div>
             )}
           </div>
         </div>
       </div>
 
       {/* Quick View Modal */}
-      <ProductQuickView
-        product={quickViewProduct}
-        isOpen={!!quickViewProduct}
-        onClose={() => setQuickViewProduct(null)}
+      {quickViewProduct && (
+        <ProductQuickView
+          product={quickViewProduct}
+          isOpen={!!quickViewProduct}
+          onClose={() => setQuickViewProduct(null)}
+          onAddToCart={handleAddToCart}
+          storeSlug={store.slug}
+        />
+      )}
+
+      {/* Product Comparison */}
+      <ProductComparison
+        storeSlug={store.slug}
         onAddToCart={handleAddToCart}
-        storeSlug={store?.slug || ''}
       />
     </StorefrontLayout>
   );

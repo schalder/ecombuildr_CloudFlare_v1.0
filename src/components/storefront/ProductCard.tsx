@@ -3,8 +3,10 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Heart, Eye, ShoppingCart, Star } from 'lucide-react';
+import { Heart, Eye, ShoppingCart, Star, GitCompare } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { WishlistButton } from './WishlistButton';
+import { useToast } from '@/hooks/use-toast';
 
 interface Product {
   id: string;
@@ -33,7 +35,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   className
 }) => {
   const [isHovered, setIsHovered] = useState(false);
-  const [isWishlisted, setIsWishlisted] = useState(false);
+  const { toast } = useToast();
 
   const discountPercentage = product.compare_price && product.compare_price > product.price
     ? Math.round(((product.compare_price - product.price) / product.compare_price) * 100)
@@ -41,6 +43,24 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
   const isNew = true; // This would come from product creation date
   const isHot = discountPercentage > 20; // Hot if discount > 20%
+
+  const handleAddToComparison = () => {
+    if ((window as any).addToComparison) {
+      const success = (window as any).addToComparison(product);
+      if (success) {
+        toast({
+          title: "Added to comparison",
+          description: `${product.name} has been added to comparison.`,
+        });
+      } else {
+        toast({
+          title: "Cannot add to comparison",
+          description: "You can compare up to 3 products at once.",
+          variant: "destructive"
+        });
+      }
+    }
+  };
 
   return (
     <Card 
@@ -76,14 +96,21 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         "absolute top-3 right-3 z-10 flex flex-col gap-2 transition-all duration-300",
         isHovered ? "opacity-100 translate-x-0" : "opacity-0 translate-x-4"
       )}>
+        <WishlistButton
+          product={product}
+          storeSlug={storeSlug}
+          className="bg-background/80 backdrop-blur-sm hover:bg-background"
+        />
+        
         <Button
           size="sm"
           variant="secondary"
           className="h-8 w-8 p-0 rounded-full bg-background/80 backdrop-blur-sm hover:bg-background"
-          onClick={() => setIsWishlisted(!isWishlisted)}
+          onClick={handleAddToComparison}
         >
-          <Heart className={cn("h-4 w-4", isWishlisted && "fill-red-500 text-red-500")} />
+          <GitCompare className="h-4 w-4" />
         </Button>
+        
         {onQuickView && (
           <Button
             size="sm"
