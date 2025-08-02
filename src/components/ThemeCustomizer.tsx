@@ -160,10 +160,11 @@ export const ThemeCustomizer: React.FC<ThemeCustomizerProps> = ({
 
       toast({
         title: "Theme Applied",
-        description: "Your theme has been saved and set as your homepage.",
+        description: "Your theme has been saved and applied to your storefront.",
       });
 
-      onSave();
+      // Switch to preview tab instead of calling onSave (which redirects to dashboard)
+      setActiveTab('preview');
     } catch (error) {
       console.error('Error saving theme:', error);
       toast({

@@ -17,6 +17,8 @@ import { productGridBlock } from './theme/ProductGridBlock';
 import { categoryCirclesBlock } from './theme/CategoryCirclesBlock';
 import { flashSaleBlock } from './theme/FlashSaleBlock';
 import { weeklyFeaturedBlock } from './theme/WeeklyFeaturedBlock';
+import { modernEcommerceHeroBlock } from './theme/ModernEcommerceHeroBlock';
+import { modernProductGridBlock } from './theme/ModernProductGridBlock';
 
 // Register core blocks
 blockRegistry.register(paragraphBlock);
@@ -36,6 +38,8 @@ blockRegistry.register(productGridBlock);
 blockRegistry.register(categoryCirclesBlock);
 blockRegistry.register(flashSaleBlock);
 blockRegistry.register(weeklyFeaturedBlock);
+blockRegistry.register(modernEcommerceHeroBlock);
+blockRegistry.register(modernProductGridBlock);
 
 // Export everything
 export * from './types';
