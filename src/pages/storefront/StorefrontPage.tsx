@@ -172,18 +172,25 @@ const PageContentRenderer: React.FC<{ sections: PageSection[] }> = ({ sections }
 };
 
 export const StorefrontPage: React.FC = () => {
-  const { storeSlug, pageSlug } = useParams<{ storeSlug: string; pageSlug: string }>();
-  const { store, loading: storeLoading, error: storeError } = useStore();
+  const { slug, pageSlug } = useParams<{ slug: string; pageSlug: string }>();
+  const { store, loadStore, loading: storeLoading, error: storeError } = useStore();
   const [page, setPage] = useState<PageData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Load store first - same pattern as StorefrontHome
+  useEffect(() => {
+    if (slug) {
+      console.log('StorefrontPage: Loading store:', slug);
+      loadStore(slug);
+    }
+  }, [slug, loadStore]);
+
+  // Fetch page data after store is loaded
   useEffect(() => {
     const fetchPage = async () => {
-      console.log('StorefrontPage: fetchPage called', { storeSlug, pageSlug, storeLoading, store: store?.slug });
-      
-      if (!storeSlug || !pageSlug || storeLoading || !store) {
-        console.log('StorefrontPage: early return', { storeSlug, pageSlug, storeLoading, hasStore: !!store });
+      if (!store?.id || !pageSlug) {
+        console.log('StorefrontPage: Waiting for store or pageSlug', { hasStore: !!store, pageSlug });
         return;
       }
 
@@ -191,9 +198,8 @@ export const StorefrontPage: React.FC = () => {
         setLoading(true);
         setError(null);
 
-        console.log('StorefrontPage: fetching page for store', store.id, 'page slug:', pageSlug);
+        console.log('StorefrontPage: Fetching page for store', store.id, 'page slug:', pageSlug);
 
-        // Fetch the page by slug and store_id using store from context
         const { data: pageData, error: pageError } = await supabase
           .from('pages')
           .select('*')
@@ -225,7 +231,7 @@ export const StorefrontPage: React.FC = () => {
     };
 
     fetchPage();
-  }, [storeSlug, pageSlug, storeLoading, store]);
+  }, [store?.id, pageSlug]);
 
   if (storeLoading || loading) {
     return (
@@ -257,7 +263,7 @@ export const StorefrontPage: React.FC = () => {
           <div className="text-center">
             <h1 className="text-2xl font-bold text-destructive mb-2">Page Not Found</h1>
             <p className="text-muted-foreground">{error || 'The requested page could not be found.'}</p>
-            <p className="text-sm text-muted-foreground mt-2">Store: {storeSlug} | Page: {pageSlug}</p>
+            <p className="text-sm text-muted-foreground mt-2">Store: {slug} | Page: {pageSlug}</p>
           </div>
         </div>
       </StorefrontLayout>
