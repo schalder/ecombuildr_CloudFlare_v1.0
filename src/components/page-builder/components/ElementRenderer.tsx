@@ -106,21 +106,11 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
         </div>
       )}
 
-      <div
-        className={cn(
-          element.styles?.backgroundColor && `bg-[${element.styles.backgroundColor}]`,
-          element.styles?.color && `text-[${element.styles.color}]`,
-          element.styles?.fontSize && `text-[${element.styles.fontSize}]`,
-          element.styles?.textAlign === 'center' && 'text-center',
-          element.styles?.textAlign === 'right' && 'text-right'
-        )}
-      >
-        <ElementComponent
-          element={element}
-          isEditing={!isPreviewMode}
-          onUpdate={handleUpdateElement}
-        />
-      </div>
+      <ElementComponent
+        element={element}
+        isEditing={!isPreviewMode}
+        onUpdate={handleUpdateElement}
+      />
     </div>
   );
 };

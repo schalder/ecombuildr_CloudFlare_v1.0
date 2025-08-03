@@ -106,62 +106,84 @@ export const usePageBuilderState = (initialData?: PageBuilderData) => {
   }, [pageData, selectedElement, recordHistory]);
 
   const addElement = useCallback((elementType: string, targetPath: string) => {
-    const newSections = [...pageData.sections];
-
-    if (elementType === 'section' || targetPath === 'root') {
+    const newData = { ...pageData };
+    
+    if (elementType === 'section') {
       // Add new section
       const newSection: PageBuilderSection = {
         id: generateId(),
-        rows: [],
-        width: 'wide',
-        styles: {}
+        rows: [{
+          id: generateId(),
+          columns: [{
+            id: generateId(),
+            width: 12,
+            elements: []
+          }],
+          columnLayout: '1'
+        }],
+        width: 'wide'
       };
-      newSections.push(newSection);
-    } else if (elementType === 'row' || targetPath.startsWith('section-')) {
+      newData.sections.push(newSection);
+    } else if (elementType === 'row') {
       // Add row to section
       const sectionId = targetPath.replace('section-', '');
-      const sectionIndex = newSections.findIndex(s => s.id === sectionId);
-      
-      if (sectionIndex !== -1) {
+      const section = newData.sections.find(s => s.id === sectionId);
+      if (section) {
         const newRow: PageBuilderRow = {
           id: generateId(),
-          columns: [
-            {
+          columns: [{
+            id: generateId(),
+            width: 12,
+            elements: []
+          }],
+          columnLayout: '1'
+        };
+        section.rows.push(newRow);
+      }
+    } else {
+      // Add element to first available column
+      if (newData.sections.length === 0) {
+        // Create a section first
+        const newSection: PageBuilderSection = {
+          id: generateId(),
+          rows: [{
+            id: generateId(),
+            columns: [{
               id: generateId(),
               width: 12,
-              elements: [],
-              styles: {}
-            }
-          ],
-          columnLayout: '1',
-          styles: {}
+              elements: []
+            }],
+            columnLayout: '1'
+          }],
+          width: 'wide'
         };
-        newSections[sectionIndex].rows.push(newRow);
+        newData.sections.push(newSection);
       }
-    } else if (targetPath.startsWith('column-')) {
-      // Add element to column
-      const columnId = targetPath.replace('column-', '');
       
+      const targetSection = newData.sections[0];
+      if (targetSection.rows.length === 0) {
+        const newRow: PageBuilderRow = {
+          id: generateId(),
+          columns: [{
+            id: generateId(),
+            width: 12,
+            elements: []
+          }],
+          columnLayout: '1'
+        };
+        targetSection.rows.push(newRow);
+      }
+      
+      const targetColumn = targetSection.rows[0].columns[0];
       const newElement: PageBuilderElement = {
         id: generateId(),
         type: elementType,
         content: getDefaultContent(elementType),
         styles: {}
       };
-
-      // Find and update the column
-      for (let section of newSections) {
-        for (let row of section.rows) {
-          const columnIndex = row.columns.findIndex(c => c.id === columnId);
-          if (columnIndex !== -1) {
-            row.columns[columnIndex].elements.push(newElement);
-            break;
-          }
-        }
-      }
+      targetColumn.elements.push(newElement);
     }
-
-    const newData = { ...pageData, sections: newSections };
+    
     recordHistory(newData);
   }, [pageData, recordHistory]);
 
@@ -231,15 +253,27 @@ export const usePageBuilderState = (initialData?: PageBuilderData) => {
 function getDefaultContent(elementType: string): Record<string, any> {
   switch (elementType) {
     case 'heading':
-      return { text: 'Your Heading Here', tag: 'h2' };
+    case 'heading-h1':
+      return { text: 'Your heading text', level: 1 };
+    case 'heading-h2':
+      return { text: 'Your heading text', level: 2 };
+    case 'heading-h3':
+      return { text: 'Your heading text', level: 3 };
     case 'text':
-      return { text: 'Add your text content here. You can edit this text by selecting the element.' };
+    case 'paragraph':
+      return { text: 'Your text content goes here...' };
     case 'button':
-      return { text: 'Click Here', href: '#' };
+      return { text: 'Click Me', variant: 'default', size: 'default', url: '#' };
     case 'image':
-      return { src: 'https://via.placeholder.com/400x300', alt: 'Placeholder image' };
+      return { src: '', alt: 'Image', width: '100%', height: 'auto' };
     case 'video':
-      return { src: '', poster: 'https://via.placeholder.com/400x300' };
+      return { src: '', autoplay: false, controls: true };
+    case 'spacer':
+      return { height: '50px' };
+    case 'divider':
+      return { style: 'solid', width: '100%', color: '#e5e7eb' };
+    case 'list':
+      return { items: ['Item 1', 'Item 2', 'Item 3'], ordered: false };
     default:
       return {};
   }

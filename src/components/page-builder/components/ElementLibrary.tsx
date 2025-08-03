@@ -94,7 +94,7 @@ export const ElementLibrary: React.FC<ElementLibraryProps> = ({
   })).filter(category => category.elements.length > 0);
 
   const handleElementClick = (elementId: string) => {
-    onAddElement(elementId, 'canvas');
+    onAddElement(elementId, 'element');
   };
 
   return (
