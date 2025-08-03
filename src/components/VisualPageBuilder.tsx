@@ -105,12 +105,27 @@ export const VisualPageBuilder: React.FC<VisualPageBuilderProps> = ({
   };
 
   const renderSectionEditor = (section: PageSection) => {
-    // Add null check to prevent undefined errors
-    if (!section || !section.content) {
+    // Debug logging to understand the issue
+    console.log('renderSectionEditor called with:', section);
+    
+    // Add comprehensive null check to prevent undefined errors
+    if (!section) {
+      console.error('Section is undefined');
       return (
         <div className="p-4 border border-dashed border-border rounded-lg min-h-[100px] flex items-center justify-center">
-          <div className="text-center text-muted-foreground">
-            Section data is missing
+          <div className="text-center text-destructive">
+            Error: Section is undefined
+          </div>
+        </div>
+      );
+    }
+
+    if (!section.content) {
+      console.error('Section content is undefined for section:', section.id);
+      return (
+        <div className="p-4 border border-dashed border-border rounded-lg min-h-[100px] flex items-center justify-center">
+          <div className="text-center text-destructive">
+            Error: Section content is missing
           </div>
         </div>
       );
@@ -120,7 +135,7 @@ export const VisualPageBuilder: React.FC<VisualPageBuilderProps> = ({
       return (
         <div className="p-4 border border-dashed border-border rounded-lg min-h-[100px] flex items-center justify-center">
           <div className="text-center">
-            <div className="text-sm font-medium mb-2">{section.content.title || `${section.type} Section`}</div>
+            <div className="text-sm font-medium mb-2">{(section.content && section.content.title) || `${section.type} Section`}</div>
             <Button
               variant="outline"
               size="sm"
@@ -140,12 +155,12 @@ export const VisualPageBuilder: React.FC<VisualPageBuilderProps> = ({
           <div className="space-y-4 p-4 border rounded-lg">
             <Input
               placeholder="Section Title"
-              value={section.content.title || ''}
+              value={(section.content && section.content.title) || ''}
               onChange={(e) => updateSection(section.id, { ...section.content, title: e.target.value })}
             />
             <Textarea
               placeholder="Content text..."
-              value={section.content.text || ''}
+              value={(section.content && section.content.text) || ''}
               onChange={(e) => updateSection(section.id, { ...section.content, text: e.target.value })}
               rows={4}
             />
@@ -160,23 +175,23 @@ export const VisualPageBuilder: React.FC<VisualPageBuilderProps> = ({
           <div className="space-y-4 p-4 border rounded-lg">
             <Input
               placeholder="Image URL"
-              value={section.content.url || ''}
+              value={(section.content && section.content.url) || ''}
               onChange={(e) => updateSection(section.id, { ...section.content, url: e.target.value })}
             />
             <Input
               placeholder="Alt text"
-              value={section.content.alt || ''}
+              value={(section.content && section.content.alt) || ''}
               onChange={(e) => updateSection(section.id, { ...section.content, alt: e.target.value })}
             />
             <Input
               placeholder="Caption (optional)"
-              value={section.content.caption || ''}
+              value={(section.content && section.content.caption) || ''}
               onChange={(e) => updateSection(section.id, { ...section.content, caption: e.target.value })}
             />
-            {section.content.url && (
+            {section.content && section.content.url && (
               <img 
                 src={section.content.url} 
-                alt={section.content.alt}
+                alt={(section.content && section.content.alt) || ''}
                 className="max-h-48 w-auto rounded"
               />
             )}
@@ -191,28 +206,28 @@ export const VisualPageBuilder: React.FC<VisualPageBuilderProps> = ({
           <div className="space-y-4 p-4 border rounded-lg">
             <Input
               placeholder="Form Title"
-              value={section.content.title || ''}
+              value={(section.content && section.content.title) || ''}
               onChange={(e) => updateSection(section.id, { ...section.content, title: e.target.value })}
             />
             <Textarea
               placeholder="Description text"
-              value={section.content.text || ''}
+              value={(section.content && section.content.text) || ''}
               onChange={(e) => updateSection(section.id, { ...section.content, text: e.target.value })}
               rows={2}
             />
             <Input
               placeholder="Contact Email"
-              value={section.content.email || ''}
+              value={(section.content && section.content.email) || ''}
               onChange={(e) => updateSection(section.id, { ...section.content, email: e.target.value })}
             />
             <Input
               placeholder="Phone Number"
-              value={section.content.phone || ''}
+              value={(section.content && section.content.phone) || ''}
               onChange={(e) => updateSection(section.id, { ...section.content, phone: e.target.value })}
             />
             <Input
               placeholder="Address"
-              value={section.content.address || ''}
+              value={(section.content && section.content.address) || ''}
               onChange={(e) => updateSection(section.id, { ...section.content, address: e.target.value })}
             />
             <div className="flex gap-2">
@@ -226,13 +241,13 @@ export const VisualPageBuilder: React.FC<VisualPageBuilderProps> = ({
           <div className="space-y-4 p-4 border rounded-lg">
             <Input
               placeholder="Section Title"
-              value={section.content.title || ''}
+              value={(section.content && section.content.title) || ''}
               onChange={(e) => updateSection(section.id, { ...section.content, title: e.target.value })}
             />
             <Input
               type="number"
               placeholder="Number of products to show"
-              value={section.content.limit || 12}
+              value={(section.content && section.content.limit) || 12}
               onChange={(e) => updateSection(section.id, { ...section.content, limit: parseInt(e.target.value) })}
             />
             <div className="flex gap-2">
