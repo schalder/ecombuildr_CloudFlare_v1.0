@@ -84,14 +84,6 @@ const navigationItems = [
     ],
   },
   {
-    title: "Design",
-    icon: Palette,
-    items: [
-      { title: "Theme Builder", url: "/dashboard/design/themes" },
-      { title: "Visual Editor", url: "/dashboard/pages/visual-builder" },
-    ],
-  },
-  {
     title: "Analytics",
     url: "/dashboard/analytics",
     icon: BarChart3,
@@ -185,17 +177,6 @@ export function AppSidebar() {
                 <NavLink to="/dashboard/pages/builder">
                   <FileText className="mr-2 h-4 w-4" />
                   Page Builder
-                </NavLink>
-              </Button>
-              <Button 
-                asChild 
-                variant="outline" 
-                size="sm" 
-                className="w-full justify-start border-sidebar-border"
-              >
-                <NavLink to="/dashboard/design/themes">
-                  <Palette className="mr-2 h-4 w-4" />
-                  Theme Builder
                 </NavLink>
               </Button>
             </div>

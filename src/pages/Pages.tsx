@@ -128,13 +128,9 @@ export default function Pages() {
               <Home className="mr-2 h-4 w-4" />
               Homepage
             </Button>
-            <Button onClick={() => navigate('/dashboard/pages/gutenberg-builder')}>
+            <Button onClick={() => navigate('/dashboard/pages/builder')}>
               <Plus className="mr-2 h-4 w-4" />
-              New Page (Block Editor)
-            </Button>
-            <Button variant="outline" onClick={() => navigate('/dashboard/pages/visual-builder')}>
-              <Plus className="mr-2 h-4 w-4" />
-              Legacy Builder
+              New Page
             </Button>
           </div>
         </div>
@@ -151,7 +147,7 @@ export default function Pages() {
                 <p>No pages found. Create your first page to get started.</p>
                 <Button 
                   className="mt-4" 
-                  onClick={() => navigate('/dashboard/pages/visual-builder')}
+                  onClick={() => navigate('/dashboard/pages/builder')}
                 >
                   <Plus className="mr-2 h-4 w-4" />
                   Create Page
@@ -202,7 +198,7 @@ export default function Pages() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => navigate(`/dashboard/pages/visual-builder?id=${page.id}`)}>
+                            <DropdownMenuItem onClick={() => navigate(`/dashboard/pages/builder/${page.id}`)}>
                               <Edit className="mr-2 h-4 w-4" />
                               Edit
                             </DropdownMenuItem>

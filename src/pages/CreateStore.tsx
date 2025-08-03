@@ -11,7 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useUserStore } from '@/hooks/useUserStore';
 import { supabase } from '@/integrations/supabase/client';
 import { ArrowLeft } from 'lucide-react';
-import { ThemeSelector } from '@/components/ThemeSelector';
+
 
 const CreateStore = () => {
   const navigate = useNavigate();
@@ -140,9 +140,8 @@ const CreateStore = () => {
           <CardContent>
             <form onSubmit={handleSubmit}>
               <Tabs defaultValue="basic" className="space-y-6">
-                <TabsList className="grid w-full grid-cols-3">
+                <TabsList className="grid w-full grid-cols-2">
                   <TabsTrigger value="basic">Basic Info</TabsTrigger>
-                  <TabsTrigger value="theme">Choose Theme</TabsTrigger>
                   <TabsTrigger value="colors">Colors</TabsTrigger>
                 </TabsList>
 
@@ -187,18 +186,6 @@ const CreateStore = () => {
                   </div>
                 </TabsContent>
 
-                <TabsContent value="theme" className="space-y-6">
-                  <div>
-                    <h3 className="text-lg font-semibold mb-2">Choose Your Store Theme</h3>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      Select a theme that matches your brand. You can change this later.
-                    </p>
-                    <ThemeSelector 
-                      selectedThemeId={formData.theme_id}
-                      onThemeSelect={(themeId) => setFormData(prev => ({ ...prev, theme_id: themeId }))}
-                    />
-                  </div>
-                </TabsContent>
 
                 <TabsContent value="colors" className="space-y-6">
                   <div className="grid grid-cols-2 gap-4">
