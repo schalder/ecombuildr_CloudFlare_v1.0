@@ -22,6 +22,7 @@ import Pages from "./pages/Pages";
 import PageBuilder from "./pages/PageBuilder";
 import VisualPageBuilderPage from "./pages/VisualPageBuilder";
 import GutenbergPageBuilder from "./pages/GutenbergPageBuilder";
+import DragDropPageBuilderPage from "./pages/DragDropPageBuilder";
 import Marketing from "./pages/Marketing";
 import FacebookAds from "./pages/FacebookAds";
 import EmailCampaigns from "./pages/EmailCampaigns";
@@ -76,6 +77,8 @@ const App = () => (
                 <Route path="/dashboard/pages/builder" element={<PageBuilder />} />
                 <Route path="/dashboard/pages/visual-builder" element={<VisualPageBuilderPage />} />
                 <Route path="/dashboard/pages/gutenberg-builder" element={<GutenbergPageBuilder />} />
+                <Route path="/dashboard/pages/drag-drop-builder" element={<DragDropPageBuilderPage />} />
+                <Route path="/dashboard/pages/drag-drop-builder/:pageId" element={<DragDropPageBuilderPage />} />
                 <Route path="/dashboard/pages/homepage" element={<PageBuilder />} />
                 <Route path="/dashboard/design/themes" element={<ThemeBuilder />} />
                 <Route path="/dashboard/marketing" element={<Marketing />} />
