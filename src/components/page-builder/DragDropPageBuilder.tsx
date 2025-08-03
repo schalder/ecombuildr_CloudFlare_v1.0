@@ -74,7 +74,7 @@ export const DragDropPageBuilder: React.FC<DragDropPageBuilderProps> = ({
     const duplicatedSection: PageBuilderSection = {
       ...section,
       id: generateId(),
-      rows: section.rows.map(row => ({
+      rows: (section.rows || []).map(row => ({
         ...row,
         id: generateId(),
         columns: row.columns.map(col => ({
@@ -115,7 +115,7 @@ export const DragDropPageBuilder: React.FC<DragDropPageBuilderProps> = ({
       ...data,
       sections: data.sections.map(section =>
         section.id === sectionId
-          ? { ...section, rows: [...section.rows, newRow] }
+          ? { ...section, rows: [...(section.rows || []), newRow] }
           : section
       )
     });
@@ -126,7 +126,7 @@ export const DragDropPageBuilder: React.FC<DragDropPageBuilderProps> = ({
       ...data,
       sections: data.sections.map(section =>
         section.id === sectionId
-          ? { ...section, rows: section.rows.filter(row => row.id !== rowId) }
+          ? { ...section, rows: (section.rows || []).filter(row => row.id !== rowId) }
           : section
       )
     });
@@ -149,7 +149,7 @@ export const DragDropPageBuilder: React.FC<DragDropPageBuilderProps> = ({
         section.id === sectionId
           ? {
               ...section,
-              rows: section.rows.map(row =>
+              rows: (section.rows || []).map(row =>
                 row.id === rowId
                   ? {
                       ...row,
@@ -172,7 +172,7 @@ export const DragDropPageBuilder: React.FC<DragDropPageBuilderProps> = ({
       ...data,
       sections: data.sections.map(section => ({
         ...section,
-        rows: section.rows.map(row => ({
+        rows: (section.rows || []).map(row => ({
           ...row,
           columns: row.columns.map(col => ({
             ...col,
@@ -190,7 +190,7 @@ export const DragDropPageBuilder: React.FC<DragDropPageBuilderProps> = ({
       ...data,
       sections: data.sections.map(section => ({
         ...section,
-        rows: section.rows.map(row => ({
+        rows: (section.rows || []).map(row => ({
           ...row,
           columns: row.columns.map(col => ({
             ...col,
@@ -373,7 +373,7 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
           backgroundColor: section.styles?.backgroundColor 
         }}
       >
-        {section.rows.length === 0 ? (
+        {(!section.rows || section.rows.length === 0) ? (
           <div className="p-8 text-center border border-dashed border-border rounded">
             <p className="text-muted-foreground mb-4">This section is empty</p>
             <Button variant="outline" onClick={() => onAddRow('1')}>
@@ -383,7 +383,7 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
           </div>
         ) : (
           <div className="space-y-2">
-            {section.rows.map((row) => (
+            {(section.rows || []).map((row) => (
               <RowComponent
                 key={row.id}
                 row={row}
