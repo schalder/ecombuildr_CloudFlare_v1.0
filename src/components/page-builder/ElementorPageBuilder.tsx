@@ -280,8 +280,13 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = ({
 
   // Element operations
   const addElement = useCallback((sectionId: string, rowId: string, columnId: string, elementType: string) => {
+    console.log('Adding element:', { sectionId, rowId, columnId, elementType });
+    
     const elementDef = elementRegistry.get(elementType);
-    if (!elementDef) return;
+    if (!elementDef) {
+      console.error('Element type not found in registry:', elementType);
+      return;
+    }
 
     const newElement: PageBuilderElement = {
       id: generateId(),
@@ -289,7 +294,9 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = ({
       content: { ...elementDef.defaultContent }
     };
 
-    updateData({
+    console.log('New element created:', newElement);
+
+    const newData = {
       ...data,
       sections: data.sections.map(section =>
         section.id === sectionId
@@ -301,7 +308,10 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = ({
                       ...row,
                       columns: row.columns.map(col =>
                         col.id === columnId
-                          ? { ...col, elements: [...col.elements, newElement] }
+                          ? { 
+                              ...col, 
+                              elements: [...col.elements, newElement] 
+                            }
                           : col
                       )
                     }
@@ -310,7 +320,11 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = ({
             }
           : section
       )
-    });
+    };
+
+    console.log('Updated data structure:', newData);
+    
+    updateData(newData);
 
     // Auto-select the new element
     setSelection({ type: 'element', id: newElement.id, parentId: columnId, grandParentId: rowId });
@@ -699,7 +713,7 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
                 isSelected={selection?.type === 'row' && selection.id === row.id}
                 onSelect={() => onSelectionChange({ type: 'row', id: row.id, parentId: section.id })}
                 onDelete={() => onDeleteRow(row.id)}
-                onAddElement={(columnId, elementType) => onAddElement(row.id, columnId, elementType)}
+            onAddElement={(columnId, elementType) => onAddElement(row.id, columnId, elementType)}
                 onUpdateElement={onUpdateElement}
                 onDeleteElement={onDeleteElement}
                 onDuplicateElement={onDuplicateElement}
@@ -812,7 +826,7 @@ interface ColumnComponentProps {
   sectionId: string;
   isSelected: boolean;
   onSelect: () => void;
-  onAddElement: (elementType: string) => void;
+  onAddElement: (columnId: string, elementType: string) => void;
   onUpdateElement: (elementId: string, updates: Partial<PageBuilderElement>) => void;
   onDeleteElement: (elementId: string) => void;
   onDuplicateElement: (elementId: string) => void;
@@ -838,8 +852,9 @@ const ColumnComponent: React.FC<ColumnComponentProps> = ({
   const [{ isOver }, drop] = useDrop(() => ({
     accept: 'element-type',
     drop: (item: DragItem) => {
+      console.log('Column drop triggered:', { item, columnId: column.id });
       if (item.elementType) {
-        onAddElement(item.elementType);
+        onAddElement(column.id, item.elementType);
       }
     },
     collect: (monitor) => ({
