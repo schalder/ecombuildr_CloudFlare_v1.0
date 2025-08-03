@@ -713,7 +713,7 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
                 isSelected={selection?.type === 'row' && selection.id === row.id}
                 onSelect={() => onSelectionChange({ type: 'row', id: row.id, parentId: section.id })}
                 onDelete={() => onDeleteRow(row.id)}
-            onAddElement={(columnId, elementType) => onAddElement(row.id, columnId, elementType)}
+            onAddElement={onAddElement}
                 onUpdateElement={onUpdateElement}
                 onDeleteElement={onDeleteElement}
                 onDuplicateElement={onDuplicateElement}
@@ -735,7 +735,7 @@ interface RowComponentProps {
   isSelected: boolean;
   onSelect: () => void;
   onDelete: () => void;
-  onAddElement: (columnId: string, elementType: string) => void;
+  onAddElement: (sectionId: string, rowId: string, columnId: string, elementType: string) => void;
   onUpdateElement: (elementId: string, updates: Partial<PageBuilderElement>) => void;
   onDeleteElement: (elementId: string) => void;
   onDuplicateElement: (elementId: string) => void;
@@ -806,7 +806,7 @@ const RowComponent: React.FC<RowComponentProps> = ({
               parentId: row.id, 
               grandParentId: sectionId 
             })}
-            onAddElement={(elementType) => onAddElement(column.id, elementType)}
+            onAddElement={(elementType) => onAddElement(sectionId, row.id, column.id, elementType)}
             onUpdateElement={onUpdateElement}
             onDeleteElement={onDeleteElement}
             onDuplicateElement={onDuplicateElement}
@@ -826,7 +826,7 @@ interface ColumnComponentProps {
   sectionId: string;
   isSelected: boolean;
   onSelect: () => void;
-  onAddElement: (columnId: string, elementType: string) => void;
+  onAddElement: (elementType: string) => void;
   onUpdateElement: (elementId: string, updates: Partial<PageBuilderElement>) => void;
   onDeleteElement: (elementId: string) => void;
   onDuplicateElement: (elementId: string) => void;
@@ -854,7 +854,7 @@ const ColumnComponent: React.FC<ColumnComponentProps> = ({
     drop: (item: DragItem) => {
       console.log('Column drop triggered:', { item, columnId: column.id });
       if (item.elementType) {
-        onAddElement(column.id, item.elementType);
+        onAddElement(item.elementType);
       }
     },
     collect: (monitor) => ({
