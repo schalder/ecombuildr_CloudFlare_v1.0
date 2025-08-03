@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { DragDropPageBuilder } from '@/components/page-builder/DragDropPageBuilder';
+import { ElementorPageBuilder } from '@/components/page-builder/ElementorPageBuilder';
 import { PageBuilderData } from '@/components/page-builder/types';
 import { supabase } from '@/integrations/supabase/client';
 import { useUserStore } from '@/hooks/useUserStore';
@@ -204,7 +204,7 @@ export default function PageBuilder() {
       <div className="flex">
         {/* Page Builder */}
         <div className="flex-1">
-          <DragDropPageBuilder
+          <ElementorPageBuilder
             initialData={builderData}
             onChange={setBuilderData}
             onSave={handleSave}
