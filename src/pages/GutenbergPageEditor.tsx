@@ -55,21 +55,43 @@ export const GutenbergPageEditor: React.FC = () => {
       if (error) throw error;
 
       if (data) {
-        // Convert legacy content to blocks if needed
+        // Convert database content to blocks with proper type safety
         let blocks: GutenbergBlock[] = [];
         
         if (data.content) {
-          if (Array.isArray(data.content)) {
-            blocks = data.content;
-          } else if (typeof data.content === 'object' && data.content.blocks) {
-            blocks = data.content.blocks;
-          } else if (typeof data.content === 'string') {
-            // Convert HTML content to a paragraph block
-            blocks = [{
-              id: `block-${Date.now()}`,
-              type: 'core/paragraph',
-              content: { content: data.content }
-            }];
+          try {
+            // Parse JSON content safely
+            const content = data.content as any;
+            
+            if (Array.isArray(content)) {
+              // Direct array of blocks
+              blocks = content.filter(block => 
+                block && 
+                typeof block === 'object' && 
+                block.id && 
+                block.type && 
+                block.content
+              ) as GutenbergBlock[];
+            } else if (typeof content === 'object' && content.blocks && Array.isArray(content.blocks)) {
+              // Legacy format with blocks property
+              blocks = content.blocks.filter(block => 
+                block && 
+                typeof block === 'object' && 
+                block.id && 
+                block.type && 
+                block.content
+              ) as GutenbergBlock[];
+            } else if (typeof content === 'string') {
+              // Convert HTML content to a paragraph block
+              blocks = [{
+                id: `block-${Date.now()}`,
+                type: 'core/paragraph',
+                content: { content }
+              }];
+            }
+          } catch (error) {
+            console.error('Error parsing page content:', error);
+            blocks = [];
           }
         }
 
@@ -101,10 +123,11 @@ export const GutenbergPageEditor: React.FC = () => {
     try {
       setSaving(true);
 
+      // Convert blocks to JSON for database storage
       const pageContent = {
         title: pageData.title,
         slug: pageData.slug,
-        content: blocks,
+        content: JSON.parse(JSON.stringify(blocks)), // Convert to Json type
         is_published: pageData.is_published,
         is_homepage: pageData.is_homepage,
         seo_title: pageData.seo_title,
