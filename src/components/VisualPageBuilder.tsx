@@ -105,6 +105,17 @@ export const VisualPageBuilder: React.FC<VisualPageBuilderProps> = ({
   };
 
   const renderSectionEditor = (section: PageSection) => {
+    // Add null check to prevent undefined errors
+    if (!section || !section.content) {
+      return (
+        <div className="p-4 border border-dashed border-border rounded-lg min-h-[100px] flex items-center justify-center">
+          <div className="text-center text-muted-foreground">
+            Section data is missing
+          </div>
+        </div>
+      );
+    }
+
     if (editingSection !== section.id) {
       return (
         <div className="p-4 border border-dashed border-border rounded-lg min-h-[100px] flex items-center justify-center">
@@ -269,7 +280,7 @@ export const VisualPageBuilder: React.FC<VisualPageBuilderProps> = ({
             <Droppable droppableId="sections">
               {(provided) => (
                 <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-4">
-                  {sections.map((section, index) => {
+                  {sections.filter(section => section && section.id).map((section, index) => {
                     const sectionType = sectionTypes.find(t => t.type === section.type);
                     const Icon = sectionType?.icon || Type;
                     
