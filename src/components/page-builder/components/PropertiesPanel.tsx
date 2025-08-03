@@ -8,7 +8,8 @@ import {
   Smartphone,
   AlignLeft,
   AlignCenter,
-  AlignRight
+  AlignRight,
+  Upload
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,11 +19,12 @@ import { Slider } from '@/components/ui/slider';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { ImageUpload } from '@/components/ui/image-upload';
 
 import { PageBuilderElement } from '../types';
 
 interface PropertiesPanelProps {
-  selectedElement?: PageBuilderElement;
+  selectedElement?: PageBuilderElement | null;
   deviceType: 'desktop' | 'tablet' | 'mobile';
   onUpdateElement: (elementId: string, updates: Partial<PageBuilderElement>) => void;
 }
@@ -67,7 +69,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
           <h3 className="font-medium text-sm mb-2">Element Properties</h3>
           <div className="text-xs text-muted-foreground space-y-1">
             <p>Type: <span className="capitalize">{selectedElement.type}</span></p>
-            <p>ID: {selectedElement.id}</p>
+            <p>ID: {selectedElement.id.slice(-8)}</p>
           </div>
         </div>
 
@@ -93,21 +95,21 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                   />
                 </div>
                 <div>
-                  <Label className="text-xs">Tag</Label>
+                  <Label className="text-xs">Heading Level</Label>
                   <Select
-                    value={selectedElement.content.tag || 'h2'}
-                    onValueChange={(value) => handleContentUpdate('tag', value)}
+                    value={selectedElement.content.level?.toString() || '2'}
+                    onValueChange={(value) => handleContentUpdate('level', parseInt(value))}
                   >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="h1">H1</SelectItem>
-                      <SelectItem value="h2">H2</SelectItem>
-                      <SelectItem value="h3">H3</SelectItem>
-                      <SelectItem value="h4">H4</SelectItem>
-                      <SelectItem value="h5">H5</SelectItem>
-                      <SelectItem value="h6">H6</SelectItem>
+                      <SelectItem value="1">H1</SelectItem>
+                      <SelectItem value="2">H2</SelectItem>
+                      <SelectItem value="3">H3</SelectItem>
+                      <SelectItem value="4">H4</SelectItem>
+                      <SelectItem value="5">H5</SelectItem>
+                      <SelectItem value="6">H6</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -129,11 +131,10 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
             {selectedElement.type === 'image' && (
               <div className="space-y-3">
                 <div>
-                  <Label className="text-xs">Image URL</Label>
-                  <Input
+                  <Label className="text-xs">Image</Label>
+                  <ImageUpload
                     value={selectedElement.content.src || ''}
-                    onChange={(e) => handleContentUpdate('src', e.target.value)}
-                    placeholder="https://example.com/image.jpg"
+                    onChange={(url) => handleContentUpdate('src', url)}
                   />
                 </div>
                 <div>
@@ -143,6 +144,32 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                     onChange={(e) => handleContentUpdate('alt', e.target.value)}
                     placeholder="Describe the image"
                   />
+                </div>
+                <div>
+                  <Label className="text-xs">Caption</Label>
+                  <Input
+                    value={selectedElement.content.caption || ''}
+                    onChange={(e) => handleContentUpdate('caption', e.target.value)}
+                    placeholder="Image caption (optional)"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <Label className="text-xs">Width</Label>
+                    <Input
+                      value={selectedElement.content.width || ''}
+                      onChange={(e) => handleContentUpdate('width', e.target.value)}
+                      placeholder="auto"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Height</Label>
+                    <Input
+                      value={selectedElement.content.height || ''}
+                      onChange={(e) => handleContentUpdate('height', e.target.value)}
+                      placeholder="auto"
+                    />
+                  </div>
                 </div>
               </div>
             )}
@@ -160,9 +187,125 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                 <div>
                   <Label className="text-xs">Link URL</Label>
                   <Input
-                    value={selectedElement.content.href || ''}
-                    onChange={(e) => handleContentUpdate('href', e.target.value)}
+                    value={selectedElement.content.url || ''}
+                    onChange={(e) => handleContentUpdate('url', e.target.value)}
                     placeholder="https://example.com"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs">Button Style</Label>
+                  <Select
+                    value={selectedElement.content.variant || 'default'}
+                    onValueChange={(value) => handleContentUpdate('variant', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="default">Default</SelectItem>
+                      <SelectItem value="destructive">Destructive</SelectItem>
+                      <SelectItem value="outline">Outline</SelectItem>
+                      <SelectItem value="secondary">Secondary</SelectItem>
+                      <SelectItem value="ghost">Ghost</SelectItem>
+                      <SelectItem value="link">Link</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-xs">Button Size</Label>
+                  <Select
+                    value={selectedElement.content.size || 'default'}
+                    onValueChange={(value) => handleContentUpdate('size', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="default">Default</SelectItem>
+                      <SelectItem value="sm">Small</SelectItem>
+                      <SelectItem value="lg">Large</SelectItem>
+                      <SelectItem value="icon">Icon</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            )}
+
+            {selectedElement.type === 'video' && (
+              <div className="space-y-3">
+                <div>
+                  <Label className="text-xs">Video URL</Label>
+                  <Input
+                    value={selectedElement.content.src || ''}
+                    onChange={(e) => handleContentUpdate('src', e.target.value)}
+                    placeholder="https://example.com/video.mp4"
+                  />
+                </div>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="controls"
+                    checked={selectedElement.content.controls !== false}
+                    onChange={(e) => handleContentUpdate('controls', e.target.checked)}
+                  />
+                  <Label htmlFor="controls" className="text-xs">Show controls</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="autoplay"
+                    checked={selectedElement.content.autoplay || false}
+                    onChange={(e) => handleContentUpdate('autoplay', e.target.checked)}
+                  />
+                  <Label htmlFor="autoplay" className="text-xs">Auto play</Label>
+                </div>
+              </div>
+            )}
+
+            {selectedElement.type === 'spacer' && (
+              <div>
+                <Label className="text-xs">Height</Label>
+                <Input
+                  value={selectedElement.content.height || '50px'}
+                  onChange={(e) => handleContentUpdate('height', e.target.value)}
+                  placeholder="50px"
+                />
+              </div>
+            )}
+
+            {selectedElement.type === 'divider' && (
+              <div className="space-y-3">
+                <div>
+                  <Label className="text-xs">Style</Label>
+                  <Select
+                    value={selectedElement.content.style || 'solid'}
+                    onValueChange={(value) => handleContentUpdate('style', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="solid">Solid</SelectItem>
+                      <SelectItem value="dashed">Dashed</SelectItem>
+                      <SelectItem value="dotted">Dotted</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-xs">Color</Label>
+                  <Input
+                    type="color"
+                    value={selectedElement.content.color || '#e5e7eb'}
+                    onChange={(e) => handleContentUpdate('color', e.target.value)}
+                    className="w-full h-10"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs">Width</Label>
+                  <Input
+                    value={selectedElement.content.width || '100%'}
+                    onChange={(e) => handleContentUpdate('width', e.target.value)}
+                    placeholder="100%"
                   />
                 </div>
               </div>
@@ -178,14 +321,14 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                 <Label className="text-xs">Font Size</Label>
                 <div className="flex items-center space-x-2">
                   <Slider
-                    value={[parseInt(selectedElement.styles?.fontSize?.replace('px', '') || '16')]}
+                    value={[parseInt(selectedElement.styles?.fontSize?.replace(/\D/g, '') || '16')]}
                     onValueChange={(value) => handleStyleUpdate('fontSize', `${value[0]}px`)}
                     max={72}
                     min={8}
                     step={1}
                     className="flex-1"
                   />
-                  <span className="text-xs text-muted-foreground w-10">
+                  <span className="text-xs text-muted-foreground w-12">
                     {selectedElement.styles?.fontSize || '16px'}
                   </span>
                 </div>
@@ -277,16 +420,11 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
               <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Advanced</h4>
               
               <div>
-                <Label className="text-xs">Custom CSS Class</Label>
-                <Input
-                  placeholder="custom-class"
-                />
-              </div>
-
-              <div>
                 <Label className="text-xs">Element ID</Label>
                 <Input
-                  placeholder="unique-id"
+                  value={selectedElement.id}
+                  disabled
+                  className="text-muted-foreground"
                 />
               </div>
 

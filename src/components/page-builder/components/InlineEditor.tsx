@@ -57,7 +57,10 @@ export const InlineEditor: React.FC<InlineEditorProps> = ({
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setEditValue(e.target.value);
+    const newValue = e.target.value;
+    setEditValue(newValue);
+    // Real-time updates
+    onChange(newValue);
   };
 
   if (isEditing) {

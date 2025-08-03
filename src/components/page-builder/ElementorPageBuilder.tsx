@@ -42,6 +42,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
+import { PropertiesPanel } from './components/PropertiesPanel';
 import { 
   PageBuilderData, 
   PageBuilderSection, 
@@ -203,6 +204,44 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = ({
     });
   }, [data, updateData]);
 
+  const duplicateElement = useCallback((elementId: string) => {
+    const element = findElement(elementId);
+    if (!element) return;
+
+    const newElement: PageBuilderElement = {
+      ...element,
+      id: generateId()
+    };
+
+    updateData({
+      ...data,
+      sections: data.sections.map(section => ({
+        ...section,
+        rows: (section.rows || []).map(row => ({
+          ...row,
+          columns: row.columns.map(col => ({
+            ...col,
+            elements: col.elements.flatMap(el =>
+              el.id === elementId ? [el, newElement] : [el]
+            )
+          }))
+        }))
+      }))
+    });
+  }, [data, updateData]);
+
+  const findElement = (elementId: string): PageBuilderElement | null => {
+    for (const section of data.sections) {
+      for (const row of section.rows || []) {
+        for (const column of row.columns) {
+          const element = column.elements.find(el => el.id === elementId);
+          if (element) return element;
+        }
+      }
+    }
+    return null;
+  };
+
   // Row operations
   const addRow = useCallback((sectionId: string, columnLayout: PageBuilderRow['columnLayout']) => {
     const columnWidths = COLUMN_LAYOUTS[columnLayout];
@@ -272,6 +311,9 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = ({
           : section
       )
     });
+
+    // Auto-select the new element
+    setSelection({ type: 'element', id: newElement.id, parentId: columnId, grandParentId: rowId });
   }, [data, updateData]);
 
   const updateElement = useCallback((elementId: string, updates: Partial<PageBuilderElement>) => {
@@ -461,6 +503,7 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = ({
                       }
                       onUpdateElement={updateElement}
                       onDeleteElement={deleteElement}
+                      onDuplicateElement={duplicateElement}
                       selection={selection}
                       onSelectionChange={setSelection}
                     />
@@ -492,20 +535,18 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = ({
           
           {!propertiesPanelCollapsed && (
             <ScrollArea className="flex-1">
-              <div className="p-4">
-                {selection ? (
-                  <PropertiesPanel
-                    selection={selection}
-                    data={data}
-                    onUpdate={updateData}
-                  />
-                ) : (
-                  <div className="text-center text-muted-foreground">
-                    <Settings className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p className="text-sm">Select an element to edit its properties</p>
-                  </div>
-                )}
-              </div>
+              {selection && selection.type === 'element' ? (
+                <PropertiesPanel
+                  selectedElement={findElement(selection.id)}
+                  deviceType={deviceType}
+                  onUpdateElement={updateElement}
+                />
+              ) : (
+                <div className="p-4 text-center text-muted-foreground">
+                  <Settings className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p className="text-sm">Select an element to edit properties</p>
+                </div>
+              )}
             </ScrollArea>
           )}
         </div>
@@ -574,6 +615,7 @@ interface SectionComponentProps {
   onAddElement: (rowId: string, columnId: string, elementType: string) => void;
   onUpdateElement: (elementId: string, updates: Partial<PageBuilderElement>) => void;
   onDeleteElement: (elementId: string) => void;
+  onDuplicateElement: (elementId: string) => void;
   selection: SelectionType | null;
   onSelectionChange: (selection: SelectionType | null) => void;
 }
@@ -589,6 +631,7 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
   onAddElement,
   onUpdateElement,
   onDeleteElement,
+  onDuplicateElement,
   selection,
   onSelectionChange
 }) => {
@@ -659,6 +702,7 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
                 onAddElement={(columnId, elementType) => onAddElement(row.id, columnId, elementType)}
                 onUpdateElement={onUpdateElement}
                 onDeleteElement={onDeleteElement}
+                onDuplicateElement={onDuplicateElement}
                 selection={selection}
                 onSelectionChange={onSelectionChange}
               />
@@ -680,6 +724,7 @@ interface RowComponentProps {
   onAddElement: (columnId: string, elementType: string) => void;
   onUpdateElement: (elementId: string, updates: Partial<PageBuilderElement>) => void;
   onDeleteElement: (elementId: string) => void;
+  onDuplicateElement: (elementId: string) => void;
   selection: SelectionType | null;
   onSelectionChange: (selection: SelectionType | null) => void;
 }
@@ -693,6 +738,7 @@ const RowComponent: React.FC<RowComponentProps> = ({
   onAddElement,
   onUpdateElement,
   onDeleteElement,
+  onDuplicateElement,
   selection,
   onSelectionChange
 }) => {
@@ -749,6 +795,7 @@ const RowComponent: React.FC<RowComponentProps> = ({
             onAddElement={(elementType) => onAddElement(column.id, elementType)}
             onUpdateElement={onUpdateElement}
             onDeleteElement={onDeleteElement}
+            onDuplicateElement={onDuplicateElement}
             selection={selection}
             onSelectionChange={onSelectionChange}
           />
@@ -768,6 +815,7 @@ interface ColumnComponentProps {
   onAddElement: (elementType: string) => void;
   onUpdateElement: (elementId: string, updates: Partial<PageBuilderElement>) => void;
   onDeleteElement: (elementId: string) => void;
+  onDuplicateElement: (elementId: string) => void;
   selection: SelectionType | null;
   onSelectionChange: (selection: SelectionType | null) => void;
 }
@@ -781,6 +829,7 @@ const ColumnComponent: React.FC<ColumnComponentProps> = ({
   onAddElement,
   onUpdateElement,
   onDeleteElement,
+  onDuplicateElement,
   selection,
   onSelectionChange
 }) => {
@@ -853,6 +902,7 @@ const ColumnComponent: React.FC<ColumnComponentProps> = ({
                 })}
                 onUpdate={onUpdateElement}
                 onDelete={onDeleteElement}
+                onDuplicate={onDuplicateElement}
               />
             ))}
           </div>
@@ -872,6 +922,7 @@ interface ElementWrapperProps {
   onSelect: () => void;
   onUpdate: (elementId: string, updates: Partial<PageBuilderElement>) => void;
   onDelete: (elementId: string) => void;
+  onDuplicate: (elementId: string) => void;
 }
 
 const ElementWrapper: React.FC<ElementWrapperProps> = ({
@@ -879,7 +930,8 @@ const ElementWrapper: React.FC<ElementWrapperProps> = ({
   isSelected,
   onSelect,
   onUpdate,
-  onDelete
+  onDelete,
+  onDuplicate
 }) => {
   const [isHovered, setIsHovered] = useState(false);
   const elementDef = elementRegistry.get(element.type);
@@ -917,7 +969,15 @@ const ElementWrapper: React.FC<ElementWrapperProps> = ({
           <Button variant="ghost" size="sm" className="h-5 w-5 p-0 hover:bg-primary-foreground/20">
             <Edit className="h-2 w-2" />
           </Button>
-          <Button variant="ghost" size="sm" className="h-5 w-5 p-0 hover:bg-primary-foreground/20">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-5 w-5 p-0 hover:bg-primary-foreground/20"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDuplicate(element.id);
+            }}
+          >
             <Copy className="h-2 w-2" />
           </Button>
           <Button variant="ghost" size="sm" className="h-5 w-5 p-0 hover:bg-primary-foreground/20">
@@ -942,7 +1002,7 @@ const ElementWrapper: React.FC<ElementWrapperProps> = ({
 
       <elementDef.component
         element={element}
-        isEditing={false}
+        isEditing={true}
         onUpdate={(updates) => onUpdate(element.id, updates)}
       />
     </div>
@@ -993,76 +1053,5 @@ const ColumnLayoutModal: React.FC<ColumnLayoutModalProps> = ({
         </div>
       </DialogContent>
     </Dialog>
-  );
-};
-
-// Properties Panel Component
-interface PropertiesPanelProps {
-  selection: SelectionType;
-  data: PageBuilderData;
-  onUpdate: (data: PageBuilderData) => void;
-}
-
-const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
-  selection,
-  data,
-  onUpdate
-}) => {
-  return (
-    <div className="space-y-6">
-      <div>
-        <h4 className="font-medium mb-2">Basic Settings</h4>
-        <div className="space-y-3">
-          <div>
-            <Label className="text-xs">Element Type</Label>
-            <p className="text-sm text-muted-foreground capitalize">{selection.type}</p>
-          </div>
-          <div>
-            <Label className="text-xs">Element ID</Label>
-            <p className="text-sm text-muted-foreground font-mono">{selection.id}</p>
-          </div>
-        </div>
-      </div>
-
-      <Separator />
-
-      <div>
-        <h4 className="font-medium mb-2">Style Settings</h4>
-        <div className="space-y-3">
-          <div>
-            <Label htmlFor="background-color" className="text-xs">Background Color</Label>
-            <Input id="background-color" type="color" className="h-8" />
-          </div>
-          <div>
-            <Label htmlFor="padding" className="text-xs">Padding</Label>
-            <Input id="padding" placeholder="e.g., 20px" className="h-8" />
-          </div>
-          <div>
-            <Label htmlFor="margin" className="text-xs">Margin</Label>
-            <Input id="margin" placeholder="e.g., 10px" className="h-8" />
-          </div>
-        </div>
-      </div>
-
-      <Separator />
-
-      <div>
-        <h4 className="font-medium mb-2">Advanced</h4>
-        <div className="space-y-3">
-          <div>
-            <Label htmlFor="css-class" className="text-xs">CSS Classes</Label>
-            <Input id="css-class" placeholder="custom-class another-class" className="h-8" />
-          </div>
-          <div>
-            <Label htmlFor="custom-css" className="text-xs">Custom CSS</Label>
-            <textarea 
-              id="custom-css"
-              className="w-full h-20 p-2 text-xs border border-border rounded resize-none"
-              placeholder="/* Custom CSS */"
-            />
-          </div>
-        </div>
-      </div>
-    </div>
   );
 };
