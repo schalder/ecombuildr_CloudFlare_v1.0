@@ -1,19 +1,30 @@
-import React, { useState, useCallback } from 'react';
-import { DndProvider, useDrag, useDrop } from 'react-dnd';
+import React, { useState, useCallback, useEffect } from 'react';
+import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
+import { useDrag, useDrop } from 'react-dnd';
 import { 
   Plus, 
-  Grip, 
-  Trash2, 
-  Edit, 
+  Settings, 
   Copy, 
+  Trash2, 
   Smartphone, 
   Tablet, 
-  Monitor, 
-  Settings,
+  Monitor,
+  RotateCcw,
+  RotateCw,
+  Search,
   ChevronDown,
   ChevronRight,
-  Search,
+  Move,
+  Edit,
+  Eye,
+  EyeOff,
+  Grip,
+  Columns,
+  PanelLeftOpen,
+  PanelLeftClose,
+  ArrowUp,
+  ArrowDown,
   Type,
   Image,
   Video,
@@ -25,36 +36,35 @@ import {
   Quote,
   MessageSquare,
   MapPin,
-  Code,
-  ArrowUp,
-  ArrowDown,
-  Move,
-  Columns,
-  PanelLeftOpen,
-  PanelLeftClose
+  Code
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogTrigger 
+} from '@/components/ui/dialog';
+import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
-import { PropertiesPanel } from './components/PropertiesPanel';
 import { 
   PageBuilderData, 
+  PageBuilderElement, 
   PageBuilderSection, 
   PageBuilderRow, 
-  PageBuilderColumn, 
-  PageBuilderElement,
-  ElementType,
+  PageBuilderColumn,
   DragItem,
-  COLUMN_LAYOUTS,
-  SECTION_WIDTHS 
+  ElementType,
+  COLUMN_LAYOUTS
 } from './types';
 import { elementRegistry } from './elements';
+import { PropertiesPanel } from './components/PropertiesPanel';
+import { SectionSettingsPanel, RowSettingsPanel, ColumnSettingsPanel } from './components/SettingsPanels';
 
 interface ElementorPageBuilderProps {
   initialData?: PageBuilderData;
@@ -69,64 +79,6 @@ type SelectionType = {
   parentId?: string;
   grandParentId?: string;
 };
-
-const ELEMENT_CATEGORIES = [
-  {
-    name: 'Basic',
-    elements: [
-      { id: 'heading', name: 'Heading', icon: Type, description: 'Add a title or heading' },
-      { id: 'text', name: 'Text Editor', icon: Type, description: 'Rich text content' },
-      { id: 'button', name: 'Button', icon: Layout, description: 'Call to action button' },
-      { id: 'image', name: 'Image', icon: Image, description: 'Single image element' },
-      { id: 'video', name: 'Video', icon: Video, description: 'Video player' },
-      { id: 'spacer', name: 'Spacer', icon: Layout, description: 'Add space between elements' },
-      { id: 'divider', name: 'Divider', icon: Layout, description: 'Visual separator line' }
-    ]
-  },
-  {
-    name: 'eCommerce',
-    elements: [
-      { id: 'product-grid', name: 'Product Grid', icon: Grid3X3, description: 'Display products in grid' },
-      { id: 'featured-products', name: 'Featured Products', icon: Star, description: 'Highlight featured products' },
-      { id: 'product-categories', name: 'Product Categories', icon: ShoppingBag, description: 'Show product categories' },
-      { id: 'add-to-cart', name: 'Add to Cart', icon: ShoppingBag, description: 'Add to cart button' },
-      { id: 'price', name: 'Price', icon: ShoppingBag, description: 'Product price display' }
-    ]
-  },
-  {
-    name: 'Forms',
-    elements: [
-      { id: 'contact-form', name: 'Contact Form', icon: Mail, description: 'Contact form with fields' },
-      { id: 'newsletter', name: 'Newsletter', icon: Mail, description: 'Email subscription form' },
-      { id: 'form-field', name: 'Form Field', icon: Layout, description: 'Single form input field' }
-    ]
-  },
-  {
-    name: 'Content',
-    elements: [
-      { id: 'testimonial', name: 'Testimonial', icon: Quote, description: 'Customer testimonial' },
-      { id: 'faq', name: 'FAQ', icon: MessageSquare, description: 'Frequently asked questions' },
-      { id: 'accordion', name: 'Accordion', icon: Layout, description: 'Collapsible content sections' },
-      { id: 'tabs', name: 'Tabs', icon: Layout, description: 'Tabbed content area' }
-    ]
-  },
-  {
-    name: 'Media',
-    elements: [
-      { id: 'image-gallery', name: 'Image Gallery', icon: Image, description: 'Multiple images in gallery' },
-      { id: 'image-carousel', name: 'Image Carousel', icon: Image, description: 'Sliding image carousel' },
-      { id: 'video-playlist', name: 'Video Playlist', icon: Video, description: 'Multiple videos' }
-    ]
-  },
-  {
-    name: 'Advanced',
-    elements: [
-      { id: 'google-maps', name: 'Google Maps', icon: MapPin, description: 'Interactive map' },
-      { id: 'custom-html', name: 'HTML', icon: Code, description: 'Custom HTML code' },
-      { id: 'social-share', name: 'Social Share', icon: Layout, description: 'Social media sharing buttons' }
-    ]
-  }
-];
 
 export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = ({
   initialData,
@@ -143,6 +95,10 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = ({
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [propertiesPanelCollapsed, setPropertiesPanelCollapsed] = useState(false);
+  const [showSettingsPanel, setShowSettingsPanel] = useState<{
+    type: 'section' | 'row' | 'column';
+    id: string;
+  } | null>(null);
 
   const updateData = useCallback((newData: PageBuilderData) => {
     setData(newData);
@@ -151,60 +107,114 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = ({
 
   const generateId = () => `pb-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
-  // Section operations
-  const addSection = useCallback((width: PageBuilderSection['width'] = 'wide') => {
-    const newSection: PageBuilderSection = {
-      id: generateId(),
-      width,
-      rows: []
-    };
+  // Initialize empty page if no data provided
+  useEffect(() => {
+    // Ensure element registry is initialized
+    console.log('ElementorPageBuilder mounted. Available elements:', elementRegistry.getAll().map(e => ({ id: e.id, name: e.name })));
     
-    updateData({
-      ...data,
-      sections: [...data.sections, newSection]
-    });
+    if (!data || !data.sections || data.sections.length === 0) {
+      const initialData: PageBuilderData = {
+        sections: [{
+          id: generateId(),
+          rows: [{
+            id: generateId(),
+            columnLayout: '1',
+            columns: [{
+              id: generateId(),
+              width: 12,
+              elements: []
+            }]
+          }],
+          width: 'wide'
+        }]
+      };
+      updateData(initialData);
+    }
   }, [data, updateData]);
 
-  const deleteSection = useCallback((sectionId: string) => {
+  // Element operations
+  const onAddElement = useCallback((sectionId: string, rowId: string, columnId: string, elementType: string) => {
+    console.log('Adding element:', { sectionId, rowId, columnId, elementType });
+    console.log('Available element types in registry:', elementRegistry.getAll().map(e => e.id));
+    
+    const elementTypeConfig = elementRegistry.get(elementType);
+    if (!elementTypeConfig) {
+      console.error('Element type not found in registry:', elementType);
+      console.error('Available types:', elementRegistry.getAll().map(e => e.id));
+      return;
+    }
+
+    const newElement: PageBuilderElement = {
+      id: generateId(),
+      type: elementType,
+      content: { ...elementTypeConfig.defaultContent }
+    };
+
+    console.log('Creating new element:', newElement);
+
+    const newData = {
+      ...data,
+      sections: data.sections.map(section =>
+        section.id === sectionId
+          ? {
+              ...section,
+              rows: (section.rows || []).map(row =>
+                row.id === rowId
+                  ? {
+                      ...row,
+                      columns: row.columns.map(col =>
+                        col.id === columnId
+                          ? { ...col, elements: [...col.elements, newElement] }
+                          : col
+                      )
+                    }
+                  : row
+              )
+            }
+          : section
+      )
+    };
+
+    updateData(newData);
+    setSelection({ type: 'element', id: newElement.id, parentId: columnId, grandParentId: rowId });
+  }, [data, updateData]);
+
+  const onUpdateElement = useCallback((elementId: string, updates: Partial<PageBuilderElement>) => {
     updateData({
       ...data,
-      sections: data.sections.filter(s => s.id !== sectionId)
-    });
-    if (selection?.id === sectionId) setSelection(null);
-  }, [data, updateData, selection]);
-
-  const duplicateSection = useCallback((sectionId: string) => {
-    const section = data.sections.find(s => s.id === sectionId);
-    if (!section) return;
-
-    const duplicatedSection: PageBuilderSection = {
-      ...section,
-      id: generateId(),
-      rows: (section.rows || []).map(row => ({
-        ...row,
-        id: generateId(),
-        columns: row.columns.map(col => ({
-          ...col,
-          id: generateId(),
-          elements: col.elements.map(el => ({
-            ...el,
-            id: generateId()
+      sections: data.sections.map(section => ({
+        ...section,
+        rows: (section.rows || []).map(row => ({
+          ...row,
+          columns: row.columns.map(col => ({
+            ...col,
+            elements: col.elements.map(el =>
+              el.id === elementId ? { ...el, ...updates } : el
+            )
           }))
         }))
       }))
-    };
-
-    const sectionIndex = data.sections.findIndex(s => s.id === sectionId);
-    const newSections = [...data.sections];
-    newSections.splice(sectionIndex + 1, 0, duplicatedSection);
-
-    updateData({
-      ...data,
-      sections: newSections
     });
   }, [data, updateData]);
 
-  const duplicateElement = useCallback((elementId: string) => {
+  const onDeleteElement = useCallback((elementId: string) => {
+    updateData({
+      ...data,
+      sections: data.sections.map(section => ({
+        ...section,
+        rows: (section.rows || []).map(row => ({
+          ...row,
+          columns: row.columns.map(col => ({
+            ...col,
+            elements: col.elements.filter(el => el.id !== elementId)
+          }))
+        }))
+      }))
+    });
+    if (selection?.id === elementId) setSelection(null);
+  }, [data, updateData, selection]);
+
+  const onDuplicateElement = useCallback((elementId: string) => {
     const element = findElement(elementId);
     if (!element) return;
 
@@ -242,6 +252,36 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = ({
     return null;
   };
 
+  // Section operations
+  const addSection = useCallback((width: PageBuilderSection['width'] = 'wide') => {
+    const newSection: PageBuilderSection = {
+      id: generateId(),
+      width,
+      rows: [{
+        id: generateId(),
+        columnLayout: '1',
+        columns: [{
+          id: generateId(),
+          width: 12,
+          elements: []
+        }]
+      }]
+    };
+    
+    updateData({
+      ...data,
+      sections: [...data.sections, newSection]
+    });
+  }, [data, updateData]);
+
+  const deleteSection = useCallback((sectionId: string) => {
+    updateData({
+      ...data,
+      sections: data.sections.filter(s => s.id !== sectionId)
+    });
+    if (selection?.id === sectionId) setSelection(null);
+  }, [data, updateData, selection]);
+
   // Row operations
   const addRow = useCallback((sectionId: string, columnLayout: PageBuilderRow['columnLayout']) => {
     const columnWidths = COLUMN_LAYOUTS[columnLayout];
@@ -278,93 +318,6 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = ({
     if (selection?.id === rowId) setSelection(null);
   }, [data, updateData, selection]);
 
-  // Element operations
-  const addElement = useCallback((sectionId: string, rowId: string, columnId: string, elementType: string) => {
-    console.log('Adding element:', { sectionId, rowId, columnId, elementType });
-    
-    const elementDef = elementRegistry.get(elementType);
-    if (!elementDef) {
-      console.error('Element type not found in registry:', elementType);
-      return;
-    }
-
-    const newElement: PageBuilderElement = {
-      id: generateId(),
-      type: elementType,
-      content: { ...elementDef.defaultContent }
-    };
-
-    console.log('New element created:', newElement);
-
-    const newData = {
-      ...data,
-      sections: data.sections.map(section =>
-        section.id === sectionId
-          ? {
-              ...section,
-              rows: (section.rows || []).map(row =>
-                row.id === rowId
-                  ? {
-                      ...row,
-                      columns: row.columns.map(col =>
-                        col.id === columnId
-                          ? { 
-                              ...col, 
-                              elements: [...col.elements, newElement] 
-                            }
-                          : col
-                      )
-                    }
-                  : row
-              )
-            }
-          : section
-      )
-    };
-
-    console.log('Updated data structure:', newData);
-    
-    updateData(newData);
-
-    // Auto-select the new element
-    setSelection({ type: 'element', id: newElement.id, parentId: columnId, grandParentId: rowId });
-  }, [data, updateData]);
-
-  const updateElement = useCallback((elementId: string, updates: Partial<PageBuilderElement>) => {
-    updateData({
-      ...data,
-      sections: data.sections.map(section => ({
-        ...section,
-        rows: (section.rows || []).map(row => ({
-          ...row,
-          columns: row.columns.map(col => ({
-            ...col,
-            elements: col.elements.map(el =>
-              el.id === elementId ? { ...el, ...updates } : el
-            )
-          }))
-        }))
-      }))
-    });
-  }, [data, updateData]);
-
-  const deleteElement = useCallback((elementId: string) => {
-    updateData({
-      ...data,
-      sections: data.sections.map(section => ({
-        ...section,
-        rows: (section.rows || []).map(row => ({
-          ...row,
-          columns: row.columns.map(col => ({
-            ...col,
-            elements: col.elements.filter(el => el.id !== elementId)
-          }))
-        }))
-      }))
-    });
-    if (selection?.id === elementId) setSelection(null);
-  }, [data, updateData, selection]);
-
   const getDevicePreviewStyles = () => {
     switch (deviceType) {
       case 'tablet':
@@ -375,6 +328,23 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = ({
         return {};
     }
   };
+
+  // Element categories for the sidebar
+  const ELEMENT_CATEGORIES = [
+    {
+      name: 'Basic',
+      elements: [
+        { id: 'heading', name: 'Heading', icon: Type, description: 'Add a title or heading' },
+        { id: 'text', name: 'Text Editor', icon: Type, description: 'Rich text content' },
+        { id: 'button', name: 'Button', icon: Layout, description: 'Call to action button' },
+        { id: 'image', name: 'Image', icon: Image, description: 'Single image element' },
+        { id: 'video', name: 'Video', icon: Video, description: 'Video player' },
+        { id: 'spacer', name: 'Spacer', icon: Layout, description: 'Add space between elements' },
+        { id: 'divider', name: 'Divider', icon: Layout, description: 'Visual separator line' },
+        { id: 'list', name: 'List', icon: Layout, description: 'Bullet or numbered lists' }
+      ]
+    }
+  ];
 
   const filteredElements = ELEMENT_CATEGORIES.map(category => ({
     ...category,
@@ -509,17 +479,19 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = ({
                       isSelected={selection?.type === 'section' && selection.id === section.id}
                       onSelect={() => setSelection({ type: 'section', id: section.id })}
                       onDelete={() => deleteSection(section.id)}
-                      onDuplicate={() => duplicateSection(section.id)}
+                      onOpenSettings={() => setShowSettingsPanel({ type: 'section', id: section.id })}
                       onAddRow={() => setShowColumnModal({ sectionId: section.id })}
                       onDeleteRow={(rowId) => deleteRow(section.id, rowId)}
                       onAddElement={(rowId, columnId, elementType) => 
-                        addElement(section.id, rowId, columnId, elementType)
+                        onAddElement(section.id, rowId, columnId, elementType)
                       }
-                      onUpdateElement={updateElement}
-                      onDeleteElement={deleteElement}
-                      onDuplicateElement={duplicateElement}
+                      onUpdateElement={onUpdateElement}
+                      onDeleteElement={onDeleteElement}
+                      onDuplicateElement={onDuplicateElement}
                       selection={selection}
                       onSelectionChange={setSelection}
+                      onOpenRowSettings={(rowId) => setShowSettingsPanel({ type: 'row', id: rowId })}
+                      onOpenColumnSettings={(columnId) => setShowSettingsPanel({ type: 'column', id: columnId })}
                     />
                   ))}
                 </div>
@@ -553,7 +525,7 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = ({
                 <PropertiesPanel
                   selectedElement={findElement(selection.id)}
                   deviceType={deviceType}
-                  onUpdateElement={updateElement}
+                  onUpdateElement={onUpdateElement}
                 />
               ) : (
                 <div className="p-4 text-center text-muted-foreground">
@@ -564,6 +536,27 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = ({
             </ScrollArea>
           )}
         </div>
+
+        {/* Settings Panel Overlay */}
+        {showSettingsPanel && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            {showSettingsPanel.type === 'section' && (
+              <SectionSettingsPanel
+                section={data.sections.find(s => s.id === showSettingsPanel.id)!}
+                onUpdate={(updates) => {
+                  updateData({
+                    ...data,
+                    sections: data.sections.map(s => 
+                      s.id === showSettingsPanel.id ? { ...s, ...updates } : s
+                    )
+                  });
+                }}
+                onClose={() => setShowSettingsPanel(null)}
+              />
+            )}
+            {/* Add Row and Column settings panels here */}
+          </div>
+        )}
       </div>
 
       {/* Column Layout Modal */}
@@ -623,7 +616,7 @@ interface SectionComponentProps {
   isSelected: boolean;
   onSelect: () => void;
   onDelete: () => void;
-  onDuplicate: () => void;
+  onOpenSettings: () => void;
   onAddRow: () => void;
   onDeleteRow: (rowId: string) => void;
   onAddElement: (rowId: string, columnId: string, elementType: string) => void;
@@ -632,6 +625,8 @@ interface SectionComponentProps {
   onDuplicateElement: (elementId: string) => void;
   selection: SelectionType | null;
   onSelectionChange: (selection: SelectionType | null) => void;
+  onOpenRowSettings: (rowId: string) => void;
+  onOpenColumnSettings: (columnId: string) => void;
 }
 
 const SectionComponent: React.FC<SectionComponentProps> = ({
@@ -639,7 +634,7 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
   isSelected,
   onSelect,
   onDelete,
-  onDuplicate,
+  onOpenSettings,
   onAddRow,
   onDeleteRow,
   onAddElement,
@@ -647,7 +642,9 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
   onDeleteElement,
   onDuplicateElement,
   selection,
-  onSelectionChange
+  onSelectionChange,
+  onOpenRowSettings,
+  onOpenColumnSettings
 }) => {
   const [isHovered, setIsHovered] = useState(false);
 
@@ -676,13 +673,10 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
           <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-primary-foreground/20" onClick={onAddRow}>
             <Plus className="h-3 w-3" />
           </Button>
-          <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-primary-foreground/20" onClick={onDuplicate}>
-            <Copy className="h-3 w-3" />
-          </Button>
           <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-primary-foreground/20" onClick={onDelete}>
             <Trash2 className="h-3 w-3" />
           </Button>
-          <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-primary-foreground/20">
+          <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-primary-foreground/20" onClick={onOpenSettings}>
             <Settings className="h-3 w-3" />
           </Button>
         </div>
@@ -691,7 +685,7 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
       <div 
         className="w-full mx-auto p-4"
         style={{ 
-          maxWidth: SECTION_WIDTHS[section.width],
+          maxWidth: section.width === 'full' ? '100%' : section.width === 'wide' ? '1200px' : section.width === 'medium' ? '800px' : '600px',
           backgroundColor: section.styles?.backgroundColor 
         }}
       >
@@ -713,12 +707,14 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
                 isSelected={selection?.type === 'row' && selection.id === row.id}
                 onSelect={() => onSelectionChange({ type: 'row', id: row.id, parentId: section.id })}
                 onDelete={() => onDeleteRow(row.id)}
-            onAddElement={onAddElement}
+                onOpenSettings={() => onOpenRowSettings(row.id)}
+                onAddElement={onAddElement}
                 onUpdateElement={onUpdateElement}
                 onDeleteElement={onDeleteElement}
                 onDuplicateElement={onDuplicateElement}
                 selection={selection}
                 onSelectionChange={onSelectionChange}
+                onOpenColumnSettings={onOpenColumnSettings}
               />
             ))}
           </div>
@@ -735,12 +731,14 @@ interface RowComponentProps {
   isSelected: boolean;
   onSelect: () => void;
   onDelete: () => void;
-  onAddElement: (sectionId: string, rowId: string, columnId: string, elementType: string) => void;
+  onOpenSettings: () => void;
+  onAddElement: (rowId: string, columnId: string, elementType: string) => void;
   onUpdateElement: (elementId: string, updates: Partial<PageBuilderElement>) => void;
   onDeleteElement: (elementId: string) => void;
   onDuplicateElement: (elementId: string) => void;
   selection: SelectionType | null;
   onSelectionChange: (selection: SelectionType | null) => void;
+  onOpenColumnSettings: (columnId: string) => void;
 }
 
 const RowComponent: React.FC<RowComponentProps> = ({
@@ -749,12 +747,14 @@ const RowComponent: React.FC<RowComponentProps> = ({
   isSelected,
   onSelect,
   onDelete,
+  onOpenSettings,
   onAddElement,
   onUpdateElement,
   onDeleteElement,
   onDuplicateElement,
   selection,
-  onSelectionChange
+  onSelectionChange,
+  onOpenColumnSettings
 }) => {
   const [isHovered, setIsHovered] = useState(false);
 
@@ -780,13 +780,10 @@ const RowComponent: React.FC<RowComponentProps> = ({
           <Grip className="h-3 w-3" />
           <span className="font-medium">Row ({row.columnLayout})</span>
           <Separator orientation="vertical" className="mx-1 h-4" />
-          <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-secondary-foreground/20">
-            <Columns className="h-3 w-3" />
-          </Button>
           <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-secondary-foreground/20" onClick={onDelete}>
             <Trash2 className="h-3 w-3" />
           </Button>
-          <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-secondary-foreground/20">
+          <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-secondary-foreground/20" onClick={onOpenSettings}>
             <Settings className="h-3 w-3" />
           </Button>
         </div>
@@ -806,7 +803,8 @@ const RowComponent: React.FC<RowComponentProps> = ({
               parentId: row.id, 
               grandParentId: sectionId 
             })}
-            onAddElement={(elementType) => onAddElement(sectionId, row.id, column.id, elementType)}
+            onOpenSettings={() => onOpenColumnSettings(column.id)}
+            onAddElement={(elementType) => onAddElement(row.id, column.id, elementType)}
             onUpdateElement={onUpdateElement}
             onDeleteElement={onDeleteElement}
             onDuplicateElement={onDuplicateElement}
@@ -826,6 +824,7 @@ interface ColumnComponentProps {
   sectionId: string;
   isSelected: boolean;
   onSelect: () => void;
+  onOpenSettings: () => void;
   onAddElement: (elementType: string) => void;
   onUpdateElement: (elementId: string, updates: Partial<PageBuilderElement>) => void;
   onDeleteElement: (elementId: string) => void;
@@ -840,6 +839,7 @@ const ColumnComponent: React.FC<ColumnComponentProps> = ({
   sectionId,
   isSelected,
   onSelect,
+  onOpenSettings,
   onAddElement,
   onUpdateElement,
   onDeleteElement,
@@ -852,7 +852,7 @@ const ColumnComponent: React.FC<ColumnComponentProps> = ({
   const [{ isOver }, drop] = useDrop(() => ({
     accept: 'element-type',
     drop: (item: DragItem) => {
-      console.log('Column drop triggered:', { item, columnId: column.id });
+      console.log('Column drop triggered:', { item, columnId: column.id, elementType: item.elementType });
       if (item.elementType) {
         onAddElement(item.elementType);
       }
@@ -885,9 +885,9 @@ const ColumnComponent: React.FC<ColumnComponentProps> = ({
       {(isHovered || isSelected) && (
         <div className="absolute -top-8 left-0 z-10 flex items-center gap-1 bg-accent text-accent-foreground px-2 py-1 rounded text-xs shadow-lg">
           <Grip className="h-3 w-3" />
-          <span className="font-medium">Column</span>
+          <span className="font-medium">Column ({column.elements.length})</span>
           <Separator orientation="vertical" className="mx-1 h-3" />
-          <Button variant="ghost" size="sm" className="h-5 w-5 p-0 hover:bg-accent-foreground/20">
+          <Button variant="ghost" size="sm" className="h-5 w-5 p-0 hover:bg-accent-foreground/20" onClick={onOpenSettings}>
             <Settings className="h-2 w-2" />
           </Button>
         </div>
@@ -981,9 +981,6 @@ const ElementWrapper: React.FC<ElementWrapperProps> = ({
           <elementDef.icon className="h-3 w-3" />
           <span className="font-medium">{elementDef.name}</span>
           <Separator orientation="vertical" className="mx-1 h-3" />
-          <Button variant="ghost" size="sm" className="h-5 w-5 p-0 hover:bg-primary-foreground/20">
-            <Edit className="h-2 w-2" />
-          </Button>
           <Button 
             variant="ghost" 
             size="sm" 
@@ -994,12 +991,6 @@ const ElementWrapper: React.FC<ElementWrapperProps> = ({
             }}
           >
             <Copy className="h-2 w-2" />
-          </Button>
-          <Button variant="ghost" size="sm" className="h-5 w-5 p-0 hover:bg-primary-foreground/20">
-            <ArrowUp className="h-2 w-2" />
-          </Button>
-          <Button variant="ghost" size="sm" className="h-5 w-5 p-0 hover:bg-primary-foreground/20">
-            <ArrowDown className="h-2 w-2" />
           </Button>
           <Button 
             variant="ghost" 
