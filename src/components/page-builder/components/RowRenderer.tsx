@@ -60,9 +60,11 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
     // TODO: Implement row duplication
   };
 
-  const getGridCols = () => {
+  const getGridTemplateColumns = () => {
     const layout = COLUMN_LAYOUTS[row.columnLayout];
-    return `grid-cols-${layout.length}`;
+    // Convert the layout numbers to CSS Grid fractional units
+    const totalParts = layout.reduce((sum, part) => sum + part, 0);
+    return layout.map(part => `${part}fr`).join(' ');
   };
 
   return (
@@ -105,7 +107,10 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
         </div>
       )}
 
-      <div className={cn('grid gap-4', getGridCols())}>
+      <div 
+        className="grid gap-4"
+        style={{ gridTemplateColumns: getGridTemplateColumns() }}
+      >
         {row.columns.map((column) => (
             <ColumnRenderer
               key={column.id}
