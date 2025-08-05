@@ -180,6 +180,7 @@ const ButtonElement: React.FC<{
   const variant = element.content.variant || 'default';
   const size = element.content.size || 'default';
   const url = element.content.url || '#';
+  const target = element.content.target || '_blank';
 
   const handleTextChange = (newText: string) => {
     onUpdate?.({
@@ -191,7 +192,11 @@ const ButtonElement: React.FC<{
     if (isEditing) {
       e.preventDefault();
     } else if (url && url !== '#') {
-      window.open(url, '_blank');
+      if (target === '_blank') {
+        window.open(url, '_blank');
+      } else {
+        window.location.href = url;
+      }
     }
   };
 
@@ -201,27 +206,52 @@ const ButtonElement: React.FC<{
     alignment === 'right' ? 'flex justify-end' : 
     'flex justify-start';
 
+  // Combine custom styles with variant styles properly
+  const customStyles = {
+    backgroundColor: element.styles?.backgroundColor,
+    color: element.styles?.color,
+    fontSize: element.styles?.fontSize,
+    padding: element.styles?.padding,
+    margin: element.styles?.margin,
+    ...(element.content.customCSS ? {} : {}) // Custom CSS will be applied via className
+  };
+
+  // Remove undefined values from styles
+  const cleanStyles = Object.fromEntries(
+    Object.entries(customStyles).filter(([_, v]) => v !== undefined && v !== '')
+  );
+
+  const customClassName = element.content.customCSS ? 
+    `button-${element.id} outline-none cursor-pointer` : 
+    'outline-none cursor-pointer';
+
   return (
-    <div className={containerClass}>
-      <Button 
-        variant={variant as any} 
-        size={size as any}
-        className="outline-none cursor-pointer"
-        onClick={handleClick}
-        style={{
-          backgroundColor: element.styles?.backgroundColor,
-          color: element.styles?.color,
-        }}
-      >
-        <InlineEditor
-          value={text}
-          onChange={handleTextChange}
-          placeholder="Button text..."
-          disabled={!isEditing}
-          className="text-inherit font-inherit"
-        />
-      </Button>
-    </div>
+    <>
+      {/* Inject custom CSS if provided */}
+      {element.content.customCSS && (
+        <style>
+          {`.button-${element.id} { ${element.content.customCSS} }`}
+        </style>
+      )}
+      <div className={containerClass} style={{ margin: element.styles?.margin }}>
+        <Button 
+          variant={variant as any} 
+          size={size as any}
+          className={customClassName}
+          onClick={handleClick}
+          style={cleanStyles}
+          id={element.content.customId || element.id}
+        >
+          <InlineEditor
+            value={text}
+            onChange={handleTextChange}
+            placeholder="Button text..."
+            disabled={!isEditing}
+            className="text-inherit font-inherit"
+          />
+        </Button>
+      </div>
+    </>
   );
 };
 

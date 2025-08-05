@@ -193,6 +193,21 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                   />
                 </div>
                 <div>
+                  <Label className="text-xs">Link Target</Label>
+                  <Select
+                    value={selectedElement.content.target || '_blank'}
+                    onValueChange={(value) => handleContentUpdate('target', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="_blank">New Tab</SelectItem>
+                      <SelectItem value="_self">Same Tab</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
                   <Label className="text-xs">Button Style</Label>
                   <Select
                     value={selectedElement.content.variant || 'default'}
@@ -208,6 +223,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                       <SelectItem value="secondary">Secondary</SelectItem>
                       <SelectItem value="ghost">Ghost</SelectItem>
                       <SelectItem value="link">Link</SelectItem>
+                      <SelectItem value="hero">Hero</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -439,19 +455,55 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
               <div>
                 <Label className="text-xs">Element ID</Label>
                 <Input
-                  value={selectedElement.id}
-                  disabled
-                  className="text-muted-foreground"
+                  value={selectedElement.content.customId || selectedElement.id}
+                  onChange={(e) => handleContentUpdate('customId', e.target.value)}
+                  placeholder="my-custom-id"
                 />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Custom ID for CSS targeting and scripting
+                </p>
               </div>
 
               <div>
                 <Label className="text-xs">Custom CSS</Label>
                 <textarea
                   className="w-full h-20 p-2 border border-border rounded text-sm resize-none font-mono"
-                  placeholder="color: red; font-weight: bold;"
+                  placeholder="color: red; font-weight: bold; border-radius: 8px;"
+                  value={selectedElement.content.customCSS || ''}
+                  onChange={(e) => handleContentUpdate('customCSS', e.target.value)}
                 />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Custom CSS will override default styles
+                </p>
               </div>
+
+              {selectedElement.type === 'button' && (
+                <div>
+                  <Label className="text-xs">Button States</Label>
+                  <div className="space-y-2 mt-2">
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <Label className="text-xs text-muted-foreground">Hover Color</Label>
+                        <Input
+                          type="color"
+                          value={selectedElement.content.hoverColor || '#000000'}
+                          onChange={(e) => handleContentUpdate('hoverColor', e.target.value)}
+                          className="h-8"
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs text-muted-foreground">Hover Background</Label>
+                        <Input
+                          type="color"
+                          value={selectedElement.content.hoverBackground || '#ffffff'}
+                          onChange={(e) => handleContentUpdate('hoverBackground', e.target.value)}
+                          className="h-8"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </TabsContent>
         </Tabs>
