@@ -927,11 +927,7 @@ const RowComponent: React.FC<RowComponentProps> = ({
               parentId: row.id, 
               grandParentId: sectionId 
             })}
-            onAddElement={(elementType, targetPath, insertIndex) => {
-              // Parse targetPath to get IDs
-              const [parsedSectionId, parsedRowId, parsedColumnId] = targetPath.split('.');
-              onAddElement(parsedSectionId, parsedRowId, parsedColumnId, elementType, insertIndex);
-            }}
+            onAddElement={onAddElement}
             onUpdateElement={onUpdateElement}
             onDeleteElement={onDeleteElement}
             onDuplicateElement={onDuplicateElement}
@@ -951,7 +947,7 @@ interface ColumnComponentProps {
   sectionId: string;
   isSelected: boolean;
   onSelect: () => void;
-  onAddElement: (elementType: string, targetPath: string, insertIndex: number) => void;
+  onAddElement: (sectionId: string, rowId: string, columnId: string, elementType: string, insertIndex?: number) => void;
   onUpdateElement: (elementId: string, updates: Partial<PageBuilderElement>) => void;
   onDeleteElement: (elementId: string) => void;
   onDuplicateElement: (elementId: string) => void;
@@ -974,9 +970,9 @@ const ColumnComponent: React.FC<ColumnComponentProps> = ({
 }) => {
   const [isHovered, setIsHovered] = useState(false);
 
-  const handleAddElement = (elementType: string, targetPath: string, insertIndex: number) => {
-    console.log('ColumnComponent handleAddElement:', { elementType, targetPath, insertIndex });
-    onAddElement(elementType, targetPath, insertIndex);
+  const handleAddElement = (elementType: string, insertIndex: number) => {
+    console.log('ColumnComponent handleAddElement:', { elementType, sectionId, rowId, columnId: column.id, insertIndex });
+    onAddElement(sectionId, rowId, column.id, elementType, insertIndex);
   };
 
   return (

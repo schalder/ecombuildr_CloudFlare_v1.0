@@ -7,8 +7,8 @@ interface ElementDropZoneProps {
   rowId: string;
   columnId: string;
   insertIndex: number;
-  onAddElement: (elementType: string, targetPath: string, insertIndex: number) => void;
-  onMoveElement?: (elementId: string, targetPath: string, insertIndex: number) => void;
+  onAddElement: (elementType: string, insertIndex: number) => void;
+  onMoveElement?: (elementId: string, insertIndex: number) => void;
   className?: string;
 }
 
@@ -25,20 +25,21 @@ export const ElementDropZone: React.FC<ElementDropZoneProps> = ({
     accept: ['element-type', 'element'],
     drop: (item: { elementType?: string; elementId?: string }, monitor) => {
       if (!monitor.didDrop()) {
-        const targetPath = `${sectionId}.${rowId}.${columnId}`;
         console.log('ElementDropZone drop:', { 
           elementType: item.elementType, 
           elementId: item.elementId,
-          targetPath, 
+          sectionId,
+          rowId,
+          columnId,
           insertIndex 
         });
         
         if (item.elementType) {
           // Adding new element at specific index
-          onAddElement(item.elementType, targetPath, insertIndex);
+          onAddElement(item.elementType, insertIndex);
         } else if (item.elementId && onMoveElement) {
           // Moving existing element to specific index
-          onMoveElement(item.elementId, targetPath, insertIndex);
+          onMoveElement(item.elementId, insertIndex);
         }
       }
     },

@@ -16,7 +16,7 @@ interface ElementRendererProps {
   rowId?: string;
   columnId?: string;
   elementIndex?: number;
-  onMoveElement?: (elementId: string, targetPath: string, insertIndex: number) => void;
+  onMoveElement?: (elementId: string, sectionId: string, rowId: string, columnId: string, insertIndex: number) => void;
 }
 
 export const ElementRenderer: React.FC<ElementRendererProps> = ({
@@ -67,7 +67,6 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
   const handleDuplicateElement = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (sectionId && rowId && columnId && elementIndex !== undefined) {
-      const targetPath = `${sectionId}.${rowId}.${columnId}`;
       if (onMoveElement) {
         // Create a new element with same content but new ID
         const newElement = {

@@ -13,8 +13,8 @@ interface CanvasAreaProps {
   isPreviewMode: boolean;
   onSelectElement: (element: PageBuilderElement | undefined) => void;
   onUpdateElement: (elementId: string, updates: Partial<PageBuilderElement>) => void;
-  onAddElement: (elementType: string, targetPath: string, insertIndex?: number) => void;
-  onMoveElement?: (elementId: string, targetPath: string, insertIndex: number) => void;
+  onAddElement: (sectionId: string, rowId: string, columnId: string, elementType: string, insertIndex?: number) => void;
+  onMoveElement?: (elementId: string, sectionId: string, rowId: string, columnId: string, insertIndex: number) => void;
   onRemoveElement: (elementId: string) => void;
   onAddSection?: () => void;
   onAddRow?: (sectionId: string) => void;
@@ -36,7 +36,8 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
   const [{ isOver }, drop] = useDrop({
     accept: 'element',
     drop: (item: { elementType: string }) => {
-      onAddElement(item.elementType, 'new-section');
+      // For canvas area drops, we need to add to first available section/row/column
+      console.log('Canvas drop - not implemented for direct element drops');
     },
     collect: (monitor) => ({
       isOver: monitor.isOver(),
@@ -60,7 +61,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
     if (onAddSection) {
       onAddSection();
     } else {
-      onAddElement('section', 'root');
+      console.log('Add section via onAddSection callback needed');
     }
   };
 

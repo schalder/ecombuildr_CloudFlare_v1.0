@@ -12,8 +12,8 @@ interface SectionRendererProps {
   isPreviewMode: boolean;
   onSelectElement: (element: PageBuilderElement | undefined) => void;
   onUpdateElement: (elementId: string, updates: Partial<PageBuilderElement>) => void;
-  onAddElement: (elementType: string, targetPath: string, insertIndex?: number) => void;
-  onMoveElement?: (elementId: string, targetPath: string, insertIndex: number) => void;
+  onAddElement: (sectionId: string, rowId: string, columnId: string, elementType: string, insertIndex?: number) => void;
+  onMoveElement?: (elementId: string, sectionId: string, rowId: string, columnId: string, insertIndex: number) => void;
   onRemoveElement: (elementId: string) => void;
 }
 
@@ -30,9 +30,8 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({
   const [{ isOver }, drop] = useDrop({
     accept: 'element',
     drop: (item: { elementType: string }) => {
-      if (item.elementType === 'row') {
-        onAddElement('row', `section-${section.id}`);
-      }
+      // For now, sections don't directly accept elements - they get rows
+      console.log('Section drop - not implemented for direct elements');
     },
     collect: (monitor) => ({
       isOver: monitor.isOver(),
@@ -47,7 +46,8 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({
   };
 
   const handleAddRow = () => {
-    onAddElement('row', `section-${section.id}`);
+    // This would need a different callback for adding rows to sections
+    console.log('Add row to section - needs separate callback');
   };
 
   const handleDeleteSection = (e: React.MouseEvent) => {

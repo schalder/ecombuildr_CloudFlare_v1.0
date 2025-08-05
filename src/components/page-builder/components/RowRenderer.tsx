@@ -12,8 +12,8 @@ interface RowRendererProps {
   isPreviewMode: boolean;
   onSelectElement: (element: PageBuilderElement | undefined) => void;
   onUpdateElement: (elementId: string, updates: Partial<PageBuilderElement>) => void;
-  onAddElement: (elementType: string, targetPath: string, insertIndex?: number) => void;
-  onMoveElement?: (elementId: string, targetPath: string, insertIndex: number) => void;
+  onAddElement: (sectionId: string, rowId: string, columnId: string, elementType: string, insertIndex?: number) => void;
+  onMoveElement?: (elementId: string, sectionId: string, rowId: string, columnId: string, insertIndex: number) => void;
   onRemoveElement: (elementId: string) => void;
 }
 
@@ -34,7 +34,8 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
     drop: (item: { elementType: string }) => {
       // Add element to first column by default
       if (row.columns.length > 0) {
-        onAddElement(item.elementType, `column-${row.columns[0].id}`);
+        console.log('RowRenderer drop to first column:', { sectionId, rowId: row.id, columnId: row.columns[0].id, elementType: item.elementType });
+        onAddElement(sectionId, row.id, row.columns[0].id, item.elementType);
       }
     },
     collect: (monitor) => ({

@@ -148,8 +148,16 @@ export const DragDropPageBuilder: React.FC<DragDropPageBuilderProps> = ({
               isPreviewMode={isPreviewMode}
               onSelectElement={selectElement}
               onUpdateElement={updateElement}
-              onAddElement={addElement}
-              onMoveElement={moveElement}
+              onAddElement={(sectionId, rowId, columnId, elementType, insertIndex) => {
+                // Convert new signature back to old for compatibility
+                const targetPath = `${sectionId}.${rowId}.${columnId}`;
+                addElement(elementType, targetPath, insertIndex);
+              }}
+              onMoveElement={moveElement ? (elementId, sectionId, rowId, columnId, insertIndex) => {
+                // Convert new signature back to old for compatibility
+                const targetPath = `${sectionId}.${rowId}.${columnId}`;
+                moveElement(elementId, targetPath, insertIndex);
+              } : undefined}
               onRemoveElement={removeElement}
               onAddSection={handleAddSection}
               onAddRow={handleAddRow}

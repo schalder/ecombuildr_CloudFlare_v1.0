@@ -14,9 +14,9 @@ interface ColumnRendererProps {
   isPreviewMode: boolean;
   onSelectElement: (element: PageBuilderElement | undefined) => void;
   onUpdateElement: (elementId: string, updates: Partial<PageBuilderElement>) => void;
-  onAddElement: (elementType: string, targetPath: string, insertIndex?: number) => void;
+  onAddElement: (sectionId: string, rowId: string, columnId: string, elementType: string, insertIndex?: number) => void;
   onRemoveElement: (elementId: string) => void;
-  onMoveElement?: (elementId: string, targetPath: string, insertIndex: number) => void;
+  onMoveElement?: (elementId: string, sectionId: string, rowId: string, columnId: string, insertIndex: number) => void;
 }
 
 export const ColumnRenderer: React.FC<ColumnRendererProps> = ({
@@ -36,14 +36,13 @@ export const ColumnRenderer: React.FC<ColumnRendererProps> = ({
     accept: ['element-type', 'element'],
     drop: (item: { elementType?: string; elementId?: string }, monitor) => {
       if (!monitor.didDrop()) {
-        const targetPath = `${sectionId}.${rowId}.${column.id}`;
+        console.log('ColumnRenderer drop:', { elementType: item.elementType, sectionId, rowId, columnId: column.id });
         if (item.elementType) {
           // Adding new element
-          onAddElement(item.elementType, targetPath);
-          console.log('Added element to:', targetPath);
+          onAddElement(sectionId, rowId, column.id, item.elementType);
         } else if (item.elementId && onMoveElement) {
           // Moving existing element
-          onMoveElement(item.elementId, targetPath, column.elements.length);
+          onMoveElement(item.elementId, sectionId, rowId, column.id, column.elements.length);
         }
       }
     },
@@ -60,8 +59,7 @@ export const ColumnRenderer: React.FC<ColumnRendererProps> = ({
   };
 
   const handleAddElement = () => {
-    const targetPath = `${sectionId}.${rowId}.${column.id}`;
-    onAddElement('text', targetPath);
+    onAddElement(sectionId, rowId, column.id, 'text');
   };
 
   return (
@@ -106,8 +104,13 @@ export const ColumnRenderer: React.FC<ColumnRendererProps> = ({
                   rowId={rowId}
                   columnId={column.id}
                   insertIndex={index}
-                  onAddElement={onAddElement}
-                  onMoveElement={onMoveElement}
+                  onAddElement={(elementType, insertIndex) => {
+                    console.log('ElementDropZone callback:', { sectionId, rowId, columnId: column.id, elementType, insertIndex });
+                    onAddElement(sectionId, rowId, column.id, elementType, insertIndex);
+                  }}
+                  onMoveElement={onMoveElement ? (elementId, insertIndex) => {
+                    onMoveElement(elementId, sectionId, rowId, column.id, insertIndex);
+                  } : undefined}
                 />
               )}
               
@@ -133,8 +136,13 @@ export const ColumnRenderer: React.FC<ColumnRendererProps> = ({
               rowId={rowId}
               columnId={column.id}
               insertIndex={column.elements.length}
-              onAddElement={onAddElement}
-              onMoveElement={onMoveElement}
+              onAddElement={(elementType, insertIndex) => {
+                console.log('ElementDropZone callback (end):', { sectionId, rowId, columnId: column.id, elementType, insertIndex });
+                onAddElement(sectionId, rowId, column.id, elementType, insertIndex);
+              }}
+              onMoveElement={onMoveElement ? (elementId, insertIndex) => {
+                onMoveElement(elementId, sectionId, rowId, column.id, insertIndex);
+              } : undefined}
             />
           )}
         </div>
