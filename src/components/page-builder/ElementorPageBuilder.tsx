@@ -618,7 +618,10 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = ({
                     const element = findElement(selection.id);
                     if (element) {
                       selectedItem = { type: 'element', data: element };
-                      updateHandler = (updates: any) => updateElement(selection.id, updates);
+                      updateHandler = (elementId: string, updates: any) => {
+                        console.log('PropertiesPanel updating element:', elementId, updates);
+                        updateElement(elementId, updates);
+                      };
                     }
                   } else if (selection.type === 'section') {
                     const section = data.sections.find(s => s.id === selection.id);
