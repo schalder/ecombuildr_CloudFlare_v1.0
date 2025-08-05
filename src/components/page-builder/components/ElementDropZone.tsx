@@ -7,8 +7,9 @@ interface ElementDropZoneProps {
   rowId: string;
   columnId: string;
   insertIndex: number;
-  onAddElement: (elementType: string, targetPath: string, insertIndex?: number) => void;
+  onAddElement: (elementType: string, targetPath: string, insertIndex: number) => void;
   onMoveElement?: (elementId: string, targetPath: string, insertIndex: number) => void;
+  className?: string;
 }
 
 export const ElementDropZone: React.FC<ElementDropZoneProps> = ({
@@ -17,18 +18,26 @@ export const ElementDropZone: React.FC<ElementDropZoneProps> = ({
   columnId,
   insertIndex,
   onAddElement,
-  onMoveElement
+  onMoveElement,
+  className
 }) => {
   const [{ isOver, canDrop }, drop] = useDrop({
     accept: ['element-type', 'element'],
     drop: (item: { elementType?: string; elementId?: string }, monitor) => {
       if (!monitor.didDrop()) {
         const targetPath = `${sectionId}.${rowId}.${columnId}`;
+        console.log('ElementDropZone drop:', { 
+          elementType: item.elementType, 
+          elementId: item.elementId,
+          targetPath, 
+          insertIndex 
+        });
+        
         if (item.elementType) {
-          // Adding new element
+          // Adding new element at specific index
           onAddElement(item.elementType, targetPath, insertIndex);
         } else if (item.elementId && onMoveElement) {
-          // Moving existing element
+          // Moving existing element to specific index
           onMoveElement(item.elementId, targetPath, insertIndex);
         }
       }
@@ -45,14 +54,37 @@ export const ElementDropZone: React.FC<ElementDropZoneProps> = ({
     <div
       ref={drop}
       className={cn(
-        'h-2 -mx-2 transition-all duration-200',
-        showDropZone ? 'bg-primary/20 border-t-2 border-primary rounded' : 'bg-transparent',
-        isOver && 'bg-primary/30 scale-y-150'
+        'relative h-1 mx-2 transition-all duration-200',
+        className,
+        showDropZone ? 'h-4' : 'h-1'
       )}
     >
+      {/* Blue line indicator like Elementor */}
+      <div
+        className={cn(
+          'absolute inset-x-0 top-1/2 -translate-y-1/2 transition-all duration-200',
+          showDropZone 
+            ? 'h-0.5 bg-blue-500 shadow-md opacity-100' 
+            : 'h-0 bg-transparent opacity-0'
+        )}
+      />
+      
+      {/* Drop zone background */}
+      <div
+        className={cn(
+          'absolute inset-0 transition-all duration-200 rounded',
+          isOver 
+            ? 'bg-blue-100/50 border border-blue-200' 
+            : showDropZone 
+            ? 'bg-blue-50/30' 
+            : 'bg-transparent'
+        )}
+      />
+
+      {/* Drop here indicator */}
       {isOver && (
-        <div className="absolute left-0 right-0 flex items-center justify-center z-20">
-          <div className="bg-primary text-primary-foreground px-2 py-1 rounded text-xs font-medium">
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
+          <div className="bg-blue-500 text-white px-2 py-1 rounded text-xs font-medium whitespace-nowrap">
             Drop here
           </div>
         </div>

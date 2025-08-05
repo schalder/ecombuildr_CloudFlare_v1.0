@@ -44,6 +44,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { PropertiesPanel } from './components/PropertiesPanel';
 import { SettingsPanel } from './components/SettingsPanels';
+import { ElementDropZone } from './components/ElementDropZone';
 import { 
   PageBuilderData, 
   PageBuilderSection, 
@@ -280,8 +281,8 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = ({
   }, [data, updateData, selection]);
 
   // Element operations
-  const addElement = useCallback((sectionId: string, rowId: string, columnId: string, elementType: string) => {
-    console.log('Adding element:', { sectionId, rowId, columnId, elementType });
+  const addElement = useCallback((sectionId: string, rowId: string, columnId: string, elementType: string, insertIndex?: number) => {
+    console.log('Adding element:', { sectionId, rowId, columnId, elementType, insertIndex });
     console.log('Available elements in registry:', elementRegistry.getAll().map(e => e.id));
     
     const elementDef = elementRegistry.get(elementType);
@@ -313,7 +314,13 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = ({
                         col.id === columnId
                           ? { 
                               ...col, 
-                              elements: [...col.elements, newElement] 
+                              elements: typeof insertIndex === 'number' 
+                                ? [
+                                    ...col.elements.slice(0, insertIndex),
+                                    newElement,
+                                    ...col.elements.slice(insertIndex)
+                                  ]
+                                : [...col.elements, newElement]
                             }
                           : col
                       )
@@ -564,8 +571,8 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = ({
                       onDuplicate={() => duplicateSection(section.id)}
                       onAddRow={() => setShowColumnModal({ sectionId: section.id })}
                       onDeleteRow={(rowId) => deleteRow(section.id, rowId)}
-            onAddElement={(sectionId, rowId, columnId, elementType) => 
-              addElement(sectionId, rowId, columnId, elementType)
+            onAddElement={(sectionId, rowId, columnId, elementType, insertIndex) => 
+              addElement(sectionId, rowId, columnId, elementType, insertIndex)
             }
                       onUpdateElement={updateElement}
                       onDeleteElement={deleteElement}
@@ -724,7 +731,7 @@ interface SectionComponentProps {
   onDuplicate: () => void;
   onAddRow: () => void;
   onDeleteRow: (rowId: string) => void;
-  onAddElement: (sectionId: string, rowId: string, columnId: string, elementType: string) => void;
+  onAddElement: (sectionId: string, rowId: string, columnId: string, elementType: string, insertIndex?: number) => void;
   onUpdateElement: (elementId: string, updates: Partial<PageBuilderElement>) => void;
   onDeleteElement: (elementId: string) => void;
   onDuplicateElement: (elementId: string) => void;
@@ -841,7 +848,7 @@ interface RowComponentProps {
   isSelected: boolean;
   onSelect: () => void;
   onDelete: () => void;
-  onAddElement: (sectionId: string, rowId: string, columnId: string, elementType: string) => void;
+  onAddElement: (sectionId: string, rowId: string, columnId: string, elementType: string, insertIndex?: number) => void;
   onUpdateElement: (elementId: string, updates: Partial<PageBuilderElement>) => void;
   onDeleteElement: (elementId: string) => void;
   onDuplicateElement: (elementId: string) => void;
@@ -920,7 +927,11 @@ const RowComponent: React.FC<RowComponentProps> = ({
               parentId: row.id, 
               grandParentId: sectionId 
             })}
-            onAddElement={(elementType) => onAddElement(sectionId, row.id, column.id, elementType)}
+            onAddElement={(elementType, targetPath, insertIndex) => {
+              // Parse targetPath to get IDs
+              const [parsedSectionId, parsedRowId, parsedColumnId] = targetPath.split('.');
+              onAddElement(parsedSectionId, parsedRowId, parsedColumnId, elementType, insertIndex);
+            }}
             onUpdateElement={onUpdateElement}
             onDeleteElement={onDeleteElement}
             onDuplicateElement={onDuplicateElement}
@@ -940,7 +951,7 @@ interface ColumnComponentProps {
   sectionId: string;
   isSelected: boolean;
   onSelect: () => void;
-  onAddElement: (elementType: string) => void;
+  onAddElement: (elementType: string, targetPath: string, insertIndex: number) => void;
   onUpdateElement: (elementId: string, updates: Partial<PageBuilderElement>) => void;
   onDeleteElement: (elementId: string) => void;
   onDuplicateElement: (elementId: string) => void;
@@ -963,30 +974,19 @@ const ColumnComponent: React.FC<ColumnComponentProps> = ({
 }) => {
   const [isHovered, setIsHovered] = useState(false);
 
-  const [{ isOver }, drop] = useDrop(() => ({
-    accept: 'element-type',
-    drop: (item: DragItem) => {
-      console.log('Column drop triggered:', { item, columnId: column.id });
-      if (item.elementType) {
-        onAddElement(item.elementType);
-      }
-    },
-    collect: (monitor) => ({
-      isOver: monitor.isOver()
-    })
-  }));
+  const handleAddElement = (elementType: string, targetPath: string, insertIndex: number) => {
+    console.log('ColumnComponent handleAddElement:', { elementType, targetPath, insertIndex });
+    onAddElement(elementType, targetPath, insertIndex);
+  };
 
   return (
     <div 
-      ref={drop}
       className={`relative min-h-24 border border-dashed rounded-lg transition-all duration-200 ${
-        isOver 
-          ? 'border-accent bg-accent/10' 
-          : isSelected 
-            ? 'border-accent bg-accent/5' 
-            : isHovered 
-              ? 'border-accent/50 bg-accent/2' 
-              : 'border-border'
+        isSelected 
+          ? 'border-accent bg-accent/5' 
+          : isHovered 
+            ? 'border-accent/50 bg-accent/2' 
+            : 'border-border'
       }`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -1016,31 +1016,52 @@ const ColumnComponent: React.FC<ColumnComponentProps> = ({
       )}
 
       <div className="p-2">
+        {/* Drop zone at top of column */}
+        <ElementDropZone
+          sectionId={sectionId}
+          rowId={rowId}
+          columnId={column.id}
+          insertIndex={0}
+          onAddElement={handleAddElement}
+          className="mb-2"
+        />
+
         {column.elements.length === 0 ? (
           <div className="h-20 flex flex-col items-center justify-center text-muted-foreground text-sm">
             <Plus className="h-6 w-6 mb-2 opacity-50" />
             <span>Drop elements here</span>
           </div>
         ) : (
-          <div className="space-y-2">
-            {column.elements.map((element) => (
-              <ElementWrapper
-                key={element.id}
-                element={element}
-                columnId={column.id}
-                rowId={rowId}
-                sectionId={sectionId}
-                isSelected={selection?.type === 'element' && selection.id === element.id}
-                onSelect={() => onSelectionChange({ 
-                  type: 'element', 
-                  id: element.id, 
-                  parentId: column.id, 
-                  grandParentId: rowId 
-                })}
-                onUpdate={onUpdateElement}
-                onDelete={onDeleteElement}
-                onDuplicate={onDuplicateElement}
-              />
+          <div>
+            {column.elements.map((element, index) => (
+              <div key={element.id}>
+                <ElementWrapper
+                  element={element}
+                  columnId={column.id}
+                  rowId={rowId}
+                  sectionId={sectionId}
+                  isSelected={selection?.type === 'element' && selection.id === element.id}
+                  onSelect={() => onSelectionChange({ 
+                    type: 'element', 
+                    id: element.id, 
+                    parentId: column.id, 
+                    grandParentId: rowId 
+                  })}
+                  onUpdate={onUpdateElement}
+                  onDelete={onDeleteElement}
+                  onDuplicate={onDuplicateElement}
+                />
+                
+                {/* Drop zone after each element */}
+                <ElementDropZone
+                  sectionId={sectionId}
+                  rowId={rowId}
+                  columnId={column.id}
+                  insertIndex={index + 1}
+                  onAddElement={handleAddElement}
+                  className="my-2"
+                />
+              </div>
             ))}
           </div>
         )}
