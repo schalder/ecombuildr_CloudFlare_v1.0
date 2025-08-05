@@ -940,7 +940,7 @@ interface ColumnComponentProps {
   sectionId: string;
   isSelected: boolean;
   onSelect: () => void;
-  onAddElement: (elementType: string) => void;
+  onAddElement: (sectionId: string, rowId: string, columnId: string, elementType: string) => void;
   onUpdateElement: (elementId: string, updates: Partial<PageBuilderElement>) => void;
   onDeleteElement: (elementId: string) => void;
   onDuplicateElement: (elementId: string) => void;
@@ -968,7 +968,7 @@ const ColumnComponent: React.FC<ColumnComponentProps> = ({
     drop: (item: DragItem) => {
       console.log('Column drop triggered:', { item, columnId: column.id });
       if (item.elementType) {
-        onAddElement(item.elementType);
+        onAddElement(sectionId, rowId, column.id, item.elementType);
       }
     },
     collect: (monitor) => ({
