@@ -60,10 +60,21 @@ export const SectionSettings: React.FC<SectionSettingsProps> = ({ section, onUpd
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label>Background Color</Label>
-            <ColorPicker
-              color={section.styles?.backgroundColor || 'transparent'}
-              onChange={(color) => handleStyleUpdate('backgroundColor', color)}
-            />
+            <div className="flex items-center space-x-2">
+              <Input
+                type="color"
+                value={section.styles?.backgroundColor || '#ffffff'}
+                onChange={(e) => handleStyleUpdate('backgroundColor', e.target.value)}
+                className="w-16 h-8 rounded border"
+              />
+              <Input
+                type="text"
+                value={section.styles?.backgroundColor || 'transparent'}
+                onChange={(e) => handleStyleUpdate('backgroundColor', e.target.value)}
+                placeholder="transparent or #ffffff"
+                className="flex-1"
+              />
+            </div>
           </div>
           
           <div className="space-y-2">
@@ -180,10 +191,21 @@ export const RowSettings: React.FC<RowSettingsProps> = ({ row, onUpdate }) => {
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label>Background Color</Label>
-            <ColorPicker
-              color={row.styles?.backgroundColor || 'transparent'}
-              onChange={(color) => handleStyleUpdate('backgroundColor', color)}
-            />
+            <div className="flex items-center space-x-2">
+              <Input
+                type="color"
+                value={row.styles?.backgroundColor || '#ffffff'}
+                onChange={(e) => handleStyleUpdate('backgroundColor', e.target.value)}
+                className="w-16 h-8 rounded border"
+              />
+              <Input
+                type="text"
+                value={row.styles?.backgroundColor || 'transparent'}
+                onChange={(e) => handleStyleUpdate('backgroundColor', e.target.value)}
+                placeholder="transparent or #ffffff"
+                className="flex-1"
+              />
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -259,10 +281,21 @@ export const ColumnSettings: React.FC<ColumnSettingsProps> = ({ column, onUpdate
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label>Background Color</Label>
-            <ColorPicker
-              color={column.styles?.backgroundColor || 'transparent'}
-              onChange={(color) => handleStyleUpdate('backgroundColor', color)}
-            />
+            <div className="flex items-center space-x-2">
+              <Input
+                type="color"
+                value={column.styles?.backgroundColor || '#ffffff'}
+                onChange={(e) => handleStyleUpdate('backgroundColor', e.target.value)}
+                className="w-16 h-8 rounded border"
+              />
+              <Input
+                type="text"
+                value={column.styles?.backgroundColor || 'transparent'}
+                onChange={(e) => handleStyleUpdate('backgroundColor', e.target.value)}
+                placeholder="transparent or #ffffff"
+                className="flex-1"
+              />
+            </div>
           </div>
         </CardContent>
       </Card>

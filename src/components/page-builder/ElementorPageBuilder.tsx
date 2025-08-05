@@ -374,6 +374,7 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = ({
 
   // Update section, row, or column
   const updateSection = useCallback((sectionId: string, updates: Partial<PageBuilderSection>) => {
+    console.log('updateSection called:', { sectionId, updates });
     updateData({
       ...data,
       sections: data.sections.map(section =>
@@ -383,6 +384,7 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = ({
   }, [data, updateData]);
 
   const updateRow = useCallback((sectionId: string, rowId: string, updates: Partial<PageBuilderRow>) => {
+    console.log('updateRow called:', { sectionId, rowId, updates });
     updateData({
       ...data,
       sections: data.sections.map(section =>
@@ -399,6 +401,7 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = ({
   }, [data, updateData]);
 
   const updateColumn = useCallback((sectionId: string, rowId: string, columnId: string, updates: Partial<PageBuilderColumn>) => {
+    console.log('updateColumn called:', { sectionId, rowId, columnId, updates });
     updateData({
       ...data,
       sections: data.sections.map(section =>
