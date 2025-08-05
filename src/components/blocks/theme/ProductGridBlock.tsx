@@ -232,12 +232,12 @@ const ProductGridEdit: React.FC<BlockEditProps> = ({
           {content.filterByCategory && (
             <div>
               <Label htmlFor="categoryId">Select Category</Label>
-              <Select value={content.categoryId || ''} onValueChange={(value) => onUpdate({ categoryId: value })}>
+              <Select value={content.categoryId || 'all'} onValueChange={(value) => onUpdate({ categoryId: value })}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Categories</SelectItem>
+                  <SelectItem value="all">All Categories</SelectItem>
                   {categories.map((category) => (
                     <SelectItem key={category.id} value={category.id}>
                       {category.name}
@@ -298,7 +298,7 @@ const ProductGridSave: React.FC<BlockSaveProps> = ({ block }) => {
       .eq('is_active', true);
 
     // Filter by category if specified
-    if (content.filterByCategory && content.categoryId) {
+    if (content.filterByCategory && content.categoryId && content.categoryId !== 'all') {
       query = query.eq('category_id', content.categoryId);
     }
 

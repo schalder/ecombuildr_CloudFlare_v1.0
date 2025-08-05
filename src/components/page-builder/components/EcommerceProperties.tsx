@@ -460,14 +460,14 @@ export const ContactFormContentProperties: React.FC<EcommerceContentPropertiesPr
       <div>
         <Label className="text-xs">Product Reference (Optional)</Label>
         <Select
-          value={element.content.productId || ''}
-          onValueChange={(value) => onUpdate('productId', value)}
+          value={element.content.productId || 'none'}
+          onValueChange={(value) => onUpdate('productId', value === 'none' ? null : value)}
         >
           <SelectTrigger>
             <SelectValue placeholder="No product reference" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">No product reference</SelectItem>
+            <SelectItem value="none">No product reference</SelectItem>
             {products.map((product) => (
               <SelectItem key={product.id} value={product.id}>
                 <div className="flex items-center gap-2">
