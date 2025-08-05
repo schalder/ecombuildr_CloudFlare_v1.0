@@ -9,6 +9,7 @@ export interface PageBuilderElement {
     padding?: string;
     textAlign?: 'left' | 'center' | 'right';
     fontSize?: string;
+    lineHeight?: string;
     color?: string;
     backgroundColor?: string;
   };

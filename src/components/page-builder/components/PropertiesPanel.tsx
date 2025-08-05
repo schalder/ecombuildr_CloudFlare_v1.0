@@ -362,6 +362,23 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
               </div>
 
               <div>
+                <Label className="text-xs">Line Height</Label>
+                <div className="flex items-center space-x-2">
+                  <Slider
+                    value={[parseFloat(selectedElement.styles?.lineHeight?.toString() || '1.6')]}
+                    onValueChange={(value) => handleStyleUpdate('lineHeight', value[0].toString())}
+                    max={3}
+                    min={1}
+                    step={0.1}
+                    className="flex-1"
+                  />
+                  <span className="text-xs text-muted-foreground w-12">
+                    {selectedElement.styles?.lineHeight || '1.6'}
+                  </span>
+                </div>
+              </div>
+
+              <div>
                 <Label className="text-xs">Text Color</Label>
                 <Input
                   type="color"

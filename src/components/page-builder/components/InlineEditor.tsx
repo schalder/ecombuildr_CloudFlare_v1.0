@@ -74,10 +74,14 @@ export const InlineEditor: React.FC<InlineEditorProps> = ({
         onKeyDown={handleKeyDown}
         className={cn(
           "w-full bg-transparent border-none outline-none resize-none",
+          multiline && "min-h-[3rem] h-auto",
           className
         )}
         placeholder={placeholder}
-        {...(multiline && { rows: 3 })}
+        {...(multiline && { 
+          rows: Math.max(3, editValue.split('\n').length),
+          style: { height: 'auto' }
+        })}
       />
     );
   }

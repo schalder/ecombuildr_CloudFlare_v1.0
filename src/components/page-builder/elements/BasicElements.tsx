@@ -27,20 +27,24 @@ const HeadingElement: React.FC<{
     textAlign: element.styles?.textAlign || 'left',
     color: element.styles?.color || 'inherit',
     fontSize: element.styles?.fontSize || `${3.5 - level * 0.5}rem`,
+    lineHeight: element.styles?.lineHeight || '1.2',
+    backgroundColor: element.styles?.backgroundColor || 'transparent',
     margin: element.styles?.margin || '0',
     padding: element.styles?.padding || '0',
   };
 
   return (
-    <Tag style={styles as any} className="outline-none font-bold">
-      <InlineEditor
-        value={text}
-        onChange={handleTextChange}
-        placeholder="Enter heading text..."
-        disabled={!isEditing}
-        className="font-inherit text-inherit"
-      />
-    </Tag>
+    <div style={{ backgroundColor: element.styles?.backgroundColor || 'transparent' }} className="rounded">
+      <Tag style={styles as any} className="outline-none font-bold block">
+        <InlineEditor
+          value={text}
+          onChange={handleTextChange}
+          placeholder="Enter heading text..."
+          disabled={!isEditing}
+          className="font-inherit text-inherit"
+        />
+      </Tag>
+    </div>
   );
 };
 
@@ -62,22 +66,25 @@ const ParagraphElement: React.FC<{
     textAlign: element.styles?.textAlign || 'left',
     color: element.styles?.color || 'inherit',
     fontSize: element.styles?.fontSize || '1rem',
-    lineHeight: '1.6',
+    lineHeight: element.styles?.lineHeight || '1.6',
+    backgroundColor: element.styles?.backgroundColor || 'transparent',
     margin: element.styles?.margin || '0',
     padding: element.styles?.padding || '0',
   };
 
   return (
-    <p style={styles as any} className="outline-none">
-      <InlineEditor
-        value={text}
-        onChange={handleTextChange}
-        placeholder="Enter your text content..."
-        disabled={!isEditing}
-        multiline={true}
-        className="text-inherit leading-inherit"
-      />
-    </p>
+    <div style={{ backgroundColor: element.styles?.backgroundColor || 'transparent' }} className="rounded">
+      <p style={styles as any} className="outline-none">
+        <InlineEditor
+          value={text}
+          onChange={handleTextChange}
+          placeholder="Enter your text content..."
+          disabled={!isEditing}
+          multiline={true}
+          className="text-inherit leading-inherit"
+        />
+      </p>
+    </div>
   );
 };
 
