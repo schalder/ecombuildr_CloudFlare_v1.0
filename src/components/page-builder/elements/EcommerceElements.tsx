@@ -1,10 +1,13 @@
 import React from 'react';
-import { ShoppingCart, Grid, Star, Tag, Package } from 'lucide-react';
+import { ShoppingCart, Grid, Star, Tag, Package, DollarSign } from 'lucide-react';
 import { PageBuilderElement, ElementType } from '../types';
 import { elementRegistry } from './ElementRegistry';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { useStoreProducts, useStoreCategories, useProductById } from '@/hooks/useStoreData';
+import { useCart } from '@/contexts/CartContext';
+import { useToast } from '@/hooks/use-toast';
 
 // Product Grid Element
 const ProductGridElement: React.FC<{
@@ -12,54 +15,70 @@ const ProductGridElement: React.FC<{
   isEditing?: boolean;
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
 }> = ({ element }) => {
-  // Mock products for now - in real implementation this would fetch from store
-  const mockProducts = [
-    {
-      id: '1',
-      name: 'Premium Headphones',
-      price: 299.99,
-      image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&h=300&fit=crop',
-      rating: 4.5
-    },
-    {
-      id: '2', 
-      name: 'Wireless Speaker',
-      price: 199.99,
-      image: 'https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=300&h=300&fit=crop',
-      rating: 4.8
-    },
-    {
-      id: '3',
-      name: 'Smart Watch',
-      price: 399.99,
-      image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=300&h=300&fit=crop',
-      rating: 4.3
-    },
-    {
-      id: '4',
-      name: 'Laptop Stand',
-      price: 79.99,
-      image: 'https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=300&h=300&fit=crop',
-      rating: 4.6
-    }
-  ];
-
+  const { addItem } = useCart();
+  const { toast } = useToast();
+  
+  // Extract configuration from element content
   const columns = element.content.columns || 2;
   const showRating = element.content.showRating !== false;
   const showPrice = element.content.showPrice !== false;
+  const showQuickAdd = element.content.showQuickAdd !== false;
+  const categoryIds = element.content.categoryIds || [];
+  const specificProductIds = element.content.specificProductIds || [];
+  const limit = element.content.limit || 4;
+  const selectionMode = element.content.selectionMode || 'all'; // 'all', 'category', 'specific'
+
+  // Fetch products based on configuration
+  const { products, loading } = useStoreProducts({
+    categoryIds: selectionMode === 'category' ? categoryIds : undefined,
+    specificProductIds: selectionMode === 'specific' ? specificProductIds : undefined,
+    limit: limit
+  });
+
+  const handleAddToCart = (product: any) => {
+    addItem({
+      id: `cart-${product.id}`,
+      productId: product.id,
+      name: product.name,
+      price: product.price,
+      image: Array.isArray(product.images) ? product.images[0] : product.images,
+      sku: product.sku
+    });
+    
+    toast({
+      title: "Added to cart",
+      description: `${product.name} has been added to your cart.`,
+    });
+  };
+
+  if (loading) {
+    return (
+      <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` }}>
+        {[...Array(limit)].map((_, i) => (
+          <Card key={i} className="animate-pulse">
+            <CardContent className="p-3">
+              <div className="aspect-square bg-muted rounded-lg mb-3"></div>
+              <div className="h-4 bg-muted rounded mb-2"></div>
+              <div className="h-3 bg-muted rounded w-2/3"></div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    );
+  }
 
   return (
     <div>
       {element.content.title && (
         <h3 className="text-xl font-semibold mb-4">{element.content.title}</h3>
       )}
-      <div className={`grid gap-4 grid-cols-${Math.min(columns, 4)}`}>
-        {mockProducts.slice(0, element.content.limit || 4).map((product) => (
+      <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` }}>
+        {products.map((product) => (
           <Card key={product.id} className="group hover:shadow-lg transition-shadow">
             <CardContent className="p-3">
               <div className="aspect-square overflow-hidden rounded-lg mb-3">
                 <img
-                  src={product.image}
+                  src={(Array.isArray(product.images) ? product.images[0] : product.images) || '/placeholder.svg'}
                   alt={product.name}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                 />
@@ -72,24 +91,43 @@ const ProductGridElement: React.FC<{
                     {[...Array(5)].map((_, i) => (
                       <Star
                         key={i}
-                        className={`h-3 w-3 ${i < Math.floor(product.rating) ? 'fill-current' : ''}`}
+                        className={`h-3 w-3 ${i < 4 ? 'fill-current' : ''}`}
                       />
                     ))}
                   </div>
-                  <span className="text-xs text-muted-foreground">({product.rating})</span>
+                  <span className="text-xs text-muted-foreground">(4.0)</span>
                 </div>
               )}
               
               {showPrice && (
                 <div className="flex items-center justify-between">
-                  <span className="font-bold text-lg">${product.price}</span>
-                  <Button size="sm">Add to Cart</Button>
+                  <div className="flex flex-col">
+                    <span className="font-bold text-lg">${product.price}</span>
+                    {product.compare_price && product.compare_price > product.price && (
+                      <span className="text-sm text-muted-foreground line-through">
+                        ${product.compare_price}
+                      </span>
+                    )}
+                  </div>
+                  {showQuickAdd && (
+                    <Button 
+                      size="sm" 
+                      onClick={() => handleAddToCart(product)}
+                    >
+                      Add to Cart
+                    </Button>
+                  )}
                 </div>
               )}
             </CardContent>
           </Card>
         ))}
       </div>
+      {products.length === 0 && (
+        <div className="text-center py-8 text-muted-foreground">
+          No products found. Add some products to your store to display them here.
+        </div>
+      )}
     </div>
   );
 };
@@ -100,54 +138,104 @@ const FeaturedProductsElement: React.FC<{
   isEditing?: boolean;
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
 }> = ({ element }) => {
-  const mockFeaturedProduct = {
-    id: 'featured-1',
-    name: 'Premium Wireless Headphones',
-    price: 299.99,
-    originalPrice: 399.99,
-    image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&h=400&fit=crop',
-    rating: 4.8,
-    features: ['Noise Cancellation', '30hr Battery', 'Wireless Charging', 'Premium Sound'],
-    description: 'Experience premium audio quality with these professional-grade wireless headphones.'
+  const { addItem } = useCart();
+  const { toast } = useToast();
+  
+  const productId = element.content.productId;
+  const layout = element.content.layout || 'horizontal';
+  const badgeText = element.content.badgeText || 'Featured Product';
+  const ctaText = element.content.ctaText || 'Add to Cart';
+  
+  const { product, loading } = useProductById(productId);
+
+  const handleAddToCart = () => {
+    if (!product) return;
+    
+    addItem({
+      id: `cart-${product.id}`,
+      productId: product.id,
+      name: product.name,
+      price: product.price,
+      image: Array.isArray(product.images) ? product.images[0] : product.images,
+      sku: product.sku
+    });
+    
+    toast({
+      title: "Added to cart",
+      description: `${product.name} has been added to your cart.`,
+    });
   };
+
+  if (loading) {
+    return (
+      <div className="bg-gradient-to-r from-primary/10 to-secondary/10 rounded-lg p-6 animate-pulse">
+        <div className="grid md:grid-cols-2 gap-6 items-center">
+          <div>
+            <div className="h-6 w-24 bg-muted rounded mb-3"></div>
+            <div className="h-8 w-3/4 bg-muted rounded mb-2"></div>
+            <div className="h-4 w-full bg-muted rounded mb-4"></div>
+            <div className="h-10 w-32 bg-muted rounded"></div>
+          </div>
+          <div className="h-64 md:h-80 bg-muted rounded-lg"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!product) {
+    return (
+      <div className="bg-gradient-to-r from-primary/10 to-secondary/10 rounded-lg p-6">
+        <div className="text-center py-8 text-muted-foreground">
+          Please select a product to feature from the properties panel.
+        </div>
+      </div>
+    );
+  }
+
+  const layoutClass = layout === 'vertical' 
+    ? 'flex flex-col gap-6' 
+    : layout === 'hero'
+    ? 'grid lg:grid-cols-2 gap-8 items-center min-h-[400px]'
+    : 'grid md:grid-cols-2 gap-6 items-center';
 
   return (
     <div className="bg-gradient-to-r from-primary/10 to-secondary/10 rounded-lg p-6">
-      <div className="grid md:grid-cols-2 gap-6 items-center">
-        <div>
-          <Badge className="mb-3">Featured Product</Badge>
-          <h2 className="text-2xl font-bold mb-2">{mockFeaturedProduct.name}</h2>
-          <p className="text-muted-foreground mb-4">{mockFeaturedProduct.description}</p>
+      <div className={layoutClass}>
+        <div className={layout === 'vertical' ? 'order-2' : ''}>
+          <Badge className="mb-3">{badgeText}</Badge>
+          <h2 className="text-2xl font-bold mb-2">{product.name}</h2>
+          <p className="text-muted-foreground mb-4">
+            {product.short_description || product.description}
+          </p>
           
           <div className="flex items-center gap-2 mb-4">
-            <span className="text-2xl font-bold text-primary">${mockFeaturedProduct.price}</span>
-            <span className="text-lg text-muted-foreground line-through">${mockFeaturedProduct.originalPrice}</span>
-            <Badge variant="destructive">Save ${mockFeaturedProduct.originalPrice - mockFeaturedProduct.price}</Badge>
+            <span className="text-2xl font-bold text-primary">${product.price}</span>
+            {product.compare_price && product.compare_price > product.price && (
+              <>
+                <span className="text-lg text-muted-foreground line-through">
+                  ${product.compare_price}
+                </span>
+                <Badge variant="destructive">
+                  Save ${(product.compare_price - product.price).toFixed(2)}
+                </Badge>
+              </>
+            )}
           </div>
 
-          <ul className="mb-4 space-y-1">
-            {mockFeaturedProduct.features.map((feature, index) => (
-              <li key={index} className="flex items-center gap-2 text-sm">
-                <div className="w-2 h-2 bg-primary rounded-full"></div>
-                {feature}
-              </li>
-            ))}
-          </ul>
-
-          <Button size="lg" className="w-full md:w-auto">
+          <Button size="lg" className="w-full md:w-auto" onClick={handleAddToCart}>
             <ShoppingCart className="h-4 w-4 mr-2" />
-            Add to Cart
+            {ctaText}
           </Button>
         </div>
         
-        <div className="relative">
+        <div className={`relative ${layout === 'vertical' ? 'order-1' : ''}`}>
           <img
-            src={mockFeaturedProduct.image}
-            alt={mockFeaturedProduct.name}
+            src={(Array.isArray(product.images) ? product.images[0] : product.images) || '/placeholder.svg'}
+            alt={product.name}
             className="w-full h-64 md:h-80 object-cover rounded-lg"
           />
           <Badge className="absolute top-4 right-4" variant="secondary">
-            ⭐ {mockFeaturedProduct.rating}
+            ⭐ 4.8
           </Badge>
         </div>
       </div>
@@ -161,16 +249,37 @@ const CategoryNavigationElement: React.FC<{
   isEditing?: boolean;
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
 }> = ({ element }) => {
-  const mockCategories = [
-    { id: '1', name: 'Electronics', icon: '📱', count: 24 },
-    { id: '2', name: 'Fashion', icon: '👕', count: 18 },
-    { id: '3', name: 'Home & Garden', icon: '🏠', count: 32 },
-    { id: '4', name: 'Sports', icon: '⚽', count: 15 },
-    { id: '5', name: 'Books', icon: '📚', count: 42 },
-    { id: '6', name: 'Beauty', icon: '💄', count: 28 }
-  ];
-
+  const { categories, loading } = useStoreCategories();
+  
   const layout = element.content.layout || 'grid';
+  const selectedCategoryIds = element.content.selectedCategoryIds || [];
+  const showProductCount = element.content.showProductCount !== false;
+  const enableLinks = element.content.enableLinks !== false;
+  
+  // Filter categories based on selection
+  const displayCategories = selectedCategoryIds.length > 0 
+    ? categories.filter(cat => selectedCategoryIds.includes(cat.id))
+    : categories;
+
+  const handleCategoryClick = (category: any) => {
+    if (enableLinks) {
+      // In a real implementation, this would navigate to the category page
+      window.location.href = `/products?category=${category.slug}`;
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        {[...Array(6)].map((_, i) => (
+          <div key={i} className="text-center animate-pulse">
+            <div className="w-16 h-16 mx-auto bg-muted rounded-full mb-2"></div>
+            <div className="h-4 bg-muted rounded mx-auto w-3/4"></div>
+          </div>
+        ))}
+      </div>
+    );
+  }
 
   if (layout === 'circles') {
     return (
@@ -179,13 +288,27 @@ const CategoryNavigationElement: React.FC<{
           <h3 className="text-xl font-semibold mb-6 text-center">{element.content.title}</h3>
         )}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          {mockCategories.map((category) => (
-            <div key={category.id} className="text-center group cursor-pointer">
-              <div className="w-16 h-16 mx-auto bg-primary/10 rounded-full flex items-center justify-center text-2xl group-hover:bg-primary/20 transition-colors">
-                {category.icon}
+          {displayCategories.map((category) => (
+            <div 
+              key={category.id} 
+              className="text-center group cursor-pointer"
+              onClick={() => handleCategoryClick(category)}
+            >
+              <div className="w-16 h-16 mx-auto bg-primary/10 rounded-full flex items-center justify-center text-2xl group-hover:bg-primary/20 transition-colors overflow-hidden">
+                {category.image_url ? (
+                  <img 
+                    src={category.image_url} 
+                    alt={category.name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <Tag className="h-6 w-6" />
+                )}
               </div>
               <h4 className="font-medium mt-2 text-sm">{category.name}</h4>
-              <p className="text-xs text-muted-foreground">{category.count} items</p>
+              {showProductCount && (
+                <p className="text-xs text-muted-foreground">0 items</p>
+              )}
             </div>
           ))}
         </div>
@@ -199,20 +322,46 @@ const CategoryNavigationElement: React.FC<{
         <h3 className="text-xl font-semibold mb-4">{element.content.title}</h3>
       )}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {mockCategories.map((category) => (
-          <Card key={category.id} className="group hover:shadow-md transition-shadow cursor-pointer">
+        {displayCategories.map((category) => (
+          <Card 
+            key={category.id} 
+            className="group hover:shadow-md transition-shadow cursor-pointer"
+            onClick={() => handleCategoryClick(category)}
+          >
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className="text-2xl">{category.icon}</div>
+                <div className="w-12 h-12 rounded-lg overflow-hidden bg-primary/10 flex items-center justify-center">
+                  {category.image_url ? (
+                    <img 
+                      src={category.image_url} 
+                      alt={category.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <Tag className="h-6 w-6" />
+                  )}
+                </div>
                 <div>
                   <h4 className="font-medium">{category.name}</h4>
-                  <p className="text-sm text-muted-foreground">{category.count} products</p>
+                  {showProductCount && (
+                    <p className="text-sm text-muted-foreground">0 products</p>
+                  )}
+                  {category.description && (
+                    <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                      {category.description}
+                    </p>
+                  )}
                 </div>
               </div>
             </CardContent>
           </Card>
         ))}
       </div>
+      {displayCategories.length === 0 && (
+        <div className="text-center py-8 text-muted-foreground">
+          No categories found. Add some categories to your store to display them here.
+        </div>
+      )}
     </div>
   );
 };
@@ -282,6 +431,89 @@ const WeeklyFeaturedElement: React.FC<{
   );
 };
 
+// Price Element
+const PriceElement: React.FC<{
+  element: PageBuilderElement;
+  isEditing?: boolean;
+  onUpdate?: (updates: Partial<PageBuilderElement>) => void;
+}> = ({ element }) => {
+  const { addItem } = useCart();
+  const { toast } = useToast();
+  
+  const productId = element.content.productId;
+  const showComparePrice = element.content.showComparePrice !== false;
+  const showDiscount = element.content.showDiscount !== false;
+  const ctaText = element.content.ctaText || 'Buy Now';
+  const layout = element.content.layout || 'horizontal';
+  
+  const { product, loading } = useProductById(productId);
+
+  const handleAddToCart = () => {
+    if (!product) return;
+    
+    addItem({
+      id: `cart-${product.id}`,
+      productId: product.id,
+      name: product.name,
+      price: product.price,
+      image: Array.isArray(product.images) ? product.images[0] : product.images,
+      sku: product.sku
+    });
+    
+    toast({
+      title: "Added to cart",
+      description: `${product.name} has been added to your cart.`,
+    });
+  };
+
+  if (loading) {
+    return (
+      <div className="animate-pulse">
+        <div className="h-8 w-24 bg-muted rounded mb-2"></div>
+        <div className="h-10 w-32 bg-muted rounded"></div>
+      </div>
+    );
+  }
+
+  if (!product) {
+    return (
+      <div className="text-center py-4 text-muted-foreground">
+        Please select a product from the properties panel.
+      </div>
+    );
+  }
+
+  const discount = product.compare_price && product.compare_price > product.price
+    ? Math.round(((product.compare_price - product.price) / product.compare_price) * 100)
+    : 0;
+
+  const layoutClass = layout === 'vertical' 
+    ? 'flex flex-col gap-2' 
+    : 'flex items-center gap-4';
+
+  return (
+    <div className={layoutClass}>
+      <div className="flex items-center gap-2">
+        <span className="text-2xl font-bold text-primary">${product.price}</span>
+        {showComparePrice && product.compare_price && product.compare_price > product.price && (
+          <span className="text-lg text-muted-foreground line-through">
+            ${product.compare_price}
+          </span>
+        )}
+        {showDiscount && discount > 0 && (
+          <Badge variant="destructive">
+            -{discount}%
+          </Badge>
+        )}
+      </div>
+      <Button onClick={handleAddToCart}>
+        <DollarSign className="h-4 w-4 mr-2" />
+        {ctaText}
+      </Button>
+    </div>
+  );
+};
+
 // Register all ecommerce elements
 export const registerEcommerceElements = () => {
   elementRegistry.register({
@@ -295,7 +527,11 @@ export const registerEcommerceElements = () => {
       columns: 2,
       limit: 4,
       showRating: true,
-      showPrice: true
+      showPrice: true,
+      showQuickAdd: true,
+      selectionMode: 'all',
+      categoryIds: [],
+      specificProductIds: []
     },
     description: 'Display products in a grid layout'
   });
@@ -306,7 +542,12 @@ export const registerEcommerceElements = () => {
     category: 'ecommerce',
     icon: Star,
     component: FeaturedProductsElement,
-    defaultContent: {},
+    defaultContent: {
+      productId: '',
+      layout: 'horizontal',
+      badgeText: 'Featured Product',
+      ctaText: 'Add to Cart'
+    },
     description: 'Highlight a specific product'
   });
 
@@ -318,7 +559,10 @@ export const registerEcommerceElements = () => {
     component: CategoryNavigationElement,
     defaultContent: { 
       title: 'Shop by Category',
-      layout: 'grid'
+      layout: 'grid',
+      selectedCategoryIds: [],
+      showProductCount: true,
+      enableLinks: true
     },
     description: 'Browse product categories'
   });
@@ -331,5 +575,21 @@ export const registerEcommerceElements = () => {
     component: WeeklyFeaturedElement,
     defaultContent: {},
     description: 'Weekly featured products section'
+  });
+
+  elementRegistry.register({
+    id: 'price',
+    name: 'Price',
+    category: 'ecommerce',
+    icon: DollarSign,
+    component: PriceElement,
+    defaultContent: {
+      productId: '',
+      showComparePrice: true,
+      showDiscount: true,
+      ctaText: 'Buy Now',
+      layout: 'horizontal'
+    },
+    description: 'Display product price with buy button'
   });
 };

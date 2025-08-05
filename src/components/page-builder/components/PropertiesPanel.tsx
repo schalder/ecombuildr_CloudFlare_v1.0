@@ -20,6 +20,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ImageUpload } from '@/components/ui/image-upload';
+import { 
+  EcommerceContentProperties,
+  FeaturedProductsContentProperties,
+  ProductCategoriesContentProperties,
+  PriceContentProperties
+} from './EcommerceProperties';
 
 import { PageBuilderElement } from '../types';
 
@@ -325,6 +331,35 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                   />
                 </div>
               </div>
+            )}
+
+            {/* Ecommerce Elements */}
+            {selectedElement.type === 'product-grid' && (
+              <EcommerceContentProperties 
+                element={selectedElement}
+                onUpdate={handleContentUpdate}
+              />
+            )}
+
+            {selectedElement.type === 'featured-products' && (
+              <FeaturedProductsContentProperties 
+                element={selectedElement}
+                onUpdate={handleContentUpdate}
+              />
+            )}
+
+            {selectedElement.type === 'product-categories' && (
+              <ProductCategoriesContentProperties 
+                element={selectedElement}
+                onUpdate={handleContentUpdate}
+              />
+            )}
+
+            {selectedElement.type === 'price' && (
+              <PriceContentProperties 
+                element={selectedElement}
+                onUpdate={handleContentUpdate}
+              />
             )}
           </TabsContent>
 
