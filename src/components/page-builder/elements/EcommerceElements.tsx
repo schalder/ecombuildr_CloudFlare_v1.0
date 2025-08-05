@@ -301,8 +301,8 @@ export const registerEcommerceElements = () => {
   });
 
   elementRegistry.register({
-    id: 'featured-product',
-    name: 'Featured Product',
+    id: 'featured-products',
+    name: 'Featured Products',
     category: 'ecommerce',
     icon: Star,
     component: FeaturedProductsElement,
@@ -311,8 +311,8 @@ export const registerEcommerceElements = () => {
   });
 
   elementRegistry.register({
-    id: 'category-navigation',
-    name: 'Category Navigation',
+    id: 'product-categories',
+    name: 'Product Categories',
     category: 'ecommerce',
     icon: Tag,
     component: CategoryNavigationElement,
