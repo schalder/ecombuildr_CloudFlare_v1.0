@@ -58,6 +58,19 @@ import {
 } from './types';
 import { elementRegistry } from './elements';
 
+// Helper function to get grid template columns for row rendering
+const getRowGridTemplateColumns = (row: PageBuilderRow) => {
+  const layout = COLUMN_LAYOUTS[row.columnLayout];
+  if (!layout) {
+    console.warn('No layout found for columnLayout:', row.columnLayout);
+    return '1fr';
+  }
+  // Convert the layout numbers to CSS Grid fractional units
+  const gridColumns = layout.map(part => `${part}fr`).join(' ');
+  console.log('ElementorPageBuilder - columnLayout:', row.columnLayout, 'layout:', layout, 'gridColumns:', gridColumns);
+  return gridColumns;
+};
+
 interface ElementorPageBuilderProps {
   initialData?: PageBuilderData;
   onChange: (data: PageBuilderData) => void;
@@ -152,6 +165,7 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = ({
   }, [onChange]);
 
   const generateId = () => `pb-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
 
   // Section operations
   const addSection = useCallback((width: PageBuilderSection['width'] = 'wide') => {
@@ -916,7 +930,7 @@ const RowComponent: React.FC<RowComponentProps> = ({
         </div>
       )}
 
-      <div className="grid gap-4 p-4" style={{ gridTemplateColumns: `repeat(${row.columns.length}, 1fr)` }}>
+      <div className="grid gap-4 p-4" style={{ gridTemplateColumns: getRowGridTemplateColumns(row) }}>
         {row.columns.map((column) => (
           <ColumnComponent
             key={column.id}
