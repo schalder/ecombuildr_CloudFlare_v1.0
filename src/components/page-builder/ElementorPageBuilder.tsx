@@ -821,8 +821,7 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
       <div 
         className="w-full mx-auto p-4"
         style={{ 
-          maxWidth: SECTION_WIDTHS[section.width],
-          backgroundColor: section.styles?.backgroundColor 
+          maxWidth: SECTION_WIDTHS[section.width]
         }}
       >
         {(!section.rows || section.rows.length === 0) ? (

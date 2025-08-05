@@ -21,6 +21,7 @@ export interface PageBuilderColumn {
   elements: PageBuilderElement[];
   styles?: {
     padding?: string;
+    margin?: string;
     backgroundColor?: string;
   };
 }

@@ -137,12 +137,22 @@ export const RowSettings: React.FC<RowSettingsProps> = ({ row, onUpdate }) => {
               value={row.columnLayout}
               onValueChange={(value) => {
                 const columnWidths = COLUMN_LAYOUTS[value as keyof typeof COLUMN_LAYOUTS];
+                // Preserve existing columns and their content when changing layout
+                const newColumns = columnWidths.map((width, index) => {
+                  const existingColumn = row.columns[index];
+                  if (existingColumn) {
+                    return { ...existingColumn, width };
+                  }
+                  return { 
+                    id: `col-${Date.now()}-${index}`, 
+                    width,
+                    elements: [],
+                    styles: {}
+                  };
+                });
                 onUpdate({
                   columnLayout: value as any,
-                  columns: columnWidths.map((width, index) => ({
-                    ...(row.columns[index] || { id: `col-${Date.now()}-${index}`, elements: [] }),
-                    width
-                  }))
+                  columns: newColumns
                 });
               }}
             >
@@ -228,22 +238,16 @@ export const ColumnSettings: React.FC<ColumnSettingsProps> = ({ column, onUpdate
     <div className="p-4 space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle className="text-sm">Column Width</CardTitle>
+          <CardTitle className="text-sm">Column Layout</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label>Width (1-12 grid system)</Label>
-            <Slider
-              value={[column.width]}
-              onValueChange={([value]) => onUpdate({ width: value })}
-              min={1}
-              max={12}
-              step={1}
-              className="w-full"
-            />
-            <div className="text-sm text-muted-foreground text-center">
-              {column.width}/12 ({Math.round((column.width / 12) * 100)}%)
-            </div>
+          <div className="p-3 bg-muted/50 rounded text-sm">
+            <p className="text-muted-foreground">
+              Column width is determined by the row's layout. Use Row Properties to change column proportions.
+            </p>
+            <p className="mt-2 font-medium">
+              Current width: {column.width} units
+            </p>
           </div>
         </CardContent>
       </Card>

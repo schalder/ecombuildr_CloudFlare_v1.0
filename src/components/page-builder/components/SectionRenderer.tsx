@@ -81,16 +81,18 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({
       className={cn(
         'relative group',
         isSelected && !isPreviewMode && 'ring-2 ring-primary ring-opacity-50',
-        isOver && 'bg-primary/5',
-        section.styles?.backgroundColor && `bg-[${section.styles.backgroundColor}]`,
-        section.styles?.padding || 'py-12'
+        isOver && 'bg-primary/5'
       )}
       style={{
+        backgroundColor: section.styles?.backgroundColor || 'transparent',
         backgroundImage: section.styles?.backgroundImage 
           ? `url(${section.styles.backgroundImage})` 
           : undefined,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        margin: section.styles?.margin || '0',
+        padding: section.styles?.padding || '48px 0'
       }}
       onClick={handleSectionClick}
     >

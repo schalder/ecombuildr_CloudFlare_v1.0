@@ -68,10 +68,13 @@ export const ColumnRenderer: React.FC<ColumnRendererProps> = ({
       className={cn(
         'relative min-h-[60px] rounded border-2 border-dashed border-transparent transition-colors',
         isOver && 'border-primary/40 bg-primary/5',
-        !isPreviewMode && isHovered && 'border-muted-foreground/30',
-        column.styles?.backgroundColor && `bg-[${column.styles.backgroundColor}]`,
-        column.styles?.padding || 'p-2'
+        !isPreviewMode && isHovered && 'border-muted-foreground/30'
       )}
+      style={{
+        backgroundColor: column.styles?.backgroundColor || 'transparent',
+        margin: column.styles?.margin || '0',
+        padding: column.styles?.padding || '8px'
+      }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={handleColumnClick}

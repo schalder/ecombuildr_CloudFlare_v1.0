@@ -77,10 +77,13 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
       ref={drop}
       className={cn(
         'relative group min-h-[80px]',
-        isOver && 'bg-primary/5 border border-primary/20 rounded-lg',
-        row.styles?.backgroundColor && `bg-[${row.styles.backgroundColor}]`,
-        row.styles?.padding || 'p-4'
+        isOver && 'bg-primary/5 border border-primary/20 rounded-lg'
       )}
+      style={{
+        backgroundColor: row.styles?.backgroundColor || 'transparent',
+        margin: row.styles?.margin || '0',
+        padding: row.styles?.padding || '16px'
+      }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={handleRowClick}
