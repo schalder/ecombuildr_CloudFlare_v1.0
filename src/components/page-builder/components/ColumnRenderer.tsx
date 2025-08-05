@@ -4,36 +4,51 @@ import { Plus, GripVertical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { PageBuilderColumn, PageBuilderElement } from '../types';
 import { ElementRenderer } from './ElementRenderer';
+import { ElementDropZone } from './ElementDropZone';
 import { cn } from '@/lib/utils';
 
 interface ColumnRendererProps {
   column: PageBuilderColumn;
+  sectionId: string;
   rowId: string;
   isPreviewMode: boolean;
   onSelectElement: (element: PageBuilderElement | undefined) => void;
   onUpdateElement: (elementId: string, updates: Partial<PageBuilderElement>) => void;
-  onAddElement: (elementType: string, targetPath: string) => void;
+  onAddElement: (elementType: string, targetPath: string, insertIndex?: number) => void;
   onRemoveElement: (elementId: string) => void;
+  onMoveElement?: (elementId: string, targetPath: string, insertIndex: number) => void;
 }
 
 export const ColumnRenderer: React.FC<ColumnRendererProps> = ({
   column,
+  sectionId,
   rowId,
   isPreviewMode,
   onSelectElement,
   onUpdateElement,
   onAddElement,
-  onRemoveElement
+  onRemoveElement,
+  onMoveElement
 }) => {
   const [isHovered, setIsHovered] = React.useState(false);
   
   const [{ isOver }, drop] = useDrop({
-    accept: 'element',
-    drop: (item: { elementType: string }) => {
-      onAddElement(item.elementType, `column-${column.id}`);
+    accept: ['element-type', 'element'],
+    drop: (item: { elementType?: string; elementId?: string }, monitor) => {
+      if (!monitor.didDrop()) {
+        const targetPath = `${sectionId}.${rowId}.${column.id}`;
+        if (item.elementType) {
+          // Adding new element
+          onAddElement(item.elementType, targetPath);
+          console.log('Added element to:', targetPath);
+        } else if (item.elementId && onMoveElement) {
+          // Moving existing element
+          onMoveElement(item.elementId, targetPath, column.elements.length);
+        }
+      }
     },
     collect: (monitor) => ({
-      isOver: monitor.isOver(),
+      isOver: monitor.isOver() && !monitor.didDrop(),
     }),
   });
 
@@ -45,7 +60,8 @@ export const ColumnRenderer: React.FC<ColumnRendererProps> = ({
   };
 
   const handleAddElement = () => {
-    onAddElement('text', `column-${column.id}`);
+    const targetPath = `${sectionId}.${rowId}.${column.id}`;
+    onAddElement('text', targetPath);
   };
 
   return (
@@ -80,17 +96,47 @@ export const ColumnRenderer: React.FC<ColumnRendererProps> = ({
           )}
         </div>
       ) : (
-        <div className="space-y-4">
-          {column.elements.map((element) => (
-            <ElementRenderer
-              key={element.id}
-              element={element}
-              isPreviewMode={isPreviewMode}
-              onSelectElement={onSelectElement}
-              onUpdateElement={onUpdateElement}
-              onRemoveElement={onRemoveElement}
-            />
+        <div className="space-y-2">
+          {column.elements.map((element, index) => (
+            <div key={element.id} className="relative">
+              {/* Drop zone above element */}
+              {!isPreviewMode && (
+                <ElementDropZone
+                  sectionId={sectionId}
+                  rowId={rowId}
+                  columnId={column.id}
+                  insertIndex={index}
+                  onAddElement={onAddElement}
+                  onMoveElement={onMoveElement}
+                />
+              )}
+              
+              <ElementRenderer
+                element={element}
+                isPreviewMode={isPreviewMode}
+                onSelectElement={onSelectElement}
+                onUpdateElement={onUpdateElement}
+                onRemoveElement={onRemoveElement}
+                sectionId={sectionId}
+                rowId={rowId}
+                columnId={column.id}
+                elementIndex={index}
+                onMoveElement={onMoveElement}
+              />
+            </div>
           ))}
+          
+          {/* Drop zone after last element */}
+          {!isPreviewMode && column.elements.length > 0 && (
+            <ElementDropZone
+              sectionId={sectionId}
+              rowId={rowId}
+              columnId={column.id}
+              insertIndex={column.elements.length}
+              onAddElement={onAddElement}
+              onMoveElement={onMoveElement}
+            />
+          )}
         </div>
       )}
     </div>

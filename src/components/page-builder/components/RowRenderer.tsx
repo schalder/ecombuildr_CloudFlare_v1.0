@@ -12,7 +12,8 @@ interface RowRendererProps {
   isPreviewMode: boolean;
   onSelectElement: (element: PageBuilderElement | undefined) => void;
   onUpdateElement: (elementId: string, updates: Partial<PageBuilderElement>) => void;
-  onAddElement: (elementType: string, targetPath: string) => void;
+  onAddElement: (elementType: string, targetPath: string, insertIndex?: number) => void;
+  onMoveElement?: (elementId: string, targetPath: string, insertIndex: number) => void;
   onRemoveElement: (elementId: string) => void;
 }
 
@@ -23,6 +24,7 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
   onSelectElement,
   onUpdateElement,
   onAddElement,
+  onMoveElement,
   onRemoveElement
 }) => {
   const [isHovered, setIsHovered] = React.useState(false);
@@ -104,16 +106,18 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
 
       <div className={cn('grid gap-4', getGridCols())}>
         {row.columns.map((column) => (
-          <ColumnRenderer
-            key={column.id}
-            column={column}
-            rowId={row.id}
-            isPreviewMode={isPreviewMode}
-            onSelectElement={onSelectElement}
-            onUpdateElement={onUpdateElement}
-            onAddElement={onAddElement}
-            onRemoveElement={onRemoveElement}
-          />
+            <ColumnRenderer
+              key={column.id}
+              column={column}
+              sectionId={sectionId}
+              rowId={row.id}
+              isPreviewMode={isPreviewMode}
+              onSelectElement={onSelectElement}
+              onUpdateElement={onUpdateElement}
+              onAddElement={onAddElement}
+              onMoveElement={onMoveElement}
+              onRemoveElement={onRemoveElement}
+            />
         ))}
       </div>
     </div>

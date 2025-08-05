@@ -91,10 +91,10 @@ export const usePageBuilderState = (initialData?: PageBuilderData) => {
     }
   }, [pageData, selectedElement, recordHistory]);
 
-  const addElement = useCallback((elementType: string, targetPath: string) => {
+  const addElement = useCallback((elementType: string, targetPath: string, insertIndex?: number) => {
     const [sectionId, rowId, columnId] = targetPath.split('.');
     
-    console.log('Adding element:', { sectionId, rowId, columnId, elementType });
+    console.log('Adding element:', { sectionId, rowId, columnId, elementType, insertIndex });
     
     const newElement: PageBuilderElement = {
       id: generateId(),
@@ -115,11 +115,15 @@ export const usePageBuilderState = (initialData?: PageBuilderData) => {
                 ...row,
                 columns: row.columns.map(column => {
                   if (column.id === columnId) {
+                    const elements = [...column.elements];
+                    const index = insertIndex !== undefined ? insertIndex : elements.length;
+                    elements.splice(index, 0, newElement);
+                    
                     const updatedColumn = {
                       ...column,
-                      elements: [...column.elements, newElement]
+                      elements
                     };
-                    console.log(`Added element to column ${columnId}. New element count:`, updatedColumn.elements.length);
+                    console.log(`Added element to column ${columnId} at index ${index}. New element count:`, updatedColumn.elements.length);
                     return updatedColumn;
                   }
                   return column;
@@ -148,6 +152,75 @@ export const usePageBuilderState = (initialData?: PageBuilderData) => {
     }, 0);
 
     console.log(`Total elements in page: ${elementCount}`);
+    recordHistory(newData);
+  }, [pageData, recordHistory]);
+
+  const moveElement = useCallback((elementId: string, targetPath: string, insertIndex: number) => {
+    const [targetSectionId, targetRowId, targetColumnId] = targetPath.split('.');
+    
+    console.log('Moving element:', { elementId, targetPath, insertIndex });
+    
+    // Find and remove the element from its current location
+    let elementToMove: PageBuilderElement | null = null;
+    
+    const newSections = pageData.sections.map(section => ({
+      ...section,
+      rows: section.rows.map(row => ({
+        ...row,
+        columns: row.columns.map(column => ({
+          ...column,
+          elements: column.elements.filter(element => {
+            if (element.id === elementId) {
+              elementToMove = element;
+              return false;
+            }
+            return true;
+          })
+        }))
+      }))
+    }));
+
+    if (!elementToMove) {
+      console.error('Element not found:', elementId);
+      return;
+    }
+
+    // Add the element to its new location
+    const finalSections = newSections.map(section => {
+      if (section.id === targetSectionId) {
+        return {
+          ...section,
+          rows: section.rows.map(row => {
+            if (row.id === targetRowId) {
+              return {
+                ...row,
+                columns: row.columns.map(column => {
+                  if (column.id === targetColumnId) {
+                    const elements = [...column.elements];
+                    elements.splice(insertIndex, 0, elementToMove!);
+                    
+                    console.log(`Moved element to column ${targetColumnId} at index ${insertIndex}`);
+                    return {
+                      ...column,
+                      elements
+                    };
+                  }
+                  return column;
+                })
+              };
+            }
+            return row;
+          })
+        };
+      }
+      return section;
+    });
+
+    const newData: PageBuilderData = {
+      ...pageData,
+      sections: finalSections
+    };
+
     recordHistory(newData);
   }, [pageData, recordHistory]);
 
@@ -197,6 +270,7 @@ export const usePageBuilderState = (initialData?: PageBuilderData) => {
     selectElement,
     updateElement,
     addElement,
+    moveElement,
     removeElement,
     setDeviceType,
     setPreviewMode,

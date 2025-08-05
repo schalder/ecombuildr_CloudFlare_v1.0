@@ -12,6 +12,11 @@ interface ElementRendererProps {
   onSelectElement: (element: PageBuilderElement | undefined) => void;
   onUpdateElement: (elementId: string, updates: Partial<PageBuilderElement>) => void;
   onRemoveElement: (elementId: string) => void;
+  sectionId?: string;
+  rowId?: string;
+  columnId?: string;
+  elementIndex?: number;
+  onMoveElement?: (elementId: string, targetPath: string, insertIndex: number) => void;
 }
 
 export const ElementRenderer: React.FC<ElementRendererProps> = ({
@@ -19,14 +24,26 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
   isPreviewMode,
   onSelectElement,
   onUpdateElement,
-  onRemoveElement
+  onRemoveElement,
+  sectionId,
+  rowId,
+  columnId,
+  elementIndex,
+  onMoveElement
 }) => {
   const [isHovered, setIsHovered] = React.useState(false);
   const [isSelected, setIsSelected] = React.useState(false);
 
   const [{ isDragging }, drag] = useDrag({
     type: 'element',
-    item: { elementId: element.id },
+    item: { 
+      elementId: element.id,
+      elementType: element.type,
+      sectionId,
+      rowId,
+      columnId,
+      elementIndex
+    },
     collect: (monitor) => ({
       isDragging: monitor.isDragging(),
     }),
@@ -49,7 +66,18 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
 
   const handleDuplicateElement = (e: React.MouseEvent) => {
     e.stopPropagation();
-    // TODO: Implement element duplication
+    if (sectionId && rowId && columnId && elementIndex !== undefined) {
+      const targetPath = `${sectionId}.${rowId}.${columnId}`;
+      if (onMoveElement) {
+        // Create a new element with same content but new ID
+        const newElement = {
+          ...element,
+          id: `pb-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+        };
+        // This is a workaround - ideally we'd have an onDuplicateElement callback
+        console.log('Duplication not fully implemented yet');
+      }
+    }
   };
 
   const handleUpdateElement = (updates: Partial<PageBuilderElement>) => {

@@ -12,7 +12,8 @@ interface SectionRendererProps {
   isPreviewMode: boolean;
   onSelectElement: (element: PageBuilderElement | undefined) => void;
   onUpdateElement: (elementId: string, updates: Partial<PageBuilderElement>) => void;
-  onAddElement: (elementType: string, targetPath: string) => void;
+  onAddElement: (elementType: string, targetPath: string, insertIndex?: number) => void;
+  onMoveElement?: (elementId: string, targetPath: string, insertIndex: number) => void;
   onRemoveElement: (elementId: string) => void;
 }
 
@@ -23,6 +24,7 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({
   onSelectElement,
   onUpdateElement,
   onAddElement,
+  onMoveElement,
   onRemoveElement
 }) => {
   const [{ isOver }, drop] = useDrop({
@@ -139,6 +141,7 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({
                 onSelectElement={onSelectElement}
                 onUpdateElement={onUpdateElement}
                 onAddElement={onAddElement}
+                onMoveElement={onMoveElement}
                 onRemoveElement={onRemoveElement}
               />
             ))}

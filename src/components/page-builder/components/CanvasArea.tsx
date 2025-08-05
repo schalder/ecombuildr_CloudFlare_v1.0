@@ -13,8 +13,11 @@ interface CanvasAreaProps {
   isPreviewMode: boolean;
   onSelectElement: (element: PageBuilderElement | undefined) => void;
   onUpdateElement: (elementId: string, updates: Partial<PageBuilderElement>) => void;
-  onAddElement: (elementType: string, targetPath: string) => void;
+  onAddElement: (elementType: string, targetPath: string, insertIndex?: number) => void;
+  onMoveElement?: (elementId: string, targetPath: string, insertIndex: number) => void;
   onRemoveElement: (elementId: string) => void;
+  onAddSection?: () => void;
+  onAddRow?: (sectionId: string) => void;
 }
 
 export const CanvasArea: React.FC<CanvasAreaProps> = ({
@@ -25,7 +28,10 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
   onSelectElement,
   onUpdateElement,
   onAddElement,
-  onRemoveElement
+  onMoveElement,
+  onRemoveElement,
+  onAddSection,
+  onAddRow
 }) => {
   const [{ isOver }, drop] = useDrop({
     accept: 'element',
@@ -51,7 +57,11 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
   };
 
   const handleAddSection = () => {
-    onAddElement('section', 'root');
+    if (onAddSection) {
+      onAddSection();
+    } else {
+      onAddElement('section', 'root');
+    }
   };
 
   return (
@@ -94,6 +104,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
                 onSelectElement={onSelectElement}
                 onUpdateElement={onUpdateElement}
                 onAddElement={onAddElement}
+                onMoveElement={onMoveElement}
                 onRemoveElement={onRemoveElement}
               />
             ))}
