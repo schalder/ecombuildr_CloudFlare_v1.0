@@ -62,9 +62,14 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
 
   const getGridTemplateColumns = () => {
     const layout = COLUMN_LAYOUTS[row.columnLayout];
+    if (!layout) {
+      console.warn('No layout found for columnLayout:', row.columnLayout);
+      return '1fr';
+    }
     // Convert the layout numbers to CSS Grid fractional units
-    const totalParts = layout.reduce((sum, part) => sum + part, 0);
-    return layout.map(part => `${part}fr`).join(' ');
+    const gridColumns = layout.map(part => `${part}fr`).join(' ');
+    console.log('RowRenderer - columnLayout:', row.columnLayout, 'layout:', layout, 'gridColumns:', gridColumns);
+    return gridColumns;
   };
 
   return (

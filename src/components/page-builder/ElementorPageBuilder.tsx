@@ -1179,14 +1179,14 @@ const ColumnLayoutModal: React.FC<ColumnLayoutModalProps> = ({
   onSelectLayout
 }) => {
   const layouts = [
-    { id: '1', name: 'Single Column', widths: [12] },
-    { id: '1-1', name: 'Two Columns (50/50)', widths: [6, 6] },
-    { id: '1-2', name: 'Two Columns (33/67)', widths: [4, 8] },
-    { id: '2-1', name: 'Two Columns (67/33)', widths: [8, 4] },
-    { id: '1-1-1', name: 'Three Columns', widths: [4, 4, 4] },
-    { id: '1-2-1', name: 'Three Columns (25/50/25)', widths: [3, 6, 3] },
-    { id: '2-1-1', name: 'Three Columns (50/25/25)', widths: [6, 3, 3] },
-    { id: '1-1-1-1', name: 'Four Columns', widths: [3, 3, 3, 3] },
+    { id: '1', name: 'Single Column', widths: COLUMN_LAYOUTS['1'] },
+    { id: '1-1', name: 'Two Columns (50/50)', widths: COLUMN_LAYOUTS['1-1'] },
+    { id: '1-2', name: 'Two Columns (33/67)', widths: COLUMN_LAYOUTS['1-2'] },
+    { id: '2-1', name: 'Two Columns (67/33)', widths: COLUMN_LAYOUTS['2-1'] },
+    { id: '1-1-1', name: 'Three Columns', widths: COLUMN_LAYOUTS['1-1-1'] },
+    { id: '1-2-1', name: 'Three Columns (25/50/25)', widths: COLUMN_LAYOUTS['1-2-1'] },
+    { id: '2-1-1', name: 'Three Columns (50/25/25)', widths: COLUMN_LAYOUTS['2-1-1'] },
+    { id: '1-1-1-1', name: 'Four Columns', widths: COLUMN_LAYOUTS['1-1-1-1'] },
   ] as const;
 
   const getGridTemplateColumns = (widths: readonly number[]) => {
@@ -1204,22 +1204,22 @@ const ColumnLayoutModal: React.FC<ColumnLayoutModalProps> = ({
             <Button
               key={layout.id}
               variant="outline"
-              className="h-auto p-4 flex flex-col items-center space-y-3 hover:border-primary hover:bg-primary/5 transition-colors"
+              className="h-auto p-4 flex flex-col items-center space-y-3 hover:border-blue-200 hover:bg-blue-50 hover:shadow-md transition-all duration-200 border-2"
               onClick={() => onSelectLayout(layout.id)}
             >
               {/* Visual Preview */}
               <div 
-                className="w-full h-8 grid gap-1 border border-border rounded"
+                className="w-full h-10 grid gap-1.5 bg-muted/30 p-2 rounded border"
                 style={{ gridTemplateColumns: getGridTemplateColumns(layout.widths) }}
               >
                 {layout.widths.map((_, index) => (
                   <div 
                     key={index} 
-                    className="bg-secondary rounded-sm"
+                    className="bg-blue-200 rounded-sm border border-blue-300"
                   />
                 ))}
               </div>
-              <span className="text-sm font-medium">{layout.name}</span>
+              <span className="text-sm font-medium text-center">{layout.name}</span>
             </Button>
           ))}
         </div>
