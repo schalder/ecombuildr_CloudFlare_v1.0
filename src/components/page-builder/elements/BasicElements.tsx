@@ -41,7 +41,8 @@ const HeadingElement: React.FC<{
           onChange={handleTextChange}
           placeholder="Enter heading text..."
           disabled={!isEditing}
-          className="font-inherit text-inherit"
+          multiline={true}
+          className="font-inherit text-inherit leading-tight"
         />
       </Tag>
     </div>

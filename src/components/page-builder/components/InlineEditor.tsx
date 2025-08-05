@@ -39,8 +39,12 @@ export const InlineEditor: React.FC<InlineEditorProps> = ({
       const textarea = inputRef.current as HTMLTextAreaElement;
       // Reset height to auto to get the correct scrollHeight
       textarea.style.height = 'auto';
-      // Set height based on scrollHeight with minimum height
-      const newHeight = Math.max(textarea.scrollHeight, 48); // 48px minimum (3rem)
+      // Get computed font size to calculate better minimum height
+      const computedStyle = window.getComputedStyle(textarea);
+      const fontSize = parseFloat(computedStyle.fontSize);
+      const lineHeight = parseFloat(computedStyle.lineHeight) || fontSize * 1.2;
+      const minHeight = Math.max(lineHeight + 16, 48); // padding + line height, minimum 48px
+      const newHeight = Math.max(textarea.scrollHeight, minHeight);
       textarea.style.height = `${newHeight}px`;
     }
   }, [isEditing, multiline, editValue]);
@@ -60,6 +64,10 @@ export const InlineEditor: React.FC<InlineEditorProps> = ({
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !multiline) {
+      e.preventDefault();
+      handleBlur();
+    } else if (e.key === 'Enter' && multiline && (e.ctrlKey || e.metaKey)) {
+      // Ctrl/Cmd+Enter to finish editing multiline text
       e.preventDefault();
       handleBlur();
     } else if (e.key === 'Escape') {
