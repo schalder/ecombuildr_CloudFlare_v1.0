@@ -1204,7 +1204,7 @@ const ColumnLayoutModal: React.FC<ColumnLayoutModalProps> = ({
             <Button
               key={layout.id}
               variant="outline"
-              className="h-auto p-4 flex flex-col items-center space-y-3 hover:border-blue-200 hover:bg-blue-50 hover:shadow-md transition-all duration-200 border-2"
+              className="h-auto p-4 flex flex-col items-center space-y-3 hover:border-blue-200 hover:bg-blue-500 hover:shadow-md transition-all duration-200 border-2 group"
               onClick={() => onSelectLayout(layout.id)}
             >
               {/* Visual Preview */}
@@ -1219,7 +1219,7 @@ const ColumnLayoutModal: React.FC<ColumnLayoutModalProps> = ({
                   />
                 ))}
               </div>
-              <span className="text-sm font-medium text-center">{layout.name}</span>
+              <span className="text-sm font-medium text-center group-hover:text-white transition-colors">{layout.name}</span>
             </Button>
           ))}
         </div>

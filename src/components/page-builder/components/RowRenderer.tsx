@@ -114,7 +114,10 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
 
       <div 
         className="grid gap-4"
-        style={{ gridTemplateColumns: getGridTemplateColumns() }}
+        style={{ 
+          gridTemplateColumns: getGridTemplateColumns(),
+          display: 'grid'
+        }}
       >
         {row.columns.map((column) => (
             <ColumnRenderer
