@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Mail, Send, User, MessageSquare } from 'lucide-react';
+import { Mail, Send, User, MessageSquare, Phone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -7,6 +7,8 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { PageBuilderElement } from '../types';
 import { elementRegistry } from './ElementRegistry';
+import { supabase } from '@/integrations/supabase/client';
+import { useParams } from 'react-router-dom';
 
 // Contact Form Element
 const ContactFormElement: React.FC<{
@@ -14,16 +16,47 @@ const ContactFormElement: React.FC<{
   isEditing?: boolean;
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
 }> = ({ element, isEditing, onUpdate }) => {
+  const { storeId } = useParams();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
+    phone: '',
     message: ''
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const showPhone = element.content.showPhone !== false;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast.success('Form submitted successfully!');
-    setFormData({ name: '', email: '', message: '' });
+    if (!storeId) {
+      toast.error('Store not found');
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('submit-contact-form', {
+        body: {
+          store_id: storeId,
+          customer_name: formData.name,
+          customer_email: formData.email,
+          customer_phone: formData.phone || null,
+          message: formData.message,
+          product_id: element.content.productId || null
+        }
+      });
+
+      if (error) throw error;
+
+      toast.success(element.content.successMessage || 'Form submitted successfully!');
+      setFormData({ name: '', email: '', phone: '', message: '' });
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      toast.error('Failed to submit form. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleInputChange = (field: string, value: string) => {
@@ -32,44 +65,61 @@ const ContactFormElement: React.FC<{
 
   return (
     <div className="max-w-md mx-auto p-6 border rounded-lg" style={element.styles}>
-      <h3 className="text-lg font-semibold mb-4">{element.content.title || 'Contact Us'}</h3>
+      <h3 className="text-lg font-semibold mb-4">
+        {element.content.title || 'Contact Us'}
+      </h3>
+      {element.content.description && (
+        <p className="text-muted-foreground mb-4">{element.content.description}</p>
+      )}
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <Label htmlFor="name">Name</Label>
+          <Label htmlFor="name">Name *</Label>
           <Input
             id="name"
             type="text"
             value={formData.name}
             onChange={(e) => handleInputChange('name', e.target.value)}
-            placeholder="Your name"
+            placeholder={element.content.namePlaceholder || "Your name"}
             required
           />
         </div>
         <div>
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="email">Email *</Label>
           <Input
             id="email"
             type="email"
             value={formData.email}
             onChange={(e) => handleInputChange('email', e.target.value)}
-            placeholder="your@email.com"
+            placeholder={element.content.emailPlaceholder || "your@email.com"}
             required
           />
         </div>
+        {showPhone && (
+          <div>
+            <Label htmlFor="phone">Phone</Label>
+            <Input
+              id="phone"
+              type="tel"
+              value={formData.phone}
+              onChange={(e) => handleInputChange('phone', e.target.value)}
+              placeholder={element.content.phonePlaceholder || "Your phone number"}
+            />
+          </div>
+        )}
         <div>
-          <Label htmlFor="message">Message</Label>
+          <Label htmlFor="message">Message *</Label>
           <Textarea
             id="message"
             value={formData.message}
             onChange={(e) => handleInputChange('message', e.target.value)}
-            placeholder="Your message..."
+            placeholder={element.content.messagePlaceholder || "Your message..."}
             rows={4}
             required
           />
         </div>
-        <Button type="submit" className="w-full">
+        <Button type="submit" className="w-full" disabled={isSubmitting}>
           <Send className="h-4 w-4 mr-2" />
-          Send Message
+          {isSubmitting ? 'Sending...' : (element.content.buttonText || 'Send Message')}
         </Button>
       </form>
     </div>
@@ -82,18 +132,49 @@ const NewsletterElement: React.FC<{
   isEditing?: boolean;
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
 }> = ({ element, isEditing, onUpdate }) => {
+  const { storeId } = useParams();
   const [email, setEmail] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast.success('Successfully subscribed to newsletter!');
-    setEmail('');
+    if (!storeId) {
+      toast.error('Store not found');
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('subscribe-newsletter', {
+        body: {
+          store_id: storeId,
+          email: email
+        }
+      });
+
+      if (error) throw error;
+
+      const successMessage = data.already_subscribed 
+        ? 'You are already subscribed!' 
+        : (element.content.successMessage || 'Successfully subscribed to newsletter!');
+      
+      toast.success(successMessage);
+      setEmail('');
+    } catch (error) {
+      console.error('Error subscribing to newsletter:', error);
+      toast.error('Failed to subscribe. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <div className="max-w-md mx-auto p-6 text-center" style={element.styles}>
       <Mail className="h-12 w-12 mx-auto mb-4 text-primary" />
-      <h3 className="text-xl font-semibold mb-2">{element.content.title || 'Subscribe to Newsletter'}</h3>
+      <h3 className="text-xl font-semibold mb-2">
+        {element.content.title || 'Subscribe to Newsletter'}
+      </h3>
       <p className="text-muted-foreground mb-4">
         {element.content.description || 'Get the latest updates and news delivered to your inbox.'}
       </p>
@@ -102,11 +183,11 @@ const NewsletterElement: React.FC<{
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          placeholder="Enter your email"
+          placeholder={element.content.emailPlaceholder || "Enter your email"}
           required
         />
-        <Button type="submit" className="w-full">
-          Subscribe
+        <Button type="submit" className="w-full" disabled={isSubmitting}>
+          {isSubmitting ? 'Subscribing...' : (element.content.buttonText || 'Subscribe')}
         </Button>
       </form>
     </div>
@@ -153,9 +234,16 @@ export const registerFormElements = () => {
     component: ContactFormElement,
     defaultContent: {
       title: 'Contact Us',
-      description: 'Get in touch with us'
+      description: 'Get in touch with us',
+      showPhone: true,
+      namePlaceholder: 'Your name',
+      emailPlaceholder: 'your@email.com',
+      phonePlaceholder: 'Your phone number',
+      messagePlaceholder: 'Your message...',
+      buttonText: 'Send Message',
+      successMessage: 'Form submitted successfully!'
     },
-    description: 'Contact form with name, email and message fields'
+    description: 'Contact form with name, email, phone and message fields'
   });
 
   elementRegistry.register({
@@ -166,7 +254,10 @@ export const registerFormElements = () => {
     component: NewsletterElement,
     defaultContent: {
       title: 'Subscribe to Newsletter',
-      description: 'Get the latest updates and news delivered to your inbox.'
+      description: 'Get the latest updates and news delivered to your inbox.',
+      emailPlaceholder: 'Enter your email',
+      buttonText: 'Subscribe',
+      successMessage: 'Successfully subscribed to newsletter!'
     },
     description: 'Email subscription form'
   });

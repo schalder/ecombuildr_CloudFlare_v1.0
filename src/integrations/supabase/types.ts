@@ -281,6 +281,48 @@ export type Database = {
         }
         Relationships: []
       }
+      form_submissions: {
+        Row: {
+          created_at: string
+          customer_email: string
+          customer_name: string
+          customer_phone: string | null
+          form_type: string
+          id: string
+          message: string | null
+          product_id: string | null
+          status: string | null
+          store_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          customer_email: string
+          customer_name: string
+          customer_phone?: string | null
+          form_type?: string
+          id?: string
+          message?: string | null
+          product_id?: string | null
+          status?: string | null
+          store_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          customer_email?: string
+          customer_name?: string
+          customer_phone?: string | null
+          form_type?: string
+          id?: string
+          message?: string | null
+          product_id?: string | null
+          status?: string | null
+          store_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       navigation_menus: {
         Row: {
           created_at: string
@@ -311,6 +353,33 @@ export type Database = {
           position?: string
           store_id?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      newsletter_subscribers: {
+        Row: {
+          email: string
+          id: string
+          status: string | null
+          store_id: string
+          subscribed_at: string
+          unsubscribed_at: string | null
+        }
+        Insert: {
+          email: string
+          id?: string
+          status?: string | null
+          store_id: string
+          subscribed_at?: string
+          unsubscribed_at?: string | null
+        }
+        Update: {
+          email?: string
+          id?: string
+          status?: string | null
+          store_id?: string
+          subscribed_at?: string
+          unsubscribed_at?: string | null
         }
         Relationships: []
       }

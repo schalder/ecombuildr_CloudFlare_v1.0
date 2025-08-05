@@ -401,3 +401,172 @@ export const PriceContentProperties: React.FC<EcommerceContentPropertiesProps> =
     </div>
   );
 };
+
+// Form Elements Properties
+export const ContactFormContentProperties: React.FC<EcommerceContentPropertiesProps> = ({
+  element,
+  onUpdate
+}) => {
+  const { products } = useStoreProducts();
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <Label className="text-xs">Form Title</Label>
+        <Input
+          value={element.content.title || ''}
+          onChange={(e) => onUpdate('title', e.target.value)}
+          placeholder="Contact Us"
+        />
+      </div>
+
+      <div>
+        <Label className="text-xs">Description</Label>
+        <Input
+          value={element.content.description || ''}
+          onChange={(e) => onUpdate('description', e.target.value)}
+          placeholder="Get in touch with us"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <div className="flex items-center space-x-2">
+          <Checkbox
+            checked={element.content.showPhone !== false}
+            onCheckedChange={(checked) => onUpdate('showPhone', checked)}
+          />
+          <Label className="text-xs">Show Phone Field</Label>
+        </div>
+      </div>
+
+      <div>
+        <Label className="text-xs">Button Text</Label>
+        <Input
+          value={element.content.buttonText || ''}
+          onChange={(e) => onUpdate('buttonText', e.target.value)}
+          placeholder="Send Message"
+        />
+      </div>
+
+      <div>
+        <Label className="text-xs">Success Message</Label>
+        <Input
+          value={element.content.successMessage || ''}
+          onChange={(e) => onUpdate('successMessage', e.target.value)}
+          placeholder="Form submitted successfully!"
+        />
+      </div>
+
+      <div>
+        <Label className="text-xs">Product Reference (Optional)</Label>
+        <Select
+          value={element.content.productId || ''}
+          onValueChange={(value) => onUpdate('productId', value)}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="No product reference" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="">No product reference</SelectItem>
+            {products.map((product) => (
+              <SelectItem key={product.id} value={product.id}>
+                <div className="flex items-center gap-2">
+                  <img 
+                    src={(Array.isArray(product.images) ? product.images[0] : product.images) || '/placeholder.svg'}
+                    alt={product.name}
+                    className="w-6 h-6 rounded object-cover"
+                  />
+                  {product.name}
+                </div>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-2">
+        <h4 className="text-xs font-medium">Field Placeholders</h4>
+        <div className="space-y-1">
+          <Input
+            value={element.content.namePlaceholder || ''}
+            onChange={(e) => onUpdate('namePlaceholder', e.target.value)}
+            placeholder="Name placeholder"
+            className="text-xs"
+          />
+          <Input
+            value={element.content.emailPlaceholder || ''}
+            onChange={(e) => onUpdate('emailPlaceholder', e.target.value)}
+            placeholder="Email placeholder"
+            className="text-xs"
+          />
+          <Input
+            value={element.content.phonePlaceholder || ''}
+            onChange={(e) => onUpdate('phonePlaceholder', e.target.value)}
+            placeholder="Phone placeholder"
+            className="text-xs"
+          />
+          <Input
+            value={element.content.messagePlaceholder || ''}
+            onChange={(e) => onUpdate('messagePlaceholder', e.target.value)}
+            placeholder="Message placeholder"
+            className="text-xs"
+          />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export const NewsletterContentProperties: React.FC<EcommerceContentPropertiesProps> = ({
+  element,
+  onUpdate
+}) => {
+  return (
+    <div className="space-y-4">
+      <div>
+        <Label className="text-xs">Title</Label>
+        <Input
+          value={element.content.title || ''}
+          onChange={(e) => onUpdate('title', e.target.value)}
+          placeholder="Subscribe to Newsletter"
+        />
+      </div>
+
+      <div>
+        <Label className="text-xs">Description</Label>
+        <Input
+          value={element.content.description || ''}
+          onChange={(e) => onUpdate('description', e.target.value)}
+          placeholder="Get the latest updates and news delivered to your inbox."
+        />
+      </div>
+
+      <div>
+        <Label className="text-xs">Email Placeholder</Label>
+        <Input
+          value={element.content.emailPlaceholder || ''}
+          onChange={(e) => onUpdate('emailPlaceholder', e.target.value)}
+          placeholder="Enter your email"
+        />
+      </div>
+
+      <div>
+        <Label className="text-xs">Button Text</Label>
+        <Input
+          value={element.content.buttonText || ''}
+          onChange={(e) => onUpdate('buttonText', e.target.value)}
+          placeholder="Subscribe"
+        />
+      </div>
+
+      <div>
+        <Label className="text-xs">Success Message</Label>
+        <Input
+          value={element.content.successMessage || ''}
+          onChange={(e) => onUpdate('successMessage', e.target.value)}
+          placeholder="Successfully subscribed to newsletter!"
+        />
+      </div>
+    </div>
+  );
+};

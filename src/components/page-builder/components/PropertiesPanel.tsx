@@ -24,7 +24,9 @@ import {
   EcommerceContentProperties,
   FeaturedProductsContentProperties,
   ProductCategoriesContentProperties,
-  PriceContentProperties
+  PriceContentProperties,
+  ContactFormContentProperties,
+  NewsletterContentProperties
 } from './EcommerceProperties';
 
 import { PageBuilderElement } from '../types';
@@ -357,6 +359,21 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
 
             {selectedElement.type === 'price' && (
               <PriceContentProperties 
+                element={selectedElement}
+                onUpdate={handleContentUpdate}
+              />
+            )}
+
+            {/* Form Elements */}
+            {selectedElement.type === 'contact-form' && (
+              <ContactFormContentProperties 
+                element={selectedElement}
+                onUpdate={handleContentUpdate}
+              />
+            )}
+
+            {selectedElement.type === 'newsletter' && (
+              <NewsletterContentProperties 
                 element={selectedElement}
                 onUpdate={handleContentUpdate}
               />
