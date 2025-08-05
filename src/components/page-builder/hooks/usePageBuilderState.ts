@@ -1,5 +1,5 @@
-import { useState, useCallback, useMemo } from 'react';
-import { PageBuilderData, PageBuilderElement, PageBuilderSection, PageBuilderRow, PageBuilderColumn, COLUMN_LAYOUTS } from '../types';
+import { useState, useCallback } from 'react';
+import { PageBuilderData, PageBuilderElement, PageBuilderSection, PageBuilderRow } from '../types';
 
 interface HistoryState {
   past: PageBuilderData[];
@@ -8,9 +8,13 @@ interface HistoryState {
 }
 
 export const usePageBuilderState = (initialData?: PageBuilderData) => {
+  const defaultData: PageBuilderData = {
+    sections: []
+  };
+
   const [history, setHistory] = useState<HistoryState>({
     past: [],
-    present: initialData || { sections: [], globalStyles: {} },
+    present: initialData || defaultData,
     future: []
   });
 
@@ -22,10 +26,12 @@ export const usePageBuilderState = (initialData?: PageBuilderData) => {
   const canUndo = history.past.length > 0;
   const canRedo = history.future.length > 0;
 
+  const generateId = () => `pb-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
   const recordHistory = useCallback((newData: PageBuilderData) => {
     setHistory(prev => ({
       past: [...prev.past, prev.present],
-      present: newData,
+      present: structuredClone(newData), // Deep clone to prevent circular references
       future: []
     }));
   }, []);
@@ -50,49 +56,29 @@ export const usePageBuilderState = (initialData?: PageBuilderData) => {
     }
   }, [canRedo]);
 
-  const generateId = () => `id_${Math.random().toString(36).substr(2, 9)}`;
-
   const selectElement = useCallback((element: PageBuilderElement | undefined) => {
     setSelectedElement(element);
   }, []);
 
   const updateElement = useCallback((elementId: string, updates: Partial<PageBuilderElement>) => {
     const updateElementRecursive = (sections: PageBuilderSection[]): PageBuilderSection[] => {
-      return sections.map(section => {
-        if (section.id === elementId) {
-          return { ...section, ...updates } as PageBuilderSection;
-        }
-
-        return {
-          ...section,
-          rows: section.rows.map(row => {
-            if (row.id === elementId) {
-              return { ...row, ...updates } as PageBuilderRow;
-            }
-
-            return {
-              ...row,
-              columns: row.columns.map(column => {
-                if (column.id === elementId) {
-                  return { ...column, ...updates } as PageBuilderColumn;
-                }
-
-                return {
-                  ...column,
-                  elements: column.elements.map(element => 
-                    element.id === elementId 
-                      ? { ...element, ...updates }
-                      : element
-                  )
-                };
-              })
-            };
-          })
-        };
-      });
+      return sections.map(section => ({
+        ...section,
+        rows: section.rows.map(row => ({
+          ...row,
+          columns: row.columns.map(column => ({
+            ...column,
+            elements: column.elements.map(element => 
+              element.id === elementId 
+                ? { ...element, ...updates }
+                : element
+            )
+          }))
+        }))
+      }));
     };
 
-    const newData = {
+    const newData: PageBuilderData = {
       ...pageData,
       sections: updateElementRecursive(pageData.sections)
     };
@@ -106,110 +92,80 @@ export const usePageBuilderState = (initialData?: PageBuilderData) => {
   }, [pageData, selectedElement, recordHistory]);
 
   const addElement = useCallback((elementType: string, targetPath: string) => {
-    const newData = { ...pageData };
+    const [sectionId, rowId, columnId] = targetPath.split('.');
     
-    if (elementType === 'section') {
-      // Add new section
-      const newSection: PageBuilderSection = {
-        id: generateId(),
-        rows: [{
-          id: generateId(),
-          columns: [{
-            id: generateId(),
-            width: 12,
-            elements: []
-          }],
-          columnLayout: '1'
-        }],
-        width: 'wide'
-      };
-      newData.sections.push(newSection);
-    } else if (elementType === 'row') {
-      // Add row to section
-      const sectionId = targetPath.replace('section-', '');
-      const section = newData.sections.find(s => s.id === sectionId);
-      if (section) {
-        const newRow: PageBuilderRow = {
-          id: generateId(),
-          columns: [{
-            id: generateId(),
-            width: 12,
-            elements: []
-          }],
-          columnLayout: '1'
-        };
-        section.rows.push(newRow);
-      }
-    } else {
-      // Add element to first available column
-      if (newData.sections.length === 0) {
-        // Create a section first
-        const newSection: PageBuilderSection = {
-          id: generateId(),
-          rows: [{
-            id: generateId(),
-            columns: [{
-              id: generateId(),
-              width: 12,
-              elements: []
-            }],
-            columnLayout: '1'
-          }],
-          width: 'wide'
-        };
-        newData.sections.push(newSection);
-      }
-      
-      const targetSection = newData.sections[0];
-      if (targetSection.rows.length === 0) {
-        const newRow: PageBuilderRow = {
-          id: generateId(),
-          columns: [{
-            id: generateId(),
-            width: 12,
-            elements: []
-          }],
-          columnLayout: '1'
-        };
-        targetSection.rows.push(newRow);
-      }
-      
-      const targetColumn = targetSection.rows[0].columns[0];
-      const newElement: PageBuilderElement = {
-        id: generateId(),
-        type: elementType,
-        content: getDefaultContent(elementType),
-        styles: {}
-      };
-      targetColumn.elements.push(newElement);
-    }
+    console.log('Adding element:', { sectionId, rowId, columnId, elementType });
     
+    const newElement: PageBuilderElement = {
+      id: generateId(),
+      type: elementType,
+      content: getDefaultContent(elementType)
+    };
+
+    console.log('New element created:', newElement);
+
+    // Create a deep clone to avoid circular references
+    const newSections = pageData.sections.map(section => {
+      if (section.id === sectionId) {
+        return {
+          ...section,
+          rows: section.rows.map(row => {
+            if (row.id === rowId) {
+              return {
+                ...row,
+                columns: row.columns.map(column => {
+                  if (column.id === columnId) {
+                    const updatedColumn = {
+                      ...column,
+                      elements: [...column.elements, newElement]
+                    };
+                    console.log(`Added element to column ${columnId}. New element count:`, updatedColumn.elements.length);
+                    return updatedColumn;
+                  }
+                  return column;
+                })
+              };
+            }
+            return row;
+          })
+        };
+      }
+      return section;
+    });
+
+    const newData: PageBuilderData = {
+      ...pageData,
+      sections: newSections
+    };
+
+    // Validate the data structure
+    const elementCount = newData.sections.reduce((total, section) => {
+      return total + section.rows.reduce((rowTotal, row) => {
+        return rowTotal + row.columns.reduce((colTotal, col) => {
+          return colTotal + col.elements.length;
+        }, 0);
+      }, 0);
+    }, 0);
+
+    console.log(`Total elements in page: ${elementCount}`);
     recordHistory(newData);
   }, [pageData, recordHistory]);
 
   const removeElement = useCallback((elementId: string) => {
-    const removeElementRecursive = (sections: PageBuilderSection[]): PageBuilderSection[] => {
-      return sections.filter(section => {
-        if (section.id === elementId) return false;
+    const newSections = pageData.sections.map(section => ({
+      ...section,
+      rows: section.rows.map(row => ({
+        ...row,
+        columns: row.columns.map(column => ({
+          ...column,
+          elements: column.elements.filter(element => element.id !== elementId)
+        }))
+      }))
+    }));
 
-        section.rows = section.rows.filter(row => {
-          if (row.id === elementId) return false;
-
-          row.columns = row.columns.filter(column => {
-            if (column.id === elementId) return false;
-
-            column.elements = column.elements.filter(element => element.id !== elementId);
-            return true;
-          });
-          return true;
-        });
-        return true;
-      });
-    };
-
-    const newData = {
+    const newData: PageBuilderData = {
       ...pageData,
-      sections: removeElementRecursive(pageData.sections)
+      sections: newSections
     };
 
     recordHistory(newData);
