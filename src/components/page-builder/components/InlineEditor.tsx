@@ -33,6 +33,18 @@ export const InlineEditor: React.FC<InlineEditorProps> = ({
     }
   }, [isEditing]);
 
+  // Auto-resize textarea based on content
+  useEffect(() => {
+    if (isEditing && multiline && inputRef.current) {
+      const textarea = inputRef.current as HTMLTextAreaElement;
+      // Reset height to auto to get the correct scrollHeight
+      textarea.style.height = 'auto';
+      // Set height based on scrollHeight with minimum height
+      const newHeight = Math.max(textarea.scrollHeight, 48); // 48px minimum (3rem)
+      textarea.style.height = `${newHeight}px`;
+    }
+  }, [isEditing, multiline, editValue]);
+
   const handleClick = () => {
     if (!disabled) {
       setIsEditing(true);
@@ -73,15 +85,15 @@ export const InlineEditor: React.FC<InlineEditorProps> = ({
         onBlur={handleBlur}
         onKeyDown={handleKeyDown}
         className={cn(
-          "w-full bg-transparent border-none outline-none resize-none",
-          multiline && "min-h-[3rem] h-auto",
+          "w-full bg-transparent border-none outline-none resize-none overflow-hidden",
+          multiline && "min-h-[3rem]",
           className
         )}
         placeholder={placeholder}
-        {...(multiline && { 
-          rows: Math.max(3, editValue.split('\n').length),
-          style: { height: 'auto' }
-        })}
+        style={{
+          height: multiline ? 'auto' : undefined,
+          minHeight: multiline ? '3rem' : undefined,
+        }}
       />
     );
   }
