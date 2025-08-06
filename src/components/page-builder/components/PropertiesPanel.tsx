@@ -34,6 +34,16 @@ import {
   AccordionContentProperties,
   TabsContentProperties
 } from './ContentProperties';
+import { 
+  ImageGalleryProperties, 
+  ImageCarouselProperties, 
+  VideoPlaylistProperties 
+} from './MediaProperties';
+import { 
+  GoogleMapsProperties, 
+  CustomHTMLProperties, 
+  SocialShareProperties 
+} from './AdvancedProperties';
 
 import { PageBuilderElement } from '../types';
 
@@ -407,12 +417,56 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
               />
             )}
 
-            {selectedElement.type === 'tabs' && (
-              <TabsContentProperties 
-                element={selectedElement}
-                onUpdate={handleContentUpdate}
-              />
-            )}
+                {selectedElement.type === 'tabs' && (
+                  <TabsContentProperties 
+                    element={selectedElement} 
+                    onUpdate={handleContentUpdate} 
+                  />
+                )}
+
+                {/* Media Elements */}
+                {selectedElement.type === 'image-gallery' && (
+                  <ImageGalleryProperties 
+                    element={selectedElement} 
+                    onUpdate={handleContentUpdate} 
+                  />
+                )}
+
+                {selectedElement.type === 'image-carousel' && (
+                  <ImageCarouselProperties 
+                    element={selectedElement} 
+                    onUpdate={handleContentUpdate} 
+                  />
+                )}
+
+                {selectedElement.type === 'video-playlist' && (
+                  <VideoPlaylistProperties 
+                    element={selectedElement} 
+                    onUpdate={handleContentUpdate} 
+                  />
+                )}
+
+                {/* Advanced Elements */}
+                {selectedElement.type === 'google-maps' && (
+                  <GoogleMapsProperties 
+                    element={selectedElement} 
+                    onUpdate={handleContentUpdate} 
+                  />
+                )}
+
+                {selectedElement.type === 'custom-html' && (
+                  <CustomHTMLProperties 
+                    element={selectedElement} 
+                    onUpdate={handleContentUpdate} 
+                  />
+                )}
+
+                {selectedElement.type === 'social-share' && (
+                  <SocialShareProperties 
+                    element={selectedElement} 
+                    onUpdate={handleContentUpdate} 
+                  />
+                )}
           </TabsContent>
 
           <TabsContent value="style" className="space-y-4 mt-4">
