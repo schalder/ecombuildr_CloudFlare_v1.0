@@ -54,21 +54,14 @@ import {
   ElementType,
   DragItem,
   COLUMN_LAYOUTS,
+  RESPONSIVE_LAYOUTS,
   SECTION_WIDTHS 
 } from './types';
 import { elementRegistry } from './elements';
 
-// Helper function to get grid template columns for row rendering
-const getRowGridTemplateColumns = (row: PageBuilderRow) => {
-  const layout = COLUMN_LAYOUTS[row.columnLayout];
-  if (!layout) {
-    console.warn('No layout found for columnLayout:', row.columnLayout);
-    return '1fr';
-  }
-  // Convert the layout numbers to CSS Grid fractional units
-  const gridColumns = layout.map(part => `${part}fr`).join(' ');
-  console.log('ElementorPageBuilder - columnLayout:', row.columnLayout, 'layout:', layout, 'gridColumns:', gridColumns);
-  return gridColumns;
+// Helper function to get responsive grid classes for a row
+const getResponsiveGridClasses = (columnLayout: string): string => {
+  return RESPONSIVE_LAYOUTS[columnLayout] || 'grid-cols-1';
 };
 
 interface ElementorPageBuilderProps {
@@ -932,7 +925,7 @@ const RowComponent: React.FC<RowComponentProps> = ({
         </div>
       )}
 
-      <div className="grid gap-4 p-4" style={{ gridTemplateColumns: getRowGridTemplateColumns(row) }}>
+      <div className={`grid gap-4 p-4 ${getResponsiveGridClasses(row.columnLayout)}`}>
         {row.columns.map((column) => (
           <ColumnComponent
             key={column.id}
