@@ -13,8 +13,9 @@ import { useToast } from '@/hooks/use-toast';
 const ProductGridElement: React.FC<{
   element: PageBuilderElement;
   isEditing?: boolean;
+  deviceType?: 'desktop' | 'tablet' | 'mobile';
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
-}> = ({ element }) => {
+}> = ({ element, deviceType = 'desktop' }) => {
   const { addItem } = useCart();
   const { toast } = useToast();
   
@@ -27,6 +28,13 @@ const ProductGridElement: React.FC<{
   const specificProductIds = element.content.specificProductIds || [];
   const limit = element.content.limit || 4;
   const selectionMode = element.content.selectionMode || 'all'; // 'all', 'category', 'specific'
+
+  // Get device-responsive grid classes
+  const getGridClasses = () => {
+    if (deviceType === 'mobile') return 'grid-cols-1';
+    if (deviceType === 'tablet') return 'grid-cols-2';
+    return `grid-cols-${Math.min(columns, 4)}`;
+  };
 
   // Fetch products based on configuration
   const { products, loading } = useStoreProducts({
@@ -53,7 +61,7 @@ const ProductGridElement: React.FC<{
 
   if (loading) {
     return (
-      <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` }}>
+      <div className={`grid gap-4 ${getGridClasses()}`}>
         {[...Array(limit)].map((_, i) => (
           <Card key={i} className="animate-pulse">
             <CardContent className="p-3">
@@ -72,7 +80,7 @@ const ProductGridElement: React.FC<{
       {element.content.title && (
         <h3 className="text-xl font-semibold mb-4">{element.content.title}</h3>
       )}
-      <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` }}>
+      <div className={`grid gap-4 ${getGridClasses()}`}>
         {products.map((product) => (
           <Card key={product.id} className="group hover:shadow-lg transition-shadow">
             <CardContent className="p-3">
@@ -136,8 +144,9 @@ const ProductGridElement: React.FC<{
 const FeaturedProductsElement: React.FC<{
   element: PageBuilderElement;
   isEditing?: boolean;
+  deviceType?: 'desktop' | 'tablet' | 'mobile';
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
-}> = ({ element }) => {
+}> = ({ element, deviceType = 'desktop' }) => {
   const { addItem } = useCart();
   const { toast } = useToast();
   
@@ -247,14 +256,28 @@ const FeaturedProductsElement: React.FC<{
 const CategoryNavigationElement: React.FC<{
   element: PageBuilderElement;
   isEditing?: boolean;
+  deviceType?: 'desktop' | 'tablet' | 'mobile';
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
-}> = ({ element }) => {
+}> = ({ element, deviceType = 'desktop' }) => {
   const { categories, loading } = useStoreCategories();
   
   const layout = element.content.layout || 'grid';
   const selectedCategoryIds = element.content.selectedCategoryIds || [];
   const showProductCount = element.content.showProductCount !== false;
   const enableLinks = element.content.enableLinks !== false;
+  
+  // Get device-responsive grid classes
+  const getCircleGridClasses = () => {
+    if (deviceType === 'mobile') return 'grid-cols-2';
+    if (deviceType === 'tablet') return 'grid-cols-4';
+    return 'grid-cols-6';
+  };
+  
+  const getCardGridClasses = () => {
+    if (deviceType === 'mobile') return 'grid-cols-1';
+    if (deviceType === 'tablet') return 'grid-cols-2';
+    return 'grid-cols-3';
+  };
   
   // Filter categories based on selection
   const displayCategories = selectedCategoryIds.length > 0 
@@ -270,7 +293,7 @@ const CategoryNavigationElement: React.FC<{
 
   if (loading) {
     return (
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+      <div className={`grid gap-4 ${getCircleGridClasses()}`}>
         {[...Array(6)].map((_, i) => (
           <div key={i} className="text-center animate-pulse">
             <div className="w-16 h-16 mx-auto bg-muted rounded-full mb-2"></div>
@@ -287,7 +310,7 @@ const CategoryNavigationElement: React.FC<{
         {element.content.title && (
           <h3 className="text-xl font-semibold mb-6 text-center">{element.content.title}</h3>
         )}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        <div className={`grid gap-4 ${getCircleGridClasses()}`}>
           {displayCategories.map((category) => (
             <div 
               key={category.id} 
@@ -321,7 +344,7 @@ const CategoryNavigationElement: React.FC<{
       {element.content.title && (
         <h3 className="text-xl font-semibold mb-4">{element.content.title}</h3>
       )}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className={`grid gap-4 ${getCardGridClasses()}`}>
         {displayCategories.map((category) => (
           <Card 
             key={category.id} 
@@ -370,8 +393,9 @@ const CategoryNavigationElement: React.FC<{
 const WeeklyFeaturedElement: React.FC<{
   element: PageBuilderElement;
   isEditing?: boolean;
+  deviceType?: 'desktop' | 'tablet' | 'mobile';
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
-}> = ({ element }) => {
+}> = ({ element, deviceType = 'desktop' }) => {
   const mockWeeklyProducts = [
     {
       id: '1',
@@ -403,7 +427,7 @@ const WeeklyFeaturedElement: React.FC<{
         <p className="text-muted-foreground">Special deals this week only!</p>
       </div>
       
-      <div className="grid md:grid-cols-3 gap-4">
+      <div className={`grid gap-4 ${deviceType === 'mobile' ? 'grid-cols-1' : deviceType === 'tablet' ? 'grid-cols-2' : 'grid-cols-3'}`}>
         {mockWeeklyProducts.map((product) => (
           <div key={product.id} className="text-center group">
             <div className="relative overflow-hidden rounded-lg mb-3">
@@ -435,6 +459,7 @@ const WeeklyFeaturedElement: React.FC<{
 const PriceElement: React.FC<{
   element: PageBuilderElement;
   isEditing?: boolean;
+  deviceType?: 'desktop' | 'tablet' | 'mobile';
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
 }> = ({ element }) => {
   const { addItem } = useCart();

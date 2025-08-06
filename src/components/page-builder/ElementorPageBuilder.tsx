@@ -953,6 +953,7 @@ const RowComponent: React.FC<RowComponentProps> = ({
             column={column}
             rowId={row.id}
             sectionId={sectionId}
+            deviceType={deviceType}
             isSelected={selection?.type === 'column' && selection.id === column.id}
             onSelect={() => onSelectionChange({ 
               type: 'column', 
@@ -978,6 +979,7 @@ interface ColumnComponentProps {
   column: PageBuilderColumn;
   rowId: string;
   sectionId: string;
+  deviceType: 'desktop' | 'tablet' | 'mobile';
   isSelected: boolean;
   onSelect: () => void;
   onAddElement: (sectionId: string, rowId: string, columnId: string, elementType: string, insertIndex?: number) => void;
@@ -992,6 +994,7 @@ const ColumnComponent: React.FC<ColumnComponentProps> = ({
   column,
   rowId,
   sectionId,
+  deviceType,
   isSelected,
   onSelect,
   onAddElement,
@@ -1069,6 +1072,7 @@ const ColumnComponent: React.FC<ColumnComponentProps> = ({
                   columnId={column.id}
                   rowId={rowId}
                   sectionId={sectionId}
+                  deviceType={deviceType}
                   isSelected={selection?.type === 'element' && selection.id === element.id}
                   onSelect={() => onSelectionChange({ 
                     type: 'element', 
@@ -1105,6 +1109,7 @@ interface ElementWrapperProps {
   columnId: string;
   rowId: string;
   sectionId: string;
+  deviceType: 'desktop' | 'tablet' | 'mobile';
   isSelected: boolean;
   onSelect: () => void;
   onUpdate: (elementId: string, updates: Partial<PageBuilderElement>) => void;
@@ -1114,6 +1119,7 @@ interface ElementWrapperProps {
 
 const ElementWrapper: React.FC<ElementWrapperProps> = ({
   element,
+  deviceType,
   isSelected,
   onSelect,
   onUpdate,
@@ -1190,6 +1196,7 @@ const ElementWrapper: React.FC<ElementWrapperProps> = ({
       <elementDef.component
         element={element}
         isEditing={true}
+        deviceType={deviceType}
         onUpdate={(updates) => onUpdate(element.id, updates)}
       />
     </div>

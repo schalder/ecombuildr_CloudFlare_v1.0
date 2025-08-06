@@ -11,6 +11,7 @@ import { InlineEditor } from '../components/InlineEditor';
 const ImageGalleryElement: React.FC<{
   element: PageBuilderElement;
   isEditing?: boolean;
+  deviceType?: 'desktop' | 'tablet' | 'mobile';
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
 }> = ({ element, isEditing, onUpdate }) => {
   const images = element.content.images || [
@@ -117,6 +118,7 @@ const ImageGalleryElement: React.FC<{
 const ImageCarouselElement: React.FC<{
   element: PageBuilderElement;
   isEditing?: boolean;
+  deviceType?: 'desktop' | 'tablet' | 'mobile';
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
 }> = ({ element, isEditing, onUpdate }) => {
   const images = element.content.images || [
@@ -209,6 +211,7 @@ const ImageCarouselElement: React.FC<{
 const VideoPlaylistElement: React.FC<{
   element: PageBuilderElement;
   isEditing?: boolean;
+  deviceType?: 'desktop' | 'tablet' | 'mobile';
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
 }> = ({ element, isEditing, onUpdate }) => {
   const videos = element.content.videos || [

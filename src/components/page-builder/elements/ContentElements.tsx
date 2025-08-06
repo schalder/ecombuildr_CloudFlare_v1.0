@@ -13,6 +13,7 @@ import { InlineEditor } from '../components/InlineEditor';
 const TestimonialElement: React.FC<{
   element: PageBuilderElement;
   isEditing?: boolean;
+  deviceType?: 'desktop' | 'tablet' | 'mobile';
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
 }> = ({ element, isEditing, onUpdate }) => {
   const testimonial = element.content.testimonial || 'This is an amazing product!';
@@ -100,6 +101,7 @@ const TestimonialElement: React.FC<{
 const FAQElement: React.FC<{
   element: PageBuilderElement;
   isEditing?: boolean;
+  deviceType?: 'desktop' | 'tablet' | 'mobile';
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
 }> = ({ element, isEditing, onUpdate }) => {
   const faqs = element.content.faqs || [
@@ -174,6 +176,7 @@ const FAQElement: React.FC<{
 const AccordionElement: React.FC<{
   element: PageBuilderElement;
   isEditing?: boolean;
+  deviceType?: 'desktop' | 'tablet' | 'mobile';
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
 }> = ({ element, isEditing, onUpdate }) => {
   const items = element.content.items || [
@@ -237,6 +240,7 @@ const AccordionElement: React.FC<{
 const TabsElement: React.FC<{
   element: PageBuilderElement;
   isEditing?: boolean;
+  deviceType?: 'desktop' | 'tablet' | 'mobile';
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
 }> = ({ element, isEditing, onUpdate }) => {
   const tabs = element.content.tabs || [

@@ -129,6 +129,7 @@ export const ColumnRenderer: React.FC<ColumnRendererProps> = ({
               <ElementRenderer
                 element={element}
                 isPreviewMode={isPreviewMode}
+                deviceType={deviceType}
                 onSelectElement={onSelectElement}
                 onUpdateElement={onUpdateElement}
                 onRemoveElement={onRemoveElement}

@@ -11,6 +11,7 @@ import { InlineEditor } from '../components/InlineEditor';
 const HeadingElement: React.FC<{
   element: PageBuilderElement;
   isEditing?: boolean;
+  deviceType?: 'desktop' | 'tablet' | 'mobile';
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
 }> = ({ element, isEditing, onUpdate }) => {
   const level = element.content.level || 2;
@@ -53,6 +54,7 @@ const HeadingElement: React.FC<{
 const ParagraphElement: React.FC<{
   element: PageBuilderElement;
   isEditing?: boolean;
+  deviceType?: 'desktop' | 'tablet' | 'mobile';
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
 }> = ({ element, isEditing, onUpdate }) => {
   const text = element.content.text || 'Your text content goes here...';
@@ -93,6 +95,7 @@ const ParagraphElement: React.FC<{
 const ImageElement: React.FC<{
   element: PageBuilderElement;
   isEditing?: boolean;
+  deviceType?: 'desktop' | 'tablet' | 'mobile';
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
 }> = ({ element, isEditing, onUpdate }) => {
   const [isEditing_, setIsEditing_] = useState(false);
@@ -154,6 +157,7 @@ const ImageElement: React.FC<{
 const ListElement: React.FC<{
   element: PageBuilderElement;
   isEditing?: boolean;
+  deviceType?: 'desktop' | 'tablet' | 'mobile';
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
 }> = ({ element, isEditing, onUpdate }) => {
   const items = element.content.items || ['List item 1', 'List item 2', 'List item 3'];
@@ -174,6 +178,7 @@ const ListElement: React.FC<{
 const ButtonElement: React.FC<{
   element: PageBuilderElement;
   isEditing?: boolean;
+  deviceType?: 'desktop' | 'tablet' | 'mobile';
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
 }> = ({ element, isEditing, onUpdate }) => {
   const text = element.content.text || 'Button';
@@ -259,6 +264,7 @@ const ButtonElement: React.FC<{
 const SpacerElement: React.FC<{
   element: PageBuilderElement;
   isEditing?: boolean;
+  deviceType?: 'desktop' | 'tablet' | 'mobile';
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
 }> = ({ element, isEditing, onUpdate }) => {
   const height = element.content.height || '50px';
@@ -295,6 +301,7 @@ const SpacerElement: React.FC<{
 const DividerElement: React.FC<{
   element: PageBuilderElement;
   isEditing?: boolean;
+  deviceType?: 'desktop' | 'tablet' | 'mobile';
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
 }> = ({ element, isEditing, onUpdate }) => {
   const style = element.content.style || 'solid';
@@ -325,6 +332,7 @@ const DividerElement: React.FC<{
 const VideoElement: React.FC<{
   element: PageBuilderElement;
   isEditing?: boolean;
+  deviceType?: 'desktop' | 'tablet' | 'mobile';
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
 }> = ({ element, isEditing, onUpdate }) => {
   const [isEditing2, setIsEditing2] = useState(false);

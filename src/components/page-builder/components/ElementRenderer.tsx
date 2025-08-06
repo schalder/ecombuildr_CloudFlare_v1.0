@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils';
 interface ElementRendererProps {
   element: PageBuilderElement;
   isPreviewMode: boolean;
+  deviceType?: 'desktop' | 'tablet' | 'mobile';
   onSelectElement: (element: PageBuilderElement | undefined) => void;
   onUpdateElement: (elementId: string, updates: Partial<PageBuilderElement>) => void;
   onRemoveElement: (elementId: string) => void;
@@ -22,6 +23,7 @@ interface ElementRendererProps {
 export const ElementRenderer: React.FC<ElementRendererProps> = ({
   element,
   isPreviewMode,
+  deviceType = 'desktop',
   onSelectElement,
   onUpdateElement,
   onRemoveElement,
@@ -136,6 +138,7 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
       <ElementComponent
         element={element}
         isEditing={!isPreviewMode}
+        deviceType={deviceType}
         onUpdate={handleUpdateElement}
       />
     </div>

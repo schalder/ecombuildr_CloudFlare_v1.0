@@ -14,6 +14,7 @@ import { useParams } from 'react-router-dom';
 const ContactFormElement: React.FC<{
   element: PageBuilderElement;
   isEditing?: boolean;
+  deviceType?: 'desktop' | 'tablet' | 'mobile';
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
 }> = ({ element, isEditing, onUpdate }) => {
   const { storeId } = useParams();
@@ -130,6 +131,7 @@ const ContactFormElement: React.FC<{
 const NewsletterElement: React.FC<{
   element: PageBuilderElement;
   isEditing?: boolean;
+  deviceType?: 'desktop' | 'tablet' | 'mobile';
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
 }> = ({ element, isEditing, onUpdate }) => {
   const { storeId } = useParams();
@@ -198,6 +200,7 @@ const NewsletterElement: React.FC<{
 const FormFieldElement: React.FC<{
   element: PageBuilderElement;
   isEditing?: boolean;
+  deviceType?: 'desktop' | 'tablet' | 'mobile';
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
 }> = ({ element, isEditing, onUpdate }) => {
   const fieldType = element.content.fieldType || 'text';

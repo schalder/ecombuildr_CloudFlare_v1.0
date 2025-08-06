@@ -11,6 +11,7 @@ import { InlineEditor } from '../components/InlineEditor';
 const GoogleMapsElement: React.FC<{
   element: PageBuilderElement;
   isEditing?: boolean;
+  deviceType?: 'desktop' | 'tablet' | 'mobile';
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
 }> = ({ element, isEditing, onUpdate }) => {
   const apiKey = element.content.apiKey || '';
@@ -80,6 +81,7 @@ const GoogleMapsElement: React.FC<{
 const CustomHTMLElement: React.FC<{
   element: PageBuilderElement;
   isEditing?: boolean;
+  deviceType?: 'desktop' | 'tablet' | 'mobile';
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
 }> = ({ element, isEditing, onUpdate }) => {
   const html = element.content.html || '<div><h3>Custom HTML</h3><p>Add your custom HTML here</p></div>';
@@ -157,6 +159,7 @@ const CustomHTMLElement: React.FC<{
 const SocialShareElement: React.FC<{
   element: PageBuilderElement;
   isEditing?: boolean;
+  deviceType?: 'desktop' | 'tablet' | 'mobile';
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
 }> = ({ element, isEditing, onUpdate }) => {
   const title = element.content.title || 'Share this page';
