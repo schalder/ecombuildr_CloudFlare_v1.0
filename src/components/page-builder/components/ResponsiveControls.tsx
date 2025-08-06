@@ -6,11 +6,13 @@ import { cn } from '@/lib/utils';
 interface ResponsiveControlsProps {
   deviceType: 'desktop' | 'tablet' | 'mobile';
   onDeviceChange: (device: 'desktop' | 'tablet' | 'mobile') => void;
+  className?: string;
 }
 
 export const ResponsiveControls: React.FC<ResponsiveControlsProps> = ({
   deviceType,
-  onDeviceChange
+  onDeviceChange,
+  className
 }) => {
   const devices = [
     { type: 'desktop' as const, icon: Monitor, label: 'Desktop' },
@@ -19,7 +21,7 @@ export const ResponsiveControls: React.FC<ResponsiveControlsProps> = ({
   ];
 
   return (
-    <div className="flex items-center space-x-1 border border-border rounded-md p-1">
+    <div className={cn("flex items-center space-x-1 border border-border rounded-md p-1", className)}>
       {devices.map(({ type, icon: Icon, label }) => (
         <Button
           key={type}
@@ -30,6 +32,7 @@ export const ResponsiveControls: React.FC<ResponsiveControlsProps> = ({
             deviceType === type && 'bg-primary text-primary-foreground'
           )}
           onClick={() => onDeviceChange(type)}
+          title={`Preview ${label} view`}
         >
           <Icon className="h-4 w-4" />
           <span className="sr-only">{label}</span>

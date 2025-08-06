@@ -2,7 +2,7 @@ import React from 'react';
 import { useDrop } from 'react-dnd';
 import { Plus, Trash2, Copy, GripVertical, Columns } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { PageBuilderRow, PageBuilderElement, COLUMN_LAYOUTS } from '../types';
+import { PageBuilderRow, PageBuilderElement, COLUMN_LAYOUTS, RESPONSIVE_LAYOUTS } from '../types';
 import { ColumnRenderer } from './ColumnRenderer';
 import { cn } from '@/lib/utils';
 
@@ -10,6 +10,7 @@ interface RowRendererProps {
   row: PageBuilderRow;
   sectionId: string;
   isPreviewMode: boolean;
+  deviceType?: 'desktop' | 'tablet' | 'mobile';
   onSelectElement: (element: PageBuilderElement | undefined) => void;
   onUpdateElement: (elementId: string, updates: Partial<PageBuilderElement>) => void;
   onAddElement: (sectionId: string, rowId: string, columnId: string, elementType: string, insertIndex?: number) => void;
@@ -21,6 +22,7 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
   row,
   sectionId,
   isPreviewMode,
+  deviceType = 'desktop',
   onSelectElement,
   onUpdateElement,
   onAddElement,
@@ -60,16 +62,23 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
     // TODO: Implement row duplication
   };
 
-  const getGridTemplateColumns = () => {
-    const layout = COLUMN_LAYOUTS[row.columnLayout];
-    if (!layout) {
-      console.warn('No layout found for columnLayout:', row.columnLayout);
-      return '1fr';
+  const getResponsiveGridClasses = () => {
+    const baseClasses = RESPONSIVE_LAYOUTS[row.columnLayout];
+    if (!baseClasses) {
+      console.warn('No responsive layout found for columnLayout:', row.columnLayout);
+      return 'grid-cols-1';
     }
-    // Convert the layout numbers to CSS Grid fractional units
-    const gridColumns = layout.map(part => `${part}fr`).join(' ');
-    console.log('RowRenderer - columnLayout:', row.columnLayout, 'layout:', layout, 'gridColumns:', gridColumns);
-    return gridColumns;
+    
+    // Add gap classes and any row-specific responsive settings
+    const gapClass = 'gap-4';
+    const stackOnMobile = row.responsive?.mobile?.stackColumns !== false; // Default to true
+    
+    if (!stackOnMobile && row.columnLayout !== '1') {
+      // If user doesn't want mobile stacking, modify the classes
+      return `${baseClasses.replace('grid-cols-1', 'grid-cols-2')} ${gapClass}`;
+    }
+    
+    return `${baseClasses} ${gapClass}`;
   };
 
   return (
@@ -115,13 +124,7 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
         </div>
       )}
 
-      <div 
-        className="grid gap-4"
-        style={{ 
-          gridTemplateColumns: getGridTemplateColumns(),
-          display: 'grid'
-        }}
-      >
+      <div className={cn('grid', getResponsiveGridClasses())}>
         {row.columns.map((column) => (
             <ColumnRenderer
               key={column.id}
@@ -129,6 +132,7 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
               sectionId={sectionId}
               rowId={row.id}
               isPreviewMode={isPreviewMode}
+              deviceType={deviceType}
               onSelectElement={onSelectElement}
               onUpdateElement={onUpdateElement}
               onAddElement={onAddElement}

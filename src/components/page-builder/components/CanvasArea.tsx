@@ -4,6 +4,7 @@ import { Plus, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { PageBuilderData, PageBuilderElement, PageBuilderSection } from '../types';
 import { SectionRenderer } from './SectionRenderer';
+import { getDevicePreviewStyles, getResponsiveContainerClasses } from '../utils/responsive';
 import { cn } from '@/lib/utils';
 
 interface CanvasAreaProps {
@@ -44,17 +45,15 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
     }),
   });
 
-  const getCanvasStyles = () => {
-    const baseStyles = 'transition-all duration-300 mx-auto bg-background';
+  const getCanvasClasses = () => {
+    const baseClasses = 'transition-all duration-300 bg-background';
+    const containerClasses = getResponsiveContainerClasses(deviceType);
     
-    switch (deviceType) {
-      case 'tablet':
-        return `${baseStyles} w-[768px] min-h-screen border-x border-border shadow-lg`;
-      case 'mobile':
-        return `${baseStyles} w-[375px] min-h-screen border-x border-border shadow-lg`;
-      default:
-        return `${baseStyles} w-full min-h-screen`;
+    if (deviceType === 'desktop') {
+      return `${baseClasses} ${containerClasses} min-h-screen`;
     }
+    
+    return `${baseClasses} ${containerClasses} min-h-screen border border-border shadow-lg rounded-lg`;
   };
 
   const handleAddSection = () => {
@@ -70,10 +69,11 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
       <div
         ref={drop}
         className={cn(
-          getCanvasStyles(),
+          getCanvasClasses(),
           isOver && 'ring-2 ring-primary ring-opacity-50',
           isPreviewMode && 'pointer-events-none'
         )}
+        style={getDevicePreviewStyles(deviceType)}
         onClick={() => !isPreviewMode && onSelectElement(undefined)}
       >
         {pageData.sections.length === 0 ? (
@@ -102,6 +102,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
                 section={section}
                 isSelected={selectedElement?.id === section.id}
                 isPreviewMode={isPreviewMode}
+                deviceType={deviceType}
                 onSelectElement={onSelectElement}
                 onUpdateElement={onUpdateElement}
                 onAddElement={onAddElement}

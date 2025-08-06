@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { PageBuilderColumn, PageBuilderElement } from '../types';
 import { ElementRenderer } from './ElementRenderer';
 import { ElementDropZone } from './ElementDropZone';
+import { isColumnHidden, getColumnResponsiveClasses } from '../utils/responsive';
 import { cn } from '@/lib/utils';
 
 interface ColumnRendererProps {
@@ -12,6 +13,7 @@ interface ColumnRendererProps {
   sectionId: string;
   rowId: string;
   isPreviewMode: boolean;
+  deviceType?: 'desktop' | 'tablet' | 'mobile';
   onSelectElement: (element: PageBuilderElement | undefined) => void;
   onUpdateElement: (elementId: string, updates: Partial<PageBuilderElement>) => void;
   onAddElement: (sectionId: string, rowId: string, columnId: string, elementType: string, insertIndex?: number) => void;
@@ -24,6 +26,7 @@ export const ColumnRenderer: React.FC<ColumnRendererProps> = ({
   sectionId,
   rowId,
   isPreviewMode,
+  deviceType = 'desktop',
   onSelectElement,
   onUpdateElement,
   onAddElement,
@@ -62,13 +65,19 @@ export const ColumnRenderer: React.FC<ColumnRendererProps> = ({
     onAddElement(sectionId, rowId, column.id, 'text');
   };
 
+  // Check if column should be hidden on current device
+  if (isColumnHidden(column, deviceType)) {
+    return null;
+  }
+
   return (
     <div
       ref={drop}
       className={cn(
         'relative min-h-[60px] rounded border-2 border-dashed border-transparent transition-colors',
         isOver && 'border-primary/40 bg-primary/5',
-        !isPreviewMode && isHovered && 'border-muted-foreground/30'
+        !isPreviewMode && isHovered && 'border-muted-foreground/30',
+        getColumnResponsiveClasses(column, deviceType)
       )}
       style={{
         backgroundColor: column.styles?.backgroundColor || 'transparent',

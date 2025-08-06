@@ -24,6 +24,20 @@ export interface PageBuilderColumn {
     margin?: string;
     backgroundColor?: string;
   };
+  responsive?: {
+    mobile?: {
+      width?: number;
+      hidden?: boolean;
+    };
+    tablet?: {
+      width?: number;
+      hidden?: boolean;
+    };
+    desktop?: {
+      width?: number;
+      hidden?: boolean;
+    };
+  };
 }
 
 export interface PageBuilderRow {
@@ -34,6 +48,19 @@ export interface PageBuilderRow {
     padding?: string;
     margin?: string;
     backgroundColor?: string;
+  };
+  responsive?: {
+    mobile?: {
+      stackColumns?: boolean;
+      columnGap?: string;
+    };
+    tablet?: {
+      columnLayout?: string;
+      columnGap?: string;
+    };
+    desktop?: {
+      columnGap?: string;
+    };
   };
 }
 
@@ -97,6 +124,20 @@ export const COLUMN_LAYOUTS = {
   '1-1-1-1': [3, 3, 3, 3],
   '1-1-1-1-1': [2, 2, 2, 3, 3],
   '1-1-1-1-1-1': [2, 2, 2, 2, 2, 2]
+} as const;
+
+// Responsive layout configurations for mobile-first approach
+export const RESPONSIVE_LAYOUTS = {
+  '1': 'grid-cols-1',
+  '1-1': 'grid-cols-1 md:grid-cols-2',
+  '1-2': 'grid-cols-1 md:grid-cols-3 [&>:first-child]:md:col-span-1 [&>:last-child]:md:col-span-2',
+  '2-1': 'grid-cols-1 md:grid-cols-3 [&>:first-child]:md:col-span-2 [&>:last-child]:md:col-span-1',
+  '1-1-1': 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3',
+  '1-2-1': 'grid-cols-1 sm:grid-cols-2 md:grid-cols-4 [&>:first-child]:md:col-span-1 [&>:nth-child(2)]:md:col-span-2 [&>:last-child]:md:col-span-1',
+  '2-1-1': 'grid-cols-1 sm:grid-cols-2 md:grid-cols-4 [&>:first-child]:md:col-span-2 [&>:nth-child(2)]:md:col-span-1 [&>:last-child]:md:col-span-1',
+  '1-1-1-1': 'grid-cols-1 sm:grid-cols-2 md:grid-cols-4',
+  '1-1-1-1-1': 'grid-cols-1 sm:grid-cols-2 md:grid-cols-5',
+  '1-1-1-1-1-1': 'grid-cols-1 sm:grid-cols-2 md:grid-cols-6'
 } as const;
 
 // Section width configurations

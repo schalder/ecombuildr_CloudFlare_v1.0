@@ -10,6 +10,7 @@ interface SectionRendererProps {
   section: PageBuilderSection;
   isSelected: boolean;
   isPreviewMode: boolean;
+  deviceType?: 'desktop' | 'tablet' | 'mobile';
   onSelectElement: (element: PageBuilderElement | undefined) => void;
   onUpdateElement: (elementId: string, updates: Partial<PageBuilderElement>) => void;
   onAddElement: (sectionId: string, rowId: string, columnId: string, elementType: string, insertIndex?: number) => void;
@@ -21,6 +22,7 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({
   section,
   isSelected,
   isPreviewMode,
+  deviceType = 'desktop',
   onSelectElement,
   onUpdateElement,
   onAddElement,
@@ -140,6 +142,7 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({
                 row={row}
                 sectionId={section.id}
                 isPreviewMode={isPreviewMode}
+                deviceType={deviceType}
                 onSelectElement={onSelectElement}
                 onUpdateElement={onUpdateElement}
                 onAddElement={onAddElement}
