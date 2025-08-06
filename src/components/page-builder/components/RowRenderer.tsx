@@ -62,23 +62,57 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
     // TODO: Implement row duplication
   };
 
-  const getResponsiveGridClasses = () => {
-    const baseClasses = RESPONSIVE_LAYOUTS[row.columnLayout];
-    if (!baseClasses) {
-      console.warn('No responsive layout found for columnLayout:', row.columnLayout);
-      return 'grid-cols-1';
-    }
-    
-    // Add gap classes and any row-specific responsive settings
-    const gapClass = 'gap-4';
+  const getDeviceSpecificGridStyle = () => {
+    const columnCount = row.columns.length;
     const stackOnMobile = row.responsive?.mobile?.stackColumns !== false; // Default to true
     
-    if (!stackOnMobile && row.columnLayout !== '1') {
-      // If user doesn't want mobile stacking, modify the classes
-      return `${baseClasses.replace('grid-cols-1', 'grid-cols-2')} ${gapClass}`;
+    // Force grid layout based on selected device type
+    if (deviceType === 'mobile' && stackOnMobile) {
+      return {
+        display: 'grid',
+        gridTemplateColumns: '1fr',
+        gap: '16px'
+      };
     }
     
-    return `${baseClasses} ${gapClass}`;
+    if (deviceType === 'tablet') {
+      // On tablet, reduce columns appropriately
+      switch (row.columnLayout) {
+        case '1-1-1-1':
+        case '1-1-1':
+          return {
+            display: 'grid',
+            gridTemplateColumns: 'repeat(2, 1fr)',
+            gap: '16px'
+          };
+        case '1-2':
+          return {
+            display: 'grid',
+            gridTemplateColumns: '1fr 2fr',
+            gap: '16px'
+          };
+        case '2-1':
+          return {
+            display: 'grid',
+            gridTemplateColumns: '2fr 1fr',
+            gap: '16px'
+          };
+        default:
+          return {
+            display: 'grid',
+            gridTemplateColumns: columnCount > 2 ? 'repeat(2, 1fr)' : 'repeat(' + columnCount + ', 1fr)',
+            gap: '16px'
+          };
+      }
+    }
+    
+    // Desktop - use original layout
+    const fractions = COLUMN_LAYOUTS[row.columnLayout] || Array(columnCount).fill(1);
+    return {
+      display: 'grid',
+      gridTemplateColumns: fractions.map(f => `${f}fr`).join(' '),
+      gap: '16px'
+    };
   };
 
   return (
@@ -124,7 +158,7 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
         </div>
       )}
 
-      <div className={cn('grid', getResponsiveGridClasses())}>
+      <div style={getDeviceSpecificGridStyle()}>
         {row.columns.map((column) => (
             <ColumnRenderer
               key={column.id}

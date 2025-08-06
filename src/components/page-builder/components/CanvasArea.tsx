@@ -46,14 +46,13 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
   });
 
   const getCanvasClasses = () => {
-    const baseClasses = 'transition-all duration-300 bg-background';
-    const containerClasses = getResponsiveContainerClasses(deviceType);
+    const baseClasses = 'transition-all duration-300 bg-background min-h-screen';
     
     if (deviceType === 'desktop') {
-      return `${baseClasses} ${containerClasses} min-h-screen`;
+      return `${baseClasses} w-full`;
     }
     
-    return `${baseClasses} ${containerClasses} min-h-screen border border-border shadow-lg rounded-lg`;
+    return `${baseClasses} border border-border shadow-lg rounded-lg mx-auto`;
   };
 
   const handleAddSection = () => {
