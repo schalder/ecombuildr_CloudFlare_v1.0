@@ -60,7 +60,22 @@ import {
 import { elementRegistry } from './elements';
 
 // Helper function to get responsive grid classes for a row
-const getResponsiveGridClasses = (columnLayout: string): string => {
+const getResponsiveGridClasses = (columnLayout: string, deviceType: 'desktop' | 'tablet' | 'mobile'): string => {
+  // Force single column on mobile for all layouts
+  if (deviceType === 'mobile') {
+    return 'grid-cols-1';
+  }
+  
+  // For tablet, use simplified layouts
+  if (deviceType === 'tablet') {
+    const columnCount = COLUMN_LAYOUTS[columnLayout]?.length || 1;
+    if (columnCount >= 3) {
+      return 'grid-cols-2'; // Max 2 columns on tablet for 3+ column layouts
+    }
+    return 'grid-cols-2'; // Default to 2 columns on tablet
+  }
+  
+  // For desktop, use full responsive layout
   return RESPONSIVE_LAYOUTS[columnLayout] || 'grid-cols-1';
 };
 
@@ -571,16 +586,17 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = ({
               ) : (
                 <div className="space-y-4">
                   {data.sections.map((section, sectionIndex) => (
-                    <SectionComponent
-                      key={section.id}
-                      section={section}
-                      sectionIndex={sectionIndex}
-                      isSelected={selection?.type === 'section' && selection.id === section.id}
-                      onSelect={() => setSelection({ type: 'section', id: section.id })}
-                      onDelete={() => deleteSection(section.id)}
-                      onDuplicate={() => duplicateSection(section.id)}
-                      onAddRow={() => setShowColumnModal({ sectionId: section.id })}
-                      onDeleteRow={(rowId) => deleteRow(section.id, rowId)}
+                     <SectionComponent
+                       key={section.id}
+                       section={section}
+                       sectionIndex={sectionIndex}
+                       deviceType={deviceType}
+                       isSelected={selection?.type === 'section' && selection.id === section.id}
+                       onSelect={() => setSelection({ type: 'section', id: section.id })}
+                       onDelete={() => deleteSection(section.id)}
+                       onDuplicate={() => duplicateSection(section.id)}
+                       onAddRow={() => setShowColumnModal({ sectionId: section.id })}
+                       onDeleteRow={(rowId) => deleteRow(section.id, rowId)}
             onAddElement={(sectionId, rowId, columnId, elementType, insertIndex) => 
               addElement(sectionId, rowId, columnId, elementType, insertIndex)
             }
@@ -738,6 +754,7 @@ const DraggableElement: React.FC<DraggableElementProps> = ({ element }) => {
 interface SectionComponentProps {
   section: PageBuilderSection;
   sectionIndex: number;
+  deviceType: 'desktop' | 'tablet' | 'mobile';
   isSelected: boolean;
   onSelect: () => void;
   onDelete: () => void;
@@ -754,6 +771,7 @@ interface SectionComponentProps {
 
 const SectionComponent: React.FC<SectionComponentProps> = ({
   section,
+  deviceType,
   isSelected,
   onSelect,
   onDelete,
@@ -835,6 +853,7 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
                 key={row.id}
                 row={row}
                 sectionId={section.id}
+                deviceType={deviceType}
                 isSelected={selection?.type === 'row' && selection.id === row.id}
                 onSelect={() => onSelectionChange({ type: 'row', id: row.id, parentId: section.id })}
                 onDelete={() => onDeleteRow(row.id)}
@@ -857,6 +876,7 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
 interface RowComponentProps {
   row: PageBuilderRow;
   sectionId: string;
+  deviceType: 'desktop' | 'tablet' | 'mobile';
   isSelected: boolean;
   onSelect: () => void;
   onDelete: () => void;
@@ -871,6 +891,7 @@ interface RowComponentProps {
 const RowComponent: React.FC<RowComponentProps> = ({
   row,
   sectionId,
+  deviceType,
   isSelected,
   onSelect,
   onDelete,
@@ -925,7 +946,7 @@ const RowComponent: React.FC<RowComponentProps> = ({
         </div>
       )}
 
-      <div className={`grid gap-4 p-4 ${getResponsiveGridClasses(row.columnLayout)}`}>
+      <div className={`grid gap-4 p-4 ${getResponsiveGridClasses(row.columnLayout, deviceType)}`}>
         {row.columns.map((column) => (
           <ColumnComponent
             key={column.id}
