@@ -28,6 +28,12 @@ import {
   ContactFormContentProperties,
   NewsletterContentProperties
 } from './EcommerceProperties';
+import {
+  TestimonialContentProperties,
+  FAQContentProperties,
+  AccordionContentProperties,
+  TabsContentProperties
+} from './ContentProperties';
 
 import { PageBuilderElement } from '../types';
 
@@ -374,6 +380,35 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
 
             {selectedElement.type === 'newsletter' && (
               <NewsletterContentProperties 
+                element={selectedElement}
+                onUpdate={handleContentUpdate}
+              />
+            )}
+
+            {/* Content Elements */}
+            {selectedElement.type === 'testimonial' && (
+              <TestimonialContentProperties 
+                element={selectedElement}
+                onUpdate={handleContentUpdate}
+              />
+            )}
+
+            {selectedElement.type === 'faq' && (
+              <FAQContentProperties 
+                element={selectedElement}
+                onUpdate={handleContentUpdate}
+              />
+            )}
+
+            {selectedElement.type === 'accordion' && (
+              <AccordionContentProperties 
+                element={selectedElement}
+                onUpdate={handleContentUpdate}
+              />
+            )}
+
+            {selectedElement.type === 'tabs' && (
+              <TabsContentProperties 
                 element={selectedElement}
                 onUpdate={handleContentUpdate}
               />
