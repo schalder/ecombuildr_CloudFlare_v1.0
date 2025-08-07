@@ -13,7 +13,7 @@ const HeadingElement: React.FC<{
   isEditing?: boolean;
   deviceType?: 'desktop' | 'tablet' | 'mobile';
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
-}> = ({ element, isEditing, onUpdate }) => {
+}> = ({ element, isEditing, onUpdate, deviceType }) => {
   const level = element.content.level || 2;
   const text = element.content.text || 'Heading';
   const Tag = `h${level}` as keyof JSX.IntrinsicElements;
@@ -25,7 +25,7 @@ const HeadingElement: React.FC<{
   };
 
   const styles = {
-    textAlign: element.styles?.textAlign || 'left',
+    textAlign: element.styles?.textAlign || (deviceType === 'tablet' ? 'center' : 'left'),
     color: element.styles?.color || 'inherit',
     fontSize: element.styles?.fontSize || `${3.5 - level * 0.5}rem`,
     lineHeight: element.styles?.lineHeight || '1.2',
@@ -56,7 +56,7 @@ const ParagraphElement: React.FC<{
   isEditing?: boolean;
   deviceType?: 'desktop' | 'tablet' | 'mobile';
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
-}> = ({ element, isEditing, onUpdate }) => {
+}> = ({ element, isEditing, onUpdate, deviceType }) => {
   const text = element.content.text || 'Your text content goes here...';
 
   const handleTextChange = (newText: string) => {
@@ -66,7 +66,7 @@ const ParagraphElement: React.FC<{
   };
 
   const styles = {
-    textAlign: element.styles?.textAlign || 'left',
+    textAlign: element.styles?.textAlign || (deviceType === 'tablet' ? 'center' : 'left'),
     color: element.styles?.color || 'inherit',
     fontSize: element.styles?.fontSize || '1rem',
     lineHeight: element.styles?.lineHeight || '1.6',
