@@ -19,6 +19,9 @@ export const ButtonElementStyles: React.FC<ButtonElementStylesProps> = ({
   element,
   onStyleUpdate,
 }) => {
+  // Debug logging
+  console.log('ButtonElementStyles rendered for element:', element.type, element.id);
+  
   const desktopStyles = element.styles?.responsive?.desktop || {};
   const mobileStyles = element.styles?.responsive?.mobile || {};
 
