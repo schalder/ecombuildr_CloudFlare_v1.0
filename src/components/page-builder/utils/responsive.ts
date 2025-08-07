@@ -68,7 +68,7 @@ export function getColumnResponsiveClasses(
   column: { responsive?: any },
   deviceType: DeviceType
 ): string {
-  const baseClasses = 'transition-all duration-200';
+  const baseClasses = 'w-full transition-all duration-200';
   
   if (isColumnHidden(column, deviceType)) {
     return `${baseClasses} hidden`;
