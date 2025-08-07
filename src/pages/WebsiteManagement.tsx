@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
@@ -10,6 +10,7 @@ import { Switch } from '@/components/ui/switch';
 import { ArrowLeft, Plus, Edit, ExternalLink, Settings, Eye } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { CreatePageModal } from '@/components/modals/CreatePageModal';
 
 interface Website {
   id: string;
@@ -39,6 +40,7 @@ const WebsiteManagement = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   const { data: website, isLoading } = useQuery({
     queryKey: ['website', id],
@@ -97,7 +99,7 @@ const WebsiteManagement = () => {
   };
 
   const handleCreatePage = () => {
-    navigate(`/dashboard/pages/builder?websiteId=${id}`);
+    setIsCreateModalOpen(true);
   };
 
   const handleEditPage = (pageId: string) => {
@@ -259,6 +261,12 @@ const WebsiteManagement = () => {
           )}
         </div>
       </div>
+
+      <CreatePageModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        websiteId={id!}
+      />
     </DashboardLayout>
   );
 };

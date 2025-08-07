@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
@@ -10,6 +10,7 @@ import { Switch } from '@/components/ui/switch';
 import { ArrowLeft, Plus, Edit, ExternalLink, Settings, Eye, ArrowUp, ArrowDown, CheckCircle, Mail } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { CreateStepModal } from '@/components/modals/CreateStepModal';
 
 interface Funnel {
   id: string;
@@ -40,6 +41,7 @@ const FunnelManagement = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   const { data: funnel, isLoading } = useQuery({
     queryKey: ['funnel', id],
@@ -98,7 +100,7 @@ const FunnelManagement = () => {
   };
 
   const handleCreateStep = () => {
-    navigate(`/dashboard/pages/builder?funnelId=${id}`);
+    setIsCreateModalOpen(true);
   };
 
   const handleEditStep = (stepId: string) => {
@@ -286,6 +288,13 @@ const FunnelManagement = () => {
           </div>
         </div>
       </div>
+
+      <CreateStepModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        funnelId={id!}
+        currentStepsCount={steps.length}
+      />
     </DashboardLayout>
   );
 };
