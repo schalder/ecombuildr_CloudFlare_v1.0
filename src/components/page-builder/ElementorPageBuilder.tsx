@@ -1338,7 +1338,7 @@ const ColumnComponent: React.FC<ColumnComponentProps> = ({
           columnId={column.id}
           insertIndex={0}
           onAddElement={handleAddElement}
-          onMoveElement={(elementId, insertIndex) => console.log('Element move:', elementId, insertIndex)}
+          onMoveElement={(elementId, insertIndex) => onMoveElement(elementId, sectionId, rowId, column.id, insertIndex)}
           className="mb-2"
         />
 
@@ -1376,7 +1376,7 @@ const ColumnComponent: React.FC<ColumnComponentProps> = ({
                   columnId={column.id}
                   insertIndex={index + 1}
                   onAddElement={handleAddElement}
-                  onMoveElement={(elementId, insertIndex) => console.log('Element move:', elementId, insertIndex)}
+                  onMoveElement={(elementId, insertIndex) => onMoveElement(elementId, sectionId, rowId, column.id, insertIndex)}
                   className="my-2"
                 />
               </div>
