@@ -78,6 +78,7 @@ export interface PageBuilderColumn {
     width?: string; // Custom width override
     maxWidth?: string;
     minWidth?: string;
+    textAlign?: 'left' | 'center' | 'right';
     responsive?: {
       desktop?: Record<string, any>;
       mobile?: Record<string, any>;

@@ -11,8 +11,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ColorPicker } from '@/components/ui/color-picker';
 import { BoxShadowPicker } from '@/components/ui/box-shadow-picker';
 import { Switch } from '@/components/ui/switch';
-import { ChevronDown, ChevronRight } from 'lucide-react';
+import { ChevronDown, ChevronRight, AlignLeft, AlignCenter, AlignRight } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 
 // Section Settings Panel
 interface SectionSettingsProps {
@@ -1017,6 +1018,20 @@ export const ColumnSettings: React.FC<ColumnSettingsProps> = ({ column, onUpdate
 
       <Card>
         <CardHeader>
+          <CardTitle className="text-sm">Alignment</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          <Label>Base Alignment</Label>
+          <ToggleGroup type="single" value={(column.styles?.textAlign as any) ?? undefined} onValueChange={(v) => v && handleStyleUpdate('textAlign', v)}>
+            <ToggleGroupItem value="left" aria-label="Align left"><AlignLeft className="h-4 w-4" /></ToggleGroupItem>
+            <ToggleGroupItem value="center" aria-label="Align center"><AlignCenter className="h-4 w-4" /></ToggleGroupItem>
+            <ToggleGroupItem value="right" aria-label="Align right"><AlignRight className="h-4 w-4" /></ToggleGroupItem>
+          </ToggleGroup>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
           <CardTitle className="text-sm">Responsive Overrides</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -1066,6 +1081,14 @@ export const ColumnSettings: React.FC<ColumnSettingsProps> = ({ column, onUpdate
                   placeholder="Custom e.g., 0 auto"
                 />
               </div>
+              <div className="space-y-2">
+                <Label>Alignment</Label>
+                <ToggleGroup type="single" value={(column.styles?.responsive?.desktop?.textAlign as any) ?? undefined} onValueChange={(v) => v && handleResponsiveStyleUpdate('desktop', 'textAlign', v)}>
+                  <ToggleGroupItem value="left" aria-label="Align left"><AlignLeft className="h-4 w-4" /></ToggleGroupItem>
+                  <ToggleGroupItem value="center" aria-label="Align center"><AlignCenter className="h-4 w-4" /></ToggleGroupItem>
+                  <ToggleGroupItem value="right" aria-label="Align right"><AlignRight className="h-4 w-4" /></ToggleGroupItem>
+                </ToggleGroup>
+              </div>
             </TabsContent>
             <TabsContent value="mobile" className="space-y-4">
               <div className="space-y-2">
@@ -1107,6 +1130,14 @@ export const ColumnSettings: React.FC<ColumnSettingsProps> = ({ column, onUpdate
                   onChange={(e) => handleResponsiveStyleUpdate('mobile', 'margin', e.target.value)}
                   placeholder="Custom e.g., 0 auto"
                 />
+              </div>
+              <div className="space-y-2">
+                <Label>Alignment</Label>
+                <ToggleGroup type="single" value={(column.styles?.responsive?.mobile?.textAlign as any) ?? undefined} onValueChange={(v) => v && handleResponsiveStyleUpdate('mobile', 'textAlign', v)}>
+                  <ToggleGroupItem value="left" aria-label="Align left"><AlignLeft className="h-4 w-4" /></ToggleGroupItem>
+                  <ToggleGroupItem value="center" aria-label="Align center"><AlignCenter className="h-4 w-4" /></ToggleGroupItem>
+                  <ToggleGroupItem value="right" aria-label="Align right"><AlignRight className="h-4 w-4" /></ToggleGroupItem>
+                </ToggleGroup>
               </div>
             </TabsContent>
           </Tabs>
