@@ -298,8 +298,10 @@ const SpacerElement: React.FC<{
   const height = element.content.height || '50px';
 
   const handleHeightChange = (newHeight: string) => {
+    // Convert string height to number (remove 'px' and parse)
+    const numericHeight = parseInt(newHeight.replace('px', '')) || 50;
     onUpdate?.({
-      content: { ...element.content, height: newHeight }
+      content: { ...element.content, height: numericHeight }
     });
   };
 
