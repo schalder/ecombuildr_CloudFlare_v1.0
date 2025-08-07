@@ -362,6 +362,21 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = ({
     }
   }, [data, updateData]);
 
+  const moveSection = useCallback((sectionId: string, insertIndex: number) => {
+    console.log('Moving section:', { sectionId, insertIndex });
+    
+    const newData = { ...data };
+    let sectionToMove: PageBuilderSection | null = null;
+    const sectionIndex = newData.sections.findIndex(section => section.id === sectionId);
+    
+    if (sectionIndex !== -1) {
+      sectionToMove = newData.sections[sectionIndex];
+      newData.sections.splice(sectionIndex, 1);
+      newData.sections.splice(insertIndex, 0, sectionToMove);
+      updateData(newData);
+    }
+  }, [data, updateData]);
+
   // Element operations
   const addElement = useCallback((sectionId: string, rowId: string, columnId: string, elementType: string, insertIndex?: number) => {
     console.log('Adding element:', { sectionId, rowId, columnId, elementType, insertIndex });
@@ -721,27 +736,41 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = ({
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {data.sections.map((section, sectionIndex) => (
-                  <SectionComponent
-                    key={section.id}
-                    section={section}
-                    sectionIndex={sectionIndex}
-                    deviceType={deviceType}
-                    isSelected={selection?.type === 'section' && selection.id === section.id}
-                    onSelect={() => setSelection({ type: 'section', id: section.id })}
-                    onDelete={() => deleteSection(section.id)}
-                    onDuplicate={() => duplicateSection(section.id)}
-                    onAddRow={(insertIndex?: number) => setShowColumnModal({ sectionId: section.id, insertIndex })}
-                    onDeleteRow={(rowId) => deleteRow(section.id, rowId)}
-                    onMoveRow={moveRow}
-                    onAddElement={addElement}
-                    onUpdateElement={updateElement}
-                    onDeleteElement={deleteElement}
-                    onDuplicateElement={duplicateElement}
-                    selection={selection}
-                    onSelectionChange={setSelection}
-                    onAddSectionAfter={() => addSectionAfter(sectionIndex)}
+                  {/* Section drop zone at the beginning */}
+                  <SectionDropZone 
+                    insertIndex={0} 
+                    onMoveSection={moveSection}
                   />
+                  
+                  {data.sections.map((section, sectionIndex) => (
+                    <div key={section.id}>
+                      <SectionComponent
+                        section={section}
+                        sectionIndex={sectionIndex}
+                        deviceType={deviceType}
+                        isSelected={selection?.type === 'section' && selection.id === section.id}
+                        onSelect={() => setSelection({ type: 'section', id: section.id })}
+                        onDelete={() => deleteSection(section.id)}
+                        onDuplicate={() => duplicateSection(section.id)}
+                        onAddRow={(insertIndex?: number) => setShowColumnModal({ sectionId: section.id, insertIndex })}
+                        onDeleteRow={(rowId) => deleteRow(section.id, rowId)}
+                        onMoveRow={moveRow}
+                        onMoveSection={moveSection}
+                        onAddElement={addElement}
+                        onUpdateElement={updateElement}
+                        onDeleteElement={deleteElement}
+                        onDuplicateElement={duplicateElement}
+                        selection={selection}
+                        onSelectionChange={setSelection}
+                        onAddSectionAfter={() => addSectionAfter(sectionIndex)}
+                      />
+                      
+                      {/* Section drop zone after each section */}
+                      <SectionDropZone 
+                        insertIndex={sectionIndex + 1} 
+                        onMoveSection={moveSection}
+                      />
+                    </div>
                   ))}
                   
                   {/* Add Section button at end */}
@@ -906,6 +935,7 @@ interface SectionComponentProps {
   onAddRow: (insertIndex?: number) => void;
   onDeleteRow: (rowId: string) => void;
   onMoveRow: (rowId: string, targetSectionId: string, insertIndex: number) => void;
+  onMoveSection: (sectionId: string, insertIndex: number) => void;
   onAddElement: (sectionId: string, rowId: string, columnId: string, elementType: string, insertIndex?: number) => void;
   onUpdateElement: (elementId: string, updates: Partial<PageBuilderElement>) => void;
   onDeleteElement: (elementId: string) => void;
@@ -925,6 +955,7 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
   onAddRow,
   onDeleteRow,
   onMoveRow,
+  onMoveSection,
   onAddElement,
   onUpdateElement,
   onDeleteElement,
@@ -1055,6 +1086,8 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
                       isSelected={selection?.type === 'row' && selection.id === row.id}
                       onSelect={() => onSelectionChange({ type: 'row', id: row.id, parentId: section.id })}
                       onDelete={() => onDeleteRow(row.id)}
+                      onAddRow={() => onAddRow(index + 1)}
+                      onMoveRow={onMoveRow}
                       onAddElement={onAddElement}
                       onUpdateElement={onUpdateElement}
                       onDeleteElement={onDeleteElement}
@@ -1094,6 +1127,8 @@ interface RowComponentProps {
   isSelected: boolean;
   onSelect: () => void;
   onDelete: () => void;
+  onAddRow: () => void;
+  onMoveRow: (rowId: string, targetSectionId: string, insertIndex: number) => void;
   onAddElement: (sectionId: string, rowId: string, columnId: string, elementType: string, insertIndex?: number) => void;
   onUpdateElement: (elementId: string, updates: Partial<PageBuilderElement>) => void;
   onDeleteElement: (elementId: string) => void;
@@ -1109,6 +1144,8 @@ const RowComponent: React.FC<RowComponentProps> = ({
   isSelected,
   onSelect,
   onDelete,
+  onAddRow,
+  onMoveRow,
   onAddElement,
   onUpdateElement,
   onDeleteElement,
@@ -1196,6 +1233,7 @@ const RowComponent: React.FC<RowComponentProps> = ({
               grandParentId: sectionId 
             })}
             onAddElement={onAddElement}
+            onMoveElement={() => {}}
             onUpdateElement={onUpdateElement}
             onDeleteElement={onDeleteElement}
             onDuplicateElement={onDuplicateElement}
@@ -1217,6 +1255,7 @@ interface ColumnComponentProps {
   isSelected: boolean;
   onSelect: () => void;
   onAddElement: (sectionId: string, rowId: string, columnId: string, elementType: string, insertIndex?: number) => void;
+  onMoveElement: (elementId: string, targetSectionId: string, targetRowId: string, targetColumnId: string, insertIndex: number) => void;
   onUpdateElement: (elementId: string, updates: Partial<PageBuilderElement>) => void;
   onDeleteElement: (elementId: string) => void;
   onDuplicateElement: (elementId: string) => void;
@@ -1232,6 +1271,7 @@ const ColumnComponent: React.FC<ColumnComponentProps> = ({
   isSelected,
   onSelect,
   onAddElement,
+  onMoveElement,
   onUpdateElement,
   onDeleteElement,
   onDuplicateElement,
@@ -1295,6 +1335,7 @@ const ColumnComponent: React.FC<ColumnComponentProps> = ({
           columnId={column.id}
           insertIndex={0}
           onAddElement={handleAddElement}
+          onMoveElement={(elementId, insertIndex) => console.log('Element move:', elementId, insertIndex)}
           className="mb-2"
         />
 
@@ -1332,6 +1373,7 @@ const ColumnComponent: React.FC<ColumnComponentProps> = ({
                   columnId={column.id}
                   insertIndex={index + 1}
                   onAddElement={handleAddElement}
+                  onMoveElement={(elementId, insertIndex) => console.log('Element move:', elementId, insertIndex)}
                   className="my-2"
                 />
               </div>
@@ -1359,6 +1401,9 @@ interface ElementWrapperProps {
 
 const ElementWrapper: React.FC<ElementWrapperProps> = ({
   element,
+  columnId,
+  rowId,
+  sectionId,
   deviceType,
   isSelected,
   onSelect,
@@ -1368,6 +1413,20 @@ const ElementWrapper: React.FC<ElementWrapperProps> = ({
 }) => {
   const [isHovered, setIsHovered] = useState(false);
   const elementDef = elementRegistry.get(element.type);
+
+  // Element drag functionality
+  const [{ isDragging }, dragRef] = useDrag({
+    type: 'element',
+    item: { 
+      elementId: element.id,
+      sourceColumnId: columnId,
+      sourceRowId: rowId,
+      sourceSectionId: sectionId
+    },
+    collect: (monitor) => ({
+      isDragging: monitor.isDragging()
+    })
+  });
 
   if (!elementDef) {
     return (
@@ -1379,12 +1438,15 @@ const ElementWrapper: React.FC<ElementWrapperProps> = ({
 
   return (
     <div
+      ref={dragRef}
       className={`relative group border transition-all duration-200 rounded ${
         isSelected 
           ? 'border-primary bg-primary/5' 
           : isHovered 
             ? 'border-primary/50' 
             : 'border-transparent'
+      } ${
+        isDragging ? 'opacity-50' : ''
       }`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -1396,6 +1458,12 @@ const ElementWrapper: React.FC<ElementWrapperProps> = ({
       {/* Element Toolbar */}
       {(isHovered || isSelected) && (
         <div className="absolute -top-8 left-0 z-20 flex items-center gap-1 bg-primary text-primary-foreground px-2 py-1 rounded text-xs shadow-lg">
+          <div 
+            ref={dragRef}
+            className="flex items-center cursor-move hover:bg-primary-foreground/20 p-1 rounded"
+          >
+            <Grip className="h-3 w-3" />
+          </div>
           <elementDef.icon className="h-3 w-3" />
           <span className="font-medium">{elementDef.name}</span>
           <Separator orientation="vertical" className="mx-1 h-3" />
