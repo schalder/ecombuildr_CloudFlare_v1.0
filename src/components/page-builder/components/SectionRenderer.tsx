@@ -63,6 +63,37 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({
   };
 
   const getSectionWidth = () => {
+    if (deviceType === 'tablet') {
+      switch (section.width) {
+        case 'full':
+          return 'w-full';
+        case 'wide':
+          return 'w-full px-4';
+        case 'medium':
+          return 'max-w-lg mx-auto px-4';
+        case 'small':
+          return 'max-w-sm mx-auto px-4';
+        default:
+          return 'w-full px-4';
+      }
+    }
+    
+    if (deviceType === 'mobile') {
+      switch (section.width) {
+        case 'full':
+          return 'w-full px-2';
+        case 'wide':
+          return 'w-full px-3';
+        case 'medium':
+          return 'w-full px-4';
+        case 'small':
+          return 'w-full px-6';
+        default:
+          return 'w-full px-4';
+      }
+    }
+    
+    // Desktop (default)
     switch (section.width) {
       case 'full':
         return 'w-full';
