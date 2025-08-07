@@ -141,7 +141,7 @@ const ImageElement: React.FC<{
     height: element.styles?.height || 'auto',
     maxWidth: element.styles?.maxWidth || (alignment === 'full' ? '100%' : undefined),
     objectFit: element.styles?.objectFit || 'cover'
-  };
+  } as React.CSSProperties;
 
   const ImageComponent = () => (
     <img
