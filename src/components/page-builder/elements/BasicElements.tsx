@@ -36,18 +36,19 @@ const HeadingElement: React.FC<{
   };
 
   return (
-    <div style={{ backgroundColor: element.styles?.backgroundColor || 'transparent' }} className="rounded">
-      <Tag style={styles as any} className="outline-none font-bold block">
-        <InlineEditor
-          value={text}
-          onChange={handleTextChange}
-          placeholder="Enter heading text..."
-          disabled={!isEditing}
-          multiline={true}
-          className="font-inherit text-inherit leading-tight"
-        />
-      </Tag>
-    </div>
+    <Tag 
+      style={styles as any} 
+      className="outline-none font-bold block rounded"
+    >
+      <InlineEditor
+        value={text}
+        onChange={handleTextChange}
+        placeholder="Enter heading text..."
+        disabled={!isEditing}
+        multiline={true}
+        className="font-inherit text-inherit leading-tight"
+      />
+    </Tag>
   );
 };
 
@@ -78,17 +79,18 @@ const ParagraphElement: React.FC<{
   };
 
   return (
-    <div style={{ backgroundColor: element.styles?.backgroundColor || 'transparent' }} className="rounded">
-      <p style={styles as any} className="outline-none">
-        <InlineEditor
-          value={text}
-          onChange={handleTextChange}
-          placeholder="Enter your text content..."
-          disabled={!isEditing}
-          multiline={true}
-          className="text-inherit leading-inherit"
-        />
-      </p>
+    <div 
+      style={styles as any} 
+      className="outline-none rounded"
+    >
+      <InlineEditor
+        value={text}
+        onChange={handleTextChange}
+        placeholder="Enter your text content..."
+        disabled={!isEditing}
+        multiline={true}
+        className="text-inherit leading-inherit"
+      />
     </div>
   );
 };

@@ -107,16 +107,17 @@ export const InlineEditor: React.FC<InlineEditorProps> = ({
   }
 
   return (
-    <div
+    <span
       onClick={handleClick}
       className={cn(
-        "cursor-text min-h-[1.5rem] hover:bg-muted/20 rounded px-1 transition-colors",
+        "cursor-text inline-block min-h-[1.5rem] hover:bg-muted/20 rounded px-1 transition-colors",
         !value && "text-muted-foreground",
         disabled && "cursor-default hover:bg-transparent",
+        multiline && "block w-full",
         className
       )}
     >
       {value || placeholder}
-    </div>
+    </span>
   );
 };
