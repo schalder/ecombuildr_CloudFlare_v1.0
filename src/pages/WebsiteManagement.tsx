@@ -126,125 +126,138 @@ const WebsiteManagement = () => {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <div className="min-h-screen bg-background">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <Button variant="outline" size="sm" onClick={() => navigate('/dashboard/websites')}>
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Websites
-            </Button>
-            <div>
-              <h1 className="text-2xl font-bold">{website.name}</h1>
-              <p className="text-muted-foreground">Manage your website and its pages</p>
+        <div className="border-b bg-background px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <Button variant="ghost" size="sm" onClick={() => navigate('/dashboard/websites')}>
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back
+              </Button>
+              <div>
+                <h1 className="text-2xl font-semibold">{website.name}</h1>
+              </div>
             </div>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Button variant="outline" size="sm">
-              <Settings className="h-4 w-4 mr-2" />
-              Settings
-            </Button>
-            {website.is_published && (
+            <div className="flex items-center space-x-2">
               <Button variant="outline" size="sm">
                 <ExternalLink className="h-4 w-4 mr-2" />
-                Preview
+                Share
               </Button>
-            )}
+              <Button variant="outline" size="sm">
+                Help
+              </Button>
+            </div>
           </div>
         </div>
 
-        {/* Website Status */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Website Status</CardTitle>
-            <CardDescription>Control your website's visibility and availability</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h4 className="font-medium">Active</h4>
-                <p className="text-sm text-muted-foreground">Enable or disable the website</p>
-              </div>
-              <Switch
-                checked={website.is_active}
-                onCheckedChange={handleToggleActive}
-                disabled={updateWebsiteMutation.isPending}
-              />
-            </div>
-            <Separator />
-            <div className="flex items-center justify-between">
-              <div>
-                <h4 className="font-medium">Published</h4>
-                <p className="text-sm text-muted-foreground">Make the website publicly accessible</p>
-              </div>
-              <Switch
-                checked={website.is_published}
-                onCheckedChange={handleTogglePublished}
-                disabled={updateWebsiteMutation.isPending}
-              />
-            </div>
-          </CardContent>
-        </Card>
+        {/* Navigation Tabs */}
+        <div className="border-b px-6">
+          <div className="flex space-x-8">
+            <button className="py-4 px-1 border-b-2 border-blue-500 text-blue-600 font-medium">
+              Pages
+            </button>
+            <button className="py-4 px-1 text-muted-foreground hover:text-foreground">
+              Stats
+            </button>
+            <button className="py-4 px-1 text-muted-foreground hover:text-foreground">
+              Sales
+            </button>
+            <button className="py-4 px-1 text-muted-foreground hover:text-foreground">
+              Security
+            </button>
+            <button className="py-4 px-1 text-muted-foreground hover:text-foreground">
+              Events
+            </button>
+            <button className="py-4 px-1 text-muted-foreground hover:text-foreground">
+              Settings
+            </button>
+          </div>
+        </div>
 
-        {/* Website Pages */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>Website Pages</CardTitle>
-                <CardDescription>Manage the pages in your website</CardDescription>
-              </div>
+        {/* Main Content */}
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-xl font-semibold">Pages</h2>
+            </div>
+            <Button onClick={handleCreatePage}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add New Page
+            </Button>
+          </div>
+
+          {pages.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground mb-4">No pages created yet</p>
               <Button onClick={handleCreatePage}>
                 <Plus className="h-4 w-4 mr-2" />
-                Add Page
+                Create Your First Page
               </Button>
             </div>
-          </CardHeader>
-          <CardContent>
-            {pages.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-muted-foreground mb-4">No pages created yet</p>
-                <Button onClick={handleCreatePage}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create Your First Page
-                </Button>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {pages.map((page) => (
-                  <div key={page.id} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div className="flex items-center space-x-3">
-                      <div>
-                        <div className="flex items-center space-x-2">
-                          <h4 className="font-medium">{page.title}</h4>
-                          {page.is_homepage && (
-                            <Badge variant="secondary" className="text-xs">Homepage</Badge>
-                          )}
-                          {page.is_published && (
-                            <Badge variant="default" className="text-xs">Published</Badge>
-                          )}
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {pages.map((page) => (
+                <div key={page.id} className="group relative">
+                  <div className="border rounded-lg overflow-hidden hover:shadow-md transition-shadow">
+                    {/* Page Preview */}
+                    <div className="aspect-[4/3] bg-muted/30 relative">
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="text-center">
+                          <div className="w-16 h-16 bg-background border-2 rounded-lg mx-auto mb-2 flex items-center justify-center">
+                            <div className="w-8 h-8 bg-muted rounded"></div>
+                          </div>
+                          <p className="text-xs text-muted-foreground">Page Preview</p>
                         </div>
-                        <p className="text-sm text-muted-foreground">/{page.slug}</p>
                       </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Button variant="outline" size="sm" onClick={() => handleEditPage(page.id)}>
-                        <Edit className="h-4 w-4 mr-2" />
-                        Edit
-                      </Button>
+                      
+                      {/* Status Badge */}
+                      <div className="absolute top-2 left-2">
+                        {page.is_homepage && (
+                          <Badge variant="secondary" className="text-xs">Homepage</Badge>
+                        )}
+                      </div>
+                      
+                      {/* Published Status */}
                       {page.is_published && (
-                        <Button variant="outline" size="sm">
-                          <Eye className="h-4 w-4 mr-2" />
-                          Preview
-                        </Button>
+                        <div className="absolute top-2 right-2">
+                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                        </div>
                       )}
                     </div>
+
+                    {/* Page Info */}
+                    <div className="p-4">
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-medium truncate">{page.title}</h3>
+                          <p className="text-sm text-muted-foreground">/{page.slug}</p>
+                        </div>
+                        <button className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Settings className="h-4 w-4 text-muted-foreground" />
+                        </button>
+                      </div>
+
+                      <div className="flex space-x-2">
+                        <Button 
+                          variant="default" 
+                          size="sm" 
+                          className="flex-1"
+                          onClick={() => handleEditPage(page.id)}
+                        >
+                          Edit
+                        </Button>
+                        <Button variant="outline" size="sm">
+                          <ExternalLink className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
                   </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </DashboardLayout>
   );

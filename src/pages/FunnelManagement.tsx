@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
-import { ArrowLeft, Plus, Edit, ExternalLink, Settings, Eye, ArrowUp, ArrowDown } from 'lucide-react';
+import { ArrowLeft, Plus, Edit, ExternalLink, Settings, Eye, ArrowUp, ArrowDown, CheckCircle, Mail } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -138,139 +138,153 @@ const FunnelManagement = () => {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <div className="min-h-screen bg-background">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <Button variant="outline" size="sm" onClick={() => navigate('/dashboard/funnels')}>
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Funnels
-            </Button>
-            <div>
-              <h1 className="text-2xl font-bold">{funnel.name}</h1>
-              <p className="text-muted-foreground">Manage your funnel steps and settings</p>
+        <div className="border-b bg-background px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <Button variant="ghost" size="sm" onClick={() => navigate('/dashboard/funnels')}>
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back
+              </Button>
+              <div>
+                <h1 className="text-2xl font-semibold">{funnel.name}</h1>
+                <p className="text-muted-foreground">Manage your funnel steps and settings</p>
+              </div>
             </div>
-          </div>
-          <div className="flex items-center space-x-2">
             <Button variant="outline" size="sm">
               <Settings className="h-4 w-4 mr-2" />
               Settings
             </Button>
-            {funnel.is_published && (
-              <Button variant="outline" size="sm">
-                <ExternalLink className="h-4 w-4 mr-2" />
-                Preview Funnel
-              </Button>
-            )}
           </div>
         </div>
 
-        {/* Funnel Status */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Funnel Status</CardTitle>
-            <CardDescription>Control your funnel's visibility and availability</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
+        <div className="flex">
+          {/* Sidebar */}
+          <div className="w-80 border-r bg-muted/30 p-6">
+            <div className="space-y-6">
+              {/* Status Section */}
               <div>
-                <h4 className="font-medium">Active</h4>
-                <p className="text-sm text-muted-foreground">Enable or disable the funnel</p>
-              </div>
-              <Switch
-                checked={funnel.is_active}
-                onCheckedChange={handleToggleActive}
-                disabled={updateFunnelMutation.isPending}
-              />
-            </div>
-            <Separator />
-            <div className="flex items-center justify-between">
-              <div>
-                <h4 className="font-medium">Published</h4>
-                <p className="text-sm text-muted-foreground">Make the funnel publicly accessible</p>
-              </div>
-              <Switch
-                checked={funnel.is_published}
-                onCheckedChange={handleTogglePublished}
-                disabled={updateFunnelMutation.isPending}
-              />
-            </div>
-          </CardContent>
-        </Card>
+                <div className="flex items-center space-x-2 mb-4">
+                  <CheckCircle className="h-5 w-5 text-green-500" />
+                  <h3 className="font-medium">Funnel Steps</h3>
+                </div>
+                
+                <div className="space-y-3">
+                  {steps.length === 0 ? (
+                    <div className="text-center py-8">
+                      <p className="text-muted-foreground mb-4">No steps created yet</p>
+                      <Button onClick={handleCreateStep} size="sm">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Create Your First Step
+                      </Button>
+                    </div>
+                  ) : (
+                    steps.map((step, index) => (
+                      <div
+                        key={step.id}
+                        className="flex items-center space-x-3 p-3 rounded-lg bg-background border cursor-pointer hover:bg-muted/50"
+                        onClick={() => handleEditStep(step.id)}
+                      >
+                        <div className="flex-shrink-0">
+                          <Mail className="h-4 w-4 text-blue-500" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium truncate">{step.title}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {getStepTypeLabel(step.step_type)}
+                          </p>
+                        </div>
+                        {step.is_published && (
+                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                        )}
+                      </div>
+                    ))
+                  )}
+                </div>
 
-        {/* Funnel Steps */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>Funnel Steps</CardTitle>
-                <CardDescription>Manage the steps in your sales funnel</CardDescription>
-              </div>
-              <Button onClick={handleCreateStep}>
-                <Plus className="h-4 w-4 mr-2" />
-                Add Step
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {steps.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-muted-foreground mb-4">No steps created yet</p>
-                <Button onClick={handleCreateStep}>
+                <Button 
+                  onClick={handleCreateStep} 
+                  className="w-full mt-4" 
+                  variant="outline"
+                >
                   <Plus className="h-4 w-4 mr-2" />
-                  Create Your First Step
+                  Add New Step or Import
                 </Button>
               </div>
-            ) : (
-              <div className="space-y-3">
-                {steps.map((step, index) => (
-                  <div key={step.id} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div className="flex items-center space-x-3">
-                      <div className="flex flex-col items-center space-y-1">
-                        <span className="text-xs text-muted-foreground">Step</span>
-                        <Badge variant="outline" className="w-8 h-8 rounded-full flex items-center justify-center">
-                          {step.step_order}
-                        </Badge>
-                      </div>
+            </div>
+          </div>
+
+          {/* Main Content */}
+          <div className="flex-1 p-6">
+            <div className="max-w-4xl">
+              {/* Funnel Status Cards */}
+              <div className="grid grid-cols-2 gap-6 mb-8">
+                <Card>
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
                       <div>
-                        <div className="flex items-center space-x-2">
-                          <h4 className="font-medium">{step.title}</h4>
-                          <Badge variant="secondary" className="text-xs">
-                            {getStepTypeLabel(step.step_type)}
-                          </Badge>
-                          {step.is_published && (
-                            <Badge variant="default" className="text-xs">Published</Badge>
-                          )}
-                        </div>
-                        <p className="text-sm text-muted-foreground">/{step.slug}</p>
+                        <h4 className="font-medium mb-1">Active</h4>
+                        <p className="text-sm text-muted-foreground">Enable or disable the funnel</p>
                       </div>
+                      <Switch
+                        checked={funnel.is_active}
+                        onCheckedChange={handleToggleActive}
+                        disabled={updateFunnelMutation.isPending}
+                      />
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <div className="flex flex-col space-y-1">
-                        <Button variant="outline" size="sm" disabled={index === 0}>
-                          <ArrowUp className="h-3 w-3" />
-                        </Button>
-                        <Button variant="outline" size="sm" disabled={index === steps.length - 1}>
-                          <ArrowDown className="h-3 w-3" />
-                        </Button>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="font-medium mb-1">Published</h4>
+                        <p className="text-sm text-muted-foreground">Make the funnel publicly accessible</p>
                       </div>
-                      <Button variant="outline" size="sm" onClick={() => handleEditStep(step.id)}>
-                        <Edit className="h-4 w-4 mr-2" />
+                      <Switch
+                        checked={funnel.is_published}
+                        onCheckedChange={handleTogglePublished}
+                        disabled={updateFunnelMutation.isPending}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Selected Step Content */}
+              {steps.length > 0 && (
+                <div className="bg-background border rounded-lg p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold">{steps[0]?.title || 'Select a step'}</h3>
+                    <div className="flex space-x-2">
+                      <Button variant="outline" size="sm">
+                        <Eye className="h-4 w-4 mr-2" />
+                        Preview
+                      </Button>
+                      <Button size="sm" onClick={() => handleEditStep(steps[0]?.id)}>
                         Edit
                       </Button>
-                      {step.is_published && (
-                        <Button variant="outline" size="sm">
-                          <Eye className="h-4 w-4 mr-2" />
-                          Preview
-                        </Button>
-                      )}
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                  
+                  <div className="bg-muted/30 rounded-lg p-8 text-center">
+                    <p className="text-muted-foreground mb-4">Please add a domain in the settings to see your Funnel live!</p>
+                    <div className="bg-background border-2 border-dashed border-muted-foreground/25 rounded-lg p-8">
+                      <div className="text-center">
+                        <div className="w-16 h-16 bg-green-100 rounded-lg mx-auto mb-4 flex items-center justify-center">
+                          <div className="w-8 h-1 bg-green-500 rounded"></div>
+                        </div>
+                        <p className="text-sm text-muted-foreground">Step preview will appear here</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
     </DashboardLayout>
   );
