@@ -105,26 +105,24 @@ const ImageElement: React.FC<{
 }> = ({ element, isEditing, onUpdate }) => {
   const { url, alt, caption, alignment = 'center', linkUrl, linkTarget = '_self' } = element.content;
   const containerStyles = renderElementStyles(element);
-  
-  // Handle adding image URL when element is empty and in edit mode
+  const [imageError, setImageError] = React.useState(false);
+  const [imageLoading, setImageLoading] = React.useState(false);
+
+  // Reset error state when URL changes
   React.useEffect(() => {
-    if (isEditing && !url) {
-      onUpdate?.({
-        content: { 
-          ...element.content,
-          url: 'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=600&h=400&fit=crop',
-          alt: 'Placeholder image',
-          alignment: 'center',
-          uploadMethod: 'url'
-        }
-      });
+    if (url) {
+      setImageError(false);
+      setImageLoading(true);
     }
-  }, [isEditing, url, onUpdate]);
+  }, [url]);
 
   if (!url) {
     return (
-      <div className="w-full h-48 bg-muted flex items-center justify-center border-2 border-dashed border-border">
-        <p className="text-muted-foreground">Click to add an image</p>
+      <div className="w-full h-48 bg-muted flex items-center justify-center border-2 border-dashed border-border rounded-lg">
+        <div className="text-center">
+          <p className="text-muted-foreground mb-2">No image selected</p>
+          <p className="text-xs text-muted-foreground">Use the properties panel to add an image</p>
+        </div>
       </div>
     );
   }
@@ -143,14 +141,46 @@ const ImageElement: React.FC<{
     objectFit: element.styles?.objectFit || 'cover'
   };
 
-  const ImageComponent = () => (
-    <img
-      src={url}
-      alt={alt || ''}
-      className="rounded-lg"
-      style={imageStyles}
-    />
-  );
+  const handleImageLoad = () => {
+    setImageLoading(false);
+    setImageError(false);
+  };
+
+  const handleImageError = () => {
+    setImageLoading(false);
+    setImageError(true);
+  };
+
+  const ImageComponent = () => {
+    if (imageError) {
+      return (
+        <div className="w-full h-48 bg-muted flex items-center justify-center border border-destructive rounded-lg">
+          <div className="text-center text-destructive">
+            <p className="text-sm">Failed to load image</p>
+            <p className="text-xs mt-1">Check the URL and try again</p>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="relative">
+        {imageLoading && (
+          <div className="absolute inset-0 bg-muted animate-pulse rounded-lg flex items-center justify-center">
+            <p className="text-xs text-muted-foreground">Loading...</p>
+          </div>
+        )}
+        <img
+          src={url}
+          alt={alt || ''}
+          className="rounded-lg"
+          style={imageStyles}
+          onLoad={handleImageLoad}
+          onError={handleImageError}
+        />
+      </div>
+    );
+  };
 
   const imageContent = linkUrl ? (
     <a 

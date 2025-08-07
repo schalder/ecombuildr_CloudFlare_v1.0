@@ -17,6 +17,19 @@ export const ImageContentProperties: React.FC<ImageContentPropertiesProps> = ({
   onUpdate
 }) => {
   const { uploadMethod = 'url', url = '', alt = '', caption = '', alignment = 'center', linkUrl = '', linkTarget = '_self' } = element.content;
+  const [urlPreview, setUrlPreview] = React.useState('');
+
+  // Update URL preview when URL changes
+  React.useEffect(() => {
+    if (uploadMethod === 'url' && url) {
+      setUrlPreview(url);
+    }
+  }, [url, uploadMethod]);
+
+  const handleUrlChange = (newUrl: string) => {
+    onUpdate('url', newUrl);
+    setUrlPreview(newUrl);
+  };
 
   return (
     <div className="space-y-6">
@@ -32,16 +45,29 @@ export const ImageContentProperties: React.FC<ImageContentPropertiesProps> = ({
             <Input
               id="image-url"
               value={url}
-              onChange={(e) => onUpdate('url', e.target.value)}
+              onChange={(e) => handleUrlChange(e.target.value)}
               placeholder="https://example.com/image.jpg"
             />
+            {urlPreview && (
+              <div className="mt-2">
+                <img 
+                  src={urlPreview} 
+                  alt="Preview" 
+                  className="w-full h-32 object-cover rounded border"
+                  onError={() => setUrlPreview('')}
+                />
+              </div>
+            )}
           </div>
         </TabsContent>
         
         <TabsContent value="upload" className="space-y-4">
           <ImageUpload
             value={url}
-            onChange={(newUrl) => onUpdate('url', newUrl)}
+            onChange={(newUrl) => {
+              onUpdate('url', newUrl);
+              onUpdate('uploadMethod', 'upload');
+            }}
             label="Upload Image"
             accept="image/*"
             maxSize={5}
