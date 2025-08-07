@@ -323,6 +323,99 @@ export type Database = {
         }
         Relationships: []
       }
+      funnel_steps: {
+        Row: {
+          content: Json
+          created_at: string
+          custom_scripts: string | null
+          funnel_id: string
+          id: string
+          is_published: boolean
+          og_image: string | null
+          seo_description: string | null
+          seo_title: string | null
+          slug: string
+          step_order: number
+          step_type: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          content?: Json
+          created_at?: string
+          custom_scripts?: string | null
+          funnel_id: string
+          id?: string
+          is_published?: boolean
+          og_image?: string | null
+          seo_description?: string | null
+          seo_title?: string | null
+          slug: string
+          step_order?: number
+          step_type?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          content?: Json
+          created_at?: string
+          custom_scripts?: string | null
+          funnel_id?: string
+          id?: string
+          is_published?: boolean
+          og_image?: string | null
+          seo_description?: string | null
+          seo_title?: string | null
+          slug?: string
+          step_order?: number
+          step_type?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      funnels: {
+        Row: {
+          created_at: string
+          description: string | null
+          domain: string | null
+          id: string
+          is_active: boolean
+          is_published: boolean
+          name: string
+          settings: Json
+          slug: string
+          store_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          domain?: string | null
+          id?: string
+          is_active?: boolean
+          is_published?: boolean
+          name: string
+          settings?: Json
+          slug: string
+          store_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          domain?: string | null
+          id?: string
+          is_active?: boolean
+          is_published?: boolean
+          name?: string
+          settings?: Json
+          slug?: string
+          store_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       navigation_menus: {
         Row: {
           created_at: string
@@ -954,6 +1047,96 @@ export type Database = {
         }
         Relationships: []
       }
+      website_pages: {
+        Row: {
+          content: Json
+          created_at: string
+          custom_scripts: string | null
+          id: string
+          is_homepage: boolean
+          is_published: boolean
+          og_image: string | null
+          seo_description: string | null
+          seo_title: string | null
+          slug: string
+          title: string
+          updated_at: string
+          website_id: string
+        }
+        Insert: {
+          content?: Json
+          created_at?: string
+          custom_scripts?: string | null
+          id?: string
+          is_homepage?: boolean
+          is_published?: boolean
+          og_image?: string | null
+          seo_description?: string | null
+          seo_title?: string | null
+          slug: string
+          title: string
+          updated_at?: string
+          website_id: string
+        }
+        Update: {
+          content?: Json
+          created_at?: string
+          custom_scripts?: string | null
+          id?: string
+          is_homepage?: boolean
+          is_published?: boolean
+          og_image?: string | null
+          seo_description?: string | null
+          seo_title?: string | null
+          slug?: string
+          title?: string
+          updated_at?: string
+          website_id?: string
+        }
+        Relationships: []
+      }
+      websites: {
+        Row: {
+          created_at: string
+          description: string | null
+          domain: string | null
+          id: string
+          is_active: boolean
+          is_published: boolean
+          name: string
+          settings: Json
+          slug: string
+          store_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          domain?: string | null
+          id?: string
+          is_active?: boolean
+          is_published?: boolean
+          name: string
+          settings?: Json
+          slug: string
+          store_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          domain?: string | null
+          id?: string
+          is_active?: boolean
+          is_published?: boolean
+          name?: string
+          settings?: Json
+          slug?: string
+          store_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -972,6 +1155,10 @@ export type Database = {
         Returns: boolean
       }
       set_homepage: {
+        Args: { page_uuid: string }
+        Returns: undefined
+      }
+      set_website_homepage: {
         Args: { page_uuid: string }
         Returns: undefined
       }

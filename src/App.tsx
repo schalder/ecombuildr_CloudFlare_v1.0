@@ -20,6 +20,10 @@ import Customers from "./pages/Customers";
 import Analytics from "./pages/Analytics";
 import Pages from "./pages/Pages";
 import PageBuilder from "./pages/PageBuilder";
+import Websites from "./pages/Websites";
+import CreateWebsite from "./pages/CreateWebsite";
+import Funnels from "./pages/Funnels";
+import CreateFunnel from "./pages/CreateFunnel";
 import Marketing from "./pages/Marketing";
 import FacebookAds from "./pages/FacebookAds";
 import EmailCampaigns from "./pages/EmailCampaigns";
@@ -69,6 +73,10 @@ const App = () => (
                 <Route path="/dashboard/orders" element={<Orders />} />
                 <Route path="/dashboard/customers" element={<Customers />} />
                 <Route path="/dashboard/analytics" element={<Analytics />} />
+                <Route path="/dashboard/websites" element={<Websites />} />
+                <Route path="/dashboard/websites/create" element={<CreateWebsite />} />
+                <Route path="/dashboard/funnels" element={<Funnels />} />
+                <Route path="/dashboard/funnels/create" element={<CreateFunnel />} />
                 <Route path="/dashboard/pages" element={<Pages />} />
                 <Route path="/dashboard/pages/builder" element={<PageBuilder />} />
                 <Route path="/dashboard/pages/builder/:pageId" element={<PageBuilder />} />

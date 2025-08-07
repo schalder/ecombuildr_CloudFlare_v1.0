@@ -50,6 +50,22 @@ const navigationItems = [
     ],
   },
   {
+    title: "Websites",
+    icon: FileText,
+    items: [
+      { title: "All Websites", url: "/dashboard/websites" },
+      { title: "Create Website", url: "/dashboard/websites/create" },
+    ],
+  },
+  {
+    title: "Funnels",
+    icon: Palette,
+    items: [
+      { title: "All Funnels", url: "/dashboard/funnels" },
+      { title: "Create Funnel", url: "/dashboard/funnels/create" },
+    ],
+  },
+  {
     title: "Products",
     icon: Package,
     items: [
@@ -113,7 +129,7 @@ export function AppSidebar() {
   const collapsed = !open;
   const location = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
-  const [expandedGroups, setExpandedGroups] = useState<string[]>(["Products", "Orders"]);
+  const [expandedGroups, setExpandedGroups] = useState<string[]>(["Websites", "Funnels"]);
 
   const currentPath = location.pathname;
 
@@ -174,9 +190,9 @@ export function AppSidebar() {
                 size="sm" 
                 className="w-full justify-start border-sidebar-border"
               >
-                <NavLink to="/dashboard/pages/builder">
+                <NavLink to="/dashboard/websites/create">
                   <FileText className="mr-2 h-4 w-4" />
-                  Page Builder
+                  Website Builder
                 </NavLink>
               </Button>
             </div>

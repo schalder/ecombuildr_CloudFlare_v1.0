@@ -1,0 +1,193 @@
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { ArrowLeft, Globe } from 'lucide-react';
+import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { useMutation } from '@tanstack/react-query';
+import { useUserStore } from '@/hooks/useUserStore';
+
+export default function CreateWebsite() {
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const { store } = useUserStore();
+  const [formData, setFormData] = useState({
+    name: '',
+    slug: '',
+    description: '',
+    domain: '',
+  });
+
+  const createWebsiteMutation = useMutation({
+    mutationFn: async (data: typeof formData) => {
+      if (!store?.id) throw new Error('No store selected');
+
+      const { data: website, error } = await supabase
+        .from('websites')
+        .insert({
+          store_id: store.id,
+          name: data.name,
+          slug: data.slug,
+          description: data.description,
+          domain: data.domain || null,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return website;
+    },
+    onSuccess: (website) => {
+      toast({
+        title: "Website created",
+        description: "Your website has been created successfully.",
+      });
+      navigate(`/dashboard/websites/${website.id}`);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create website. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.name.trim() || !formData.slug.trim()) {
+      toast({
+        title: "Error",
+        description: "Please fill in all required fields.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    createWebsiteMutation.mutate(formData);
+  };
+
+  const handleSlugChange = (value: string) => {
+    // Auto-generate slug from name if slug is empty
+    const slug = value.toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .trim();
+    
+    setFormData(prev => ({ ...prev, slug }));
+  };
+
+  const handleNameChange = (value: string) => {
+    setFormData(prev => ({ ...prev, name: value }));
+    
+    // Auto-generate slug if slug is empty
+    if (!formData.slug) {
+      handleSlugChange(value);
+    }
+  };
+
+  return (
+    <DashboardLayout>
+      <div className="max-w-2xl mx-auto space-y-6">
+        <div className="flex items-center space-x-4">
+          <Button variant="ghost" size="sm" onClick={() => navigate('/dashboard/websites')}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Websites
+          </Button>
+        </div>
+
+        <Card>
+          <CardHeader>
+            <div className="flex items-center space-x-2">
+              <Globe className="h-6 w-6 text-primary" />
+              <div>
+                <CardTitle>Create New Website</CardTitle>
+                <CardDescription>
+                  Set up a complete website with multiple pages
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <Label htmlFor="name">Website Name *</Label>
+                <Input
+                  id="name"
+                  placeholder="e.g., My Business Website"
+                  value={formData.name}
+                  onChange={(e) => handleNameChange(e.target.value)}
+                  required
+                />
+                <p className="text-sm text-muted-foreground mt-1">
+                  The name of your website
+                </p>
+              </div>
+
+              <div>
+                <Label htmlFor="slug">Website Slug *</Label>
+                <Input
+                  id="slug"
+                  placeholder="e.g., my-business"
+                  value={formData.slug}
+                  onChange={(e) => handleSlugChange(e.target.value)}
+                  required
+                />
+                <p className="text-sm text-muted-foreground mt-1">
+                  URL identifier: website/{formData.slug || 'your-slug'}
+                </p>
+              </div>
+
+              <div>
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  placeholder="Brief description of your website"
+                  value={formData.description}
+                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                  rows={3}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="domain">Custom Domain (Optional)</Label>
+                <Input
+                  id="domain"
+                  placeholder="e.g., yourdomain.com"
+                  value={formData.domain}
+                  onChange={(e) => setFormData(prev => ({ ...prev, domain: e.target.value }))}
+                />
+                <p className="text-sm text-muted-foreground mt-1">
+                  Leave empty to use the default URL
+                </p>
+              </div>
+
+              <div className="flex space-x-3 pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => navigate('/dashboard/websites')}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={createWebsiteMutation.isPending}
+                >
+                  {createWebsiteMutation.isPending ? 'Creating...' : 'Create Website'}
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+    </DashboardLayout>
+  );
+}
