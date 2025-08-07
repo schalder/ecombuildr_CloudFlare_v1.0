@@ -414,7 +414,13 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = ({
     updateData({
       ...data,
       sections: data.sections.map(section =>
-        section.id === sectionId ? { ...section, ...updates } : section
+        section.id === sectionId 
+          ? { 
+              ...section, 
+              ...updates,
+              styles: updates.styles ? { ...section.styles, ...updates.styles } : section.styles
+            } 
+          : section
       )
     });
   }, [data, updateData]);
@@ -428,7 +434,13 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = ({
           ? {
               ...section,
               rows: (section.rows || []).map(row =>
-                row.id === rowId ? { ...row, ...updates } : row
+                row.id === rowId 
+                  ? { 
+                      ...row, 
+                      ...updates,
+                      styles: updates.styles ? { ...row.styles, ...updates.styles } : row.styles
+                    } 
+                  : row
               )
             }
           : section
@@ -449,7 +461,13 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = ({
                   ? {
                       ...row,
                       columns: row.columns.map(col =>
-                        col.id === columnId ? { ...col, ...updates } : col
+                        col.id === columnId 
+                          ? { 
+                              ...col, 
+                              ...updates,
+                              styles: updates.styles ? { ...col.styles, ...updates.styles } : col.styles
+                            } 
+                          : col
                       )
                     }
                   : row
