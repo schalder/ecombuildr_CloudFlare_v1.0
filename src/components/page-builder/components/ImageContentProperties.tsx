@@ -14,13 +14,13 @@ export const ImageContentProperties: React.FC<ImageContentPropertiesProps> = ({
   element,
   onUpdate
 }) => {
-  const { url = '', alt = '', caption = '', alignment = 'center', linkUrl = '', linkTarget = '_self' } = element.content;
+  const { src = '', alt = '', caption = '', alignment = 'center', linkUrl = '', linkTarget = '_self' } = element.content;
 
   return (
     <div className="space-y-6">
       <MediaSelector
-        value={url}
-        onChange={(newUrl) => onUpdate('url', newUrl)}
+        value={src}
+        onChange={(newUrl) => onUpdate('src', newUrl)}
         label="Image"
       />
 
