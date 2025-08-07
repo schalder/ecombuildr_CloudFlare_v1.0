@@ -69,10 +69,13 @@ const getResponsiveGridClasses = (columnLayout: string, deviceType: 'desktop' | 
   // For tablet, use simplified layouts
   if (deviceType === 'tablet') {
     const columnCount = COLUMN_LAYOUTS[columnLayout]?.length || 1;
+    if (columnCount === 1) {
+      return 'grid-cols-1'; // Single column stays single on tablet
+    }
     if (columnCount >= 3) {
       return 'grid-cols-2'; // Max 2 columns on tablet for 3+ column layouts
     }
-    return 'grid-cols-2'; // Default to 2 columns on tablet
+    return 'grid-cols-2'; // 2 columns on tablet for 2-column layouts
   }
   
   // For desktop, use full responsive layout
