@@ -140,12 +140,33 @@ export const renderElementStyles = (element: PageBuilderElement): React.CSSPrope
   const styles: React.CSSProperties = {};
   
   if (element.styles) {
+    // Dimensions
+    if (element.styles.width) styles.width = element.styles.width;
+    if (element.styles.height) styles.height = element.styles.height;
+    if (element.styles.maxWidth) styles.maxWidth = element.styles.maxWidth;
+    if (element.styles.minWidth) styles.minWidth = element.styles.minWidth;
+    if (element.styles.maxHeight) styles.maxHeight = element.styles.maxHeight;
+    if (element.styles.minHeight) styles.minHeight = element.styles.minHeight;
+    
     // Background styles
     if (element.styles.backgroundColor && element.styles.backgroundColor !== 'transparent') {
       styles.backgroundColor = element.styles.backgroundColor;
     }
+    if (element.styles.backgroundImage) {
+      styles.backgroundImage = `url(${element.styles.backgroundImage})`;
+      styles.backgroundSize = 'cover';
+      styles.backgroundPosition = 'center';
+      styles.backgroundRepeat = 'no-repeat';
+    }
     
-    // Box shadow styles
+    // Border styles
+    if (element.styles.borderWidth) styles.borderWidth = element.styles.borderWidth;
+    if (element.styles.borderColor) styles.borderColor = element.styles.borderColor;
+    if (element.styles.borderStyle) styles.borderStyle = element.styles.borderStyle;
+    if (element.styles.borderRadius) styles.borderRadius = element.styles.borderRadius;
+    
+    // Effects
+    if (element.styles.opacity !== undefined) styles.opacity = element.styles.opacity;
     if (element.styles.boxShadow && element.styles.boxShadow !== 'none') {
       styles.boxShadow = element.styles.boxShadow;
     }
@@ -167,6 +188,11 @@ export const renderElementStyles = (element: PageBuilderElement): React.CSSPrope
     if (element.styles.fontSize) styles.fontSize = element.styles.fontSize;
     if (element.styles.lineHeight) styles.lineHeight = element.styles.lineHeight;
     if (element.styles.textAlign) styles.textAlign = element.styles.textAlign;
+    if (element.styles.fontWeight) styles.fontWeight = element.styles.fontWeight;
+    if (element.styles.fontFamily) styles.fontFamily = element.styles.fontFamily;
+    
+    // Media-specific properties
+    if (element.styles.objectFit) styles.objectFit = element.styles.objectFit;
   }
   
   return styles;

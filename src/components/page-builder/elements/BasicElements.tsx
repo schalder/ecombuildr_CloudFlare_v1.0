@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { elementRegistry } from './ElementRegistry';
 import { InlineEditor } from '../components/InlineEditor';
+import { renderElementStyles } from '../utils/styleRenderer';
 
 // Heading Element
 const HeadingElement: React.FC<{
@@ -25,14 +26,14 @@ const HeadingElement: React.FC<{
     });
   };
 
+  const elementStyles = renderElementStyles(element);
   const styles = {
+    ...elementStyles,
     textAlign: element.styles?.textAlign || (deviceType === 'tablet' ? 'center' : 'left'),
     color: element.styles?.color || 'inherit',
     fontSize: element.styles?.fontSize || `${3.5 - level * 0.5}rem`,
     lineHeight: element.styles?.lineHeight || '1.2',
     backgroundColor: element.styles?.backgroundColor || 'transparent',
-    margin: element.styles?.margin || '0',
-    padding: element.styles?.padding || '0',
   };
 
   return (
@@ -68,14 +69,14 @@ const ParagraphElement: React.FC<{
     });
   };
 
+  const elementStyles = renderElementStyles(element);
   const styles = {
+    ...elementStyles,
     textAlign: element.styles?.textAlign || (deviceType === 'tablet' ? 'center' : 'left'),
     color: element.styles?.color || 'inherit',
     fontSize: element.styles?.fontSize || '1rem',
     lineHeight: element.styles?.lineHeight || '1.6',
     backgroundColor: element.styles?.backgroundColor || 'transparent',
-    margin: element.styles?.margin || '0',
-    padding: element.styles?.padding || '0',
   };
 
   return (
@@ -139,15 +140,19 @@ const ImageElement: React.FC<{
     );
   }
 
+  const elementStyles = renderElementStyles(element);
+
   return (
-    <div className="text-center">
+    <div className="text-center" style={elementStyles}>
       <img
         src={element.content.src}
         alt={element.content.alt || 'Image'}
-        className="max-w-full h-auto rounded"
+        className="max-w-full h-auto"
         style={{
-          width: element.content.width || 'auto',
-          height: element.content.height || 'auto'
+          width: element.content.width || elementStyles.width || 'auto',
+          height: element.content.height || elementStyles.height || 'auto',
+          objectFit: elementStyles.objectFit || 'cover',
+          borderRadius: elementStyles.borderRadius || 'inherit',
         }}
       />
       {element.content.caption && (
@@ -279,6 +284,8 @@ const SpacerElement: React.FC<{
     });
   };
 
+  const elementStyles = renderElementStyles(element);
+
   if (isEditing) {
     return (
       <div className="border border-dashed border-muted-foreground/30 rounded p-4 text-center bg-muted/10">
@@ -297,7 +304,7 @@ const SpacerElement: React.FC<{
   }
 
   return (
-    <div style={{ height }} className="w-full" />
+    <div style={{ ...elementStyles, height: elementStyles.height || height }} className="w-full" />
   );
 };
 
@@ -312,7 +319,9 @@ const DividerElement: React.FC<{
   const color = element.content.color || '#e5e7eb';
   const width = element.content.width || '100%';
 
+  const elementStyles = renderElementStyles(element);
   const dividerStyle = {
+    ...elementStyles,
     borderTop: `1px ${style} ${color}`,
     width,
     margin: element.styles?.margin || '20px 0',
@@ -373,16 +382,20 @@ const VideoElement: React.FC<{
     );
   }
 
+  const elementStyles = renderElementStyles(element);
+
   return (
-    <div className="relative group">
+    <div className="relative group" style={elementStyles}>
       <video 
         src={src} 
         controls={controls}
         autoPlay={autoplay}
         className="w-full h-auto outline-none"
         style={{
-          margin: element.styles?.margin || '0',
-          padding: element.styles?.padding || '0',
+          width: elementStyles.width || 'auto',
+          height: elementStyles.height || 'auto',
+          objectFit: elementStyles.objectFit || 'cover',
+          borderRadius: elementStyles.borderRadius || 'inherit',
         }}
       />
       {isEditing && (

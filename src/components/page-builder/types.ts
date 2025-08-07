@@ -12,6 +12,7 @@ export interface PageBuilderElement {
     lineHeight?: string;
     color?: string;
     backgroundColor?: string;
+    backgroundImage?: string;
     boxShadow?: string;
     paddingTop?: string;
     paddingRight?: string;
@@ -25,12 +26,16 @@ export interface PageBuilderElement {
     height?: string;
     maxWidth?: string;
     minWidth?: string;
+    maxHeight?: string;
+    minHeight?: string;
     borderWidth?: string;
     borderColor?: string;
     borderRadius?: string;
     borderStyle?: string;
-    opacity?: string;
+    opacity?: number;
     objectFit?: 'cover' | 'contain' | 'fill' | 'none' | 'scale-down';
+    fontWeight?: string;
+    fontFamily?: string;
   };
 }
 
