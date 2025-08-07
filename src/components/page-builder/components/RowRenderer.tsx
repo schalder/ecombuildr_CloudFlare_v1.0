@@ -36,19 +36,21 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
 }) => {
   const [isHovered, setIsHovered] = React.useState(false);
   
-  const [{ isOver }, drop] = useDrop({
-    accept: 'element',
-    drop: (item: { elementType: string }) => {
-      // Add element to first column by default
-      if (row.columns.length > 0) {
-        console.log('RowRenderer drop to first column:', { sectionId, rowId: row.id, columnId: row.columns[0].id, elementType: item.elementType });
-        onAddElement(sectionId, row.id, row.columns[0].id, item.elementType);
-      }
-    },
-    collect: (monitor) => ({
-      isOver: monitor.isOver(),
-    }),
-  });
+  const [{ isOver }, drop] = isPreviewMode 
+    ? [{ isOver: false }, React.useRef(null)]
+    : useDrop({
+        accept: 'element',
+        drop: (item: { elementType: string }) => {
+          // Add element to first column by default
+          if (row.columns.length > 0) {
+            console.log('RowRenderer drop to first column:', { sectionId, rowId: row.id, columnId: row.columns[0].id, elementType: item.elementType });
+            onAddElement(sectionId, row.id, row.columns[0].id, item.elementType);
+          }
+        },
+        collect: (monitor) => ({
+          isOver: monitor.isOver(),
+        }),
+      });
 
   const handleRowClick = (e: React.MouseEvent) => {
     e.stopPropagation();

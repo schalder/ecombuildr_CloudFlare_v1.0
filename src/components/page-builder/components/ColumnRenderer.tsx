@@ -38,24 +38,26 @@ export const ColumnRenderer: React.FC<ColumnRendererProps> = ({
 }) => {
   const [isHovered, setIsHovered] = React.useState(false);
   
-  const [{ isOver }, drop] = useDrop({
-    accept: ['element-type', 'element'],
-    drop: (item: { elementType?: string; elementId?: string }, monitor) => {
-      if (!monitor.didDrop()) {
-        console.log('ColumnRenderer drop:', { elementType: item.elementType, sectionId, rowId, columnId: column.id });
-        if (item.elementType) {
-          // Adding new element
-          onAddElement(sectionId, rowId, column.id, item.elementType);
-        } else if (item.elementId && onMoveElement) {
-          // Moving existing element
-          onMoveElement(item.elementId, sectionId, rowId, column.id, column.elements.length);
-        }
-      }
-    },
-    collect: (monitor) => ({
-      isOver: monitor.isOver() && !monitor.didDrop(),
-    }),
-  });
+  const [{ isOver }, drop] = isPreviewMode 
+    ? [{ isOver: false }, React.useRef(null)]
+    : useDrop({
+        accept: ['element-type', 'element'],
+        drop: (item: { elementType?: string; elementId?: string }, monitor) => {
+          if (!monitor.didDrop()) {
+            console.log('ColumnRenderer drop:', { elementType: item.elementType, sectionId, rowId, columnId: column.id });
+            if (item.elementType) {
+              // Adding new element
+              onAddElement(sectionId, rowId, column.id, item.elementType);
+            } else if (item.elementId && onMoveElement) {
+              // Moving existing element
+              onMoveElement(item.elementId, sectionId, rowId, column.id, column.elements.length);
+            }
+          }
+        },
+        collect: (monitor) => ({
+          isOver: monitor.isOver() && !monitor.didDrop(),
+        }),
+      });
 
   const handleColumnClick = (e: React.MouseEvent) => {
     e.stopPropagation();

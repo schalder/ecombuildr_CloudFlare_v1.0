@@ -38,20 +38,22 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
   const [isHovered, setIsHovered] = React.useState(false);
   const [isSelected, setIsSelected] = React.useState(false);
 
-  const [{ isDragging }, drag] = useDrag({
-    type: 'element',
-    item: { 
-      elementId: element.id,
-      elementType: element.type,
-      sectionId,
-      rowId,
-      columnId,
-      elementIndex
-    },
-    collect: (monitor) => ({
-      isDragging: monitor.isDragging(),
-    }),
-  });
+  const [{ isDragging }, drag] = isPreviewMode 
+    ? [{ isDragging: false }, React.useRef(null)]
+    : useDrag({
+        type: 'element',
+        item: { 
+          elementId: element.id,
+          elementType: element.type,
+          sectionId,
+          rowId,
+          columnId,
+          elementIndex
+        },
+        collect: (monitor) => ({
+          isDragging: monitor.isDragging(),
+        }),
+      });
 
   const elementType = elementRegistry.get(element.type);
 

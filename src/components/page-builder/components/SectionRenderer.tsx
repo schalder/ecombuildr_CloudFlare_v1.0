@@ -37,16 +37,18 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({
   onAddRowAfter
 }) => {
   const [isHovered, setIsHovered] = React.useState(false);
-  const [{ isOver }, drop] = useDrop({
-    accept: 'element',
-    drop: (item: { elementType: string }) => {
-      // For now, sections don't directly accept elements - they get rows
-      console.log('Section drop - not implemented for direct elements');
-    },
-    collect: (monitor) => ({
-      isOver: monitor.isOver(),
-    }),
-  });
+  const [{ isOver }, drop] = isPreviewMode 
+    ? [{ isOver: false }, React.useRef(null)]
+    : useDrop({
+        accept: 'element',
+        drop: (item: { elementType: string }) => {
+          // For now, sections don't directly accept elements - they get rows
+          console.log('Section drop - not implemented for direct elements');
+        },
+        collect: (monitor) => ({
+          isOver: monitor.isOver(),
+        }),
+      });
 
   const handleSectionClick = (e: React.MouseEvent) => {
     e.stopPropagation();
