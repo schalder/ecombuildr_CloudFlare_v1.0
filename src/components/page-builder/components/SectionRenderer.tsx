@@ -63,6 +63,11 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({
   };
 
   const getSectionWidth = () => {
+    // If custom width is set, don't apply preset classes
+    if (section.customWidth) {
+      return '';
+    }
+    
     if (deviceType === 'tablet') {
       switch (section.width) {
         case 'full':
@@ -108,6 +113,51 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({
     }
   };
 
+  const getSectionStyles = () => {
+    const styles: React.CSSProperties = {
+      backgroundColor: section.styles?.backgroundColor || 'transparent',
+    };
+
+    // Custom width override
+    if (section.customWidth) {
+      styles.width = section.customWidth;
+      styles.maxWidth = section.styles?.maxWidth || 'none';
+      styles.minWidth = section.styles?.minWidth || 'auto';
+    } else if (section.styles?.maxWidth || section.styles?.minWidth) {
+      if (section.styles.maxWidth) styles.maxWidth = section.styles.maxWidth;
+      if (section.styles.minWidth) styles.minWidth = section.styles.minWidth;
+    }
+
+    // Advanced spacing - use individual properties if available, otherwise fallback to combined
+    if (section.styles?.paddingTop || section.styles?.paddingRight || section.styles?.paddingBottom || section.styles?.paddingLeft) {
+      styles.paddingTop = section.styles.paddingTop || '0';
+      styles.paddingRight = section.styles.paddingRight || '0';
+      styles.paddingBottom = section.styles.paddingBottom || '0';
+      styles.paddingLeft = section.styles.paddingLeft || '0';
+    } else if (section.styles?.padding) {
+      styles.padding = section.styles.padding;
+    }
+
+    if (section.styles?.marginTop || section.styles?.marginRight || section.styles?.marginBottom || section.styles?.marginLeft) {
+      styles.marginTop = section.styles.marginTop || '0';
+      styles.marginRight = section.styles.marginRight || '0';
+      styles.marginBottom = section.styles.marginBottom || '0';
+      styles.marginLeft = section.styles.marginLeft || '0';
+    } else if (section.styles?.margin) {
+      styles.margin = section.styles.margin;
+    }
+
+    // Background image
+    if (section.styles?.backgroundImage) {
+      styles.backgroundImage = `url(${section.styles.backgroundImage})`;
+      styles.backgroundSize = 'cover';
+      styles.backgroundPosition = 'center';
+      styles.backgroundRepeat = 'no-repeat';
+    }
+
+    return styles;
+  };
+
   return (
     <div
       ref={drop}
@@ -116,17 +166,7 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({
         isSelected && !isPreviewMode && 'ring-2 ring-primary ring-opacity-50',
         isOver && 'bg-primary/5'
       )}
-      style={{
-        backgroundColor: section.styles?.backgroundColor || 'transparent',
-        backgroundImage: section.styles?.backgroundImage 
-          ? `url(${section.styles.backgroundImage})` 
-          : undefined,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat',
-        margin: section.styles?.margin || '0',
-        padding: section.styles?.padding || '48px 0'
-      }}
+      style={getSectionStyles()}
       onClick={handleSectionClick}
     >
       {/* Section Controls */}
@@ -155,7 +195,7 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({
         </div>
       )}
 
-      <div className={getSectionWidth()}>
+      <div className={cn(getSectionWidth(), section.customWidth ? 'mx-auto' : '')}>
         {section.rows.length === 0 ? (
           <div className="min-h-[120px] flex items-center justify-center border-2 border-dashed border-muted-foreground/30 rounded-lg">
             {!isPreviewMode && (

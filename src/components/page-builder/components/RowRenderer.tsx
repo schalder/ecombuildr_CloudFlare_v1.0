@@ -141,6 +141,41 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
     return row.columns.length;
   };
 
+  const getRowStyles = () => {
+    const styles: React.CSSProperties = {
+      backgroundColor: row.styles?.backgroundColor || 'transparent',
+    };
+
+    // Custom width override
+    if (row.customWidth) {
+      styles.width = row.customWidth;
+    }
+    
+    if (row.styles?.maxWidth) styles.maxWidth = row.styles.maxWidth;
+    if (row.styles?.minWidth) styles.minWidth = row.styles.minWidth;
+
+    // Advanced spacing - use individual properties if available, otherwise fallback to combined
+    if (row.styles?.paddingTop || row.styles?.paddingRight || row.styles?.paddingBottom || row.styles?.paddingLeft) {
+      styles.paddingTop = row.styles.paddingTop || '0';
+      styles.paddingRight = row.styles.paddingRight || '0';
+      styles.paddingBottom = row.styles.paddingBottom || '0';
+      styles.paddingLeft = row.styles.paddingLeft || '0';
+    } else {
+      styles.padding = row.styles?.padding || '16px';
+    }
+
+    if (row.styles?.marginTop || row.styles?.marginRight || row.styles?.marginBottom || row.styles?.marginLeft) {
+      styles.marginTop = row.styles.marginTop || '0';
+      styles.marginRight = row.styles.marginRight || '0';
+      styles.marginBottom = row.styles.marginBottom || '0';
+      styles.marginLeft = row.styles.marginLeft || '0';
+    } else if (row.styles?.margin) {
+      styles.margin = row.styles.margin;
+    }
+
+    return styles;
+  };
+
   return (
     <div
       ref={drop}
@@ -148,11 +183,7 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
         'relative group min-h-[80px]',
         isOver && 'bg-primary/5 border border-primary/20 rounded-lg'
       )}
-      style={{
-        backgroundColor: row.styles?.backgroundColor || 'transparent',
-        margin: row.styles?.margin || '0',
-        padding: row.styles?.padding || '16px'
-      }}
+      style={getRowStyles()}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={handleRowClick}

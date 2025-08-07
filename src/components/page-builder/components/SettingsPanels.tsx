@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { PageBuilderSection, PageBuilderRow, PageBuilderColumn, PageBuilderElement, SECTION_WIDTHS, COLUMN_LAYOUTS } from '../types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,6 +9,9 @@ import { Separator } from '@/components/ui/separator';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ColorPicker } from '@/components/ui/color-picker';
+import { Switch } from '@/components/ui/switch';
+import { ChevronDown, ChevronRight } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 // Section Settings Panel
 interface SectionSettingsProps {
@@ -17,6 +20,9 @@ interface SectionSettingsProps {
 }
 
 export const SectionSettings: React.FC<SectionSettingsProps> = ({ section, onUpdate }) => {
+  const [useAdvancedSpacing, setUseAdvancedSpacing] = useState(false);
+  const [customWidthMode, setCustomWidthMode] = useState(!!section.customWidth);
+
   const handleStyleUpdate = (key: string, value: any) => {
     onUpdate({
       styles: {
@@ -34,21 +40,69 @@ export const SectionSettings: React.FC<SectionSettingsProps> = ({ section, onUpd
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="section-width">Width</Label>
-            <Select
-              value={section.width}
-              onValueChange={(value) => onUpdate({ width: value as any })}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="full">Full Width</SelectItem>
-                <SelectItem value="wide">Wide (1200px)</SelectItem>
-                <SelectItem value="medium">Medium (800px)</SelectItem>
-                <SelectItem value="small">Small (600px)</SelectItem>
-              </SelectContent>
-            </Select>
+            <Label htmlFor="section-width">Width Mode</Label>
+            <div className="flex items-center space-x-2">
+              <Switch 
+                checked={customWidthMode}
+                onCheckedChange={(checked) => {
+                  setCustomWidthMode(checked);
+                  if (!checked) {
+                    onUpdate({ customWidth: undefined });
+                  }
+                }}
+              />
+              <Label className="text-sm">Custom Width</Label>
+            </div>
+          </div>
+          
+          {!customWidthMode ? (
+            <div className="space-y-2">
+              <Label htmlFor="section-width">Preset Width</Label>
+              <Select
+                value={section.width}
+                onValueChange={(value) => onUpdate({ width: value as any })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="full">Full Width</SelectItem>
+                  <SelectItem value="wide">Wide (1200px)</SelectItem>
+                  <SelectItem value="medium">Medium (800px)</SelectItem>
+                  <SelectItem value="small">Small (600px)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <Label htmlFor="custom-width">Custom Width</Label>
+              <Input
+                id="custom-width"
+                value={section.customWidth || ''}
+                onChange={(e) => onUpdate({ customWidth: e.target.value })}
+                placeholder="e.g., 1000px, 80%, 100vw"
+              />
+            </div>
+          )}
+          
+          <div className="space-y-2">
+            <Label htmlFor="max-width">Max Width</Label>
+            <Input
+              id="max-width"
+              value={section.styles?.maxWidth || ''}
+              onChange={(e) => handleStyleUpdate('maxWidth', e.target.value)}
+              placeholder="e.g., 1400px, 100%"
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="min-width">Min Width</Label>
+            <Input
+              id="min-width"
+              value={section.styles?.minWidth || ''}
+              onChange={(e) => handleStyleUpdate('minWidth', e.target.value)}
+              placeholder="e.g., 320px, 50%"
+            />
           </div>
         </CardContent>
       </Card>
@@ -94,25 +148,133 @@ export const SectionSettings: React.FC<SectionSettingsProps> = ({ section, onUpd
           <CardTitle className="text-sm">Spacing</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="section-padding">Padding</Label>
-            <Input
-              id="section-padding"
-              value={section.styles?.padding || '0'}
-              onChange={(e) => handleStyleUpdate('padding', e.target.value)}
-              placeholder="20px"
+          <div className="flex items-center space-x-2 mb-4">
+            <Switch 
+              checked={useAdvancedSpacing}
+              onCheckedChange={setUseAdvancedSpacing}
             />
+            <Label className="text-sm">Advanced Spacing</Label>
           </div>
           
-          <div className="space-y-2">
-            <Label htmlFor="section-margin">Margin</Label>
-            <Input
-              id="section-margin"
-              value={section.styles?.margin || '0'}
-              onChange={(e) => handleStyleUpdate('margin', e.target.value)}
-              placeholder="10px 0"
-            />
-          </div>
+          {!useAdvancedSpacing ? (
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="section-padding">Padding</Label>
+                <Input
+                  id="section-padding"
+                  value={section.styles?.padding || ''}
+                  onChange={(e) => handleStyleUpdate('padding', e.target.value)}
+                  placeholder="20px or 20px 40px"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="section-margin">Margin</Label>
+                <Input
+                  id="section-margin"
+                  value={section.styles?.margin || ''}
+                  onChange={(e) => handleStyleUpdate('margin', e.target.value)}
+                  placeholder="10px 0 or auto"
+                />
+              </div>
+            </>
+          ) : (
+            <>
+              <Collapsible>
+                <CollapsibleTrigger className="flex items-center space-x-2 w-full text-left">
+                  <ChevronRight className="h-4 w-4" />
+                  <Label className="text-sm font-medium">Padding</Label>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="space-y-2 mt-2 pl-6">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <Label className="text-xs">Top</Label>
+                      <Input
+                        value={section.styles?.paddingTop || ''}
+                        onChange={(e) => handleStyleUpdate('paddingTop', e.target.value)}
+                        placeholder="0px"
+                        className="h-8"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Right</Label>
+                      <Input
+                        value={section.styles?.paddingRight || ''}
+                        onChange={(e) => handleStyleUpdate('paddingRight', e.target.value)}
+                        placeholder="0px"
+                        className="h-8"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Bottom</Label>
+                      <Input
+                        value={section.styles?.paddingBottom || ''}
+                        onChange={(e) => handleStyleUpdate('paddingBottom', e.target.value)}
+                        placeholder="0px"
+                        className="h-8"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Left</Label>
+                      <Input
+                        value={section.styles?.paddingLeft || ''}
+                        onChange={(e) => handleStyleUpdate('paddingLeft', e.target.value)}
+                        placeholder="0px"
+                        className="h-8"
+                      />
+                    </div>
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
+              
+              <Collapsible>
+                <CollapsibleTrigger className="flex items-center space-x-2 w-full text-left">
+                  <ChevronRight className="h-4 w-4" />
+                  <Label className="text-sm font-medium">Margin</Label>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="space-y-2 mt-2 pl-6">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <Label className="text-xs">Top</Label>
+                      <Input
+                        value={section.styles?.marginTop || ''}
+                        onChange={(e) => handleStyleUpdate('marginTop', e.target.value)}
+                        placeholder="0px"
+                        className="h-8"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Right</Label>
+                      <Input
+                        value={section.styles?.marginRight || ''}
+                        onChange={(e) => handleStyleUpdate('marginRight', e.target.value)}
+                        placeholder="0px"
+                        className="h-8"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Bottom</Label>
+                      <Input
+                        value={section.styles?.marginBottom || ''}
+                        onChange={(e) => handleStyleUpdate('marginBottom', e.target.value)}
+                        placeholder="0px"
+                        className="h-8"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Left</Label>
+                      <Input
+                        value={section.styles?.marginLeft || ''}
+                        onChange={(e) => handleStyleUpdate('marginLeft', e.target.value)}
+                        placeholder="0px"
+                        className="h-8"
+                      />
+                    </div>
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
+            </>
+          )}
         </CardContent>
       </Card>
     </div>
@@ -126,6 +288,9 @@ interface RowSettingsProps {
 }
 
 export const RowSettings: React.FC<RowSettingsProps> = ({ row, onUpdate }) => {
+  const [useAdvancedSpacing, setUseAdvancedSpacing] = useState(false);
+  const [customWidthMode, setCustomWidthMode] = useState(!!row.customWidth);
+
   const handleStyleUpdate = (key: string, value: any) => {
     onUpdate({
       styles: {
@@ -181,6 +346,44 @@ export const RowSettings: React.FC<RowSettingsProps> = ({ row, onUpdate }) => {
               </SelectContent>
             </Select>
           </div>
+          
+          <div className="space-y-2">
+            <Label>Row Width Mode</Label>
+            <div className="flex items-center space-x-2">
+              <Switch 
+                checked={customWidthMode}
+                onCheckedChange={(checked) => {
+                  setCustomWidthMode(checked);
+                  if (!checked) {
+                    onUpdate({ customWidth: undefined });
+                  }
+                }}
+              />
+              <Label className="text-sm">Custom Width</Label>
+            </div>
+          </div>
+          
+          {customWidthMode && (
+            <div className="space-y-2">
+              <Label htmlFor="row-custom-width">Custom Width</Label>
+              <Input
+                id="row-custom-width"
+                value={row.customWidth || ''}
+                onChange={(e) => onUpdate({ customWidth: e.target.value })}
+                placeholder="e.g., 800px, 90%, 100vw"
+              />
+            </div>
+          )}
+          
+          <div className="space-y-2">
+            <Label htmlFor="row-max-width">Max Width</Label>
+            <Input
+              id="row-max-width"
+              value={row.styles?.maxWidth || ''}
+              onChange={(e) => handleStyleUpdate('maxWidth', e.target.value)}
+              placeholder="e.g., 1200px, 100%"
+            />
+          </div>
         </CardContent>
       </Card>
 
@@ -215,25 +418,133 @@ export const RowSettings: React.FC<RowSettingsProps> = ({ row, onUpdate }) => {
           <CardTitle className="text-sm">Spacing</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="row-padding">Padding</Label>
-            <Input
-              id="row-padding"
-              value={row.styles?.padding || '0'}
-              onChange={(e) => handleStyleUpdate('padding', e.target.value)}
-              placeholder="20px"
+          <div className="flex items-center space-x-2 mb-4">
+            <Switch 
+              checked={useAdvancedSpacing}
+              onCheckedChange={setUseAdvancedSpacing}
             />
+            <Label className="text-sm">Advanced Spacing</Label>
           </div>
           
-          <div className="space-y-2">
-            <Label htmlFor="row-margin">Margin</Label>
-            <Input
-              id="row-margin"
-              value={row.styles?.margin || '0'}
-              onChange={(e) => handleStyleUpdate('margin', e.target.value)}
-              placeholder="10px 0"
-            />
-          </div>
+          {!useAdvancedSpacing ? (
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="row-padding">Padding</Label>
+                <Input
+                  id="row-padding"
+                  value={row.styles?.padding || ''}
+                  onChange={(e) => handleStyleUpdate('padding', e.target.value)}
+                  placeholder="20px or 20px 40px"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="row-margin">Margin</Label>
+                <Input
+                  id="row-margin"
+                  value={row.styles?.margin || ''}
+                  onChange={(e) => handleStyleUpdate('margin', e.target.value)}
+                  placeholder="10px 0 or auto"
+                />
+              </div>
+            </>
+          ) : (
+            <>
+              <Collapsible>
+                <CollapsibleTrigger className="flex items-center space-x-2 w-full text-left">
+                  <ChevronRight className="h-4 w-4" />
+                  <Label className="text-sm font-medium">Padding</Label>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="space-y-2 mt-2 pl-6">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <Label className="text-xs">Top</Label>
+                      <Input
+                        value={row.styles?.paddingTop || ''}
+                        onChange={(e) => handleStyleUpdate('paddingTop', e.target.value)}
+                        placeholder="0px"
+                        className="h-8"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Right</Label>
+                      <Input
+                        value={row.styles?.paddingRight || ''}
+                        onChange={(e) => handleStyleUpdate('paddingRight', e.target.value)}
+                        placeholder="0px"
+                        className="h-8"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Bottom</Label>
+                      <Input
+                        value={row.styles?.paddingBottom || ''}
+                        onChange={(e) => handleStyleUpdate('paddingBottom', e.target.value)}
+                        placeholder="0px"
+                        className="h-8"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Left</Label>
+                      <Input
+                        value={row.styles?.paddingLeft || ''}
+                        onChange={(e) => handleStyleUpdate('paddingLeft', e.target.value)}
+                        placeholder="0px"
+                        className="h-8"
+                      />
+                    </div>
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
+              
+              <Collapsible>
+                <CollapsibleTrigger className="flex items-center space-x-2 w-full text-left">
+                  <ChevronRight className="h-4 w-4" />
+                  <Label className="text-sm font-medium">Margin</Label>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="space-y-2 mt-2 pl-6">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <Label className="text-xs">Top</Label>
+                      <Input
+                        value={row.styles?.marginTop || ''}
+                        onChange={(e) => handleStyleUpdate('marginTop', e.target.value)}
+                        placeholder="0px"
+                        className="h-8"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Right</Label>
+                      <Input
+                        value={row.styles?.marginRight || ''}
+                        onChange={(e) => handleStyleUpdate('marginRight', e.target.value)}
+                        placeholder="0px"
+                        className="h-8"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Bottom</Label>
+                      <Input
+                        value={row.styles?.marginBottom || ''}
+                        onChange={(e) => handleStyleUpdate('marginBottom', e.target.value)}
+                        placeholder="0px"
+                        className="h-8"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Left</Label>
+                      <Input
+                        value={row.styles?.marginLeft || ''}
+                        onChange={(e) => handleStyleUpdate('marginLeft', e.target.value)}
+                        placeholder="0px"
+                        className="h-8"
+                      />
+                    </div>
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
+            </>
+          )}
         </CardContent>
       </Card>
     </div>
@@ -247,6 +558,9 @@ interface ColumnSettingsProps {
 }
 
 export const ColumnSettings: React.FC<ColumnSettingsProps> = ({ column, onUpdate }) => {
+  const [useAdvancedSpacing, setUseAdvancedSpacing] = useState(false);
+  const [customWidthMode, setCustomWidthMode] = useState(!!column.customWidth);
+
   const handleStyleUpdate = (key: string, value: any) => {
     onUpdate({
       styles: {
@@ -265,11 +579,56 @@ export const ColumnSettings: React.FC<ColumnSettingsProps> = ({ column, onUpdate
         <CardContent className="space-y-4">
           <div className="p-3 bg-muted/50 rounded text-sm">
             <p className="text-muted-foreground">
-              Column width is determined by the row's layout. Use Row Properties to change column proportions.
+              Current grid width: {column.width} units
             </p>
-            <p className="mt-2 font-medium">
-              Current width: {column.width} units
-            </p>
+          </div>
+          
+          <div className="space-y-2">
+            <Label>Column Width Mode</Label>
+            <div className="flex items-center space-x-2">
+              <Switch 
+                checked={customWidthMode}
+                onCheckedChange={(checked) => {
+                  setCustomWidthMode(checked);
+                  if (!checked) {
+                    onUpdate({ customWidth: undefined });
+                  }
+                }}
+              />
+              <Label className="text-sm">Override Grid Width</Label>
+            </div>
+          </div>
+          
+          {customWidthMode && (
+            <div className="space-y-2">
+              <Label htmlFor="column-custom-width">Custom Width</Label>
+              <Input
+                id="column-custom-width"
+                value={column.customWidth || ''}
+                onChange={(e) => onUpdate({ customWidth: e.target.value })}
+                placeholder="e.g., 300px, 50%, 20rem"
+              />
+            </div>
+          )}
+          
+          <div className="space-y-2">
+            <Label htmlFor="column-max-width">Max Width</Label>
+            <Input
+              id="column-max-width"
+              value={column.styles?.maxWidth || ''}
+              onChange={(e) => handleStyleUpdate('maxWidth', e.target.value)}
+              placeholder="e.g., 400px, 100%"
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="column-min-width">Min Width</Label>
+            <Input
+              id="column-min-width"
+              value={column.styles?.minWidth || ''}
+              onChange={(e) => handleStyleUpdate('minWidth', e.target.value)}
+              placeholder="e.g., 200px, 30%"
+            />
           </div>
         </CardContent>
       </Card>
@@ -305,15 +664,133 @@ export const ColumnSettings: React.FC<ColumnSettingsProps> = ({ column, onUpdate
           <CardTitle className="text-sm">Spacing</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="column-padding">Padding</Label>
-            <Input
-              id="column-padding"
-              value={column.styles?.padding || '0'}
-              onChange={(e) => handleStyleUpdate('padding', e.target.value)}
-              placeholder="20px"
+          <div className="flex items-center space-x-2 mb-4">
+            <Switch 
+              checked={useAdvancedSpacing}
+              onCheckedChange={setUseAdvancedSpacing}
             />
+            <Label className="text-sm">Advanced Spacing</Label>
           </div>
+          
+          {!useAdvancedSpacing ? (
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="column-padding">Padding</Label>
+                <Input
+                  id="column-padding"
+                  value={column.styles?.padding || ''}
+                  onChange={(e) => handleStyleUpdate('padding', e.target.value)}
+                  placeholder="20px or 20px 40px"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="column-margin">Margin</Label>
+                <Input
+                  id="column-margin"
+                  value={column.styles?.margin || ''}
+                  onChange={(e) => handleStyleUpdate('margin', e.target.value)}
+                  placeholder="10px 0 or auto"
+                />
+              </div>
+            </>
+          ) : (
+            <>
+              <Collapsible>
+                <CollapsibleTrigger className="flex items-center space-x-2 w-full text-left">
+                  <ChevronRight className="h-4 w-4" />
+                  <Label className="text-sm font-medium">Padding</Label>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="space-y-2 mt-2 pl-6">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <Label className="text-xs">Top</Label>
+                      <Input
+                        value={column.styles?.paddingTop || ''}
+                        onChange={(e) => handleStyleUpdate('paddingTop', e.target.value)}
+                        placeholder="0px"
+                        className="h-8"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Right</Label>
+                      <Input
+                        value={column.styles?.paddingRight || ''}
+                        onChange={(e) => handleStyleUpdate('paddingRight', e.target.value)}
+                        placeholder="0px"
+                        className="h-8"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Bottom</Label>
+                      <Input
+                        value={column.styles?.paddingBottom || ''}
+                        onChange={(e) => handleStyleUpdate('paddingBottom', e.target.value)}
+                        placeholder="0px"
+                        className="h-8"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Left</Label>
+                      <Input
+                        value={column.styles?.paddingLeft || ''}
+                        onChange={(e) => handleStyleUpdate('paddingLeft', e.target.value)}
+                        placeholder="0px"
+                        className="h-8"
+                      />
+                    </div>
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
+              
+              <Collapsible>
+                <CollapsibleTrigger className="flex items-center space-x-2 w-full text-left">
+                  <ChevronRight className="h-4 w-4" />
+                  <Label className="text-sm font-medium">Margin</Label>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="space-y-2 mt-2 pl-6">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <Label className="text-xs">Top</Label>
+                      <Input
+                        value={column.styles?.marginTop || ''}
+                        onChange={(e) => handleStyleUpdate('marginTop', e.target.value)}
+                        placeholder="0px"
+                        className="h-8"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Right</Label>
+                      <Input
+                        value={column.styles?.marginRight || ''}
+                        onChange={(e) => handleStyleUpdate('marginRight', e.target.value)}
+                        placeholder="0px"
+                        className="h-8"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Bottom</Label>
+                      <Input
+                        value={column.styles?.marginBottom || ''}
+                        onChange={(e) => handleStyleUpdate('marginBottom', e.target.value)}
+                        placeholder="0px"
+                        className="h-8"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Left</Label>
+                      <Input
+                        value={column.styles?.marginLeft || ''}
+                        onChange={(e) => handleStyleUpdate('marginLeft', e.target.value)}
+                        placeholder="0px"
+                        className="h-8"
+                      />
+                    </div>
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
+            </>
+          )}
         </CardContent>
       </Card>
     </div>

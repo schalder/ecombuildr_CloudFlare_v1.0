@@ -67,6 +67,44 @@ export const ColumnRenderer: React.FC<ColumnRendererProps> = ({
     onAddElement(sectionId, rowId, column.id, 'text');
   };
 
+  const getColumnStyles = () => {
+    const styles: React.CSSProperties = {
+      backgroundColor: column.styles?.backgroundColor || 'transparent',
+    };
+
+    // Custom width override
+    if (column.customWidth) {
+      styles.width = column.customWidth;
+      styles.flexBasis = column.customWidth;
+      styles.flexGrow = 0;
+      styles.flexShrink = 0;
+    }
+    
+    if (column.styles?.maxWidth) styles.maxWidth = column.styles.maxWidth;
+    if (column.styles?.minWidth) styles.minWidth = column.styles.minWidth;
+
+    // Advanced spacing - use individual properties if available, otherwise fallback to combined
+    if (column.styles?.paddingTop || column.styles?.paddingRight || column.styles?.paddingBottom || column.styles?.paddingLeft) {
+      styles.paddingTop = column.styles.paddingTop || '0';
+      styles.paddingRight = column.styles.paddingRight || '0';
+      styles.paddingBottom = column.styles.paddingBottom || '0';
+      styles.paddingLeft = column.styles.paddingLeft || '0';
+    } else {
+      styles.padding = column.styles?.padding || '8px';
+    }
+
+    if (column.styles?.marginTop || column.styles?.marginRight || column.styles?.marginBottom || column.styles?.marginLeft) {
+      styles.marginTop = column.styles.marginTop || '0';
+      styles.marginRight = column.styles.marginRight || '0';
+      styles.marginBottom = column.styles.marginBottom || '0';
+      styles.marginLeft = column.styles.marginLeft || '0';
+    } else if (column.styles?.margin) {
+      styles.margin = column.styles.margin;
+    }
+
+    return styles;
+  };
+
   // Check if column should be hidden on current device
   if (isColumnHidden(column, deviceType)) {
     return null;
@@ -81,11 +119,7 @@ export const ColumnRenderer: React.FC<ColumnRendererProps> = ({
         !isPreviewMode && isHovered && 'border-muted-foreground/30',
         getColumnResponsiveClasses(column, deviceType)
       )}
-      style={{
-        backgroundColor: column.styles?.backgroundColor || 'transparent',
-        margin: column.styles?.margin || '0',
-        padding: column.styles?.padding || '8px'
-      }}
+      style={getColumnStyles()}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={handleColumnClick}

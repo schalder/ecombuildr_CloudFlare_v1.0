@@ -19,23 +19,38 @@ export interface PageBuilderColumn {
   id: string;
   width: number; // 1-12 based on grid system
   elements: PageBuilderElement[];
+  customWidth?: string; // Custom width override (px, %, vw, etc.)
   styles?: {
     padding?: string;
     margin?: string;
     backgroundColor?: string;
+    paddingTop?: string;
+    paddingRight?: string;
+    paddingBottom?: string;
+    paddingLeft?: string;
+    marginTop?: string;
+    marginRight?: string;
+    marginBottom?: string;
+    marginLeft?: string;
+    width?: string; // Custom width override
+    maxWidth?: string;
+    minWidth?: string;
   };
   responsive?: {
     mobile?: {
       width?: number;
       hidden?: boolean;
+      customWidth?: string;
     };
     tablet?: {
       width?: number;
       hidden?: boolean;
+      customWidth?: string;
     };
     desktop?: {
       width?: number;
       hidden?: boolean;
+      customWidth?: string;
     };
   };
 }
@@ -44,22 +59,37 @@ export interface PageBuilderRow {
   id: string;
   columns: PageBuilderColumn[];
   columnLayout: '1' | '1-1' | '1-2' | '2-1' | '1-1-1' | '1-2-1' | '2-1-1' | '1-1-1-1' | '1-1-1-1-1' | '1-1-1-1-1-1';
+  customWidth?: string; // Custom width override (px, %, vw, etc.)
   styles?: {
     padding?: string;
     margin?: string;
     backgroundColor?: string;
+    paddingTop?: string;
+    paddingRight?: string;
+    paddingBottom?: string;
+    paddingLeft?: string;
+    marginTop?: string;
+    marginRight?: string;
+    marginBottom?: string;
+    marginLeft?: string;
+    width?: string; // Custom width override
+    maxWidth?: string;
+    minWidth?: string;
   };
   responsive?: {
     mobile?: {
       stackColumns?: boolean;
       columnGap?: string;
+      customWidth?: string;
     };
     tablet?: {
       columnLayout?: string;
       columnGap?: string;
+      customWidth?: string;
     };
     desktop?: {
       columnGap?: string;
+      customWidth?: string;
     };
   };
 }
@@ -68,11 +98,23 @@ export interface PageBuilderSection {
   id: string;
   rows: PageBuilderRow[];
   width: 'full' | 'wide' | 'medium' | 'small';
+  customWidth?: string; // Custom width override (px, %, vw, etc.)
   styles?: {
     padding?: string;
     margin?: string;
     backgroundColor?: string;
     backgroundImage?: string;
+    paddingTop?: string;
+    paddingRight?: string;
+    paddingBottom?: string;
+    paddingLeft?: string;
+    marginTop?: string;
+    marginRight?: string;
+    marginBottom?: string;
+    marginLeft?: string;
+    width?: string; // Custom width override
+    maxWidth?: string;
+    minWidth?: string;
   };
 }
 
