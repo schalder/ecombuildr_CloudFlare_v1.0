@@ -971,6 +971,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
+      set_homepage: {
+        Args: { page_uuid: string }
+        Returns: undefined
+      }
     }
     Enums: {
       order_status:
