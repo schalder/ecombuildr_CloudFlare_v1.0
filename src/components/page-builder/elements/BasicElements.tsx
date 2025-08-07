@@ -241,6 +241,9 @@ const ButtonElement: React.FC<{
   deviceType?: 'desktop' | 'tablet' | 'mobile';
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
 }> = ({ element, isEditing, deviceType, onUpdate }) => {
+  const [isInlineEditing, setIsInlineEditing] = useState(false);
+  const [editText, setEditText] = useState(element.content.text || 'Click Me');
+
   const responsiveStyles = element.styles?.responsive || {};
   const desktopStyles = responsiveStyles.desktop || {};
   const mobileStyles = responsiveStyles.mobile || {};
@@ -249,15 +252,26 @@ const ButtonElement: React.FC<{
   const url = element.content.url || '#';
   const target = element.content.target || '_blank';
 
-  const handleTextChange = (newText: string) => {
+  const handleTextSubmit = () => {
     onUpdate?.({
-      content: { ...element.content, text: newText }
+      content: { ...element.content, text: editText }
     });
+    setIsInlineEditing(false);
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleTextSubmit();
+    } else if (e.key === 'Escape') {
+      setEditText(text);
+      setIsInlineEditing(false);
+    }
   };
 
   const handleClick = (e: React.MouseEvent) => {
     if (isEditing) {
       e.preventDefault();
+      setIsInlineEditing(true);
     } else if (url && url !== '#') {
       if (target === '_blank') {
         window.open(url, '_blank');
@@ -415,14 +429,21 @@ const ButtonElement: React.FC<{
           className={buttonClasses}
           style={buttonStyles}
         >
-          <input
-            type="text"
-            value={text}
-            onChange={(e) => handleTextChange(e.target.value)}
-            className="bg-transparent border-none outline-none text-center w-full text-inherit font-inherit"
-            placeholder="Button Text"
-            style={{ color: 'inherit' }}
-          />
+          {isInlineEditing ? (
+            <input
+              type="text"
+              value={editText}
+              onChange={(e) => setEditText(e.target.value)}
+              onBlur={handleTextSubmit}
+              onKeyDown={handleKeyPress}
+              className="bg-transparent border-none outline-none text-center w-full text-inherit font-inherit"
+              placeholder="Button Text"
+              style={{ color: 'inherit' }}
+              autoFocus
+            />
+          ) : (
+            <span onClick={handleClick}>{text}</span>
+          )}
         </div>
       </div>
     );
