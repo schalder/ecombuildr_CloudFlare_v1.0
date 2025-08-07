@@ -172,6 +172,18 @@ export default function PageBuilder() {
     }
   };
 
+  // Save on Cmd/Ctrl+S
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') {
+        e.preventDefault();
+        if (!isSaving) handleSave();
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [isSaving, handleSave]);
+
   const handlePreview = () => {
     if (!currentStore) return;
     
@@ -198,7 +210,7 @@ export default function PageBuilder() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="h-screen bg-background flex flex-col">
       {/* Top Navigation */}
       <div className="border-b bg-card px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-4">
@@ -243,9 +255,9 @@ export default function PageBuilder() {
         </div>
       </div>
 
-      <div className="flex">
+      <div className="flex-1 min-h-0 flex">
         {/* Page Builder */}
-        <div className="flex-1">
+        <div className="flex-1 min-h-0">
           <ElementorPageBuilder
             initialData={builderData}
             onChange={setBuilderData}

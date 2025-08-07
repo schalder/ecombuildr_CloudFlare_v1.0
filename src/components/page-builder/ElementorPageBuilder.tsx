@@ -621,9 +621,9 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = ({
 
   return (
     <DndProvider backend={HTML5Backend}>
-      <div className="flex h-screen bg-background">
+      <div className="flex h-full min-h-0 bg-background">
         {/* Element Library Sidebar */}
-        <div className={`border-r bg-card transition-all duration-300 ${sidebarCollapsed ? 'w-12' : 'w-80'}`}>
+        <div className={`flex flex-col min-h-0 border-r bg-card transition-all duration-300 ${sidebarCollapsed ? 'w-12' : 'w-80'}`}>
           <div className="p-4 border-b">
             <div className="flex items-center justify-between">
               {!sidebarCollapsed && <h3 className="font-semibold">Elements</h3>}
@@ -675,7 +675,7 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = ({
         </div>
 
         {/* Main Content Area */}
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col min-h-0">
           {/* Top Toolbar */}
           <div className="border-b bg-card p-4 flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -715,9 +715,6 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = ({
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Add Section
-              </Button>
-              <Button onClick={onSave} disabled={isSaving}>
-                {isSaving ? 'Saving...' : 'Save'}
               </Button>
             </div>
           </div>
@@ -788,7 +785,7 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = ({
         </div>
 
         {/* Properties Panel */}
-        <div className={`border-l bg-card transition-all duration-300 ${propertiesPanelCollapsed ? 'w-12' : 'w-80'}`}>
+        <div className={`flex flex-col min-h-0 border-l bg-card transition-all duration-300 ${propertiesPanelCollapsed ? 'w-12' : 'w-80'}`}>
           <div className="p-4 border-b">
             <div className="flex items-center justify-between">
               {!propertiesPanelCollapsed && (
