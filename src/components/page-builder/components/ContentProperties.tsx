@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { ImageUpload } from '@/components/ui/image-upload';
 import { PageBuilderElement } from '../types';
 import { ImageContentProperties } from './ImageContentProperties';
+import { VideoContentProperties } from './VideoContentProperties';
 
 interface ContentPropertiesProps {
   element: PageBuilderElement;
@@ -158,37 +159,7 @@ export const ContentProperties: React.FC<ContentPropertiesProps> = ({
 
   // Video element content
   if (element.type === 'video') {
-    return (
-      <div className="space-y-4">
-        <div>
-          <Label htmlFor="video-url">Video URL</Label>
-          <Input
-            id="video-url"
-            value={element.content.src || ''}
-            onChange={(e) => onUpdate('src', e.target.value)}
-            placeholder="https://example.com/video.mp4"
-          />
-        </div>
-        <div className="flex items-center space-x-2">
-          <input
-            type="checkbox"
-            id="video-controls"
-            checked={element.content.controls !== false}
-            onChange={(e) => onUpdate('controls', e.target.checked)}
-          />
-          <Label htmlFor="video-controls" className="text-sm">Show controls</Label>
-        </div>
-        <div className="flex items-center space-x-2">
-          <input
-            type="checkbox"
-            id="video-autoplay"
-            checked={element.content.autoplay || false}
-            onChange={(e) => onUpdate('autoplay', e.target.checked)}
-          />
-          <Label htmlFor="video-autoplay" className="text-sm">Autoplay</Label>
-        </div>
-      </div>
-    );
+    return <VideoContentProperties element={element} onUpdate={onUpdate} />;
   }
 
   // Spacer element content

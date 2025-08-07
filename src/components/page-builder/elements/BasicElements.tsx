@@ -401,80 +401,203 @@ const VideoElement: React.FC<{
   deviceType?: 'desktop' | 'tablet' | 'mobile';
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
 }> = ({ element, isEditing, onUpdate }) => {
-  const [isEditing2, setIsEditing2] = useState(false);
-  const src = element.content.src || '';
-  const controls = element.content.controls !== false;
-  const autoplay = element.content.autoplay || false;
+  const { 
+    videoType = 'url',
+    url = '', 
+    embedCode = '',
+    width = 'full',
+    controls = true, 
+    autoplay = false,
+    muted = false
+  } = element.content;
+  
+  const containerStyles = renderElementStyles(element);
 
-  const handleSrcChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    onUpdate?.({
-      content: { ...element.content, src: e.target.value }
-    });
-  };
+  // Import video utilities
+  const { parseVideoUrl, getVideoWidthClasses, buildEmbedUrl, sanitizeEmbedCode } = React.useMemo(() => {
+    return {
+      parseVideoUrl: (url: string) => {
+        if (!url) return { type: 'unknown' as const };
+        
+        // YouTube patterns
+        const youtubeRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+        const youtubeMatch = url.match(youtubeRegex);
+        if (youtubeMatch) {
+          const id = youtubeMatch[1];
+          return {
+            type: 'youtube' as const,
+            id,
+            embedUrl: `https://www.youtube.com/embed/${id}`
+          };
+        }
 
-  if (!src) {
+        // Vimeo patterns
+        const vimeoRegex = /(?:vimeo\.com\/)(?:.*\/)?(\d+)(?:\?.*)?/;
+        const vimeoMatch = url.match(vimeoRegex);
+        if (vimeoMatch) {
+          const id = vimeoMatch[1];
+          return {
+            type: 'vimeo' as const,
+            id,
+            embedUrl: `https://player.vimeo.com/video/${id}`
+          };
+        }
+
+        // Wistia patterns
+        const wistiaRegex = /(?:wistia\.(?:com|net)\/(?:medias|embed)\/|wi\.st\/)([a-zA-Z0-9]+)/;
+        const wistiaMatch = url.match(wistiaRegex);
+        if (wistiaMatch) {
+          const id = wistiaMatch[1];
+          return {
+            type: 'wistia' as const,
+            id,
+            embedUrl: `https://fast.wistia.net/embed/iframe/${id}`
+          };
+        }
+
+        // Check if it's a direct video file
+        const videoFileRegex = /\.(mp4|webm|ogg|mov|avi)(\?.*)?$/i;
+        if (videoFileRegex.test(url)) {
+          return {
+            type: 'hosted' as const,
+            embedUrl: url
+          };
+        }
+
+        return { type: 'unknown' as const };
+      },
+      getVideoWidthClasses: (width: string) => {
+        switch (width) {
+          case 'full': return 'w-full';
+          case 'three-quarters': return 'w-3/4 mx-auto';
+          case 'half': return 'w-1/2 mx-auto';
+          default: return 'w-full';
+        }
+      },
+      buildEmbedUrl: (baseUrl: string, type: string, options: any = {}) => {
+        const urlObj = new URL(baseUrl);
+        
+        switch (type) {
+          case 'youtube':
+            if (options.autoplay) urlObj.searchParams.set('autoplay', '1');
+            if (!options.controls) urlObj.searchParams.set('controls', '0');
+            if (options.muted) urlObj.searchParams.set('mute', '1');
+            urlObj.searchParams.set('rel', '0');
+            break;
+            
+          case 'vimeo':
+            if (options.autoplay) urlObj.searchParams.set('autoplay', '1');
+            if (!options.controls) urlObj.searchParams.set('controls', '0');
+            if (options.muted) urlObj.searchParams.set('muted', '1');
+            break;
+            
+          case 'wistia':
+            if (options.autoplay) urlObj.searchParams.set('autoPlay', 'true');
+            if (!options.controls) urlObj.searchParams.set('playbar', 'false');
+            if (options.muted) urlObj.searchParams.set('volume', '0');
+            break;
+        }
+        
+        return urlObj.toString();
+      },
+      sanitizeEmbedCode: (embedCode: string) => {
+        return embedCode
+          .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+          .replace(/javascript:/gi, '')
+          .replace(/on\w+\s*=/gi, '');
+      }
+    };
+  }, []);
+
+  if (isEditing && videoType === 'url' && !url) {
     return (
       <div 
-        className="border-2 border-dashed border-muted-foreground/30 rounded-lg p-8 text-center bg-muted/10 cursor-pointer hover:bg-muted/20 transition-colors"
-        onClick={() => isEditing && setIsEditing2(true)}
+        className="w-full h-48 bg-muted flex items-center justify-center border-2 border-dashed border-border rounded-lg"
+        style={containerStyles}
       >
-        <Play className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-        <p className="text-muted-foreground mb-4">Click to add video</p>
-        {(isEditing && isEditing2) && (
-          <div className="space-y-2" onClick={(e) => e.stopPropagation()}>
-            <Input
-              placeholder="Enter video URL..."
-              onChange={handleSrcChange}
-              className="max-w-xs mx-auto"
-              autoFocus
-              onBlur={() => setIsEditing2(false)}
-            />
-          </div>
-        )}
+        <p className="text-sm text-muted-foreground">Add a video URL in the properties panel</p>
       </div>
     );
   }
 
-  const elementStyles = renderElementStyles(element);
+  if (isEditing && videoType === 'embed' && !embedCode) {
+    return (
+      <div 
+        className="w-full h-48 bg-muted flex items-center justify-center border-2 border-dashed border-border rounded-lg"
+        style={containerStyles}
+      >
+        <p className="text-sm text-muted-foreground">Add custom embed code in the properties panel</p>
+      </div>
+    );
+  }
 
-  return (
-    <div className="relative group" style={elementStyles}>
-      <video 
-        src={src} 
-        controls={controls}
-        autoPlay={autoplay}
-        className="w-full h-auto outline-none"
-        style={{
-          width: elementStyles.width || 'auto',
-          height: elementStyles.height || 'auto',
-          objectFit: elementStyles.objectFit || 'cover',
-          borderRadius: elementStyles.borderRadius || 'inherit',
-        }}
-      />
-      {isEditing && (
-        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => setIsEditing2(true)}
+  const widthClasses = getVideoWidthClasses(String(width));
+
+  // Handle custom embed code
+  if (videoType === 'embed' && embedCode) {
+    const sanitizedCode = sanitizeEmbedCode(embedCode);
+    return (
+      <div className={`${widthClasses} aspect-video`} style={containerStyles}>
+        <div 
+          className="w-full h-full"
+          dangerouslySetInnerHTML={{ __html: sanitizedCode }}
+        />
+      </div>
+    );
+  }
+
+  // Handle URL-based videos
+  if (videoType === 'url' && url) {
+    const videoInfo = parseVideoUrl(url);
+    
+    if (videoInfo.type === 'hosted') {
+      // Direct video file
+      return (
+        <div className={`${widthClasses} aspect-video`} style={containerStyles}>
+          <video
+            src={url}
+            controls={controls}
+            autoPlay={autoplay}
+            muted={muted}
+            className="w-full h-full rounded-lg"
           >
-            Edit Video
-          </Button>
+            Your browser does not support the video tag.
+          </video>
         </div>
-      )}
-      {isEditing && isEditing2 && (
-        <div className="absolute top-full left-0 right-0 bg-background border border-border rounded-md p-4 shadow-lg z-10 space-y-2">
-          <Input
-            placeholder="Video URL..."
-            value={src}
-            onChange={handleSrcChange}
-            className="w-full"
+      );
+    }
+
+    if (videoInfo.embedUrl && ['youtube', 'vimeo', 'wistia'].includes(videoInfo.type)) {
+      // Embedded video services
+      const finalEmbedUrl = buildEmbedUrl(videoInfo.embedUrl, videoInfo.type, {
+        autoplay,
+        controls,
+        muted
+      });
+
+      return (
+        <div className={`${widthClasses} aspect-video`} style={containerStyles}>
+          <iframe
+            src={finalEmbedUrl}
+            className="w-full h-full rounded-lg"
+            frameBorder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
           />
-          <Button size="sm" onClick={() => setIsEditing2(false)}>
-            Done
-          </Button>
         </div>
-      )}
+      );
+    }
+  }
+
+  // Fallback for invalid or unrecognized video
+  return (
+    <div 
+      className={`${widthClasses} aspect-video bg-muted flex items-center justify-center border-2 border-dashed border-border rounded-lg`}
+      style={containerStyles}
+    >
+      <p className="text-sm text-muted-foreground">
+        {videoType === 'url' ? 'Invalid video URL' : 'No video content'}
+      </p>
     </div>
   );
 };
