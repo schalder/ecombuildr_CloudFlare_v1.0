@@ -22,8 +22,10 @@ import Pages from "./pages/Pages";
 import PageBuilder from "./pages/PageBuilder";
 import Websites from "./pages/Websites";
 import CreateWebsite from "./pages/CreateWebsite";
+import WebsiteManagement from "./pages/WebsiteManagement";
 import Funnels from "./pages/Funnels";
 import CreateFunnel from "./pages/CreateFunnel";
+import FunnelManagement from "./pages/FunnelManagement";
 import Marketing from "./pages/Marketing";
 import FacebookAds from "./pages/FacebookAds";
 import EmailCampaigns from "./pages/EmailCampaigns";
@@ -75,8 +77,10 @@ const App = () => (
                 <Route path="/dashboard/analytics" element={<Analytics />} />
                 <Route path="/dashboard/websites" element={<Websites />} />
                 <Route path="/dashboard/websites/create" element={<CreateWebsite />} />
+                <Route path="/dashboard/websites/:id" element={<WebsiteManagement />} />
                 <Route path="/dashboard/funnels" element={<Funnels />} />
                 <Route path="/dashboard/funnels/create" element={<CreateFunnel />} />
+                <Route path="/dashboard/funnels/:id" element={<FunnelManagement />} />
                 <Route path="/dashboard/pages" element={<Pages />} />
                 <Route path="/dashboard/pages/builder" element={<PageBuilder />} />
                 <Route path="/dashboard/pages/builder/:pageId" element={<PageBuilder />} />
