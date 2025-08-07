@@ -119,9 +119,9 @@ export const ImageGalleryProperties: React.FC<MediaPropertiesProps> = ({
         </div>
         <div className="space-y-3 max-h-60 overflow-y-auto">
           {images.map((image: string, index: number) => (
-            <div key={index} className="flex items-center space-x-2 p-2 border rounded">
-              <GripVertical className="h-4 w-4 text-muted-foreground" />
-              <div className="flex-1">
+            <div key={index} className="flex items-center space-x-2 p-2 border rounded overflow-hidden">
+              <GripVertical className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+              <div className="flex-1 min-w-0 overflow-hidden">
                 <CompactMediaSelector
                   value={image}
                   onChange={(url) => updateImage(index, url)}
@@ -132,6 +132,7 @@ export const ImageGalleryProperties: React.FC<MediaPropertiesProps> = ({
                 onClick={() => removeImage(index)}
                 size="sm"
                 variant="destructive"
+                className="flex-shrink-0"
               >
                 <Trash2 className="h-4 w-4" />
               </Button>
@@ -244,9 +245,9 @@ export const ImageCarouselProperties: React.FC<MediaPropertiesProps> = ({
         </div>
         <div className="space-y-3 max-h-60 overflow-y-auto">
           {images.map((image: string, index: number) => (
-            <div key={index} className="flex items-center space-x-2 p-2 border rounded">
-              <GripVertical className="h-4 w-4 text-muted-foreground" />
-              <div className="flex-1">
+            <div key={index} className="flex items-center space-x-2 p-2 border rounded overflow-hidden">
+              <GripVertical className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+              <div className="flex-1 min-w-0 overflow-hidden">
                 <CompactMediaSelector
                   value={image}
                   onChange={(url) => updateImage(index, url)}
@@ -257,6 +258,7 @@ export const ImageCarouselProperties: React.FC<MediaPropertiesProps> = ({
                 onClick={() => removeImage(index)}
                 size="sm"
                 variant="destructive"
+                className="flex-shrink-0"
               >
                 <Trash2 className="h-4 w-4" />
               </Button>

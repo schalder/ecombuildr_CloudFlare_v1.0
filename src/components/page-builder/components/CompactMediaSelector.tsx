@@ -44,7 +44,7 @@ export const CompactMediaSelector: React.FC<CompactMediaSelectorProps> = ({
   if (hasImage) {
     return (
       <div className="group relative">
-        <div className="flex items-center gap-3 p-2 border rounded-lg bg-muted/30">
+        <div className="flex items-center gap-3 p-2 border rounded-lg bg-muted/30 overflow-hidden">
           <div className="w-12 h-12 rounded-md overflow-hidden bg-muted flex-shrink-0">
             <img 
               src={value} 
@@ -55,12 +55,20 @@ export const CompactMediaSelector: React.FC<CompactMediaSelectorProps> = ({
               }}
             />
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium truncate">
-              {value.split('/').pop() || 'Selected image'}
+          <div className="flex-1 min-w-0 overflow-hidden">
+            <p className="text-sm font-medium truncate" title={value.split('/').pop() || 'Selected image'}>
+              {(() => {
+                const filename = value.split('/').pop() || 'Selected image';
+                return filename.length > 25 ? `${filename.substring(0, 25)}...` : filename;
+              })()}
             </p>
-            <p className="text-xs text-muted-foreground truncate">
-              {value.length > 40 ? `${value.substring(0, 40)}...` : value}
+            <p className="text-xs text-muted-foreground truncate" title={value}>
+              {(() => {
+                if (value.length <= 35) return value;
+                const start = value.substring(0, 20);
+                const end = value.substring(value.length - 12);
+                return `${start}...${end}`;
+              })()}
             </p>
           </div>
           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
