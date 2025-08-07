@@ -63,7 +63,6 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
   };
 
   const getDeviceSpecificGridStyle = () => {
-    const columnCount = row.columns.length;
     const stackOnMobile = row.responsive?.mobile?.stackColumns !== false; // Default to true
     
     // Force grid layout based on selected device type
@@ -94,11 +93,20 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
       }
     }
     
-    // Desktop - use original layout
-    const fractions = COLUMN_LAYOUTS[row.columnLayout] || Array(columnCount).fill(1);
+    // Desktop - always use the columnLayout configuration, not actual column count
+    const fractions = COLUMN_LAYOUTS[row.columnLayout];
+    if (fractions) {
+      return {
+        display: 'grid',
+        gridTemplateColumns: fractions.map(f => `${f}fr`).join(' '),
+        gap: '16px'
+      };
+    }
+    
+    // Fallback to single column if layout not found
     return {
       display: 'grid',
-      gridTemplateColumns: fractions.map(f => `${f}fr`).join(' '),
+      gridTemplateColumns: '1fr',
       gap: '16px'
     };
   };
