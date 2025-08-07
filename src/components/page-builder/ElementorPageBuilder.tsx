@@ -59,6 +59,7 @@ import {
   SECTION_WIDTHS 
 } from './types';
 import { elementRegistry } from './elements';
+import { renderSectionStyles, renderRowStyles, renderColumnStyles, hasUserBackground, hasUserShadow } from './utils/styleRenderer';
 
 // Helper function to get responsive grid classes for a row
 const getResponsiveGridClasses = (columnLayout: string, deviceType: 'desktop' | 'tablet' | 'mobile'): string => {
@@ -899,16 +900,22 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
   onAddSectionAfter
 }) => {
   const [isHovered, setIsHovered] = useState(false);
+  const userBackground = hasUserBackground(section.styles);
+  const userShadow = hasUserShadow(section.styles);
 
   return (
     <div 
-      className={`relative group border-2 border-dashed transition-all duration-200 ${
-        isSelected 
+      className={`relative group transition-all duration-200 ${
+        // Only apply border/background styles if no user-defined styles and not in preview mode
+        !userBackground && !userShadow ? 'border-2 border-dashed' : ''
+      } ${
+        isSelected && !userBackground 
           ? 'border-primary bg-primary/5' 
-          : isHovered 
+          : isHovered && !userBackground
             ? 'border-primary/50 bg-primary/2' 
-            : 'border-transparent'
+            : !userBackground ? 'border-transparent' : ''
       }`}
+      style={renderSectionStyles(section)}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={(e) => {
@@ -1049,16 +1056,22 @@ const RowComponent: React.FC<RowComponentProps> = ({
   onSelectionChange
 }) => {
   const [isHovered, setIsHovered] = useState(false);
+  const userBackground = hasUserBackground(row.styles);
+  const userShadow = hasUserShadow(row.styles);
 
   return (
     <div 
-      className={`relative group border border-dashed transition-all duration-200 rounded-lg ${
-        isSelected 
+      className={`relative group transition-all duration-200 rounded-lg ${
+        // Only apply border/background styles if no user-defined styles
+        !userBackground && !userShadow ? 'border border-dashed' : ''
+      } ${
+        isSelected && !userBackground
           ? 'border-secondary bg-secondary/10' 
-          : isHovered 
+          : isHovered && !userBackground
             ? 'border-secondary/50 bg-secondary/5' 
-            : 'border-transparent'
+            : !userBackground ? 'border-transparent' : ''
       }`}
+      style={renderRowStyles(row)}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={(e) => {
@@ -1151,6 +1164,8 @@ const ColumnComponent: React.FC<ColumnComponentProps> = ({
   onSelectionChange
 }) => {
   const [isHovered, setIsHovered] = useState(false);
+  const userBackground = hasUserBackground(column.styles);
+  const userShadow = hasUserShadow(column.styles);
 
   const handleAddElement = (elementType: string, insertIndex: number) => {
     console.log('ColumnComponent handleAddElement:', { elementType, sectionId, rowId, columnId: column.id, insertIndex });
@@ -1159,13 +1174,17 @@ const ColumnComponent: React.FC<ColumnComponentProps> = ({
 
   return (
     <div 
-      className={`relative min-h-24 border border-dashed rounded-lg transition-all duration-200 ${
-        isSelected 
+      className={`relative min-h-24 rounded-lg transition-all duration-200 ${
+        // Only apply border/background styles if no user-defined styles
+        !userBackground && !userShadow ? 'border border-dashed' : ''
+      } ${
+        isSelected && !userBackground
           ? 'border-accent bg-accent/5' 
-          : isHovered 
+          : isHovered && !userBackground
             ? 'border-accent/50 bg-accent/2' 
-            : 'border-border'
+            : !userBackground ? 'border-border' : ''
       }`}
+      style={renderColumnStyles(column)}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={(e) => {
