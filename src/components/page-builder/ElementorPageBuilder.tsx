@@ -45,9 +45,6 @@ import { Label } from '@/components/ui/label';
 import { PropertiesPanel } from './components/PropertiesPanel';
 import { SettingsPanel } from './components/SettingsPanels';
 import { ElementDropZone } from './components/ElementDropZone';
-import { SectionDropZone } from './components/SectionDropZone';
-import { RowDropZone } from './components/RowDropZone';
-import { SectionRenderer } from './components/SectionRenderer';
 import { 
   PageBuilderData, 
   PageBuilderSection, 
@@ -182,23 +179,16 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = ({
 
 
   // Section operations
-  const addSection = useCallback((width: PageBuilderSection['width'] = 'wide', insertIndex?: number) => {
+  const addSection = useCallback((width: PageBuilderSection['width'] = 'wide') => {
     const newSection: PageBuilderSection = {
       id: generateId(),
       width,
       rows: []
     };
     
-    const newSections = [...data.sections];
-    if (typeof insertIndex === 'number') {
-      newSections.splice(insertIndex, 0, newSection);
-    } else {
-      newSections.push(newSection);
-    }
-    
     updateData({
       ...data,
-      sections: newSections
+      sections: [...data.sections, newSection]
     });
   }, [data, updateData]);
 
@@ -280,7 +270,7 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = ({
   };
 
   // Row operations
-  const addRow = useCallback((sectionId: string, columnLayout: PageBuilderRow['columnLayout'], insertIndex?: number) => {
+  const addRow = useCallback((sectionId: string, columnLayout: PageBuilderRow['columnLayout']) => {
     const columnWidths = COLUMN_LAYOUTS[columnLayout];
     const newRow: PageBuilderRow = {
       id: generateId(),
@@ -296,16 +286,7 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = ({
       ...data,
       sections: data.sections.map(section =>
         section.id === sectionId
-          ? { 
-              ...section, 
-              rows: typeof insertIndex === 'number'
-                ? [
-                    ...(section.rows || []).slice(0, insertIndex),
-                    newRow,
-                    ...(section.rows || []).slice(insertIndex)
-                  ]
-                : [...(section.rows || []), newRow]
-            }
+          ? { ...section, rows: [...(section.rows || []), newRow] }
           : section
       )
     });
@@ -606,45 +587,28 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = ({
                   </Button>
                 </div>
               ) : (
-                <div className="space-y-2">
-                  {/* Section drop zone at the beginning */}
-                  <SectionDropZone
-                    insertIndex={0}
-                    onAddSection={(insertIndex) => addSection('wide', insertIndex)}
-                  />
-                  
+                <div className="space-y-4">
                   {data.sections.map((section, sectionIndex) => (
-                    <div key={section.id}>
-                      <SectionRenderer
-                        section={section}
-                        isSelected={selection?.type === 'section' && selection.id === section.id}
-                        isPreviewMode={false}
-                        deviceType={deviceType}
-                        onSelectElement={(element) => {
-                          if (element) {
-                            setSelection({ type: 'section', id: section.id });
-                          }
-                        }}
-                        onUpdateElement={updateElement}
-                        onAddElement={(sectionId, rowId, columnId, elementType, insertIndex) => 
-                          addElement(sectionId, rowId, columnId, elementType, insertIndex)
-                        }
-                        onRemoveElement={(elementId) => {
-                          if (elementId === section.id) {
-                            deleteSection(section.id);
-                          } else {
-                            deleteElement(elementId);
-                          }
-                        }}
-                        onAddRow={(sectionId, columnLayout, insertIndex) => addRow(sectionId, columnLayout as PageBuilderRow['columnLayout'], insertIndex)}
-                      />
-                      
-                      {/* Section drop zone after each section */}
-                      <SectionDropZone
-                        insertIndex={sectionIndex + 1}
-                        onAddSection={(insertIndex) => addSection('wide', insertIndex)}
-                      />
-                    </div>
+                     <SectionComponent
+                       key={section.id}
+                       section={section}
+                       sectionIndex={sectionIndex}
+                       deviceType={deviceType}
+                       isSelected={selection?.type === 'section' && selection.id === section.id}
+                       onSelect={() => setSelection({ type: 'section', id: section.id })}
+                       onDelete={() => deleteSection(section.id)}
+                       onDuplicate={() => duplicateSection(section.id)}
+                       onAddRow={() => setShowColumnModal({ sectionId: section.id })}
+                       onDeleteRow={(rowId) => deleteRow(section.id, rowId)}
+            onAddElement={(sectionId, rowId, columnId, elementType, insertIndex) => 
+              addElement(sectionId, rowId, columnId, elementType, insertIndex)
+            }
+                      onUpdateElement={updateElement}
+                      onDeleteElement={deleteElement}
+                      onDuplicateElement={duplicateElement}
+                      selection={selection}
+                      onSelectionChange={setSelection}
+                    />
                   ))}
                 </div>
               )}
@@ -798,7 +762,7 @@ interface SectionComponentProps {
   onSelect: () => void;
   onDelete: () => void;
   onDuplicate: () => void;
-  onAddRow: (insertIndex?: number) => void;
+  onAddRow: () => void;
   onDeleteRow: (rowId: string) => void;
   onAddElement: (sectionId: string, rowId: string, columnId: string, elementType: string, insertIndex?: number) => void;
   onUpdateElement: (elementId: string, updates: Partial<PageBuilderElement>) => void;
@@ -848,7 +812,7 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
           <Grip className="h-3 w-3" />
           <span className="font-medium">Section</span>
           <Separator orientation="vertical" className="mx-1 h-4" />
-          <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-primary-foreground/20" onClick={() => onAddRow()}>
+          <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-primary-foreground/20" onClick={onAddRow}>
             <Plus className="h-3 w-3" />
           </Button>
           <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-primary-foreground/20" onClick={onDuplicate}>
@@ -880,7 +844,7 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
         {(!section.rows || section.rows.length === 0) ? (
           <div className="p-12 text-center border border-dashed border-border rounded-lg">
             <p className="text-muted-foreground mb-4">This section is empty</p>
-            <Button variant="outline" onClick={() => onAddRow()}>
+            <Button variant="outline" onClick={onAddRow}>
               <Plus className="h-4 w-4 mr-2" />
               Add Row
             </Button>
