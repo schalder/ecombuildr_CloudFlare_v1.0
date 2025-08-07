@@ -10,6 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { BlockRenderer } from '@/components/blocks';
+import { PageBuilderRenderer } from '@/components/storefront/PageBuilderRenderer';
 
 interface PageData {
   id: string;
@@ -283,13 +284,20 @@ export const StorefrontPage: React.FC = () => {
 
   return (
     <StorefrontLayout>
-      <div className="container mx-auto px-4 py-8">
-        {(page.content as any)?.blocks ? (
-          <BlockRenderer blocks={(page.content as any).blocks} />
+      <div className="w-full">
+        {/* Check for page builder content first (sections format) */}
+        {page.content?.sections ? (
+          <PageBuilderRenderer data={page.content} />
+        ) : (page.content as any)?.blocks ? (
+          <div className="container mx-auto px-4 py-8">
+            <BlockRenderer blocks={(page.content as any).blocks} />
+          </div>
         ) : page.content?.sections ? (
-          <PageContentRenderer sections={page.content.sections} />
+          <div className="container mx-auto px-4 py-8">
+            <PageContentRenderer sections={page.content.sections} />
+          </div>
         ) : (
-          <div>
+          <div className="container mx-auto px-4 py-8">
             <h1 className="text-3xl font-bold mb-6">{page.title}</h1>
             <p className="text-muted-foreground">This page is still being set up.</p>
           </div>

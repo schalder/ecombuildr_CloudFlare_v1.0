@@ -6,6 +6,7 @@ import { ThemeRenderer } from '@/components/storefront/ThemeRenderer';
 import { useCart } from '@/contexts/CartContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Link } from 'react-router-dom';
+import { PageBuilderRenderer } from '@/components/storefront/PageBuilderRenderer';
 
 interface Product {
   id: string;
@@ -125,6 +126,37 @@ export const StorefrontHome: React.FC = () => {
     );
   }
 
+  // Check if there's a custom homepage
+  if (homepage && homepage.content) {
+    // Set up SEO metadata for custom homepage
+    if (homepage.seo_title) {
+      document.title = homepage.seo_title;
+    }
+    if (homepage.seo_description) {
+      const metaDescription = document.querySelector('meta[name="description"]');
+      if (metaDescription) {
+        metaDescription.setAttribute('content', homepage.seo_description);
+      }
+    }
+
+    return (
+      <StorefrontLayout>
+        <div className="w-full">
+          {/* Render custom homepage with page builder */}
+          {homepage.content?.sections ? (
+            <PageBuilderRenderer data={homepage.content} />
+          ) : (
+            <div className="container mx-auto px-4 py-8">
+              <h1 className="text-3xl font-bold mb-6">{homepage.title}</h1>
+              <p className="text-muted-foreground">This homepage is still being set up.</p>
+            </div>
+          )}
+        </div>
+      </StorefrontLayout>
+    );
+  }
+
+  // Default theme renderer if no custom homepage
   return (
     <StorefrontLayout>
       <ThemeRenderer />
