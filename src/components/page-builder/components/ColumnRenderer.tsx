@@ -7,6 +7,7 @@ import { ElementRenderer } from './ElementRenderer';
 import { ElementDropZone } from './ElementDropZone';
 import { isColumnHidden, getColumnResponsiveClasses } from '../utils/responsive';
 import { cn } from '@/lib/utils';
+import { renderColumnStyles, hasUserBackground, hasUserShadow } from '../utils/styleRenderer';
 
 interface ColumnRendererProps {
   column: PageBuilderColumn;
@@ -67,47 +68,18 @@ export const ColumnRenderer: React.FC<ColumnRendererProps> = ({
     onAddElement(sectionId, rowId, column.id, 'text');
   };
 
-  const getColumnStyles = () => {
-    const styles: React.CSSProperties = {
-      backgroundColor: column.styles?.backgroundColor || 'transparent',
-    };
-
-    // Custom width override
+  const getColumnStyles = (): React.CSSProperties => {
+    const baseStyles = renderColumnStyles(column);
+    
+    // Add any column-specific overrides
     if (column.customWidth) {
-      styles.width = column.customWidth;
-      styles.flexBasis = column.customWidth;
-      styles.flexGrow = 0;
-      styles.flexShrink = 0;
+      baseStyles.width = column.customWidth;
+      baseStyles.flexBasis = column.customWidth;
+      baseStyles.flexGrow = 0;
+      baseStyles.flexShrink = 0;
     }
     
-    if (column.styles?.maxWidth) styles.maxWidth = column.styles.maxWidth;
-    if (column.styles?.minWidth) styles.minWidth = column.styles.minWidth;
-
-    // Advanced spacing - use individual properties if available, otherwise fallback to combined
-    if (column.styles?.paddingTop || column.styles?.paddingRight || column.styles?.paddingBottom || column.styles?.paddingLeft) {
-      styles.paddingTop = column.styles.paddingTop || '0';
-      styles.paddingRight = column.styles.paddingRight || '0';
-      styles.paddingBottom = column.styles.paddingBottom || '0';
-      styles.paddingLeft = column.styles.paddingLeft || '0';
-    } else {
-      styles.padding = column.styles?.padding || '8px';
-    }
-
-    if (column.styles?.marginTop || column.styles?.marginRight || column.styles?.marginBottom || column.styles?.marginLeft) {
-      styles.marginTop = column.styles.marginTop || '0';
-      styles.marginRight = column.styles.marginRight || '0';
-      styles.marginBottom = column.styles.marginBottom || '0';
-      styles.marginLeft = column.styles.marginLeft || '0';
-    } else if (column.styles?.margin) {
-      styles.margin = column.styles.margin;
-    }
-
-    // Box shadow
-    if (column.styles?.boxShadow && column.styles.boxShadow !== 'none') {
-      styles.boxShadow = column.styles.boxShadow;
-    }
-
-    return styles;
+    return baseStyles;
   };
 
   // Check if column should be hidden on current device
@@ -115,8 +87,8 @@ export const ColumnRenderer: React.FC<ColumnRendererProps> = ({
     return null;
   }
 
-  const hasUserBackground = column.styles?.backgroundColor && column.styles.backgroundColor !== 'transparent';
-  const hasUserShadow = column.styles?.boxShadow && column.styles.boxShadow !== 'none';
+  const userBackground = hasUserBackground(column.styles);
+  const userShadow = hasUserShadow(column.styles);
 
   return (
     <div
@@ -124,15 +96,11 @@ export const ColumnRenderer: React.FC<ColumnRendererProps> = ({
       className={cn(
         'relative min-h-[60px] rounded border-2 border-dashed border-transparent transition-colors',
         isOver && 'border-primary/40',
-        isOver && !hasUserBackground && 'bg-primary/5',
+        isOver && !userBackground && 'bg-primary/5',
         !isPreviewMode && isHovered && 'border-muted-foreground/30',
         getColumnResponsiveClasses(column, deviceType)
       )}
-      style={{
-        ...getColumnStyles(),
-        backgroundColor: hasUserBackground ? `${column.styles?.backgroundColor} !important` : getColumnStyles().backgroundColor,
-        boxShadow: hasUserShadow ? `${column.styles?.boxShadow} !important` : getColumnStyles().boxShadow
-      }}
+      style={getColumnStyles()}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={handleColumnClick}

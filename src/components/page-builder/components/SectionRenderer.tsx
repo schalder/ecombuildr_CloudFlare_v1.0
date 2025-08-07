@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { PageBuilderSection, PageBuilderElement } from '../types';
 import { RowRenderer } from './RowRenderer';
 import { cn } from '@/lib/utils';
+import { renderSectionStyles, hasUserBackground, hasUserShadow } from '../utils/styleRenderer';
 
 interface SectionRendererProps {
   section: PageBuilderSection;
@@ -119,58 +120,12 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({
     }
   };
 
-  const getSectionStyles = () => {
-    const styles: React.CSSProperties = {
-      backgroundColor: section.styles?.backgroundColor || 'transparent',
-    };
-
-    // Custom width override
-    if (section.customWidth) {
-      styles.width = section.customWidth;
-      styles.maxWidth = section.styles?.maxWidth || 'none';
-      styles.minWidth = section.styles?.minWidth || 'auto';
-    } else if (section.styles?.maxWidth || section.styles?.minWidth) {
-      if (section.styles.maxWidth) styles.maxWidth = section.styles.maxWidth;
-      if (section.styles.minWidth) styles.minWidth = section.styles.minWidth;
-    }
-
-    // Advanced spacing - use individual properties if available, otherwise fallback to combined
-    if (section.styles?.paddingTop || section.styles?.paddingRight || section.styles?.paddingBottom || section.styles?.paddingLeft) {
-      styles.paddingTop = section.styles.paddingTop || '0';
-      styles.paddingRight = section.styles.paddingRight || '0';
-      styles.paddingBottom = section.styles.paddingBottom || '0';
-      styles.paddingLeft = section.styles.paddingLeft || '0';
-    } else if (section.styles?.padding) {
-      styles.padding = section.styles.padding;
-    }
-
-    if (section.styles?.marginTop || section.styles?.marginRight || section.styles?.marginBottom || section.styles?.marginLeft) {
-      styles.marginTop = section.styles.marginTop || '0';
-      styles.marginRight = section.styles.marginRight || '0';
-      styles.marginBottom = section.styles.marginBottom || '0';
-      styles.marginLeft = section.styles.marginLeft || '0';
-    } else if (section.styles?.margin) {
-      styles.margin = section.styles.margin;
-    }
-
-    // Background image
-    if (section.styles?.backgroundImage) {
-      styles.backgroundImage = `url(${section.styles.backgroundImage})`;
-      styles.backgroundSize = 'cover';
-      styles.backgroundPosition = 'center';
-      styles.backgroundRepeat = 'no-repeat';
-    }
-
-    // Box shadow
-    if (section.styles?.boxShadow && section.styles.boxShadow !== 'none') {
-      styles.boxShadow = section.styles.boxShadow;
-    }
-
-    return styles;
+  const getSectionStyles = (): React.CSSProperties => {
+    return renderSectionStyles(section);
   };
 
-  const hasUserBackground = section.styles?.backgroundColor && section.styles.backgroundColor !== 'transparent';
-  const hasUserShadow = section.styles?.boxShadow && section.styles.boxShadow !== 'none';
+  const userBackground = hasUserBackground(section.styles);
+  const userShadow = hasUserShadow(section.styles);
 
   return (
     <div
@@ -178,17 +133,13 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({
       className={cn(
         'relative group border-2 border-dashed transition-all duration-200',
         isSelected && !isPreviewMode && 'border-primary',
-        isSelected && !isPreviewMode && !hasUserBackground && 'bg-primary/5',
+        isSelected && !isPreviewMode && !userBackground && 'bg-primary/5',
         isHovered && !isPreviewMode && !isSelected && 'border-primary/30',
-        isHovered && !isPreviewMode && !isSelected && !hasUserBackground && 'bg-primary/2',
+        isHovered && !isPreviewMode && !isSelected && !userBackground && 'bg-primary/2',
         !isHovered && !isSelected && 'border-transparent',
-        isOver && !hasUserBackground && 'bg-primary/5'
+        isOver && !userBackground && 'bg-primary/5'
       )}
-      style={{
-        ...getSectionStyles(),
-        backgroundColor: hasUserBackground ? `${section.styles?.backgroundColor} !important` : getSectionStyles().backgroundColor,
-        boxShadow: hasUserShadow ? `${section.styles?.boxShadow} !important` : getSectionStyles().boxShadow
-      }}
+      style={getSectionStyles()}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={handleSectionClick}

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { PageBuilderRow, PageBuilderElement, COLUMN_LAYOUTS, RESPONSIVE_LAYOUTS } from '../types';
 import { ColumnRenderer } from './ColumnRenderer';
 import { cn } from '@/lib/utils';
+import { renderRowStyles, hasUserBackground, hasUserShadow } from '../utils/styleRenderer';
 
 interface RowRendererProps {
   row: PageBuilderRow;
@@ -145,48 +146,12 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
     return row.columns.length;
   };
 
-  const getRowStyles = () => {
-    const styles: React.CSSProperties = {
-      backgroundColor: row.styles?.backgroundColor || 'transparent',
-    };
-
-    // Custom width override
-    if (row.customWidth) {
-      styles.width = row.customWidth;
-    }
-    
-    if (row.styles?.maxWidth) styles.maxWidth = row.styles.maxWidth;
-    if (row.styles?.minWidth) styles.minWidth = row.styles.minWidth;
-
-    // Advanced spacing - use individual properties if available, otherwise fallback to combined
-    if (row.styles?.paddingTop || row.styles?.paddingRight || row.styles?.paddingBottom || row.styles?.paddingLeft) {
-      styles.paddingTop = row.styles.paddingTop || '0';
-      styles.paddingRight = row.styles.paddingRight || '0';
-      styles.paddingBottom = row.styles.paddingBottom || '0';
-      styles.paddingLeft = row.styles.paddingLeft || '0';
-    } else {
-      styles.padding = row.styles?.padding || '16px';
-    }
-
-    if (row.styles?.marginTop || row.styles?.marginRight || row.styles?.marginBottom || row.styles?.marginLeft) {
-      styles.marginTop = row.styles.marginTop || '0';
-      styles.marginRight = row.styles.marginRight || '0';
-      styles.marginBottom = row.styles.marginBottom || '0';
-      styles.marginLeft = row.styles.marginLeft || '0';
-    } else if (row.styles?.margin) {
-      styles.margin = row.styles.margin;
-    }
-
-    // Box shadow
-    if (row.styles?.boxShadow && row.styles.boxShadow !== 'none') {
-      styles.boxShadow = row.styles.boxShadow;
-    }
-
-    return styles;
+  const getRowStyles = (): React.CSSProperties => {
+    return renderRowStyles(row);
   };
 
-  const hasUserBackground = row.styles?.backgroundColor && row.styles.backgroundColor !== 'transparent';
-  const hasUserShadow = row.styles?.boxShadow && row.styles.boxShadow !== 'none';
+  const userBackground = hasUserBackground(row.styles);
+  const userShadow = hasUserShadow(row.styles);
 
   return (
     <div
@@ -194,16 +159,12 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
       className={cn(
         'relative group min-h-[80px] border border-dashed transition-all duration-200',
         isHovered && !isPreviewMode && 'border-secondary/50',
-        isHovered && !isPreviewMode && !hasUserBackground && 'bg-secondary/5',
+        isHovered && !isPreviewMode && !userBackground && 'bg-secondary/5',
         !isHovered && 'border-transparent',
         isOver && 'border-primary/20 rounded-lg',
-        isOver && !hasUserBackground && 'bg-primary/5'
+        isOver && !userBackground && 'bg-primary/5'
       )}
-      style={{
-        ...getRowStyles(),
-        backgroundColor: hasUserBackground ? `${row.styles?.backgroundColor} !important` : getRowStyles().backgroundColor,
-        boxShadow: hasUserShadow ? `${row.styles?.boxShadow} !important` : getRowStyles().boxShadow
-      }}
+      style={getRowStyles()}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={handleRowClick}
