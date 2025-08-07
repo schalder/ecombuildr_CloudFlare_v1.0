@@ -14,13 +14,13 @@ interface RowDropZoneProps {
 }
 
 const LAYOUT_OPTIONS = [
-  { key: '1', label: '1 Column', icon: '1', columns: COLUMN_LAYOUTS['1'] },
-  { key: '2', label: '2 Columns', icon: '2', columns: COLUMN_LAYOUTS['2'] },
-  { key: '3', label: '3 Columns', icon: '3', columns: COLUMN_LAYOUTS['3'] },
-  { key: '1-2', label: '1/3 - 2/3', icon: '⅓⅔', columns: COLUMN_LAYOUTS['1-2'] },
-  { key: '2-1', label: '2/3 - 1/3', icon: '⅔⅓', columns: COLUMN_LAYOUTS['2-1'] },
-  { key: '4', label: '4 Columns', icon: '4', columns: COLUMN_LAYOUTS['4'] }
-];
+  { key: '1', label: '1 Column', icon: '1', columns: COLUMN_LAYOUTS['1'] || [12] },
+  { key: '1-1', label: '2 Columns', icon: '2', columns: COLUMN_LAYOUTS['1-1'] || [6, 6] },
+  { key: '1-1-1', label: '3 Columns', icon: '3', columns: COLUMN_LAYOUTS['1-1-1'] || [4, 4, 4] },
+  { key: '1-2', label: '1/3 - 2/3', icon: '⅓⅔', columns: COLUMN_LAYOUTS['1-2'] || [4, 8] },
+  { key: '2-1', label: '2/3 - 1/3', icon: '⅔⅓', columns: COLUMN_LAYOUTS['2-1'] || [8, 4] },
+  { key: '1-1-1-1', label: '4 Columns', icon: '4', columns: COLUMN_LAYOUTS['1-1-1-1'] || [3, 3, 3, 3] }
+].filter(layout => layout.columns && layout.columns.length > 0);
 
 export const RowDropZone: React.FC<RowDropZoneProps> = ({
   sectionId,
