@@ -99,7 +99,7 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
     <div
       ref={drag}
       className={cn(
-        'relative group transition-all duration-200',
+        'relative group transition-all duration-200 w-full',
         isDragging && 'opacity-50',
         isSelected && !isPreviewMode && 'ring-2 ring-primary ring-opacity-50 rounded',
         element.styles?.margin,
