@@ -18,6 +18,8 @@ export const ButtonElementStyles: React.FC<ButtonElementStylesProps> = ({
   element,
   onStyleUpdate,
 }) => {
+  console.log('🔧 ButtonElementStyles component loaded for element:', element.type, element.id);
+  console.log('🔧 Element styles:', element.styles);
   const [responsiveTab, setResponsiveTab] = useState<'desktop' | 'mobile'>('desktop');
 
   // Get responsive styles
