@@ -224,37 +224,67 @@ export const ContentProperties: React.FC<ContentPropertiesProps> = ({
 
   // List element content
   if (element.type === 'list') {
-    const items = element.content.items || [];
-    
+    const rawItems = element.content.items || [];
+
+    const setStyle = (value: 'bullets' | 'numbers' | 'icons') => {
+      onUpdate('style', value);
+      if (value === 'numbers') onUpdate('ordered', true);
+      if (value !== 'numbers') onUpdate('ordered', false);
+    };
+
     const addItem = () => {
-      const newItems = [...items, `List item ${items.length + 1}`];
+      const newItems = [...rawItems, `List item ${rawItems.length + 1}`];
       onUpdate('items', newItems);
     };
 
     const removeItem = (index: number) => {
-      const newItems = items.filter((_: any, i: number) => i !== index);
+      const newItems = rawItems.filter((_: any, i: number) => i !== index);
       onUpdate('items', newItems);
     };
 
-    const updateItem = (index: number, value: string) => {
-      const newItems = [...items];
-      newItems[index] = value;
+    const updateItemText = (index: number, value: string) => {
+      const newItems = [...rawItems];
+      if (typeof newItems[index] === 'string') newItems[index] = value;
+      else newItems[index] = { ...(newItems[index] || {}), text: value };
       onUpdate('items', newItems);
     };
+
+    const updateItemIcon = (index: number, icon: string) => {
+      const newItems = [...rawItems];
+      if (typeof newItems[index] === 'string') newItems[index] = { text: newItems[index], icon };
+      else newItems[index] = { ...(newItems[index] || {}), icon };
+      onUpdate('items', newItems);
+    };
+
+    const style = element.content.style || (element.content.ordered ? 'numbers' : 'bullets');
 
     return (
       <div className="space-y-4">
+        <div>
+          <Label htmlFor="list-style">List Style</Label>
+          <Select value={style} onValueChange={(v) => setStyle(v as any)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="bullets">Bullets</SelectItem>
+              <SelectItem value="numbers">Numbers</SelectItem>
+              <SelectItem value="icons">Icons</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
         <div className="flex items-center space-x-2">
           <input
             type="checkbox"
             id="list-ordered"
-            checked={element.content.ordered || false}
-            onChange={(e) => onUpdate('ordered', e.target.checked)}
+            checked={(style === 'numbers') || (element.content.ordered || false)}
+            onChange={(e) => setStyle(e.target.checked ? 'numbers' : 'bullets')}
           />
-          <Label htmlFor="list-ordered" className="text-sm">Numbered list</Label>
+          <Label htmlFor="list-ordered" className="text-sm">Numbered list (legacy)</Label>
         </div>
         
-        <div className="space-y-3">
+        <div>
           <div className="flex items-center justify-between">
             <Label className="text-sm">List Items</Label>
             <Button size="sm" onClick={addItem} className="h-7">
@@ -262,28 +292,164 @@ export const ContentProperties: React.FC<ContentPropertiesProps> = ({
               Add Item
             </Button>
           </div>
-          
-          {items.map((item: string, index: number) => (
-            <div key={index} className="flex items-center space-x-2">
-              <Input
-                value={item}
-                onChange={(e) => updateItem(index, e.target.value)}
-                placeholder={`Item ${index + 1}`}
-              />
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => removeItem(index)}
-                className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-              >
-                <Trash2 className="h-3 w-3" />
-              </Button>
+
+          <div className="space-y-2 mt-2">
+            {rawItems.map((item: any, index: number) => (
+              <div key={index} className="flex items-center gap-2">
+                <Input
+                  value={typeof item === 'string' ? item : (item.text || '')}
+                  onChange={(e) => updateItemText(index, e.target.value)}
+                  placeholder={`Item ${index + 1}`}
+                />
+                {style === 'icons' && (
+                  <div className="flex items-center gap-2">
+                    <Input
+                      className="w-32"
+                      value={typeof item === 'object' ? (item.icon || '') : ''}
+                      onChange={(e) => updateItemIcon(index, e.target.value)}
+                      placeholder="fa icon"
+                    />
+                    <div className="w-8 text-center">
+                      <i className={`fa-solid fa-${typeof item === 'object' ? (item.icon || 'check') : 'check'}`}></i>
+                    </div>
+                  </div>
+                )}
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => removeItem(index)}
+                  className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                >
+                  <Trash2 className="h-3 w-3" />
+                </Button>
+              </div>
+            ))}
+
+            {rawItems.length === 0 && (
+              <div className="text-center text-muted-foreground text-sm py-4">
+                No items. Click "Add Item" to get started.
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Navigation Menu element content
+  if (element.type === 'navigation-menu') {
+    type MenuItem = { id: string; label: string; type?: 'url' | 'page'; url?: string; pagePath?: string; children?: MenuItem[] };
+    const items: MenuItem[] = element.content.items || [];
+
+    const addRootItem = () => {
+      const next: MenuItem[] = [...items, { id: `mi-${Date.now()}`, label: 'Menu Item', type: 'url', url: '#', children: [] }];
+      onUpdate('items', next);
+    };
+
+    const updateRootItem = (idx: number, updates: Partial<MenuItem>) => {
+      const next = [...items];
+      next[idx] = { ...next[idx], ...updates };
+      onUpdate('items', next);
+    };
+
+    const removeRootItem = (idx: number) => {
+      const next = items.filter((_, i) => i !== idx);
+      onUpdate('items', next);
+    };
+
+    const addChild = (idx: number) => {
+      const next = [...items];
+      const children = next[idx].children || [];
+      next[idx] = { ...next[idx], children: [...children, { id: `mi-${Date.now()}`, label: 'Sub Item', type: 'url', url: '#', children: [] }] };
+      onUpdate('items', next);
+    };
+
+    const updateChild = (parentIdx: number, childIdx: number, updates: Partial<MenuItem>) => {
+      const next = [...items];
+      const children = next[parentIdx].children || [];
+      children[childIdx] = { ...children[childIdx], ...updates };
+      next[parentIdx] = { ...next[parentIdx], children: [...children] };
+      onUpdate('items', next);
+    };
+
+    const removeChild = (parentIdx: number, childIdx: number) => {
+      const next = [...items];
+      const children = (next[parentIdx].children || []).filter((_, i) => i !== childIdx);
+      next[parentIdx] = { ...next[parentIdx], children };
+      onUpdate('items', next);
+    };
+
+    return (
+      <div className="space-y-4">
+        <div>
+          <Label>Logo</Label>
+          <ImageUpload value={element.content.logoUrl || ''} onChange={(url) => onUpdate('logoUrl', url)} />
+        </div>
+
+        <div className="flex items-center justify-between">
+          <div>
+            <Label className="text-sm">Menu Items</Label>
+            <p className="text-xs text-muted-foreground">Add items and optional sub items (one level)</p>
+          </div>
+          <Button size="sm" onClick={addRootItem} className="h-7">
+            <Plus className="h-3 w-3 mr-1" />
+            Add Item
+          </Button>
+        </div>
+
+        <div className="space-y-3">
+          {items.map((item, idx) => (
+            <div key={item.id} className="border rounded-md p-3 space-y-2">
+              <div className="grid grid-cols-2 gap-2">
+                <Input value={item.label} onChange={(e) => updateRootItem(idx, { label: e.target.value })} placeholder="Label" />
+                <Select value={item.type || 'url'} onValueChange={(v) => updateRootItem(idx, { type: v as any })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="url">Custom URL</SelectItem>
+                    <SelectItem value="page">Page path</SelectItem>
+                  </SelectContent>
+                </Select>
+                { (item.type || 'url') === 'url' ? (
+                  <Input className="col-span-2" value={item.url || ''} onChange={(e) => updateRootItem(idx, { url: e.target.value })} placeholder="https:// or /path" />
+                ) : (
+                  <Input className="col-span-2" value={item.pagePath || ''} onChange={(e) => updateRootItem(idx, { pagePath: e.target.value })} placeholder="/page-slug" />
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <Button size="sm" variant="outline" onClick={() => addChild(idx)}>Add Subitem</Button>
+                <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => removeRootItem(idx)}>Delete</Button>
+              </div>
+
+              {item.children && item.children.length > 0 && (
+                <div className="mt-2 pl-3 border-l space-y-2">
+                  {item.children.map((child, cIdx) => (
+                    <div key={child.id} className="grid grid-cols-2 gap-2 items-center">
+                      <Input value={child.label} onChange={(e) => updateChild(idx, cIdx, { label: e.target.value })} placeholder="Sub label" />
+                      <Select value={child.type || 'url'} onValueChange={(v) => updateChild(idx, cIdx, { type: v as any })}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="url">Custom URL</SelectItem>
+                          <SelectItem value="page">Page path</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      { (child.type || 'url') === 'url' ? (
+                        <Input className="col-span-2" value={child.url || ''} onChange={(e) => updateChild(idx, cIdx, { url: e.target.value })} placeholder="https:// or /path" />
+                      ) : (
+                        <Input className="col-span-2" value={child.pagePath || ''} onChange={(e) => updateChild(idx, cIdx, { pagePath: e.target.value })} placeholder="/page-slug" />
+                      )}
+                      <div className="col-span-2 flex items-center justify-end">
+                        <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => removeChild(idx, cIdx)}>Remove</Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           ))}
-          
+
           {items.length === 0 && (
             <div className="text-center text-muted-foreground text-sm py-4">
-              No items. Click "Add Item" to get started.
+              No menu items yet. Click "Add Item" to create one.
             </div>
           )}
         </div>

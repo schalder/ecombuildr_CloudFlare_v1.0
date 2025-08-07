@@ -247,17 +247,45 @@ const ListElement: React.FC<{
   deviceType?: 'desktop' | 'tablet' | 'mobile';
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
 }> = ({ element, isEditing, onUpdate }) => {
-  const items = element.content.items || ['List item 1', 'List item 2', 'List item 3'];
-  const isOrdered = element.content.ordered || false;
+  const rawItems = element.content.items || ['List item 1', 'List item 2', 'List item 3'];
+  const style: 'bullets' | 'numbers' | 'icons' = element.content.style || (element.content.ordered ? 'numbers' : 'bullets');
+  const defaultIcon: string = element.content.defaultIcon || 'check';
 
-  const ListTag = isOrdered ? 'ol' : 'ul';
+  type Item = string | { text: string; icon?: string };
+  const items: { text: string; icon?: string }[] = (rawItems as Item[]).map((it) =>
+    typeof it === 'string' ? { text: it, icon: defaultIcon } : { text: it.text, icon: it.icon || defaultIcon }
+  );
 
+  if (style === 'numbers') {
+    return (
+      <ol className="list-decimal list-inside">
+        {items.map((item, index) => (
+          <li key={index} className="mb-1">{item.text}</li>
+        ))}
+      </ol>
+    );
+  }
+
+  if (style === 'icons') {
+    return (
+      <ul className="list-none pl-0">
+        {items.map((item, index) => (
+          <li key={index} className="mb-1 flex items-start">
+            <i className={`fa-solid fa-${item.icon} mr-2 mt-1`} aria-hidden="true"></i>
+            <span>{item.text}</span>
+          </li>
+        ))}
+      </ul>
+    );
+  }
+
+  // Default bullets
   return (
-    <ListTag className={isOrdered ? 'list-decimal list-inside' : 'list-disc list-inside'}>
-      {items.map((item: string, index: number) => (
-        <li key={index} className="mb-1">{item}</li>
+    <ul className="list-disc list-inside">
+      {items.map((item, index) => (
+        <li key={index} className="mb-1">{item.text}</li>
       ))}
-    </ListTag>
+    </ul>
   );
 };
 
@@ -772,8 +800,10 @@ export const registerBasicElements = () => {
     component: ListElement,
     defaultContent: { 
       items: ['List item 1', 'List item 2', 'List item 3'], 
-      ordered: false 
+      ordered: false,
+      style: 'bullets',
+      defaultIcon: 'check'
     },
-    description: 'Bullet or numbered lists'
+    description: 'Bullet, numbered, or icon lists'
   });
 };
