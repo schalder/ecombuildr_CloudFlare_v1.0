@@ -21,6 +21,16 @@ export interface PageBuilderElement {
     marginRight?: string;
     marginBottom?: string;
     marginLeft?: string;
+    width?: string;
+    height?: string;
+    maxWidth?: string;
+    minWidth?: string;
+    borderWidth?: string;
+    borderColor?: string;
+    borderRadius?: string;
+    borderStyle?: string;
+    opacity?: string;
+    objectFit?: 'cover' | 'contain' | 'fill' | 'none' | 'scale-down';
   };
 }
 

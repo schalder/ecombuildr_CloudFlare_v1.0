@@ -44,6 +44,12 @@ import {
   CustomHTMLProperties, 
   SocialShareProperties 
 } from './AdvancedProperties';
+import {
+  TextElementStyles,
+  MediaElementStyles, 
+  LayoutElementStyles,
+  FormElementStyles
+} from './ElementStyles';
 
 import { PageBuilderElement } from '../types';
 
@@ -83,6 +89,32 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
         [property]: value
       }
     });
+  };
+
+  // Determine which style component to render based on element type
+  const renderElementStyles = () => {
+    // Text-based elements (heading, text, button)
+    if (['heading', 'text', 'button'].includes(selectedElement.type)) {
+      return <TextElementStyles element={selectedElement} onStyleUpdate={handleStyleUpdate} />;
+    }
+    
+    // Media elements (image, video)
+    if (['image', 'video'].includes(selectedElement.type)) {
+      return <MediaElementStyles element={selectedElement} onStyleUpdate={handleStyleUpdate} />;
+    }
+    
+    // Layout elements (spacer, divider)
+    if (['spacer', 'divider'].includes(selectedElement.type)) {
+      return <LayoutElementStyles element={selectedElement} onStyleUpdate={handleStyleUpdate} />;
+    }
+    
+    // Form elements
+    if (['contact-form', 'newsletter'].includes(selectedElement.type)) {
+      return <FormElementStyles element={selectedElement} onStyleUpdate={handleStyleUpdate} />;
+    }
+    
+    // Default fallback for any other element types (ecommerce, content, media, advanced)
+    return <TextElementStyles element={selectedElement} onStyleUpdate={handleStyleUpdate} />;
   };
 
   return (
@@ -470,123 +502,8 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
           </TabsContent>
 
           <TabsContent value="style" className="space-y-4 mt-4">
-            {/* Typography */}
-            <div className="space-y-3">
-              <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Typography</h4>
-              
-              <div>
-                <Label className="text-xs">Font Size</Label>
-                <div className="flex items-center space-x-2">
-                  <Slider
-                    value={[parseInt(selectedElement.styles?.fontSize?.replace(/\D/g, '') || '16')]}
-                    onValueChange={(value) => handleStyleUpdate('fontSize', `${value[0]}px`)}
-                    max={72}
-                    min={8}
-                    step={1}
-                    className="flex-1"
-                  />
-                  <span className="text-xs text-muted-foreground w-12">
-                    {selectedElement.styles?.fontSize || '16px'}
-                  </span>
-                </div>
-              </div>
-
-              <div>
-                <Label className="text-xs">Text Align</Label>
-                <div className="flex space-x-1">
-                  <Button
-                    size="sm"
-                    variant={selectedElement.styles?.textAlign === 'left' ? 'default' : 'outline'}
-                    onClick={() => handleStyleUpdate('textAlign', 'left')}
-                  >
-                    <AlignLeft className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant={selectedElement.styles?.textAlign === 'center' ? 'default' : 'outline'}
-                    onClick={() => handleStyleUpdate('textAlign', 'center')}
-                  >
-                    <AlignCenter className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant={selectedElement.styles?.textAlign === 'right' ? 'default' : 'outline'}
-                    onClick={() => handleStyleUpdate('textAlign', 'right')}
-                  >
-                    <AlignRight className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-
-              <div>
-                <Label className="text-xs">Line Height</Label>
-                <div className="flex items-center space-x-2">
-                  <Slider
-                    value={[parseFloat(selectedElement.styles?.lineHeight?.toString() || '1.6')]}
-                    onValueChange={(value) => handleStyleUpdate('lineHeight', value[0].toString())}
-                    max={3}
-                    min={1}
-                    step={0.1}
-                    className="flex-1"
-                  />
-                  <span className="text-xs text-muted-foreground w-12">
-                    {selectedElement.styles?.lineHeight || '1.6'}
-                  </span>
-                </div>
-              </div>
-
-              <div>
-                <Label className="text-xs">Text Color</Label>
-                <Input
-                  type="color"
-                  value={selectedElement.styles?.color || '#000000'}
-                  onChange={(e) => handleStyleUpdate('color', e.target.value)}
-                  className="w-full h-10"
-                />
-              </div>
-            </div>
-
-            <Separator />
-
-            {/* Background */}
-            <div className="space-y-3">
-              <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Background</h4>
-              
-              <div>
-                <Label className="text-xs">Background Color</Label>
-                <Input
-                  type="color"
-                  value={selectedElement.styles?.backgroundColor || '#ffffff'}
-                  onChange={(e) => handleStyleUpdate('backgroundColor', e.target.value)}
-                  className="w-full h-10"
-                />
-              </div>
-            </div>
-
-            <Separator />
-
-            {/* Spacing */}
-            <div className="space-y-3">
-              <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Spacing</h4>
-              
-              <div>
-                <Label className="text-xs">Margin</Label>
-                <Input
-                  value={selectedElement.styles?.margin || ''}
-                  onChange={(e) => handleStyleUpdate('margin', e.target.value)}
-                  placeholder="e.g., 10px 20px"
-                />
-              </div>
-
-              <div>
-                <Label className="text-xs">Padding</Label>
-                <Input
-                  value={selectedElement.styles?.padding || ''}
-                  onChange={(e) => handleStyleUpdate('padding', e.target.value)}
-                  placeholder="e.g., 10px 20px"
-                />
-              </div>
-            </div>
+            {/* Render element-specific styles based on element type */}
+            {renderElementStyles()}
           </TabsContent>
 
           <TabsContent value="advanced" className="space-y-4 mt-4">
