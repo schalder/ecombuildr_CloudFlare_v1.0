@@ -214,21 +214,46 @@ const FeaturedProductsElement: React.FC<{
     );
   }
 
-  const layoutClass = layout === 'vertical' 
-    ? 'flex flex-col gap-6' 
-    : layout === 'hero'
+  // Mobile/tablet responsive layout logic
+  const isMobileOrTablet = deviceType === 'mobile' || deviceType === 'tablet';
+  const isVerticalLayout = layout === 'vertical' || isMobileOrTablet;
+  
+  const containerClass = deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-4xl mx-auto';
+  const layoutClass = layout === 'hero'
     ? 'grid lg:grid-cols-2 gap-8 items-center min-h-[400px]'
-    : deviceType === 'tablet' && columnCount === 1 
+    : isVerticalLayout
     ? 'flex flex-col gap-6'
     : 'grid md:grid-cols-2 gap-6 items-center';
 
+  // Responsive image sizing
+  const imageClass = isMobileOrTablet 
+    ? 'w-full h-48 sm:h-56 object-cover rounded-lg'
+    : 'w-full h-64 md:h-80 object-cover rounded-lg';
+
   return (
-    <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-4xl mx-auto'}`}>
+    <div className={containerClass}>
       <div className="bg-gradient-to-r from-primary/10 to-secondary/10 rounded-lg p-6">
         <div className={layoutClass}>
-          <div className={layout === 'vertical' ? 'order-2' : ''}>
+          {/* Header section - Badge and Title */}
+          <div className={`${isVerticalLayout ? '' : 'order-1'}`}>
             <Badge className="mb-3">{badgeText}</Badge>
-            <h2 className="text-2xl font-bold mb-2">{product.name}</h2>
+            <h2 className="text-2xl font-bold mb-4">{product.name}</h2>
+            
+            {/* Image section - appears right after title on mobile/tablet */}
+            {isMobileOrTablet && (
+              <div className="relative mb-4">
+                <img
+                  src={(Array.isArray(product.images) ? product.images[0] : product.images) || '/placeholder.svg'}
+                  alt={product.name}
+                  className={imageClass}
+                />
+                <Badge className="absolute top-4 right-4" variant="secondary">
+                  ⭐ 4.8
+                </Badge>
+              </div>
+            )}
+            
+            {/* Content section - Description, Price, Button */}
             <p className="text-muted-foreground mb-4">
               {product.short_description || product.description}
             </p>
@@ -253,16 +278,19 @@ const FeaturedProductsElement: React.FC<{
             </Button>
           </div>
           
-          <div className={`relative ${layout === 'vertical' ? 'order-1' : ''}`}>
-            <img
-              src={(Array.isArray(product.images) ? product.images[0] : product.images) || '/placeholder.svg'}
-              alt={product.name}
-              className="w-full h-64 md:h-80 object-cover rounded-lg"
-            />
-            <Badge className="absolute top-4 right-4" variant="secondary">
-              ⭐ 4.8
-            </Badge>
-          </div>
+          {/* Image section - for desktop only */}
+          {!isMobileOrTablet && (
+            <div className={`relative ${layout === 'vertical' ? 'order-1' : 'order-2'}`}>
+              <img
+                src={(Array.isArray(product.images) ? product.images[0] : product.images) || '/placeholder.svg'}
+                alt={product.name}
+                className={imageClass}
+              />
+              <Badge className="absolute top-4 right-4" variant="secondary">
+                ⭐ 4.8
+              </Badge>
+            </div>
+          )}
         </div>
       </div>
     </div>
