@@ -161,6 +161,11 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({
       styles.backgroundRepeat = 'no-repeat';
     }
 
+    // Box shadow
+    if (section.styles?.boxShadow && section.styles.boxShadow !== 'none') {
+      styles.boxShadow = section.styles.boxShadow;
+    }
+
     return styles;
   };
 

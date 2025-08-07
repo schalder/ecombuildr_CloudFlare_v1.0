@@ -24,6 +24,8 @@ export interface PageBuilderColumn {
     padding?: string;
     margin?: string;
     backgroundColor?: string;
+    backgroundImage?: string;
+    boxShadow?: string;
     paddingTop?: string;
     paddingRight?: string;
     paddingBottom?: string;
@@ -64,6 +66,8 @@ export interface PageBuilderRow {
     padding?: string;
     margin?: string;
     backgroundColor?: string;
+    backgroundImage?: string;
+    boxShadow?: string;
     paddingTop?: string;
     paddingRight?: string;
     paddingBottom?: string;
@@ -104,6 +108,7 @@ export interface PageBuilderSection {
     margin?: string;
     backgroundColor?: string;
     backgroundImage?: string;
+    boxShadow?: string;
     paddingTop?: string;
     paddingRight?: string;
     paddingBottom?: string;

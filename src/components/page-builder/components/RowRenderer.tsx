@@ -177,6 +177,11 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
       styles.margin = row.styles.margin;
     }
 
+    // Box shadow
+    if (row.styles?.boxShadow && row.styles.boxShadow !== 'none') {
+      styles.boxShadow = row.styles.boxShadow;
+    }
+
     return styles;
   };
 

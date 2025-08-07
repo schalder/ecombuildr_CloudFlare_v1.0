@@ -102,6 +102,11 @@ export const ColumnRenderer: React.FC<ColumnRendererProps> = ({
       styles.margin = column.styles.margin;
     }
 
+    // Box shadow
+    if (column.styles?.boxShadow && column.styles.boxShadow !== 'none') {
+      styles.boxShadow = column.styles.boxShadow;
+    }
+
     return styles;
   };
 

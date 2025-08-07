@@ -9,6 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ColorPicker } from '@/components/ui/color-picker';
+import { BoxShadowPicker } from '@/components/ui/box-shadow-picker';
 import { Switch } from '@/components/ui/switch';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -112,24 +113,11 @@ export const SectionSettings: React.FC<SectionSettingsProps> = ({ section, onUpd
           <CardTitle className="text-sm">Background</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label>Background Color</Label>
-            <div className="flex items-center space-x-2">
-              <Input
-                type="color"
-                value={section.styles?.backgroundColor || '#ffffff'}
-                onChange={(e) => handleStyleUpdate('backgroundColor', e.target.value)}
-                className="w-16 h-8 rounded border"
-              />
-              <Input
-                type="text"
-                value={section.styles?.backgroundColor || 'transparent'}
-                onChange={(e) => handleStyleUpdate('backgroundColor', e.target.value)}
-                placeholder="transparent or #ffffff"
-                className="flex-1"
-              />
-            </div>
-          </div>
+          <ColorPicker
+            color={section.styles?.backgroundColor || 'transparent'}
+            onChange={(color) => handleStyleUpdate('backgroundColor', color)}
+            label="Background Color"
+          />
           
           <div className="space-y-2">
             <Label htmlFor="bg-image">Background Image URL</Label>
@@ -140,6 +128,12 @@ export const SectionSettings: React.FC<SectionSettingsProps> = ({ section, onUpd
               placeholder="https://example.com/image.jpg"
             />
           </div>
+          
+          <BoxShadowPicker
+            value={section.styles?.boxShadow || 'none'}
+            onChange={(shadow) => handleStyleUpdate('boxShadow', shadow)}
+            label="Box Shadow"
+          />
         </CardContent>
       </Card>
 
@@ -392,24 +386,17 @@ export const RowSettings: React.FC<RowSettingsProps> = ({ row, onUpdate }) => {
           <CardTitle className="text-sm">Background</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label>Background Color</Label>
-            <div className="flex items-center space-x-2">
-              <Input
-                type="color"
-                value={row.styles?.backgroundColor || '#ffffff'}
-                onChange={(e) => handleStyleUpdate('backgroundColor', e.target.value)}
-                className="w-16 h-8 rounded border"
-              />
-              <Input
-                type="text"
-                value={row.styles?.backgroundColor || 'transparent'}
-                onChange={(e) => handleStyleUpdate('backgroundColor', e.target.value)}
-                placeholder="transparent or #ffffff"
-                className="flex-1"
-              />
-            </div>
-          </div>
+          <ColorPicker
+            color={row.styles?.backgroundColor || 'transparent'}
+            onChange={(color) => handleStyleUpdate('backgroundColor', color)}
+            label="Background Color"
+          />
+          
+          <BoxShadowPicker
+            value={row.styles?.boxShadow || 'none'}
+            onChange={(shadow) => handleStyleUpdate('boxShadow', shadow)}
+            label="Box Shadow"
+          />
         </CardContent>
       </Card>
 
@@ -638,24 +625,17 @@ export const ColumnSettings: React.FC<ColumnSettingsProps> = ({ column, onUpdate
           <CardTitle className="text-sm">Background</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label>Background Color</Label>
-            <div className="flex items-center space-x-2">
-              <Input
-                type="color"
-                value={column.styles?.backgroundColor || '#ffffff'}
-                onChange={(e) => handleStyleUpdate('backgroundColor', e.target.value)}
-                className="w-16 h-8 rounded border"
-              />
-              <Input
-                type="text"
-                value={column.styles?.backgroundColor || 'transparent'}
-                onChange={(e) => handleStyleUpdate('backgroundColor', e.target.value)}
-                placeholder="transparent or #ffffff"
-                className="flex-1"
-              />
-            </div>
-          </div>
+          <ColorPicker
+            color={column.styles?.backgroundColor || 'transparent'}
+            onChange={(color) => handleStyleUpdate('backgroundColor', color)}
+            label="Background Color"
+          />
+          
+          <BoxShadowPicker
+            value={column.styles?.boxShadow || 'none'}
+            onChange={(shadow) => handleStyleUpdate('boxShadow', shadow)}
+            label="Box Shadow"
+          />
         </CardContent>
       </Card>
 
