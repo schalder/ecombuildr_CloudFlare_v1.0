@@ -249,6 +249,89 @@ export const usePageBuilderState = (initialData?: PageBuilderData) => {
     }
   }, [pageData, selectedElement, recordHistory]);
 
+  const moveRow = useCallback((rowId: string, targetSectionId: string, insertIndex: number) => {
+    console.log('Moving row:', { rowId, targetSectionId, insertIndex });
+    
+    // Find and remove the row from its current location
+    let rowToMove: PageBuilderRow | null = null;
+    let sourceSectionId: string | null = null;
+    
+    const newSections = pageData.sections.map(section => {
+      const updatedRows = section.rows.filter(row => {
+        if (row.id === rowId) {
+          rowToMove = row;
+          sourceSectionId = section.id;
+          return false;
+        }
+        return true;
+      });
+      
+      return {
+        ...section,
+        rows: updatedRows
+      };
+    });
+
+    if (!rowToMove || !sourceSectionId) {
+      console.error('Row not found:', rowId);
+      return;
+    }
+
+    // Add the row to its new location
+    const finalSections = newSections.map(section => {
+      if (section.id === targetSectionId) {
+        const rows = [...section.rows];
+        rows.splice(insertIndex, 0, rowToMove!);
+        
+        console.log(`Moved row to section ${targetSectionId} at index ${insertIndex}`);
+        return {
+          ...section,
+          rows
+        };
+      }
+      return section;
+    });
+
+    const newData: PageBuilderData = {
+      ...pageData,
+      sections: finalSections
+    };
+
+    recordHistory(newData);
+  }, [pageData, recordHistory]);
+
+  const moveSection = useCallback((sectionId: string, insertIndex: number) => {
+    console.log('Moving section:', { sectionId, insertIndex });
+    
+    // Find and remove the section from its current location
+    let sectionToMove: PageBuilderSection | null = null;
+    const currentIndex = pageData.sections.findIndex(section => section.id === sectionId);
+    
+    if (currentIndex === -1) {
+      console.error('Section not found:', sectionId);
+      return;
+    }
+    
+    sectionToMove = pageData.sections[currentIndex];
+    const sectionsWithoutMoved = pageData.sections.filter(section => section.id !== sectionId);
+    
+    // Adjust insert index if moving within the same array
+    const finalInsertIndex = currentIndex < insertIndex ? insertIndex - 1 : insertIndex;
+    
+    // Insert at new position
+    const finalSections = [...sectionsWithoutMoved];
+    finalSections.splice(finalInsertIndex, 0, sectionToMove);
+    
+    console.log(`Moved section ${sectionId} from index ${currentIndex} to ${finalInsertIndex}`);
+
+    const newData: PageBuilderData = {
+      ...pageData,
+      sections: finalSections
+    };
+
+    recordHistory(newData);
+  }, [pageData, recordHistory]);
+
   const updatePageData = useCallback((newData: PageBuilderData) => {
     recordHistory(newData);
   }, [recordHistory]);
@@ -271,6 +354,8 @@ export const usePageBuilderState = (initialData?: PageBuilderData) => {
     updateElement,
     addElement,
     moveElement,
+    moveRow,
+    moveSection,
     removeElement,
     setDeviceType,
     setPreviewMode,

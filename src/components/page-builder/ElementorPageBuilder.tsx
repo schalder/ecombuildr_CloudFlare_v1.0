@@ -60,6 +60,8 @@ import {
 } from './types';
 import { elementRegistry } from './elements';
 import { renderSectionStyles, renderRowStyles, renderColumnStyles, hasUserBackground, hasUserShadow } from './utils/styleRenderer';
+import { SectionDropZone } from './components/SectionDropZone';
+import { RowDropZone } from './components/RowDropZone';
 
 // Helper function to get responsive grid classes for a row
 const getResponsiveGridClasses = (columnLayout: string, deviceType: 'desktop' | 'tablet' | 'mobile'): string => {
@@ -330,6 +332,35 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = ({
     });
     if (selection?.id === rowId) setSelection(null);
   }, [data, updateData, selection]);
+
+  const moveRow = useCallback((rowId: string, targetSectionId: string, insertIndex: number) => {
+    console.log('Moving row:', { rowId, targetSectionId, insertIndex });
+    
+    const newData = { ...data };
+    let rowToMove: PageBuilderRow | null = null;
+    
+    // Find and remove the row from its current location
+    newData.sections.forEach(section => {
+      const rowIndex = section.rows?.findIndex(row => row.id === rowId) ?? -1;
+      if (rowIndex !== -1) {
+        rowToMove = section.rows![rowIndex];
+        section.rows!.splice(rowIndex, 1);
+      }
+    });
+
+    if (!rowToMove) {
+      console.error('Row not found:', rowId);
+      return;
+    }
+
+    // Add the row to its new location
+    const targetSection = newData.sections.find(section => section.id === targetSectionId);
+    if (targetSection) {
+      if (!targetSection.rows) targetSection.rows = [];
+      targetSection.rows.splice(insertIndex, 0, rowToMove);
+      updateData(newData);
+    }
+  }, [data, updateData]);
 
   // Element operations
   const addElement = useCallback((sectionId: string, rowId: string, columnId: string, elementType: string, insertIndex?: number) => {
@@ -691,25 +722,26 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = ({
               ) : (
                 <div className="space-y-4">
                   {data.sections.map((section, sectionIndex) => (
-                    <SectionComponent
-                      key={section.id}
-                      section={section}
-                      sectionIndex={sectionIndex}
-                      deviceType={deviceType}
-                      isSelected={selection?.type === 'section' && selection.id === section.id}
-                      onSelect={() => setSelection({ type: 'section', id: section.id })}
-                      onDelete={() => deleteSection(section.id)}
-                      onDuplicate={() => duplicateSection(section.id)}
-                      onAddRow={(insertIndex?: number) => setShowColumnModal({ sectionId: section.id, insertIndex })}
-                      onDeleteRow={(rowId) => deleteRow(section.id, rowId)}
-                      onAddElement={addElement}
-                      onUpdateElement={updateElement}
-                      onDeleteElement={deleteElement}
-                      onDuplicateElement={duplicateElement}
-                      selection={selection}
-                      onSelectionChange={setSelection}
-                      onAddSectionAfter={() => addSectionAfter(sectionIndex)}
-                    />
+                  <SectionComponent
+                    key={section.id}
+                    section={section}
+                    sectionIndex={sectionIndex}
+                    deviceType={deviceType}
+                    isSelected={selection?.type === 'section' && selection.id === section.id}
+                    onSelect={() => setSelection({ type: 'section', id: section.id })}
+                    onDelete={() => deleteSection(section.id)}
+                    onDuplicate={() => duplicateSection(section.id)}
+                    onAddRow={(insertIndex?: number) => setShowColumnModal({ sectionId: section.id, insertIndex })}
+                    onDeleteRow={(rowId) => deleteRow(section.id, rowId)}
+                    onMoveRow={moveRow}
+                    onAddElement={addElement}
+                    onUpdateElement={updateElement}
+                    onDeleteElement={deleteElement}
+                    onDuplicateElement={duplicateElement}
+                    selection={selection}
+                    onSelectionChange={setSelection}
+                    onAddSectionAfter={() => addSectionAfter(sectionIndex)}
+                  />
                   ))}
                   
                   {/* Add Section button at end */}
@@ -873,6 +905,7 @@ interface SectionComponentProps {
   onDuplicate: () => void;
   onAddRow: (insertIndex?: number) => void;
   onDeleteRow: (rowId: string) => void;
+  onMoveRow: (rowId: string, targetSectionId: string, insertIndex: number) => void;
   onAddElement: (sectionId: string, rowId: string, columnId: string, elementType: string, insertIndex?: number) => void;
   onUpdateElement: (elementId: string, updates: Partial<PageBuilderElement>) => void;
   onDeleteElement: (elementId: string) => void;
@@ -891,6 +924,7 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
   onDuplicate,
   onAddRow,
   onDeleteRow,
+  onMoveRow,
   onAddElement,
   onUpdateElement,
   onDeleteElement,
@@ -903,8 +937,18 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
   const userBackground = hasUserBackground(section.styles);
   const userShadow = hasUserShadow(section.styles);
 
+  // Section drag functionality
+  const [{ isDragging }, dragRef] = useDrag({
+    type: 'section',
+    item: { sectionId: section.id },
+    collect: (monitor) => ({
+      isDragging: monitor.isDragging()
+    })
+  });
+
   return (
     <div 
+      ref={dragRef}
       className={`relative group transition-all duration-200 ${
         // Only apply border/background styles if no user-defined styles and not in preview mode
         !userBackground && !userShadow ? 'border-2 border-dashed' : ''
@@ -914,6 +958,8 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
           : isHovered && !userBackground
             ? 'border-primary/50 bg-primary/2' 
             : !userBackground ? 'border-transparent' : ''
+      } ${
+        isDragging ? 'opacity-50' : ''
       }`}
       style={renderSectionStyles(section)}
       onMouseEnter={() => setIsHovered(true)}
@@ -993,22 +1039,37 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
           </div>
         ) : (
           <div className="space-y-0">
-                {(section.rows || []).map((row, rowIndex) => (
-                  <RowComponent
-                    key={row.id}
-                    row={row}
-                    sectionId={section.id}
-                    deviceType={deviceType}
-                    isSelected={selection?.type === 'row' && selection.id === row.id}
-                    onSelect={() => onSelectionChange({ type: 'row', id: row.id, parentId: section.id })}
-                    onDelete={() => onDeleteRow(row.id)}
-                    onAddElement={onAddElement}
-                    onUpdateElement={onUpdateElement}
-                    onDeleteElement={onDeleteElement}
-                    onDuplicateElement={onDuplicateElement}
-                    selection={selection}
-                    onSelectionChange={onSelectionChange}
-                  />
+                {/* Drop zone at the beginning */}
+                <RowDropZone
+                  sectionId={section.id}
+                  insertIndex={0}
+                  onMoveRow={onMoveRow}
+                />
+                
+                {(section.rows || []).map((row, index) => (
+                  <React.Fragment key={row.id}>
+                    <RowComponent
+                      row={row}
+                      sectionId={section.id}
+                      deviceType={deviceType}
+                      isSelected={selection?.type === 'row' && selection.id === row.id}
+                      onSelect={() => onSelectionChange({ type: 'row', id: row.id, parentId: section.id })}
+                      onDelete={() => onDeleteRow(row.id)}
+                      onAddElement={onAddElement}
+                      onUpdateElement={onUpdateElement}
+                      onDeleteElement={onDeleteElement}
+                      onDuplicateElement={onDuplicateElement}
+                      selection={selection}
+                      onSelectionChange={onSelectionChange}
+                    />
+                    
+                    {/* Drop zone after each row */}
+                    <RowDropZone
+                      sectionId={section.id}
+                      insertIndex={index + 1}
+                      onMoveRow={onMoveRow}
+                    />
+                  </React.Fragment>
                 ))}
                 
                 {/* Add Row button at end */}
@@ -1059,8 +1120,18 @@ const RowComponent: React.FC<RowComponentProps> = ({
   const userBackground = hasUserBackground(row.styles);
   const userShadow = hasUserShadow(row.styles);
 
+  // Row drag functionality
+  const [{ isDragging }, dragRef] = useDrag({
+    type: 'row',
+    item: { rowId: row.id },
+    collect: (monitor) => ({
+      isDragging: monitor.isDragging()
+    })
+  });
+
   return (
     <div 
+      ref={dragRef}
       className={`relative group transition-all duration-200 rounded-lg ${
         // Only apply border/background styles if no user-defined styles
         !userBackground && !userShadow ? 'border border-dashed' : ''
@@ -1070,6 +1141,8 @@ const RowComponent: React.FC<RowComponentProps> = ({
           : isHovered && !userBackground
             ? 'border-secondary/50 bg-secondary/5' 
             : !userBackground ? 'border-transparent' : ''
+      } ${
+        isDragging ? 'opacity-50' : ''
       }`}
       style={renderRowStyles(row)}
       onMouseEnter={() => setIsHovered(true)}
@@ -1082,7 +1155,9 @@ const RowComponent: React.FC<RowComponentProps> = ({
       {/* Row Toolbar */}
       {(isHovered || isSelected) && (
         <div className="absolute -top-10 left-0 z-10 flex items-center gap-1 bg-secondary text-secondary-foreground px-3 py-1 rounded-md text-xs shadow-lg">
-          <Grip className="h-3 w-3" />
+          <div ref={dragRef} className="cursor-move">
+            <Grip className="h-3 w-3" />
+          </div>
           <span className="font-medium">Row ({row.columnLayout})</span>
           <Separator orientation="vertical" className="mx-1 h-4" />
           <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-secondary-foreground/20">
