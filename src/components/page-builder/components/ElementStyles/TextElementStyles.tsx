@@ -36,20 +36,39 @@ export const TextElementStyles: React.FC<TextElementStylesProps> = ({
       {/* Typography */}
       <div className="space-y-3">
         <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Typography</h4>
+        <div className="flex items-center justify-between">
+          <Label className="text-xs">Device</Label>
+          <div className="flex space-x-2">
+            <Button
+              size="sm"
+              variant={responsiveTab === 'desktop' ? 'default' : 'outline'}
+              onClick={() => setResponsiveTab('desktop')}
+            >
+              <Monitor className="h-4 w-4 mr-1" /> Desktop
+            </Button>
+            <Button
+              size="sm"
+              variant={responsiveTab === 'mobile' ? 'default' : 'outline'}
+              onClick={() => setResponsiveTab('mobile')}
+            >
+              <Smartphone className="h-4 w-4 mr-1" /> Mobile
+            </Button>
+          </div>
+        </div>
         
         <div>
           <Label className="text-xs">Font Size</Label>
           <div className="flex items-center space-x-2">
             <Slider
-              value={[parseInt(element.styles?.fontSize?.replace(/\D/g, '') || '16')]}
-              onValueChange={(value) => onStyleUpdate('fontSize', `${value[0]}px`)}
+              value={[parseInt(((currentStyles.fontSize || element.styles?.fontSize || '16px').toString()).replace(/\D/g, ''))]}
+              onValueChange={(value) => handleResponsiveUpdate('fontSize', `${value[0]}px`)}
               max={72}
               min={8}
               step={1}
               className="flex-1"
             />
             <span className="text-xs text-muted-foreground w-12">
-              {element.styles?.fontSize || '16px'}
+              {(currentStyles.fontSize || element.styles?.fontSize || '16px') as string}
             </span>
           </div>
         </div>
@@ -85,15 +104,15 @@ export const TextElementStyles: React.FC<TextElementStylesProps> = ({
           <Label className="text-xs">Line Height</Label>
           <div className="flex items-center space-x-2">
             <Slider
-              value={[parseFloat(element.styles?.lineHeight?.toString() || '1.6')]}
-              onValueChange={(value) => onStyleUpdate('lineHeight', value[0].toString())}
+              value={[parseFloat(((currentStyles.lineHeight ?? element.styles?.lineHeight ?? '1.6').toString()))]}
+              onValueChange={(value) => handleResponsiveUpdate('lineHeight', value[0].toString())}
               max={3}
               min={1}
               step={0.1}
               className="flex-1"
             />
             <span className="text-xs text-muted-foreground w-12">
-              {element.styles?.lineHeight || '1.6'}
+              {(currentStyles.lineHeight || element.styles?.lineHeight || '1.6') as string}
             </span>
           </div>
         </div>
@@ -170,8 +189,8 @@ export const TextElementStyles: React.FC<TextElementStylesProps> = ({
         <div>
           <Label className="text-xs">Margin</Label>
           <Input
-            value={element.styles?.margin || ''}
-            onChange={(e) => onStyleUpdate('margin', e.target.value)}
+            value={(currentStyles.margin || element.styles?.margin || '') as string}
+            onChange={(e) => handleResponsiveUpdate('margin', e.target.value)}
             placeholder="e.g., 10px 20px"
           />
         </div>
@@ -179,8 +198,8 @@ export const TextElementStyles: React.FC<TextElementStylesProps> = ({
         <div>
           <Label className="text-xs">Padding</Label>
           <Input
-            value={element.styles?.padding || ''}
-            onChange={(e) => onStyleUpdate('padding', e.target.value)}
+            value={(currentStyles.padding || element.styles?.padding || '') as string}
+            onChange={(e) => handleResponsiveUpdate('padding', e.target.value)}
             placeholder="e.g., 10px 20px"
           />
         </div>
