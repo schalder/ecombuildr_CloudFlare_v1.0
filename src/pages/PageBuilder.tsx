@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 import { ArrowLeft, Save, Eye, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -14,8 +14,14 @@ import { useUserStore } from '@/hooks/useUserStore';
 
 export default function PageBuilder() {
   const navigate = useNavigate();
-  const { pageId } = useParams();
+  const { pageId, websiteId, funnelId, stepId } = useParams();
+  const location = useLocation();
   const { store: currentStore } = useUserStore();
+  
+  // Determine context based on URL parameters
+  const context = websiteId ? 'website' : funnelId ? 'funnel' : 'store';
+  const entityId = pageId || stepId;
+  const parentId = websiteId || funnelId;
   
   const [pageData, setPageData] = useState({
     title: 'New Page',
@@ -33,24 +39,39 @@ export default function PageBuilder() {
 
   // Load existing page if editing
   useEffect(() => {
-    if (pageId && currentStore) {
+    if (entityId && currentStore) {
       loadPage();
     }
-  }, [pageId, currentStore]);
+  }, [entityId, currentStore, context]);
 
   const loadPage = async () => {
-    if (!pageId || !currentStore) return;
+    if (!entityId || !currentStore) return;
     
     try {
       setIsLoading(true);
       
-      const { data, error } = await supabase
-        .from('pages')
-        .select('*')
-        .eq('id', pageId)
-        .eq('store_id', currentStore.id)
-        .single();
+      let query;
+      if (context === 'website') {
+        query = supabase
+          .from('website_pages')
+          .select('*')
+          .eq('id', entityId)
+          .eq('website_id', parentId);
+      } else if (context === 'funnel') {
+        query = supabase
+          .from('funnel_steps')
+          .select('*')
+          .eq('id', entityId)
+          .eq('funnel_id', parentId);
+      } else {
+        query = supabase
+          .from('pages')
+          .select('*')
+          .eq('id', entityId)
+          .eq('store_id', currentStore.id);
+      }
 
+      const { data, error } = await query.single();
       if (error) throw error;
 
       if (data) {
@@ -58,7 +79,7 @@ export default function PageBuilder() {
           title: data.title,
           slug: data.slug,
           is_published: data.is_published,
-          is_homepage: data.is_homepage,
+          is_homepage: data.is_homepage || false,
           seo_title: data.seo_title || '',
           seo_description: data.seo_description || ''
         });
@@ -70,7 +91,6 @@ export default function PageBuilder() {
             if (content.sections) {
               setBuilderData({ sections: content.sections });
             } else {
-              // Convert legacy format if needed
               setBuilderData({ sections: [] });
             }
           } catch (error) {
@@ -107,38 +127,46 @@ export default function PageBuilder() {
         slug: pageData.slug,
         content: JSON.parse(JSON.stringify(pageContent)),
         is_published: pageData.is_published,
-        is_homepage: pageData.is_homepage,
         seo_title: pageData.seo_title,
         seo_description: pageData.seo_description,
-        store_id: currentStore.id
+        ...(context === 'website' && { is_homepage: pageData.is_homepage })
       };
 
       let result;
-      if (pageId) {
-        // Update existing page
-        result = await supabase
-          .from('pages')
-          .update(pagePayload)
-          .eq('id', pageId)
-          .eq('store_id', currentStore.id);
+      if (entityId) {
+        // Update existing page/step
+        if (context === 'website') {
+          result = await supabase
+            .from('website_pages')
+            .update(pagePayload)
+            .eq('id', entityId)
+            .eq('website_id', parentId);
+        } else if (context === 'funnel') {
+          result = await supabase
+            .from('funnel_steps')
+            .update(pagePayload)
+            .eq('id', entityId)
+            .eq('funnel_id', parentId);
+        } else {
+          result = await supabase
+            .from('pages')
+            .update({ ...pagePayload, store_id: currentStore.id })
+            .eq('id', entityId)
+            .eq('store_id', currentStore.id);
+        }
       } else {
-        // Create new page
+        // Create new page (shouldn't happen in this fixed version)
         result = await supabase
           .from('pages')
-          .insert(pagePayload);
+          .insert({ ...pagePayload, store_id: currentStore.id });
       }
 
       if (result.error) throw result.error;
 
-      toast.success(pageId ? 'Page updated successfully!' : 'Page created successfully!');
-      
-      if (!pageId) {
-        // Navigate to edit mode for new pages
-        navigate('/dashboard/pages');
-      }
+      toast.success('Content updated successfully!');
     } catch (error) {
-      console.error('Error saving page:', error);
-      toast.error('Failed to save page');
+      console.error('Error saving content:', error);
+      toast.error('Failed to save content');
     } finally {
       setIsSaving(false);
     }
@@ -147,8 +175,14 @@ export default function PageBuilder() {
   const handlePreview = () => {
     if (!currentStore) return;
     
-    // Open preview in new tab
-    const previewUrl = `/store/${currentStore.slug}/${pageData.slug}`;
+    let previewUrl;
+    if (context === 'website') {
+      previewUrl = `/website/${parentId}/${pageData.slug}`;
+    } else if (context === 'funnel') {
+      previewUrl = `/funnel/${parentId}/${pageData.slug}`;
+    } else {
+      previewUrl = `/store/${currentStore.slug}/${pageData.slug}`;
+    }
     window.open(previewUrl, '_blank');
   };
 
@@ -171,10 +205,18 @@ export default function PageBuilder() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => navigate('/dashboard/pages')}
+            onClick={() => {
+              if (context === 'website') {
+                navigate(`/dashboard/websites/${parentId}`);
+              } else if (context === 'funnel') {
+                navigate(`/dashboard/funnels/${parentId}`);
+              } else {
+                navigate('/dashboard/pages');
+              }
+            }}
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Pages
+            Back to {context === 'website' ? 'Website' : context === 'funnel' ? 'Funnel' : 'Pages'}
           </Button>
           
           <div className="flex items-center gap-2">

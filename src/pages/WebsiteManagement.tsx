@@ -103,7 +103,7 @@ const WebsiteManagement = () => {
   };
 
   const handleEditPage = (pageId: string) => {
-    navigate(`/dashboard/pages/builder/${pageId}?websiteId=${id}`);
+    navigate(`/dashboard/websites/${id}/pages/${pageId}/builder`);
   };
 
   if (isLoading) {

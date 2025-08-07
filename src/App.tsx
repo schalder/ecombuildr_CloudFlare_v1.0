@@ -85,6 +85,10 @@ const App = () => (
                 <Route path="/dashboard/pages/builder" element={<PageBuilder />} />
                 <Route path="/dashboard/pages/builder/:pageId" element={<PageBuilder />} />
                 <Route path="/dashboard/pages/homepage" element={<PageBuilder />} />
+                
+                {/* Context-aware page builder routes */}
+                <Route path="/dashboard/websites/:websiteId/pages/:pageId/builder" element={<PageBuilder />} />
+                <Route path="/dashboard/funnels/:funnelId/steps/:stepId/builder" element={<PageBuilder />} />
                 <Route path="/dashboard/marketing" element={<Marketing />} />
                 <Route path="/dashboard/marketing/facebook" element={<FacebookAds />} />
                 <Route path="/dashboard/marketing/email" element={<EmailCampaigns />} />
