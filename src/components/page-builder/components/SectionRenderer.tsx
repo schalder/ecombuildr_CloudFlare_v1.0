@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 
 interface SectionRendererProps {
   section: PageBuilderSection;
+  sectionIndex: number;
   isSelected: boolean;
   isPreviewMode: boolean;
   deviceType?: 'desktop' | 'tablet' | 'mobile';
@@ -16,10 +17,13 @@ interface SectionRendererProps {
   onAddElement: (sectionId: string, rowId: string, columnId: string, elementType: string, insertIndex?: number) => void;
   onMoveElement?: (elementId: string, sectionId: string, rowId: string, columnId: string, insertIndex: number) => void;
   onRemoveElement: (elementId: string) => void;
+  onAddSectionAfter: () => void;
+  onAddRowAfter: (rowIndex: number) => void;
 }
 
 export const SectionRenderer: React.FC<SectionRendererProps> = ({
   section,
+  sectionIndex,
   isSelected,
   isPreviewMode,
   deviceType = 'desktop',
@@ -27,8 +31,11 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({
   onUpdateElement,
   onAddElement,
   onMoveElement,
-  onRemoveElement
+  onRemoveElement,
+  onAddSectionAfter,
+  onAddRowAfter
 }) => {
+  const [isHovered, setIsHovered] = React.useState(false);
   const [{ isOver }, drop] = useDrop({
     accept: 'element',
     drop: (item: { elementType: string }) => {
@@ -162,15 +169,19 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({
     <div
       ref={drop}
       className={cn(
-        'relative group',
-        isSelected && !isPreviewMode && 'ring-2 ring-primary ring-opacity-50',
+        'relative group border-2 border-dashed transition-all duration-200',
+        isSelected && !isPreviewMode && 'border-primary bg-primary/5',
+        isHovered && !isPreviewMode && !isSelected && 'border-primary/30 bg-primary/2',
+        !isHovered && !isSelected && 'border-transparent',
         isOver && 'bg-primary/5'
       )}
       style={getSectionStyles()}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       onClick={handleSectionClick}
     >
       {/* Section Controls */}
-      {!isPreviewMode && isSelected && (
+      {!isPreviewMode && (isSelected || isHovered) && (
         <div className="absolute -top-10 left-0 flex items-center space-x-1 bg-primary text-primary-foreground px-2 py-1 rounded-md text-xs z-10">
           <GripVertical className="h-3 w-3" />
           <span>Section</span>
@@ -191,6 +202,17 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({
             >
               <Trash2 className="h-3 w-3" />
             </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-6 w-6 p-0 hover:bg-primary-foreground/20"
+              onClick={(e) => {
+                e.stopPropagation();
+                onAddSectionAfter();
+              }}
+            >
+              <Plus className="h-3 w-3" />
+            </Button>
           </div>
         </div>
       )}
@@ -207,10 +229,11 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({
           </div>
         ) : (
           <div className="space-y-4">
-            {section.rows.map((row) => (
+            {section.rows.map((row, rowIndex) => (
               <RowRenderer
                 key={row.id}
                 row={row}
+                rowIndex={rowIndex}
                 sectionId={section.id}
                 isPreviewMode={isPreviewMode}
                 deviceType={deviceType}
@@ -219,6 +242,7 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({
                 onAddElement={onAddElement}
                 onMoveElement={onMoveElement}
                 onRemoveElement={onRemoveElement}
+                onAddRowAfter={() => onAddRowAfter(rowIndex)}
               />
             ))}
             

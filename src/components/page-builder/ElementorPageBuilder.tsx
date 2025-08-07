@@ -45,8 +45,7 @@ import { Label } from '@/components/ui/label';
 import { PropertiesPanel } from './components/PropertiesPanel';
 import { SettingsPanel } from './components/SettingsPanels';
 import { ElementDropZone } from './components/ElementDropZone';
-import { SectionAddButton } from './components/SectionAddButton';
-import { RowAddButton } from './components/RowAddButton';
+import { SectionRenderer } from './components/SectionRenderer';
 import { 
   PageBuilderData, 
   PageBuilderSection, 
@@ -200,6 +199,14 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = ({
       sections: newSections
     });
   }, [data, updateData]);
+
+  const addSectionAfter = useCallback((sectionIndex: number) => {
+    addSection('wide', sectionIndex + 1);
+  }, [addSection]);
+
+  const addRowAfter = useCallback((sectionId: string, rowIndex: number) => {
+    setShowColumnModal({ sectionId, insertIndex: rowIndex + 1 });
+  }, []);
 
   const deleteSection = useCallback((sectionId: string) => {
     updateData({
@@ -470,6 +477,64 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = ({
     if (selection?.id === elementId) setSelection(null);
   }, [data, updateData, selection]);
 
+  const moveElement = useCallback((elementId: string, targetSectionId: string, targetRowId: string, targetColumnId: string, insertIndex: number) => {
+    console.log('Moving element:', { elementId, targetSectionId, targetRowId, targetColumnId, insertIndex });
+    
+    // Find and remove the element from its current location
+    let elementToMove: PageBuilderElement | null = null;
+    const newData = {
+      ...data,
+      sections: data.sections.map(section => ({
+        ...section,
+        rows: (section.rows || []).map(row => ({
+          ...row,
+          columns: row.columns.map(col => ({
+            ...col,
+            elements: col.elements.filter(el => {
+              if (el.id === elementId) {
+                elementToMove = el;
+                return false;
+              }
+              return true;
+            })
+          }))
+        }))
+      }))
+    };
+
+    // Insert the element at the target location
+    if (elementToMove) {
+      newData.sections = newData.sections.map(section =>
+        section.id === targetSectionId
+          ? {
+              ...section,
+              rows: (section.rows || []).map(row =>
+                row.id === targetRowId
+                  ? {
+                      ...row,
+                      columns: row.columns.map(col =>
+                        col.id === targetColumnId
+                          ? {
+                              ...col,
+                              elements: [
+                                ...col.elements.slice(0, insertIndex),
+                                elementToMove!,
+                                ...col.elements.slice(insertIndex)
+                              ]
+                            }
+                          : col
+                      )
+                    }
+                  : row
+              )
+            }
+          : section
+      );
+    }
+
+    updateData(newData);
+  }, [data, updateData]);
+
   const getDevicePreviewStyles = () => {
     switch (deviceType) {
       case 'tablet':
@@ -605,55 +670,42 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = ({
                   </Button>
                 </div>
               ) : (
-                <div className="space-y-0">
+                <div className="space-y-4">
                   {data.sections.map((section, sectionIndex) => (
-                    <div key={section.id} className="group">
-                      {/* Section Add Button Before */}
-                      {sectionIndex === 0 && (
-                        <SectionAddButton
-                          onAddSection={() => addSection('wide', 0)}
-                          position="between"
-                          className="group-hover:opacity-100"
-                        />
-                      )}
-                      
-                      {/* Section Add Button Between */}
-                      {sectionIndex > 0 && (
-                        <SectionAddButton
-                          onAddSection={() => addSection('wide', sectionIndex)}
-                          position="between"
-                          className="group-hover:opacity-100"
-                        />
-                      )}
-                      
-                      <SectionComponent
-                        key={section.id}
-                        section={section}
-                        sectionIndex={sectionIndex}
-                        deviceType={deviceType}
-                        isSelected={selection?.type === 'section' && selection.id === section.id}
-                        onSelect={() => setSelection({ type: 'section', id: section.id })}
-                        onDelete={() => deleteSection(section.id)}
-                        onDuplicate={() => duplicateSection(section.id)}
-                        onAddRow={(insertIndex?: number) => setShowColumnModal({ sectionId: section.id, insertIndex })}
-                        onDeleteRow={(rowId) => deleteRow(section.id, rowId)}
-                        onAddElement={(sectionId, rowId, columnId, elementType, insertIndex) => 
-                          addElement(sectionId, rowId, columnId, elementType, insertIndex)
+                    <SectionRenderer
+                      key={section.id}
+                      section={section}
+                      sectionIndex={sectionIndex}
+                      isSelected={selection?.type === 'section' && selection.id === section.id}
+                      isPreviewMode={false}
+                      deviceType={deviceType}
+                      onSelectElement={(element) => 
+                        element 
+                          ? setSelection({ type: 'element', id: element.id }) 
+                          : setSelection({ type: 'section', id: section.id })
+                      }
+                      onUpdateElement={updateElement}
+                      onAddElement={addElement}
+                      onMoveElement={moveElement}
+                      onRemoveElement={(id) => {
+                        if (id === section.id) {
+                          deleteSection(id);
+                        } else {
+                          deleteElement(id);
                         }
-                        onUpdateElement={updateElement}
-                        onDeleteElement={deleteElement}
-                        onDuplicateElement={duplicateElement}
-                        selection={selection}
-                        onSelectionChange={setSelection}
-                      />
-                    </div>
+                      }}
+                      onAddSectionAfter={() => addSectionAfter(sectionIndex)}
+                      onAddRowAfter={(rowIndex) => addRowAfter(section.id, rowIndex)}
+                    />
                   ))}
                   
-                  {/* Section Add Button At End */}
-                  <SectionAddButton
-                    onAddSection={() => addSection('wide')}
-                    position="end"
-                  />
+                  {/* Add Section button at end */}
+                  <div className="pt-4 text-center">
+                    <Button variant="outline" onClick={() => addSection()}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Section
+                    </Button>
+                  </div>
                 </div>
               )}
             </div>
@@ -909,40 +961,31 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
           </div>
         ) : (
           <div className="space-y-0">
-            {(section.rows || []).map((row, rowIndex) => (
-              <div key={row.id} className="group">
-                {/* Row Add Button Between */}
-                {rowIndex > 0 && (
-                  <RowAddButton
-                    onAddRow={() => onAddRow(rowIndex)}
-                    position="between"
-                    className="group-hover:opacity-100"
+                {(section.rows || []).map((row, rowIndex) => (
+                  <RowComponent
+                    key={row.id}
+                    row={row}
+                    sectionId={section.id}
+                    deviceType={deviceType}
+                    isSelected={selection?.type === 'row' && selection.id === row.id}
+                    onSelect={() => onSelectionChange({ type: 'row', id: row.id, parentId: section.id })}
+                    onDelete={() => onDeleteRow(row.id)}
+                    onAddElement={onAddElement}
+                    onUpdateElement={onUpdateElement}
+                    onDeleteElement={onDeleteElement}
+                    onDuplicateElement={onDuplicateElement}
+                    selection={selection}
+                    onSelectionChange={onSelectionChange}
                   />
-                )}
+                ))}
                 
-                <RowComponent
-                  key={row.id}
-                  row={row}
-                  sectionId={section.id}
-                  deviceType={deviceType}
-                  isSelected={selection?.type === 'row' && selection.id === row.id}
-                  onSelect={() => onSelectionChange({ type: 'row', id: row.id, parentId: section.id })}
-                  onDelete={() => onDeleteRow(row.id)}
-                  onAddElement={onAddElement}
-                  onUpdateElement={onUpdateElement}
-                  onDeleteElement={onDeleteElement}
-                  onDuplicateElement={onDuplicateElement}
-                  selection={selection}
-                  onSelectionChange={onSelectionChange}
-                />
-              </div>
-            ))}
-            
-            {/* Row Add Button At End */}
-            <RowAddButton
-              onAddRow={() => onAddRow()}
-              position="end"
-            />
+                {/* Add Row button at end */}
+                <div className="pt-4 text-center">
+                  <Button variant="outline" size="sm" onClick={() => onAddRow()}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Row
+                  </Button>
+                </div>
           </div>
         )}
       </div>

@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 
 interface RowRendererProps {
   row: PageBuilderRow;
+  rowIndex: number;
   sectionId: string;
   isPreviewMode: boolean;
   deviceType?: 'desktop' | 'tablet' | 'mobile';
@@ -16,10 +17,12 @@ interface RowRendererProps {
   onAddElement: (sectionId: string, rowId: string, columnId: string, elementType: string, insertIndex?: number) => void;
   onMoveElement?: (elementId: string, sectionId: string, rowId: string, columnId: string, insertIndex: number) => void;
   onRemoveElement: (elementId: string) => void;
+  onAddRowAfter: () => void;
 }
 
 export const RowRenderer: React.FC<RowRendererProps> = ({
   row,
+  rowIndex,
   sectionId,
   isPreviewMode,
   deviceType = 'desktop',
@@ -27,7 +30,8 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
   onUpdateElement,
   onAddElement,
   onMoveElement,
-  onRemoveElement
+  onRemoveElement,
+  onAddRowAfter
 }) => {
   const [isHovered, setIsHovered] = React.useState(false);
   
@@ -180,8 +184,10 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
     <div
       ref={drop}
       className={cn(
-        'relative group min-h-[80px]',
-        isOver && 'bg-primary/5 border border-primary/20 rounded-lg'
+        'relative group min-h-[80px] border border-dashed transition-all duration-200',
+        isHovered && !isPreviewMode && 'border-secondary/50 bg-secondary/5',
+        !isHovered && 'border-transparent',
+        isOver && 'bg-primary/5 border-primary/20 rounded-lg'
       )}
       style={getRowStyles()}
       onMouseEnter={() => setIsHovered(true)}
@@ -210,6 +216,17 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
               onClick={handleDeleteRow}
             >
               <Trash2 className="h-3 w-3" />
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-6 w-6 p-0 hover:bg-secondary-foreground/20"
+              onClick={(e) => {
+                e.stopPropagation();
+                onAddRowAfter();
+              }}
+            >
+              <Plus className="h-3 w-3" />
             </Button>
           </div>
         </div>
