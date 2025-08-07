@@ -136,12 +136,12 @@ const ImageElement: React.FC<{
     full: 'w-full'
   };
 
-  const imageStyles = {
+  const imageStyles: React.CSSProperties = {
     width: element.styles?.width || 'auto',
     height: element.styles?.height || 'auto',
     maxWidth: element.styles?.maxWidth || (alignment === 'full' ? '100%' : undefined),
     objectFit: element.styles?.objectFit || 'cover'
-  } as React.CSSProperties;
+  };
 
   const ImageComponent = () => (
     <img
@@ -311,7 +311,7 @@ const SpacerElement: React.FC<{
         <div className="flex items-center justify-center space-x-2 text-sm text-muted-foreground">
           <span>Spacer:</span>
           <InlineEditor
-            value={typeof height === 'number' ? `${height}px` : height}
+            value={typeof height === 'number' ? `${height}px` : String(height)}
             onChange={handleHeightChange}
             placeholder="50px"
             disabled={false}
@@ -322,8 +322,10 @@ const SpacerElement: React.FC<{
     );
   }
 
+  const spacerHeight = typeof height === 'number' ? `${height}px` : String(height);
+  
   return (
-    <div style={{ ...elementStyles, height: elementStyles.height || (typeof height === 'number' ? `${height}px` : height) }} className="w-full" />
+    <div style={{ ...elementStyles, height: elementStyles.height || spacerHeight }} className="w-full" />
   );
 };
 
