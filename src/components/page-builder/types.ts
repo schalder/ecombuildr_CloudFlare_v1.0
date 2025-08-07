@@ -15,8 +15,6 @@ export interface PageBuilderElement {
     alignment?: 'left' | 'right' | 'center' | 'full';
     linkUrl?: string;
     linkTarget?: '_blank' | '_self';
-    fullWidth?: boolean;
-    widthType?: 'auto' | 'full' | 'custom';
     [key: string]: any;
   };
   styles?: {
@@ -51,25 +49,6 @@ export interface PageBuilderElement {
     objectFit?: 'cover' | 'contain' | 'fill' | 'none' | 'scale-down';
     fontWeight?: string;
     fontFamily?: string;
-    // Responsive typography properties
-    responsive?: {
-      fullWidth?: boolean;
-      widthType?: 'auto' | 'custom';
-      desktop?: {
-        fontSize?: string;
-        fontWeight?: string;
-        letterSpacing?: string;
-        textTransform?: string;
-        padding?: string;
-      };
-      mobile?: {
-        fontSize?: string;
-        fontWeight?: string;
-        letterSpacing?: string;
-        textTransform?: string;
-        padding?: string;
-      };
-    };
   };
 }
 

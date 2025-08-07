@@ -7,8 +7,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { elementRegistry } from './ElementRegistry';
 import { InlineEditor } from '../components/InlineEditor';
 import { renderElementStyles } from '../utils/styleRenderer';
-import { generateResponsiveButtonClasses, generateResponsiveButtonStyles, generateResponsivePaddingCSS } from '../utils/responsiveButtonUtils';
-import { cn } from '@/lib/utils';
 
 // Heading Element
 const HeadingElement: React.FC<{
@@ -240,40 +238,22 @@ const ButtonElement: React.FC<{
   isEditing?: boolean;
   deviceType?: 'desktop' | 'tablet' | 'mobile';
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
-}> = ({ element, isEditing, deviceType, onUpdate }) => {
-  const [isInlineEditing, setIsInlineEditing] = useState(false);
-  const [editText, setEditText] = useState(element.content.text || 'Click Me');
-
-  const responsiveStyles = element.styles?.responsive || {};
-  const desktopStyles = responsiveStyles.desktop || {};
-  const mobileStyles = responsiveStyles.mobile || {};
-  const fullWidth = responsiveStyles.fullWidth || false;
-  const currentStyles = responsiveStyles[deviceType || 'desktop'] || {};
-  
-  const text = element.content.text || 'Click Me';
+}> = ({ element, isEditing, onUpdate }) => {
+  const text = element.content.text || 'Button';
+  const variant = element.content.variant || 'default';
+  const size = element.content.size || 'default';
   const url = element.content.url || '#';
   const target = element.content.target || '_blank';
 
-  const handleTextSubmit = () => {
+  const handleTextChange = (newText: string) => {
     onUpdate?.({
-      content: { ...element.content, text: editText }
+      content: { ...element.content, text: newText }
     });
-    setIsInlineEditing(false);
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleTextSubmit();
-    } else if (e.key === 'Escape') {
-      setEditText(text);
-      setIsInlineEditing(false);
-    }
   };
 
   const handleClick = (e: React.MouseEvent) => {
     if (isEditing) {
       e.preventDefault();
-      setIsInlineEditing(true);
     } else if (url && url !== '#') {
       if (target === '_blank') {
         window.open(url, '_blank');
@@ -283,102 +263,58 @@ const ButtonElement: React.FC<{
     }
   };
 
-  // Calculate smart padding if none exists
-  const getSmartPadding = (fontSize: string, fallback: string) => {
-    const size = parseInt(fontSize?.replace(/\D/g, '') || '16');
-    const vertical = Math.max(8, size * 0.4);
-    const horizontal = Math.max(16, size * 0.8);
-    return `${vertical}px ${horizontal}px`;
+  const alignment = element.styles?.textAlign || 'left';
+  const containerClass = 
+    alignment === 'center' ? 'flex justify-center' :
+    alignment === 'right' ? 'flex justify-end' : 
+    'flex justify-start';
+
+  // Combine custom styles with variant styles properly
+  const customStyles = {
+    backgroundColor: element.styles?.backgroundColor,
+    color: element.styles?.color,
+    fontSize: element.styles?.fontSize,
+    padding: element.styles?.padding,
+    margin: element.styles?.margin,
+    ...(element.content.customCSS ? {} : {}) // Custom CSS will be applied via className
   };
 
-  // Generate responsive classes
-  const getResponsiveClasses = () => {
-    const classes = ['cursor-pointer', 'transition-all', 'duration-200', 'inline-flex', 'items-center', 'justify-center', 'font-medium', 'focus-visible:outline-none', 'focus-visible:ring-2', 'focus-visible:ring-ring', 'focus-visible:ring-offset-2', 'disabled:pointer-events-none', 'disabled:opacity-50'];
-    
-    // Width handling
-    const isFullWidth = element.content.fullWidth || responsiveStyles.fullWidth;
-    if (isFullWidth) {
-      classes.push('w-full');
-    } else {
-      classes.push('w-auto');
-    }
-
-    return classes.join(' ');
-  };
-
-  // Smart padding calculation
-  const calculateSmartPadding = (fontSize: number) => {
-    const verticalPadding = Math.max(8, fontSize * 0.6);
-    const horizontalPadding = Math.max(16, fontSize * 1.2);
-    return `${verticalPadding}px ${horizontalPadding}px`;
-  };
-
-  const currentFontSize = currentStyles.fontSize || (deviceType === 'mobile' ? 14 : 16);
-  const smartPadding = (responsiveStyles as any).padding === 'auto' || !(responsiveStyles as any).padding 
-    ? calculateSmartPadding(currentFontSize)
-    : (responsiveStyles as any).padding;
-
-  const buttonClasses = cn(
-    'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
-    'cursor-pointer hover:shadow-lg transform hover:scale-105',
-    {
-      'w-full': fullWidth,
-    }
+  // Remove undefined values from styles
+  const cleanStyles = Object.fromEntries(
+    Object.entries(customStyles).filter(([_, v]) => v !== undefined && v !== '')
   );
 
-  const buttonStyles: React.CSSProperties = {
-    backgroundColor: element.content.backgroundColor || '#007bff',
-    color: element.content.textColor || '#ffffff',
-    borderRadius: element.content.borderRadius || '6px',
-    boxShadow: element.content.boxShadow || '0 2px 4px rgba(0,0,0,0.1)',
-    padding: smartPadding,
-    margin: element.content.margin || '0',
-    fontSize: `${currentFontSize}px`,
-    fontWeight: currentStyles.fontWeight || 'normal',
-    letterSpacing: currentStyles.letterSpacing || 'normal',
-    textTransform: currentStyles.textTransform as any || 'none',
-    width: fullWidth ? '100%' : ((responsiveStyles as any).customWidth || 'auto'),
-    textAlign: 'center'
-  };
-
-  if (isEditing) {
-    return (
-      <div className="flex justify-center">
-        <div
-          className={buttonClasses}
-          style={buttonStyles}
-        >
-          {isInlineEditing ? (
-            <input
-              type="text"
-              value={editText}
-              onChange={(e) => setEditText(e.target.value)}
-              onBlur={handleTextSubmit}
-              onKeyDown={handleKeyPress}
-              className="bg-transparent border-none outline-none text-center w-full text-inherit font-inherit"
-              placeholder="Button Text"
-              style={{ color: 'inherit' }}
-              autoFocus
-            />
-          ) : (
-            <span onClick={handleClick}>{text}</span>
-          )}
-        </div>
-      </div>
-    );
-  }
+  const customClassName = element.content.customCSS ? 
+    `button-${element.id} outline-none cursor-pointer` : 
+    'outline-none cursor-pointer';
 
   return (
-    <div className="flex justify-center">
-      <button
-        className={buttonClasses}
-        style={buttonStyles}
-        onClick={handleClick}
-        id={element.content.customId || element.id}
-      >
-        {text}
-      </button>
-    </div>
+    <>
+      {/* Inject custom CSS if provided */}
+      {element.content.customCSS && (
+        <style>
+          {`.button-${element.id} { ${element.content.customCSS} }`}
+        </style>
+      )}
+      <div className={containerClass} style={{ margin: element.styles?.margin }}>
+        <Button 
+          variant={variant as any} 
+          size={size as any}
+          className={customClassName}
+          onClick={handleClick}
+          style={cleanStyles}
+          id={element.content.customId || element.id}
+        >
+          <InlineEditor
+            value={text}
+            onChange={handleTextChange}
+            placeholder="Button text..."
+            disabled={!isEditing}
+            className="text-inherit font-inherit"
+          />
+        </Button>
+      </div>
+    </>
   );
 };
 
