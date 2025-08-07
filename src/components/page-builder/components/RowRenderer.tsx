@@ -111,6 +111,27 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
     };
   };
 
+  const getColumnsToRender = () => {
+    // For mobile, always stack all columns
+    if (deviceType === 'mobile') {
+      return row.columns;
+    }
+    
+    // For tablet, respect the columnLayout setting
+    if (deviceType === 'tablet') {
+      if (row.columnLayout === '1') {
+        // Only render the first column for true single-column layout
+        return row.columns.slice(0, 1);
+      } else {
+        // For multi-column layouts on tablet, stack all columns
+        return row.columns;
+      }
+    }
+    
+    // For desktop, render all columns according to the layout
+    return row.columns;
+  };
+
   return (
     <div
       ref={drop}
@@ -155,7 +176,7 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
       )}
 
       <div style={getDeviceSpecificGridStyle()}>
-        {row.columns.map((column) => (
+        {getColumnsToRender().map((column) => (
             <ColumnRenderer
               key={column.id}
               column={column}
