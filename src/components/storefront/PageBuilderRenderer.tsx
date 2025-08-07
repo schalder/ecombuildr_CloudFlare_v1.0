@@ -38,39 +38,40 @@ export const PageBuilderRenderer: React.FC<PageBuilderRendererProps> = ({
     );
   }
 
-  return (
-    <DndProvider backend={HTML5Backend}>
-      <div className={`page-builder-content ${className}`}>
-        {/* Apply global styles if they exist */}
-        {data.globalStyles && (
-          <style>{`
-            .page-builder-content {
-              ${Object.entries(data.globalStyles).map(([key, value]) => `${key}: ${value};`).join(' ')}
-            }
-          `}</style>
-        )}
-        
-        {/* Render sections in preview mode for storefront */}
-        <div className="space-y-0">
-          {data.sections.map((section, index) => (
-            <SectionRenderer
-              key={section.id}
-              section={section}
-              sectionIndex={index}
-              isSelected={false}
-              isPreviewMode={true}
-              deviceType="desktop"
-              onSelectElement={() => {}}
-              onUpdateElement={() => {}}
-              onAddElement={() => {}}
-              onRemoveElement={() => {}}
-              onMoveElement={() => {}}
-              onAddSectionAfter={() => {}}
-              onAddRowAfter={() => {}}
-            />
-          ))}
-        </div>
+  const content = (
+    <div className={`page-builder-content ${className}`}>
+      {/* Apply global styles if they exist */}
+      {data.globalStyles && (
+        <style>{`
+          .page-builder-content {
+            ${Object.entries(data.globalStyles).map(([key, value]) => `${key}: ${value};`).join(' ')}
+          }
+        `}</style>
+      )}
+      
+      {/* Render sections in preview mode for storefront */}
+      <div className="space-y-0">
+        {data.sections.map((section, index) => (
+          <SectionRenderer
+            key={section.id}
+            section={section}
+            sectionIndex={index}
+            isSelected={false}
+            isPreviewMode={true}
+            deviceType="desktop"
+            onSelectElement={() => {}}
+            onUpdateElement={() => {}}
+            onAddElement={() => {}}
+            onRemoveElement={() => {}}
+            onMoveElement={() => {}}
+            onAddSectionAfter={() => {}}
+            onAddRowAfter={() => {}}
+          />
+        ))}
       </div>
-    </DndProvider>
+    </div>
   );
+
+  // For published pages, don't wrap in DndProvider to avoid drag-and-drop behavior
+  return content;
 };
