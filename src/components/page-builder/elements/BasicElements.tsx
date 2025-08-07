@@ -311,7 +311,7 @@ const SpacerElement: React.FC<{
         <div className="flex items-center justify-center space-x-2 text-sm text-muted-foreground">
           <span>Spacer:</span>
           <InlineEditor
-            value={typeof height === 'number' ? `${height}px` : String(height)}
+            value={String(height)}
             onChange={handleHeightChange}
             placeholder="50px"
             disabled={false}
@@ -322,7 +322,7 @@ const SpacerElement: React.FC<{
     );
   }
 
-  const spacerHeight = typeof height === 'number' ? `${height}px` : String(height);
+  const spacerHeight = String(height);
   
   return (
     <div style={{ ...elementStyles, height: elementStyles.height || spacerHeight }} className="w-full" />
