@@ -247,6 +247,8 @@ const ButtonElement: React.FC<{
   const responsiveStyles = element.styles?.responsive || {};
   const desktopStyles = responsiveStyles.desktop || {};
   const mobileStyles = responsiveStyles.mobile || {};
+  const fullWidth = responsiveStyles.fullWidth || false;
+  const currentStyles = responsiveStyles[deviceType || 'desktop'] || {};
   
   const text = element.content.text || 'Click Me';
   const url = element.content.url || '#';
@@ -301,130 +303,47 @@ const ButtonElement: React.FC<{
       classes.push('w-auto');
     }
 
-    // Font size classes
-    if (desktopStyles.fontSize) {
-      const size = parseInt(desktopStyles.fontSize.replace(/\D/g, ''));
-      if (size <= 12) classes.push('lg:text-sm');
-      else if (size <= 16) classes.push('lg:text-base');
-      else if (size <= 18) classes.push('lg:text-lg');
-      else if (size <= 20) classes.push('lg:text-xl');
-      else if (size <= 24) classes.push('lg:text-2xl');
-      else classes.push('lg:text-3xl');
-    } else {
-      classes.push('lg:text-base'); // Default desktop size
-    }
-
-    if (mobileStyles.fontSize) {
-      const size = parseInt(mobileStyles.fontSize.replace(/\D/g, ''));
-      if (size <= 12) classes.push('text-sm');
-      else if (size <= 16) classes.push('text-base');
-      else if (size <= 18) classes.push('text-lg');
-      else if (size <= 20) classes.push('text-xl');
-      else classes.push('text-2xl');
-    } else {
-      classes.push('text-sm'); // Default mobile size
-    }
-
-    // Font weight
-    const desktopWeight = desktopStyles.fontWeight || 'medium';
-    const mobileWeight = mobileStyles.fontWeight || 'medium';
-    classes.push(`lg:font-${desktopWeight}`);
-    classes.push(`font-${mobileWeight}`);
-
-    // Letter spacing
-    if (desktopStyles.letterSpacing && desktopStyles.letterSpacing !== 'normal') {
-      classes.push(`lg:tracking-${desktopStyles.letterSpacing}`);
-    }
-    if (mobileStyles.letterSpacing && mobileStyles.letterSpacing !== 'normal') {
-      classes.push(`tracking-${mobileStyles.letterSpacing}`);
-    }
-
-    // Text transform
-    if (desktopStyles.textTransform && desktopStyles.textTransform !== 'none') {
-      classes.push(`lg:${desktopStyles.textTransform}`);
-    }
-    if (mobileStyles.textTransform && mobileStyles.textTransform !== 'none') {
-      classes.push(mobileStyles.textTransform);
-    }
-
     return classes.join(' ');
   };
 
-  // Generate inline styles
-  const buttonStyles: React.CSSProperties = {
-    cursor: 'pointer',
-    textAlign: element.styles?.textAlign || 'center',
+  // Smart padding calculation
+  const calculateSmartPadding = (fontSize: number) => {
+    const verticalPadding = Math.max(8, fontSize * 0.6);
+    const horizontalPadding = Math.max(16, fontSize * 1.2);
+    return `${verticalPadding}px ${horizontalPadding}px`;
   };
 
-  // Width handling
-  const isFullWidth = element.content.fullWidth || responsiveStyles.fullWidth;
-  if (isFullWidth) {
-    buttonStyles.width = '100%';
-  } else if (element.styles?.width) {
-    buttonStyles.width = element.styles.width;
-  }
-
-  // Colors with fallbacks
-  buttonStyles.backgroundColor = element.styles?.backgroundColor || 'hsl(var(--primary))';
-  buttonStyles.color = element.styles?.color || 'hsl(var(--primary-foreground))';
-
-  // Border radius
-  if (element.styles?.borderRadius) {
-    buttonStyles.borderRadius = element.styles.borderRadius;
-  } else {
-    buttonStyles.borderRadius = '6px'; // Default rounded
-  }
-
-  // Box shadow
-  if (element.styles?.boxShadow) {
-    buttonStyles.boxShadow = element.styles.boxShadow;
-  }
-
-  // Margin
-  if (element.styles?.margin) {
-    buttonStyles.margin = element.styles.margin;
-  }
-
-  // Padding logic
-  if (element.styles?.padding) {
-    // Global padding takes precedence
-    buttonStyles.padding = element.styles.padding;
-  } else {
-    // Use responsive padding with smart fallbacks
-    const mobilePadding = mobileStyles.padding || getSmartPadding(mobileStyles.fontSize, '8px 16px');
-    buttonStyles.padding = mobilePadding;
-  }
-
-  // Generate responsive CSS for desktop padding
-  const responsivePaddingCSS = () => {
-    if (element.styles?.padding) return ''; // Global padding takes precedence
-    
-    const desktopPadding = desktopStyles.padding || getSmartPadding(desktopStyles.fontSize, '12px 24px');
-    
-    return `
-      @media (min-width: 1024px) {
-        .responsive-button-${element.id} {
-          padding: ${desktopPadding} !important;
-        }
-      }
-    `;
-  };
-
-  const alignment = element.styles?.textAlign || 'left';
-  const containerClass = 
-    alignment === 'center' ? 'flex justify-center' :
-    alignment === 'right' ? 'flex justify-end' : 
-    'flex justify-start';
+  const currentFontSize = currentStyles.fontSize || (deviceType === 'mobile' ? 14 : 16);
+  const smartPadding = (responsiveStyles as any).padding === 'auto' || !(responsiveStyles as any).padding 
+    ? calculateSmartPadding(currentFontSize)
+    : (responsiveStyles as any).padding;
 
   const buttonClasses = cn(
-    getResponsiveClasses(),
-    `responsive-button-${element.id}`
+    'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
+    'cursor-pointer hover:shadow-lg transform hover:scale-105',
+    {
+      'w-full': fullWidth,
+    }
   );
+
+  const buttonStyles: React.CSSProperties = {
+    backgroundColor: element.content.backgroundColor || '#007bff',
+    color: element.content.textColor || '#ffffff',
+    borderRadius: element.content.borderRadius || '6px',
+    boxShadow: element.content.boxShadow || '0 2px 4px rgba(0,0,0,0.1)',
+    padding: smartPadding,
+    margin: element.content.margin || '0',
+    fontSize: `${currentFontSize}px`,
+    fontWeight: currentStyles.fontWeight || 'normal',
+    letterSpacing: currentStyles.letterSpacing || 'normal',
+    textTransform: currentStyles.textTransform as any || 'none',
+    width: fullWidth ? '100%' : ((responsiveStyles as any).customWidth || 'auto'),
+    textAlign: 'center'
+  };
 
   if (isEditing) {
     return (
-      <div className={containerClass}>
-        <style dangerouslySetInnerHTML={{ __html: responsivePaddingCSS() }} />
+      <div className="flex justify-center">
         <div
           className={buttonClasses}
           style={buttonStyles}
@@ -450,8 +369,7 @@ const ButtonElement: React.FC<{
   }
 
   return (
-    <div className={containerClass}>
-      <style dangerouslySetInnerHTML={{ __html: responsivePaddingCSS() }} />
+    <div className="flex justify-center">
       <button
         className={buttonClasses}
         style={buttonStyles}
