@@ -47,12 +47,11 @@ export const WebsitePage: React.FC = () => {
 
         console.log('WebsitePage: Fetching website and page:', { websiteId, pageSlug });
 
-        // First fetch the website to check if it's published and active
+        // First fetch the website to check if it's active
         const { data: websiteData, error: websiteError } = await supabase
           .from('websites')
           .select('*')
           .eq('id', websiteId)
-          .eq('is_published', true)
           .eq('is_active', true)
           .maybeSingle();
 
