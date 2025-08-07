@@ -4,6 +4,7 @@ import { Plus, Trash2, Copy, Settings, GripVertical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { PageBuilderSection, PageBuilderElement } from '../types';
 import { RowRenderer } from './RowRenderer';
+import { RowDropZone } from './RowDropZone';
 import { cn } from '@/lib/utils';
 
 interface SectionRendererProps {
@@ -16,6 +17,7 @@ interface SectionRendererProps {
   onAddElement: (sectionId: string, rowId: string, columnId: string, elementType: string, insertIndex?: number) => void;
   onMoveElement?: (elementId: string, sectionId: string, rowId: string, columnId: string, insertIndex: number) => void;
   onRemoveElement: (elementId: string) => void;
+  onAddRow?: (sectionId: string, columnLayout: string, insertIndex: number) => void;
 }
 
 export const SectionRenderer: React.FC<SectionRendererProps> = ({
@@ -27,7 +29,8 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({
   onUpdateElement,
   onAddElement,
   onMoveElement,
-  onRemoveElement
+  onRemoveElement,
+  onAddRow
 }) => {
   const [{ isOver }, drop] = useDrop({
     accept: 'element',
@@ -206,30 +209,40 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({
             )}
           </div>
         ) : (
-          <div className="space-y-4">
-            {section.rows.map((row) => (
-              <RowRenderer
-                key={row.id}
-                row={row}
+          <div className="space-y-2">
+            {/* Row drop zone at the beginning */}
+            {!isPreviewMode && onAddRow && (
+              <RowDropZone
                 sectionId={section.id}
-                isPreviewMode={isPreviewMode}
-                deviceType={deviceType}
-                onSelectElement={onSelectElement}
-                onUpdateElement={onUpdateElement}
-                onAddElement={onAddElement}
-                onMoveElement={onMoveElement}
-                onRemoveElement={onRemoveElement}
+                insertIndex={0}
+                onAddRow={onAddRow}
               />
-            ))}
-            
-            {!isPreviewMode && (
-              <div className="pt-4 text-center">
-                <Button variant="outline" size="sm" onClick={handleAddRow}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Row
-                </Button>
-              </div>
             )}
+            
+            {section.rows.map((row, index) => (
+              <div key={row.id}>
+                <RowRenderer
+                  row={row}
+                  sectionId={section.id}
+                  isPreviewMode={isPreviewMode}
+                  deviceType={deviceType}
+                  onSelectElement={onSelectElement}
+                  onUpdateElement={onUpdateElement}
+                  onAddElement={onAddElement}
+                  onMoveElement={onMoveElement}
+                  onRemoveElement={onRemoveElement}
+                />
+                
+                {/* Row drop zone after each row */}
+                {!isPreviewMode && onAddRow && (
+                  <RowDropZone
+                    sectionId={section.id}
+                    insertIndex={index + 1}
+                    onAddRow={onAddRow}
+                  />
+                )}
+              </div>
+            ))}
           </div>
         )}
       </div>

@@ -1,5 +1,8 @@
 import React from 'react';
 import { useDrop } from 'react-dnd';
+import { Plus } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { InlineAddButton } from './InlineAddButton';
 import { cn } from '@/lib/utils';
 
 interface ElementDropZoneProps {
@@ -55,9 +58,9 @@ export const ElementDropZone: React.FC<ElementDropZoneProps> = ({
     <div
       ref={drop}
       className={cn(
-        'relative h-1 mx-2 transition-all duration-200',
+        'relative h-1 mx-2 transition-all duration-200 group',
         className,
-        showDropZone ? 'h-4' : 'h-1'
+        showDropZone ? 'h-8' : 'h-1'
       )}
     >
       {/* Blue line indicator like Elementor */}
@@ -82,14 +85,26 @@ export const ElementDropZone: React.FC<ElementDropZoneProps> = ({
         )}
       />
 
-      {/* Drop here indicator */}
-      {isOver && (
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
+      {/* Inline add button - shows on hover */}
+      <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
+        {isOver ? (
           <div className="bg-blue-500 text-white px-2 py-1 rounded text-xs font-medium whitespace-nowrap">
             Drop here
           </div>
-        </div>
-      )}
+        ) : (
+          <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onAddElement('text', insertIndex)}
+              className="bg-background/90 border border-dashed border-muted-foreground/30 hover:bg-primary/5 hover:border-primary/50 p-2 h-8 w-8"
+              title="Add element"
+            >
+              <Plus className="h-3 w-3" />
+            </Button>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
