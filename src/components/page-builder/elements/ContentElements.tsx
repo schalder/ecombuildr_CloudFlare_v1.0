@@ -14,8 +14,9 @@ const TestimonialElement: React.FC<{
   element: PageBuilderElement;
   isEditing?: boolean;
   deviceType?: 'desktop' | 'tablet' | 'mobile';
+  columnCount?: number;
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
-}> = ({ element, isEditing, onUpdate }) => {
+}> = ({ element, isEditing, onUpdate, deviceType, columnCount = 1 }) => {
   const testimonial = element.content.testimonial || 'This is an amazing product!';
   const author = element.content.author || 'John Doe';
   const position = element.content.position || 'CEO, Company';
@@ -41,7 +42,7 @@ const TestimonialElement: React.FC<{
   };
 
   return (
-    <div className="max-w-md mx-auto p-6 border rounded-lg bg-background" style={element.styles}>
+    <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-md mx-auto'} p-6 border rounded-lg bg-background`} style={element.styles}>
       <div className="flex items-center space-x-1 mb-4">
         {[...Array(5)].map((_, i) => (
           <Star
@@ -102,8 +103,9 @@ const FAQElement: React.FC<{
   element: PageBuilderElement;
   isEditing?: boolean;
   deviceType?: 'desktop' | 'tablet' | 'mobile';
+  columnCount?: number;
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
-}> = ({ element, isEditing, onUpdate }) => {
+}> = ({ element, isEditing, onUpdate, deviceType, columnCount = 1 }) => {
   const faqs = element.content.faqs || [
     { question: 'What is your return policy?', answer: 'We offer a 30-day return policy for all items.' },
     { question: 'How long does shipping take?', answer: 'Standard shipping takes 3-5 business days.' }
@@ -128,7 +130,7 @@ const FAQElement: React.FC<{
   };
 
   return (
-    <div className="max-w-2xl mx-auto space-y-4" style={element.styles}>
+    <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-2xl mx-auto'} space-y-4`} style={element.styles}>
       <h3 className="text-xl font-semibold mb-4">
         <InlineEditor
           value={title}
@@ -177,8 +179,9 @@ const AccordionElement: React.FC<{
   element: PageBuilderElement;
   isEditing?: boolean;
   deviceType?: 'desktop' | 'tablet' | 'mobile';
+  columnCount?: number;
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
-}> = ({ element, isEditing, onUpdate }) => {
+}> = ({ element, isEditing, onUpdate, deviceType, columnCount = 1 }) => {
   const items = element.content.items || [
     { title: 'Section 1', content: 'Content for section 1' },
     { title: 'Section 2', content: 'Content for section 2' },
@@ -204,7 +207,7 @@ const AccordionElement: React.FC<{
   };
 
   return (
-    <div className="max-w-2xl mx-auto" style={element.styles}>
+    <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-2xl mx-auto'}`} style={element.styles}>
       <Accordion type={allowMultiple ? "multiple" : "single"} collapsible className="w-full">
         {items.map((item: any, index: number) => (
           <AccordionItem key={index} value={`item-${index}`}>
@@ -241,8 +244,9 @@ const TabsElement: React.FC<{
   element: PageBuilderElement;
   isEditing?: boolean;
   deviceType?: 'desktop' | 'tablet' | 'mobile';
+  columnCount?: number;
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
-}> = ({ element, isEditing, onUpdate }) => {
+}> = ({ element, isEditing, onUpdate, deviceType, columnCount = 1 }) => {
   const tabs = element.content.tabs || [
     { id: 'tab1', label: 'Tab 1', content: 'Content for tab 1' },
     { id: 'tab2', label: 'Tab 2', content: 'Content for tab 2' },
@@ -270,7 +274,7 @@ const TabsElement: React.FC<{
   const gridCols = tabs.length <= 2 ? 'grid-cols-2' : tabs.length === 3 ? 'grid-cols-3' : 'grid-cols-4';
 
   return (
-    <div className="max-w-2xl mx-auto" style={element.styles}>
+    <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-2xl mx-auto'}`} style={element.styles}>
       <Tabs defaultValue={defaultTab} className="w-full">
         <TabsList className={`grid w-full ${gridCols}`}>
           {tabs.map((tab: any, index: number) => (

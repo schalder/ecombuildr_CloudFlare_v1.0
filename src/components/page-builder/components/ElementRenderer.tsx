@@ -10,6 +10,7 @@ interface ElementRendererProps {
   element: PageBuilderElement;
   isPreviewMode: boolean;
   deviceType?: 'desktop' | 'tablet' | 'mobile';
+  columnCount?: number;
   onSelectElement: (element: PageBuilderElement | undefined) => void;
   onUpdateElement: (elementId: string, updates: Partial<PageBuilderElement>) => void;
   onRemoveElement: (elementId: string) => void;
@@ -24,6 +25,7 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
   element,
   isPreviewMode,
   deviceType = 'desktop',
+  columnCount = 1,
   onSelectElement,
   onUpdateElement,
   onRemoveElement,
@@ -139,6 +141,7 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
         element={element}
         isEditing={!isPreviewMode}
         deviceType={deviceType}
+        columnCount={columnCount}
         onUpdate={handleUpdateElement}
       />
     </div>

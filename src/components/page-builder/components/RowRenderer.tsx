@@ -153,6 +153,7 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
               column={column}
               sectionId={sectionId}
               rowId={row.id}
+              columnCount={row.columns.length}
               isPreviewMode={isPreviewMode}
               deviceType={deviceType}
               onSelectElement={onSelectElement}

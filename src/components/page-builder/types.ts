@@ -91,7 +91,7 @@ export interface ElementType {
   name: string;
   category: 'basic' | 'media' | 'ecommerce' | 'marketing' | 'form' | 'custom';
   icon: React.ComponentType<{ className?: string }>;
-  component: React.ComponentType<{ element: PageBuilderElement; isEditing?: boolean; deviceType?: 'desktop' | 'tablet' | 'mobile'; onUpdate?: (updates: Partial<PageBuilderElement>) => void; }>;
+  component: React.ComponentType<{ element: PageBuilderElement; isEditing?: boolean; deviceType?: 'desktop' | 'tablet' | 'mobile'; columnCount?: number; onUpdate?: (updates: Partial<PageBuilderElement>) => void; }>;
   defaultContent: Record<string, any>;
   description?: string;
 }

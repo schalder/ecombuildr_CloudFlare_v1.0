@@ -12,6 +12,7 @@ interface ColumnRendererProps {
   column: PageBuilderColumn;
   sectionId: string;
   rowId: string;
+  columnCount?: number;
   isPreviewMode: boolean;
   deviceType?: 'desktop' | 'tablet' | 'mobile';
   onSelectElement: (element: PageBuilderElement | undefined) => void;
@@ -25,6 +26,7 @@ export const ColumnRenderer: React.FC<ColumnRendererProps> = ({
   column,
   sectionId,
   rowId,
+  columnCount = 1,
   isPreviewMode,
   deviceType = 'desktop',
   onSelectElement,
@@ -130,6 +132,7 @@ export const ColumnRenderer: React.FC<ColumnRendererProps> = ({
                 element={element}
                 isPreviewMode={isPreviewMode}
                 deviceType={deviceType}
+                columnCount={columnCount}
                 onSelectElement={onSelectElement}
                 onUpdateElement={onUpdateElement}
                 onRemoveElement={onRemoveElement}

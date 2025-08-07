@@ -12,8 +12,9 @@ const HeadingElement: React.FC<{
   element: PageBuilderElement;
   isEditing?: boolean;
   deviceType?: 'desktop' | 'tablet' | 'mobile';
+  columnCount?: number;
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
-}> = ({ element, isEditing, onUpdate, deviceType }) => {
+}> = ({ element, isEditing, onUpdate, deviceType, columnCount = 1 }) => {
   const level = element.content.level || 2;
   const text = element.content.text || 'Heading';
   const Tag = `h${level}` as keyof JSX.IntrinsicElements;
@@ -55,8 +56,9 @@ const ParagraphElement: React.FC<{
   element: PageBuilderElement;
   isEditing?: boolean;
   deviceType?: 'desktop' | 'tablet' | 'mobile';
+  columnCount?: number;
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
-}> = ({ element, isEditing, onUpdate, deviceType }) => {
+}> = ({ element, isEditing, onUpdate, deviceType, columnCount = 1 }) => {
   const text = element.content.text || 'Your text content goes here...';
 
   const handleTextChange = (newText: string) => {
