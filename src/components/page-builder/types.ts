@@ -53,6 +53,8 @@ export interface PageBuilderElement {
     fontFamily?: string;
     // Responsive typography properties
     responsive?: {
+      fullWidth?: boolean;
+      widthType?: 'auto' | 'custom';
       desktop?: {
         fontSize?: string;
         fontWeight?: string;

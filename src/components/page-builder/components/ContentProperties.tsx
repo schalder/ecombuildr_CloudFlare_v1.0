@@ -160,7 +160,7 @@ export const ContentProperties: React.FC<ContentPropertiesProps> = ({
             checked={element.content.fullWidth || false}
             onChange={(e) => onUpdate('fullWidth', e.target.checked)}
           />
-          <Label htmlFor="button-full-width">Full Width</Label>
+          <Label htmlFor="button-full-width">Full Width (Legacy - use Style tab)</Label>
         </div>
       </div>
     );

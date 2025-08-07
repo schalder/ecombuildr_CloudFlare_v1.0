@@ -44,7 +44,7 @@ export const ButtonElementStyles: React.FC<ButtonElementStylesProps> = ({
         <div className="flex items-center space-x-2">
           <Switch
             id="full-width"
-            checked={element.content.fullWidth || false}
+            checked={element.styles?.responsive?.fullWidth || element.content.fullWidth || false}
             onCheckedChange={(checked) => {
               const currentResponsive = element.styles?.responsive || {};
               onStyleUpdate('responsive', {
@@ -56,11 +56,11 @@ export const ButtonElementStyles: React.FC<ButtonElementStylesProps> = ({
           <Label htmlFor="full-width" className="text-xs">Full Width</Label>
         </div>
 
-        {!element.content.fullWidth && (
-          <div>
+        {!(element.styles?.responsive?.fullWidth || element.content.fullWidth) && (
+          <div className="space-y-2">
             <Label className="text-xs">Width Type</Label>
             <Select
-              value={element.content.widthType || 'auto'}
+              value={element.styles?.responsive?.widthType || element.content.widthType || 'auto'}
               onValueChange={(value) => {
                 const currentResponsive = element.styles?.responsive || {};
                 onStyleUpdate('responsive', {
@@ -80,7 +80,7 @@ export const ButtonElementStyles: React.FC<ButtonElementStylesProps> = ({
           </div>
         )}
 
-        {element.content.widthType === 'custom' && !element.content.fullWidth && (
+        {(element.styles?.responsive?.widthType === 'custom' || element.content.widthType === 'custom') && !(element.styles?.responsive?.fullWidth || element.content.fullWidth) && (
           <div>
             <Label className="text-xs">Custom Width</Label>
             <Input
