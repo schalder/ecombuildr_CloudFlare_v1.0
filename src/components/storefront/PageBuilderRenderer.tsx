@@ -3,6 +3,7 @@ import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { PageBuilderData } from '@/components/page-builder/types';
 import { SectionRenderer } from '@/components/page-builder/components/SectionRenderer';
+import { BREAKPOINTS, DeviceType } from '@/components/page-builder/utils/responsive';
 
 interface PageBuilderRendererProps {
   data: PageBuilderData;
@@ -13,6 +14,26 @@ export const PageBuilderRenderer: React.FC<PageBuilderRendererProps> = ({
   data, 
   className = '' 
 }) => {
+  const [deviceType, setDeviceType] = React.useState<DeviceType>('desktop');
+
+  React.useEffect(() => {
+    const calculateDeviceType = (): DeviceType => {
+      const width = window.innerWidth;
+      if (width < BREAKPOINTS.md) return 'mobile';
+      if (width < BREAKPOINTS.lg) return 'tablet';
+      return 'desktop';
+    };
+
+    const handleResize = () => {
+      const next = calculateDeviceType();
+      setDeviceType(next);
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   console.log('PageBuilderRenderer: Received data:', data);
   
   if (!data) {
@@ -58,7 +79,7 @@ export const PageBuilderRenderer: React.FC<PageBuilderRendererProps> = ({
             sectionIndex={index}
             isSelected={false}
             isPreviewMode={true}
-            deviceType="desktop"
+            deviceType={deviceType}
             onSelectElement={() => {}}
             onUpdateElement={() => {}}
             onAddElement={() => {}}
