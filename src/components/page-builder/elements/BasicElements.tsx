@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { elementRegistry } from './ElementRegistry';
 import { InlineEditor } from '../components/InlineEditor';
 import { renderElementStyles } from '../utils/styleRenderer';
+import { generateResponsiveCSS } from '../utils/responsiveStyles';
 
 // Heading Element
 const HeadingElement: React.FC<{
@@ -15,7 +16,7 @@ const HeadingElement: React.FC<{
   deviceType?: 'desktop' | 'tablet' | 'mobile';
   columnCount?: number;
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
-}> = ({ element, isEditing, onUpdate, deviceType, columnCount = 1 }) => {
+}> = ({ element, isEditing, onUpdate, deviceType = 'desktop', columnCount = 1 }) => {
   const level = element.content.level || 2;
   const text = element.content.text || 'Heading';
   const Tag = `h${level}` as keyof JSX.IntrinsicElements;
@@ -26,30 +27,44 @@ const HeadingElement: React.FC<{
     });
   };
 
+  // Base styles and defaults
   const elementStyles = renderElementStyles(element);
-  const styles = {
+  const baseStyles = {
     ...elementStyles,
     textAlign: element.styles?.textAlign || (deviceType === 'tablet' ? 'center' : 'left'),
     color: element.styles?.color || 'inherit',
     fontSize: element.styles?.fontSize || `${3.5 - level * 0.5}rem`,
     lineHeight: element.styles?.lineHeight || '1.2',
     backgroundColor: element.styles?.backgroundColor || 'transparent',
-  };
+  } as React.CSSProperties;
+
+  // Responsive overrides
+  const responsive = element.styles?.responsive || {};
+  const deviceKey = deviceType === 'tablet' ? 'desktop' : deviceType;
+  const currentDeviceStyles = (responsive as any)[deviceKey] || {};
+
+  const finalStyles = { ...baseStyles, ...currentDeviceStyles } as React.CSSProperties;
+  const cleanStyles = Object.fromEntries(
+    Object.entries(finalStyles).filter(([_, v]) => v !== undefined && v !== '')
+  ) as React.CSSProperties;
+
+  const className = [`element-${element.id}`, 'outline-none font-bold block rounded'].join(' ');
 
   return (
-    <Tag 
-      style={styles as any} 
-      className="outline-none font-bold block rounded"
-    >
-      <InlineEditor
-        value={text}
-        onChange={handleTextChange}
-        placeholder="Enter heading text..."
-        disabled={!isEditing}
-        multiline={true}
-        className="font-inherit text-inherit leading-tight"
-      />
-    </Tag>
+    <>
+      <style>{generateResponsiveCSS(element.id, element.styles)}</style>
+      <Tag style={cleanStyles} className={className}>
+        <InlineEditor
+          value={text}
+          onChange={handleTextChange}
+          placeholder="Enter heading text..."
+          disabled={!isEditing}
+          multiline={true}
+          className="font-inherit leading-tight"
+          style={{ textAlign: cleanStyles.textAlign as any }}
+        />
+      </Tag>
+    </>
   );
 };
 
@@ -60,7 +75,7 @@ const ParagraphElement: React.FC<{
   deviceType?: 'desktop' | 'tablet' | 'mobile';
   columnCount?: number;
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
-}> = ({ element, isEditing, onUpdate, deviceType, columnCount = 1 }) => {
+}> = ({ element, isEditing, onUpdate, deviceType = 'desktop', columnCount = 1 }) => {
   const text = element.content.text || 'Your text content goes here...';
 
   const handleTextChange = (newText: string) => {
@@ -69,30 +84,44 @@ const ParagraphElement: React.FC<{
     });
   };
 
+  // Base styles and defaults
   const elementStyles = renderElementStyles(element);
-  const styles = {
+  const baseStyles = {
     ...elementStyles,
     textAlign: element.styles?.textAlign || (deviceType === 'tablet' ? 'center' : 'left'),
     color: element.styles?.color || 'inherit',
     fontSize: element.styles?.fontSize || '1rem',
     lineHeight: element.styles?.lineHeight || '1.6',
     backgroundColor: element.styles?.backgroundColor || 'transparent',
-  };
+  } as React.CSSProperties;
+
+  // Responsive overrides
+  const responsive = element.styles?.responsive || {};
+  const deviceKey = deviceType === 'tablet' ? 'desktop' : deviceType;
+  const currentDeviceStyles = (responsive as any)[deviceKey] || {};
+
+  const finalStyles = { ...baseStyles, ...currentDeviceStyles } as React.CSSProperties;
+  const cleanStyles = Object.fromEntries(
+    Object.entries(finalStyles).filter(([_, v]) => v !== undefined && v !== '')
+  ) as React.CSSProperties;
+
+  const className = [`element-${element.id}`, 'outline-none rounded'].join(' ');
 
   return (
-    <div 
-      style={styles as any} 
-      className="outline-none rounded"
-    >
-      <InlineEditor
-        value={text}
-        onChange={handleTextChange}
-        placeholder="Enter your text content..."
-        disabled={!isEditing}
-        multiline={true}
-        className="text-inherit leading-inherit"
-      />
-    </div>
+    <>
+      <style>{generateResponsiveCSS(element.id, element.styles)}</style>
+      <div style={cleanStyles} className={className}>
+        <InlineEditor
+          value={text}
+          onChange={handleTextChange}
+          placeholder="Enter your text content..."
+          disabled={!isEditing}
+          multiline={true}
+          className="leading-inherit"
+          style={{ textAlign: cleanStyles.textAlign as any }}
+        />
+      </div>
+    </>
   );
 };
 

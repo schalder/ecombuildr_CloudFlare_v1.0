@@ -8,6 +8,7 @@ interface InlineEditorProps {
   className?: string;
   multiline?: boolean;
   disabled?: boolean;
+  style?: React.CSSProperties;
 }
 
 export const InlineEditor: React.FC<InlineEditorProps> = ({
@@ -16,7 +17,8 @@ export const InlineEditor: React.FC<InlineEditorProps> = ({
   placeholder = "Click to edit...",
   className = "",
   multiline = false,
-  disabled = false
+  disabled = false,
+  style
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(value);
@@ -122,6 +124,7 @@ export const InlineEditor: React.FC<InlineEditorProps> = ({
         )}
         placeholder={placeholder}
         style={{
+          ...(style || {}),
           height: multiline ? 'auto' : undefined,
           minHeight: multiline ? '3rem' : undefined,
         }}
@@ -139,6 +142,7 @@ export const InlineEditor: React.FC<InlineEditorProps> = ({
         multiline && "block w-full",
         className
       )}
+      style={style}
     >
       {value || placeholder}
     </span>

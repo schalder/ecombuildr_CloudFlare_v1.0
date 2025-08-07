@@ -4,7 +4,8 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Separator } from '@/components/ui/separator';
-import { AlignLeft, AlignCenter, AlignRight } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { AlignLeft, AlignCenter, AlignRight, Monitor, Smartphone } from 'lucide-react';
 import { PageBuilderElement } from '../../types';
 
 interface TextElementStylesProps {
@@ -16,6 +17,20 @@ export const TextElementStyles: React.FC<TextElementStylesProps> = ({
   element,
   onStyleUpdate,
 }) => {
+  // Responsive controls state and helpers
+  const [responsiveTab, setResponsiveTab] = React.useState<'desktop' | 'mobile'>('desktop');
+  const responsiveStyles = element.styles?.responsive || { desktop: {}, mobile: {} };
+  const currentStyles = (responsiveStyles as any)[responsiveTab] || {};
+  const handleResponsiveUpdate = (property: string, value: any) => {
+    const updatedResponsive = {
+      ...responsiveStyles,
+      [responsiveTab]: {
+        ...currentStyles,
+        [property]: value,
+      },
+    };
+    onStyleUpdate('responsive', updatedResponsive);
+  };
   return (
     <div className="space-y-4">
       {/* Typography */}

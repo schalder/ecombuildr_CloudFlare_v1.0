@@ -104,7 +104,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
     
     // Text-based elements (heading, text)
     if (['heading', 'text'].includes(selectedElement.type)) {
-      return <TextElementStyles element={selectedElement} onStyleUpdate={handleStyleUpdate} />;
+      return <TextElementStyles key={`text-${selectedElement.id}`} element={selectedElement} onStyleUpdate={handleStyleUpdate} />;
     }
     
     // Media elements (image, video)
