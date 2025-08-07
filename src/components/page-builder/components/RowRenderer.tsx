@@ -76,13 +76,22 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
     }
     
     if (deviceType === 'tablet') {
-      // For tablet, ALWAYS use single column for better readability
-      // This prevents empty space on the right side
-      return {
-        display: 'grid',
-        gridTemplateColumns: '1fr',
-        gap: '16px'
-      };
+      if (row.columnLayout === '1') {
+        // True single column - center content
+        return {
+          display: 'grid',
+          gridTemplateColumns: '1fr',
+          gap: '16px',
+          justifyItems: 'center'
+        };
+      } else {
+        // Multi-column that should stack - keep left align
+        return {
+          display: 'grid',
+          gridTemplateColumns: '1fr',
+          gap: '16px'
+        };
+      }
     }
     
     // Desktop - use original layout
