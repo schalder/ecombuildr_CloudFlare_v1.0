@@ -47,6 +47,8 @@ import { CheckoutPage } from "./pages/storefront/CheckoutPage";
 import { PaymentProcessing } from "./pages/storefront/PaymentProcessing";
 import { OrderConfirmation } from "./pages/storefront/OrderConfirmation";
 import { StorefrontPage } from "./pages/storefront/StorefrontPage";
+import { FunnelStepPage } from "./pages/storefront/FunnelStepPage";
+import { WebsitePage } from "./pages/storefront/WebsitePage";
 
 const queryClient = new QueryClient();
 
@@ -115,6 +117,14 @@ const App = () => (
                 <Route path="/store/:slug/order-confirmation/:orderId" element={<OrderConfirmation />} />
                 <Route path="/store/:slug/:pageSlug" element={<StorefrontPage />} />
                 <Route path="/store/:slug" element={<StorefrontHome />} />
+                
+                {/* Funnel Routes */}
+                <Route path="/funnel/:funnelId/:stepSlug" element={<FunnelStepPage />} />
+                <Route path="/funnel/:funnelId" element={<FunnelStepPage />} />
+
+                {/* Website Routes */}
+                <Route path="/website/:websiteId/:pageSlug" element={<WebsitePage />} />
+                <Route path="/website/:websiteId" element={<WebsitePage />} />
                 
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
