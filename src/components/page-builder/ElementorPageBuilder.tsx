@@ -1081,7 +1081,7 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
                 />
                 
                 {(section.rows || []).map((row, index) => (
-                  <React.Fragment key={row.id}>
+                  <div key={row.id}>
                     <RowComponent
                       row={row}
                       sectionId={section.id}
@@ -1105,7 +1105,7 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
                       insertIndex={index + 1}
                       onMoveRow={onMoveRow}
                     />
-                  </React.Fragment>
+                  </div>
                 ))}
                 
                 {/* Add Row button at end */}
