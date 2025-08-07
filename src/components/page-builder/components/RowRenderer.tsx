@@ -76,57 +76,13 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
     }
     
     if (deviceType === 'tablet') {
-      // Smart tablet logic: check if we should stack content
-      const hasContentInMultipleColumns = row.columns.filter(col => col.elements.length > 0).length > 1;
-      const hasTextHeavyContent = row.columns.some(col => 
-        col.elements.some(el => 
-          el.type === 'heading' || 
-          el.type === 'paragraph' || 
-          el.type === 'testimonials' ||
-          el.type === 'text'
-        )
-      );
-      
-      // Force single column for better readability in these cases:
-      // 1. Only one column has content
-      // 2. Text-heavy content that reads better stacked
-      // 3. Single column layouts
-      if (!hasContentInMultipleColumns || hasTextHeavyContent || columnCount === 1) {
-        return {
-          display: 'grid',
-          gridTemplateColumns: '1fr',
-          gap: '16px'
-        };
-      }
-      
-      // For multi-column layouts with visual content, use smart 2-column max
-      switch (row.columnLayout) {
-        case '1-1-1-1':
-        case '1-1-1':
-          return {
-            display: 'grid',
-            gridTemplateColumns: 'repeat(2, 1fr)',
-            gap: '16px'
-          };
-        case '1-2':
-          return {
-            display: 'grid',
-            gridTemplateColumns: '1fr 2fr',
-            gap: '16px'
-          };
-        case '2-1':
-          return {
-            display: 'grid',
-            gridTemplateColumns: '2fr 1fr',
-            gap: '16px'
-          };
-        default:
-          return {
-            display: 'grid',
-            gridTemplateColumns: columnCount > 2 ? 'repeat(2, 1fr)' : 'repeat(' + columnCount + ', 1fr)',
-            gap: '16px'
-          };
-      }
+      // For tablet, ALWAYS use single column for better readability
+      // This prevents empty space on the right side
+      return {
+        display: 'grid',
+        gridTemplateColumns: '1fr',
+        gap: '16px'
+      };
     }
     
     // Desktop - use original layout
