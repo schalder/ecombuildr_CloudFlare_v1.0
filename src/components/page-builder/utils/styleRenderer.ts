@@ -133,9 +133,6 @@ export const renderColumnStyles = (column: PageBuilderColumn, deviceType: 'deskt
     if (column.styles.marginBottom) styles.marginBottom = column.styles.marginBottom;
     if (column.styles.marginLeft) styles.marginLeft = column.styles.marginLeft;
     
-    // Alignment
-    if (column.styles.textAlign) (styles as any).textAlign = column.styles.textAlign;
-    
     // Width
     if (column.styles.maxWidth) styles.maxWidth = column.styles.maxWidth;
     if (column.styles.minWidth) styles.minWidth = column.styles.minWidth;
