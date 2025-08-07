@@ -49,6 +49,10 @@ export interface PageBuilderElement {
     objectFit?: 'cover' | 'contain' | 'fill' | 'none' | 'scale-down';
     fontWeight?: string;
     fontFamily?: string;
+    responsive?: {
+      desktop?: Record<string, any>;
+      mobile?: Record<string, any>;
+    };
   };
 }
 

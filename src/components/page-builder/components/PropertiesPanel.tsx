@@ -49,7 +49,8 @@ import {
   TextElementStyles,
   MediaElementStyles, 
   LayoutElementStyles,
-  FormElementStyles
+  FormElementStyles,
+  ButtonElementStyles
 } from './ElementStyles';
 
 import { PageBuilderElement } from '../types';
@@ -94,8 +95,13 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
 
   // Determine which style component to render based on element type
   const renderElementStyles = () => {
-    // Text-based elements (heading, text, button)
-    if (['heading', 'text', 'button'].includes(selectedElement.type)) {
+    // Button elements get their own specialized component
+    if (selectedElement.type === 'button') {
+      return <ButtonElementStyles element={selectedElement} onStyleUpdate={handleStyleUpdate} />;
+    }
+    
+    // Text-based elements (heading, text)
+    if (['heading', 'text'].includes(selectedElement.type)) {
       return <TextElementStyles element={selectedElement} onStyleUpdate={handleStyleUpdate} />;
     }
     

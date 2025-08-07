@@ -238,7 +238,7 @@ const ButtonElement: React.FC<{
   isEditing?: boolean;
   deviceType?: 'desktop' | 'tablet' | 'mobile';
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
-}> = ({ element, isEditing, onUpdate }) => {
+}> = ({ element, isEditing, deviceType = 'desktop', onUpdate }) => {
   const text = element.content.text || 'Button';
   const variant = element.content.variant || 'default';
   const size = element.content.size || 'default';
@@ -269,33 +269,86 @@ const ButtonElement: React.FC<{
     alignment === 'right' ? 'flex justify-end' : 
     'flex justify-start';
 
-  // Combine custom styles with variant styles properly
-  const customStyles = {
+  // Get responsive styles
+  const responsiveStyles = element.styles?.responsive || {};
+  const currentDeviceStyles = responsiveStyles[deviceType === 'tablet' ? 'desktop' : deviceType] || {};
+
+  // Smart padding based on font size
+  const fontSize = currentDeviceStyles.fontSize || element.styles?.fontSize || '16px';
+  const smartPadding = element.styles?.padding || (() => {
+    const size = parseInt(fontSize.replace(/\D/g, ''));
+    if (size <= 12) return '6px 12px';
+    if (size <= 16) return '8px 16px';
+    if (size <= 20) return '10px 20px';
+    if (size <= 24) return '12px 24px';
+    if (size <= 32) return '16px 32px';
+    return '20px 40px';
+  })();
+
+  // Combine styles with responsive overrides
+  const baseStyles = {
     backgroundColor: element.styles?.backgroundColor,
     color: element.styles?.color,
     fontSize: element.styles?.fontSize,
-    padding: element.styles?.padding,
+    fontWeight: element.styles?.fontWeight,
+    borderWidth: element.styles?.borderWidth,
+    borderColor: element.styles?.borderColor,
+    borderRadius: element.styles?.borderRadius,
+    boxShadow: element.styles?.boxShadow,
+    padding: smartPadding,
     margin: element.styles?.margin,
-    ...(element.content.customCSS ? {} : {}) // Custom CSS will be applied via className
+    width: element.styles?.width,
+    cursor: 'pointer'
+  };
+
+  const finalStyles = {
+    ...baseStyles,
+    ...currentDeviceStyles
   };
 
   // Remove undefined values from styles
   const cleanStyles = Object.fromEntries(
-    Object.entries(customStyles).filter(([_, v]) => v !== undefined && v !== '')
+    Object.entries(finalStyles).filter(([_, v]) => v !== undefined && v !== '')
   );
 
-  const customClassName = element.content.customCSS ? 
-    `button-${element.id} outline-none cursor-pointer` : 
-    'outline-none cursor-pointer';
+  // Generate responsive CSS for different devices
+  const generateResponsiveCSS = () => {
+    if (!responsiveStyles.desktop && !responsiveStyles.mobile) return '';
+    
+    let css = '';
+    
+    if (responsiveStyles.desktop && Object.keys(responsiveStyles.desktop).length > 0) {
+      const desktopProps = Object.entries(responsiveStyles.desktop)
+        .map(([prop, value]) => `${prop.replace(/([A-Z])/g, '-$1').toLowerCase()}: ${value}`)
+        .join('; ');
+      css += `.element-${element.id} { ${desktopProps}; }`;
+    }
+    
+    if (responsiveStyles.mobile && Object.keys(responsiveStyles.mobile).length > 0) {
+      const mobileProps = Object.entries(responsiveStyles.mobile)
+        .map(([prop, value]) => `${prop.replace(/([A-Z])/g, '-$1').toLowerCase()}: ${value}`)
+        .join('; ');
+      css += `@media (max-width: 767px) { .element-${element.id} { ${mobileProps}; } }`;
+    }
+    
+    return css;
+  };
+
+  const customClassName = [
+    `element-${element.id}`,
+    'outline-none cursor-pointer transition-all duration-200',
+    element.styles?.width === '100%' ? 'w-full' : '',
+    element.content.customCSS ? `button-${element.id}` : ''
+  ].filter(Boolean).join(' ');
 
   return (
     <>
-      {/* Inject custom CSS if provided */}
-      {element.content.customCSS && (
-        <style>
-          {`.button-${element.id} { ${element.content.customCSS} }`}
-        </style>
-      )}
+      {/* Inject responsive CSS */}
+      <style>
+        {generateResponsiveCSS()}
+        {element.content.customCSS && `.button-${element.id} { ${element.content.customCSS} }`}
+      </style>
+      
       <div className={containerClass} style={{ margin: element.styles?.margin }}>
         <Button 
           variant={variant as any} 
@@ -310,7 +363,7 @@ const ButtonElement: React.FC<{
             onChange={handleTextChange}
             placeholder="Button text..."
             disabled={!isEditing}
-            className="text-inherit font-inherit"
+            className="text-inherit font-inherit bg-transparent border-0 outline-none ring-0 focus:ring-0"
           />
         </Button>
       </div>
