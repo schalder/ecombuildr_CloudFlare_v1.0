@@ -185,16 +185,25 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
     return styles;
   };
 
+  const hasUserBackground = row.styles?.backgroundColor && row.styles.backgroundColor !== 'transparent';
+  const hasUserShadow = row.styles?.boxShadow && row.styles.boxShadow !== 'none';
+
   return (
     <div
       ref={drop}
       className={cn(
         'relative group min-h-[80px] border border-dashed transition-all duration-200',
-        isHovered && !isPreviewMode && 'border-secondary/50 bg-secondary/5',
+        isHovered && !isPreviewMode && 'border-secondary/50',
+        isHovered && !isPreviewMode && !hasUserBackground && 'bg-secondary/5',
         !isHovered && 'border-transparent',
-        isOver && 'bg-primary/5 border-primary/20 rounded-lg'
+        isOver && 'border-primary/20 rounded-lg',
+        isOver && !hasUserBackground && 'bg-primary/5'
       )}
-      style={getRowStyles()}
+      style={{
+        ...getRowStyles(),
+        backgroundColor: hasUserBackground ? `${row.styles?.backgroundColor} !important` : getRowStyles().backgroundColor,
+        boxShadow: hasUserShadow ? `${row.styles?.boxShadow} !important` : getRowStyles().boxShadow
+      }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={handleRowClick}

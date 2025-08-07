@@ -169,17 +169,26 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({
     return styles;
   };
 
+  const hasUserBackground = section.styles?.backgroundColor && section.styles.backgroundColor !== 'transparent';
+  const hasUserShadow = section.styles?.boxShadow && section.styles.boxShadow !== 'none';
+
   return (
     <div
       ref={drop}
       className={cn(
         'relative group border-2 border-dashed transition-all duration-200',
-        isSelected && !isPreviewMode && 'border-primary bg-primary/5',
-        isHovered && !isPreviewMode && !isSelected && 'border-primary/30 bg-primary/2',
+        isSelected && !isPreviewMode && 'border-primary',
+        isSelected && !isPreviewMode && !hasUserBackground && 'bg-primary/5',
+        isHovered && !isPreviewMode && !isSelected && 'border-primary/30',
+        isHovered && !isPreviewMode && !isSelected && !hasUserBackground && 'bg-primary/2',
         !isHovered && !isSelected && 'border-transparent',
-        isOver && 'bg-primary/5'
+        isOver && !hasUserBackground && 'bg-primary/5'
       )}
-      style={getSectionStyles()}
+      style={{
+        ...getSectionStyles(),
+        backgroundColor: hasUserBackground ? `${section.styles?.backgroundColor} !important` : getSectionStyles().backgroundColor,
+        boxShadow: hasUserShadow ? `${section.styles?.boxShadow} !important` : getSectionStyles().boxShadow
+      }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={handleSectionClick}

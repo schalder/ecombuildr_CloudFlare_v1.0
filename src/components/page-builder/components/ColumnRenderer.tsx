@@ -115,16 +115,24 @@ export const ColumnRenderer: React.FC<ColumnRendererProps> = ({
     return null;
   }
 
+  const hasUserBackground = column.styles?.backgroundColor && column.styles.backgroundColor !== 'transparent';
+  const hasUserShadow = column.styles?.boxShadow && column.styles.boxShadow !== 'none';
+
   return (
     <div
       ref={drop}
       className={cn(
         'relative min-h-[60px] rounded border-2 border-dashed border-transparent transition-colors',
-        isOver && 'border-primary/40 bg-primary/5',
+        isOver && 'border-primary/40',
+        isOver && !hasUserBackground && 'bg-primary/5',
         !isPreviewMode && isHovered && 'border-muted-foreground/30',
         getColumnResponsiveClasses(column, deviceType)
       )}
-      style={getColumnStyles()}
+      style={{
+        ...getColumnStyles(),
+        backgroundColor: hasUserBackground ? `${column.styles?.backgroundColor} !important` : getColumnStyles().backgroundColor,
+        boxShadow: hasUserShadow ? `${column.styles?.boxShadow} !important` : getColumnStyles().boxShadow
+      }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={handleColumnClick}
