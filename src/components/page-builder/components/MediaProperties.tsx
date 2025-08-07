@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { MediaSelector } from './MediaSelector';
+import { CompactMediaSelector } from './CompactMediaSelector';
 import { Plus, Trash2, GripVertical } from 'lucide-react';
 import { PageBuilderElement } from '../types';
 
@@ -121,7 +122,7 @@ export const ImageGalleryProperties: React.FC<MediaPropertiesProps> = ({
             <div key={index} className="flex items-center space-x-2 p-2 border rounded">
               <GripVertical className="h-4 w-4 text-muted-foreground" />
               <div className="flex-1">
-                <MediaSelector
+                <CompactMediaSelector
                   value={image}
                   onChange={(url) => updateImage(index, url)}
                   label={`Image ${index + 1}`}
@@ -246,7 +247,7 @@ export const ImageCarouselProperties: React.FC<MediaPropertiesProps> = ({
             <div key={index} className="flex items-center space-x-2 p-2 border rounded">
               <GripVertical className="h-4 w-4 text-muted-foreground" />
               <div className="flex-1">
-                <MediaSelector
+                <CompactMediaSelector
                   value={image}
                   onChange={(url) => updateImage(index, url)}
                   label={`Image ${index + 1}`}
