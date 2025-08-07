@@ -32,7 +32,10 @@ const ProductGridElement: React.FC<{
   // Get device-responsive grid classes
   const getGridClasses = () => {
     if (deviceType === 'mobile') return 'grid-cols-1';
-    if (deviceType === 'tablet') return 'grid-cols-2';
+    if (deviceType === 'tablet') {
+      // Smart tablet logic: use 2 cols for 2+ columns, 3 cols for 4+ columns
+      return columns >= 4 ? 'grid-cols-3' : 'grid-cols-2';
+    }
     return `grid-cols-${Math.min(columns, 4)}`;
   };
 
@@ -269,13 +272,19 @@ const CategoryNavigationElement: React.FC<{
   // Get device-responsive grid classes
   const getCircleGridClasses = () => {
     if (deviceType === 'mobile') return 'grid-cols-2';
-    if (deviceType === 'tablet') return 'grid-cols-4';
+    if (deviceType === 'tablet') {
+      // Smart tablet logic: use fewer columns if few categories
+      return displayCategories.length <= 2 ? 'grid-cols-2' : 'grid-cols-4';
+    }
     return 'grid-cols-6';
   };
   
   const getCardGridClasses = () => {
     if (deviceType === 'mobile') return 'grid-cols-1';
-    if (deviceType === 'tablet') return 'grid-cols-2';
+    if (deviceType === 'tablet') {
+      // Smart tablet logic: single column if few categories for better readability
+      return displayCategories.length <= 2 ? 'grid-cols-1' : 'grid-cols-2';
+    }
     return 'grid-cols-3';
   };
   
