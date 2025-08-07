@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 
 interface InlineEditorProps {
@@ -33,21 +33,39 @@ export const InlineEditor: React.FC<InlineEditorProps> = ({
     }
   }, [isEditing]);
 
-  // Auto-resize textarea based on content
-  useEffect(() => {
-    if (isEditing && multiline && inputRef.current) {
-      const textarea = inputRef.current as HTMLTextAreaElement;
-      // Reset height to auto to get the correct scrollHeight
+  // Optimized auto-resize with debounce and RAF
+  const autoResize = useCallback((textarea: HTMLTextAreaElement) => {
+    // Use RAF to prevent forced reflow during DOM updates
+    requestAnimationFrame(() => {
+      if (!textarea) return;
+      
+      // Batch DOM reads/writes to avoid layout thrashing
+      const currentHeight = textarea.style.height;
       textarea.style.height = 'auto';
-      // Get computed font size to calculate better minimum height
+      const scrollHeight = textarea.scrollHeight;
+      
+      // Cache computed style to avoid repeated calculations
       const computedStyle = window.getComputedStyle(textarea);
       const fontSize = parseFloat(computedStyle.fontSize);
       const lineHeight = parseFloat(computedStyle.lineHeight) || fontSize * 1.2;
-      const minHeight = Math.max(lineHeight + 16, 48); // padding + line height, minimum 48px
-      const newHeight = Math.max(textarea.scrollHeight, minHeight);
-      textarea.style.height = `${newHeight}px`;
+      const minHeight = Math.max(lineHeight + 16, 48);
+      const newHeight = Math.max(scrollHeight, minHeight);
+      
+      // Only update if height actually changed to prevent unnecessary reflows
+      if (currentHeight !== `${newHeight}px`) {
+        textarea.style.height = `${newHeight}px`;
+      }
+    });
+  }, []);
+
+  // Debounced resize effect
+  useEffect(() => {
+    if (isEditing && multiline && inputRef.current) {
+      const textarea = inputRef.current as HTMLTextAreaElement;
+      const timeoutId = setTimeout(() => autoResize(textarea), 0);
+      return () => clearTimeout(timeoutId);
     }
-  }, [isEditing, multiline, editValue]);
+  }, [isEditing, multiline, editValue, autoResize]);
 
   const handleClick = () => {
     if (!disabled) {
@@ -81,6 +99,11 @@ export const InlineEditor: React.FC<InlineEditorProps> = ({
     setEditValue(newValue);
     // Real-time updates
     onChange(newValue);
+    
+    // Trigger resize for multiline inputs with debounce
+    if (multiline && e.target instanceof HTMLTextAreaElement) {
+      autoResize(e.target);
+    }
   };
 
   if (isEditing) {
