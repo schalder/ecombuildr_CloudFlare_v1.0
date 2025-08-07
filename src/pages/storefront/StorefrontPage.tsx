@@ -209,6 +209,8 @@ export const StorefrontPage: React.FC = () => {
           .eq('is_published', true)
           .maybeSingle();
 
+        console.log('StorefrontPage: Database query result:', { pageData, pageError });
+
         if (pageError) {
           console.error('StorefrontPage: Error fetching page:', pageError);
           setError('Failed to load page');

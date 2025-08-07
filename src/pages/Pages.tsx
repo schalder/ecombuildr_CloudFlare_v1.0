@@ -39,14 +39,15 @@ export default function Pages() {
 
   const fetchPages = async () => {
     try {
-      const { data: stores } = await supabase
+      const { data: storesData } = await supabase
         .from('stores')
-        .select('id')
+        .select('id, slug')
         .eq('owner_id', user?.id);
 
-      if (!stores || stores.length === 0) return;
+      if (!storesData || storesData.length === 0) return;
 
-      const storeIds = stores.map(store => store.id);
+      setStores(storesData);
+      const storeIds = storesData.map(store => store.id);
       const { data, error } = await supabase
         .from('pages')
         .select('*')
@@ -205,10 +206,19 @@ export default function Pages() {
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => {
                               // Get the store slug from the current stores
-                              const storeSlug = stores?.[0]?.slug; // Assuming single store for now
+                              const storeSlug = stores?.[0]?.slug;
+                              if (!storeSlug) {
+                                toast({
+                                  title: "Error",
+                                  description: "Store slug not found",
+                                  variant: "destructive",
+                                });
+                                return;
+                              }
                               const previewUrl = page.is_homepage 
-                                ? `/${storeSlug}` 
-                                : `/${storeSlug}/${page.slug}`;
+                                ? `/store/${storeSlug}` 
+                                : `/store/${storeSlug}/${page.slug}`;
+                              console.log('Opening preview URL:', previewUrl);
                               window.open(previewUrl, '_blank');
                             }}>
                               <Eye className="mr-2 h-4 w-4" />

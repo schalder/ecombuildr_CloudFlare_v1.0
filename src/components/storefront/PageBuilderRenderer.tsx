@@ -11,10 +11,27 @@ export const PageBuilderRenderer: React.FC<PageBuilderRendererProps> = ({
   data, 
   className = '' 
 }) => {
-  if (!data?.sections || data.sections.length === 0) {
+  console.log('PageBuilderRenderer: Received data:', data);
+  
+  if (!data) {
+    console.log('PageBuilderRenderer: No data provided');
+    return (
+      <div className={`text-center py-12 ${className}`}>
+        <p className="text-muted-foreground">No page data available.</p>
+      </div>
+    );
+  }
+
+  if (!data.sections || !Array.isArray(data.sections) || data.sections.length === 0) {
+    console.log('PageBuilderRenderer: No sections found or sections is not an array:', data.sections);
     return (
       <div className={`text-center py-12 ${className}`}>
         <p className="text-muted-foreground">This page is still being set up.</p>
+        <div className="mt-4 text-xs text-muted-foreground">
+          <p>Data keys: {Object.keys(data).join(', ')}</p>
+          <p>Sections type: {typeof data.sections}</p>
+          <p>Sections length: {Array.isArray(data.sections) ? data.sections.length : 'Not an array'}</p>
+        </div>
       </div>
     );
   }

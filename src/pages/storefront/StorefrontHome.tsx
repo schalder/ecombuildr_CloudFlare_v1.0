@@ -52,7 +52,8 @@ export const StorefrontHome: React.FC = () => {
     if (!store) return;
     
     try {
-      const { data } = await supabase
+      console.log('StorefrontHome: Fetching homepage for store:', store.id);
+      const { data, error } = await supabase
         .from('pages')
         .select('*')
         .eq('store_id', store.id)
@@ -60,9 +61,15 @@ export const StorefrontHome: React.FC = () => {
         .eq('is_published', true)
         .maybeSingle();
 
+      if (error) {
+        console.error('StorefrontHome: Error fetching homepage:', error);
+        return;
+      }
+
+      console.log('StorefrontHome: Homepage data:', data);
       setHomepage(data);
     } catch (error) {
-      console.error('Error fetching homepage:', error);
+      console.error('StorefrontHome: Error fetching homepage:', error);
     }
   };
 
@@ -127,7 +134,10 @@ export const StorefrontHome: React.FC = () => {
   }
 
   // Check if there's a custom homepage
-  if (homepage && homepage.content) {
+  if (homepage) {
+    console.log('StorefrontHome: Rendering custom homepage:', homepage.title);
+    console.log('StorefrontHome: Homepage content:', homepage.content);
+    
     // Set up SEO metadata for custom homepage
     if (homepage.seo_title) {
       document.title = homepage.seo_title;
@@ -149,6 +159,9 @@ export const StorefrontHome: React.FC = () => {
             <div className="container mx-auto px-4 py-8">
               <h1 className="text-3xl font-bold mb-6">{homepage.title}</h1>
               <p className="text-muted-foreground">This homepage is still being set up.</p>
+              <p className="text-sm text-muted-foreground mt-4">
+                Content structure: {JSON.stringify(Object.keys(homepage.content || {}), null, 2)}
+              </p>
             </div>
           )}
         </div>
