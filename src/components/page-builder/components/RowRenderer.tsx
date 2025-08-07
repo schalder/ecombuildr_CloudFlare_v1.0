@@ -157,12 +157,14 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
     <div
       ref={drop}
       className={cn(
-        'relative group min-h-[80px] border border-dashed transition-all duration-200',
-        isHovered && !isPreviewMode && 'border-secondary/50',
-        isHovered && !isPreviewMode && !userBackground && 'bg-secondary/5',
-        !isHovered && 'border-transparent',
-        isOver && 'border-primary/20 rounded-lg',
-        isOver && !userBackground && 'bg-primary/5'
+        'relative group min-h-[80px] transition-all duration-200',
+        // Only apply border/background styles if not in preview mode
+        !isPreviewMode && 'border border-dashed',
+        !isPreviewMode && isHovered && 'border-secondary/50',
+        !isPreviewMode && isHovered && !userBackground && 'bg-secondary/5',
+        !isPreviewMode && !isHovered && 'border-transparent',
+        !isPreviewMode && isOver && 'border-primary/20 rounded-lg',
+        !isPreviewMode && isOver && !userBackground && 'bg-primary/5'
       )}
       style={getRowStyles()}
       onMouseEnter={() => setIsHovered(true)}

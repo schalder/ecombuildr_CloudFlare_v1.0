@@ -131,13 +131,15 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({
     <div
       ref={drop}
       className={cn(
-        'relative group border-2 border-dashed transition-all duration-200',
-        isSelected && !isPreviewMode && 'border-primary',
-        isSelected && !isPreviewMode && !userBackground && 'bg-primary/5',
-        isHovered && !isPreviewMode && !isSelected && 'border-primary/30',
-        isHovered && !isPreviewMode && !isSelected && !userBackground && 'bg-primary/2',
-        !isHovered && !isSelected && 'border-transparent',
-        isOver && !userBackground && 'bg-primary/5'
+        'relative group transition-all duration-200',
+        // Only apply border styles if not in preview mode
+        !isPreviewMode && 'border-2 border-dashed',
+        !isPreviewMode && isSelected && 'border-primary',
+        !isPreviewMode && isSelected && !userBackground && 'bg-primary/5',
+        !isPreviewMode && isHovered && !isSelected && 'border-primary/30',
+        !isPreviewMode && isHovered && !isSelected && !userBackground && 'bg-primary/2',
+        !isPreviewMode && !isHovered && !isSelected && 'border-transparent',
+        !isPreviewMode && isOver && !userBackground && 'bg-primary/5'
       )}
       style={getSectionStyles()}
       onMouseEnter={() => setIsHovered(true)}

@@ -94,9 +94,11 @@ export const ColumnRenderer: React.FC<ColumnRendererProps> = ({
     <div
       ref={drop}
       className={cn(
-        'relative min-h-[60px] rounded border-2 border-dashed border-transparent transition-colors',
-        isOver && 'border-primary/40',
-        isOver && !userBackground && 'bg-primary/5',
+        'relative min-h-[60px] transition-colors',
+        // Only apply border/background styles if not in preview mode
+        !isPreviewMode && 'rounded border-2 border-dashed border-transparent',
+        !isPreviewMode && isOver && 'border-primary/40',
+        !isPreviewMode && isOver && !userBackground && 'bg-primary/5',
         !isPreviewMode && isHovered && 'border-muted-foreground/30',
         getColumnResponsiveClasses(column, deviceType)
       )}
