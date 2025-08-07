@@ -132,6 +132,15 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
     return row.columns;
   };
 
+  const getEffectiveColumnCount = () => {
+    // For tablet with single column layout, return 1
+    if (deviceType === 'tablet' && row.columnLayout === '1') {
+      return 1;
+    }
+    // Otherwise return the total number of columns in the row
+    return row.columns.length;
+  };
+
   return (
     <div
       ref={drop}
@@ -182,7 +191,7 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
               column={column}
               sectionId={sectionId}
               rowId={row.id}
-              columnCount={row.columns.length}
+              columnCount={getEffectiveColumnCount()}
               isPreviewMode={isPreviewMode}
               deviceType={deviceType}
               onSelectElement={onSelectElement}

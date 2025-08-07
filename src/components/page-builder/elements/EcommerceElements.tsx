@@ -14,8 +14,9 @@ const ProductGridElement: React.FC<{
   element: PageBuilderElement;
   isEditing?: boolean;
   deviceType?: 'desktop' | 'tablet' | 'mobile';
+  columnCount?: number;
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
-}> = ({ element, deviceType = 'desktop' }) => {
+}> = ({ element, deviceType = 'desktop', columnCount = 1 }) => {
   const { addItem } = useCart();
   const { toast } = useToast();
   
@@ -33,6 +34,8 @@ const ProductGridElement: React.FC<{
   const getGridClasses = () => {
     if (deviceType === 'mobile') return 'grid-cols-1';
     if (deviceType === 'tablet') {
+      // Respect single column layout
+      if (columnCount === 1) return 'grid-cols-1';
       // Smart tablet logic: use 2 cols for 2+ columns, 3 cols for 4+ columns
       return columns >= 4 ? 'grid-cols-3' : 'grid-cols-2';
     }
@@ -64,22 +67,24 @@ const ProductGridElement: React.FC<{
 
   if (loading) {
     return (
-      <div className={`grid gap-4 ${getGridClasses()}`}>
-        {[...Array(limit)].map((_, i) => (
-          <Card key={i} className="animate-pulse">
-            <CardContent className="p-3">
-              <div className="aspect-square bg-muted rounded-lg mb-3"></div>
-              <div className="h-4 bg-muted rounded mb-2"></div>
-              <div className="h-3 bg-muted rounded w-2/3"></div>
-            </CardContent>
-          </Card>
-        ))}
+      <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-6xl mx-auto'}`}>
+        <div className={`grid gap-4 ${getGridClasses()}`}>
+          {[...Array(limit)].map((_, i) => (
+            <Card key={i} className="animate-pulse">
+              <CardContent className="p-3">
+                <div className="aspect-square bg-muted rounded-lg mb-3"></div>
+                <div className="h-4 bg-muted rounded mb-2"></div>
+                <div className="h-3 bg-muted rounded w-2/3"></div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       </div>
     );
   }
 
   return (
-    <div>
+    <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-6xl mx-auto'}`}>
       {element.content.title && (
         <h3 className="text-xl font-semibold mb-4">{element.content.title}</h3>
       )}
@@ -148,8 +153,9 @@ const FeaturedProductsElement: React.FC<{
   element: PageBuilderElement;
   isEditing?: boolean;
   deviceType?: 'desktop' | 'tablet' | 'mobile';
+  columnCount?: number;
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
-}> = ({ element, deviceType = 'desktop' }) => {
+}> = ({ element, deviceType = 'desktop', columnCount = 1 }) => {
   const { addItem } = useCart();
   const { toast } = useToast();
   
@@ -180,15 +186,17 @@ const FeaturedProductsElement: React.FC<{
 
   if (loading) {
     return (
-      <div className="bg-gradient-to-r from-primary/10 to-secondary/10 rounded-lg p-6 animate-pulse">
-        <div className="grid md:grid-cols-2 gap-6 items-center">
-          <div>
-            <div className="h-6 w-24 bg-muted rounded mb-3"></div>
-            <div className="h-8 w-3/4 bg-muted rounded mb-2"></div>
-            <div className="h-4 w-full bg-muted rounded mb-4"></div>
-            <div className="h-10 w-32 bg-muted rounded"></div>
+      <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-4xl mx-auto'}`}>
+        <div className="bg-gradient-to-r from-primary/10 to-secondary/10 rounded-lg p-6 animate-pulse">
+          <div className="grid md:grid-cols-2 gap-6 items-center">
+            <div>
+              <div className="h-6 w-24 bg-muted rounded mb-3"></div>
+              <div className="h-8 w-3/4 bg-muted rounded mb-2"></div>
+              <div className="h-4 w-full bg-muted rounded mb-4"></div>
+              <div className="h-10 w-32 bg-muted rounded"></div>
+            </div>
+            <div className="h-64 md:h-80 bg-muted rounded-lg"></div>
           </div>
-          <div className="h-64 md:h-80 bg-muted rounded-lg"></div>
         </div>
       </div>
     );
@@ -196,9 +204,11 @@ const FeaturedProductsElement: React.FC<{
 
   if (!product) {
     return (
-      <div className="bg-gradient-to-r from-primary/10 to-secondary/10 rounded-lg p-6">
-        <div className="text-center py-8 text-muted-foreground">
-          Please select a product to feature from the properties panel.
+      <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-4xl mx-auto'}`}>
+        <div className="bg-gradient-to-r from-primary/10 to-secondary/10 rounded-lg p-6">
+          <div className="text-center py-8 text-muted-foreground">
+            Please select a product to feature from the properties panel.
+          </div>
         </div>
       </div>
     );
@@ -208,47 +218,51 @@ const FeaturedProductsElement: React.FC<{
     ? 'flex flex-col gap-6' 
     : layout === 'hero'
     ? 'grid lg:grid-cols-2 gap-8 items-center min-h-[400px]'
+    : deviceType === 'tablet' && columnCount === 1 
+    ? 'flex flex-col gap-6'
     : 'grid md:grid-cols-2 gap-6 items-center';
 
   return (
-    <div className="bg-gradient-to-r from-primary/10 to-secondary/10 rounded-lg p-6">
-      <div className={layoutClass}>
-        <div className={layout === 'vertical' ? 'order-2' : ''}>
-          <Badge className="mb-3">{badgeText}</Badge>
-          <h2 className="text-2xl font-bold mb-2">{product.name}</h2>
-          <p className="text-muted-foreground mb-4">
-            {product.short_description || product.description}
-          </p>
-          
-          <div className="flex items-center gap-2 mb-4">
-            <span className="text-2xl font-bold text-primary">${product.price}</span>
-            {product.compare_price && product.compare_price > product.price && (
-              <>
-                <span className="text-lg text-muted-foreground line-through">
-                  ${product.compare_price}
-                </span>
-                <Badge variant="destructive">
-                  Save ${(product.compare_price - product.price).toFixed(2)}
-                </Badge>
-              </>
-            )}
-          </div>
+    <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-4xl mx-auto'}`}>
+      <div className="bg-gradient-to-r from-primary/10 to-secondary/10 rounded-lg p-6">
+        <div className={layoutClass}>
+          <div className={layout === 'vertical' ? 'order-2' : ''}>
+            <Badge className="mb-3">{badgeText}</Badge>
+            <h2 className="text-2xl font-bold mb-2">{product.name}</h2>
+            <p className="text-muted-foreground mb-4">
+              {product.short_description || product.description}
+            </p>
+            
+            <div className="flex items-center gap-2 mb-4">
+              <span className="text-2xl font-bold text-primary">${product.price}</span>
+              {product.compare_price && product.compare_price > product.price && (
+                <>
+                  <span className="text-lg text-muted-foreground line-through">
+                    ${product.compare_price}
+                  </span>
+                  <Badge variant="destructive">
+                    Save ${(product.compare_price - product.price).toFixed(2)}
+                  </Badge>
+                </>
+              )}
+            </div>
 
-          <Button size="lg" className="w-full md:w-auto" onClick={handleAddToCart}>
-            <ShoppingCart className="h-4 w-4 mr-2" />
-            {ctaText}
-          </Button>
-        </div>
-        
-        <div className={`relative ${layout === 'vertical' ? 'order-1' : ''}`}>
-          <img
-            src={(Array.isArray(product.images) ? product.images[0] : product.images) || '/placeholder.svg'}
-            alt={product.name}
-            className="w-full h-64 md:h-80 object-cover rounded-lg"
-          />
-          <Badge className="absolute top-4 right-4" variant="secondary">
-            ⭐ 4.8
-          </Badge>
+            <Button size="lg" className="w-full md:w-auto" onClick={handleAddToCart}>
+              <ShoppingCart className="h-4 w-4 mr-2" />
+              {ctaText}
+            </Button>
+          </div>
+          
+          <div className={`relative ${layout === 'vertical' ? 'order-1' : ''}`}>
+            <img
+              src={(Array.isArray(product.images) ? product.images[0] : product.images) || '/placeholder.svg'}
+              alt={product.name}
+              className="w-full h-64 md:h-80 object-cover rounded-lg"
+            />
+            <Badge className="absolute top-4 right-4" variant="secondary">
+              ⭐ 4.8
+            </Badge>
+          </div>
         </div>
       </div>
     </div>
@@ -260,8 +274,9 @@ const CategoryNavigationElement: React.FC<{
   element: PageBuilderElement;
   isEditing?: boolean;
   deviceType?: 'desktop' | 'tablet' | 'mobile';
+  columnCount?: number;
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
-}> = ({ element, deviceType = 'desktop' }) => {
+}> = ({ element, deviceType = 'desktop', columnCount = 1 }) => {
   const { categories, loading } = useStoreCategories();
   
   const layout = element.content.layout || 'grid';
@@ -269,10 +284,17 @@ const CategoryNavigationElement: React.FC<{
   const showProductCount = element.content.showProductCount !== false;
   const enableLinks = element.content.enableLinks !== false;
   
+  // Filter categories based on selection
+  const displayCategories = selectedCategoryIds.length > 0 
+    ? categories.filter(cat => selectedCategoryIds.includes(cat.id))
+    : categories;
+  
   // Get device-responsive grid classes
   const getCircleGridClasses = () => {
     if (deviceType === 'mobile') return 'grid-cols-2';
     if (deviceType === 'tablet') {
+      // Respect single column layout
+      if (columnCount === 1) return 'grid-cols-3';
       // Smart tablet logic: use fewer columns if few categories
       return displayCategories.length <= 2 ? 'grid-cols-2' : 'grid-cols-4';
     }
@@ -282,16 +304,13 @@ const CategoryNavigationElement: React.FC<{
   const getCardGridClasses = () => {
     if (deviceType === 'mobile') return 'grid-cols-1';
     if (deviceType === 'tablet') {
+      // Respect single column layout
+      if (columnCount === 1) return 'grid-cols-1';
       // Smart tablet logic: single column if few categories for better readability
       return displayCategories.length <= 2 ? 'grid-cols-1' : 'grid-cols-2';
     }
     return 'grid-cols-3';
   };
-  
-  // Filter categories based on selection
-  const displayCategories = selectedCategoryIds.length > 0 
-    ? categories.filter(cat => selectedCategoryIds.includes(cat.id))
-    : categories;
 
   const handleCategoryClick = (category: any) => {
     if (enableLinks) {
@@ -302,20 +321,22 @@ const CategoryNavigationElement: React.FC<{
 
   if (loading) {
     return (
-      <div className={`grid gap-4 ${getCircleGridClasses()}`}>
-        {[...Array(6)].map((_, i) => (
-          <div key={i} className="text-center animate-pulse">
-            <div className="w-16 h-16 mx-auto bg-muted rounded-full mb-2"></div>
-            <div className="h-4 bg-muted rounded mx-auto w-3/4"></div>
-          </div>
-        ))}
+      <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-6xl mx-auto'}`}>
+        <div className={`grid gap-4 ${getCircleGridClasses()}`}>
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="text-center animate-pulse">
+              <div className="w-16 h-16 mx-auto bg-muted rounded-full mb-2"></div>
+              <div className="h-4 bg-muted rounded mx-auto w-3/4"></div>
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
 
   if (layout === 'circles') {
     return (
-      <div>
+      <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-6xl mx-auto'}`}>
         {element.content.title && (
           <h3 className="text-xl font-semibold mb-6 text-center">{element.content.title}</h3>
         )}
@@ -349,7 +370,7 @@ const CategoryNavigationElement: React.FC<{
   }
 
   return (
-    <div>
+    <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-6xl mx-auto'}`}>
       {element.content.title && (
         <h3 className="text-xl font-semibold mb-4">{element.content.title}</h3>
       )}
@@ -403,8 +424,9 @@ const WeeklyFeaturedElement: React.FC<{
   element: PageBuilderElement;
   isEditing?: boolean;
   deviceType?: 'desktop' | 'tablet' | 'mobile';
+  columnCount?: number;
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
-}> = ({ element, deviceType = 'desktop' }) => {
+}> = ({ element, deviceType = 'desktop', columnCount = 1 }) => {
   const mockWeeklyProducts = [
     {
       id: '1',
@@ -429,36 +451,47 @@ const WeeklyFeaturedElement: React.FC<{
     }
   ];
 
+  const getGridClasses = () => {
+    if (deviceType === 'mobile') return 'grid-cols-1';
+    if (deviceType === 'tablet') {
+      // Respect the column layout: single column for tablet when columnCount is 1
+      return columnCount === 1 ? 'grid-cols-1' : 'grid-cols-2';
+    }
+    return 'grid-cols-3';
+  };
+
   return (
-    <div className="bg-card rounded-lg p-6 border">
-      <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold mb-2">Weekly Featured Products</h2>
-        <p className="text-muted-foreground">Special deals this week only!</p>
-      </div>
-      
-      <div className={`grid gap-4 ${deviceType === 'mobile' ? 'grid-cols-1' : deviceType === 'tablet' ? 'grid-cols-2' : 'grid-cols-3'}`}>
-        {mockWeeklyProducts.map((product) => (
-          <div key={product.id} className="text-center group">
-            <div className="relative overflow-hidden rounded-lg mb-3">
-              <img
-                src={product.image}
-                alt={product.name}
-                className="w-full h-40 object-cover group-hover:scale-105 transition-transform"
-              />
-              <Badge className="absolute top-2 right-2" variant="destructive">
-                -{product.discount}%
-              </Badge>
+    <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-4xl mx-auto'}`}>
+      <div className="bg-card rounded-lg p-6 border">
+        <div className="text-center mb-6">
+          <h2 className="text-2xl font-bold mb-2">Weekly Featured Products</h2>
+          <p className="text-muted-foreground">Special deals this week only!</p>
+        </div>
+        
+        <div className={`grid gap-4 ${getGridClasses()}`}>
+          {mockWeeklyProducts.map((product) => (
+            <div key={product.id} className="text-center group">
+              <div className="relative overflow-hidden rounded-lg mb-3">
+                <img
+                  src={product.image}
+                  alt={product.name}
+                  className="w-full h-40 object-cover group-hover:scale-105 transition-transform"
+                />
+                <Badge className="absolute top-2 right-2" variant="destructive">
+                  -{product.discount}%
+                </Badge>
+              </div>
+              <h4 className="font-medium mb-2">{product.name}</h4>
+              <div className="mb-3">
+                <span className="text-lg font-bold text-primary">${product.price}</span>
+                <span className="text-sm text-muted-foreground line-through ml-2">
+                  ${(product.price / (1 - product.discount / 100)).toFixed(2)}
+                </span>
+              </div>
+              <Button size="sm" className="w-full">Quick Add</Button>
             </div>
-            <h4 className="font-medium mb-2">{product.name}</h4>
-            <div className="mb-3">
-              <span className="text-lg font-bold text-primary">${product.price}</span>
-              <span className="text-sm text-muted-foreground line-through ml-2">
-                ${(product.price / (1 - product.discount / 100)).toFixed(2)}
-              </span>
-            </div>
-            <Button size="sm" className="w-full">Quick Add</Button>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -469,8 +502,9 @@ const PriceElement: React.FC<{
   element: PageBuilderElement;
   isEditing?: boolean;
   deviceType?: 'desktop' | 'tablet' | 'mobile';
+  columnCount?: number;
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
-}> = ({ element }) => {
+}> = ({ element, deviceType = 'desktop', columnCount = 1 }) => {
   const { addItem } = useCart();
   const { toast } = useToast();
   
@@ -502,17 +536,21 @@ const PriceElement: React.FC<{
 
   if (loading) {
     return (
-      <div className="animate-pulse">
-        <div className="h-8 w-24 bg-muted rounded mb-2"></div>
-        <div className="h-10 w-32 bg-muted rounded"></div>
+      <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-md mx-auto'}`}>
+        <div className="animate-pulse">
+          <div className="h-8 w-24 bg-muted rounded mb-2"></div>
+          <div className="h-10 w-32 bg-muted rounded"></div>
+        </div>
       </div>
     );
   }
 
   if (!product) {
     return (
-      <div className="text-center py-4 text-muted-foreground">
-        Please select a product from the properties panel.
+      <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-md mx-auto'}`}>
+        <div className="text-center py-4 text-muted-foreground">
+          Please select a product from the properties panel.
+        </div>
       </div>
     );
   }
@@ -526,24 +564,26 @@ const PriceElement: React.FC<{
     : 'flex items-center gap-4';
 
   return (
-    <div className={layoutClass}>
-      <div className="flex items-center gap-2">
-        <span className="text-2xl font-bold text-primary">${product.price}</span>
-        {showComparePrice && product.compare_price && product.compare_price > product.price && (
-          <span className="text-lg text-muted-foreground line-through">
-            ${product.compare_price}
-          </span>
-        )}
-        {showDiscount && discount > 0 && (
-          <Badge variant="destructive">
-            -{discount}%
-          </Badge>
-        )}
+    <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-md mx-auto'}`}>
+      <div className={layoutClass}>
+        <div className="flex items-center gap-2">
+          <span className="text-2xl font-bold text-primary">${product.price}</span>
+          {showComparePrice && product.compare_price && product.compare_price > product.price && (
+            <span className="text-lg text-muted-foreground line-through">
+              ${product.compare_price}
+            </span>
+          )}
+          {showDiscount && discount > 0 && (
+            <Badge variant="destructive">
+              -{discount}%
+            </Badge>
+          )}
+        </div>
+        <Button onClick={handleAddToCart}>
+          <DollarSign className="h-4 w-4 mr-2" />
+          {ctaText}
+        </Button>
       </div>
-      <Button onClick={handleAddToCart}>
-        <DollarSign className="h-4 w-4 mr-2" />
-        {ctaText}
-      </Button>
     </div>
   );
 };
