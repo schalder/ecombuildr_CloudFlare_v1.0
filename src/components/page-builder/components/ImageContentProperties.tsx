@@ -3,9 +3,7 @@ import { PageBuilderElement } from '../types';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ImageUpload } from '@/components/ui/image-upload';
-import { Switch } from '@/components/ui/switch';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { MediaSelector } from './MediaSelector';
 
 interface ImageContentPropertiesProps {
   element: PageBuilderElement;
@@ -16,64 +14,15 @@ export const ImageContentProperties: React.FC<ImageContentPropertiesProps> = ({
   element,
   onUpdate
 }) => {
-  const { uploadMethod = 'url', url = '', alt = '', caption = '', alignment = 'center', linkUrl = '', linkTarget = '_self' } = element.content;
-  const [urlPreview, setUrlPreview] = React.useState('');
-
-  // Update URL preview when URL changes
-  React.useEffect(() => {
-    if (uploadMethod === 'url' && url) {
-      setUrlPreview(url);
-    }
-  }, [url, uploadMethod]);
-
-  const handleUrlChange = (newUrl: string) => {
-    onUpdate('url', newUrl);
-    setUrlPreview(newUrl);
-  };
+  const { url = '', alt = '', caption = '', alignment = 'center', linkUrl = '', linkTarget = '_self' } = element.content;
 
   return (
     <div className="space-y-6">
-      <Tabs value={uploadMethod} onValueChange={(value) => onUpdate('uploadMethod', value)}>
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="url">External URL</TabsTrigger>
-          <TabsTrigger value="upload">Upload File</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="url" className="space-y-4">
-          <div>
-            <Label htmlFor="image-url">Image URL</Label>
-            <Input
-              id="image-url"
-              value={url}
-              onChange={(e) => handleUrlChange(e.target.value)}
-              placeholder="https://example.com/image.jpg"
-            />
-            {urlPreview && (
-              <div className="mt-2">
-                <img 
-                  src={urlPreview} 
-                  alt="Preview" 
-                  className="w-full h-32 object-cover rounded border"
-                  onError={() => setUrlPreview('')}
-                />
-              </div>
-            )}
-          </div>
-        </TabsContent>
-        
-        <TabsContent value="upload" className="space-y-4">
-          <ImageUpload
-            value={url}
-            onChange={(newUrl) => {
-              onUpdate('url', newUrl);
-              onUpdate('uploadMethod', 'upload');
-            }}
-            label="Upload Image"
-            accept="image/*"
-            maxSize={5}
-          />
-        </TabsContent>
-      </Tabs>
+      <MediaSelector
+        value={url}
+        onChange={(newUrl) => onUpdate('url', newUrl)}
+        label="Image"
+      />
 
       <div>
         <Label htmlFor="image-alt">Alt Text</Label>
