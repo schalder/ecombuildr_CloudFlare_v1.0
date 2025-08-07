@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,7 @@ import { ArrowLeft, Plus, Edit, ExternalLink, Settings, Eye } from 'lucide-react
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { CreatePageModal } from '@/components/modals/CreatePageModal';
+import { WebsiteSettings } from '@/components/website/WebsiteSettings';
 
 interface Website {
   id: string;
@@ -40,7 +41,10 @@ const WebsiteManagement = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  
+  const activeTab = searchParams.get('tab') || 'pages';
 
   const { data: website, isLoading } = useQuery({
     queryKey: ['website', id],
@@ -106,6 +110,10 @@ const WebsiteManagement = () => {
     navigate(`/dashboard/websites/${id}/pages/${pageId}/builder`);
   };
 
+  const handleTabChange = (tab: string) => {
+    setSearchParams({ tab });
+  };
+
   if (isLoading) {
     return (
       <DashboardLayout>
@@ -156,22 +164,64 @@ const WebsiteManagement = () => {
         {/* Navigation Tabs */}
         <div className="border-b px-6">
           <div className="flex space-x-8">
-            <button className="py-4 px-1 border-b-2 border-blue-500 text-blue-600 font-medium">
+            <button 
+              className={`py-4 px-1 border-b-2 font-medium transition-colors ${
+                activeTab === 'pages' 
+                  ? 'border-primary text-primary' 
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
+              }`}
+              onClick={() => handleTabChange('pages')}
+            >
               Pages
             </button>
-            <button className="py-4 px-1 text-muted-foreground hover:text-foreground">
+            <button 
+              className={`py-4 px-1 border-b-2 font-medium transition-colors ${
+                activeTab === 'stats' 
+                  ? 'border-primary text-primary' 
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
+              }`}
+              onClick={() => handleTabChange('stats')}
+            >
               Stats
             </button>
-            <button className="py-4 px-1 text-muted-foreground hover:text-foreground">
+            <button 
+              className={`py-4 px-1 border-b-2 font-medium transition-colors ${
+                activeTab === 'sales' 
+                  ? 'border-primary text-primary' 
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
+              }`}
+              onClick={() => handleTabChange('sales')}
+            >
               Sales
             </button>
-            <button className="py-4 px-1 text-muted-foreground hover:text-foreground">
+            <button 
+              className={`py-4 px-1 border-b-2 font-medium transition-colors ${
+                activeTab === 'security' 
+                  ? 'border-primary text-primary' 
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
+              }`}
+              onClick={() => handleTabChange('security')}
+            >
               Security
             </button>
-            <button className="py-4 px-1 text-muted-foreground hover:text-foreground">
+            <button 
+              className={`py-4 px-1 border-b-2 font-medium transition-colors ${
+                activeTab === 'events' 
+                  ? 'border-primary text-primary' 
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
+              }`}
+              onClick={() => handleTabChange('events')}
+            >
               Events
             </button>
-            <button className="py-4 px-1 text-muted-foreground hover:text-foreground">
+            <button 
+              className={`py-4 px-1 border-b-2 font-medium transition-colors ${
+                activeTab === 'settings' 
+                  ? 'border-primary text-primary' 
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
+              }`}
+              onClick={() => handleTabChange('settings')}
+            >
               Settings
             </button>
           </div>
@@ -179,84 +229,116 @@ const WebsiteManagement = () => {
 
         {/* Main Content */}
         <div className="p-6">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-xl font-semibold">Pages</h2>
-            </div>
-            <Button onClick={handleCreatePage}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add New Page
-            </Button>
-          </div>
-
-          {pages.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-muted-foreground mb-4">No pages created yet</p>
-              <Button onClick={handleCreatePage}>
-                <Plus className="h-4 w-4 mr-2" />
-                Create Your First Page
-              </Button>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {pages.map((page) => (
-                <div key={page.id} className="group relative">
-                  <div className="border rounded-lg overflow-hidden hover:shadow-md transition-shadow">
-                    {/* Page Preview */}
-                    <div className="aspect-[4/3] bg-muted/30 relative">
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="text-center">
-                          <div className="w-16 h-16 bg-background border-2 rounded-lg mx-auto mb-2 flex items-center justify-center">
-                            <div className="w-8 h-8 bg-muted rounded"></div>
-                          </div>
-                          <p className="text-xs text-muted-foreground">Page Preview</p>
-                        </div>
-                      </div>
-                      
-                      {/* Status Badge */}
-                      <div className="absolute top-2 left-2">
-                        {page.is_homepage && (
-                          <Badge variant="secondary" className="text-xs">Homepage</Badge>
-                        )}
-                      </div>
-                      
-                      {/* Published Status */}
-                      {page.is_published && (
-                        <div className="absolute top-2 right-2">
-                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Page Info */}
-                    <div className="p-4">
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-medium truncate">{page.title}</h3>
-                          <p className="text-sm text-muted-foreground">/{page.slug}</p>
-                        </div>
-                        <button className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <Settings className="h-4 w-4 text-muted-foreground" />
-                        </button>
-                      </div>
-
-                      <div className="flex space-x-2">
-                        <Button 
-                          variant="default" 
-                          size="sm" 
-                          className="flex-1"
-                          onClick={() => handleEditPage(page.id)}
-                        >
-                          Edit
-                        </Button>
-                        <Button variant="outline" size="sm">
-                          <ExternalLink className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
+          {activeTab === 'pages' && (
+            <>
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h2 className="text-xl font-semibold">Pages</h2>
                 </div>
-              ))}
+                <Button onClick={handleCreatePage}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add New Page
+                </Button>
+              </div>
+
+              {pages.length === 0 ? (
+                <div className="text-center py-12">
+                  <p className="text-muted-foreground mb-4">No pages created yet</p>
+                  <Button onClick={handleCreatePage}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create Your First Page
+                  </Button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {pages.map((page) => (
+                    <div key={page.id} className="group relative">
+                      <div className="border rounded-lg overflow-hidden hover:shadow-md transition-shadow">
+                        {/* Page Preview */}
+                        <div className="aspect-[4/3] bg-muted/30 relative">
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <div className="text-center">
+                              <div className="w-16 h-16 bg-background border-2 rounded-lg mx-auto mb-2 flex items-center justify-center">
+                                <div className="w-8 h-8 bg-muted rounded"></div>
+                              </div>
+                              <p className="text-xs text-muted-foreground">Page Preview</p>
+                            </div>
+                          </div>
+                          
+                          {/* Status Badge */}
+                          <div className="absolute top-2 left-2">
+                            {page.is_homepage && (
+                              <Badge variant="secondary" className="text-xs">Homepage</Badge>
+                            )}
+                          </div>
+                          
+                          {/* Published Status */}
+                          {page.is_published && (
+                            <div className="absolute top-2 right-2">
+                              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Page Info */}
+                        <div className="p-4">
+                          <div className="flex items-start justify-between mb-2">
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-medium truncate">{page.title}</h3>
+                              <p className="text-sm text-muted-foreground">/{page.slug}</p>
+                            </div>
+                            <button className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Settings className="h-4 w-4 text-muted-foreground" />
+                            </button>
+                          </div>
+
+                          <div className="flex space-x-2">
+                            <Button 
+                              variant="default" 
+                              size="sm" 
+                              className="flex-1"
+                              onClick={() => handleEditPage(page.id)}
+                            >
+                              Edit
+                            </Button>
+                            <Button variant="outline" size="sm">
+                              <ExternalLink className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+
+          {activeTab === 'settings' && website && (
+            <WebsiteSettings website={website} />
+          )}
+
+          {activeTab === 'stats' && (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground">Stats coming soon...</p>
+            </div>
+          )}
+
+          {activeTab === 'sales' && (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground">Sales analytics coming soon...</p>
+            </div>
+          )}
+
+          {activeTab === 'security' && (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground">Security settings coming soon...</p>
+            </div>
+          )}
+
+          {activeTab === 'events' && (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground">Event tracking coming soon...</p>
             </div>
           )}
         </div>
