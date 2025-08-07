@@ -103,20 +103,20 @@ const ImageElement: React.FC<{
   deviceType?: 'desktop' | 'tablet' | 'mobile';
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
 }> = ({ element, isEditing, onUpdate }) => {
-  const { url, alt, caption, alignment = 'center', linkUrl, linkTarget = '_self' } = element.content;
+  const { src, alt, caption, alignment = 'center', linkUrl, linkTarget = '_self' } = element.content;
   const containerStyles = renderElementStyles(element);
   const [imageError, setImageError] = React.useState(false);
   const [imageLoading, setImageLoading] = React.useState(false);
 
   // Reset error state when URL changes
   React.useEffect(() => {
-    if (url) {
+    if (src) {
       setImageError(false);
       setImageLoading(true);
     }
-  }, [url]);
+  }, [src]);
 
-  if (!url) {
+  if (!src) {
     return (
       <div className="w-full h-48 bg-muted flex items-center justify-center border-2 border-dashed border-border rounded-lg">
         <div className="text-center">
@@ -171,7 +171,7 @@ const ImageElement: React.FC<{
           </div>
         )}
         <img
-          src={url}
+          src={src}
           alt={alt || ''}
           className="rounded-lg"
           style={imageStyles}
