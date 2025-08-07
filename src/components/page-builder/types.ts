@@ -3,7 +3,20 @@
 export interface PageBuilderElement {
   id: string;
   type: string;
-  content: Record<string, any>;
+  content: {
+    text?: string;
+    url?: string;
+    alt?: string;
+    src?: string;
+    width?: number;
+    height?: number;
+    caption?: string;
+    uploadMethod?: 'upload' | 'url';
+    alignment?: 'left' | 'right' | 'center' | 'full';
+    linkUrl?: string;
+    linkTarget?: '_blank' | '_self';
+    [key: string]: any;
+  };
   styles?: {
     margin?: string;
     padding?: string;

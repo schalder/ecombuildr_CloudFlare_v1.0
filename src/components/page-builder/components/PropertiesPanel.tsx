@@ -33,7 +33,7 @@ import {
   FAQContentProperties,
   AccordionContentProperties,
   TabsContentProperties
-} from './ContentProperties';
+} from './ContentPropertiesLegacy';
 import { 
   ImageGalleryProperties, 
   ImageCarouselProperties, 

@@ -103,62 +103,81 @@ const ImageElement: React.FC<{
   deviceType?: 'desktop' | 'tablet' | 'mobile';
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
 }> = ({ element, isEditing, onUpdate }) => {
-  const [isEditing_, setIsEditing_] = useState(false);
+  const { url, alt, caption, alignment = 'center', linkUrl, linkTarget = '_self' } = element.content;
+  const containerStyles = renderElementStyles(element);
+  
+  // Handle adding image URL when element is empty and in edit mode
+  React.useEffect(() => {
+    if (isEditing && !url) {
+      onUpdate?.({
+        content: { 
+          ...element.content,
+          url: 'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=600&h=400&fit=crop',
+          alt: 'Placeholder image',
+          alignment: 'center',
+          uploadMethod: 'url'
+        }
+      });
+    }
+  }, [isEditing, url, onUpdate]);
 
-  if (!element.content.src) {
+  if (!url) {
     return (
-      <div className="border-2 border-dashed border-border rounded-lg p-8 text-center">
-        <Image className="h-12 w-12 mx-auto text-muted-foreground mb-2" />
-        <p className="text-muted-foreground">Click to add image</p>
-        {isEditing && (
-          <Button
-            variant="outline"
-            size="sm"
-            className="mt-2"
-            onClick={() => setIsEditing_(true)}
-          >
-            Add Image URL
-          </Button>
-        )}
-        {isEditing_ && (
-          <div className="mt-2 space-y-2">
-            <Input
-              placeholder="Enter image URL"
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  const url = (e.target as HTMLInputElement).value;
-                  onUpdate?.({
-                    content: { ...element.content, src: url, alt: 'Image' }
-                  });
-                  setIsEditing_(false);
-                }
-              }}
-            />
-          </div>
-        )}
+      <div className="w-full h-48 bg-muted flex items-center justify-center border-2 border-dashed border-border">
+        <p className="text-muted-foreground">Click to add an image</p>
       </div>
     );
   }
 
-  const elementStyles = renderElementStyles(element);
+  const alignmentClasses = {
+    left: 'flex justify-start',
+    center: 'flex justify-center',
+    right: 'flex justify-end',
+    full: 'w-full'
+  };
+
+  const imageStyles = {
+    width: element.styles?.width || 'auto',
+    height: element.styles?.height || 'auto',
+    maxWidth: element.styles?.maxWidth || (alignment === 'full' ? '100%' : undefined),
+    objectFit: element.styles?.objectFit || 'cover'
+  };
+
+  const ImageComponent = () => (
+    <img
+      src={url}
+      alt={alt || ''}
+      className="rounded-lg"
+      style={imageStyles}
+    />
+  );
+
+  const imageContent = linkUrl ? (
+    <a 
+      href={linkUrl} 
+      target={linkTarget}
+      className="inline-block"
+    >
+      <ImageComponent />
+    </a>
+  ) : (
+    <ImageComponent />
+  );
 
   return (
-    <div className="text-center" style={elementStyles}>
-      <img
-        src={element.content.src}
-        alt={element.content.alt || 'Image'}
-        className="max-w-full h-auto"
-        style={{
-          width: element.content.width || elementStyles.width || 'auto',
-          height: element.content.height || elementStyles.height || 'auto',
-          objectFit: elementStyles.objectFit || 'cover',
-          borderRadius: elementStyles.borderRadius || 'inherit',
-        }}
-      />
-      {element.content.caption && (
-        <p className="text-sm text-muted-foreground mt-2">{element.content.caption}</p>
-      )}
-    </div>
+    <figure 
+      className={`my-4 ${alignmentClasses[alignment] || alignmentClasses.center}`}
+      style={containerStyles}
+    >
+      <div className={alignment === 'full' ? 'w-full' : 'inline-block'}>
+        {imageContent}
+        {caption && (
+          <figcaption className="text-sm text-muted-foreground mt-2 text-center">
+            {caption}
+          </figcaption>
+        )}
+      </div>
+    </figure>
   );
 };
 
@@ -292,7 +311,7 @@ const SpacerElement: React.FC<{
         <div className="flex items-center justify-center space-x-2 text-sm text-muted-foreground">
           <span>Spacer:</span>
           <InlineEditor
-            value={height}
+            value={typeof height === 'number' ? `${height}px` : height}
             onChange={handleHeightChange}
             placeholder="50px"
             disabled={false}
@@ -304,7 +323,7 @@ const SpacerElement: React.FC<{
   }
 
   return (
-    <div style={{ ...elementStyles, height: elementStyles.height || height }} className="w-full" />
+    <div style={{ ...elementStyles, height: elementStyles.height || (typeof height === 'number' ? `${height}px` : height) }} className="w-full" />
   );
 };
 
