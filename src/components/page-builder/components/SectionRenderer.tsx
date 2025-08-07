@@ -55,8 +55,7 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({
   };
 
   const handleAddRow = () => {
-    // This would need a different callback for adding rows to sections
-    console.log('Add row to section - needs separate callback');
+    onAddRowAfter(section.rows.length);
   };
 
   const handleDeleteSection = (e: React.MouseEvent) => {

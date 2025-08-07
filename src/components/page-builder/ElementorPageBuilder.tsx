@@ -672,30 +672,24 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = ({
               ) : (
                 <div className="space-y-4">
                   {data.sections.map((section, sectionIndex) => (
-                    <SectionRenderer
+                    <SectionComponent
                       key={section.id}
                       section={section}
                       sectionIndex={sectionIndex}
-                      isSelected={selection?.type === 'section' && selection.id === section.id}
-                      isPreviewMode={false}
                       deviceType={deviceType}
-                      onSelectElement={(element) => 
-                        element 
-                          ? setSelection({ type: 'element', id: element.id }) 
-                          : setSelection({ type: 'section', id: section.id })
-                      }
-                      onUpdateElement={updateElement}
+                      isSelected={selection?.type === 'section' && selection.id === section.id}
+                      onSelect={() => setSelection({ type: 'section', id: section.id })}
+                      onDelete={() => deleteSection(section.id)}
+                      onDuplicate={() => duplicateSection(section.id)}
+                      onAddRow={(insertIndex?: number) => setShowColumnModal({ sectionId: section.id, insertIndex })}
+                      onDeleteRow={(rowId) => deleteRow(section.id, rowId)}
                       onAddElement={addElement}
-                      onMoveElement={moveElement}
-                      onRemoveElement={(id) => {
-                        if (id === section.id) {
-                          deleteSection(id);
-                        } else {
-                          deleteElement(id);
-                        }
-                      }}
+                      onUpdateElement={updateElement}
+                      onDeleteElement={deleteElement}
+                      onDuplicateElement={duplicateElement}
+                      selection={selection}
+                      onSelectionChange={setSelection}
                       onAddSectionAfter={() => addSectionAfter(sectionIndex)}
-                      onAddRowAfter={(rowIndex) => addRowAfter(section.id, rowIndex)}
                     />
                   ))}
                   
@@ -866,6 +860,7 @@ interface SectionComponentProps {
   onDuplicateElement: (elementId: string) => void;
   selection: SelectionType | null;
   onSelectionChange: (selection: SelectionType | null) => void;
+  onAddSectionAfter: () => void;
 }
 
 const SectionComponent: React.FC<SectionComponentProps> = ({
@@ -882,7 +877,8 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
   onDeleteElement,
   onDuplicateElement,
   selection,
-  onSelectionChange
+  onSelectionChange,
+  onAddSectionAfter
 }) => {
   const [isHovered, setIsHovered] = useState(false);
 
@@ -908,17 +904,28 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
           <Grip className="h-3 w-3" />
           <span className="font-medium">Section</span>
           <Separator orientation="vertical" className="mx-1 h-4" />
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="h-6 w-6 p-0 hover:bg-primary-foreground/20" 
-            onClick={(e) => {
-              e.stopPropagation();
-              onAddRow();
-            }}
-          >
-            <Plus className="h-3 w-3" />
-          </Button>
+           <Button 
+             variant="ghost" 
+             size="sm" 
+             className="h-6 w-6 p-0 hover:bg-primary-foreground/20" 
+             onClick={(e) => {
+               e.stopPropagation();
+               onAddRow();
+             }}
+           >
+             <Plus className="h-3 w-3" />
+           </Button>
+           <Button 
+             variant="ghost" 
+             size="sm" 
+             className="h-6 w-6 p-0 hover:bg-primary-foreground/20" 
+             onClick={(e) => {
+               e.stopPropagation();
+               onAddSectionAfter();
+             }}
+           >
+             <Plus className="h-3 w-3" />
+           </Button>
           <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-primary-foreground/20" onClick={onDuplicate}>
             <Copy className="h-3 w-3" />
           </Button>
