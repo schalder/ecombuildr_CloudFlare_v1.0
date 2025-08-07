@@ -153,6 +153,15 @@ export const ContentProperties: React.FC<ContentPropertiesProps> = ({
             </SelectContent>
           </Select>
         </div>
+        <div className="flex items-center space-x-2">
+          <input
+            type="checkbox"
+            id="button-full-width"
+            checked={element.content.fullWidth || false}
+            onChange={(e) => onUpdate('fullWidth', e.target.checked)}
+          />
+          <Label htmlFor="button-full-width">Full Width</Label>
+        </div>
       </div>
     );
   }

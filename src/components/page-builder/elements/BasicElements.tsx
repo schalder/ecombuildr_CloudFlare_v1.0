@@ -238,7 +238,7 @@ const ButtonElement: React.FC<{
   isEditing?: boolean;
   deviceType?: 'desktop' | 'tablet' | 'mobile';
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
-}> = ({ element, isEditing, onUpdate }) => {
+}> = ({ element, isEditing, deviceType, onUpdate }) => {
   const text = element.content.text || 'Button';
   const variant = element.content.variant || 'default';
   const size = element.content.size || 'default';
@@ -269,31 +269,120 @@ const ButtonElement: React.FC<{
     alignment === 'right' ? 'flex justify-end' : 
     'flex justify-start';
 
-  // Combine custom styles with variant styles properly
-  const customStyles = {
+  // Generate responsive button styles
+  const responsiveStyles = {
     backgroundColor: element.styles?.backgroundColor,
     color: element.styles?.color,
-    fontSize: element.styles?.fontSize,
-    padding: element.styles?.padding,
+    borderRadius: element.styles?.borderRadius,
+    boxShadow: element.styles?.boxShadow,
     margin: element.styles?.margin,
-    ...(element.content.customCSS ? {} : {}) // Custom CSS will be applied via className
+    // Handle custom width
+    ...(element.content.fullWidth 
+      ? { width: '100%' } 
+      : element.content.widthType === 'custom' && element.styles?.width 
+        ? { width: element.styles.width }
+        : {}),
+    // Global padding fallback
+    ...(element.styles?.padding && 
+        !element.styles?.responsive?.desktop?.padding && 
+        !element.styles?.responsive?.mobile?.padding 
+      ? { padding: element.styles.padding }
+      : {}),
   };
 
   // Remove undefined values from styles
   const cleanStyles = Object.fromEntries(
-    Object.entries(customStyles).filter(([_, v]) => v !== undefined && v !== '')
+    Object.entries(responsiveStyles).filter(([_, v]) => v !== undefined && v !== '')
   );
 
-  const customClassName = element.content.customCSS ? 
-    `button-${element.id} outline-none cursor-pointer` : 
-    'outline-none cursor-pointer';
+  // Generate responsive classes
+  const responsiveClasses: string[] = ['cursor-pointer', 'transition-all', 'duration-200'];
+  
+  const desktopStyles = element.styles?.responsive?.desktop;
+  const mobileStyles = element.styles?.responsive?.mobile;
+
+  // Add responsive font size classes
+  if (mobileStyles?.fontSize) {
+    const mobileSize = parseInt(mobileStyles.fontSize.replace(/\D/g, ''));
+    if (mobileSize <= 12) responsiveClasses.push('text-sm');
+    else if (mobileSize <= 16) responsiveClasses.push('text-base');
+    else if (mobileSize <= 18) responsiveClasses.push('text-lg');
+    else if (mobileSize <= 20) responsiveClasses.push('text-xl');
+    else responsiveClasses.push('text-2xl');
+  }
+
+  if (desktopStyles?.fontSize) {
+    const desktopSize = parseInt(desktopStyles.fontSize.replace(/\D/g, ''));
+    if (desktopSize <= 12) responsiveClasses.push('lg:text-sm');
+    else if (desktopSize <= 16) responsiveClasses.push('lg:text-base');
+    else if (desktopSize <= 18) responsiveClasses.push('lg:text-lg');
+    else if (desktopSize <= 20) responsiveClasses.push('lg:text-xl');
+    else if (desktopSize <= 24) responsiveClasses.push('lg:text-2xl');
+    else if (desktopSize <= 30) responsiveClasses.push('lg:text-3xl');
+    else responsiveClasses.push('lg:text-4xl');
+  }
+
+  // Add responsive font weight classes
+  if (mobileStyles?.fontWeight) {
+    responsiveClasses.push(`font-${mobileStyles.fontWeight}`);
+  }
+
+  if (desktopStyles?.fontWeight) {
+    responsiveClasses.push(`lg:font-${desktopStyles.fontWeight}`);
+  }
+
+  // Add responsive letter spacing
+  if (mobileStyles?.letterSpacing && mobileStyles.letterSpacing !== 'normal') {
+    responsiveClasses.push(`tracking-${mobileStyles.letterSpacing}`);
+  }
+
+  if (desktopStyles?.letterSpacing && desktopStyles.letterSpacing !== 'normal') {
+    responsiveClasses.push(`lg:tracking-${desktopStyles.letterSpacing}`);
+  }
+
+  // Add responsive text transform
+  if (mobileStyles?.textTransform && mobileStyles.textTransform !== 'none') {
+    responsiveClasses.push(mobileStyles.textTransform);
+  }
+
+  if (desktopStyles?.textTransform && desktopStyles.textTransform !== 'none') {
+    responsiveClasses.push(`lg:${desktopStyles.textTransform}`);
+  }
+
+  // Generate responsive padding CSS
+  const responsivePaddingCSS = () => {
+    const mobilePadding = mobileStyles?.padding;
+    const desktopPadding = desktopStyles?.padding;
+
+    if (!mobilePadding && !desktopPadding) return '';
+
+    let css = '';
+    if (mobilePadding) {
+      css += `padding: ${mobilePadding} !important;`;
+    }
+    if (desktopPadding) {
+      css += `@media (min-width: 1024px) { padding: ${desktopPadding} !important; }`;
+    }
+    return css;
+  };
+
+  const customClassName = [
+    element.content.customCSS ? `button-${element.id}` : '',
+    'outline-none',
+    ...responsiveClasses,
+    element.content.fullWidth ? 'w-full' : 'w-auto'
+  ].filter(Boolean).join(' ');
+
+  const paddingCSS = responsivePaddingCSS();
+  const customCSS = element.content.customCSS || '';
+  const combinedCSS = [customCSS, paddingCSS].filter(Boolean).join(' ');
 
   return (
     <>
-      {/* Inject custom CSS if provided */}
-      {element.content.customCSS && (
+      {/* Inject custom CSS and responsive padding */}
+      {combinedCSS && (
         <style>
-          {`.button-${element.id} { ${element.content.customCSS} }`}
+          {`.button-${element.id} { ${combinedCSS} }`}
         </style>
       )}
       <div className={containerClass} style={{ margin: element.styles?.margin }}>
