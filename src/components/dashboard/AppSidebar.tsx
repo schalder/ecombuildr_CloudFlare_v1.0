@@ -91,15 +91,6 @@ const navigationItems = [
     icon: Users,
   },
   {
-    title: "Pages",
-    icon: FileText,
-    items: [
-      { title: "All Pages", url: "/dashboard/pages" },
-      { title: "Page Builder", url: "/dashboard/pages/builder" },
-      { title: "Homepage", url: "/dashboard/pages/homepage" },
-    ],
-  },
-  {
     title: "Analytics",
     url: "/dashboard/analytics",
     icon: BarChart3,

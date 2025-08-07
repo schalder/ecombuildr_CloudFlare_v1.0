@@ -18,7 +18,7 @@ import ProductLibrary from "./pages/ProductLibrary";
 import Orders from "./pages/Orders";
 import Customers from "./pages/Customers";
 import Analytics from "./pages/Analytics";
-import Pages from "./pages/Pages";
+
 import PageBuilder from "./pages/PageBuilder";
 import Websites from "./pages/Websites";
 import CreateWebsite from "./pages/CreateWebsite";
@@ -83,10 +83,6 @@ const App = () => (
                 <Route path="/dashboard/funnels" element={<Funnels />} />
                 <Route path="/dashboard/funnels/create" element={<CreateFunnel />} />
                 <Route path="/dashboard/funnels/:id" element={<FunnelManagement />} />
-                <Route path="/dashboard/pages" element={<Pages />} />
-                <Route path="/dashboard/pages/builder" element={<PageBuilder />} />
-                <Route path="/dashboard/pages/builder/:pageId" element={<PageBuilder />} />
-                <Route path="/dashboard/pages/homepage" element={<PageBuilder />} />
                 
                 {/* Context-aware page builder routes */}
                 <Route path="/dashboard/websites/:websiteId/pages/:pageId/builder" element={<PageBuilder />} />
