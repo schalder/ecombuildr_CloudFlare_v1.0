@@ -1087,7 +1087,7 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
                       onSelect={() => onSelectionChange({ type: 'row', id: row.id, parentId: section.id })}
                       onDelete={() => onDeleteRow(row.id)}
                       onAddRow={() => onAddRow(index + 1)}
-                      onMoveRow={onMoveRow}
+                        onMoveElement={moveElement}
                       onAddElement={onAddElement}
                       onUpdateElement={onUpdateElement}
                       onDeleteElement={onDeleteElement}
@@ -1128,7 +1128,7 @@ interface RowComponentProps {
   onSelect: () => void;
   onDelete: () => void;
   onAddRow: () => void;
-  onMoveRow: (rowId: string, targetSectionId: string, insertIndex: number) => void;
+  onMoveElement: (elementId: string, targetSectionId: string, targetRowId: string, targetColumnId: string, insertIndex: number) => void;
   onAddElement: (sectionId: string, rowId: string, columnId: string, elementType: string, insertIndex?: number) => void;
   onUpdateElement: (elementId: string, updates: Partial<PageBuilderElement>) => void;
   onDeleteElement: (elementId: string) => void;
@@ -1145,7 +1145,7 @@ const RowComponent: React.FC<RowComponentProps> = ({
   onSelect,
   onDelete,
   onAddRow,
-  onMoveRow,
+  onMoveElement,
   onAddElement,
   onUpdateElement,
   onDeleteElement,
@@ -1233,7 +1233,7 @@ const RowComponent: React.FC<RowComponentProps> = ({
               grandParentId: sectionId 
             })}
             onAddElement={onAddElement}
-            onMoveElement={() => {}}
+            onMoveElement={onMoveElement}
             onUpdateElement={onUpdateElement}
             onDeleteElement={onDeleteElement}
             onDuplicateElement={onDuplicateElement}
