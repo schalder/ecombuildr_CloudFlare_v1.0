@@ -28,6 +28,7 @@ export default function Pages() {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [pages, setPages] = useState<Page[]>([]);
+  const [stores, setStores] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -202,7 +203,14 @@ export default function Pages() {
                               <Edit className="mr-2 h-4 w-4" />
                               Edit
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => window.open(`/preview/${page.slug}`, '_blank')}>
+                            <DropdownMenuItem onClick={() => {
+                              // Get the store slug from the current stores
+                              const storeSlug = stores?.[0]?.slug; // Assuming single store for now
+                              const previewUrl = page.is_homepage 
+                                ? `/${storeSlug}` 
+                                : `/${storeSlug}/${page.slug}`;
+                              window.open(previewUrl, '_blank');
+                            }}>
                               <Eye className="mr-2 h-4 w-4" />
                               Preview
                             </DropdownMenuItem>
