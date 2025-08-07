@@ -45,6 +45,8 @@ import { Label } from '@/components/ui/label';
 import { PropertiesPanel } from './components/PropertiesPanel';
 import { SettingsPanel } from './components/SettingsPanels';
 import { ElementDropZone } from './components/ElementDropZone';
+import { SectionAddButton } from './components/SectionAddButton';
+import { RowAddButton } from './components/RowAddButton';
 import { 
   PageBuilderData, 
   PageBuilderSection, 
@@ -164,7 +166,7 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = ({
     initialData || { sections: [] }
   );
   const [selection, setSelection] = useState<SelectionType | null>(null);
-  const [showColumnModal, setShowColumnModal] = useState<{ sectionId: string } | null>(null);
+  const [showColumnModal, setShowColumnModal] = useState<{ sectionId: string; insertIndex?: number } | null>(null);
   const [deviceType, setDeviceType] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -179,16 +181,23 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = ({
 
 
   // Section operations
-  const addSection = useCallback((width: PageBuilderSection['width'] = 'wide') => {
+  const addSection = useCallback((width: PageBuilderSection['width'] = 'wide', insertIndex?: number) => {
     const newSection: PageBuilderSection = {
       id: generateId(),
       width,
       rows: []
     };
     
+    const newSections = [...data.sections];
+    if (typeof insertIndex === 'number') {
+      newSections.splice(insertIndex, 0, newSection);
+    } else {
+      newSections.push(newSection);
+    }
+    
     updateData({
       ...data,
-      sections: [...data.sections, newSection]
+      sections: newSections
     });
   }, [data, updateData]);
 
@@ -270,7 +279,7 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = ({
   };
 
   // Row operations
-  const addRow = useCallback((sectionId: string, columnLayout: PageBuilderRow['columnLayout']) => {
+  const addRow = useCallback((sectionId: string, columnLayout: PageBuilderRow['columnLayout'], insertIndex?: number) => {
     const columnWidths = COLUMN_LAYOUTS[columnLayout];
     const newRow: PageBuilderRow = {
       id: generateId(),
@@ -286,7 +295,16 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = ({
       ...data,
       sections: data.sections.map(section =>
         section.id === sectionId
-          ? { ...section, rows: [...(section.rows || []), newRow] }
+          ? { 
+              ...section, 
+              rows: typeof insertIndex === 'number' 
+                ? [
+                    ...(section.rows || []).slice(0, insertIndex),
+                    newRow,
+                    ...(section.rows || []).slice(insertIndex)
+                  ]
+                : [...(section.rows || []), newRow]
+            }
           : section
       )
     });
@@ -587,29 +605,55 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = ({
                   </Button>
                 </div>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-0">
                   {data.sections.map((section, sectionIndex) => (
-                     <SectionComponent
-                       key={section.id}
-                       section={section}
-                       sectionIndex={sectionIndex}
-                       deviceType={deviceType}
-                       isSelected={selection?.type === 'section' && selection.id === section.id}
-                       onSelect={() => setSelection({ type: 'section', id: section.id })}
-                       onDelete={() => deleteSection(section.id)}
-                       onDuplicate={() => duplicateSection(section.id)}
-                       onAddRow={() => setShowColumnModal({ sectionId: section.id })}
-                       onDeleteRow={(rowId) => deleteRow(section.id, rowId)}
-            onAddElement={(sectionId, rowId, columnId, elementType, insertIndex) => 
-              addElement(sectionId, rowId, columnId, elementType, insertIndex)
-            }
-                      onUpdateElement={updateElement}
-                      onDeleteElement={deleteElement}
-                      onDuplicateElement={duplicateElement}
-                      selection={selection}
-                      onSelectionChange={setSelection}
-                    />
+                    <div key={section.id} className="group">
+                      {/* Section Add Button Before */}
+                      {sectionIndex === 0 && (
+                        <SectionAddButton
+                          onAddSection={() => addSection('wide', 0)}
+                          position="between"
+                          className="group-hover:opacity-100"
+                        />
+                      )}
+                      
+                      {/* Section Add Button Between */}
+                      {sectionIndex > 0 && (
+                        <SectionAddButton
+                          onAddSection={() => addSection('wide', sectionIndex)}
+                          position="between"
+                          className="group-hover:opacity-100"
+                        />
+                      )}
+                      
+                      <SectionComponent
+                        key={section.id}
+                        section={section}
+                        sectionIndex={sectionIndex}
+                        deviceType={deviceType}
+                        isSelected={selection?.type === 'section' && selection.id === section.id}
+                        onSelect={() => setSelection({ type: 'section', id: section.id })}
+                        onDelete={() => deleteSection(section.id)}
+                        onDuplicate={() => duplicateSection(section.id)}
+                        onAddRow={(insertIndex?: number) => setShowColumnModal({ sectionId: section.id, insertIndex })}
+                        onDeleteRow={(rowId) => deleteRow(section.id, rowId)}
+                        onAddElement={(sectionId, rowId, columnId, elementType, insertIndex) => 
+                          addElement(sectionId, rowId, columnId, elementType, insertIndex)
+                        }
+                        onUpdateElement={updateElement}
+                        onDeleteElement={deleteElement}
+                        onDuplicateElement={duplicateElement}
+                        selection={selection}
+                        onSelectionChange={setSelection}
+                      />
+                    </div>
                   ))}
+                  
+                  {/* Section Add Button At End */}
+                  <SectionAddButton
+                    onAddSection={() => addSection('wide')}
+                    position="end"
+                  />
                 </div>
               )}
             </div>
@@ -709,7 +753,7 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = ({
         onClose={() => setShowColumnModal(null)}
         onSelectLayout={(layout) => {
           if (showColumnModal) {
-            addRow(showColumnModal.sectionId, layout);
+            addRow(showColumnModal.sectionId, layout, showColumnModal.insertIndex);
           }
         }}
       />
@@ -762,7 +806,7 @@ interface SectionComponentProps {
   onSelect: () => void;
   onDelete: () => void;
   onDuplicate: () => void;
-  onAddRow: () => void;
+  onAddRow: (insertIndex?: number) => void;
   onDeleteRow: (rowId: string) => void;
   onAddElement: (sectionId: string, rowId: string, columnId: string, elementType: string, insertIndex?: number) => void;
   onUpdateElement: (elementId: string, updates: Partial<PageBuilderElement>) => void;
@@ -812,7 +856,15 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
           <Grip className="h-3 w-3" />
           <span className="font-medium">Section</span>
           <Separator orientation="vertical" className="mx-1 h-4" />
-          <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-primary-foreground/20" onClick={onAddRow}>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-6 w-6 p-0 hover:bg-primary-foreground/20" 
+            onClick={(e) => {
+              e.stopPropagation();
+              onAddRow();
+            }}
+          >
             <Plus className="h-3 w-3" />
           </Button>
           <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-primary-foreground/20" onClick={onDuplicate}>
@@ -844,30 +896,53 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
         {(!section.rows || section.rows.length === 0) ? (
           <div className="p-12 text-center border border-dashed border-border rounded-lg">
             <p className="text-muted-foreground mb-4">This section is empty</p>
-            <Button variant="outline" onClick={onAddRow}>
+            <Button 
+              variant="outline" 
+              onClick={(e) => {
+                e.stopPropagation();
+                onAddRow();
+              }}
+            >
               <Plus className="h-4 w-4 mr-2" />
               Add Row
             </Button>
           </div>
         ) : (
-          <div className="space-y-4">
-            {(section.rows || []).map((row) => (
-              <RowComponent
-                key={row.id}
-                row={row}
-                sectionId={section.id}
-                deviceType={deviceType}
-                isSelected={selection?.type === 'row' && selection.id === row.id}
-                onSelect={() => onSelectionChange({ type: 'row', id: row.id, parentId: section.id })}
-                onDelete={() => onDeleteRow(row.id)}
-            onAddElement={onAddElement}
-                onUpdateElement={onUpdateElement}
-                onDeleteElement={onDeleteElement}
-                onDuplicateElement={onDuplicateElement}
-                selection={selection}
-                onSelectionChange={onSelectionChange}
-              />
+          <div className="space-y-0">
+            {(section.rows || []).map((row, rowIndex) => (
+              <div key={row.id} className="group">
+                {/* Row Add Button Between */}
+                {rowIndex > 0 && (
+                  <RowAddButton
+                    onAddRow={() => onAddRow(rowIndex)}
+                    position="between"
+                    className="group-hover:opacity-100"
+                  />
+                )}
+                
+                <RowComponent
+                  key={row.id}
+                  row={row}
+                  sectionId={section.id}
+                  deviceType={deviceType}
+                  isSelected={selection?.type === 'row' && selection.id === row.id}
+                  onSelect={() => onSelectionChange({ type: 'row', id: row.id, parentId: section.id })}
+                  onDelete={() => onDeleteRow(row.id)}
+                  onAddElement={onAddElement}
+                  onUpdateElement={onUpdateElement}
+                  onDeleteElement={onDeleteElement}
+                  onDuplicateElement={onDuplicateElement}
+                  selection={selection}
+                  onSelectionChange={onSelectionChange}
+                />
+              </div>
             ))}
+            
+            {/* Row Add Button At End */}
+            <RowAddButton
+              onAddRow={() => onAddRow()}
+              position="end"
+            />
           </div>
         )}
       </div>
