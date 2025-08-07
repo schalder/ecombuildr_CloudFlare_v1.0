@@ -292,48 +292,96 @@ export const SectionSettings: React.FC<SectionSettingsProps> = ({ section, onUpd
           <CardTitle className="text-sm">Responsive Overrides</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Desktop Width</Label>
-              <Input
-                value={section.styles?.responsive?.desktop?.width || ''}
-                onChange={(e) => handleResponsiveStyleUpdate('desktop', 'width', e.target.value)}
-                placeholder="e.g., 1200px or 100%"
-              />
-              <Label>Desktop Padding</Label>
-              <Input
-                value={section.styles?.responsive?.desktop?.padding || ''}
-                onChange={(e) => handleResponsiveStyleUpdate('desktop', 'padding', e.target.value)}
-                placeholder="16px 24px"
-              />
-              <Label>Desktop Margin</Label>
-              <Input
-                value={section.styles?.responsive?.desktop?.margin || ''}
-                onChange={(e) => handleResponsiveStyleUpdate('desktop', 'margin', e.target.value)}
-                placeholder="0 auto"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Mobile Width</Label>
-              <Input
-                value={section.styles?.responsive?.mobile?.width || ''}
-                onChange={(e) => handleResponsiveStyleUpdate('mobile', 'width', e.target.value)}
-                placeholder="e.g., 100%, 360px"
-              />
-              <Label>Mobile Padding</Label>
-              <Input
-                value={section.styles?.responsive?.mobile?.padding || ''}
-                onChange={(e) => handleResponsiveStyleUpdate('mobile', 'padding', e.target.value)}
-                placeholder="12px 16px"
-              />
-              <Label>Mobile Margin</Label>
-              <Input
-                value={section.styles?.responsive?.mobile?.margin || ''}
-                onChange={(e) => handleResponsiveStyleUpdate('mobile', 'margin', e.target.value)}
-                placeholder="0 auto"
-              />
-            </div>
-          </div>
+          <Tabs defaultValue="desktop" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="desktop">Desktop</TabsTrigger>
+              <TabsTrigger value="mobile">Mobile</TabsTrigger>
+            </TabsList>
+            <TabsContent value="desktop" className="space-y-4">
+              <div className="space-y-2">
+                <Label>Width (%): <span className="text-muted-foreground">{Math.min(100, Math.max(30, parseInt(String(section.styles?.responsive?.desktop?.width || '').replace(/[^0-9]/g, '')) || 100))}%</span></Label>
+                <Slider
+                  min={30}
+                  max={100}
+                  step={1}
+                  value={[Math.min(100, Math.max(30, parseInt(String(section.styles?.responsive?.desktop?.width || '').replace(/[^0-9]/g, '')) || 100))]}
+                  onValueChange={(v) => handleResponsiveStyleUpdate('desktop', 'width', `${v[0]}%`)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Padding (px)</Label>
+                <Slider
+                  min={0}
+                  max={140}
+                  step={1}
+                  value={[Math.min(140, Math.max(0, parseInt(String(section.styles?.responsive?.desktop?.padding || '').replace(/[^0-9]/g, '')) || 0))]}
+                  onValueChange={(v) => handleResponsiveStyleUpdate('desktop', 'padding', `${v[0]}px`)}
+                />
+                <Input
+                  value={section.styles?.responsive?.desktop?.padding || ''}
+                  onChange={(e) => handleResponsiveStyleUpdate('desktop', 'padding', e.target.value)}
+                  placeholder="Custom e.g., 12px 16px"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Margin (px)</Label>
+                <Slider
+                  min={0}
+                  max={140}
+                  step={1}
+                  value={[Math.min(140, Math.max(0, parseInt(String(section.styles?.responsive?.desktop?.margin || '').replace(/[^0-9]/g, '')) || 0))]}
+                  onValueChange={(v) => handleResponsiveStyleUpdate('desktop', 'margin', `${v[0]}px`)}
+                />
+                <Input
+                  value={section.styles?.responsive?.desktop?.margin || ''}
+                  onChange={(e) => handleResponsiveStyleUpdate('desktop', 'margin', e.target.value)}
+                  placeholder="Custom e.g., 0 auto"
+                />
+              </div>
+            </TabsContent>
+            <TabsContent value="mobile" className="space-y-4">
+              <div className="space-y-2">
+                <Label>Width (%): <span className="text-muted-foreground">{Math.min(100, Math.max(30, parseInt(String(section.styles?.responsive?.mobile?.width || '').replace(/[^0-9]/g, '')) || 100))}%</span></Label>
+                <Slider
+                  min={30}
+                  max={100}
+                  step={1}
+                  value={[Math.min(100, Math.max(30, parseInt(String(section.styles?.responsive?.mobile?.width || '').replace(/[^0-9]/g, '')) || 100))]}
+                  onValueChange={(v) => handleResponsiveStyleUpdate('mobile', 'width', `${v[0]}%`)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Padding (px)</Label>
+                <Slider
+                  min={0}
+                  max={140}
+                  step={1}
+                  value={[Math.min(140, Math.max(0, parseInt(String(section.styles?.responsive?.mobile?.padding || '').replace(/[^0-9]/g, '')) || 0))]}
+                  onValueChange={(v) => handleResponsiveStyleUpdate('mobile', 'padding', `${v[0]}px`)}
+                />
+                <Input
+                  value={section.styles?.responsive?.mobile?.padding || ''}
+                  onChange={(e) => handleResponsiveStyleUpdate('mobile', 'padding', e.target.value)}
+                  placeholder="Custom e.g., 12px 16px"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Margin (px)</Label>
+                <Slider
+                  min={0}
+                  max={140}
+                  step={1}
+                  value={[Math.min(140, Math.max(0, parseInt(String(section.styles?.responsive?.mobile?.margin || '').replace(/[^0-9]/g, '')) || 0))]}
+                  onValueChange={(v) => handleResponsiveStyleUpdate('mobile', 'margin', `${v[0]}px`)}
+                />
+                <Input
+                  value={section.styles?.responsive?.mobile?.margin || ''}
+                  onChange={(e) => handleResponsiveStyleUpdate('mobile', 'margin', e.target.value)}
+                  placeholder="Custom e.g., 0 auto"
+                />
+              </div>
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
     </div>
@@ -620,48 +668,96 @@ export const RowSettings: React.FC<RowSettingsProps> = ({ row, onUpdate }) => {
           <CardTitle className="text-sm">Responsive Overrides</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Desktop Width</Label>
-              <Input
-                value={row.styles?.responsive?.desktop?.width || ''}
-                onChange={(e) => handleResponsiveStyleUpdate('desktop', 'width', e.target.value)}
-                placeholder="e.g., 1000px or 100%"
-              />
-              <Label>Desktop Padding</Label>
-              <Input
-                value={row.styles?.responsive?.desktop?.padding || ''}
-                onChange={(e) => handleResponsiveStyleUpdate('desktop', 'padding', e.target.value)}
-                placeholder="16px 24px"
-              />
-              <Label>Desktop Margin</Label>
-              <Input
-                value={row.styles?.responsive?.desktop?.margin || ''}
-                onChange={(e) => handleResponsiveStyleUpdate('desktop', 'margin', e.target.value)}
-                placeholder="0 auto"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Mobile Width</Label>
-              <Input
-                value={row.styles?.responsive?.mobile?.width || ''}
-                onChange={(e) => handleResponsiveStyleUpdate('mobile', 'width', e.target.value)}
-                placeholder="e.g., 100%, 360px"
-              />
-              <Label>Mobile Padding</Label>
-              <Input
-                value={row.styles?.responsive?.mobile?.padding || ''}
-                onChange={(e) => handleResponsiveStyleUpdate('mobile', 'padding', e.target.value)}
-                placeholder="12px 16px"
-              />
-              <Label>Mobile Margin</Label>
-              <Input
-                value={row.styles?.responsive?.mobile?.margin || ''}
-                onChange={(e) => handleResponsiveStyleUpdate('mobile', 'margin', e.target.value)}
-                placeholder="0 auto"
-              />
-            </div>
-          </div>
+          <Tabs defaultValue="desktop" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="desktop">Desktop</TabsTrigger>
+              <TabsTrigger value="mobile">Mobile</TabsTrigger>
+            </TabsList>
+            <TabsContent value="desktop" className="space-y-4">
+              <div className="space-y-2">
+                <Label>Width (%): <span className="text-muted-foreground">{Math.min(100, Math.max(30, parseInt(String(row.styles?.responsive?.desktop?.width || '').replace(/[^0-9]/g, '')) || 100))}%</span></Label>
+                <Slider
+                  min={30}
+                  max={100}
+                  step={1}
+                  value={[Math.min(100, Math.max(30, parseInt(String(row.styles?.responsive?.desktop?.width || '').replace(/[^0-9]/g, '')) || 100))]}
+                  onValueChange={(v) => handleResponsiveStyleUpdate('desktop', 'width', `${v[0]}%`)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Padding (px)</Label>
+                <Slider
+                  min={0}
+                  max={140}
+                  step={1}
+                  value={[Math.min(140, Math.max(0, parseInt(String(row.styles?.responsive?.desktop?.padding || '').replace(/[^0-9]/g, '')) || 0))]}
+                  onValueChange={(v) => handleResponsiveStyleUpdate('desktop', 'padding', `${v[0]}px`)}
+                />
+                <Input
+                  value={row.styles?.responsive?.desktop?.padding || ''}
+                  onChange={(e) => handleResponsiveStyleUpdate('desktop', 'padding', e.target.value)}
+                  placeholder="Custom e.g., 12px 16px"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Margin (px)</Label>
+                <Slider
+                  min={0}
+                  max={140}
+                  step={1}
+                  value={[Math.min(140, Math.max(0, parseInt(String(row.styles?.responsive?.desktop?.margin || '').replace(/[^0-9]/g, '')) || 0))]}
+                  onValueChange={(v) => handleResponsiveStyleUpdate('desktop', 'margin', `${v[0]}px`)}
+                />
+                <Input
+                  value={row.styles?.responsive?.desktop?.margin || ''}
+                  onChange={(e) => handleResponsiveStyleUpdate('desktop', 'margin', e.target.value)}
+                  placeholder="Custom e.g., 0 auto"
+                />
+              </div>
+            </TabsContent>
+            <TabsContent value="mobile" className="space-y-4">
+              <div className="space-y-2">
+                <Label>Width (%): <span className="text-muted-foreground">{Math.min(100, Math.max(30, parseInt(String(row.styles?.responsive?.mobile?.width || '').replace(/[^0-9]/g, '')) || 100))}%</span></Label>
+                <Slider
+                  min={30}
+                  max={100}
+                  step={1}
+                  value={[Math.min(100, Math.max(30, parseInt(String(row.styles?.responsive?.mobile?.width || '').replace(/[^0-9]/g, '')) || 100))]}
+                  onValueChange={(v) => handleResponsiveStyleUpdate('mobile', 'width', `${v[0]}%`)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Padding (px)</Label>
+                <Slider
+                  min={0}
+                  max={140}
+                  step={1}
+                  value={[Math.min(140, Math.max(0, parseInt(String(row.styles?.responsive?.mobile?.padding || '').replace(/[^0-9]/g, '')) || 0))]}
+                  onValueChange={(v) => handleResponsiveStyleUpdate('mobile', 'padding', `${v[0]}px`)}
+                />
+                <Input
+                  value={row.styles?.responsive?.mobile?.padding || ''}
+                  onChange={(e) => handleResponsiveStyleUpdate('mobile', 'padding', e.target.value)}
+                  placeholder="Custom e.g., 12px 16px"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Margin (px)</Label>
+                <Slider
+                  min={0}
+                  max={140}
+                  step={1}
+                  value={[Math.min(140, Math.max(0, parseInt(String(row.styles?.responsive?.mobile?.margin || '').replace(/[^0-9]/g, '')) || 0))]}
+                  onValueChange={(v) => handleResponsiveStyleUpdate('mobile', 'margin', `${v[0]}px`)}
+                />
+                <Input
+                  value={row.styles?.responsive?.mobile?.margin || ''}
+                  onChange={(e) => handleResponsiveStyleUpdate('mobile', 'margin', e.target.value)}
+                  placeholder="Custom e.g., 0 auto"
+                />
+              </div>
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
     </div>
@@ -924,48 +1020,96 @@ export const ColumnSettings: React.FC<ColumnSettingsProps> = ({ column, onUpdate
           <CardTitle className="text-sm">Responsive Overrides</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Desktop Width</Label>
-              <Input
-                value={column.styles?.responsive?.desktop?.width || ''}
-                onChange={(e) => handleResponsiveStyleUpdate('desktop', 'width', e.target.value)}
-                placeholder="e.g., 400px or 100%"
-              />
-              <Label>Desktop Padding</Label>
-              <Input
-                value={column.styles?.responsive?.desktop?.padding || ''}
-                onChange={(e) => handleResponsiveStyleUpdate('desktop', 'padding', e.target.value)}
-                placeholder="16px 24px"
-              />
-              <Label>Desktop Margin</Label>
-              <Input
-                value={column.styles?.responsive?.desktop?.margin || ''}
-                onChange={(e) => handleResponsiveStyleUpdate('desktop', 'margin', e.target.value)}
-                placeholder="0 auto"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Mobile Width</Label>
-              <Input
-                value={column.styles?.responsive?.mobile?.width || ''}
-                onChange={(e) => handleResponsiveStyleUpdate('mobile', 'width', e.target.value)}
-                placeholder="e.g., 100%, 360px"
-              />
-              <Label>Mobile Padding</Label>
-              <Input
-                value={column.styles?.responsive?.mobile?.padding || ''}
-                onChange={(e) => handleResponsiveStyleUpdate('mobile', 'padding', e.target.value)}
-                placeholder="12px 16px"
-              />
-              <Label>Mobile Margin</Label>
-              <Input
-                value={column.styles?.responsive?.mobile?.margin || ''}
-                onChange={(e) => handleResponsiveStyleUpdate('mobile', 'margin', e.target.value)}
-                placeholder="0 auto"
-              />
-            </div>
-          </div>
+          <Tabs defaultValue="desktop" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="desktop">Desktop</TabsTrigger>
+              <TabsTrigger value="mobile">Mobile</TabsTrigger>
+            </TabsList>
+            <TabsContent value="desktop" className="space-y-4">
+              <div className="space-y-2">
+                <Label>Width (%): <span className="text-muted-foreground">{Math.min(100, Math.max(30, parseInt(String(column.styles?.responsive?.desktop?.width || '').replace(/[^0-9]/g, '')) || 100))}%</span></Label>
+                <Slider
+                  min={30}
+                  max={100}
+                  step={1}
+                  value={[Math.min(100, Math.max(30, parseInt(String(column.styles?.responsive?.desktop?.width || '').replace(/[^0-9]/g, '')) || 100))]}
+                  onValueChange={(v) => handleResponsiveStyleUpdate('desktop', 'width', `${v[0]}%`)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Padding (px)</Label>
+                <Slider
+                  min={0}
+                  max={140}
+                  step={1}
+                  value={[Math.min(140, Math.max(0, parseInt(String(column.styles?.responsive?.desktop?.padding || '').replace(/[^0-9]/g, '')) || 0))]}
+                  onValueChange={(v) => handleResponsiveStyleUpdate('desktop', 'padding', `${v[0]}px`)}
+                />
+                <Input
+                  value={column.styles?.responsive?.desktop?.padding || ''}
+                  onChange={(e) => handleResponsiveStyleUpdate('desktop', 'padding', e.target.value)}
+                  placeholder="Custom e.g., 12px 16px"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Margin (px)</Label>
+                <Slider
+                  min={0}
+                  max={140}
+                  step={1}
+                  value={[Math.min(140, Math.max(0, parseInt(String(column.styles?.responsive?.desktop?.margin || '').replace(/[^0-9]/g, '')) || 0))]}
+                  onValueChange={(v) => handleResponsiveStyleUpdate('desktop', 'margin', `${v[0]}px`)}
+                />
+                <Input
+                  value={column.styles?.responsive?.desktop?.margin || ''}
+                  onChange={(e) => handleResponsiveStyleUpdate('desktop', 'margin', e.target.value)}
+                  placeholder="Custom e.g., 0 auto"
+                />
+              </div>
+            </TabsContent>
+            <TabsContent value="mobile" className="space-y-4">
+              <div className="space-y-2">
+                <Label>Width (%): <span className="text-muted-foreground">{Math.min(100, Math.max(30, parseInt(String(column.styles?.responsive?.mobile?.width || '').replace(/[^0-9]/g, '')) || 100))}%</span></Label>
+                <Slider
+                  min={30}
+                  max={100}
+                  step={1}
+                  value={[Math.min(100, Math.max(30, parseInt(String(column.styles?.responsive?.mobile?.width || '').replace(/[^0-9]/g, '')) || 100))]}
+                  onValueChange={(v) => handleResponsiveStyleUpdate('mobile', 'width', `${v[0]}%`)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Padding (px)</Label>
+                <Slider
+                  min={0}
+                  max={140}
+                  step={1}
+                  value={[Math.min(140, Math.max(0, parseInt(String(column.styles?.responsive?.mobile?.padding || '').replace(/[^0-9]/g, '')) || 0))]}
+                  onValueChange={(v) => handleResponsiveStyleUpdate('mobile', 'padding', `${v[0]}px`)}
+                />
+                <Input
+                  value={column.styles?.responsive?.mobile?.padding || ''}
+                  onChange={(e) => handleResponsiveStyleUpdate('mobile', 'padding', e.target.value)}
+                  placeholder="Custom e.g., 12px 16px"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Margin (px)</Label>
+                <Slider
+                  min={0}
+                  max={140}
+                  step={1}
+                  value={[Math.min(140, Math.max(0, parseInt(String(column.styles?.responsive?.mobile?.margin || '').replace(/[^0-9]/g, '')) || 0))]}
+                  onValueChange={(v) => handleResponsiveStyleUpdate('mobile', 'margin', `${v[0]}px`)}
+                />
+                <Input
+                  value={column.styles?.responsive?.mobile?.margin || ''}
+                  onChange={(e) => handleResponsiveStyleUpdate('mobile', 'margin', e.target.value)}
+                  placeholder="Custom e.g., 0 auto"
+                />
+              </div>
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
     </div>
