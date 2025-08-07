@@ -755,6 +755,7 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = ({
                         onAddRow={(insertIndex?: number) => setShowColumnModal({ sectionId: section.id, insertIndex })}
                         onDeleteRow={(rowId) => deleteRow(section.id, rowId)}
                         onMoveRow={moveRow}
+                        onMoveElement={moveElement}
                         onMoveSection={moveSection}
                         onAddElement={addElement}
                         onUpdateElement={updateElement}
@@ -935,6 +936,7 @@ interface SectionComponentProps {
   onAddRow: (insertIndex?: number) => void;
   onDeleteRow: (rowId: string) => void;
   onMoveRow: (rowId: string, targetSectionId: string, insertIndex: number) => void;
+  onMoveElement: (elementId: string, targetSectionId: string, targetRowId: string, targetColumnId: string, insertIndex: number) => void;
   onMoveSection: (sectionId: string, insertIndex: number) => void;
   onAddElement: (sectionId: string, rowId: string, columnId: string, elementType: string, insertIndex?: number) => void;
   onUpdateElement: (elementId: string, updates: Partial<PageBuilderElement>) => void;
@@ -955,6 +957,7 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
   onAddRow,
   onDeleteRow,
   onMoveRow,
+  onMoveElement,
   onMoveSection,
   onAddElement,
   onUpdateElement,
@@ -1087,7 +1090,7 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
                       onSelect={() => onSelectionChange({ type: 'row', id: row.id, parentId: section.id })}
                       onDelete={() => onDeleteRow(row.id)}
                       onAddRow={() => onAddRow(index + 1)}
-                        onMoveElement={moveElement}
+                        onMoveElement={onMoveElement}
                       onAddElement={onAddElement}
                       onUpdateElement={onUpdateElement}
                       onDeleteElement={onDeleteElement}
