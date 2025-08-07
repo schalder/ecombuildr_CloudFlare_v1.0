@@ -149,7 +149,7 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
   };
 
   const getRowStyles = (): React.CSSProperties => {
-    return renderRowStyles(row);
+    return renderRowStyles(row, deviceType);
   };
 
   const userBackground = hasUserBackground(row.styles);

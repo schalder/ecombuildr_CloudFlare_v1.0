@@ -47,10 +47,12 @@ function kebabCase(str: string): string {
   return str.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
 }
 
-export function mergeResponsiveStyles(baseStyles: any, responsiveStyles: any, deviceType: 'desktop' | 'mobile' = 'desktop'): any {
+export function mergeResponsiveStyles(baseStyles: any, responsiveStyles: any, deviceType: 'desktop' | 'tablet' | 'mobile' = 'desktop'): any {
   if (!responsiveStyles?.responsive) return baseStyles;
   
-  const deviceStyles = responsiveStyles.responsive[deviceType] || {};
+  // We only store desktop/mobile overrides. Treat tablet as desktop for now.
+  const key = deviceType === 'mobile' ? 'mobile' : 'desktop';
+  const deviceStyles = responsiveStyles.responsive[key] || {};
   
   return {
     ...baseStyles,

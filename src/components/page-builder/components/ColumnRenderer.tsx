@@ -71,7 +71,7 @@ export const ColumnRenderer: React.FC<ColumnRendererProps> = ({
   };
 
   const getColumnStyles = (): React.CSSProperties => {
-    const baseStyles = renderColumnStyles(column);
+    const baseStyles = renderColumnStyles(column, deviceType);
     
     // Add any column-specific overrides
     if (column.customWidth) {

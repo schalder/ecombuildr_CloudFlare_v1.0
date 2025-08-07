@@ -1,7 +1,8 @@
 import { PageBuilderSection, PageBuilderRow, PageBuilderColumn, PageBuilderElement } from '../types';
+import { mergeResponsiveStyles } from './responsiveStyles';
 
 // Universal style renderer that creates pure inline styles
-export const renderSectionStyles = (section: PageBuilderSection): React.CSSProperties => {
+export const renderSectionStyles = (section: PageBuilderSection, deviceType: 'desktop' | 'tablet' | 'mobile' = 'desktop'): React.CSSProperties => {
   const styles: React.CSSProperties = {};
   
   if (section.styles) {
@@ -35,6 +36,7 @@ export const renderSectionStyles = (section: PageBuilderSection): React.CSSPrope
     if (section.styles.marginLeft) styles.marginLeft = section.styles.marginLeft;
     
     // Width
+    if (section.styles.width) styles.width = section.styles.width;
     if (section.styles.maxWidth) styles.maxWidth = section.styles.maxWidth;
     if (section.styles.minWidth) styles.minWidth = section.styles.minWidth;
   }
@@ -44,10 +46,12 @@ export const renderSectionStyles = (section: PageBuilderSection): React.CSSPrope
     styles.width = section.customWidth;
   }
   
-  return styles;
+  // Merge responsive overrides
+  const merged = mergeResponsiveStyles(styles, section.styles, deviceType);
+  return merged;
 };
 
-export const renderRowStyles = (row: PageBuilderRow): React.CSSProperties => {
+export const renderRowStyles = (row: PageBuilderRow, deviceType: 'desktop' | 'tablet' | 'mobile' = 'desktop'): React.CSSProperties => {
   const styles: React.CSSProperties = {};
   
   if (row.styles) {
@@ -91,10 +95,12 @@ export const renderRowStyles = (row: PageBuilderRow): React.CSSProperties => {
     styles.width = row.customWidth;
   }
   
-  return styles;
+  // Merge responsive overrides
+  const merged = mergeResponsiveStyles(styles, row.styles, deviceType);
+  return merged;
 };
 
-export const renderColumnStyles = (column: PageBuilderColumn): React.CSSProperties => {
+export const renderColumnStyles = (column: PageBuilderColumn, deviceType: 'desktop' | 'tablet' | 'mobile' = 'desktop'): React.CSSProperties => {
   const styles: React.CSSProperties = {};
   
   if (column.styles) {
@@ -133,7 +139,9 @@ export const renderColumnStyles = (column: PageBuilderColumn): React.CSSProperti
     if (column.styles.width) styles.width = column.styles.width;
   }
   
-  return styles;
+  // Merge responsive overrides
+  const merged = mergeResponsiveStyles(styles, column.styles, deviceType);
+  return merged;
 };
 
 export const renderElementStyles = (element: PageBuilderElement): React.CSSProperties => {

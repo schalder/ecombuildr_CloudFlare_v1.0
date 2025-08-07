@@ -78,6 +78,10 @@ export interface PageBuilderColumn {
     width?: string; // Custom width override
     maxWidth?: string;
     minWidth?: string;
+    responsive?: {
+      desktop?: Record<string, any>;
+      mobile?: Record<string, any>;
+    };
   };
   responsive?: {
     mobile?: {
@@ -120,6 +124,10 @@ export interface PageBuilderRow {
     width?: string; // Custom width override
     maxWidth?: string;
     minWidth?: string;
+    responsive?: {
+      desktop?: Record<string, any>;
+      mobile?: Record<string, any>;
+    };
   };
   responsive?: {
     mobile?: {
@@ -161,6 +169,10 @@ export interface PageBuilderSection {
     width?: string; // Custom width override
     maxWidth?: string;
     minWidth?: string;
+    responsive?: {
+      desktop?: Record<string, any>;
+      mobile?: Record<string, any>;
+    };
   };
 }
 

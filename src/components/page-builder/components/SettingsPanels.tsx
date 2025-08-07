@@ -33,6 +33,21 @@ export const SectionSettings: React.FC<SectionSettingsProps> = ({ section, onUpd
     });
   };
 
+  const handleResponsiveStyleUpdate = (device: 'desktop' | 'mobile', key: string, value: any) => {
+    onUpdate({
+      styles: {
+        ...section.styles,
+        responsive: {
+          ...section.styles?.responsive,
+          [device]: {
+            ...(section.styles?.responsive?.[device] || {}),
+            [key]: value
+          }
+        }
+      }
+    });
+  };
+
   return (
     <div className="p-4 space-y-6">
       <Card>
@@ -271,6 +286,56 @@ export const SectionSettings: React.FC<SectionSettingsProps> = ({ section, onUpd
           )}
         </CardContent>
       </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm">Responsive Overrides</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Desktop Width</Label>
+              <Input
+                value={section.styles?.responsive?.desktop?.width || ''}
+                onChange={(e) => handleResponsiveStyleUpdate('desktop', 'width', e.target.value)}
+                placeholder="e.g., 1200px or 100%"
+              />
+              <Label>Desktop Padding</Label>
+              <Input
+                value={section.styles?.responsive?.desktop?.padding || ''}
+                onChange={(e) => handleResponsiveStyleUpdate('desktop', 'padding', e.target.value)}
+                placeholder="16px 24px"
+              />
+              <Label>Desktop Margin</Label>
+              <Input
+                value={section.styles?.responsive?.desktop?.margin || ''}
+                onChange={(e) => handleResponsiveStyleUpdate('desktop', 'margin', e.target.value)}
+                placeholder="0 auto"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Mobile Width</Label>
+              <Input
+                value={section.styles?.responsive?.mobile?.width || ''}
+                onChange={(e) => handleResponsiveStyleUpdate('mobile', 'width', e.target.value)}
+                placeholder="e.g., 100%, 360px"
+              />
+              <Label>Mobile Padding</Label>
+              <Input
+                value={section.styles?.responsive?.mobile?.padding || ''}
+                onChange={(e) => handleResponsiveStyleUpdate('mobile', 'padding', e.target.value)}
+                placeholder="12px 16px"
+              />
+              <Label>Mobile Margin</Label>
+              <Input
+                value={section.styles?.responsive?.mobile?.margin || ''}
+                onChange={(e) => handleResponsiveStyleUpdate('mobile', 'margin', e.target.value)}
+                placeholder="0 auto"
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
@@ -290,6 +355,21 @@ export const RowSettings: React.FC<RowSettingsProps> = ({ row, onUpdate }) => {
       styles: {
         ...row.styles,
         [key]: value
+      }
+    });
+  };
+
+  const handleResponsiveStyleUpdate = (device: 'desktop' | 'mobile', key: string, value: any) => {
+    onUpdate({
+      styles: {
+        ...row.styles,
+        responsive: {
+          ...row.styles?.responsive,
+          [device]: {
+            ...(row.styles?.responsive?.[device] || {}),
+            [key]: value
+          }
+        }
       }
     });
   };
@@ -534,6 +614,56 @@ export const RowSettings: React.FC<RowSettingsProps> = ({ row, onUpdate }) => {
           )}
         </CardContent>
       </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm">Responsive Overrides</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Desktop Width</Label>
+              <Input
+                value={row.styles?.responsive?.desktop?.width || ''}
+                onChange={(e) => handleResponsiveStyleUpdate('desktop', 'width', e.target.value)}
+                placeholder="e.g., 1000px or 100%"
+              />
+              <Label>Desktop Padding</Label>
+              <Input
+                value={row.styles?.responsive?.desktop?.padding || ''}
+                onChange={(e) => handleResponsiveStyleUpdate('desktop', 'padding', e.target.value)}
+                placeholder="16px 24px"
+              />
+              <Label>Desktop Margin</Label>
+              <Input
+                value={row.styles?.responsive?.desktop?.margin || ''}
+                onChange={(e) => handleResponsiveStyleUpdate('desktop', 'margin', e.target.value)}
+                placeholder="0 auto"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Mobile Width</Label>
+              <Input
+                value={row.styles?.responsive?.mobile?.width || ''}
+                onChange={(e) => handleResponsiveStyleUpdate('mobile', 'width', e.target.value)}
+                placeholder="e.g., 100%, 360px"
+              />
+              <Label>Mobile Padding</Label>
+              <Input
+                value={row.styles?.responsive?.mobile?.padding || ''}
+                onChange={(e) => handleResponsiveStyleUpdate('mobile', 'padding', e.target.value)}
+                placeholder="12px 16px"
+              />
+              <Label>Mobile Margin</Label>
+              <Input
+                value={row.styles?.responsive?.mobile?.margin || ''}
+                onChange={(e) => handleResponsiveStyleUpdate('mobile', 'margin', e.target.value)}
+                placeholder="0 auto"
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
@@ -553,6 +683,21 @@ export const ColumnSettings: React.FC<ColumnSettingsProps> = ({ column, onUpdate
       styles: {
         ...column.styles,
         [key]: value
+      }
+    });
+  };
+
+  const handleResponsiveStyleUpdate = (device: 'desktop' | 'mobile', key: string, value: any) => {
+    onUpdate({
+      styles: {
+        ...column.styles,
+        responsive: {
+          ...column.styles?.responsive,
+          [device]: {
+            ...(column.styles?.responsive?.[device] || {}),
+            [key]: value
+          }
+        }
       }
     });
   };
@@ -771,6 +916,56 @@ export const ColumnSettings: React.FC<ColumnSettingsProps> = ({ column, onUpdate
               </Collapsible>
             </>
           )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm">Responsive Overrides</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Desktop Width</Label>
+              <Input
+                value={column.styles?.responsive?.desktop?.width || ''}
+                onChange={(e) => handleResponsiveStyleUpdate('desktop', 'width', e.target.value)}
+                placeholder="e.g., 400px or 100%"
+              />
+              <Label>Desktop Padding</Label>
+              <Input
+                value={column.styles?.responsive?.desktop?.padding || ''}
+                onChange={(e) => handleResponsiveStyleUpdate('desktop', 'padding', e.target.value)}
+                placeholder="16px 24px"
+              />
+              <Label>Desktop Margin</Label>
+              <Input
+                value={column.styles?.responsive?.desktop?.margin || ''}
+                onChange={(e) => handleResponsiveStyleUpdate('desktop', 'margin', e.target.value)}
+                placeholder="0 auto"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Mobile Width</Label>
+              <Input
+                value={column.styles?.responsive?.mobile?.width || ''}
+                onChange={(e) => handleResponsiveStyleUpdate('mobile', 'width', e.target.value)}
+                placeholder="e.g., 100%, 360px"
+              />
+              <Label>Mobile Padding</Label>
+              <Input
+                value={column.styles?.responsive?.mobile?.padding || ''}
+                onChange={(e) => handleResponsiveStyleUpdate('mobile', 'padding', e.target.value)}
+                placeholder="12px 16px"
+              />
+              <Label>Mobile Margin</Label>
+              <Input
+                value={column.styles?.responsive?.mobile?.margin || ''}
+                onChange={(e) => handleResponsiveStyleUpdate('mobile', 'margin', e.target.value)}
+                placeholder="0 auto"
+              />
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>

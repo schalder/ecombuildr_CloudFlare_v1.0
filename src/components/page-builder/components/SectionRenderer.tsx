@@ -123,7 +123,7 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({
   };
 
   const getSectionStyles = (): React.CSSProperties => {
-    return renderSectionStyles(section);
+    return renderSectionStyles(section, deviceType);
   };
 
   const userBackground = hasUserBackground(section.styles);
