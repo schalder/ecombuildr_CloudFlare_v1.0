@@ -54,6 +54,8 @@ export const ButtonElementStyles: React.FC<ButtonElementStylesProps> = ({
                 ...currentResponsive,
                 fullWidth: checked
               });
+              // Also update content for backwards compatibility
+              onStyleUpdate('content', { ...element.content, fullWidth: checked });
             }}
           />
           <Label htmlFor="full-width" className="text-xs">Full Width</Label>
@@ -190,11 +192,28 @@ export const ButtonElementStyles: React.FC<ButtonElementStylesProps> = ({
 
             <div>
               <Label className="text-xs">Padding (Desktop)</Label>
-              <Input
-                value={desktopStyles.padding || ''}
-                onChange={(e) => updateResponsiveStyle('desktop', 'padding', e.target.value)}
-                placeholder="e.g., 12px 24px"
-              />
+              <div className="flex items-center space-x-2">
+                <Input
+                  value={desktopStyles.padding || ''}
+                  onChange={(e) => updateResponsiveStyle('desktop', 'padding', e.target.value)}
+                  placeholder="Auto: 12px 24px"
+                  className="flex-1"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const fontSize = parseInt(desktopStyles.fontSize?.replace(/\D/g, '') || '16');
+                    const vertical = Math.max(8, fontSize * 0.4);
+                    const horizontal = Math.max(16, fontSize * 0.8);
+                    updateResponsiveStyle('desktop', 'padding', `${vertical}px ${horizontal}px`);
+                  }}
+                  className="h-8 px-2 text-xs"
+                >
+                  Auto
+                </Button>
+              </div>
             </div>
           </TabsContent>
           
@@ -275,11 +294,28 @@ export const ButtonElementStyles: React.FC<ButtonElementStylesProps> = ({
 
             <div>
               <Label className="text-xs">Padding (Mobile)</Label>
-              <Input
-                value={mobileStyles.padding || ''}
-                onChange={(e) => updateResponsiveStyle('mobile', 'padding', e.target.value)}
-                placeholder="e.g., 8px 16px"
-              />
+              <div className="flex items-center space-x-2">
+                <Input
+                  value={mobileStyles.padding || ''}
+                  onChange={(e) => updateResponsiveStyle('mobile', 'padding', e.target.value)}
+                  placeholder="Auto: 8px 16px"
+                  className="flex-1"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const fontSize = parseInt(mobileStyles.fontSize?.replace(/\D/g, '') || '14');
+                    const vertical = Math.max(8, fontSize * 0.4);
+                    const horizontal = Math.max(16, fontSize * 0.8);
+                    updateResponsiveStyle('mobile', 'padding', `${vertical}px ${horizontal}px`);
+                  }}
+                  className="h-8 px-2 text-xs"
+                >
+                  Auto
+                </Button>
+              </div>
             </div>
           </TabsContent>
         </Tabs>

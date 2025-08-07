@@ -8,6 +8,7 @@ import { elementRegistry } from './ElementRegistry';
 import { InlineEditor } from '../components/InlineEditor';
 import { renderElementStyles } from '../utils/styleRenderer';
 import { generateResponsiveButtonClasses, generateResponsiveButtonStyles, generateResponsivePaddingCSS } from '../utils/responsiveButtonUtils';
+import { cn } from '@/lib/utils';
 
 // Heading Element
 const HeadingElement: React.FC<{
@@ -240,9 +241,11 @@ const ButtonElement: React.FC<{
   deviceType?: 'desktop' | 'tablet' | 'mobile';
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
 }> = ({ element, isEditing, deviceType, onUpdate }) => {
-  const text = element.content.text || 'Button';
-  const variant = element.content.variant || 'default';
-  const size = element.content.size || 'default';
+  const responsiveStyles = element.styles?.responsive || {};
+  const desktopStyles = responsiveStyles.desktop || {};
+  const mobileStyles = responsiveStyles.mobile || {};
+  
+  const text = element.content.text || 'Click Me';
   const url = element.content.url || '#';
   const target = element.content.target || '_blank';
 
@@ -264,69 +267,179 @@ const ButtonElement: React.FC<{
     }
   };
 
+  // Calculate smart padding if none exists
+  const getSmartPadding = (fontSize: string, fallback: string) => {
+    const size = parseInt(fontSize?.replace(/\D/g, '') || '16');
+    const vertical = Math.max(8, size * 0.4);
+    const horizontal = Math.max(16, size * 0.8);
+    return `${vertical}px ${horizontal}px`;
+  };
+
+  // Generate responsive classes
+  const getResponsiveClasses = () => {
+    const classes = ['cursor-pointer', 'transition-all', 'duration-200', 'inline-flex', 'items-center', 'justify-center', 'font-medium', 'focus-visible:outline-none', 'focus-visible:ring-2', 'focus-visible:ring-ring', 'focus-visible:ring-offset-2', 'disabled:pointer-events-none', 'disabled:opacity-50'];
+    
+    // Width handling
+    const isFullWidth = element.content.fullWidth || responsiveStyles.fullWidth;
+    if (isFullWidth) {
+      classes.push('w-full');
+    } else {
+      classes.push('w-auto');
+    }
+
+    // Font size classes
+    if (desktopStyles.fontSize) {
+      const size = parseInt(desktopStyles.fontSize.replace(/\D/g, ''));
+      if (size <= 12) classes.push('lg:text-sm');
+      else if (size <= 16) classes.push('lg:text-base');
+      else if (size <= 18) classes.push('lg:text-lg');
+      else if (size <= 20) classes.push('lg:text-xl');
+      else if (size <= 24) classes.push('lg:text-2xl');
+      else classes.push('lg:text-3xl');
+    } else {
+      classes.push('lg:text-base'); // Default desktop size
+    }
+
+    if (mobileStyles.fontSize) {
+      const size = parseInt(mobileStyles.fontSize.replace(/\D/g, ''));
+      if (size <= 12) classes.push('text-sm');
+      else if (size <= 16) classes.push('text-base');
+      else if (size <= 18) classes.push('text-lg');
+      else if (size <= 20) classes.push('text-xl');
+      else classes.push('text-2xl');
+    } else {
+      classes.push('text-sm'); // Default mobile size
+    }
+
+    // Font weight
+    const desktopWeight = desktopStyles.fontWeight || 'medium';
+    const mobileWeight = mobileStyles.fontWeight || 'medium';
+    classes.push(`lg:font-${desktopWeight}`);
+    classes.push(`font-${mobileWeight}`);
+
+    // Letter spacing
+    if (desktopStyles.letterSpacing && desktopStyles.letterSpacing !== 'normal') {
+      classes.push(`lg:tracking-${desktopStyles.letterSpacing}`);
+    }
+    if (mobileStyles.letterSpacing && mobileStyles.letterSpacing !== 'normal') {
+      classes.push(`tracking-${mobileStyles.letterSpacing}`);
+    }
+
+    // Text transform
+    if (desktopStyles.textTransform && desktopStyles.textTransform !== 'none') {
+      classes.push(`lg:${desktopStyles.textTransform}`);
+    }
+    if (mobileStyles.textTransform && mobileStyles.textTransform !== 'none') {
+      classes.push(mobileStyles.textTransform);
+    }
+
+    return classes.join(' ');
+  };
+
+  // Generate inline styles
+  const buttonStyles: React.CSSProperties = {
+    cursor: 'pointer',
+    textAlign: element.styles?.textAlign || 'center',
+  };
+
+  // Width handling
+  const isFullWidth = element.content.fullWidth || responsiveStyles.fullWidth;
+  if (isFullWidth) {
+    buttonStyles.width = '100%';
+  } else if (element.styles?.width) {
+    buttonStyles.width = element.styles.width;
+  }
+
+  // Colors with fallbacks
+  buttonStyles.backgroundColor = element.styles?.backgroundColor || 'hsl(var(--primary))';
+  buttonStyles.color = element.styles?.color || 'hsl(var(--primary-foreground))';
+
+  // Border radius
+  if (element.styles?.borderRadius) {
+    buttonStyles.borderRadius = element.styles.borderRadius;
+  } else {
+    buttonStyles.borderRadius = '6px'; // Default rounded
+  }
+
+  // Box shadow
+  if (element.styles?.boxShadow) {
+    buttonStyles.boxShadow = element.styles.boxShadow;
+  }
+
+  // Margin
+  if (element.styles?.margin) {
+    buttonStyles.margin = element.styles.margin;
+  }
+
+  // Padding logic
+  if (element.styles?.padding) {
+    // Global padding takes precedence
+    buttonStyles.padding = element.styles.padding;
+  } else {
+    // Use responsive padding with smart fallbacks
+    const mobilePadding = mobileStyles.padding || getSmartPadding(mobileStyles.fontSize, '8px 16px');
+    buttonStyles.padding = mobilePadding;
+  }
+
+  // Generate responsive CSS for desktop padding
+  const responsivePaddingCSS = () => {
+    if (element.styles?.padding) return ''; // Global padding takes precedence
+    
+    const desktopPadding = desktopStyles.padding || getSmartPadding(desktopStyles.fontSize, '12px 24px');
+    
+    return `
+      @media (min-width: 1024px) {
+        .responsive-button-${element.id} {
+          padding: ${desktopPadding} !important;
+        }
+      }
+    `;
+  };
+
   const alignment = element.styles?.textAlign || 'left';
   const containerClass = 
     alignment === 'center' ? 'flex justify-center' :
     alignment === 'right' ? 'flex justify-end' : 
     'flex justify-start';
 
-  // Use the responsive utilities for cleaner implementation
-  const responsiveClasses = generateResponsiveButtonClasses(element);
-  const responsiveStyles = generateResponsiveButtonStyles(element);
-  const responsivePaddingCSS = generateResponsivePaddingCSS(element);
-  
-  // Check for full width from either location for backwards compatibility
-  const isFullWidth = element.styles?.responsive?.fullWidth || element.content.fullWidth;
-  
-  // Apply width styles
-  if (isFullWidth) {
-    responsiveStyles.width = '100%';
-  } else if (element.styles?.responsive?.widthType === 'custom' && element.styles?.width) {
-    responsiveStyles.width = element.styles.width;
-  }
-
-  // Remove undefined values from styles
-  const cleanStyles = Object.fromEntries(
-    Object.entries(responsiveStyles).filter(([_, v]) => v !== undefined && v !== '')
+  const buttonClasses = cn(
+    getResponsiveClasses(),
+    `responsive-button-${element.id}`
   );
 
-  const customClassName = [
-    element.content.customCSS ? `button-${element.id}` : '',
-    'outline-none',
-    responsiveClasses,
-    isFullWidth ? 'w-full' : 'w-auto'
-  ].filter(Boolean).join(' ');
-
-  const customCSS = element.content.customCSS || '';
-  const combinedCSS = [customCSS, responsivePaddingCSS].filter(Boolean).join(' ');
+  if (isEditing) {
+    return (
+      <div className={containerClass}>
+        <style dangerouslySetInnerHTML={{ __html: responsivePaddingCSS() }} />
+        <div
+          className={buttonClasses}
+          style={buttonStyles}
+        >
+          <input
+            type="text"
+            value={text}
+            onChange={(e) => handleTextChange(e.target.value)}
+            className="bg-transparent border-none outline-none text-center w-full text-inherit font-inherit"
+            placeholder="Button Text"
+            style={{ color: 'inherit' }}
+          />
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <>
-      {/* Inject custom CSS and responsive padding */}
-      {combinedCSS && (
-        <style>
-          {`.button-${element.id} { ${combinedCSS} }`}
-        </style>
-      )}
-      <div className={containerClass} style={{ margin: element.styles?.margin }}>
-        <Button 
-          variant={variant as any} 
-          size={size as any}
-          className={customClassName}
-          onClick={handleClick}
-          style={cleanStyles}
-          id={element.content.customId || element.id}
-        >
-          <InlineEditor
-            value={text}
-            onChange={handleTextChange}
-            placeholder="Button text..."
-            disabled={!isEditing}
-            className="text-inherit font-inherit"
-          />
-        </Button>
-      </div>
-    </>
+    <div className={containerClass}>
+      <style dangerouslySetInnerHTML={{ __html: responsivePaddingCSS() }} />
+      <button
+        className={buttonClasses}
+        style={buttonStyles}
+        onClick={handleClick}
+        id={element.content.customId || element.id}
+      >
+        {text}
+      </button>
+    </div>
   );
 };
 
