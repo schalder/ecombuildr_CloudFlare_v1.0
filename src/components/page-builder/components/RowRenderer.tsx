@@ -162,11 +162,11 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
         'relative group min-h-[80px] transition-all duration-200',
         // Only apply border/background styles if not in preview mode
         !isPreviewMode && 'border border-dashed',
-        !isPreviewMode && isHovered && 'border-foreground/30',
-        !isPreviewMode && isHovered && !userBackground && 'bg-foreground/5',
+        !isPreviewMode && isHovered && 'border-secondary/50',
+        !isPreviewMode && isHovered && !userBackground && 'bg-secondary/5',
         !isPreviewMode && !isHovered && 'border-transparent',
-        !isPreviewMode && isOver && 'border-foreground/30 rounded-lg',
-        !isPreviewMode && isOver && !userBackground && 'bg-foreground/10'
+        !isPreviewMode && isOver && 'border-primary/20 rounded-lg',
+        !isPreviewMode && isOver && !userBackground && 'bg-primary/5'
       )}
       style={getRowStyles()}
       onMouseEnter={() => setIsHovered(true)}
@@ -175,7 +175,7 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
     >
       {/* Row Controls */}
       {!isPreviewMode && isHovered && (
-        <div className="absolute -top-8 left-0 flex items-center space-x-1 bg-foreground text-background px-2 py-1 rounded-md text-xs z-10">
+        <div className="absolute -top-8 left-0 flex items-center space-x-1 bg-secondary text-secondary-foreground px-2 py-1 rounded-md text-xs z-10">
           <GripVertical className="h-3 w-3" />
           <Columns className="h-3 w-3" />
           <span>Row</span>
@@ -183,7 +183,7 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
             <Button
               size="sm"
               variant="ghost"
-              className="h-6 w-6 p-0 hover:bg-background/20"
+              className="h-6 w-6 p-0 hover:bg-secondary-foreground/20"
               onClick={handleDuplicateRow}
             >
               <Copy className="h-3 w-3" />
@@ -199,7 +199,7 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
             <Button
               size="sm"
               variant="ghost"
-              className="h-6 w-6 p-0 hover:bg-background/20"
+              className="h-6 w-6 p-0 hover:bg-secondary-foreground/20"
               onClick={(e) => {
                 e.stopPropagation();
                 onAddRowAfter();

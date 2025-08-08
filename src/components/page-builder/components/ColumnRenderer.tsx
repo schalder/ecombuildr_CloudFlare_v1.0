@@ -99,9 +99,9 @@ export const ColumnRenderer: React.FC<ColumnRendererProps> = ({
         'relative min-h-[60px] transition-colors',
         // Only apply border/background styles if not in preview mode
         !isPreviewMode && 'rounded border-2 border-dashed border-transparent',
-        !isPreviewMode && isOver && 'border-foreground/30',
-        !isPreviewMode && isOver && !userBackground && 'bg-foreground/5',
-        !isPreviewMode && isHovered && 'border-foreground/30',
+        !isPreviewMode && isOver && 'border-primary/40',
+        !isPreviewMode && isOver && !userBackground && 'bg-primary/5',
+        !isPreviewMode && isHovered && 'border-muted-foreground/30',
         getColumnResponsiveClasses(column, deviceType)
       )}
       style={getColumnStyles()}
@@ -111,7 +111,7 @@ export const ColumnRenderer: React.FC<ColumnRendererProps> = ({
     >
       {/* Column Controls */}
       {!isPreviewMode && isHovered && column.elements.length === 0 && (
-        <div className="absolute -top-6 left-0 flex items-center space-x-1 bg-foreground text-background px-2 py-1 rounded-md text-xs z-10">
+        <div className="absolute -top-6 left-0 flex items-center space-x-1 bg-muted text-muted-foreground px-2 py-1 rounded-md text-xs z-10">
           <GripVertical className="h-3 w-3" />
           <span>Column</span>
         </div>

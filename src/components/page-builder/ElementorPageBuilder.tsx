@@ -1013,14 +1013,14 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
     >
       {/* Section Toolbar */}
       {(isHovered || isSelected) && (
-        <div className="absolute -top-12 left-0 z-20 flex items-center gap-1 bg-foreground text-background px-3 py-1 rounded-md text-xs shadow-lg">
+        <div className="absolute -top-12 left-0 z-20 flex items-center gap-1 bg-primary text-primary-foreground px-3 py-1 rounded-md text-xs shadow-lg">
           <Grip className="h-3 w-3" />
           <span className="font-medium">Section</span>
           <Separator orientation="vertical" className="mx-1 h-4" />
            <Button 
              variant="ghost" 
              size="sm" 
-             className="h-6 w-6 p-0 hover:bg-background/20" 
+             className="h-6 w-6 p-0 hover:bg-primary-foreground/20" 
              onClick={(e) => {
                e.stopPropagation();
                onAddRow();
@@ -1031,7 +1031,7 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
            <Button 
              variant="ghost" 
              size="sm" 
-             className="h-6 w-6 p-0 hover:bg-background/20" 
+             className="h-6 w-6 p-0 hover:bg-primary-foreground/20" 
              onClick={(e) => {
                e.stopPropagation();
                onAddSectionAfter();
@@ -1039,16 +1039,16 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
            >
              <Plus className="h-3 w-3" />
            </Button>
-          <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-background/20" onClick={onDuplicate}>
+          <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-primary-foreground/20" onClick={onDuplicate}>
             <Copy className="h-3 w-3" />
           </Button>
-          <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-background/20" onClick={onDelete}>
+          <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-primary-foreground/20" onClick={onDelete}>
             <Trash2 className="h-3 w-3" />
           </Button>
           <Button 
             variant="ghost" 
             size="sm" 
-            className="h-6 w-6 p-0 hover:bg-background/20"
+            className="h-6 w-6 p-0 hover:bg-primary-foreground/20"
             onClick={(e) => {
               e.stopPropagation();
               onSelectionChange({ type: 'section', id: section.id });
@@ -1185,9 +1185,9 @@ const RowComponent: React.FC<RowComponentProps> = ({
         !userBackground && !userShadow ? 'border border-dashed' : ''
       } ${
         isSelected && !userBackground
-          ? 'border-foreground bg-foreground/10' 
+          ? 'border-secondary bg-secondary/10' 
           : isHovered && !userBackground
-            ? 'border-foreground/40 bg-foreground/5' 
+            ? 'border-secondary/50 bg-secondary/5' 
             : !userBackground ? 'border-transparent' : ''
       } ${
         isDragging ? 'opacity-50' : ''
@@ -1202,22 +1202,22 @@ const RowComponent: React.FC<RowComponentProps> = ({
     >
       {/* Row Toolbar */}
       {(isHovered || isSelected) && (
-        <div className="absolute -top-10 left-0 z-10 flex items-center gap-1 bg-foreground text-background px-3 py-1 rounded-md text-xs shadow-lg">
+        <div className="absolute -top-10 left-0 z-10 flex items-center gap-1 bg-secondary text-secondary-foreground px-3 py-1 rounded-md text-xs shadow-lg">
           <div ref={dragRef} className="cursor-move">
             <Grip className="h-3 w-3" />
           </div>
           <span className="font-medium">Row ({row.columnLayout})</span>
           <Separator orientation="vertical" className="mx-1 h-4" />
-          <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-background/20">
+          <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-secondary-foreground/20">
             <Columns className="h-3 w-3" />
           </Button>
-          <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-background/20" onClick={onDelete}>
+          <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-secondary-foreground/20" onClick={onDelete}>
             <Trash2 className="h-3 w-3" />
           </Button>
           <Button 
             variant="ghost" 
             size="sm" 
-            className="h-6 w-6 p-0 hover:bg-background/20"
+            className="h-6 w-6 p-0 hover:bg-secondary-foreground/20"
             onClick={(e) => {
               e.stopPropagation();
               onSelectionChange({ type: 'row', id: row.id, parentId: sectionId });
@@ -1320,14 +1320,14 @@ const ColumnComponent: React.FC<ColumnComponentProps> = ({
     >
       {/* Column Toolbar */}
       {(isHovered || isSelected) && (
-        <div className="absolute -top-8 left-0 z-10 flex items-center gap-1 bg-foreground text-background px-2 py-1 rounded text-xs shadow-lg">
+        <div className="absolute -top-8 left-0 z-10 flex items-center gap-1 bg-accent text-accent-foreground px-2 py-1 rounded text-xs shadow-lg">
           <Grip className="h-3 w-3" />
           <span className="font-medium">Column</span>
           <Separator orientation="vertical" className="mx-1 h-3" />
           <Button 
             variant="ghost" 
             size="sm" 
-            className="h-5 w-5 p-0 hover:bg-background/20"
+            className="h-5 w-5 p-0 hover:bg-accent-foreground/20"
             onClick={(e) => {
               e.stopPropagation();
               onSelect();
@@ -1468,23 +1468,23 @@ const ElementWrapper: React.FC<ElementWrapperProps> = ({
     >
       {/* Element Toolbar */}
       {(isHovered || isSelected) && (
-        <div className="absolute -top-8 left-0 z-20 flex items-center gap-1 bg-foreground text-background px-2 py-1 rounded text-xs shadow-lg">
+        <div className="absolute -top-8 left-0 z-20 flex items-center gap-1 bg-primary text-primary-foreground px-2 py-1 rounded text-xs shadow-lg">
           <div 
             ref={dragRef}
-            className="flex items-center cursor-move hover:bg-background/20 p-1 rounded"
+            className="flex items-center cursor-move hover:bg-primary-foreground/20 p-1 rounded"
           >
             <Grip className="h-3 w-3" />
           </div>
           <elementDef.icon className="h-3 w-3" />
           <span className="font-medium">{elementDef.name}</span>
           <Separator orientation="vertical" className="mx-1 h-3" />
-          <Button variant="ghost" size="sm" className="h-5 w-5 p-0 hover:bg-background/20">
+          <Button variant="ghost" size="sm" className="h-5 w-5 p-0 hover:bg-primary-foreground/20">
             <Edit className="h-2 w-2" />
           </Button>
           <Button 
             variant="ghost" 
             size="sm" 
-            className="h-5 w-5 p-0 hover:bg-background/20"
+            className="h-5 w-5 p-0 hover:bg-primary-foreground/20"
             onClick={(e) => {
               e.stopPropagation();
               onDuplicate(element.id);
@@ -1492,10 +1492,10 @@ const ElementWrapper: React.FC<ElementWrapperProps> = ({
           >
             <Copy className="h-2 w-2" />
           </Button>
-          <Button variant="ghost" size="sm" className="h-5 w-5 p-0 hover:bg-background/20">
+          <Button variant="ghost" size="sm" className="h-5 w-5 p-0 hover:bg-primary-foreground/20">
             <ArrowUp className="h-2 w-2" />
           </Button>
-          <Button variant="ghost" size="sm" className="h-5 w-5 p-0 hover:bg-background/20">
+          <Button variant="ghost" size="sm" className="h-5 w-5 p-0 hover:bg-primary-foreground/20">
             <ArrowDown className="h-2 w-2" />
           </Button>
           <Button 

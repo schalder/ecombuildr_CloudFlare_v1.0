@@ -136,12 +136,12 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({
         'relative group transition-all duration-200',
         // Only apply border styles if not in preview mode
         !isPreviewMode && 'border-2 border-dashed',
-        !isPreviewMode && isSelected && 'border-foreground',
-        !isPreviewMode && isSelected && !userBackground && 'bg-foreground/10',
-        !isPreviewMode && isHovered && !isSelected && 'border-foreground/30',
-        !isPreviewMode && isHovered && !isSelected && !userBackground && 'bg-foreground/5',
+        !isPreviewMode && isSelected && 'border-primary',
+        !isPreviewMode && isSelected && !userBackground && 'bg-primary/5',
+        !isPreviewMode && isHovered && !isSelected && 'border-primary/30',
+        !isPreviewMode && isHovered && !isSelected && !userBackground && 'bg-primary/2',
         !isPreviewMode && !isHovered && !isSelected && 'border-transparent',
-        !isPreviewMode && isOver && !userBackground && 'bg-foreground/10'
+        !isPreviewMode && isOver && !userBackground && 'bg-primary/5'
       )}
       style={getSectionStyles()}
       onMouseEnter={() => setIsHovered(true)}
@@ -150,14 +150,14 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({
     >
       {/* Section Controls */}
       {!isPreviewMode && (isSelected || isHovered) && (
-        <div className="absolute -top-10 left-0 flex items-center space-x-1 bg-foreground text-background px-2 py-1 rounded-md text-xs z-10">
+        <div className="absolute -top-10 left-0 flex items-center space-x-1 bg-primary text-primary-foreground px-2 py-1 rounded-md text-xs z-10">
           <GripVertical className="h-3 w-3" />
           <span>Section</span>
           <div className="flex items-center space-x-1 ml-2">
             <Button
               size="sm"
               variant="ghost"
-              className="h-6 w-6 p-0 hover:bg-background/20"
+              className="h-6 w-6 p-0 hover:bg-primary-foreground/20"
               onClick={handleDuplicateSection}
             >
               <Copy className="h-3 w-3" />
@@ -173,7 +173,7 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({
             <Button
               size="sm"
               variant="ghost"
-              className="h-6 w-6 p-0 hover:bg-background/20"
+              className="h-6 w-6 p-0 hover:bg-primary-foreground/20"
               onClick={(e) => {
                 e.stopPropagation();
                 onAddSectionAfter();
