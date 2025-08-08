@@ -611,13 +611,24 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = ({
     }
   };
 
-  const filteredElements = ELEMENT_CATEGORIES.map(category => ({
-    ...category,
-    elements: category.elements.filter(element =>
-      element.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      element.description.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-  })).filter(category => category.elements.length > 0);
+  // Build element library from registry
+  const allElements = elementRegistry.getAll();
+  const elementsByCategory = allElements.reduce((acc, el) => {
+    const cat = el.category;
+    if (!acc[cat]) acc[cat] = [];
+    acc[cat].push(el);
+    return acc;
+  }, {} as Record<string, typeof allElements>);
+
+  const filteredElements = Object.entries(elementsByCategory)
+    .map(([cat, elements]) => ({
+      name: cat.charAt(0).toUpperCase() + cat.slice(1),
+      elements: elements.filter((element) =>
+        element.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (element.description || '').toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    }))
+    .filter(category => category.elements.length > 0);
 
   return (
     <DndProvider backend={HTML5Backend}>
@@ -891,7 +902,7 @@ interface DraggableElementProps {
     id: string;
     name: string;
     icon: React.ComponentType<{ className?: string }>;
-    description: string;
+    description?: string;
   };
 }
 
