@@ -162,8 +162,8 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
         'relative group min-h-[80px] transition-all duration-200',
         // Only apply border/background styles if not in preview mode
         !isPreviewMode && 'border border-dashed',
-        !isPreviewMode && isHovered && 'border-secondary/50',
-        !isPreviewMode && isHovered && !userBackground && 'bg-secondary/5',
+        !isPreviewMode && isHovered && 'border-primary/30',
+        !isPreviewMode && isHovered && !userBackground && 'bg-primary/5',
         !isPreviewMode && !isHovered && 'border-transparent',
         !isPreviewMode && isOver && 'border-primary/20 rounded-lg',
         !isPreviewMode && isOver && !userBackground && 'bg-primary/5'
@@ -175,7 +175,7 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
     >
       {/* Row Controls */}
       {!isPreviewMode && isHovered && (
-        <div className="absolute -top-8 left-0 flex items-center space-x-1 bg-secondary text-secondary-foreground px-2 py-1 rounded-md text-xs z-10">
+        <div className="absolute -top-8 left-0 flex items-center space-x-1 bg-primary text-primary-foreground px-2 py-1 rounded-md text-xs z-10">
           <GripVertical className="h-3 w-3" />
           <Columns className="h-3 w-3" />
           <span>Row</span>
