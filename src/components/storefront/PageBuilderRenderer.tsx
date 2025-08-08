@@ -4,6 +4,9 @@ import { HTML5Backend } from 'react-dnd-html5-backend';
 import { PageBuilderData } from '@/components/page-builder/types';
 import { SectionRenderer } from '@/components/page-builder/components/SectionRenderer';
 import { BREAKPOINTS, DeviceType } from '@/components/page-builder/utils/responsive';
+// Ensure elements are registered on storefront render too
+import '@/components/page-builder/elements';
+import { elementRegistry } from '@/components/page-builder/elements';
 
 interface PageBuilderRendererProps {
   data: PageBuilderData;
@@ -32,6 +35,11 @@ export const PageBuilderRenderer: React.FC<PageBuilderRendererProps> = ({
     handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  React.useEffect(() => {
+    const ids = elementRegistry.getAll().map(e => e.id);
+    console.log('PageBuilderRenderer: Registered elements:', ids);
   }, []);
 
   console.log('PageBuilderRenderer: Received data:', data);

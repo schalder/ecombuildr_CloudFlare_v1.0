@@ -39,9 +39,10 @@ const ProductGridElement: React.FC<{
       // Smart tablet logic: use 2 cols for 2+ columns, 3 cols for 4+ columns
       return columns >= 4 ? 'grid-cols-3' : 'grid-cols-2';
     }
-    return `grid-cols-${Math.min(columns, 4)}`;
+    const col = Math.min(columns, 4);
+    const map: Record<number, string> = { 1: 'grid-cols-1', 2: 'grid-cols-2', 3: 'grid-cols-3', 4: 'grid-cols-4' };
+    return map[col] || 'grid-cols-2';
   };
-
   // Fetch products based on configuration
   const { products, loading } = useStoreProducts({
     categoryIds: selectionMode === 'category' ? categoryIds : undefined,

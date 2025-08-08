@@ -55,7 +55,34 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
         }),
       });
 
-  const elementType = elementRegistry.get(element.type);
+  // Resolve element type with backward-compatible fallbacks
+  let elementType = elementRegistry.get(element.type);
+  if (!elementType) {
+    const normalized = element.type.replace(/_/g, '-');
+    const aliasMap: Record<string, string> = {
+      'product_grid': 'product-grid',
+      'featured_products': 'featured-products',
+      'product_categories': 'product-categories',
+      'category_navigation': 'product-categories',
+    };
+    const candidates = Array.from(
+      new Set([
+        normalized,
+        aliasMap[element.type],
+        aliasMap[normalized as keyof typeof aliasMap],
+      ].filter(Boolean) as string[])
+    );
+    for (const id of candidates) {
+      const hit = elementRegistry.get(id);
+      if (hit) {
+        elementType = hit;
+        break;
+      }
+    }
+    if (!elementType) {
+      console.warn('ElementRenderer: Unknown element type', element.type, 'tried:', candidates, 'available:', elementRegistry.getAll().map(e => e.id));
+    }
+  }
 
   const handleElementClick = (e: React.MouseEvent) => {
     e.stopPropagation();
