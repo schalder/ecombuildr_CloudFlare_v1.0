@@ -105,7 +105,7 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
       className={cn(
         'relative group transition-all duration-200 w-full',
         isDragging && 'opacity-50',
-        isSelected && !isPreviewMode && 'ring-2 ring-primary ring-opacity-50 rounded',
+        isSelected && !isPreviewMode && 'ring-2 ring-foreground ring-opacity-40 rounded',
         element.styles?.margin,
         element.styles?.padding
       )}
@@ -115,14 +115,14 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
     >
       {/* Element Controls */}
       {!isPreviewMode && isHovered && (
-        <div className="absolute -top-8 left-0 flex items-center space-x-1 bg-accent text-accent-foreground px-2 py-1 rounded-md text-xs z-20">
+        <div className="absolute -top-8 left-0 flex items-center space-x-1 bg-foreground text-background px-2 py-1 rounded-md text-xs z-20">
           <GripVertical className="h-3 w-3" />
           <span className="capitalize">{elementType.name}</span>
           <div className="flex items-center space-x-1 ml-2">
             <Button
               size="sm"
               variant="ghost"
-              className="h-6 w-6 p-0 hover:bg-accent-foreground/20"
+              className="h-6 w-6 p-0 hover:bg-background/20"
               onClick={handleDuplicateElement}
             >
               <Copy className="h-3 w-3" />
