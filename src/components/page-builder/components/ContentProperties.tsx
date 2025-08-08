@@ -420,6 +420,27 @@ export const ContentProperties: React.FC<ContentPropertiesProps> = ({
           />
         </div>
 
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="hamburger-icon-color">Hamburger Icon Color</Label>
+            <Input
+              id="hamburger-icon-color"
+              type="color"
+              value={element.content.hamburgerIconColor || element.content.linkColor || '#333333'}
+              onChange={(e) => onUpdate('hamburgerIconColor', e.target.value)}
+            />
+          </div>
+          <div>
+            <Label htmlFor="hamburger-icon-hover-color">Hamburger Hover Color</Label>
+            <Input
+              id="hamburger-icon-hover-color"
+              type="color"
+              value={element.content.hamburgerIconHoverColor || element.content.linkHoverColor || '#111111'}
+              onChange={(e) => onUpdate('hamburgerIconHoverColor', e.target.value)}
+            />
+          </div>
+        </div>
+
         <div>
           <Label htmlFor="nav-gap">Menu Item Gap (px)</Label>
           <Input

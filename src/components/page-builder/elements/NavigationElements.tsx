@@ -20,6 +20,8 @@ const NavigationMenuElement: React.FC<{
   const logoAlt: string = element.content.logoAlt || 'Logo';
   const [hoveredId, setHoveredId] = React.useState<string | null>(null);
 
+  const isMobileView = deviceType === 'mobile';
+
   const handleNav = (e: React.MouseEvent<HTMLAnchorElement>, href?: string) => {
     if (isEditing) {
       e.preventDefault();
@@ -44,6 +46,8 @@ const NavigationMenuElement: React.FC<{
   const linkColor: string | undefined = element.content.linkColor || (merged?.color as string) || undefined;
   const hoverColor: string | undefined = element.content.linkHoverColor || undefined;
   const submenuHoverBg: string | undefined = element.content.submenuHoverBgColor || undefined;
+  const hamburgerIconColor: string | undefined = element.content.hamburgerIconColor || undefined;
+  const hamburgerIconHoverColor: string | undefined = element.content.hamburgerIconHoverColor || undefined;
   const uniqueClass = `pb-nav-${element.id}`;
 
   const textStyles: React.CSSProperties = {
@@ -64,7 +68,9 @@ const NavigationMenuElement: React.FC<{
     justifyContent: justifyMap[(merged?.textAlign as string) || 'right'],
     columnGap: typeof itemGap === 'number' ? `${itemGap}px` : (itemGap as any),
   };
-  const globalCSS = `${generateResponsiveCSS(element.id, element.styles)}${hoverColor ? ` .${uniqueClass}:hover { color: ${hoverColor} !important; }` : ''}${submenuHoverBg ? ` .${uniqueClass}-submenu:hover { background-color: ${submenuHoverBg} !important; }` : ''}`;
+  const desktopNavClass = deviceType ? (deviceType === 'mobile' ? 'hidden' : 'block') : 'hidden md:block';
+  const mobileWrapperClass = deviceType ? (deviceType === 'mobile' ? 'block' : 'hidden') : 'md:hidden';
+  const globalCSS = `${generateResponsiveCSS(element.id, element.styles)}${hoverColor ? ` .${uniqueClass}:hover { color: ${hoverColor} !important; }` : ''}${submenuHoverBg ? ` .${uniqueClass}-submenu:hover { background-color: ${submenuHoverBg} !important; }` : ''}${hamburgerIconHoverColor ? ` .${uniqueClass}-hamburger:hover svg { color: ${hamburgerIconHoverColor} !important; }` : ''}`;
   return (
     <>
       <style>{globalCSS}</style>
@@ -82,10 +88,10 @@ const NavigationMenuElement: React.FC<{
         </div>
 
         {/* Desktop menu */}
-        <nav className="hidden md:block flex-1">
+        <nav className={`${desktopNavClass} flex-1`}>
           <ul className="flex items-center w-full" style={listInlineStyle}>
             {items.map((item) => (
-              <li key={item.id} className="relative" onMouseEnter={() => setHoveredId(item.id)} onMouseLeave={() => setHoveredId(null)}>
+              <li key={item.id} className="relative group">
                 <a
                   href={resolveHref(item)}
                   onClick={(e) => handleNav(e, resolveHref(item))}
@@ -97,10 +103,10 @@ const NavigationMenuElement: React.FC<{
                   {item.children && item.children.length > 0 && (
                     <>
                       <div
-                        className={`absolute right-6 top-[calc(100%+0.25rem)] w-2 h-2 bg-card rotate-45 border-l border-t z-50 ${hoveredId===item.id ? 'opacity-100' : 'opacity-0'} transition-opacity`}
+                        className="absolute right-6 top-[calc(100%)] w-2 h-2 bg-card rotate-45 border-l border-t z-50 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
                         aria-hidden="true"
                       />
-                      <ul className={`absolute right-0 top-full mt-2 min-w-[220px] bg-card border rounded-md shadow-md z-50 ${hoveredId===item.id ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'} transition-opacity`}>
+                      <ul className="absolute right-0 top-full mt-0 min-w-[220px] bg-card border rounded-md shadow-md z-50 invisible opacity-0 pointer-events-none group-hover:visible group-hover:opacity-100 group-hover:pointer-events-auto transition-all">
                         {item.children.map((child) => (
                           <li key={child.id}>
                             <a
@@ -122,11 +128,11 @@ const NavigationMenuElement: React.FC<{
         </nav>
 
         {/* Mobile hamburger */}
-        <div className="md:hidden">
+        <div className={mobileWrapperClass}>
           <Sheet>
             <SheetTrigger asChild>
-              <Button variant="outline" size="icon" aria-label="Open menu">
-                <Menu className="h-5 w-5" />
+              <Button variant="outline" size="icon" aria-label="Open menu" className={`${uniqueClass}-hamburger`}>
+                <Menu className="h-5 w-5" style={{ color: hamburgerIconColor || linkColor }} />
               </Button>
             </SheetTrigger>
             <SheetContent side="right" className="w-72 z-[60]">
@@ -186,6 +192,8 @@ export const registerNavigationElements = () => {
       linkHoverColor: '#111111',
       submenuHoverBgColor: '',
       menuGap: 24,
+      hamburgerIconColor: '#333333',
+      hamburgerIconHoverColor: '#111111',
       items: [
         { id: 'home', label: 'Home', type: 'url', url: '/', children: [] },
         { id: 'shop', label: 'Shop', type: 'url', url: '/products', children: [
