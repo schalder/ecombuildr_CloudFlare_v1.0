@@ -178,7 +178,7 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
     >
       {/* Row Controls */}
       {!isPreviewMode && (isSelected || isHovered) && (
-        <div className="absolute -top-8 left-0 flex items-center space-x-1 bg-secondary text-secondary-foreground px-2 py-1 rounded-md text-xs z-10">
+        <div className="absolute -top-8 left-0 flex items-center space-x-1 bg-blue-600 text-white px-2 py-1 rounded-md text-xs z-10">
           <GripVertical className="h-3 w-3" />
           <Columns className="h-3 w-3" />
           <span>Row</span>
