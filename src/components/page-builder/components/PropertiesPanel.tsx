@@ -148,8 +148,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
           </TabsList>
 
           <TabsContent value="content" className="space-y-4 mt-4">
-            {/* Use ContentProperties for basic elements */}
-            {['heading', 'text', 'image', 'button', 'video', 'spacer', 'divider'].includes(selectedElement.type) ? (
+            {['heading', 'text', 'image', 'button', 'video', 'spacer', 'divider', 'list', 'navigation-menu'].includes(selectedElement.type) ? (
               <ContentProperties 
                 element={selectedElement}
                 onUpdate={handleContentUpdate}
