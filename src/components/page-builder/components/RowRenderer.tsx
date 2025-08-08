@@ -170,8 +170,8 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
       {!isPreviewMode && (
         <div
           className={cn(
-            "pointer-events-none absolute inset-0 z-30 rounded-lg border-2 border-dashed transition-opacity",
-            (isHovered || isOver) ? "opacity-100 border-accent/70" : "opacity-0 group-hover:opacity-100 border-accent/50"
+            "pointer-events-none absolute -inset-[2px] z-40 rounded-lg border-2 border-dashed transition-opacity",
+            (isHovered || isOver) ? "opacity-100 border-primary" : "opacity-0 group-hover:opacity-100 border-primary/90"
           )}
         />
       )}
