@@ -389,6 +389,27 @@ export const ContentProperties: React.FC<ContentPropertiesProps> = ({
           />
         </div>
 
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="nav-link-color">Menu Item Color</Label>
+            <Input
+              id="nav-link-color"
+              type="color"
+              value={element.content.linkColor || '#333333'}
+              onChange={(e) => onUpdate('linkColor', e.target.value)}
+            />
+          </div>
+          <div>
+            <Label htmlFor="nav-link-hover-color">Hover Color</Label>
+            <Input
+              id="nav-link-hover-color"
+              type="color"
+              value={element.content.linkHoverColor || '#111111'}
+              onChange={(e) => onUpdate('linkHoverColor', e.target.value)}
+            />
+          </div>
+        </div>
+
         <div className="flex items-center justify-between">
           <div>
             <Label className="text-sm">Menu Items</Label>

@@ -40,8 +40,12 @@ const NavigationMenuElement: React.FC<{
   const containerStyles = renderElementStyles(element);
 
   const merged = mergeResponsiveStyles({}, element.styles, deviceType || 'desktop');
+  const linkColor: string | undefined = element.content.linkColor || (merged?.color as string) || undefined;
+  const hoverColor: string | undefined = element.content.linkHoverColor || undefined;
+  const uniqueClass = `pb-nav-${element.id}`;
+
   const textStyles: React.CSSProperties = {
-    color: merged?.color,
+    color: linkColor,
     fontSize: merged?.fontSize,
     lineHeight: merged?.lineHeight,
     fontWeight: merged?.fontWeight,
@@ -52,9 +56,10 @@ const NavigationMenuElement: React.FC<{
     center: 'center',
     right: 'flex-end',
   };
+  const globalCSS = `${generateResponsiveCSS(element.id, element.styles)}${hoverColor ? ` .${uniqueClass}:hover { color: ${hoverColor} !important; }` : ''}`;
   return (
     <>
-      <style>{generateResponsiveCSS(element.id, element.styles)}</style>
+      <style>{globalCSS}</style>
       <header
         className={[`element-${element.id}`, 'w-full relative z-[60]', !hasUserBackground(element.styles) ? 'bg-background' : ''].join(' ').trim()}
         style={containerStyles}
@@ -70,13 +75,13 @@ const NavigationMenuElement: React.FC<{
 
         {/* Desktop menu */}
         <nav className="hidden md:block flex-1">
-          <ul className="flex items-center gap-6 w-full" style={{ ...textStyles, justifyContent: justifyMap[(merged?.textAlign as string) || 'left'] }}>
+          <ul className="flex items-center gap-8 w-full" style={{ ...textStyles, justifyContent: justifyMap[(merged?.textAlign as string) || 'right'] }}>
             {items.map((item) => (
               <li key={item.id} className="relative group">
                 <a
                   href={resolveHref(item)}
                   onClick={(e) => handleNav(e, resolveHref(item))}
-                  className="hover:underline"
+                  className={`${uniqueClass} px-3 py-2 font-medium transition-colors`}
                   style={textStyles}
                 >
                   {item.label}
@@ -93,7 +98,7 @@ const NavigationMenuElement: React.FC<{
                             <a
                               href={resolveHref(child)}
                               onClick={(e) => handleNav(e, resolveHref(child))}
-                              className="block px-3 py-2 hover:bg-accent hover:text-accent-foreground"
+                              className={`${uniqueClass} block px-3 py-2 hover:bg-accent hover:text-accent-foreground`}
                               style={textStyles}
                             >
                               {child.label}
@@ -124,7 +129,7 @@ const NavigationMenuElement: React.FC<{
                       <a
                         href={resolveHref(item)}
                         onClick={(e) => handleNav(e, resolveHref(item))}
-                        className="block px-2 py-2 rounded hover:bg-accent hover:text-accent-foreground"
+                        className={`${uniqueClass} block px-2 py-2 rounded hover:bg-accent hover:text-accent-foreground`}
                         style={textStyles}
                       >
                         {item.label}
@@ -136,7 +141,7 @@ const NavigationMenuElement: React.FC<{
                           <a
                             href={resolveHref(child)}
                             onClick={(e) => handleNav(e, resolveHref(child))}
-                            className="block px-2 py-1 rounded hover:bg-accent hover:text-accent-foreground"
+                            className={`${uniqueClass} block px-2 py-1 rounded hover:bg-accent hover:text-accent-foreground`}
                             style={textStyles}
                           >
                             {child.label}
