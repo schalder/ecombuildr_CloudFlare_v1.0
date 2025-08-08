@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Image, Video, ChevronLeft, ChevronRight, Play } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious, type CarouselApi } from '@/components/ui/carousel';
 import { PageBuilderElement } from '../types';
 import { elementRegistry } from './ElementRegistry';
 import { InlineEditor } from '../components/InlineEditor';
@@ -81,11 +81,11 @@ const ImageGalleryElement: React.FC<{
           if (!image) return null;
           
           const imageElement = (
-            <div className="cursor-pointer group">
+            <div className="cursor-pointer">
               <img
                 src={image}
                 alt={`Gallery image ${index + 1}`}
-                className={`w-full object-cover rounded-lg group-hover:opacity-80 transition-opacity ${getAspectRatioClass()}`}
+                className={`w-full object-cover rounded-lg ${getAspectRatioClass()}`}
               />
             </div>
           );
@@ -133,16 +133,25 @@ const ImageCarouselElement: React.FC<{
   const showDots = element.content.showDots !== false;
 
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [api, setApi] = useState<CarouselApi | null>(null);
 
   useEffect(() => {
-    if (!autoPlay || images.length <= 1) return;
+    if (!api) return;
+    const onSelect = () => setCurrentIndex(api.selectedScrollSnap());
+    api.on('select', onSelect);
+    onSelect();
+    return () => {
+      api.off('select', onSelect);
+    };
+  }, [api]);
 
+  useEffect(() => {
+    if (!api || !autoPlay || images.length <= 1) return;
     const interval = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % images.length);
+      api.scrollNext();
     }, autoPlayDelay);
-
     return () => clearInterval(interval);
-  }, [autoPlay, autoPlayDelay, images.length]);
+  }, [api, autoPlay, autoPlayDelay, images.length]);
 
   const handleTitleUpdate = (newTitle: string) => {
     if (onUpdate) {
@@ -164,7 +173,7 @@ const ImageCarouselElement: React.FC<{
         placeholder="Carousel title..."
       />
       <div className="relative">
-        <Carousel className="w-full">
+        <Carousel className="w-full" setApi={setApi} opts={{ loop: true }}>
           <CarouselContent>
             {images.map((image: string, index: number) => {
               if (!image) return null;
@@ -197,7 +206,7 @@ const ImageCarouselElement: React.FC<{
                 className={`w-2 h-2 rounded-full transition-colors ${
                   index === currentIndex ? 'bg-primary' : 'bg-primary/30'
                 }`}
-                onClick={() => setCurrentIndex(index)}
+                onClick={() => api?.scrollTo(index)}
               />
             ))}
           </div>
