@@ -173,6 +173,15 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
       onMouseLeave={() => setIsHovered(false)}
       onClick={handleRowClick}
     >
+      {/* Hover Outline Overlay (builder only) */}
+      {!isPreviewMode && (
+        <div
+          className={cn(
+            "pointer-events-none absolute inset-0 rounded-lg border-2 border-dashed transition-opacity",
+            isHovered ? "opacity-100 border-primary/40" : "opacity-0 group-hover:opacity-100 border-primary/30"
+          )}
+        />
+      )}
       {/* Row Controls */}
       {!isPreviewMode && isHovered && (
         <div className="absolute -top-8 left-0 flex items-center space-x-1 bg-secondary text-secondary-foreground px-2 py-1 rounded-md text-xs z-10">
