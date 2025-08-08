@@ -159,14 +159,7 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
     <div
       ref={drop}
       className={cn(
-        'relative group min-h-[80px] transition-all duration-200',
-        // Only apply border/background styles if not in preview mode
-        !isPreviewMode && 'border border-dashed',
-        !isPreviewMode && isHovered && 'border-secondary/50',
-        !isPreviewMode && isHovered && !userBackground && 'bg-secondary/5',
-        !isPreviewMode && !isHovered && 'border-transparent',
-        !isPreviewMode && isOver && 'border-primary/20 rounded-lg',
-        !isPreviewMode && isOver && !userBackground && 'bg-primary/5'
+        'relative group min-h-[80px] transition-all duration-200'
       )}
       style={getRowStyles()}
       onMouseEnter={() => setIsHovered(true)}
@@ -177,8 +170,8 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
       {!isPreviewMode && (
         <div
           className={cn(
-            "pointer-events-none absolute inset-0 z-20 rounded-lg border-2 border-dashed transition-opacity",
-            isHovered ? "opacity-100 border-primary/60" : "opacity-0 group-hover:opacity-100 border-primary/40"
+            "pointer-events-none absolute inset-0 z-30 rounded-lg border-2 border-dashed transition-opacity",
+            (isHovered || isOver) ? "opacity-100 border-accent/70" : "opacity-0 group-hover:opacity-100 border-accent/50"
           )}
         />
       )}
