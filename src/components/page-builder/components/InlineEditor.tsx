@@ -136,9 +136,9 @@ export const InlineEditor: React.FC<InlineEditorProps> = ({
     <span
       onClick={handleClick}
       className={cn(
-        "cursor-text inline-block min-h-[1.5rem] hover:bg-muted/20 rounded px-1 transition-colors",
+        disabled ? "cursor-inherit select-none hover:bg-transparent" : "cursor-text hover:bg-muted/20",
+        "inline-block min-h-[1.5rem] rounded px-1 transition-colors",
         !value && "text-muted-foreground",
-        disabled && "cursor-default hover:bg-transparent",
         multiline && "block w-full",
         className
       )}
