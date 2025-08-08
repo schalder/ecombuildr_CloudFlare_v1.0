@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useUserStore } from './useUserStore';
+import { useStore as useStoreContext } from '@/contexts/StoreContext';
 
 interface Product {
   id: string;
@@ -41,7 +42,9 @@ export const useStoreProducts = (options?: {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { store } = useUserStore();
+  const { store: userStore } = useUserStore();
+  const { store: storefrontStore } = useStoreContext();
+  const store = storefrontStore || userStore;
 
   const fetchProducts = useCallback(async () => {
     if (!store) return;
@@ -96,7 +99,9 @@ export const useStoreCategories = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { store } = useUserStore();
+  const { store: userStore } = useUserStore();
+  const { store: storefrontStore } = useStoreContext();
+  const store = storefrontStore || userStore;
 
   const fetchCategories = useCallback(async () => {
     if (!store) return;
@@ -133,7 +138,9 @@ export const useProductById = (productId?: string) => {
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { store } = useUserStore();
+  const { store: userStore } = useUserStore();
+  const { store: storefrontStore } = useStoreContext();
+  const store = storefrontStore || userStore;
 
   const fetchProduct = useCallback(async () => {
     if (!store || !productId) return;
