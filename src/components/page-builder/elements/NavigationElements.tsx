@@ -4,6 +4,8 @@ import { elementRegistry } from './ElementRegistry';
 import { PageBuilderElement, ElementType } from '../types';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { renderElementStyles, hasUserBackground } from '../utils/styleRenderer';
+import { generateResponsiveCSS } from '../utils/responsiveStyles';
 
 // Navigation Menu Element Component
 const NavigationMenuElement: React.FC<{
@@ -35,9 +37,16 @@ const NavigationMenuElement: React.FC<{
     return item.pagePath || '#';
   };
 
+  const containerStyles = renderElementStyles(element);
+
   return (
-    <header className="w-full border-b bg-background">
-      <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between">
+    <>
+      <style>{generateResponsiveCSS(element.id, element.styles)}</style>
+      <header
+        className={[`element-${element.id}`, 'w-full relative z-[60]', !hasUserBackground(element.styles) ? 'bg-background' : ''].join(' ').trim()}
+        style={containerStyles}
+      >
+        <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between">
         <div className="flex items-center gap-3">
           {logoUrl ? (
             <img src={logoUrl} alt={logoAlt} className="h-8 w-auto" />
@@ -59,7 +68,7 @@ const NavigationMenuElement: React.FC<{
                   {item.label}
                 </a>
                 {item.children && item.children.length > 0 && (
-                  <ul className="absolute left-0 top-full mt-2 min-w-[200px] bg-card border rounded-md shadow-md opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity">
+                  <ul className="absolute left-0 top-full mt-2 min-w-[200px] bg-card border rounded-md shadow-md z-50 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity">
                     {item.children.map((child) => (
                       <li key={child.id}>
                         <a
@@ -86,7 +95,7 @@ const NavigationMenuElement: React.FC<{
                 <Menu className="h-5 w-5" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-72">
+            <SheetContent side="right" className="w-72 z-[60]">
               <div className="mt-6">
                 <ul className="space-y-2">
                   {items.map((item) => (
@@ -120,8 +129,9 @@ const NavigationMenuElement: React.FC<{
             </SheetContent>
           </Sheet>
         </div>
-      </div>
-    </header>
+        </div>
+      </header>
+    </>
   );
 };
 

@@ -256,19 +256,22 @@ const ListElement: React.FC<{
     typeof it === 'string' ? { text: it, icon: defaultIcon } : { text: it.text, icon: it.icon || defaultIcon }
   );
 
+  const elementStyles = renderElementStyles(element);
+  const className = `element-${element.id}`;
+
+  let listNode: React.ReactNode;
+
   if (style === 'numbers') {
-    return (
-      <ol className="list-decimal list-inside">
+    listNode = (
+      <ol style={elementStyles} className={`${className} list-decimal list-inside`}>
         {items.map((item, index) => (
           <li key={index} className="mb-1">{item.text}</li>
         ))}
       </ol>
     );
-  }
-
-  if (style === 'icons') {
-    return (
-      <ul className="list-none pl-0">
+  } else if (style === 'icons') {
+    listNode = (
+      <ul style={elementStyles} className={`${className} list-none pl-0`}>
         {items.map((item, index) => (
           <li key={index} className="mb-1 flex items-start">
             <i className={`fa-solid fa-${item.icon} mr-2 mt-1`} aria-hidden="true"></i>
@@ -277,15 +280,21 @@ const ListElement: React.FC<{
         ))}
       </ul>
     );
+  } else {
+    listNode = (
+      <ul style={elementStyles} className={`${className} list-disc list-inside`}>
+        {items.map((item, index) => (
+          <li key={index} className="mb-1">{item.text}</li>
+        ))}
+      </ul>
+    );
   }
 
-  // Default bullets
   return (
-    <ul className="list-disc list-inside">
-      {items.map((item, index) => (
-        <li key={index} className="mb-1">{item.text}</li>
-      ))}
-    </ul>
+    <>
+      <style>{generateResponsiveCSS(element.id, element.styles)}</style>
+      {listNode}
+    </>
   );
 };
 
