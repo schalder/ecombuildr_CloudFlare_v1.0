@@ -43,6 +43,7 @@ const NavigationMenuElement: React.FC<{
   const merged = mergeResponsiveStyles({}, element.styles, deviceType || 'desktop');
   const linkColor: string | undefined = element.content.linkColor || (merged?.color as string) || undefined;
   const hoverColor: string | undefined = element.content.linkHoverColor || undefined;
+  const submenuHoverBg: string | undefined = element.content.submenuHoverBgColor || undefined;
   const uniqueClass = `pb-nav-${element.id}`;
 
   const textStyles: React.CSSProperties = {
@@ -63,7 +64,7 @@ const NavigationMenuElement: React.FC<{
     justifyContent: justifyMap[(merged?.textAlign as string) || 'right'],
     columnGap: typeof itemGap === 'number' ? `${itemGap}px` : (itemGap as any),
   };
-  const globalCSS = `${generateResponsiveCSS(element.id, element.styles)}${hoverColor ? ` .${uniqueClass}:hover { color: ${hoverColor} !important; }` : ''}`;
+  const globalCSS = `${generateResponsiveCSS(element.id, element.styles)}${hoverColor ? ` .${uniqueClass}:hover { color: ${hoverColor} !important; }` : ''}${submenuHoverBg ? ` .${uniqueClass}-submenu:hover { background-color: ${submenuHoverBg} !important; }` : ''}`;
   return (
     <>
       <style>{globalCSS}</style>
@@ -105,7 +106,7 @@ const NavigationMenuElement: React.FC<{
                             <a
                               href={resolveHref(child)}
                               onClick={(e) => handleNav(e, resolveHref(child))}
-                              className={`${uniqueClass} block px-3 py-2 hover:bg-accent hover:text-accent-foreground`}
+                              className={`${uniqueClass} ${submenuHoverBg ? `${uniqueClass}-submenu` : 'hover:bg-accent hover:text-accent-foreground'} block px-3 py-2 rounded`}
                               style={textStyles}
                             >
                               {child.label}
@@ -148,7 +149,7 @@ const NavigationMenuElement: React.FC<{
                           <a
                             href={resolveHref(child)}
                             onClick={(e) => handleNav(e, resolveHref(child))}
-                            className={`${uniqueClass} block px-2 py-1 rounded hover:bg-accent hover:text-accent-foreground`}
+                            className={`${uniqueClass} ${submenuHoverBg ? `${uniqueClass}-submenu` : 'hover:bg-accent hover:text-accent-foreground'} block px-2 py-1 rounded`}
                             style={textStyles}
                           >
                             {child.label}
@@ -181,6 +182,10 @@ export const registerNavigationElements = () => {
     defaultContent: {
       logoUrl: '',
       logoAlt: 'Logo',
+      linkColor: '#333333',
+      linkHoverColor: '#111111',
+      submenuHoverBgColor: '',
+      menuGap: 24,
       items: [
         { id: 'home', label: 'Home', type: 'url', url: '/', children: [] },
         { id: 'shop', label: 'Shop', type: 'url', url: '/products', children: [

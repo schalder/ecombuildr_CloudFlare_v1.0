@@ -411,6 +411,16 @@ export const ContentProperties: React.FC<ContentPropertiesProps> = ({
         </div>
 
         <div>
+          <Label htmlFor="submenu-hover-bg">Submenu Hover Background</Label>
+          <Input
+            id="submenu-hover-bg"
+            type="color"
+            value={element.content.submenuHoverBgColor || '#f5f5f5'}
+            onChange={(e) => onUpdate('submenuHoverBgColor', e.target.value)}
+          />
+        </div>
+
+        <div>
           <Label htmlFor="nav-gap">Menu Item Gap (px)</Label>
           <Input
             id="nav-gap"
