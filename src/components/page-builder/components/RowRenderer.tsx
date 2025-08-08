@@ -11,6 +11,7 @@ interface RowRendererProps {
   row: PageBuilderRow;
   rowIndex: number;
   sectionId: string;
+  isSelected?: boolean;
   isPreviewMode: boolean;
   deviceType?: 'desktop' | 'tablet' | 'mobile';
   onSelectElement: (element: PageBuilderElement | undefined) => void;
@@ -25,6 +26,7 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
   row,
   rowIndex,
   sectionId,
+  isSelected = false,
   isPreviewMode,
   deviceType = 'desktop',
   onSelectElement,
@@ -161,11 +163,12 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
       className={cn(
         'relative group min-h-[80px] transition-all duration-200',
         // Only apply border/background styles if not in preview mode
-        !isPreviewMode && 'border border-dashed',
-        !isPreviewMode && isHovered && 'border-secondary/50',
-        !isPreviewMode && isHovered && !userBackground && 'bg-secondary/5',
-        !isPreviewMode && !isHovered && 'border-transparent',
-        !isPreviewMode && isOver && 'border-primary/20 rounded-lg',
+        !isPreviewMode && 'border-2 border-dashed',
+        !isPreviewMode && isSelected && 'border-primary',
+        !isPreviewMode && isSelected && !userBackground && 'bg-primary/5',
+        !isPreviewMode && isHovered && !isSelected && 'border-primary/30',
+        !isPreviewMode && isHovered && !isSelected && !userBackground && 'bg-primary/2',
+        !isPreviewMode && !isHovered && !isSelected && 'border-transparent',
         !isPreviewMode && isOver && !userBackground && 'bg-primary/5'
       )}
       style={getRowStyles()}
@@ -174,7 +177,7 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
       onClick={handleRowClick}
     >
       {/* Row Controls */}
-      {!isPreviewMode && isHovered && (
+      {!isPreviewMode && (isSelected || isHovered) && (
         <div className="absolute -top-8 left-0 flex items-center space-x-1 bg-secondary text-secondary-foreground px-2 py-1 rounded-md text-xs z-10">
           <GripVertical className="h-3 w-3" />
           <Columns className="h-3 w-3" />

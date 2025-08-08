@@ -11,6 +11,7 @@ interface SectionRendererProps {
   section: PageBuilderSection;
   sectionIndex: number;
   isSelected: boolean;
+  selectedElement?: PageBuilderElement;
   isPreviewMode: boolean;
   deviceType?: 'desktop' | 'tablet' | 'mobile';
   onSelectElement: (element: PageBuilderElement | undefined) => void;
@@ -26,6 +27,7 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({
   section,
   sectionIndex,
   isSelected,
+  selectedElement,
   isPreviewMode,
   deviceType = 'desktop',
   onSelectElement,
@@ -203,6 +205,7 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({
                 row={row}
                 rowIndex={rowIndex}
                 sectionId={section.id}
+                isSelected={selectedElement?.id === row.id}
                 isPreviewMode={isPreviewMode}
                 deviceType={deviceType}
                 onSelectElement={onSelectElement}
