@@ -159,22 +159,17 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
     <div
       ref={drop}
       className={cn(
-        'relative group min-h-[80px] transition-all duration-200'
+        'relative group min-h-[80px] transition-all duration-200',
+        // Apply border directly like SectionRenderer does
+        !isPreviewMode && 'border-2 border-dashed',
+        !isPreviewMode && (isHovered || isOver) && 'border-[#155EEF]',
+        !isPreviewMode && !isHovered && !isOver && 'border-transparent'
       )}
       style={getRowStyles()}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={handleRowClick}
     >
-      {/* Hover Outline Overlay (builder only) */}
-      {!isPreviewMode && (
-        <div
-          className={cn(
-            "pointer-events-none absolute -inset-[2px] z-50 rounded-lg border-2 border-dashed transition-opacity",
-            (isHovered || isOver) ? "opacity-100 border-[#155EEF]" : "opacity-0"
-          )}
-        />
-      )}
       {/* Row Controls */}
       {!isPreviewMode && isHovered && (
         <div className="absolute -top-8 left-0 flex items-center space-x-1 bg-secondary text-secondary-foreground px-2 py-1 rounded-md text-xs z-10">
