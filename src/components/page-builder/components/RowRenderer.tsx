@@ -162,7 +162,7 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
         'relative group min-h-[80px] transition-all duration-200',
         // Apply border directly like SectionRenderer does
         !isPreviewMode && 'border-2 border-dashed',
-        !isPreviewMode && (isHovered || isOver) && 'border-primary',
+        !isPreviewMode && (isHovered || isOver) && 'border-primary/30',
         !isPreviewMode && !isHovered && !isOver && 'border-transparent'
       )}
       style={getRowStyles()}
