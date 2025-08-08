@@ -81,6 +81,9 @@ All colors MUST be HSL. Designed for trust, energy, and conversion.
     --sidebar-border: 220 13% 91%;
 
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Builder outlines */
+    --builder-row: 220 87% 51%;
   }
 
   .dark {

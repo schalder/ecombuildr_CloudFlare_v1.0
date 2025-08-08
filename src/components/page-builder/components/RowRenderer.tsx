@@ -171,7 +171,7 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
         <div
           className={cn(
             "pointer-events-none absolute -inset-[2px] z-50 rounded-lg border-2 border-dashed transition-opacity",
-            (isHovered || isOver) ? "opacity-100 border-accent" : "opacity-0 group-hover:opacity-100 border-accent/90"
+            (isHovered || isOver) ? "opacity-100 border-builder-row" : "opacity-0 group-hover:opacity-100 border-builder-row/90"
           )}
         />
       )}
