@@ -19,6 +19,35 @@ const NavigationMenuElement: React.FC<{
   const logoUrl: string | undefined = element.content.logoUrl;
   const logoAlt: string = element.content.logoAlt || 'Logo';
   const [hoveredId, setHoveredId] = React.useState<string | null>(null);
+  const openTimer = React.useRef<number | null>(null);
+  const closeTimer = React.useRef<number | null>(null);
+
+  const onEnter = (id: string) => {
+    if (closeTimer.current) {
+      window.clearTimeout(closeTimer.current);
+      closeTimer.current = null;
+    }
+    if (openTimer.current) window.clearTimeout(openTimer.current);
+    openTimer.current = window.setTimeout(() => setHoveredId(id), 80);
+  };
+
+  const onLeave = (id: string) => {
+    if (openTimer.current) {
+      window.clearTimeout(openTimer.current);
+      openTimer.current = null;
+    }
+    if (closeTimer.current) window.clearTimeout(closeTimer.current);
+    closeTimer.current = window.setTimeout(() => {
+      setHoveredId((cur) => (cur === id ? null : cur));
+    }, 160);
+  };
+
+  React.useEffect(() => {
+    return () => {
+      if (openTimer.current) window.clearTimeout(openTimer.current);
+      if (closeTimer.current) window.clearTimeout(closeTimer.current);
+    };
+  }, []);
 
   const isMobileView = deviceType === 'mobile';
 
@@ -91,7 +120,7 @@ const NavigationMenuElement: React.FC<{
         <nav className={`${desktopNavClass} flex-1`}>
           <ul className="flex items-center w-full" style={listInlineStyle}>
             {items.map((item) => (
-              <li key={item.id} className="relative group">
+              <li key={item.id} className="relative" onMouseEnter={() => onEnter(item.id)} onMouseLeave={() => onLeave(item.id)}>
                 <a
                   href={resolveHref(item)}
                   onClick={(e) => handleNav(e, resolveHref(item))}
@@ -103,10 +132,14 @@ const NavigationMenuElement: React.FC<{
                   {item.children && item.children.length > 0 && (
                     <>
                       <div
-                        className="absolute right-6 top-[calc(100%)] w-2 h-2 bg-card rotate-45 border-l border-t z-50 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
+                        className={`absolute right-6 top-[calc(100%)] w-2 h-2 bg-card rotate-45 border-l border-t z-50 transition-opacity pointer-events-none ${hoveredId === item.id ? 'opacity-100' : 'opacity-0'}`}
                         aria-hidden="true"
                       />
-                      <ul className="absolute right-0 top-full mt-0 min-w-[220px] bg-card border rounded-md shadow-md z-50 invisible opacity-0 pointer-events-none group-hover:visible group-hover:opacity-100 group-hover:pointer-events-auto transition-all">
+                      <ul
+                        className={`absolute right-0 top-full mt-0 min-w-[220px] bg-card border rounded-md shadow-md z-50 transition-all ${hoveredId === item.id ? 'visible opacity-100 pointer-events-auto' : 'invisible opacity-0 pointer-events-none'}`}
+                        onMouseEnter={() => onEnter(item.id)}
+                        onMouseLeave={() => onLeave(item.id)}
+                      >
                         {item.children.map((child) => (
                           <li key={child.id}>
                             <a
