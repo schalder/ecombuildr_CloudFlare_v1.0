@@ -410,6 +410,17 @@ export const ContentProperties: React.FC<ContentPropertiesProps> = ({
           </div>
         </div>
 
+        <div>
+          <Label htmlFor="nav-gap">Menu Item Gap (px)</Label>
+          <Input
+            id="nav-gap"
+            type="number"
+            min={0}
+            value={element.content.menuGap ?? 24}
+            onChange={(e) => onUpdate('menuGap', Number(e.target.value))}
+          />
+        </div>
+
         <div className="flex items-center justify-between">
           <div>
             <Label className="text-sm">Menu Items</Label>

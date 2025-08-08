@@ -18,6 +18,7 @@ const NavigationMenuElement: React.FC<{
   const items: MenuItem[] = element.content.items || [];
   const logoUrl: string | undefined = element.content.logoUrl;
   const logoAlt: string = element.content.logoAlt || 'Logo';
+  const [hoveredId, setHoveredId] = React.useState<string | null>(null);
 
   const handleNav = (e: React.MouseEvent<HTMLAnchorElement>, href?: string) => {
     if (isEditing) {
@@ -56,12 +57,18 @@ const NavigationMenuElement: React.FC<{
     center: 'center',
     right: 'flex-end',
   };
+  const itemGap = element.content.menuGap ?? 24;
+  const listInlineStyle: React.CSSProperties = {
+    ...textStyles,
+    justifyContent: justifyMap[(merged?.textAlign as string) || 'right'],
+    columnGap: typeof itemGap === 'number' ? `${itemGap}px` : (itemGap as any),
+  };
   const globalCSS = `${generateResponsiveCSS(element.id, element.styles)}${hoverColor ? ` .${uniqueClass}:hover { color: ${hoverColor} !important; }` : ''}`;
   return (
     <>
       <style>{globalCSS}</style>
       <header
-        className={[`element-${element.id}`, 'w-full relative z-[60]', !hasUserBackground(element.styles) ? 'bg-background' : ''].join(' ').trim()}
+        className={[`element-${element.id}`, 'w-full relative z-[60] overflow-visible', !hasUserBackground(element.styles) ? 'bg-background' : ''].join(' ').trim()}
         style={containerStyles}
       >
         <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between">
@@ -75,9 +82,9 @@ const NavigationMenuElement: React.FC<{
 
         {/* Desktop menu */}
         <nav className="hidden md:block flex-1">
-          <ul className="flex items-center gap-8 w-full" style={{ ...textStyles, justifyContent: justifyMap[(merged?.textAlign as string) || 'right'] }}>
+          <ul className="flex items-center w-full" style={listInlineStyle}>
             {items.map((item) => (
-              <li key={item.id} className="relative group">
+              <li key={item.id} className="relative" onMouseEnter={() => setHoveredId(item.id)} onMouseLeave={() => setHoveredId(null)}>
                 <a
                   href={resolveHref(item)}
                   onClick={(e) => handleNav(e, resolveHref(item))}
@@ -89,10 +96,10 @@ const NavigationMenuElement: React.FC<{
                   {item.children && item.children.length > 0 && (
                     <>
                       <div
-                        className="absolute left-4 top-[calc(100%+0.25rem)] w-2 h-2 bg-card rotate-45 border-l border-t z-50 opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity"
+                        className={`absolute right-6 top-[calc(100%+0.25rem)] w-2 h-2 bg-card rotate-45 border-l border-t z-50 ${hoveredId===item.id ? 'opacity-100' : 'opacity-0'} transition-opacity`}
                         aria-hidden="true"
                       />
-                      <ul className="absolute left-0 top-full mt-2 min-w-[200px] bg-card border rounded-md shadow-md z-50 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity">
+                      <ul className={`absolute right-0 top-full mt-2 min-w-[220px] bg-card border rounded-md shadow-md z-50 ${hoveredId===item.id ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'} transition-opacity`}>
                         {item.children.map((child) => (
                           <li key={child.id}>
                             <a
