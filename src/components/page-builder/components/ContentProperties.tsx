@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { ImageUpload } from '@/components/ui/image-upload';
+import { MediaSelector } from './MediaSelector';
 import { PageBuilderElement } from '../types';
 import { ImageContentProperties } from './ImageContentProperties';
 import { VideoContentProperties } from './VideoContentProperties';
@@ -382,8 +382,11 @@ export const ContentProperties: React.FC<ContentPropertiesProps> = ({
     return (
       <div className="space-y-4">
         <div>
-          <Label>Logo</Label>
-          <ImageUpload value={element.content.logoUrl || ''} onChange={(url) => onUpdate('logoUrl', url)} />
+          <MediaSelector
+            value={element.content.logoUrl || ''}
+            onChange={(url) => onUpdate('logoUrl', url)}
+            label="Logo image"
+          />
         </div>
 
         <div className="flex items-center justify-between">

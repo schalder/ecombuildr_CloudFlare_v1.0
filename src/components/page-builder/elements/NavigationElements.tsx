@@ -5,7 +5,7 @@ import { PageBuilderElement, ElementType } from '../types';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { renderElementStyles, hasUserBackground } from '../utils/styleRenderer';
-import { generateResponsiveCSS } from '../utils/responsiveStyles';
+import { generateResponsiveCSS, mergeResponsiveStyles } from '../utils/responsiveStyles';
 
 // Navigation Menu Element Component
 const NavigationMenuElement: React.FC<{
@@ -13,7 +13,7 @@ const NavigationMenuElement: React.FC<{
   isEditing?: boolean;
   deviceType?: 'desktop' | 'tablet' | 'mobile';
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
-}> = ({ element, isEditing }) => {
+}> = ({ element, isEditing, deviceType = 'desktop' }) => {
   type MenuItem = { id: string; label: string; type?: 'url'|'page'; url?: string; pagePath?: string; children?: MenuItem[] };
   const items: MenuItem[] = element.content.items || [];
   const logoUrl: string | undefined = element.content.logoUrl;
@@ -39,6 +39,19 @@ const NavigationMenuElement: React.FC<{
 
   const containerStyles = renderElementStyles(element);
 
+  const merged = mergeResponsiveStyles({}, element.styles, deviceType || 'desktop');
+  const textStyles: React.CSSProperties = {
+    color: merged?.color,
+    fontSize: merged?.fontSize,
+    lineHeight: merged?.lineHeight,
+    fontWeight: merged?.fontWeight,
+    fontFamily: merged?.fontFamily,
+  };
+  const justifyMap: Record<string, React.CSSProperties['justifyContent']> = {
+    left: 'flex-start',
+    center: 'center',
+    right: 'flex-end',
+  };
   return (
     <>
       <style>{generateResponsiveCSS(element.id, element.styles)}</style>
@@ -56,32 +69,40 @@ const NavigationMenuElement: React.FC<{
         </div>
 
         {/* Desktop menu */}
-        <nav className="hidden md:block">
-          <ul className="flex items-center gap-6">
+        <nav className="hidden md:block flex-1">
+          <ul className="flex items-center gap-6 w-full" style={{ ...textStyles, justifyContent: justifyMap[(merged?.textAlign as string) || 'left'] }}>
             {items.map((item) => (
               <li key={item.id} className="relative group">
                 <a
                   href={resolveHref(item)}
                   onClick={(e) => handleNav(e, resolveHref(item))}
-                  className="text-sm hover:underline"
+                  className="hover:underline"
+                  style={textStyles}
                 >
                   {item.label}
                 </a>
-                {item.children && item.children.length > 0 && (
-                  <ul className="absolute left-0 top-full mt-2 min-w-[200px] bg-card border rounded-md shadow-md z-50 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity">
-                    {item.children.map((child) => (
-                      <li key={child.id}>
-                        <a
-                          href={resolveHref(child)}
-                          onClick={(e) => handleNav(e, resolveHref(child))}
-                          className="block px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground"
-                        >
-                          {child.label}
-                        </a>
-                      </li>
-                    ))}
-                  </ul>
-                )}
+                  {item.children && item.children.length > 0 && (
+                    <>
+                      <div
+                        className="absolute left-4 top-[calc(100%+0.25rem)] w-2 h-2 bg-card rotate-45 border-l border-t z-50 opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity"
+                        aria-hidden="true"
+                      />
+                      <ul className="absolute left-0 top-full mt-2 min-w-[200px] bg-card border rounded-md shadow-md z-50 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity">
+                        {item.children.map((child) => (
+                          <li key={child.id}>
+                            <a
+                              href={resolveHref(child)}
+                              onClick={(e) => handleNav(e, resolveHref(child))}
+                              className="block px-3 py-2 hover:bg-accent hover:text-accent-foreground"
+                              style={textStyles}
+                            >
+                              {child.label}
+                            </a>
+                          </li>
+                        ))}
+                      </ul>
+                    </>
+                  )}
               </li>
             ))}
           </ul>
@@ -97,13 +118,14 @@ const NavigationMenuElement: React.FC<{
             </SheetTrigger>
             <SheetContent side="right" className="w-72 z-[60]">
               <div className="mt-6">
-                <ul className="space-y-2">
+                <ul className="space-y-2" style={textStyles}>
                   {items.map((item) => (
                     <li key={item.id}>
                       <a
                         href={resolveHref(item)}
                         onClick={(e) => handleNav(e, resolveHref(item))}
                         className="block px-2 py-2 rounded hover:bg-accent hover:text-accent-foreground"
+                        style={textStyles}
                       >
                         {item.label}
                       </a>
@@ -111,13 +133,14 @@ const NavigationMenuElement: React.FC<{
                         <ul className="ml-2 mt-1 space-y-1">
                           {item.children.map((child) => (
                             <li key={child.id}>
-                              <a
-                                href={resolveHref(child)}
-                                onClick={(e) => handleNav(e, resolveHref(child))}
-                                className="block px-2 py-1 rounded hover:bg-accent hover:text-accent-foreground text-sm"
-                              >
-                                {child.label}
-                              </a>
+                          <a
+                            href={resolveHref(child)}
+                            onClick={(e) => handleNav(e, resolveHref(child))}
+                            className="block px-2 py-1 rounded hover:bg-accent hover:text-accent-foreground"
+                            style={textStyles}
+                          >
+                            {child.label}
+                          </a>
                             </li>
                           ))}
                         </ul>
