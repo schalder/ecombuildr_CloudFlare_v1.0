@@ -160,10 +160,13 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
       ref={drop}
       className={cn(
         'relative group min-h-[80px] transition-all duration-200',
-        // Apply border directly like SectionRenderer does
-        !isPreviewMode && 'border-2 border-dashed',
-        !isPreviewMode && (isHovered || isOver) && 'border-primary/30',
-        !isPreviewMode && !isHovered && !isOver && 'border-transparent'
+        // Only apply border/background styles if not in preview mode
+        !isPreviewMode && 'border border-dashed',
+        !isPreviewMode && isHovered && 'border-secondary/50',
+        !isPreviewMode && isHovered && !userBackground && 'bg-secondary/5',
+        !isPreviewMode && !isHovered && 'border-transparent',
+        !isPreviewMode && isOver && 'border-primary/20 rounded-lg',
+        !isPreviewMode && isOver && !userBackground && 'bg-primary/5'
       )}
       style={getRowStyles()}
       onMouseEnter={() => setIsHovered(true)}
