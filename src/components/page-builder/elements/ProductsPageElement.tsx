@@ -3,6 +3,7 @@ import { PageBuilderElement } from '../types';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -11,6 +12,7 @@ import { ProductGridSkeleton } from '@/components/storefront/ProductGridSkeleton
 import { ProductCard } from '@/components/storefront/ProductCard';
 import { ProductQuickView } from '@/components/storefront/ProductQuickView';
 import { RecentlyViewed } from '@/components/storefront/RecentlyViewed';
+import { WishlistButton } from '@/components/storefront/WishlistButton';
 import { useCart } from '@/contexts/CartContext';
 import { useToast } from '@/hooks/use-toast';
 import { useStore } from '@/contexts/StoreContext';
@@ -18,7 +20,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import { renderElementStyles } from '@/components/page-builder/utils/styleRenderer';
 import { mergeResponsiveStyles } from '@/components/page-builder/utils/responsiveStyles';
-import { ArrowUpDown, Grid3X3, List, Search, SlidersHorizontal } from 'lucide-react';
+import { ArrowUpDown, Grid3X3, List, Search, SlidersHorizontal, Eye, GitCompare, Star } from 'lucide-react';
+import { useEcomPaths } from '@/lib/pathResolver';
 
 interface Product {
   id: string;
@@ -57,6 +60,8 @@ export const ProductsPageElement: React.FC<{
   const { store } = useStore();
   const { addItem } = useCart();
   const { toast } = useToast();
+
+  const paths = useEcomPaths();
 
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -333,14 +338,62 @@ export const ProductsPageElement: React.FC<{
                 )}
               >
                 {products.map((product) => (
-                  <ProductCard
-                    key={product.id}
-                    product={product}
-                    storeSlug={store?.slug || ''}
-                    onAddToCart={handleAddToCart}
-                    onQuickView={(p) => setQuickViewProduct(p as any)}
-                    className={viewMode === 'list' ? 'flex flex-row' : ''}
-                  />
+                  viewMode === 'grid' ? (
+                    <ProductCard
+                      key={product.id}
+                      product={product}
+                      storeSlug={store?.slug || ''}
+                      onAddToCart={handleAddToCart}
+                      onQuickView={(p) => setQuickViewProduct(p as any)}
+                    />
+                  ) : (
+                    <Card key={product.id} className="p-4">
+                      <div className="flex gap-4 items-start">
+                        <a href={paths.productDetail(product.slug)} className="w-28 sm:w-40 h-28 sm:h-40 rounded-md overflow-hidden bg-muted flex-shrink-0">
+                          <img src={product.images[0] || '/placeholder.svg'} alt={product.name} className="w-full h-full object-cover" />
+                        </a>
+                        <div className="flex-1 space-y-2">
+                          <a href={paths.productDetail(product.slug)} className="hover:text-primary transition-colors">
+                            <h3 className="font-semibold text-base sm:text-lg leading-snug">{product.name}</h3>
+                          </a>
+                          <div className="flex items-center gap-1">
+                            {[...Array(5)].map((_, i) => (
+                              <Star key={i} className={`h-4 w-4 ${i < 4 ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground'}`} />
+                            ))}
+                            <span className="text-xs text-muted-foreground ml-1">(4.0)</span>
+                          </div>
+                          {product.short_description && (
+                            <p className="text-sm text-muted-foreground line-clamp-2 sm:line-clamp-3">{product.short_description}</p>
+                          )}
+                        </div>
+                        <div className="w-40 sm:w-48 flex flex-col items-end gap-2">
+                          <div className="text-right">
+                            <div className="font-bold text-lg">৳{product.price.toFixed(2)}</div>
+                            {product.compare_price && product.compare_price > product.price && (
+                              <div className="text-sm text-muted-foreground line-through">৳{product.compare_price.toFixed(2)}</div>
+                            )}
+                          </div>
+                          <Button onClick={() => handleAddToCart(product)} className="w-full sm:w-auto">
+                            Add to Cart
+                          </Button>
+                          <div className="hidden sm:flex items-center gap-2 text-muted-foreground">
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setQuickViewProduct(product)}>
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => { if ((window as any).addToComparison) { (window as any).addToComparison(product); } }}
+                            >
+                              <GitCompare className="h-4 w-4" />
+                            </Button>
+                            <WishlistButton product={product as any} storeSlug={store?.slug || ''} size="sm" />
+                          </div>
+                        </div>
+                      </div>
+                    </Card>
+                  )
                 ))}
               </div>
 
