@@ -17,7 +17,7 @@ const ProductGridElement: React.FC<{
   deviceType?: 'desktop' | 'tablet' | 'mobile';
   columnCount?: number;
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
-}> = ({ element, deviceType = 'desktop', columnCount = 1 }) => {
+}> = ({ element, isEditing = false, deviceType = 'desktop', columnCount = 1 }) => {
   const { addItem, clearCart } = useCart();
   const { toast } = useToast();
   const { store } = useStore();
@@ -149,7 +149,7 @@ const ProductGridElement: React.FC<{
                       size="sm" 
                       onClick={() => handleAddToCart(product)}
                     >
-                      Add to Cart
+                      {ctaBehavior === 'buy_now' ? 'Buy Now' : 'Add to Cart'}
                     </Button>
                   )}
                 </div>
@@ -174,7 +174,7 @@ const FeaturedProductsElement: React.FC<{
   deviceType?: 'desktop' | 'tablet' | 'mobile';
   columnCount?: number;
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
-}> = ({ element, deviceType = 'desktop', columnCount = 1 }) => {
+}> = ({ element, isEditing = false, deviceType = 'desktop', columnCount = 1 }) => {
   const { addItem, clearCart } = useCart();
   const { toast } = useToast();
   const { store } = useStore();

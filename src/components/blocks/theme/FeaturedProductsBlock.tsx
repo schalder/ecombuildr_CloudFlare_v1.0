@@ -185,10 +185,8 @@ export const FeaturedProductsSave: React.FC<BlockSaveProps> = ({ block }) => {
   const content = block.content as FeaturedProductsContent;
   const { store } = useStore();
   const [products, setProducts] = useState<FeaturedProduct[]>([]);
-  const { addItem, clearCart } = require('@/contexts/CartContext').useCart();
-  const { toast } = require('@/hooks/use-toast');
-  const { addItem, clearCart } = require('@/contexts/CartContext').useCart();
-  const { toast } = require('@/hooks/use-toast');
+  const { addItem, clearCart } = useCart();
+  const { toast } = useToast();
 
   useEffect(() => {
     if (store?.id) {
@@ -251,7 +249,7 @@ export const FeaturedProductsSave: React.FC<BlockSaveProps> = ({ block }) => {
                   window.location.href = `/store/${store.slug}/checkout`;
                 } else {
                   addItem(item);
-                  toast.toast({ title: 'Added to cart', description: `${p.name} has been added to your cart.` });
+                  toast({ title: 'Added to cart', description: `${p.name} has been added to your cart.` });
                 }
               }}
               onQuickView={() => {}}
