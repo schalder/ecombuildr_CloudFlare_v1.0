@@ -90,6 +90,7 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
           ...(website.settings?.system_pages || {}),
           product_detail_page_id: productDetailTemplateId || null,
         },
+        currency: (website.settings?.currency || { code: 'BDT' })
       };
 
       const { error } = await supabase

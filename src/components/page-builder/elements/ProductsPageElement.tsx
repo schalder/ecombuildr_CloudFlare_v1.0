@@ -22,6 +22,7 @@ import { renderElementStyles } from '@/components/page-builder/utils/styleRender
 import { mergeResponsiveStyles } from '@/components/page-builder/utils/responsiveStyles';
 import { ArrowUpDown, Grid3X3, List, Search, SlidersHorizontal, Eye, GitCompare, Star } from 'lucide-react';
 import { useEcomPaths } from '@/lib/pathResolver';
+import { formatCurrency } from '@/lib/currency';
 
 interface Product {
   id: string;

@@ -14,6 +14,7 @@ import { ProductQuickView } from '@/components/storefront/ProductQuickView';
 import { renderElementStyles } from '@/components/page-builder/utils/styleRenderer';
 import { mergeResponsiveStyles } from '@/components/page-builder/utils/responsiveStyles';
 import { ProductsPageElement } from './ProductsPageElement';
+import { formatCurrency } from '@/lib/currency';
 // Product Grid Element
 const ProductGridElement: React.FC<{
   element: PageBuilderElement;
@@ -220,10 +221,10 @@ const ProductGridElement: React.FC<{
               {showPrice && (
                 <div className="flex items-center justify-between">
                   <div className="flex flex-col">
-                    <span style={{ color: elementStyles.color, fontSize: elementStyles.fontSize, fontWeight: elementStyles.fontWeight }} className="font-bold text-lg">${product.price}</span>
+                    <span style={{ color: elementStyles.color, fontSize: elementStyles.fontSize, fontWeight: elementStyles.fontWeight }} className="font-bold text-lg">{formatCurrency(product.price)}</span>
                     {product.compare_price && product.compare_price > product.price && (
                       <span className="text-sm text-muted-foreground line-through">
-                        ${product.compare_price}
+                        {formatCurrency(product.compare_price)}
                       </span>
                     )}
                   </div>
