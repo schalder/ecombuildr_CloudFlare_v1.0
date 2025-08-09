@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { useStoreProducts, useStoreCategories, useProductById } from '@/hooks/useStoreData';
 import { useCart } from '@/contexts/CartContext';
 import { useToast } from '@/hooks/use-toast';
+import { useStore } from '@/contexts/StoreContext';
 
 // Product Grid Element
 const ProductGridElement: React.FC<{
@@ -17,8 +18,10 @@ const ProductGridElement: React.FC<{
   columnCount?: number;
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
 }> = ({ element, deviceType = 'desktop', columnCount = 1 }) => {
-  const { addItem } = useCart();
+  const { addItem, clearCart } = useCart();
   const { toast } = useToast();
+  const { store } = useStore();
+  const ctaBehavior: 'add_to_cart' | 'buy_now' = element.content.ctaBehavior || 'add_to_cart';
   
   // Extract configuration from element content
   const columns = element.content.columns || 2;
@@ -51,6 +54,21 @@ const ProductGridElement: React.FC<{
   });
 
   const handleAddToCart = (product: any) => {
+    if (ctaBehavior === 'buy_now' && store?.slug && !isEditing) {
+      // Replace cart with this item and go to checkout
+      clearCart();
+      addItem({
+        id: `cart-${product.id}`,
+        productId: product.id,
+        name: product.name,
+        price: product.price,
+        image: Array.isArray(product.images) ? product.images[0] : product.images,
+        sku: product.sku
+      });
+      window.location.href = `/store/${store.slug}/checkout`;
+      return;
+    }
+
     addItem({
       id: `cart-${product.id}`,
       productId: product.id,
@@ -157,8 +175,10 @@ const FeaturedProductsElement: React.FC<{
   columnCount?: number;
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
 }> = ({ element, deviceType = 'desktop', columnCount = 1 }) => {
-  const { addItem } = useCart();
+  const { addItem, clearCart } = useCart();
   const { toast } = useToast();
+  const { store } = useStore();
+  const ctaBehavior: 'add_to_cart' | 'buy_now' = element.content.ctaBehavior || 'add_to_cart';
   
   const productId = element.content.productId;
   const layout = element.content.layout || 'horizontal';
@@ -169,6 +189,20 @@ const FeaturedProductsElement: React.FC<{
 
   const handleAddToCart = () => {
     if (!product) return;
+
+    if (ctaBehavior === 'buy_now' && store?.slug && !isEditing) {
+      clearCart();
+      addItem({
+        id: `cart-${product.id}`,
+        productId: product.id,
+        name: product.name,
+        price: product.price,
+        image: Array.isArray(product.images) ? product.images[0] : product.images,
+        sku: product.sku
+      });
+      window.location.href = `/store/${store.slug}/checkout`;
+      return;
+    }
     
     addItem({
       id: `cart-${product.id}`,

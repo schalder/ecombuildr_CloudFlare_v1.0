@@ -8,6 +8,8 @@ import { Settings, Trash2, Copy } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useStore } from '@/contexts/StoreContext';
 import { ProductCard } from '@/components/storefront/ProductCard';
+import { useCart } from '@/contexts/CartContext';
+import { useToast } from '@/hooks/use-toast';
 
 interface FeaturedProductsContent {
   title: string;
@@ -15,6 +17,8 @@ interface FeaturedProductsContent {
   layout: 'grid' | 'organic';
   showPrice: boolean;
   selectedProducts?: string[];
+  ctaBehavior?: 'add_to_cart' | 'buy_now';
+  ctaText?: string;
 }
 
 interface FeaturedProduct {
@@ -144,6 +148,29 @@ export const FeaturedProductsEdit: React.FC<BlockEditProps> = ({
                 ))}
               </div>
             </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label className="text-xs">CTA Behavior</Label>
+                <Select value={content.ctaBehavior || 'add_to_cart'} onValueChange={(value) => onUpdate({ ctaBehavior: value })}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="add_to_cart">Add to Cart</SelectItem>
+                    <SelectItem value="buy_now">Buy Now</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-xs">CTA Text</Label>
+                <Input
+                  value={content.ctaText || (content.ctaBehavior === 'buy_now' ? 'Buy Now' : 'Add to Cart')}
+                  onChange={(e) => onUpdate({ ctaText: e.target.value })}
+                  placeholder="Add to Cart"
+                />
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -158,6 +185,10 @@ export const FeaturedProductsSave: React.FC<BlockSaveProps> = ({ block }) => {
   const content = block.content as FeaturedProductsContent;
   const { store } = useStore();
   const [products, setProducts] = useState<FeaturedProduct[]>([]);
+  const { addItem, clearCart } = require('@/contexts/CartContext').useCart();
+  const { toast } = require('@/hooks/use-toast');
+  const { addItem, clearCart } = require('@/contexts/CartContext').useCart();
+  const { toast } = require('@/hooks/use-toast');
 
   useEffect(() => {
     if (store?.id) {
@@ -206,8 +237,25 @@ export const FeaturedProductsSave: React.FC<BlockSaveProps> = ({ block }) => {
               key={product.id}
               product={{...product, is_active: true, images: Array.isArray(product.images) ? product.images : []}}
               storeSlug={store?.slug || ''}
-              onAddToCart={() => {}}
+              onAddToCart={(p) => {
+                const item = {
+                  id: `cart-${p.id}`,
+                  productId: p.id,
+                  name: p.name,
+                  price: p.price,
+                  image: Array.isArray(p.images) ? p.images[0] : (p as any).images,
+                } as any;
+                if (content.ctaBehavior === 'buy_now' && store?.slug) {
+                  clearCart();
+                  addItem(item);
+                  window.location.href = `/store/${store.slug}/checkout`;
+                } else {
+                  addItem(item);
+                  toast.toast({ title: 'Added to cart', description: `${p.name} has been added to your cart.` });
+                }
+              }}
               onQuickView={() => {}}
+              ctaLabel={content.ctaText || (content.ctaBehavior === 'buy_now' ? 'Buy Now' : 'Add to Cart')}
             />
           ))}
         </div>

@@ -168,6 +168,22 @@ export const EcommerceContentProperties: React.FC<EcommerceContentPropertiesProp
           <Label className="text-xs">Show Quick Add Button</Label>
         </div>
       </div>
+
+      <div>
+        <Label className="text-xs">CTA Behavior</Label>
+        <Select
+          value={element.content.ctaBehavior || 'add_to_cart'}
+          onValueChange={(value) => onUpdate('ctaBehavior', value)}
+        >
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="add_to_cart">Add to Cart</SelectItem>
+            <SelectItem value="buy_now">Buy Now</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
     </div>
   );
 };
@@ -239,6 +255,21 @@ export const FeaturedProductsContentProperties: React.FC<EcommerceContentPropert
           onChange={(e) => onUpdate('ctaText', e.target.value)}
           placeholder="Add to Cart"
         />
+      </div>
+      <div>
+        <Label className="text-xs">CTA Behavior</Label>
+        <Select
+          value={element.content.ctaBehavior || 'add_to_cart'}
+          onValueChange={(value) => onUpdate('ctaBehavior', value)}
+        >
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="add_to_cart">Add to Cart</SelectItem>
+            <SelectItem value="buy_now">Buy Now</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
     </div>
   );

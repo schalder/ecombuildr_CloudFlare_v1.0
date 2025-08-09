@@ -7,6 +7,8 @@ import { BlockEditProps, BlockSaveProps, BlockRegistration } from '../types';
 import { Grid, Star, Heart, ShoppingCart, Eye } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useStore } from '@/contexts/StoreContext';
+import { useCart } from '@/contexts/CartContext';
+import { useToast } from '@/hooks/use-toast';
 
 interface ModernProductGridContent {
   title: string;
@@ -17,6 +19,8 @@ interface ModernProductGridContent {
   showWishlist: boolean;
   showStock: boolean;
   limit: number;
+  ctaBehavior?: 'add_to_cart' | 'buy_now';
+  ctaText?: string;
 }
 
 interface Product {
@@ -117,6 +121,31 @@ const ModernProductGridEdit: React.FC<BlockEditProps> = ({ block, onUpdate }) =>
           </label>
         </div>
       </div>
+
+      <div className="space-y-2">
+        <Label className="text-sm font-medium">CTA</Label>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label className="text-xs">Behavior</Label>
+            <select
+              className="w-full border rounded px-2 py-1 text-sm"
+              value={content.ctaBehavior || 'add_to_cart'}
+              onChange={(e) => onUpdate({ ctaBehavior: e.target.value as any })}
+            >
+              <option value="add_to_cart">Add to Cart</option>
+              <option value="buy_now">Buy Now</option>
+            </select>
+          </div>
+          <div>
+            <Label className="text-xs">CTA Text</Label>
+            <Input
+              value={content.ctaText || (content.ctaBehavior === 'buy_now' ? 'Buy Now' : 'Add to Cart')}
+              onChange={(e) => onUpdate({ ctaText: e.target.value })}
+              placeholder="Add to Cart"
+            />
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
@@ -124,6 +153,8 @@ const ModernProductGridEdit: React.FC<BlockEditProps> = ({ block, onUpdate }) =>
 const ModernProductGridSave: React.FC<BlockSaveProps> = ({ block }) => {
   const content = block.content as ModernProductGridContent;
   const { store } = useStore();
+  const { addItem, clearCart } = useCart();
+  const { toast } = useToast();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -346,9 +377,33 @@ const ModernProductGridSave: React.FC<BlockSaveProps> = ({ block }) => {
 
                 <div className="flex space-x-2">
                   {content.showQuickAdd !== false && (
-                    <Button className="flex-1 bg-orange-500 hover:bg-orange-600">
+                    <Button 
+                      className="flex-1 bg-orange-500 hover:bg-orange-600"
+                      onClick={() => {
+                        if (content.ctaBehavior === 'buy_now' && store?.slug) {
+                          clearCart();
+                          addItem({
+                            id: `cart-${product.id}`,
+                            productId: product.id,
+                            name: product.name,
+                            price: product.price,
+                            image: Array.isArray(product.images) ? product.images[0] : (product as any).images,
+                          });
+                          window.location.href = `/store/${store.slug}/checkout`;
+                        } else {
+                          addItem({
+                            id: `cart-${product.id}`,
+                            productId: product.id,
+                            name: product.name,
+                            price: product.price,
+                            image: Array.isArray(product.images) ? product.images[0] : (product as any).images,
+                          });
+                          toast({ title: 'Added to cart', description: `${product.name} has been added to your cart.` });
+                        }
+                      }}
+                    >
                       <ShoppingCart className="w-4 h-4 mr-2" />
-                      Quick Add
+                      {content.ctaText || (content.ctaBehavior === 'buy_now' ? 'Buy Now' : 'Add to Cart')}
                     </Button>
                   )}
                   <Button variant="outline" size="sm">

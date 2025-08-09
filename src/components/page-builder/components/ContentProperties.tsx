@@ -452,6 +452,16 @@ export const ContentProperties: React.FC<ContentPropertiesProps> = ({
           />
         </div>
 
+        <div className="flex items-center space-x-2 mb-2">
+          <input
+            type="checkbox"
+            id="nav-show-cart"
+            checked={!!element.content.showCart}
+            onChange={(e) => onUpdate('showCart', e.target.checked)}
+          />
+          <Label htmlFor="nav-show-cart" className="text-sm">Show Cart Icon</Label>
+        </div>
+
         <div className="flex items-center justify-between">
           <div>
             <Label className="text-sm">Menu Items</Label>

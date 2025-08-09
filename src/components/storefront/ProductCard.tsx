@@ -25,6 +25,7 @@ interface ProductCardProps {
   onAddToCart: (product: Product) => void;
   onQuickView?: (product: Product) => void;
   className?: string;
+  ctaLabel?: string;
 }
 
 export const ProductCard: React.FC<ProductCardProps> = ({
@@ -32,7 +33,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   storeSlug,
   onAddToCart,
   onQuickView,
-  className
+  className,
+  ctaLabel,
 }) => {
   const [isHovered, setIsHovered] = useState(false);
   const { toast } = useToast();
@@ -141,7 +143,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
           >
             <ShoppingCart className="h-4 w-4 mr-2" />
-            Add to Cart
+            {ctaLabel || 'Add to Cart'}
           </Button>
         </div>
       </div>
@@ -199,7 +201,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
               className="h-8 px-3 text-xs opacity-70 group-hover:opacity-100 transition-opacity"
             >
               <ShoppingCart className="h-3 w-3 mr-1" />
-              Quick Add
+              {ctaLabel || 'Add to Cart'}
             </Button>
           </div>
         </div>

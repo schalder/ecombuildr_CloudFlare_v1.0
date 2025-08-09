@@ -1,11 +1,15 @@
 import React from 'react';
-import { Menu } from 'lucide-react';
+import { Menu, ShoppingCart } from 'lucide-react';
 import { elementRegistry } from './ElementRegistry';
 import { PageBuilderElement, ElementType } from '../types';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { renderElementStyles, hasUserBackground } from '../utils/styleRenderer';
 import { generateResponsiveCSS, mergeResponsiveStyles } from '../utils/responsiveStyles';
+import { Badge } from '@/components/ui/badge';
+import { CartDrawer } from '@/components/storefront/CartDrawer';
+import { useCart } from '@/contexts/CartContext';
+import { useStore } from '@/contexts/StoreContext';
 
 // Navigation Menu Element Component
 const NavigationMenuElement: React.FC<{
@@ -78,7 +82,10 @@ const NavigationMenuElement: React.FC<{
   const hamburgerIconColor: string | undefined = element.content.hamburgerIconColor || undefined;
   const hamburgerIconHoverColor: string | undefined = element.content.hamburgerIconHoverColor || undefined;
   const uniqueClass = `pb-nav-${element.id}`;
-
+  const { itemCount } = useCart();
+  const { store } = useStore();
+  const showCart: boolean = !!element.content.showCart;
+ 
   const textStyles: React.CSSProperties = {
     color: linkColor,
     fontSize: merged?.fontSize,
@@ -160,49 +167,85 @@ const NavigationMenuElement: React.FC<{
           </ul>
         </nav>
 
-        {/* Mobile hamburger */}
-        <div className={mobileWrapperClass}>
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button variant="outline" size="icon" aria-label="Open menu" className={`${uniqueClass}-hamburger`}>
-                <Menu className="h-5 w-5" style={{ color: hamburgerIconColor || linkColor }} />
+        {/* Desktop cart */}
+        {showCart && !isMobileView && (
+          <div className="hidden md:flex items-center ml-3">
+            <CartDrawer>
+              <Button variant="ghost" size="sm" aria-label="Open cart" className="relative">
+                <ShoppingCart className="h-4 w-4" />
+                {itemCount > 0 && (
+                  <Badge 
+                    variant="destructive" 
+                    className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs"
+                  >
+                    {itemCount}
+                  </Badge>
+                )}
               </Button>
-            </SheetTrigger>
-            <SheetContent side="right" className="w-72 z-[60]">
-              <div className="mt-6">
-                <ul className="space-y-2" style={textStyles}>
-                  {items.map((item) => (
-                    <li key={item.id}>
-                      <a
-                        href={resolveHref(item)}
-                        onClick={(e) => handleNav(e, resolveHref(item))}
-                        className={`${uniqueClass} block px-2 py-2 rounded hover:bg-accent hover:text-accent-foreground`}
-                        style={textStyles}
-                      >
-                        {item.label}
-                      </a>
-                      {item.children && item.children.length > 0 && (
-                        <ul className="ml-2 mt-1 space-y-1">
-                          {item.children.map((child) => (
-                            <li key={child.id}>
-                          <a
-                            href={resolveHref(child)}
-                            onClick={(e) => handleNav(e, resolveHref(child))}
-                            className={`${uniqueClass} ${submenuHoverBg ? `${uniqueClass}-submenu` : 'hover:bg-accent hover:text-accent-foreground'} block px-2 py-1 rounded`}
-                            style={textStyles}
-                          >
-                            {child.label}
-                          </a>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </SheetContent>
-          </Sheet>
+            </CartDrawer>
+          </div>
+        )}
+
+        {/* Mobile hamburger and cart */}
+        <div className={mobileWrapperClass}>
+          <div className="flex items-center gap-2">
+            {showCart && (
+              <CartDrawer>
+                <Button variant="outline" size="icon" aria-label="Open cart" className="relative">
+                  <ShoppingCart className="h-5 w-5" />
+                  {itemCount > 0 && (
+                    <Badge 
+                      variant="destructive" 
+                      className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs"
+                    >
+                      {itemCount}
+                    </Badge>
+                  )}
+                </Button>
+              </CartDrawer>
+            )}
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="outline" size="icon" aria-label="Open menu" className={`${uniqueClass}-hamburger`}>
+                  <Menu className="h-5 w-5" style={{ color: hamburgerIconColor || linkColor }} />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-72 z-[60]">
+                <div className="mt-6">
+                  <ul className="space-y-2" style={textStyles}>
+                    {items.map((item) => (
+                      <li key={item.id}>
+                        <a
+                          href={resolveHref(item)}
+                          onClick={(e) => handleNav(e, resolveHref(item))}
+                          className={`${uniqueClass} block px-2 py-2 rounded hover:bg-accent hover:text-accent-foreground`}
+                          style={textStyles}
+                        >
+                          {item.label}
+                        </a>
+                        {item.children && item.children.length > 0 && (
+                          <ul className="ml-2 mt-1 space-y-1">
+                            {item.children.map((child) => (
+                              <li key={child.id}>
+                            <a
+                              href={resolveHref(child)}
+                              onClick={(e) => handleNav(e, resolveHref(child))}
+                              className={`${uniqueClass} ${submenuHoverBg ? `${uniqueClass}-submenu` : 'hover:bg-accent hover:text-accent-foreground'} block px-2 py-1 rounded`}
+                              style={textStyles}
+                            >
+                              {child.label}
+                            </a>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </SheetContent>
+            </Sheet>
+          </div>
         </div>
         </div>
       </header>
@@ -227,6 +270,7 @@ export const registerNavigationElements = () => {
       menuGap: 24,
       hamburgerIconColor: '#333333',
       hamburgerIconHoverColor: '#111111',
+      showCart: false,
       items: [
         { id: 'home', label: 'Home', type: 'url', url: '/', children: [] },
         { id: 'shop', label: 'Shop', type: 'url', url: '/products', children: [
