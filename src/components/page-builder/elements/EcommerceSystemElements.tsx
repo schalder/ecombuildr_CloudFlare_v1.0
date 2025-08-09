@@ -527,7 +527,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
                 {fields.address?.enabled && (
                   <Textarea placeholder={fields.address.placeholder} value={form.shipping_address} onChange={e=>setForm(f=>({...f,shipping_address:e.target.value}))} rows={3} />
                 )}
-                <div className={`grid ${ship2GridCols} gap-3`}>>
+                <div className={`grid ${ship2GridCols} gap-3`}>
                   {fields.city?.enabled && (
                     <Input placeholder={fields.city.placeholder} value={form.shipping_city} onChange={e=>setForm(f=>({...f,shipping_city:e.target.value}))} />
                   )}
@@ -535,7 +535,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
                     <Input placeholder={fields.area.placeholder} value={form.shipping_area} onChange={e=>setForm(f=>({...f,shipping_area:e.target.value}))} />
                   )}
                 </div>
-                <div className={`grid ${ship3GridCols} gap-3`}>>
+                <div className={`grid ${ship3GridCols} gap-3`}>
                   {fields.country?.enabled && (
                     <Input placeholder={fields.country.placeholder} value={form.shipping_country} onChange={e=>setForm(f=>({...f,shipping_country:e.target.value}))} />
                   )}
@@ -566,7 +566,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
           )}
           {sections.payment && (
             <Card>
-              <CardHeader><CardTitle>Payment</CardTitle></CardHeader>
+              <CardHeader><CardTitle>{headings.payment}</CardTitle></CardHeader>
               <CardContent className="space-y-3">
                 <Select value={form.payment_method} onValueChange={(v:any)=>setForm(f=>({...f,payment_method:v}))}>
                   <SelectTrigger><SelectValue placeholder="Select method" /></SelectTrigger>
@@ -594,7 +594,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
         <div className="space-y-4">
           {sections.summary && (
             <Card>
-              <CardHeader><CardTitle>Summary</CardTitle></CardHeader>
+              <CardHeader><CardTitle>{headings.summary}</CardTitle></CardHeader>
               <CardContent className="space-y-3">
                 {/* Items */}
                 <div className="space-y-2">

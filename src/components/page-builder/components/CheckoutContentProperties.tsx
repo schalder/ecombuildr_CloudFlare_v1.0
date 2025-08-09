@@ -64,6 +64,29 @@ export const CheckoutContentProperties: React.FC<CheckoutContentPropertiesProps>
       <Separator />
 
       <Accordion type="multiple" className="w-full">
+        <AccordionItem value="headings">
+          <AccordionTrigger className="text-sm">Section Headings</AccordionTrigger>
+          <AccordionContent>
+            <div className="grid grid-cols-1 gap-3">
+              <div>
+                <Label className="text-sm">Customer Information</Label>
+                <Input value={(element.content?.headings?.info ?? 'Customer Information')} onChange={(e) => onUpdate('headings', { ...(element.content?.headings || {}), info: e.target.value })} />
+              </div>
+              <div>
+                <Label className="text-sm">Shipping</Label>
+                <Input value={(element.content?.headings?.shipping ?? 'Shipping')} onChange={(e) => onUpdate('headings', { ...(element.content?.headings || {}), shipping: e.target.value })} />
+              </div>
+              <div>
+                <Label className="text-sm">Payment</Label>
+                <Input value={(element.content?.headings?.payment ?? 'Payment')} onChange={(e) => onUpdate('headings', { ...(element.content?.headings || {}), payment: e.target.value })} />
+              </div>
+              <div>
+                <Label className="text-sm">Order Summary</Label>
+                <Input value={(element.content?.headings?.summary ?? 'Order Summary')} onChange={(e) => onUpdate('headings', { ...(element.content?.headings || {}), summary: e.target.value })} />
+              </div>
+            </div>
+          </AccordionContent>
+        </AccordionItem>
         <AccordionItem value="info">
           <AccordionTrigger className="text-sm">Your Information</AccordionTrigger>
           <AccordionContent>
