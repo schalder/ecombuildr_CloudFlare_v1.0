@@ -654,7 +654,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
 };
 
 // Order Confirmation Element (reads orderId from path or ?orderId=)
-const OrderConfirmationElement: React.FC<{ element: PageBuilderElement }> = () => {
+const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditing?: boolean }> = ({ element, isEditing }) => {
   const { orderId, websiteId } = useParams<{ orderId?: string; websiteId?: string }>();
   const { store, loadStoreById } = useStore();
   const paths = useEcomPaths();
@@ -663,6 +663,16 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement }> = () =
   const [loading, setLoading] = useState(true);
   const query = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
   const id = orderId || query.get('orderId') || '';
+
+  const cfg: any = element.content || {};
+  const texts = cfg.texts || {
+    title: 'Order Confirmed!',
+    subtitle: 'Thank you for your order.',
+    customerTitle: 'Customer',
+    shippingTitle: 'Shipping',
+    itemsTitle: 'Items',
+  };
+  const show = cfg.show || { email: true, phone: true, notes: true };
 
   useEffect(() => {
     (async () => {
@@ -675,15 +685,42 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement }> = () =
 
   useEffect(() => {
     (async () => {
-      if (!store || !id) { setLoading(false); return; }
       try {
-        const { data: o } = await supabase.from('orders').select('*').eq('id', id).eq('store_id', store.id).single();
-        setOrder(o);
-        const { data: it } = await supabase.from('order_items').select('*').eq('order_id', id);
-        setItems(it || []);
-      } finally { setLoading(false); }
+        if (!id) {
+          if (isEditing) {
+            // Demo data in builder when no order id
+            setOrder({
+              order_number: '10001',
+              customer_name: 'Jane Doe',
+              customer_phone: '+1 555-1234',
+              customer_email: 'jane@example.com',
+              shipping_address: '123 Market St',
+              shipping_city: 'San Francisco',
+              shipping_area: 'CA',
+              total: 149.98,
+              created_at: new Date().toISOString(),
+              status: 'pending',
+            });
+            setItems([
+              { id: '1', product_name: 'Sample Product A', quantity: 1, total: 99.99 },
+              { id: '2', product_name: 'Sample Product B', quantity: 1, total: 49.99 },
+            ]);
+          }
+          setLoading(false);
+          return;
+        }
+        // Fetch via public edge function to bypass RLS
+        const { data, error } = await supabase.functions.invoke('get-order', { body: { orderId: id } });
+        if (error) throw error;
+        setOrder(data?.order || null);
+        setItems(data?.items || []);
+      } catch (e) {
+        console.error('OrderConfirmationElement fetch error', e);
+      } finally {
+        setLoading(false);
+      }
     })();
-  }, [store, id]);
+  }, [id]);
 
   if (loading) return <div className="text-center">Loading...</div>;
   if (!order) return <div className="text-center">Order not found</div>;
@@ -694,27 +731,29 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement }> = () =
         <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
           <CheckCircle className="h-8 w-8 text-green-600" />
         </div>
-        <h1 className="text-3xl font-bold mb-2">Order Confirmed!</h1>
-        <p className="text-muted-foreground">Thank you for your order.</p>
+        <h1 className="text-3xl font-bold mb-2">{texts.title}</h1>
+        <p className="text-muted-foreground">{texts.subtitle}</p>
       </div>
       <Card>
         <CardHeader><CardTitle>Order #{order.order_number}</CardTitle></CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <h3 className="font-semibold mb-2">Customer</h3>
-            <p className="text-sm">{order.customer_name} · {order.customer_phone}</p>
-            <p className="text-sm text-muted-foreground">{order.customer_email}</p>
+            <h3 className="font-semibold mb-2">{texts.customerTitle}</h3>
+            <p className="text-sm">{order.customer_name}{show.phone && order.customer_phone ? ` · ${order.customer_phone}` : ''}</p>
+            {show.email && (
+              <p className="text-sm text-muted-foreground">{order.customer_email}</p>
+            )}
           </div>
           <Separator />
           <div>
-            <h3 className="font-semibold mb-2">Shipping</h3>
+            <h3 className="font-semibold mb-2">{texts.shippingTitle}</h3>
             <p className="text-sm">{order.shipping_address}</p>
             <p className="text-sm">{order.shipping_city}{order.shipping_area && `, ${order.shipping_area}`}</p>
           </div>
         </CardContent>
       </Card>
       <Card>
-        <CardHeader><CardTitle>Items</CardTitle></CardHeader>
+        <CardHeader><CardTitle>{texts.itemsTitle}</CardTitle></CardHeader>
         <CardContent className="space-y-2">
           {items.map((it) => (
             <div key={it.id} className="flex justify-between text-sm">

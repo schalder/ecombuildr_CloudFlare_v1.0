@@ -30,6 +30,7 @@ import {
   NewsletterContentProperties
 } from './EcommerceProperties';
 import { CheckoutContentProperties } from './CheckoutContentProperties';
+import { OrderConfirmationContentProperties } from './OrderConfirmationContentProperties';
 import {
   TestimonialContentProperties,
   FAQContentProperties,

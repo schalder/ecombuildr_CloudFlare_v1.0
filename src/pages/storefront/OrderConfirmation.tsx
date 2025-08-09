@@ -78,27 +78,19 @@ useEffect(() => {
     if (!store || !orderId) return;
 
     try {
-      // Fetch order
-      const { data: orderData, error: orderError } = await supabase
-        .from('orders')
-        .select('*')
-        .eq('id', orderId)
-        .eq('store_id', store.id)
-        .single();
-
-      if (orderError) throw orderError;
-      setOrder(orderData as Order);
-
-      // Fetch order items
-      const { data: itemsData, error: itemsError } = await supabase
-        .from('order_items')
-        .select('*')
-        .eq('order_id', orderId);
-
-      if (itemsError) throw itemsError;
-      setOrderItems(itemsData || []);
+      const { data, error } = await supabase.functions.invoke('get-order', {
+        body: { orderId },
+      });
+      if (error) throw error;
+      if (!data || !data.order) {
+        setOrder(null);
+        setOrderItems([]);
+      } else {
+        setOrder(data.order as Order);
+        setOrderItems((data.items || []) as OrderItem[]);
+      }
     } catch (error) {
-      console.error('Error fetching order:', error);
+      console.error('Error fetching order via edge function:', error);
     } finally {
       setLoading(false);
     }
