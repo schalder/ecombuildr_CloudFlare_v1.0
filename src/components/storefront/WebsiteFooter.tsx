@@ -40,6 +40,22 @@ export const WebsiteFooter: React.FC<{ website: WebsiteData; }> = ({ website }) 
     color: cfg?.style?.text_color || undefined,
   }) as React.CSSProperties, [cfg]);
 
+  const quickLinks: FooterLinkItem[] = (cfg?.links && cfg.links.length > 0)
+    ? cfg.links
+    : [
+        { id: 'home', label: 'Home', type: 'page', page_slug: '' },
+        { id: 'products', label: 'Products', type: 'page', page_slug: 'products' },
+        { id: 'about', label: 'About', type: 'page', page_slug: 'about' },
+        { id: 'contact', label: 'Contact', type: 'page', page_slug: 'contact' },
+      ];
+
+  const customerLinks = [
+    { id: 'shipping', label: 'Shipping Info', to: `${paths.base}/shipping` },
+    { id: 'returns', label: 'Returns', to: `${paths.base}/returns` },
+    { id: 'privacy', label: 'Privacy Policy', to: `${paths.base}/privacy-policy` },
+    { id: 'terms', label: 'Terms of Service', to: `${paths.base}/terms-of-service` },
+  ];
+
   return (
     <footer id="website-footer" className="border-t" style={styleVars}>
       {/* Hover style for links */}
@@ -62,11 +78,11 @@ export const WebsiteFooter: React.FC<{ website: WebsiteData; }> = ({ website }) 
               <p className="text-sm opacity-80">{cfg.description}</p>
             )}
           </div>
-          {cfg?.links && cfg.links.length > 0 && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 md:gap-12 w-full md:w-auto">
             <div className="md:text-right">
               <h3 className="font-semibold mb-3" style={{ color: cfg?.style?.heading_color || undefined }}>Quick Links</h3>
               <ul className="space-y-2">
-                {cfg.links.map((l) => (
+                {quickLinks.map((l) => (
                   <li key={l.id}>
                     {l.type === 'custom' && l.url ? (
                       <a href={l.url} target={l.new_tab ? '_blank' : undefined} rel={l.new_tab ? 'noopener' : undefined} className="text-sm transition-colors" style={{ color: cfg?.style?.text_color || undefined }}>
@@ -81,7 +97,19 @@ export const WebsiteFooter: React.FC<{ website: WebsiteData; }> = ({ website }) 
                 ))}
               </ul>
             </div>
-          )}
+            <div className="md:text-right">
+              <h3 className="font-semibold mb-3" style={{ color: cfg?.style?.heading_color || undefined }}>Customer Service</h3>
+              <ul className="space-y-2">
+                {customerLinks.map(link => (
+                  <li key={link.id}>
+                    <Link to={link.to} className="text-sm transition-colors" style={{ color: cfg?.style?.text_color || undefined }}>
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
         </div>
         <div className="border-t mt-8 pt-6 text-center text-sm opacity-80">
           © {new Date().getFullYear()} {website.name}. All rights reserved.

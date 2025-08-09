@@ -4,6 +4,9 @@ import { Menu, Search, ShoppingCart } from 'lucide-react';
 import { useEcomPaths } from '@/lib/pathResolver';
 import { Sheet, SheetContent, SheetHeader, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { useCart } from '@/contexts/CartContext';
+import { CartDrawer } from './CartDrawer';
 
 interface WebsiteData {
   id: string;
@@ -41,6 +44,7 @@ export const WebsiteHeader: React.FC<{ website: WebsiteData; }> = ({ website }) 
   const paths = useEcomPaths();
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
+  const { itemCount } = useCart();
 
   const styleVars = useMemo(() => ({
     backgroundColor: cfg?.style?.bg_color || undefined,
@@ -98,8 +102,13 @@ export const WebsiteHeader: React.FC<{ website: WebsiteData; }> = ({ website }) 
             </Button>
           )}
           {cfg?.show_cart && (
-            <Button variant="ghost" size="icon" onClick={handleCart} aria-label="Cart">
+            <Button variant="ghost" size="icon" onClick={handleCart} aria-label="Cart" className="relative">
               <ShoppingCart className="w-5 h-5" style={{ color: cfg?.style?.text_color || undefined }} />
+              {itemCount > 0 && (
+                <Badge variant="destructive" className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center text-[10px]">
+                  {itemCount}
+                </Badge>
+              )}
             </Button>
           )}
         </div>

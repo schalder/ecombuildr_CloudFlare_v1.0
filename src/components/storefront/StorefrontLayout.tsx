@@ -1,4 +1,5 @@
 import React from 'react';
+import { useParams } from 'react-router-dom';
 import { useStore } from '@/contexts/StoreContext';
 import { StorefrontHeader } from './StorefrontHeader';
 import { StorefrontFooter } from './StorefrontFooter';
@@ -10,6 +11,8 @@ interface StorefrontLayoutProps {
 
 export const StorefrontLayout: React.FC<StorefrontLayoutProps> = ({ children }) => {
   const { store, loading, error } = useStore();
+  const { websiteId } = useParams<{ websiteId?: string }>();
+  const isWebsiteContext = Boolean(websiteId);
 
   if (loading) {
     return (
@@ -38,11 +41,11 @@ export const StorefrontLayout: React.FC<StorefrontLayoutProps> = ({ children }) 
           --store-secondary: ${store.secondary_color};
         }
       `}</style>
-      <StorefrontHeader />
+      {!isWebsiteContext && <StorefrontHeader />}
       <main className="flex-1">
         {children}
       </main>
-      <StorefrontFooter />
+      {!isWebsiteContext && <StorefrontFooter />}
     </div>
   );
 };

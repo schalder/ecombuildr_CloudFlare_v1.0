@@ -24,7 +24,7 @@ export const WebsiteLayout: React.FC = () => {
   const [website, setWebsite] = React.useState<WebsiteData | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
-  const { loadStoreById } = useStore();
+  const { store, loadStoreById } = useStore();
 
   React.useEffect(() => {
     const loadWebsite = async () => {
@@ -85,6 +85,12 @@ export const WebsiteLayout: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
+      <style>{`
+        :root {
+          --store-primary: ${store?.primary_color ?? '#10B981'};
+          --store-secondary: ${store?.secondary_color ?? '#059669'};
+        }
+      `}</style>
       <WebsiteHeader website={website} />
       <main className="flex-1">
         <Outlet />
