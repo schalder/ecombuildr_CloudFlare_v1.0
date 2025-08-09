@@ -571,7 +571,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement }> = ({ elemen
                 )}
               </CardContent>
             </Card>
-          )
+          )}
         </div>
         <div className="space-y-4">
           {sections.summary && (
@@ -611,7 +611,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement }> = ({ elemen
                 )}
               </CardContent>
             </Card>
-          )
+          )}
         </div>
       </div>
     </>
