@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useStore } from '@/contexts/StoreContext';
 import { StorefrontLayout } from '@/components/storefront/StorefrontLayout';
 import { Button } from '@/components/ui/button';
@@ -10,13 +10,15 @@ import { toast } from 'sonner';
 import { useEcomPaths } from '@/lib/pathResolver';
 
 export const PaymentProcessing: React.FC = () => {
-  const { slug, websiteId, orderId } = useParams<{ slug?: string; websiteId?: string; orderId: string }>();
+  const { slug, websiteId, orderId: orderIdParam } = useParams<{ slug?: string; websiteId?: string; orderId?: string }>();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { store, loadStore, loadStoreById } = useStore();
   const [order, setOrder] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [verifying, setVerifying] = useState(false);
   const paths = useEcomPaths();
+  const orderId = orderIdParam || searchParams.get('orderId') || '';
 useEffect(() => {
   if (slug) {
     loadStore(slug);

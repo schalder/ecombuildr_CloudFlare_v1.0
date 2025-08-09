@@ -129,6 +129,11 @@ const App = () => (
                   <Route path="search" element={<SearchResults />} />
                   <Route path="cart" element={<CartPage />} />
                   <Route path="checkout" element={<CheckoutPage />} />
+                  {/* Support both param and query styles for order-related pages */}
+                  <Route path="payment-processing" element={<PaymentProcessing />} />
+                  <Route path="payment-processing/:orderId" element={<PaymentProcessing />} />
+                  <Route path="order-confirmation" element={<OrderConfirmation />} />
+                  <Route path="order-confirmation/:orderId" element={<OrderConfirmation />} />
                   <Route path=":pageSlug" element={<WebsitePage />} />
                 </Route>
                 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import { useStore } from '@/contexts/StoreContext';
 import { StorefrontLayout } from '@/components/storefront/StorefrontLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -42,12 +42,14 @@ interface OrderItem {
 }
 
 export const OrderConfirmation: React.FC = () => {
-  const { slug, websiteId, orderId } = useParams<{ slug?: string; websiteId?: string; orderId: string }>();
+  const { slug, websiteId, orderId: orderIdParam } = useParams<{ slug?: string; websiteId?: string; orderId?: string }>();
+  const [searchParams] = useSearchParams();
   const { store, loadStore, loadStoreById } = useStore();
   const [order, setOrder] = useState<Order | null>(null);
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
   const [loading, setLoading] = useState(true);
   const paths = useEcomPaths();
+  const orderId = orderIdParam || searchParams.get('orderId') || '';
 useEffect(() => {
   if (slug) {
     loadStore(slug);
