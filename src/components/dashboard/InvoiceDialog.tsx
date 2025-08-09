@@ -30,30 +30,42 @@ export const InvoiceDialog: React.FC<Props> = ({ open, onOpenChange, data }) => 
 
   const handlePrint = () => {
     if (!printRef.current) return;
-    const printContents = printRef.current.innerHTML;
-    const win = window.open('', '_blank', 'width=800,height=900');
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'fixed';
+    iframe.style.right = '0';
+    iframe.style.bottom = '0';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    iframe.style.border = '0';
+    document.body.appendChild(iframe);
+
+    const doc = iframe.contentDocument || iframe.contentWindow?.document;
+    if (!doc) return;
+
+    const styles = `
+      <style>
+        @page { margin: 12mm; }
+        body { background: #ffffff; color: #000; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial; }
+        .avoid-break { break-inside: avoid; }
+        .totals { width: 256px; margin-left: auto; }
+        hr { border: none; border-top: 1px solid #e5e7eb; margin: 16px 0; }
+      </style>
+    `;
+
+    doc.open();
+    doc.write(`<html><head><title>Invoice - ${data?.order?.order_number || ''}</title>${styles}</head><body>${printRef.current.innerHTML}</body></html>`);
+    doc.close();
+
+    const win = iframe.contentWindow;
     if (!win) return;
-    win.document.open();
-    win.document.write(`
-      <html>
-        <head>
-          <title>Invoice - ${data?.order?.order_number || ''}</title>
-          <meta name="viewport" content="width=device-width, initial-scale=1" />
-          <style>
-            @page { margin: 12mm; }
-            body { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial; color: #000; }
-            .avoid-break { break-inside: avoid; }
-            .totals { width: 256px; margin-left: auto; }
-            hr { border: none; border-top: 1px solid #e5e7eb; margin: 16px 0; }
-          </style>
-        </head>
-        <body>${printContents}</body>
-      </html>
-    `);
-    win.document.close();
     win.focus();
-    win.print();
-    win.close();
+    // Wait a tick to ensure layout is done
+    setTimeout(() => {
+      win.print();
+      setTimeout(() => {
+        document.body.removeChild(iframe);
+      }, 100);
+    }, 100);
   };
 
   const handleDownloadPdf = async () => {
