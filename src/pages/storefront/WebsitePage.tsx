@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
 import { PageBuilderRenderer } from '@/components/storefront/PageBuilderRenderer';
-
+import { useStore } from '@/contexts/StoreContext';
 interface WebsitePageData {
   id: string;
   title: string;
@@ -24,6 +24,7 @@ interface WebsiteData {
   description?: string;
   is_published: boolean;
   is_active: boolean;
+  store_id: string;
 }
 
 export const WebsitePage: React.FC = () => {
@@ -32,7 +33,7 @@ export const WebsitePage: React.FC = () => {
   const [page, setPage] = useState<WebsitePageData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
+  const { loadStoreById } = useStore();
   useEffect(() => {
     const fetchWebsiteAndPage = async () => {
       if (!websiteId) {
@@ -68,6 +69,13 @@ export const WebsitePage: React.FC = () => {
         }
 
         setWebsite(websiteData);
+
+        // Ensure StoreContext is populated for ecommerce elements
+        try {
+          await loadStoreById(websiteData.store_id);
+        } catch (e) {
+          console.warn('WebsitePage: loadStoreById failed', e);
+        }
 
         // Then fetch the website page
         let pageQuery = supabase
@@ -109,7 +117,7 @@ export const WebsitePage: React.FC = () => {
     };
 
     fetchWebsiteAndPage();
-  }, [websiteId, pageSlug]);
+  }, [websiteId, pageSlug, loadStoreById]);
 
   // Set up SEO metadata
   useEffect(() => {

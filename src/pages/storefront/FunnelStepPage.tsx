@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
 import { PageBuilderRenderer } from '@/components/storefront/PageBuilderRenderer';
-
+import { useStore } from '@/contexts/StoreContext';
 interface FunnelStepData {
   id: string;
   title: string;
@@ -25,6 +25,7 @@ interface FunnelData {
   description?: string;
   is_published: boolean;
   is_active: boolean;
+  store_id: string;
 }
 
 export const FunnelStepPage: React.FC = () => {
@@ -33,7 +34,7 @@ export const FunnelStepPage: React.FC = () => {
   const [step, setStep] = useState<FunnelStepData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
+  const { loadStoreById } = useStore();
   useEffect(() => {
     const fetchFunnelAndStep = async () => {
       if (!funnelId || !stepSlug) {
@@ -71,6 +72,13 @@ export const FunnelStepPage: React.FC = () => {
 
         setFunnel(funnelData);
 
+        // Ensure StoreContext is populated for ecommerce elements
+        try {
+          await loadStoreById(funnelData.store_id);
+        } catch (e) {
+          console.warn('FunnelStepPage: loadStoreById failed', e);
+        }
+
         // Then fetch the funnel step
         const { data: stepData, error: stepError } = await supabase
           .from('funnel_steps')
@@ -103,7 +111,7 @@ export const FunnelStepPage: React.FC = () => {
     };
 
     fetchFunnelAndStep();
-  }, [funnelId, stepSlug]);
+  }, [funnelId, stepSlug, loadStoreById]);
 
   // Set up SEO metadata
   useEffect(() => {

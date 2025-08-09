@@ -20,6 +20,7 @@ interface StoreContextType {
   loading: boolean;
   error: string | null;
   loadStore: (slug: string) => Promise<void>;
+  loadStoreById: (id: string) => Promise<void>;
 }
 
 const StoreContext = createContext<StoreContextType | undefined>(undefined);
@@ -70,12 +71,54 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   }, [store?.slug, error]);
 
+  const loadStoreById = useCallback(async (id: string) => {
+    // Prevent loading the same store multiple times
+    if (store?.id === id && !error && !loading) {
+      console.log('Store already loaded by id:', id);
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      console.log('Loading store with id:', id);
+
+      const { data, error } = await supabase
+        .from('stores')
+        .select('id, name, slug, description, logo_url, favicon_url, primary_color, secondary_color, is_active, settings')
+        .eq('id', id)
+        .eq('is_active', true)
+        .maybeSingle();
+
+      console.log('Store query by id result:', { data, error });
+
+      if (error) {
+        console.error('Store query by id error:', error);
+        throw error;
+      }
+
+      if (!data) {
+        throw new Error('Store not found or is inactive');
+      }
+
+      setStore(data);
+    } catch (err: any) {
+      console.error('Store loading by id error:', err);
+      setError(err.message || 'Failed to load store');
+      setStore(null);
+    } finally {
+      setLoading(false);
+    }
+  }, [store?.id, error]);
+
   return (
     <StoreContext.Provider value={{
       store,
       loading,
       error,
       loadStore,
+      loadStoreById,
     }}>
       {children}
     </StoreContext.Provider>
