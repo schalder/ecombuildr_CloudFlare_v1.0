@@ -441,18 +441,35 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
         discount_amount: 0,
         total: total + shippingCost,
         status: form.payment_method === 'cod' ? 'pending' as const : 'processing' as const,
-        order_number: `ORD-${Date.now()}`,
         custom_fields: form.custom_fields,
       };
-      const { data: order } = await supabase.from('orders').insert(orderData).select().single();
-      const orderItems = items.map(i => ({ order_id: order!.id, product_id: i.productId, product_name: i.name, product_sku: i.sku, price: i.price, quantity: i.quantity, total: i.price * i.quantity }));
-      await supabase.from('order_items').insert(orderItems);
+
+      const itemsPayload = items.map(i => ({
+        product_id: i.productId,
+        product_name: i.name,
+        product_sku: i.sku,
+        price: i.price,
+        quantity: i.quantity,
+        image: i.image,
+      }));
+
+      const { data, error } = await supabase.functions.invoke('create-order', {
+        body: {
+          order: orderData,
+          items: itemsPayload,
+          storeId: store.id,
+        }
+      });
+      if (error) throw error;
+      const orderId: string | undefined = data?.order?.id;
+      if (!orderId) throw new Error('Order was not created');
+
       if (form.payment_method === 'cod') {
         clearCart();
         toast.success('Order placed!');
-        navigate(paths.orderConfirmation(order!.id));
+        navigate(paths.orderConfirmation(orderId));
       } else {
-        await initiatePayment(order!.id, orderData.total, form.payment_method);
+        await initiatePayment(orderId, orderData.total, form.payment_method);
       }
     } catch (e) {
       console.error(e);
