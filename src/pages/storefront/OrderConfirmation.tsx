@@ -9,6 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import { supabase } from '@/integrations/supabase/client';
 import { CheckCircle, Package, MapPin, CreditCard, Clock } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useEcomPaths } from '@/lib/pathResolver';
 
 interface Order {
   id: string;
@@ -41,17 +42,29 @@ interface OrderItem {
 }
 
 export const OrderConfirmation: React.FC = () => {
-  const { slug, orderId } = useParams<{ slug: string; orderId: string }>();
-  const { store, loadStore } = useStore();
+  const { slug, websiteId, orderId } = useParams<{ slug?: string; websiteId?: string; orderId: string }>();
+  const { store, loadStore, loadStoreById } = useStore();
   const [order, setOrder] = useState<Order | null>(null);
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const paths = useEcomPaths();
+useEffect(() => {
+  if (slug) {
+    loadStore(slug);
+  } else if (websiteId) {
+    (async () => {
+      const { data: website } = await supabase
+        .from('websites')
+        .select('store_id')
+        .eq('id', websiteId)
+        .single();
+      if (website?.store_id) {
+        await loadStoreById(website.store_id);
+      }
+    })();
+  }
+}, [slug, websiteId, loadStore, loadStoreById]);
 
-  useEffect(() => {
-    if (slug) {
-      loadStore(slug);
-    }
-  }, [slug, loadStore]);
 
   useEffect(() => {
     if (store && orderId) {
@@ -153,7 +166,7 @@ export const OrderConfirmation: React.FC = () => {
             <p className="text-muted-foreground mb-6">
               The requested order could not be found or does not belong to this store.
             </p>
-            <Link to={`/store/${store.slug}`}>
+            <Link to={paths.home}>
               <Button>Return to Store</Button>
             </Link>
           </div>
@@ -308,7 +321,7 @@ export const OrderConfirmation: React.FC = () => {
 
           {/* Action Buttons */}
           <div className="flex space-x-4">
-            <Link to={`/store/${store.slug}`} className="flex-1">
+            <Link to={paths.home} className="flex-1">
               <Button variant="outline" className="w-full">
                 Continue Shopping
               </Button>

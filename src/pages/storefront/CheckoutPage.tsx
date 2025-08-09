@@ -14,6 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { CreditCard, Truck, MapPin } from 'lucide-react';
 import { toast } from 'sonner';
+import { useEcomPaths } from '@/lib/pathResolver';
 
 interface CheckoutForm {
   customer_name: string;
@@ -28,11 +29,11 @@ interface CheckoutForm {
 }
 
 export const CheckoutPage: React.FC = () => {
-  const { slug } = useParams<{ slug: string }>();
+  const { slug, websiteId } = useParams<{ slug?: string; websiteId?: string }>();
   const navigate = useNavigate();
-  const { store, loadStore } = useStore();
+  const { store, loadStore, loadStoreById } = useStore();
   const { items, total, clearCart } = useCart();
-  
+  const paths = useEcomPaths();
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [discountLoading, setDiscountLoading] = useState(false);
@@ -51,17 +52,28 @@ export const CheckoutPage: React.FC = () => {
     discount_code: '',
   });
 
-  useEffect(() => {
-    if (slug) {
-      loadStore(slug);
-    }
-  }, [slug, loadStore]);
+useEffect(() => {
+  if (slug) {
+    loadStore(slug);
+  } else if (websiteId) {
+    (async () => {
+      const { data: website } = await supabase
+        .from('websites')
+        .select('store_id')
+        .eq('id', websiteId)
+        .single();
+      if (website?.store_id) {
+        await loadStoreById(website.store_id);
+      }
+    })();
+  }
+}, [slug, websiteId, loadStore, loadStoreById]);
 
-  useEffect(() => {
-    if (items.length === 0) {
-      navigate(`/store/${slug}`);
-    }
-  }, [items, navigate, slug]);
+useEffect(() => {
+  if (items.length === 0) {
+    navigate(paths.home);
+  }
+}, [items, navigate, paths.home]);
 
   const handleInputChange = (field: keyof CheckoutForm, value: string) => {
     setForm(prev => ({ ...prev, [field]: value }));
@@ -229,7 +241,7 @@ export const CheckoutPage: React.FC = () => {
         // For COD, just clear cart and redirect
         clearCart();
         toast.success('Order placed successfully!');
-        navigate(`/store/${store.slug}/order-confirmation/${order.id}`);
+        navigate(paths.orderConfirmation(order.id));
       } else {
         // For online payments, initiate payment process
         await initiatePayment(order.id, finalTotal, form.payment_method);
@@ -291,7 +303,7 @@ export const CheckoutPage: React.FC = () => {
         clearCart();
         
         // Redirect to a payment processing page
-        navigate(`/store/${store!.slug}/payment-processing/${orderId}`);
+        navigate(paths.paymentProcessing(orderId));
       } else {
         throw new Error('Payment URL not received');
       }

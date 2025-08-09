@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { CartDrawer } from '@/components/storefront/CartDrawer';
 import { useCart } from '@/contexts/CartContext';
 import { useStore } from '@/contexts/StoreContext';
+import { useEcomPaths } from '@/lib/pathResolver';
 
 // Navigation Menu Element Component
 const NavigationMenuElement: React.FC<{
@@ -69,7 +70,16 @@ const NavigationMenuElement: React.FC<{
   };
 
   const resolveHref = (item: MenuItem) => {
-    if ((item.type || 'url') === 'url') return item.url || '#';
+    if ((item.type || 'url') === 'url') {
+      const raw = item.url || '#';
+      if (raw.startsWith('/products') || raw.startsWith('/checkout') || raw.startsWith('/cart')) {
+        const rest = raw.startsWith('/products') ? raw.slice('/products'.length) : raw.startsWith('/checkout') ? raw.slice('/checkout'.length) : raw.slice('/cart'.length);
+        if (raw.startsWith('/products')) return `${paths.products}${rest}`;
+        if (raw.startsWith('/checkout')) return `${paths.checkout}${rest}`;
+        if (raw.startsWith('/cart')) return `${paths.cart}${rest}`;
+      }
+      return raw;
+    }
     return item.pagePath || '#';
   };
 
@@ -85,6 +95,7 @@ const NavigationMenuElement: React.FC<{
   const { itemCount } = useCart();
   const { store } = useStore();
   const showCart: boolean = !!element.content.showCart;
+  const paths = useEcomPaths();
  
   const textStyles: React.CSSProperties = {
     color: linkColor,

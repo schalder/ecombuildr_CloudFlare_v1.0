@@ -119,6 +119,9 @@ const App = () => (
                 <Route path="/funnel/:funnelId" element={<FunnelStepPage />} />
 
                 {/* Website Routes */}
+                <Route path="/website/:websiteId/checkout" element={<CheckoutPage />} />
+                <Route path="/website/:websiteId/payment-processing/:orderId" element={<PaymentProcessing />} />
+                <Route path="/website/:websiteId/order-confirmation/:orderId" element={<OrderConfirmation />} />
                 <Route path="/website/:websiteId/:pageSlug" element={<WebsitePage />} />
                 <Route path="/website/:websiteId" element={<WebsitePage />} />
                 

@@ -7,20 +7,33 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { CheckCircle, Clock, XCircle, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
+import { useEcomPaths } from '@/lib/pathResolver';
 
 export const PaymentProcessing: React.FC = () => {
-  const { slug, orderId } = useParams<{ slug: string; orderId: string }>();
+  const { slug, websiteId, orderId } = useParams<{ slug?: string; websiteId?: string; orderId: string }>();
   const navigate = useNavigate();
-  const { store, loadStore } = useStore();
+  const { store, loadStore, loadStoreById } = useStore();
   const [order, setOrder] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [verifying, setVerifying] = useState(false);
+  const paths = useEcomPaths();
+useEffect(() => {
+  if (slug) {
+    loadStore(slug);
+  } else if (websiteId) {
+    (async () => {
+      const { data: website } = await supabase
+        .from('websites')
+        .select('store_id')
+        .eq('id', websiteId)
+        .single();
+      if (website?.store_id) {
+        await loadStoreById(website.store_id);
+      }
+    })();
+  }
+}, [slug, websiteId, loadStore, loadStoreById]);
 
-  useEffect(() => {
-    if (slug) {
-      loadStore(slug);
-    }
-  }, [slug, loadStore]);
 
   useEffect(() => {
     if (orderId && store) {
@@ -66,7 +79,7 @@ export const PaymentProcessing: React.FC = () => {
 
       if (data.paymentStatus === 'success') {
         toast.success('Payment verified successfully!');
-        navigate(`/store/${store!.slug}/order-confirmation/${order.id}`);
+        navigate(paths.orderConfirmation(order.id));
       } else {
         toast.error('Payment verification failed. Please contact support.');
         setOrder(prev => ({ ...prev, status: 'payment_failed' }));
@@ -143,7 +156,7 @@ export const PaymentProcessing: React.FC = () => {
           <div className="text-center">
             <h1 className="text-2xl font-bold text-destructive mb-2">Order Not Found</h1>
             <p className="text-muted-foreground mb-4">The requested order could not be found.</p>
-            <Button onClick={() => navigate(`/store/${slug}`)}>
+            <Button onClick={() => navigate(paths.home)}>
               Continue Shopping
             </Button>
           </div>
@@ -210,7 +223,7 @@ export const PaymentProcessing: React.FC = () => {
                 
                 {order.status === 'paid' && (
                   <Button 
-                    onClick={() => navigate(`/store/${store!.slug}/order-confirmation/${order.id}`)}
+                    onClick={() => navigate(paths.orderConfirmation(order.id))}
                     className="w-full"
                   >
                     View Order Details
@@ -219,7 +232,7 @@ export const PaymentProcessing: React.FC = () => {
 
                 {order.status === 'payment_failed' && (
                   <Button 
-                    onClick={() => navigate(`/store/${store!.slug}/checkout`)}
+                    onClick={() => navigate(paths.checkout)}
                     className="w-full"
                   >
                     Try Again
@@ -228,7 +241,7 @@ export const PaymentProcessing: React.FC = () => {
 
                 <Button 
                   variant="outline" 
-                  onClick={() => navigate(`/store/${store!.slug}`)}
+                  onClick={() => navigate(paths.home)}
                   className="w-full"
                 >
                   Continue Shopping

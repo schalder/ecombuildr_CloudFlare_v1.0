@@ -6,6 +6,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/co
 import { Separator } from '@/components/ui/separator';
 import { Plus, Minus, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useEcomPaths } from '@/lib/pathResolver';
 
 interface CartDrawerProps {
   children: React.ReactNode;
@@ -14,6 +15,7 @@ interface CartDrawerProps {
 export const CartDrawer: React.FC<CartDrawerProps> = ({ children }) => {
   const { items, total, updateQuantity, removeItem } = useCart();
   const { store } = useStore();
+  const paths = useEcomPaths();
 
   if (!store) return null;
 
@@ -39,7 +41,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ children }) => {
                   </div>
                 </div>
                 <p className="text-muted-foreground mb-4">Your cart is empty</p>
-                <Link to={`/store/${store.slug}/products`}>
+                <Link to={paths.products}>
                   <Button variant="outline" className="w-full">
                     Continue Shopping
                   </Button>
@@ -116,7 +118,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ children }) => {
                   <span>৳{total.toFixed(2)}</span>
                 </div>
               </div>
-              <Link to={`/store/${store.slug}/checkout`} className="block">
+              <Link to={paths.checkout} className="block">
                 <Button className="w-full" size="lg">
                   Proceed to Checkout
                 </Button>

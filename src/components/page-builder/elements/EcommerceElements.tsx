@@ -9,6 +9,7 @@ import { useStoreProducts, useStoreCategories, useProductById } from '@/hooks/us
 import { useCart } from '@/contexts/CartContext';
 import { useToast } from '@/hooks/use-toast';
 import { useStore } from '@/contexts/StoreContext';
+import { useEcomPaths } from '@/lib/pathResolver';
 
 // Product Grid Element
 const ProductGridElement: React.FC<{
@@ -21,6 +22,7 @@ const ProductGridElement: React.FC<{
   const { addItem, clearCart } = useCart();
   const { toast } = useToast();
   const { store } = useStore();
+  const paths = useEcomPaths();
   const ctaBehavior: 'add_to_cart' | 'buy_now' = element.content.ctaBehavior || 'add_to_cart';
   
   // Extract configuration from element content
@@ -65,7 +67,7 @@ const ProductGridElement: React.FC<{
         image: Array.isArray(product.images) ? product.images[0] : product.images,
         sku: product.sku
       });
-      window.location.href = `/store/${store.slug}/checkout`;
+      window.location.href = paths.checkout;
       return;
     }
 
@@ -178,6 +180,7 @@ const FeaturedProductsElement: React.FC<{
   const { addItem, clearCart } = useCart();
   const { toast } = useToast();
   const { store } = useStore();
+  const paths = useEcomPaths();
   const ctaBehavior: 'add_to_cart' | 'buy_now' = element.content.ctaBehavior || 'add_to_cart';
   
   const productId = element.content.productId;
@@ -200,7 +203,7 @@ const FeaturedProductsElement: React.FC<{
         image: Array.isArray(product.images) ? product.images[0] : product.images,
         sku: product.sku
       });
-      window.location.href = `/store/${store.slug}/checkout`;
+      window.location.href = paths.checkout;
       return;
     }
     
