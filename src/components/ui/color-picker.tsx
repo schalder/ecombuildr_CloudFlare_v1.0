@@ -34,9 +34,9 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({ color, onChange, label
           >
             <div 
               className="w-4 h-4 rounded border"
-              style={{ backgroundColor: color }}
+              style={{ backgroundColor: color || 'transparent' }}
             />
-            <span>{color}</span>
+            <span>{color || 'Auto'}</span>
             <Palette className="w-4 h-4 ml-auto" />
           </Button>
         </PopoverTrigger>
@@ -48,7 +48,7 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({ color, onChange, label
                 <Input
                   id="color-input"
                   type="color"
-                  value={color}
+                  value={color || '#000000'}
                   onChange={(e) => onChange(e.target.value)}
                   className="w-12 h-10 p-1"
                 />
@@ -76,6 +76,29 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({ color, onChange, label
                   />
                 ))}
               </div>
+            </div>
+
+            <div className="flex items-center justify-between gap-2 pt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  onChange('');
+                  setIsOpen(false);
+                }}
+              >
+                Reset
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  onChange('transparent');
+                  setIsOpen(false);
+                }}
+              >
+                Transparent
+              </Button>
             </div>
           </div>
         </PopoverContent>

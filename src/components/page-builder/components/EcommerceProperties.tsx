@@ -296,6 +296,43 @@ export const FeaturedProductsContentProperties: React.FC<EcommerceContentPropert
           </SelectContent>
         </Select>
       </div>
+      <div>
+        <Label className="text-xs">Grid Columns</Label>
+        <Select
+          value={element.content.columns?.toString() || '2'}
+          onValueChange={(value) => onUpdate('columns', parseInt(value))}
+        >
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="1">1 Column</SelectItem>
+            <SelectItem value="2">2 Columns</SelectItem>
+            <SelectItem value="3">3 Columns</SelectItem>
+            <SelectItem value="4">4 Columns</SelectItem>
+            <SelectItem value="6">6 Columns</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div>
+        <Label className="text-xs">Tablet Columns</Label>
+        <Select
+          value={element.content.tabletColumns?.toString() || 'auto'}
+          onValueChange={(value) => value === 'auto' ? onUpdate('tabletColumns', undefined) : onUpdate('tabletColumns', parseInt(value))}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Auto" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="auto">Auto</SelectItem>
+            <SelectItem value="1">1 Column</SelectItem>
+            <SelectItem value="2">2 Columns</SelectItem>
+            <SelectItem value="3">3 Columns</SelectItem>
+            <SelectItem value="4">4 Columns</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
       <div>
         <Label className="text-xs">Badge Text</Label>

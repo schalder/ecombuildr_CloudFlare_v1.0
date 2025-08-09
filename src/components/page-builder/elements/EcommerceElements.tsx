@@ -320,11 +320,31 @@ const FeaturedProductsElement: React.FC<{
     return bs as React.CSSProperties;
   }, [deviceType, (element as any).styles?.buttonStyles]);
 
+  // Responsive grid classes for multi-featured layout
+  const getGridClasses = () => {
+    const cols = element.content.columns || 2;
+    if (deviceType === 'mobile') return 'grid-cols-1';
+    if (deviceType === 'tablet') {
+      if (columnCount === 1) return 'grid-cols-1';
+      const tCols = element.content.tabletColumns as number | undefined;
+      if (typeof tCols === 'number') {
+        const t = Math.max(1, Math.min(4, tCols));
+        const map: Record<number, string> = { 1: 'grid-cols-1', 2: 'grid-cols-2', 3: 'grid-cols-3', 4: 'grid-cols-4' };
+        return map[t];
+      }
+      // auto heuristic
+      return cols >= 4 ? 'grid-cols-3' : 'grid-cols-2';
+    }
+    const d = Math.min(cols, 4);
+    const map: Record<number, string> = { 1: 'grid-cols-1', 2: 'grid-cols-2', 3: 'grid-cols-3', 4: 'grid-cols-4' };
+    return map[d] || 'grid-cols-2';
+  };
+
   if (selectedProductIds.length > 0) {
     if (loadingFeatured) {
       return (
         <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-6xl mx-auto'}`}>
-          <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+          <div className={`grid gap-4 ${getGridClasses()}`}>
             {[...Array(4)].map((_, i) => (
               <Card key={i} className="animate-pulse">
                 <CardContent className="p-3">
@@ -346,7 +366,7 @@ const FeaturedProductsElement: React.FC<{
         {element.content.title && (
           <h3 style={{ color: elementStyles.color, fontSize: elementStyles.fontSize, textAlign: elementStyles.textAlign, lineHeight: elementStyles.lineHeight, fontWeight: elementStyles.fontWeight }} className="text-xl font-semibold mb-4">{element.content.title}</h3>
         )}
-        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+        <div className={`grid gap-4 ${getGridClasses()}`}>
           {featuredProducts.map((p) => (
             <Card key={p.id} className="group hover:shadow-lg transition-shadow">
               <CardContent className="p-3">
@@ -436,7 +456,7 @@ const FeaturedProductsElement: React.FC<{
     : 'w-full h-64 md:h-80 object-cover rounded-lg';
 
   return (
-    <div className={containerClass} style={renderElementStyles(element)}>
+    <div className={containerClass} style={renderElementStyles(element, deviceType)}>
       <div className="bg-gradient-to-r from-primary/10 to-secondary/10 rounded-lg p-6">
         <div className={layoutClass}>
           {/* Header section - Badge and Title */}

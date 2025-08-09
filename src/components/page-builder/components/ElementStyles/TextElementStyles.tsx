@@ -7,7 +7,7 @@ import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AlignLeft, AlignCenter, AlignRight, Monitor, Smartphone } from 'lucide-react';
 import { PageBuilderElement } from '../../types';
-
+import { ColorPicker } from '@/components/ui/color-picker';
 interface TextElementStylesProps {
   element: PageBuilderElement;
   onStyleUpdate: (property: string, value: any) => void;
@@ -117,15 +117,11 @@ export const TextElementStyles: React.FC<TextElementStylesProps> = ({
           </div>
         </div>
 
-        <div>
-          <Label className="text-xs">Text Color</Label>
-          <Input
-            type="color"
-            value={element.styles?.color || '#000000'}
-            onChange={(e) => onStyleUpdate('color', e.target.value)}
-            className="w-full h-10"
+          <ColorPicker 
+            label="Text Color"
+            color={element.styles?.color || ''}
+            onChange={(val) => onStyleUpdate('color', val)}
           />
-        </div>
       </div>
 
       <Separator />
@@ -134,15 +130,11 @@ export const TextElementStyles: React.FC<TextElementStylesProps> = ({
       <div className="space-y-3">
         <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Background</h4>
         
-        <div>
-          <Label className="text-xs">Background Color</Label>
-          <Input
-            type="color"
-            value={element.styles?.backgroundColor || '#ffffff'}
-            onChange={(e) => onStyleUpdate('backgroundColor', e.target.value)}
-            className="w-full h-10"
-          />
-        </div>
+        <ColorPicker 
+          label="Background Color"
+          color={element.styles?.backgroundColor || ''}
+          onChange={(val) => onStyleUpdate('backgroundColor', val)}
+        />
       </div>
 
       <Separator />
@@ -160,15 +152,11 @@ export const TextElementStyles: React.FC<TextElementStylesProps> = ({
           />
         </div>
 
-        <div>
-          <Label className="text-xs">Border Color</Label>
-          <Input
-            type="color"
-            value={element.styles?.borderColor || '#e5e7eb'}
-            onChange={(e) => onStyleUpdate('borderColor', e.target.value)}
-            className="w-full h-10"
-          />
-        </div>
+        <ColorPicker 
+          label="Border Color"
+          color={element.styles?.borderColor || ''}
+          onChange={(val) => onStyleUpdate('borderColor', val)}
+        />
 
         <div>
           <Label className="text-xs">Border Radius</Label>
@@ -211,24 +199,16 @@ export const TextElementStyles: React.FC<TextElementStylesProps> = ({
           <Separator />
           <div className="space-y-3">
             <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Button Styles</h4>
-            <div>
-              <Label className="text-xs">Text Color</Label>
-              <Input
-                type="color"
-                value={(element.styles as any)?.buttonStyles?.color || '#ffffff'}
-                onChange={(e) => onStyleUpdate('buttonStyles', { ...(element.styles as any)?.buttonStyles, color: e.target.value })}
-                className="w-full h-10"
-              />
-            </div>
-            <div>
-              <Label className="text-xs">Background Color</Label>
-              <Input
-                type="color"
-                value={(element.styles as any)?.buttonStyles?.backgroundColor || '#3b82f6'}
-                onChange={(e) => onStyleUpdate('buttonStyles', { ...(element.styles as any)?.buttonStyles, backgroundColor: e.target.value })}
-                className="w-full h-10"
-              />
-            </div>
+            <ColorPicker 
+              label="Text Color"
+              color={(element.styles as any)?.buttonStyles?.color || ''}
+              onChange={(val) => onStyleUpdate('buttonStyles', { ...(element.styles as any)?.buttonStyles, color: val })}
+            />
+            <ColorPicker 
+              label="Background Color"
+              color={(element.styles as any)?.buttonStyles?.backgroundColor || ''}
+              onChange={(val) => onStyleUpdate('buttonStyles', { ...(element.styles as any)?.buttonStyles, backgroundColor: val })}
+            />
           </div>
         </>
       )}
