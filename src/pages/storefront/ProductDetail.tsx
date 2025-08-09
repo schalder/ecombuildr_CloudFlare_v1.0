@@ -27,8 +27,8 @@ interface Product {
 }
 
 export const ProductDetail: React.FC = () => {
-  const { slug, productSlug } = useParams<{ slug: string; productSlug: string }>();
-  const { store, loadStore } = useStore();
+  const { slug, websiteId, productSlug } = useParams<{ slug?: string; websiteId?: string; productSlug: string }>();
+  const { store, loadStore, loadStoreById } = useStore();
   const { addItem } = useCart();
   
   const [product, setProduct] = useState<Product | null>(null);
@@ -37,10 +37,22 @@ export const ProductDetail: React.FC = () => {
   const [quantity, setQuantity] = useState(1);
 
   useEffect(() => {
-    if (slug) {
-      loadStore(slug);
-    }
-  }, [slug, loadStore]);
+    const init = async () => {
+      if (slug) {
+        loadStore(slug);
+      } else if (websiteId) {
+        const { data: website } = await supabase
+          .from('websites')
+          .select('store_id')
+          .eq('id', websiteId)
+          .single();
+        if (website?.store_id) {
+          await loadStoreById(website.store_id);
+        }
+      }
+    };
+    init();
+  }, [slug, websiteId, loadStore, loadStoreById]);
 
   useEffect(() => {
     if (store && productSlug) {

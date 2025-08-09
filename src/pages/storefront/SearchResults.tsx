@@ -22,9 +22,9 @@ interface Product {
 }
 
 export const SearchResults: React.FC = () => {
-  const { slug } = useParams<{ slug: string }>();
+  const { slug, websiteId } = useParams<{ slug?: string; websiteId?: string }>();
   const [searchParams] = useSearchParams();
-  const { store, loadStore } = useStore();
+  const { store, loadStore, loadStoreById } = useStore();
   const { addItem } = useCart();
   
   const [products, setProducts] = useState<Product[]>([]);
@@ -32,10 +32,22 @@ export const SearchResults: React.FC = () => {
   const searchQuery = searchParams.get('q') || '';
 
   useEffect(() => {
-    if (slug) {
-      loadStore(slug);
-    }
-  }, [slug, loadStore]);
+    const init = async () => {
+      if (slug) {
+        loadStore(slug);
+      } else if (websiteId) {
+        const { data: website } = await supabase
+          .from('websites')
+          .select('store_id')
+          .eq('id', websiteId)
+          .single();
+        if (website?.store_id) {
+          await loadStoreById(website.store_id);
+        }
+      }
+    };
+    init();
+  }, [slug, websiteId, loadStore, loadStoreById]);
 
   useEffect(() => {
     if (store && searchQuery) {
@@ -123,7 +135,7 @@ export const SearchResults: React.FC = () => {
             <p className="text-muted-foreground text-lg mb-4">
               No products found for "{searchQuery}"
             </p>
-            <Link to={`/store/${store.slug}/products`}>
+            <Link to={require('@/lib/pathResolver').useEcomPaths().products}>
               <Button variant="outline">Browse All Products</Button>
             </Link>
           </div>
@@ -144,7 +156,7 @@ export const SearchResults: React.FC = () => {
                   )}
                 </div>
                 <CardContent className="p-4">
-                  <Link to={`/store/${store.slug}/products/${product.slug}`}>
+                  <Link to={require('@/lib/pathResolver').useEcomPaths().productDetail(product.slug)}>
                     <h3 className="font-semibold text-sm mb-1 hover:text-primary transition-colors line-clamp-2">
                       {product.name}
                     </h3>

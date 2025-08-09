@@ -1,9 +1,11 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useStore } from '@/contexts/StoreContext';
+import { useEcomPaths } from '@/lib/pathResolver';
 
 export const StorefrontFooter: React.FC = () => {
   const { store } = useStore();
+  const paths = useEcomPaths();
 
   if (!store) return null;
 
@@ -13,7 +15,7 @@ export const StorefrontFooter: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Store Info */}
           <div className="md:col-span-2">
-            <Link to={`/store/${store.slug}`} className="flex items-center space-x-3 mb-4">
+            <Link to={paths.home} className="flex items-center space-x-3 mb-4">
               {store.logo_url && (
                 <img 
                   src={store.logo_url} 
@@ -36,7 +38,7 @@ export const StorefrontFooter: React.FC = () => {
             <ul className="space-y-2">
               <li>
                 <Link 
-                  to={`/store/${store.slug}`}
+                  to={paths.home}
                   className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
                   Home
@@ -44,7 +46,7 @@ export const StorefrontFooter: React.FC = () => {
               </li>
               <li>
                 <Link 
-                  to={`/store/${store.slug}/products`}
+                  to={paths.products}
                   className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
                   Products
@@ -52,7 +54,7 @@ export const StorefrontFooter: React.FC = () => {
               </li>
               <li>
                 <Link 
-                  to={`/store/${store.slug}/about`}
+                  to={`${paths.base}/about`}
                   className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
                   About
@@ -60,7 +62,7 @@ export const StorefrontFooter: React.FC = () => {
               </li>
               <li>
                 <Link 
-                  to={`/store/${store.slug}/contact`}
+                  to={`${paths.base}/contact`}
                   className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
                   Contact

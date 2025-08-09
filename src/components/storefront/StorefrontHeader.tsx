@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useStore } from '@/contexts/StoreContext';
 import { useCart } from '@/contexts/CartContext';
 import { CartDrawer } from './CartDrawer';
@@ -8,20 +8,22 @@ import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { ShoppingCart, Menu, Search, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { useEcomPaths } from '@/lib/pathResolver';
 
 export const StorefrontHeader: React.FC = () => {
   const { store } = useStore();
   const { itemCount } = useCart();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const navigate = useNavigate();
+  const paths = useEcomPaths();
 
   if (!store) return null;
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      // Navigate to search results
-      window.location.href = `/store/${store.slug}/search?q=${encodeURIComponent(searchQuery)}`;
+      navigate(`${paths.products}?q=${encodeURIComponent(searchQuery)}`);
     }
   };
 
@@ -30,7 +32,7 @@ export const StorefrontHeader: React.FC = () => {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo and Store Name */}
-          <Link to={`/store/${store.slug}`} className="flex items-center space-x-3">
+          <Link to={paths.home} className="flex items-center space-x-3">
             {store.logo_url && (
               <img 
                 src={store.logo_url} 
@@ -44,25 +46,25 @@ export const StorefrontHeader: React.FC = () => {
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-6">
             <Link 
-              to={`/store/${store.slug}`}
+              to={paths.home}
               className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
             >
               Home
             </Link>
             <Link 
-              to={`/store/${store.slug}/products`}
+              to={paths.products}
               className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
             >
               Products
             </Link>
             <Link 
-              to={`/store/${store.slug}/about`}
+              to={`${paths.base}/about`}
               className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
             >
               About
             </Link>
             <Link 
-              to={`/store/${store.slug}/contact`}
+              to={`${paths.base}/contact`}
               className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
             >
               Contact
@@ -106,25 +108,25 @@ export const StorefrontHeader: React.FC = () => {
               <SheetContent side="right" className="w-[300px]">
                 <nav className="flex flex-col space-y-4 mt-6">
                   <Link 
-                    to={`/store/${store.slug}`}
+                    to={paths.home}
                     className="text-lg font-medium text-foreground"
                   >
                     Home
                   </Link>
                   <Link 
-                    to={`/store/${store.slug}/products`}
+                    to={paths.products}
                     className="text-lg font-medium text-foreground"
                   >
                     Products
                   </Link>
                   <Link 
-                    to={`/store/${store.slug}/about`}
+                    to={`${paths.base}/about`}
                     className="text-lg font-medium text-foreground"
                   >
                     About
                   </Link>
                   <Link 
-                    to={`/store/${store.slug}/contact`}
+                    to={`${paths.base}/contact`}
                     className="text-lg font-medium text-foreground"
                   >
                     Contact

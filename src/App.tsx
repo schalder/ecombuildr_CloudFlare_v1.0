@@ -121,12 +121,15 @@ const App = () => (
                 <Route path="/funnel/:funnelId" element={<FunnelStepPage />} />
 
                 {/* Website Routes */}
-                <Route path="/website/:websiteId/cart" element={<CartPage />} />
-                <Route path="/website/:websiteId/checkout" element={<CheckoutPage />} />
-                <Route path="/website/:websiteId/payment-processing/:orderId" element={<PaymentProcessing />} />
-                <Route path="/website/:websiteId/order-confirmation/:orderId" element={<OrderConfirmation />} />
-                <Route path="/website/:websiteId/:pageSlug" element={<WebsitePage />} />
-                <Route path="/website/:websiteId" element={<WebsitePage />} />
+                 <Route path="/website/:websiteId/products" element={<StorefrontProducts />} />
+                 <Route path="/website/:websiteId/products/:productSlug" element={<ProductDetail />} />
+                 <Route path="/website/:websiteId/search" element={<SearchResults />} />
+                 <Route path="/website/:websiteId/cart" element={<CartPage />} />
+                 <Route path="/website/:websiteId/checkout" element={<CheckoutPage />} />
+                 <Route path="/website/:websiteId/payment-processing/:orderId" element={<PaymentProcessing />} />
+                 <Route path="/website/:websiteId/order-confirmation/:orderId" element={<OrderConfirmation />} />
+                 <Route path="/website/:websiteId/:pageSlug" element={<WebsitePage />} />
+                 <Route path="/website/:websiteId" element={<WebsitePage />} />
                 
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />

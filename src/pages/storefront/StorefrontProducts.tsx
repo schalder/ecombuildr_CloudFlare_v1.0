@@ -57,10 +57,10 @@ interface FilterState {
 }
 
 export const StorefrontProducts: React.FC = () => {
-  const { slug } = useParams<{ slug: string }>();
+  const { slug, websiteId } = useParams<{ slug?: string; websiteId?: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { store, loading: storeLoading, loadStore } = useStore();
+  const { store, loading: storeLoading, loadStore, loadStoreById } = useStore();
   const { addItem } = useCart();
   const { toast } = useToast();
   
@@ -207,11 +207,23 @@ export const StorefrontProducts: React.FC = () => {
 
   // Load store and fetch data
   useEffect(() => {
-    if (slug) {
-      console.log('Loading store for products page:', slug);
-      loadStore(slug);
-    }
-  }, [slug, loadStore]);
+    const init = async () => {
+      if (slug) {
+        console.log('Loading store for products page:', slug);
+        loadStore(slug);
+      } else if (websiteId) {
+        const { data: website } = await supabase
+          .from('websites')
+          .select('store_id')
+          .eq('id', websiteId)
+          .single();
+        if (website?.store_id) {
+          await loadStoreById(website.store_id);
+        }
+      }
+    };
+    init();
+  }, [slug, websiteId, loadStore, loadStoreById]);
 
   useEffect(() => {
     if (store?.id) {

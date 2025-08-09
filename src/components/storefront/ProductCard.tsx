@@ -7,6 +7,7 @@ import { Heart, Eye, ShoppingCart, Star, GitCompare } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WishlistButton } from './WishlistButton';
 import { useToast } from '@/hooks/use-toast';
+import { useEcomPaths } from '@/lib/pathResolver';
 
 interface Product {
   id: string;
@@ -21,7 +22,7 @@ interface Product {
 
 interface ProductCardProps {
   product: Product;
-  storeSlug: string;
+  storeSlug?: string;
   onAddToCart: (product: Product) => void;
   onQuickView?: (product: Product) => void;
   className?: string;
@@ -38,6 +39,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 }) => {
   const [isHovered, setIsHovered] = useState(false);
   const { toast } = useToast();
+  const paths = useEcomPaths();
 
   const discountPercentage = product.compare_price && product.compare_price > product.price
     ? Math.round(((product.compare_price - product.price) / product.compare_price) * 100)
@@ -165,7 +167,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         </div>
 
         {/* Product Name */}
-        <Link to={`/store/${storeSlug}/products/${product.slug}`}>
+        <Link to={paths.productDetail(product.slug)}>
           <h3 className="font-semibold text-sm leading-tight line-clamp-2 hover:text-primary transition-colors">
             {product.name}
           </h3>

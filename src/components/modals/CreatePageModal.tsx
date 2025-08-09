@@ -29,13 +29,37 @@ export const CreatePageModal: React.FC<CreatePageModalProps> = ({
 
   const createPageMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
+      // Prepare default content by page type
+      const baseSection = (elements: any[] = []) => ({
+        id: `section_${Date.now()}`,
+        width: 'wide',
+        rows: [
+          {
+            id: `row_${Date.now()}`,
+            columnLayout: '1',
+            columns: [
+              { id: `col_${Date.now()}`, width: 12, elements } as any
+            ]
+          }
+        ]
+      });
+
+      let content: any = { sections: [] };
+      if (data.pageType === 'products') {
+        content = { sections: [baseSection([{ id: `el_${Date.now()}`, type: 'product-grid', content: {} }])] };
+      } else if (data.pageType === 'cart') {
+        content = { sections: [baseSection([{ id: `el_${Date.now()}`, type: 'cart-summary', content: {} }])] };
+      } else if (data.pageType === 'checkout') {
+        content = { sections: [baseSection([{ id: `el_${Date.now()}`, type: 'checkout-cta', content: {} }])] };
+      }
+
       const { data: result, error } = await supabase
         .from('website_pages')
         .insert({
           title: data.title,
           slug: data.slug,
           website_id: websiteId,
-          content: { sections: [] },
+          content,
           is_published: false,
           is_homepage: false
         })
@@ -92,6 +116,18 @@ export const CreatePageModal: React.FC<CreatePageModalProps> = ({
     }));
   };
 
+  const handlePageTypeChange = (value: string) => {
+    setFormData(prev => {
+      let nextSlug = prev.slug;
+      if (!prev.slug) {
+        if (value === 'products') nextSlug = 'products';
+        if (value === 'cart') nextSlug = 'cart';
+        if (value === 'checkout') nextSlug = 'checkout';
+      }
+      return { ...prev, pageType: value, slug: nextSlug };
+    });
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-md">
@@ -124,7 +160,7 @@ export const CreatePageModal: React.FC<CreatePageModalProps> = ({
 
           <div>
             <Label htmlFor="pageType">Page Type</Label>
-            <Select value={formData.pageType} onValueChange={(value) => setFormData(prev => ({ ...prev, pageType: value }))}>
+            <Select value={formData.pageType} onValueChange={handlePageTypeChange}>
               <SelectTrigger>
                 <SelectValue placeholder="Select page type" />
               </SelectTrigger>
@@ -133,6 +169,9 @@ export const CreatePageModal: React.FC<CreatePageModalProps> = ({
                 <SelectItem value="landing">Landing Page</SelectItem>
                 <SelectItem value="contact">Contact Page</SelectItem>
                 <SelectItem value="blog">Blog Page</SelectItem>
+                <SelectItem value="products">Products Page (Ecommerce)</SelectItem>
+                <SelectItem value="cart">Cart Page (Ecommerce)</SelectItem>
+                <SelectItem value="checkout">Checkout Page (Ecommerce)</SelectItem>
               </SelectContent>
             </Select>
           </div>
