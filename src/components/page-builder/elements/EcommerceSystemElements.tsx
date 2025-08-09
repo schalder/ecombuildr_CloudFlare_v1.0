@@ -328,7 +328,7 @@ const CartFullElement: React.FC<{ element: PageBuilderElement }> = () => {
 };
 
 // Full Checkout Element (wired to builder options and responsive styles)
-const CheckoutFullElement: React.FC<{ element: PageBuilderElement }> = ({ element }) => {
+const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 'desktop' | 'tablet' | 'mobile' }> = ({ element, deviceType = 'desktop' }) => {
   const { slug, websiteId } = useParams<{ slug?: string; websiteId?: string }>();
   const navigate = useNavigate();
   const { store, loadStore, loadStoreById } = useStore();
@@ -354,23 +354,41 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement }> = ({ elemen
   const showItemImages: boolean = cfg.showItemImages ?? true;
   const sections = cfg.sections || { info: true, shipping: true, payment: true, summary: true };
 
+  // Section headings with defaults
+  const headings = cfg.headings || {
+    info: 'Customer Information',
+    shipping: 'Shipping',
+    payment: 'Payment',
+    summary: 'Order Summary',
+  };
+
   // Dynamic grid helpers for responsive form layout
   const showFullName = !!fields.fullName?.enabled;
   const showPhone = !!fields.phone?.enabled;
-  const infoCols = showFullName && showPhone ? 'md:grid-cols-2' : 'md:grid-cols-1';
+  const infoGridCols = deviceType === 'mobile'
+    ? 'grid-cols-1'
+    : (showFullName && showPhone ? 'grid-cols-2' : 'grid-cols-1');
 
   const showCity = !!fields.city?.enabled;
   const showArea = !!fields.area?.enabled;
-  const ship2Cols = showCity && showArea ? 'md:grid-cols-2' : 'md:grid-cols-1';
+  const ship2GridCols = deviceType === 'mobile'
+    ? 'grid-cols-1'
+    : (showCity && showArea ? 'grid-cols-2' : 'grid-cols-1');
 
   const showCountry = !!fields.country?.enabled;
   const showState = !!fields.state?.enabled;
   const showPostal = !!fields.postalCode?.enabled;
-  const ship3Cols = showCountry && showState && showPostal
-    ? 'md:grid-cols-3'
-    : ((showCountry && showState) || (showCountry && showPostal) || (showState && showPostal)
-      ? 'md:grid-cols-2'
-      : 'md:grid-cols-1');
+  const ship3GridCols = deviceType === 'mobile'
+    ? 'grid-cols-1'
+    : (showCountry && showState && showPostal
+      ? 'grid-cols-3'
+      : ((showCountry && showState) || (showCountry && showPostal) || (showState && showPostal)
+        ? 'grid-cols-2'
+        : 'grid-cols-1'));
+
+  // Overall layout for builder device previews
+  const gridCols = deviceType === 'mobile' ? 'grid-cols-1' : (deviceType === 'tablet' ? 'grid-cols-2' : 'grid-cols-3');
+  const leftColSpan = deviceType === 'desktop' ? 'col-span-2' : 'col-span-1';
 
   const [form, setForm] = useState({
     customer_name: '', customer_email: '', customer_phone: '',
@@ -482,13 +500,13 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement }> = ({ elemen
     <>
       {/* Responsive styles for the primary button */}
       <style>{buttonCSS}</style>
-      <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-4">
+      <div className={`max-w-5xl mx-auto grid ${gridCols} gap-6`}>
+        <div className={`${leftColSpan} space-y-4`}>
           {sections.info && (
             <Card>
-              <CardHeader><CardTitle>Customer Information</CardTitle></CardHeader>
+              <CardHeader><CardTitle>{headings.info}</CardTitle></CardHeader>
               <CardContent className="space-y-3">
-                <div className={`grid grid-cols-1 ${infoCols} gap-3`}>
+                <div className={`grid ${infoGridCols} gap-3`}>
                   {fields.fullName?.enabled && (
                     <Input placeholder={fields.fullName.placeholder} value={form.customer_name} onChange={e=>setForm(f=>({...f,customer_name:e.target.value}))} />
                   )}
@@ -504,12 +522,12 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement }> = ({ elemen
           )}
           {sections.shipping && (
             <Card>
-              <CardHeader><CardTitle>Shipping</CardTitle></CardHeader>
+              <CardHeader><CardTitle>{headings.shipping}</CardTitle></CardHeader>
               <CardContent className="space-y-3">
                 {fields.address?.enabled && (
                   <Textarea placeholder={fields.address.placeholder} value={form.shipping_address} onChange={e=>setForm(f=>({...f,shipping_address:e.target.value}))} rows={3} />
                 )}
-                <div className={`grid grid-cols-1 ${ship2Cols} gap-3`}>
+                <div className={`grid ${ship2GridCols} gap-3`}>>
                   {fields.city?.enabled && (
                     <Input placeholder={fields.city.placeholder} value={form.shipping_city} onChange={e=>setForm(f=>({...f,shipping_city:e.target.value}))} />
                   )}
@@ -517,7 +535,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement }> = ({ elemen
                     <Input placeholder={fields.area.placeholder} value={form.shipping_area} onChange={e=>setForm(f=>({...f,shipping_area:e.target.value}))} />
                   )}
                 </div>
-                <div className={`grid grid-cols-1 ${ship3Cols} gap-3`}>
+                <div className={`grid ${ship3GridCols} gap-3`}>>
                   {fields.country?.enabled && (
                     <Input placeholder={fields.country.placeholder} value={form.shipping_country} onChange={e=>setForm(f=>({...f,shipping_country:e.target.value}))} />
                   )}
