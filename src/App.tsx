@@ -46,6 +46,7 @@ import { SearchResults } from "./pages/storefront/SearchResults";
 import { CheckoutPage } from "./pages/storefront/CheckoutPage";
 import { PaymentProcessing } from "./pages/storefront/PaymentProcessing";
 import { OrderConfirmation } from "./pages/storefront/OrderConfirmation";
+import { CartPage } from "./pages/storefront/CartPage";
 import { StorefrontPage } from "./pages/storefront/StorefrontPage";
 import { FunnelStepPage } from "./pages/storefront/FunnelStepPage";
 import { WebsitePage } from "./pages/storefront/WebsitePage";
@@ -108,6 +109,7 @@ const App = () => (
                 <Route path="/store/:slug/products" element={<StorefrontProducts />} />
                 <Route path="/store/:slug/products/:productSlug" element={<ProductDetail />} />
                 <Route path="/store/:slug/search" element={<SearchResults />} />
+                <Route path="/store/:slug/cart" element={<CartPage />} />
                 <Route path="/store/:slug/checkout" element={<CheckoutPage />} />
                 <Route path="/store/:slug/payment-processing/:orderId" element={<PaymentProcessing />} />
                 <Route path="/store/:slug/order-confirmation/:orderId" element={<OrderConfirmation />} />
@@ -119,6 +121,7 @@ const App = () => (
                 <Route path="/funnel/:funnelId" element={<FunnelStepPage />} />
 
                 {/* Website Routes */}
+                <Route path="/website/:websiteId/cart" element={<CartPage />} />
                 <Route path="/website/:websiteId/checkout" element={<CheckoutPage />} />
                 <Route path="/website/:websiteId/payment-processing/:orderId" element={<PaymentProcessing />} />
                 <Route path="/website/:websiteId/order-confirmation/:orderId" element={<OrderConfirmation />} />

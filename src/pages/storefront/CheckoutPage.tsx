@@ -69,11 +69,10 @@ useEffect(() => {
   }
 }, [slug, websiteId, loadStore, loadStoreById]);
 
+// Do not auto-redirect on empty cart; show an empty state instead
 useEffect(() => {
-  if (items.length === 0) {
-    navigate(paths.home);
-  }
-}, [items, navigate, paths.home]);
+  // Intentionally left blank to avoid bouncing users back to home
+}, []);
 
   const handleInputChange = (field: keyof CheckoutForm, value: string) => {
     setForm(prev => ({ ...prev, [field]: value }));
@@ -322,9 +321,29 @@ useEffect(() => {
       </StorefrontLayout>
     );
   }
-
+  
+  if (items.length === 0) {
+    return (
+      <StorefrontLayout>
+        <div className="container mx-auto px-4 py-12">
+          <Card className="max-w-2xl mx-auto">
+            <CardHeader>
+              <CardTitle>Your cart is empty</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <p className="text-muted-foreground">Add products to your cart before checking out.</p>
+              <div className="flex gap-3">
+                <Button onClick={() => navigate(paths.products)}>Continue Shopping</Button>
+                <Button variant="outline" onClick={() => navigate(paths.home)}>Go to Home</Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </StorefrontLayout>
+    );
+  }
+  
   const finalTotal = total + shippingCost - discountAmount;
-
   return (
     <StorefrontLayout>
       <div className="container mx-auto px-4 py-8">
