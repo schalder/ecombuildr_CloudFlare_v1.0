@@ -145,9 +145,11 @@ const ProductGridElement: React.FC<{
     return bs as React.CSSProperties;
   }, [deviceType, (element as any).styles?.buttonStyles]);
 
+  const elementStyles = renderElementStyles(element, deviceType);
+
   if (loading) {
     return (
-      <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-6xl mx-auto'}`} style={renderElementStyles(element)}>
+      <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-6xl mx-auto'}`} style={elementStyles}>
         <div className={`grid gap-4 ${getGridClasses()}`}>
           {[...Array(limit)].map((_, i) => (
             <Card key={i} className="animate-pulse">
@@ -164,9 +166,9 @@ const ProductGridElement: React.FC<{
   }
 
   return (
-    <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-6xl mx-auto'}`} style={renderElementStyles(element)}>
+    <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-6xl mx-auto'}`} style={elementStyles}>
       {element.content.title && (
-        <h3 className="font-semibold mb-4">{element.content.title}</h3>
+        <h3 style={{ color: elementStyles.color, fontSize: elementStyles.fontSize, textAlign: elementStyles.textAlign, lineHeight: elementStyles.lineHeight, fontWeight: elementStyles.fontWeight }} className="font-semibold mb-4">{element.content.title}</h3>
       )}
       <div className={`grid gap-4 ${getGridClasses()}`}>
         {products.map((product) => (
@@ -196,7 +198,7 @@ const ProductGridElement: React.FC<{
                   </Button>
                 )}
               </div>
-              <h4 className="font-medium mb-2 line-clamp-2">
+              <h4 style={{ color: elementStyles.color, fontSize: elementStyles.fontSize, textAlign: elementStyles.textAlign, lineHeight: elementStyles.lineHeight, fontWeight: elementStyles.fontWeight }} className="font-medium mb-2 line-clamp-2">
                 <a href={paths.productDetail(product.slug)} className="hover:underline">{product.name}</a>
               </h4>
               
@@ -210,14 +212,14 @@ const ProductGridElement: React.FC<{
                       />
                     ))}
                   </div>
-                  <span className="text-xs text-muted-foreground">(4.0)</span>
+                  <span style={{ color: elementStyles.color, fontSize: elementStyles.fontSize }} className="text-xs text-muted-foreground">(4.0)</span>
                 </div>
               )}
               
               {showPrice && (
                 <div className="flex items-center justify-between">
                   <div className="flex flex-col">
-                    <span className="font-bold text-lg">${product.price}</span>
+                    <span style={{ color: elementStyles.color, fontSize: elementStyles.fontSize, fontWeight: elementStyles.fontWeight }} className="font-bold text-lg">${product.price}</span>
                     {product.compare_price && product.compare_price > product.price && (
                       <span className="text-sm text-muted-foreground line-through">
                         ${product.compare_price}
@@ -337,10 +339,12 @@ const FeaturedProductsElement: React.FC<{
       );
     }
 
+    const elementStyles = renderElementStyles(element, deviceType);
+    
     return (
-      <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-6xl mx-auto'}`} style={renderElementStyles(element)}>
+      <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-6xl mx-auto'}`} style={elementStyles}>
         {element.content.title && (
-          <h3 className="text-xl font-semibold mb-4">{element.content.title}</h3>
+          <h3 style={{ color: elementStyles.color, fontSize: elementStyles.fontSize, textAlign: elementStyles.textAlign, lineHeight: elementStyles.lineHeight, fontWeight: elementStyles.fontWeight }} className="text-xl font-semibold mb-4">{element.content.title}</h3>
         )}
         <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
           {featuredProducts.map((p) => (
@@ -355,15 +359,15 @@ const FeaturedProductsElement: React.FC<{
                     />
                   </a>
                 </div>
-                <div className="flex items-start justify-between gap-2">
-                  <h4 className="font-medium line-clamp-2">
-                    <a href={paths.productDetail(p.slug)} className="hover:underline">{p.name}</a>
-                  </h4>
+                 <div className="flex items-start justify-between gap-2">
+                   <h4 style={{ color: elementStyles.color, fontSize: elementStyles.fontSize, textAlign: elementStyles.textAlign, lineHeight: elementStyles.lineHeight, fontWeight: elementStyles.fontWeight }} className="font-medium line-clamp-2">
+                     <a href={paths.productDetail(p.slug)} className="hover:underline">{p.name}</a>
+                   </h4>
                   <Star className="h-4 w-4 text-primary shrink-0" aria-label="Featured" />
                 </div>
                 <div className="mt-2 flex items-center justify-between">
-                  <div className="flex flex-col">
-                    <span className="font-bold">${p.price}</span>
+                   <div className="flex flex-col">
+                     <span style={{ color: elementStyles.color, fontSize: elementStyles.fontSize, fontWeight: elementStyles.fontWeight }} className="font-bold">${p.price}</span>
                     {p.compare_price && p.compare_price > p.price && (
                       <span className="text-sm text-muted-foreground line-through">
                         ${p.compare_price}

@@ -144,7 +144,7 @@ export const renderColumnStyles = (column: PageBuilderColumn, deviceType: 'deskt
   return merged;
 };
 
-export const renderElementStyles = (element: PageBuilderElement): React.CSSProperties => {
+export const renderElementStyles = (element: PageBuilderElement, deviceType: 'desktop' | 'tablet' | 'mobile' = 'desktop'): React.CSSProperties => {
   const styles: React.CSSProperties = {};
   
   if (element.styles) {
@@ -203,7 +203,9 @@ export const renderElementStyles = (element: PageBuilderElement): React.CSSPrope
     if (element.styles.objectFit) styles.objectFit = element.styles.objectFit;
   }
   
-  return styles;
+  // Merge responsive overrides
+  const merged = mergeResponsiveStyles(styles, element.styles, deviceType);
+  return merged;
 };
 
 // Check if element has user-defined background or shadow

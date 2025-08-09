@@ -111,8 +111,8 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
       return <OrderConfirmationElementStyles element={selectedElement} onStyleUpdate={handleStyleUpdate} />;
     }
 
-    // Text-based elements (heading, text)
-    if (['heading', 'text'].includes(selectedElement.type)) {
+    // Text-based elements (heading, text, product-grid, featured-products)
+    if (['heading', 'text', 'product-grid', 'featured-products'].includes(selectedElement.type)) {
       return <TextElementStyles key={`text-${selectedElement.id}`} element={selectedElement} onStyleUpdate={handleStyleUpdate} />;
     }
     
