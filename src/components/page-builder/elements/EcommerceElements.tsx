@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShoppingCart, Grid, Star, Tag, Package, DollarSign } from 'lucide-react';
+import { ShoppingCart, Grid, Star, Tag, Package, DollarSign, Eye } from 'lucide-react';
 import { PageBuilderElement, ElementType } from '../types';
 import { elementRegistry } from './ElementRegistry';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,7 +10,7 @@ import { useCart } from '@/contexts/CartContext';
 import { useToast } from '@/hooks/use-toast';
 import { useStore } from '@/contexts/StoreContext';
 import { useEcomPaths } from '@/lib/pathResolver';
-
+import { ProductQuickView } from '@/components/storefront/ProductQuickView';
 // Product Grid Element
 const ProductGridElement: React.FC<{
   element: PageBuilderElement;
@@ -24,6 +24,11 @@ const ProductGridElement: React.FC<{
   const { store } = useStore();
   const paths = useEcomPaths();
   const ctaBehavior: 'add_to_cart' | 'buy_now' = element.content.ctaBehavior || 'add_to_cart';
+  
+  // Quick View support
+  const showQuickView = element.content.showQuickView !== false;
+  const [quickViewOpen, setQuickViewOpen] = React.useState(false);
+  const [quickViewProduct, setQuickViewProduct] = React.useState<any>(null);
   
   // Extract configuration from element content
   const columns = element.content.columns || 2;
@@ -84,6 +89,45 @@ const ProductGridElement: React.FC<{
       title: "Added to cart",
       description: `${product.name} has been added to your cart.`,
     });
+  };
+
+  const openQuickView = (product: any) => {
+    setQuickViewProduct(product);
+    setQuickViewOpen(true);
+  };
+
+  const closeQuickView = () => {
+    setQuickViewOpen(false);
+    setQuickViewProduct(null);
+  };
+
+  const handleQuickViewAddToCart = (p: any, quantity: number, variation?: any) => {
+    if (ctaBehavior === 'buy_now' && store?.slug && !isEditing) {
+      clearCart();
+      addItem({
+        id: `cart-${p.id}`,
+        productId: p.id,
+        name: p.name,
+        price: p.price,
+        image: Array.isArray(p.images) ? p.images[0] : p.images,
+        sku: p.sku,
+        quantity,
+        variation
+      });
+      window.location.href = paths.checkout;
+      return;
+    }
+    addItem({
+      id: `cart-${p.id}`,
+      productId: p.id,
+      name: p.name,
+      price: p.price,
+      image: Array.isArray(p.images) ? p.images[0] : p.images,
+      sku: p.sku,
+      quantity,
+      variation
+    });
+    toast({ title: 'Added to cart', description: `${p.name} has been added to your cart.` });
   };
 
   if (loading) {
