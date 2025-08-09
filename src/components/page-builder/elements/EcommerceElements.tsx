@@ -11,6 +11,8 @@ import { useToast } from '@/hooks/use-toast';
 import { useStore } from '@/contexts/StoreContext';
 import { useEcomPaths } from '@/lib/pathResolver';
 import { ProductQuickView } from '@/components/storefront/ProductQuickView';
+import { renderElementStyles } from '@/components/page-builder/utils/styleRenderer';
+import { mergeResponsiveStyles } from '@/components/page-builder/utils/responsiveStyles';
 // Product Grid Element
 const ProductGridElement: React.FC<{
   element: PageBuilderElement;
@@ -46,14 +48,19 @@ const ProductGridElement: React.FC<{
     if (deviceType === 'tablet') {
       // Respect single column layout
       if (columnCount === 1) return 'grid-cols-1';
-      // Smart tablet logic: use 2 cols for 2+ columns, 3 cols for 4+ columns
-      return columns >= 4 ? 'grid-cols-3' : 'grid-cols-2';
+      // Use explicit tablet columns when provided, fallback to heuristic
+      const tCols = element.content.tabletColumns as number | undefined;
+      if (typeof tCols === 'number') {
+        const t = Math.max(1, Math.min(4, tCols));
+        const map: Record<number, string> = { 1: 'grid-cols-1', 2: 'grid-cols-2', 3: 'grid-cols-3', 4: 'grid-cols-4' };
+        return map[t];
+      }
+      return (element.content.columns || 2) >= 4 ? 'grid-cols-3' : 'grid-cols-2';
     }
     const col = Math.min(columns, 4);
     const map: Record<number, string> = { 1: 'grid-cols-1', 2: 'grid-cols-2', 3: 'grid-cols-3', 4: 'grid-cols-4' };
     return map[col] || 'grid-cols-2';
   };
-  // Fetch products based on configuration
   const { products, loading } = useStoreProducts({
     categoryIds: selectionMode === 'category' ? categoryIds : undefined,
     specificProductIds: selectionMode === 'specific' ? specificProductIds : undefined,
@@ -130,9 +137,17 @@ const ProductGridElement: React.FC<{
     toast({ title: 'Added to cart', description: `${p.name} has been added to your cart.` });
   };
 
+  const buttonStyles = React.useMemo(() => {
+    const bs = element.content?.buttonStyles || {};
+    if ((bs as any).responsive) {
+      return mergeResponsiveStyles({}, bs, deviceType as any) as React.CSSProperties;
+    }
+    return bs as React.CSSProperties;
+  }, [element.content?.buttonStyles, deviceType]);
+
   if (loading) {
     return (
-      <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-6xl mx-auto'}`}>
+      <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-6xl mx-auto'}`} style={renderElementStyles(element)}>
         <div className={`grid gap-4 ${getGridClasses()}`}>
           {[...Array(limit)].map((_, i) => (
             <Card key={i} className="animate-pulse">
@@ -149,7 +164,7 @@ const ProductGridElement: React.FC<{
   }
 
   return (
-    <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-6xl mx-auto'}`}>
+    <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-6xl mx-auto'}`} style={renderElementStyles(element)}>
       {element.content.title && (
         <h3 className="text-xl font-semibold mb-4">{element.content.title}</h3>
       )}
@@ -213,6 +228,7 @@ const ProductGridElement: React.FC<{
                     <Button 
                       size="sm" 
                       onClick={() => handleAddToCart(product)}
+                      style={buttonStyles as React.CSSProperties}
                     >
                       {ctaBehavior === 'buy_now' ? 'Buy Now' : 'Add to Cart'}
                     </Button>
