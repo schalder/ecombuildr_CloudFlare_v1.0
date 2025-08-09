@@ -48,9 +48,13 @@ export const CreatePageModal: React.FC<CreatePageModalProps> = ({
       if (data.pageType === 'products') {
         content = { sections: [baseSection([{ id: `el_${Date.now()}`, type: 'product-grid', content: {} }])] };
       } else if (data.pageType === 'cart') {
-        content = { sections: [baseSection([{ id: `el_${Date.now()}`, type: 'cart-summary', content: {} }])] };
+        content = { sections: [baseSection([{ id: `el_${Date.now()}`, type: 'cart-full', content: {} }])] };
       } else if (data.pageType === 'checkout') {
-        content = { sections: [baseSection([{ id: `el_${Date.now()}`, type: 'checkout-cta', content: {} }])] };
+        content = { sections: [baseSection([{ id: `el_${Date.now()}`, type: 'checkout-full', content: {} }])] };
+      } else if (data.pageType === 'order-confirmation') {
+        content = { sections: [baseSection([{ id: `el_${Date.now()}`, type: 'order-confirmation', content: {} }])] };
+      } else if (data.pageType === 'payment-processing') {
+        content = { sections: [baseSection([{ id: `el_${Date.now()}`, type: 'payment-processing', content: {} }])] };
       }
 
       const { data: result, error } = await supabase
@@ -123,6 +127,8 @@ export const CreatePageModal: React.FC<CreatePageModalProps> = ({
         if (value === 'products') nextSlug = 'products';
         if (value === 'cart') nextSlug = 'cart';
         if (value === 'checkout') nextSlug = 'checkout';
+        if (value === 'order-confirmation') nextSlug = 'order-confirmation';
+        if (value === 'payment-processing') nextSlug = 'payment-processing';
       }
       return { ...prev, pageType: value, slug: nextSlug };
     });
