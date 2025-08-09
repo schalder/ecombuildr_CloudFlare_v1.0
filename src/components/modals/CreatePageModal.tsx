@@ -46,7 +46,7 @@ export const CreatePageModal: React.FC<CreatePageModalProps> = ({
 
       let content: any = { sections: [] };
       if (data.pageType === 'products') {
-        content = { sections: [baseSection([{ id: `el_${Date.now()}`, type: 'product-grid', content: {} }])] };
+        content = { sections: [baseSection([{ id: `el_${Date.now()}`, type: 'products-page', content: {} }])] };
       } else if (data.pageType === 'cart') {
         content = { sections: [baseSection([{ id: `el_${Date.now()}`, type: 'cart-full', content: {} }])] };
       } else if (data.pageType === 'checkout') {

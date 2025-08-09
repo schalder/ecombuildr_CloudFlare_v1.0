@@ -13,6 +13,7 @@ import { useEcomPaths } from '@/lib/pathResolver';
 import { ProductQuickView } from '@/components/storefront/ProductQuickView';
 import { renderElementStyles } from '@/components/page-builder/utils/styleRenderer';
 import { mergeResponsiveStyles } from '@/components/page-builder/utils/responsiveStyles';
+import { ProductsPageElement } from './ProductsPageElement';
 // Product Grid Element
 const ProductGridElement: React.FC<{
   element: PageBuilderElement;
@@ -872,6 +873,29 @@ const PriceElement: React.FC<{
 
 // Register all ecommerce elements
 export const registerEcommerceElements = () => {
+  elementRegistry.register({
+    id: 'products-page',
+    name: 'Products Page',
+    category: 'ecommerce',
+    icon: Grid,
+    component: ProductsPageElement,
+    defaultContent: {
+      title: 'Products',
+      subtitle: 'Discover our amazing collection of products',
+      showSearch: true,
+      showFilters: true,
+      showSort: true,
+      showViewToggle: true,
+      columns: 4,
+      tabletColumns: 3,
+      defaultSortBy: 'name',
+      defaultViewMode: 'grid',
+      priceRange: [0, 10000],
+      showRecentlyViewed: true
+    },
+    description: 'Full products listing page'
+  });
+
   elementRegistry.register({
     id: 'product-grid',
     name: 'Product Grid',

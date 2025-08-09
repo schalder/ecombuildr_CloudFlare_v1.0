@@ -27,7 +27,8 @@ import {
   ProductCategoriesContentProperties,
   PriceContentProperties,
   ContactFormContentProperties,
-  NewsletterContentProperties
+  NewsletterContentProperties,
+  ProductsPageContentProperties
 } from './EcommerceProperties';
 import { CheckoutContentProperties } from './CheckoutContentProperties';
 import { OrderConfirmationContentProperties } from './OrderConfirmationContentProperties';
@@ -112,7 +113,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
     }
 
     // Text-based elements (heading, text, product-grid, featured-products)
-    if (['heading', 'text', 'product-grid', 'featured-products'].includes(selectedElement.type)) {
+    if (['heading', 'text', 'product-grid', 'featured-products', 'products-page'].includes(selectedElement.type)) {
       return <TextElementStyles key={`text-${selectedElement.id}`} element={selectedElement} onStyleUpdate={handleStyleUpdate} />;
     }
     
@@ -172,6 +173,13 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
             {/* Ecommerce Elements */}
             {selectedElement.type === 'product-grid' && (
               <EcommerceContentProperties 
+                element={selectedElement}
+                onUpdate={handleContentUpdate}
+              />
+            )}
+
+            {selectedElement.type === 'products-page' && (
+              <ProductsPageContentProperties 
                 element={selectedElement}
                 onUpdate={handleContentUpdate}
               />

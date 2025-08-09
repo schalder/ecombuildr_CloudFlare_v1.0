@@ -696,3 +696,158 @@ export const NewsletterContentProperties: React.FC<EcommerceContentPropertiesPro
     </div>
   );
 };
+
+// Products Page Properties
+export const ProductsPageContentProperties: React.FC<EcommerceContentPropertiesProps> = ({ element, onUpdate }) => {
+  return (
+    <div className="space-y-4">
+      <div>
+        <Label className="text-xs">Title</Label>
+        <Input
+          value={element.content.title || ''}
+          onChange={(e) => onUpdate('title', e.target.value)}
+          placeholder="Products"
+        />
+      </div>
+
+      <div>
+        <Label className="text-xs">Subtitle</Label>
+        <Input
+          value={element.content.subtitle || ''}
+          onChange={(e) => onUpdate('subtitle', e.target.value)}
+          placeholder="Discover our amazing collection of products"
+        />
+      </div>
+
+      <div>
+        <Label className="text-xs">Grid Columns</Label>
+        <Select
+          value={element.content.columns?.toString() || '4'}
+          onValueChange={(v) => onUpdate('columns', parseInt(v))}
+        >
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="1">1 Column</SelectItem>
+            <SelectItem value="2">2 Columns</SelectItem>
+            <SelectItem value="3">3 Columns</SelectItem>
+            <SelectItem value="4">4 Columns</SelectItem>
+            <SelectItem value="6">6 Columns</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div>
+        <Label className="text-xs">Tablet Columns</Label>
+        <Select
+          value={element.content.tabletColumns?.toString() || 'auto'}
+          onValueChange={(value) => value === 'auto' ? onUpdate('tabletColumns', undefined) : onUpdate('tabletColumns', parseInt(value))}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Auto" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="auto">Auto</SelectItem>
+            <SelectItem value="1">1 Column</SelectItem>
+            <SelectItem value="2">2 Columns</SelectItem>
+            <SelectItem value="3">3 Columns</SelectItem>
+            <SelectItem value="4">4 Columns</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-2">
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              checked={element.content.showSearch !== false}
+              onCheckedChange={(checked) => onUpdate('showSearch', checked)}
+            />
+            <Label className="text-xs">Show Search</Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              checked={element.content.showFilters !== false}
+              onCheckedChange={(checked) => onUpdate('showFilters', checked)}
+            />
+            <Label className="text-xs">Show Filters</Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              checked={element.content.showRecentlyViewed !== false}
+              onCheckedChange={(checked) => onUpdate('showRecentlyViewed', checked)}
+            />
+            <Label className="text-xs">Show Recently Viewed</Label>
+          </div>
+        </div>
+        <div className="space-y-2">
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              checked={element.content.showSort !== false}
+              onCheckedChange={(checked) => onUpdate('showSort', checked)}
+            />
+            <Label className="text-xs">Show Sort</Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              checked={element.content.showViewToggle !== false}
+              onCheckedChange={(checked) => onUpdate('showViewToggle', checked)}
+            />
+            <Label className="text-xs">Show View Toggle</Label>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <Label className="text-xs">Default Sort</Label>
+        <Select
+          value={element.content.defaultSortBy || 'name'}
+          onValueChange={(v) => onUpdate('defaultSortBy', v)}
+        >
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="name">Name</SelectItem>
+            <SelectItem value="price-low">Price: Low to High</SelectItem>
+            <SelectItem value="price-high">Price: High to Low</SelectItem>
+            <SelectItem value="newest">Newest First</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div>
+        <Label className="text-xs">Default View</Label>
+        <Select
+          value={element.content.defaultViewMode || 'grid'}
+          onValueChange={(v) => onUpdate('defaultViewMode', v)}
+        >
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="grid">Grid</SelectItem>
+            <SelectItem value="list">List</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div>
+        <Label className="text-xs">Default Price Range</Label>
+        <div className="space-y-2">
+          <Slider
+            value={element.content.priceRange || [0, 10000]}
+            onValueChange={(value) => onUpdate('priceRange', value as [number, number])}
+            max={10000}
+            min={0}
+            step={100}
+          />
+          <span className="text-xs text-muted-foreground">
+            ৳{(element.content.priceRange || [0, 10000])[0]} - ৳{(element.content.priceRange || [0, 10000])[1]}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+};

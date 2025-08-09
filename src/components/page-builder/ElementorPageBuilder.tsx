@@ -116,6 +116,7 @@ const ELEMENT_CATEGORIES = [
   {
     name: 'eCommerce',
     elements: [
+      { id: 'products-page', name: 'Products Page', icon: Grid3X3, description: 'Full products listing page' },
       { id: 'product-grid', name: 'Product Grid', icon: Grid3X3, description: 'Display products in grid' },
       { id: 'featured-products', name: 'Featured Products', icon: Star, description: 'Highlight featured products' },
       { id: 'product-categories', name: 'Product Categories', icon: ShoppingBag, description: 'Show product categories' },
