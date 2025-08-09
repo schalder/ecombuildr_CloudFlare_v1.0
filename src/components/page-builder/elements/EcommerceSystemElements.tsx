@@ -736,11 +736,11 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
     // Styles
     const oc = (element.styles as any)?.orderConfirmation || {};
     const css = [
-      require('@/components/page-builder/utils/responsiveStyles')?.generateResponsiveCSS?.(`${element.id}-oc-title`, oc.title) ?? '',
-      require('@/components/page-builder/utils/responsiveStyles')?.generateResponsiveCSS?.(`${element.id}-oc-subtitle`, oc.subtitle) ?? '',
-      require('@/components/page-builder/utils/responsiveStyles')?.generateResponsiveCSS?.(`${element.id}-oc-section-title`, oc.sectionTitle) ?? '',
-      require('@/components/page-builder/utils/responsiveStyles')?.generateResponsiveCSS?.(`${element.id}-oc-success`, oc.successIcon) ?? '',
-      require('@/components/page-builder/utils/responsiveStyles')?.generateResponsiveCSS?.(`${element.id}-oc-card`, oc.card) ?? '',
+      generateResponsiveCSS(`${element.id}-oc-title`, oc.title) || '',
+      generateResponsiveCSS(`${element.id}-oc-subtitle`, oc.subtitle) || '',
+      generateResponsiveCSS(`${element.id}-oc-section-title`, oc.sectionTitle) || '',
+      generateResponsiveCSS(`${element.id}-oc-success`, oc.successIcon) || '',
+      generateResponsiveCSS(`${element.id}-oc-card`, oc.card) || '',
     ].join(' ');
 
     return (
