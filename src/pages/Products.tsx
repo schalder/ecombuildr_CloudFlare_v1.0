@@ -59,12 +59,36 @@ export default function Products() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [showBulkActions, setShowBulkActions] = useState(false);
+  const [storeIds, setStoreIds] = useState<string[]>([]);
 
   useEffect(() => {
     if (user) {
       fetchProducts();
     }
   }, [user]);
+
+  // Realtime subscription to product inventory updates for the owner's stores
+  useEffect(() => {
+    if (!user || storeIds.length === 0) return;
+
+    const filter = storeIds.length === 1
+      ? `store_id=eq.${storeIds[0]}`
+      : `store_id=in.(${storeIds.join(",")})`;
+
+    const channel = supabase
+      .channel('products-inventory-updates')
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'products', filter }, (payload) => {
+        const updated: any = payload.new;
+        setProducts(prev =>
+          prev.map(p => p.id === updated.id ? { ...p, inventory_quantity: updated.inventory_quantity } : p)
+        );
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user, storeIds]);
 
   const fetchProducts = async () => {
     try {
@@ -79,6 +103,8 @@ export default function Products() {
       if (storesError) throw storesError;
 
       if (stores && stores.length > 0) {
+        const ids = stores.map((store: any) => store.id as string);
+        setStoreIds(ids);
         const { data: products, error: productsError } = await supabase
           .from('products')
           .select(`
