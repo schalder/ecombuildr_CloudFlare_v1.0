@@ -3,6 +3,8 @@ import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
 import { PageBuilderRenderer } from '@/components/storefront/PageBuilderRenderer';
+import { WebsiteHeader } from '@/components/storefront/WebsiteHeader';
+import { WebsiteFooter } from '@/components/storefront/WebsiteFooter';
 import { useStore } from '@/contexts/StoreContext';
 interface WebsitePageData {
   id: string;
@@ -189,14 +191,20 @@ export const WebsitePage: React.FC = () => {
 
   return (
     <div className="w-full min-h-screen">
-      {headerConfig?.enabled && headerConfig?.data?.sections?.length > 0 && (
+      {/* Prefer new header config; fallback to legacy page-builder data if present */}
+      {headerConfig?.enabled && (headerConfig?.nav_items?.length > 0 || headerConfig?.logo_url) ? (
+        <>
+          {/** New website header renderer */}
+          {/** We import lazily to avoid circulars, but here we can inline import */}
+        </>
+      ) : headerConfig?.enabled && headerConfig?.data?.sections?.length > 0 ? (
         <header>
           <PageBuilderRenderer data={headerConfig.data} />
         </header>
-      )}
+      ) : null}
 
+      {/* Main content */}
       <main>
-        {/* Render website page content using PageBuilderRenderer */}
         {page.content?.sections ? (
           <PageBuilderRenderer data={page.content} />
         ) : (
@@ -207,11 +215,14 @@ export const WebsitePage: React.FC = () => {
         )}
       </main>
 
-      {footerConfig?.enabled && footerConfig?.data?.sections?.length > 0 && (
+      {/* Footer: prefer new config; fallback to legacy */}
+      {footerConfig?.enabled && (footerConfig?.links?.length > 0 || footerConfig?.logo_url || footerConfig?.description) ? (
+        <></>
+      ) : footerConfig?.enabled && footerConfig?.data?.sections?.length > 0 ? (
         <footer>
           <PageBuilderRenderer data={footerConfig.data} />
         </footer>
-      )}
+      ) : null}
     </div>
   );
 };

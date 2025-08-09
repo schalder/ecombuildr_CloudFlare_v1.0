@@ -13,7 +13,8 @@ import { useToast } from '@/hooks/use-toast';
 import { CreatePageModal } from '@/components/modals/CreatePageModal';
 import { WebsiteSettings } from '@/components/website/WebsiteSettings';
 import { WebsitePageSettingsModal } from '@/components/modals/WebsitePageSettingsModal';
-import { WebsiteRegionEditor } from '@/components/website/WebsiteRegionEditor';
+import { WebsiteHeaderBuilder } from '@/components/website/WebsiteHeaderBuilder';
+import { WebsiteFooterBuilder } from '@/components/website/WebsiteFooterBuilder';
 
 interface Website {
   id: string;
@@ -356,11 +357,11 @@ const WebsiteManagement = () => {
           )}
 
           {activeTab === 'header' && website && (
-            <WebsiteRegionEditor website={website} region="header" />
+            <WebsiteHeaderBuilder website={website} />
           )}
 
           {activeTab === 'footer' && website && (
-            <WebsiteRegionEditor website={website} region="footer" />
+            <WebsiteFooterBuilder website={website} />
           )}
 
           {activeTab === 'settings' && website && (
