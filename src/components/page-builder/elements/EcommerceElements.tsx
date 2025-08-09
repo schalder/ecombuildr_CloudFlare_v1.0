@@ -355,6 +355,36 @@ const CategoryNavigationElement: React.FC<{
     ? categories.filter(cat => selectedCategoryIds.includes(cat.id))
     : categories;
   
+  // Product counts per category (for display)
+  const [counts, setCounts] = React.useState<Record<string, number>>({});
+  React.useEffect(() => {
+    if (!showProductCount || displayCategories.length === 0) return;
+    let cancelled = false;
+    const fetchCounts = async () => {
+      const results: Record<string, number> = {};
+      // Lazy import supabase to avoid touching imports at file top
+      const { supabase } = await import('@/integrations/supabase/client');
+      await Promise.all(
+        displayCategories.map(async (cat) => {
+          try {
+            const { count } = await supabase
+              .from('products')
+              .select('id', { head: true, count: 'exact' })
+              .eq('category_id', cat.id)
+              .eq('is_active', true);
+            results[cat.id] = count ?? 0;
+          } catch (e) {
+            results[cat.id] = 0;
+          }
+        })
+      );
+      if (!cancelled) setCounts(results);
+    };
+    fetchCounts();
+    return () => { cancelled = true; };
+  // Key off IDs string to avoid deep deps
+  }, [showProductCount, displayCategories.map(c => c.id).join(',')]);
+  
   // Get device-responsive grid classes
   const getCircleGridClasses = () => {
     if (deviceType === 'mobile') return 'grid-cols-2';
@@ -425,7 +455,7 @@ const CategoryNavigationElement: React.FC<{
               </div>
               <h4 className="font-medium mt-2 text-sm">{category.name}</h4>
               {showProductCount && (
-                <p className="text-xs text-muted-foreground">0 items</p>
+                <p className="text-xs text-muted-foreground">{(counts[category.id] ?? 0)} {(counts[category.id] ?? 0) === 1 ? 'product' : 'products'}</p>
               )}
             </div>
           ))}
@@ -462,7 +492,7 @@ const CategoryNavigationElement: React.FC<{
                 <div>
                   <h4 className="font-medium">{category.name}</h4>
                   {showProductCount && (
-                    <p className="text-sm text-muted-foreground">0 products</p>
+                    <p className="text-sm text-muted-foreground">{(counts[category.id] ?? 0)} {(counts[category.id] ?? 0) === 1 ? 'product' : 'products'}</p>
                   )}
                   {category.description && (
                     <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
