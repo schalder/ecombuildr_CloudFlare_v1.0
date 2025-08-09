@@ -168,13 +168,13 @@ export const CheckoutContentProperties: React.FC<CheckoutContentPropertiesProps>
                 <Label className="text-sm">Show trust badge</Label>
               </div>
               {trust.enabled && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <MediaSelector value={trust.imageUrl} onChange={(url) => onUpdate('trustBadge', { ...trust, imageUrl: url })} label="Badge image" />
-                  <div>
-                    <Label className="text-sm">Alt text</Label>
-                    <Input value={trust.alt} onChange={(e) => onUpdate('trustBadge', { ...trust, alt: e.target.value })} placeholder="Secure checkout" />
+                  <div className="space-y-3">
+                    <MediaSelector value={trust.imageUrl} onChange={(url) => onUpdate('trustBadge', { ...trust, imageUrl: url })} label="Badge image" />
+                    <div>
+                      <Label className="text-sm">Alt text</Label>
+                      <Input value={trust.alt} onChange={(e) => onUpdate('trustBadge', { ...trust, alt: e.target.value })} placeholder="Secure checkout" />
+                    </div>
                   </div>
-                </div>
               )}
             </div>
           </AccordionContent>

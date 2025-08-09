@@ -352,6 +352,25 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement }> = ({ elemen
   const trust = cfg.trustBadge || { enabled: false, imageUrl: '', alt: 'Secure checkout' };
   const buttonLabel: string = cfg.placeOrderLabel || 'Place Order';
   const showItemImages: boolean = cfg.showItemImages ?? true;
+  const sections = cfg.sections || { info: true, shipping: true, payment: true, summary: true };
+
+  // Dynamic grid helpers for responsive form layout
+  const showFullName = !!fields.fullName?.enabled;
+  const showPhone = !!fields.phone?.enabled;
+  const infoCols = showFullName && showPhone ? 'md:grid-cols-2' : 'md:grid-cols-1';
+
+  const showCity = !!fields.city?.enabled;
+  const showArea = !!fields.area?.enabled;
+  const ship2Cols = showCity && showArea ? 'md:grid-cols-2' : 'md:grid-cols-1';
+
+  const showCountry = !!fields.country?.enabled;
+  const showState = !!fields.state?.enabled;
+  const showPostal = !!fields.postalCode?.enabled;
+  const ship3Cols = showCountry && showState && showPostal
+    ? 'md:grid-cols-3'
+    : ((showCountry && showState) || (showCountry && showPostal) || (showState && showPostal)
+      ? 'md:grid-cols-2'
+      : 'md:grid-cols-1');
 
   const [form, setForm] = useState({
     customer_name: '', customer_email: '', customer_phone: '',
@@ -465,126 +484,134 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement }> = ({ elemen
       <style>{buttonCSS}</style>
       <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-4">
-          <Card>
-            <CardHeader><CardTitle>Customer Information</CardTitle></CardHeader>
-            <CardContent className="space-y-3">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {fields.fullName?.enabled && (
-                  <Input placeholder={fields.fullName.placeholder} value={form.customer_name} onChange={e=>setForm(f=>({...f,customer_name:e.target.value}))} />
+          {sections.info && (
+            <Card>
+              <CardHeader><CardTitle>Customer Information</CardTitle></CardHeader>
+              <CardContent className="space-y-3">
+                <div className={`grid grid-cols-1 ${infoCols} gap-3`}>
+                  {fields.fullName?.enabled && (
+                    <Input placeholder={fields.fullName.placeholder} value={form.customer_name} onChange={e=>setForm(f=>({...f,customer_name:e.target.value}))} />
+                  )}
+                  {fields.phone?.enabled && (
+                    <Input placeholder={fields.phone.placeholder} value={form.customer_phone} onChange={e=>setForm(f=>({...f,customer_phone:e.target.value}))} />
+                  )}
+                </div>
+                {fields.email?.enabled && (
+                  <Input type="email" placeholder={fields.email.placeholder} value={form.customer_email} onChange={e=>setForm(f=>({...f,customer_email:e.target.value}))} />
                 )}
-                {fields.phone?.enabled && (
-                  <Input placeholder={fields.phone.placeholder} value={form.customer_phone} onChange={e=>setForm(f=>({...f,customer_phone:e.target.value}))} />
+              </CardContent>
+            </Card>
+          )}
+          {sections.shipping && (
+            <Card>
+              <CardHeader><CardTitle>Shipping</CardTitle></CardHeader>
+              <CardContent className="space-y-3">
+                {fields.address?.enabled && (
+                  <Textarea placeholder={fields.address.placeholder} value={form.shipping_address} onChange={e=>setForm(f=>({...f,shipping_address:e.target.value}))} rows={3} />
                 )}
-              </div>
-              {fields.email?.enabled && (
-                <Input type="email" placeholder={fields.email.placeholder} value={form.customer_email} onChange={e=>setForm(f=>({...f,customer_email:e.target.value}))} />
-              )}
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader><CardTitle>Shipping</CardTitle></CardHeader>
-            <CardContent className="space-y-3">
-              {fields.address?.enabled && (
-                <Textarea placeholder={fields.address.placeholder} value={form.shipping_address} onChange={e=>setForm(f=>({...f,shipping_address:e.target.value}))} rows={3} />
-              )}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {fields.city?.enabled && (
-                  <Input placeholder={fields.city.placeholder} value={form.shipping_city} onChange={e=>setForm(f=>({...f,shipping_city:e.target.value}))} />
-                )}
-                {fields.area?.enabled && (
-                  <Input placeholder={fields.area.placeholder} value={form.shipping_area} onChange={e=>setForm(f=>({...f,shipping_area:e.target.value}))} />
-                )}
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {fields.country?.enabled && (
-                  <Input placeholder={fields.country.placeholder} value={form.shipping_country} onChange={e=>setForm(f=>({...f,shipping_country:e.target.value}))} />
-                )}
-                {fields.state?.enabled && (
-                  <Input placeholder={fields.state.placeholder} value={form.shipping_state} onChange={e=>setForm(f=>({...f,shipping_state:e.target.value}))} />
-                )}
-                {fields.postalCode?.enabled && (
-                  <Input placeholder={fields.postalCode.placeholder} value={form.shipping_postal_code} onChange={e=>setForm(f=>({...f,shipping_postal_code:e.target.value}))} />
-                )}
-              </div>
+                <div className={`grid grid-cols-1 ${ship2Cols} gap-3`}>
+                  {fields.city?.enabled && (
+                    <Input placeholder={fields.city.placeholder} value={form.shipping_city} onChange={e=>setForm(f=>({...f,shipping_city:e.target.value}))} />
+                  )}
+                  {fields.area?.enabled && (
+                    <Input placeholder={fields.area.placeholder} value={form.shipping_area} onChange={e=>setForm(f=>({...f,shipping_area:e.target.value}))} />
+                  )}
+                </div>
+                <div className={`grid grid-cols-1 ${ship3Cols} gap-3`}>
+                  {fields.country?.enabled && (
+                    <Input placeholder={fields.country.placeholder} value={form.shipping_country} onChange={e=>setForm(f=>({...f,shipping_country:e.target.value}))} />
+                  )}
+                  {fields.state?.enabled && (
+                    <Input placeholder={fields.state.placeholder} value={form.shipping_state} onChange={e=>setForm(f=>({...f,shipping_state:e.target.value}))} />
+                  )}
+                  {fields.postalCode?.enabled && (
+                    <Input placeholder={fields.postalCode.placeholder} value={form.shipping_postal_code} onChange={e=>setForm(f=>({...f,shipping_postal_code:e.target.value}))} />
+                  )}
+                </div>
 
-              {/* Custom fields */}
-              {customFields?.length > 0 && (
+                {/* Custom fields */}
+                {customFields?.length > 0 && (
+                  <div className="space-y-2">
+                    {customFields.filter((cf:any)=>cf.enabled).map((cf:any) => (
+                      <div key={cf.id}>
+                        {cf.type === 'textarea' ? (
+                          <Textarea placeholder={cf.placeholder || cf.label} value={(form.custom_fields as any)[cf.id] || ''} onChange={(e)=>setForm(f=>({...f, custom_fields: { ...f.custom_fields, [cf.id]: e.target.value }}))} />
+                        ) : (
+                          <Input type={cf.type || 'text'} placeholder={cf.placeholder || cf.label} value={(form.custom_fields as any)[cf.id] || ''} onChange={(e)=>setForm(f=>({...f, custom_fields: { ...f.custom_fields, [cf.id]: e.target.value }}))} />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+          {sections.payment && (
+            <Card>
+              <CardHeader><CardTitle>Payment</CardTitle></CardHeader>
+              <CardContent className="space-y-3">
+                <Select value={form.payment_method} onValueChange={(v:any)=>setForm(f=>({...f,payment_method:v}))}>
+                  <SelectTrigger><SelectValue placeholder="Select method" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="cod">Cash on Delivery</SelectItem>
+                    <SelectItem value="bkash">bKash</SelectItem>
+                    <SelectItem value="nagad">Nagad</SelectItem>
+                    <SelectItem value="sslcommerz">Credit/Debit Card (SSLCommerz)</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Textarea placeholder="Order notes (optional)" value={form.notes} onChange={e=>setForm(f=>({...f,notes:e.target.value}))} />
+
+                {terms.enabled && (
+                  <label className="flex items-center gap-2 text-sm">
+                    <input type="checkbox" checked={form.accept_terms} onChange={(e)=>setForm(f=>({...f, accept_terms: e.target.checked}))} />
+                    <span>
+                      {terms.label} {terms.url && (<a href={terms.url} target="_blank" rel="noreferrer" className="underline">Read</a>)}
+                    </span>
+                  </label>
+                )}
+              </CardContent>
+            </Card>
+          )
+        </div>
+        <div className="space-y-4">
+          {sections.summary && (
+            <Card>
+              <CardHeader><CardTitle>Summary</CardTitle></CardHeader>
+              <CardContent className="space-y-3">
+                {/* Items */}
                 <div className="space-y-2">
-                  {customFields.filter((cf:any)=>cf.enabled).map((cf:any) => (
-                    <div key={cf.id}>
-                      {cf.type === 'textarea' ? (
-                        <Textarea placeholder={cf.placeholder || cf.label} value={(form.custom_fields as any)[cf.id] || ''} onChange={(e)=>setForm(f=>({...f, custom_fields: { ...f.custom_fields, [cf.id]: e.target.value }}))} />
-                      ) : (
-                        <Input type={cf.type || 'text'} placeholder={cf.placeholder || cf.label} value={(form.custom_fields as any)[cf.id] || ''} onChange={(e)=>setForm(f=>({...f, custom_fields: { ...f.custom_fields, [cf.id]: e.target.value }}))} />
-                      )}
+                  {items.map((it)=> (
+                    <div key={it.id} className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3 min-w-0">
+                        {showItemImages && it.image && (
+                          <img src={it.image} alt={it.name} className="w-10 h-10 object-cover rounded border" />
+                        )}
+                        <div className="min-w-0">
+                          <div className="text-sm font-medium truncate">{it.name}</div>
+                          <div className="text-xs text-muted-foreground">× {it.quantity}</div>
+                        </div>
+                      </div>
+                      <div className="text-sm font-medium">৳{(it.price * it.quantity).toFixed(2)}</div>
                     </div>
                   ))}
                 </div>
-              )}
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader><CardTitle>Payment</CardTitle></CardHeader>
-            <CardContent className="space-y-3">
-              <Select value={form.payment_method} onValueChange={(v:any)=>setForm(f=>({...f,payment_method:v}))}>
-                <SelectTrigger><SelectValue placeholder="Select method" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="cod">Cash on Delivery</SelectItem>
-                  <SelectItem value="bkash">bKash</SelectItem>
-                  <SelectItem value="nagad">Nagad</SelectItem>
-                  <SelectItem value="sslcommerz">Credit/Debit Card (SSLCommerz)</SelectItem>
-                </SelectContent>
-              </Select>
-              <Textarea placeholder="Order notes (optional)" value={form.notes} onChange={e=>setForm(f=>({...f,notes:e.target.value}))} />
+                <Separator />
+                <div className="flex justify-between"><span>Subtotal</span><span className="font-semibold">৳{total.toFixed(2)}</span></div>
+                <div className="flex justify-between"><span>Shipping</span><span className="font-semibold">৳{shippingCost.toFixed(2)}</span></div>
+                <div className="flex justify-between font-bold"><span>Total</span><span>৳{(total+shippingCost).toFixed(2)}</span></div>
 
-              {terms.enabled && (
-                <label className="flex items-center gap-2 text-sm">
-                  <input type="checkbox" checked={form.accept_terms} onChange={(e)=>setForm(f=>({...f, accept_terms: e.target.checked}))} />
-                  <span>
-                    {terms.label} {terms.url && (<a href={terms.url} target="_blank" rel="noreferrer" className="underline">Read</a>)}
-                  </span>
-                </label>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-        <div className="space-y-4">
-          <Card>
-            <CardHeader><CardTitle>Summary</CardTitle></CardHeader>
-            <CardContent className="space-y-3">
-              {/* Items */}
-              <div className="space-y-2">
-                {items.map((it)=> (
-                  <div key={it.id} className="flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-3 min-w-0">
-                      {showItemImages && it.image && (
-                        <img src={it.image} alt={it.name} className="w-10 h-10 object-cover rounded border" />
-                      )}
-                      <div className="min-w-0">
-                        <div className="text-sm font-medium truncate">{it.name}</div>
-                        <div className="text-xs text-muted-foreground">× {it.quantity}</div>
-                      </div>
-                    </div>
-                    <div className="text-sm font-medium">৳{(it.price * it.quantity).toFixed(2)}</div>
+                <Button className={`w-full mt-2 element-${element.id}`} onClick={handleSubmit} disabled={loading}>
+                  {loading? 'Placing Order...' : buttonLabel}
+                </Button>
+
+                {trust.enabled && trust.imageUrl && (
+                  <div className="pt-2">
+                    <img src={trust.imageUrl} alt={trust.alt || 'Secure checkout'} className="w-full h-auto object-contain" loading="lazy" />
                   </div>
-                ))}
-              </div>
-              <Separator />
-              <div className="flex justify-between"><span>Subtotal</span><span className="font-semibold">৳{total.toFixed(2)}</span></div>
-              <div className="flex justify-between"><span>Shipping</span><span className="font-semibold">৳{shippingCost.toFixed(2)}</span></div>
-              <div className="flex justify-between font-bold"><span>Total</span><span>৳{(total+shippingCost).toFixed(2)}</span></div>
-
-              <Button className={`w-full mt-2 element-${element.id}`} onClick={handleSubmit} disabled={loading}>
-                {loading? 'Placing Order...' : buttonLabel}
-              </Button>
-
-              {trust.enabled && trust.imageUrl && (
-                <div className="pt-2">
-                  <img src={trust.imageUrl} alt={trust.alt || 'Secure checkout'} className="w-full h-auto object-contain" loading="lazy" />
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                )}
+              </CardContent>
+            </Card>
+          )
         </div>
       </div>
     </>
