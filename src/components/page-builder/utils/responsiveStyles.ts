@@ -9,23 +9,39 @@ export function generateResponsiveCSS(elementId: string, styles: any): string {
   
   // Desktop styles (default)
   if (Object.keys(desktop).length > 0) {
-    const desktopProps = Object.entries(desktop)
+    const { hoverColor, hoverBackgroundColor, ...restDesktop } = desktop as any;
+    const desktopProps = Object.entries(restDesktop)
       .map(([prop, value]) => `${kebabCase(prop)}: ${value}`)
       .join('; ');
-    
+
     if (desktopProps) {
       css += `.element-${elementId} { ${desktopProps}; }`;
+    }
+    if (hoverColor || hoverBackgroundColor) {
+      const hoverPairs: string[] = [];
+      if (hoverColor) hoverPairs.push(`color: ${hoverColor}`);
+      if (hoverBackgroundColor) hoverPairs.push(`background-color: ${hoverBackgroundColor}`);
+      css += `.element-${elementId}:hover { ${hoverPairs.join('; ')}; }`;
     }
   }
   
   // Mobile styles (max-width: 767px)
   if (Object.keys(mobile).length > 0) {
-    const mobileProps = Object.entries(mobile)
+    const { hoverColor: mHoverColor, hoverBackgroundColor: mHoverBg, ...restMobile } = mobile as any;
+    const mobileProps = Object.entries(restMobile)
       .map(([prop, value]) => `${kebabCase(prop)}: ${value}`)
       .join('; ');
     
-    if (mobileProps) {
-      css += `@media (max-width: 767px) { .element-${elementId} { ${mobileProps}; } }`;
+    if (mobileProps || mHoverColor || mHoverBg) {
+      css += `@media (max-width: 767px) { `;
+      if (mobileProps) css += `.element-${elementId} { ${mobileProps}; }`;
+      if (mHoverColor || mHoverBg) {
+        const hoverPairs: string[] = [];
+        if (mHoverColor) hoverPairs.push(`color: ${mHoverColor}`);
+        if (mHoverBg) hoverPairs.push(`background-color: ${mHoverBg}`);
+        css += `.element-${elementId}:hover { ${hoverPairs.join('; ')}; }`;
+      }
+      css += ` }`;
     }
   }
   

@@ -58,6 +58,16 @@ export const CheckoutElementStyles: React.FC<CheckoutElementStylesProps> = ({ el
               <Input type="color" value={current.backgroundColor || '#10B981'} onChange={(e) => updateResponsive('backgroundColor', e.target.value)} className="h-10" />
             </div>
           </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label className="text-xs">Hover Text</Label>
+              <Input type="color" value={current.hoverColor || current.color || '#ffffff'} onChange={(e) => updateResponsive('hoverColor', e.target.value)} className="h-10" />
+            </div>
+            <div>
+              <Label className="text-xs">Hover Background</Label>
+              <Input type="color" value={current.hoverBackgroundColor || current.backgroundColor || '#0f766e'} onChange={(e) => updateResponsive('hoverBackgroundColor', e.target.value)} className="h-10" />
+            </div>
+          </div>
           <div>
             <Label className="text-xs">Border Radius</Label>
             <Slider value={[parseInt(current.borderRadius?.replace(/\D/g, '') || '6')]} onValueChange={(val) => updateResponsive('borderRadius', `${val[0]}px`)} min={0} max={24} step={1} />
@@ -83,6 +93,16 @@ export const CheckoutElementStyles: React.FC<CheckoutElementStylesProps> = ({ el
             <div>
               <Label className="text-xs">Background</Label>
               <Input type="color" value={current.backgroundColor || '#10B981'} onChange={(e) => updateResponsive('backgroundColor', e.target.value)} className="h-10" />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label className="text-xs">Hover Text</Label>
+              <Input type="color" value={current.hoverColor || current.color || '#ffffff'} onChange={(e) => updateResponsive('hoverColor', e.target.value)} className="h-10" />
+            </div>
+            <div>
+              <Label className="text-xs">Hover Background</Label>
+              <Input type="color" value={current.hoverBackgroundColor || current.backgroundColor || '#0f766e'} onChange={(e) => updateResponsive('hoverBackgroundColor', e.target.value)} className="h-10" />
             </div>
           </div>
           <div>
