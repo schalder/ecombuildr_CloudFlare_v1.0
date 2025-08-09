@@ -178,6 +178,8 @@ export const CreatePageModal: React.FC<CreatePageModalProps> = ({
                 <SelectItem value="products">Products Page (Ecommerce)</SelectItem>
                 <SelectItem value="cart">Cart Page (Ecommerce)</SelectItem>
                 <SelectItem value="checkout">Checkout Page (Ecommerce)</SelectItem>
+                <SelectItem value="order-confirmation">Order Confirmation Page (Ecommerce)</SelectItem>
+                <SelectItem value="payment-processing">Payment Processing Page (Ecommerce)</SelectItem>
               </SelectContent>
             </Select>
           </div>

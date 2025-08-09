@@ -126,8 +126,7 @@ const App = () => (
                  <Route path="/website/:websiteId/search" element={<SearchResults />} />
                  <Route path="/website/:websiteId/cart" element={<CartPage />} />
                  <Route path="/website/:websiteId/checkout" element={<CheckoutPage />} />
-                 <Route path="/website/:websiteId/payment-processing/:orderId" element={<PaymentProcessing />} />
-                 <Route path="/website/:websiteId/order-confirmation/:orderId" element={<OrderConfirmation />} />
+                 {/* Website ecom pages use WebsitePage (generic :pageSlug route) */}
                  <Route path="/website/:websiteId/:pageSlug" element={<WebsitePage />} />
                  <Route path="/website/:websiteId" element={<WebsitePage />} />
                 

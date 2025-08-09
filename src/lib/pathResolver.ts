@@ -16,7 +16,7 @@ export const useEcomPaths = () => {
     productDetail: (productSlug: string) => `${base}/products/${productSlug}`,
     checkout: `${base}/checkout`,
     cart: `${base}/cart`,
-    paymentProcessing: (orderId: string) => `${base}/payment-processing/${orderId}`,
-    orderConfirmation: (orderId: string) => `${base}/order-confirmation/${orderId}`,
+    paymentProcessing: (orderId: string) => websiteId ? `${base}/payment-processing?orderId=${orderId}` : `${base}/payment-processing/${orderId}`,
+    orderConfirmation: (orderId: string) => websiteId ? `${base}/order-confirmation?orderId=${orderId}` : `${base}/order-confirmation/${orderId}`,
   };
 };
