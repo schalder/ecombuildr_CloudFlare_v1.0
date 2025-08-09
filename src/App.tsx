@@ -50,6 +50,7 @@ import { CartPage } from "./pages/storefront/CartPage";
 import { StorefrontPage } from "./pages/storefront/StorefrontPage";
 import { FunnelStepPage } from "./pages/storefront/FunnelStepPage";
 import { WebsitePage } from "./pages/storefront/WebsitePage";
+import { WebsiteLayout } from "@/components/storefront/WebsiteLayout";
 
 const queryClient = new QueryClient();
 
@@ -121,14 +122,15 @@ const App = () => (
                 <Route path="/funnel/:funnelId" element={<FunnelStepPage />} />
 
                 {/* Website Routes */}
-                 <Route path="/website/:websiteId/products" element={<StorefrontProducts />} />
-                 <Route path="/website/:websiteId/products/:productSlug" element={<ProductDetail />} />
-                 <Route path="/website/:websiteId/search" element={<SearchResults />} />
-                 <Route path="/website/:websiteId/cart" element={<CartPage />} />
-                 <Route path="/website/:websiteId/checkout" element={<CheckoutPage />} />
-                 {/* Website ecom pages use WebsitePage (generic :pageSlug route) */}
-                 <Route path="/website/:websiteId/:pageSlug" element={<WebsitePage />} />
-                 <Route path="/website/:websiteId" element={<WebsitePage />} />
+                <Route path="/website/:websiteId" element={<WebsiteLayout />}>
+                  <Route index element={<WebsitePage />} />
+                  <Route path="products" element={<StorefrontProducts />} />
+                  <Route path="products/:productSlug" element={<ProductDetail />} />
+                  <Route path="search" element={<SearchResults />} />
+                  <Route path="cart" element={<CartPage />} />
+                  <Route path="checkout" element={<CheckoutPage />} />
+                  <Route path=":pageSlug" element={<WebsitePage />} />
+                </Route>
                 
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />

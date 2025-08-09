@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
 import { PageBuilderRenderer } from '@/components/storefront/PageBuilderRenderer';
@@ -37,6 +37,8 @@ export const WebsitePage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { loadStoreById } = useStore();
+  const [searchParams] = useSearchParams();
+  const isPreview = searchParams.get('preview') === '1';
   useEffect(() => {
     const fetchWebsiteAndPage = async () => {
       if (!websiteId) {
@@ -84,8 +86,11 @@ export const WebsitePage: React.FC = () => {
         let pageQuery = supabase
           .from('website_pages')
           .select('*')
-          .eq('website_id', websiteId)
-          .eq('is_published', true);
+          .eq('website_id', websiteId);
+
+        if (!isPreview) {
+          pageQuery = pageQuery.eq('is_published', true);
+        }
 
         if (pageSlug) {
           // Fetch specific page by slug
@@ -120,7 +125,7 @@ export const WebsitePage: React.FC = () => {
     };
 
     fetchWebsiteAndPage();
-  }, [websiteId, pageSlug, loadStoreById]);
+  }, [websiteId, pageSlug, loadStoreById, isPreview]);
 
   // Set up SEO metadata
   useEffect(() => {
@@ -167,7 +172,7 @@ export const WebsitePage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center" role="status" aria-live="polite">
         <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     );
@@ -191,19 +196,6 @@ export const WebsitePage: React.FC = () => {
 
   return (
     <div className="w-full min-h-screen">
-      {/* Prefer new header config; fallback to legacy page-builder data if present */}
-      {headerConfig?.enabled && (headerConfig?.nav_items?.length > 0 || headerConfig?.logo_url) ? (
-        <>
-          {/** New website header renderer */}
-          {/** We import lazily to avoid circulars, but here we can inline import */}
-        </>
-      ) : headerConfig?.enabled && headerConfig?.data?.sections?.length > 0 ? (
-        <header>
-          <PageBuilderRenderer data={headerConfig.data} />
-        </header>
-      ) : null}
-
-      {/* Main content */}
       <main>
         {page.content?.sections ? (
           <PageBuilderRenderer data={page.content} />
@@ -214,15 +206,6 @@ export const WebsitePage: React.FC = () => {
           </div>
         )}
       </main>
-
-      {/* Footer: prefer new config; fallback to legacy */}
-      {footerConfig?.enabled && (footerConfig?.links?.length > 0 || footerConfig?.logo_url || footerConfig?.description) ? (
-        <></>
-      ) : footerConfig?.enabled && footerConfig?.data?.sections?.length > 0 ? (
-        <footer>
-          <PageBuilderRenderer data={footerConfig.data} />
-        </footer>
-      ) : null}
     </div>
   );
 };
