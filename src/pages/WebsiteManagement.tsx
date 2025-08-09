@@ -13,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { CreatePageModal } from '@/components/modals/CreatePageModal';
 import { WebsiteSettings } from '@/components/website/WebsiteSettings';
 import { WebsitePageSettingsModal } from '@/components/modals/WebsitePageSettingsModal';
+import { WebsiteRegionEditor } from '@/components/website/WebsiteRegionEditor';
 
 interface Website {
   id: string;
@@ -179,6 +180,26 @@ const WebsiteManagement = () => {
             </button>
             <button 
               className={`py-4 px-1 border-b-2 font-medium transition-colors ${
+                activeTab === 'header' 
+                  ? 'border-primary text-primary' 
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
+              }`}
+              onClick={() => handleTabChange('header')}
+            >
+              Header
+            </button>
+            <button 
+              className={`py-4 px-1 border-b-2 font-medium transition-colors ${
+                activeTab === 'footer' 
+                  ? 'border-primary text-primary' 
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
+              }`}
+              onClick={() => handleTabChange('footer')}
+            >
+              Footer
+            </button>
+            <button 
+              className={`py-4 px-1 border-b-2 font-medium transition-colors ${
                 activeTab === 'stats' 
                   ? 'border-primary text-primary' 
                   : 'border-transparent text-muted-foreground hover:text-foreground'
@@ -332,6 +353,14 @@ const WebsiteManagement = () => {
                 </div>
               )}
             </>
+          )}
+
+          {activeTab === 'header' && website && (
+            <WebsiteRegionEditor website={website} region="header" />
+          )}
+
+          {activeTab === 'footer' && website && (
+            <WebsiteRegionEditor website={website} region="footer" />
           )}
 
           {activeTab === 'settings' && website && (

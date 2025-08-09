@@ -25,6 +25,7 @@ interface WebsiteData {
   is_published: boolean;
   is_active: boolean;
   store_id: string;
+  settings?: any;
 }
 
 export const WebsitePage: React.FC = () => {
@@ -182,16 +183,34 @@ export const WebsitePage: React.FC = () => {
     );
   }
 
+  // Resolve global header/footer from website settings
+  const headerConfig = (website.settings as any)?.global_header;
+  const footerConfig = (website.settings as any)?.global_footer;
+
   return (
     <div className="w-full min-h-screen">
-      {/* Render website page content using PageBuilderRenderer */}
-      {page.content?.sections ? (
-        <PageBuilderRenderer data={page.content} />
-      ) : (
-        <div className="container mx-auto px-4 py-8">
-          <h1 className="text-3xl font-bold mb-6">{page.title}</h1>
-          <p className="text-muted-foreground">This page is still being set up.</p>
-        </div>
+      {headerConfig?.enabled && headerConfig?.data?.sections?.length > 0 && (
+        <header>
+          <PageBuilderRenderer data={headerConfig.data} />
+        </header>
+      )}
+
+      <main>
+        {/* Render website page content using PageBuilderRenderer */}
+        {page.content?.sections ? (
+          <PageBuilderRenderer data={page.content} />
+        ) : (
+          <div className="container mx-auto px-4 py-8">
+            <h1 className="text-3xl font-bold mb-6">{page.title}</h1>
+            <p className="text-muted-foreground">This page is still being set up.</p>
+          </div>
+        )}
+      </main>
+
+      {footerConfig?.enabled && footerConfig?.data?.sections?.length > 0 && (
+        <footer>
+          <PageBuilderRenderer data={footerConfig.data} />
+        </footer>
       )}
     </div>
   );
