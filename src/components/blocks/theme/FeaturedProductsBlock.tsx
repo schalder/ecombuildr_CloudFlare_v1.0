@@ -10,6 +10,7 @@ import { useStore } from '@/contexts/StoreContext';
 import { ProductCard } from '@/components/storefront/ProductCard';
 import { useCart } from '@/contexts/CartContext';
 import { useToast } from '@/hooks/use-toast';
+import { useEcomPaths } from '@/lib/pathResolver';
 
 interface FeaturedProductsContent {
   title: string;
@@ -187,6 +188,7 @@ export const FeaturedProductsSave: React.FC<BlockSaveProps> = ({ block }) => {
   const [products, setProducts] = useState<FeaturedProduct[]>([]);
   const { addItem, clearCart } = useCart();
   const { toast } = useToast();
+  const paths = useEcomPaths();
 
   useEffect(() => {
     if (store?.id) {
@@ -246,7 +248,7 @@ export const FeaturedProductsSave: React.FC<BlockSaveProps> = ({ block }) => {
                 if (content.ctaBehavior === 'buy_now' && store?.slug) {
                   clearCart();
                   addItem(item);
-                  window.location.href = `/store/${store.slug}/checkout`;
+                  window.location.href = paths.checkout;
                 } else {
                   addItem(item);
                   toast({ title: 'Added to cart', description: `${p.name} has been added to your cart.` });
