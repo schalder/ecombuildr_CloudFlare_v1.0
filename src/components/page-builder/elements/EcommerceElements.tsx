@@ -344,7 +344,7 @@ const CategoryNavigationElement: React.FC<{
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
 }> = ({ element, deviceType = 'desktop', columnCount = 1 }) => {
   const { categories, loading } = useStoreCategories();
-  
+  const paths = useEcomPaths();
   const layout = element.content.layout || 'grid';
   const selectedCategoryIds = element.content.selectedCategoryIds || [];
   const showProductCount = element.content.showProductCount !== false;
@@ -380,8 +380,7 @@ const CategoryNavigationElement: React.FC<{
 
   const handleCategoryClick = (category: any) => {
     if (enableLinks) {
-      // In a real implementation, this would navigate to the category page
-      window.location.href = `/products?category=${category.slug}`;
+      window.location.href = `${paths.products}?category=${category.slug}`;
     }
   };
 

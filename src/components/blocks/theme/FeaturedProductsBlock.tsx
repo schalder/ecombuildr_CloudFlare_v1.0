@@ -189,7 +189,6 @@ export const FeaturedProductsSave: React.FC<BlockSaveProps> = ({ block }) => {
   const { addItem, clearCart } = useCart();
   const { toast } = useToast();
   const paths = useEcomPaths();
-  const paths = useEcomPaths();
 
   useEffect(() => {
     if (store?.id) {
