@@ -157,14 +157,33 @@ const ProductGridElement: React.FC<{
         {products.map((product) => (
           <Card key={product.id} className="group hover:shadow-lg transition-shadow">
             <CardContent className="p-3">
-              <div className="aspect-square overflow-hidden rounded-lg mb-3">
-                <img
-                  src={(Array.isArray(product.images) ? product.images[0] : product.images) || '/placeholder.svg'}
-                  alt={product.name}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                />
+              <div className="aspect-square overflow-hidden rounded-lg mb-3 relative">
+                <a href={paths.productDetail(product.slug)} aria-label={product.name}>
+                  <img
+                    src={(Array.isArray(product.images) ? product.images[0] : product.images) || '/placeholder.svg'}
+                    alt={product.name}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                  />
+                </a>
+                {showQuickView && (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="icon"
+                    className="absolute top-2 right-2 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={() => openQuickView({
+                      ...product,
+                      images: Array.isArray(product.images) ? product.images : [product.images]
+                    })}
+                    aria-label={`Quick view ${product.name}`}
+                  >
+                    <Eye className="h-4 w-4" />
+                  </Button>
+                )}
               </div>
-              <h4 className="font-medium mb-2 line-clamp-2">{product.name}</h4>
+              <h4 className="font-medium mb-2 line-clamp-2">
+                <a href={paths.productDetail(product.slug)} className="hover:underline">{product.name}</a>
+              </h4>
               
               {showRating && (
                 <div className="flex items-center gap-1 mb-2">
@@ -209,6 +228,16 @@ const ProductGridElement: React.FC<{
           No products found. Add some products to your store to display them here.
         </div>
       )}
+
+      {showQuickView && (
+        <ProductQuickView
+          product={quickViewProduct}
+          isOpen={quickViewOpen}
+          onClose={closeQuickView}
+          onAddToCart={handleQuickViewAddToCart}
+          storeSlug={store?.slug || ''}
+        />
+      )}
     </div>
   );
 };
@@ -228,43 +257,109 @@ const FeaturedProductsElement: React.FC<{
   const ctaBehavior: 'add_to_cart' | 'buy_now' = element.content.ctaBehavior || 'add_to_cart';
   
   const productId = element.content.productId;
+  const selectedProductIds: string[] = element.content.selectedProductIds || [];
   const layout = element.content.layout || 'horizontal';
   const badgeText = element.content.badgeText || 'Featured Product';
   const ctaText = element.content.ctaText || 'Add to Cart';
   
+  // Multi-featured support
+  const { products: featuredProducts, loading: loadingFeatured } = useStoreProducts(
+    selectedProductIds.length > 0 ? { specificProductIds: selectedProductIds } : undefined as any
+  );
+  
   const { product, loading } = useProductById(productId);
 
-  const handleAddToCart = () => {
-    if (!product) return;
-
+  const handleAddToCartGeneric = (p: any) => {
     if (ctaBehavior === 'buy_now' && store?.slug && !isEditing) {
       clearCart();
       addItem({
-        id: `cart-${product.id}`,
-        productId: product.id,
-        name: product.name,
-        price: product.price,
-        image: Array.isArray(product.images) ? product.images[0] : product.images,
-        sku: product.sku
+        id: `cart-${p.id}`,
+        productId: p.id,
+        name: p.name,
+        price: p.price,
+        image: Array.isArray(p.images) ? p.images[0] : p.images,
+        sku: p.sku
       });
       window.location.href = paths.checkout;
       return;
     }
-    
     addItem({
-      id: `cart-${product.id}`,
-      productId: product.id,
-      name: product.name,
-      price: product.price,
-      image: Array.isArray(product.images) ? product.images[0] : product.images,
-      sku: product.sku
+      id: `cart-${p.id}`,
+      productId: p.id,
+      name: p.name,
+      price: p.price,
+      image: Array.isArray(p.images) ? p.images[0] : p.images,
+      sku: p.sku
     });
-    
-    toast({
-      title: "Added to cart",
-      description: `${product.name} has been added to your cart.`,
-    });
+    toast({ title: 'Added to cart', description: `${p.name} has been added to your cart.` });
   };
+
+  if (selectedProductIds.length > 0) {
+    if (loadingFeatured) {
+      return (
+        <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-6xl mx-auto'}`}>
+          <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+            {[...Array(4)].map((_, i) => (
+              <Card key={i} className="animate-pulse">
+                <CardContent className="p-3">
+                  <div className="aspect-square bg-muted rounded-lg mb-3"></div>
+                  <div className="h-4 bg-muted rounded mb-2"></div>
+                  <div className="h-3 bg-muted rounded w-2/3"></div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-6xl mx-auto'}`}>
+        {element.content.title && (
+          <h3 className="text-xl font-semibold mb-4">{element.content.title}</h3>
+        )}
+        <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+          {featuredProducts.map((p) => (
+            <Card key={p.id} className="group hover:shadow-lg transition-shadow">
+              <CardContent className="p-3">
+                <div className="aspect-square overflow-hidden rounded-lg mb-3">
+                  <a href={paths.productDetail(p.slug)} aria-label={p.name}>
+                    <img
+                      src={(Array.isArray(p.images) ? p.images[0] : p.images) || '/placeholder.svg'}
+                      alt={p.name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                    />
+                  </a>
+                </div>
+                <div className="flex items-start justify-between gap-2">
+                  <h4 className="font-medium line-clamp-2">
+                    <a href={paths.productDetail(p.slug)} className="hover:underline">{p.name}</a>
+                  </h4>
+                  <Badge>{badgeText}</Badge>
+                </div>
+                <div className="mt-2 flex items-center justify-between">
+                  <div className="flex flex-col">
+                    <span className="font-bold">${p.price}</span>
+                    {p.compare_price && p.compare_price > p.price && (
+                      <span className="text-sm text-muted-foreground line-through">
+                        ${p.compare_price}
+                      </span>
+                    )}
+                  </div>
+                  <Button size="sm" onClick={() => handleAddToCartGeneric(p)}>
+                    {ctaBehavior === 'buy_now' ? 'Buy Now' : 'Add to Cart'}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+        {featuredProducts.length === 0 && (
+          <div className="text-center py-8 text-muted-foreground">Select products to feature.</div>
+        )}
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -354,7 +449,7 @@ const FeaturedProductsElement: React.FC<{
               )}
             </div>
 
-            <Button size="lg" className="w-full md:w-auto" onClick={handleAddToCart}>
+            <Button size="lg" className="w-full md:w-auto" onClick={() => handleAddToCartGeneric(product)}>
               <ShoppingCart className="h-4 w-4 mr-2" />
               {ctaText}
             </Button>
@@ -742,6 +837,7 @@ export const registerEcommerceElements = () => {
       showRating: true,
       showPrice: true,
       showQuickAdd: true,
+      showQuickView: true,
       selectionMode: 'all',
       categoryIds: [],
       specificProductIds: []

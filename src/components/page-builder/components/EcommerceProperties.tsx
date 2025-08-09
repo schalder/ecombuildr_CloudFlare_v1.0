@@ -167,6 +167,13 @@ export const EcommerceContentProperties: React.FC<EcommerceContentPropertiesProp
           />
           <Label className="text-xs">Show Quick Add Button</Label>
         </div>
+        <div className="flex items-center space-x-2">
+          <Checkbox
+            checked={element.content.showQuickView !== false}
+            onCheckedChange={(checked) => onUpdate('showQuickView', checked)}
+          />
+          <Label className="text-xs">Show Quick View Button</Label>
+        </div>
       </div>
 
       <div>
@@ -197,29 +204,61 @@ export const FeaturedProductsContentProperties: React.FC<EcommerceContentPropert
   return (
     <div className="space-y-4">
       <div>
-        <Label className="text-xs">Select Product</Label>
-        <Select
-          value={element.content.productId || ''}
-          onValueChange={(value) => onUpdate('productId', value)}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Choose a product" />
-          </SelectTrigger>
-          <SelectContent>
-            {products.map((product) => (
-              <SelectItem key={product.id} value={product.id}>
-                <div className="flex items-center gap-2">
-                  <img 
-                    src={(Array.isArray(product.images) ? product.images[0] : product.images) || '/placeholder.svg'}
-                    alt={product.name}
-                    className="w-6 h-6 rounded object-cover"
-                  />
-                  {product.name}
-                </div>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <Label className="text-xs">Filter by Categories</Label>
+        <div className="space-y-2 max-h-40 overflow-y-auto">
+          {(useStoreCategories().categories || []).map((category) => (
+            <div key={category.id} className="flex items-center space-x-2">
+              <Checkbox
+                checked={(element.content.filterCategoryIds || []).includes(category.id)}
+                onCheckedChange={() => {
+                  const current = element.content.filterCategoryIds || [];
+                  const updated = current.includes(category.id)
+                    ? current.filter((id: string) => id !== category.id)
+                    : [...current, category.id];
+                  onUpdate('filterCategoryIds', updated);
+                }}
+              />
+              <Label className="text-xs">{category.name}</Label>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <Label className="text-xs">Select Products to Feature</Label>
+        <div className="space-y-2 max-h-56 overflow-y-auto">
+          {(
+            (() => {
+              const cats = element.content.filterCategoryIds || [];
+              const list = cats.length
+                ? products.filter((p: any) => cats.includes(p.category_id))
+                : products;
+              return list;
+            })()
+          ).map((product) => (
+            <div key={product.id} className="flex items-center space-x-2">
+              <Checkbox
+                checked={(element.content.selectedProductIds || []).includes(product.id)}
+                onCheckedChange={() => {
+                  const current = element.content.selectedProductIds || [];
+                  const updated = current.includes(product.id)
+                    ? current.filter((id: string) => id !== product.id)
+                    : [...current, product.id];
+                  onUpdate('selectedProductIds', updated);
+                }}
+              />
+              <div className="flex items-center gap-2 flex-1">
+                <img
+                  src={(Array.isArray(product.images) ? product.images[0] : product.images) || '/placeholder.svg'}
+                  alt={product.name}
+                  className="w-6 h-6 rounded object-cover"
+                />
+                <Label className="text-xs flex-1">{product.name}</Label>
+              </div>
+            </div>
+          ))}
+        </div>
+        <p className="text-2xs text-muted-foreground mt-1">Tip: If you leave selection empty, legacy single-product setting will be used.</p>
       </div>
 
       <div>
