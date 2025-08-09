@@ -441,7 +441,15 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
         discount_amount: 0,
         total: total + shippingCost,
         status: form.payment_method === 'cod' ? 'pending' as const : 'processing' as const,
-        custom_fields: form.custom_fields,
+        // Persist custom fields with labels for better display later
+        custom_fields: (customFields || [])
+          .filter((cf: any) => cf.enabled)
+          .map((cf: any) => {
+            const value = (form.custom_fields as any)[cf.id];
+            if (value === undefined || value === null || value === '') return null;
+            return { id: cf.id, label: cf.label || cf.id, value };
+          })
+          .filter(Boolean),
       };
 
       const itemsPayload = items.map(i => ({
@@ -769,6 +777,41 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
             <p className="text-sm">{order.shipping_address}</p>
             <p className="text-sm">{order.shipping_city}{order.shipping_area && `, ${order.shipping_area}`}</p>
           </div>
+          {Array.isArray(order.custom_fields) && order.custom_fields.length > 0 && (
+            <>
+              <Separator />
+              <div>
+                <h3 className={`font-semibold mb-2 element-${element.id}-oc-section-title`}>Additional Information</h3>
+                <div className="space-y-1">
+                  {order.custom_fields.map((cf: any, idx: number) => (
+                    <p key={idx} className="text-sm"><strong>{cf.label || cf.id}:</strong> {String(cf.value)}</p>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+          {!Array.isArray(order.custom_fields) && order.custom_fields && (
+            <>
+              <Separator />
+              <div>
+                <h3 className={`font-semibold mb-2 element-${element.id}-oc-section-title`}>Additional Information</h3>
+                <div className="space-y-1">
+                  {Object.entries(order.custom_fields as any).map(([key, val]: any) => (
+                    <p key={key} className="text-sm"><strong>{key}:</strong> {String(val)}</p>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+          {show.notes && order.notes && (
+            <>
+              <Separator />
+              <div>
+                <h3 className={`font-semibold mb-2 element-${element.id}-oc-section-title`}>Order Notes</h3>
+                <p className="text-sm text-muted-foreground">{order.notes}</p>
+              </div>
+            </>
+          )}
         </CardContent>
       </Card>
       <Card className={`element-${element.id}-oc-card`}>

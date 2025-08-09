@@ -4,6 +4,7 @@ import { useSearchParams } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
+import { InvoiceDialog } from "@/components/dashboard/InvoiceDialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -43,6 +44,7 @@ interface Order {
   payment_method: string;
   shipping_city?: string;
   shipping_address?: string;
+  shipping_area?: string;
   notes?: string;
 }
 
@@ -103,6 +105,7 @@ export default function Orders() {
             created_at,
             payment_method,
             shipping_city,
+            shipping_area,
             shipping_address,
             notes
           `)
@@ -314,6 +317,11 @@ export default function Orders() {
                         <div>
                           <div className="font-medium">{order.customer_name}</div>
                           <div className="text-sm text-muted-foreground">{order.customer_phone}</div>
+                          {(order.shipping_city || order.shipping_area || order.shipping_address) && (
+                            <div className="text-xs text-muted-foreground">
+                              Ship: {order.shipping_city || ''}{order.shipping_area ? `, ${order.shipping_area}` : ''}
+                            </div>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell>
@@ -339,8 +347,17 @@ export default function Orders() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem 
-                              onClick={() => {
+                              onClick={async () => {
                                 setSelectedOrder(order);
+                                // Fetch full details for dialog
+                                try {
+                                  const { data } = await supabase.functions.invoke('get-order', { body: { orderId: order.id } });
+                                  if (data) {
+                                    // Attach to selectedOrder for ease
+                                    setSelectedOrder({ ...order, ...data.order });
+                                    ;(window as any).__order_items = data.items; // temp storage for dialog rendering
+                                  }
+                                } catch (e) { console.error(e); }
                                 setIsOrderDetailsOpen(true);
                               }}
                             >
@@ -368,6 +385,20 @@ export default function Orders() {
                                 Mark Delivered
                               </DropdownMenuItem>
                             )}
+                            <DropdownMenuItem
+                              onClick={async () => {
+                                setSelectedOrder(order);
+                                try {
+                                  const { data } = await supabase.functions.invoke('get-order', { body: { orderId: order.id } });
+                                  if (data) {
+                                    setInvoiceData({ order: data.order, items: data.items || [] });
+                                    setInvoiceOpen(true);
+                                  }
+                                } catch (e) { console.error(e); }
+                              }}
+                            >
+                              Invoice / PDF
+                            </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
@@ -397,9 +428,30 @@ export default function Orders() {
                   <div>
                     <h4 className="font-medium">Shipping</h4>
                     <p>{selectedOrder.shipping_address}</p>
-                    <p>{selectedOrder.shipping_city}</p>
+                    <p>{selectedOrder.shipping_city}{selectedOrder.shipping_area ? `, ${selectedOrder.shipping_area}` : ''}</p>
                   </div>
                 </div>
+                {/* Custom Fields */}
+                {Array.isArray((selectedOrder as any).custom_fields) && (selectedOrder as any).custom_fields.length > 0 && (
+                  <div>
+                    <h4 className="font-medium">Additional Information</h4>
+                    <div className="mt-2 space-y-1">
+                      {(selectedOrder as any).custom_fields.map((cf: any, idx: number) => (
+                        <p key={idx} className="text-sm"><strong>{cf.label || cf.id}:</strong> {String(cf.value)}</p>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {!Array.isArray((selectedOrder as any).custom_fields) && (selectedOrder as any).custom_fields && (
+                  <div>
+                    <h4 className="font-medium">Additional Information</h4>
+                    <div className="mt-2 space-y-1">
+                      {Object.entries((selectedOrder as any).custom_fields).map(([key, val]: any) => (
+                        <p key={key} className="text-sm"><strong>{key}:</strong> {String(val)}</p>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 <div>
                   <h4 className="font-medium">Order Summary</h4>
                   <p>Status: <Badge>{selectedOrder.status}</Badge></p>

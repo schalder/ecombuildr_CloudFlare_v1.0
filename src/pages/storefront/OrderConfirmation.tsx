@@ -30,6 +30,7 @@ interface Order {
   total: number;
   created_at: string;
   notes?: string;
+  custom_fields?: any;
 }
 
 interface OrderItem {
@@ -239,6 +240,34 @@ useEffect(() => {
                   {order.payment_method === 'cod' ? 'Cash on Delivery' : 'Online Payment'}
                 </p>
               </div>
+
+              {/* Custom Fields */}
+              {Array.isArray((order as any).custom_fields) && (order as any).custom_fields.length > 0 && (
+                <>
+                  <Separator />
+                  <div>
+                    <h3 className="font-semibold mb-2">Additional Information</h3>
+                    <div className="space-y-1">
+                      {(order as any).custom_fields.map((cf: any, idx: number) => (
+                        <p key={idx} className="text-sm"><strong>{cf.label || cf.id}:</strong> {String(cf.value)}</p>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+              {!Array.isArray((order as any).custom_fields) && (order as any).custom_fields && (
+                <>
+                  <Separator />
+                  <div>
+                    <h3 className="font-semibold mb-2">Additional Information</h3>
+                    <div className="space-y-1">
+                      {Object.entries((order as any).custom_fields).map(([key, val]: any) => (
+                        <p key={key} className="text-sm"><strong>{key}:</strong> {String(val)}</p>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
 
               {order.notes && (
                 <>
