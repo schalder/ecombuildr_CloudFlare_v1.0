@@ -310,6 +310,14 @@ const FeaturedProductsElement: React.FC<{
     toast({ title: 'Added to cart', description: `${p.name} has been added to your cart.` });
   };
 
+  const buttonStyles = React.useMemo(() => {
+    const bs = (element as any).styles?.buttonStyles || {};
+    if ((bs as any).responsive) {
+      return mergeResponsiveStyles({}, bs, deviceType as any) as React.CSSProperties;
+    }
+    return bs as React.CSSProperties;
+  }, [deviceType, (element as any).styles?.buttonStyles]);
+
   if (selectedProductIds.length > 0) {
     if (loadingFeatured) {
       return (
