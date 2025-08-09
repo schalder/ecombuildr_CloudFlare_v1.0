@@ -65,6 +65,8 @@ export default function Orders() {
   const [statusFilter, setStatusFilter] = useState<string>(searchParams.get("status") || "");
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isOrderDetailsOpen, setIsOrderDetailsOpen] = useState(false);
+  const [invoiceOpen, setInvoiceOpen] = useState(false);
+  const [invoiceData, setInvoiceData] = useState<{ order: any; items: any[] } | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -469,6 +471,7 @@ export default function Orders() {
             )}
           </DialogContent>
         </Dialog>
+        <InvoiceDialog open={invoiceOpen} onOpenChange={setInvoiceOpen} data={invoiceData} />
       </div>
     </DashboardLayout>
   );
