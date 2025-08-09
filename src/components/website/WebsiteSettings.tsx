@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const websiteSettingsSchema = z.object({
   name: z.string().min(1, 'Website name is required'),
@@ -58,6 +59,24 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
     },
   });
 
+  const [pages, setPages] = React.useState<{ id: string; title: string; slug: string; is_published: boolean }[]>([]);
+  const [loadingPages, setLoadingPages] = React.useState(false);
+  const [productDetailTemplateId, setProductDetailTemplateId] = React.useState<string>(website.settings?.system_pages?.product_detail_page_id || '');
+
+  React.useEffect(() => {
+    const fetchPages = async () => {
+      setLoadingPages(true);
+      const { data, error } = await supabase
+        .from('website_pages')
+        .select('id, title, slug, is_published')
+        .eq('website_id', website.id)
+        .order('title');
+      if (!error && data) setPages(data);
+      setLoadingPages(false);
+    };
+    fetchPages();
+  }, [website.id]);
+
   const updateWebsiteMutation = useMutation({
     mutationFn: async (data: WebsiteSettingsForm) => {
       const { favicon_url, header_tracking_code, footer_tracking_code, ...basicFields } = data;
@@ -67,6 +86,10 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
         favicon_url: favicon_url || null,
         header_tracking_code: header_tracking_code || null,
         footer_tracking_code: footer_tracking_code || null,
+        system_pages: {
+          ...(website.settings?.system_pages || {}),
+          product_detail_page_id: productDetailTemplateId || null,
+        },
       };
 
       const { error } = await supabase
