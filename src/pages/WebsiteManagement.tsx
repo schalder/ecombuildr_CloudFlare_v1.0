@@ -12,6 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { CreatePageModal } from '@/components/modals/CreatePageModal';
 import { WebsiteSettings } from '@/components/website/WebsiteSettings';
+import { WebsitePageSettingsModal } from '@/components/modals/WebsitePageSettingsModal';
 
 interface Website {
   id: string;
@@ -43,6 +44,8 @@ const WebsiteManagement = () => {
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [selectedPage, setSelectedPage] = useState<WebsitePage | null>(null);
   
   const activeTab = searchParams.get('tab') || 'pages';
 
@@ -287,7 +290,11 @@ const WebsiteManagement = () => {
                               <h3 className="font-medium truncate">{page.title}</h3>
                               <p className="text-sm text-muted-foreground">/{page.slug}</p>
                             </div>
-                            <button className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button
+                              className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                              aria-label="Page settings"
+                              onClick={() => { setSelectedPage(page); setIsSettingsOpen(true); }}
+                            >
                               <Settings className="h-4 w-4 text-muted-foreground" />
                             </button>
                           </div>
@@ -301,7 +308,20 @@ const WebsiteManagement = () => {
                             >
                               Edit
                             </Button>
-                            <Button variant="outline" size="sm">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              aria-label="Visit page"
+                              onClick={() => {
+                                const base = `/website/${id}`;
+                                const needsOrderId = page.slug === 'order-confirmation' || page.slug === 'payment-processing';
+                                const url = page.is_homepage ? `${base}` : `${base}/${page.slug}${needsOrderId ? '?orderId=demo' : ''}`;
+                                if (!page.is_published) {
+                                  toast({ title: 'Opening unpublished page', description: 'Only visible to you while logged in.', variant: 'default' });
+                                }
+                                window.open(url, '_blank', 'noopener');
+                              }}
+                            >
                               <ExternalLink className="h-4 w-4" />
                             </Button>
                           </div>
@@ -348,6 +368,14 @@ const WebsiteManagement = () => {
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         websiteId={id!}
+      />
+
+      {/* Page Settings Modal */}
+      <WebsitePageSettingsModal
+        open={isSettingsOpen}
+        onClose={() => { setIsSettingsOpen(false); setSelectedPage(null); }}
+        websiteId={id!}
+        page={selectedPage}
       />
     </DashboardLayout>
   );
