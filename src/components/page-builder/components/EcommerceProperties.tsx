@@ -72,6 +72,25 @@ export const EcommerceContentProperties: React.FC<EcommerceContentPropertiesProp
       </div>
 
       <div>
+        <Label className="text-xs">Tablet Columns</Label>
+        <Select
+          value={element.content.tabletColumns?.toString() || 'auto'}
+          onValueChange={(value) => value === 'auto' ? onUpdate('tabletColumns', undefined) : onUpdate('tabletColumns', parseInt(value))}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Auto" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="auto">Auto</SelectItem>
+            <SelectItem value="1">1 Column</SelectItem>
+            <SelectItem value="2">2 Columns</SelectItem>
+            <SelectItem value="3">3 Columns</SelectItem>
+            <SelectItem value="4">4 Columns</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div>
         <Label className="text-xs">Product Limit</Label>
         <div className="space-y-2">
           <Slider

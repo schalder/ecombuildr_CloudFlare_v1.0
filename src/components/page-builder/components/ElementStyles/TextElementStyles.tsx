@@ -204,6 +204,34 @@ export const TextElementStyles: React.FC<TextElementStylesProps> = ({
           />
         </div>
       </div>
+
+      {/* Ecommerce-specific: Button Styles */}
+      {['product-grid', 'featured-products'].includes(element.type) && (
+        <>
+          <Separator />
+          <div className="space-y-3">
+            <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Button Styles</h4>
+            <div>
+              <Label className="text-xs">Text Color</Label>
+              <Input
+                type="color"
+                value={(element.styles as any)?.buttonStyles?.color || '#ffffff'}
+                onChange={(e) => onStyleUpdate('buttonStyles', { ...(element.styles as any)?.buttonStyles, color: e.target.value })}
+                className="w-full h-10"
+              />
+            </div>
+            <div>
+              <Label className="text-xs">Background Color</Label>
+              <Input
+                type="color"
+                value={(element.styles as any)?.buttonStyles?.backgroundColor || '#3b82f6'}
+                onChange={(e) => onStyleUpdate('buttonStyles', { ...(element.styles as any)?.buttonStyles, backgroundColor: e.target.value })}
+                className="w-full h-10"
+              />
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 };

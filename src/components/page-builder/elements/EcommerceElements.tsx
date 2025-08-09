@@ -138,12 +138,12 @@ const ProductGridElement: React.FC<{
   };
 
   const buttonStyles = React.useMemo(() => {
-    const bs = element.content?.buttonStyles || {};
+    const bs = (element as any).styles?.buttonStyles || {};
     if ((bs as any).responsive) {
       return mergeResponsiveStyles({}, bs, deviceType as any) as React.CSSProperties;
     }
     return bs as React.CSSProperties;
-  }, [element.content?.buttonStyles, deviceType]);
+  }, [deviceType, (element as any).styles?.buttonStyles]);
 
   if (loading) {
     return (
@@ -166,7 +166,7 @@ const ProductGridElement: React.FC<{
   return (
     <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-6xl mx-auto'}`} style={renderElementStyles(element)}>
       {element.content.title && (
-        <h3 className="text-xl font-semibold mb-4">{element.content.title}</h3>
+        <h3 className="font-semibold mb-4">{element.content.title}</h3>
       )}
       <div className={`grid gap-4 ${getGridClasses()}`}>
         {products.map((product) => (
@@ -330,11 +330,11 @@ const FeaturedProductsElement: React.FC<{
     }
 
     return (
-      <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-6xl mx-auto'}`}>
+      <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-6xl mx-auto'}`} style={renderElementStyles(element)}>
         {element.content.title && (
           <h3 className="text-xl font-semibold mb-4">{element.content.title}</h3>
         )}
-        <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
           {featuredProducts.map((p) => (
             <Card key={p.id} className="group hover:shadow-lg transition-shadow">
               <CardContent className="p-3">
@@ -351,7 +351,7 @@ const FeaturedProductsElement: React.FC<{
                   <h4 className="font-medium line-clamp-2">
                     <a href={paths.productDetail(p.slug)} className="hover:underline">{p.name}</a>
                   </h4>
-                  <Badge>{badgeText}</Badge>
+                  <Star className="h-4 w-4 text-primary shrink-0" aria-label="Featured" />
                 </div>
                 <div className="mt-2 flex items-center justify-between">
                   <div className="flex flex-col">
@@ -362,7 +362,7 @@ const FeaturedProductsElement: React.FC<{
                       </span>
                     )}
                   </div>
-                  <Button size="sm" onClick={() => handleAddToCartGeneric(p)}>
+                  <Button size="sm" onClick={() => handleAddToCartGeneric(p)} style={buttonStyles as React.CSSProperties}>
                     {ctaBehavior === 'buy_now' ? 'Buy Now' : 'Add to Cart'}
                   </Button>
                 </div>
@@ -424,13 +424,13 @@ const FeaturedProductsElement: React.FC<{
     : 'w-full h-64 md:h-80 object-cover rounded-lg';
 
   return (
-    <div className={containerClass}>
+    <div className={containerClass} style={renderElementStyles(element)}>
       <div className="bg-gradient-to-r from-primary/10 to-secondary/10 rounded-lg p-6">
         <div className={layoutClass}>
           {/* Header section - Badge and Title */}
           <div className={`${isVerticalLayout ? '' : 'order-1'}`}>
-            <Badge className="mb-3">{badgeText}</Badge>
-            <h2 className="text-2xl font-bold mb-4">{product.name}</h2>
+            <Star className="h-5 w-5 text-primary mb-3" aria-label="Featured" />
+            <h2 className="font-bold mb-4">{product.name}</h2>
             
             {/* Image section - appears right after title on mobile/tablet */}
             {isMobileOrTablet && (
@@ -465,7 +465,7 @@ const FeaturedProductsElement: React.FC<{
               )}
             </div>
 
-            <Button size="lg" className="w-full md:w-auto" onClick={() => handleAddToCartGeneric(product)}>
+            <Button size="lg" className="w-full md:w-auto" onClick={() => handleAddToCartGeneric(product)} style={buttonStyles as React.CSSProperties}>
               <ShoppingCart className="h-4 w-4 mr-2" />
               {ctaText}
             </Button>
