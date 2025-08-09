@@ -31,7 +31,7 @@ import {
 } from './EcommerceProperties';
 import { CheckoutContentProperties } from './CheckoutContentProperties';
 import { OrderConfirmationContentProperties } from './OrderConfirmationContentProperties';
-import {
+import { 
   TestimonialContentProperties,
   FAQContentProperties,
   AccordionContentProperties,
@@ -52,7 +52,8 @@ import {
   MediaElementStyles, 
   LayoutElementStyles,
   FormElementStyles,
-  ButtonElementStyles
+  ButtonElementStyles,
+  OrderConfirmationElementStyles
 } from './ElementStyles';
 import { CheckoutElementStyles } from './ElementStyles/CheckoutElementStyles';
 
@@ -105,6 +106,11 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
       return <ButtonElementStyles key={`button-${selectedElement.id}`} element={selectedElement} onStyleUpdate={handleStyleUpdate} />;
     }
     
+    // Order Confirmation specialized styles
+    if (selectedElement.type === 'order-confirmation') {
+      return <OrderConfirmationElementStyles element={selectedElement} onStyleUpdate={handleStyleUpdate} />;
+    }
+
     // Text-based elements (heading, text)
     if (['heading', 'text'].includes(selectedElement.type)) {
       return <TextElementStyles key={`text-${selectedElement.id}`} element={selectedElement} onStyleUpdate={handleStyleUpdate} />;
@@ -194,6 +200,13 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
 
             {selectedElement.type === 'checkout-full' && (
               <CheckoutContentProperties
+                element={selectedElement}
+                onUpdate={handleContentUpdate}
+              />
+            )}
+
+            {selectedElement.type === 'order-confirmation' && (
+              <OrderConfirmationContentProperties
                 element={selectedElement}
                 onUpdate={handleContentUpdate}
               />

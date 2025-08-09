@@ -697,7 +697,10 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
               shipping_address: '123 Market St',
               shipping_city: 'San Francisco',
               shipping_area: 'CA',
-              total: 149.98,
+              subtotal: 149.98,
+              shipping_cost: 10,
+              discount_amount: 0,
+              total: 159.98,
               created_at: new Date().toISOString(),
               status: 'pending',
             });
@@ -725,20 +728,36 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
   if (loading) return <div className="text-center">Loading...</div>;
   if (!order) return <div className="text-center">Order not found</div>;
 
-  return (
+  // Derived totals
+    const subtotal = Number(order.subtotal ?? items.reduce((s, it) => s + Number(it.total || 0), 0));
+    const shipping = Number(order.shipping_cost ?? 0);
+    const discount = Number(order.discount_amount ?? 0);
+
+    // Styles
+    const oc = (element.styles as any)?.orderConfirmation || {};
+    const css = [
+      require('@/components/page-builder/utils/responsiveStyles')?.generateResponsiveCSS?.(`${element.id}-oc-title`, oc.title) ?? '',
+      require('@/components/page-builder/utils/responsiveStyles')?.generateResponsiveCSS?.(`${element.id}-oc-subtitle`, oc.subtitle) ?? '',
+      require('@/components/page-builder/utils/responsiveStyles')?.generateResponsiveCSS?.(`${element.id}-oc-section-title`, oc.sectionTitle) ?? '',
+      require('@/components/page-builder/utils/responsiveStyles')?.generateResponsiveCSS?.(`${element.id}-oc-success`, oc.successIcon) ?? '',
+      require('@/components/page-builder/utils/responsiveStyles')?.generateResponsiveCSS?.(`${element.id}-oc-card`, oc.card) ?? '',
+    ].join(' ');
+
+    return (
     <div className="max-w-2xl mx-auto space-y-6">
+      <style>{css}</style>
       <div className="text-center">
-        <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
-          <CheckCircle className="h-8 w-8 text-green-600" />
+        <div className={`inline-flex items-center justify-center w-16 h-16 rounded-full mb-4 element-${element.id}-oc-success`}>
+          <CheckCircle className="h-8 w-8" />
         </div>
-        <h1 className="text-3xl font-bold mb-2">{texts.title}</h1>
-        <p className="text-muted-foreground">{texts.subtitle}</p>
+        <h1 className={`text-3xl font-bold mb-2 element-${element.id}-oc-title`}>{texts.title}</h1>
+        <p className={`text-muted-foreground element-${element.id}-oc-subtitle`}>{texts.subtitle}</p>
       </div>
-      <Card>
+      <Card className={`element-${element.id}-oc-card`}>
         <CardHeader><CardTitle>Order #{order.order_number}</CardTitle></CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <h3 className="font-semibold mb-2">{texts.customerTitle}</h3>
+            <h3 className={`font-semibold mb-2 element-${element.id}-oc-section-title`}>{texts.customerTitle}</h3>
             <p className="text-sm">{order.customer_name}{show.phone && order.customer_phone ? ` · ${order.customer_phone}` : ''}</p>
             {show.email && (
               <p className="text-sm text-muted-foreground">{order.customer_email}</p>
@@ -746,13 +765,13 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
           </div>
           <Separator />
           <div>
-            <h3 className="font-semibold mb-2">{texts.shippingTitle}</h3>
+            <h3 className={`font-semibold mb-2 element-${element.id}-oc-section-title`}>{texts.shippingTitle}</h3>
             <p className="text-sm">{order.shipping_address}</p>
             <p className="text-sm">{order.shipping_city}{order.shipping_area && `, ${order.shipping_area}`}</p>
           </div>
         </CardContent>
       </Card>
-      <Card>
+      <Card className={`element-${element.id}-oc-card`}>
         <CardHeader><CardTitle>{texts.itemsTitle}</CardTitle></CardHeader>
         <CardContent className="space-y-2">
           {items.map((it) => (
@@ -761,6 +780,12 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
               <span>৳{Number(it.total).toFixed(2)}</span>
             </div>
           ))}
+          <Separator className="my-2" />
+          <div className="flex justify-between text-sm"><span>Subtotal</span><span>৳{subtotal.toFixed(2)}</span></div>
+          <div className="flex justify-between text-sm"><span>Shipping</span><span>৳{shipping.toFixed(2)}</span></div>
+          {discount > 0 && (
+            <div className="flex justify-between text-sm"><span>Discount</span><span>- ৳{discount.toFixed(2)}</span></div>
+          )}
           <Separator className="my-2" />
           <div className="flex justify-between font-bold"><span>Total</span><span>৳{Number(order.total).toFixed(2)}</span></div>
         </CardContent>
