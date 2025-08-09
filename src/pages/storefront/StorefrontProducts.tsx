@@ -80,6 +80,34 @@ export const StorefrontProducts: React.FC = () => {
     freeShipping: false
   });
 
+  // Initialize category filter from URL param (e.g., ?category=slug)
+  useEffect(() => {
+    const paramCategory = searchParams.get('category');
+    if (paramCategory) {
+      setFilters((prev) => {
+        if (
+          (prev.categories.length === 1 && prev.categories[0] === paramCategory) ||
+          prev.categories.includes(paramCategory)
+        ) {
+          return prev;
+        }
+        return { ...prev, categories: [paramCategory] };
+      });
+    }
+  }, [searchParams]);
+
+  // Keep URL in sync with selected category (first selected)
+  useEffect(() => {
+    const current = searchParams.get('category');
+    const selected = filters.categories[0] || null;
+    if (selected !== current) {
+      const newParams = new URLSearchParams(searchParams);
+      if (selected) newParams.set('category', selected);
+      else newParams.delete('category');
+      setSearchParams(newParams);
+    }
+  }, [filters.categories, setSearchParams, searchParams]);
+
   // Fetch categories
   const fetchCategories = async () => {
     if (!store?.id) return;
@@ -232,6 +260,13 @@ export const StorefrontProducts: React.FC = () => {
       fetchProducts();
     }
   }, [store?.id, searchQuery, sortBy, filters]);
+
+  // Refetch products once categories load to apply slug->id mapping
+  useEffect(() => {
+    if (store?.id) {
+      fetchProducts();
+    }
+  }, [categories]);
 
   const handleAddToCart = (product: Product, quantity?: number, variation?: any) => {
     addItem({
