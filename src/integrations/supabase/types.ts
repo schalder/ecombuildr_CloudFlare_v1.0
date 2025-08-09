@@ -534,6 +534,7 @@ export type Database = {
         Row: {
           courier_name: string | null
           created_at: string | null
+          custom_fields: Json | null
           customer_email: string | null
           customer_id: string | null
           customer_name: string
@@ -549,7 +550,10 @@ export type Database = {
           shipping_area: string | null
           shipping_city: string | null
           shipping_cost: number | null
+          shipping_country: string | null
           shipping_method: string | null
+          shipping_postal_code: string | null
+          shipping_state: string | null
           status: Database["public"]["Enums"]["order_status"] | null
           store_id: string
           subtotal: number
@@ -563,6 +567,7 @@ export type Database = {
         Insert: {
           courier_name?: string | null
           created_at?: string | null
+          custom_fields?: Json | null
           customer_email?: string | null
           customer_id?: string | null
           customer_name: string
@@ -578,7 +583,10 @@ export type Database = {
           shipping_area?: string | null
           shipping_city?: string | null
           shipping_cost?: number | null
+          shipping_country?: string | null
           shipping_method?: string | null
+          shipping_postal_code?: string | null
+          shipping_state?: string | null
           status?: Database["public"]["Enums"]["order_status"] | null
           store_id: string
           subtotal?: number
@@ -592,6 +600,7 @@ export type Database = {
         Update: {
           courier_name?: string | null
           created_at?: string | null
+          custom_fields?: Json | null
           customer_email?: string | null
           customer_id?: string | null
           customer_name?: string
@@ -607,7 +616,10 @@ export type Database = {
           shipping_area?: string | null
           shipping_city?: string | null
           shipping_cost?: number | null
+          shipping_country?: string | null
           shipping_method?: string | null
+          shipping_postal_code?: string | null
+          shipping_state?: string | null
           status?: Database["public"]["Enums"]["order_status"] | null
           store_id?: string
           subtotal?: number

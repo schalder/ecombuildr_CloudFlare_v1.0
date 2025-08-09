@@ -29,6 +29,7 @@ import {
   ContactFormContentProperties,
   NewsletterContentProperties
 } from './EcommerceProperties';
+import { CheckoutContentProperties } from './CheckoutContentProperties';
 import {
   TestimonialContentProperties,
   FAQContentProperties,
@@ -52,6 +53,7 @@ import {
   FormElementStyles,
   ButtonElementStyles
 } from './ElementStyles';
+import { CheckoutElementStyles } from './ElementStyles/CheckoutElementStyles';
 
 import { PageBuilderElement } from '../types';
 
@@ -121,6 +123,11 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
     if (['contact-form', 'newsletter'].includes(selectedElement.type)) {
       return <FormElementStyles element={selectedElement} onStyleUpdate={handleStyleUpdate} />;
     }
+
+    // Checkout element button styles
+    if (selectedElement.type === 'checkout-full') {
+      return <CheckoutElementStyles element={selectedElement} onStyleUpdate={handleStyleUpdate} />;
+    }
     
     // Default fallback for any other element types (ecommerce, content, media, advanced)
     return <TextElementStyles element={selectedElement} onStyleUpdate={handleStyleUpdate} />;
@@ -179,6 +186,13 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
 
             {selectedElement.type === 'price' && (
               <PriceContentProperties 
+                element={selectedElement}
+                onUpdate={handleContentUpdate}
+              />
+            )}
+
+            {selectedElement.type === 'checkout-full' && (
+              <CheckoutContentProperties
                 element={selectedElement}
                 onUpdate={handleContentUpdate}
               />
