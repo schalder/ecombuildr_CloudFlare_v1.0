@@ -16,6 +16,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useStoreProducts } from '@/hooks/useStoreData';
+import { generateResponsiveCSS } from '@/components/page-builder/utils/responsiveStyles';
 
 const CartSummaryElement: React.FC<{ element: PageBuilderElement }> = () => {
   const { items, total, updateQuantity, removeItem } = useCart();
@@ -326,20 +327,46 @@ const CartFullElement: React.FC<{ element: PageBuilderElement }> = () => {
   );
 };
 
-// Full Checkout Element (simplified, supports COD and online gateways)
-const CheckoutFullElement: React.FC<{ element: PageBuilderElement }> = () => {
+// Full Checkout Element (wired to builder options and responsive styles)
+const CheckoutFullElement: React.FC<{ element: PageBuilderElement }> = ({ element }) => {
   const { slug, websiteId } = useParams<{ slug?: string; websiteId?: string }>();
   const navigate = useNavigate();
   const { store, loadStore, loadStoreById } = useStore();
   const { items, total, clearCart } = useCart();
   const paths = useEcomPaths();
+
+  const cfg: any = element.content || {};
+  const fields = cfg.fields || {
+    fullName: { enabled: true, placeholder: 'Full Name' },
+    phone: { enabled: true, placeholder: 'Phone Number' },
+    email: { enabled: true, placeholder: 'Email Address' },
+    address: { enabled: true, placeholder: 'Street address' },
+    city: { enabled: true, placeholder: 'City' },
+    area: { enabled: true, placeholder: 'Area' },
+    country: { enabled: true, placeholder: 'Country' },
+    state: { enabled: true, placeholder: 'State/Province' },
+    postalCode: { enabled: true, placeholder: 'ZIP / Postal code' },
+  };
+  const customFields: any[] = cfg.customFields || [];
+  const terms = cfg.terms || { enabled: false, required: true, label: 'I agree to the Terms & Conditions', url: '/terms' };
+  const trust = cfg.trustBadge || { enabled: false, imageUrl: '', alt: 'Secure checkout' };
+  const buttonLabel: string = cfg.placeOrderLabel || 'Place Order';
+  const showItemImages: boolean = cfg.showItemImages ?? true;
+
   const [form, setForm] = useState({
     customer_name: '', customer_email: '', customer_phone: '',
     shipping_address: '', shipping_city: '', shipping_area: '',
+    shipping_country: '', shipping_state: '', shipping_postal_code: '',
     payment_method: 'cod' as 'cod' | 'bkash' | 'nagad' | 'sslcommerz', notes: '',
+    accept_terms: false,
+    custom_fields: {} as Record<string, any>,
   });
   const [shippingCost] = useState(50);
   const [loading, setLoading] = useState(false);
+
+  // Button responsive CSS
+  const buttonStyles = (element.styles as any)?.checkoutButton || { responsive: { desktop: {}, mobile: {} } };
+  const buttonCSS = generateResponsiveCSS(element.id, buttonStyles);
 
   useEffect(() => {
     if (slug) loadStore(slug);
@@ -353,9 +380,13 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement }> = () => {
 
   const handleSubmit = async () => {
     if (!store || items.length === 0) return;
+    if (terms.enabled && terms.required && !form.accept_terms) {
+      toast.error('Please accept the terms to continue');
+      return;
+    }
     setLoading(true);
     try {
-      const orderData = {
+      const orderData: any = {
         store_id: store.id,
         customer_name: form.customer_name,
         customer_email: form.customer_email,
@@ -363,6 +394,9 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement }> = () => {
         shipping_address: form.shipping_address,
         shipping_city: form.shipping_city,
         shipping_area: form.shipping_area,
+        shipping_country: form.shipping_country,
+        shipping_state: form.shipping_state,
+        shipping_postal_code: form.shipping_postal_code,
         payment_method: form.payment_method,
         notes: form.notes,
         subtotal: total,
@@ -371,6 +405,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement }> = () => {
         total: total + shippingCost,
         status: form.payment_method === 'cod' ? 'pending' as const : 'processing' as const,
         order_number: `ORD-${Date.now()}`,
+        custom_fields: form.custom_fields,
       };
       const { data: order } = await supabase.from('orders').insert(orderData).select().single();
       const orderItems = items.map(i => ({ order_id: order!.id, product_id: i.productId, product_name: i.name, product_sku: i.sku, price: i.price, quantity: i.quantity, total: i.price * i.quantity }));
@@ -401,7 +436,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement }> = () => {
           response = await supabase.functions.invoke('nagad-payment', { body: { orderId, amount, storeId: store!.id } });
           break;
         case 'sslcommerz':
-          response = await supabase.functions.invoke('sslcommerz-payment', { body: { orderId, amount, storeId: store!.id, customerData: { name: form.customer_name, email: form.customer_email, phone: form.customer_phone, address: form.shipping_address, city: form.shipping_city } } });
+          response = await supabase.functions.invoke('sslcommerz-payment', { body: { orderId, amount, storeId: store!.id, customerData: { name: form.customer_name, email: form.customer_email, phone: form.customer_phone, address: form.shipping_address, city: form.shipping_city, country: form.shipping_country, state: form.shipping_state, postal_code: form.shipping_postal_code } } });
           break;
         default:
           throw new Error('Invalid payment method');
@@ -425,57 +460,134 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement }> = () => {
   if (items.length === 0) return <div className="text-center text-muted-foreground">Your cart is empty.</div>;
 
   return (
-    <div className="max-w-4xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <div className="lg:col-span-2 space-y-4">
-        <Card>
-          <CardHeader><CardTitle>Customer Information</CardTitle></CardHeader>
-          <CardContent className="space-y-3">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <Input placeholder="Full Name" value={form.customer_name} onChange={e=>setForm(f=>({...f,customer_name:e.target.value}))} />
-              <Input placeholder="Phone" value={form.customer_phone} onChange={e=>setForm(f=>({...f,customer_phone:e.target.value}))} />
-            </div>
-            <Input type="email" placeholder="Email" value={form.customer_email} onChange={e=>setForm(f=>({...f,customer_email:e.target.value}))} />
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader><CardTitle>Shipping</CardTitle></CardHeader>
-          <CardContent className="space-y-3">
-            <Textarea placeholder="Address" value={form.shipping_address} onChange={e=>setForm(f=>({...f,shipping_address:e.target.value}))} rows={3} />
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <Input placeholder="City" value={form.shipping_city} onChange={e=>setForm(f=>({...f,shipping_city:e.target.value}))} />
-              <Input placeholder="Area" value={form.shipping_area} onChange={e=>setForm(f=>({...f,shipping_area:e.target.value}))} />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader><CardTitle>Payment</CardTitle></CardHeader>
-          <CardContent className="space-y-3">
-            <Select value={form.payment_method} onValueChange={(v:any)=>setForm(f=>({...f,payment_method:v}))}>
-              <SelectTrigger><SelectValue placeholder="Select method" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="cod">Cash on Delivery</SelectItem>
-                <SelectItem value="bkash">bKash</SelectItem>
-                <SelectItem value="nagad">Nagad</SelectItem>
-                <SelectItem value="sslcommerz">Credit/Debit Card (SSLCommerz)</SelectItem>
-              </SelectContent>
-            </Select>
-            <Textarea placeholder="Order notes (optional)" value={form.notes} onChange={e=>setForm(f=>({...f,notes:e.target.value}))} />
-          </CardContent>
-        </Card>
+    <>
+      {/* Responsive styles for the primary button */}
+      <style>{buttonCSS}</style>
+      <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 space-y-4">
+          <Card>
+            <CardHeader><CardTitle>Customer Information</CardTitle></CardHeader>
+            <CardContent className="space-y-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {fields.fullName?.enabled && (
+                  <Input placeholder={fields.fullName.placeholder} value={form.customer_name} onChange={e=>setForm(f=>({...f,customer_name:e.target.value}))} />
+                )}
+                {fields.phone?.enabled && (
+                  <Input placeholder={fields.phone.placeholder} value={form.customer_phone} onChange={e=>setForm(f=>({...f,customer_phone:e.target.value}))} />
+                )}
+              </div>
+              {fields.email?.enabled && (
+                <Input type="email" placeholder={fields.email.placeholder} value={form.customer_email} onChange={e=>setForm(f=>({...f,customer_email:e.target.value}))} />
+              )}
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader><CardTitle>Shipping</CardTitle></CardHeader>
+            <CardContent className="space-y-3">
+              {fields.address?.enabled && (
+                <Textarea placeholder={fields.address.placeholder} value={form.shipping_address} onChange={e=>setForm(f=>({...f,shipping_address:e.target.value}))} rows={3} />
+              )}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {fields.city?.enabled && (
+                  <Input placeholder={fields.city.placeholder} value={form.shipping_city} onChange={e=>setForm(f=>({...f,shipping_city:e.target.value}))} />
+                )}
+                {fields.area?.enabled && (
+                  <Input placeholder={fields.area.placeholder} value={form.shipping_area} onChange={e=>setForm(f=>({...f,shipping_area:e.target.value}))} />
+                )}
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {fields.country?.enabled && (
+                  <Input placeholder={fields.country.placeholder} value={form.shipping_country} onChange={e=>setForm(f=>({...f,shipping_country:e.target.value}))} />
+                )}
+                {fields.state?.enabled && (
+                  <Input placeholder={fields.state.placeholder} value={form.shipping_state} onChange={e=>setForm(f=>({...f,shipping_state:e.target.value}))} />
+                )}
+                {fields.postalCode?.enabled && (
+                  <Input placeholder={fields.postalCode.placeholder} value={form.shipping_postal_code} onChange={e=>setForm(f=>({...f,shipping_postal_code:e.target.value}))} />
+                )}
+              </div>
+
+              {/* Custom fields */}
+              {customFields?.length > 0 && (
+                <div className="space-y-2">
+                  {customFields.filter((cf:any)=>cf.enabled).map((cf:any) => (
+                    <div key={cf.id}>
+                      {cf.type === 'textarea' ? (
+                        <Textarea placeholder={cf.placeholder || cf.label} value={(form.custom_fields as any)[cf.id] || ''} onChange={(e)=>setForm(f=>({...f, custom_fields: { ...f.custom_fields, [cf.id]: e.target.value }}))} />
+                      ) : (
+                        <Input type={cf.type || 'text'} placeholder={cf.placeholder || cf.label} value={(form.custom_fields as any)[cf.id] || ''} onChange={(e)=>setForm(f=>({...f, custom_fields: { ...f.custom_fields, [cf.id]: e.target.value }}))} />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader><CardTitle>Payment</CardTitle></CardHeader>
+            <CardContent className="space-y-3">
+              <Select value={form.payment_method} onValueChange={(v:any)=>setForm(f=>({...f,payment_method:v}))}>
+                <SelectTrigger><SelectValue placeholder="Select method" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="cod">Cash on Delivery</SelectItem>
+                  <SelectItem value="bkash">bKash</SelectItem>
+                  <SelectItem value="nagad">Nagad</SelectItem>
+                  <SelectItem value="sslcommerz">Credit/Debit Card (SSLCommerz)</SelectItem>
+                </SelectContent>
+              </Select>
+              <Textarea placeholder="Order notes (optional)" value={form.notes} onChange={e=>setForm(f=>({...f,notes:e.target.value}))} />
+
+              {terms.enabled && (
+                <label className="flex items-center gap-2 text-sm">
+                  <input type="checkbox" checked={form.accept_terms} onChange={(e)=>setForm(f=>({...f, accept_terms: e.target.checked}))} />
+                  <span>
+                    {terms.label} {terms.url && (<a href={terms.url} target="_blank" rel="noreferrer" className="underline">Read</a>)}
+                  </span>
+                </label>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+        <div className="space-y-4">
+          <Card>
+            <CardHeader><CardTitle>Summary</CardTitle></CardHeader>
+            <CardContent className="space-y-3">
+              {/* Items */}
+              <div className="space-y-2">
+                {items.map((it)=> (
+                  <div key={it.id} className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      {showItemImages && it.image && (
+                        <img src={it.image} alt={it.name} className="w-10 h-10 object-cover rounded border" />
+                      )}
+                      <div className="min-w-0">
+                        <div className="text-sm font-medium truncate">{it.name}</div>
+                        <div className="text-xs text-muted-foreground">× {it.quantity}</div>
+                      </div>
+                    </div>
+                    <div className="text-sm font-medium">৳{(it.price * it.quantity).toFixed(2)}</div>
+                  </div>
+                ))}
+              </div>
+              <Separator />
+              <div className="flex justify-between"><span>Subtotal</span><span className="font-semibold">৳{total.toFixed(2)}</span></div>
+              <div className="flex justify-between"><span>Shipping</span><span className="font-semibold">৳{shippingCost.toFixed(2)}</span></div>
+              <div className="flex justify-between font-bold"><span>Total</span><span>৳{(total+shippingCost).toFixed(2)}</span></div>
+
+              <Button className={`w-full mt-2 element-${element.id}`} onClick={handleSubmit} disabled={loading}>
+                {loading? 'Placing Order...' : buttonLabel}
+              </Button>
+
+              {trust.enabled && trust.imageUrl && (
+                <div className="pt-2">
+                  <img src={trust.imageUrl} alt={trust.alt || 'Secure checkout'} className="w-full h-auto object-contain" loading="lazy" />
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </div>
-      <div className="space-y-4">
-        <Card>
-          <CardHeader><CardTitle>Summary</CardTitle></CardHeader>
-          <CardContent className="space-y-2">
-            <div className="flex justify-between"><span>Subtotal</span><span className="font-semibold">৳{total.toFixed(2)}</span></div>
-            <div className="flex justify-between"><span>Shipping</span><span className="font-semibold">৳{shippingCost.toFixed(2)}</span></div>
-            <Separator />
-            <div className="flex justify-between font-bold"><span>Total</span><span>৳{(total+shippingCost).toFixed(2)}</span></div>
-            <Button className="w-full mt-2" onClick={handleSubmit} disabled={loading}>{loading? 'Placing Order...' : 'Place Order'}</Button>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+    </>
   );
 };
 

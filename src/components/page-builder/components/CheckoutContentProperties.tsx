@@ -5,7 +5,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { PageBuilderElement } from '../../page-builder/types';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { PageBuilderElement } from '@/components/page-builder/types';
 import { MediaSelector } from './MediaSelector';
 
 interface CheckoutContentPropertiesProps {
@@ -62,192 +63,206 @@ export const CheckoutContentProperties: React.FC<CheckoutContentPropertiesProps>
 
       <Separator />
 
-      <div className="space-y-3">
-        <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Your Information</h4>
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <input type="checkbox" checked={!!fields.fullName.enabled} onChange={(e) => updateField('fullName', { enabled: e.target.checked })} />
-              <Label className="text-sm">Full Name</Label>
-            </div>
-            <Input value={fields.fullName.placeholder} onChange={(e) => updateField('fullName', { placeholder: e.target.value })} placeholder="Placeholder" />
-          </div>
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <input type="checkbox" checked={!!fields.phone.enabled} onChange={(e) => updateField('phone', { enabled: e.target.checked })} />
-              <Label className="text-sm">Phone</Label>
-            </div>
-            <Input value={fields.phone.placeholder} onChange={(e) => updateField('phone', { placeholder: e.target.value })} placeholder="Placeholder" />
-          </div>
-        </div>
-        <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <input type="checkbox" checked={!!fields.email.enabled} onChange={(e) => updateField('email', { enabled: e.target.checked })} />
-            <Label className="text-sm">Email</Label>
-          </div>
-          <Input value={fields.email.placeholder} onChange={(e) => updateField('email', { placeholder: e.target.value })} placeholder="Placeholder" />
-        </div>
-      </div>
-
-      <Separator />
-
-      <div className="space-y-3">
-        <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Shipping Address</h4>
-        <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <input type="checkbox" checked={!!fields.address.enabled} onChange={(e) => updateField('address', { enabled: e.target.checked })} />
-            <Label className="text-sm">Address</Label>
-          </div>
-          <Input value={fields.address.placeholder} onChange={(e) => updateField('address', { placeholder: e.target.value })} placeholder="Placeholder" />
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <input type="checkbox" checked={!!fields.city.enabled} onChange={(e) => updateField('city', { enabled: e.target.checked })} />
-              <Label className="text-sm">City</Label>
-            </div>
-            <Input value={fields.city.placeholder} onChange={(e) => updateField('city', { placeholder: e.target.value })} placeholder="Placeholder" />
-          </div>
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <input type="checkbox" checked={!!fields.area.enabled} onChange={(e) => updateField('area', { enabled: e.target.checked })} />
-              <Label className="text-sm">Area</Label>
-            </div>
-            <Input value={fields.area.placeholder} onChange={(e) => updateField('area', { placeholder: e.target.value })} placeholder="Placeholder" />
-          </div>
-        </div>
-        <div className="grid grid-cols-3 gap-3">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <input type="checkbox" checked={!!fields.country.enabled} onChange={(e) => updateField('country', { enabled: e.target.checked })} />
-              <Label className="text-sm">Country</Label>
-            </div>
-            <Input value={fields.country.placeholder} onChange={(e) => updateField('country', { placeholder: e.target.value })} placeholder="Placeholder" />
-          </div>
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <input type="checkbox" checked={!!fields.state.enabled} onChange={(e) => updateField('state', { enabled: e.target.checked })} />
-              <Label className="text-sm">State/Province</Label>
-            </div>
-            <Input value={fields.state.placeholder} onChange={(e) => updateField('state', { placeholder: e.target.value })} placeholder="Placeholder" />
-          </div>
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <input type="checkbox" checked={!!fields.postalCode.enabled} onChange={(e) => updateField('postalCode', { enabled: e.target.checked })} />
-              <Label className="text-sm">ZIP / Postal code</Label>
-            </div>
-            <Input value={fields.postalCode.placeholder} onChange={(e) => updateField('postalCode', { placeholder: e.target.value })} placeholder="Placeholder" />
-          </div>
-        </div>
-      </div>
-
-      <Separator />
-
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Product Summary</h4>
-          <div className="flex items-center gap-2">
-            <input type="checkbox" checked={!!showItemImages} onChange={(e) => onUpdate('showItemImages', e.target.checked)} />
-            <Label className="text-sm">Show item images</Label>
-          </div>
-        </div>
-      </div>
-
-      <Separator />
-
-      <div className="space-y-3">
-        <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Trust Badge</h4>
-        <div className="flex items-center gap-2">
-          <input type="checkbox" checked={!!trust.enabled} onChange={(e) => onUpdate('trustBadge', { ...trust, enabled: e.target.checked })} />
-          <Label className="text-sm">Show trust badge</Label>
-        </div>
-        {trust.enabled && (
-          <div className="grid grid-cols-2 gap-3">
-            <MediaSelector value={trust.imageUrl} onChange={(url) => onUpdate('trustBadge', { ...trust, imageUrl: url })} label="Badge image" />
-            <div>
-              <Label className="text-sm">Alt text</Label>
-              <Input value={trust.alt} onChange={(e) => onUpdate('trustBadge', { ...trust, alt: e.target.value })} placeholder="Secure checkout" />
-            </div>
-          </div>
-        )}
-      </div>
-
-      <Separator />
-
-      <div className="space-y-3">
-        <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Terms & Conditions</h4>
-        <div className="flex items-center gap-2">
-          <input type="checkbox" checked={!!terms.enabled} onChange={(e) => onUpdate('terms', { ...terms, enabled: e.target.checked })} />
-          <Label className="text-sm">Show terms checkbox</Label>
-        </div>
-        {terms.enabled && (
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <input type="checkbox" checked={!!terms.required} onChange={(e) => onUpdate('terms', { ...terms, required: e.target.checked })} />
-              <Label className="text-sm">Require acceptance</Label>
-            </div>
-            <div>
-              <Label className="text-sm">Label</Label>
-              <Input value={terms.label} onChange={(e) => onUpdate('terms', { ...terms, label: e.target.value })} />
-            </div>
-            <div>
-              <Label className="text-sm">Terms page URL</Label>
-              <Input value={terms.url} onChange={(e) => onUpdate('terms', { ...terms, url: e.target.value })} placeholder="/terms" />
-            </div>
-          </div>
-        )}
-      </div>
-
-      <Separator />
-
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Custom Fields</h4>
-          <Button size="sm" className="h-7" onClick={addCustomField}>Add Field</Button>
-        </div>
-        <div className="space-y-2">
-          {customFields.map((cf: any, idx: number) => (
-            <div key={cf.id} className="border rounded-md p-3 space-y-2">
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <Label className="text-sm">Label</Label>
-                  <Input value={cf.label} onChange={(e) => updateCustomField(idx, { label: e.target.value })} />
+      <Accordion type="multiple" className="w-full">
+        <AccordionItem value="info">
+          <AccordionTrigger className="text-sm">Your Information</AccordionTrigger>
+          <AccordionContent>
+            <div className="space-y-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <input type="checkbox" checked={!!fields.fullName.enabled} onChange={(e) => updateField('fullName', { enabled: e.target.checked })} />
+                    <Label className="text-sm">Full Name</Label>
+                  </div>
+                  <Input value={fields.fullName.placeholder} onChange={(e) => updateField('fullName', { placeholder: e.target.value })} placeholder="Placeholder" />
                 </div>
-                <div>
-                  <Label className="text-sm">Placeholder</Label>
-                  <Input value={cf.placeholder || ''} onChange={(e) => updateCustomField(idx, { placeholder: e.target.value })} />
-                </div>
-                <div>
-                  <Label className="text-sm">Type</Label>
-                  <Select value={cf.type || 'text'} onValueChange={(v) => updateCustomField(idx, { type: v })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="text">Text</SelectItem>
-                      <SelectItem value="textarea">Textarea</SelectItem>
-                      <SelectItem value="number">Number</SelectItem>
-                      <SelectItem value="email">Email</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="flex items-center gap-2 mt-6">
-                  <input type="checkbox" checked={!!cf.required} onChange={(e) => updateCustomField(idx, { required: e.target.checked })} />
-                  <Label className="text-sm">Required</Label>
-                  <input type="checkbox" className="ml-4" checked={!!cf.enabled} onChange={(e) => updateCustomField(idx, { enabled: e.target.checked })} />
-                  <Label className="text-sm">Enabled</Label>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <input type="checkbox" checked={!!fields.phone.enabled} onChange={(e) => updateField('phone', { enabled: e.target.checked })} />
+                    <Label className="text-sm">Phone</Label>
+                  </div>
+                  <Input value={fields.phone.placeholder} onChange={(e) => updateField('phone', { placeholder: e.target.value })} placeholder="Placeholder" />
                 </div>
               </div>
-              <div className="flex justify-end">
-                <Button size="sm" variant="ghost" className="h-8 text-destructive hover:text-destructive" onClick={() => removeCustomField(idx)}>
-                  Remove
-                </Button>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <input type="checkbox" checked={!!fields.email.enabled} onChange={(e) => updateField('email', { enabled: e.target.checked })} />
+                  <Label className="text-sm">Email</Label>
+                </div>
+                <Input value={fields.email.placeholder} onChange={(e) => updateField('email', { placeholder: e.target.value })} placeholder="Placeholder" />
               </div>
             </div>
-          ))}
-          {customFields.length === 0 && (
-            <div className="text-center text-muted-foreground text-sm py-2">No custom fields. Click Add Field to create one.</div>
-          )}
-        </div>
-      </div>
+          </AccordionContent>
+        </AccordionItem>
+
+        <AccordionItem value="shipping">
+          <AccordionTrigger className="text-sm">Shipping Address</AccordionTrigger>
+          <AccordionContent>
+            <div className="space-y-3">
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <input type="checkbox" checked={!!fields.address.enabled} onChange={(e) => updateField('address', { enabled: e.target.checked })} />
+                  <Label className="text-sm">Address</Label>
+                </div>
+                <Input value={fields.address.placeholder} onChange={(e) => updateField('address', { placeholder: e.target.value })} placeholder="Placeholder" />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <input type="checkbox" checked={!!fields.city.enabled} onChange={(e) => updateField('city', { enabled: e.target.checked })} />
+                    <Label className="text-sm">City</Label>
+                  </div>
+                  <Input value={fields.city.placeholder} onChange={(e) => updateField('city', { placeholder: e.target.value })} placeholder="Placeholder" />
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <input type="checkbox" checked={!!fields.area.enabled} onChange={(e) => updateField('area', { enabled: e.target.checked })} />
+                    <Label className="text-sm">Area</Label>
+                  </div>
+                  <Input value={fields.area.placeholder} onChange={(e) => updateField('area', { placeholder: e.target.value })} placeholder="Placeholder" />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <input type="checkbox" checked={!!fields.country.enabled} onChange={(e) => updateField('country', { enabled: e.target.checked })} />
+                    <Label className="text-sm">Country</Label>
+                  </div>
+                  <Input value={fields.country.placeholder} onChange={(e) => updateField('country', { placeholder: e.target.value })} placeholder="Placeholder" />
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <input type="checkbox" checked={!!fields.state.enabled} onChange={(e) => updateField('state', { enabled: e.target.checked })} />
+                    <Label className="text-sm">State/Province</Label>
+                  </div>
+                  <Input value={fields.state.placeholder} onChange={(e) => updateField('state', { placeholder: e.target.value })} placeholder="Placeholder" />
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <input type="checkbox" checked={!!fields.postalCode.enabled} onChange={(e) => updateField('postalCode', { enabled: e.target.checked })} />
+                    <Label className="text-sm">ZIP / Postal code</Label>
+                  </div>
+                  <Input value={fields.postalCode.placeholder} onChange={(e) => updateField('postalCode', { placeholder: e.target.value })} placeholder="Placeholder" />
+                </div>
+              </div>
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+
+        <AccordionItem value="summary">
+          <AccordionTrigger className="text-sm">Product Summary</AccordionTrigger>
+          <AccordionContent>
+            <div className="flex items-center gap-2">
+              <input type="checkbox" checked={!!showItemImages} onChange={(e) => onUpdate('showItemImages', e.target.checked)} />
+              <Label className="text-sm">Show item images</Label>
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+
+        <AccordionItem value="trust">
+          <AccordionTrigger className="text-sm">Trust Badge</AccordionTrigger>
+          <AccordionContent>
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <input type="checkbox" checked={!!trust.enabled} onChange={(e) => onUpdate('trustBadge', { ...trust, enabled: e.target.checked })} />
+                <Label className="text-sm">Show trust badge</Label>
+              </div>
+              {trust.enabled && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <MediaSelector value={trust.imageUrl} onChange={(url) => onUpdate('trustBadge', { ...trust, imageUrl: url })} label="Badge image" />
+                  <div>
+                    <Label className="text-sm">Alt text</Label>
+                    <Input value={trust.alt} onChange={(e) => onUpdate('trustBadge', { ...trust, alt: e.target.value })} placeholder="Secure checkout" />
+                  </div>
+                </div>
+              )}
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+
+        <AccordionItem value="terms">
+          <AccordionTrigger className="text-sm">Terms & Conditions</AccordionTrigger>
+          <AccordionContent>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <input type="checkbox" checked={!!terms.enabled} onChange={(e) => onUpdate('terms', { ...terms, enabled: e.target.checked })} />
+                <Label className="text-sm">Show terms checkbox</Label>
+              </div>
+              {terms.enabled && (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <input type="checkbox" checked={!!terms.required} onChange={(e) => onUpdate('terms', { ...terms, required: e.target.checked })} />
+                    <Label className="text-sm">Require acceptance</Label>
+                  </div>
+                  <div>
+                    <Label className="text-sm">Label</Label>
+                    <Input value={terms.label} onChange={(e) => onUpdate('terms', { ...terms, label: e.target.value })} />
+                  </div>
+                  <div>
+                    <Label className="text-sm">Terms page URL</Label>
+                    <Input value={terms.url} onChange={(e) => onUpdate('terms', { ...terms, url: e.target.value })} placeholder="/terms" />
+                  </div>
+                </div>
+              )}
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+
+        <AccordionItem value="custom">
+          <AccordionTrigger className="text-sm">Custom Fields</AccordionTrigger>
+          <AccordionContent>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">Manage fields</span>
+                <Button size="sm" className="h-7" onClick={addCustomField}>Add Field</Button>
+              </div>
+              <div className="space-y-2">
+                {customFields.map((cf: any, idx: number) => (
+                  <div key={cf.id} className="border rounded-md p-3 space-y-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <div>
+                        <Label className="text-sm">Label</Label>
+                        <Input value={cf.label} onChange={(e) => updateCustomField(idx, { label: e.target.value })} />
+                      </div>
+                      <div>
+                        <Label className="text-sm">Placeholder</Label>
+                        <Input value={cf.placeholder || ''} onChange={(e) => updateCustomField(idx, { placeholder: e.target.value })} />
+                      </div>
+                      <div>
+                        <Label className="text-sm">Type</Label>
+                        <Select value={cf.type || 'text'} onValueChange={(v) => updateCustomField(idx, { type: v })}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="text">Text</SelectItem>
+                            <SelectItem value="textarea">Textarea</SelectItem>
+                            <SelectItem value="number">Number</SelectItem>
+                            <SelectItem value="email">Email</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="flex items-center gap-2 mt-6">
+                        <input type="checkbox" checked={!!cf.required} onChange={(e) => updateCustomField(idx, { required: e.target.checked })} />
+                        <Label className="text-sm">Required</Label>
+                        <input type="checkbox" className="ml-4" checked={!!cf.enabled} onChange={(e) => updateCustomField(idx, { enabled: e.target.checked })} />
+                        <Label className="text-sm">Enabled</Label>
+                      </div>
+                    </div>
+                    <div className="flex justify-end">
+                      <Button size="sm" variant="ghost" className="h-8 text-destructive hover:text-destructive" onClick={() => removeCustomField(idx)}>
+                        Remove
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+                {customFields.length === 0 && (
+                  <div className="text-center text-muted-foreground text-sm py-2">No custom fields. Click Add Field to create one.</div>
+                )}
+              </div>
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
+
     </div>
   );
 };
