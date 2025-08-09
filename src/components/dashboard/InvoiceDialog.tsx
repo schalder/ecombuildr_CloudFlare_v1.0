@@ -28,8 +28,9 @@ export const InvoiceDialog: React.FC<Props> = ({ open, onOpenChange, data }) => 
     return { subtotal, shipping, discount, total };
   }, [data]);
 
-  const handlePrint = () => {
+  const handlePrint = async () => {
     if (!printRef.current) return;
+
     const iframe = document.createElement('iframe');
     iframe.style.position = 'fixed';
     iframe.style.right = '0';
@@ -37,37 +38,53 @@ export const InvoiceDialog: React.FC<Props> = ({ open, onOpenChange, data }) => 
     iframe.style.width = '0';
     iframe.style.height = '0';
     iframe.style.border = '0';
+    iframe.setAttribute('aria-hidden', 'true');
     document.body.appendChild(iframe);
 
     const doc = iframe.contentDocument || iframe.contentWindow?.document;
     if (!doc) return;
 
-    const styles = `
-      <style>
-        @page { margin: 12mm; }
-        body { background: #ffffff; color: #000; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial; }
-        .avoid-break { break-inside: avoid; }
-        .totals { width: 256px; margin-left: auto; }
-        hr { border: none; border-top: 1px solid #e5e7eb; margin: 16px 0; }
-      </style>
-    `;
-
+    // Build a clean printable document
     doc.open();
-    doc.write(`<html><head><title>Invoice - ${data?.order?.order_number || ''}</title>${styles}</head><body>${printRef.current.innerHTML}</body></html>`);
+    doc.write(`<!doctype html><html><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /><title>Invoice - ${data?.order?.order_number || ''}</title><style>@page{margin:12mm;} body{background:#fff;color:#000;-webkit-print-color-adjust:exact;print-color-adjust:exact;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial;} .avoid-break{break-inside:avoid}</style></head><body></body></html>`);
     doc.close();
+
+    // Clone all styles (Tailwind + tokens) into the iframe so it looks identical
+    const head = doc.head;
+    const sourceStyleNodes = Array.from(document.querySelectorAll('link[rel="stylesheet"], style')) as HTMLElement[];
+    const loadPromises: Promise<void>[] = [];
+
+    sourceStyleNodes.forEach((node) => {
+      const cloned = node.cloneNode(true) as HTMLElement;
+      head.appendChild(cloned);
+      if (cloned.tagName.toLowerCase() === 'link') {
+        const link = cloned as HTMLLinkElement;
+        if (!link.sheet) {
+          loadPromises.push(new Promise<void>((resolve) => {
+            link.addEventListener('load', () => resolve(), { once: true });
+            link.addEventListener('error', () => resolve(), { once: true });
+          }));
+        }
+      }
+    });
+
+    // Inject invoice HTML
+    doc.body.innerHTML = printRef.current.innerHTML;
+
+    // Wait for stylesheets to be ready, then print
+    try { await Promise.all(loadPromises); } catch {}
 
     const win = iframe.contentWindow;
     if (!win) return;
-    win.focus();
-    // Wait a tick to ensure layout is done
+
     setTimeout(() => {
+      win.focus();
       win.print();
       setTimeout(() => {
         document.body.removeChild(iframe);
-      }, 100);
-    }, 100);
+      }, 50);
+    }, 50);
   };
-
   const handleDownloadPdf = async () => {
     if (!printRef.current) return;
     setDownloading(true);
