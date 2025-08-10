@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
 import { PageBuilderRenderer } from '@/components/storefront/PageBuilderRenderer';
 import { setGlobalCurrency } from '@/lib/currency';
+import { setSEO, buildCanonical } from '@/lib/seo';
 
 interface WebsitePageData {
   id: string;
@@ -28,6 +29,7 @@ export const WebsiteOverrideRoute: React.FC<WebsiteOverrideRouteProps> = ({ slug
   const [page, setPage] = React.useState<WebsitePageData | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [resolvedWebsiteId, setResolvedWebsiteId] = React.useState<string | null>(null);
+  const [websiteMeta, setWebsiteMeta] = React.useState<any>(null);
 
   // Resolve website id if only slug is provided
   React.useEffect(() => {
@@ -80,50 +82,44 @@ export const WebsiteOverrideRoute: React.FC<WebsiteOverrideRouteProps> = ({ slug
     fetchPage();
   }, [resolvedWebsiteId, slug, isPreview]);
 
-  // Ensure global currency is set for override routes
+  // Ensure global currency is set and load website meta
   React.useEffect(() => {
     (async () => {
       if (!resolvedWebsiteId) return;
       try {
         const { data } = await supabase
           .from('websites')
-          .select('settings')
+          .select('name, settings, domain, seo_title, seo_description, og_image, meta_robots, canonical_domain')
           .eq('id', resolvedWebsiteId)
           .maybeSingle();
         const code = (data as any)?.settings?.currency?.code || 'BDT';
         setGlobalCurrency(code as any);
+        setWebsiteMeta(data);
       } catch (e) {
         // ignore
       }
     })();
   }, [resolvedWebsiteId]);
 
-  // Basic SEO handling for override pages
+  // SEO handling using centralized utility
   React.useEffect(() => {
     if (!page) return;
-    if (page.seo_title) document.title = page.seo_title;
 
-    if (page.seo_description) {
-      let metaDescription = document.querySelector('meta[name="description"]');
-      if (!metaDescription) {
-        metaDescription = document.createElement('meta');
-        metaDescription.setAttribute('name', 'description');
-        document.head.appendChild(metaDescription);
-      }
-      metaDescription.setAttribute('content', page.seo_description);
-    }
+    const title = page.seo_title || (websiteMeta?.seo_title ? `${page.title} - ${websiteMeta?.name || ''}`.trim() : page.title);
+    const description = page.seo_description || websiteMeta?.seo_description;
+    const image = page.og_image || websiteMeta?.og_image;
+    const canonical = buildCanonical(undefined, websiteMeta?.canonical_domain || websiteMeta?.domain);
 
-    if (page.og_image) {
-      let ogImage = document.querySelector('meta[property="og:image"]');
-      if (!ogImage) {
-        ogImage = document.createElement('meta');
-        ogImage.setAttribute('property', 'og:image');
-        document.head.appendChild(ogImage);
-      }
-      ogImage.setAttribute('content', page.og_image);
-    }
+    setSEO({
+      title,
+      description,
+      image,
+      canonical,
+      robots: websiteMeta?.meta_robots || 'index, follow',
+      siteName: websiteMeta?.name,
+      ogType: 'website',
+    });
 
-    // Inject custom scripts if they exist
     if (page.custom_scripts) {
       const scriptElement = document.createElement('div');
       scriptElement.innerHTML = page.custom_scripts;
@@ -132,7 +128,7 @@ export const WebsiteOverrideRoute: React.FC<WebsiteOverrideRouteProps> = ({ slug
         document.head.removeChild(scriptElement);
       };
     }
-  }, [page]);
+  }, [page, websiteMeta]);
 
   if (loading) {
     return (

@@ -5,6 +5,7 @@ import { Loader2 } from 'lucide-react';
 import ProductDetail from '@/pages/storefront/ProductDetail';
 import { PageBuilderRenderer } from '@/components/storefront/PageBuilderRenderer';
 import { setGlobalCurrency } from '@/lib/currency';
+import { setSEO, buildCanonical } from '@/lib/seo';
 
 interface WebsiteData {
   id: string;
@@ -30,6 +31,7 @@ export const WebsiteProductDetailRoute: React.FC = () => {
   const [page, setPage] = React.useState<WebsitePageData | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [resolvedWebsiteId, setResolvedWebsiteId] = React.useState<string | null>(null);
+  const [websiteMeta, setWebsiteMeta] = React.useState<any>(null);
 
   // Resolve website id if only slug is provided
   React.useEffect(() => {
@@ -67,7 +69,7 @@ export const WebsiteProductDetailRoute: React.FC = () => {
       try {
         const { data: website, error: wErr } = await supabase
           .from('websites')
-          .select('id, name, settings')
+          .select('id, name, settings, domain, seo_title, seo_description, og_image, meta_robots, canonical_domain')
           .eq('id', resolvedWebsiteId)
           .maybeSingle();
         if (wErr || !website) {
@@ -75,6 +77,8 @@ export const WebsiteProductDetailRoute: React.FC = () => {
           setLoading(false);
           return;
         }
+
+        setWebsiteMeta(website);
 
         // Initialize global currency from website settings
         try {
@@ -113,32 +117,25 @@ export const WebsiteProductDetailRoute: React.FC = () => {
     fetchTemplate();
   }, [resolvedWebsiteId, isPreview]);
 
-  // Basic SEO handling for override pages
+  // SEO handling using centralized utility
   React.useEffect(() => {
     if (!page) return;
-    if (page.seo_title) document.title = page.seo_title;
 
-    if (page.seo_description) {
-      let metaDescription = document.querySelector('meta[name="description"]');
-      if (!metaDescription) {
-        metaDescription = document.createElement('meta');
-        metaDescription.setAttribute('name', 'description');
-        document.head.appendChild(metaDescription);
-      }
-      metaDescription.setAttribute('content', page.seo_description);
-    }
+    const title = page.seo_title || websiteMeta?.seo_title || page.title;
+    const description = page.seo_description || websiteMeta?.seo_description;
+    const image = page.og_image || websiteMeta?.og_image;
+    const canonical = buildCanonical(undefined, websiteMeta?.canonical_domain || websiteMeta?.domain);
 
-    if (page.og_image) {
-      let ogImage = document.querySelector('meta[property="og:image"]');
-      if (!ogImage) {
-        ogImage = document.createElement('meta');
-        ogImage.setAttribute('property', 'og:image');
-        document.head.appendChild(ogImage);
-      }
-      ogImage.setAttribute('content', page.og_image);
-    }
+    setSEO({
+      title,
+      description,
+      image,
+      canonical,
+      robots: websiteMeta?.meta_robots || 'index, follow',
+      siteName: websiteMeta?.name,
+      ogType: 'product',
+    });
 
-    // Inject custom scripts if they exist
     if (page.custom_scripts) {
       const scriptElement = document.createElement('div');
       scriptElement.innerHTML = page.custom_scripts;
@@ -147,7 +144,7 @@ export const WebsiteProductDetailRoute: React.FC = () => {
         document.head.removeChild(scriptElement);
       };
     }
-  }, [page]);
+  }, [page, websiteMeta]);
 
   if (loading) {
     return (

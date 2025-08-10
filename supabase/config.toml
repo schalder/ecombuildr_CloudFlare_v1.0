@@ -24,3 +24,9 @@ verify_jwt = false
 
 [functions.get-order]
 verify_jwt = false
+
+[functions.robots]
+verify_jwt = false
+
+[functions.sitemap]
+verify_jwt = false

@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
 import { PageBuilderRenderer } from '@/components/storefront/PageBuilderRenderer';
 import { useStore } from '@/contexts/StoreContext';
+import { setSEO, buildCanonical } from '@/lib/seo';
 interface FunnelStepData {
   id: string;
   title: string;
@@ -113,46 +114,35 @@ export const FunnelStepPage: React.FC = () => {
     fetchFunnelAndStep();
   }, [funnelId, stepSlug, loadStoreById]);
 
-  // Set up SEO metadata
+  // Set up SEO metadata using centralized utility
   useEffect(() => {
-    if (step) {
-      if (step.seo_title) {
-        document.title = step.seo_title;
-      } else if (step.title && funnel?.name) {
-        document.title = `${step.title} - ${funnel.name}`;
-      }
+    if (!step || !funnel) return;
 
-      if (step.seo_description) {
-        let metaDescription = document.querySelector('meta[name="description"]');
-        if (!metaDescription) {
-          metaDescription = document.createElement('meta');
-          metaDescription.setAttribute('name', 'description');
-          document.head.appendChild(metaDescription);
-        }
-        metaDescription.setAttribute('content', step.seo_description);
-      }
+    const title = step.seo_title || (step.title && funnel.name ? `${step.title} - ${funnel.name}` : step.title);
+    const description = step.seo_description || (funnel as any)?.seo_description || funnel.description;
+    const image = step.og_image || (funnel as any)?.og_image;
+    const canonical = buildCanonical();
 
-      if (step.og_image) {
-        let ogImage = document.querySelector('meta[property="og:image"]');
-        if (!ogImage) {
-          ogImage = document.createElement('meta');
-          ogImage.setAttribute('property', 'og:image');
-          document.head.appendChild(ogImage);
-        }
-        ogImage.setAttribute('content', step.og_image);
-      }
+    setSEO({
+      title: title || undefined,
+      description,
+      image,
+      canonical,
+      robots: (funnel as any)?.meta_robots || 'index, follow',
+      siteName: funnel.name,
+      ogType: 'website',
+    });
 
-      // Inject custom scripts if they exist
-      if (step.custom_scripts) {
-        const scriptElement = document.createElement('div');
-        scriptElement.innerHTML = step.custom_scripts;
-        document.head.appendChild(scriptElement);
+    // Inject custom scripts if they exist
+    if (step.custom_scripts) {
+      const scriptElement = document.createElement('div');
+      scriptElement.innerHTML = step.custom_scripts;
+      document.head.appendChild(scriptElement);
 
-        // Cleanup function to remove scripts when component unmounts
-        return () => {
-          document.head.removeChild(scriptElement);
-        };
-      }
+      // Cleanup function to remove scripts when component unmounts
+      return () => {
+        document.head.removeChild(scriptElement);
+      };
     }
   }, [step, funnel]);
 

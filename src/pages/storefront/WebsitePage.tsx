@@ -5,6 +5,7 @@ import { Loader2 } from 'lucide-react';
 import { PageBuilderRenderer } from '@/components/storefront/PageBuilderRenderer';
 import { useStore } from '@/contexts/StoreContext';
 import { setGlobalCurrency } from '@/lib/currency';
+import { setSEO, buildCanonical } from '@/lib/seo';
 interface WebsitePageData {
   id: string;
   title: string;
@@ -23,10 +24,16 @@ interface WebsiteData {
   name: string;
   slug: string;
   description?: string;
+  domain?: string;
   is_published: boolean;
   is_active: boolean;
   store_id: string;
   settings?: any;
+  seo_title?: string;
+  seo_description?: string;
+  og_image?: string;
+  meta_robots?: string;
+  canonical_domain?: string;
 }
 
 export const WebsitePage: React.FC = () => {
@@ -169,44 +176,31 @@ export const WebsitePage: React.FC = () => {
 
   // Set up SEO metadata
   useEffect(() => {
-    if (page) {
-      if (page.seo_title) {
-        document.title = page.seo_title;
-      } else if (page.title && website?.name) {
-        document.title = `${page.title} - ${website.name}`;
-      }
+    if (!page || !website) return;
 
-      if (page.seo_description) {
-        let metaDescription = document.querySelector('meta[name="description"]');
-        if (!metaDescription) {
-          metaDescription = document.createElement('meta');
-          metaDescription.setAttribute('name', 'description');
-          document.head.appendChild(metaDescription);
-        }
-        metaDescription.setAttribute('content', page.seo_description);
-      }
+    const title = page.seo_title || (page.title && website.name ? `${page.title} - ${website.name}` : (website as any)?.seo_title);
+    const description = page.seo_description || (website as any)?.seo_description || website.description || undefined;
+    const image = page.og_image || (website as any)?.og_image || undefined;
+    const canonical = buildCanonical(undefined, (website as any)?.canonical_domain || website.domain);
 
-      if (page.og_image) {
-        let ogImage = document.querySelector('meta[property="og:image"]');
-        if (!ogImage) {
-          ogImage = document.createElement('meta');
-          ogImage.setAttribute('property', 'og:image');
-          document.head.appendChild(ogImage);
-        }
-        ogImage.setAttribute('content', page.og_image);
-      }
+    setSEO({
+      title: title || undefined,
+      description,
+      image,
+      canonical,
+      robots: (website as any)?.meta_robots || 'index, follow',
+      siteName: website.name,
+      ogType: 'website',
+    });
 
-      // Inject custom scripts if they exist
-      if (page.custom_scripts) {
-        const scriptElement = document.createElement('div');
-        scriptElement.innerHTML = page.custom_scripts;
-        document.head.appendChild(scriptElement);
-
-        // Cleanup function to remove scripts when component unmounts
-        return () => {
-          document.head.removeChild(scriptElement);
-        };
-      }
+    // Inject custom scripts if they exist
+    if (page.custom_scripts) {
+      const scriptElement = document.createElement('div');
+      scriptElement.innerHTML = page.custom_scripts;
+      document.head.appendChild(scriptElement);
+      return () => {
+        document.head.removeChild(scriptElement);
+      };
     }
   }, [page, website]);
 
