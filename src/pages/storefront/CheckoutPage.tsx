@@ -15,6 +15,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { CreditCard, Truck, MapPin } from 'lucide-react';
 import { toast } from 'sonner';
 import { useEcomPaths } from '@/lib/pathResolver';
+import { computeShippingForAddress, ShippingSettings } from '@/lib/shipping';
+import { formatCurrency } from '@/lib/currency';
 
 interface CheckoutForm {
   customer_name: string;
@@ -39,6 +41,7 @@ export const CheckoutPage: React.FC = () => {
   const [discountLoading, setDiscountLoading] = useState(false);
   const [discountAmount, setDiscountAmount] = useState(0);
   const [shippingCost, setShippingCost] = useState(50); // Default shipping cost
+  const [websiteShipping, setWebsiteShipping] = useState<ShippingSettings | undefined>(undefined);
   
   const [form, setForm] = useState<CheckoutForm>({
     customer_name: '',
@@ -59,11 +62,15 @@ useEffect(() => {
     (async () => {
       const { data: website } = await supabase
         .from('websites')
-        .select('store_id')
+        .select('store_id, settings')
         .eq('id', websiteId)
         .single();
       if (website?.store_id) {
         await loadStoreById(website.store_id);
+      }
+      const ship = (website?.settings as any)?.shipping;
+      if (ship) {
+        setWebsiteShipping(ship as ShippingSettings);
       }
     })();
   }
@@ -73,6 +80,16 @@ useEffect(() => {
 useEffect(() => {
   // Intentionally left blank to avoid bouncing users back to home
 }, []);
+
+// Recompute shipping cost when city or website shipping settings change
+useEffect(() => {
+  if (websiteShipping && websiteShipping.enabled) {
+    const cost = computeShippingForAddress(websiteShipping, { city: form.shipping_city });
+    if (typeof cost === 'number') setShippingCost(cost);
+  } else {
+    setShippingCost(50);
+  }
+}, [websiteShipping, form.shipping_city]);
 
   const handleInputChange = (field: keyof CheckoutForm, value: string) => {
     setForm(prev => ({ ...prev, [field]: value }));
@@ -136,7 +153,7 @@ useEffect(() => {
 
       // Check minimum amount
       if (discount.minimum_amount && total < discount.minimum_amount) {
-        toast.error(`Minimum order amount is $${discount.minimum_amount} for this discount`);
+        toast.error(`Minimum order amount is ${formatCurrency(discount.minimum_amount)} for this discount`);
         setDiscountAmount(0);
         return;
       }
@@ -152,7 +169,7 @@ useEffect(() => {
       // Ensure discount doesn't exceed total
       discountValue = Math.min(discountValue, total);
       setDiscountAmount(discountValue);
-      toast.success(`Discount code applied! You saved $${discountValue.toFixed(2)}`);
+      toast.success(`Discount code applied! You saved ${formatCurrency(discountValue)}`);
     } catch (error) {
       console.error('Error applying discount:', error);
       toast.error('Error applying discount code');
@@ -577,7 +594,7 @@ useEffect(() => {
                     {items.map((item) => (
                       <div key={item.id} className="flex justify-between text-sm">
                         <span>{item.name} × {item.quantity}</span>
-                        <span>${(item.price * item.quantity).toFixed(2)}</span>
+                        <span>{formatCurrency(item.price * item.quantity)}</span>
                       </div>
                     ))}
                   </div>
@@ -611,22 +628,22 @@ useEffect(() => {
                   <div className="space-y-2">
                     <div className="flex justify-between">
                       <span>Subtotal:</span>
-                      <span>${total.toFixed(2)}</span>
+                      <span>{formatCurrency(total)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span>Shipping:</span>
-                      <span>${shippingCost.toFixed(2)}</span>
+                      <span>{formatCurrency(shippingCost)}</span>
                     </div>
                     {discountAmount > 0 && (
                       <div className="flex justify-between text-green-600">
                         <span>Discount:</span>
-                        <span>-${discountAmount.toFixed(2)}</span>
+                        <span>-{formatCurrency(discountAmount)}</span>
                       </div>
                     )}
                     <Separator />
                     <div className="flex justify-between font-bold text-lg">
                       <span>Total:</span>
-                      <span>${finalTotal.toFixed(2)}</span>
+                      <span>{formatCurrency(finalTotal)}</span>
                     </div>
                   </div>
                 </CardContent>

@@ -42,6 +42,15 @@ interface WebsiteSettingsProps {
   website: Website;
 }
 
+// Shipping settings types for per-website configuration
+type ShippingCityRule = { city: string; fee: number; label?: string };
+type ShippingSettings = {
+  enabled: boolean;
+  country?: string;
+  restOfCountryFee: number;
+  cityRules: ShippingCityRule[];
+};
+
 export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -64,6 +73,16 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
   const [pages, setPages] = React.useState<{ id: string; title: string; slug: string; is_published: boolean }[]>([]);
   const [loadingPages, setLoadingPages] = React.useState(false);
   const [productDetailTemplateId, setProductDetailTemplateId] = React.useState<string>(website.settings?.system_pages?.product_detail_page_id || '');
+
+  // Shipping settings state
+  const [shippingSettings, setShippingSettings] = React.useState<ShippingSettings>(
+    website.settings?.shipping || {
+      enabled: false,
+      country: '',
+      restOfCountryFee: 0,
+      cityRules: [],
+    }
+  );
 
   React.useEffect(() => {
     const fetchPages = async () => {
@@ -93,6 +112,7 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
           product_detail_page_id: productDetailTemplateId || null,
         },
         currency: { code: currency_code || 'BDT' },
+        shipping: shippingSettings,
       };
 
       const { error } = await supabase
@@ -308,6 +328,128 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
                   </FormItem>
                 )}
               />
+            </CardContent>
+          </Card>
+
+          {/* Shipping & Delivery */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Shipping & Delivery</CardTitle>
+              <CardDescription>
+                Configure location-based delivery charges for this website.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                  <div className="space-y-0.5">
+                    <FormLabel className="text-base">Enable Shipping Rules</FormLabel>
+                    <FormDescription>Turn on to apply fees by city and for the rest of the country.</FormDescription>
+                  </div>
+                  <FormControl>
+                    <Switch
+                      checked={shippingSettings.enabled}
+                      onCheckedChange={(v) => setShippingSettings((s) => ({ ...s, enabled: v }))}
+                    />
+                  </FormControl>
+                </FormItem>
+                <FormItem>
+                  <FormLabel>Country</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="e.g., Bangladesh"
+                      value={shippingSettings.country || ''}
+                      onChange={(e) => setShippingSettings((s) => ({ ...s, country: e.target.value }))}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Used for your shipping context. Rules below apply within this country.
+                  </FormDescription>
+                </FormItem>
+              </div>
+
+              <Separator />
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormItem>
+                  <FormLabel>Default fee (rest of country)</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      min={0}
+                      step="0.01"
+                      value={shippingSettings.restOfCountryFee}
+                      onChange={(e) => setShippingSettings((s) => ({ ...s, restOfCountryFee: Number(e.target.value) || 0 }))}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Applied to all locations not matched by a city rule.
+                  </FormDescription>
+                </FormItem>
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <FormLabel>City-specific rules</FormLabel>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShippingSettings((s) => ({ ...s, cityRules: [...s.cityRules, { city: '', fee: 0 }] }))}
+                  >
+                    Add City Rule
+                  </Button>
+                </div>
+
+                {shippingSettings.cityRules.length === 0 && (
+                  <p className="text-sm text-muted-foreground">No city rules yet. Add one to override the default fee for a city.</p>
+                )}
+
+                {shippingSettings.cityRules.map((rule, idx) => (
+                  <div key={idx} className="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
+                    <FormItem>
+                      <FormLabel>City</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="e.g., Dhaka"
+                          value={rule.city}
+                          onChange={(e) => setShippingSettings((s) => {
+                            const cityRules = [...s.cityRules];
+                            cityRules[idx] = { ...cityRules[idx], city: e.target.value };
+                            return { ...s, cityRules };
+                          })}
+                        />
+                      </FormControl>
+                    </FormItem>
+                    <FormItem>
+                      <FormLabel>Fee</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min={0}
+                          step="0.01"
+                          value={rule.fee}
+                          onChange={(e) => setShippingSettings((s) => {
+                            const cityRules = [...s.cityRules];
+                            cityRules[idx] = { ...cityRules[idx], fee: Number(e.target.value) || 0 };
+                            return { ...s, cityRules };
+                          })}
+                        />
+                      </FormControl>
+                    </FormItem>
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        className="md:self-start"
+                        onClick={() => setShippingSettings((s) => ({ ...s, cityRules: s.cityRules.filter((_, i) => i !== idx) }))}
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </CardContent>
           </Card>
 
