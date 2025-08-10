@@ -40,7 +40,7 @@ export const CheckoutPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [discountLoading, setDiscountLoading] = useState(false);
   const [discountAmount, setDiscountAmount] = useState(0);
-  const [shippingCost, setShippingCost] = useState(50); // Default shipping cost
+  const [shippingCost, setShippingCost] = useState(0); // Default shipping cost
   const [websiteShipping, setWebsiteShipping] = useState<ShippingSettings | undefined>(undefined);
   
   const [form, setForm] = useState<CheckoutForm>({
@@ -87,7 +87,7 @@ useEffect(() => {
     const cost = computeShippingForAddress(websiteShipping, { city: form.shipping_city });
     if (typeof cost === 'number') setShippingCost(cost);
   } else {
-    setShippingCost(50);
+    setShippingCost(0);
   }
 }, [websiteShipping, form.shipping_city]);
 

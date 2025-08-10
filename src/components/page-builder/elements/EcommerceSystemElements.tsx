@@ -18,6 +18,7 @@ import { toast } from 'sonner';
 import { useStoreProducts } from '@/hooks/useStoreData';
 import { generateResponsiveCSS } from '@/components/page-builder/utils/responsiveStyles';
 import { formatCurrency } from '@/lib/currency';
+import { computeShippingForAddress, ShippingSettings } from '@/lib/shipping';
 
 const CartSummaryElement: React.FC<{ element: PageBuilderElement }> = () => {
   const { items, total, updateQuantity, removeItem } = useCart();
@@ -399,7 +400,8 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
     accept_terms: false,
     custom_fields: {} as Record<string, any>,
   });
-  const [shippingCost] = useState(50);
+  const [shippingCost, setShippingCost] = useState(0);
+  const [websiteShipping, setWebsiteShipping] = useState<ShippingSettings | undefined>(undefined);
   const [loading, setLoading] = useState(false);
 
   // Button responsive CSS
@@ -407,14 +409,31 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
   const buttonCSS = generateResponsiveCSS(element.id, buttonStyles);
 
   useEffect(() => {
-    if (slug) loadStore(slug);
-    else if (websiteId) {
+    if (slug) {
+      loadStore(slug);
+    } else if (websiteId) {
       (async () => {
-        const { data: website } = await supabase.from('websites').select('store_id').eq('id', websiteId).single();
+        const { data: website } = await supabase
+          .from('websites')
+          .select('store_id, settings')
+          .eq('id', websiteId)
+          .single();
         if (website?.store_id) await loadStoreById(website.store_id);
+        const ship = (website?.settings as any)?.shipping;
+        if (ship) setWebsiteShipping(ship as ShippingSettings);
       })();
     }
   }, [slug, websiteId, loadStore, loadStoreById]);
+
+  // Recompute shipping cost when city or website shipping settings change
+  useEffect(() => {
+    if (websiteShipping && websiteShipping.enabled) {
+      const cost = computeShippingForAddress(websiteShipping, { city: form.shipping_city });
+      if (typeof cost === 'number') setShippingCost(cost);
+    } else {
+      setShippingCost(0);
+    }
+  }, [websiteShipping, form.shipping_city]);
 
   const handleSubmit = async () => {
     if (!store || items.length === 0) return;
