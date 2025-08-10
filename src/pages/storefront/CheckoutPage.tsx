@@ -77,20 +77,38 @@ useEffect(() => {
   }
 }, [slug, websiteId, loadStore, loadStoreById]);
 
+// Fallback: use store-level shipping settings when website settings are not present
+useEffect(() => {
+  if (!websiteShipping && (store as any)?.settings?.shipping) {
+    setWebsiteShipping(((store as any).settings.shipping) as ShippingSettings);
+    console.debug('[CheckoutPage] Using store-level shipping settings as fallback');
+  }
+}, [store, websiteShipping]);
+
 // Do not auto-redirect on empty cart; show an empty state instead
 useEffect(() => {
   // Intentionally left blank to avoid bouncing users back to home
 }, []);
 
-// Recompute shipping cost when city or website shipping settings change
+// Recompute shipping cost when address details or settings change
 useEffect(() => {
   if (websiteShipping && websiteShipping.enabled) {
-    const cost = computeShippingForAddress(websiteShipping, { city: form.shipping_city });
+    const cost = computeShippingForAddress(websiteShipping, {
+      city: form.shipping_city,
+      area: form.shipping_area,
+      address: form.shipping_address,
+    });
     if (typeof cost === 'number') setShippingCost(cost);
+    console.debug('[CheckoutPage] Recomputed shipping', {
+      city: form.shipping_city,
+      area: form.shipping_area,
+      address: form.shipping_address,
+      cost,
+    });
   } else {
     setShippingCost(0);
   }
-}, [websiteShipping, form.shipping_city]);
+}, [websiteShipping, form.shipping_city, form.shipping_area, form.shipping_address]);
 
   const handleInputChange = (field: keyof CheckoutForm, value: string) => {
     setForm(prev => ({ ...prev, [field]: value }));

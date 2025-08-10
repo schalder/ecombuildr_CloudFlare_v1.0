@@ -340,15 +340,15 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
 
   const cfg: any = element.content || {};
   const fields = cfg.fields || {
-    fullName: { enabled: true, placeholder: 'Full Name' },
-    phone: { enabled: true, placeholder: 'Phone Number' },
-    email: { enabled: true, placeholder: 'Email Address' },
-    address: { enabled: true, placeholder: 'Street address' },
-    city: { enabled: true, placeholder: 'City' },
-    area: { enabled: true, placeholder: 'Area' },
-    country: { enabled: true, placeholder: 'Country' },
-    state: { enabled: true, placeholder: 'State/Province' },
-    postalCode: { enabled: true, placeholder: 'ZIP / Postal code' },
+    fullName: { enabled: true, required: true, placeholder: 'Full Name' },
+    phone: { enabled: true, required: true, placeholder: 'Phone Number' },
+    email: { enabled: true, required: false, placeholder: 'Email Address' },
+    address: { enabled: true, required: true, placeholder: 'Street address' },
+    city: { enabled: true, required: true, placeholder: 'City' },
+    area: { enabled: true, required: false, placeholder: 'Area' },
+    country: { enabled: true, required: false, placeholder: 'Country' },
+    state: { enabled: true, required: false, placeholder: 'State/Province' },
+    postalCode: { enabled: true, required: false, placeholder: 'ZIP / Postal code' },
   };
   const customFields: any[] = cfg.customFields || [];
   const terms = cfg.terms || { enabled: false, required: true, label: 'I agree to the Terms & Conditions', url: '/terms' };
@@ -405,9 +405,14 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
   const [websiteShipping, setWebsiteShipping] = useState<ShippingSettings | undefined>(undefined);
   const [loading, setLoading] = useState(false);
 
-  // Button responsive CSS
+  // Button and header responsive CSS + background settings
   const buttonStyles = (element.styles as any)?.checkoutButton || { responsive: { desktop: {}, mobile: {} } };
   const buttonCSS = generateResponsiveCSS(element.id, buttonStyles);
+  const headerStyles = (element.styles as any)?.checkoutSectionHeader || { responsive: { desktop: {}, mobile: {} } };
+  const headerCSS = generateResponsiveCSS(`${element.id}-section-header`, headerStyles);
+  const backgrounds = (element.styles as any)?.checkoutBackgrounds || {};
+  const formBorderWidth = Number((backgrounds as any)?.formBorderWidth || 0);
+  const summaryBorderWidth = Number((backgrounds as any)?.summaryBorderWidth || 0);
 
   useEffect(() => {
     if (slug) {
@@ -426,15 +431,36 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
     }
   }, [slug, websiteId, loadStore, loadStoreById]);
 
-  // Recompute shipping cost when city or website shipping settings change
+  // Fallback: use store-level shipping settings when website settings are not present
+  useEffect(() => {
+    if (!websiteShipping && (store as any)?.settings?.shipping) {
+      setWebsiteShipping(((store as any).settings.shipping) as ShippingSettings);
+      console.debug('[Checkout] Using store-level shipping settings as fallback');
+    }
+  }, [store, websiteShipping]);
+
+  // Recompute shipping cost when address details change (primarily city)
   useEffect(() => {
     if (websiteShipping && websiteShipping.enabled) {
-      const cost = computeShippingForAddress(websiteShipping, { city: form.shipping_city });
+      const cost = computeShippingForAddress(websiteShipping, {
+        city: form.shipping_city,
+        area: form.shipping_area,
+        address: form.shipping_address,
+        postal: form.shipping_postal_code,
+      });
       if (typeof cost === 'number') setShippingCost(cost);
+      // Debug: observe when shipping recalculates
+      console.debug('[Checkout] Recomputed shipping', {
+        city: form.shipping_city,
+        area: form.shipping_area,
+        postal: form.shipping_postal_code,
+        address: form.shipping_address,
+        cost,
+      });
     } else {
       setShippingCost(0);
     }
-  }, [websiteShipping, form.shipping_city]);
+  }, [websiteShipping, form.shipping_city, form.shipping_area, form.shipping_postal_code, form.shipping_address]);
 
   const handleSubmit = async () => {
     if (!store || items.length === 0) return;
@@ -442,6 +468,37 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
       toast.error('Please accept the terms to continue');
       return;
     }
+
+    // Validate required fields
+    const missing: string[] = [];
+    const isEmpty = (v?: string) => !v || v.trim() === '';
+
+    if (fields.fullName?.enabled && (fields.fullName?.required ?? true) && isEmpty(form.customer_name)) missing.push('Full Name');
+    if (fields.phone?.enabled && (fields.phone?.required ?? true) && isEmpty(form.customer_phone)) missing.push('Phone');
+    if (fields.email?.enabled && (fields.email?.required ?? false)) {
+      const email = form.customer_email || '';
+      const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+      if (isEmpty(email) || !emailOk) missing.push('Valid Email');
+    }
+    if (fields.address?.enabled && (fields.address?.required ?? true) && isEmpty(form.shipping_address)) missing.push('Address');
+    if (fields.city?.enabled && (fields.city?.required ?? true) && isEmpty(form.shipping_city)) missing.push('City');
+    if (fields.area?.enabled && (fields.area?.required ?? false) && isEmpty(form.shipping_area)) missing.push('Area');
+    if (fields.country?.enabled && (fields.country?.required ?? false) && isEmpty(form.shipping_country)) missing.push('Country');
+    if (fields.state?.enabled && (fields.state?.required ?? false) && isEmpty(form.shipping_state)) missing.push('State/Province');
+    if (fields.postalCode?.enabled && (fields.postalCode?.required ?? false) && isEmpty(form.shipping_postal_code)) missing.push('ZIP / Postal code');
+
+    (customFields || [])
+      .filter((cf:any) => cf.enabled && cf.required)
+      .forEach((cf:any) => {
+        const val = (form.custom_fields as any)[cf.id];
+        if (isEmpty(String(val ?? ''))) missing.push(cf.label || 'Custom field');
+      });
+
+    if (missing.length) {
+      toast.error(`Please fill in: ${missing.join(', ')}`);
+      return;
+    }
+
     setLoading(true);
     try {
       const orderData: any = {
@@ -546,93 +603,90 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
   return (
     <>
       {/* Responsive styles for the primary button */}
-      <style>{buttonCSS}</style>
-      <div className={`max-w-5xl mx-auto grid ${gridCols} gap-6`}>
+      <style>{buttonCSS + headerCSS}</style>
+      <div className={`max-w-5xl mx-auto grid ${gridCols} gap-6`} style={{ backgroundColor: backgrounds.containerBg || undefined }}>
         <div className={`${leftColSpan} space-y-4`}>
-          {sections.info && (
-            <Card>
-              <CardHeader><CardTitle>{headings.info}</CardTitle></CardHeader>
-              <CardContent className="space-y-3">
-                <div className={`grid ${infoGridCols} gap-3`}>
-                  {fields.fullName?.enabled && (
-                    <Input placeholder={fields.fullName.placeholder} value={form.customer_name} onChange={e=>setForm(f=>({...f,customer_name:e.target.value}))} />
-                  )}
-                  {fields.phone?.enabled && (
-                    <Input placeholder={fields.phone.placeholder} value={form.customer_phone} onChange={e=>setForm(f=>({...f,customer_phone:e.target.value}))} />
-                  )}
-                </div>
-                {fields.email?.enabled && (
-                  <Input type="email" placeholder={fields.email.placeholder} value={form.customer_email} onChange={e=>setForm(f=>({...f,customer_email:e.target.value}))} />
+          {(sections.info || sections.shipping || sections.payment) && (
+            <Card className={formBorderWidth > 0 ? undefined : 'border-0'} style={{ backgroundColor: backgrounds.formBg || undefined, borderColor: (backgrounds as any).formBorderColor || undefined, borderWidth: formBorderWidth || 0 }}>
+              <CardContent className="p-4 md:p-6 space-y-6">
+                {sections.info && (
+                  <section className="space-y-4">
+                    <h3 className={`mb-3 font-semibold element-${element.id}-section-header`}>{headings.info}</h3>
+                    <div className={`grid ${infoGridCols} gap-4`}>
+                      {fields.fullName?.enabled && (
+                        <Input placeholder={fields.fullName.placeholder} value={form.customer_name} onChange={e=>setForm(f=>({...f,customer_name:e.target.value}))} required={!!(fields.fullName?.enabled && (fields.fullName?.required ?? true))} aria-required={!!(fields.fullName?.enabled && (fields.fullName?.required ?? true))} />
+                      )}
+                      {fields.phone?.enabled && (
+                        <Input placeholder={fields.phone.placeholder} value={form.customer_phone} onChange={e=>setForm(f=>({...f,customer_phone:e.target.value}))} required={!!(fields.phone?.enabled && (fields.phone?.required ?? true))} aria-required={!!(fields.phone?.enabled && (fields.phone?.required ?? true))} />
+                      )}
+                    </div>
+                    {fields.email?.enabled && (
+                      <Input type="email" placeholder={fields.email.placeholder} value={form.customer_email} onChange={e=>setForm(f=>({...f,customer_email:e.target.value}))} required={!!(fields.email?.enabled && (fields.email?.required ?? false))} aria-required={!!(fields.email?.enabled && (fields.email?.required ?? false))} />
+                    )}
+                  </section>
                 )}
-              </CardContent>
-            </Card>
-          )}
-          {sections.shipping && (
-            <Card>
-              <CardHeader><CardTitle>{headings.shipping}</CardTitle></CardHeader>
-              <CardContent className="space-y-3">
-                {fields.address?.enabled && (
-                  <Textarea placeholder={fields.address.placeholder} value={form.shipping_address} onChange={e=>setForm(f=>({...f,shipping_address:e.target.value}))} rows={3} />
-                )}
-                <div className={`grid ${ship2GridCols} gap-3`}>
-                  {fields.city?.enabled && (
-                    <Input placeholder={fields.city.placeholder} value={form.shipping_city} onChange={e=>setForm(f=>({...f,shipping_city:e.target.value}))} />
-                  )}
-                  {fields.area?.enabled && (
-                    <Input placeholder={fields.area.placeholder} value={form.shipping_area} onChange={e=>setForm(f=>({...f,shipping_area:e.target.value}))} />
-                  )}
-                </div>
-                <div className={`grid ${ship3GridCols} gap-3`}>
-                  {fields.country?.enabled && (
-                    <Input placeholder={fields.country.placeholder} value={form.shipping_country} onChange={e=>setForm(f=>({...f,shipping_country:e.target.value}))} />
-                  )}
-                  {fields.state?.enabled && (
-                    <Input placeholder={fields.state.placeholder} value={form.shipping_state} onChange={e=>setForm(f=>({...f,shipping_state:e.target.value}))} />
-                  )}
-                  {fields.postalCode?.enabled && (
-                    <Input placeholder={fields.postalCode.placeholder} value={form.shipping_postal_code} onChange={e=>setForm(f=>({...f,shipping_postal_code:e.target.value}))} />
-                  )}
-                </div>
 
-                {/* Custom fields */}
-                {customFields?.length > 0 && (
-                  <div className="space-y-2">
-                    {customFields.filter((cf:any)=>cf.enabled).map((cf:any) => (
-                      <div key={cf.id}>
-                        {cf.type === 'textarea' ? (
-                          <Textarea placeholder={cf.placeholder || cf.label} value={(form.custom_fields as any)[cf.id] || ''} onChange={(e)=>setForm(f=>({...f, custom_fields: { ...f.custom_fields, [cf.id]: e.target.value }}))} />
-                        ) : (
-                          <Input type={cf.type || 'text'} placeholder={cf.placeholder || cf.label} value={(form.custom_fields as any)[cf.id] || ''} onChange={(e)=>setForm(f=>({...f, custom_fields: { ...f.custom_fields, [cf.id]: e.target.value }}))} />
-                        )}
+                {sections.info && (sections.shipping || sections.payment) && <Separator className="my-4" />}
+
+                {sections.shipping && (
+                  <section className="space-y-4">
+                    <h3 className={`mb-3 font-semibold element-${element.id}-section-header`}>{headings.shipping}</h3>
+                    {fields.address?.enabled && (
+                      <Textarea placeholder={fields.address.placeholder} value={form.shipping_address} onChange={e=>setForm(f=>({...f,shipping_address:e.target.value}))} rows={3} required={!!(fields.address?.enabled && (fields.address?.required ?? true))} aria-required={!!(fields.address?.enabled && (fields.address?.required ?? true))} />
+                    )}
+                    <div className={`grid ${ship2GridCols} gap-4`}>
+                      {fields.city?.enabled && (
+                        <Input placeholder={fields.city.placeholder} value={form.shipping_city} onChange={e=>setForm(f=>({...f,shipping_city:e.target.value}))} required={!!(fields.city?.enabled && (fields.city?.required ?? true))} aria-required={!!(fields.city?.enabled && (fields.city?.required ?? true))} />
+                      )}
+                      {fields.area?.enabled && (
+                        <Input placeholder={fields.area.placeholder} value={form.shipping_area} onChange={e=>setForm(f=>({...f,shipping_area:e.target.value}))} required={!!(fields.area?.enabled && (fields.area?.required ?? false))} aria-required={!!(fields.area?.enabled && (fields.area?.required ?? false))} />
+                      )}
+                    </div>
+                    <div className={`grid ${ship3GridCols} gap-4`}>
+                      {fields.country?.enabled && (
+                        <Input placeholder={fields.country.placeholder} value={form.shipping_country} onChange={e=>setForm(f=>({...f,shipping_country:e.target.value}))} required={!!(fields.country?.enabled && (fields.country?.required ?? false))} aria-required={!!(fields.country?.enabled && (fields.country?.required ?? false))} />
+                      )}
+                      {fields.state?.enabled && (
+                        <Input placeholder={fields.state.placeholder} value={form.shipping_state} onChange={e=>setForm(f=>({...f,shipping_state:e.target.value}))} required={!!(fields.state?.enabled && (fields.state?.required ?? false))} aria-required={!!(fields.state?.enabled && (fields.state?.required ?? false))} />
+                      )}
+                      {fields.postalCode?.enabled && (
+                        <Input placeholder={fields.postalCode.placeholder} value={form.shipping_postal_code} onChange={e=>setForm(f=>({...f,shipping_postal_code:e.target.value}))} required={!!(fields.postalCode?.enabled && (fields.postalCode?.required ?? false))} aria-required={!!(fields.postalCode?.enabled && (fields.postalCode?.required ?? false))} />
+                      )}
+                    </div>
+
+                    {/* Custom fields */}
+                    {customFields?.length > 0 && (
+                      <div className="space-y-2">
+                        {customFields.filter((cf:any)=>cf.enabled).map((cf:any) => (
+                          <div key={cf.id}>
+                            {cf.type === 'textarea' ? (
+                              <Textarea placeholder={cf.placeholder || cf.label} value={(form.custom_fields as any)[cf.id] || ''} onChange={(e)=>setForm(f=>({...f, custom_fields: { ...f.custom_fields, [cf.id]: e.target.value }}))} required={!!cf.required} aria-required={!!cf.required} />
+                            ) : (
+                              <Input type={cf.type || 'text'} placeholder={cf.placeholder || cf.label} value={(form.custom_fields as any)[cf.id] || ''} onChange={(e)=>setForm(f=>({...f, custom_fields: { ...f.custom_fields, [cf.id]: e.target.value }}))} required={!!cf.required} aria-required={!!cf.required} />
+                            )}
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
+                    )}
+                  </section>
                 )}
-              </CardContent>
-            </Card>
-          )}
-          {sections.payment && (
-            <Card>
-              <CardHeader><CardTitle>{headings.payment}</CardTitle></CardHeader>
-              <CardContent className="space-y-3">
-                <Select value={form.payment_method} onValueChange={(v:any)=>setForm(f=>({...f,payment_method:v}))}>
-                  <SelectTrigger><SelectValue placeholder="Select method" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="cod">Cash on Delivery</SelectItem>
-                    <SelectItem value="bkash">bKash</SelectItem>
-                    <SelectItem value="nagad">Nagad</SelectItem>
-                    <SelectItem value="sslcommerz">Credit/Debit Card (SSLCommerz)</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Textarea placeholder="Order notes (optional)" value={form.notes} onChange={e=>setForm(f=>({...f,notes:e.target.value}))} />
 
-                {terms.enabled && (
-                  <label className="flex items-center gap-2 text-sm">
-                    <input type="checkbox" checked={form.accept_terms} onChange={(e)=>setForm(f=>({...f, accept_terms: e.target.checked}))} />
-                    <span>
-                      {terms.label} {terms.url && (<a href={terms.url} target="_blank" rel="noreferrer" className="underline">Read</a>)}
-                    </span>
-                  </label>
+                {sections.shipping && sections.payment && <Separator className="my-4" />}
+
+                {sections.payment && (
+                  <section className="space-y-4">
+                    <h3 className={`mb-3 font-semibold element-${element.id}-section-header`}>{headings.payment}</h3>
+                    <Select value={form.payment_method} onValueChange={(v:any)=>setForm(f=>({...f,payment_method:v}))}>
+                      <SelectTrigger><SelectValue placeholder="Select method" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="cod">Cash on Delivery</SelectItem>
+                        <SelectItem value="bkash">bKash</SelectItem>
+                        <SelectItem value="nagad">Nagad</SelectItem>
+                        <SelectItem value="sslcommerz">Credit/Debit Card (SSLCommerz)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Textarea placeholder="Order notes (optional)" value={form.notes} onChange={e=>setForm(f=>({...f,notes:e.target.value}))} />
+                  </section>
                 )}
               </CardContent>
             </Card>
@@ -640,7 +694,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
         </div>
         <div className="space-y-4">
           {sections.summary && (
-            <Card>
+              <Card className={summaryBorderWidth > 0 ? undefined : 'border-0'} style={{ backgroundColor: backgrounds.summaryBg || undefined, borderColor: (backgrounds as any).summaryBorderColor || undefined, borderWidth: summaryBorderWidth || 0 }}>
               <CardHeader><CardTitle>{headings.summary}</CardTitle></CardHeader>
               <CardContent className="space-y-3">
                 {/* Items */}
@@ -651,10 +705,10 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
                         {showItemImages && it.image && (
                           <img src={it.image} alt={it.name} className="w-10 h-10 object-cover rounded border" />
                         )}
-                          <div className="min-w-0">
-                            <div className="text-sm font-medium truncate">{nameWithVariant(it.name, (it as any).variation)}</div>
-                            <div className="text-xs text-muted-foreground">× {it.quantity}</div>
-                          </div>
+                        <div className="min-w-0">
+                          <div className="text-sm font-medium truncate">{nameWithVariant(it.name, (it as any).variation)}</div>
+                          <div className="text-xs text-muted-foreground">× {it.quantity}</div>
+                        </div>
                       </div>
                       <div className="text-sm font-medium">{formatCurrency(it.price * it.quantity)}</div>
                     </div>
@@ -668,6 +722,15 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
                 <Button className={`w-full mt-2 element-${element.id}`} onClick={handleSubmit} disabled={loading}>
                   {loading? 'Placing Order...' : buttonLabel}
                 </Button>
+
+                {terms.enabled && (
+                  <label className="flex items-center gap-2 text-sm mt-2">
+                    <input type="checkbox" checked={form.accept_terms} onChange={(e)=>setForm(f=>({...f, accept_terms: e.target.checked}))} />
+                    <span>
+                      {terms.label} {terms.url && (<a href={terms.url} target="_blank" rel="noreferrer" className="underline">Read</a>)}
+                    </span>
+                  </label>
+                )}
 
                 {trust.enabled && trust.imageUrl && (
                   <div className="pt-2">
