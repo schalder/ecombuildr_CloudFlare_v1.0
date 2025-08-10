@@ -583,12 +583,12 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
       {/* Responsive styles for the primary button and section headers */}
       <style>{buttonCSS + headerCSS}</style>
       <div className={`max-w-5xl mx-auto grid ${gridCols} gap-6`} style={{ backgroundColor: bgs.containerBg }}>
-        <div className={`${leftColSpan} space-y-4`}>
-          <div className="rounded-lg border p-4 md:p-6 space-y-6" style={{ backgroundColor: bgs.formBg }}>
+        <div className={`${leftColSpan} space-y-6`}>
+          <div className="rounded-lg border p-4 md:p-6 space-y-8" style={{ backgroundColor: bgs.formBg }}>
             {sections.info && (
               <section>
-                <h3 className={`mb-3 font-semibold element-${element.id}-section-header`}>{headings.info}</h3>
-                <div className={`grid ${infoGridCols} gap-3`}>
+                <h3 className={`mb-4 font-semibold element-${element.id}-section-header`}>{headings.info}</h3>
+                <div className={`grid ${infoGridCols} gap-4`}>
                   {fields.fullName?.enabled && (
                     <Input placeholder={fields.fullName.placeholder} value={form.customer_name} onChange={e=>setForm(f=>({...f,customer_name:e.target.value}))} required={!!(fields.fullName?.enabled && (fields.fullName?.required ?? true))} aria-required={!!(fields.fullName?.enabled && (fields.fullName?.required ?? true))} />
                   )}
@@ -597,20 +597,20 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
                   )}
                 </div>
                 {fields.email?.enabled && (
-                  <Input type="email" placeholder={fields.email.placeholder} value={form.customer_email} onChange={e=>setForm(f=>({...f,customer_email:e.target.value}))} required={!!(fields.email?.enabled && (fields.email?.required ?? false))} aria-required={!!(fields.email?.enabled && (fields.email?.required ?? false))} />
+                  <Input type="email" placeholder={fields.email.placeholder} value={form.customer_email} onChange={e=>setForm(f=>({...f,customer_email:e.target.value}))} required={!!(fields.email?.enabled && (fields.email?.required ?? false))} aria-required={!!(fields.email?.enabled && (fields.email?.required ?? false))} className="mt-3 md:mt-4" />
                 )}
               </section>
             )}
 
-            {sections.shipping && sections.info && (<Separator className="my-2" />)}
+            {sections.shipping && sections.info && (<Separator className="my-4" />)}
 
             {sections.shipping && (
               <section>
-                <h3 className={`mb-3 font-semibold element-${element.id}-section-header`}>{headings.shipping}</h3>
+                <h3 className={`mb-4 font-semibold element-${element.id}-section-header`}>{headings.shipping}</h3>
                 {fields.address?.enabled && (
-                  <Textarea placeholder={fields.address.placeholder} value={form.shipping_address} onChange={e=>setForm(f=>({...f,shipping_address:e.target.value}))} rows={3} required={!!(fields.address?.enabled && (fields.address?.required ?? true))} aria-required={!!(fields.address?.enabled && (fields.address?.required ?? true))} />
+                  <Textarea placeholder={fields.address.placeholder} value={form.shipping_address} onChange={e=>setForm(f=>({...f,shipping_address:e.target.value}))} rows={3} required={!!(fields.address?.enabled && (fields.address?.required ?? true))} aria-required={!!(fields.address?.enabled && (fields.address?.required ?? true))} className="mb-3 md:mb-4" />
                 )}
-                <div className={`grid ${ship2GridCols} gap-3`}>
+                <div className={`grid ${ship2GridCols} gap-4`}>
                   {fields.city?.enabled && (
                     <Input placeholder={fields.city.placeholder} value={form.shipping_city} onChange={e=>setForm(f=>({...f,shipping_city:e.target.value}))} required={!!(fields.city?.enabled && (fields.city?.required ?? true))} aria-required={!!(fields.city?.enabled && (fields.city?.required ?? true))} />
                   )}
@@ -618,7 +618,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
                     <Input placeholder={fields.area.placeholder} value={form.shipping_area} onChange={e=>setForm(f=>({...f,shipping_area:e.target.value}))} required={!!(fields.area?.enabled && (fields.area?.required ?? false))} aria-required={!!(fields.area?.enabled && (fields.area?.required ?? false))} />
                   )}
                 </div>
-                <div className={`grid ${ship3GridCols} gap-3`}>
+                <div className={`grid ${ship3GridCols} gap-4`}>
                   {fields.country?.enabled && (
                     <Input placeholder={fields.country.placeholder} value={form.shipping_country} onChange={e=>setForm(f=>({...f,shipping_country:e.target.value}))} required={!!(fields.country?.enabled && (fields.country?.required ?? false))} aria-required={!!(fields.country?.enabled && (fields.country?.required ?? false))} />
                   )}
@@ -631,7 +631,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
                 </div>
 
                 {customFields?.length > 0 && (
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     {customFields.filter((cf:any)=>cf.enabled).map((cf:any) => (
                       <div key={cf.id}>
                         {cf.type === 'textarea' ? (
@@ -646,11 +646,11 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
               </section>
             )}
 
-            {sections.payment && (sections.info || sections.shipping) && (<Separator className="my-2" />)}
+            {sections.payment && (sections.info || sections.shipping) && (<Separator className="my-4" />)}
 
             {sections.payment && (
               <section>
-                <h3 className={`mb-3 font-semibold element-${element.id}-section-header`}>{headings.payment}</h3>
+                <h3 className={`mb-4 font-semibold element-${element.id}-section-header`}>{headings.payment}</h3>
                 <Select value={form.payment_method} onValueChange={(v:any)=>setForm(f=>({...f,payment_method:v}))}>
                   <SelectTrigger><SelectValue placeholder="Select method" /></SelectTrigger>
                   <SelectContent>
@@ -660,7 +660,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
                     <SelectItem value="sslcommerz">Credit/Debit Card (SSLCommerz)</SelectItem>
                   </SelectContent>
                 </Select>
-                <Textarea placeholder="Order notes (optional)" value={form.notes} onChange={e=>setForm(f=>({...f,notes:e.target.value}))} />
+                <Textarea placeholder="Order notes (optional)" value={form.notes} onChange={e=>setForm(f=>({...f,notes:e.target.value}))} className="mt-3 md:mt-4" />
               </section>
             )}
           </div>
