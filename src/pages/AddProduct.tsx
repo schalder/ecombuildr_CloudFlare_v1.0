@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -11,6 +12,8 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import RichTextEditor from '@/components/ui/RichTextEditor';
+import VariationsBuilder, { VariationOption } from '@/components/products/VariationsBuilder';
 
 export default function AddProduct() {
   const { user } = useAuth();
@@ -35,6 +38,14 @@ export default function AddProduct() {
     seo_description: '',
     images: [] as string[],
   });
+
+  // New local states
+  const [hasVariants, setHasVariants] = useState(false);
+  const [variations, setVariations] = useState<VariationOption[]>([]);
+  const [enableFreeShipping, setEnableFreeShipping] = useState(false);
+  const [freeShippingMin, setFreeShippingMin] = useState<string>('');
+  const [easyReturnsEnabled, setEasyReturnsEnabled] = useState(false);
+  const [easyReturnsDays, setEasyReturnsDays] = useState<string>('30');
 
   // Fetch categories for the dropdown
   useEffect(() => {
@@ -98,6 +109,11 @@ export default function AddProduct() {
         inventory_quantity: parseInt(formData.inventory_quantity) || 0,
         category_id: formData.category_id || null,
         images: formData.images,
+        // New fields
+        variations: hasVariants ? variations : [],
+        free_shipping_min_amount: enableFreeShipping && freeShippingMin ? parseFloat(freeShippingMin) : null,
+        easy_returns_enabled: easyReturnsEnabled,
+        easy_returns_days: easyReturnsEnabled && easyReturnsDays ? parseInt(easyReturnsDays) : null,
       });
 
       if (error) throw error;
@@ -159,11 +175,10 @@ export default function AddProduct() {
 
             <div className="space-y-2">
               <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
+              <RichTextEditor
                 value={formData.description}
-                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                rows={4}
+                onChange={(html) => setFormData(prev => ({ ...prev, description: html }))}
+                placeholder="Write a detailed description..."
               />
             </div>
           </CardContent>
@@ -235,6 +250,71 @@ export default function AddProduct() {
                 />
               </div>
             )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Variations</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Switch id="has_variants" checked={hasVariants} onCheckedChange={setHasVariants} />
+              <Label htmlFor="has_variants">This product has variants (e.g., Size, Color)</Label>
+            </div>
+            {hasVariants && (
+              <VariationsBuilder options={variations} onChange={setVariations} />
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Shipping & Returns</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Switch
+                  id="free_shipping"
+                  checked={enableFreeShipping}
+                  onCheckedChange={setEnableFreeShipping}
+                />
+                <Label htmlFor="free_shipping">Offer free shipping over a minimum amount</Label>
+              </div>
+              {enableFreeShipping && (
+                <div className="grid grid-cols-1 md:grid-cols-[200px] gap-2">
+                  <Input
+                    type="number"
+                    step="0.01"
+                    placeholder="Minimum amount (e.g., 1000)"
+                    value={freeShippingMin}
+                    onChange={(e) => setFreeShippingMin(e.target.value)}
+                  />
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Switch
+                  id="easy_returns"
+                  checked={easyReturnsEnabled}
+                  onCheckedChange={setEasyReturnsEnabled}
+                />
+                <Label htmlFor="easy_returns">Enable Easy Returns</Label>
+              </div>
+              {easyReturnsEnabled && (
+                <div className="grid grid-cols-1 md:grid-cols-[200px] gap-2">
+                  <Input
+                    type="number"
+                    placeholder="Days (e.g., 30)"
+                    value={easyReturnsDays}
+                    onChange={(e) => setEasyReturnsDays(e.target.value)}
+                  />
+                </div>
+              )}
+            </div>
           </CardContent>
         </Card>
 

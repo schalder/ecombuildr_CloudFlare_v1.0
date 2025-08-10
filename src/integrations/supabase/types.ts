@@ -772,6 +772,51 @@ export type Database = {
         }
         Relationships: []
       }
+      product_reviews: {
+        Row: {
+          comment: string | null
+          created_at: string
+          id: string
+          is_visible: boolean
+          product_id: string
+          rating: number
+          reviewer_email: string | null
+          reviewer_name: string
+          reviewer_phone: string | null
+          store_id: string
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          is_visible?: boolean
+          product_id: string
+          rating: number
+          reviewer_email?: string | null
+          reviewer_name: string
+          reviewer_phone?: string | null
+          store_id: string
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          is_visible?: boolean
+          product_id?: string
+          rating?: number
+          reviewer_email?: string | null
+          reviewer_name?: string
+          reviewer_phone?: string | null
+          store_id?: string
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       products: {
         Row: {
           category_id: string | null
@@ -779,6 +824,9 @@ export type Database = {
           cost_price: number | null
           created_at: string | null
           description: string | null
+          easy_returns_days: number | null
+          easy_returns_enabled: boolean
+          free_shipping_min_amount: number | null
           id: string
           images: Json | null
           inventory_quantity: number | null
@@ -801,6 +849,9 @@ export type Database = {
           cost_price?: number | null
           created_at?: string | null
           description?: string | null
+          easy_returns_days?: number | null
+          easy_returns_enabled?: boolean
+          free_shipping_min_amount?: number | null
           id?: string
           images?: Json | null
           inventory_quantity?: number | null
@@ -823,6 +874,9 @@ export type Database = {
           cost_price?: number | null
           created_at?: string | null
           description?: string | null
+          easy_returns_days?: number | null
+          easy_returns_enabled?: boolean
+          free_shipping_min_amount?: number | null
           id?: string
           images?: Json | null
           inventory_quantity?: number | null

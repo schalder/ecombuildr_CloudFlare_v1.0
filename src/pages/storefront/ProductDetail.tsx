@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useStore } from '@/contexts/StoreContext';
@@ -10,6 +11,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { ShoppingCart, Heart, Share2, Star } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatCurrency } from '@/lib/currency';
+import ReviewsSection from '@/components/storefront/ReviewsSection';
+import RelatedProducts from '@/components/storefront/RelatedProducts';
 
 interface Product {
   id: string;
@@ -25,6 +28,10 @@ interface Product {
   track_inventory: boolean;
   variations: any[];
   is_active: boolean;
+  category_id?: string | null;
+  free_shipping_min_amount?: number | null;
+  easy_returns_enabled?: boolean;
+  easy_returns_days?: number | null;
 }
 
 export const ProductDetail: React.FC = () => {
@@ -77,10 +84,10 @@ export const ProductDetail: React.FC = () => {
       if (error) throw error;
       const product = {
         ...data,
-        images: Array.isArray(data.images) ? data.images.filter(img => typeof img === 'string') as string[] : [],
-        variations: Array.isArray(data.variations) ? data.variations : []
+        images: Array.isArray(data.images) ? data.images.filter((img: any) => typeof img === 'string') as string[] : [],
+        variations: Array.isArray(data.variations) ? data.variations : [],
       };
-      setProduct(product);
+      setProduct(product as Product);
     } catch (error) {
       console.error('Error fetching product:', error);
       setProduct(null);
@@ -302,6 +309,27 @@ export const ProductDetail: React.FC = () => {
                   <Share2 className="h-4 w-4" />
                 </Button>
               </div>
+
+              {(product.free_shipping_min_amount || product.easy_returns_enabled) && (
+                <div className="grid grid-cols-2 gap-4 text-sm pt-2">
+                  {product.free_shipping_min_amount && (
+                    <div>
+                      <span className="font-medium">Free Shipping</span>
+                      <p className="text-muted-foreground">
+                        On orders over {formatCurrency(Number(product.free_shipping_min_amount))}
+                      </p>
+                    </div>
+                  )}
+                  {product.easy_returns_enabled && (
+                    <div>
+                      <span className="font-medium">Easy Returns</span>
+                      <p className="text-muted-foreground">
+                        {product.easy_returns_days ? `${product.easy_returns_days}-day return policy` : "Easy return policy"}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             <Separator />
@@ -311,10 +339,16 @@ export const ProductDetail: React.FC = () => {
               <div>
                 <h3 className="text-lg font-semibold mb-3">Description</h3>
                 <div className="prose prose-sm max-w-none text-muted-foreground">
-                  <p>{product.description}</p>
+                  <div dangerouslySetInnerHTML={{ __html: product.description }} />
                 </div>
               </div>
             )}
+
+            {/* Reviews */}
+            <ReviewsSection productId={product.id} />
+
+            {/* Related products */}
+            <RelatedProducts categoryId={product.category_id || null} currentProductId={product.id} />
           </div>
         </div>
       </div>

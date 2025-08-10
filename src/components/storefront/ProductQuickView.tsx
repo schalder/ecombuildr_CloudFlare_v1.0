@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -7,6 +8,11 @@ import { Separator } from '@/components/ui/separator';
 import { ShoppingCart, Heart, Star, Minus, Plus, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatCurrency } from '@/lib/currency';
+
+interface VariationOption {
+  name: string;
+  values: string[];
+}
 
 interface Product {
   id: string;
@@ -18,6 +24,12 @@ interface Product {
   images: string[];
   slug: string;
   is_active: boolean;
+  track_inventory?: boolean;
+  inventory_quantity?: number | null;
+  variations?: VariationOption[];
+  free_shipping_min_amount?: number | null;
+  easy_returns_enabled?: boolean;
+  easy_returns_days?: number | null;
 }
 
 interface ProductQuickViewProps {
@@ -37,9 +49,23 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
 }) => {
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
-  const [selectedSize, setSelectedSize] = useState('M');
-  const [selectedColor, setSelectedColor] = useState('Black');
   const [isWishlisted, setIsWishlisted] = useState(false);
+
+  const options = useMemo<VariationOption[]>(() => Array.isArray(product?.variations) ? (product!.variations as any) : [], [product]);
+  const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
+
+  React.useEffect(() => {
+    // Initialize selection to first value for each option
+    if (options && options.length) {
+      const initial: Record<string, string> = {};
+      options.forEach(opt => {
+        initial[opt.name] = opt.values?.[0] || '';
+      });
+      setSelectedOptions(initial);
+    } else {
+      setSelectedOptions({});
+    }
+  }, [options]);
 
   if (!product) return null;
 
@@ -47,19 +73,16 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
     ? Math.round(((product.compare_price - product.price) / product.compare_price) * 100)
     : 0;
 
-  const sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
-  const colors = [
-    { name: 'Black', value: '#000000' },
-    { name: 'White', value: '#FFFFFF' },
-    { name: 'Navy', value: '#1E40AF' },
-    { name: 'Gray', value: '#6B7280' },
-  ];
+  const inStock = !product.track_inventory || (product.inventory_quantity ?? 0) > 0;
+
+  const strippedDescription = useMemo(() => {
+    if (product.short_description) return product.short_description;
+    if (!product.description) return "";
+    return product.description.replace(/<[^>]+>/g, "").slice(0, 180) + (product.description.length > 180 ? "..." : "");
+  }, [product]);
 
   const handleAddToCart = () => {
-    onAddToCart(product, quantity, {
-      size: selectedSize,
-      color: selectedColor
-    });
+    onAddToCart(product, quantity, Object.keys(selectedOptions).length ? selectedOptions : undefined);
     onClose();
   };
 
@@ -83,9 +106,7 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
                     -{discountPercentage}% OFF
                   </Badge>
                 )}
-                <Badge className="bg-emerald-500 hover:bg-emerald-600 text-xs font-bold">
-                  New Arrival
-                </Badge>
+                {/* Hide "New Arrival" mock */}
               </div>
 
               {/* Close Button */}
@@ -125,7 +146,7 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
           {/* Product Details */}
           <div className="p-6 space-y-6">
             <div>
-              {/* Product Rating */}
+              {/* Product Rating - placeholder stars until average rating integrated */}
               <div className="flex items-center gap-1 mb-2">
                 {[...Array(5)].map((_, i) => (
                   <Star
@@ -136,7 +157,7 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
                     )}
                   />
                 ))}
-                <span className="text-sm text-muted-foreground ml-2">(24 Reviews)</span>
+                <span className="text-sm text-muted-foreground ml-2">(Reviews)</span>
               </div>
 
               <h1 className="text-2xl font-bold text-foreground mb-2">{product.name}</h1>
@@ -155,8 +176,10 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
 
               {/* Stock Status */}
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
-                <span className="text-sm text-emerald-600 font-medium">In Stock (47 items)</span>
+                <div className={cn("w-2 h-2 rounded-full", inStock ? "bg-emerald-500" : "bg-destructive")} />
+                <span className={cn("text-sm font-medium", inStock ? "text-emerald-600" : "text-destructive")}>
+                  {inStock ? `In Stock${product.track_inventory ? ` (${product.inventory_quantity} items)` : ""}` : "Out of Stock"}
+                </span>
               </div>
             </div>
 
@@ -165,50 +188,39 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
             {/* Product Description */}
             <div>
               <p className="text-muted-foreground leading-relaxed">
-                {product.short_description || product.description}
+                {strippedDescription}
               </p>
             </div>
 
             <Separator />
 
-            {/* Size Selection */}
-            <div>
-              <h3 className="font-semibold mb-3">Size</h3>
-              <div className="flex gap-2">
-                {sizes.map((size) => (
-                  <Button
-                    key={size}
-                    variant={selectedSize === size ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setSelectedSize(size)}
-                    className="min-w-[40px]"
-                  >
-                    {size}
-                  </Button>
+            {/* Dynamic Variations */}
+            {options.length > 0 && (
+              <div className="space-y-4">
+                {options.map((opt) => (
+                  <div key={opt.name}>
+                    <h3 className="font-semibold mb-3">{opt.name}</h3>
+                    <div className="flex gap-2 flex-wrap">
+                      {opt.values.map((val) => {
+                        const selected = selectedOptions[opt.name] === val;
+                        return (
+                          <Button
+                            key={val}
+                            variant={selected ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => setSelectedOptions(prev => ({ ...prev, [opt.name]: val }))}
+                            className="min-w-[40px]"
+                          >
+                            {val}
+                          </Button>
+                        );
+                      })}
+                    </div>
+                  </div>
                 ))}
+                <Separator />
               </div>
-            </div>
-
-            {/* Color Selection */}
-            <div>
-              <h3 className="font-semibold mb-3">Color: {selectedColor}</h3>
-              <div className="flex gap-2">
-                {colors.map((color) => (
-                  <button
-                    key={color.name}
-                    onClick={() => setSelectedColor(color.name)}
-                    className={cn(
-                      "w-8 h-8 rounded-full border-2 transition-all",
-                      selectedColor === color.name ? "border-primary scale-110" : "border-muted"
-                    )}
-                    style={{ backgroundColor: color.value }}
-                    title={color.name}
-                  />
-                ))}
-              </div>
-            </div>
-
-            <Separator />
+            )}
 
             {/* Quantity and Add to Cart */}
             <div className="space-y-4">
@@ -244,9 +256,10 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
                 <Button 
                   onClick={handleAddToCart}
                   className="flex-1 h-12 text-base font-semibold"
+                  disabled={!inStock}
                 >
                   <ShoppingCart className="h-5 w-5 mr-2" />
-                  Add to Cart
+                  {inStock ? "Add to Cart" : "Out of Stock"}
                 </Button>
                 <Button
                   variant="outline"
@@ -259,21 +272,31 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
               </div>
             </div>
 
-            {/* Product Features */}
-            <Card className="bg-muted/50">
-              <CardContent className="p-4">
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="font-medium">Free Shipping</span>
-                    <p className="text-muted-foreground">On orders over {formatCurrency(1000)}</p>
+            {/* Product Features (real data) */}
+            {(product.free_shipping_min_amount || product.easy_returns_enabled) && (
+              <Card className="bg-muted/50">
+                <CardContent className="p-4">
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    {product.free_shipping_min_amount && (
+                      <div>
+                        <span className="font-medium">Free Shipping</span>
+                        <p className="text-muted-foreground">
+                          On orders over {formatCurrency(Number(product.free_shipping_min_amount))}
+                        </p>
+                      </div>
+                    )}
+                    {product.easy_returns_enabled && (
+                      <div>
+                        <span className="font-medium">Easy Returns</span>
+                        <p className="text-muted-foreground">
+                          {product.easy_returns_days ? `${product.easy_returns_days}-day return policy` : "Easy return policy"}
+                        </p>
+                      </div>
+                    )}
                   </div>
-                  <div>
-                    <span className="font-medium">Easy Returns</span>
-                    <p className="text-muted-foreground">30-day return policy</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
       </DialogContent>
