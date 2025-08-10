@@ -409,13 +409,6 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
   const buttonStyles = (element.styles as any)?.checkoutButton || { responsive: { desktop: {}, mobile: {} } };
   const buttonCSS = generateResponsiveCSS(element.id, buttonStyles);
 
-  // Section header responsive CSS
-  const headerStyles = (element.styles as any)?.checkoutSectionHeader || { responsive: { desktop: {}, mobile: {} } };
-  const headerCSS = generateResponsiveCSS(`${element.id}-section-header`, headerStyles);
-
-  // Background colors
-  const backgrounds = (element.styles as any)?.checkoutBackgrounds || {};
-
   useEffect(() => {
     if (slug) {
       loadStore(slug);
@@ -583,98 +576,95 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
 
   return (
     <>
-      {/* Responsive styles for the primary button and section headers */}
-      <style>{buttonCSS + headerCSS}</style>
-      <div className={`max-w-5xl mx-auto grid ${gridCols} gap-6`} style={{ backgroundColor: (backgrounds as any)?.container || undefined }}>
-
-        <div className={`${leftColSpan}`}>
-          <div className="space-y-4 rounded-md p-4" style={{ backgroundColor: (backgrounds as any)?.formContainer || undefined }}>
-            {sections.info && (
-              <Card>
-                <CardHeader><CardTitle className={`element-${element.id}-section-header`}>{headings.info}</CardTitle></CardHeader>
-                <CardContent className="space-y-3">
-                  <div className={`grid ${infoGridCols} gap-3`}>
-                    {fields.fullName?.enabled && (
-                      <Input placeholder={fields.fullName.placeholder} value={form.customer_name} onChange={e=>setForm(f=>({...f,customer_name:e.target.value}))} required={!!(fields.fullName?.enabled && (fields.fullName?.required ?? true))} aria-required={!!(fields.fullName?.enabled && (fields.fullName?.required ?? true))} />
-                    )}
-                    {fields.phone?.enabled && (
-                      <Input placeholder={fields.phone.placeholder} value={form.customer_phone} onChange={e=>setForm(f=>({...f,customer_phone:e.target.value}))} required={!!(fields.phone?.enabled && (fields.phone?.required ?? true))} aria-required={!!(fields.phone?.enabled && (fields.phone?.required ?? true))} />
-                    )}
-                  </div>
-                  {fields.email?.enabled && (
-                    <Input type="email" placeholder={fields.email.placeholder} value={form.customer_email} onChange={e=>setForm(f=>({...f,customer_email:e.target.value}))} required={!!(fields.email?.enabled && (fields.email?.required ?? false))} aria-required={!!(fields.email?.enabled && (fields.email?.required ?? false))} />
+      {/* Responsive styles for the primary button */}
+      <style>{buttonCSS}</style>
+      <div className={`max-w-5xl mx-auto grid ${gridCols} gap-6`}>
+        <div className={`${leftColSpan} space-y-4`}>
+          {sections.info && (
+            <Card>
+              <CardHeader><CardTitle>{headings.info}</CardTitle></CardHeader>
+              <CardContent className="space-y-3">
+                <div className={`grid ${infoGridCols} gap-3`}>
+                  {fields.fullName?.enabled && (
+                    <Input placeholder={fields.fullName.placeholder} value={form.customer_name} onChange={e=>setForm(f=>({...f,customer_name:e.target.value}))} required={!!(fields.fullName?.enabled && (fields.fullName?.required ?? true))} aria-required={!!(fields.fullName?.enabled && (fields.fullName?.required ?? true))} />
                   )}
-                </CardContent>
-              </Card>
-            )}
-            {sections.shipping && (
-              <Card>
-                <CardHeader><CardTitle className={`element-${element.id}-section-header`}>{headings.shipping}</CardTitle></CardHeader>
-                <CardContent className="space-y-3">
-                  {fields.address?.enabled && (
-                    <Textarea placeholder={fields.address.placeholder} value={form.shipping_address} onChange={e=>setForm(f=>({...f,shipping_address:e.target.value}))} rows={3} required={!!(fields.address?.enabled && (fields.address?.required ?? true))} aria-required={!!(fields.address?.enabled && (fields.address?.required ?? true))} />
+                  {fields.phone?.enabled && (
+                    <Input placeholder={fields.phone.placeholder} value={form.customer_phone} onChange={e=>setForm(f=>({...f,customer_phone:e.target.value}))} required={!!(fields.phone?.enabled && (fields.phone?.required ?? true))} aria-required={!!(fields.phone?.enabled && (fields.phone?.required ?? true))} />
                   )}
-                  <div className={`grid ${ship2GridCols} gap-3`}>
-                    {fields.city?.enabled && (
-                      <Input placeholder={fields.city.placeholder} value={form.shipping_city} onChange={e=>setForm(f=>({...f,shipping_city:e.target.value}))} required={!!(fields.city?.enabled && (fields.city?.required ?? true))} aria-required={!!(fields.city?.enabled && (fields.city?.required ?? true))} />
-                    )}
-                    {fields.area?.enabled && (
-                      <Input placeholder={fields.area.placeholder} value={form.shipping_area} onChange={e=>setForm(f=>({...f,shipping_area:e.target.value}))} required={!!(fields.area?.enabled && (fields.area?.required ?? false))} aria-required={!!(fields.area?.enabled && (fields.area?.required ?? false))} />
-                    )}
-                  </div>
-                  <div className={`grid ${ship3GridCols} gap-3`}>
-                    {fields.country?.enabled && (
-                      <Input placeholder={fields.country.placeholder} value={form.shipping_country} onChange={e=>setForm(f=>({...f,shipping_country:e.target.value}))} required={!!(fields.country?.enabled && (fields.country?.required ?? false))} aria-required={!!(fields.country?.enabled && (fields.country?.required ?? false))} />
-                    )}
-                    {fields.state?.enabled && (
-                      <Input placeholder={fields.state.placeholder} value={form.shipping_state} onChange={e=>setForm(f=>({...f,shipping_state:e.target.value}))} required={!!(fields.state?.enabled && (fields.state?.required ?? false))} aria-required={!!(fields.state?.enabled && (fields.state?.required ?? false))} />
-                    )}
-                    {fields.postalCode?.enabled && (
-                      <Input placeholder={fields.postalCode.placeholder} value={form.shipping_postal_code} onChange={e=>setForm(f=>({...f,shipping_postal_code:e.target.value}))} required={!!(fields.postalCode?.enabled && (fields.postalCode?.required ?? false))} aria-required={!!(fields.postalCode?.enabled && (fields.postalCode?.required ?? false))} />
-                    )}
-                  </div>
-
-                  {/* Custom fields */}
-                  {customFields?.length > 0 && (
-                    <div className="space-y-2">
-                      {customFields.filter((cf:any)=>cf.enabled).map((cf:any) => (
-                        <div key={cf.id}>
-                          {cf.type === 'textarea' ? (
-                            <Textarea placeholder={cf.placeholder || cf.label} value={(form.custom_fields as any)[cf.id] || ''} onChange={(e)=>setForm(f=>({...f, custom_fields: { ...f.custom_fields, [cf.id]: e.target.value }}))} required={!!cf.required} aria-required={!!cf.required} />
-                          ) : (
-                            <Input type={cf.type || 'text'} placeholder={cf.placeholder || cf.label} value={(form.custom_fields as any)[cf.id] || ''} onChange={(e)=>setForm(f=>({...f, custom_fields: { ...f.custom_fields, [cf.id]: e.target.value }}))} required={!!cf.required} aria-required={!!cf.required} />
-                          )}
-                        </div>
-                      ))}
-                    </div>
+                </div>
+                {fields.email?.enabled && (
+                  <Input type="email" placeholder={fields.email.placeholder} value={form.customer_email} onChange={e=>setForm(f=>({...f,customer_email:e.target.value}))} required={!!(fields.email?.enabled && (fields.email?.required ?? false))} aria-required={!!(fields.email?.enabled && (fields.email?.required ?? false))} />
+                )}
+              </CardContent>
+            </Card>
+          )}
+          {sections.shipping && (
+            <Card>
+              <CardHeader><CardTitle>{headings.shipping}</CardTitle></CardHeader>
+              <CardContent className="space-y-3">
+                {fields.address?.enabled && (
+                  <Textarea placeholder={fields.address.placeholder} value={form.shipping_address} onChange={e=>setForm(f=>({...f,shipping_address:e.target.value}))} rows={3} required={!!(fields.address?.enabled && (fields.address?.required ?? true))} aria-required={!!(fields.address?.enabled && (fields.address?.required ?? true))} />
+                )}
+                <div className={`grid ${ship2GridCols} gap-3`}>
+                  {fields.city?.enabled && (
+                    <Input placeholder={fields.city.placeholder} value={form.shipping_city} onChange={e=>setForm(f=>({...f,shipping_city:e.target.value}))} required={!!(fields.city?.enabled && (fields.city?.required ?? true))} aria-required={!!(fields.city?.enabled && (fields.city?.required ?? true))} />
                   )}
-                </CardContent>
-              </Card>
-            )}
-            {sections.payment && (
-              <Card>
-                <CardHeader><CardTitle className={`element-${element.id}-section-header`}>{headings.payment}</CardTitle></CardHeader>
-                <CardContent className="space-y-3">
-                  <Select value={form.payment_method} onValueChange={(v:any)=>setForm(f=>({...f,payment_method:v}))}>
-                    <SelectTrigger><SelectValue placeholder="Select method" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="cod">Cash on Delivery</SelectItem>
-                      <SelectItem value="bkash">bKash</SelectItem>
-                      <SelectItem value="nagad">Nagad</SelectItem>
-                      <SelectItem value="sslcommerz">Credit/Debit Card (SSLCommerz)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Textarea placeholder="Order notes (optional)" value={form.notes} onChange={e=>setForm(f=>({...f,notes:e.target.value}))} />
+                  {fields.area?.enabled && (
+                    <Input placeholder={fields.area.placeholder} value={form.shipping_area} onChange={e=>setForm(f=>({...f,shipping_area:e.target.value}))} required={!!(fields.area?.enabled && (fields.area?.required ?? false))} aria-required={!!(fields.area?.enabled && (fields.area?.required ?? false))} />
+                  )}
+                </div>
+                <div className={`grid ${ship3GridCols} gap-3`}>
+                  {fields.country?.enabled && (
+                    <Input placeholder={fields.country.placeholder} value={form.shipping_country} onChange={e=>setForm(f=>({...f,shipping_country:e.target.value}))} required={!!(fields.country?.enabled && (fields.country?.required ?? false))} aria-required={!!(fields.country?.enabled && (fields.country?.required ?? false))} />
+                  )}
+                  {fields.state?.enabled && (
+                    <Input placeholder={fields.state.placeholder} value={form.shipping_state} onChange={e=>setForm(f=>({...f,shipping_state:e.target.value}))} required={!!(fields.state?.enabled && (fields.state?.required ?? false))} aria-required={!!(fields.state?.enabled && (fields.state?.required ?? false))} />
+                  )}
+                  {fields.postalCode?.enabled && (
+                    <Input placeholder={fields.postalCode.placeholder} value={form.shipping_postal_code} onChange={e=>setForm(f=>({...f,shipping_postal_code:e.target.value}))} required={!!(fields.postalCode?.enabled && (fields.postalCode?.required ?? false))} aria-required={!!(fields.postalCode?.enabled && (fields.postalCode?.required ?? false))} />
+                  )}
+                </div>
 
-                </CardContent>
-              </Card>
-            )}
-          </div>
+                {/* Custom fields */}
+                {customFields?.length > 0 && (
+                  <div className="space-y-2">
+                    {customFields.filter((cf:any)=>cf.enabled).map((cf:any) => (
+                      <div key={cf.id}>
+                        {cf.type === 'textarea' ? (
+                          <Textarea placeholder={cf.placeholder || cf.label} value={(form.custom_fields as any)[cf.id] || ''} onChange={(e)=>setForm(f=>({...f, custom_fields: { ...f.custom_fields, [cf.id]: e.target.value }}))} required={!!cf.required} aria-required={!!cf.required} />
+                        ) : (
+                          <Input type={cf.type || 'text'} placeholder={cf.placeholder || cf.label} value={(form.custom_fields as any)[cf.id] || ''} onChange={(e)=>setForm(f=>({...f, custom_fields: { ...f.custom_fields, [cf.id]: e.target.value }}))} required={!!cf.required} aria-required={!!cf.required} />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+          {sections.payment && (
+            <Card>
+              <CardHeader><CardTitle>{headings.payment}</CardTitle></CardHeader>
+              <CardContent className="space-y-3">
+                <Select value={form.payment_method} onValueChange={(v:any)=>setForm(f=>({...f,payment_method:v}))}>
+                  <SelectTrigger><SelectValue placeholder="Select method" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="cod">Cash on Delivery</SelectItem>
+                    <SelectItem value="bkash">bKash</SelectItem>
+                    <SelectItem value="nagad">Nagad</SelectItem>
+                    <SelectItem value="sslcommerz">Credit/Debit Card (SSLCommerz)</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Textarea placeholder="Order notes (optional)" value={form.notes} onChange={e=>setForm(f=>({...f,notes:e.target.value}))} />
+
+              </CardContent>
+            </Card>
+          )}
         </div>
         <div className="space-y-4">
           {sections.summary && (
-            <Card style={{ backgroundColor: (backgrounds as any)?.summaryCard || undefined }}>
-              <CardHeader><CardTitle className={`element-${element.id}-section-header`}>{headings.summary}</CardTitle></CardHeader>
+            <Card>
+              <CardHeader><CardTitle>{headings.summary}</CardTitle></CardHeader>
               <CardContent className="space-y-3">
                 {/* Items */}
                 <div className="space-y-2">
@@ -713,7 +703,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
 
                 {trust.enabled && trust.imageUrl && (
                   <div className="pt-2">
-                    <img src={trust.imageUrl} alt={trust.alt || 'Secure checkout'} className="w-full max-h-16 object-contain mx-auto" loading="lazy" />
+                    <img src={trust.imageUrl} alt={trust.alt || 'Secure checkout'} className="w-full h-auto object-contain" loading="lazy" />
                   </div>
                 )}
               </CardContent>
