@@ -340,15 +340,15 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
 
   const cfg: any = element.content || {};
   const fields = cfg.fields || {
-    fullName: { enabled: true, required: true, placeholder: 'Full Name' },
-    phone: { enabled: true, required: true, placeholder: 'Phone Number' },
-    email: { enabled: true, required: false, placeholder: 'Email Address' },
-    address: { enabled: true, required: true, placeholder: 'Street address' },
-    city: { enabled: true, required: true, placeholder: 'City' },
-    area: { enabled: true, required: false, placeholder: 'Area' },
-    country: { enabled: true, required: false, placeholder: 'Country' },
-    state: { enabled: true, required: false, placeholder: 'State/Province' },
-    postalCode: { enabled: true, required: false, placeholder: 'ZIP / Postal code' },
+    fullName: { enabled: true, placeholder: 'Full Name' },
+    phone: { enabled: true, placeholder: 'Phone Number' },
+    email: { enabled: true, placeholder: 'Email Address' },
+    address: { enabled: true, placeholder: 'Street address' },
+    city: { enabled: true, placeholder: 'City' },
+    area: { enabled: true, placeholder: 'Area' },
+    country: { enabled: true, placeholder: 'Country' },
+    state: { enabled: true, placeholder: 'State/Province' },
+    postalCode: { enabled: true, placeholder: 'ZIP / Postal code' },
   };
   const customFields: any[] = cfg.customFields || [];
   const terms = cfg.terms || { enabled: false, required: true, label: 'I agree to the Terms & Conditions', url: '/terms' };
@@ -442,37 +442,6 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
       toast.error('Please accept the terms to continue');
       return;
     }
-
-    // Validate required fields
-    const missing: string[] = [];
-    const isEmpty = (v?: string) => !v || v.trim() === '';
-
-    if (fields.fullName?.enabled && (fields.fullName?.required ?? true) && isEmpty(form.customer_name)) missing.push('Full Name');
-    if (fields.phone?.enabled && (fields.phone?.required ?? true) && isEmpty(form.customer_phone)) missing.push('Phone');
-    if (fields.email?.enabled && (fields.email?.required ?? false)) {
-      const email = form.customer_email || '';
-      const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-      if (isEmpty(email) || !emailOk) missing.push('Valid Email');
-    }
-    if (fields.address?.enabled && (fields.address?.required ?? true) && isEmpty(form.shipping_address)) missing.push('Address');
-    if (fields.city?.enabled && (fields.city?.required ?? true) && isEmpty(form.shipping_city)) missing.push('City');
-    if (fields.area?.enabled && (fields.area?.required ?? false) && isEmpty(form.shipping_area)) missing.push('Area');
-    if (fields.country?.enabled && (fields.country?.required ?? false) && isEmpty(form.shipping_country)) missing.push('Country');
-    if (fields.state?.enabled && (fields.state?.required ?? false) && isEmpty(form.shipping_state)) missing.push('State/Province');
-    if (fields.postalCode?.enabled && (fields.postalCode?.required ?? false) && isEmpty(form.shipping_postal_code)) missing.push('ZIP / Postal code');
-
-    (customFields || [])
-      .filter((cf:any) => cf.enabled && cf.required)
-      .forEach((cf:any) => {
-        const val = (form.custom_fields as any)[cf.id];
-        if (isEmpty(String(val ?? ''))) missing.push(cf.label || 'Custom field');
-      });
-
-    if (missing.length) {
-      toast.error(`Please fill in: ${missing.join(', ')}`);
-      return;
-    }
-
     setLoading(true);
     try {
       const orderData: any = {
@@ -586,14 +555,14 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
               <CardContent className="space-y-3">
                 <div className={`grid ${infoGridCols} gap-3`}>
                   {fields.fullName?.enabled && (
-                    <Input placeholder={fields.fullName.placeholder} value={form.customer_name} onChange={e=>setForm(f=>({...f,customer_name:e.target.value}))} required={!!(fields.fullName?.enabled && (fields.fullName?.required ?? true))} aria-required={!!(fields.fullName?.enabled && (fields.fullName?.required ?? true))} />
+                    <Input placeholder={fields.fullName.placeholder} value={form.customer_name} onChange={e=>setForm(f=>({...f,customer_name:e.target.value}))} />
                   )}
                   {fields.phone?.enabled && (
-                    <Input placeholder={fields.phone.placeholder} value={form.customer_phone} onChange={e=>setForm(f=>({...f,customer_phone:e.target.value}))} required={!!(fields.phone?.enabled && (fields.phone?.required ?? true))} aria-required={!!(fields.phone?.enabled && (fields.phone?.required ?? true))} />
+                    <Input placeholder={fields.phone.placeholder} value={form.customer_phone} onChange={e=>setForm(f=>({...f,customer_phone:e.target.value}))} />
                   )}
                 </div>
                 {fields.email?.enabled && (
-                  <Input type="email" placeholder={fields.email.placeholder} value={form.customer_email} onChange={e=>setForm(f=>({...f,customer_email:e.target.value}))} required={!!(fields.email?.enabled && (fields.email?.required ?? false))} aria-required={!!(fields.email?.enabled && (fields.email?.required ?? false))} />
+                  <Input type="email" placeholder={fields.email.placeholder} value={form.customer_email} onChange={e=>setForm(f=>({...f,customer_email:e.target.value}))} />
                 )}
               </CardContent>
             </Card>
@@ -603,25 +572,25 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
               <CardHeader><CardTitle>{headings.shipping}</CardTitle></CardHeader>
               <CardContent className="space-y-3">
                 {fields.address?.enabled && (
-                  <Textarea placeholder={fields.address.placeholder} value={form.shipping_address} onChange={e=>setForm(f=>({...f,shipping_address:e.target.value}))} rows={3} required={!!(fields.address?.enabled && (fields.address?.required ?? true))} aria-required={!!(fields.address?.enabled && (fields.address?.required ?? true))} />
+                  <Textarea placeholder={fields.address.placeholder} value={form.shipping_address} onChange={e=>setForm(f=>({...f,shipping_address:e.target.value}))} rows={3} />
                 )}
                 <div className={`grid ${ship2GridCols} gap-3`}>
                   {fields.city?.enabled && (
-                    <Input placeholder={fields.city.placeholder} value={form.shipping_city} onChange={e=>setForm(f=>({...f,shipping_city:e.target.value}))} required={!!(fields.city?.enabled && (fields.city?.required ?? true))} aria-required={!!(fields.city?.enabled && (fields.city?.required ?? true))} />
+                    <Input placeholder={fields.city.placeholder} value={form.shipping_city} onChange={e=>setForm(f=>({...f,shipping_city:e.target.value}))} />
                   )}
                   {fields.area?.enabled && (
-                    <Input placeholder={fields.area.placeholder} value={form.shipping_area} onChange={e=>setForm(f=>({...f,shipping_area:e.target.value}))} required={!!(fields.area?.enabled && (fields.area?.required ?? false))} aria-required={!!(fields.area?.enabled && (fields.area?.required ?? false))} />
+                    <Input placeholder={fields.area.placeholder} value={form.shipping_area} onChange={e=>setForm(f=>({...f,shipping_area:e.target.value}))} />
                   )}
                 </div>
                 <div className={`grid ${ship3GridCols} gap-3`}>
                   {fields.country?.enabled && (
-                    <Input placeholder={fields.country.placeholder} value={form.shipping_country} onChange={e=>setForm(f=>({...f,shipping_country:e.target.value}))} required={!!(fields.country?.enabled && (fields.country?.required ?? false))} aria-required={!!(fields.country?.enabled && (fields.country?.required ?? false))} />
+                    <Input placeholder={fields.country.placeholder} value={form.shipping_country} onChange={e=>setForm(f=>({...f,shipping_country:e.target.value}))} />
                   )}
                   {fields.state?.enabled && (
-                    <Input placeholder={fields.state.placeholder} value={form.shipping_state} onChange={e=>setForm(f=>({...f,shipping_state:e.target.value}))} required={!!(fields.state?.enabled && (fields.state?.required ?? false))} aria-required={!!(fields.state?.enabled && (fields.state?.required ?? false))} />
+                    <Input placeholder={fields.state.placeholder} value={form.shipping_state} onChange={e=>setForm(f=>({...f,shipping_state:e.target.value}))} />
                   )}
                   {fields.postalCode?.enabled && (
-                    <Input placeholder={fields.postalCode.placeholder} value={form.shipping_postal_code} onChange={e=>setForm(f=>({...f,shipping_postal_code:e.target.value}))} required={!!(fields.postalCode?.enabled && (fields.postalCode?.required ?? false))} aria-required={!!(fields.postalCode?.enabled && (fields.postalCode?.required ?? false))} />
+                    <Input placeholder={fields.postalCode.placeholder} value={form.shipping_postal_code} onChange={e=>setForm(f=>({...f,shipping_postal_code:e.target.value}))} />
                   )}
                 </div>
 
@@ -631,9 +600,9 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
                     {customFields.filter((cf:any)=>cf.enabled).map((cf:any) => (
                       <div key={cf.id}>
                         {cf.type === 'textarea' ? (
-                          <Textarea placeholder={cf.placeholder || cf.label} value={(form.custom_fields as any)[cf.id] || ''} onChange={(e)=>setForm(f=>({...f, custom_fields: { ...f.custom_fields, [cf.id]: e.target.value }}))} required={!!cf.required} aria-required={!!cf.required} />
+                          <Textarea placeholder={cf.placeholder || cf.label} value={(form.custom_fields as any)[cf.id] || ''} onChange={(e)=>setForm(f=>({...f, custom_fields: { ...f.custom_fields, [cf.id]: e.target.value }}))} />
                         ) : (
-                          <Input type={cf.type || 'text'} placeholder={cf.placeholder || cf.label} value={(form.custom_fields as any)[cf.id] || ''} onChange={(e)=>setForm(f=>({...f, custom_fields: { ...f.custom_fields, [cf.id]: e.target.value }}))} required={!!cf.required} aria-required={!!cf.required} />
+                          <Input type={cf.type || 'text'} placeholder={cf.placeholder || cf.label} value={(form.custom_fields as any)[cf.id] || ''} onChange={(e)=>setForm(f=>({...f, custom_fields: { ...f.custom_fields, [cf.id]: e.target.value }}))} />
                         )}
                       </div>
                     ))}
@@ -657,6 +626,14 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
                 </Select>
                 <Textarea placeholder="Order notes (optional)" value={form.notes} onChange={e=>setForm(f=>({...f,notes:e.target.value}))} />
 
+                {terms.enabled && (
+                  <label className="flex items-center gap-2 text-sm">
+                    <input type="checkbox" checked={form.accept_terms} onChange={(e)=>setForm(f=>({...f, accept_terms: e.target.checked}))} />
+                    <span>
+                      {terms.label} {terms.url && (<a href={terms.url} target="_blank" rel="noreferrer" className="underline">Read</a>)}
+                    </span>
+                  </label>
+                )}
               </CardContent>
             </Card>
           )}
@@ -691,15 +668,6 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
                 <Button className={`w-full mt-2 element-${element.id}`} onClick={handleSubmit} disabled={loading}>
                   {loading? 'Placing Order...' : buttonLabel}
                 </Button>
-
-                {terms.enabled && (
-                  <label className="flex items-center gap-2 text-sm mt-2">
-                    <input type="checkbox" checked={form.accept_terms} onChange={(e)=>setForm(f=>({...f, accept_terms: e.target.checked}))} />
-                    <span>
-                      {terms.label} {terms.url && (<a href={terms.url} target="_blank" rel="noreferrer" className="underline">Read</a>)}
-                    </span>
-                  </label>
-                )}
 
                 {trust.enabled && trust.imageUrl && (
                   <div className="pt-2">

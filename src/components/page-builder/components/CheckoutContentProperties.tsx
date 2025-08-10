@@ -15,15 +15,15 @@ interface CheckoutContentPropertiesProps {
 }
 
 const defaultFields = {
-  fullName: { enabled: true, required: true, placeholder: 'Full Name' },
-  phone: { enabled: true, required: true, placeholder: 'Phone Number' },
-  email: { enabled: true, required: false, placeholder: 'Email Address' },
-  address: { enabled: true, required: true, placeholder: 'Street address' },
-  city: { enabled: true, required: true, placeholder: 'City' },
-  area: { enabled: true, required: false, placeholder: 'Area' },
-  country: { enabled: true, required: false, placeholder: 'Country' },
-  state: { enabled: true, required: false, placeholder: 'State/Province' },
-  postalCode: { enabled: true, required: false, placeholder: 'ZIP / Postal code' },
+  fullName: { enabled: true, placeholder: 'Full Name' },
+  phone: { enabled: true, placeholder: 'Phone Number' },
+  email: { enabled: true, placeholder: 'Email Address' },
+  address: { enabled: true, placeholder: 'Street address' },
+  city: { enabled: true, placeholder: 'City' },
+  area: { enabled: true, placeholder: 'Area' },
+  country: { enabled: true, placeholder: 'Country' },
+  state: { enabled: true, placeholder: 'State/Province' },
+  postalCode: { enabled: true, placeholder: 'ZIP / Postal code' },
 };
 
 export const CheckoutContentProperties: React.FC<CheckoutContentPropertiesProps> = ({ element, onUpdate }) => {
@@ -96,8 +96,6 @@ export const CheckoutContentProperties: React.FC<CheckoutContentPropertiesProps>
                   <div className="flex items-center gap-2">
                     <input type="checkbox" checked={!!fields.fullName.enabled} onChange={(e) => updateField('fullName', { enabled: e.target.checked })} />
                     <Label className="text-sm">Full Name</Label>
-                    <input type="checkbox" className="ml-4" checked={!!fields.fullName.required} onChange={(e) => updateField('fullName', { required: e.target.checked })} />
-                    <Label className="text-sm">Required</Label>
                   </div>
                   <Input value={fields.fullName.placeholder} onChange={(e) => updateField('fullName', { placeholder: e.target.value })} placeholder="Placeholder" />
                 </div>
@@ -105,8 +103,6 @@ export const CheckoutContentProperties: React.FC<CheckoutContentPropertiesProps>
                   <div className="flex items-center gap-2">
                     <input type="checkbox" checked={!!fields.phone.enabled} onChange={(e) => updateField('phone', { enabled: e.target.checked })} />
                     <Label className="text-sm">Phone</Label>
-                    <input type="checkbox" className="ml-4" checked={!!fields.phone.required} onChange={(e) => updateField('phone', { required: e.target.checked })} />
-                    <Label className="text-sm">Required</Label>
                   </div>
                   <Input value={fields.phone.placeholder} onChange={(e) => updateField('phone', { placeholder: e.target.value })} placeholder="Placeholder" />
                 </div>
@@ -115,8 +111,6 @@ export const CheckoutContentProperties: React.FC<CheckoutContentPropertiesProps>
                 <div className="flex items-center gap-2">
                   <input type="checkbox" checked={!!fields.email.enabled} onChange={(e) => updateField('email', { enabled: e.target.checked })} />
                   <Label className="text-sm">Email</Label>
-                  <input type="checkbox" className="ml-4" checked={!!fields.email.required} onChange={(e) => updateField('email', { required: e.target.checked })} />
-                  <Label className="text-sm">Required</Label>
                 </div>
                 <Input value={fields.email.placeholder} onChange={(e) => updateField('email', { placeholder: e.target.value })} placeholder="Placeholder" />
               </div>
@@ -132,57 +126,45 @@ export const CheckoutContentProperties: React.FC<CheckoutContentPropertiesProps>
                 <div className="flex items-center gap-2">
                   <input type="checkbox" checked={!!fields.address.enabled} onChange={(e) => updateField('address', { enabled: e.target.checked })} />
                   <Label className="text-sm">Address</Label>
-                  <input type="checkbox" className="ml-4" checked={!!fields.address.required} onChange={(e) => updateField('address', { required: e.target.checked })} />
-                  <Label className="text-sm">Required</Label>
                 </div>
                 <Input value={fields.address.placeholder} onChange={(e) => updateField('address', { placeholder: e.target.value })} placeholder="Placeholder" />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <input type="checkbox" checked={!!fields.city.enabled} onChange={(e) => updateField('city', { enabled: e.target.checked })} />
-                  <Label className="text-sm">City</Label>
-                  <input type="checkbox" className="ml-4" checked={!!fields.city.required} onChange={(e) => updateField('city', { required: e.target.checked })} />
-                  <Label className="text-sm">Required</Label>
-                </div>
+                  <div className="flex items-center gap-2">
+                    <input type="checkbox" checked={!!fields.city.enabled} onChange={(e) => updateField('city', { enabled: e.target.checked })} />
+                    <Label className="text-sm">City</Label>
+                  </div>
                   <Input value={fields.city.placeholder} onChange={(e) => updateField('city', { placeholder: e.target.value })} placeholder="Placeholder" />
                 </div>
                 <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <input type="checkbox" checked={!!fields.area.enabled} onChange={(e) => updateField('area', { enabled: e.target.checked })} />
-                  <Label className="text-sm">Area</Label>
-                  <input type="checkbox" className="ml-4" checked={!!fields.area.required} onChange={(e) => updateField('area', { required: e.target.checked })} />
-                  <Label className="text-sm">Required</Label>
-                </div>
+                  <div className="flex items-center gap-2">
+                    <input type="checkbox" checked={!!fields.area.enabled} onChange={(e) => updateField('area', { enabled: e.target.checked })} />
+                    <Label className="text-sm">Area</Label>
+                  </div>
                   <Input value={fields.area.placeholder} onChange={(e) => updateField('area', { placeholder: e.target.value })} placeholder="Placeholder" />
                 </div>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <input type="checkbox" checked={!!fields.country.enabled} onChange={(e) => updateField('country', { enabled: e.target.checked })} />
-                  <Label className="text-sm">Country</Label>
-                  <input type="checkbox" className="ml-4" checked={!!fields.country.required} onChange={(e) => updateField('country', { required: e.target.checked })} />
-                  <Label className="text-sm">Required</Label>
-                </div>
+                  <div className="flex items-center gap-2">
+                    <input type="checkbox" checked={!!fields.country.enabled} onChange={(e) => updateField('country', { enabled: e.target.checked })} />
+                    <Label className="text-sm">Country</Label>
+                  </div>
                   <Input value={fields.country.placeholder} onChange={(e) => updateField('country', { placeholder: e.target.value })} placeholder="Placeholder" />
                 </div>
                 <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <input type="checkbox" checked={!!fields.state.enabled} onChange={(e) => updateField('state', { enabled: e.target.checked })} />
-                  <Label className="text-sm">State/Province</Label>
-                  <input type="checkbox" className="ml-4" checked={!!fields.state.required} onChange={(e) => updateField('state', { required: e.target.checked })} />
-                  <Label className="text-sm">Required</Label>
-                </div>
+                  <div className="flex items-center gap-2">
+                    <input type="checkbox" checked={!!fields.state.enabled} onChange={(e) => updateField('state', { enabled: e.target.checked })} />
+                    <Label className="text-sm">State/Province</Label>
+                  </div>
                   <Input value={fields.state.placeholder} onChange={(e) => updateField('state', { placeholder: e.target.value })} placeholder="Placeholder" />
                 </div>
                 <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <input type="checkbox" checked={!!fields.postalCode.enabled} onChange={(e) => updateField('postalCode', { enabled: e.target.checked })} />
-                  <Label className="text-sm">ZIP / Postal code</Label>
-                  <input type="checkbox" className="ml-4" checked={!!fields.postalCode.required} onChange={(e) => updateField('postalCode', { required: e.target.checked })} />
-                  <Label className="text-sm">Required</Label>
-                </div>
+                  <div className="flex items-center gap-2">
+                    <input type="checkbox" checked={!!fields.postalCode.enabled} onChange={(e) => updateField('postalCode', { enabled: e.target.checked })} />
+                    <Label className="text-sm">ZIP / Postal code</Label>
+                  </div>
                   <Input value={fields.postalCode.placeholder} onChange={(e) => updateField('postalCode', { placeholder: e.target.value })} placeholder="Placeholder" />
                 </div>
               </div>
