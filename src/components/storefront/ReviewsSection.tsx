@@ -71,8 +71,23 @@ export const ReviewsSection: React.FC<ReviewsSectionProps> = ({ productId }) => 
       return;
     }
     setSubmitting(true);
+    // Fetch store_id for the product to satisfy types and constraints
+    const { data: productData, error: productError } = await supabase
+      .from("products")
+      .select("store_id")
+      .eq("id", productId)
+      .maybeSingle();
+
+    if (productError || !productData?.store_id) {
+      console.error("Failed to resolve product store_id:", productError);
+      toast.error("Unable to submit review at the moment.");
+      setSubmitting(false);
+      return;
+    }
+
     const { error } = await supabase.from("product_reviews").insert({
       product_id: productId,
+      store_id: productData.store_id,
       reviewer_name: form.name,
       reviewer_email: form.email || null,
       reviewer_phone: form.phone || null,
