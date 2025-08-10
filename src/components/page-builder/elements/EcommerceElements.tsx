@@ -389,10 +389,10 @@ const FeaturedProductsElement: React.FC<{
                 </div>
                 <div className="mt-2 flex items-center justify-between">
                    <div className="flex flex-col">
-                     <span style={{ color: elementStyles.color, fontSize: elementStyles.fontSize, fontWeight: elementStyles.fontWeight }} className="font-bold">${p.price}</span>
+                     <span style={{ color: elementStyles.color, fontSize: elementStyles.fontSize, fontWeight: elementStyles.fontWeight }} className="font-bold">{formatCurrency(p.price)}</span>
                     {p.compare_price && p.compare_price > p.price && (
                       <span className="text-sm text-muted-foreground line-through">
-                        ${p.compare_price}
+                        {formatCurrency(p.compare_price)}
                       </span>
                     )}
                   </div>
@@ -486,14 +486,14 @@ const FeaturedProductsElement: React.FC<{
             </p>
             
             <div className="flex items-center gap-2 mb-4">
-              <span className="text-2xl font-bold text-primary">${product.price}</span>
+              <span className="text-2xl font-bold text-primary">{formatCurrency(product.price)}</span>
               {product.compare_price && product.compare_price > product.price && (
                 <>
                   <span className="text-lg text-muted-foreground line-through">
-                    ${product.compare_price}
+                    {formatCurrency(product.compare_price)}
                   </span>
                   <Badge variant="destructive">
-                    Save ${(product.compare_price - product.price).toFixed(2)}
+                    Save {formatCurrency(product.compare_price - product.price)}
                   </Badge>
                 </>
               )}
@@ -767,9 +767,9 @@ const WeeklyFeaturedElement: React.FC<{
               </div>
               <h4 className="font-medium mb-2">{product.name}</h4>
               <div className="mb-3">
-                <span className="text-lg font-bold text-primary">${product.price}</span>
+                <span className="text-lg font-bold text-primary">{formatCurrency(product.price)}</span>
                 <span className="text-sm text-muted-foreground line-through ml-2">
-                  ${(product.price / (1 - product.discount / 100)).toFixed(2)}
+                  {formatCurrency(product.price / (1 - product.discount / 100))}
                 </span>
               </div>
               <Button size="sm" className="w-full">Quick Add</Button>
@@ -851,10 +851,10 @@ const PriceElement: React.FC<{
     <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-md mx-auto'}`}>
       <div className={layoutClass}>
         <div className="flex items-center gap-2">
-          <span className="text-2xl font-bold text-primary">${product.price}</span>
+          <span className="text-2xl font-bold text-primary">{formatCurrency(product.price)}</span>
           {showComparePrice && product.compare_price && product.compare_price > product.price && (
             <span className="text-lg text-muted-foreground line-through">
-              ${product.compare_price}
+              {formatCurrency(product.compare_price)}
             </span>
           )}
           {showDiscount && discount > 0 && (
