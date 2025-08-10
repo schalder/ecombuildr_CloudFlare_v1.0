@@ -68,7 +68,8 @@ export default function Orders() {
   const [isOrderDetailsOpen, setIsOrderDetailsOpen] = useState(false);
   const [invoiceOpen, setInvoiceOpen] = useState(false);
   const [invoiceData, setInvoiceData] = useState<{ order: any; items: any[] } | null>(null);
-
+  const [orderItemsMap, setOrderItemsMap] = useState<Record<string, any[]>>({});
+  const [selectedOrderItems, setSelectedOrderItems] = useState<any[]>([]);
   useEffect(() => {
     if (user) {
       fetchOrders();
@@ -117,6 +118,24 @@ export default function Orders() {
 
         if (ordersError) throw ordersError;
         setOrders(orders || []);
+
+        // Fetch items for these orders to summarize products/variants in list
+        const orderIds = (orders || []).map(o => o.id);
+        if (orderIds.length > 0) {
+          const { data: items, error: itemsError } = await supabase
+            .from('order_items')
+            .select('id, order_id, product_name, variation, quantity, price, total')
+            .in('order_id', orderIds);
+          if (itemsError) throw itemsError;
+          const map: Record<string, any[]> = {};
+          (items || []).forEach((it: any) => {
+            if (!map[it.order_id]) map[it.order_id] = [];
+            map[it.order_id].push(it);
+          });
+          setOrderItemsMap(map);
+        } else {
+          setOrderItemsMap({});
+        }
       }
     } catch (error) {
       console.error('Error fetching orders:', error);
@@ -262,6 +281,9 @@ export default function Orders() {
                 <DropdownMenuItem onClick={() => setStatusFilter("delivered")}>
                   Delivered
                 </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setStatusFilter("cancelled")}>
+                  Cancelled
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -314,6 +336,16 @@ export default function Orders() {
                               to {order.shipping_city}
                             </div>
                           )}
+                          {Array.isArray(orderItemsMap[order.id]) && orderItemsMap[order.id].length > 0 && (
+                            <div className="mt-1 text-xs text-muted-foreground">
+                              {orderItemsMap[order.id].slice(0, 2).map((it: any, i: number) => (
+                                <div key={i}>{nameWithVariant(it.product_name, it.variation)} × {it.quantity}</div>
+                              ))}
+                              {orderItemsMap[order.id].length > 2 && (
+                                <div>+{orderItemsMap[order.id].length - 2} more item(s)</div>
+                              )}
+                            </div>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell>
@@ -354,11 +386,11 @@ export default function Orders() {
                                 setSelectedOrder(order);
                                 // Fetch full details for dialog
                                 try {
-                                  const { data } = await supabase.functions.invoke('get-order', { body: { orderId: order.id } });
+                                  const { data, error } = await supabase.functions.invoke('get-order', { body: { orderId: order.id } });
+                                  if (error) throw error;
                                   if (data) {
-                                    // Attach to selectedOrder for ease
                                     setSelectedOrder({ ...order, ...data.order });
-                                    ;(window as any).__order_items = data.items; // temp storage for dialog rendering
+                                    setSelectedOrderItems(data.items || []);
                                   }
                                 } catch (e) { console.error(e); }
                                 setIsOrderDetailsOpen(true);
@@ -401,6 +433,32 @@ export default function Orders() {
                               }}
                             >
                               Invoice / PDF
+                            </DropdownMenuItem>
+                            {order.status !== 'cancelled' && order.status !== 'delivered' && (
+                              <DropdownMenuItem
+                                onClick={async () => {
+                                  if (!confirm('Cancel this order?')) return;
+                                  await updateOrderStatus(order.id, 'cancelled');
+                                }}
+                              >
+                                Cancel Order
+                              </DropdownMenuItem>
+                            )}
+                            <DropdownMenuItem
+                              onClick={async () => {
+                                if (!confirm('Delete this order permanently? This cannot be undone.')) return;
+                                try {
+                                  const { error } = await supabase.functions.invoke('delete-order', { body: { orderId: order.id } });
+                                  if (error) throw error;
+                                  setOrders(orders.filter(o => o.id !== order.id));
+                                  toast({ title: 'Deleted', description: 'Order deleted successfully.' });
+                                } catch (e) {
+                                  console.error(e);
+                                  toast({ title: 'Error', description: 'Failed to delete order', variant: 'destructive' });
+                                }
+                              }}
+                            >
+                              Delete Order
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -465,7 +523,7 @@ export default function Orders() {
                 <div>
                   <h4 className="font-medium">Order Items</h4>
                   <div className="mt-2 space-y-1">
-                    {(((window as any).__order_items) || []).map((it: any, idx: number) => (
+                    {selectedOrderItems.map((it: any, idx: number) => (
                       <div key={idx} className="flex justify-between text-sm">
                         <span>{nameWithVariant(it.product_name, it.variation)} × {it.quantity}</span>
                         <span>৳{Number(it.total).toFixed(2)}</span>
