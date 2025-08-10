@@ -28,26 +28,6 @@ export const CheckoutElementStyles: React.FC<CheckoutElementStylesProps> = ({ el
     onStyleUpdate('checkoutButton', next);
   };
 
-  // Section header responsive styles
-  const headerStyles = ((element.styles as any)?.checkoutSectionHeader) || { responsive: { desktop: {}, mobile: {} } } as any;
-  const currentHeader = headerStyles.responsive?.[tab] || {} as any;
-  const updateResponsiveHeader = (key: string, value: any) => {
-    const next = {
-      responsive: {
-        desktop: { ...(headerStyles.responsive?.desktop || {}) },
-        mobile: { ...(headerStyles.responsive?.mobile || {}) },
-      }
-    } as any;
-    next.responsive[tab] = { ...next.responsive[tab], [key]: value };
-    onStyleUpdate('checkoutSectionHeader', next);
-  };
-
-  // Background color styles
-  const backgrounds = ((element.styles as any)?.checkoutBackgrounds) || {} as any;
-  const updateBackground = (key: string, value: any) => {
-    onStyleUpdate('checkoutBackgrounds', { ...backgrounds, [key]: value });
-  };
-
   return (
     <div className="space-y-4">
       <div>
@@ -135,59 +115,6 @@ export const CheckoutElementStyles: React.FC<CheckoutElementStylesProps> = ({ el
           </div>
         </TabsContent>
       </Tabs>
-
-      <Separator />
-
-      <div className="space-y-4">
-        <div>
-          <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Section Header</h4>
-          <p className="text-xs text-muted-foreground">Adjust the font size of section titles.</p>
-        </div>
-        <Tabs value={tab} onValueChange={(v) => setTab(v as any)}>
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="desktop" className="flex items-center gap-2"><Monitor className="h-3 w-3" />Desktop</TabsTrigger>
-            <TabsTrigger value="mobile" className="flex items-center gap-2"><Smartphone className="h-3 w-3" />Mobile</TabsTrigger>
-          </TabsList>
-          <TabsContent value="desktop" className="space-y-3 mt-3">
-            <div>
-              <Label className="text-xs">Font Size</Label>
-              <div className="flex items-center gap-2">
-                <Slider value={[parseInt(currentHeader.fontSize?.replace(/\D/g, '') || '18')]} onValueChange={(val) => updateResponsiveHeader('fontSize', `${val[0]}px`)} min={12} max={32} step={1} className="flex-1" />
-                <span className="text-xs text-muted-foreground w-12">{currentHeader.fontSize || '18px'}</span>
-              </div>
-            </div>
-          </TabsContent>
-          <TabsContent value="mobile" className="space-y-3 mt-3">
-            <div>
-              <Label className="text-xs">Font Size</Label>
-              <div className="flex items-center gap-2">
-                <Slider value={[parseInt(currentHeader.fontSize?.replace(/\D/g, '') || '16')]} onValueChange={(val) => updateResponsiveHeader('fontSize', `${val[0]}px`)} min={12} max={28} step={1} className="flex-1" />
-                <span className="text-xs text-muted-foreground w-12">{currentHeader.fontSize || '16px'}</span>
-              </div>
-            </div>
-          </TabsContent>
-        </Tabs>
-      </div>
-
-      <Separator />
-
-      <div className="space-y-3">
-        <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Backgrounds</h4>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <div>
-            <Label className="text-xs">Outer Container</Label>
-            <Input type="color" value={backgrounds.containerBg || '#ffffff'} onChange={(e) => updateBackground('containerBg', e.target.value)} className="h-10" />
-          </div>
-          <div>
-            <Label className="text-xs">Form Area</Label>
-            <Input type="color" value={backgrounds.formBg || '#ffffff'} onChange={(e) => updateBackground('formBg', e.target.value)} className="h-10" />
-          </div>
-          <div>
-            <Label className="text-xs">Summary Card</Label>
-            <Input type="color" value={backgrounds.summaryBg || '#ffffff'} onChange={(e) => updateBackground('summaryBg', e.target.value)} className="h-10" />
-          </div>
-        </div>
-      </div>
 
       <Separator />
 
