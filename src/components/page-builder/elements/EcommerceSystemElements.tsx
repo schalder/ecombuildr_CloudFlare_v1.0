@@ -409,6 +409,13 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
   const buttonStyles = (element.styles as any)?.checkoutButton || { responsive: { desktop: {}, mobile: {} } };
   const buttonCSS = generateResponsiveCSS(element.id, buttonStyles);
 
+  // Section header responsive CSS
+  const sectionHeaderStyles = (element.styles as any)?.checkoutSectionHeader || { responsive: { desktop: {}, mobile: {} } };
+  const sectionHeaderCSS = generateResponsiveCSS(`${element.id}-co-section-title`, sectionHeaderStyles);
+
+  // Background areas
+  const areas = (element.styles as any)?.checkoutAreas || {};
+
   useEffect(() => {
     if (slug) {
       loadStore(slug);
@@ -576,14 +583,15 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
 
   return (
     <>
-      {/* Responsive styles for the primary button */}
-      <style>{buttonCSS}</style>
-      <div className={`max-w-5xl mx-auto grid ${gridCols} gap-6`}>
-        <div className={`${leftColSpan} space-y-4`}>
+      {/* Responsive styles */}
+      <style>{buttonCSS + sectionHeaderCSS}</style>
+      <div className={`max-w-5xl mx-auto grid ${gridCols} gap-6`} style={{ backgroundColor: (areas as any)?.outerBackground }}>
+        <div className={`${leftColSpan}`}>
+          <div className="space-y-4 rounded-md p-4 md:p-6" style={{ backgroundColor: (areas as any)?.formBackground }}>
           {sections.info && (
-            <Card>
-              <CardHeader><CardTitle>{headings.info}</CardTitle></CardHeader>
-              <CardContent className="space-y-3">
+            <Card className="bg-transparent shadow-none border-0">
+              <CardHeader className="p-0"><CardTitle className={`element-${element.id}-co-section-title`}>{headings.info}</CardTitle></CardHeader>
+              <CardContent className="space-y-3 p-0">
                 <div className={`grid ${infoGridCols} gap-3`}>
                   {fields.fullName?.enabled && (
                     <Input placeholder={fields.fullName.placeholder} value={form.customer_name} onChange={e=>setForm(f=>({...f,customer_name:e.target.value}))} required={!!(fields.fullName?.enabled && (fields.fullName?.required ?? true))} aria-required={!!(fields.fullName?.enabled && (fields.fullName?.required ?? true))} />
@@ -599,9 +607,9 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
             </Card>
           )}
           {sections.shipping && (
-            <Card>
-              <CardHeader><CardTitle>{headings.shipping}</CardTitle></CardHeader>
-              <CardContent className="space-y-3">
+            <Card className="bg-transparent shadow-none border-0">
+              <CardHeader className="p-0"><CardTitle className={`element-${element.id}-co-section-title`}>{headings.shipping}</CardTitle></CardHeader>
+              <CardContent className="space-y-3 p-0">
                 {fields.address?.enabled && (
                   <Textarea placeholder={fields.address.placeholder} value={form.shipping_address} onChange={e=>setForm(f=>({...f,shipping_address:e.target.value}))} rows={3} required={!!(fields.address?.enabled && (fields.address?.required ?? true))} aria-required={!!(fields.address?.enabled && (fields.address?.required ?? true))} />
                 )}
@@ -623,7 +631,8 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
                   {fields.postalCode?.enabled && (
                     <Input placeholder={fields.postalCode.placeholder} value={form.shipping_postal_code} onChange={e=>setForm(f=>({...f,shipping_postal_code:e.target.value}))} required={!!(fields.postalCode?.enabled && (fields.postalCode?.required ?? false))} aria-required={!!(fields.postalCode?.enabled && (fields.postalCode?.required ?? false))} />
                   )}
-                </div>
+          </div>
+        </div>
 
                 {/* Custom fields */}
                 {customFields?.length > 0 && (
@@ -643,9 +652,9 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
             </Card>
           )}
           {sections.payment && (
-            <Card>
-              <CardHeader><CardTitle>{headings.payment}</CardTitle></CardHeader>
-              <CardContent className="space-y-3">
+            <Card className="bg-transparent shadow-none border-0">
+              <CardHeader className="p-0"><CardTitle className={`element-${element.id}-co-section-title`}>{headings.payment}</CardTitle></CardHeader>
+              <CardContent className="space-y-3 p-0">
                 <Select value={form.payment_method} onValueChange={(v:any)=>setForm(f=>({...f,payment_method:v}))}>
                   <SelectTrigger><SelectValue placeholder="Select method" /></SelectTrigger>
                   <SelectContent>
@@ -660,11 +669,12 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
               </CardContent>
             </Card>
           )}
+          </div>
         </div>
         <div className="space-y-4">
           {sections.summary && (
-            <Card>
-              <CardHeader><CardTitle>{headings.summary}</CardTitle></CardHeader>
+            <Card style={{ backgroundColor: (areas as any)?.summaryBackground }}>
+              <CardHeader><CardTitle className={`element-${element.id}-co-section-title`}>{headings.summary}</CardTitle></CardHeader>
               <CardContent className="space-y-3">
                 {/* Items */}
                 <div className="space-y-2">

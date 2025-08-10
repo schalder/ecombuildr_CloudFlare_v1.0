@@ -16,6 +16,9 @@ export const CheckoutElementStyles: React.FC<CheckoutElementStylesProps> = ({ el
   const [tab, setTab] = useState<'desktop' | 'mobile'>('desktop');
   const styles = ((element.styles as any)?.checkoutButton) || { responsive: { desktop: {}, mobile: {} } } as any;
   const current = styles.responsive?.[tab] || {} as any;
+  const headerStyles = ((element.styles as any)?.checkoutSectionHeader) || { responsive: { desktop: {}, mobile: {} } } as any;
+  const currentHeader = headerStyles.responsive?.[tab] || {} as any;
+  const areas = ((element.styles as any)?.checkoutAreas) || {} as any;
 
   const updateResponsive = (key: string, value: any) => {
     const next = {
@@ -26,6 +29,21 @@ export const CheckoutElementStyles: React.FC<CheckoutElementStylesProps> = ({ el
     } as any;
     next.responsive[tab] = { ...next.responsive[tab], [key]: value };
     onStyleUpdate('checkoutButton', next);
+  };
+
+  const updateHeaderResponsive = (key: string, value: any) => {
+    const next = {
+      responsive: {
+        desktop: { ...(headerStyles.responsive?.desktop || {}) },
+        mobile: { ...(headerStyles.responsive?.mobile || {}) },
+      }
+    } as any;
+    next.responsive[tab] = { ...next.responsive[tab], [key]: value };
+    onStyleUpdate('checkoutSectionHeader', next);
+  };
+
+  const updateAreas = (key: string, value: any) => {
+    onStyleUpdate('checkoutAreas', { ...(areas || {}), [key]: value });
   };
 
   return (
