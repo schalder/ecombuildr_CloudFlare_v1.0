@@ -24,6 +24,12 @@ const websiteSettingsSchema = z.object({
   header_tracking_code: z.string().optional(),
   footer_tracking_code: z.string().optional(),
   currency_code: z.enum(['BDT','USD','INR','EUR','GBP']).default('BDT'),
+  // SEO defaults
+  seo_title: z.string().optional(),
+  seo_description: z.string().optional(),
+  og_image: z.string().optional(),
+  meta_robots: z.string().optional(),
+  canonical_domain: z.string().optional(),
 });
 
 type WebsiteSettingsForm = z.infer<typeof websiteSettingsSchema>;
@@ -60,13 +66,18 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
     defaultValues: {
       name: website.name || '',
       description: website.description || '',
-      domain: website.domain || '',
+      domain: (website as any).domain || '',
       is_published: website.is_published,
       is_active: website.is_active,
       favicon_url: website.settings?.favicon_url || '',
       header_tracking_code: website.settings?.header_tracking_code || '',
       footer_tracking_code: website.settings?.footer_tracking_code || '',
       currency_code: website.settings?.currency?.code || 'BDT',
+      seo_title: (website as any).seo_title || '',
+      seo_description: (website as any).seo_description || '',
+      og_image: (website as any).og_image || '',
+      meta_robots: (website as any).meta_robots || 'index, follow',
+      canonical_domain: (website as any).canonical_domain || (website as any).domain || '',
     },
   });
 
@@ -450,6 +461,109 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
                   </div>
                 ))}
               </div>
+            </CardContent>
+          </Card>
+
+          {/* SEO Defaults */}
+          <Card>
+            <CardHeader>
+              <CardTitle>SEO Defaults</CardTitle>
+              <CardDescription>
+                Set default SEO metadata for this website. Individual pages can override these values.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <FormField
+                control={form.control}
+                name="seo_title"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Default SEO Title</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Awesome Store - Great Products" {...field} />
+                    </FormControl>
+                    <FormDescription>
+                      Recommended under 60 characters.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="seo_description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Default Meta Description</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Shop quality products with fast shipping and great support."
+                        className="resize-none"
+                        rows={3}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Keep it under 160 characters.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="og_image"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Default OG Image URL</FormLabel>
+                      <FormControl>
+                        <Input placeholder="https://example.com/og-image.jpg" {...field} />
+                      </FormControl>
+                      <FormDescription>
+                        Used for social sharing previews.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="meta_robots"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Robots</FormLabel>
+                      <FormControl>
+                        <Input placeholder="index, follow" {...field} />
+                      </FormControl>
+                      <FormDescription>
+                        e.g., "index, follow" or "noindex, nofollow".
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <FormField
+                control={form.control}
+                name="canonical_domain"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Canonical Domain</FormLabel>
+                    <FormControl>
+                      <Input placeholder="example.com" {...field} />
+                    </FormControl>
+                    <FormDescription>
+                      Used to build canonical URLs (protocol added automatically). Leave blank to use current host.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </CardContent>
           </Card>
 

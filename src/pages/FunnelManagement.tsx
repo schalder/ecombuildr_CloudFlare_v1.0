@@ -7,6 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { ArrowLeft, Plus, Edit, ExternalLink, Settings, Eye, ArrowUp, ArrowDown, CheckCircle, Mail, BarChart3, DollarSign, Shield, Activity } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -23,6 +25,11 @@ interface Funnel {
   settings: any;
   created_at: string;
   updated_at: string;
+  seo_title?: string;
+  seo_description?: string;
+  og_image?: string;
+  meta_robots?: string;
+  canonical_domain?: string;
 }
 
 interface FunnelStep {
@@ -44,6 +51,13 @@ const FunnelManagement = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('steps');
   const [activeMainTab, setActiveMainTab] = useState('overview');
+  const [seo, setSeo] = useState({
+    seo_title: '',
+    seo_description: '',
+    og_image: '',
+    meta_robots: 'index, follow',
+    canonical_domain: '',
+  });
 
   const { data: funnel, isLoading } = useQuery({
     queryKey: ['funnel', id],
@@ -74,6 +88,17 @@ const FunnelManagement = () => {
     },
     enabled: !!id,
   });
+
+  React.useEffect(() => {
+    if (!funnel) return;
+    setSeo({
+      seo_title: funnel.seo_title || '',
+      seo_description: funnel.seo_description || '',
+      og_image: funnel.og_image || '',
+      meta_robots: funnel.meta_robots || 'index, follow',
+      canonical_domain: funnel.canonical_domain || funnel.domain || '',
+    });
+  }, [funnel?.id]);
 
   const updateFunnelMutation = useMutation({
     mutationFn: async (updates: Partial<Funnel>) => {
@@ -384,15 +409,95 @@ const FunnelManagement = () => {
           </div>
         )}
 
-        {/* Other tab content placeholders */}
+        {/* Other tab content including Settings */}
         {activeTab !== 'steps' && (
           <div className="p-6">
-            <div className="bg-background border rounded-lg p-12 text-center">
-              <h3 className="text-lg font-semibold mb-2 capitalize">{activeTab}</h3>
-              <p className="text-muted-foreground">Content for {activeTab} tab coming soon</p>
-            </div>
+            {activeTab === 'settings' ? (
+              <div className="max-w-3xl mx-auto space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>SEO Defaults</CardTitle>
+                    <CardDescription>Set default SEO metadata for this funnel. Steps can override these.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Default SEO Title</label>
+                        <Input
+                          placeholder="Amazing Funnel - High Conversions"
+                          value={seo.seo_title}
+                          onChange={(e) => setSeo((s) => ({ ...s, seo_title: e.target.value }))}
+                        />
+                        <p className="text-xs text-muted-foreground mt-1">Under 60 characters recommended.</p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Robots</label>
+                        <Input
+                          placeholder="index, follow"
+                          value={seo.meta_robots}
+                          onChange={(e) => setSeo((s) => ({ ...s, meta_robots: e.target.value }))}
+                        />
+                        <p className="text-xs text-muted-foreground mt-1">e.g., index, follow or noindex, nofollow</p>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Default Meta Description</label>
+                      <Textarea
+                        rows={3}
+                        placeholder="Compelling funnel that converts visitors into customers."
+                        value={seo.seo_description}
+                        onChange={(e) => setSeo((s) => ({ ...s, seo_description: e.target.value }))}
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">Keep under 160 characters.</p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Default OG Image URL</label>
+                        <Input
+                          placeholder="https://example.com/og.jpg"
+                          value={seo.og_image}
+                          onChange={(e) => setSeo((s) => ({ ...s, og_image: e.target.value }))}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Canonical Domain</label>
+                        <Input
+                          placeholder="example.com"
+                          value={seo.canonical_domain}
+                          onChange={(e) => setSeo((s) => ({ ...s, canonical_domain: e.target.value }))}
+                        />
+                        <p className="text-xs text-muted-foreground mt-1">Used to build canonical URLs.</p>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end">
+                      <Button
+                        onClick={() => updateFunnelMutation.mutate({
+                          seo_title: seo.seo_title,
+                          seo_description: seo.seo_description,
+                          og_image: seo.og_image,
+                          meta_robots: seo.meta_robots,
+                          canonical_domain: seo.canonical_domain,
+                        })}
+                        disabled={updateFunnelMutation.isPending}
+                      >
+                        {updateFunnelMutation.isPending ? 'Saving...' : 'Save SEO Settings'}
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            ) : (
+              <div className="bg-background border rounded-lg p-12 text-center">
+                <h3 className="text-lg font-semibold mb-2 capitalize">{activeTab}</h3>
+                <p className="text-muted-foreground">Content for {activeTab} tab coming soon</p>
+              </div>
+            )}
           </div>
         )}
+
       </div>
 
       <CreateStepModal
