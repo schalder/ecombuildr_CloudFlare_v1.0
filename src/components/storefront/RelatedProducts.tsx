@@ -2,16 +2,19 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useStore } from "@/contexts/StoreContext";
-import { Card, CardContent } from "@/components/ui/card";
-import { formatCurrency } from "@/lib/currency";
-import { useNavigate } from "react-router-dom";
+import { ProductCard } from "@/components/storefront/ProductCard";
+import { useCart } from "@/contexts/CartContext";
+import { useToast } from "@/hooks/use-toast";
 
 type Product = {
   id: string;
   name: string;
   slug: string;
   price: number;
+  compare_price?: number;
+  short_description?: string;
   images: string[];
+  is_active: boolean;
 };
 
 type RelatedProductsProps = {
@@ -21,9 +24,15 @@ type RelatedProductsProps = {
 };
 
 export const RelatedProducts: React.FC<RelatedProductsProps> = ({ categoryId, currentProductId, limit = 8 }) => {
-  const { store } = useStore();
-  const [items, setItems] = useState<Product[]>([]);
-  const navigate = useNavigate();
+const { store } = useStore();
+const [items, setItems] = useState<Product[]>([]);
+const { addItem } = useCart();
+const { toast } = useToast();
+
+const handleAddToCart = (p: Product) => {
+  addItem({ id: p.id, productId: p.id, name: p.name, price: p.price, quantity: 1, image: p.images?.[0] });
+  toast({ title: "Added to cart", description: `${p.name} added to cart.` });
+};
 
   useEffect(() => {
     const load = async () => {
@@ -33,7 +42,7 @@ export const RelatedProducts: React.FC<RelatedProductsProps> = ({ categoryId, cu
       }
       const { data, error } = await supabase
         .from("products")
-        .select("id, name, slug, price, images")
+        .select("id, name, slug, price, compare_price, short_description, images, is_active")
         .eq("store_id", store.id)
         .eq("is_active", true)
         .eq("category_id", categoryId)
@@ -58,17 +67,13 @@ export const RelatedProducts: React.FC<RelatedProductsProps> = ({ categoryId, cu
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-semibold">Related Products</h3>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {items.map((p) => (
-          <Card key={p.id} className="cursor-pointer" onClick={() => navigate(`../${p.slug}`)}>
-            <CardContent className="p-3 space-y-2">
-              <div className="aspect-square rounded bg-muted overflow-hidden">
-                <img src={p.images?.[0] || "/placeholder.svg"} alt={p.name} className="w-full h-full object-cover" />
-              </div>
-              <div className="text-sm font-medium">{p.name}</div>
-              <div className="text-sm text-muted-foreground">{formatCurrency(p.price)}</div>
-            </CardContent>
-          </Card>
+          <ProductCard
+            key={p.id}
+            product={p}
+            onAddToCart={handleAddToCart}
+          />
         ))}
       </div>
     </div>
