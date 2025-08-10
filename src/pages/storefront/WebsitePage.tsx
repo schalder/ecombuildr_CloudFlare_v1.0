@@ -186,6 +186,7 @@ export const WebsitePage: React.FC = () => {
       robots: isPreview ? 'noindex, nofollow' : ((website as any)?.meta_robots || 'index, follow'),
       siteName: website.name,
       ogType: 'website',
+      favicon: (website as any)?.settings?.favicon_url || '/favicon.ico',
     });
   }, [website, isPreview]);
 
@@ -206,6 +207,7 @@ export const WebsitePage: React.FC = () => {
       robots: (website as any)?.meta_robots || 'index, follow',
       siteName: website.name,
       ogType: 'website',
+      favicon: (website as any)?.settings?.favicon_url || '/favicon.ico',
     });
 
     // Inject custom scripts if they exist

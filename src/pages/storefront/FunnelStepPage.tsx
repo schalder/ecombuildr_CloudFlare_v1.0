@@ -35,7 +35,7 @@ export const FunnelStepPage: React.FC = () => {
   const [step, setStep] = useState<FunnelStepData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { loadStoreById } = useStore();
+  const { loadStoreById, store } = useStore();
   useEffect(() => {
     const fetchFunnelAndStep = async () => {
       if (!funnelId || !stepSlug) {
@@ -126,8 +126,9 @@ export const FunnelStepPage: React.FC = () => {
       robots: (funnel as any)?.meta_robots || 'index, follow',
       siteName: funnel.name,
       ogType: 'website',
+      favicon: store?.favicon_url || '/favicon.ico',
     });
-  }, [funnel]);
+  }, [funnel, store]);
 
   // Set up SEO metadata using centralized utility
   useEffect(() => {
@@ -146,6 +147,7 @@ export const FunnelStepPage: React.FC = () => {
       robots: (funnel as any)?.meta_robots || 'index, follow',
       siteName: funnel.name,
       ogType: 'website',
+      favicon: store?.favicon_url || '/favicon.ico',
     });
 
     // Inject custom scripts if they exist
@@ -159,7 +161,7 @@ export const FunnelStepPage: React.FC = () => {
         document.head.removeChild(scriptElement);
       };
     }
-  }, [step, funnel]);
+  }, [step, funnel, store]);
 
   if (loading) {
     return (

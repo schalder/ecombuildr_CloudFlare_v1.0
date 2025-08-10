@@ -113,6 +113,7 @@ export const WebsiteOverrideRoute: React.FC<WebsiteOverrideRouteProps> = ({ slug
       robots: isPreview ? 'noindex, nofollow' : (websiteMeta?.meta_robots || 'index, follow'),
       siteName: websiteMeta?.name,
       ogType: 'website',
+      favicon: websiteMeta?.settings?.favicon_url || '/favicon.ico',
     });
   }, [websiteMeta, isPreview]);
 
@@ -133,6 +134,7 @@ export const WebsiteOverrideRoute: React.FC<WebsiteOverrideRouteProps> = ({ slug
       robots: websiteMeta?.meta_robots || 'index, follow',
       siteName: websiteMeta?.name,
       ogType: 'website',
+      favicon: websiteMeta?.settings?.favicon_url || '/favicon.ico',
     });
 
     if (page.custom_scripts) {

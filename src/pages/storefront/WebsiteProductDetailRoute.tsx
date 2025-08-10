@@ -121,7 +121,7 @@ export const WebsiteProductDetailRoute: React.FC = () => {
   React.useEffect(() => {
     if (!websiteMeta) return;
     const canonical = buildCanonical(undefined, websiteMeta?.canonical_domain || websiteMeta?.domain);
-    setSEO({
+  setSEO({
       title: websiteMeta?.seo_title || websiteMeta?.name,
       description: websiteMeta?.seo_description,
       image: websiteMeta?.og_image,
@@ -129,6 +129,7 @@ export const WebsiteProductDetailRoute: React.FC = () => {
       robots: isPreview ? 'noindex, nofollow' : (websiteMeta?.meta_robots || 'index, follow'),
       siteName: websiteMeta?.name,
       ogType: 'website',
+      favicon: websiteMeta?.settings?.favicon_url || '/favicon.ico',
     });
   }, [websiteMeta, isPreview]);
 
@@ -149,6 +150,7 @@ export const WebsiteProductDetailRoute: React.FC = () => {
       robots: websiteMeta?.meta_robots || 'index, follow',
       siteName: websiteMeta?.name,
       ogType: 'product',
+      favicon: websiteMeta?.settings?.favicon_url || '/favicon.ico',
     });
 
     if (page.custom_scripts) {

@@ -10,6 +10,7 @@ export type SEOConfig = {
   siteName?: string;
   ogType?: string; // e.g., 'website', 'article', 'product'
   locale?: string; // e.g., 'en_US'
+  favicon?: string; // URL to favicon (png/ico)
   structuredData?: Record<string, any> | Record<string, any>[]; // JSON-LD
 };
 
@@ -103,6 +104,16 @@ export function setSEO(input: SEOConfig) {
   // Robots
   if (cfg.robots) {
     upsertMeta('meta[name="robots"]', { name: 'robots', content: cfg.robots });
+  }
+
+  // Favicon
+  if (cfg.favicon) {
+    // Standard icon
+    upsertLink('icon', cfg.favicon);
+    // Legacy/Windows support
+    upsertLink('shortcut icon', cfg.favicon);
+    // iOS home screen (PNG recommended)
+    upsertLink('apple-touch-icon', cfg.favicon);
   }
 
   // JSON-LD Structured Data
