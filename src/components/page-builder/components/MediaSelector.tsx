@@ -56,7 +56,7 @@ export const MediaSelector: React.FC<MediaSelectorProps> = ({
             <img 
               src={value || urlPreview} 
               alt="Selected image"
-              className="w-full h-full object-contain"
+              className="w-full h-full object-cover"
               onError={() => setUrlPreview('')}
             />
           </div>
@@ -80,15 +80,15 @@ export const MediaSelector: React.FC<MediaSelectorProps> = ({
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="library" className="flex items-center gap-2">
             <FolderOpen className="w-4 h-4" />
-            Library
+            Media Library
           </TabsTrigger>
           <TabsTrigger value="upload" className="flex items-center gap-2">
             <Upload className="w-4 h-4" />
-            Upload
+            Upload New
           </TabsTrigger>
           <TabsTrigger value="url" className="flex items-center gap-2">
             <Link className="w-4 h-4" />
-            URL
+            External URL
           </TabsTrigger>
         </TabsList>
         
@@ -99,7 +99,7 @@ export const MediaSelector: React.FC<MediaSelectorProps> = ({
               Browse and select from your uploaded images
             </p>
             <Button onClick={() => setIsMediaLibraryOpen(true)}>
-              Open Library
+              Open Media Library
             </Button>
           </div>
         </TabsContent>
