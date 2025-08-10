@@ -81,7 +81,7 @@ export default function Websites() {
   const handlePreviewWebsite = (website: Website) => {
     const url = website.domain 
       ? `https://${website.domain}` 
-      : `/website/${website.slug}`;
+      : `/site/${website.slug}`;
     window.open(url, '_blank');
   };
 
@@ -150,7 +150,7 @@ export default function Websites() {
                   <div className="space-y-3">
                     <div className="flex items-center text-sm text-muted-foreground">
                       <Globe className="mr-2 h-4 w-4" />
-                      {website.domain || `website/${website.slug}`}
+                      {website.domain || `site/${website.slug}`}
                     </div>
                     
                     <div className="flex space-x-2">

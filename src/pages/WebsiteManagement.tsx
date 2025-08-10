@@ -335,7 +335,7 @@ const WebsiteManagement = () => {
                               size="sm"
                               aria-label="Visit page"
                               onClick={() => {
-                                const base = `/website/${id}`;
+                                const base = website?.domain ? `https://${website.domain}` : `/site/${website?.slug}`;
                                 const needsOrderId = page.slug === 'order-confirmation' || page.slug === 'payment-processing';
                                 const url = page.is_homepage ? `${base}` : `${base}/${page.slug}${needsOrderId ? '?orderId=demo' : ''}`;
                                 if (!page.is_published) {

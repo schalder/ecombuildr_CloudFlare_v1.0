@@ -21,8 +21,16 @@ export interface WebsitePageSettingsModalProps {
   } | null;
 }
 
-const getPublicUrlForPage = (origin: string, websiteId: string, page: { slug: string; is_homepage: boolean }) => {
-  const base = `${origin}/website/${websiteId}`;
+const getPublicUrlForPage = (
+  origin: string,
+  opts: { websiteId: string; slug?: string; domain?: string },
+  page: { slug: string; is_homepage: boolean }
+) => {
+  const base = opts.domain
+    ? `https://${opts.domain}`
+    : opts.slug
+    ? `/site/${opts.slug}`
+    : `${origin}/website/${opts.websiteId}`;
   if (page.is_homepage) return base;
   const needsOrderId = page.slug === "order-confirmation" || page.slug === "payment-processing";
   return needsOrderId ? `${base}/${page.slug}?orderId=demo` : `${base}/${page.slug}`;
@@ -35,6 +43,22 @@ export const WebsitePageSettingsModal: React.FC<WebsitePageSettingsModalProps> =
   const [title, setTitle] = useState("");
   const [slug, setSlug] = useState("");
   const [published, setPublished] = useState(false);
+  const [websiteMeta, setWebsiteMeta] = useState<{ slug?: string; domain?: string } | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data } = await supabase
+          .from('websites')
+          .select('slug, domain')
+          .eq('id', websiteId)
+          .maybeSingle();
+        setWebsiteMeta({ slug: (data as any)?.slug, domain: (data as any)?.domain });
+      } catch {
+        setWebsiteMeta(null);
+      }
+    })();
+  }, [websiteId]);
 
   useEffect(() => {
     if (page) {
@@ -46,8 +70,8 @@ export const WebsitePageSettingsModal: React.FC<WebsitePageSettingsModalProps> =
 
   const url = useMemo(() => {
     if (!page) return "";
-    return getPublicUrlForPage(window.location.origin, websiteId, page);
-  }, [page, websiteId]);
+    return getPublicUrlForPage(window.location.origin, { websiteId, slug: websiteMeta?.slug, domain: websiteMeta?.domain }, page);
+  }, [page, websiteId, websiteMeta]);
 
   const updateMutation = useMutation({
     mutationFn: async () => {

@@ -32,7 +32,7 @@ interface WebsiteData {
 }
 
 export const WebsitePage: React.FC = () => {
-  const { websiteId, pageSlug } = useParams<{ websiteId: string; pageSlug?: string }>();
+  const { websiteId, websiteSlug, pageSlug } = useParams<{ websiteId?: string; websiteSlug?: string; pageSlug?: string }>();
   const [website, setWebsite] = useState<WebsiteData | null>(null);
   const [page, setPage] = useState<WebsitePageData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -40,9 +40,32 @@ export const WebsitePage: React.FC = () => {
   const { loadStoreById } = useStore();
   const [searchParams] = useSearchParams();
   const isPreview = searchParams.get('preview') === '1';
+  const [resolvedWebsiteId, setResolvedWebsiteId] = useState<string | null>(null);
+  useEffect(() => {
+    (async () => {
+      if (websiteId) {
+        setResolvedWebsiteId(websiteId);
+        return;
+      }
+      if (websiteSlug) {
+        try {
+          const { data } = await supabase
+            .from('websites')
+            .select('id')
+            .eq('slug', websiteSlug)
+            .eq('is_active', true)
+            .maybeSingle();
+          setResolvedWebsiteId((data as any)?.id || null);
+        } catch {
+          setResolvedWebsiteId(null);
+        }
+      }
+    })();
+  }, [websiteId, websiteSlug]);
+
   useEffect(() => {
     const fetchWebsiteAndPage = async () => {
-      if (!websiteId) {
+      if (!resolvedWebsiteId) {
         setError('Invalid website URL');
         setLoading(false);
         return;
@@ -52,13 +75,13 @@ export const WebsitePage: React.FC = () => {
         setLoading(true);
         setError(null);
 
-        console.log('WebsitePage: Fetching website and page:', { websiteId, pageSlug });
+        console.log('WebsitePage: Fetching website and page:', { resolvedWebsiteId, pageSlug });
 
         // First fetch the website to check if it's active
         const { data: websiteData, error: websiteError } = await supabase
           .from('websites')
           .select('*')
-          .eq('id', websiteId)
+          .eq('id', resolvedWebsiteId)
           .eq('is_active', true)
           .maybeSingle();
 
@@ -69,7 +92,7 @@ export const WebsitePage: React.FC = () => {
         }
 
         if (!websiteData) {
-          console.log('WebsitePage: Website not found or not published:', websiteId);
+          console.log('WebsitePage: Website not found or not published:', resolvedWebsiteId);
           setError('Website not found or not available');
           return;
         }
@@ -87,7 +110,7 @@ export const WebsitePage: React.FC = () => {
         let pageQuery = supabase
           .from('website_pages')
           .select('*')
-          .eq('website_id', websiteId);
+          .eq('website_id', resolvedWebsiteId);
 
         if (!isPreview) {
           pageQuery = pageQuery.eq('is_published', true);
@@ -126,7 +149,7 @@ export const WebsitePage: React.FC = () => {
     };
 
     fetchWebsiteAndPage();
-  }, [websiteId, pageSlug, loadStoreById, isPreview]);
+  }, [resolvedWebsiteId, pageSlug, loadStoreById, isPreview]);
 
   // Set up SEO metadata
   useEffect(() => {
