@@ -11,6 +11,7 @@ import { ElementorPageBuilder } from '@/components/page-builder/ElementorPageBui
 import { PageBuilderData } from '@/components/page-builder/types';
 import { supabase } from '@/integrations/supabase/client';
 import { useUserStore } from '@/hooks/useUserStore';
+import { setGlobalCurrency } from '@/lib/currency';
 
 export default function PageBuilder() {
   const navigate = useNavigate();
@@ -43,6 +44,25 @@ export default function PageBuilder() {
       loadPage();
     }
   }, [entityId, currentStore, context]);
+
+  // Ensure currency is initialized in builder preview for website pages
+  useEffect(() => {
+    if (context === 'website' && parentId) {
+      (async () => {
+        try {
+          const { data } = await supabase
+            .from('websites')
+            .select('settings')
+            .eq('id', parentId)
+            .maybeSingle();
+          const code = (data as any)?.settings?.currency?.code || 'BDT';
+          setGlobalCurrency(code as any);
+        } catch {
+          // ignore
+        }
+      })();
+    }
+  }, [context, parentId]);
 
   const loadPage = async () => {
     if (!entityId || !currentStore) return;
