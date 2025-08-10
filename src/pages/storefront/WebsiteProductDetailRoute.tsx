@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
 import ProductDetail from '@/pages/storefront/ProductDetail';
 import { PageBuilderRenderer } from '@/components/storefront/PageBuilderRenderer';
+import { setGlobalCurrency } from '@/lib/currency';
 
 interface WebsiteData {
   id: string;
@@ -44,6 +45,12 @@ export const WebsiteProductDetailRoute: React.FC = () => {
           setLoading(false);
           return;
         }
+
+        // Initialize global currency from website settings
+        try {
+          const code = (website as any)?.settings?.currency?.code || 'BDT';
+          setGlobalCurrency(code as any);
+        } catch {}
 
         const settings: any = (website as any).settings || {};
         const templateId: string | undefined = settings?.system_pages?.product_detail_page_id || undefined;

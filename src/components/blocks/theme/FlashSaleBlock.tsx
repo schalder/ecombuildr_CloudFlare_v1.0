@@ -9,6 +9,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { BlockEditProps, BlockSaveProps } from '../types';
 import { supabase } from '@/integrations/supabase/client';
 import { useUserStore } from '@/hooks/useUserStore';
+import { formatCurrency } from '@/lib/currency';
 
 interface FlashSaleContent {
   title: string;
@@ -351,10 +352,10 @@ const FlashSaleSave: React.FC<BlockSaveProps> = ({ block }) => {
 
                   <div className="flex items-center gap-2">
                     <span className="font-bold text-destructive text-lg">
-                      ৳{salePrice.toLocaleString()}
+                      {formatCurrency(salePrice)}
                     </span>
                     <span className="text-sm text-muted-foreground line-through">
-                      ৳{product.price.toLocaleString()}
+                      {formatCurrency(product.price)}
                     </span>
                   </div>
                 </CardContent>

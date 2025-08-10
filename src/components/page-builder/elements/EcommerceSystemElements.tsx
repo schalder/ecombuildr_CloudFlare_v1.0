@@ -17,6 +17,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useStoreProducts } from '@/hooks/useStoreData';
 import { generateResponsiveCSS } from '@/components/page-builder/utils/responsiveStyles';
+import { formatCurrency } from '@/lib/currency';
 
 const CartSummaryElement: React.FC<{ element: PageBuilderElement }> = () => {
   const { items, total, updateQuantity, removeItem } = useCart();
@@ -51,7 +52,7 @@ const CartSummaryElement: React.FC<{ element: PageBuilderElement }> = () => {
                 )}
                 <div className="min-w-0">
                   <div className="font-medium truncate">{item.name}</div>
-                  <div className="text-sm text-muted-foreground">৳{item.price.toFixed(2)}</div>
+                  <div className="text-sm text-muted-foreground">{formatCurrency(item.price)}</div>
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -64,7 +65,7 @@ const CartSummaryElement: React.FC<{ element: PageBuilderElement }> = () => {
           ))}
           <div className="flex items-center justify-between pt-2">
             <span className="font-semibold">Total</span>
-            <span className="font-semibold">৳{total.toFixed(2)}</span>
+            <span className="font-semibold">{formatCurrency(total)}</span>
           </div>
           <Button className="w-full" onClick={() => (window.location.href = paths.checkout)}>Proceed to Checkout</Button>
         </CardContent>
@@ -87,7 +88,7 @@ const CheckoutCtaElement: React.FC<{ element: PageBuilderElement }> = () => {
         </p>
         <div className="flex items-center justify-between">
           <span>Subtotal</span>
-          <span className="font-semibold">৳{total.toFixed(2)}</span>
+          <span className="font-semibold">{formatCurrency(total)}</span>
         </div>
         <Button className="w-full" onClick={() => (window.location.href = paths.checkout)} disabled={items.length === 0}>
           Go to Checkout
@@ -214,9 +215,9 @@ const ProductDetailElement: React.FC<{ element: PageBuilderElement }> = ({ eleme
             {product.sku && <p className="text-sm text-muted-foreground">SKU: {product.sku}</p>}
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-bold">৳{product.price?.toFixed(2)}</span>
+            <span className="text-3xl font-bold">{formatCurrency(product.price)}</span>
             {product.compare_price && product.compare_price>product.price && (
-              <span className="text-xl text-muted-foreground line-through">৳{product.compare_price.toFixed(2)}</span>
+              <span className="text-xl text-muted-foreground line-through">{formatCurrency(product.compare_price)}</span>
             )}
           </div>
           {product.short_description && (<p className="text-muted-foreground">{product.short_description}</p>)}
@@ -263,7 +264,7 @@ const RelatedProductsElement: React.FC<{ element: PageBuilderElement }> = ({ ele
                 <img src={(Array.isArray(p.images)?p.images[0]:p.images) || '/placeholder.svg'} alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
               </div>
               <div className="text-sm font-medium line-clamp-1">{p.name}</div>
-              <div className="text-sm">৳{Number(p.price).toFixed(2)}</div>
+              <div className="text-sm">{formatCurrency(Number(p.price))}</div>
               <Button variant="outline" size="sm" className="mt-2 w-full" onClick={() => (window.location.href = paths.productDetail(p.slug))}>View</Button>
             </CardContent>
           </Card>
@@ -298,7 +299,7 @@ const CartFullElement: React.FC<{ element: PageBuilderElement }> = () => {
                 {item.image && <img src={item.image} alt={item.name} className="w-16 h-16 object-cover rounded border" />}
                 <div className="min-w-0">
                   <div className="font-medium truncate">{item.name}</div>
-                  <div className="text-sm text-muted-foreground">৳{item.price.toFixed(2)}</div>
+                  <div className="text-sm text-muted-foreground">{formatCurrency(item.price)}</div>
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -317,7 +318,7 @@ const CartFullElement: React.FC<{ element: PageBuilderElement }> = () => {
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <span>Subtotal</span>
-              <span className="font-semibold">৳{total.toFixed(2)}</span>
+              <span className="font-semibold">{formatCurrency(total)}</span>
             </div>
             <Button className="w-full" onClick={() => (window.location.href = paths.checkout)}>Proceed to Checkout</Button>
           </CardContent>
@@ -634,14 +635,14 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
                           <div className="text-xs text-muted-foreground">× {it.quantity}</div>
                         </div>
                       </div>
-                      <div className="text-sm font-medium">৳{(it.price * it.quantity).toFixed(2)}</div>
+                      <div className="text-sm font-medium">{formatCurrency(it.price * it.quantity)}</div>
                     </div>
                   ))}
                 </div>
                 <Separator />
-                <div className="flex justify-between"><span>Subtotal</span><span className="font-semibold">৳{total.toFixed(2)}</span></div>
-                <div className="flex justify-between"><span>Shipping</span><span className="font-semibold">৳{shippingCost.toFixed(2)}</span></div>
-                <div className="flex justify-between font-bold"><span>Total</span><span>৳{(total+shippingCost).toFixed(2)}</span></div>
+                <div className="flex justify-between"><span>Subtotal</span><span className="font-semibold">{formatCurrency(total)}</span></div>
+                <div className="flex justify-between"><span>Shipping</span><span className="font-semibold">{formatCurrency(shippingCost)}</span></div>
+                <div className="flex justify-between font-bold"><span>Total</span><span>{formatCurrency(total+shippingCost)}</span></div>
 
                 <Button className={`w-full mt-2 element-${element.id}`} onClick={handleSubmit} disabled={loading}>
                   {loading? 'Placing Order...' : buttonLabel}
@@ -820,17 +821,17 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
           {items.map((it) => (
             <div key={it.id} className="flex justify-between text-sm">
               <span>{it.product_name} × {it.quantity}</span>
-              <span>৳{Number(it.total).toFixed(2)}</span>
+              <span>{formatCurrency(Number(it.total))}</span>
             </div>
           ))}
           <Separator className="my-2" />
-          <div className="flex justify-between text-sm"><span>Subtotal</span><span>৳{subtotal.toFixed(2)}</span></div>
-          <div className="flex justify-between text-sm"><span>Shipping</span><span>৳{shipping.toFixed(2)}</span></div>
+          <div className="flex justify-between text-sm"><span>Subtotal</span><span>{formatCurrency(subtotal)}</span></div>
+          <div className="flex justify-between text-sm"><span>Shipping</span><span>{formatCurrency(shipping)}</span></div>
           {discount > 0 && (
-            <div className="flex justify-between text-sm"><span>Discount</span><span>- ৳{discount.toFixed(2)}</span></div>
+            <div className="flex justify-between text-sm"><span>Discount</span><span>- {formatCurrency(discount)}</span></div>
           )}
           <Separator className="my-2" />
-          <div className="flex justify-between font-bold"><span>Total</span><span>৳{Number(order.total).toFixed(2)}</span></div>
+          <div className="flex justify-between font-bold"><span>Total</span><span>{formatCurrency(Number(order.total))}</span></div>
         </CardContent>
       </Card>
       <div className="flex gap-3">
@@ -902,7 +903,7 @@ const PaymentProcessingElement: React.FC<{ element: PageBuilderElement }> = () =
             <span>Order No.</span><span className="font-medium">{order.order_number}</span>
           </div>
           <div className="flex justify-between text-sm">
-            <span>Total</span><span className="font-medium">৳{Number(order.total).toFixed(2)}</span>
+            <span>Total</span><span className="font-medium">{formatCurrency(Number(order.total))}</span>
           </div>
         </div>
         {order.status === 'processing' && (

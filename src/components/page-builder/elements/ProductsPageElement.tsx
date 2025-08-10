@@ -369,9 +369,9 @@ export const ProductsPageElement: React.FC<{
                         </div>
                         <div className="w-40 sm:w-48 flex flex-col items-end gap-2">
                           <div className="text-right">
-                            <div className="font-bold text-lg">৳{product.price.toFixed(2)}</div>
+                            <div className="font-bold text-lg">{formatCurrency(product.price)}</div>
                             {product.compare_price && product.compare_price > product.price && (
-                              <div className="text-sm text-muted-foreground line-through">৳{product.compare_price.toFixed(2)}</div>
+                              <div className="text-sm text-muted-foreground line-through">{formatCurrency(product.compare_price)}</div>
                             )}
                           </div>
                           <Button onClick={() => handleAddToCart(product)} className="w-full sm:w-auto">

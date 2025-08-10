@@ -3,6 +3,7 @@ import { useParams, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
 import { PageBuilderRenderer } from '@/components/storefront/PageBuilderRenderer';
+import { setGlobalCurrency } from '@/lib/currency';
 
 interface WebsitePageData {
   id: string;
@@ -54,6 +55,24 @@ export const WebsiteOverrideRoute: React.FC<WebsiteOverrideRouteProps> = ({ slug
     };
     fetchPage();
   }, [websiteId, slug, isPreview]);
+
+  // Ensure global currency is set for override routes
+  React.useEffect(() => {
+    (async () => {
+      if (!websiteId) return;
+      try {
+        const { data } = await supabase
+          .from('websites')
+          .select('settings')
+          .eq('id', websiteId)
+          .maybeSingle();
+        const code = (data as any)?.settings?.currency?.code || 'BDT';
+        setGlobalCurrency(code as any);
+      } catch (e) {
+        // ignore
+      }
+    })();
+  }, [websiteId]);
 
   // Basic SEO handling for override pages
   React.useEffect(() => {

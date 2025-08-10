@@ -9,6 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import { supabase } from '@/integrations/supabase/client';
 import { ShoppingCart, Heart, Share2, Star } from 'lucide-react';
 import { toast } from 'sonner';
+import { formatCurrency } from '@/lib/currency';
 
 interface Product {
   id: string;
@@ -239,11 +240,11 @@ export const ProductDetail: React.FC = () => {
 
             <div className="flex items-baseline space-x-2">
               <span className="text-3xl font-bold text-foreground">
-                ৳{product.price.toFixed(2)}
+                {formatCurrency(product.price)}
               </span>
               {product.compare_price && product.compare_price > product.price && (
                 <span className="text-xl text-muted-foreground line-through">
-                  ৳{product.compare_price.toFixed(2)}
+                  {formatCurrency(product.compare_price)}
                 </span>
               )}
             </div>

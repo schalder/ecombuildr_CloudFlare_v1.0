@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { ChevronDown, ChevronUp, Filter, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { formatCurrency } from '@/lib/currency';
 
 interface Category {
   id: string;
@@ -186,8 +187,8 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
                 className="w-full"
               />
               <div className="flex items-center justify-between text-sm text-muted-foreground">
-                <span>৳{filters.priceRange[0]}</span>
-                <span>৳{filters.priceRange[1]}</span>
+                <span>{formatCurrency(filters.priceRange[0])}</span>
+                <span>{formatCurrency(filters.priceRange[1])}</span>
               </div>
             </div>
           )}

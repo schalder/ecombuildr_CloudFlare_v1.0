@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Badge } from '@/components/ui/badge';
 import { GitCompare, X, ShoppingCart } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { formatCurrency } from '@/lib/currency';
 
 interface Product {
   id: string;
@@ -145,11 +146,11 @@ export const ProductComparison: React.FC<ProductComparisonProps> = ({
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
                     <span className="font-bold text-lg">
-                      ৳{product.price.toFixed(2)}
+                      {formatCurrency(product.price)}
                     </span>
                     {product.compare_price && product.compare_price > product.price && (
                       <span className="text-sm text-muted-foreground line-through">
-                        ৳{product.compare_price.toFixed(2)}
+                        {formatCurrency(product.compare_price)}
                       </span>
                     )}
                   </div>
