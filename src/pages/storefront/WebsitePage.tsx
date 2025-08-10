@@ -39,30 +39,48 @@ export const WebsitePage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const isPreview = searchParams.get('preview') === '1';
   const [resolvedWebsiteId, setResolvedWebsiteId] = useState<string | null>(null);
+  const [resolvingSiteId, setResolvingSiteId] = useState(true);
   useEffect(() => {
+    let active = true;
+    setResolvingSiteId(true);
     (async () => {
-      if (websiteId) {
-        setResolvedWebsiteId(websiteId);
-        return;
-      }
-      if (websiteSlug) {
-        try {
+      try {
+        if (websiteId) {
+          if (!active) return;
+          setResolvedWebsiteId(websiteId);
+        } else if (websiteSlug) {
           const { data } = await supabase
             .from('websites')
             .select('id')
             .eq('slug', websiteSlug)
             .eq('is_active', true)
             .maybeSingle();
+          if (!active) return;
           setResolvedWebsiteId((data as any)?.id || null);
-        } catch {
+        } else {
+          if (!active) return;
           setResolvedWebsiteId(null);
         }
+      } catch {
+        if (!active) return;
+        setResolvedWebsiteId(null);
+      } finally {
+        if (!active) return;
+        setResolvingSiteId(false);
       }
     })();
+    return () => {
+      active = false;
+    };
   }, [websiteId, websiteSlug]);
 
   useEffect(() => {
     const fetchWebsiteAndPage = async () => {
+      if (resolvingSiteId) {
+        setLoading(true);
+        return;
+      }
+
       if (!resolvedWebsiteId) {
         setError('Invalid website URL');
         setLoading(false);
@@ -147,7 +165,7 @@ export const WebsitePage: React.FC = () => {
     };
 
     fetchWebsiteAndPage();
-  }, [resolvedWebsiteId, pageSlug, loadStoreById, isPreview]);
+  }, [resolvedWebsiteId, pageSlug, loadStoreById, isPreview, resolvingSiteId]);
 
   // Set up SEO metadata
   useEffect(() => {
@@ -212,7 +230,7 @@ export const WebsitePage: React.FC = () => {
         <div className="text-center">
           <h1 className="text-2xl font-bold text-destructive mb-2">Page Not Found</h1>
           <p className="text-muted-foreground">{error || 'The requested page could not be found.'}</p>
-          <p className="text-sm text-muted-foreground mt-2">Website: {websiteId} | Page: {pageSlug || 'homepage'}</p>
+          <p className="text-sm text-muted-foreground mt-2">Website: {websiteSlug || websiteId || 'unknown'} | Page: {pageSlug || 'homepage'}</p>
         </div>
       </div>
     );
