@@ -480,6 +480,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
         price: i.price,
         quantity: i.quantity,
         image: i.image,
+        variation: (i as any).variation ?? null,
       }));
 
       const { data, error } = await supabase.functions.invoke('create-order', {
