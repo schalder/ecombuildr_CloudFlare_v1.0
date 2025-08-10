@@ -35,9 +35,16 @@ interface Product {
   price: number;
   compare_price?: number;
   short_description?: string;
+  description?: string;
   images: string[];
   slug: string;
   is_active: boolean;
+  variations?: any;
+  track_inventory?: boolean;
+  inventory_quantity?: number | null;
+  free_shipping_min_amount?: number | null;
+  easy_returns_enabled?: boolean;
+  easy_returns_days?: number | null;
 }
 
 interface Category {
@@ -200,9 +207,16 @@ export const StorefrontProducts: React.FC = () => {
         price: product.price || 0,
         compare_price: product.compare_price || undefined,
         short_description: product.short_description || undefined,
+        description: product.description || undefined,
         images: Array.isArray(product.images) ? product.images.filter((img): img is string => typeof img === 'string') : [],
         slug: product.slug || '',
-        is_active: product.is_active || false
+        is_active: product.is_active || false,
+        variations: (product as any).variations ?? undefined,
+        track_inventory: product.track_inventory ?? undefined,
+        inventory_quantity: product.inventory_quantity ?? undefined,
+        free_shipping_min_amount: product.free_shipping_min_amount ?? undefined,
+        easy_returns_enabled: product.easy_returns_enabled ?? undefined,
+        easy_returns_days: product.easy_returns_days ?? undefined,
       }));
       
       console.log('Transformed products:', transformedProducts);

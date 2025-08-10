@@ -27,7 +27,7 @@ interface Product {
   sku?: string;
   inventory_quantity?: number;
   track_inventory: boolean;
-  variations: any[];
+  variations: any;
   is_active: boolean;
   category_id?: string | null;
   free_shipping_min_amount?: number | null;
@@ -118,7 +118,7 @@ export const ProductDetail: React.FC = () => {
       const product = {
         ...data,
         images: Array.isArray(data.images) ? data.images.filter((img: any) => typeof img === 'string') as string[] : [],
-        variations: Array.isArray(data.variations) ? data.variations : [],
+        variations: (data as any).variations ?? [],
       };
       setProduct(product as Product);
     } catch (error) {
