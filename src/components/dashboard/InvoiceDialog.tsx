@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
+import { nameWithVariant } from '@/lib/utils';
 
 interface InvoiceData {
   order: any;
@@ -214,7 +215,7 @@ export const InvoiceDialog: React.FC<Props> = ({ open, onOpenChange, data }) => 
               <div className="mt-1 space-y-1 text-sm">
                 {data?.items?.map((it, idx) => (
                   <div key={idx} className="grid grid-cols-12">
-                    <div className="col-span-6">{it.product_name}</div>
+                    <div className="col-span-6">{nameWithVariant(it.product_name, (it as any).variation)}</div>
                     <div className="col-span-2 text-right">৳{Number(it.price).toFixed(2)}</div>
                     <div className="col-span-2 text-right">{it.quantity}</div>
                     <div className="col-span-2 text-right">৳{Number(it.total).toFixed(2)}</div>

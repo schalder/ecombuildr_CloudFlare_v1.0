@@ -10,6 +10,7 @@ import { useEcomPaths } from '@/lib/pathResolver';
 import { Input } from '@/components/ui/input';
 import { Trash2 } from 'lucide-react';
 import { formatCurrency } from '@/lib/currency';
+import { nameWithVariant } from '@/lib/utils';
 
 export const CartPage: React.FC = () => {
   const { slug, websiteId } = useParams<{ slug?: string; websiteId?: string }>();
@@ -87,7 +88,7 @@ export const CartPage: React.FC = () => {
                       <img src={item.image} alt={`${item.name} image`} className="w-20 h-20 object-cover rounded" loading="lazy" />
                     )}
                     <div className="flex-1">
-                      <div className="font-medium">{item.name}</div>
+                      <div className="font-medium">{nameWithVariant(item.name, item.variation)}</div>
                       <div className="text-sm text-muted-foreground">{formatCurrency(item.price)}</div>
                       <div className="mt-2 flex items-center gap-2">
                         <span className="text-sm">Qty:</span>

@@ -10,6 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { CheckCircle, Package, MapPin, CreditCard, Clock } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useEcomPaths } from '@/lib/pathResolver';
+import { nameWithVariant } from '@/lib/utils';
 
 interface Order {
   id: string;
@@ -40,6 +41,7 @@ interface OrderItem {
   price: number;
   quantity: number;
   total: number;
+  variation?: any;
 }
 
 export const OrderConfirmation: React.FC = () => {
@@ -291,7 +293,7 @@ useEffect(() => {
                 {orderItems.map((item) => (
                   <div key={item.id} className="flex justify-between items-center py-2">
                     <div className="flex-1">
-                      <p className="font-medium text-sm">{item.product_name}</p>
+                      <p className="font-medium text-sm">{nameWithVariant(item.product_name, (item as any).variation)}</p>
                       {item.product_sku && (
                         <p className="text-xs text-muted-foreground">SKU: {item.product_sku}</p>
                       )}

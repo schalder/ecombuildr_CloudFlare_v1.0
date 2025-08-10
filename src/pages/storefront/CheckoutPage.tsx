@@ -17,6 +17,7 @@ import { toast } from 'sonner';
 import { useEcomPaths } from '@/lib/pathResolver';
 import { computeShippingForAddress, ShippingSettings } from '@/lib/shipping';
 import { formatCurrency } from '@/lib/currency';
+import { nameWithVariant } from '@/lib/utils';
 
 interface CheckoutForm {
   customer_name: string;
@@ -593,7 +594,7 @@ useEffect(() => {
                   <div className="space-y-2">
                     {items.map((item) => (
                       <div key={item.id} className="flex justify-between text-sm">
-                        <span>{item.name} × {item.quantity}</span>
+                        <span>{nameWithVariant(item.name, item.variation)} × {item.quantity}</span>
                         <span>{formatCurrency(item.price * item.quantity)}</span>
                       </div>
                     ))}

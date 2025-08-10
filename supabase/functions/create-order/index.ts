@@ -13,6 +13,7 @@ type OrderItemInput = {
   price: number;
   quantity: number;
   image?: string | null;
+  variation?: Record<string, any> | null;
 };
 
 type OrderInput = {
@@ -98,6 +99,7 @@ serve(async (req) => {
       price: i.price,
       quantity: i.quantity,
       total: i.price * i.quantity,
+      variation: i.variation ?? null,
       created_at: new Date().toISOString(),
     }));
 

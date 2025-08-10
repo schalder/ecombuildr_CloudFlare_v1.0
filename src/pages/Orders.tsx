@@ -31,6 +31,7 @@ import {
   Filter
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { nameWithVariant } from '@/lib/utils';
 
 interface Order {
   id: string;
@@ -461,12 +462,17 @@ export default function Orders() {
                   <p>Payment: {selectedOrder.payment_method}</p>
                   <p>Date: {new Date(selectedOrder.created_at).toLocaleString()}</p>
                 </div>
-                {selectedOrder.notes && (
-                  <div>
-                    <h4 className="font-medium">Notes</h4>
-                    <p>{selectedOrder.notes}</p>
+                <div>
+                  <h4 className="font-medium">Order Items</h4>
+                  <div className="mt-2 space-y-1">
+                    {(((window as any).__order_items) || []).map((it: any, idx: number) => (
+                      <div key={idx} className="flex justify-between text-sm">
+                        <span>{nameWithVariant(it.product_name, it.variation)} × {it.quantity}</span>
+                        <span>৳{Number(it.total).toFixed(2)}</span>
+                      </div>
+                    ))}
                   </div>
-                )}
+                </div>
               </div>
             )}
           </DialogContent>

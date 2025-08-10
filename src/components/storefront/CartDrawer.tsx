@@ -8,6 +8,7 @@ import { Plus, Minus, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useEcomPaths } from '@/lib/pathResolver';
 import { formatCurrency } from '@/lib/currency';
+import { nameWithVariant } from '@/lib/utils';
 
 interface CartDrawerProps {
   children: React.ReactNode;
@@ -62,7 +63,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ children }) => {
                       </div>
                     )}
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-medium text-sm leading-tight mb-1 line-clamp-2">{item.name}</h3>
+                      <h3 className="font-medium text-sm leading-tight mb-1 line-clamp-2">{nameWithVariant(item.name, item.variation)}</h3>
                       <p className="text-sm text-muted-foreground mb-2">{formatCurrency(item.price)} each</p>
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-1">

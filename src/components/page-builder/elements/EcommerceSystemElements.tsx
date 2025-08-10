@@ -52,7 +52,7 @@ const CartSummaryElement: React.FC<{ element: PageBuilderElement }> = () => {
                   <img src={item.image} alt={item.name} className="w-12 h-12 object-cover rounded border" />
                 )}
                 <div className="min-w-0">
-                  <div className="font-medium truncate">{item.name}</div>
+                  <div className="font-medium truncate">{nameWithVariant(item.name, (item as any).variation)}</div>
                   <div className="text-sm text-muted-foreground">{formatCurrency(item.price)}</div>
                 </div>
               </div>
@@ -299,7 +299,7 @@ const CartFullElement: React.FC<{ element: PageBuilderElement }> = () => {
               <div className="flex items-center gap-3 min-w-0">
                 {item.image && <img src={item.image} alt={item.name} className="w-16 h-16 object-cover rounded border" />}
                 <div className="min-w-0">
-                  <div className="font-medium truncate">{item.name}</div>
+                  <div className="font-medium truncate">{nameWithVariant(item.name, (item as any).variation)}</div>
                   <div className="text-sm text-muted-foreground">{formatCurrency(item.price)}</div>
                 </div>
               </div>
@@ -649,10 +649,10 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
                         {showItemImages && it.image && (
                           <img src={it.image} alt={it.name} className="w-10 h-10 object-cover rounded border" />
                         )}
-                        <div className="min-w-0">
-                          <div className="text-sm font-medium truncate">{it.name}</div>
-                          <div className="text-xs text-muted-foreground">× {it.quantity}</div>
-                        </div>
+                          <div className="min-w-0">
+                            <div className="text-sm font-medium truncate">{nameWithVariant(it.name, (it as any).variation)}</div>
+                            <div className="text-xs text-muted-foreground">× {it.quantity}</div>
+                          </div>
                       </div>
                       <div className="text-sm font-medium">{formatCurrency(it.price * it.quantity)}</div>
                     </div>
@@ -839,7 +839,7 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
         <CardContent className="space-y-2">
           {items.map((it) => (
             <div key={it.id} className="flex justify-between text-sm">
-              <span>{it.product_name} × {it.quantity}</span>
+              <span>{nameWithVariant(it.product_name, (it as any).variation)} × {it.quantity}</span>
               <span>{formatCurrency(Number(it.total))}</span>
             </div>
           ))}
