@@ -6,6 +6,7 @@ import { PageBuilderRenderer } from '@/components/storefront/PageBuilderRenderer
 import { WebsiteHeader } from '@/components/storefront/WebsiteHeader';
 import { WebsiteFooter } from '@/components/storefront/WebsiteFooter';
 import { useStore } from '@/contexts/StoreContext';
+import { setGlobalCurrency } from '@/lib/currency';
 interface WebsitePageData {
   id: string;
   title: string;
@@ -169,6 +170,12 @@ export const WebsitePage: React.FC = () => {
       }
     }
   }, [page, website]);
+
+  // Ensure global currency matches website settings on WebsitePage routes
+  useEffect(() => {
+    const code = (website?.settings?.currency?.code as string) || 'BDT';
+    try { setGlobalCurrency(code as any); } catch {}
+  }, [website?.settings?.currency?.code]);
 
   if (loading) {
     return (
