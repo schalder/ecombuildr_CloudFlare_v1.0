@@ -12,6 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Save, Package } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import RichTextEditor from "@/components/ui/RichTextEditor";
 import VariationsBuilder, { VariationOption } from "@/components/products/VariationsBuilder";
 import VariantMatrix, { VariantEntry } from "@/components/products/VariantMatrix";
 
@@ -49,15 +50,26 @@ export default function EditProduct() {
     description: '',
     price: '',
     compare_price: '',
+    cost_price: '',
     sku: '',
+    track_inventory: false,
     inventory_quantity: '',
     category_id: '',
     is_active: true,
+    images: [] as string[],
+    seo_title: '',
+    seo_description: '',
   });
 
   const [hasVariants, setHasVariants] = useState(false);
   const [variations, setVariations] = useState<VariationOption[]>([]);
   const [variantEntries, setVariantEntries] = useState<VariantEntry[]>([]);
+
+  // Shipping & returns toggles
+  const [enableFreeShipping, setEnableFreeShipping] = useState(false);
+  const [freeShippingMin, setFreeShippingMin] = useState<string>('');
+  const [easyReturnsEnabled, setEasyReturnsEnabled] = useState(false);
+  const [easyReturnsDays, setEasyReturnsDays] = useState<string>('30');
 
   useEffect(() => {
     if (user && id) {
@@ -92,11 +104,22 @@ export default function EditProduct() {
           description: product.description || '',
           price: product.price?.toString() || '',
           compare_price: product.compare_price?.toString() || '',
+          cost_price: product.cost_price?.toString() || '',
           sku: product.sku || '',
+          track_inventory: !!product.track_inventory,
           inventory_quantity: product.inventory_quantity?.toString() || '',
           category_id: product.category_id || '',
           is_active: product.is_active,
+          images: Array.isArray(product.images) ? product.images.filter((i: any) => typeof i === 'string') : [],
+          seo_title: (product as any).seo_title || '',
+          seo_description: (product as any).seo_description || '',
         });
+
+        // Shipping & returns
+        setEnableFreeShipping(!!(product as any).free_shipping_min_amount);
+        setFreeShippingMin((product as any).free_shipping_min_amount?.toString() || '');
+        setEasyReturnsEnabled(!!(product as any).easy_returns_enabled);
+        setEasyReturnsDays((product as any).easy_returns_days?.toString() || '30');
 
         const v = (product as any).variations;
         if (Array.isArray(v)) {
@@ -161,9 +184,17 @@ export default function EditProduct() {
         description: formData.description || null,
         price: parseFloat(formData.price),
         compare_price: formData.compare_price ? parseFloat(formData.compare_price) : null,
+        cost_price: formData.cost_price ? parseFloat(formData.cost_price) : null,
         sku: formData.sku || null,
+        track_inventory: !!formData.track_inventory,
         inventory_quantity: formData.inventory_quantity ? parseInt(formData.inventory_quantity) : null,
         category_id: formData.category_id === 'none' ? null : formData.category_id || null,
+        images: formData.images,
+        seo_title: formData.seo_title || null,
+        seo_description: formData.seo_description || null,
+        free_shipping_min_amount: enableFreeShipping && freeShippingMin ? parseFloat(freeShippingMin) : null,
+        easy_returns_enabled: easyReturnsEnabled,
+        easy_returns_days: easyReturnsEnabled && easyReturnsDays ? parseInt(easyReturnsDays) : null,
         is_active: formData.is_active,
         updated_at: new Date().toISOString(),
         variations: hasVariants ? { options: variations, variants: variantEntries } : [],
@@ -268,12 +299,10 @@ export default function EditProduct() {
 
                 <div>
                   <Label htmlFor="description">Description</Label>
-                  <Textarea
-                    id="description"
+                  <RichTextEditor
                     value={formData.description}
-                    onChange={(e) => handleInputChange('description', e.target.value)}
-                    placeholder="Detailed product description"
-                    rows={4}
+                    onChange={(html) => handleInputChange('description', html)}
+                    placeholder="Write a detailed description..."
                   />
                 </div>
 
@@ -327,6 +356,19 @@ export default function EditProduct() {
                       type="number"
                       value={formData.compare_price}
                       onChange={(e) => handleInputChange('compare_price', e.target.value)}
+                      placeholder="0.00"
+                      step="0.01"
+                      min="0"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="cost_price">Cost Price (৳)</Label>
+                    <Input
+                      id="cost_price"
+                      type="number"
+                      value={formData.cost_price}
+                      onChange={(e) => handleInputChange('cost_price', e.target.value)}
                       placeholder="0.00"
                       step="0.01"
                       min="0"
