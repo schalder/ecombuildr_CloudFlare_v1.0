@@ -405,13 +405,9 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
   const [websiteShipping, setWebsiteShipping] = useState<ShippingSettings | undefined>(undefined);
   const [loading, setLoading] = useState(false);
 
-  // Button and header responsive CSS
+  // Button responsive CSS
   const buttonStyles = (element.styles as any)?.checkoutButton || { responsive: { desktop: {}, mobile: {} } };
   const buttonCSS = generateResponsiveCSS(element.id, buttonStyles);
-  const headerStyles = (element.styles as any)?.checkoutSectionHeader || { responsive: { desktop: {}, mobile: {} } };
-  const headerCSS = generateResponsiveCSS(`${element.id}-section-header`, headerStyles);
-  const bgs = (element.styles as any)?.checkoutBackgrounds || {};
-
 
   useEffect(() => {
     if (slug) {
@@ -580,15 +576,15 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
 
   return (
     <>
-      {/* Responsive styles for the primary button and section headers */}
-      <style>{buttonCSS + headerCSS}</style>
-      <div className={`max-w-5xl mx-auto grid ${gridCols} gap-6`} style={{ backgroundColor: bgs.containerBg }}>
-        <div className={`${leftColSpan} space-y-6`}>
-          <div className="rounded-lg border p-4 md:p-6 space-y-8" style={{ backgroundColor: bgs.formBg }}>
-            {sections.info && (
-              <section>
-                <h3 className={`mb-4 font-semibold element-${element.id}-section-header`}>{headings.info}</h3>
-                <div className={`grid ${infoGridCols} gap-4`}>
+      {/* Responsive styles for the primary button */}
+      <style>{buttonCSS}</style>
+      <div className={`max-w-5xl mx-auto grid ${gridCols} gap-6`}>
+        <div className={`${leftColSpan} space-y-4`}>
+          {sections.info && (
+            <Card>
+              <CardHeader><CardTitle>{headings.info}</CardTitle></CardHeader>
+              <CardContent className="space-y-3">
+                <div className={`grid ${infoGridCols} gap-3`}>
                   {fields.fullName?.enabled && (
                     <Input placeholder={fields.fullName.placeholder} value={form.customer_name} onChange={e=>setForm(f=>({...f,customer_name:e.target.value}))} required={!!(fields.fullName?.enabled && (fields.fullName?.required ?? true))} aria-required={!!(fields.fullName?.enabled && (fields.fullName?.required ?? true))} />
                   )}
@@ -597,20 +593,19 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
                   )}
                 </div>
                 {fields.email?.enabled && (
-                  <Input type="email" placeholder={fields.email.placeholder} value={form.customer_email} onChange={e=>setForm(f=>({...f,customer_email:e.target.value}))} required={!!(fields.email?.enabled && (fields.email?.required ?? false))} aria-required={!!(fields.email?.enabled && (fields.email?.required ?? false))} className="mt-3 md:mt-4" />
+                  <Input type="email" placeholder={fields.email.placeholder} value={form.customer_email} onChange={e=>setForm(f=>({...f,customer_email:e.target.value}))} required={!!(fields.email?.enabled && (fields.email?.required ?? false))} aria-required={!!(fields.email?.enabled && (fields.email?.required ?? false))} />
                 )}
-              </section>
-            )}
-
-            {sections.shipping && sections.info && (<Separator className="my-4" />)}
-
-            {sections.shipping && (
-              <section>
-                <h3 className={`mb-4 font-semibold element-${element.id}-section-header`}>{headings.shipping}</h3>
+              </CardContent>
+            </Card>
+          )}
+          {sections.shipping && (
+            <Card>
+              <CardHeader><CardTitle>{headings.shipping}</CardTitle></CardHeader>
+              <CardContent className="space-y-3">
                 {fields.address?.enabled && (
-                  <Textarea placeholder={fields.address.placeholder} value={form.shipping_address} onChange={e=>setForm(f=>({...f,shipping_address:e.target.value}))} rows={3} required={!!(fields.address?.enabled && (fields.address?.required ?? true))} aria-required={!!(fields.address?.enabled && (fields.address?.required ?? true))} className="mb-3 md:mb-4" />
+                  <Textarea placeholder={fields.address.placeholder} value={form.shipping_address} onChange={e=>setForm(f=>({...f,shipping_address:e.target.value}))} rows={3} required={!!(fields.address?.enabled && (fields.address?.required ?? true))} aria-required={!!(fields.address?.enabled && (fields.address?.required ?? true))} />
                 )}
-                <div className={`grid ${ship2GridCols} gap-4`}>
+                <div className={`grid ${ship2GridCols} gap-3`}>
                   {fields.city?.enabled && (
                     <Input placeholder={fields.city.placeholder} value={form.shipping_city} onChange={e=>setForm(f=>({...f,shipping_city:e.target.value}))} required={!!(fields.city?.enabled && (fields.city?.required ?? true))} aria-required={!!(fields.city?.enabled && (fields.city?.required ?? true))} />
                   )}
@@ -618,7 +613,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
                     <Input placeholder={fields.area.placeholder} value={form.shipping_area} onChange={e=>setForm(f=>({...f,shipping_area:e.target.value}))} required={!!(fields.area?.enabled && (fields.area?.required ?? false))} aria-required={!!(fields.area?.enabled && (fields.area?.required ?? false))} />
                   )}
                 </div>
-                <div className={`grid ${ship3GridCols} gap-4`}>
+                <div className={`grid ${ship3GridCols} gap-3`}>
                   {fields.country?.enabled && (
                     <Input placeholder={fields.country.placeholder} value={form.shipping_country} onChange={e=>setForm(f=>({...f,shipping_country:e.target.value}))} required={!!(fields.country?.enabled && (fields.country?.required ?? false))} aria-required={!!(fields.country?.enabled && (fields.country?.required ?? false))} />
                   )}
@@ -630,8 +625,9 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
                   )}
                 </div>
 
+                {/* Custom fields */}
                 {customFields?.length > 0 && (
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     {customFields.filter((cf:any)=>cf.enabled).map((cf:any) => (
                       <div key={cf.id}>
                         {cf.type === 'textarea' ? (
@@ -643,14 +639,13 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
                     ))}
                   </div>
                 )}
-              </section>
-            )}
-
-            {sections.payment && (sections.info || sections.shipping) && (<Separator className="my-4" />)}
-
-            {sections.payment && (
-              <section>
-                <h3 className={`mb-4 font-semibold element-${element.id}-section-header`}>{headings.payment}</h3>
+              </CardContent>
+            </Card>
+          )}
+          {sections.payment && (
+            <Card>
+              <CardHeader><CardTitle>{headings.payment}</CardTitle></CardHeader>
+              <CardContent className="space-y-3">
                 <Select value={form.payment_method} onValueChange={(v:any)=>setForm(f=>({...f,payment_method:v}))}>
                   <SelectTrigger><SelectValue placeholder="Select method" /></SelectTrigger>
                   <SelectContent>
@@ -660,14 +655,15 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
                     <SelectItem value="sslcommerz">Credit/Debit Card (SSLCommerz)</SelectItem>
                   </SelectContent>
                 </Select>
-                <Textarea placeholder="Order notes (optional)" value={form.notes} onChange={e=>setForm(f=>({...f,notes:e.target.value}))} className="mt-3 md:mt-4" />
-              </section>
-            )}
-          </div>
+                <Textarea placeholder="Order notes (optional)" value={form.notes} onChange={e=>setForm(f=>({...f,notes:e.target.value}))} />
+
+              </CardContent>
+            </Card>
+          )}
         </div>
         <div className="space-y-4">
           {sections.summary && (
-            <Card style={{ backgroundColor: bgs.summaryBg }}>
+            <Card>
               <CardHeader><CardTitle>{headings.summary}</CardTitle></CardHeader>
               <CardContent className="space-y-3">
                 {/* Items */}
@@ -678,10 +674,10 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
                         {showItemImages && it.image && (
                           <img src={it.image} alt={it.name} className="w-10 h-10 object-cover rounded border" />
                         )}
-                        <div className="min-w-0">
-                          <div className="text-sm font-medium truncate">{nameWithVariant(it.name, (it as any).variation)}</div>
-                          <div className="text-xs text-muted-foreground">× {it.quantity}</div>
-                        </div>
+                          <div className="min-w-0">
+                            <div className="text-sm font-medium truncate">{nameWithVariant(it.name, (it as any).variation)}</div>
+                            <div className="text-xs text-muted-foreground">× {it.quantity}</div>
+                          </div>
                       </div>
                       <div className="text-sm font-medium">{formatCurrency(it.price * it.quantity)}</div>
                     </div>
