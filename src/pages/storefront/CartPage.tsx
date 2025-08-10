@@ -9,6 +9,7 @@ import { useStore } from '@/contexts/StoreContext';
 import { useEcomPaths } from '@/lib/pathResolver';
 import { Input } from '@/components/ui/input';
 import { Trash2 } from 'lucide-react';
+import { formatCurrency } from '@/lib/currency';
 
 export const CartPage: React.FC = () => {
   const { slug, websiteId } = useParams<{ slug?: string; websiteId?: string }>();
@@ -87,7 +88,7 @@ export const CartPage: React.FC = () => {
                     )}
                     <div className="flex-1">
                       <div className="font-medium">{item.name}</div>
-                      <div className="text-sm text-muted-foreground">৳{item.price.toFixed(2)}</div>
+                      <div className="text-sm text-muted-foreground">{formatCurrency(item.price)}</div>
                       <div className="mt-2 flex items-center gap-2">
                         <span className="text-sm">Qty:</span>
                         <Input
@@ -116,12 +117,12 @@ export const CartPage: React.FC = () => {
               <CardContent className="space-y-4">
                 <div className="flex justify-between text-sm">
                   <span>Subtotal</span>
-                  <span>৳{total.toFixed(2)}</span>
+                  <span>{formatCurrency(total)}</span>
                 </div>
                 <Separator />
                 <div className="flex justify-between items-center font-semibold text-lg">
                   <span>Total</span>
-                  <span>৳{total.toFixed(2)}</span>
+                  <span>{formatCurrency(total)}</span>
                 </div>
                 <Button className="w-full" onClick={() => navigate(paths.checkout)}>
                   Proceed to Checkout
