@@ -19,6 +19,7 @@ import { useStoreProducts } from '@/hooks/useStoreData';
 import { generateResponsiveCSS } from '@/components/page-builder/utils/responsiveStyles';
 import { formatCurrency } from '@/lib/currency';
 import { computeShippingForAddress, ShippingSettings } from '@/lib/shipping';
+import { nameWithVariant } from '@/lib/utils';
 
 const CartSummaryElement: React.FC<{ element: PageBuilderElement }> = () => {
   const { items, total, updateQuantity, removeItem } = useCart();
