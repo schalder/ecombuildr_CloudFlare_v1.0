@@ -20,31 +20,14 @@ function normalize(str?: string) {
 
 export function computeShippingForAddress(
   settings: ShippingSettings | undefined,
-  addr: { city?: string; area?: string; address?: string; postal?: string }
+  addr: { city?: string }
 ): number | undefined {
   if (!settings || !settings.enabled) return undefined;
 
   const city = normalize(addr.city);
-  const area = normalize(addr.area);
-  const address = normalize(addr.address);
-
-  // 1) Exact city match
   if (city) {
     const match = settings.cityRules.find((r) => normalize(r.city) === city);
     if (match) return Number(match.fee) || 0;
   }
-
-  // 2) Fallback: substring match of rule city within area or address
-  const haystacks = [area, address].filter(Boolean) as string[];
-  if (haystacks.length) {
-    const found = settings.cityRules.find((r) => {
-      const ruleCity = normalize(r.city);
-      return ruleCity && haystacks.some((h) => h.includes(ruleCity));
-    });
-    if (found) return Number(found.fee) || 0;
-  }
-
-  // 3) Rest of country fallback
   return Number(settings.restOfCountryFee) || 0;
 }
-
