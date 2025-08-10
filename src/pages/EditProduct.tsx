@@ -306,25 +306,6 @@ export default function EditProduct() {
                   />
                 </div>
 
-                <div>
-                  <Label htmlFor="category">Category</Label>
-                  <Select
-                    value={formData.category_id}
-                    onValueChange={(value) => handleInputChange('category_id', value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">No category</SelectItem>
-                      {categories.map((category) => (
-                        <SelectItem key={category.id} value={category.id}>
-                          {category.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
               </CardContent>
             </Card>
 
@@ -382,7 +363,7 @@ export default function EditProduct() {
                   <CardTitle>Inventory</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div>
+                  <div className="space-y-2">
                     <Label htmlFor="sku">SKU</Label>
                     <Input
                       id="sku"
@@ -392,17 +373,28 @@ export default function EditProduct() {
                     />
                   </div>
 
-                  <div>
-                    <Label htmlFor="inventory_quantity">Inventory Quantity</Label>
-                    <Input
-                      id="inventory_quantity"
-                      type="number"
-                      value={formData.inventory_quantity}
-                      onChange={(e) => handleInputChange('inventory_quantity', e.target.value)}
-                      placeholder="0"
-                      min="0"
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="track_inventory"
+                      checked={!!formData.track_inventory}
+                      onCheckedChange={(checked) => handleInputChange('track_inventory', checked)}
                     />
+                    <Label htmlFor="track_inventory">Track inventory</Label>
                   </div>
+
+                  {formData.track_inventory && (
+                    <div className="space-y-2">
+                      <Label htmlFor="inventory_quantity">Quantity</Label>
+                      <Input
+                        id="inventory_quantity"
+                        type="number"
+                        value={formData.inventory_quantity}
+                        onChange={(e) => handleInputChange('inventory_quantity', e.target.value)}
+                        placeholder="0"
+                        min="0"
+                      />
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 
@@ -442,6 +434,141 @@ export default function EditProduct() {
                   <VariantMatrix options={variations} variants={variantEntries} onChange={setVariantEntries} />
                 </>
               )}
+            </CardContent>
+          </Card>
+
+          {/* Media */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Media</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="images">Product Images</Label>
+                <div className="space-y-2">
+                  {formData.images.map((image, index) => (
+                    <div key={index} className="flex gap-2">
+                      <Input
+                        value={image}
+                        onChange={(e) => {
+                          const newImages = [...formData.images];
+                          newImages[index] = e.target.value;
+                          setFormData((prev) => ({ ...prev, images: newImages }));
+                        }}
+                        placeholder="Image URL"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                          const newImages = formData.images.filter((_, i) => i !== index);
+                          setFormData((prev) => ({ ...prev, images: newImages }));
+                        }}
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                  ))}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setFormData((prev) => ({ ...prev, images: [...prev.images, ""] }));
+                    }}
+                  >
+                    Add Image URL
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Category & SEO */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Category & SEO</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="category_id">Category</Label>
+                <Select value={formData.category_id} onValueChange={(value) => handleInputChange('category_id', value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">No category</SelectItem>
+                    {categories.map((category) => (
+                      <SelectItem key={category.id} value={category.id}>
+                        {category.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="seo_title">SEO Title</Label>
+                <Input
+                  id="seo_title"
+                  value={formData.seo_title}
+                  onChange={(e) => handleInputChange('seo_title', e.target.value)}
+                  placeholder="SEO optimized title"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="seo_description">SEO Description</Label>
+                <Textarea
+                  id="seo_description"
+                  value={formData.seo_description}
+                  onChange={(e) => handleInputChange('seo_description', e.target.value)}
+                  placeholder="SEO meta description"
+                  rows={3}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Shipping & Returns */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Shipping & Returns</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Switch id="free_shipping" checked={enableFreeShipping} onCheckedChange={setEnableFreeShipping} />
+                  <Label htmlFor="free_shipping">Offer free shipping over a minimum amount</Label>
+                </div>
+                {enableFreeShipping && (
+                  <div className="grid grid-cols-1 md:grid-cols-[200px] gap-2">
+                    <Input
+                      type="number"
+                      step="0.01"
+                      placeholder="Minimum amount (e.g., 1000)"
+                      value={freeShippingMin}
+                      onChange={(e) => setFreeShippingMin(e.target.value)}
+                    />
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Switch id="easy_returns" checked={easyReturnsEnabled} onCheckedChange={setEasyReturnsEnabled} />
+                  <Label htmlFor="easy_returns">Enable Easy Returns</Label>
+                </div>
+                {easyReturnsEnabled && (
+                  <div className="grid grid-cols-1 md:grid-cols-[200px] gap-2">
+                    <Input
+                      type="number"
+                      placeholder="Days (e.g., 30)"
+                      value={easyReturnsDays}
+                      onChange={(e) => setEasyReturnsDays(e.target.value)}
+                    />
+                  </div>
+                )}
+              </div>
             </CardContent>
           </Card>
 
