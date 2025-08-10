@@ -269,8 +269,8 @@ export const CheckoutContentProperties: React.FC<CheckoutContentPropertiesProps>
               </div>
               <div className="space-y-2">
                 {customFields.map((cf: any, idx: number) => (
-                  <div key={cf.id} className="border rounded-md p-3 space-y-2">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div key={cf.id} className="border rounded-md p-3 space-y-3">
+                    <div className="space-y-3">
                       <div>
                         <Label className="text-sm">Label</Label>
                         <Input value={cf.label} onChange={(e) => updateCustomField(idx, { label: e.target.value })} />
@@ -291,11 +291,15 @@ export const CheckoutContentProperties: React.FC<CheckoutContentPropertiesProps>
                           </SelectContent>
                         </Select>
                       </div>
-                      <div className="flex items-center gap-2 mt-6">
-                        <input type="checkbox" checked={!!cf.required} onChange={(e) => updateCustomField(idx, { required: e.target.checked })} />
-                        <Label className="text-sm">Required</Label>
-                        <input type="checkbox" className="ml-4" checked={!!cf.enabled} onChange={(e) => updateCustomField(idx, { enabled: e.target.checked })} />
-                        <Label className="text-sm">Enabled</Label>
+                      <div className="flex items-center gap-6">
+                        <label className="flex items-center gap-2">
+                          <input type="checkbox" checked={!!cf.required} onChange={(e) => updateCustomField(idx, { required: e.target.checked })} />
+                          <span className="text-sm">Required</span>
+                        </label>
+                        <label className="flex items-center gap-2">
+                          <input type="checkbox" checked={!!cf.enabled} onChange={(e) => updateCustomField(idx, { enabled: e.target.checked })} />
+                          <span className="text-sm">Enabled</span>
+                        </label>
                       </div>
                     </div>
                     <div className="flex justify-end">
