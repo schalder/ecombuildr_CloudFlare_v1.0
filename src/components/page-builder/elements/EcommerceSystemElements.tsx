@@ -411,6 +411,8 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
   const headerStyles = (element.styles as any)?.checkoutSectionHeader || { responsive: { desktop: {}, mobile: {} } };
   const headerCSS = generateResponsiveCSS(`${element.id}-section-header`, headerStyles);
   const backgrounds = (element.styles as any)?.checkoutBackgrounds || {};
+  const formBorderWidth = Number((backgrounds as any)?.formBorderWidth || 0);
+  const summaryBorderWidth = Number((backgrounds as any)?.summaryBorderWidth || 0);
 
   useEffect(() => {
     if (slug) {
@@ -429,13 +431,32 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
     }
   }, [slug, websiteId, loadStore, loadStoreById]);
 
+  // Fallback: use store-level shipping settings when website settings are not present
+  useEffect(() => {
+    if (!websiteShipping && (store as any)?.settings?.shipping) {
+      setWebsiteShipping(((store as any).settings.shipping) as ShippingSettings);
+      console.debug('[Checkout] Using store-level shipping settings as fallback');
+    }
+  }, [store, websiteShipping]);
+
   // Recompute shipping cost when address details change (primarily city)
   useEffect(() => {
     if (websiteShipping && websiteShipping.enabled) {
-      const cost = computeShippingForAddress(websiteShipping, { city: form.shipping_city });
+      const cost = computeShippingForAddress(websiteShipping, {
+        city: form.shipping_city,
+        area: form.shipping_area,
+        address: form.shipping_address,
+        postal: form.shipping_postal_code,
+      });
       if (typeof cost === 'number') setShippingCost(cost);
       // Debug: observe when shipping recalculates
-      console.debug('[Checkout] Recomputed shipping', { city: form.shipping_city, area: form.shipping_area, postal: form.shipping_postal_code, cost });
+      console.debug('[Checkout] Recomputed shipping', {
+        city: form.shipping_city,
+        area: form.shipping_area,
+        postal: form.shipping_postal_code,
+        address: form.shipping_address,
+        cost,
+      });
     } else {
       setShippingCost(0);
     }
@@ -586,7 +607,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
       <div className={`max-w-5xl mx-auto grid ${gridCols} gap-6`} style={{ backgroundColor: backgrounds.containerBg || undefined }}>
         <div className={`${leftColSpan} space-y-4`}>
           {(sections.info || sections.shipping || sections.payment) && (
-            <Card style={{ backgroundColor: backgrounds.formBg || undefined }}>
+            <Card className={formBorderWidth > 0 ? undefined : 'border-0'} style={{ backgroundColor: backgrounds.formBg || undefined, borderColor: (backgrounds as any).formBorderColor || undefined, borderWidth: formBorderWidth || 0 }}>
               <CardContent className="p-4 md:p-6 space-y-6">
                 {sections.info && (
                   <section className="space-y-4">
@@ -673,7 +694,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
         </div>
         <div className="space-y-4">
           {sections.summary && (
-              <Card style={{ backgroundColor: backgrounds.summaryBg || undefined }}>
+              <Card className={summaryBorderWidth > 0 ? undefined : 'border-0'} style={{ backgroundColor: backgrounds.summaryBg || undefined, borderColor: (backgrounds as any).summaryBorderColor || undefined, borderWidth: summaryBorderWidth || 0 }}>
               <CardHeader><CardTitle>{headings.summary}</CardTitle></CardHeader>
               <CardContent className="space-y-3">
                 {/* Items */}

@@ -6,6 +6,7 @@ import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Monitor, Smartphone } from 'lucide-react';
 import { PageBuilderElement } from '../../types';
+import { Button } from '@/components/ui/button';
 
 interface CheckoutElementStylesProps {
   element: PageBuilderElement;
@@ -46,7 +47,7 @@ export const CheckoutElementStyles: React.FC<CheckoutElementStylesProps> = ({ el
     onStyleUpdate('checkoutSectionHeader', next);
   };
 
-  const updateBackgrounds = (key: 'containerBg' | 'formBg' | 'summaryBg', value: string) => {
+  const updateBackgrounds = (key: 'containerBg' | 'formBg' | 'summaryBg' | 'formBorderColor' | 'formBorderWidth' | 'summaryBorderColor' | 'summaryBorderWidth', value: any) => {
     onStyleUpdate('checkoutBackgrounds', { ...backgrounds, [key]: value });
   };
 
@@ -172,20 +173,66 @@ export const CheckoutElementStyles: React.FC<CheckoutElementStylesProps> = ({ el
       <Separator />
 
       <div className="space-y-3">
-        <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Backgrounds</h4>
-        <p className="text-xs text-muted-foreground">Customize container, form card, and summary background colors.</p>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <div>
-            <Label className="text-xs">Outer Container</Label>
-            <Input type="color" value={backgrounds.containerBg || '#ffffff'} onChange={(e) => updateBackgrounds('containerBg', e.target.value)} className="h-10" />
+        <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Backgrounds & Borders</h4>
+        <p className="text-xs text-muted-foreground">Customize container, form area, and summary area. Colors are stacked vertically for clarity.</p>
+
+        {/* Container Background */}
+        <div className="space-y-2">
+          <Label className="text-xs">Outer Container Background</Label>
+          <div className="flex items-center gap-2">
+            <Input type="color" value={backgrounds.containerBg || '#ffffff'} onChange={(e) => updateBackgrounds('containerBg', e.target.value)} className="h-10 w-14 p-0" />
+            <Button variant="ghost" size="sm" onClick={() => updateBackgrounds('containerBg', undefined)}>Reset</Button>
+            <Button variant="ghost" size="sm" onClick={() => updateBackgrounds('containerBg', 'transparent')}>Transparent</Button>
+          </div>
+        </div>
+
+        <Separator />
+
+        {/* Form Area */}
+        <div className="space-y-2">
+          <h5 className="text-xs font-medium">Form Area</h5>
+          <Label className="text-xs">Background</Label>
+          <div className="flex items-center gap-2">
+            <Input type="color" value={backgrounds.formBg || '#ffffff'} onChange={(e) => updateBackgrounds('formBg', e.target.value)} className="h-10 w-14 p-0" />
+            <Button variant="ghost" size="sm" onClick={() => updateBackgrounds('formBg', undefined)}>Reset</Button>
+            <Button variant="ghost" size="sm" onClick={() => updateBackgrounds('formBg', 'transparent')}>Transparent</Button>
+          </div>
+          <Label className="text-xs">Border Color</Label>
+          <div className="flex items-center gap-2">
+            <Input type="color" value={backgrounds.formBorderColor || '#e2e8f0'} onChange={(e) => updateBackgrounds('formBorderColor', e.target.value)} className="h-10 w-14 p-0" />
+            <Button variant="ghost" size="sm" onClick={() => updateBackgrounds('formBorderColor', undefined)}>Reset</Button>
           </div>
           <div>
-            <Label className="text-xs">Form Card</Label>
-            <Input type="color" value={backgrounds.formBg || '#ffffff'} onChange={(e) => updateBackgrounds('formBg', e.target.value)} className="h-10" />
+            <Label className="text-xs">Border Width</Label>
+            <div className="flex items-center gap-2">
+              <Slider value={[Number(backgrounds.formBorderWidth || 0)]} onValueChange={(val) => updateBackgrounds('formBorderWidth', val[0])} min={0} max={8} step={1} className="flex-1" />
+              <span className="text-xs text-muted-foreground w-10 text-right">{Number(backgrounds.formBorderWidth || 0)}px</span>
+            </div>
+          </div>
+        </div>
+
+        <Separator />
+
+        {/* Summary Area */}
+        <div className="space-y-2">
+          <h5 className="text-xs font-medium">Summary Area</h5>
+          <Label className="text-xs">Background</Label>
+          <div className="flex items-center gap-2">
+            <Input type="color" value={backgrounds.summaryBg || '#ffffff'} onChange={(e) => updateBackgrounds('summaryBg', e.target.value)} className="h-10 w-14 p-0" />
+            <Button variant="ghost" size="sm" onClick={() => updateBackgrounds('summaryBg', undefined)}>Reset</Button>
+            <Button variant="ghost" size="sm" onClick={() => updateBackgrounds('summaryBg', 'transparent')}>Transparent</Button>
+          </div>
+          <Label className="text-xs">Border Color</Label>
+          <div className="flex items-center gap-2">
+            <Input type="color" value={backgrounds.summaryBorderColor || '#e2e8f0'} onChange={(e) => updateBackgrounds('summaryBorderColor', e.target.value)} className="h-10 w-14 p-0" />
+            <Button variant="ghost" size="sm" onClick={() => updateBackgrounds('summaryBorderColor', undefined)}>Reset</Button>
           </div>
           <div>
-            <Label className="text-xs">Summary Card</Label>
-            <Input type="color" value={backgrounds.summaryBg || '#ffffff'} onChange={(e) => updateBackgrounds('summaryBg', e.target.value)} className="h-10" />
+            <Label className="text-xs">Border Width</Label>
+            <div className="flex items-center gap-2">
+              <Slider value={[Number(backgrounds.summaryBorderWidth || 0)]} onValueChange={(val) => updateBackgrounds('summaryBorderWidth', val[0])} min={0} max={8} step={1} className="flex-1" />
+              <span className="text-xs text-muted-foreground w-10 text-right">{Number(backgrounds.summaryBorderWidth || 0)}px</span>
+            </div>
           </div>
         </div>
       </div>
