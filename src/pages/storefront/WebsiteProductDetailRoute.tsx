@@ -23,22 +23,52 @@ interface WebsitePageData {
 }
 
 export const WebsiteProductDetailRoute: React.FC = () => {
-  const { websiteId } = useParams<{ websiteId: string }>();
+  const { websiteId, websiteSlug } = useParams<{ websiteId?: string; websiteSlug?: string }>();
   const [searchParams] = useSearchParams();
   const isPreview = searchParams.get('preview') === '1';
 
   const [page, setPage] = React.useState<WebsitePageData | null>(null);
   const [loading, setLoading] = React.useState(true);
+  const [resolvedWebsiteId, setResolvedWebsiteId] = React.useState<string | null>(null);
+
+  // Resolve website id if only slug is provided
+  React.useEffect(() => {
+    (async () => {
+      if (websiteId) {
+        setResolvedWebsiteId(websiteId);
+        return;
+      }
+      if (websiteSlug) {
+        try {
+          const { data } = await supabase
+            .from('websites')
+            .select('id, settings')
+            .eq('slug', websiteSlug)
+            .eq('is_active', true)
+            .maybeSingle();
+          const id = (data as any)?.id || null;
+          setResolvedWebsiteId(id);
+          // Initialize currency from settings when available
+          try {
+            const code = (data as any)?.settings?.currency?.code || 'BDT';
+            setGlobalCurrency(code as any);
+          } catch {}
+        } catch {
+          setResolvedWebsiteId(null);
+        }
+      }
+    })();
+  }, [websiteId, websiteSlug]);
 
   React.useEffect(() => {
     const fetchTemplate = async () => {
-      if (!websiteId) return;
+      if (!resolvedWebsiteId) return;
       setLoading(true);
       try {
         const { data: website, error: wErr } = await supabase
           .from('websites')
           .select('id, name, settings')
-          .eq('id', websiteId)
+          .eq('id', resolvedWebsiteId)
           .maybeSingle();
         if (wErr || !website) {
           setPage(null);
@@ -64,7 +94,7 @@ export const WebsiteProductDetailRoute: React.FC = () => {
           .from('website_pages')
           .select('*')
           .eq('id', templateId)
-          .eq('website_id', websiteId);
+          .eq('website_id', resolvedWebsiteId);
 
         if (!isPreview) {
           query = query.eq('is_published', true);
@@ -81,7 +111,7 @@ export const WebsiteProductDetailRoute: React.FC = () => {
       }
     };
     fetchTemplate();
-  }, [websiteId, isPreview]);
+  }, [resolvedWebsiteId, isPreview]);
 
   // Basic SEO handling for override pages
   React.useEffect(() => {

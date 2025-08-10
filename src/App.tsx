@@ -163,6 +163,46 @@ const App = () => (
                   <Route path=":pageSlug" element={<WebsitePage />} />
                 </Route>
 
+                {/* Clean slug-based Website Routes */}
+                <Route path="/site/:websiteSlug" element={<WebsiteLayout />}>
+                  <Route index element={<WebsitePage />} />
+                  <Route
+                    path="products"
+                    element={<WebsiteOverrideRoute slug="products" fallback={<StorefrontProducts />} />}
+                  />
+                  <Route path="products/:productSlug" element={<WebsiteProductDetailRoute />} />
+                  <Route
+                    path="search"
+                    element={<WebsiteOverrideRoute slug="search" fallback={<SearchResults />} />}
+                  />
+                  <Route
+                    path="cart"
+                    element={<WebsiteOverrideRoute slug="cart" fallback={<CartPage />} />}
+                  />
+                  <Route
+                    path="checkout"
+                    element={<WebsiteOverrideRoute slug="checkout" fallback={<CheckoutPage />} />}
+                  />
+                  {/* Support both param and query styles for order-related pages with override */}
+                  <Route
+                    path="payment-processing"
+                    element={<WebsiteOverrideRoute slug="payment-processing" fallback={<PaymentProcessing />} />}
+                  />
+                  <Route
+                    path="payment-processing/:orderId"
+                    element={<WebsiteOverrideRoute slug="payment-processing" fallback={<PaymentProcessing />} />}
+                  />
+                  <Route
+                    path="order-confirmation"
+                    element={<WebsiteOverrideRoute slug="order-confirmation" fallback={<OrderConfirmation />} />}
+                  />
+                  <Route
+                    path="order-confirmation/:orderId"
+                    element={<WebsiteOverrideRoute slug="order-confirmation" fallback={<OrderConfirmation />} />}
+                  />
+                  <Route path=":pageSlug" element={<WebsitePage />} />
+                </Route>
+
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Outlet, useParams, useSearchParams } from 'react-router-dom';
+import { Outlet, useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useStore } from '@/contexts/StoreContext';
@@ -19,8 +19,9 @@ interface WebsiteData {
 }
 
 export const WebsiteLayout: React.FC = () => {
-  const { websiteId } = useParams<{ websiteId: string }>();
+  const { websiteId, websiteSlug } = useParams<{ websiteId?: string; websiteSlug?: string }>();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const isPreview = searchParams.get('preview') === '1';
   const [website, setWebsite] = React.useState<WebsiteData | null>(null);
   const [loading, setLoading] = React.useState(true);
@@ -29,7 +30,7 @@ export const WebsiteLayout: React.FC = () => {
 
   React.useEffect(() => {
     const loadWebsite = async () => {
-      if (!websiteId) return;
+      if (!websiteId && !websiteSlug) return;
       try {
         setLoading(true);
         setError(null);
@@ -37,7 +38,7 @@ export const WebsiteLayout: React.FC = () => {
         let query = supabase
           .from('websites')
           .select('*')
-          .eq('id', websiteId)
+          .eq(websiteId ? 'id' : 'slug', (websiteId || websiteSlug) as string)
           .eq('is_active', true);
         // For preview, don't filter by is_published; RLS will allow owners
         if (!isPreview) {
@@ -63,7 +64,18 @@ export const WebsiteLayout: React.FC = () => {
       }
     };
     loadWebsite();
-  }, [websiteId, isPreview, loadStoreById]);
+  }, [websiteId, websiteSlug, isPreview, loadStoreById]);
+
+  // Redirect legacy /website/:id to clean /site/:slug while preserving the rest of the path
+  React.useEffect(() => {
+    if (website && websiteId && !websiteSlug) {
+      const current = window.location.pathname + window.location.search + window.location.hash;
+      const next = current.replace(`/website/${websiteId}`, `/site/${website.slug}`);
+      if (next !== current) {
+        navigate(next, { replace: true });
+      }
+    }
+  }, [website, websiteId, websiteSlug, navigate]);
 
   React.useEffect(() => {
     const code = (website?.settings?.currency?.code as string) || 'BDT';

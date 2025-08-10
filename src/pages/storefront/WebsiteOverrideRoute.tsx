@@ -22,21 +22,45 @@ interface WebsiteOverrideRouteProps {
 }
 
 export const WebsiteOverrideRoute: React.FC<WebsiteOverrideRouteProps> = ({ slug, fallback }) => {
-  const { websiteId } = useParams<{ websiteId: string }>();
+  const { websiteId, websiteSlug } = useParams<{ websiteId?: string; websiteSlug?: string }>();
   const [searchParams] = useSearchParams();
   const isPreview = searchParams.get('preview') === '1';
   const [page, setPage] = React.useState<WebsitePageData | null>(null);
   const [loading, setLoading] = React.useState(true);
+  const [resolvedWebsiteId, setResolvedWebsiteId] = React.useState<string | null>(null);
+
+  // Resolve website id if only slug is provided
+  React.useEffect(() => {
+    (async () => {
+      if (websiteId) {
+        setResolvedWebsiteId(websiteId);
+        return;
+      }
+      if (websiteSlug) {
+        try {
+          const { data } = await supabase
+            .from('websites')
+            .select('id')
+            .eq('slug', websiteSlug)
+            .eq('is_active', true)
+            .maybeSingle();
+          setResolvedWebsiteId((data as any)?.id || null);
+        } catch {
+          setResolvedWebsiteId(null);
+        }
+      }
+    })();
+  }, [websiteId, websiteSlug]);
 
   React.useEffect(() => {
     const fetchPage = async () => {
-      if (!websiteId) return;
+      if (!resolvedWebsiteId) return;
       setLoading(true);
       try {
         let query = supabase
           .from('website_pages')
           .select('*')
-          .eq('website_id', websiteId)
+          .eq('website_id', resolvedWebsiteId)
           .eq('slug', slug);
 
         if (!isPreview) {
@@ -54,17 +78,17 @@ export const WebsiteOverrideRoute: React.FC<WebsiteOverrideRouteProps> = ({ slug
       }
     };
     fetchPage();
-  }, [websiteId, slug, isPreview]);
+  }, [resolvedWebsiteId, slug, isPreview]);
 
   // Ensure global currency is set for override routes
   React.useEffect(() => {
     (async () => {
-      if (!websiteId) return;
+      if (!resolvedWebsiteId) return;
       try {
         const { data } = await supabase
           .from('websites')
           .select('settings')
-          .eq('id', websiteId)
+          .eq('id', resolvedWebsiteId)
           .maybeSingle();
         const code = (data as any)?.settings?.currency?.code || 'BDT';
         setGlobalCurrency(code as any);
@@ -72,7 +96,7 @@ export const WebsiteOverrideRoute: React.FC<WebsiteOverrideRouteProps> = ({ slug
         // ignore
       }
     })();
-  }, [websiteId]);
+  }, [resolvedWebsiteId]);
 
   // Basic SEO handling for override pages
   React.useEffect(() => {
