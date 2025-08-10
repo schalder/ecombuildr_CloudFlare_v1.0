@@ -140,9 +140,9 @@ export const ReviewsSection: React.FC<ReviewsSectionProps> = ({ productId }) => 
                 <div key={r.id} className="border rounded-md p-4">
                   <div className="flex items-center justify-between">
                     <div className="font-medium">{r.reviewer_name}</div>
-                    <div className="flex items-center gap-1 text-yellow-500">
+                    <div className="flex items-center gap-1">
                       {[...Array(5)].map((_, i) => (
-                        <Star key={i} className={i < r.rating ? "h-4 w-4 fill-yellow-400 text-yellow-400" : "h-4 w-4 text-muted-foreground"} />
+                        <Star key={i} className={i < r.rating ? "h-4 w-4 fill-current text-primary" : "h-4 w-4 text-muted-foreground"} />
                       ))}
                     </div>
                   </div>
@@ -175,16 +175,21 @@ export const ReviewsSection: React.FC<ReviewsSectionProps> = ({ productId }) => 
               <Input id="r-phone" value={form.phone} onChange={(e) => setForm((p) => ({ ...p, phone: e.target.value }))} />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="r-rating">Rating (1-5)</Label>
-              <Input
-                id="r-rating"
-                type="number"
-                min={1}
-                max={5}
-                value={form.rating}
-                onChange={(e) => setForm((p) => ({ ...p, rating: Number(e.target.value) }))}
-                required
-              />
+              <Label>Rating</Label>
+              <div className="flex items-center gap-2">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    aria-label={`${i} star${i > 1 ? "s" : ""}`}
+                    onClick={() => setForm((p) => ({ ...p, rating: i }))}
+                    className="p-1"
+                  >
+                    <Star className={i <= form.rating ? "h-5 w-5 fill-current text-primary" : "h-5 w-5 text-muted-foreground"} />
+                  </button>
+                ))}
+                <span className="text-sm text-muted-foreground">{form.rating} / 5</span>
+              </div>
             </div>
             <div className="space-y-2 md:col-span-2">
               <Label htmlFor="r-title">Title</Label>

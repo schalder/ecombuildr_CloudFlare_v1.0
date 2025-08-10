@@ -8,9 +8,10 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { supabase } from '@/integrations/supabase/client';
-import { ShoppingCart, Heart, Share2, Star } from 'lucide-react';
+import { ShoppingCart, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatCurrency } from '@/lib/currency';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import ReviewsSection from '@/components/storefront/ReviewsSection';
 import RelatedProducts from '@/components/storefront/RelatedProducts';
 
@@ -392,24 +393,34 @@ export const ProductDetail: React.FC = () => {
               )}
             </div>
 
-            <Separator />
-
-            {/* Product Description */}
-            {product.description && (
-              <div>
-                <h3 className="text-lg font-semibold mb-3">Description</h3>
-                <div className="prose prose-sm max-w-none text-muted-foreground">
-                  <div dangerouslySetInnerHTML={{ __html: product.description }} />
-                </div>
-              </div>
-            )}
-
-            {/* Reviews */}
-            <ReviewsSection productId={product.id} />
-
-            {/* Related products */}
-            <RelatedProducts categoryId={product.category_id || null} currentProductId={product.id} />
           </div>
+        </div>
+
+        {/* Details Tabs */}
+        <div className="mt-12">
+          <Tabs defaultValue="description" className="w-full">
+            <TabsList className="w-full justify-start">
+              <TabsTrigger value="description">Description</TabsTrigger>
+              <TabsTrigger value="reviews">Reviews</TabsTrigger>
+            </TabsList>
+            <TabsContent value="description">
+              {product.description ? (
+                <article className="prose prose-sm max-w-none text-muted-foreground">
+                  <div dangerouslySetInnerHTML={{ __html: product.description }} />
+                </article>
+              ) : (
+                <p className="text-muted-foreground">No description available.</p>
+              )}
+            </TabsContent>
+            <TabsContent value="reviews">
+              <ReviewsSection productId={product.id} />
+            </TabsContent>
+          </Tabs>
+        </div>
+
+        {/* Related products */}
+        <div className="mt-12">
+          <RelatedProducts categoryId={product.category_id || null} currentProductId={product.id} />
         </div>
       </div>
     </StorefrontLayout>
