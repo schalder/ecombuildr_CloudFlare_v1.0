@@ -44,6 +44,38 @@ export const ProductDetail: React.FC = () => {
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
 
+  // Variations handling
+  const options = React.useMemo<any[]>(() => {
+    const v: any = product?.variations;
+    if (Array.isArray(v)) return v as any[];
+    return (v?.options || []) as any[];
+  }, [product]);
+  const variantList = React.useMemo<any[]>(() => {
+    const v: any = product?.variations;
+    return Array.isArray(v) ? [] : (v?.variants || []);
+  }, [product]);
+  const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
+  useEffect(() => {
+    if (options && options.length) {
+      const initial: Record<string, string> = {};
+      options.forEach((opt: any) => {
+        initial[opt.name] = opt.values?.[0] || '';
+      });
+      setSelectedOptions(initial);
+    } else {
+      setSelectedOptions({});
+    }
+  }, [options]);
+  const selectedVariant = React.useMemo(() => {
+    if (!variantList.length) return null;
+    return (
+      variantList.find((vv) => {
+        const opts = vv.options || {};
+        return Object.keys(opts).every((k) => opts[k] === selectedOptions[k]);
+      }) || null
+    );
+  }, [variantList, selectedOptions]);
+
   useEffect(() => {
     const init = async () => {
       if (slug) {
@@ -108,13 +140,14 @@ export const ProductDetail: React.FC = () => {
     }
 
     addItem({
-      id: `${product.id}-default`,
+      id: `${product.id}${Object.keys(selectedOptions).length ? `-${JSON.stringify(selectedOptions)}` : ''}`,
       productId: product.id,
       name: product.name,
-      price: product.price,
+      price: effectivePrice,
       image: product.images[0],
       sku: product.sku,
       quantity,
+      variation: Object.keys(selectedOptions).length ? selectedOptions : undefined,
     });
 
     toast.success(`Added ${quantity} ${product.name} to cart`);
@@ -188,8 +221,9 @@ export const ProductDetail: React.FC = () => {
   }
 
   const isOutOfStock = product.track_inventory && product.inventory_quantity !== undefined && product.inventory_quantity <= 0;
-  const discountPercentage = product.compare_price && product.compare_price > product.price 
-    ? Math.round(((product.compare_price - product.price) / product.compare_price) * 100)
+  const effectivePrice = (selectedVariant?.price ?? product.price);
+  const discountPercentage = product.compare_price && product.compare_price > effectivePrice 
+    ? Math.round(((product.compare_price - effectivePrice) / product.compare_price) * 100)
     : 0;
 
   return (
@@ -247,9 +281,9 @@ export const ProductDetail: React.FC = () => {
 
             <div className="flex items-baseline space-x-2">
               <span className="text-3xl font-bold text-foreground">
-                {formatCurrency(product.price)}
+                {formatCurrency(effectivePrice)}
               </span>
-              {product.compare_price && product.compare_price > product.price && (
+              {product.compare_price && product.compare_price > effectivePrice && (
                 <span className="text-xl text-muted-foreground line-through">
                   {formatCurrency(product.compare_price)}
                 </span>
@@ -261,6 +295,32 @@ export const ProductDetail: React.FC = () => {
             )}
 
             <Separator />
+
+            {/* Variations */}
+            {options.length > 0 && (
+              <div className="space-y-4">
+                {options.map((opt: any) => (
+                  <div key={opt.name}>
+                    <h3 className="font-semibold mb-2">{opt.name}</h3>
+                    <div className="flex gap-2 flex-wrap">
+                      {(opt.values || []).map((val: string) => {
+                        const selected = selectedOptions[opt.name] === val;
+                        return (
+                          <Button
+                            key={val}
+                            variant={selected ? 'default' : 'outline'}
+                            size="sm"
+                            onClick={() => setSelectedOptions(prev => ({ ...prev, [opt.name]: val }))}
+                          >
+                            {val}
+                          </Button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
 
             {/* Quantity and Add to Cart */}
             <div className="space-y-4">

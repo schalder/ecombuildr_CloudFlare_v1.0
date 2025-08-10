@@ -12,6 +12,8 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Save, Package } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import VariationsBuilder, { VariationOption } from "@/components/products/VariationsBuilder";
+import VariantMatrix, { VariantEntry } from "@/components/products/VariantMatrix";
 
 interface Product {
   id: string;
@@ -53,6 +55,10 @@ export default function EditProduct() {
     is_active: true,
   });
 
+  const [hasVariants, setHasVariants] = useState(false);
+  const [variations, setVariations] = useState<VariationOption[]>([]);
+  const [variantEntries, setVariantEntries] = useState<VariantEntry[]>([]);
+
   useEffect(() => {
     if (user && id) {
       fetchProduct();
@@ -91,6 +97,21 @@ export default function EditProduct() {
           category_id: product.category_id || '',
           is_active: product.is_active,
         });
+
+        const v = (product as any).variations;
+        if (Array.isArray(v)) {
+          setHasVariants(v.length > 0);
+          setVariations(v);
+          setVariantEntries([]);
+        } else if (v && typeof v === 'object') {
+          setHasVariants((v.options || []).length > 0);
+          setVariations(v.options || []);
+          setVariantEntries(v.variants || []);
+        } else {
+          setHasVariants(false);
+          setVariations([]);
+          setVariantEntries([]);
+        }
       }
     } catch (error) {
       console.error('Error fetching product:', error);
@@ -145,6 +166,7 @@ export default function EditProduct() {
         category_id: formData.category_id === 'none' ? null : formData.category_id || null,
         is_active: formData.is_active,
         updated_at: new Date().toISOString(),
+        variations: hasVariants ? { options: variations, variants: variantEntries } : [],
       };
 
       const { error } = await supabase
@@ -361,6 +383,25 @@ export default function EditProduct() {
               </Card>
             </div>
           </div>
+
+          {/* Variations */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Variations</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center gap-2">
+                <Switch id="has_variants" checked={hasVariants} onCheckedChange={setHasVariants} />
+                <Label htmlFor="has_variants">This product has variants (e.g., Size, Color)</Label>
+              </div>
+              {hasVariants && (
+                <>
+                  <VariationsBuilder options={variations} onChange={setVariations} />
+                  <VariantMatrix options={variations} variants={variantEntries} onChange={setVariantEntries} />
+                </>
+              )}
+            </CardContent>
+          </Card>
 
           {/* Actions */}
           <div className="flex justify-end gap-4">
