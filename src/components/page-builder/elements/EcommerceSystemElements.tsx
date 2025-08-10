@@ -429,15 +429,17 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
     }
   }, [slug, websiteId, loadStore, loadStoreById]);
 
-  // Recompute shipping cost when city or website shipping settings change
+  // Recompute shipping cost when address details change (primarily city)
   useEffect(() => {
     if (websiteShipping && websiteShipping.enabled) {
       const cost = computeShippingForAddress(websiteShipping, { city: form.shipping_city });
       if (typeof cost === 'number') setShippingCost(cost);
+      // Debug: observe when shipping recalculates
+      console.debug('[Checkout] Recomputed shipping', { city: form.shipping_city, area: form.shipping_area, postal: form.shipping_postal_code, cost });
     } else {
       setShippingCost(0);
     }
-  }, [websiteShipping, form.shipping_city]);
+  }, [websiteShipping, form.shipping_city, form.shipping_area, form.shipping_postal_code, form.shipping_address]);
 
   const handleSubmit = async () => {
     if (!store || items.length === 0) return;
@@ -587,7 +589,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
             <Card style={{ backgroundColor: backgrounds.formBg || undefined }}>
               <CardContent className="p-4 md:p-6 space-y-6">
                 {sections.info && (
-                  <section>
+                  <section className="space-y-4">
                     <h3 className={`mb-3 font-semibold element-${element.id}-section-header`}>{headings.info}</h3>
                     <div className={`grid ${infoGridCols} gap-4`}>
                       {fields.fullName?.enabled && (
@@ -606,7 +608,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
                 {sections.info && (sections.shipping || sections.payment) && <Separator className="my-4" />}
 
                 {sections.shipping && (
-                  <section>
+                  <section className="space-y-4">
                     <h3 className={`mb-3 font-semibold element-${element.id}-section-header`}>{headings.shipping}</h3>
                     {fields.address?.enabled && (
                       <Textarea placeholder={fields.address.placeholder} value={form.shipping_address} onChange={e=>setForm(f=>({...f,shipping_address:e.target.value}))} rows={3} required={!!(fields.address?.enabled && (fields.address?.required ?? true))} aria-required={!!(fields.address?.enabled && (fields.address?.required ?? true))} />
@@ -651,7 +653,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
                 {sections.shipping && sections.payment && <Separator className="my-4" />}
 
                 {sections.payment && (
-                  <section>
+                  <section className="space-y-4">
                     <h3 className={`mb-3 font-semibold element-${element.id}-section-header`}>{headings.payment}</h3>
                     <Select value={form.payment_method} onValueChange={(v:any)=>setForm(f=>({...f,payment_method:v}))}>
                       <SelectTrigger><SelectValue placeholder="Select method" /></SelectTrigger>
