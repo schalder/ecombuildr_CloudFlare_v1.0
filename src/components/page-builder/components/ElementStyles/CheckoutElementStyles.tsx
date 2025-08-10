@@ -17,6 +17,13 @@ export const CheckoutElementStyles: React.FC<CheckoutElementStylesProps> = ({ el
   const styles = ((element.styles as any)?.checkoutButton) || { responsive: { desktop: {}, mobile: {} } } as any;
   const current = styles.responsive?.[tab] || {} as any;
 
+  // Section header styles
+  const headerStyles = ((element.styles as any)?.checkoutSectionHeader) || { responsive: { desktop: {}, mobile: {} } } as any;
+  const currentHeader = headerStyles.responsive?.[tab] || {} as any;
+
+  // Background colors
+  const backgrounds = ((element.styles as any)?.checkoutBackgrounds) || {} as any;
+
   const updateResponsive = (key: string, value: any) => {
     const next = {
       responsive: {
@@ -26,6 +33,21 @@ export const CheckoutElementStyles: React.FC<CheckoutElementStylesProps> = ({ el
     } as any;
     next.responsive[tab] = { ...next.responsive[tab], [key]: value };
     onStyleUpdate('checkoutButton', next);
+  };
+
+  const updateHeaderResponsive = (key: string, value: any) => {
+    const next = {
+      responsive: {
+        desktop: { ...(headerStyles.responsive?.desktop || {}) },
+        mobile: { ...(headerStyles.responsive?.mobile || {}) },
+      }
+    } as any;
+    next.responsive[tab] = { ...next.responsive[tab], [key]: value };
+    onStyleUpdate('checkoutSectionHeader', next);
+  };
+
+  const updateBackgrounds = (key: 'containerBg' | 'formBg' | 'summaryBg', value: string) => {
+    onStyleUpdate('checkoutBackgrounds', { ...backgrounds, [key]: value });
   };
 
   return (
@@ -115,6 +137,58 @@ export const CheckoutElementStyles: React.FC<CheckoutElementStylesProps> = ({ el
           </div>
         </TabsContent>
       </Tabs>
+
+      <Separator />
+
+      <div>
+        <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Section Header</h4>
+        <p className="text-xs text-muted-foreground">Adjust section title font size per device.</p>
+        <Tabs value={tab} onValueChange={(v) => setTab(v as any)}>
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="desktop" className="flex items-center gap-2"><Monitor className="h-3 w-3" />Desktop</TabsTrigger>
+            <TabsTrigger value="mobile" className="flex items-center gap-2"><Smartphone className="h-3 w-3" />Mobile</TabsTrigger>
+          </TabsList>
+          <TabsContent value="desktop" className="space-y-3 mt-3">
+            <div>
+              <Label className="text-xs">Font Size</Label>
+              <div className="flex items-center gap-2">
+                <Slider value={[parseInt(currentHeader.fontSize?.replace(/\D/g, '') || '16')]} onValueChange={(val) => updateHeaderResponsive('fontSize', `${val[0]}px`)} min={12} max={28} step={1} className="flex-1" />
+                <span className="text-xs text-muted-foreground w-12">{currentHeader.fontSize || '16px'}</span>
+              </div>
+            </div>
+          </TabsContent>
+          <TabsContent value="mobile" className="space-y-3 mt-3">
+            <div>
+              <Label className="text-xs">Font Size</Label>
+              <div className="flex items-center gap-2">
+                <Slider value={[parseInt(currentHeader.fontSize?.replace(/\D/g, '') || '16')]} onValueChange={(val) => updateHeaderResponsive('fontSize', `${val[0]}px`)} min={12} max={24} step={1} className="flex-1" />
+                <span className="text-xs text-muted-foreground w-12">{currentHeader.fontSize || '16px'}</span>
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
+      </div>
+
+      <Separator />
+
+      <div className="space-y-3">
+        <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Backgrounds</h4>
+        <p className="text-xs text-muted-foreground">Customize container, form card, and summary background colors.</p>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div>
+            <Label className="text-xs">Outer Container</Label>
+            <Input type="color" value={backgrounds.containerBg || '#ffffff'} onChange={(e) => updateBackgrounds('containerBg', e.target.value)} className="h-10" />
+          </div>
+          <div>
+            <Label className="text-xs">Form Card</Label>
+            <Input type="color" value={backgrounds.formBg || '#ffffff'} onChange={(e) => updateBackgrounds('formBg', e.target.value)} className="h-10" />
+          </div>
+          <div>
+            <Label className="text-xs">Summary Card</Label>
+            <Input type="color" value={backgrounds.summaryBg || '#ffffff'} onChange={(e) => updateBackgrounds('summaryBg', e.target.value)} className="h-10" />
+          </div>
+        </div>
+      </div>
 
       <Separator />
 
