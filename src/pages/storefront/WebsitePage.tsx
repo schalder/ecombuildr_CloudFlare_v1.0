@@ -174,6 +174,21 @@ export const WebsitePage: React.FC = () => {
     fetchWebsiteAndPage();
   }, [resolvedWebsiteId, pageSlug, loadStoreById, isPreview, resolvingSiteId]);
 
+  // Provisional website-level SEO (runs as soon as website loads)
+  useEffect(() => {
+    if (!website) return;
+    const canonical = buildCanonical(undefined, (website as any)?.canonical_domain || website.domain);
+    setSEO({
+      title: ((website as any)?.seo_title || website.name) || undefined,
+      description: ((website as any)?.seo_description || website.description) || undefined,
+      image: (website as any)?.og_image,
+      canonical,
+      robots: isPreview ? 'noindex, nofollow' : ((website as any)?.meta_robots || 'index, follow'),
+      siteName: website.name,
+      ogType: 'website',
+    });
+  }, [website, isPreview]);
+
   // Set up SEO metadata
   useEffect(() => {
     if (!page || !website) return;

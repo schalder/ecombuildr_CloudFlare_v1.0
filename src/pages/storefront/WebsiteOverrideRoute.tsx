@@ -101,11 +101,26 @@ export const WebsiteOverrideRoute: React.FC<WebsiteOverrideRouteProps> = ({ slug
     })();
   }, [resolvedWebsiteId]);
 
+  // Provisional website-level SEO (runs as soon as website meta loads)
+  React.useEffect(() => {
+    if (!websiteMeta) return;
+    const canonical = buildCanonical(undefined, websiteMeta?.canonical_domain || websiteMeta?.domain);
+    setSEO({
+      title: websiteMeta?.seo_title || websiteMeta?.name,
+      description: websiteMeta?.seo_description,
+      image: websiteMeta?.og_image,
+      canonical,
+      robots: isPreview ? 'noindex, nofollow' : (websiteMeta?.meta_robots || 'index, follow'),
+      siteName: websiteMeta?.name,
+      ogType: 'website',
+    });
+  }, [websiteMeta, isPreview]);
+
   // SEO handling using centralized utility
   React.useEffect(() => {
     if (!page) return;
 
-    const title = page.seo_title || (websiteMeta?.seo_title ? `${page.title} - ${websiteMeta?.name || ''}`.trim() : page.title);
+    const title = page.seo_title || (websiteMeta?.name ? `${page.title} - ${websiteMeta.name}` : page.title);
     const description = page.seo_description || websiteMeta?.seo_description;
     const image = page.og_image || websiteMeta?.og_image;
     const canonical = buildCanonical(undefined, websiteMeta?.canonical_domain || websiteMeta?.domain);

@@ -114,6 +114,21 @@ export const FunnelStepPage: React.FC = () => {
     fetchFunnelAndStep();
   }, [funnelId, stepSlug, loadStoreById]);
 
+  // Provisional funnel-level SEO (runs as soon as funnel loads)
+  useEffect(() => {
+    if (!funnel) return;
+    const canonical = buildCanonical(undefined, (funnel as any)?.canonical_domain);
+    setSEO({
+      title: ((funnel as any)?.seo_title || funnel.name) || undefined,
+      description: ((funnel as any)?.seo_description || funnel.description) || undefined,
+      image: (funnel as any)?.og_image,
+      canonical,
+      robots: (funnel as any)?.meta_robots || 'index, follow',
+      siteName: funnel.name,
+      ogType: 'website',
+    });
+  }, [funnel]);
+
   // Set up SEO metadata using centralized utility
   useEffect(() => {
     if (!step || !funnel) return;
@@ -121,7 +136,7 @@ export const FunnelStepPage: React.FC = () => {
     const title = step.seo_title || (step.title && funnel.name ? `${step.title} - ${funnel.name}` : step.title);
     const description = step.seo_description || (funnel as any)?.seo_description || funnel.description;
     const image = step.og_image || (funnel as any)?.og_image;
-    const canonical = buildCanonical();
+    const canonical = buildCanonical(undefined, (funnel as any)?.canonical_domain);
 
     setSEO({
       title: title || undefined,
