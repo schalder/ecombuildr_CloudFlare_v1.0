@@ -11,8 +11,8 @@ interface StorefrontLayoutProps {
 
 export const StorefrontLayout: React.FC<StorefrontLayoutProps> = ({ children }) => {
   const { store, loading, error } = useStore();
-  const { websiteId } = useParams<{ websiteId?: string }>();
-  const isWebsiteContext = Boolean(websiteId);
+  const { websiteId, websiteSlug } = useParams<{ websiteId?: string; websiteSlug?: string }>();
+  const isWebsiteContext = Boolean(websiteId || websiteSlug);
 
   if (loading) {
     return (

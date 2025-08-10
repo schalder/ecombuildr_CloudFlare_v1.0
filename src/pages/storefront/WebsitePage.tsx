@@ -3,8 +3,6 @@ import { useParams, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
 import { PageBuilderRenderer } from '@/components/storefront/PageBuilderRenderer';
-import { WebsiteHeader } from '@/components/storefront/WebsiteHeader';
-import { WebsiteFooter } from '@/components/storefront/WebsiteFooter';
 import { useStore } from '@/contexts/StoreContext';
 import { setGlobalCurrency } from '@/lib/currency';
 interface WebsitePageData {
@@ -220,9 +218,6 @@ export const WebsitePage: React.FC = () => {
     );
   }
 
-  // Resolve global header/footer from website settings
-  const headerConfig = (website.settings as any)?.global_header;
-  const footerConfig = (website.settings as any)?.global_footer;
 
   return (
     <div className="w-full min-h-screen">
