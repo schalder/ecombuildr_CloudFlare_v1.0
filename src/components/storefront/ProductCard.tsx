@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 import { WishlistButton } from './WishlistButton';
 import { useToast } from '@/hooks/use-toast';
 import { useEcomPaths } from '@/lib/pathResolver';
+import { formatCurrency } from '@/lib/currency';
 
 interface Product {
   id: string;
@@ -184,11 +185,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <span className="font-bold text-lg text-foreground">
-              ৳{product.price.toFixed(2)}
+              {formatCurrency(product.price)}
             </span>
             {product.compare_price && product.compare_price > product.price && (
               <span className="text-sm text-muted-foreground line-through">
-                ৳{product.compare_price.toFixed(2)}
+                {formatCurrency(product.compare_price)}
               </span>
             )}
           </div>

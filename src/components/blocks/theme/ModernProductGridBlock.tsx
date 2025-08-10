@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useStore } from '@/contexts/StoreContext';
 import { useCart } from '@/contexts/CartContext';
 import { useToast } from '@/hooks/use-toast';
+import { formatCurrency } from '@/lib/currency';
 
 interface ModernProductGridContent {
   title: string;
@@ -365,11 +366,11 @@ const ModernProductGridSave: React.FC<BlockSaveProps> = ({ block }) => {
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center space-x-2">
                     <span className="text-2xl font-bold text-orange-500">
-                      ${product.price}
+                      {formatCurrency(product.price)}
                     </span>
                     {product.compare_price && (
                       <span className="text-lg text-gray-400 line-through">
-                        ${product.compare_price}
+                        {formatCurrency(product.compare_price)}
                       </span>
                     )}
                   </div>

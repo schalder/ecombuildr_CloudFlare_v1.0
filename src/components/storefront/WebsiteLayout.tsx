@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useStore } from '@/contexts/StoreContext';
 import { WebsiteHeader } from '@/components/storefront/WebsiteHeader';
 import { WebsiteFooter } from '@/components/storefront/WebsiteFooter';
+import { setGlobalCurrency } from '@/lib/currency';
 
 interface WebsiteData {
   id: string;
@@ -63,6 +64,11 @@ export const WebsiteLayout: React.FC = () => {
     };
     loadWebsite();
   }, [websiteId, isPreview, loadStoreById]);
+
+  React.useEffect(() => {
+    const code = (website?.settings?.currency?.code as string) || 'BDT';
+    try { setGlobalCurrency(code as any); } catch {}
+  }, [website?.settings?.currency?.code]);
 
   if (loading) {
     return (

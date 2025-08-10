@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { ShoppingCart, Heart, Star, Minus, Plus, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { formatCurrency } from '@/lib/currency';
 
 interface Product {
   id: string;
@@ -143,11 +144,11 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
               {/* Pricing */}
               <div className="flex items-center gap-3 mb-4">
                 <span className="text-3xl font-bold text-foreground">
-                  ৳{product.price.toFixed(2)}
+                  {formatCurrency(product.price)}
                 </span>
                 {product.compare_price && product.compare_price > product.price && (
                   <span className="text-lg text-muted-foreground line-through">
-                    ৳{product.compare_price.toFixed(2)}
+                    {formatCurrency(product.compare_price)}
                   </span>
                 )}
               </div>
@@ -234,7 +235,7 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
                     </Button>
                   </div>
                   <span className="text-sm text-muted-foreground">
-                    Total: ৳{(product.price * quantity).toFixed(2)}
+                    Total: {formatCurrency(product.price * quantity)}
                   </span>
                 </div>
               </div>
@@ -264,7 +265,7 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
                     <span className="font-medium">Free Shipping</span>
-                    <p className="text-muted-foreground">On orders over ৳1000</p>
+                    <p className="text-muted-foreground">On orders over {formatCurrency(1000)}</p>
                   </div>
                   <div>
                     <span className="font-medium">Easy Returns</span>

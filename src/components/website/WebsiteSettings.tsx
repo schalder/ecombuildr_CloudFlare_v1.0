@@ -23,6 +23,7 @@ const websiteSettingsSchema = z.object({
   favicon_url: z.string().url('Must be a valid URL').optional().or(z.literal('')),
   header_tracking_code: z.string().optional(),
   footer_tracking_code: z.string().optional(),
+  currency_code: z.enum(['BDT','USD','INR','EUR','GBP']).default('BDT'),
 });
 
 type WebsiteSettingsForm = z.infer<typeof websiteSettingsSchema>;
@@ -56,6 +57,7 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
       favicon_url: website.settings?.favicon_url || '',
       header_tracking_code: website.settings?.header_tracking_code || '',
       footer_tracking_code: website.settings?.footer_tracking_code || '',
+      currency_code: website.settings?.currency?.code || 'BDT',
     },
   });
 
@@ -79,7 +81,7 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
 
   const updateWebsiteMutation = useMutation({
     mutationFn: async (data: WebsiteSettingsForm) => {
-      const { favicon_url, header_tracking_code, footer_tracking_code, ...basicFields } = data;
+      const { favicon_url, header_tracking_code, footer_tracking_code, currency_code, ...basicFields } = data;
       
       const settings = {
         ...website.settings,
@@ -90,7 +92,7 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
           ...(website.settings?.system_pages || {}),
           product_detail_page_id: productDetailTemplateId || null,
         },
-        currency: (website.settings?.currency || { code: 'BDT' })
+        currency: { code: currency_code || 'BDT' },
       };
 
       const { error } = await supabase
@@ -263,6 +265,44 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
                     </FormControl>
                     <FormDescription>
                       URL to your website's favicon (16x16 or 32x32 pixels).
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Localization & Currency</CardTitle>
+              <CardDescription>
+                Choose the currency used across this website.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <FormField
+                control={form.control}
+                name="currency_code"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Currency</FormLabel>
+                    <FormControl>
+                      <Select value={field.value} onValueChange={field.onChange}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select currency" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="BDT">Bangladeshi Taka (BDT)</SelectItem>
+                          <SelectItem value="USD">US Dollar (USD)</SelectItem>
+                          <SelectItem value="INR">Indian Rupee (INR)</SelectItem>
+                          <SelectItem value="EUR">Euro (EUR)</SelectItem>
+                          <SelectItem value="GBP">British Pound (GBP)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </FormControl>
+                    <FormDescription>
+                      This currency will be applied globally across your website.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>

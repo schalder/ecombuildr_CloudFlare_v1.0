@@ -7,6 +7,7 @@ import { Separator } from '@/components/ui/separator';
 import { Plus, Minus, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useEcomPaths } from '@/lib/pathResolver';
+import { formatCurrency } from '@/lib/currency';
 
 interface CartDrawerProps {
   children: React.ReactNode;
@@ -62,7 +63,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ children }) => {
                     )}
                     <div className="flex-1 min-w-0">
                       <h3 className="font-medium text-sm leading-tight mb-1 line-clamp-2">{item.name}</h3>
-                      <p className="text-sm text-muted-foreground mb-2">৳{item.price.toFixed(2)} each</p>
+                      <p className="text-sm text-muted-foreground mb-2">{formatCurrency(item.price)} each</p>
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-1">
                           <Button
@@ -87,7 +88,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ children }) => {
                           </Button>
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className="text-sm font-semibold">৳{(item.price * item.quantity).toFixed(2)}</span>
+                          <span className="text-sm font-semibold">{formatCurrency(item.price * item.quantity)}</span>
                           <Button
                             variant="ghost"
                             size="sm"
@@ -111,11 +112,11 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ children }) => {
               <div className="space-y-2">
                 <div className="flex justify-between items-center text-sm">
                   <span>Subtotal ({items.reduce((sum, item) => sum + item.quantity, 0)} items):</span>
-                  <span>৳{total.toFixed(2)}</span>
+                  <span>{formatCurrency(total)}</span>
                 </div>
                 <div className="flex justify-between items-center text-lg font-semibold">
                   <span>Total:</span>
-                  <span>৳{total.toFixed(2)}</span>
+                  <span>{formatCurrency(total)}</span>
                 </div>
               </div>
               <Link to={paths.checkout} className="block">

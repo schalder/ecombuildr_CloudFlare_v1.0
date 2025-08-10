@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { BlockEditProps, BlockSaveProps } from '../types';
 import { supabase } from '@/integrations/supabase/client';
 import { useUserStore } from '@/hooks/useUserStore';
+import { formatCurrency } from '@/lib/currency';
 
 interface ProductGridContent {
   title: string;
@@ -430,11 +431,11 @@ const ProductGridSave: React.FC<BlockSaveProps> = ({ block }) => {
                   {content.showPrices && (
                     <div className="flex items-center gap-2">
                       <span className="font-bold text-primary">
-                        ৳{product.price.toLocaleString()}
+                        {formatCurrency(product.price)}
                       </span>
                       {product.compare_price && product.compare_price > product.price && (
                         <span className="text-sm text-muted-foreground line-through">
-                          ৳{product.compare_price.toLocaleString()}
+                          {formatCurrency(product.compare_price)}
                         </span>
                       )}
                     </div>
