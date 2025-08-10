@@ -18,6 +18,7 @@ import ProductLibrary from "./pages/ProductLibrary";
 import Orders from "./pages/Orders";
 import Customers from "./pages/Customers";
 import Analytics from "./pages/Analytics";
+import Reviews from "./pages/Reviews";
 
 import PageBuilder from "./pages/PageBuilder";
 import Websites from "./pages/Websites";
@@ -81,6 +82,7 @@ const App = () => (
                 <Route path="/dashboard/orders" element={<Orders />} />
                 <Route path="/dashboard/customers" element={<Customers />} />
                 <Route path="/dashboard/analytics" element={<Analytics />} />
+                <Route path="/dashboard/reviews" element={<Reviews />} />
                 <Route path="/dashboard/websites" element={<Websites />} />
                 <Route path="/dashboard/websites/create" element={<CreateWebsite />} />
                 <Route path="/dashboard/websites/:id" element={<WebsiteManagement />} />

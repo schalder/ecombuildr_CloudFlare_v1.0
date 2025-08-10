@@ -14,6 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import RichTextEditor from '@/components/ui/RichTextEditor';
 import VariationsBuilder, { VariationOption } from '@/components/products/VariationsBuilder';
+import VariantMatrix, { VariantEntry } from '@/components/products/VariantMatrix';
 
 export default function AddProduct() {
   const { user } = useAuth();
@@ -42,6 +43,7 @@ export default function AddProduct() {
   // New local states
   const [hasVariants, setHasVariants] = useState(false);
   const [variations, setVariations] = useState<VariationOption[]>([]);
+  const [variantEntries, setVariantEntries] = useState<VariantEntry[]>([]);
   const [enableFreeShipping, setEnableFreeShipping] = useState(false);
   const [freeShippingMin, setFreeShippingMin] = useState<string>('');
   const [easyReturnsEnabled, setEasyReturnsEnabled] = useState(false);
@@ -110,7 +112,7 @@ export default function AddProduct() {
         category_id: formData.category_id || null,
         images: formData.images,
         // New fields
-        variations: hasVariants ? variations : [],
+        variations: hasVariants ? { options: variations, variants: variantEntries } : [],
         free_shipping_min_amount: enableFreeShipping && freeShippingMin ? parseFloat(freeShippingMin) : null,
         easy_returns_enabled: easyReturnsEnabled,
         easy_returns_days: easyReturnsEnabled && easyReturnsDays ? parseInt(easyReturnsDays) : null,
@@ -263,7 +265,10 @@ export default function AddProduct() {
               <Label htmlFor="has_variants">This product has variants (e.g., Size, Color)</Label>
             </div>
             {hasVariants && (
-              <VariationsBuilder options={variations} onChange={setVariations} />
+              <>
+                <VariationsBuilder options={variations} onChange={setVariations} />
+                <VariantMatrix options={variations} variants={variantEntries} onChange={setVariantEntries} />
+              </>
             )}
           </CardContent>
         </Card>

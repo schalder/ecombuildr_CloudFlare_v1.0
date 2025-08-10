@@ -51,14 +51,23 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
   const [quantity, setQuantity] = useState(1);
   const [isWishlisted, setIsWishlisted] = useState(false);
 
-  const options = useMemo<VariationOption[]>(() => Array.isArray(product?.variations) ? (product!.variations as any) : [], [product]);
+  const options = useMemo<VariationOption[]>(() => {
+    const v: any = product?.variations;
+    if (Array.isArray(v)) return v as any;
+    return (v?.options || []) as VariationOption[];
+  }, [product]);
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
 
+  // Variants list (for price overrides)
+  const variantList = useMemo<any[]>(() => {
+    const v: any = product?.variations;
+    return Array.isArray(v) ? [] : (v?.variants || []);
+  }, [product]);
+
   React.useEffect(() => {
-    // Initialize selection to first value for each option
     if (options && options.length) {
       const initial: Record<string, string> = {};
-      options.forEach(opt => {
+      options.forEach((opt) => {
         initial[opt.name] = opt.values?.[0] || '';
       });
       setSelectedOptions(initial);
@@ -66,6 +75,16 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
       setSelectedOptions({});
     }
   }, [options]);
+
+  const selectedVariant = useMemo(() => {
+    if (!variantList.length) return null;
+    return (
+      variantList.find((vv) => {
+        const opts = vv.options || {};
+        return Object.keys(opts).every((k) => opts[k] === selectedOptions[k]);
+      }) || null
+    );
+  }, [variantList, selectedOptions]);
 
   if (!product) return null;
 
@@ -82,7 +101,9 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
   }, [product]);
 
   const handleAddToCart = () => {
-    onAddToCart(product, quantity, Object.keys(selectedOptions).length ? selectedOptions : undefined);
+    const unitPrice = selectedVariant?.price ?? product.price;
+    const pWithPrice = { ...product, price: unitPrice } as any;
+    onAddToCart(pWithPrice, quantity, Object.keys(selectedOptions).length ? selectedOptions : undefined);
     onClose();
   };
 
@@ -165,9 +186,9 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
               {/* Pricing */}
               <div className="flex items-center gap-3 mb-4">
                 <span className="text-3xl font-bold text-foreground">
-                  {formatCurrency(product.price)}
+                  {formatCurrency((selectedVariant?.price ?? product.price))}
                 </span>
-                {product.compare_price && product.compare_price > product.price && (
+                {product.compare_price && (product.compare_price > (selectedVariant?.price ?? product.price)) && (
                   <span className="text-lg text-muted-foreground line-through">
                     {formatCurrency(product.compare_price)}
                   </span>
@@ -247,7 +268,7 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
                     </Button>
                   </div>
                   <span className="text-sm text-muted-foreground">
-                    Total: {formatCurrency(product.price * quantity)}
+                    Total: {formatCurrency((selectedVariant?.price ?? product.price) * quantity)}
                   </span>
                 </div>
               </div>

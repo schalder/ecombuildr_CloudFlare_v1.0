@@ -68,12 +68,13 @@ const navigationItems = [
   {
     title: "Products",
     icon: Package,
-    items: [
-      { title: "All Products", url: "/dashboard/products" },
-      { title: "Add Product", url: "/dashboard/products/add" },
-      { title: "Categories", url: "/dashboard/categories" },
-      { title: "Product Library", url: "/dashboard/product-library" },
-    ],
+      items: [
+        { title: "All Products", url: "/dashboard/products" },
+        { title: "Add Product", url: "/dashboard/products/add" },
+        { title: "Categories", url: "/dashboard/categories" },
+        { title: "Product Library", url: "/dashboard/product-library" },
+        { title: "Reviews", url: "/dashboard/reviews" },
+      ],
   },
   {
     title: "Orders",
