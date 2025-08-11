@@ -276,6 +276,7 @@ const ListElement: React.FC<{
   const iconSize: number = currentDeviceStyles.iconSize ?? (element.styles as any)?.iconSize ?? 16;
   const itemGap: number = currentDeviceStyles.itemGap ?? (element.styles as any)?.itemGap ?? 4;
   const indent: number = currentDeviceStyles.indent ?? (element.styles as any)?.indent ?? 0;
+  const iconColor: string | undefined = currentDeviceStyles.iconColor ?? (element.styles as any)?.iconColor ?? undefined;
 
   const containerStyles: React.CSSProperties = {
     ...baseStyles,
@@ -300,7 +301,7 @@ const ListElement: React.FC<{
           const faIcon = ICONS_MAP[iconName] || ICONS_MAP['check'];
           return (
             <li key={index} className="mb-1 flex items-start" style={{ marginBottom: `${itemGap}px` }}>
-              <span className="mr-2 mt-0.5" style={{ fontSize: `${iconSize}px`, lineHeight: 1 }}>
+              <span className="mr-2 mt-0.5" style={{ fontSize: `${iconSize}px`, lineHeight: 1, color: iconColor }}>
                 <FontAwesomeIcon icon={faIcon} />
               </span>
               <span>{item.text}</span>

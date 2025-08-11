@@ -4,6 +4,7 @@ import { Slider } from '@/components/ui/slider';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
+import { ColorPicker } from '@/components/ui/color-picker';
 import { Monitor, Smartphone } from 'lucide-react';
 import { PageBuilderElement } from '../../types';
 
@@ -88,6 +89,14 @@ export const ListElementStyles: React.FC<ListElementStylesProps> = ({ element, o
             />
             <span className="text-xs text-muted-foreground w-12">{(currentStyles.indent || (element.styles as any)?.indent || 0) as number}px</span>
           </div>
+        </div>
+
+        <div>
+          <Label className="text-xs">Icon Color</Label>
+          <ColorPicker
+            color={(currentStyles.iconColor || (element.styles as any)?.iconColor || '') as string}
+            onChange={(val) => handleResponsiveUpdate('iconColor', val)}
+          />
         </div>
       </div>
     </div>
