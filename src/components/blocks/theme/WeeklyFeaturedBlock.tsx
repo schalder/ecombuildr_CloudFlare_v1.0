@@ -311,13 +311,13 @@ const WeeklyFeaturedSave: React.FC<BlockSaveProps> = ({ block }) => {
   const renderGridLayout = () => (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       {products.map((product, index) => (
-        <Card key={product.id} className="hover:shadow-lg transition-all duration-300 overflow-hidden">
+        <div key={product.id} className="product-card hover:shadow-lg transition-all duration-300 overflow-hidden">
           <div className="relative aspect-square overflow-hidden">
             {product.images && Array.isArray(product.images) && product.images[0] ? (
               <img
                 src={product.images[0]}
                 alt={product.name}
-                className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                className="product-image w-full h-full object-cover"
               />
             ) : (
               <div className="w-full h-full bg-muted flex items-center justify-center">
@@ -333,7 +333,7 @@ const WeeklyFeaturedSave: React.FC<BlockSaveProps> = ({ block }) => {
             )}
           </div>
 
-          <CardContent className="p-4">
+          <div className="p-4">
             <h3 className="font-medium text-sm mb-2 line-clamp-2">{product.name}</h3>
             
             <div className="flex items-center gap-1 mb-2">
@@ -358,8 +358,8 @@ const WeeklyFeaturedSave: React.FC<BlockSaveProps> = ({ block }) => {
               <ShoppingCart className="w-4 h-4 mr-1" />
               Add to Cart
             </Button>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       ))}
     </div>
   );

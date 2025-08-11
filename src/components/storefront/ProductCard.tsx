@@ -70,7 +70,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   return (
     <Card 
       className={cn(
-        "relative overflow-hidden bg-card border hover:shadow-2xl transition-all duration-300",
+        "product-card relative overflow-hidden bg-card border hover:shadow-2xl transition-all duration-300",
         "hover:-translate-y-1",
         className
       )}
@@ -133,7 +133,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         <img
           src={product.images[0] || '/placeholder.svg'}
           alt={product.name}
-          className="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
+          className="product-image w-full h-full object-cover"
         />
         
         {/* Overlay Add to Cart Button - appears on hover */}

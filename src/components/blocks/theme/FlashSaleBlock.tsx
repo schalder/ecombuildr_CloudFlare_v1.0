@@ -304,13 +304,13 @@ const FlashSaleSave: React.FC<BlockSaveProps> = ({ block }) => {
             const salePercentage = content.salePercentage || 20;
 
             return (
-              <Card key={product.id} className="bg-card border-2 border-destructive/20 hover:border-destructive transition-all duration-300 overflow-hidden group">
+              <div key={product.id} className="product-card bg-card border-2 border-destructive/20 hover:border-destructive transition-all duration-300 overflow-hidden">
                 <div className="relative aspect-square overflow-hidden">
                   {product.images && Array.isArray(product.images) && product.images[0] ? (
                     <img
                       src={product.images[0]}
                       alt={product.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      className="product-image w-full h-full object-cover"
                     />
                   ) : (
                     <div className="w-full h-full bg-muted flex items-center justify-center">
@@ -326,7 +326,9 @@ const FlashSaleSave: React.FC<BlockSaveProps> = ({ block }) => {
                     FLASH SALE
                   </Badge>
 
-                  <div className="absolute bottom-2 left-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="absolute bottom-2 left-2 right-2 opacity-0 hover:opacity-100 transition-opacity"
+                       onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
+                       onMouseLeave={(e) => e.currentTarget.style.opacity = '0'}>
                     <Button size="sm" className="w-full bg-destructive hover:bg-destructive/90">
                       <ShoppingCart className="w-4 h-4 mr-1" />
                       Add to Cart
@@ -334,7 +336,7 @@ const FlashSaleSave: React.FC<BlockSaveProps> = ({ block }) => {
                   </div>
                 </div>
 
-                <CardContent className="p-4">
+                <div className="p-4">
                   <h3 className="font-medium text-sm mb-2 line-clamp-2">{product.name}</h3>
                   
                   {product.short_description && (
@@ -358,8 +360,8 @@ const FlashSaleSave: React.FC<BlockSaveProps> = ({ block }) => {
                       {formatCurrency(product.price)}
                     </span>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             );
           })}
         </div>

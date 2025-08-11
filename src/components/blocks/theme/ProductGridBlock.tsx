@@ -374,13 +374,13 @@ const ProductGridSave: React.FC<BlockSaveProps> = ({ block }) => {
               : 'bg-card rounded-lg border hover:shadow-md transition-all duration-300 overflow-hidden';
 
             return (
-              <Card key={product.id} className={cardClass}>
+              <div key={product.id} className={`product-card ${cardClass}`}>
                 <div className="relative aspect-square overflow-hidden">
                   {product.images && Array.isArray(product.images) && product.images[0] ? (
                     <img
                       src={product.images[0]}
                       alt={product.name}
-                      className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                      className="product-image w-full h-full object-cover"
                     />
                   ) : (
                     <div className="w-full h-full bg-muted flex items-center justify-center">
@@ -410,7 +410,7 @@ const ProductGridSave: React.FC<BlockSaveProps> = ({ block }) => {
                   )}
                 </div>
 
-                <CardContent className="p-4">
+                <div className="p-4">
                   <h3 className="font-medium text-sm mb-2 line-clamp-2">{product.name}</h3>
                   
                   {product.short_description && (
@@ -440,8 +440,8 @@ const ProductGridSave: React.FC<BlockSaveProps> = ({ block }) => {
                       )}
                     </div>
                   )}
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             );
           })}
         </div>
