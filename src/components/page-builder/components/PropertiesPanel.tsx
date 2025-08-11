@@ -130,7 +130,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
       return (
         <>
           {/* Card/background/border/spacing via TextElementStyles */}
-          <TextElementStyles key={`text-${selectedElement.id}`} element={selectedElement} onStyleUpdate={handleStyleUpdate} />
+          <TextElementStyles key={`text-${selectedElement.id}`} element={selectedElement} onStyleUpdate={handleStyleUpdate} showTypography={false} />
           {/* Per-part typography */}
           <WeeklyFeaturedTypographyStyles key={`wfty-${selectedElement.id}`} element={selectedElement} onStyleUpdate={handleStyleUpdate} />
           {/* Button styles */}
