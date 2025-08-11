@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 import { ArrowLeft, Save, Eye, Settings } from 'lucide-react';
@@ -38,33 +38,7 @@ export default function PageBuilder() {
   const [isLoading, setIsLoading] = useState(!!pageId);
   const [showSettings, setShowSettings] = useState(false);
 
-  // Load existing page if editing
-  useEffect(() => {
-    if (entityId && currentStore) {
-      loadPage();
-    }
-  }, [entityId, currentStore, context]);
-
-  // Ensure currency is initialized in builder preview for website pages
-  useEffect(() => {
-    if (context === 'website' && parentId) {
-      (async () => {
-        try {
-          const { data } = await supabase
-            .from('websites')
-            .select('settings')
-            .eq('id', parentId)
-            .maybeSingle();
-          const code = (data as any)?.settings?.currency?.code || 'BDT';
-          setGlobalCurrency(code as any);
-        } catch {
-          // ignore
-        }
-      })();
-    }
-  }, [context, parentId]);
-
-  const loadPage = async () => {
+  const loadPage = useCallback(async () => {
     if (!entityId || !currentStore) return;
     
     try {
@@ -125,9 +99,9 @@ export default function PageBuilder() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [entityId, currentStore, context, parentId]);
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     if (!currentStore) {
       toast.error('No store selected');
       return;
@@ -190,14 +164,52 @@ export default function PageBuilder() {
     } finally {
       setIsSaving(false);
     }
-  };
+  }, [currentStore, builderData, pageData, entityId, context, parentId]);
+
+  // Load existing page if editing
+  useEffect(() => {
+    if (entityId && currentStore) {
+      loadPage();
+    }
+  }, [entityId, currentStore, context, loadPage]);
+
+  // Ensure currency is initialized in builder preview for website pages
+  useEffect(() => {
+    if (context === 'website' && parentId) {
+      (async () => {
+        try {
+          const { data } = await supabase
+            .from('websites')
+            .select('settings')
+            .eq('id', parentId)
+            .maybeSingle();
+          const code = (data as any)?.settings?.currency?.code || 'BDT';
+          setGlobalCurrency(code as any);
+        } catch {
+          // ignore
+        }
+      })();
+    }
+  }, [context, parentId]);
+
+  // Tab visibility handling to prevent unnecessary operations
+  const isPageVisible = useRef(true);
+  
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      isPageVisible.current = !document.hidden;
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, []);
 
   // Save on Cmd/Ctrl+S
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') {
         e.preventDefault();
-        if (!isSaving) handleSave();
+        if (!isSaving && isPageVisible.current) handleSave();
       }
     };
     window.addEventListener('keydown', onKeyDown);

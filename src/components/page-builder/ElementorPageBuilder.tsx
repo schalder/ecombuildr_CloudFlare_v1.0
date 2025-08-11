@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, memo } from 'react';
 import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { 
@@ -159,7 +159,7 @@ const ELEMENT_CATEGORIES = [
   }
 ];
 
-export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = ({
+export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = memo(({
   initialData,
   onChange,
   onSave,
@@ -911,7 +911,7 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = ({
       />
     </DndProvider>
   );
-};
+});
 
 // Draggable Element Component
 interface DraggableElementProps {

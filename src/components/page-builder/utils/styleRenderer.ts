@@ -23,17 +23,24 @@ export const renderSectionStyles = (section: PageBuilderSection, deviceType: 'de
       styles.boxShadow = section.styles.boxShadow;
     }
     
-    // Spacing styles
-    if (section.styles.padding) styles.padding = section.styles.padding;
-    if (section.styles.margin) styles.margin = section.styles.margin;
-    if (section.styles.paddingTop) styles.paddingTop = section.styles.paddingTop;
-    if (section.styles.paddingRight) styles.paddingRight = section.styles.paddingRight;
-    if (section.styles.paddingBottom) styles.paddingBottom = section.styles.paddingBottom;
-    if (section.styles.paddingLeft) styles.paddingLeft = section.styles.paddingLeft;
-    if (section.styles.marginTop) styles.marginTop = section.styles.marginTop;
-    if (section.styles.marginRight) styles.marginRight = section.styles.marginRight;
-    if (section.styles.marginBottom) styles.marginBottom = section.styles.marginBottom;
-    if (section.styles.marginLeft) styles.marginLeft = section.styles.marginLeft;
+    // Spacing styles - prioritize individual properties over shorthand to prevent conflicts
+    if (section.styles.paddingTop || section.styles.paddingRight || section.styles.paddingBottom || section.styles.paddingLeft) {
+      if (section.styles.paddingTop) styles.paddingTop = section.styles.paddingTop;
+      if (section.styles.paddingRight) styles.paddingRight = section.styles.paddingRight;
+      if (section.styles.paddingBottom) styles.paddingBottom = section.styles.paddingBottom;
+      if (section.styles.paddingLeft) styles.paddingLeft = section.styles.paddingLeft;
+    } else if (section.styles.padding) {
+      styles.padding = section.styles.padding;
+    }
+    
+    if (section.styles.marginTop || section.styles.marginRight || section.styles.marginBottom || section.styles.marginLeft) {
+      if (section.styles.marginTop) styles.marginTop = section.styles.marginTop;
+      if (section.styles.marginRight) styles.marginRight = section.styles.marginRight;
+      if (section.styles.marginBottom) styles.marginBottom = section.styles.marginBottom;
+      if (section.styles.marginLeft) styles.marginLeft = section.styles.marginLeft;
+    } else if (section.styles.margin) {
+      styles.margin = section.styles.margin;
+    }
     
     // Width
     if (section.styles.width) styles.width = section.styles.width;
@@ -72,17 +79,24 @@ export const renderRowStyles = (row: PageBuilderRow, deviceType: 'desktop' | 'ta
       styles.boxShadow = row.styles.boxShadow;
     }
     
-    // Spacing styles
-    if (row.styles.padding) styles.padding = row.styles.padding;
-    if (row.styles.margin) styles.margin = row.styles.margin;
-    if (row.styles.paddingTop) styles.paddingTop = row.styles.paddingTop;
-    if (row.styles.paddingRight) styles.paddingRight = row.styles.paddingRight;
-    if (row.styles.paddingBottom) styles.paddingBottom = row.styles.paddingBottom;
-    if (row.styles.paddingLeft) styles.paddingLeft = row.styles.paddingLeft;
-    if (row.styles.marginTop) styles.marginTop = row.styles.marginTop;
-    if (row.styles.marginRight) styles.marginRight = row.styles.marginRight;
-    if (row.styles.marginBottom) styles.marginBottom = row.styles.marginBottom;
-    if (row.styles.marginLeft) styles.marginLeft = row.styles.marginLeft;
+    // Spacing styles - prioritize individual properties over shorthand to prevent conflicts
+    if (row.styles.paddingTop || row.styles.paddingRight || row.styles.paddingBottom || row.styles.paddingLeft) {
+      if (row.styles.paddingTop) styles.paddingTop = row.styles.paddingTop;
+      if (row.styles.paddingRight) styles.paddingRight = row.styles.paddingRight;
+      if (row.styles.paddingBottom) styles.paddingBottom = row.styles.paddingBottom;
+      if (row.styles.paddingLeft) styles.paddingLeft = row.styles.paddingLeft;
+    } else if (row.styles.padding) {
+      styles.padding = row.styles.padding;
+    }
+    
+    if (row.styles.marginTop || row.styles.marginRight || row.styles.marginBottom || row.styles.marginLeft) {
+      if (row.styles.marginTop) styles.marginTop = row.styles.marginTop;
+      if (row.styles.marginRight) styles.marginRight = row.styles.marginRight;
+      if (row.styles.marginBottom) styles.marginBottom = row.styles.marginBottom;
+      if (row.styles.marginLeft) styles.marginLeft = row.styles.marginLeft;
+    } else if (row.styles.margin) {
+      styles.margin = row.styles.margin;
+    }
     
     // Width
     if (row.styles.maxWidth) styles.maxWidth = row.styles.maxWidth;
@@ -143,17 +157,24 @@ export const renderColumnStyles = (column: PageBuilderColumn, deviceType: 'deskt
       }
     }
     
-    // Spacing styles
-    if (column.styles.padding) styles.padding = column.styles.padding;
-    if (column.styles.margin) styles.margin = column.styles.margin;
-    if (column.styles.paddingTop) styles.paddingTop = column.styles.paddingTop;
-    if (column.styles.paddingRight) styles.paddingRight = column.styles.paddingRight;
-    if (column.styles.paddingBottom) styles.paddingBottom = column.styles.paddingBottom;
-    if (column.styles.paddingLeft) styles.paddingLeft = column.styles.paddingLeft;
-    if (column.styles.marginTop) styles.marginTop = column.styles.marginTop;
-    if (column.styles.marginRight) styles.marginRight = column.styles.marginRight;
-    if (column.styles.marginBottom) styles.marginBottom = column.styles.marginBottom;
-    if (column.styles.marginLeft) styles.marginLeft = column.styles.marginLeft;
+    // Spacing styles - prioritize individual properties over shorthand to prevent conflicts
+    if (column.styles.paddingTop || column.styles.paddingRight || column.styles.paddingBottom || column.styles.paddingLeft) {
+      if (column.styles.paddingTop) styles.paddingTop = column.styles.paddingTop;
+      if (column.styles.paddingRight) styles.paddingRight = column.styles.paddingRight;
+      if (column.styles.paddingBottom) styles.paddingBottom = column.styles.paddingBottom;
+      if (column.styles.paddingLeft) styles.paddingLeft = column.styles.paddingLeft;
+    } else if (column.styles.padding) {
+      styles.padding = column.styles.padding;
+    }
+    
+    if (column.styles.marginTop || column.styles.marginRight || column.styles.marginBottom || column.styles.marginLeft) {
+      if (column.styles.marginTop) styles.marginTop = column.styles.marginTop;
+      if (column.styles.marginRight) styles.marginRight = column.styles.marginRight;
+      if (column.styles.marginBottom) styles.marginBottom = column.styles.marginBottom;
+      if (column.styles.marginLeft) styles.marginLeft = column.styles.marginLeft;
+    } else if (column.styles.margin) {
+      styles.margin = column.styles.margin;
+    }
     
     // Width
     if (column.styles.maxWidth) styles.maxWidth = column.styles.maxWidth;
@@ -201,17 +222,24 @@ export const renderElementStyles = (element: PageBuilderElement, deviceType: 'de
       styles.boxShadow = element.styles.boxShadow;
     }
     
-    // Spacing styles
-    if (element.styles.padding) styles.padding = element.styles.padding;
-    if (element.styles.margin) styles.margin = element.styles.margin;
-    if (element.styles.paddingTop) styles.paddingTop = element.styles.paddingTop;
-    if (element.styles.paddingRight) styles.paddingRight = element.styles.paddingRight;
-    if (element.styles.paddingBottom) styles.paddingBottom = element.styles.paddingBottom;
-    if (element.styles.paddingLeft) styles.paddingLeft = element.styles.paddingLeft;
-    if (element.styles.marginTop) styles.marginTop = element.styles.marginTop;
-    if (element.styles.marginRight) styles.marginRight = element.styles.marginRight;
-    if (element.styles.marginBottom) styles.marginBottom = element.styles.marginBottom;
-    if (element.styles.marginLeft) styles.marginLeft = element.styles.marginLeft;
+    // Spacing styles - prioritize individual properties over shorthand to prevent conflicts
+    if (element.styles.paddingTop || element.styles.paddingRight || element.styles.paddingBottom || element.styles.paddingLeft) {
+      if (element.styles.paddingTop) styles.paddingTop = element.styles.paddingTop;
+      if (element.styles.paddingRight) styles.paddingRight = element.styles.paddingRight;
+      if (element.styles.paddingBottom) styles.paddingBottom = element.styles.paddingBottom;
+      if (element.styles.paddingLeft) styles.paddingLeft = element.styles.paddingLeft;
+    } else if (element.styles.padding) {
+      styles.padding = element.styles.padding;
+    }
+    
+    if (element.styles.marginTop || element.styles.marginRight || element.styles.marginBottom || element.styles.marginLeft) {
+      if (element.styles.marginTop) styles.marginTop = element.styles.marginTop;
+      if (element.styles.marginRight) styles.marginRight = element.styles.marginRight;
+      if (element.styles.marginBottom) styles.marginBottom = element.styles.marginBottom;
+      if (element.styles.marginLeft) styles.marginLeft = element.styles.marginLeft;
+    } else if (element.styles.margin) {
+      styles.margin = element.styles.margin;
+    }
     
     // Typography
     if (element.styles.color) styles.color = element.styles.color;

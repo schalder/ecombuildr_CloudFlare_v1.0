@@ -35,10 +35,19 @@ export const InlineEditor: React.FC<InlineEditorProps> = ({
     }
   }, [isEditing]);
 
-  // Optimized auto-resize with debounce and RAF
+  // Cleanup refs for proper memory management
+  const rafIdRef = useRef<number | null>(null);
+  const timeoutIdRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Optimized auto-resize with debounce and RAF with proper cleanup
   const autoResize = useCallback((textarea: HTMLTextAreaElement) => {
+    // Cancel previous RAF to prevent stacking
+    if (rafIdRef.current) {
+      cancelAnimationFrame(rafIdRef.current);
+    }
+    
     // Use RAF to prevent forced reflow during DOM updates
-    requestAnimationFrame(() => {
+    rafIdRef.current = requestAnimationFrame(() => {
       if (!textarea) return;
       
       // Batch DOM reads/writes to avoid layout thrashing
@@ -57,17 +66,44 @@ export const InlineEditor: React.FC<InlineEditorProps> = ({
       if (currentHeight !== `${newHeight}px`) {
         textarea.style.height = `${newHeight}px`;
       }
+      
+      rafIdRef.current = null;
     });
   }, []);
 
-  // Debounced resize effect
+  // Debounced resize effect with proper cleanup
   useEffect(() => {
     if (isEditing && multiline && inputRef.current) {
       const textarea = inputRef.current as HTMLTextAreaElement;
-      const timeoutId = setTimeout(() => autoResize(textarea), 0);
-      return () => clearTimeout(timeoutId);
+      
+      // Clear existing timeout
+      if (timeoutIdRef.current) {
+        clearTimeout(timeoutIdRef.current);
+      }
+      
+      // Debounce resize for performance
+      timeoutIdRef.current = setTimeout(() => autoResize(textarea), 16); // ~60fps
+      
+      return () => {
+        if (timeoutIdRef.current) {
+          clearTimeout(timeoutIdRef.current);
+          timeoutIdRef.current = null;
+        }
+      };
     }
   }, [isEditing, multiline, editValue, autoResize]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (rafIdRef.current) {
+        cancelAnimationFrame(rafIdRef.current);
+      }
+      if (timeoutIdRef.current) {
+        clearTimeout(timeoutIdRef.current);
+      }
+    };
+  }, []);
 
   const handleClick = () => {
     if (!disabled) {
