@@ -411,22 +411,29 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
     summary: 'Order Summary',
   };
 
-  // Dynamic grid helpers for responsive form layout (mobile-first)
+  // Dynamic grid helpers for responsive form layout
   const showFullName = !!fields.fullName?.enabled;
   const showPhone = !!fields.phone?.enabled;
-  const infoGridColsMd = (showFullName && showPhone) ? 'md:grid-cols-2' : 'md:grid-cols-1';
+  const infoGridCols = deviceType === 'mobile'
+    ? 'grid-cols-1'
+    : (showFullName && showPhone ? 'grid-cols-2' : 'grid-cols-1');
 
   const showCity = !!fields.city?.enabled;
   const showArea = !!fields.area?.enabled;
-  const ship2GridColsMd = (showCity && showArea) ? 'md:grid-cols-2' : 'md:grid-cols-1';
+  const ship2GridCols = deviceType === 'mobile'
+    ? 'grid-cols-1'
+    : (showCity && showArea ? 'grid-cols-2' : 'grid-cols-1');
 
   const showCountry = !!fields.country?.enabled;
   const showState = !!fields.state?.enabled;
   const showPostal = !!fields.postalCode?.enabled;
-  const ship3GridColsMd =
-    (showCountry && showState && showPostal) ? 'md:grid-cols-3'
-    : ((showCountry && showState) || (showCountry && showPostal) || (showState && showPostal)) ? 'md:grid-cols-2'
-    : 'md:grid-cols-1';
+  const ship3GridCols = deviceType === 'mobile'
+    ? 'grid-cols-1'
+    : (showCountry && showState && showPostal
+      ? 'grid-cols-3'
+      : ((showCountry && showState) || (showCountry && showPostal) || (showState && showPostal)
+        ? 'grid-cols-2'
+        : 'grid-cols-1'));
 
   // Single-column layout (no grid)
 
@@ -624,7 +631,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
               {sections.info && (
                 <section className="space-y-4">
                   <h3 className={`mb-3 font-semibold element-${element.id}-section-header`}>{headings.info}</h3>
-                  <div className={`grid grid-cols-1 ${infoGridColsMd} gap-4`}>
+                  <div className={`grid ${infoGridCols} gap-4`}>
                     {fields.fullName?.enabled && (
                       <Input placeholder={fields.fullName.placeholder} value={form.customer_name} onChange={e=>setForm(f=>({...f,customer_name:e.target.value}))} required={!!(fields.fullName?.enabled && (fields.fullName?.required ?? true))} aria-required={!!(fields.fullName?.enabled && (fields.fullName?.required ?? true))} />
                     )}
@@ -646,7 +653,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
                   {fields.address?.enabled && (
                     <Textarea placeholder={fields.address.placeholder} value={form.shipping_address} onChange={e=>setForm(f=>({...f,shipping_address:e.target.value}))} rows={3} required={!!(fields.address?.enabled && (fields.address?.required ?? true))} aria-required={!!(fields.address?.enabled && (fields.address?.required ?? true))} />
                   )}
-                  <div className={`grid grid-cols-1 ${ship2GridColsMd} gap-4`}>
+                  <div className={`grid ${ship2GridCols} gap-4`}>
                     {fields.city?.enabled && (
                       <Input placeholder={fields.city.placeholder} value={form.shipping_city} onChange={e=>setForm(f=>({...f,shipping_city:e.target.value}))} required={!!(fields.city?.enabled && (fields.city?.required ?? true))} aria-required={!!(fields.city?.enabled && (fields.city?.required ?? true))} />
                     )}
@@ -654,7 +661,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
                       <Input placeholder={fields.area.placeholder} value={form.shipping_area} onChange={e=>setForm(f=>({...f,shipping_area:e.target.value}))} required={!!(fields.area?.enabled && (fields.area?.required ?? false))} aria-required={!!(fields.area?.enabled && (fields.area?.required ?? false))} />
                     )}
                   </div>
-                  <div className={`grid grid-cols-1 ${ship3GridColsMd} gap-4`}>
+                  <div className={`grid ${ship3GridCols} gap-4`}>
                     {fields.country?.enabled && (
                       <Input placeholder={fields.country.placeholder} value={form.shipping_country} onChange={e=>setForm(f=>({...f,shipping_country:e.target.value}))} required={!!(fields.country?.enabled && (fields.country?.required ?? false))} aria-required={!!(fields.country?.enabled && (fields.country?.required ?? false))} />
                     )}
