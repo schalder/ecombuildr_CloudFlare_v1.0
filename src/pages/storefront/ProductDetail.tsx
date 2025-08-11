@@ -376,11 +376,11 @@ export const ProductDetail: React.FC = () => {
                 </p>
               )}
 
-              <div className="flex flex-col sm:flex-row gap-3">
+              <div className="grid grid-cols-1 gap-3">
                 <Button
                   onClick={handleAddToCart}
                   disabled={isOutOfStock}
-                  className="flex-1"
+                  className="w-full"
                   size="lg"
                 >
                   <ShoppingCart className="h-4 w-4 mr-2" />
@@ -388,12 +388,12 @@ export const ProductDetail: React.FC = () => {
                 </Button>
                 {/* Optional Action Buttons */}
                 {((product as any).action_buttons?.order_now?.enabled) && (
-                  <Button size="lg" className="flex-1" onClick={handleOrderNow}>
+                  <Button size="lg" className="w-full" onClick={handleOrderNow}>
                     {(product as any).action_buttons?.order_now?.label || 'Order Now'}
                   </Button>
                 )}
                 {((product as any).action_buttons?.call?.enabled) && (
-                  <Button size="lg" variant="outline" className="flex-1" onClick={() => {
+                  <Button size="lg" variant="outline" className="w-full" onClick={() => {
                     const num = (product as any).action_buttons?.call?.phone;
                     if (num) window.location.href = `tel:${num}`;
                   }}>
@@ -401,14 +401,14 @@ export const ProductDetail: React.FC = () => {
                   </Button>
                 )}
                 {((product as any).action_buttons?.whatsapp?.enabled) && (
-                  <Button size="lg" variant="outline" className="flex-1" onClick={() => {
+                  <Button size="lg" variant="outline" className="w-full" onClick={() => {
                     const url = (product as any).action_buttons?.whatsapp?.url;
                     if (url) window.open(url, '_blank');
                   }}>
                     {(product as any).action_buttons?.whatsapp?.label || 'WhatsApp'}
                   </Button>
                 )}
-                <Button variant="outline" size="lg" onClick={handleShare}>
+                <Button variant="outline" size="lg" onClick={handleShare} className="w-full">
                   <Share2 className="h-4 w-4" />
                 </Button>
               </div>
