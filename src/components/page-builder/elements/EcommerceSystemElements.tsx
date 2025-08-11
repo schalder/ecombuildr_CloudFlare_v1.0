@@ -16,7 +16,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useStoreProducts } from '@/hooks/useStoreData';
-import { generateResponsiveCSS } from '@/components/page-builder/utils/responsiveStyles';
+import { generateResponsiveCSS, mergeResponsiveStyles } from '@/components/page-builder/utils/responsiveStyles';
 import { formatCurrency } from '@/lib/currency';
 import { computeShippingForAddress } from '@/lib/shipping';
 import { nameWithVariant } from '@/lib/utils';
@@ -264,9 +264,19 @@ const RelatedProductsElement: React.FC<{ element: PageBuilderElement; deviceType
   const mobileCols = element.content?.mobileColumns ?? 1;
   const gridClass = `grid grid-cols-${mobileCols} md:grid-cols-${tabletCols} lg:grid-cols-${desktopCols} gap-4`;
   const title = element.content?.title || 'Related Products';
+  const showTitle = element.content?.showTitle !== false;
+
+  const buttonStyles = React.useMemo(() => {
+    const bs = (element as any).styles?.buttonStyles || {};
+    if ((bs as any).responsive) {
+      return mergeResponsiveStyles({}, bs, deviceType as any) as React.CSSProperties;
+    }
+    return bs as React.CSSProperties;
+  }, [deviceType, (element as any).styles?.buttonStyles]);
+
   return (
     <div className="max-w-6xl mx-auto">
-      {title && <h3 className="text-xl font-semibold mb-4">{title}</h3>}
+      {showTitle && title && <h3 className="text-xl font-semibold mb-4">{title}</h3>}
       <div className={gridClass}>
         {products.map((p) => (
           <Card key={p.id} className="group/card">
@@ -276,7 +286,7 @@ const RelatedProductsElement: React.FC<{ element: PageBuilderElement; deviceType
               </div>
               <div className="text-sm font-medium line-clamp-1">{p.name}</div>
               <div className="text-sm">{formatCurrency(Number(p.price))}</div>
-              <Button variant="outline" size="sm" className="mt-2 w-full" onClick={() => (window.location.href = paths.productDetail(p.slug))}>View</Button>
+              <Button variant="outline" size="sm" className="mt-2 w-full" style={buttonStyles as React.CSSProperties} onClick={() => (window.location.href = paths.productDetail(p.slug))}>View</Button>
             </CardContent>
           </Card>
         ))}

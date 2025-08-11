@@ -737,6 +737,14 @@ const WeeklyFeaturedElement: React.FC<{
     loadTopSellers();
   }, [store?.id, limit]);
 
+  const buttonStyles = React.useMemo(() => {
+    const bs = (element as any).styles?.buttonStyles || {};
+    if ((bs as any).responsive) {
+      return mergeResponsiveStyles({}, bs, deviceType as any) as React.CSSProperties;
+    }
+    return bs as React.CSSProperties;
+  }, [deviceType, (element as any).styles?.buttonStyles]);
+
   const gridClass = `grid grid-cols-${mobileCols} md:grid-cols-${tabletCols} lg:grid-cols-${desktopCols} gap-4`;
 
   if (loading) {
@@ -752,11 +760,12 @@ const WeeklyFeaturedElement: React.FC<{
   }
 
   const title = element.content?.title || 'Weekly Featured Products';
+  const showTitle = element.content?.showTitle !== false;
   return (
     <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-4xl mx-auto'}`}>
       <div className="bg-card rounded-lg p-6 border">
         <div className="text-center mb-6">
-          <h2 className="text-2xl font-bold mb-2">{title}</h2>
+          {showTitle && <h2 className="text-2xl font-bold mb-2">{title}</h2>}
           <p className="text-muted-foreground">Top selling products this week</p>
         </div>
         <div className={gridClass}>
@@ -778,7 +787,7 @@ const WeeklyFeaturedElement: React.FC<{
                   </span>
                 )}
               </div>
-              <Button size="sm" className="w-full">Add to Cart</Button>
+              <Button size="sm" className="w-full" style={buttonStyles as React.CSSProperties}>Add to Cart</Button>
             </div>
           ))}
           {items.length === 0 && (

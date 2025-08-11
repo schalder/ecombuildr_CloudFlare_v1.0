@@ -56,7 +56,8 @@ import {
   LayoutElementStyles,
   FormElementStyles,
   ButtonElementStyles,
-  OrderConfirmationElementStyles
+  OrderConfirmationElementStyles,
+  EcommerceActionButtonStyles
 } from './ElementStyles';
 import { CheckoutElementStyles } from './ElementStyles/CheckoutElementStyles';
 
@@ -112,6 +113,16 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
     // Order Confirmation specialized styles
     if (selectedElement.type === 'order-confirmation') {
       return <OrderConfirmationElementStyles element={selectedElement} onStyleUpdate={handleStyleUpdate} />;
+    }
+
+    // For elements that need both text and button styling
+    if (['related-products', 'weekly-featured'].includes(selectedElement.type)) {
+      return (
+        <>
+          <TextElementStyles key={`text-${selectedElement.id}`} element={selectedElement} onStyleUpdate={handleStyleUpdate} />
+          <EcommerceActionButtonStyles key={`btn-${selectedElement.id}`} element={selectedElement} onStyleUpdate={handleStyleUpdate} />
+        </>
+      );
     }
 
     // Text-based elements (heading, text, product-grid, featured-products)

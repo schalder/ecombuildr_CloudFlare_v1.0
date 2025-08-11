@@ -861,6 +861,10 @@ export const RelatedProductsContentProperties: React.FC<EcommerceContentProperti
       <div>
         <Label className="text-xs">Title</Label>
         <Input value={element.content.title || ''} onChange={(e) => onUpdate('title', e.target.value)} placeholder="Related Products" />
+        <div className="flex items-center gap-2 mt-2">
+          <Checkbox checked={element.content.showTitle !== false} onCheckedChange={(v) => onUpdate('showTitle', Boolean(v))} />
+          <Label className="text-xs">Show Title</Label>
+        </div>
       </div>
 
       <div>
@@ -936,6 +940,10 @@ export const WeeklyFeaturedElementProperties: React.FC<EcommerceContentPropertie
       <div>
         <Label className="text-xs">Title</Label>
         <Input value={element.content.title || ''} onChange={(e) => onUpdate('title', e.target.value)} placeholder="Weekly Featured" />
+        <div className="flex items-center gap-2 mt-2">
+          <Checkbox checked={element.content.showTitle !== false} onCheckedChange={(v) => onUpdate('showTitle', Boolean(v))} />
+          <Label className="text-xs">Show Title</Label>
+        </div>
       </div>
       <div>
         <Label className="text-xs">Product Count</Label>
