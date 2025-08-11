@@ -1137,14 +1137,14 @@ export const ColumnSettings: React.FC<ColumnSettingsProps> = ({ column, onUpdate
           <div className="space-y-2">
             <Label htmlFor="content-alignment">Content Alignment</Label>
             <Select
-              value={column.styles?.contentAlignment || ''}
-              onValueChange={(value) => handleStyleUpdate('contentAlignment', value)}
+              value={column.styles?.contentAlignment || 'normal'}
+              onValueChange={(value) => handleStyleUpdate('contentAlignment', value === 'normal' ? undefined : value)}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select alignment..." />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Default</SelectItem>
+                <SelectItem value="normal">Default</SelectItem>
                 <SelectItem value="flex-start">Start</SelectItem>
                 <SelectItem value="center">Center</SelectItem>
                 <SelectItem value="flex-end">End</SelectItem>
@@ -1156,14 +1156,14 @@ export const ColumnSettings: React.FC<ColumnSettingsProps> = ({ column, onUpdate
           <div className="space-y-2">
             <Label htmlFor="content-justification">Content Distribution</Label>
             <Select
-              value={column.styles?.contentJustification || ''}
-              onValueChange={(value) => handleStyleUpdate('contentJustification', value)}
+              value={column.styles?.contentJustification || 'normal'}
+              onValueChange={(value) => handleStyleUpdate('contentJustification', value === 'normal' ? undefined : value)}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select distribution..." />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Default</SelectItem>
+                <SelectItem value="normal">Default</SelectItem>
                 <SelectItem value="flex-start">Start</SelectItem>
                 <SelectItem value="center">Center</SelectItem>
                 <SelectItem value="flex-end">End</SelectItem>
