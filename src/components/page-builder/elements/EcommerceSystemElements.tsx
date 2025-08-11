@@ -623,7 +623,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
       <div className="max-w-5xl mx-auto" style={{ backgroundColor: backgrounds.containerBg || undefined }}>
         {(sections.info || sections.shipping || sections.payment || sections.summary) && (
           <Card className={formBorderWidth > 0 ? undefined : 'border-0'} style={{ backgroundColor: backgrounds.formBg || undefined, borderColor: (backgrounds as any).formBorderColor || undefined, borderWidth: formBorderWidth || 0 }}>
-            <CardContent className="p-4 md:p-6 space-y-6">
+            <CardContent className="p-4 md:p-6 space-y-6 w-full overflow-x-hidden">
               {sections.info && (
                 <section className="space-y-4">
                   <h3 className={`mb-3 font-semibold element-${element.id}-section-header`} style={headerInline as React.CSSProperties}>{headings.info}</h3>
@@ -711,7 +711,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
                     {/* Items */}
                     <div className="space-y-2">
                       {items.map((it)=> (
-                        <div key={it.id} className="flex items-center justify-between gap-3">
+                        <div key={it.id} className="flex flex-wrap items-start justify-between gap-3">
                           <div className="flex items-center gap-3 min-w-0">
                             {showItemImages && it.image && (
                               <img src={it.image} alt={it.name} className="w-10 h-10 object-cover rounded border" />
@@ -721,14 +721,14 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
                               <div className="text-xs text-muted-foreground">× {it.quantity}</div>
                             </div>
                           </div>
-                          <div className="text-sm font-medium">{formatCurrency(it.price * it.quantity)}</div>
+                          <div className="text-sm font-medium shrink-0 whitespace-nowrap text-right">{formatCurrency(it.price * it.quantity)}</div>
                         </div>
                       ))}
                     </div>
                     <Separator className="my-3" />
-                    <div className="flex justify-between"><span>Subtotal</span><span className="font-semibold">{formatCurrency(total)}</span></div>
-                    <div className="flex justify-between"><span>Shipping</span><span className="font-semibold">{formatCurrency(shippingCost)}</span></div>
-                    <div className="flex justify-between font-bold"><span>Total</span><span>{formatCurrency(total+shippingCost)}</span></div>
+                    <div className="flex flex-wrap items-center justify-between gap-2 min-w-0"><span className="truncate">Subtotal</span><span className="font-semibold shrink-0 whitespace-nowrap text-right">{formatCurrency(total)}</span></div>
+                    <div className="flex flex-wrap items-center justify-between gap-2 min-w-0"><span className="truncate">Shipping</span><span className="font-semibold shrink-0 whitespace-nowrap text-right">{formatCurrency(shippingCost)}</span></div>
+                    <div className="flex flex-wrap items-center justify-between gap-2 min-w-0 font-bold"><span className="truncate">Total</span><span className="shrink-0 whitespace-nowrap text-right">{formatCurrency(total+shippingCost)}</span></div>
 
                     <Button size={buttonSize as any} className={`w-full mt-2 element-${element.id}`} style={buttonInline as React.CSSProperties} onClick={handleSubmit} disabled={loading}>
                       {loading? 'Placing Order...' : buttonLabel}
