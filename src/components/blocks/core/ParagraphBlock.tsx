@@ -1,25 +1,24 @@
 import React, { useState } from 'react';
 import { Type } from 'lucide-react';
 import { BlockEditProps, BlockSaveProps, BlockRegistration } from '../types';
-import { Textarea } from '@/components/ui/textarea';
+import { InlineEditor } from '@/components/page-builder/components/InlineEditor';
 
 const ParagraphEdit: React.FC<BlockEditProps> = ({ block, onUpdate, isSelected }) => {
   const [content, setContent] = useState(block.content.text || '');
 
-  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const newText = e.target.value;
+  const handleChange = (newText: string) => {
     setContent(newText);
     onUpdate({ text: newText });
   };
 
   return (
     <div className={`p-4 border rounded-lg ${isSelected ? 'border-primary' : 'border-border'}`}>
-      <Textarea
+      <InlineEditor
         value={content}
         onChange={handleChange}
         placeholder="Write your paragraph here..."
-        className="border-none p-0 resize-none min-h-[100px]"
-        style={{ boxShadow: 'none' }}
+        multiline={true}
+        className="w-full min-h-[100px]"
       />
     </div>
   );

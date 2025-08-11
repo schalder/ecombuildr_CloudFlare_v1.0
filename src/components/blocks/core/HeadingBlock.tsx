@@ -1,15 +1,14 @@
 import React, { useState } from 'react';
 import { Heading } from 'lucide-react';
 import { BlockEditProps, BlockSaveProps, BlockRegistration } from '../types';
-import { Input } from '@/components/ui/input';
+import { InlineEditor } from '@/components/page-builder/components/InlineEditor';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const HeadingEdit: React.FC<BlockEditProps> = ({ block, onUpdate, isSelected }) => {
   const [content, setContent] = useState(block.content.text || '');
   const [level, setLevel] = useState(block.content.level || 2);
 
-  const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newText = e.target.value;
+  const handleTextChange = (newText: string) => {
     setContent(newText);
     onUpdate({ text: newText, level });
   };
@@ -37,12 +36,12 @@ const HeadingEdit: React.FC<BlockEditProps> = ({ block, onUpdate, isSelected }) 
           </SelectContent>
         </Select>
       </div>
-      <Input
+      <InlineEditor
         value={content}
         onChange={handleTextChange}
         placeholder="Write your heading..."
-        className="border-none p-0 text-lg font-semibold"
-        style={{ boxShadow: 'none' }}
+        multiline={true}
+        className="text-lg font-semibold w-full"
       />
     </div>
   );

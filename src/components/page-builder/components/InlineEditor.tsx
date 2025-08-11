@@ -99,8 +99,7 @@ export const InlineEditor: React.FC<InlineEditorProps> = ({
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const newValue = e.target.value;
     setEditValue(newValue);
-    // Real-time updates
-    onChange(newValue);
+    // Remove real-time updates to prevent flash effects
     
     // Trigger resize for multiline inputs with debounce
     if (multiline && e.target instanceof HTMLTextAreaElement) {
@@ -136,7 +135,7 @@ export const InlineEditor: React.FC<InlineEditorProps> = ({
     <span
       onClick={handleClick}
       className={cn(
-        disabled ? "cursor-inherit select-none hover:bg-transparent" : "cursor-text hover:bg-muted/20",
+        disabled ? "cursor-default select-text" : "cursor-text hover:bg-muted/20",
         "inline-block min-h-[1.5rem] rounded px-1 transition-colors",
         !value && "text-muted-foreground",
         multiline && "block w-full",
