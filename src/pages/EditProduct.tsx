@@ -223,7 +223,7 @@ is_active: formData.is_active,
         updated_at: new Date().toISOString(),
         variations: hasVariants ? { options: variations, variants: variantEntries } : [],
         action_buttons: actionButtons,
-        allowed_payment_methods: paymentMethods.length ? paymentMethods : null,
+        allowed_payment_methods: allowedPayments.length ? allowedPayments : null,
       };
 
       const { error } = await supabase

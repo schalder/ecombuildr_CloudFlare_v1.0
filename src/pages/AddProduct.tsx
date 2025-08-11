@@ -128,7 +128,7 @@ const { error } = await supabase.from('products').insert({
         easy_returns_enabled: easyReturnsEnabled,
         easy_returns_days: easyReturnsEnabled && easyReturnsDays ? parseInt(easyReturnsDays) : null,
         action_buttons: actionButtons,
-        allowed_payment_methods: paymentMethods.length ? paymentMethods : null,
+        allowed_payment_methods: allowedPayments.length ? allowedPayments : null,
       });
 
       if (error) throw error;
