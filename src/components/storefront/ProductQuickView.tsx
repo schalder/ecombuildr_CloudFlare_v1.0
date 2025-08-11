@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -51,22 +51,25 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
   const [quantity, setQuantity] = useState(1);
   const [isWishlisted, setIsWishlisted] = useState(false);
 
-  // Derive options and variants without hooks to avoid hook-order issues
-  const options: VariationOption[] = (() => {
+  // Memoized options/variants to prevent effect loops
+  const options = useMemo<VariationOption[]>(() => {
     const v: any = product?.variations;
     if (Array.isArray(v)) return v as any;
     return (v?.options || []) as VariationOption[];
-  })();
+  }, [product?.id]);
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
 
   // Variants list (for price overrides)
-  const variantList: any[] = (() => {
+  const variantList = useMemo<any[]>(() => {
     const v: any = product?.variations;
     return Array.isArray(v) ? [] : (v?.variants || []);
-  })();
+  }, [product?.id]);
 
-  React.useEffect(() => {
-    if (options && options.length) {
+  useEffect(() => {
+    if (!product) return;
+    setSelectedImage(0);
+    setQuantity(1);
+    if (options.length) {
       const initial: Record<string, string> = {};
       options.forEach((opt) => {
         initial[opt.name] = opt.values?.[0] || '';
@@ -75,7 +78,7 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
     } else {
       setSelectedOptions({});
     }
-  }, [product, options]);
+  }, [product?.id, isOpen]);
 
   const selectedVariant = (() => {
     if (!variantList.length) return null;
