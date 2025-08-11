@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { elementRegistry } from './ElementRegistry';
 import { InlineEditor } from '../components/InlineEditor';
+import { InlineRTE, sanitizeHtml } from '../components/InlineRTE';
 import { renderElementStyles } from '../utils/styleRenderer';
 import { generateResponsiveCSS } from '../utils/responsiveStyles';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -57,17 +58,16 @@ const HeadingElement: React.FC<{
       <style>{generateResponsiveCSS(element.id, element.styles)}</style>
       <Tag style={cleanStyles} className={className}>
         {isEditing ? (
-          <InlineEditor
+          <InlineRTE
             value={text}
             onChange={handleTextChange}
             placeholder="Enter heading text..."
             disabled={false}
-            multiline={true}
             className="font-inherit leading-tight"
             style={{ textAlign: cleanStyles.textAlign as any }}
           />
         ) : (
-          text
+          <span dangerouslySetInnerHTML={{ __html: sanitizeHtml(text) }} />
         )}
       </Tag>
     </>
@@ -118,17 +118,16 @@ const ParagraphElement: React.FC<{
       <style>{generateResponsiveCSS(element.id, element.styles)}</style>
       <div style={cleanStyles} className={className}>
         {isEditing ? (
-          <InlineEditor
+          <InlineRTE
             value={text}
             onChange={handleTextChange}
             placeholder="Enter your text content..."
             disabled={false}
-            multiline={true}
             className="leading-inherit"
             style={{ textAlign: cleanStyles.textAlign as any }}
           />
         ) : (
-          <div className="whitespace-pre-wrap">{text}</div>
+          <div className="whitespace-pre-wrap" dangerouslySetInnerHTML={{ __html: sanitizeHtml(text) }} />
         )}
       </div>
     </>
