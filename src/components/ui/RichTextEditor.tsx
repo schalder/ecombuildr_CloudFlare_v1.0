@@ -27,7 +27,7 @@ import {
   Palette
 } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
@@ -267,28 +267,37 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
 
   return (
     <div className={cn("rounded-md border border-input bg-background", className)}>
-      <div className="flex flex-wrap items-center gap-1 p-2 border-b">
+      <div
+        className="flex flex-wrap items-center gap-1 p-2 border-b"
+        onMouseDownCapture={(e) => {
+          const target = e.target as HTMLElement;
+          if (target.closest("button")) {
+            // Prevent toolbar buttons from stealing focus/selection from editor
+            e.preventDefault();
+          }
+        }}
+      >
         {/* History */}
-        <Button variant="ghost" size="icon" onClick={() => exec("undo")} title="Undo">
+        <Button type="button" variant="ghost" size="icon" onClick={() => exec("undo")} title="Undo">
           <Undo2 className="h-4 w-4" />
         </Button>
-        <Button variant="ghost" size="icon" onClick={() => exec("redo")} title="Redo">
+        <Button type="button" variant="ghost" size="icon" onClick={() => exec("redo")} title="Redo">
           <Redo2 className="h-4 w-4" />
         </Button>
 
         <Separator orientation="vertical" className="mx-1 h-6" />
 
         {/* Basic styles */}
-        <Button variant="ghost" size="icon" onClick={() => exec("bold")} title="Bold">
+        <Button type="button" variant="ghost" size="icon" onClick={() => exec("bold")} title="Bold">
           <Bold className="h-4 w-4" />
         </Button>
-        <Button variant="ghost" size="icon" onClick={() => exec("italic")} title="Italic">
+        <Button type="button" variant="ghost" size="icon" onClick={() => exec("italic")} title="Italic">
           <Italic className="h-4 w-4" />
         </Button>
-        <Button variant="ghost" size="icon" onClick={() => exec("underline")} title="Underline">
+        <Button type="button" variant="ghost" size="icon" onClick={() => exec("underline")} title="Underline">
           <Underline className="h-4 w-4" />
         </Button>
-        <Button variant="ghost" size="icon" onClick={() => exec("strikeThrough")} title="Strikethrough">
+        <Button type="button" variant="ghost" size="icon" onClick={() => exec("strikeThrough")} title="Strikethrough">
           <Strikethrough className="h-4 w-4" />
         </Button>
 
@@ -296,13 +305,13 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
 
         {/* Headings */}
         <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon" onClick={() => applyHeading("h1")} title="H1">
+          <Button type="button" variant="ghost" size="icon" onClick={() => applyHeading("h1")} title="H1">
             <Heading1 className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="icon" onClick={() => applyHeading("h2")} title="H2">
+          <Button type="button" variant="ghost" size="icon" onClick={() => applyHeading("h2")} title="H2">
             <Heading2 className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="icon" onClick={() => applyHeading("h3")} title="H3">
+          <Button type="button" variant="ghost" size="icon" onClick={() => applyHeading("h3")} title="H3">
             <Heading3 className="h-4 w-4" />
           </Button>
         </div>
@@ -310,36 +319,37 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
         <Separator orientation="vertical" className="mx-1 h-6" />
 
         {/* Lists */}
-        <Button variant="ghost" size="icon" onClick={() => exec("insertUnorderedList")} title="Bullet list">
+        <Button type="button" variant="ghost" size="icon" onClick={() => exec("insertUnorderedList")} title="Bullet list">
           <List className="h-4 w-4" />
         </Button>
-        <Button variant="ghost" size="icon" onClick={() => exec("insertOrderedList")} title="Numbered list">
+        <Button type="button" variant="ghost" size="icon" onClick={() => exec("insertOrderedList")} title="Numbered list">
           <ListOrdered className="h-4 w-4" />
         </Button>
 
         <Separator orientation="vertical" className="mx-1 h-6" />
 
         {/* Alignment */}
-        <Button variant="ghost" size="icon" onClick={() => exec("justifyLeft")} title="Align left">
+        <Button type="button" variant="ghost" size="icon" onClick={() => exec("justifyLeft")} title="Align left">
           <AlignLeft className="h-4 w-4" />
         </Button>
-        <Button variant="ghost" size="icon" onClick={() => exec("justifyCenter")} title="Align center">
+        <Button type="button" variant="ghost" size="icon" onClick={() => exec("justifyCenter")} title="Align center">
           <AlignCenter className="h-4 w-4" />
         </Button>
-        <Button variant="ghost" size="icon" onClick={() => exec("justifyRight")} title="Align right">
+        <Button type="button" variant="ghost" size="icon" onClick={() => exec("justifyRight")} title="Align right">
           <AlignRight className="h-4 w-4" />
         </Button>
-        <Button variant="ghost" size="icon" onClick={() => exec("justifyFull")} title="Justify">
+        <Button type="button" variant="ghost" size="icon" onClick={() => exec("justifyFull")} title="Justify">
           <AlignJustify className="h-4 w-4" />
         </Button>
 
         <Separator orientation="vertical" className="mx-1 h-6" />
 
         {/* Quote / Code */}
-        <Button variant="ghost" size="icon" onClick={() => exec("formatBlock", "<blockquote>")} title="Blockquote">
+        <Button type="button" variant="ghost" size="icon" onClick={() => exec("formatBlock", "<blockquote>")} title="Blockquote">
           <Quote className="h-4 w-4" />
         </Button>
         <Button
+          type="button"
           variant="ghost"
           size="icon"
           onClick={() => {
@@ -357,15 +367,16 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
         <Separator orientation="vertical" className="mx-1 h-6" />
 
         {/* Link */}
-        <Button variant="ghost" size="icon" onClick={addLink} title="Insert link">
+        <Button type="button" variant="ghost" size="icon" onClick={addLink} title="Insert link">
           <LinkIcon className="h-4 w-4" />
         </Button>
 
         {/* Image */}
         <Button
+          type="button"
           variant="ghost"
           size="icon"
-          onMouseDown={saveSelection}
+          onMouseDown={(e) => { e.preventDefault(); saveSelection(); }}
           onClick={() => setIsImageDialogOpen(true)}
           title="Insert image"
         >
@@ -377,7 +388,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
         {/* Colors */}
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="ghost" size="icon" title="Text color">
+            <Button type="button" variant="ghost" size="icon" title="Text color">
               <Palette className="h-4 w-4" />
             </Button>
           </PopoverTrigger>
@@ -385,14 +396,14 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
             <div className="space-y-2">
               <Label htmlFor="rte-text-color">Text color</Label>
               <Input id="rte-text-color" type="color" value={textColor} onChange={(e) => setTextColor(e.target.value)} />
-              <Button variant="secondary" className="w-full" onClick={() => applyTextColor(textColor)}>Apply</Button>
+              <Button type="button" variant="secondary" className="w-full" onClick={() => applyTextColor(textColor)}>Apply</Button>
             </div>
           </PopoverContent>
         </Popover>
 
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="ghost" size="icon" title="Highlight color">
+            <Button type="button" variant="ghost" size="icon" title="Highlight color">
               <PaintBucket className="h-4 w-4" />
             </Button>
           </PopoverTrigger>
@@ -400,7 +411,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
             <div className="space-y-2">
               <Label htmlFor="rte-bg-color">Highlight</Label>
               <Input id="rte-bg-color" type="color" value={bgColor} onChange={(e) => setBgColor(e.target.value)} />
-              <Button variant="secondary" className="w-full" onClick={() => applyBgColor(bgColor)}>Apply</Button>
+              <Button type="button" variant="secondary" className="w-full" onClick={() => applyBgColor(bgColor)}>Apply</Button>
             </div>
           </PopoverContent>
         </Popover>
@@ -408,7 +419,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
         <Separator orientation="vertical" className="mx-1 h-6" />
 
         {/* Clear formatting */}
-        <Button variant="ghost" size="icon" onClick={() => exec("removeFormat")} title="Clear formatting">
+        <Button type="button" variant="ghost" size="icon" onClick={() => exec("removeFormat")} title="Clear formatting">
           <Eraser className="h-4 w-4" />
         </Button>
       </div>
@@ -430,6 +441,9 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
           <DialogHeader>
             <DialogTitle>Insert Image</DialogTitle>
           </DialogHeader>
+          <DialogDescription>
+            Upload a file or paste an image URL. Images are inserted responsively with alt text.
+          </DialogDescription>
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="rte-image-upload">Upload</Label>
@@ -448,6 +462,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
           </div>
           <DialogFooter>
             <Button
+              type="button"
               onClick={() => {
                 if (imageUrl) {
                   insertImageAtSelection(imageUrl, imageAlt);
