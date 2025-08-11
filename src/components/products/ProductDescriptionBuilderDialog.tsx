@@ -4,6 +4,7 @@ import { ElementorPageBuilder } from '@/components/page-builder/ElementorPageBui
 import { PageBuilderData } from '@/components/page-builder/types';
 import { Button } from '@/components/ui/button';
 import { Save, X } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
 
 interface ProductDescriptionBuilderDialogProps {
   open: boolean;
@@ -29,11 +30,22 @@ const ProductDescriptionBuilderDialog: React.FC<ProductDescriptionBuilderDialogP
     setSaving(true);
     try {
       onSave(data);
-      onOpenChange(false);
+      toast({ title: 'Saved', description: 'Description saved successfully.' });
     } finally {
       setSaving(false);
     }
-  }, [data, onSave, onOpenChange]);
+  }, [data, onSave]);
+
+  React.useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+        e.preventDefault();
+        handleSave();
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [handleSave]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -46,7 +58,7 @@ const ProductDescriptionBuilderDialog: React.FC<ProductDescriptionBuilderDialogP
                 <X className="h-4 w-4 mr-2" /> Close
               </Button>
               <Button onClick={handleSave} disabled={saving}>
-                <Save className="h-4 w-4 mr-2" /> {saving ? 'Saving...' : 'Save & Close'}
+                <Save className="h-4 w-4 mr-2" /> {saving ? 'Saving...' : 'Save'}
               </Button>
             </div>
           </header>
@@ -55,13 +67,7 @@ const ProductDescriptionBuilderDialog: React.FC<ProductDescriptionBuilderDialogP
               initialData={data}
               onChange={(d) => setData(d)}
               onSave={async () => {
-                setSaving(true);
-                try {
-                  onSave(data);
-                  onOpenChange(false);
-                } finally {
-                  setSaving(false);
-                }
+                await handleSave();
               }}
               isSaving={saving}
             />

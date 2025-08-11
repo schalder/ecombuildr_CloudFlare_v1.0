@@ -679,7 +679,7 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = memo(({
           </div>
           
           {!sidebarCollapsed && (
-            <ScrollArea className="flex-1">
+            <ScrollArea className="h-0 flex-1">
               <div className="p-4 space-y-6">
                 {filteredElements.map((category) => (
                   <div key={category.name}>
@@ -832,7 +832,7 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = memo(({
           </div>
           
           {!propertiesPanelCollapsed && (
-            <ScrollArea className="flex-1">
+            <ScrollArea className="h-0 flex-1">
               {selection ? (
                 (() => {
                   // Get selected item data based on selection type

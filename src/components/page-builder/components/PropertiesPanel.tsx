@@ -18,7 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Slider } from '@/components/ui/slider';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
-import { ScrollArea } from '@/components/ui/scroll-area';
+
 import { ImageUpload } from '@/components/ui/image-upload';
 import { ContentProperties } from './ContentProperties';
 import { 
@@ -179,7 +179,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
   };
 
   return (
-    <ScrollArea className="h-full">
+    <div className="h-full overflow-y-auto">
       <div className="p-4 space-y-6">
         {/* Element Info */}
         <div>
@@ -425,6 +425,6 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
           </TabsContent>
         </Tabs>
       </div>
-    </ScrollArea>
+    </div>
   );
 };
