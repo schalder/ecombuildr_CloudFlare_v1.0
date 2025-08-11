@@ -18,8 +18,9 @@ import { toast } from 'sonner';
 import { useStoreProducts } from '@/hooks/useStoreData';
 import { generateResponsiveCSS } from '@/components/page-builder/utils/responsiveStyles';
 import { formatCurrency } from '@/lib/currency';
-import { computeShippingForAddress, ShippingSettings } from '@/lib/shipping';
+import { computeShippingForAddress } from '@/lib/shipping';
 import { nameWithVariant } from '@/lib/utils';
+import { useWebsiteShipping } from '@/hooks/useWebsiteShipping';
 
 const CartSummaryElement: React.FC<{ element: PageBuilderElement }> = () => {
   const { items, total, updateQuantity, removeItem } = useCart();
@@ -402,42 +403,8 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
     custom_fields: {} as Record<string, any>,
   });
   const [shippingCost, setShippingCost] = useState(0);
-  const [websiteShipping, setWebsiteShipping] = useState<ShippingSettings | undefined>(undefined);
+  const { websiteShipping } = useWebsiteShipping();
   const [loading, setLoading] = useState(false);
-
-  // Button and header responsive CSS + background settings
-  const buttonStyles = (element.styles as any)?.checkoutButton || { responsive: { desktop: {}, mobile: {} } };
-  const buttonCSS = generateResponsiveCSS(element.id, buttonStyles);
-  const headerStyles = (element.styles as any)?.checkoutSectionHeader || { responsive: { desktop: {}, mobile: {} } };
-  const headerCSS = generateResponsiveCSS(`${element.id}-section-header`, headerStyles);
-  const backgrounds = (element.styles as any)?.checkoutBackgrounds || {};
-  const formBorderWidth = Number((backgrounds as any)?.formBorderWidth || 0);
-  const summaryBorderWidth = Number((backgrounds as any)?.summaryBorderWidth || 0);
-
-  useEffect(() => {
-    if (slug) {
-      loadStore(slug);
-    } else if (websiteId) {
-      (async () => {
-        const { data: website } = await supabase
-          .from('websites')
-          .select('store_id, settings')
-          .eq('id', websiteId)
-          .single();
-        if (website?.store_id) await loadStoreById(website.store_id);
-        const ship = (website?.settings as any)?.shipping;
-        if (ship) setWebsiteShipping(ship as ShippingSettings);
-      })();
-    }
-  }, [slug, websiteId, loadStore, loadStoreById]);
-
-  // Fallback: use store-level shipping settings when website settings are not present
-  useEffect(() => {
-    if (!websiteShipping && (store as any)?.settings?.shipping) {
-      setWebsiteShipping(((store as any).settings.shipping) as ShippingSettings);
-      console.debug('[Checkout] Using store-level shipping settings as fallback');
-    }
-  }, [store, websiteShipping]);
 
   // Recompute shipping cost when address details change (primarily city)
   useEffect(() => {

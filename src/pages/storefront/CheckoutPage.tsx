@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useStore } from '@/contexts/StoreContext';
 import { useCart } from '@/contexts/CartContext';
 import { StorefrontLayout } from '@/components/storefront/StorefrontLayout';
@@ -15,9 +15,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { CreditCard, Truck, MapPin } from 'lucide-react';
 import { toast } from 'sonner';
 import { useEcomPaths } from '@/lib/pathResolver';
-import { computeShippingForAddress, ShippingSettings } from '@/lib/shipping';
+import { computeShippingForAddress } from '@/lib/shipping';
 import { formatCurrency } from '@/lib/currency';
 import { nameWithVariant } from '@/lib/utils';
+import { useWebsiteShipping } from '@/hooks/useWebsiteShipping';
 
 interface CheckoutForm {
   customer_name: string;
@@ -34,7 +35,7 @@ interface CheckoutForm {
 export const CheckoutPage: React.FC = () => {
   const { slug, websiteId } = useParams<{ slug?: string; websiteId?: string }>();
   const navigate = useNavigate();
-  const { store, loadStore, loadStoreById } = useStore();
+  const { store } = useStore();
   const { items, total, clearCart } = useCart();
   const paths = useEcomPaths();
   const [currentStep, setCurrentStep] = useState(1);
@@ -42,8 +43,8 @@ export const CheckoutPage: React.FC = () => {
   const [discountLoading, setDiscountLoading] = useState(false);
   const [discountAmount, setDiscountAmount] = useState(0);
   const [shippingCost, setShippingCost] = useState(0); // Default shipping cost
-  const [websiteShipping, setWebsiteShipping] = useState<ShippingSettings | undefined>(undefined);
-  
+const { websiteShipping } = useWebsiteShipping();
+
   const [form, setForm] = useState<CheckoutForm>({
     customer_name: '',
     customer_email: '',
@@ -55,40 +56,6 @@ export const CheckoutPage: React.FC = () => {
     notes: '',
     discount_code: '',
   });
-
-useEffect(() => {
-  if (slug) {
-    loadStore(slug);
-  } else if (websiteId) {
-    (async () => {
-      const { data: website } = await supabase
-        .from('websites')
-        .select('store_id, settings')
-        .eq('id', websiteId)
-        .single();
-      if (website?.store_id) {
-        await loadStoreById(website.store_id);
-      }
-      const ship = (website?.settings as any)?.shipping;
-      if (ship) {
-        setWebsiteShipping(ship as ShippingSettings);
-      }
-    })();
-  }
-}, [slug, websiteId, loadStore, loadStoreById]);
-
-// Fallback: use store-level shipping settings when website settings are not present
-useEffect(() => {
-  if (!websiteShipping && (store as any)?.settings?.shipping) {
-    setWebsiteShipping(((store as any).settings.shipping) as ShippingSettings);
-    console.debug('[CheckoutPage] Using store-level shipping settings as fallback');
-  }
-}, [store, websiteShipping]);
-
-// Do not auto-redirect on empty cart; show an empty state instead
-useEffect(() => {
-  // Intentionally left blank to avoid bouncing users back to home
-}, []);
 
 // Recompute shipping cost when address details or settings change
 useEffect(() => {
