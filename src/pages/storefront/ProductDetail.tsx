@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useStore } from '@/contexts/StoreContext';
 import { useCart } from '@/contexts/CartContext';
 import { StorefrontLayout } from '@/components/storefront/StorefrontLayout';
@@ -14,6 +14,7 @@ import { formatCurrency } from '@/lib/currency';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import ReviewsSection from '@/components/storefront/ReviewsSection';
 import RelatedProducts from '@/components/storefront/RelatedProducts';
+import { useEcomPaths } from '@/lib/pathResolver';
 
 interface Product {
   id: string;
@@ -35,10 +36,19 @@ interface Product {
   easy_returns_days?: number | null;
 }
 
+interface ActionButtons {
+  order_now?: { enabled?: boolean; label?: string };
+  phone?: { enabled?: boolean; label?: string; number?: string };
+  whatsapp?: { enabled?: boolean; label?: string; url?: string };
+}
+
+
 export const ProductDetail: React.FC = () => {
   const { slug, websiteId, productSlug } = useParams<{ slug?: string; websiteId?: string; productSlug: string }>();
   const { store, loadStore, loadStoreById } = useStore();
   const { addItem } = useCart();
+  const navigate = useNavigate();
+  const paths = useEcomPaths();
   
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
@@ -119,7 +129,8 @@ export const ProductDetail: React.FC = () => {
         ...data,
         images: Array.isArray(data.images) ? data.images.filter((img: any) => typeof img === 'string') as string[] : [],
         variations: (data as any).variations ?? [],
-      };
+        action_buttons: (data as any).action_buttons as ActionButtons | undefined,
+      } as any;
       setProduct(product as Product);
     } catch (error) {
       console.error('Error fetching product:', error);
@@ -152,6 +163,13 @@ export const ProductDetail: React.FC = () => {
     });
 
     toast.success(`Added ${quantity} ${product.name} to cart`);
+  };
+
+  const handleOrderNow = () => {
+    if (!product) return;
+    // Reuse add to cart then go straight to checkout
+    handleAddToCart();
+    navigate(paths.checkout);
   };
 
   const handleShare = async () => {
@@ -356,7 +374,7 @@ export const ProductDetail: React.FC = () => {
                 </p>
               )}
 
-              <div className="flex space-x-3">
+              <div className="flex flex-col sm:flex-row gap-3">
                 <Button
                   onClick={handleAddToCart}
                   disabled={isOutOfStock}
@@ -366,6 +384,28 @@ export const ProductDetail: React.FC = () => {
                   <ShoppingCart className="h-4 w-4 mr-2" />
                   {isOutOfStock ? 'Out of Stock' : 'Add to Cart'}
                 </Button>
+                {/* Optional Action Buttons */}
+                {((product as any).action_buttons?.order_now?.enabled) && (
+                  <Button size="lg" className="flex-1" onClick={handleOrderNow}>
+                    {(product as any).action_buttons?.order_now?.label || 'Order Now'}
+                  </Button>
+                )}
+                {((product as any).action_buttons?.phone?.enabled) && (
+                  <Button size="lg" variant="outline" className="flex-1" onClick={() => {
+                    const num = (product as any).action_buttons?.phone?.number;
+                    if (num) window.location.href = `tel:${num}`;
+                  }}>
+                    {(product as any).action_buttons?.phone?.label || 'Call Now'}
+                  </Button>
+                )}
+                {((product as any).action_buttons?.whatsapp?.enabled) && (
+                  <Button size="lg" variant="outline" className="flex-1" onClick={() => {
+                    const url = (product as any).action_buttons?.whatsapp?.url;
+                    if (url) window.open(url, '_blank');
+                  }}>
+                    {(product as any).action_buttons?.whatsapp?.label || 'WhatsApp'}
+                  </Button>
+                )}
                 <Button variant="outline" size="lg" onClick={handleShare}>
                   <Share2 className="h-4 w-4" />
                 </Button>

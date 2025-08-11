@@ -32,6 +32,7 @@ interface CheckoutForm {
   discount_code: string;
 }
 
+
 export const CheckoutPage: React.FC = () => {
   const navigate = useNavigate();
   const { store } = useStore();
@@ -42,7 +43,9 @@ export const CheckoutPage: React.FC = () => {
   const [discountLoading, setDiscountLoading] = useState(false);
   const [discountAmount, setDiscountAmount] = useState(0);
   const [shippingCost, setShippingCost] = useState(0); // Default shipping cost
-const { websiteShipping } = useWebsiteShipping();
+  const { websiteShipping } = useWebsiteShipping();
+
+  const [allowedMethods, setAllowedMethods] = useState<Array<'cod' | 'bkash' | 'nagad' | 'sslcommerz'>>(['cod','bkash','nagad','sslcommerz']);
 
   const [form, setForm] = useState<CheckoutForm>({
     customer_name: '',
@@ -75,6 +78,31 @@ useEffect(() => {
     setShippingCost(0);
   }
 }, [websiteShipping, form.shipping_city, form.shipping_area, form.shipping_address]);
+
+  // Derive allowed payment methods based on products in cart
+  useEffect(() => {
+    const loadAllowed = async () => {
+      if (!items.length) return setAllowedMethods(['cod','bkash','nagad','sslcommerz']);
+      const ids = Array.from(new Set(items.map(i => i.productId)));
+      const { data } = await supabase
+        .from('products')
+        .select('id, allowed_payment_methods')
+        .in('id', ids);
+      let acc: string[] = ['cod','bkash','nagad','sslcommerz'];
+      (data || []).forEach((p: any) => {
+        const arr: string[] | null = p.allowed_payment_methods;
+        if (arr && arr.length > 0) {
+          acc = acc.filter(m => arr.includes(m));
+        }
+      });
+      if (acc.length === 0) acc = ['cod'];
+      setAllowedMethods(acc as any);
+      if (!acc.includes(form.payment_method)) {
+        setForm(prev => ({ ...prev, payment_method: acc[0] as any }));
+      }
+    };
+    loadAllowed();
+  }, [items]);
 
   const handleInputChange = (field: keyof CheckoutForm, value: string) => {
     setForm(prev => ({ ...prev, [field]: value }));
@@ -477,10 +505,19 @@ useEffect(() => {
                         <SelectValue placeholder="Select payment method" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="cod">Cash on Delivery (COD)</SelectItem>
-                        <SelectItem value="bkash">bKash</SelectItem>
-                        <SelectItem value="nagad">Nagad</SelectItem>
-                        <SelectItem value="sslcommerz">Credit/Debit Card (SSLCommerz)</SelectItem>
+                        {allowedMethods.includes('cod') && (
+                          <SelectItem value="cod">Cash on Delivery (COD)</SelectItem>
+                        )}
+                        {allowedMethods.includes('bkash') && (
+                          <SelectItem value="bkash">bKash</SelectItem>
+                        )}
+                        {allowedMethods.includes('nagad') && (
+                          <SelectItem value="nagad">Nagad</SelectItem>
+                        )}
+                        {allowedMethods.includes('sslcommerz') && (
+                          <SelectItem value="sslcommerz">Credit/Debit Card (SSLCommerz)</SelectItem>
+                        )}
+                      </SelectContent>
                       </SelectContent>
                     </Select>
                     

@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -47,7 +48,15 @@ export default function AddProduct() {
   const [enableFreeShipping, setEnableFreeShipping] = useState(false);
   const [freeShippingMin, setFreeShippingMin] = useState<string>('');
   const [easyReturnsEnabled, setEasyReturnsEnabled] = useState(false);
-  const [easyReturnsDays, setEasyReturnsDays] = useState<string>('30');
+const [easyReturnsDays, setEasyReturnsDays] = useState<string>('30');
+
+  // Action buttons & payment methods
+  const [actionButtons, setActionButtons] = useState({
+    order_now: { enabled: false, label: 'Order Now' },
+    phone: { enabled: false, label: 'Call Now', number: '' },
+    whatsapp: { enabled: false, label: 'WhatsApp', url: '' },
+  });
+  const [paymentMethods, setPaymentMethods] = useState<string[]>([]);
 
   // Fetch categories for the dropdown
   useEffect(() => {
@@ -101,7 +110,7 @@ export default function AddProduct() {
 
       const slug = formData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 
-      const { error } = await supabase.from('products').insert({
+const { error } = await supabase.from('products').insert({
         ...formData,
         store_id: stores[0].id,
         slug,
@@ -116,6 +125,8 @@ export default function AddProduct() {
         free_shipping_min_amount: enableFreeShipping && freeShippingMin ? parseFloat(freeShippingMin) : null,
         easy_returns_enabled: easyReturnsEnabled,
         easy_returns_days: easyReturnsEnabled && easyReturnsDays ? parseInt(easyReturnsDays) : null,
+        action_buttons: actionButtons,
+        allowed_payment_methods: paymentMethods.length ? paymentMethods : null,
       });
 
       if (error) throw error;

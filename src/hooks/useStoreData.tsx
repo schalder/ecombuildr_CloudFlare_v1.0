@@ -24,6 +24,8 @@ interface Product {
   variations?: any; // Json type from Supabase
   seo_title?: string | null;
   seo_description?: string | null;
+  action_buttons?: any;
+  allowed_payment_methods?: string[] | null;
 }
 
 interface Category {

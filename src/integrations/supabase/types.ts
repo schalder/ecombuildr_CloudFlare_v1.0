@@ -819,6 +819,8 @@ export type Database = {
       }
       products: {
         Row: {
+          action_buttons: Json
+          allowed_payment_methods: string[] | null
           category_id: string | null
           compare_price: number | null
           cost_price: number | null
@@ -844,6 +846,8 @@ export type Database = {
           variations: Json | null
         }
         Insert: {
+          action_buttons?: Json
+          allowed_payment_methods?: string[] | null
           category_id?: string | null
           compare_price?: number | null
           cost_price?: number | null
@@ -869,6 +873,8 @@ export type Database = {
           variations?: Json | null
         }
         Update: {
+          action_buttons?: Json
+          allowed_payment_methods?: string[] | null
           category_id?: string | null
           compare_price?: number | null
           cost_price?: number | null

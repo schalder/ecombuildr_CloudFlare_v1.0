@@ -14,7 +14,8 @@ import { ArrowLeft, Save, Package } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import RichTextEditor from "@/components/ui/RichTextEditor";
 import VariationsBuilder, { VariationOption } from "@/components/products/VariationsBuilder";
-import VariantMatrix, { VariantEntry } from "@/components/products/VariantMatrix";
+import VariantMatrix, { VariantEntry } from "@components/products/VariantMatrix";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface Product {
   id: string;
@@ -69,7 +70,15 @@ export default function EditProduct() {
   const [enableFreeShipping, setEnableFreeShipping] = useState(false);
   const [freeShippingMin, setFreeShippingMin] = useState<string>('');
   const [easyReturnsEnabled, setEasyReturnsEnabled] = useState(false);
-  const [easyReturnsDays, setEasyReturnsDays] = useState<string>('30');
+const [easyReturnsDays, setEasyReturnsDays] = useState<string>('30');
+
+  // Action buttons & payment methods
+  const [actionButtons, setActionButtons] = useState({
+    order_now: { enabled: false, label: 'Order Now' },
+    phone: { enabled: false, label: 'Call Now', number: '' },
+    whatsapp: { enabled: false, label: 'WhatsApp', url: '' },
+  });
+  const [paymentMethods, setPaymentMethods] = useState<string[]>([]);
 
   useEffect(() => {
     if (user && id) {
@@ -135,6 +144,16 @@ export default function EditProduct() {
           setVariations([]);
           setVariantEntries([]);
         }
+
+        // Action buttons & payments
+        const ab = (product as any).action_buttons || {};
+        setActionButtons({
+          order_now: { enabled: !!ab.order_now?.enabled, label: ab.order_now?.label || 'Order Now' },
+          phone: { enabled: !!ab.phone?.enabled, label: ab.phone?.label || 'Call Now', number: ab.phone?.number || '' },
+          whatsapp: { enabled: !!ab.whatsapp?.enabled, label: ab.whatsapp?.label || 'WhatsApp', url: ab.whatsapp?.url || '' },
+        });
+        setPaymentMethods(((product as any).allowed_payment_methods || []) as string[]);
+
       }
     } catch (error) {
       console.error('Error fetching product:', error);
@@ -195,9 +214,11 @@ export default function EditProduct() {
         free_shipping_min_amount: enableFreeShipping && freeShippingMin ? parseFloat(freeShippingMin) : null,
         easy_returns_enabled: easyReturnsEnabled,
         easy_returns_days: easyReturnsEnabled && easyReturnsDays ? parseInt(easyReturnsDays) : null,
-        is_active: formData.is_active,
+is_active: formData.is_active,
         updated_at: new Date().toISOString(),
         variations: hasVariants ? { options: variations, variants: variantEntries } : [],
+        action_buttons: actionButtons,
+        allowed_payment_methods: paymentMethods.length ? paymentMethods : null,
       };
 
       const { error } = await supabase
