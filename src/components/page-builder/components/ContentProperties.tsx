@@ -231,9 +231,8 @@ export const ContentProperties: React.FC<ContentPropertiesProps> = ({
     const rawItems = element.content.items || [];
 
     const setStyle = (value: 'bullets' | 'numbers' | 'icons') => {
+      // Single-source of truth: use only `content.style` to avoid overwrite races
       onUpdate('style', value);
-      if (value === 'numbers') onUpdate('ordered', true);
-      if (value !== 'numbers') onUpdate('ordered', false);
     };
 
     const addItem = () => {
@@ -283,7 +282,7 @@ export const ContentProperties: React.FC<ContentPropertiesProps> = ({
           <input
             type="checkbox"
             id="list-ordered"
-            checked={(style === 'numbers') || (element.content.ordered || false)}
+            checked={style === 'numbers'}
             onChange={(e) => setStyle(e.target.checked ? 'numbers' : 'bullets')}
           />
           <Label htmlFor="list-ordered" className="text-sm">Numbered list (legacy)</Label>
