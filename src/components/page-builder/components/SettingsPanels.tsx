@@ -1112,6 +1112,79 @@ export const ColumnSettings: React.FC<ColumnSettingsProps> = ({ column, onUpdate
           </Tabs>
         </CardContent>
       </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm">Content Layout</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="content-direction">Content Direction</Label>
+            <Select
+              value={column.styles?.contentDirection || 'column'}
+              onValueChange={(value) => handleStyleUpdate('contentDirection', value)}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="column">Vertical (Column)</SelectItem>
+                <SelectItem value="row">Horizontal (Row)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="content-alignment">Content Alignment</Label>
+            <Select
+              value={column.styles?.contentAlignment || ''}
+              onValueChange={(value) => handleStyleUpdate('contentAlignment', value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select alignment..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Default</SelectItem>
+                <SelectItem value="flex-start">Start</SelectItem>
+                <SelectItem value="center">Center</SelectItem>
+                <SelectItem value="flex-end">End</SelectItem>
+                <SelectItem value="stretch">Stretch</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="content-justification">Content Distribution</Label>
+            <Select
+              value={column.styles?.contentJustification || ''}
+              onValueChange={(value) => handleStyleUpdate('contentJustification', value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select distribution..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Default</SelectItem>
+                <SelectItem value="flex-start">Start</SelectItem>
+                <SelectItem value="center">Center</SelectItem>
+                <SelectItem value="flex-end">End</SelectItem>
+                <SelectItem value="space-between">Space Between</SelectItem>
+                <SelectItem value="space-around">Space Around</SelectItem>
+                <SelectItem value="space-evenly">Space Evenly</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="content-gap">Content Gap</Label>
+            <Input
+              id="content-gap"
+              value={column.styles?.contentGap || ''}
+              onChange={(e) => handleStyleUpdate('contentGap', e.target.value)}
+              placeholder="e.g., 16px, 1rem, 2%"
+            />
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

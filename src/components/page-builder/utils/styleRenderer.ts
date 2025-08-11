@@ -121,6 +121,28 @@ export const renderColumnStyles = (column: PageBuilderColumn, deviceType: 'deskt
       styles.boxShadow = column.styles.boxShadow;
     }
     
+    // Content alignment styles - enable flexbox when alignment is set
+    if (column.styles.contentAlignment || column.styles.contentJustification || column.styles.contentDirection) {
+      styles.display = 'flex';
+      styles.flexDirection = column.styles.contentDirection || 'column';
+      
+      if (column.styles.contentAlignment) {
+        // For column direction: alignItems controls vertical alignment
+        // For row direction: alignItems controls horizontal alignment
+        styles.alignItems = column.styles.contentAlignment;
+      }
+      
+      if (column.styles.contentJustification) {
+        // For column direction: justifyContent controls horizontal alignment
+        // For row direction: justifyContent controls vertical alignment
+        styles.justifyContent = column.styles.contentJustification;
+      }
+      
+      if (column.styles.contentGap) {
+        styles.gap = column.styles.contentGap;
+      }
+    }
+    
     // Spacing styles
     if (column.styles.padding) styles.padding = column.styles.padding;
     if (column.styles.margin) styles.margin = column.styles.margin;

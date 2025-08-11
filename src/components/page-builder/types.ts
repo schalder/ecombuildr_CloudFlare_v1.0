@@ -78,6 +78,11 @@ export interface PageBuilderColumn {
     width?: string; // Custom width override
     maxWidth?: string;
     minWidth?: string;
+    // Content alignment properties
+    contentAlignment?: 'flex-start' | 'center' | 'flex-end' | 'stretch';
+    contentJustification?: 'flex-start' | 'center' | 'flex-end' | 'space-between' | 'space-around' | 'space-evenly';
+    contentDirection?: 'column' | 'row';
+    contentGap?: string;
     responsive?: {
       desktop?: Record<string, any>;
       mobile?: Record<string, any>;
