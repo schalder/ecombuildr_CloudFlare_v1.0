@@ -261,10 +261,10 @@ const RelatedProductsElement: React.FC<{ element: PageBuilderElement }> = ({ ele
       {element.content?.title && <h3 className="text-xl font-semibold mb-4">{element.content.title}</h3>}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {products.map((p) => (
-          <Card key={p.id} className="group">
+          <Card key={p.id} className="group/card">
             <CardContent className="p-3">
               <div className="aspect-square rounded-lg overflow-hidden mb-2">
-                <img src={(Array.isArray(p.images)?p.images[0]:p.images) || '/placeholder.svg'} alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                <img src={(Array.isArray(p.images)?p.images[0]:p.images) || '/placeholder.svg'} alt={p.name} className="w-full h-full object-cover group-hover/card:scale-105 transition-transform" />
               </div>
               <div className="text-sm font-medium line-clamp-1">{p.name}</div>
               <div className="text-sm">{formatCurrency(Number(p.price))}</div>

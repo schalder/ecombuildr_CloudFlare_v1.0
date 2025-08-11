@@ -174,14 +174,14 @@ const ProductGridElement: React.FC<{
       )}
       <div className={`grid gap-4 ${getGridClasses()}`}>
         {products.map((product) => (
-          <Card key={product.id} className="group hover:shadow-lg transition-shadow">
+          <Card key={product.id} className="group/card hover:shadow-lg transition-shadow">
             <CardContent className="p-3">
               <div className="aspect-square overflow-hidden rounded-lg mb-3 relative">
                 <a href={paths.productDetail(product.slug)} aria-label={product.name}>
                   <img
                     src={(Array.isArray(product.images) ? product.images[0] : product.images) || '/placeholder.svg'}
                     alt={product.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                    className="w-full h-full object-cover group-hover/card:scale-105 transition-transform"
                   />
                 </a>
                 {showQuickView && (
@@ -189,7 +189,7 @@ const ProductGridElement: React.FC<{
                     type="button"
                     variant="secondary"
                     size="icon"
-                    className="absolute top-2 right-2 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="absolute top-2 right-2 h-8 w-8 opacity-0 group-hover/card:opacity-100 transition-opacity"
                     onClick={() => openQuickView({
                       ...product,
                       images: Array.isArray(product.images) ? product.images : [product.images]
@@ -370,14 +370,14 @@ const FeaturedProductsElement: React.FC<{
         )}
         <div className={`grid gap-4 ${getGridClasses()}`}>
           {featuredProducts.map((p) => (
-            <Card key={p.id} className="group hover:shadow-lg transition-shadow">
+            <Card key={p.id} className="group/card hover:shadow-lg transition-shadow">
               <CardContent className="p-3">
                 <div className="aspect-square overflow-hidden rounded-lg mb-3">
                   <a href={paths.productDetail(p.slug)} aria-label={p.name}>
                     <img
                       src={(Array.isArray(p.images) ? p.images[0] : p.images) || '/placeholder.svg'}
                       alt={p.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                      className="w-full h-full object-cover group-hover/card:scale-105 transition-transform"
                     />
                   </a>
                 </div>
@@ -754,12 +754,12 @@ const WeeklyFeaturedElement: React.FC<{
         
         <div className={`grid gap-4 ${getGridClasses()}`}>
           {mockWeeklyProducts.map((product) => (
-            <div key={product.id} className="text-center group">
+            <div key={product.id} className="text-center group/card">
               <div className="relative overflow-hidden rounded-lg mb-3">
                 <img
                   src={product.image}
                   alt={product.name}
-                  className="w-full h-40 object-cover group-hover:scale-105 transition-transform"
+                  className="w-full h-40 object-cover group-hover/card:scale-105 transition-transform"
                 />
                 <Badge className="absolute top-2 right-2" variant="destructive">
                   -{product.discount}%

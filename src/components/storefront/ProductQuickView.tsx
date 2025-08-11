@@ -51,18 +51,19 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
   const [quantity, setQuantity] = useState(1);
   const [isWishlisted, setIsWishlisted] = useState(false);
 
-  const options = useMemo<VariationOption[]>(() => {
+  // Derive options and variants without hooks to avoid hook-order issues
+  const options: VariationOption[] = (() => {
     const v: any = product?.variations;
     if (Array.isArray(v)) return v as any;
     return (v?.options || []) as VariationOption[];
-  }, [product]);
+  })();
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
 
   // Variants list (for price overrides)
-  const variantList = useMemo<any[]>(() => {
+  const variantList: any[] = (() => {
     const v: any = product?.variations;
     return Array.isArray(v) ? [] : (v?.variants || []);
-  }, [product]);
+  })();
 
   React.useEffect(() => {
     if (options && options.length) {
@@ -74,9 +75,9 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
     } else {
       setSelectedOptions({});
     }
-  }, [options]);
+  }, [product, options]);
 
-  const selectedVariant = useMemo(() => {
+  const selectedVariant = (() => {
     if (!variantList.length) return null;
     return (
       variantList.find((vv) => {
@@ -84,7 +85,7 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
         return Object.keys(opts).every((k) => opts[k] === selectedOptions[k]);
       }) || null
     );
-  }, [variantList, selectedOptions]);
+  })();
 
   if (!product) return null;
 
@@ -94,11 +95,11 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
 
   const inStock = !product.track_inventory || (product.inventory_quantity ?? 0) > 0;
 
-  const strippedDescription = useMemo(() => {
-    if (product.short_description) return product.short_description;
-    if (!product.description) return "";
+  const strippedDescription = (() => {
+    if (product?.short_description) return product.short_description;
+    if (!product?.description) return "";
     return product.description.replace(/<[^>]+>/g, "").slice(0, 180) + (product.description.length > 180 ? "..." : "");
-  }, [product]);
+  })();
 
   const handleAddToCart = () => {
     const unitPrice = selectedVariant?.price ?? product.price;
