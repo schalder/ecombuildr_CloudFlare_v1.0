@@ -1,8 +1,36 @@
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
-import { Bold, Italic, Underline, Link as LinkIcon, List, ListOrdered, Heading1, Heading2 } from "lucide-react";
+import {
+  Bold,
+  Italic,
+  Underline,
+  Strikethrough,
+  Link as LinkIcon,
+  List,
+  ListOrdered,
+  Heading1,
+  Heading2,
+  Heading3,
+  Quote,
+  Code,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  AlignJustify,
+  Undo2,
+  Redo2,
+  Image as ImageIcon,
+  Eraser,
+  PaintBucket,
+  Palette
+} from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { supabase } from "@/integrations/supabase/client";
 
 type RichTextEditorProps = {
   value: string;
@@ -18,6 +46,13 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
   placeholder,
 }) => {
   const editorRef = useRef<HTMLDivElement | null>(null);
+  const [isImageDialogOpen, setIsImageDialogOpen] = useState(false);
+  const [imageUrl, setImageUrl] = useState("");
+  const [imageAlt, setImageAlt] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
+  const [textColor, setTextColor] = useState("#000000");
+  const [bgColor, setBgColor] = useState("#ffff00");
+  const savedSelection = useRef<Range | null>(null);
 
   useEffect(() => {
     if (!editorRef.current) return;
@@ -27,11 +62,135 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
     }
   }, [value]);
 
+  useEffect(() => {
+    // Prefer CSS styling for execCommand results
+    try {
+      document.execCommand("styleWithCSS", false, "true");
+    } catch (_) {
+      // ignore
+    }
+  }, []);
+
+  const getSelectionRange = () => {
+    const sel = window.getSelection();
+    if (sel && sel.rangeCount > 0) {
+      return sel.getRangeAt(0);
+    }
+    return null;
+  };
+
+  const saveSelection = () => {
+    const range = getSelectionRange();
+    savedSelection.current = range ? range.cloneRange() : null;
+  };
+
+  const restoreSelection = () => {
+    const range = savedSelection.current;
+    if (range) {
+      const sel = window.getSelection();
+      if (sel) {
+        sel.removeAllRanges();
+        sel.addRange(range);
+      }
+    }
+  };
+
   const exec = (command: string, value?: string) => {
     document.execCommand(command, false, value);
     if (editorRef.current) {
       onChange(editorRef.current.innerHTML);
     }
+  };
+
+  const sanitizeHtml = (input: string): string => {
+    const container = document.createElement("div");
+    container.innerHTML = input;
+
+    const ALLOWED = new Set([
+      "P","BR","STRONG","B","EM","I","U","S",
+      "A","H1","H2","H3","H4","H5","H6",
+      "UL","OL","LI","BLOCKQUOTE","CODE","PRE",
+      "SPAN","IMG","DIV"
+    ]);
+
+    const sanitizeElement = (el: Element) => {
+      // Remove event handlers and disallowed attributes
+      [...el.attributes].forEach(attr => {
+        const name = attr.name.toLowerCase();
+        if (name.startsWith("on")) {
+          el.removeAttribute(attr.name);
+        }
+      });
+
+      const tag = el.tagName.toUpperCase();
+      if (!ALLOWED.has(tag)) {
+        // unwrap
+        const parent = el.parentNode;
+        if (parent) {
+          while (el.firstChild) parent.insertBefore(el.firstChild, el);
+          parent.removeChild(el);
+        }
+        return;
+      }
+
+      if (tag === "A") {
+        const href = (el as HTMLAnchorElement).getAttribute("href") || "";
+        if (!/^(https?:|mailto:|tel:)/i.test(href)) {
+          el.removeAttribute("href");
+        }
+        el.setAttribute("rel", "nofollow noopener noreferrer");
+        el.setAttribute("target", "_blank");
+      }
+
+      if (tag === "IMG") {
+        const img = el as HTMLImageElement;
+        const src = img.getAttribute("src") || "";
+        if (!/^(https?:|data:)/i.test(src)) {
+          img.parentElement?.removeChild(img);
+          return;
+        }
+        img.removeAttribute("width");
+        img.removeAttribute("height");
+        img.style.maxWidth = "100%";
+        img.style.height = "auto";
+      }
+
+      // Sanitize style
+      const style = (el as HTMLElement).getAttribute("style");
+      if (style) {
+        const allowedStyles = [
+          "color",
+          "background-color",
+          "text-align",
+          "font-size",
+          "font-weight",
+          "font-style",
+          "text-decoration"
+        ];
+        const cleaned: Record<string,string> = {};
+        style.split(";").forEach(rule => {
+          const [prop, val] = rule.split(":");
+          if (!prop || !val) return;
+          const p = prop.trim().toLowerCase();
+          if (allowedStyles.includes(p)) cleaned[p] = val.trim();
+        });
+        (el as HTMLElement).setAttribute(
+          "style",
+          Object.entries(cleaned).map(([k,v]) => `${k}: ${v}`).join("; ")
+        );
+      }
+    };
+
+    const treeWalker = document.createTreeWalker(container, NodeFilter.SHOW_ELEMENT);
+    const toProcess: Element[] = [];
+    let current = treeWalker.nextNode();
+    while (current) {
+      toProcess.push(current as Element);
+      current = treeWalker.nextNode();
+    }
+    toProcess.forEach(sanitizeElement);
+
+    return container.innerHTML;
   };
 
   const handleInput = () => {
@@ -40,14 +199,86 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
     }
   };
 
+  const handlePaste: React.ClipboardEventHandler<HTMLDivElement> = (e) => {
+    e.preventDefault();
+    const html = e.clipboardData.getData("text/html");
+    const text = e.clipboardData.getData("text/plain");
+    let toInsert = html ? sanitizeHtml(html) : text.replace(/\n/g, "<br>");
+
+    // Ensure images are responsive when pasting raw html
+    toInsert = toInsert.replace(/<img(.*?)>/g, (m) => {
+      if (/style=/i.test(m)) return m;
+      return m.replace(/<img/i, '<img style="max-width:100%;height:auto"');
+    });
+
+    document.execCommand("insertHTML", false, toInsert);
+    handleInput();
+  };
+
   const addLink = () => {
     const url = prompt("Enter URL");
     if (url) exec("createLink", url);
   };
 
+  const insertImageAtSelection = (url: string, alt?: string) => {
+    restoreSelection();
+    const html = `<img src="${url}" alt="${alt ? alt.replace(/"/g, '\\"') : ""}" style="max-width:100%;height:auto" />`;
+    document.execCommand("insertHTML", false, html);
+    handleInput();
+  };
+
+  const handleFileUpload: React.ChangeEventHandler<HTMLInputElement> = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploading(true);
+    try {
+      const { data: user } = await supabase.auth.getUser();
+      const uid = user.user?.id || "anonymous";
+      const path = `${uid}/${Date.now()}-${file.name}`;
+      const { error } = await supabase.storage.from("images").upload(path, file, { upsert: true });
+      if (error) throw error;
+      const { data } = supabase.storage.from("images").getPublicUrl(path);
+      const publicUrl = data.publicUrl;
+      setImageUrl(publicUrl);
+      insertImageAtSelection(publicUrl, imageAlt);
+      setIsImageDialogOpen(false);
+      setImageUrl("");
+      setImageAlt("");
+    } catch (err) {
+      console.error("Upload failed", err);
+      alert("Image upload failed. Please try again.");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const applyTextColor = (color: string) => {
+    exec("foreColor", color);
+  };
+
+  const applyBgColor = (color: string) => {
+    exec("hiliteColor", color);
+  };
+
+  const applyHeading = (level: string) => {
+    if (level === "p") exec("formatBlock", "<p>");
+    else exec("formatBlock", `<${level}>`);
+  };
+
   return (
     <div className={cn("rounded-md border border-input bg-background", className)}>
-      <div className="flex flex-wrap gap-1 p-2 border-b">
+      <div className="flex flex-wrap items-center gap-1 p-2 border-b">
+        {/* History */}
+        <Button variant="ghost" size="icon" onClick={() => exec("undo")} title="Undo">
+          <Undo2 className="h-4 w-4" />
+        </Button>
+        <Button variant="ghost" size="icon" onClick={() => exec("redo")} title="Redo">
+          <Redo2 className="h-4 w-4" />
+        </Button>
+
+        <Separator orientation="vertical" className="mx-1 h-6" />
+
+        {/* Basic styles */}
         <Button variant="ghost" size="icon" onClick={() => exec("bold")} title="Bold">
           <Bold className="h-4 w-4" />
         </Button>
@@ -57,41 +288,191 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
         <Button variant="ghost" size="icon" onClick={() => exec("underline")} title="Underline">
           <Underline className="h-4 w-4" />
         </Button>
-        <Separator orientation="vertical" className="mx-1 h-6" />
-        <Button variant="ghost" size="icon" onClick={() => exec("formatBlock", "<h1>")} title="H1">
-          <Heading1 className="h-4 w-4" />
+        <Button variant="ghost" size="icon" onClick={() => exec("strikeThrough")} title="Strikethrough">
+          <Strikethrough className="h-4 w-4" />
         </Button>
-        <Button variant="ghost" size="icon" onClick={() => exec("formatBlock", "<h2>")} title="H2">
-          <Heading2 className="h-4 w-4" />
-        </Button>
+
         <Separator orientation="vertical" className="mx-1 h-6" />
+
+        {/* Headings */}
+        <div className="flex items-center gap-1">
+          <Button variant="ghost" size="icon" onClick={() => applyHeading("h1")} title="H1">
+            <Heading1 className="h-4 w-4" />
+          </Button>
+          <Button variant="ghost" size="icon" onClick={() => applyHeading("h2")} title="H2">
+            <Heading2 className="h-4 w-4" />
+          </Button>
+          <Button variant="ghost" size="icon" onClick={() => applyHeading("h3")} title="H3">
+            <Heading3 className="h-4 w-4" />
+          </Button>
+        </div>
+
+        <Separator orientation="vertical" className="mx-1 h-6" />
+
+        {/* Lists */}
         <Button variant="ghost" size="icon" onClick={() => exec("insertUnorderedList")} title="Bullet list">
           <List className="h-4 w-4" />
         </Button>
         <Button variant="ghost" size="icon" onClick={() => exec("insertOrderedList")} title="Numbered list">
           <ListOrdered className="h-4 w-4" />
         </Button>
+
         <Separator orientation="vertical" className="mx-1 h-6" />
+
+        {/* Alignment */}
+        <Button variant="ghost" size="icon" onClick={() => exec("justifyLeft")} title="Align left">
+          <AlignLeft className="h-4 w-4" />
+        </Button>
+        <Button variant="ghost" size="icon" onClick={() => exec("justifyCenter")} title="Align center">
+          <AlignCenter className="h-4 w-4" />
+        </Button>
+        <Button variant="ghost" size="icon" onClick={() => exec("justifyRight")} title="Align right">
+          <AlignRight className="h-4 w-4" />
+        </Button>
+        <Button variant="ghost" size="icon" onClick={() => exec("justifyFull")} title="Justify">
+          <AlignJustify className="h-4 w-4" />
+        </Button>
+
+        <Separator orientation="vertical" className="mx-1 h-6" />
+
+        {/* Quote / Code */}
+        <Button variant="ghost" size="icon" onClick={() => exec("formatBlock", "<blockquote>")} title="Blockquote">
+          <Quote className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => {
+            const sel = window.getSelection();
+            const text = sel?.toString() || "";
+            if (!text) return;
+            document.execCommand("insertHTML", false, `<code>${text.replace(/</g, "&lt;")}</code>`);
+            handleInput();
+          }}
+          title="Inline code"
+        >
+          <Code className="h-4 w-4" />
+        </Button>
+
+        <Separator orientation="vertical" className="mx-1 h-6" />
+
+        {/* Link */}
         <Button variant="ghost" size="icon" onClick={addLink} title="Insert link">
           <LinkIcon className="h-4 w-4" />
+        </Button>
+
+        {/* Image */}
+        <Button
+          variant="ghost"
+          size="icon"
+          onMouseDown={saveSelection}
+          onClick={() => setIsImageDialogOpen(true)}
+          title="Insert image"
+        >
+          <ImageIcon className="h-4 w-4" />
+        </Button>
+
+        <Separator orientation="vertical" className="mx-1 h-6" />
+
+        {/* Colors */}
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="ghost" size="icon" title="Text color">
+              <Palette className="h-4 w-4" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-48" align="start">
+            <div className="space-y-2">
+              <Label htmlFor="rte-text-color">Text color</Label>
+              <Input id="rte-text-color" type="color" value={textColor} onChange={(e) => setTextColor(e.target.value)} />
+              <Button variant="secondary" className="w-full" onClick={() => applyTextColor(textColor)}>Apply</Button>
+            </div>
+          </PopoverContent>
+        </Popover>
+
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="ghost" size="icon" title="Highlight color">
+              <PaintBucket className="h-4 w-4" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-48" align="start">
+            <div className="space-y-2">
+              <Label htmlFor="rte-bg-color">Highlight</Label>
+              <Input id="rte-bg-color" type="color" value={bgColor} onChange={(e) => setBgColor(e.target.value)} />
+              <Button variant="secondary" className="w-full" onClick={() => applyBgColor(bgColor)}>Apply</Button>
+            </div>
+          </PopoverContent>
+        </Popover>
+
+        <Separator orientation="vertical" className="mx-1 h-6" />
+
+        {/* Clear formatting */}
+        <Button variant="ghost" size="icon" onClick={() => exec("removeFormat")} title="Clear formatting">
+          <Eraser className="h-4 w-4" />
         </Button>
       </div>
 
       <div
         ref={editorRef}
-        className="min-h-[160px] max-h-[400px] overflow-y-auto p-3 text-sm outline-none"
+        className="rte-content min-h-[200px] max-h-[500px] overflow-y-auto p-3 text-sm outline-none"
         contentEditable
         onInput={handleInput}
+        onPaste={handlePaste}
         data-placeholder={placeholder}
         suppressContentEditableWarning
         style={{ whiteSpace: "pre-wrap" }}
       />
+
+      {/* Image Dialog */}
+      <Dialog open={isImageDialogOpen} onOpenChange={setIsImageDialogOpen}>
+        <DialogContent onOpenAutoFocus={(e) => e.preventDefault()}>
+          <DialogHeader>
+            <DialogTitle>Insert Image</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="rte-image-upload">Upload</Label>
+              <Input id="rte-image-upload" type="file" accept="image/*" onChange={handleFileUpload} disabled={isUploading} />
+            </div>
+            <div className="grid grid-cols-1 gap-2">
+              <div className="space-y-2">
+                <Label htmlFor="rte-image-url">Or from URL</Label>
+                <Input id="rte-image-url" placeholder="https://..." value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="rte-image-alt">Alt text</Label>
+                <Input id="rte-image-alt" placeholder="Describe the image" value={imageAlt} onChange={(e) => setImageAlt(e.target.value)} />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              onClick={() => {
+                if (imageUrl) {
+                  insertImageAtSelection(imageUrl, imageAlt);
+                  setIsImageDialogOpen(false);
+                  setImageUrl("");
+                  setImageAlt("");
+                }
+              }}
+              disabled={!imageUrl || isUploading}
+            >
+              Insert
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Simple placeholder styling */}
       <style>{`
         [contenteditable][data-placeholder]:empty:before {
           content: attr(data-placeholder);
           color: hsl(var(--muted-foreground));
         }
+        .rte-content :where(h1,h2,h3){ margin: 0.5rem 0; }
+        .rte-content blockquote { border-inline-start: 2px solid hsl(var(--muted-foreground) / 0.3); padding-inline-start: 1rem; color: hsl(var(--muted-foreground)); }
+        .rte-content img { max-width: 100%; height: auto; }
       `}</style>
     </div>
   );
