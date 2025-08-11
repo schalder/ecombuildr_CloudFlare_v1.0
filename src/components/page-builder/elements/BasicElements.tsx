@@ -54,15 +54,19 @@ const HeadingElement: React.FC<{
     <>
       <style>{generateResponsiveCSS(element.id, element.styles)}</style>
       <Tag style={cleanStyles} className={className}>
-        <InlineEditor
-          value={text}
-          onChange={handleTextChange}
-          placeholder="Enter heading text..."
-          disabled={!isEditing}
-          multiline={true}
-          className="font-inherit leading-tight"
-          style={{ textAlign: cleanStyles.textAlign as any }}
-        />
+        {isEditing ? (
+          <InlineEditor
+            value={text}
+            onChange={handleTextChange}
+            placeholder="Enter heading text..."
+            disabled={false}
+            multiline={true}
+            className="font-inherit leading-tight"
+            style={{ textAlign: cleanStyles.textAlign as any }}
+          />
+        ) : (
+          text
+        )}
       </Tag>
     </>
   );
@@ -111,15 +115,19 @@ const ParagraphElement: React.FC<{
     <>
       <style>{generateResponsiveCSS(element.id, element.styles)}</style>
       <div style={cleanStyles} className={className}>
-        <InlineEditor
-          value={text}
-          onChange={handleTextChange}
-          placeholder="Enter your text content..."
-          disabled={!isEditing}
-          multiline={true}
-          className="leading-inherit"
-          style={{ textAlign: cleanStyles.textAlign as any }}
-        />
+        {isEditing ? (
+          <InlineEditor
+            value={text}
+            onChange={handleTextChange}
+            placeholder="Enter your text content..."
+            disabled={false}
+            multiline={true}
+            className="leading-inherit"
+            style={{ textAlign: cleanStyles.textAlign as any }}
+          />
+        ) : (
+          <div className="whitespace-pre-wrap">{text}</div>
+        )}
       </div>
     </>
   );
@@ -424,13 +432,17 @@ const ButtonElement: React.FC<{
           style={cleanStyles}
           id={element.content.customId || element.id}
         >
-          <InlineEditor
-            value={text}
-            onChange={handleTextChange}
-            placeholder="Button text..."
-            disabled={!isEditing}
-            className="text-inherit font-inherit bg-transparent border-0 outline-none ring-0 focus:ring-0"
-          />
+          {isEditing ? (
+            <InlineEditor
+              value={text}
+              onChange={handleTextChange}
+              placeholder="Button text..."
+              disabled={false}
+              className="text-inherit font-inherit bg-transparent border-0 outline-none ring-0 focus:ring-0"
+            />
+          ) : (
+            text
+          )}
         </Button>
       </div>
     </>
