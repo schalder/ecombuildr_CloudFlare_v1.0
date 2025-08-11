@@ -680,7 +680,7 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = memo(({
           </div>
           
           {!sidebarCollapsed && (
-            <ScrollArea className="flex-1">
+            <ScrollArea scrollbarType="always" className="flex-1 min-h-0">
               <div className="p-4 space-y-6">
                 {filteredElements.map((category) => (
                   <div key={category.name}>
@@ -749,7 +749,7 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = memo(({
           </div>
 
           {/* Canvas Area */}
-          <ScrollArea className="flex-1 bg-muted/30">
+          <ScrollArea scrollbarType="always" className="flex-1 min-h-0 bg-muted/30">
             <div className="p-8">
               <div style={getDevicePreviewStyles()} className="min-h-full bg-background rounded-lg shadow-sm">
                 {data.sections.length === 0 ? (
@@ -835,7 +835,7 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = memo(({
           </div>
           
           {!propertiesPanelCollapsed && (
-            <ScrollArea className="flex-1">
+            <ScrollArea scrollbarType="always" className="flex-1 min-h-0">
               {selection ? (
                 (() => {
                   // Get selected item data based on selection type
