@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, ReactNode, useRef } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
@@ -30,6 +30,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const lastToastTime = useRef<number>(0);
 
   useEffect(() => {
     const abortController = new AbortController();
@@ -40,19 +42,36 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       (event, session) => {
         if (!isMounted || abortController.signal.aborted) return;
         
+        const previousSession = session;
         setSession(session);
         setUser(session?.user ?? null);
         
-        if (event === 'SIGNED_IN') {
-          toast({
-            title: "Welcome back!",
-            description: "You have been signed in successfully.",
-          });
-        } else if (event === 'SIGNED_OUT') {
+        // Only show toasts for actual user actions, not session refreshes
+        const now = Date.now();
+        const timeSinceLastToast = now - lastToastTime.current;
+        
+        if (event === 'SIGNED_IN' && !isInitialLoad && timeSinceLastToast > 5000) {
+          // Only show welcome toast for genuine sign-ins, not tab switches or refreshes
+          const isGenuineSignIn = !previousSession || previousSession.user?.id !== session?.user?.id;
+          
+          if (isGenuineSignIn) {
+            toast({
+              title: "Welcome back!",
+              description: "You have been signed in successfully.",
+            });
+            lastToastTime.current = now;
+          }
+        } else if (event === 'SIGNED_OUT' && !isInitialLoad && timeSinceLastToast > 2000) {
           toast({
             title: "Signed out",
             description: "You have been signed out successfully.",
           });
+          lastToastTime.current = now;
+        }
+        
+        // Mark initial load as complete after first auth state change
+        if (isInitialLoad) {
+          setIsInitialLoad(false);
         }
         
         setLoading(false);
@@ -68,10 +87,18 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
+        
+        // Set initial load to false after getting session
+        setTimeout(() => {
+          if (isMounted) {
+            setIsInitialLoad(false);
+          }
+        }, 1000);
       } catch (error) {
         if (!abortController.signal.aborted) {
           console.error('Error getting initial session:', error);
           setLoading(false);
+          setIsInitialLoad(false);
         }
       }
     };
