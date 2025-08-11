@@ -131,3 +131,22 @@ All colors MUST be HSL. Designed for trust, energy, and conversion.
     @apply bg-background text-foreground;
   }
 }
+
+/* Product Card Isolated Hover Effects */
+@layer components {
+  .product-card-hover:hover img {
+    transform: scale(1.1);
+  }
+
+  .product-card-individual:hover img {
+    transform: scale(1.05);
+  }
+
+  .product-card-weekly:hover img {
+    transform: scale(1.05);
+  }
+
+  .product-card-modern:hover img {
+    transform: scale(1.05);
+  }
+}
