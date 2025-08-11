@@ -311,7 +311,7 @@ const ModernProductGridSave: React.FC<BlockSaveProps> = ({ block }) => {
           {products.map((product, index) => (
             <div
               key={product.id}
-              className="bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden product-card-modern"
+              className="bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden"
             >
               <div className="relative">
                 <img

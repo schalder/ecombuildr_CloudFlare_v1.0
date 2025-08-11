@@ -370,8 +370,8 @@ const ProductGridSave: React.FC<BlockSaveProps> = ({ block }) => {
           {products.map((product) => {
             const discount = calculateDiscount(product.price, product.compare_price);
             const cardClass = content.layout === 'organic' 
-              ? 'bg-card rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden product-card-individual'
-              : 'bg-card rounded-lg border hover:shadow-md transition-all duration-300 overflow-hidden product-card-individual';
+              ? 'bg-card rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden'
+              : 'bg-card rounded-lg border hover:shadow-md transition-all duration-300 overflow-hidden';
 
             return (
               <Card key={product.id} className={cardClass}>

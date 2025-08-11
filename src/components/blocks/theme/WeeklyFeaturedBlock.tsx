@@ -311,7 +311,7 @@ const WeeklyFeaturedSave: React.FC<BlockSaveProps> = ({ block }) => {
   const renderGridLayout = () => (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       {products.map((product, index) => (
-        <Card key={product.id} className="product-card-weekly hover:shadow-lg transition-all duration-300 overflow-hidden">
+        <Card key={product.id} className="hover:shadow-lg transition-all duration-300 overflow-hidden">
           <div className="relative aspect-square overflow-hidden">
             {product.images && Array.isArray(product.images) && product.images[0] ? (
               <img
