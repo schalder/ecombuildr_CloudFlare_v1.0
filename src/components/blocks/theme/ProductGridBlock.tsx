@@ -370,8 +370,8 @@ const ProductGridSave: React.FC<BlockSaveProps> = ({ block }) => {
           {products.map((product) => {
             const discount = calculateDiscount(product.price, product.compare_price);
             const cardClass = content.layout === 'organic' 
-              ? 'bg-card rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden group'
-              : 'bg-card rounded-lg border hover:shadow-md transition-all duration-300 overflow-hidden group';
+              ? 'bg-card rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden group/card'
+              : 'bg-card rounded-lg border hover:shadow-md transition-all duration-300 overflow-hidden group/card';
 
             return (
               <Card key={product.id} className={cardClass}>
@@ -380,7 +380,7 @@ const ProductGridSave: React.FC<BlockSaveProps> = ({ block }) => {
                     <img
                       src={product.images[0]}
                       alt={product.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      className="w-full h-full object-cover group-hover/card:scale-105 transition-transform duration-300"
                     />
                   ) : (
                     <div className="w-full h-full bg-muted flex items-center justify-center">
@@ -394,14 +394,14 @@ const ProductGridSave: React.FC<BlockSaveProps> = ({ block }) => {
                     </Badge>
                   )}
 
-                  <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="absolute top-2 right-2 opacity-0 group-hover/card:opacity-100 transition-opacity">
                     <Button size="sm" variant="secondary" className="w-8 h-8 p-0">
                       <Heart className="w-4 h-4" />
                     </Button>
                   </div>
 
                   {content.showQuickAdd && (
-                    <div className="absolute bottom-2 left-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="absolute bottom-2 left-2 right-2 opacity-0 group-hover/card:opacity-100 transition-opacity">
                       <Button size="sm" className="w-full">
                         <ShoppingCart className="w-4 h-4 mr-1" />
                         Quick Add
