@@ -48,7 +48,15 @@ export default function AddProduct() {
   const [enableFreeShipping, setEnableFreeShipping] = useState(false);
   const [freeShippingMin, setFreeShippingMin] = useState<string>('');
   const [easyReturnsEnabled, setEasyReturnsEnabled] = useState(false);
-const [easyReturnsDays, setEasyReturnsDays] = useState<string>('30');
+  const [easyReturnsDays, setEasyReturnsDays] = useState<string>('30');
+
+  // Action buttons & payment methods
+  const [actionButtons, setActionButtons] = useState({
+    order_now: { enabled: false, label: 'Order Now' },
+    call: { enabled: false, label: 'Call Now', phone: '' },
+    whatsapp: { enabled: false, label: 'WhatsApp', url: '' },
+  });
+  const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
 
   // Action buttons & payment methods
   const [actionButtons, setActionButtons] = useState({
@@ -281,6 +289,91 @@ const { error } = await supabase.from('products').insert({
                 <VariantMatrix options={variations} variants={variantEntries} onChange={setVariantEntries} />
               </>
             )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Product Actions & Payments</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <Switch
+                    id="order_now_enabled"
+                    checked={actionButtons.order_now.enabled}
+                    onCheckedChange={(v) => setActionButtons(prev => ({ ...prev, order_now: { ...prev.order_now, enabled: v } }))}
+                  />
+                  <Label htmlFor="order_now_enabled">Enable "Order Now" button</Label>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="order_now_label">Order Now Button Text</Label>
+                  <Input id="order_now_label" value={actionButtons.order_now.label}
+                    onChange={(e) => setActionButtons(prev => ({ ...prev, order_now: { ...prev.order_now, label: e.target.value } }))}
+                  />
+                </div>
+                <Separator />
+                <div className="flex items-center gap-2">
+                  <Switch
+                    id="call_enabled"
+                    checked={actionButtons.call.enabled}
+                    onCheckedChange={(v) => setActionButtons(prev => ({ ...prev, call: { ...prev.call, enabled: v } }))}
+                  />
+                  <Label htmlFor="call_enabled">Enable Call button</Label>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="call_label">Call Button Text</Label>
+                  <Input id="call_label" value={actionButtons.call.label}
+                    onChange={(e) => setActionButtons(prev => ({ ...prev, call: { ...prev.call, label: e.target.value } }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="call_phone">Phone Number</Label>
+                  <Input id="call_phone" placeholder="e.g. +8801XXXXXXXXX" value={actionButtons.call.phone || ''}
+                    onChange={(e) => setActionButtons(prev => ({ ...prev, call: { ...prev.call, phone: e.target.value } }))}
+                  />
+                </div>
+              </div>
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <Switch
+                    id="whatsapp_enabled"
+                    checked={actionButtons.whatsapp.enabled}
+                    onCheckedChange={(v) => setActionButtons(prev => ({ ...prev, whatsapp: { ...prev.whatsapp, enabled: v } }))}
+                  />
+                  <Label htmlFor="whatsapp_enabled">Enable WhatsApp button</Label>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="whatsapp_label">WhatsApp Button Text</Label>
+                  <Input id="whatsapp_label" value={actionButtons.whatsapp.label}
+                    onChange={(e) => setActionButtons(prev => ({ ...prev, whatsapp: { ...prev.whatsapp, label: e.target.value } }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="whatsapp_url">WhatsApp URL</Label>
+                  <Input id="whatsapp_url" placeholder="e.g. https://wa.me/8801XXXXXXXXX?text=Hello" value={actionButtons.whatsapp.url || ''}
+                    onChange={(e) => setActionButtons(prev => ({ ...prev, whatsapp: { ...prev.whatsapp, url: e.target.value } }))}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Allowed Payment Methods</Label>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {['cod','bkash','nagad','sslcommerz'].map((m) => (
+                  <label key={m} className="flex items-center gap-2">
+                    <Checkbox
+                      checked={allowedPayments.includes(m)}
+                      onCheckedChange={(v) => setAllowedPayments(prev => v ? [...prev, m] : prev.filter(x => x !== m))}
+                    />
+                    <span className="capitalize">{m === 'sslcommerz' ? 'SSLCommerz' : m}</span>
+                  </label>
+                ))}
+              </div>
+              <p className="text-sm text-muted-foreground">Leave all unchecked to allow all methods.</p>
+            </div>
           </CardContent>
         </Card>
 

@@ -8,12 +8,13 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { supabase } from '@/integrations/supabase/client';
-import { ShoppingCart, Share2 } from 'lucide-react';
+import { ShoppingCart, Share2, Phone, MessageCircle, Zap } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatCurrency } from '@/lib/currency';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import ReviewsSection from '@/components/storefront/ReviewsSection';
 import RelatedProducts from '@/components/storefront/RelatedProducts';
+import { useEcomPaths } from '@/lib/pathResolver';
 import { useEcomPaths } from '@/lib/pathResolver';
 
 interface Product {
@@ -34,6 +35,8 @@ interface Product {
   free_shipping_min_amount?: number | null;
   easy_returns_enabled?: boolean;
   easy_returns_days?: number | null;
+  action_buttons?: any;
+  allowed_payment_methods?: string[] | null;
 }
 
 interface ActionButtons {
