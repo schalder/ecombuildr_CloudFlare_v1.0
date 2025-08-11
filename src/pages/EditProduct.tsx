@@ -165,6 +165,10 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
           whatsapp: { enabled: !!ab.whatsapp?.enabled, label: ab.whatsapp?.label || 'WhatsApp', url: ab.whatsapp?.url || '' },
         });
         setAllowedPayments(((product as any).allowed_payment_methods || []) as string[]);
+        
+        // Description builder
+        setDescriptionMode(((product as any).description_mode as any) === 'builder' ? 'builder' : 'rich_text');
+        setDescriptionBuilder(((product as any).description_builder as any) || { sections: [] });
 
       }
     } catch (error) {
@@ -737,6 +741,13 @@ is_active: formData.is_active,
               )}
             </Button>
           </div>
+
+          <ProductDescriptionBuilderDialog
+            open={isBuilderOpen}
+            onOpenChange={setIsBuilderOpen}
+            initialData={descriptionBuilder}
+            onSave={(data) => setDescriptionBuilder(data)}
+          />
         </form>
       </div>
     </DashboardLayout>

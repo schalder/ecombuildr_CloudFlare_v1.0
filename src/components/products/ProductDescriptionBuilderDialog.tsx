@@ -1,6 +1,6 @@
 import React from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { DragDropPageBuilder } from '@/components/page-builder/DragDropPageBuilder';
+import { ElementorPageBuilder } from '@/components/page-builder/ElementorPageBuilder';
 import { PageBuilderData } from '@/components/page-builder/types';
 
 interface ProductDescriptionBuilderDialogProps {
@@ -25,9 +25,9 @@ const ProductDescriptionBuilderDialog: React.FC<ProductDescriptionBuilderDialogP
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="p-0 max-w-[95vw] w-[95vw] h-[95vh]" onOpenAutoFocus={(e) => e.preventDefault()}>
+      <DialogContent className="p-0 m-0 w-screen h-screen max-w-none left-0 top-0 translate-x-0 translate-y-0 rounded-none" onOpenAutoFocus={(e) => e.preventDefault()}>
         <div className="w-full h-full">
-          <DragDropPageBuilder
+          <ElementorPageBuilder
             initialData={data}
             onChange={(d) => setData(d)}
             onSave={async () => {
