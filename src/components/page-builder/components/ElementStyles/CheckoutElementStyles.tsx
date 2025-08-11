@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Monitor, Smartphone } from 'lucide-react';
 import { PageBuilderElement } from '../../types';
 import { Button } from '@/components/ui/button';
@@ -56,6 +57,21 @@ export const CheckoutElementStyles: React.FC<CheckoutElementStylesProps> = ({ el
       <div>
         <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Primary Button</h4>
         <p className="text-xs text-muted-foreground">Customize the Place Order button styles</p>
+      </div>
+
+      {/* Button size preset */}
+      <div className="grid grid-cols-1 gap-2">
+        <Label className="text-xs">Size Preset</Label>
+        <Select value={(element.styles as any)?.checkoutButtonSize || 'default'} onValueChange={(v) => onStyleUpdate('checkoutButtonSize', v)}>
+          <SelectTrigger className="h-9">
+            <SelectValue placeholder="Choose size" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="sm">Small</SelectItem>
+            <SelectItem value="default">Medium</SelectItem>
+            <SelectItem value="lg">Large</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <Tabs value={tab} onValueChange={(v) => setTab(v as any)}>

@@ -457,6 +457,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
   const backgrounds = (element.styles as any)?.checkoutBackgrounds || {};
   const formBorderWidth = Number((backgrounds as any)?.formBorderWidth || 0);
   const summaryBorderWidth = Number((backgrounds as any)?.summaryBorderWidth || 0);
+  const buttonSize = (((element.styles as any)?.checkoutButtonSize) || 'default') as 'sm' | 'default' | 'lg';
 
   // Recompute shipping cost when address details change (primarily city)
   useEffect(() => {
@@ -733,7 +734,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
                     <div className="flex justify-between"><span>Shipping</span><span className="font-semibold">{formatCurrency(shippingCost)}</span></div>
                     <div className="flex justify-between font-bold"><span>Total</span><span>{formatCurrency(total+shippingCost)}</span></div>
 
-                    <Button className={`w-full mt-2 element-${element.id}`} onClick={handleSubmit} disabled={loading}>
+                    <Button size={buttonSize as any} className={`w-full mt-2 element-${element.id}`} onClick={handleSubmit} disabled={loading}>
                       {loading? 'Placing Order...' : buttonLabel}
                     </Button>
 
