@@ -435,9 +435,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
         ? 'grid-cols-2'
         : 'grid-cols-1'));
 
-  // Overall layout for builder device previews
-  const gridCols = deviceType === 'mobile' ? 'grid-cols-1' : (deviceType === 'tablet' ? 'grid-cols-2' : 'grid-cols-3');
-  const leftColSpan = deviceType === 'desktop' ? 'col-span-2' : 'col-span-1';
+  // Single-column layout (no grid)
 
   const [form, setForm] = useState({
     customer_name: '', customer_email: '', customer_phone: '',
@@ -625,144 +623,142 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
     <>
       {/* Responsive styles for the primary button */}
       <style>{buttonCSS + headerCSS}</style>
-      <div className={`max-w-5xl mx-auto grid ${gridCols} gap-6`} style={{ backgroundColor: backgrounds.containerBg || undefined }}>
-        <div className={`${leftColSpan} space-y-4`}>
-          {(sections.info || sections.shipping || sections.payment) && (
-            <Card className={formBorderWidth > 0 ? undefined : 'border-0'} style={{ backgroundColor: backgrounds.formBg || undefined, borderColor: (backgrounds as any).formBorderColor || undefined, borderWidth: formBorderWidth || 0 }}>
-              <CardContent className="p-4 md:p-6 space-y-6">
-                {sections.info && (
-                  <section className="space-y-4">
-                    <h3 className={`mb-3 font-semibold element-${element.id}-section-header`}>{headings.info}</h3>
-                    <div className={`grid ${infoGridCols} gap-4`}>
-                      {fields.fullName?.enabled && (
-                        <Input placeholder={fields.fullName.placeholder} value={form.customer_name} onChange={e=>setForm(f=>({...f,customer_name:e.target.value}))} required={!!(fields.fullName?.enabled && (fields.fullName?.required ?? true))} aria-required={!!(fields.fullName?.enabled && (fields.fullName?.required ?? true))} />
-                      )}
-                      {fields.phone?.enabled && (
-                        <Input placeholder={fields.phone.placeholder} value={form.customer_phone} onChange={e=>setForm(f=>({...f,customer_phone:e.target.value}))} required={!!(fields.phone?.enabled && (fields.phone?.required ?? true))} aria-required={!!(fields.phone?.enabled && (fields.phone?.required ?? true))} />
-                      )}
-                    </div>
-                    {fields.email?.enabled && (
-                      <Input type="email" placeholder={fields.email.placeholder} value={form.customer_email} onChange={e=>setForm(f=>({...f,customer_email:e.target.value}))} required={!!(fields.email?.enabled && (fields.email?.required ?? false))} aria-required={!!(fields.email?.enabled && (fields.email?.required ?? false))} />
+      <div className="max-w-5xl mx-auto" style={{ backgroundColor: backgrounds.containerBg || undefined }}>
+        {(sections.info || sections.shipping || sections.payment || sections.summary) && (
+          <Card className={formBorderWidth > 0 ? undefined : 'border-0'} style={{ backgroundColor: backgrounds.formBg || undefined, borderColor: (backgrounds as any).formBorderColor || undefined, borderWidth: formBorderWidth || 0 }}>
+            <CardContent className="p-4 md:p-6 space-y-6">
+              {sections.info && (
+                <section className="space-y-4">
+                  <h3 className={`mb-3 font-semibold element-${element.id}-section-header`}>{headings.info}</h3>
+                  <div className={`grid ${infoGridCols} gap-4`}>
+                    {fields.fullName?.enabled && (
+                      <Input placeholder={fields.fullName.placeholder} value={form.customer_name} onChange={e=>setForm(f=>({...f,customer_name:e.target.value}))} required={!!(fields.fullName?.enabled && (fields.fullName?.required ?? true))} aria-required={!!(fields.fullName?.enabled && (fields.fullName?.required ?? true))} />
                     )}
-                  </section>
-                )}
-
-                {sections.info && (sections.shipping || sections.payment) && <Separator className="my-4" />}
-
-                {sections.shipping && (
-                  <section className="space-y-4">
-                    <h3 className={`mb-3 font-semibold element-${element.id}-section-header`}>{headings.shipping}</h3>
-                    {fields.address?.enabled && (
-                      <Textarea placeholder={fields.address.placeholder} value={form.shipping_address} onChange={e=>setForm(f=>({...f,shipping_address:e.target.value}))} rows={3} required={!!(fields.address?.enabled && (fields.address?.required ?? true))} aria-required={!!(fields.address?.enabled && (fields.address?.required ?? true))} />
+                    {fields.phone?.enabled && (
+                      <Input placeholder={fields.phone.placeholder} value={form.customer_phone} onChange={e=>setForm(f=>({...f,customer_phone:e.target.value}))} required={!!(fields.phone?.enabled && (fields.phone?.required ?? true))} aria-required={!!(fields.phone?.enabled && (fields.phone?.required ?? true))} />
                     )}
-                    <div className={`grid ${ship2GridCols} gap-4`}>
-                      {fields.city?.enabled && (
-                        <Input placeholder={fields.city.placeholder} value={form.shipping_city} onChange={e=>setForm(f=>({...f,shipping_city:e.target.value}))} required={!!(fields.city?.enabled && (fields.city?.required ?? true))} aria-required={!!(fields.city?.enabled && (fields.city?.required ?? true))} />
-                      )}
-                      {fields.area?.enabled && (
-                        <Input placeholder={fields.area.placeholder} value={form.shipping_area} onChange={e=>setForm(f=>({...f,shipping_area:e.target.value}))} required={!!(fields.area?.enabled && (fields.area?.required ?? false))} aria-required={!!(fields.area?.enabled && (fields.area?.required ?? false))} />
-                      )}
-                    </div>
-                    <div className={`grid ${ship3GridCols} gap-4`}>
-                      {fields.country?.enabled && (
-                        <Input placeholder={fields.country.placeholder} value={form.shipping_country} onChange={e=>setForm(f=>({...f,shipping_country:e.target.value}))} required={!!(fields.country?.enabled && (fields.country?.required ?? false))} aria-required={!!(fields.country?.enabled && (fields.country?.required ?? false))} />
-                      )}
-                      {fields.state?.enabled && (
-                        <Input placeholder={fields.state.placeholder} value={form.shipping_state} onChange={e=>setForm(f=>({...f,shipping_state:e.target.value}))} required={!!(fields.state?.enabled && (fields.state?.required ?? false))} aria-required={!!(fields.state?.enabled && (fields.state?.required ?? false))} />
-                      )}
-                      {fields.postalCode?.enabled && (
-                        <Input placeholder={fields.postalCode.placeholder} value={form.shipping_postal_code} onChange={e=>setForm(f=>({...f,shipping_postal_code:e.target.value}))} required={!!(fields.postalCode?.enabled && (fields.postalCode?.required ?? false))} aria-required={!!(fields.postalCode?.enabled && (fields.postalCode?.required ?? false))} />
-                      )}
-                    </div>
-
-                    {/* Custom fields */}
-                    {customFields?.length > 0 && (
-                      <div className="space-y-2">
-                        {customFields.filter((cf:any)=>cf.enabled).map((cf:any) => (
-                          <div key={cf.id}>
-                            {cf.type === 'textarea' ? (
-                              <Textarea placeholder={cf.placeholder || cf.label} value={(form.custom_fields as any)[cf.id] || ''} onChange={(e)=>setForm(f=>({...f, custom_fields: { ...f.custom_fields, [cf.id]: e.target.value }}))} required={!!cf.required} aria-required={!!cf.required} />
-                            ) : (
-                              <Input type={cf.type || 'text'} placeholder={cf.placeholder || cf.label} value={(form.custom_fields as any)[cf.id] || ''} onChange={(e)=>setForm(f=>({...f, custom_fields: { ...f.custom_fields, [cf.id]: e.target.value }}))} required={!!cf.required} aria-required={!!cf.required} />
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </section>
-                )}
-
-                {sections.shipping && sections.payment && <Separator className="my-4" />}
-
-                {sections.payment && (
-                  <section className="space-y-4">
-                    <h3 className={`mb-3 font-semibold element-${element.id}-section-header`}>{headings.payment}</h3>
-                    <Select value={form.payment_method} onValueChange={(v:any)=>setForm(f=>({...f,payment_method:v}))}>
-                      <SelectTrigger><SelectValue placeholder="Select method" /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="cod">Cash on Delivery</SelectItem>
-                        <SelectItem value="bkash">bKash</SelectItem>
-                        <SelectItem value="nagad">Nagad</SelectItem>
-                        <SelectItem value="sslcommerz">Credit/Debit Card (SSLCommerz)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <Textarea placeholder="Order notes (optional)" value={form.notes} onChange={e=>setForm(f=>({...f,notes:e.target.value}))} />
-                  </section>
-                )}
-              </CardContent>
-            </Card>
-          )}
-        </div>
-        <div className="space-y-4">
-          {sections.summary && (
-              <Card className={summaryBorderWidth > 0 ? undefined : 'border-0'} style={{ backgroundColor: backgrounds.summaryBg || undefined, borderColor: (backgrounds as any).summaryBorderColor || undefined, borderWidth: summaryBorderWidth || 0 }}>
-              <CardHeader><CardTitle>{headings.summary}</CardTitle></CardHeader>
-              <CardContent className="space-y-3">
-                {/* Items */}
-                <div className="space-y-2">
-                  {items.map((it)=> (
-                    <div key={it.id} className="flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-3 min-w-0">
-                        {showItemImages && it.image && (
-                          <img src={it.image} alt={it.name} className="w-10 h-10 object-cover rounded border" />
-                        )}
-                        <div className="min-w-0">
-                          <div className="text-sm font-medium truncate">{nameWithVariant(it.name, (it as any).variation)}</div>
-                          <div className="text-xs text-muted-foreground">× {it.quantity}</div>
-                        </div>
-                      </div>
-                      <div className="text-sm font-medium">{formatCurrency(it.price * it.quantity)}</div>
-                    </div>
-                  ))}
-                </div>
-                <Separator />
-                <div className="flex justify-between"><span>Subtotal</span><span className="font-semibold">{formatCurrency(total)}</span></div>
-                <div className="flex justify-between"><span>Shipping</span><span className="font-semibold">{formatCurrency(shippingCost)}</span></div>
-                <div className="flex justify-between font-bold"><span>Total</span><span>{formatCurrency(total+shippingCost)}</span></div>
-
-                <Button className={`w-full mt-2 element-${element.id}`} onClick={handleSubmit} disabled={loading}>
-                  {loading? 'Placing Order...' : buttonLabel}
-                </Button>
-
-                {terms.enabled && (
-                  <label className="flex items-center gap-2 text-sm mt-2">
-                    <input type="checkbox" checked={form.accept_terms} onChange={(e)=>setForm(f=>({...f, accept_terms: e.target.checked}))} />
-                    <span>
-                      {terms.label} {terms.url && (<a href={terms.url} target="_blank" rel="noreferrer" className="underline">Read</a>)}
-                    </span>
-                  </label>
-                )}
-
-                {trust.enabled && trust.imageUrl && (
-                  <div className="pt-2">
-                    <img src={trust.imageUrl} alt={trust.alt || 'Secure checkout'} className="w-full h-auto object-contain" loading="lazy" />
                   </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
-        </div>
+                  {fields.email?.enabled && (
+                    <Input type="email" placeholder={fields.email.placeholder} value={form.customer_email} onChange={e=>setForm(f=>({...f,customer_email:e.target.value}))} required={!!(fields.email?.enabled && (fields.email?.required ?? false))} aria-required={!!(fields.email?.enabled && (fields.email?.required ?? false))} />
+                  )}
+                </section>
+              )}
+
+              {sections.info && (sections.shipping || sections.payment) && <Separator className="my-4" />}
+
+              {sections.shipping && (
+                <section className="space-y-4">
+                  <h3 className={`mb-3 font-semibold element-${element.id}-section-header`}>{headings.shipping}</h3>
+                  {fields.address?.enabled && (
+                    <Textarea placeholder={fields.address.placeholder} value={form.shipping_address} onChange={e=>setForm(f=>({...f,shipping_address:e.target.value}))} rows={3} required={!!(fields.address?.enabled && (fields.address?.required ?? true))} aria-required={!!(fields.address?.enabled && (fields.address?.required ?? true))} />
+                  )}
+                  <div className={`grid ${ship2GridCols} gap-4`}>
+                    {fields.city?.enabled && (
+                      <Input placeholder={fields.city.placeholder} value={form.shipping_city} onChange={e=>setForm(f=>({...f,shipping_city:e.target.value}))} required={!!(fields.city?.enabled && (fields.city?.required ?? true))} aria-required={!!(fields.city?.enabled && (fields.city?.required ?? true))} />
+                    )}
+                    {fields.area?.enabled && (
+                      <Input placeholder={fields.area.placeholder} value={form.shipping_area} onChange={e=>setForm(f=>({...f,shipping_area:e.target.value}))} required={!!(fields.area?.enabled && (fields.area?.required ?? false))} aria-required={!!(fields.area?.enabled && (fields.area?.required ?? false))} />
+                    )}
+                  </div>
+                  <div className={`grid ${ship3GridCols} gap-4`}>
+                    {fields.country?.enabled && (
+                      <Input placeholder={fields.country.placeholder} value={form.shipping_country} onChange={e=>setForm(f=>({...f,shipping_country:e.target.value}))} required={!!(fields.country?.enabled && (fields.country?.required ?? false))} aria-required={!!(fields.country?.enabled && (fields.country?.required ?? false))} />
+                    )}
+                    {fields.state?.enabled && (
+                      <Input placeholder={fields.state.placeholder} value={form.shipping_state} onChange={e=>setForm(f=>({...f,shipping_state:e.target.value}))} required={!!(fields.state?.enabled && (fields.state?.required ?? false))} aria-required={!!(fields.state?.enabled && (fields.state?.required ?? false))} />
+                    )}
+                    {fields.postalCode?.enabled && (
+                      <Input placeholder={fields.postalCode.placeholder} value={form.shipping_postal_code} onChange={e=>setForm(f=>({...f,shipping_postal_code:e.target.value}))} required={!!(fields.postalCode?.enabled && (fields.postalCode?.required ?? false))} aria-required={!!(fields.postalCode?.enabled && (fields.postalCode?.required ?? false))} />
+                    )}
+                  </div>
+
+                  {/* Custom fields */}
+                  {customFields?.length > 0 && (
+                    <div className="space-y-2">
+                      {customFields.filter((cf:any)=>cf.enabled).map((cf:any) => (
+                        <div key={cf.id}>
+                          {cf.type === 'textarea' ? (
+                            <Textarea placeholder={cf.placeholder || cf.label} value={(form.custom_fields as any)[cf.id] || ''} onChange={(e)=>setForm(f=>({...f, custom_fields: { ...f.custom_fields, [cf.id]: e.target.value }}))} required={!!cf.required} aria-required={!!cf.required} />
+                          ) : (
+                            <Input type={cf.type || 'text'} placeholder={cf.placeholder || cf.label} value={(form.custom_fields as any)[cf.id] || ''} onChange={(e)=>setForm(f=>({...f, custom_fields: { ...f.custom_fields, [cf.id]: e.target.value }}))} required={!!cf.required} aria-required={!!cf.required} />
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </section>
+              )}
+
+              {sections.shipping && sections.payment && <Separator className="my-4" />}
+
+              {sections.payment && (
+                <section className="space-y-4">
+                  <h3 className={`mb-3 font-semibold element-${element.id}-section-header`}>{headings.payment}</h3>
+                  <Select value={form.payment_method} onValueChange={(v:any)=>setForm(f=>({...f,payment_method:v}))}>
+                    <SelectTrigger><SelectValue placeholder="Select method" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="cod">Cash on Delivery</SelectItem>
+                      <SelectItem value="bkash">bKash</SelectItem>
+                      <SelectItem value="nagad">Nagad</SelectItem>
+                      <SelectItem value="sslcommerz">Credit/Debit Card (SSLCommerz)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Textarea placeholder="Order notes (optional)" value={form.notes} onChange={e=>setForm(f=>({...f,notes:e.target.value}))} />
+                </section>
+              )}
+
+              {sections.summary && (
+                <section className="space-y-3">
+                  <h3 className={`mb-3 font-semibold element-${element.id}-section-header`}>{headings.summary}</h3>
+                  <div className="rounded-md p-4" style={{ backgroundColor: backgrounds.summaryBg || undefined, borderColor: (backgrounds as any).summaryBorderColor || undefined, borderWidth: summaryBorderWidth || 0, borderStyle: summaryBorderWidth ? 'solid' as any : undefined }}>
+                    {/* Items */}
+                    <div className="space-y-2">
+                      {items.map((it)=> (
+                        <div key={it.id} className="flex items-center justify-between gap-3">
+                          <div className="flex items-center gap-3 min-w-0">
+                            {showItemImages && it.image && (
+                              <img src={it.image} alt={it.name} className="w-10 h-10 object-cover rounded border" />
+                            )}
+                            <div className="min-w-0">
+                              <div className="text-sm font-medium truncate">{nameWithVariant(it.name, (it as any).variation)}</div>
+                              <div className="text-xs text-muted-foreground">× {it.quantity}</div>
+                            </div>
+                          </div>
+                          <div className="text-sm font-medium">{formatCurrency(it.price * it.quantity)}</div>
+                        </div>
+                      ))}
+                    </div>
+                    <Separator className="my-3" />
+                    <div className="flex justify-between"><span>Subtotal</span><span className="font-semibold">{formatCurrency(total)}</span></div>
+                    <div className="flex justify-between"><span>Shipping</span><span className="font-semibold">{formatCurrency(shippingCost)}</span></div>
+                    <div className="flex justify-between font-bold"><span>Total</span><span>{formatCurrency(total+shippingCost)}</span></div>
+
+                    <Button className={`w-full mt-2 element-${element.id}`} onClick={handleSubmit} disabled={loading}>
+                      {loading? 'Placing Order...' : buttonLabel}
+                    </Button>
+
+                    {terms.enabled && (
+                      <label className="flex items-center gap-2 text-sm mt-2">
+                        <input type="checkbox" checked={form.accept_terms} onChange={(e)=>setForm(f=>({...f, accept_terms: e.target.checked}))} />
+                        <span>
+                          {terms.label} {terms.url && (<a href={terms.url} target="_blank" rel="noreferrer" className="underline">Read</a>)}
+                        </span>
+                      </label>
+                    )}
+
+                    {trust.enabled && trust.imageUrl && (
+                      <div className="pt-2">
+                        <img src={trust.imageUrl} alt={trust.alt || 'Secure checkout'} className="w-full h-auto object-contain" loading="lazy" />
+                      </div>
+                    )}
+                  </div>
+                </section>
+              )}
+            </CardContent>
+          </Card>
+        )}
       </div>
+
     </>
   );
 };
