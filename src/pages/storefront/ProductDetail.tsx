@@ -15,7 +15,6 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import ReviewsSection from '@/components/storefront/ReviewsSection';
 import RelatedProducts from '@/components/storefront/RelatedProducts';
 import { useEcomPaths } from '@/lib/pathResolver';
-import { useEcomPaths } from '@/lib/pathResolver';
 
 interface Product {
   id: string;
@@ -393,12 +392,12 @@ export const ProductDetail: React.FC = () => {
                     {(product as any).action_buttons?.order_now?.label || 'Order Now'}
                   </Button>
                 )}
-                {((product as any).action_buttons?.phone?.enabled) && (
+                {((product as any).action_buttons?.call?.enabled) && (
                   <Button size="lg" variant="outline" className="flex-1" onClick={() => {
-                    const num = (product as any).action_buttons?.phone?.number;
+                    const num = (product as any).action_buttons?.call?.phone;
                     if (num) window.location.href = `tel:${num}`;
                   }}>
-                    {(product as any).action_buttons?.phone?.label || 'Call Now'}
+                    {(product as any).action_buttons?.call?.label || 'Call Now'}
                   </Button>
                 )}
                 {((product as any).action_buttons?.whatsapp?.enabled) && (

@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import RichTextEditor from '@/components/ui/RichTextEditor';
@@ -58,13 +59,6 @@ export default function AddProduct() {
   });
   const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
 
-  // Action buttons & payment methods
-  const [actionButtons, setActionButtons] = useState({
-    order_now: { enabled: false, label: 'Order Now' },
-    phone: { enabled: false, label: 'Call Now', number: '' },
-    whatsapp: { enabled: false, label: 'WhatsApp', url: '' },
-  });
-  const [paymentMethods, setPaymentMethods] = useState<string[]>([]);
 
   // Fetch categories for the dropdown
   useEffect(() => {

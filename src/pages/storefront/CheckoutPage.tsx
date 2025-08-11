@@ -529,18 +529,8 @@ useEffect(() => {
                         placeholder="Any special instructions for your order"
                         rows={3}
                       />
-                    </Select>
-                    
-                    <div>
-                      <Label htmlFor="notes">Order Notes (Optional)</Label>
-                      <Textarea
-                        id="notes"
-                        value={form.notes}
-                        onChange={(e) => handleInputChange('notes', e.target.value)}
-                        placeholder="Any special instructions for your order"
-                        rows={3}
-                      />
                     </div>
+                    
                   </CardContent>
                 </Card>
               )}

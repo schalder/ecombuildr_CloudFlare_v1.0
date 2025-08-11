@@ -11,12 +11,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Separator } from "@/components/ui/separator";
 import { ArrowLeft, Save, Package } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import RichTextEditor from "@/components/ui/RichTextEditor";
 import VariationsBuilder, { VariationOption } from "@/components/products/VariationsBuilder";
-import VariantMatrix, { VariantEntry } from "@components/products/VariantMatrix";
-import { Checkbox } from "@/components/ui/checkbox";
+import VariantMatrix, { VariantEntry } from "@/components/products/VariantMatrix";
 
 interface Product {
   id: string;
@@ -81,13 +81,6 @@ export default function EditProduct() {
   });
   const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
 
-  // Action buttons & payment methods
-  const [actionButtons, setActionButtons] = useState({
-    order_now: { enabled: false, label: 'Order Now' },
-    phone: { enabled: false, label: 'Call Now', number: '' },
-    whatsapp: { enabled: false, label: 'WhatsApp', url: '' },
-  });
-  const [paymentMethods, setPaymentMethods] = useState<string[]>([]);
 
   useEffect(() => {
     if (user && id) {
@@ -161,10 +154,10 @@ export default function EditProduct() {
         const ab = (product as any).action_buttons || {};
         setActionButtons({
           order_now: { enabled: !!ab.order_now?.enabled, label: ab.order_now?.label || 'Order Now' },
-          phone: { enabled: !!ab.phone?.enabled, label: ab.phone?.label || 'Call Now', number: ab.phone?.number || '' },
+          call: { enabled: !!ab.call?.enabled, label: ab.call?.label || 'Call Now', phone: ab.call?.phone || '' },
           whatsapp: { enabled: !!ab.whatsapp?.enabled, label: ab.whatsapp?.label || 'WhatsApp', url: ab.whatsapp?.url || '' },
         });
-        setPaymentMethods(((product as any).allowed_payment_methods || []) as string[]);
+        setAllowedPayments(((product as any).allowed_payment_methods || []) as string[]);
 
       }
     } catch (error) {
