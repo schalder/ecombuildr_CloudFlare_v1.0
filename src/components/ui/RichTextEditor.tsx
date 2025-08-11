@@ -53,6 +53,9 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
   const [textColor, setTextColor] = useState("#000000");
   const [bgColor, setBgColor] = useState("#ffff00");
   const savedSelection = useRef<Range | null>(null);
+  const [imageWidthPct, setImageWidthPct] = useState<number>(100);
+  const [editingExistingImage, setEditingExistingImage] = useState<boolean>(false);
+  const selectedImageRef = useRef<HTMLImageElement | null>(null);
 
   useEffect(() => {
     if (!editorRef.current) return;
@@ -63,13 +66,50 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
   }, [value]);
 
   useEffect(() => {
-    // Prefer CSS styling for execCommand results
+    // Prefer CSS styling for execCommand results, and default paragraphs to <p>
     try {
       document.execCommand("styleWithCSS", false, "true");
+      document.execCommand("defaultParagraphSeparator", false, "p");
     } catch (_) {
       // ignore
     }
   }, []);
+
+  useEffect(() => {
+    if (!isImageDialogOpen) return;
+    // Restore and inspect current selection to detect selected image
+    restoreSelection();
+    const range = savedSelection.current;
+    if (!range) return;
+    let node: Node = range.commonAncestorContainer;
+    if (node.nodeType === Node.TEXT_NODE) {
+      node = (node as Text).parentElement as HTMLElement;
+    }
+    let img: HTMLImageElement | null = null;
+    if (node instanceof HTMLElement) {
+      if (node.tagName === "IMG") img = node as HTMLImageElement;
+      else img = node.closest("img") as HTMLImageElement | null;
+    }
+    if (img) {
+      selectedImageRef.current = img;
+      setEditingExistingImage(true);
+      setImageUrl(img.getAttribute("src") || "");
+      setImageAlt(img.getAttribute("alt") || "");
+      const w = (img.style.width || "").trim();
+      if (w.endsWith("%")) {
+        const n = parseInt(w, 10);
+        setImageWidthPct(isNaN(n) ? 100 : n);
+      } else {
+        setImageWidthPct(100);
+      }
+    } else {
+      selectedImageRef.current = null;
+      setEditingExistingImage(false);
+      setImageUrl("");
+      setImageAlt("");
+      setImageWidthPct(100);
+    }
+  }, [isImageDialogOpen]);
 
   const getSelectionRange = () => {
     const sel = window.getSelection();
@@ -96,6 +136,10 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
   };
 
   const exec = (command: string, value?: string) => {
+    restoreSelection();
+    if (editorRef.current) {
+      editorRef.current.focus({ preventScroll: true });
+    }
     document.execCommand(command, false, value);
     if (editorRef.current) {
       onChange(editorRef.current.innerHTML);
@@ -165,7 +209,10 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
           "font-size",
           "font-weight",
           "font-style",
-          "text-decoration"
+          "text-decoration",
+          "width",
+          "max-width",
+          "height"
         ];
         const cleaned: Record<string,string> = {};
         style.split(";").forEach(rule => {
@@ -220,9 +267,9 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
     if (url) exec("createLink", url);
   };
 
-  const insertImageAtSelection = (url: string, alt?: string) => {
+  const insertImageAtSelection = (url: string, alt?: string, widthPct: number = 100) => {
     restoreSelection();
-    const html = `<img src="${url}" alt="${alt ? alt.replace(/"/g, '\\"') : ""}" style="max-width:100%;height:auto" />`;
+    const html = `<img src="${url}" alt="${alt ? alt.replace(/"/g, '\\"') : ""}" style="width:${widthPct}%;max-width:100%;height:auto" />`;
     document.execCommand("insertHTML", false, html);
     handleInput();
   };
@@ -240,7 +287,17 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
       const { data } = supabase.storage.from("images").getPublicUrl(path);
       const publicUrl = data.publicUrl;
       setImageUrl(publicUrl);
-      insertImageAtSelection(publicUrl, imageAlt);
+      if (selectedImageRef.current) {
+        const img = selectedImageRef.current;
+        img.src = publicUrl;
+        img.alt = imageAlt;
+        img.style.width = `${imageWidthPct}%`;
+        img.style.maxWidth = "100%";
+        img.style.height = "auto";
+        handleInput();
+      } else {
+        insertImageAtSelection(publicUrl, imageAlt, imageWidthPct);
+      }
       setIsImageDialogOpen(false);
       setImageUrl("");
       setImageAlt("");
@@ -261,8 +318,8 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
   };
 
   const applyHeading = (level: string) => {
-    if (level === "p") exec("formatBlock", "<p>");
-    else exec("formatBlock", `<${level}>`);
+    const block = level === "p" ? "P" : level.toUpperCase();
+    exec("formatBlock", block);
   };
 
   return (
@@ -345,7 +402,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
         <Separator orientation="vertical" className="mx-1 h-6" />
 
         {/* Quote / Code */}
-        <Button type="button" variant="ghost" size="icon" onClick={() => exec("formatBlock", "<blockquote>")} title="Blockquote">
+        <Button type="button" variant="ghost" size="icon" onClick={() => exec("formatBlock", "BLOCKQUOTE")} title="Blockquote">
           <Quote className="h-4 w-4" />
         </Button>
         <Button
@@ -430,6 +487,9 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
         contentEditable
         onInput={handleInput}
         onPaste={handlePaste}
+        onFocus={saveSelection}
+        onKeyUp={saveSelection}
+        onMouseUp={saveSelection}
         data-placeholder={placeholder}
         suppressContentEditableWarning
         style={{ whiteSpace: "pre-wrap" }}
@@ -439,10 +499,10 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
       <Dialog open={isImageDialogOpen} onOpenChange={setIsImageDialogOpen}>
         <DialogContent onOpenAutoFocus={(e) => e.preventDefault()}>
           <DialogHeader>
-            <DialogTitle>Insert Image</DialogTitle>
+            <DialogTitle>{editingExistingImage ? "Edit Image" : "Insert Image"}</DialogTitle>
           </DialogHeader>
           <DialogDescription>
-            Upload a file or paste an image URL. Images are inserted responsively with alt text.
+            Upload a file or paste an image URL. Images are inserted responsively with alt text and adjustable width.
           </DialogDescription>
           <div className="space-y-4">
             <div className="space-y-2">
@@ -459,13 +519,36 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
                 <Input id="rte-image-alt" placeholder="Describe the image" value={imageAlt} onChange={(e) => setImageAlt(e.target.value)} />
               </div>
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="rte-image-width">Width ({imageWidthPct}%)</Label>
+              <input
+                id="rte-image-width"
+                type="range"
+                min={25}
+                max={100}
+                step={5}
+                value={imageWidthPct}
+                onChange={(e) => setImageWidthPct(Number(e.target.value))}
+                className="w-full"
+              />
+            </div>
           </div>
           <DialogFooter>
             <Button
               type="button"
               onClick={() => {
                 if (imageUrl) {
-                  insertImageAtSelection(imageUrl, imageAlt);
+                  if (selectedImageRef.current) {
+                    const img = selectedImageRef.current;
+                    img.src = imageUrl;
+                    img.alt = imageAlt;
+                    img.style.width = `${imageWidthPct}%`;
+                    img.style.maxWidth = "100%";
+                    img.style.height = "auto";
+                    handleInput();
+                  } else {
+                    insertImageAtSelection(imageUrl, imageAlt, imageWidthPct);
+                  }
                   setIsImageDialogOpen(false);
                   setImageUrl("");
                   setImageAlt("");
@@ -473,7 +556,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
               }}
               disabled={!imageUrl || isUploading}
             >
-              Insert
+              {editingExistingImage ? "Apply" : "Insert"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -488,6 +571,9 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
         .rte-content :where(h1,h2,h3){ margin: 0.5rem 0; }
         .rte-content blockquote { border-inline-start: 2px solid hsl(var(--muted-foreground) / 0.3); padding-inline-start: 1rem; color: hsl(var(--muted-foreground)); }
         .rte-content img { max-width: 100%; height: auto; }
+        .rte-content ul { list-style: disc; padding-left: 1.25rem; margin: 0.5rem 0; }
+        .rte-content ol { list-style: decimal; padding-left: 1.25rem; margin: 0.5rem 0; }
+        .rte-content li { margin: 0.25rem 0; }
       `}</style>
     </div>
   );
