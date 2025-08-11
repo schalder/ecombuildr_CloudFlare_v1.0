@@ -865,6 +865,10 @@ export const RelatedProductsContentProperties: React.FC<EcommerceContentProperti
           <Checkbox checked={element.content.showTitle !== false} onCheckedChange={(v) => onUpdate('showTitle', Boolean(v))} />
           <Label className="text-xs">Show Title</Label>
         </div>
+        <div className="mt-3">
+          <Label className="text-xs">Button Label</Label>
+          <Input value={element.content.ctaText || 'View'} onChange={(e) => onUpdate('ctaText', e.target.value)} placeholder="View" />
+        </div>
       </div>
 
       <div>

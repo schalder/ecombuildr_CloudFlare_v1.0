@@ -21,6 +21,7 @@ import { formatCurrency } from '@/lib/currency';
 import { computeShippingForAddress } from '@/lib/shipping';
 import { nameWithVariant } from '@/lib/utils';
 import { useWebsiteShipping } from '@/hooks/useWebsiteShipping';
+import { renderElementStyles } from '@/components/page-builder/utils/styleRenderer';
 
 const CartSummaryElement: React.FC<{ element: PageBuilderElement }> = () => {
   const { items, total, updateQuantity, removeItem } = useCart();
@@ -274,19 +275,45 @@ const RelatedProductsElement: React.FC<{ element: PageBuilderElement; deviceType
     return bs as React.CSSProperties;
   }, [deviceType, (element as any).styles?.buttonStyles]);
 
+  const elementStyles = renderElementStyles(element, deviceType);
+
   return (
     <div className="max-w-6xl mx-auto">
-      {showTitle && title && <h3 className="text-xl font-semibold mb-4">{title}</h3>}
+      {showTitle && title && (
+        <h3
+          className="font-semibold mb-4"
+          style={{ color: elementStyles.color, fontSize: elementStyles.fontSize, textAlign: elementStyles.textAlign, lineHeight: elementStyles.lineHeight, fontWeight: elementStyles.fontWeight }}
+        >
+          {title}
+        </h3>
+      )}
       <div className={gridClass}>
         {products.map((p) => (
-          <Card key={p.id} className="group/card">
-            <CardContent className="p-3">
+          <Card key={p.id} className="group/card" style={{
+            backgroundColor: elementStyles.backgroundColor,
+            borderColor: elementStyles.borderColor,
+            borderWidth: elementStyles.borderWidth as any,
+            borderStyle: elementStyles.borderWidth ? 'solid' : undefined,
+            borderRadius: elementStyles.borderRadius as any,
+            margin: elementStyles.margin as any,
+            marginTop: elementStyles.marginTop as any,
+            marginRight: elementStyles.marginRight as any,
+            marginBottom: elementStyles.marginBottom as any,
+            marginLeft: elementStyles.marginLeft as any,
+          }}>
+            <CardContent className="p-3" style={{
+              padding: elementStyles.padding as any,
+              paddingTop: elementStyles.paddingTop as any,
+              paddingRight: elementStyles.paddingRight as any,
+              paddingBottom: elementStyles.paddingBottom as any,
+              paddingLeft: elementStyles.paddingLeft as any,
+            }}>
               <div className="aspect-square rounded-lg overflow-hidden mb-2">
                 <img src={(Array.isArray(p.images)?p.images[0]:p.images) || '/placeholder.svg'} alt={p.name} className="w-full h-full object-cover group-hover/card:scale-105 transition-transform" />
               </div>
-              <div className="text-sm font-medium line-clamp-1">{p.name}</div>
+              <div className="text-sm font-medium line-clamp-1" style={{ color: elementStyles.color, fontSize: elementStyles.fontSize, textAlign: elementStyles.textAlign, lineHeight: elementStyles.lineHeight, fontWeight: elementStyles.fontWeight }}>{p.name}</div>
               <div className="text-sm">{formatCurrency(Number(p.price))}</div>
-              <Button variant="outline" size="sm" className="mt-2 w-full" style={buttonStyles as React.CSSProperties} onClick={() => (window.location.href = paths.productDetail(p.slug))}>View</Button>
+              <Button variant="outline" size="sm" className="mt-2 w-full" style={buttonStyles as React.CSSProperties} onClick={() => (window.location.href = paths.productDetail(p.slug))}>{element.content?.ctaText || 'View'}</Button>
             </CardContent>
           </Card>
         ))}
@@ -1030,7 +1057,7 @@ export const registerEcommerceSystemElements = () => {
     category: 'ecommerce',
     icon: Star,
     component: RelatedProductsElement,
-    defaultContent: { limit: 8, title: 'Related Products', columns: 4, tabletColumns: 2, mobileColumns: 1, categoryIds: [] },
+    defaultContent: { limit: 8, title: 'Related Products', columns: 4, tabletColumns: 2, mobileColumns: 1, categoryIds: [], ctaText: 'View' },
     description: 'Show a small grid of products.'
   });
 

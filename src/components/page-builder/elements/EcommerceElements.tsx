@@ -745,6 +745,8 @@ const WeeklyFeaturedElement: React.FC<{
     return bs as React.CSSProperties;
   }, [deviceType, (element as any).styles?.buttonStyles]);
 
+  const elementStyles = renderElementStyles(element, deviceType);
+
   const gridClass = `grid grid-cols-${mobileCols} md:grid-cols-${tabletCols} lg:grid-cols-${desktopCols} gap-4`;
 
   if (loading) {
@@ -761,33 +763,59 @@ const WeeklyFeaturedElement: React.FC<{
 
   const title = element.content?.title || 'Weekly Featured Products';
   const showTitle = element.content?.showTitle !== false;
+  const subtitle = element.content?.subtitle || 'Top selling products this week';
+  const showSubtitle = element.content?.showSubtitle !== false;
   return (
     <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-4xl mx-auto'}`}>
       <div className="bg-card rounded-lg p-6 border">
         <div className="text-center mb-6">
-          {showTitle && <h2 className="text-2xl font-bold mb-2">{title}</h2>}
-          <p className="text-muted-foreground">Top selling products this week</p>
+          {showTitle && (
+            <h2 className="font-bold mb-2" style={{ color: elementStyles.color, fontSize: elementStyles.fontSize, textAlign: elementStyles.textAlign, lineHeight: elementStyles.lineHeight, fontWeight: elementStyles.fontWeight }}>{title}</h2>
+          )}
+          {showSubtitle && (
+            <p className="text-muted-foreground">{subtitle}</p>
+          )}
         </div>
         <div className={gridClass}>
           {items.map((p) => (
-            <div key={p.id} className="text-center group/card">
-              <div className="relative overflow-hidden rounded-lg mb-3 aspect-square">
-                <img
-                  src={(Array.isArray(p.images) ? p.images[0] : p.images) || '/placeholder.svg'}
-                  alt={p.name}
-                  className="w-full h-full object-cover group-hover/card:scale-105 transition-transform"
-                />
+            <div key={p.id} className="group/card" style={{
+              backgroundColor: elementStyles.backgroundColor,
+              borderColor: elementStyles.borderColor,
+              borderWidth: elementStyles.borderWidth as any,
+              borderStyle: elementStyles.borderWidth ? 'solid' : undefined,
+              borderRadius: elementStyles.borderRadius as any,
+              margin: elementStyles.margin as any,
+              marginTop: elementStyles.marginTop as any,
+              marginRight: elementStyles.marginRight as any,
+              marginBottom: elementStyles.marginBottom as any,
+              marginLeft: elementStyles.marginLeft as any,
+              textAlign: elementStyles.textAlign as any,
+            }}>
+              <div className="p-3" style={{
+                padding: elementStyles.padding as any,
+                paddingTop: elementStyles.paddingTop as any,
+                paddingRight: elementStyles.paddingRight as any,
+                paddingBottom: elementStyles.paddingBottom as any,
+                paddingLeft: elementStyles.paddingLeft as any,
+              }}>
+                <div className="relative overflow-hidden rounded-lg mb-3 aspect-square">
+                  <img
+                    src={(Array.isArray(p.images) ? p.images[0] : p.images) || '/placeholder.svg'}
+                    alt={p.name}
+                    className="w-full h-full object-cover group-hover/card:scale-105 transition-transform"
+                  />
+                </div>
+                <h4 className="font-medium mb-2 line-clamp-1" style={{ color: elementStyles.color, fontSize: elementStyles.fontSize, textAlign: elementStyles.textAlign, lineHeight: elementStyles.lineHeight, fontWeight: elementStyles.fontWeight }}>{p.name}</h4>
+                <div className="mb-3">
+                  <span className="font-bold text-primary" style={{ fontSize: elementStyles.fontSize }}>{formatCurrency(Number(p.price))}</span>
+                  {p.compare_price && p.compare_price > p.price && (
+                    <span className="text-sm text-muted-foreground line-through ml-2">
+                      {formatCurrency(Number(p.compare_price))}
+                    </span>
+                  )}
+                </div>
+                <Button size="sm" className="w-full" style={buttonStyles as React.CSSProperties}>{element.content?.ctaText || 'Add to Cart'}</Button>
               </div>
-              <h4 className="font-medium mb-2 line-clamp-1">{p.name}</h4>
-              <div className="mb-3">
-                <span className="text-lg font-bold text-primary">{formatCurrency(Number(p.price))}</span>
-                {p.compare_price && p.compare_price > p.price && (
-                  <span className="text-sm text-muted-foreground line-through ml-2">
-                    {formatCurrency(Number(p.compare_price))}
-                  </span>
-                )}
-              </div>
-              <Button size="sm" className="w-full" style={buttonStyles as React.CSSProperties}>Add to Cart</Button>
             </div>
           ))}
           {items.length === 0 && (

@@ -94,7 +94,7 @@ export const EcommerceActionButtonStyles: React.FC<EcommerceActionButtonStylesPr
           </Select>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-3">
           <div>
             <Label className="text-xs">Text color</Label>
             <div className="flex items-center gap-2">
