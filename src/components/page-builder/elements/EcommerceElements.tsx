@@ -9,6 +9,7 @@ import { useStoreProducts, useStoreCategories, useProductById } from '@/hooks/us
 import { useCart } from '@/contexts/CartContext';
 import { useToast } from '@/hooks/use-toast';
 import { useStore } from '@/contexts/StoreContext';
+import { useUserStore } from '@/hooks/useUserStore';
 import { useEcomPaths } from '@/lib/pathResolver';
 import { ProductQuickView } from '@/components/storefront/ProductQuickView';
 import { renderElementStyles } from '@/components/page-builder/utils/styleRenderer';
