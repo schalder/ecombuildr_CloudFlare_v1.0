@@ -28,7 +28,9 @@ import {
   PriceContentProperties,
   ContactFormContentProperties,
   NewsletterContentProperties,
-  ProductsPageContentProperties
+  ProductsPageContentProperties,
+  RelatedProductsContentProperties,
+  WeeklyFeaturedElementProperties
 } from './EcommerceProperties';
 import { CheckoutContentProperties } from './CheckoutContentProperties';
 import { OrderConfirmationContentProperties } from './OrderConfirmationContentProperties';
@@ -187,6 +189,20 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
 
             {selectedElement.type === 'featured-products' && (
               <FeaturedProductsContentProperties 
+                element={selectedElement}
+                onUpdate={handleContentUpdate}
+              />
+            )}
+
+            {selectedElement.type === 'related-products' && (
+              <RelatedProductsContentProperties
+                element={selectedElement}
+                onUpdate={handleContentUpdate}
+              />
+            )}
+
+            {selectedElement.type === 'weekly-featured' && (
+              <WeeklyFeaturedElementProperties
                 element={selectedElement}
                 onUpdate={handleContentUpdate}
               />

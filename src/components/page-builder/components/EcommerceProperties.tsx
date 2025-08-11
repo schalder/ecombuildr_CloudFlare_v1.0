@@ -851,3 +851,138 @@ export const ProductsPageContentProperties: React.FC<EcommerceContentPropertiesP
     </div>
   );
 };
+
+// Related Products (Element) Content Properties
+export const RelatedProductsContentProperties: React.FC<EcommerceContentPropertiesProps> = ({ element, onUpdate }) => {
+  const { categories } = useStoreCategories();
+  const selected = element.content.categoryIds || [];
+  return (
+    <div className="space-y-4">
+      <div>
+        <Label className="text-xs">Title</Label>
+        <Input value={element.content.title || ''} onChange={(e) => onUpdate('title', e.target.value)} placeholder="Related Products" />
+      </div>
+
+      <div>
+        <Label className="text-xs">Categories to include</Label>
+        <p className="text-xs text-muted-foreground mb-2">Leave empty to use all categories</p>
+        <div className="space-y-2 max-h-40 overflow-y-auto">
+          {categories.map((c) => (
+            <div key={c.id} className="flex items-center gap-2">
+              <Checkbox checked={selected.includes(c.id)} onCheckedChange={() => {
+                const updated = selected.includes(c.id) ? selected.filter((id: string) => id !== c.id) : [...selected, c.id];
+                onUpdate('categoryIds', updated);
+              }} />
+              <Label className="text-xs">{c.name}</Label>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <Label className="text-xs">Product Limit</Label>
+        <div className="space-y-2">
+          <Slider value={[element.content.limit || 8]} onValueChange={(v) => onUpdate('limit', v[0])} min={1} max={50} step={1} />
+          <span className="text-xs text-muted-foreground">{element.content.limit || 8} products</span>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-3 gap-3">
+        <div>
+          <Label className="text-xs">Desktop Columns</Label>
+          <Select value={(element.content.columns ?? 4).toString()} onValueChange={(v) => onUpdate('columns', parseInt(v))}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="1">1</SelectItem>
+              <SelectItem value="2">2</SelectItem>
+              <SelectItem value="3">3</SelectItem>
+              <SelectItem value="4">4</SelectItem>
+              <SelectItem value="5">5</SelectItem>
+              <SelectItem value="6">6</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label className="text-xs">Tablet Columns</Label>
+          <Select value={(element.content.tabletColumns ?? 2).toString()} onValueChange={(v) => onUpdate('tabletColumns', parseInt(v))}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="1">1</SelectItem>
+              <SelectItem value="2">2</SelectItem>
+              <SelectItem value="3">3</SelectItem>
+              <SelectItem value="4">4</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label className="text-xs">Mobile Columns</Label>
+          <Select value={(element.content.mobileColumns ?? 1).toString()} onValueChange={(v) => onUpdate('mobileColumns', parseInt(v))}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="1">1</SelectItem>
+              <SelectItem value="2">2</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Weekly Featured (Element) Content Properties
+export const WeeklyFeaturedElementProperties: React.FC<EcommerceContentPropertiesProps> = ({ element, onUpdate }) => {
+  return (
+    <div className="space-y-4">
+      <div>
+        <Label className="text-xs">Title</Label>
+        <Input value={element.content.title || ''} onChange={(e) => onUpdate('title', e.target.value)} placeholder="Weekly Featured" />
+      </div>
+      <div>
+        <Label className="text-xs">Product Count</Label>
+        <div className="space-y-2">
+          <Slider value={[element.content.limit || 6]} onValueChange={(v) => onUpdate('limit', v[0])} min={1} max={24} step={1} />
+          <span className="text-xs text-muted-foreground">{element.content.limit || 6} products</span>
+        </div>
+      </div>
+      <div className="grid grid-cols-3 gap-3">
+        <div>
+          <Label className="text-xs">Desktop Columns</Label>
+          <Select value={(element.content.columns ?? 3).toString()} onValueChange={(v) => onUpdate('columns', parseInt(v))}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="1">1</SelectItem>
+              <SelectItem value="2">2</SelectItem>
+              <SelectItem value="3">3</SelectItem>
+              <SelectItem value="4">4</SelectItem>
+              <SelectItem value="5">5</SelectItem>
+              <SelectItem value="6">6</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label className="text-xs">Tablet Columns</Label>
+          <Select value={(element.content.tabletColumns ?? 2).toString()} onValueChange={(v) => onUpdate('tabletColumns', parseInt(v))}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="1">1</SelectItem>
+              <SelectItem value="2">2</SelectItem>
+              <SelectItem value="3">3</SelectItem>
+              <SelectItem value="4">4</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label className="text-xs">Mobile Columns</Label>
+          <Select value={(element.content.mobileColumns ?? 1).toString()} onValueChange={(v) => onUpdate('mobileColumns', parseInt(v))}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="1">1</SelectItem>
+              <SelectItem value="2">2</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+    </div>
+  );
+};
+

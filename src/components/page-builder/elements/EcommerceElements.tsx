@@ -15,6 +15,7 @@ import { renderElementStyles } from '@/components/page-builder/utils/styleRender
 import { mergeResponsiveStyles } from '@/components/page-builder/utils/responsiveStyles';
 import { ProductsPageElement } from './ProductsPageElement';
 import { formatCurrency } from '@/lib/currency';
+import { supabase } from '@/integrations/supabase/client';
 // Product Grid Element
 const ProductGridElement: React.FC<{
   element: PageBuilderElement;
@@ -711,70 +712,77 @@ const WeeklyFeaturedElement: React.FC<{
   columnCount?: number;
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
 }> = ({ element, deviceType = 'desktop', columnCount = 1 }) => {
-  const mockWeeklyProducts = [
-    {
-      id: '1',
-      name: 'Gaming Keyboard',
-      price: 129.99,
-      image: 'https://images.unsplash.com/photo-1541140532154-b024d705b90a?w=300&h=200&fit=crop',
-      discount: 20
-    },
-    {
-      id: '2',
-      name: 'Wireless Mouse',
-      price: 79.99,
-      image: 'https://images.unsplash.com/photo-1527814050087-3793815479db?w=300&h=200&fit=crop',
-      discount: 15
-    },
-    {
-      id: '3',
-      name: 'Monitor Stand',
-      price: 49.99,
-      image: 'https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=300&h=200&fit=crop',
-      discount: 25
-    }
-  ];
+  const { store: userStore } = useUserStore();
+  const { store: storefrontStore } = useStore();
+  const store = storefrontStore || userStore;
+  const [items, setItems] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(true);
 
-  const getGridClasses = () => {
-    if (deviceType === 'mobile') return 'grid-cols-1';
-    if (deviceType === 'tablet') {
-      // Respect the column layout: single column for tablet when columnCount is 1
-      return columnCount === 1 ? 'grid-cols-1' : 'grid-cols-2';
-    }
-    return 'grid-cols-3';
-  };
+  const limit = element.content?.limit ?? 6;
+  const desktopCols = element.content?.columns ?? 3;
+  const tabletCols = element.content?.tabletColumns ?? 2;
+  const mobileCols = element.content?.mobileColumns ?? 1;
 
+  React.useEffect(() => {
+    const loadTopSellers = async () => {
+      if (!store?.id) { setItems([]); setLoading(false); return; }
+      setLoading(true);
+      const { data, error } = await supabase.functions.invoke('top-sellers', {
+        body: { storeId: store.id, limit }
+      });
+      if (!error && Array.isArray(data)) setItems(data as any[]);
+      setLoading(false);
+    };
+    loadTopSellers();
+  }, [store?.id, limit]);
+
+  const gridClass = `grid grid-cols-${mobileCols} md:grid-cols-${tabletCols} lg:grid-cols-${desktopCols} gap-4`;
+
+  if (loading) {
+    return (
+      <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-4xl mx-auto'}`}>
+        <div className="grid grid-cols-3 gap-4">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="h-40 bg-muted rounded animate-pulse" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  const title = element.content?.title || 'Weekly Featured Products';
   return (
     <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-4xl mx-auto'}`}>
       <div className="bg-card rounded-lg p-6 border">
         <div className="text-center mb-6">
-          <h2 className="text-2xl font-bold mb-2">Weekly Featured Products</h2>
-          <p className="text-muted-foreground">Special deals this week only!</p>
+          <h2 className="text-2xl font-bold mb-2">{title}</h2>
+          <p className="text-muted-foreground">Top selling products this week</p>
         </div>
-        
-        <div className={`grid gap-4 ${getGridClasses()}`}>
-          {mockWeeklyProducts.map((product) => (
-            <div key={product.id} className="text-center group/card">
-              <div className="relative overflow-hidden rounded-lg mb-3">
+        <div className={gridClass}>
+          {items.map((p) => (
+            <div key={p.id} className="text-center group/card">
+              <div className="relative overflow-hidden rounded-lg mb-3 aspect-square">
                 <img
-                  src={product.image}
-                  alt={product.name}
-                  className="w-full h-40 object-cover group-hover/card:scale-105 transition-transform"
+                  src={(Array.isArray(p.images) ? p.images[0] : p.images) || '/placeholder.svg'}
+                  alt={p.name}
+                  className="w-full h-full object-cover group-hover/card:scale-105 transition-transform"
                 />
-                <Badge className="absolute top-2 right-2" variant="destructive">
-                  -{product.discount}%
-                </Badge>
               </div>
-              <h4 className="font-medium mb-2">{product.name}</h4>
+              <h4 className="font-medium mb-2 line-clamp-1">{p.name}</h4>
               <div className="mb-3">
-                <span className="text-lg font-bold text-primary">{formatCurrency(product.price)}</span>
-                <span className="text-sm text-muted-foreground line-through ml-2">
-                  {formatCurrency(product.price / (1 - product.discount / 100))}
-                </span>
+                <span className="text-lg font-bold text-primary">{formatCurrency(Number(p.price))}</span>
+                {p.compare_price && p.compare_price > p.price && (
+                  <span className="text-sm text-muted-foreground line-through ml-2">
+                    {formatCurrency(Number(p.compare_price))}
+                  </span>
+                )}
               </div>
-              <Button size="sm" className="w-full">Quick Add</Button>
+              <Button size="sm" className="w-full">Add to Cart</Button>
             </div>
           ))}
+          {items.length === 0 && (
+            <div className="col-span-full text-center text-muted-foreground py-8">No data yet.</div>
+          )}
         </div>
       </div>
     </div>
@@ -955,7 +963,13 @@ export const registerEcommerceElements = () => {
     category: 'ecommerce',
     icon: Package,
     component: WeeklyFeaturedElement,
-    defaultContent: {},
+    defaultContent: {
+      title: 'Weekly Featured',
+      limit: 6,
+      columns: 3,
+      tabletColumns: 2,
+      mobileColumns: 1
+    },
     description: 'Weekly featured products section'
   });
 

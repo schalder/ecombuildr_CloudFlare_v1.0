@@ -253,13 +253,21 @@ const ProductDetailElement: React.FC<{ element: PageBuilderElement }> = ({ eleme
 };
 
 // Related Products (simple grid)
-const RelatedProductsElement: React.FC<{ element: PageBuilderElement }> = ({ element }) => {
-  const { products } = useStoreProducts({ limit: element.content?.limit || 4 });
+const RelatedProductsElement: React.FC<{ element: PageBuilderElement; deviceType?: 'desktop' | 'tablet' | 'mobile'; }> = ({ element, deviceType = 'desktop' }) => {
+  const { products } = useStoreProducts({ 
+    limit: element.content?.limit || 8,
+    categoryIds: element.content?.categoryIds || []
+  });
   const paths = useEcomPaths();
+  const desktopCols = element.content?.columns ?? 4;
+  const tabletCols = element.content?.tabletColumns ?? 2;
+  const mobileCols = element.content?.mobileColumns ?? 1;
+  const gridClass = `grid grid-cols-${mobileCols} md:grid-cols-${tabletCols} lg:grid-cols-${desktopCols} gap-4`;
+  const title = element.content?.title || 'Related Products';
   return (
     <div className="max-w-6xl mx-auto">
-      {element.content?.title && <h3 className="text-xl font-semibold mb-4">{element.content.title}</h3>}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      {title && <h3 className="text-xl font-semibold mb-4">{title}</h3>}
+      <div className={gridClass}>
         {products.map((p) => (
           <Card key={p.id} className="group/card">
             <CardContent className="p-3">
@@ -1012,7 +1020,7 @@ export const registerEcommerceSystemElements = () => {
     category: 'ecommerce',
     icon: Star,
     component: RelatedProductsElement,
-    defaultContent: { limit: 4, title: 'Related Products' },
+    defaultContent: { limit: 8, title: 'Related Products', columns: 4, tabletColumns: 2, mobileColumns: 1, categoryIds: [] },
     description: 'Show a small grid of products.'
   });
 
