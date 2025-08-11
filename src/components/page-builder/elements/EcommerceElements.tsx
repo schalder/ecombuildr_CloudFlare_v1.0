@@ -746,6 +746,10 @@ const WeeklyFeaturedElement: React.FC<{
   }, [deviceType, (element as any).styles?.buttonStyles]);
 
   const elementStyles = renderElementStyles(element, deviceType);
+  const headlineStyles = mergeResponsiveStyles({}, (element as any).styles?.headlineStyles, deviceType as any);
+  const subheadlineStyles = mergeResponsiveStyles({}, (element as any).styles?.subheadlineStyles, deviceType as any);
+  const productTitleStyles = mergeResponsiveStyles({}, (element as any).styles?.productTitleStyles, deviceType as any);
+  const priceStyles = mergeResponsiveStyles({}, (element as any).styles?.priceStyles, deviceType as any);
 
   const gridClass = `grid grid-cols-${mobileCols} md:grid-cols-${tabletCols} lg:grid-cols-${desktopCols} gap-4`;
 
@@ -770,10 +774,10 @@ const WeeklyFeaturedElement: React.FC<{
       <div className="bg-card rounded-lg p-6 border">
         <div className="text-center mb-6">
           {showTitle && (
-            <h2 className="font-bold mb-2" style={{ color: elementStyles.color, fontSize: elementStyles.fontSize, textAlign: elementStyles.textAlign, lineHeight: elementStyles.lineHeight, fontWeight: elementStyles.fontWeight }}>{title}</h2>
+            <h2 className="font-bold mb-2" style={headlineStyles as any}>{title}</h2>
           )}
           {showSubtitle && (
-            <p className="text-muted-foreground">{subtitle}</p>
+            <p className="text-muted-foreground" style={subheadlineStyles as any}>{subtitle}</p>
           )}
         </div>
         <div className={gridClass}>
@@ -805,9 +809,9 @@ const WeeklyFeaturedElement: React.FC<{
                     className="w-full h-full object-cover group-hover/card:scale-105 transition-transform"
                   />
                 </div>
-                <h4 className="font-medium mb-2 line-clamp-1" style={{ color: elementStyles.color, fontSize: elementStyles.fontSize, textAlign: elementStyles.textAlign, lineHeight: elementStyles.lineHeight, fontWeight: elementStyles.fontWeight }}>{p.name}</h4>
+                <h4 className="font-medium mb-2" style={productTitleStyles as any}>{p.name}</h4>
                 <div className="mb-3">
-                  <span className="font-bold text-primary" style={{ fontSize: elementStyles.fontSize }}>{formatCurrency(Number(p.price))}</span>
+                  <span className="font-bold text-primary" style={priceStyles as any}>{formatCurrency(Number(p.price))}</span>
                   {p.compare_price && p.compare_price > p.price && (
                     <span className="text-sm text-muted-foreground line-through ml-2">
                       {formatCurrency(Number(p.compare_price))}
@@ -1003,6 +1007,9 @@ export const registerEcommerceElements = () => {
     component: WeeklyFeaturedElement,
     defaultContent: {
       title: 'Weekly Featured',
+      subtitle: 'Top selling products this week',
+      showSubtitle: true,
+      ctaText: 'Add to Cart',
       limit: 6,
       columns: 3,
       tabletColumns: 2,

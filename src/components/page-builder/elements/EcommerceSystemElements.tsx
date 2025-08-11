@@ -311,7 +311,7 @@ const RelatedProductsElement: React.FC<{ element: PageBuilderElement; deviceType
               <div className="aspect-square rounded-lg overflow-hidden mb-2">
                 <img src={(Array.isArray(p.images)?p.images[0]:p.images) || '/placeholder.svg'} alt={p.name} className="w-full h-full object-cover group-hover/card:scale-105 transition-transform" />
               </div>
-              <div className="text-sm font-medium line-clamp-1" style={{ color: elementStyles.color, fontSize: elementStyles.fontSize, textAlign: elementStyles.textAlign, lineHeight: elementStyles.lineHeight, fontWeight: elementStyles.fontWeight }}>{p.name}</div>
+              <div className="text-sm font-medium" style={{ color: elementStyles.color, fontSize: elementStyles.fontSize, textAlign: elementStyles.textAlign, lineHeight: elementStyles.lineHeight, fontWeight: elementStyles.fontWeight }}>{p.name}</div>
               <div className="text-sm">{formatCurrency(Number(p.price))}</div>
               <Button variant="outline" size="sm" className="mt-2 w-full" style={buttonStyles as React.CSSProperties} onClick={() => (window.location.href = paths.productDetail(p.slug))}>{element.content?.ctaText || 'View'}</Button>
             </CardContent>

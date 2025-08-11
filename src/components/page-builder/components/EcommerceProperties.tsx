@@ -943,12 +943,27 @@ export const WeeklyFeaturedElementProperties: React.FC<EcommerceContentPropertie
     <div className="space-y-4">
       <div>
         <Label className="text-xs">Title</Label>
-        <Input value={element.content.title || ''} onChange={(e) => onUpdate('title', e.target.value)} placeholder="Weekly Featured" />
+        <Input value={element.content.title || ''} onChange={(e) => onUpdate('title', e.target.value)} placeholder="Weekly Featured Products" />
         <div className="flex items-center gap-2 mt-2">
           <Checkbox checked={element.content.showTitle !== false} onCheckedChange={(v) => onUpdate('showTitle', Boolean(v))} />
           <Label className="text-xs">Show Title</Label>
         </div>
       </div>
+
+      <div>
+        <Label className="text-xs">Subtitle</Label>
+        <Input value={element.content.subtitle || ''} onChange={(e) => onUpdate('subtitle', e.target.value)} placeholder="Top selling products this week" />
+        <div className="flex items-center gap-2 mt-2">
+          <Checkbox checked={element.content.showSubtitle !== false} onCheckedChange={(v) => onUpdate('showSubtitle', Boolean(v))} />
+          <Label className="text-xs">Show Subtitle</Label>
+        </div>
+      </div>
+
+      <div>
+        <Label className="text-xs">Button Label</Label>
+        <Input value={element.content.ctaText || 'Add to Cart'} onChange={(e) => onUpdate('ctaText', e.target.value)} placeholder="Add to Cart" />
+      </div>
+
       <div>
         <Label className="text-xs">Product Count</Label>
         <div className="space-y-2">
@@ -956,6 +971,7 @@ export const WeeklyFeaturedElementProperties: React.FC<EcommerceContentPropertie
           <span className="text-xs text-muted-foreground">{element.content.limit || 6} products</span>
         </div>
       </div>
+
       <div className="grid grid-cols-3 gap-3">
         <div>
           <Label className="text-xs">Desktop Columns</Label>

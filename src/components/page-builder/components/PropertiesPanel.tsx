@@ -57,7 +57,8 @@ import {
   FormElementStyles,
   ButtonElementStyles,
   OrderConfirmationElementStyles,
-  EcommerceActionButtonStyles
+  EcommerceActionButtonStyles,
+  WeeklyFeaturedTypographyStyles
 } from './ElementStyles';
 import { CheckoutElementStyles } from './ElementStyles/CheckoutElementStyles';
 
@@ -116,10 +117,23 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
     }
 
     // For elements that need both text and button styling
-    if (['related-products', 'weekly-featured'].includes(selectedElement.type)) {
+    if (['related-products'].includes(selectedElement.type)) {
       return (
         <>
           <TextElementStyles key={`text-${selectedElement.id}`} element={selectedElement} onStyleUpdate={handleStyleUpdate} />
+          <EcommerceActionButtonStyles key={`btn-${selectedElement.id}`} element={selectedElement} onStyleUpdate={handleStyleUpdate} />
+        </>
+      );
+    }
+
+    if (selectedElement.type === 'weekly-featured') {
+      return (
+        <>
+          {/* Card/background/border/spacing via TextElementStyles */}
+          <TextElementStyles key={`text-${selectedElement.id}`} element={selectedElement} onStyleUpdate={handleStyleUpdate} />
+          {/* Per-part typography */}
+          <WeeklyFeaturedTypographyStyles key={`wfty-${selectedElement.id}`} element={selectedElement} onStyleUpdate={handleStyleUpdate} />
+          {/* Button styles */}
           <EcommerceActionButtonStyles key={`btn-${selectedElement.id}`} element={selectedElement} onStyleUpdate={handleStyleUpdate} />
         </>
       );
