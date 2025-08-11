@@ -21,7 +21,6 @@ interface SectionSettingsProps {
 }
 
 export const SectionSettings: React.FC<SectionSettingsProps> = ({ section, onUpdate }) => {
-  const [useAdvancedSpacing, setUseAdvancedSpacing] = useState(false);
   const [customWidthMode, setCustomWidthMode] = useState(!!section.customWidth);
 
   const handleStyleUpdate = (key: string, value: any) => {
@@ -157,133 +156,89 @@ export const SectionSettings: React.FC<SectionSettingsProps> = ({ section, onUpd
           <CardTitle className="text-sm">Spacing</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center space-x-2 mb-4">
-            <Switch 
-              checked={useAdvancedSpacing}
-              onCheckedChange={setUseAdvancedSpacing}
-            />
-            <Label className="text-sm">Advanced Spacing</Label>
+          <div className="space-y-3">
+            <Label className="text-sm font-medium">Padding</Label>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label className="text-xs text-muted-foreground">Top</Label>
+                <Input
+                  value={section.styles?.paddingTop || ''}
+                  onChange={(e) => handleStyleUpdate('paddingTop', e.target.value)}
+                  placeholder="0px"
+                  className="h-8"
+                />
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground">Right</Label>
+                <Input
+                  value={section.styles?.paddingRight || ''}
+                  onChange={(e) => handleStyleUpdate('paddingRight', e.target.value)}
+                  placeholder="0px"
+                  className="h-8"
+                />
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground">Bottom</Label>
+                <Input
+                  value={section.styles?.paddingBottom || ''}
+                  onChange={(e) => handleStyleUpdate('paddingBottom', e.target.value)}
+                  placeholder="0px"
+                  className="h-8"
+                />
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground">Left</Label>
+                <Input
+                  value={section.styles?.paddingLeft || ''}
+                  onChange={(e) => handleStyleUpdate('paddingLeft', e.target.value)}
+                  placeholder="0px"
+                  className="h-8"
+                />
+              </div>
+            </div>
           </div>
           
-          {!useAdvancedSpacing ? (
-            <>
-              <div className="space-y-2">
-                <Label htmlFor="section-padding">Padding</Label>
+          <div className="space-y-3">
+            <Label className="text-sm font-medium">Margin</Label>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label className="text-xs text-muted-foreground">Top</Label>
                 <Input
-                  id="section-padding"
-                  value={section.styles?.padding || ''}
-                  onChange={(e) => handleStyleUpdate('padding', e.target.value)}
-                  placeholder="20px or 20px 40px"
+                  value={section.styles?.marginTop || ''}
+                  onChange={(e) => handleStyleUpdate('marginTop', e.target.value)}
+                  placeholder="0px"
+                  className="h-8"
                 />
               </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="section-margin">Margin</Label>
+              <div>
+                <Label className="text-xs text-muted-foreground">Right</Label>
                 <Input
-                  id="section-margin"
-                  value={section.styles?.margin || ''}
-                  onChange={(e) => handleStyleUpdate('margin', e.target.value)}
-                  placeholder="10px 0 or auto"
+                  value={section.styles?.marginRight || ''}
+                  onChange={(e) => handleStyleUpdate('marginRight', e.target.value)}
+                  placeholder="0px"
+                  className="h-8"
                 />
               </div>
-            </>
-          ) : (
-            <>
-              <Collapsible>
-                <CollapsibleTrigger className="flex items-center space-x-2 w-full text-left">
-                  <ChevronRight className="h-4 w-4" />
-                  <Label className="text-sm font-medium">Padding</Label>
-                </CollapsibleTrigger>
-                <CollapsibleContent className="space-y-2 mt-2 pl-6">
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <Label className="text-xs">Top</Label>
-                      <Input
-                        value={section.styles?.paddingTop || ''}
-                        onChange={(e) => handleStyleUpdate('paddingTop', e.target.value)}
-                        placeholder="0px"
-                        className="h-8"
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-xs">Right</Label>
-                      <Input
-                        value={section.styles?.paddingRight || ''}
-                        onChange={(e) => handleStyleUpdate('paddingRight', e.target.value)}
-                        placeholder="0px"
-                        className="h-8"
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-xs">Bottom</Label>
-                      <Input
-                        value={section.styles?.paddingBottom || ''}
-                        onChange={(e) => handleStyleUpdate('paddingBottom', e.target.value)}
-                        placeholder="0px"
-                        className="h-8"
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-xs">Left</Label>
-                      <Input
-                        value={section.styles?.paddingLeft || ''}
-                        onChange={(e) => handleStyleUpdate('paddingLeft', e.target.value)}
-                        placeholder="0px"
-                        className="h-8"
-                      />
-                    </div>
-                  </div>
-                </CollapsibleContent>
-              </Collapsible>
-              
-              <Collapsible>
-                <CollapsibleTrigger className="flex items-center space-x-2 w-full text-left">
-                  <ChevronRight className="h-4 w-4" />
-                  <Label className="text-sm font-medium">Margin</Label>
-                </CollapsibleTrigger>
-                <CollapsibleContent className="space-y-2 mt-2 pl-6">
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <Label className="text-xs">Top</Label>
-                      <Input
-                        value={section.styles?.marginTop || ''}
-                        onChange={(e) => handleStyleUpdate('marginTop', e.target.value)}
-                        placeholder="0px"
-                        className="h-8"
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-xs">Right</Label>
-                      <Input
-                        value={section.styles?.marginRight || ''}
-                        onChange={(e) => handleStyleUpdate('marginRight', e.target.value)}
-                        placeholder="0px"
-                        className="h-8"
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-xs">Bottom</Label>
-                      <Input
-                        value={section.styles?.marginBottom || ''}
-                        onChange={(e) => handleStyleUpdate('marginBottom', e.target.value)}
-                        placeholder="0px"
-                        className="h-8"
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-xs">Left</Label>
-                      <Input
-                        value={section.styles?.marginLeft || ''}
-                        onChange={(e) => handleStyleUpdate('marginLeft', e.target.value)}
-                        placeholder="0px"
-                        className="h-8"
-                      />
-                    </div>
-                  </div>
-                </CollapsibleContent>
-              </Collapsible>
-            </>
-          )}
+              <div>
+                <Label className="text-xs text-muted-foreground">Bottom</Label>
+                <Input
+                  value={section.styles?.marginBottom || ''}
+                  onChange={(e) => handleStyleUpdate('marginBottom', e.target.value)}
+                  placeholder="0px"
+                  className="h-8"
+                />
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground">Left</Label>
+                <Input
+                  value={section.styles?.marginLeft || ''}
+                  onChange={(e) => handleStyleUpdate('marginLeft', e.target.value)}
+                  placeholder="0px"
+                  className="h-8"
+                />
+              </div>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
@@ -395,7 +350,6 @@ interface RowSettingsProps {
 }
 
 export const RowSettings: React.FC<RowSettingsProps> = ({ row, onUpdate }) => {
-  const [useAdvancedSpacing, setUseAdvancedSpacing] = useState(false);
   const [customWidthMode, setCustomWidthMode] = useState(!!row.customWidth);
 
   const handleStyleUpdate = (key: string, value: any) => {
@@ -533,133 +487,89 @@ export const RowSettings: React.FC<RowSettingsProps> = ({ row, onUpdate }) => {
           <CardTitle className="text-sm">Spacing</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center space-x-2 mb-4">
-            <Switch 
-              checked={useAdvancedSpacing}
-              onCheckedChange={setUseAdvancedSpacing}
-            />
-            <Label className="text-sm">Advanced Spacing</Label>
+          <div className="space-y-3">
+            <Label className="text-sm font-medium">Padding</Label>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label className="text-xs text-muted-foreground">Top</Label>
+                <Input
+                  value={row.styles?.paddingTop || ''}
+                  onChange={(e) => handleStyleUpdate('paddingTop', e.target.value)}
+                  placeholder="0px"
+                  className="h-8"
+                />
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground">Right</Label>
+                <Input
+                  value={row.styles?.paddingRight || ''}
+                  onChange={(e) => handleStyleUpdate('paddingRight', e.target.value)}
+                  placeholder="0px"
+                  className="h-8"
+                />
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground">Bottom</Label>
+                <Input
+                  value={row.styles?.paddingBottom || ''}
+                  onChange={(e) => handleStyleUpdate('paddingBottom', e.target.value)}
+                  placeholder="0px"
+                  className="h-8"
+                />
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground">Left</Label>
+                <Input
+                  value={row.styles?.paddingLeft || ''}
+                  onChange={(e) => handleStyleUpdate('paddingLeft', e.target.value)}
+                  placeholder="0px"
+                  className="h-8"
+                />
+              </div>
+            </div>
           </div>
           
-          {!useAdvancedSpacing ? (
-            <>
-              <div className="space-y-2">
-                <Label htmlFor="row-padding">Padding</Label>
+          <div className="space-y-3">
+            <Label className="text-sm font-medium">Margin</Label>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label className="text-xs text-muted-foreground">Top</Label>
                 <Input
-                  id="row-padding"
-                  value={row.styles?.padding || ''}
-                  onChange={(e) => handleStyleUpdate('padding', e.target.value)}
-                  placeholder="20px or 20px 40px"
+                  value={row.styles?.marginTop || ''}
+                  onChange={(e) => handleStyleUpdate('marginTop', e.target.value)}
+                  placeholder="0px"
+                  className="h-8"
                 />
               </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="row-margin">Margin</Label>
+              <div>
+                <Label className="text-xs text-muted-foreground">Right</Label>
                 <Input
-                  id="row-margin"
-                  value={row.styles?.margin || ''}
-                  onChange={(e) => handleStyleUpdate('margin', e.target.value)}
-                  placeholder="10px 0 or auto"
+                  value={row.styles?.marginRight || ''}
+                  onChange={(e) => handleStyleUpdate('marginRight', e.target.value)}
+                  placeholder="0px"
+                  className="h-8"
                 />
               </div>
-            </>
-          ) : (
-            <>
-              <Collapsible>
-                <CollapsibleTrigger className="flex items-center space-x-2 w-full text-left">
-                  <ChevronRight className="h-4 w-4" />
-                  <Label className="text-sm font-medium">Padding</Label>
-                </CollapsibleTrigger>
-                <CollapsibleContent className="space-y-2 mt-2 pl-6">
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <Label className="text-xs">Top</Label>
-                      <Input
-                        value={row.styles?.paddingTop || ''}
-                        onChange={(e) => handleStyleUpdate('paddingTop', e.target.value)}
-                        placeholder="0px"
-                        className="h-8"
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-xs">Right</Label>
-                      <Input
-                        value={row.styles?.paddingRight || ''}
-                        onChange={(e) => handleStyleUpdate('paddingRight', e.target.value)}
-                        placeholder="0px"
-                        className="h-8"
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-xs">Bottom</Label>
-                      <Input
-                        value={row.styles?.paddingBottom || ''}
-                        onChange={(e) => handleStyleUpdate('paddingBottom', e.target.value)}
-                        placeholder="0px"
-                        className="h-8"
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-xs">Left</Label>
-                      <Input
-                        value={row.styles?.paddingLeft || ''}
-                        onChange={(e) => handleStyleUpdate('paddingLeft', e.target.value)}
-                        placeholder="0px"
-                        className="h-8"
-                      />
-                    </div>
-                  </div>
-                </CollapsibleContent>
-              </Collapsible>
-              
-              <Collapsible>
-                <CollapsibleTrigger className="flex items-center space-x-2 w-full text-left">
-                  <ChevronRight className="h-4 w-4" />
-                  <Label className="text-sm font-medium">Margin</Label>
-                </CollapsibleTrigger>
-                <CollapsibleContent className="space-y-2 mt-2 pl-6">
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <Label className="text-xs">Top</Label>
-                      <Input
-                        value={row.styles?.marginTop || ''}
-                        onChange={(e) => handleStyleUpdate('marginTop', e.target.value)}
-                        placeholder="0px"
-                        className="h-8"
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-xs">Right</Label>
-                      <Input
-                        value={row.styles?.marginRight || ''}
-                        onChange={(e) => handleStyleUpdate('marginRight', e.target.value)}
-                        placeholder="0px"
-                        className="h-8"
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-xs">Bottom</Label>
-                      <Input
-                        value={row.styles?.marginBottom || ''}
-                        onChange={(e) => handleStyleUpdate('marginBottom', e.target.value)}
-                        placeholder="0px"
-                        className="h-8"
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-xs">Left</Label>
-                      <Input
-                        value={row.styles?.marginLeft || ''}
-                        onChange={(e) => handleStyleUpdate('marginLeft', e.target.value)}
-                        placeholder="0px"
-                        className="h-8"
-                      />
-                    </div>
-                  </div>
-                </CollapsibleContent>
-              </Collapsible>
-            </>
-          )}
+              <div>
+                <Label className="text-xs text-muted-foreground">Bottom</Label>
+                <Input
+                  value={row.styles?.marginBottom || ''}
+                  onChange={(e) => handleStyleUpdate('marginBottom', e.target.value)}
+                  placeholder="0px"
+                  className="h-8"
+                />
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground">Left</Label>
+                <Input
+                  value={row.styles?.marginLeft || ''}
+                  onChange={(e) => handleStyleUpdate('marginLeft', e.target.value)}
+                  placeholder="0px"
+                  className="h-8"
+                />
+              </div>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
@@ -771,7 +681,6 @@ interface ColumnSettingsProps {
 }
 
 export const ColumnSettings: React.FC<ColumnSettingsProps> = ({ column, onUpdate }) => {
-  const [useAdvancedSpacing, setUseAdvancedSpacing] = useState(false);
   const [customWidthMode, setCustomWidthMode] = useState(!!column.customWidth);
 
   const handleStyleUpdate = (key: string, value: any) => {
@@ -885,133 +794,89 @@ export const ColumnSettings: React.FC<ColumnSettingsProps> = ({ column, onUpdate
           <CardTitle className="text-sm">Spacing</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center space-x-2 mb-4">
-            <Switch 
-              checked={useAdvancedSpacing}
-              onCheckedChange={setUseAdvancedSpacing}
-            />
-            <Label className="text-sm">Advanced Spacing</Label>
+          <div className="space-y-3">
+            <Label className="text-sm font-medium">Padding</Label>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label className="text-xs text-muted-foreground">Top</Label>
+                <Input
+                  value={column.styles?.paddingTop || ''}
+                  onChange={(e) => handleStyleUpdate('paddingTop', e.target.value)}
+                  placeholder="0px"
+                  className="h-8"
+                />
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground">Right</Label>
+                <Input
+                  value={column.styles?.paddingRight || ''}
+                  onChange={(e) => handleStyleUpdate('paddingRight', e.target.value)}
+                  placeholder="0px"
+                  className="h-8"
+                />
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground">Bottom</Label>
+                <Input
+                  value={column.styles?.paddingBottom || ''}
+                  onChange={(e) => handleStyleUpdate('paddingBottom', e.target.value)}
+                  placeholder="0px"
+                  className="h-8"
+                />
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground">Left</Label>
+                <Input
+                  value={column.styles?.paddingLeft || ''}
+                  onChange={(e) => handleStyleUpdate('paddingLeft', e.target.value)}
+                  placeholder="0px"
+                  className="h-8"
+                />
+              </div>
+            </div>
           </div>
           
-          {!useAdvancedSpacing ? (
-            <>
-              <div className="space-y-2">
-                <Label htmlFor="column-padding">Padding</Label>
+          <div className="space-y-3">
+            <Label className="text-sm font-medium">Margin</Label>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label className="text-xs text-muted-foreground">Top</Label>
                 <Input
-                  id="column-padding"
-                  value={column.styles?.padding || ''}
-                  onChange={(e) => handleStyleUpdate('padding', e.target.value)}
-                  placeholder="20px or 20px 40px"
+                  value={column.styles?.marginTop || ''}
+                  onChange={(e) => handleStyleUpdate('marginTop', e.target.value)}
+                  placeholder="0px"
+                  className="h-8"
                 />
               </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="column-margin">Margin</Label>
+              <div>
+                <Label className="text-xs text-muted-foreground">Right</Label>
                 <Input
-                  id="column-margin"
-                  value={column.styles?.margin || ''}
-                  onChange={(e) => handleStyleUpdate('margin', e.target.value)}
-                  placeholder="10px 0 or auto"
+                  value={column.styles?.marginRight || ''}
+                  onChange={(e) => handleStyleUpdate('marginRight', e.target.value)}
+                  placeholder="0px"
+                  className="h-8"
                 />
               </div>
-            </>
-          ) : (
-            <>
-              <Collapsible>
-                <CollapsibleTrigger className="flex items-center space-x-2 w-full text-left">
-                  <ChevronRight className="h-4 w-4" />
-                  <Label className="text-sm font-medium">Padding</Label>
-                </CollapsibleTrigger>
-                <CollapsibleContent className="space-y-2 mt-2 pl-6">
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <Label className="text-xs">Top</Label>
-                      <Input
-                        value={column.styles?.paddingTop || ''}
-                        onChange={(e) => handleStyleUpdate('paddingTop', e.target.value)}
-                        placeholder="0px"
-                        className="h-8"
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-xs">Right</Label>
-                      <Input
-                        value={column.styles?.paddingRight || ''}
-                        onChange={(e) => handleStyleUpdate('paddingRight', e.target.value)}
-                        placeholder="0px"
-                        className="h-8"
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-xs">Bottom</Label>
-                      <Input
-                        value={column.styles?.paddingBottom || ''}
-                        onChange={(e) => handleStyleUpdate('paddingBottom', e.target.value)}
-                        placeholder="0px"
-                        className="h-8"
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-xs">Left</Label>
-                      <Input
-                        value={column.styles?.paddingLeft || ''}
-                        onChange={(e) => handleStyleUpdate('paddingLeft', e.target.value)}
-                        placeholder="0px"
-                        className="h-8"
-                      />
-                    </div>
-                  </div>
-                </CollapsibleContent>
-              </Collapsible>
-              
-              <Collapsible>
-                <CollapsibleTrigger className="flex items-center space-x-2 w-full text-left">
-                  <ChevronRight className="h-4 w-4" />
-                  <Label className="text-sm font-medium">Margin</Label>
-                </CollapsibleTrigger>
-                <CollapsibleContent className="space-y-2 mt-2 pl-6">
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <Label className="text-xs">Top</Label>
-                      <Input
-                        value={column.styles?.marginTop || ''}
-                        onChange={(e) => handleStyleUpdate('marginTop', e.target.value)}
-                        placeholder="0px"
-                        className="h-8"
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-xs">Right</Label>
-                      <Input
-                        value={column.styles?.marginRight || ''}
-                        onChange={(e) => handleStyleUpdate('marginRight', e.target.value)}
-                        placeholder="0px"
-                        className="h-8"
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-xs">Bottom</Label>
-                      <Input
-                        value={column.styles?.marginBottom || ''}
-                        onChange={(e) => handleStyleUpdate('marginBottom', e.target.value)}
-                        placeholder="0px"
-                        className="h-8"
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-xs">Left</Label>
-                      <Input
-                        value={column.styles?.marginLeft || ''}
-                        onChange={(e) => handleStyleUpdate('marginLeft', e.target.value)}
-                        placeholder="0px"
-                        className="h-8"
-                      />
-                    </div>
-                  </div>
-                </CollapsibleContent>
-              </Collapsible>
-            </>
-          )}
+              <div>
+                <Label className="text-xs text-muted-foreground">Bottom</Label>
+                <Input
+                  value={column.styles?.marginBottom || ''}
+                  onChange={(e) => handleStyleUpdate('marginBottom', e.target.value)}
+                  placeholder="0px"
+                  className="h-8"
+                />
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground">Left</Label>
+                <Input
+                  value={column.styles?.marginLeft || ''}
+                  onChange={(e) => handleStyleUpdate('marginLeft', e.target.value)}
+                  placeholder="0px"
+                  className="h-8"
+                />
+              </div>
+            </div>
+          </div>
         </CardContent>
       </Card>
 

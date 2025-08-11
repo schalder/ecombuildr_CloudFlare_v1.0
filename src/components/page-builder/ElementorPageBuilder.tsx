@@ -188,7 +188,11 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = ({
     const newSection: PageBuilderSection = {
       id: generateId(),
       width,
-      rows: []
+      rows: [],
+      styles: {
+        paddingTop: '20px',
+        paddingBottom: '20px'
+      }
     };
     
     const newSections = [...data.sections];
@@ -295,10 +299,22 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = ({
     const newRow: PageBuilderRow = {
       id: generateId(),
       columnLayout,
+      styles: {
+        paddingTop: '10px',
+        paddingBottom: '10px',
+        paddingLeft: '5px',
+        paddingRight: '5px'
+      },
       columns: columnWidths.map(width => ({
         id: generateId(),
         width,
-        elements: []
+        elements: [],
+        styles: {
+          paddingTop: '10px',
+          paddingRight: '10px',
+          paddingLeft: '5px',
+          paddingBottom: '5px'
+        }
       }))
     };
 
