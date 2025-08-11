@@ -406,6 +406,15 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
   const { websiteShipping } = useWebsiteShipping();
   const [loading, setLoading] = useState(false);
 
+  // Button and header responsive CSS + background settings
+  const buttonStyles = (element.styles as any)?.checkoutButton || { responsive: { desktop: {}, mobile: {} } };
+  const buttonCSS = generateResponsiveCSS(element.id, buttonStyles);
+  const headerStyles = (element.styles as any)?.checkoutSectionHeader || { responsive: { desktop: {}, mobile: {} } };
+  const headerCSS = generateResponsiveCSS(`${element.id}-section-header`, headerStyles);
+  const backgrounds = (element.styles as any)?.checkoutBackgrounds || {};
+  const formBorderWidth = Number((backgrounds as any)?.formBorderWidth || 0);
+  const summaryBorderWidth = Number((backgrounds as any)?.summaryBorderWidth || 0);
+
   // Recompute shipping cost when address details change (primarily city)
   useEffect(() => {
     if (websiteShipping && websiteShipping.enabled) {

@@ -33,7 +33,6 @@ interface CheckoutForm {
 }
 
 export const CheckoutPage: React.FC = () => {
-  const { slug, websiteId } = useParams<{ slug?: string; websiteId?: string }>();
   const navigate = useNavigate();
   const { store } = useStore();
   const { items, total, clearCart } = useCart();
