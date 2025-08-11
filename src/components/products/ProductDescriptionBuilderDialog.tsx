@@ -3,7 +3,7 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { ElementorPageBuilder } from '@/components/page-builder/ElementorPageBuilder';
 import { PageBuilderData } from '@/components/page-builder/types';
 import { Button } from '@/components/ui/button';
-import { Save, X } from 'lucide-react';
+import { Save } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
 interface ProductDescriptionBuilderDialogProps {
@@ -54,9 +54,6 @@ const ProductDescriptionBuilderDialog: React.FC<ProductDescriptionBuilderDialogP
           <header className="flex items-center justify-between border-b bg-background px-4 py-2">
             <h1 className="text-lg font-semibold text-foreground">Product Description Builder</h1>
             <div className="flex items-center gap-2">
-              <Button variant="ghost" onClick={() => onOpenChange(false)}>
-                <X className="h-4 w-4 mr-2" /> Close
-              </Button>
               <Button onClick={handleSave} disabled={saving}>
                 <Save className="h-4 w-4 mr-2" /> {saving ? 'Saving...' : 'Save'}
               </Button>

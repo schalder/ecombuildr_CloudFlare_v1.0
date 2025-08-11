@@ -117,7 +117,22 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
         return;
       }
 
-      const slug = formData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+      // Generate a unique, URL-safe slug per store
+      const baseSlug = formData.name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+      let slug = baseSlug;
+      const { data: existingSlugs } = await supabase
+        .from('products')
+        .select('slug')
+        .eq('store_id', stores[0].id)
+        .ilike('slug', `${baseSlug}%`);
+      if (existingSlugs && existingSlugs.length) {
+        const set = new Set((existingSlugs as any[]).map((r) => r.slug as string));
+        if (set.has(baseSlug)) {
+          let n = 2;
+          while (set.has(`${baseSlug}-${n}`)) n++;
+          slug = `${baseSlug}-${n}`;
+        }
+      }
 
 const { error } = await supabase.from('products').insert({
         ...formData,

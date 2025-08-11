@@ -38,7 +38,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
+
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
@@ -679,7 +679,7 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = memo(({
           </div>
           
           {!sidebarCollapsed && (
-            <ScrollArea className="h-0 flex-1">
+            <div className="flex-1 min-h-0 overflow-y-auto">
               <div className="p-4 space-y-6">
                 {filteredElements.map((category) => (
                   <div key={category.name}>
@@ -698,7 +698,7 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = memo(({
                   </div>
                 ))}
               </div>
-            </ScrollArea>
+            </div>
           )}
         </div>
 
@@ -832,7 +832,7 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = memo(({
           </div>
           
           {!propertiesPanelCollapsed && (
-            <ScrollArea className="h-0 flex-1">
+            <div className="flex-1 min-h-0 overflow-y-auto">
               {selection ? (
                 (() => {
                   // Get selected item data based on selection type
@@ -894,7 +894,7 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = memo(({
                   <p className="text-sm">Select an element to edit properties</p>
                 </div>
               )}
-            </ScrollArea>
+            </div>
           )}
         </div>
       </div>
