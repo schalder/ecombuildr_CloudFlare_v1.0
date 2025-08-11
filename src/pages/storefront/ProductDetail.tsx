@@ -15,6 +15,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import ReviewsSection from '@/components/storefront/ReviewsSection';
 import RelatedProducts from '@/components/storefront/RelatedProducts';
 import { useEcomPaths } from '@/lib/pathResolver';
+import { PageBuilderRenderer } from '@/components/storefront/PageBuilderRenderer';
 
 interface Product {
   id: string;
@@ -36,7 +37,10 @@ interface Product {
   easy_returns_days?: number | null;
   action_buttons?: any;
   allowed_payment_methods?: string[] | null;
+  description_mode?: 'rich_text' | 'builder';
+  description_builder?: any;
 }
+
 
 interface ActionButtons {
   order_now?: { enabled?: boolean; label?: string };
@@ -446,7 +450,11 @@ export const ProductDetail: React.FC = () => {
               <TabsTrigger value="reviews">Reviews</TabsTrigger>
             </TabsList>
             <TabsContent value="description">
-              {product.description ? (
+              {((product as any).description_mode === 'builder' && (product as any).description_builder?.sections?.length) ? (
+                <section aria-label="Product description">
+                  <PageBuilderRenderer data={(product as any).description_builder as any} />
+                </section>
+              ) : product.description ? (
                 <article className="prose prose-sm max-w-none text-muted-foreground">
                   <div dangerouslySetInnerHTML={{ __html: product.description }} />
                 </article>
