@@ -568,7 +568,9 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
           content: attr(data-placeholder);
           color: hsl(var(--muted-foreground));
         }
-        .rte-content :where(h1,h2,h3){ margin: 0.5rem 0; }
+        .rte-content h1 { font-size: 1.875rem; line-height: 2.25rem; font-weight: 700; margin: 0.75rem 0; }
+        .rte-content h2 { font-size: 1.5rem; line-height: 2rem; font-weight: 700; margin: 0.6rem 0; }
+        .rte-content h3 { font-size: 1.25rem; line-height: 1.75rem; font-weight: 600; margin: 0.5rem 0; }
         .rte-content blockquote { border-inline-start: 2px solid hsl(var(--muted-foreground) / 0.3); padding-inline-start: 1rem; color: hsl(var(--muted-foreground)); }
         .rte-content img { max-width: 100%; height: auto; }
         .rte-content ul { list-style: disc; padding-left: 1.25rem; margin: 0.5rem 0; }

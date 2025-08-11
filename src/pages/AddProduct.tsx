@@ -15,6 +15,8 @@ import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import RichTextEditor from '@/components/ui/RichTextEditor';
+import ProductDescriptionBuilderDialog from '@/components/products/ProductDescriptionBuilderDialog';
+import type { PageBuilderData } from '@/components/page-builder/types';
 import VariationsBuilder, { VariationOption } from '@/components/products/VariationsBuilder';
 import VariantMatrix, { VariantEntry } from '@/components/products/VariantMatrix';
 
@@ -57,7 +59,12 @@ export default function AddProduct() {
     call: { enabled: false, label: 'Call Now', phone: '' },
     whatsapp: { enabled: false, label: 'WhatsApp', url: '' },
   });
-  const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
+const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
+
+  // Description mode (Rich Text or Page Builder)
+  const [descriptionMode, setDescriptionMode] = useState<'rich_text' | 'builder'>('rich_text');
+  const [descriptionBuilder, setDescriptionBuilder] = useState<PageBuilderData>({ sections: [] });
+  const [isBuilderOpen, setIsBuilderOpen] = useState(false);
 
 
   // Fetch categories for the dropdown
@@ -129,6 +136,8 @@ const { error } = await supabase.from('products').insert({
         easy_returns_days: easyReturnsEnabled && easyReturnsDays ? parseInt(easyReturnsDays) : null,
         action_buttons: actionButtons,
         allowed_payment_methods: allowedPayments.length ? allowedPayments : null,
+        description_mode: descriptionMode,
+        description_builder: descriptionBuilder,
       });
 
       if (error) throw error;
@@ -188,13 +197,37 @@ const { error } = await supabase.from('products').insert({
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <RichTextEditor
-                value={formData.description}
-                onChange={(html) => setFormData(prev => ({ ...prev, description: html }))}
-                placeholder="Write a detailed description..."
-              />
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <Switch
+                  id="use_builder"
+                  checked={descriptionMode === 'builder'}
+                  onCheckedChange={(v) => setDescriptionMode(v ? 'builder' : 'rich_text')}
+                />
+                <Label htmlFor="use_builder">Use Page Builder for Description</Label>
+              </div>
+
+              {descriptionMode === 'rich_text' ? (
+                <div className="space-y-2">
+                  <Label htmlFor="description">Description</Label>
+                  <RichTextEditor
+                    value={formData.description}
+                    onChange={(html) => setFormData(prev => ({ ...prev, description: html }))}
+                    placeholder="Write a detailed description..."
+                  />
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <Button type="button" onClick={() => setIsBuilderOpen(true)}>
+                    Edit Description with Page Builder
+                  </Button>
+                  <p className="text-sm text-muted-foreground">
+                    {descriptionBuilder.sections && descriptionBuilder.sections.length
+                      ? 'Builder content saved. Click Edit to update.'
+                      : 'No builder content yet. Click Edit to start.'}
+                  </p>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -538,6 +571,13 @@ const { error } = await supabase.from('products').insert({
             {loading ? 'Creating...' : 'Create Product'}
           </Button>
         </div>
+
+        <ProductDescriptionBuilderDialog
+          open={isBuilderOpen}
+          onOpenChange={setIsBuilderOpen}
+          initialData={descriptionBuilder}
+          onSave={(data) => setDescriptionBuilder(data)}
+        />
       </form>
     </DashboardLayout>
   );
