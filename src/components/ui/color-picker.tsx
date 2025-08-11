@@ -34,6 +34,7 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({ color, onChange, label
               variant="outline"
               size="sm"
               className="h-7 w-7 p-0"
+              onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
             >
               <span className="sr-only">Open color picker</span>
               <div 
@@ -45,6 +46,7 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({ color, onChange, label
             <Button
               variant="outline"
               className="w-full justify-start gap-2 h-10"
+              onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
             >
               <div 
                 className="w-4 h-4 rounded border"
@@ -55,7 +57,7 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({ color, onChange, label
             </Button>
           )}
         </PopoverTrigger>
-        <PopoverContent className="w-64 p-4 bg-popover z-[90]">
+        <PopoverContent className="w-64 p-4 bg-popover z-[90] pointer-events-auto" data-rte-floating>
           <div className="space-y-4">
             <div>
               <Label htmlFor="color-input">Custom Color</Label>

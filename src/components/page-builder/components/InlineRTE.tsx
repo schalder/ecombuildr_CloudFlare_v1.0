@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { ColorPicker } from '@/components/ui/color-picker';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ensureGoogleFontLoaded } from '@/hooks/useGoogleFontLoader';
 
 export interface InlineRTEProps {
   value: string;
@@ -82,6 +83,8 @@ export const InlineRTE: React.FC<InlineRTEProps> = ({ value, onChange, placehold
   const [showToolbar, setShowToolbar] = useState(false);
   const [toolbarPos, setToolbarPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
   const [currentColor, setCurrentColor] = useState<string>('');
+  const toolbarRef = useRef<HTMLDivElement>(null);
+  const [selectedFont, setSelectedFont] = useState('default');
 
   // Keep editor content in sync
   useEffect(() => {
@@ -99,6 +102,16 @@ export const InlineRTE: React.FC<InlineRTEProps> = ({ value, onChange, placehold
 
     const handleSelection = () => {
       const sel = window.getSelection();
+      const active = document.activeElement as HTMLElement | null;
+      const floatingEls = Array.from(document.querySelectorAll('[data-rte-floating]')) as HTMLElement[];
+      const interactingWithFloating = !!active && floatingEls.some((f) => f.contains(active));
+
+      if (interactingWithFloating) {
+        // Keep toolbar visible when interacting with its popovers/menus
+        setShowToolbar(true);
+        return;
+      }
+
       if (!sel || sel.rangeCount === 0) {
         setShowToolbar(false);
         return;
@@ -196,12 +209,23 @@ export const InlineRTE: React.FC<InlineRTEProps> = ({ value, onChange, placehold
   );
 
   const fonts = useMemo(
-    () => [
-      { label: 'Default', value: 'default' },
-      { label: 'System Sans', value: 'Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, \"Apple Color Emoji\", \"Segoe UI Emoji\"' },
-      { label: 'Serif', value: 'Georgia, Times New Roman, Times, serif' },
-      { label: 'Monospace', value: 'SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", \"Courier New\", monospace' },
-    ],
+    () => {
+      const base = [
+        { label: 'Default', value: 'default' },
+        { label: 'System Sans', value: 'Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji"' },
+        { label: 'Serif', value: 'Georgia, Times New Roman, Times, serif' },
+        { label: 'Monospace', value: 'SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace' },
+      ];
+      const google = [
+        { label: 'Poppins', value: '"Poppins", sans-serif', family: 'Poppins', weights: '400;500;600;700' },
+        { label: 'Montserrat', value: '"Montserrat", sans-serif', family: 'Montserrat', weights: '400;500;600;700' },
+        { label: 'Roboto', value: 'Roboto, sans-serif', family: 'Roboto', weights: '400;500;700' },
+        { label: 'Open Sans', value: '"Open Sans", sans-serif', family: 'Open Sans', weights: '400;600;700' },
+        { label: 'Lato', value: 'Lato, sans-serif', family: 'Lato', weights: '400;700' },
+        { label: 'Playfair Display', value: '"Playfair Display", serif', family: 'Playfair Display', weights: '400;700' },
+      ];
+      return [...base, ...google];
+    },
     []
   );
 
@@ -209,16 +233,23 @@ export const InlineRTE: React.FC<InlineRTEProps> = ({ value, onChange, placehold
     <div className="relative">
       {showToolbar && isEditing && (
         <div
+          ref={toolbarRef}
+          onMouseDown={(e) => e.preventDefault()}
           className="fixed z-50 -translate-x-1/2 rounded-md border bg-popover text-popover-foreground shadow-md px-2 py-1 flex items-center gap-1"
           style={{ top: toolbarPos.top, left: toolbarPos.left }}
         >
-          <Select onValueChange={(v) => applyFont(v)}>
-            <SelectTrigger className="h-7 min-w-[120px] bg-popover">
+          <Select value={selectedFont} onValueChange={(v) => {
+            setSelectedFont(v);
+            const meta = (fonts as any[]).find((f: any) => f.value === v);
+            if (meta && meta.family) ensureGoogleFontLoaded(meta.family, meta.weights);
+            applyFont(v);
+          }}>
+            <SelectTrigger className="h-7 min-w-[140px] bg-popover" onMouseDown={(e) => e.preventDefault()}>
               <SelectValue placeholder="Default" />
             </SelectTrigger>
-            <SelectContent className="z-[90] bg-popover">
-              {fonts.map((f) => (
-                <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>
+            <SelectContent className="z-[90] bg-popover" data-rte-floating>
+              {(fonts as any[]).map((f: any) => (
+                <SelectItem key={f.label} value={f.value}>{f.label}</SelectItem>
               ))}
             </SelectContent>
           </Select>
