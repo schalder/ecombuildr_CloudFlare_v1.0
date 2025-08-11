@@ -9,6 +9,7 @@ interface ColorPickerProps {
   color: string;
   onChange: (color: string) => void;
   label?: string;
+  compact?: boolean;
 }
 
 const presetColors = [
@@ -20,7 +21,7 @@ const presetColors = [
   '#6B7280', '#4B5563', '#374151', '#1F2937'
 ];
 
-export const ColorPicker: React.FC<ColorPickerProps> = ({ color, onChange, label }) => {
+export const ColorPicker: React.FC<ColorPickerProps> = ({ color, onChange, label, compact }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -28,19 +29,33 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({ color, onChange, label
       {label && <Label>{label}</Label>}
       <Popover open={isOpen} onOpenChange={setIsOpen}>
         <PopoverTrigger asChild>
-          <Button
-            variant="outline"
-            className="w-full justify-start gap-2 h-10"
-          >
-            <div 
-              className="w-4 h-4 rounded border"
-              style={{ backgroundColor: color || 'transparent' }}
-            />
-            <span>{color || 'Auto'}</span>
-            <Palette className="w-4 h-4 ml-auto" />
-          </Button>
+          {compact ? (
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 w-7 p-0"
+            >
+              <span className="sr-only">Open color picker</span>
+              <div 
+                className="w-4 h-4 rounded border"
+                style={{ backgroundColor: color || 'transparent' }}
+              />
+            </Button>
+          ) : (
+            <Button
+              variant="outline"
+              className="w-full justify-start gap-2 h-10"
+            >
+              <div 
+                className="w-4 h-4 rounded border"
+                style={{ backgroundColor: color || 'transparent' }}
+              />
+              <span>{color || 'Auto'}</span>
+              <Palette className="w-4 h-4 ml-auto" />
+            </Button>
+          )}
         </PopoverTrigger>
-        <PopoverContent className="w-64 p-4">
+        <PopoverContent className="w-64 p-4 bg-popover z-[90]">
           <div className="space-y-4">
             <div>
               <Label htmlFor="color-input">Custom Color</Label>

@@ -2,6 +2,8 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Bold, Italic, Underline, Strikethrough, Link as LinkIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { ColorPicker } from '@/components/ui/color-picker';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export interface InlineRTEProps {
   value: string;
@@ -75,9 +77,11 @@ export function sanitizeHtml(input: string): string {
 
 export const InlineRTE: React.FC<InlineRTEProps> = ({ value, onChange, placeholder, className, disabled, style }) => {
   const editorRef = useRef<HTMLDivElement>(null);
+  const lastRangeRef = useRef<Range | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [showToolbar, setShowToolbar] = useState(false);
   const [toolbarPos, setToolbarPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
+  const [currentColor, setCurrentColor] = useState<string>('');
 
   // Keep editor content in sync
   useEffect(() => {
@@ -105,8 +109,10 @@ export const InlineRTE: React.FC<InlineRTEProps> = ({ value, onChange, placehold
         return;
       }
       const rect = range.getBoundingClientRect();
+      // save selection for toolbar actions
+      lastRangeRef.current = range.cloneRange();
       if (rect) {
-        const top = Math.max(8, rect.top - 40);
+        const top = Math.max(8, rect.top - 48);
         const left = Math.max(8, rect.left + rect.width / 2);
         setToolbarPos({ top, left });
         setShowToolbar(true);
@@ -118,22 +124,28 @@ export const InlineRTE: React.FC<InlineRTEProps> = ({ value, onChange, placehold
   }, []);
 
   const exec = (command: string, valueArg?: string) => {
+    // restore selection before executing
+    const sel = window.getSelection();
+    if (lastRangeRef.current && sel) {
+      sel.removeAllRanges();
+      sel.addRange(lastRangeRef.current);
+    }
     try {
       document.execCommand('styleWithCSS', false, 'true');
     } catch {}
     document.execCommand(command, false, valueArg);
-    // sanitize and propagate change
     const html = sanitizeHtml(editorRef.current?.innerHTML || '');
     onChange(html);
   };
 
   const applyColor = (color: string) => {
+    setCurrentColor(color);
+    if (!color) {
+      const baseColor = getComputedStyle(editorRef.current as HTMLElement).color;
+      exec('foreColor', baseColor);
+      return;
+    }
     exec('foreColor', color);
-  };
-
-  const resetColor = () => {
-    const baseColor = getComputedStyle(editorRef.current as HTMLElement).color;
-    exec('foreColor', baseColor);
   };
 
   const applyFont = (font: string) => {
@@ -200,16 +212,16 @@ export const InlineRTE: React.FC<InlineRTEProps> = ({ value, onChange, placehold
           className="fixed z-50 -translate-x-1/2 rounded-md border bg-popover text-popover-foreground shadow-md px-2 py-1 flex items-center gap-1"
           style={{ top: toolbarPos.top, left: toolbarPos.left }}
         >
-          {/* Font family */}
-          <select
-            className="text-xs bg-transparent border rounded px-1 py-0.5"
-            onChange={(e) => applyFont(e.target.value)}
-            defaultValue="default"
-          >
-            {fonts.map((f) => (
-              <option key={f.value} value={f.value}>{f.label}</option>
-            ))}
-          </select>
+          <Select onValueChange={(v) => applyFont(v)}>
+            <SelectTrigger className="h-7 min-w-[120px] bg-popover">
+              <SelectValue placeholder="Default" />
+            </SelectTrigger>
+            <SelectContent className="z-[90] bg-popover">
+              {fonts.map((f) => (
+                <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
           <div className="w-px h-4 bg-border mx-1" />
 
@@ -228,19 +240,20 @@ export const InlineRTE: React.FC<InlineRTEProps> = ({ value, onChange, placehold
 
           <div className="w-px h-4 bg-border mx-1" />
 
-          {/* Colors */}
-          <div className="flex items-center gap-1">
-            {colors.map((c) => (
-              <button
-                key={c}
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={() => applyColor(c)}
-                className="h-5 w-5 rounded-full border"
-                style={{ backgroundColor: c }}
-                aria-label={`color ${c}`}
-              />
-            ))}
-            <Button size="sm" variant="secondary" className="h-7 px-2 text-[10px]" onMouseDown={(e) => e.preventDefault()} onClick={resetColor}>
+          {/* Full color picker with reset */}
+          <div className="flex items-center gap-2">
+            <ColorPicker
+              compact
+              color={currentColor}
+              onChange={(c) => {
+                if (!c || c === 'transparent') {
+                  applyColor('');
+                } else {
+                  applyColor(c);
+                }
+              }}
+            />
+            <Button size="sm" variant="secondary" className="h-7 px-2 text-[10px]" onMouseDown={(e) => e.preventDefault()} onClick={() => applyColor('')}>
               Reset
             </Button>
           </div>
