@@ -1,5 +1,5 @@
 import React from 'react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { ElementorPageBuilder } from '@/components/page-builder/ElementorPageBuilder';
 import { PageBuilderData } from '@/components/page-builder/types';
 import { Button } from '@/components/ui/button';
@@ -50,10 +50,15 @@ const ProductDescriptionBuilderDialog: React.FC<ProductDescriptionBuilderDialogP
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent hideClose className="p-0 m-0 w-screen h-screen max-w-none left-0 top-0 translate-x-0 translate-y-0 rounded-none" onOpenAutoFocus={(e) => e.preventDefault()}>
+        <DialogTitle className="sr-only">Product Description Builder</DialogTitle>
+        <DialogDescription className="sr-only">Build and save the product description.</DialogDescription>
         <div className="w-full h-full flex flex-col">
           <header className="flex items-center justify-between border-b bg-background px-4 pr-14 py-2">
             <h1 className="text-lg font-semibold text-foreground">Product Description Builder</h1>
             <div className="flex items-center gap-2">
+              <Button variant="outline" onClick={() => onOpenChange(false)}>
+                Close
+              </Button>
               <Button onClick={handleSave} disabled={saving}>
                 <Save className="h-4 w-4 mr-2" /> {saving ? 'Saving...' : 'Save'}
               </Button>
