@@ -2,8 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-@import './styles/product-cards.css';
-
 /* F-Commerce SaaS Design System - Bangladeshi Market Focus
 All colors MUST be HSL. Designed for trust, energy, and conversion.
 */
