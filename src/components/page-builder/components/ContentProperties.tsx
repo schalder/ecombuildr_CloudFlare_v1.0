@@ -11,6 +11,10 @@ import { MediaSelector } from './MediaSelector';
 import { PageBuilderElement } from '../types';
 import { ImageContentProperties } from './ImageContentProperties';
 import { VideoContentProperties } from './VideoContentProperties';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { IconPicker } from '@/components/ui/icon-picker';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { ICONS_MAP } from '@/components/icons/fontawesome-list';
 
 interface ContentPropertiesProps {
   element: PageBuilderElement;
@@ -257,6 +261,7 @@ export const ContentProperties: React.FC<ContentPropertiesProps> = ({
     };
 
     const style = element.content.style || (element.content.ordered ? 'numbers' : 'bullets');
+    const defaultIconName: string = element.content.defaultIcon || 'check';
 
     return (
       <div className="space-y-4">
@@ -283,6 +288,16 @@ export const ContentProperties: React.FC<ContentPropertiesProps> = ({
           />
           <Label htmlFor="list-ordered" className="text-sm">Numbered list (legacy)</Label>
         </div>
+
+        {style === 'icons' && (
+          <div>
+            <IconPicker
+              label="Default Icon"
+              value={defaultIconName}
+              onChange={(name) => onUpdate('defaultIcon', name)}
+            />
+          </div>
+        )}
         
         <div>
           <div className="flex items-center justify-between">
@@ -294,36 +309,45 @@ export const ContentProperties: React.FC<ContentPropertiesProps> = ({
           </div>
 
           <div className="space-y-2 mt-2">
-            {rawItems.map((item: any, index: number) => (
-              <div key={index} className="flex items-center gap-2">
-                <Input
-                  value={typeof item === 'string' ? item : (item.text || '')}
-                  onChange={(e) => updateItemText(index, e.target.value)}
-                  placeholder={`Item ${index + 1}`}
-                />
-                {style === 'icons' && (
-                  <div className="flex items-center gap-2">
-                    <Input
-                      className="w-32"
-                      value={typeof item === 'object' ? (item.icon || '') : ''}
-                      onChange={(e) => updateItemIcon(index, e.target.value)}
-                      placeholder="fa icon"
-                    />
-                    <div className="w-8 text-center">
-                      <i className={`fa-solid fa-${typeof item === 'object' ? (item.icon || 'check') : 'check'}`}></i>
+            {rawItems.map((item: any, index: number) => {
+              const iconName = typeof item === 'object' ? (item.icon || defaultIconName) : defaultIconName;
+              const faIcon = ICONS_MAP[iconName];
+              return (
+                <div key={index} className="flex items-center gap-2">
+                  <Input
+                    value={typeof item === 'string' ? item : (item.text || '')}
+                    onChange={(e) => updateItemText(index, e.target.value)}
+                    placeholder={`Item ${index + 1}`}
+                  />
+                  {style === 'icons' && (
+                    <div className="flex items-center gap-2">
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button variant="outline" size="sm" className="h-8">
+                            <span className="mr-2">Icon</span>
+                            {faIcon ? <FontAwesomeIcon icon={faIcon} /> : null}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent align="start" className="w-[360px]">
+                          <IconPicker
+                            value={iconName}
+                            onChange={(name) => updateItemIcon(index, name)}
+                          />
+                        </PopoverContent>
+                      </Popover>
                     </div>
-                  </div>
-                )}
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => removeItem(index)}
-                  className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                >
-                  <Trash2 className="h-3 w-3" />
-                </Button>
-              </div>
-            ))}
+                  )}
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => removeItem(index)}
+                    className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
+                </div>
+              );
+            })}
 
             {rawItems.length === 0 && (
               <div className="text-center text-muted-foreground text-sm py-4">

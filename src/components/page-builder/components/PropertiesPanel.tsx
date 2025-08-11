@@ -58,7 +58,8 @@ import {
   ButtonElementStyles,
   OrderConfirmationElementStyles,
   EcommerceActionButtonStyles,
-  WeeklyFeaturedTypographyStyles
+  WeeklyFeaturedTypographyStyles,
+  ListElementStyles
 } from './ElementStyles';
 import { CheckoutElementStyles } from './ElementStyles/CheckoutElementStyles';
 
@@ -135,6 +136,15 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
           <WeeklyFeaturedTypographyStyles key={`wfty-${selectedElement.id}`} element={selectedElement} onStyleUpdate={handleStyleUpdate} />
           {/* Button styles */}
           <EcommerceActionButtonStyles key={`btn-${selectedElement.id}`} element={selectedElement} onStyleUpdate={handleStyleUpdate} />
+        </>
+      );
+    }
+
+    if (selectedElement.type === 'list') {
+      return (
+        <>
+          <TextElementStyles key={`text-${selectedElement.id}`} element={selectedElement} onStyleUpdate={handleStyleUpdate} />
+          <ListElementStyles key={`list-${selectedElement.id}`} element={selectedElement} onStyleUpdate={handleStyleUpdate} />
         </>
       );
     }

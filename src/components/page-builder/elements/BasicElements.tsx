@@ -8,6 +8,8 @@ import { elementRegistry } from './ElementRegistry';
 import { InlineEditor } from '../components/InlineEditor';
 import { renderElementStyles } from '../utils/styleRenderer';
 import { generateResponsiveCSS } from '../utils/responsiveStyles';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { ICONS_MAP } from '@/components/icons/fontawesome-list';
 
 // Heading Element
 const HeadingElement: React.FC<{
@@ -254,7 +256,7 @@ const ListElement: React.FC<{
   isEditing?: boolean;
   deviceType?: 'desktop' | 'tablet' | 'mobile';
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
-}> = ({ element, isEditing, onUpdate }) => {
+}> = ({ element, isEditing, onUpdate, deviceType = 'desktop' }) => {
   const rawItems = element.content.items || ['List item 1', 'List item 2', 'List item 3'];
   const style: 'bullets' | 'numbers' | 'icons' = element.content.style || (element.content.ordered ? 'numbers' : 'bullets');
   const defaultIcon: string = element.content.defaultIcon || 'check';
@@ -264,35 +266,54 @@ const ListElement: React.FC<{
     typeof it === 'string' ? { text: it, icon: defaultIcon } : { text: it.text, icon: it.icon || defaultIcon }
   );
 
-  const elementStyles = renderElementStyles(element);
-  const className = `element-${element.id}`;
+  const baseStyles = renderElementStyles(element);
+
+  // Responsive overrides for list-specific styles
+  const responsive = element.styles?.responsive || {};
+  const deviceKey = deviceType === 'tablet' ? 'desktop' : deviceType;
+  const currentDeviceStyles: any = (responsive as any)[deviceKey] || {};
+
+  const iconSize: number = currentDeviceStyles.iconSize ?? (element.styles as any)?.iconSize ?? 16;
+  const itemGap: number = currentDeviceStyles.itemGap ?? (element.styles as any)?.itemGap ?? 4;
+  const indent: number = currentDeviceStyles.indent ?? (element.styles as any)?.indent ?? 0;
+
+  const containerStyles: React.CSSProperties = {
+    ...baseStyles,
+    paddingLeft: indent ? `${indent}px` : baseStyles.paddingLeft,
+  };
 
   let listNode: React.ReactNode;
 
   if (style === 'numbers') {
     listNode = (
-      <ol style={elementStyles} className={`${className} list-decimal list-inside`}>
+      <ol style={containerStyles} className={`element-${element.id} list-decimal list-inside`}>
         {items.map((item, index) => (
-          <li key={index} className="mb-1">{item.text}</li>
+          <li key={index} className="mb-1" style={{ marginBottom: `${itemGap}px` }}>{item.text}</li>
         ))}
       </ol>
     );
   } else if (style === 'icons') {
     listNode = (
-      <ul style={elementStyles} className={`${className} list-none pl-0`}>
-        {items.map((item, index) => (
-          <li key={index} className="mb-1 flex items-start">
-            <i className={`fa-solid fa-${item.icon} mr-2 mt-1`} aria-hidden="true"></i>
-            <span>{item.text}</span>
-          </li>
-        ))}
+      <ul style={containerStyles} className={`element-${element.id} list-none pl-0`}>
+        {items.map((item, index) => {
+          const iconName = item.icon || defaultIcon;
+          const faIcon = ICONS_MAP[iconName] || ICONS_MAP['check'];
+          return (
+            <li key={index} className="mb-1 flex items-start" style={{ marginBottom: `${itemGap}px` }}>
+              <span className="mr-2 mt-0.5" style={{ fontSize: `${iconSize}px`, lineHeight: 1 }}>
+                <FontAwesomeIcon icon={faIcon} />
+              </span>
+              <span>{item.text}</span>
+            </li>
+          );
+        })}
       </ul>
     );
   } else {
     listNode = (
-      <ul style={elementStyles} className={`${className} list-disc list-inside`}>
+      <ul style={containerStyles} className={`element-${element.id} list-disc list-inside`}>
         {items.map((item, index) => (
-          <li key={index} className="mb-1">{item.text}</li>
+          <li key={index} className="mb-1" style={{ marginBottom: `${itemGap}px` }}>{item.text}</li>
         ))}
       </ul>
     );
