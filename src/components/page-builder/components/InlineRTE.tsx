@@ -237,6 +237,7 @@ export const InlineRTE: React.FC<InlineRTEProps> = ({ value, onChange, placehold
           onMouseDown={(e) => e.preventDefault()}
           className="fixed z-50 -translate-x-1/2 rounded-md border bg-popover text-popover-foreground shadow-md px-2 py-1 flex items-center gap-1"
           style={{ top: toolbarPos.top, left: toolbarPos.left }}
+          data-rte-floating
         >
           <Select value={selectedFont} onValueChange={(v) => {
             setSelectedFont(v);
@@ -305,7 +306,17 @@ export const InlineRTE: React.FC<InlineRTEProps> = ({ value, onChange, placehold
         suppressContentEditableWarning
         data-placeholder={placeholder}
         onFocus={() => setIsEditing(true)}
-        onBlur={() => { setIsEditing(false); setShowToolbar(false); onInput(); }}
+        onBlur={() => {
+          setIsEditing(false);
+          const active = document.activeElement as HTMLElement | null;
+          const toolbarEl = toolbarRef.current;
+          const floatingEls = Array.from(document.querySelectorAll('[data-rte-floating]')) as HTMLElement[];
+          const interacting = !!active && ((toolbarEl && toolbarEl.contains(active)) || floatingEls.some((f) => f.contains(active)));
+          if (!interacting) {
+            setShowToolbar(false);
+          }
+          onInput();
+        }}
         onInput={onInput}
         onKeyDown={onKeyDown}
       />
