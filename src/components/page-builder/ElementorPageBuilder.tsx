@@ -679,7 +679,7 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = memo(({
           </div>
           
           {!sidebarCollapsed && (
-            <div className="flex-1 min-h-0 overflow-y-auto">
+            <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain">
               <div className="p-4 space-y-6">
                 {filteredElements.map((category) => (
                   <div key={category.name}>
@@ -748,7 +748,7 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = memo(({
           </div>
 
           {/* Canvas Area */}
-          <div className="flex-1 overflow-auto bg-muted/30 p-8">
+          <div className="flex-1 overflow-auto overscroll-contain bg-muted/30 p-8">
             <div style={getDevicePreviewStyles()} className="min-h-full bg-background rounded-lg shadow-sm">
               {data.sections.length === 0 ? (
                 <div className="p-16 text-center">
@@ -832,7 +832,7 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = memo(({
           </div>
           
           {!propertiesPanelCollapsed && (
-            <div className="flex-1 min-h-0 overflow-y-auto">
+            <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain">
               {selection ? (
                 (() => {
                   // Get selected item data based on selection type
