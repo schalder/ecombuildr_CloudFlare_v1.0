@@ -711,15 +711,13 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
                     {/* Items */}
                     <div className="space-y-2">
                       {items.map((it)=> (
-                        <div key={it.id} className="flex flex-wrap items-start justify-between gap-3">
-                          <div className="flex items-center gap-3 min-w-0">
-                            {showItemImages && it.image && (
-                              <img src={it.image} alt={it.name} className="w-10 h-10 object-cover rounded border" />
-                            )}
-                            <div className="min-w-0">
-                              <div className="text-sm font-medium truncate">{nameWithVariant(it.name, (it as any).variation)}</div>
-                              <div className="text-xs text-muted-foreground">× {it.quantity}</div>
-                            </div>
+                        <div key={it.id} className={`grid items-center gap-3 ${showItemImages && it.image ? 'grid-cols-[auto_1fr_auto]' : 'grid-cols-[1fr_auto]'}`}>
+                          {showItemImages && it.image && (
+                            <img src={it.image} alt={it.name} className="w-10 h-10 object-cover rounded border shrink-0" />
+                          )}
+                          <div className="min-w-0">
+                            <div className="text-sm font-medium break-words">{nameWithVariant(it.name, (it as any).variation)}</div>
+                            <div className="text-xs text-muted-foreground">× {it.quantity}</div>
                           </div>
                           <div className="text-sm font-medium shrink-0 whitespace-nowrap text-right">{formatCurrency(it.price * it.quantity)}</div>
                         </div>
