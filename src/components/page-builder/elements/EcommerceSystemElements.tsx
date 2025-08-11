@@ -342,19 +342,23 @@ const CartFullElement: React.FC<{ element: PageBuilderElement }> = () => {
       <div className="md:col-span-2 space-y-4">
         {items.map((item) => (
           <Card key={item.id}>
-            <CardContent className="p-4 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3 min-w-0">
-                {item.image && <img src={item.image} alt={item.name} className="w-16 h-16 object-cover rounded border" />}
+            <CardContent className="p-4">
+              <div className={`grid items-start gap-3 ${item.image ? 'grid-cols-[auto_1fr_auto]' : 'grid-cols-[1fr_auto]'}`}>
+                {item.image && (
+                  <img src={item.image} alt={item.name} className="w-16 h-16 object-cover rounded border shrink-0" />
+                )}
                 <div className="min-w-0">
-                  <div className="font-medium truncate">{nameWithVariant(item.name, (item as any).variation)}</div>
-                  <div className="text-sm text-muted-foreground">{formatCurrency(item.price)}</div>
+                  <div className="font-medium break-words">{nameWithVariant(item.name, (item as any).variation)}</div>
                 </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" onClick={() => updateQuantity(item.id, Math.max(1, item.quantity-1))}>-</Button>
-                <span className="w-8 text-center">{item.quantity}</span>
-                <Button variant="outline" size="sm" onClick={() => updateQuantity(item.id, item.quantity+1)}>+</Button>
-                <Button variant="ghost" size="sm" onClick={() => removeItem(item.id)}>Remove</Button>
+                <div className="text-sm font-medium shrink-0 whitespace-nowrap text-right self-start">
+                  {formatCurrency(item.price)}
+                </div>
+                <div className={`${item.image ? 'col-span-3' : 'col-span-2'} flex items-center gap-2 pt-2`}>
+                  <Button variant="outline" size="sm" onClick={() => updateQuantity(item.id, Math.max(1, item.quantity-1))}>-</Button>
+                  <span className="w-8 text-center">{item.quantity}</span>
+                  <Button variant="outline" size="sm" onClick={() => updateQuantity(item.id, item.quantity+1)}>+</Button>
+                  <Button variant="ghost" size="sm" onClick={() => removeItem(item.id)}>Remove</Button>
+                </div>
               </div>
             </CardContent>
           </Card>
