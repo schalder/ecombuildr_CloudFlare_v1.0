@@ -62,6 +62,7 @@ import { elementRegistry } from './elements';
 import { renderSectionStyles, renderRowStyles, renderColumnStyles, hasUserBackground, hasUserShadow } from './utils/styleRenderer';
 import { SectionDropZone } from './components/SectionDropZone';
 import { RowDropZone } from './components/RowDropZone';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 // Helper function to get responsive grid classes for a row
 const getResponsiveGridClasses = (columnLayout: string, deviceType: 'desktop' | 'tablet' | 'mobile'): string => {
@@ -679,7 +680,7 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = memo(({
           </div>
           
           {!sidebarCollapsed && (
-            <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain">
+            <ScrollArea className="flex-1">
               <div className="p-4 space-y-6">
                 {filteredElements.map((category) => (
                   <div key={category.name}>
@@ -698,7 +699,7 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = memo(({
                   </div>
                 ))}
               </div>
-            </div>
+            </ScrollArea>
           )}
         </div>
 
@@ -748,68 +749,70 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = memo(({
           </div>
 
           {/* Canvas Area */}
-          <div className="flex-1 overflow-auto overscroll-contain bg-muted/30 p-8">
-            <div style={getDevicePreviewStyles()} className="min-h-full bg-background rounded-lg shadow-sm">
-              {data.sections.length === 0 ? (
-                <div className="p-16 text-center">
-                  <h3 className="text-lg font-medium mb-2">Start Building Your Page</h3>
-                  <p className="text-muted-foreground mb-4">Add your first section to get started</p>
-                  <Button onClick={() => addSection()}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Section
-                  </Button>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {/* Section drop zone at the beginning */}
-                  <SectionDropZone 
-                    insertIndex={0} 
-                    onMoveSection={moveSection}
-                  />
-                  
-                  {data.sections.map((section, sectionIndex) => (
-                    <div key={section.id}>
-                      <SectionComponent
-                        section={section}
-                        sectionIndex={sectionIndex}
-                        deviceType={deviceType}
-                        isSelected={selection?.type === 'section' && selection.id === section.id}
-                        onSelect={() => setSelection({ type: 'section', id: section.id })}
-                        onDelete={() => deleteSection(section.id)}
-                        onDuplicate={() => duplicateSection(section.id)}
-                        onAddRow={(insertIndex?: number) => setShowColumnModal({ sectionId: section.id, insertIndex })}
-                        onDeleteRow={(rowId) => deleteRow(section.id, rowId)}
-                        onMoveRow={moveRow}
-                        onMoveElement={moveElement}
-                        onMoveSection={moveSection}
-                        onAddElement={addElement}
-                        onUpdateElement={updateElement}
-                        onDeleteElement={deleteElement}
-                        onDuplicateElement={duplicateElement}
-                        selection={selection}
-                        onSelectionChange={setSelection}
-                        onAddSectionAfter={() => addSectionAfter(sectionIndex)}
-                      />
-                      
-                      {/* Section drop zone after each section */}
-                      <SectionDropZone 
-                        insertIndex={sectionIndex + 1} 
-                        onMoveSection={moveSection}
-                      />
-                    </div>
-                  ))}
-                  
-                  {/* Add Section button at end */}
-                  <div className="pt-4 text-center">
-                    <Button variant="outline" onClick={() => addSection()}>
+          <ScrollArea className="flex-1 bg-muted/30">
+            <div className="p-8">
+              <div style={getDevicePreviewStyles()} className="min-h-full bg-background rounded-lg shadow-sm">
+                {data.sections.length === 0 ? (
+                  <div className="p-16 text-center">
+                    <h3 className="text-lg font-medium mb-2">Start Building Your Page</h3>
+                    <p className="text-muted-foreground mb-4">Add your first section to get started</p>
+                    <Button onClick={() => addSection()}>
                       <Plus className="h-4 w-4 mr-2" />
                       Add Section
                     </Button>
                   </div>
-                </div>
-              )}
+                ) : (
+                  <div className="space-y-4">
+                    {/* Section drop zone at the beginning */}
+                    <SectionDropZone 
+                      insertIndex={0} 
+                      onMoveSection={moveSection}
+                    />
+                    
+                    {data.sections.map((section, sectionIndex) => (
+                      <div key={section.id}>
+                        <SectionComponent
+                          section={section}
+                          sectionIndex={sectionIndex}
+                          deviceType={deviceType}
+                          isSelected={selection?.type === 'section' && selection.id === section.id}
+                          onSelect={() => setSelection({ type: 'section', id: section.id })}
+                          onDelete={() => deleteSection(section.id)}
+                          onDuplicate={() => duplicateSection(section.id)}
+                          onAddRow={(insertIndex?: number) => setShowColumnModal({ sectionId: section.id, insertIndex })}
+                          onDeleteRow={(rowId) => deleteRow(section.id, rowId)}
+                          onMoveRow={moveRow}
+                          onMoveElement={moveElement}
+                          onMoveSection={moveSection}
+                          onAddElement={addElement}
+                          onUpdateElement={updateElement}
+                          onDeleteElement={deleteElement}
+                          onDuplicateElement={duplicateElement}
+                          selection={selection}
+                          onSelectionChange={setSelection}
+                          onAddSectionAfter={() => addSectionAfter(sectionIndex)}
+                        />
+                        
+                        {/* Section drop zone after each section */}
+                        <SectionDropZone 
+                          insertIndex={sectionIndex + 1} 
+                          onMoveSection={moveSection}
+                        />
+                      </div>
+                    ))}
+                    
+                    {/* Add Section button at end */}
+                    <div className="pt-4 text-center">
+                      <Button variant="outline" onClick={() => addSection()}>
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Section
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
+          </ScrollArea>
         </div>
 
         {/* Properties Panel */}
@@ -832,7 +835,7 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = memo(({
           </div>
           
           {!propertiesPanelCollapsed && (
-            <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain">
+            <ScrollArea className="flex-1">
               {selection ? (
                 (() => {
                   // Get selected item data based on selection type
@@ -894,7 +897,7 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = memo(({
                   <p className="text-sm">Select an element to edit properties</p>
                 </div>
               )}
-            </div>
+            </ScrollArea>
           )}
         </div>
       </div>
