@@ -414,26 +414,19 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
   // Dynamic grid helpers for responsive form layout
   const showFullName = !!fields.fullName?.enabled;
   const showPhone = !!fields.phone?.enabled;
-  const infoGridCols = deviceType === 'mobile'
-    ? 'grid-cols-1'
-    : (showFullName && showPhone ? 'grid-cols-2' : 'grid-cols-1');
+  const infoGridCols = (showFullName && showPhone) ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1';
 
   const showCity = !!fields.city?.enabled;
   const showArea = !!fields.area?.enabled;
-  const ship2GridCols = deviceType === 'mobile'
-    ? 'grid-cols-1'
-    : (showCity && showArea ? 'grid-cols-2' : 'grid-cols-1');
+  const ship2GridCols = (showCity && showArea) ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1';
 
   const showCountry = !!fields.country?.enabled;
   const showState = !!fields.state?.enabled;
   const showPostal = !!fields.postalCode?.enabled;
-  const ship3GridCols = deviceType === 'mobile'
-    ? 'grid-cols-1'
-    : (showCountry && showState && showPostal
-      ? 'grid-cols-3'
-      : ((showCountry && showState) || (showCountry && showPostal) || (showState && showPostal)
-        ? 'grid-cols-2'
-        : 'grid-cols-1'));
+  const ship3Count = [showCountry, showState, showPostal].filter(Boolean).length;
+  let ship3GridCols = 'grid-cols-1';
+  if (ship3Count >= 3) ship3GridCols = 'grid-cols-1 md:grid-cols-3';
+  else if (ship3Count === 2) ship3GridCols = 'grid-cols-1 md:grid-cols-2';
 
   // Single-column layout (no grid)
 
@@ -458,6 +451,9 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
   const formBorderWidth = Number((backgrounds as any)?.formBorderWidth || 0);
   const summaryBorderWidth = Number((backgrounds as any)?.summaryBorderWidth || 0);
   const buttonSize = (((element.styles as any)?.checkoutButtonSize) || 'default') as 'sm' | 'default' | 'lg';
+  // Inline resolved styles so Style tab 'Mobile' preview applies instantly
+  const buttonInline = React.useMemo(() => mergeResponsiveStyles({}, buttonStyles, deviceType as any), [buttonStyles, deviceType]);
+  const headerInline = React.useMemo(() => mergeResponsiveStyles({}, headerStyles, deviceType as any), [headerStyles, deviceType]);
 
   // Recompute shipping cost when address details change (primarily city)
   useEffect(() => {
@@ -630,7 +626,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
             <CardContent className="p-4 md:p-6 space-y-6">
               {sections.info && (
                 <section className="space-y-4">
-                  <h3 className={`mb-3 font-semibold element-${element.id}-section-header`}>{headings.info}</h3>
+                  <h3 className={`mb-3 font-semibold element-${element.id}-section-header`} style={headerInline as React.CSSProperties}>{headings.info}</h3>
                   <div className={`grid ${infoGridCols} gap-4`}>
                     {fields.fullName?.enabled && (
                       <Input placeholder={fields.fullName.placeholder} value={form.customer_name} onChange={e=>setForm(f=>({...f,customer_name:e.target.value}))} required={!!(fields.fullName?.enabled && (fields.fullName?.required ?? true))} aria-required={!!(fields.fullName?.enabled && (fields.fullName?.required ?? true))} />
@@ -649,7 +645,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
 
               {sections.shipping && (
                 <section className="space-y-4">
-                  <h3 className={`mb-3 font-semibold element-${element.id}-section-header`}>{headings.shipping}</h3>
+                  <h3 className={`mb-3 font-semibold element-${element.id}-section-header`} style={headerInline as React.CSSProperties}>{headings.shipping}</h3>
                   {fields.address?.enabled && (
                     <Textarea placeholder={fields.address.placeholder} value={form.shipping_address} onChange={e=>setForm(f=>({...f,shipping_address:e.target.value}))} rows={3} required={!!(fields.address?.enabled && (fields.address?.required ?? true))} aria-required={!!(fields.address?.enabled && (fields.address?.required ?? true))} />
                   )}
@@ -694,9 +690,9 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
 
               {sections.payment && (
                 <section className="space-y-4">
-                  <h3 className={`mb-3 font-semibold element-${element.id}-section-header`}>{headings.payment}</h3>
+                  <h3 className={`mb-3 font-semibold element-${element.id}-section-header`} style={headerInline as React.CSSProperties}>{headings.payment}</h3>
                   <Select value={form.payment_method} onValueChange={(v:any)=>setForm(f=>({...f,payment_method:v}))}>
-                    <SelectTrigger><SelectValue placeholder="Select method" /></SelectTrigger>
+                    <SelectTrigger className="w-full"><SelectValue placeholder="Select method" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="cod">Cash on Delivery</SelectItem>
                       <SelectItem value="bkash">bKash</SelectItem>
@@ -710,7 +706,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
 
               {sections.summary && (
                 <section className="space-y-3">
-                  <h3 className={`mb-3 font-semibold element-${element.id}-section-header`}>{headings.summary}</h3>
+                  <h3 className={`mb-3 font-semibold element-${element.id}-section-header`} style={headerInline as React.CSSProperties}>{headings.summary}</h3>
                   <div className="rounded-md p-4" style={{ backgroundColor: backgrounds.summaryBg || undefined, borderColor: (backgrounds as any).summaryBorderColor || undefined, borderWidth: summaryBorderWidth || 0, borderStyle: summaryBorderWidth ? 'solid' as any : undefined }}>
                     {/* Items */}
                     <div className="space-y-2">
@@ -734,7 +730,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
                     <div className="flex justify-between"><span>Shipping</span><span className="font-semibold">{formatCurrency(shippingCost)}</span></div>
                     <div className="flex justify-between font-bold"><span>Total</span><span>{formatCurrency(total+shippingCost)}</span></div>
 
-                    <Button size={buttonSize as any} className={`w-full mt-2 element-${element.id}`} onClick={handleSubmit} disabled={loading}>
+                    <Button size={buttonSize as any} className={`w-full mt-2 element-${element.id}`} style={buttonInline as React.CSSProperties} onClick={handleSubmit} disabled={loading}>
                       {loading? 'Placing Order...' : buttonLabel}
                     </Button>
 
