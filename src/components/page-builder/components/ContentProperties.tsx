@@ -50,24 +50,26 @@ export const ContentProperties: React.FC<ContentPropertiesProps> = ({
         const nodes = Array.from(document.querySelectorAll(
           '[data-pb-section-id],[data-pb-row-id],[data-pb-column-id],[data-pb-element-id]'
         )) as HTMLElement[];
-        const opts = nodes.map((node) => {
+        const optsMap = new Map<string, { id: string; label: string }>();
+        nodes.forEach((node) => {
+          const id = node.id || node.getAttribute('id') || '';
+          if (!id) return;
           let type = 'Section';
           if (node.hasAttribute('data-pb-row-id')) type = 'Row';
           else if (node.hasAttribute('data-pb-column-id')) type = 'Column';
           else if (node.hasAttribute('data-pb-element-id')) type = 'Element';
-          return {
-            id: node.id,
-            label: `${type}: #${node.id}`,
-          };
-        }).filter(o => o.id);
-        setSectionOptions(opts);
+          const label = `${type}: ${id}`; // no leading '#'
+          optsMap.set(id, { id, label });
+        });
+        setSectionOptions(Array.from(optsMap.values()));
       };
       scan();
       const observer = new MutationObserver(() => scan());
-      observer.observe(document.body, { childList: true, subtree: true });
+      observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['id'] });
       return () => observer.disconnect();
     }
   }, [element.type]);
+
   // Image element content
   if (element.type === 'image') {
     return <ImageContentProperties element={element} onUpdate={onUpdate} />;
@@ -204,7 +206,7 @@ export const ContentProperties: React.FC<ContentPropertiesProps> = ({
               onValueChange={(value) => onUpdate('scrollTarget', value.replace(/^#/, ''))}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select a section on this page" />
+                <SelectValue placeholder="Select a target on this page" />
               </SelectTrigger>
               <SelectContent>
                 {sectionOptions
