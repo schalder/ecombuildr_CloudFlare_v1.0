@@ -8,6 +8,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AlignLeft, AlignCenter, AlignRight, Monitor, Smartphone } from 'lucide-react';
 import { PageBuilderElement } from '../../types';
 import { ColorPicker } from '@/components/ui/color-picker';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ensureGoogleFontLoaded } from '@/hooks/useGoogleFontLoader';
 interface TextElementStylesProps {
   element: PageBuilderElement;
   onStyleUpdate: (property: string, value: any) => void;
@@ -39,6 +41,27 @@ export const TextElementStyles: React.FC<TextElementStylesProps> = ({
     };
     onStyleUpdate('responsive', updatedResponsive);
   };
+
+  const fontOptions = React.useMemo(() => {
+    const base = [
+      { label: 'Default', value: 'default' },
+      { label: 'System Sans', value: 'Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji"' },
+      { label: 'Serif', value: 'Georgia, Times New Roman, Times, serif' },
+      { label: 'Monospace', value: 'SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace' },
+    ];
+    const google = [
+      { label: 'Poppins', value: '"Poppins", sans-serif', family: 'Poppins', weights: '400;500;600;700' },
+      { label: 'Montserrat', value: '"Montserrat", sans-serif', family: 'Montserrat', weights: '400;500;600;700' },
+      { label: 'Roboto', value: 'Roboto, sans-serif', family: 'Roboto', weights: '400;500;700' },
+      { label: 'Open Sans', value: '"Open Sans", sans-serif', family: 'Open Sans', weights: '400;600;700' },
+      { label: 'Lato', value: 'Lato, sans-serif', family: 'Lato', weights: '400;700' },
+      { label: 'Playfair Display', value: '"Playfair Display", serif', family: 'Playfair Display', weights: '400;700' },
+    ];
+    return [...base, ...google];
+  }, []);
+
+  const currentFontFamily = (element.styles?.fontFamily || '').trim();
+  const selectedFontValue = (fontOptions.find((f: any) => f.value === currentFontFamily)?.value as string) || 'default';
   return (
     <div className="space-y-4">
       {/* Typography */}
@@ -65,6 +88,28 @@ export const TextElementStyles: React.FC<TextElementStylesProps> = ({
             </div>
           </div>
           
+          <div>
+            <Label className="text-xs">Font Family</Label>
+            <Select value={selectedFontValue} onValueChange={(v) => {
+              const meta = (fontOptions as any[]).find((f: any) => f.value === v);
+              if (meta && meta.family) ensureGoogleFontLoaded(meta.family, meta.weights);
+              if (v === 'default') {
+                onStyleUpdate('fontFamily', '');
+              } else {
+                onStyleUpdate('fontFamily', v);
+              }
+            }}>
+              <SelectTrigger className="h-8 bg-background">
+                <SelectValue placeholder="Default" />
+              </SelectTrigger>
+              <SelectContent>
+                {(fontOptions as any[]).map((f: any) => (
+                  <SelectItem key={f.label} value={f.value}>{f.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           <div>
             <Label className="text-xs">Font Size</Label>
             <div className="flex items-center space-x-2">
