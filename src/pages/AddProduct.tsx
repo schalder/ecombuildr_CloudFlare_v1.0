@@ -19,6 +19,8 @@ import ProductDescriptionBuilderDialog from '@/components/products/ProductDescri
 import type { PageBuilderData } from '@/components/page-builder/types';
 import VariationsBuilder, { VariationOption } from '@/components/products/VariationsBuilder';
 import VariantMatrix, { VariantEntry } from '@/components/products/VariantMatrix';
+import { AspectRatio } from '@/components/ui/aspect-ratio';
+import { parseVideoUrl, buildEmbedUrl } from '@/components/page-builder/utils/videoUtils';
 
 export default function AddProduct() {
   const { user } = useAuth();
@@ -42,6 +44,7 @@ export default function AddProduct() {
     seo_title: '',
     seo_description: '',
     images: [] as string[],
+    video_url: '',
   });
 
   // New local states
@@ -144,16 +147,17 @@ const { error } = await supabase.from('products').insert({
         inventory_quantity: parseInt(formData.inventory_quantity) || 0,
         category_id: formData.category_id || null,
         images: formData.images,
+        video_url: formData.video_url || null,
         // New fields
         variations: hasVariants ? { options: variations, variants: variantEntries } : [],
         free_shipping_min_amount: enableFreeShipping && freeShippingMin ? parseFloat(freeShippingMin) : null,
         easy_returns_enabled: easyReturnsEnabled,
         easy_returns_days: easyReturnsEnabled && easyReturnsDays ? parseInt(easyReturnsDays) : null,
-        action_buttons: actionButtons,
+        action_buttons: actionButtons as any,
         allowed_payment_methods: allowedPayments.length ? allowedPayments : null,
         description_mode: descriptionMode,
-        description_builder: descriptionBuilder,
-      });
+        description_builder: descriptionBuilder as any,
+      } as any);
 
       if (error) throw error;
 
@@ -526,6 +530,36 @@ const { error } = await supabase.from('products').insert({
                   Add Image URL
                 </Button>
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="video_url">Product Video (optional)</Label>
+              <Input
+                id="video_url"
+                value={formData.video_url}
+                onChange={(e) => setFormData(prev => ({ ...prev, video_url: e.target.value }))}
+                placeholder="YouTube/Vimeo/Wistia link or direct MP4/WebM URL"
+              />
+              {formData.video_url && (() => {
+                const info = parseVideoUrl(formData.video_url);
+                if (info.type === 'unknown') return null;
+                return (
+                  <AspectRatio ratio={16/9}>
+                    {info.type === 'hosted' ? (
+                      <video src={info.embedUrl} controls className="w-full h-full rounded border" />
+                    ) : (
+                      <iframe
+                        src={buildEmbedUrl(info.embedUrl!, info.type, { controls: true })}
+                        className="w-full h-full rounded border"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                        title="Product Video Preview"
+                      />
+                    )}
+                  </AspectRatio>
+                );
+              })()}
+              <p className="text-xs text-muted-foreground">Supports YouTube, Vimeo, Wistia, or direct .mp4/.webm links.</p>
             </div>
           </CardContent>
         </Card>

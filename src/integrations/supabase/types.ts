@@ -826,6 +826,8 @@ export type Database = {
           cost_price: number | null
           created_at: string | null
           description: string | null
+          description_builder: Json | null
+          description_mode: string
           easy_returns_days: number | null
           easy_returns_enabled: boolean
           free_shipping_min_amount: number | null
@@ -844,6 +846,7 @@ export type Database = {
           track_inventory: boolean | null
           updated_at: string | null
           variations: Json | null
+          video_url: string | null
         }
         Insert: {
           action_buttons?: Json
@@ -853,6 +856,8 @@ export type Database = {
           cost_price?: number | null
           created_at?: string | null
           description?: string | null
+          description_builder?: Json | null
+          description_mode?: string
           easy_returns_days?: number | null
           easy_returns_enabled?: boolean
           free_shipping_min_amount?: number | null
@@ -871,6 +876,7 @@ export type Database = {
           track_inventory?: boolean | null
           updated_at?: string | null
           variations?: Json | null
+          video_url?: string | null
         }
         Update: {
           action_buttons?: Json
@@ -880,6 +886,8 @@ export type Database = {
           cost_price?: number | null
           created_at?: string | null
           description?: string | null
+          description_builder?: Json | null
+          description_mode?: string
           easy_returns_days?: number | null
           easy_returns_enabled?: boolean
           free_shipping_min_amount?: number | null
@@ -898,6 +906,7 @@ export type Database = {
           track_inventory?: boolean | null
           updated_at?: string | null
           variations?: Json | null
+          video_url?: string | null
         }
         Relationships: [
           {

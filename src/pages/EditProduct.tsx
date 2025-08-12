@@ -61,6 +61,7 @@ export default function EditProduct() {
     category_id: '',
     is_active: true,
     images: [] as string[],
+    video_url: '',
     seo_title: '',
     seo_description: '',
   });
@@ -129,6 +130,7 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
           category_id: product.category_id || '',
           is_active: product.is_active,
           images: Array.isArray(product.images) ? product.images.filter((i: any) => typeof i === 'string') : [],
+          video_url: (product as any).video_url || '',
           seo_title: (product as any).seo_title || '',
           seo_description: (product as any).seo_description || '',
           
@@ -225,19 +227,20 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
         inventory_quantity: formData.inventory_quantity ? parseInt(formData.inventory_quantity) : null,
         category_id: formData.category_id === 'none' ? null : formData.category_id || null,
         images: formData.images,
+        video_url: formData.video_url || null,
         seo_title: formData.seo_title || null,
         seo_description: formData.seo_description || null,
         free_shipping_min_amount: enableFreeShipping && freeShippingMin ? parseFloat(freeShippingMin) : null,
         easy_returns_enabled: easyReturnsEnabled,
         easy_returns_days: easyReturnsEnabled && easyReturnsDays ? parseInt(easyReturnsDays) : null,
-is_active: formData.is_active,
+        is_active: formData.is_active,
         updated_at: new Date().toISOString(),
         variations: hasVariants ? { options: variations, variants: variantEntries } : [],
-        action_buttons: actionButtons,
+        action_buttons: actionButtons as any,
         allowed_payment_methods: allowedPayments.length ? allowedPayments : null,
         description_mode: descriptionMode,
-        description_builder: descriptionBuilder,
-      };
+        description_builder: descriptionBuilder as any,
+      } as any;
 
       const { error } = await supabase
         .from('products')
@@ -628,6 +631,36 @@ is_active: formData.is_active,
                     Add Image URL
                   </Button>
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="video_url">Product Video (optional)</Label>
+                <Input
+                  id="video_url"
+                  value={formData.video_url}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, video_url: e.target.value }))}
+                  placeholder="YouTube/Vimeo/Wistia link or direct MP4/WebM URL"
+                />
+                {formData.video_url && (() => {
+                  const info = parseVideoUrl(formData.video_url);
+                  if (info.type === 'unknown') return null;
+                  return (
+                    <AspectRatio ratio={16/9}>
+                      {info.type === 'hosted' ? (
+                        <video src={info.embedUrl} controls className="w-full h-full rounded border" />
+                      ) : (
+                        <iframe
+                          src={buildEmbedUrl(info.embedUrl!, info.type, { controls: true })}
+                          className="w-full h-full rounded border"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                          title="Product Video Preview"
+                        />
+                      )}
+                    </AspectRatio>
+                  );
+                })()}
+                <p className="text-xs text-muted-foreground">Supports YouTube, Vimeo, Wistia, or direct .mp4/.webm links.</p>
               </div>
             </CardContent>
           </Card>
