@@ -254,15 +254,15 @@ export const ProductDetail: React.FC = () => {
     : 0;
 
   // Build media list (video first if available)
-  const videoInfo = React.useMemo(() => parseVideoUrl((product as any).video_url || ''), [product]);
-  const mediaItems = React.useMemo(() => {
-    const items: Array<{ kind: 'video' | 'image'; src?: string; thumb?: string; }> = [];
+  const videoInfo = parseVideoUrl(((product as any)?.video_url) || '');
+  const mediaItems: Array<{ kind: 'video' | 'image'; src?: string; thumb?: string }> = (() => {
+    const items: Array<{ kind: 'video' | 'image'; src?: string; thumb?: string }> = [];
     if (videoInfo && videoInfo.type !== 'unknown' && videoInfo.embedUrl) {
       items.push({ kind: 'video', src: videoInfo.embedUrl, thumb: videoInfo.thumbnailUrl });
     }
-    (product.images || []).forEach((img) => items.push({ kind: 'image', src: img }));
+    (product?.images || []).forEach((img) => items.push({ kind: 'image', src: img }));
     return items;
-  }, [videoInfo, product]);
+  })();
 
   return (
     <StorefrontLayout>
