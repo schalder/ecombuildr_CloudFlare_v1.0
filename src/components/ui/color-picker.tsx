@@ -34,6 +34,7 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({ color, onChange, label
               variant="outline"
               size="sm"
               className="h-7 w-7 p-0"
+              onMouseDown={(e) => e.preventDefault()}
             >
               <span className="sr-only">Open color picker</span>
               <div 
@@ -45,6 +46,7 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({ color, onChange, label
             <Button
               variant="outline"
               className="w-full justify-start gap-2 h-10"
+              onMouseDown={(e) => e.preventDefault()}
             >
               <div 
                 className="w-4 h-4 rounded border"

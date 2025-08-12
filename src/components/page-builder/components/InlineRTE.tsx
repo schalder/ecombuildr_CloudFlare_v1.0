@@ -246,7 +246,7 @@ export const InlineRTE: React.FC<InlineRTEProps> = ({ value, onChange, placehold
               if (meta && meta.family) ensureGoogleFontLoaded(meta.family, meta.weights);
               applyFont(v);
             }}>
-              <SelectTrigger className="h-7 min-w-[140px] bg-popover">
+              <SelectTrigger className="h-7 min-w-[140px] bg-popover" onMouseDown={(e) => e.preventDefault()}>
                 <SelectValue placeholder="Default" />
               </SelectTrigger>
               <SelectContent className="z-[90] bg-popover" data-rte-floating>
