@@ -552,7 +552,7 @@ const VideoElement: React.FC<{
   isEditing?: boolean;
   deviceType?: 'desktop' | 'tablet' | 'mobile';
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
-}> = ({ element, isEditing, onUpdate }) => {
+}> = ({ element, isEditing, deviceType, onUpdate }) => {
   const { 
     videoType = 'url',
     url = '', 

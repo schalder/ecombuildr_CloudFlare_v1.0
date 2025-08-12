@@ -268,3 +268,6 @@ export const MediaElementStyles: React.FC<MediaElementStylesProps> = ({
           </div>
         </div>
       </div>
+    </div>
+  );
+};
