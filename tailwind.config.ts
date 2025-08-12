@@ -46,10 +46,15 @@ export default {
 					foreground: 'hsl(var(--success-foreground))',
 					light: 'hsl(var(--success-light))'
 				},
-				destructive: {
-					DEFAULT: 'hsl(var(--destructive))',
-					foreground: 'hsl(var(--destructive-foreground))'
-				},
+					destructive: {
+						DEFAULT: 'hsl(var(--destructive))',
+						foreground: 'hsl(var(--destructive-foreground))'
+					},
+					warning: {
+						DEFAULT: 'hsl(var(--warning))',
+						foreground: 'hsl(var(--warning-foreground))',
+						light: 'hsl(var(--warning-light))'
+					},
 				muted: {
 					DEFAULT: 'hsl(var(--muted))',
 					foreground: 'hsl(var(--muted-foreground))'

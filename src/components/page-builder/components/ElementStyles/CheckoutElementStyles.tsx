@@ -70,6 +70,7 @@ export const CheckoutElementStyles: React.FC<CheckoutElementStylesProps> = ({ el
             <SelectItem value="sm">Small</SelectItem>
             <SelectItem value="default">Medium</SelectItem>
             <SelectItem value="lg">Large</SelectItem>
+            <SelectItem value="xl">Extra Large</SelectItem>
           </SelectContent>
         </Select>
       </div>

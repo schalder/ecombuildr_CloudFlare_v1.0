@@ -95,7 +95,7 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
   const backgrounds = (element.styles as any)?.checkoutBackgrounds || {};
   const formBorderWidth = Number((backgrounds as any)?.formBorderWidth || 0);
   const summaryBorderWidth = Number((backgrounds as any)?.summaryBorderWidth || 0);
-  const buttonSize = (((element.styles as any)?.checkoutButtonSize) || 'default') as 'sm' | 'default' | 'lg';
+  const buttonSize = (((element.styles as any)?.checkoutButtonSize) || 'default') as 'sm' | 'default' | 'lg' | 'xl';
   const buttonInline = useMemo(() => mergeResponsiveStyles({}, buttonStyles, deviceType as any), [buttonStyles, deviceType]);
   const headerInline = useMemo(() => mergeResponsiveStyles({}, headerStyles, deviceType as any), [headerStyles, deviceType]);
 
@@ -396,11 +396,11 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
 
             {orderBump.enabled && bumpProduct && (
               <section className="space-y-3">
-                <div className="border border-dashed rounded-md overflow-hidden" style={{ borderColor: 'hsl(55 97% 80%)' }}>
-                  <div className="px-3 py-2" style={{ backgroundColor: 'hsl(55 97% 88%)' }}>
+                <div className="border border-dashed rounded-md overflow-hidden" style={{ borderColor: 'hsl(var(--warning-border))' }}>
+                  <div className="px-3 py-2" style={{ backgroundColor: 'hsl(var(--warning-light))' }}>
                     <label className="flex items-center gap-2">
                       <input type="checkbox" checked={bumpChecked} onChange={(e)=>setBumpChecked(e.target.checked)} />
-                      <span className="text-sm font-semibold" style={{ color: 'hsl(120 60% 35%)' }}>{orderBump.label || 'Add this to my order'}</span>
+                      <span className="text-sm font-semibold" style={{ color: 'hsl(var(--success))' }}>{orderBump.label || 'Add this to my order'}</span>
                     </label>
                   </div>
                   <div className="p-3 flex items-start gap-3">

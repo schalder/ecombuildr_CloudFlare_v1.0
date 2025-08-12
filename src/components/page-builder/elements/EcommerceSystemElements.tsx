@@ -454,7 +454,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
   const backgrounds = (element.styles as any)?.checkoutBackgrounds || {};
   const formBorderWidth = Number((backgrounds as any)?.formBorderWidth || 0);
   const summaryBorderWidth = Number((backgrounds as any)?.summaryBorderWidth || 0);
-  const buttonSize = (((element.styles as any)?.checkoutButtonSize) || 'default') as 'sm' | 'default' | 'lg';
+  const buttonSize = (((element.styles as any)?.checkoutButtonSize) || 'default') as 'sm' | 'default' | 'lg' | 'xl';
   // Inline resolved styles so Style tab 'Mobile' preview applies instantly
   const buttonInline = React.useMemo(() => mergeResponsiveStyles({}, buttonStyles, deviceType as any), [buttonStyles, deviceType]);
   const headerInline = React.useMemo(() => mergeResponsiveStyles({}, headerStyles, deviceType as any), [headerStyles, deviceType]);
