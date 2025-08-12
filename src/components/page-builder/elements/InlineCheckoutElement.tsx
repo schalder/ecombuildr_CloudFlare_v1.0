@@ -87,6 +87,23 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
     custom_fields: {} as Record<string, any>,
   });
 
+  // Allowed payment methods derived from selected product (and optional order bump when checked)
+  const [allowedMethods, setAllowedMethods] = useState<Array<'cod' | 'bkash' | 'nagad' | 'sslcommerz'>>(['cod','bkash','nagad','sslcommerz']);
+  useEffect(() => {
+    let methods: string[] = ['cod','bkash','nagad','sslcommerz'];
+    if (selectedProduct?.allowed_payment_methods && selectedProduct.allowed_payment_methods.length > 0) {
+      methods = methods.filter(m => (selectedProduct.allowed_payment_methods as string[]).includes(m));
+    }
+    if (orderBump.enabled && bumpChecked && bumpProduct?.allowed_payment_methods && bumpProduct.allowed_payment_methods.length > 0) {
+      methods = methods.filter(m => (bumpProduct.allowed_payment_methods as string[]).includes(m));
+    }
+    if (methods.length === 0) methods = ['cod'];
+    setAllowedMethods(methods as any);
+    if (!methods.includes(form.payment_method)) {
+      setForm(prev => ({ ...prev, payment_method: methods[0] as any }));
+    }
+  }, [selectedProduct?.id, bumpProduct?.id, bumpChecked, orderBump.enabled]);
+
   // Styles
   const buttonStyles = (element.styles as any)?.checkoutButton || { responsive: { desktop: {}, mobile: {} } };
   const buttonCSS = generateResponsiveCSS(element.id, buttonStyles);
@@ -384,10 +401,10 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
                 <Select value={form.payment_method} onValueChange={(v:any)=>setForm(f=>({...f,payment_method:v}))}>
                   <SelectTrigger className="w-full"><SelectValue placeholder="Select method" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="cod">Cash on Delivery</SelectItem>
-                    <SelectItem value="bkash">bKash</SelectItem>
-                    <SelectItem value="nagad">Nagad</SelectItem>
-                    <SelectItem value="sslcommerz">Credit/Debit Card (SSLCommerz)</SelectItem>
+                    {allowedMethods.includes('cod') && (<SelectItem value="cod">Cash on Delivery</SelectItem>)}
+                    {allowedMethods.includes('bkash') && (<SelectItem value="bkash">bKash</SelectItem>)}
+                    {allowedMethods.includes('nagad') && (<SelectItem value="nagad">Nagad</SelectItem>)}
+                    {allowedMethods.includes('sslcommerz') && (<SelectItem value="sslcommerz">Credit/Debit Card (SSLCommerz)</SelectItem>)}
                   </SelectContent>
                 </Select>
                 
