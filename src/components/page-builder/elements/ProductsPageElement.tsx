@@ -94,26 +94,22 @@ export const ProductsPageElement: React.FC<{
   }, [deviceType, (element as any).styles?.buttonStyles]);
 
   const getGridClasses = () => {
-    const cols = element.content.columns || 4;
-    if (deviceType === 'mobile') {
-      const mCols = (element.content as any).mobileColumns as number | undefined;
-      const m = typeof mCols === 'number' ? Math.max(1, Math.min(3, mCols)) : 2;
-      const map: Record<number, string> = { 1: 'grid-cols-1', 2: 'grid-cols-2', 3: 'grid-cols-3' };
-      return map[m] || 'grid-cols-2';
-    }
-    if (deviceType === 'tablet') {
-      if (columnCount === 1) return 'grid-cols-1';
-      const tCols = element.content.tabletColumns as number | undefined;
-      if (typeof tCols === 'number') {
-        const t = Math.max(1, Math.min(4, tCols));
-        const map: Record<number, string> = { 1: 'grid-cols-1', 2: 'grid-cols-2', 3: 'grid-cols-3', 4: 'grid-cols-4' };
-        return map[t];
-      }
-      return cols >= 4 ? 'grid-cols-3' : 'grid-cols-2';
-    }
-    const d = Math.min(cols, 4);
-    const map: Record<number, string> = { 1: 'grid-cols-1', 2: 'grid-cols-2', 3: 'grid-cols-3', 4: 'grid-cols-4' };
-    return map[d] || 'grid-cols-4';
+    // Always emit responsive classes so CSS handles breakpoints on live pages
+    const desktopColsRaw = Number(element.content.columns ?? 4);
+    const desktop = Math.max(1, Math.min(4, isNaN(desktopColsRaw) ? 4 : desktopColsRaw));
+
+    const tabletConfigured = (element.content as any).tabletColumns as number | undefined;
+    let tablet = typeof tabletConfigured === 'number'
+      ? Math.max(1, Math.min(4, tabletConfigured))
+      : (desktop >= 4 ? 3 : 2);
+    // Preserve builder behavior: when a single column is forced in tablet layout
+    if (columnCount === 1) tablet = 1;
+
+    const mobileConfigured = (element.content as any).mobileColumns as number | undefined;
+    const mobile = typeof mobileConfigured === 'number' ? Math.max(1, Math.min(3, mobileConfigured)) : 2;
+
+    const cls = (n: number) => `grid-cols-${n}`;
+    return `${cls(mobile)} md:${cls(tablet)} lg:${cls(desktop)}`;
   };
 
   useEffect(() => {
