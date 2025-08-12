@@ -58,7 +58,7 @@ export const ContentProperties: React.FC<ContentPropertiesProps> = ({
           if (node.hasAttribute('data-pb-row-id')) type = 'Row';
           else if (node.hasAttribute('data-pb-column-id')) type = 'Column';
           else if (node.hasAttribute('data-pb-element-id')) type = 'Element';
-          const label = `${type}: ${id}`; // no leading '#'
+          const label = `${type}: #${id}`;
           optsMap.set(id, { id, label });
         });
         setSectionOptions(Array.from(optsMap.values()));
@@ -202,7 +202,7 @@ export const ContentProperties: React.FC<ContentPropertiesProps> = ({
               className="mb-2"
             />
             <Select
-              value={element.content.scrollTarget || ''}
+              value={element.content.scrollTarget ? `#${element.content.scrollTarget.replace(/^#/, '')}` : ''}
               onValueChange={(value) => onUpdate('scrollTarget', value.replace(/^#/, ''))}
             >
               <SelectTrigger>
@@ -212,7 +212,7 @@ export const ContentProperties: React.FC<ContentPropertiesProps> = ({
                 {sectionOptions
                   .filter(opt => opt.label.toLowerCase().includes(scrollSearch.toLowerCase()))
                   .map(opt => (
-                    <SelectItem key={opt.id} value={opt.id}>{opt.label}</SelectItem>
+                    <SelectItem key={opt.id} value={`#${opt.id}`}>{opt.label}</SelectItem>
                   ))}
               </SelectContent>
             </Select>

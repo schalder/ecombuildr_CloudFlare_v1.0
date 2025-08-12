@@ -387,17 +387,6 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                 <p className="text-xs text-muted-foreground mt-1">Use #{selectedElement.anchor} for in-page scrolling</p>
               </div>
               
-              <div>
-                <Label className="text-xs">Element ID</Label>
-                <Input
-                  value={selectedElement.content.customId || selectedElement.id}
-                  onChange={(e) => handleContentUpdate('customId', e.target.value)}
-                  placeholder="my-custom-id"
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  Custom ID for CSS targeting and scripting
-                </p>
-              </div>
 
               <div>
                 <Label className="text-xs">Custom CSS</Label>
@@ -409,6 +398,19 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                 />
                 <p className="text-xs text-muted-foreground mt-1">
                   Custom CSS will override default styles
+                </p>
+              </div>
+
+              <div>
+                <Label className="text-xs">Custom JavaScript</Label>
+                <textarea
+                  className="w-full h-20 p-2 border border-border rounded text-sm resize-none font-mono"
+                  placeholder="// You can use 'el' to access this element (by #anchor)\nel.style.borderRadius = '8px';"
+                  value={selectedElement.content.customJS || ''}
+                  onChange={(e) => handleContentUpdate('customJS', e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Runs with el = document.getElementById(selectedElement.anchor). Use with caution.
                 </p>
               </div>
 

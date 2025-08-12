@@ -506,8 +506,7 @@ const ButtonElement: React.FC<{
   const customClassName = [
     `element-${element.id}`,
     'outline-none cursor-pointer transition-all duration-200',
-    element.styles?.width === '100%' ? 'w-full' : '',
-    element.content.customCSS ? `button-${element.id}` : ''
+    element.styles?.width === '100%' ? 'w-full' : ''
   ].filter(Boolean).join(' ');
 
   return (
@@ -515,7 +514,6 @@ const ButtonElement: React.FC<{
       {/* Inject responsive CSS */}
       <style>
         {generateResponsiveCSS()}
-        {element.content.customCSS && `.button-${element.id} { ${element.content.customCSS} }`}
       </style>
       
       <div className={containerClass} style={{ margin: element.styles?.margin }}>
@@ -525,7 +523,6 @@ const ButtonElement: React.FC<{
           className={customClassName}
           onClick={handleClick}
           style={cleanStyles}
-          id={element.content.customId || element.id}
         >
           {isEditing ? (
             <InlineEditor
