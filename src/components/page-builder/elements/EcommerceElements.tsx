@@ -950,6 +950,7 @@ export const registerEcommerceElements = () => {
       showViewToggle: true,
       columns: 4,
       tabletColumns: 3,
+      mobileColumns: 2,
       defaultSortBy: 'name',
       defaultViewMode: 'grid',
       priceRange: [0, 10000],

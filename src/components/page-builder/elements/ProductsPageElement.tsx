@@ -95,7 +95,12 @@ export const ProductsPageElement: React.FC<{
 
   const getGridClasses = () => {
     const cols = element.content.columns || 4;
-    if (deviceType === 'mobile') return 'grid-cols-1';
+    if (deviceType === 'mobile') {
+      const mCols = (element.content as any).mobileColumns as number | undefined;
+      const m = typeof mCols === 'number' ? Math.max(1, Math.min(3, mCols)) : 2;
+      const map: Record<number, string> = { 1: 'grid-cols-1', 2: 'grid-cols-2', 3: 'grid-cols-3' };
+      return map[m] || 'grid-cols-2';
+    }
     if (deviceType === 'tablet') {
       if (columnCount === 1) return 'grid-cols-1';
       const tCols = element.content.tabletColumns as number | undefined;
