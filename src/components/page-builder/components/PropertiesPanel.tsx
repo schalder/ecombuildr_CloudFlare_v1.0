@@ -33,6 +33,7 @@ import {
   WeeklyFeaturedElementProperties
 } from './EcommerceProperties';
 import { CheckoutContentProperties } from './CheckoutContentProperties';
+import { InlineCheckoutContentProperties } from './InlineCheckoutContentProperties';
 import { OrderConfirmationContentProperties } from './OrderConfirmationContentProperties';
 import { 
   TestimonialContentProperties,
@@ -170,7 +171,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
     }
 
     // Checkout element button styles
-    if (selectedElement.type === 'checkout-full') {
+    if (['checkout-full', 'checkout-inline'].includes(selectedElement.type)) {
       return <CheckoutElementStyles element={selectedElement} onStyleUpdate={handleStyleUpdate} />;
     }
     
@@ -259,6 +260,13 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
 
             {selectedElement.type === 'checkout-full' && (
               <CheckoutContentProperties
+                element={selectedElement}
+                onUpdate={handleContentUpdate}
+              />
+            )}
+
+            {selectedElement.type === 'checkout-inline' && (
+              <InlineCheckoutContentProperties
                 element={selectedElement}
                 onUpdate={handleContentUpdate}
               />
