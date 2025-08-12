@@ -1037,7 +1037,7 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
   return (
     <div 
       ref={dragRef}
-      id={`pb-section-${section.id}`}
+      id={section.anchor}
       data-pb-section-id={section.id}
       className={`relative group transition-all duration-200 ${
         // Only apply border/background styles if no user-defined styles and not in preview mode
@@ -1228,7 +1228,7 @@ const RowComponent: React.FC<RowComponentProps> = ({
   return (
     <div 
       ref={dragRef}
-      id={`pb-row-${row.id}`}
+      id={row.anchor}
       data-pb-row-id={row.id}
       className={`relative group transition-all duration-200 rounded-lg ${
         // Only apply border/background styles if no user-defined styles
@@ -1350,7 +1350,7 @@ const ColumnComponent: React.FC<ColumnComponentProps> = ({
 
   return (
     <div 
-      id={`pb-column-${column.id}`}
+      id={column.anchor}
       data-pb-column-id={column.id}
       className={`relative min-h-24 rounded-lg transition-all duration-200 ${
         // Only apply border/background styles if no user-defined styles
@@ -1502,7 +1502,7 @@ const ElementWrapper: React.FC<ElementWrapperProps> = ({
   return (
     <div
       ref={dragRef}
-      id={`pb-el-${element.id}`}
+      id={element.anchor}
       data-pb-element-id={element.id}
       className={`relative group border transition-all duration-200 rounded ${
         isSelected 

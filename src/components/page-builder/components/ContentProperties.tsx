@@ -53,7 +53,7 @@ export const ContentProperties: React.FC<ContentPropertiesProps> = ({
         const optsMap = new Map<string, { id: string; label: string }>();
         nodes.forEach((node) => {
           const id = node.id || node.getAttribute('id') || '';
-          if (!id) return;
+          if (!id || /^pb-/.test(id)) return;
           let type = 'Section';
           if (node.hasAttribute('data-pb-row-id')) type = 'Row';
           else if (node.hasAttribute('data-pb-column-id')) type = 'Column';
