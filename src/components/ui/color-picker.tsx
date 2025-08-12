@@ -55,7 +55,7 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({ color, onChange, label
             </Button>
           )}
         </PopoverTrigger>
-        <PopoverContent className="w-64 p-4 bg-popover z-[90] pointer-events-auto" data-rte-floating>
+        <PopoverContent className="w-64 p-4 bg-popover z-[9999] pointer-events-auto" data-rte-floating>
           <div className="space-y-4">
             <div>
               <Label htmlFor="color-input">Custom Color</Label>

@@ -233,7 +233,6 @@ export const InlineRTE: React.FC<InlineRTEProps> = ({ value, onChange, placehold
 
   return (
     <div className="relative">
-      {showToolbar && isEditing && (
         <div
           ref={toolbarRef}
           className="fixed z-50 -translate-x-1/2 rounded-md border bg-popover text-popover-foreground shadow-md px-2 py-1 flex items-center gap-1"
@@ -308,14 +307,20 @@ export const InlineRTE: React.FC<InlineRTEProps> = ({ value, onChange, placehold
         data-placeholder={placeholder}
         onFocus={() => setIsEditing(true)}
         onBlur={() => {
-          setIsEditing(false);
           const active = document.activeElement as HTMLElement | null;
           const toolbarEl = toolbarRef.current;
           const floatingEls = Array.from(document.querySelectorAll('[data-rte-floating]')) as HTMLElement[];
           const interacting = !!active && ((toolbarEl && toolbarEl.contains(active)) || floatingEls.some((f) => f.contains(active)));
-          if (!interacting) {
+
+          if (interacting) {
+            // Stay in editing mode when interacting with toolbar/popovers
+            setIsEditing(true);
+            setShowToolbar(true);
+          } else {
+            setIsEditing(false);
             setShowToolbar(false);
           }
+
           onInput();
         }}
         onInput={onInput}
