@@ -376,6 +376,16 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
           <TabsContent value="advanced" className="space-y-4 mt-4">
             <div className="space-y-3">
               <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Advanced</h4>
+
+              {/* Anchor (read-only) */}
+              <div>
+                <Label className="text-xs">Anchor</Label>
+                <div className="flex items-center gap-2 mt-1">
+                  <Input readOnly value={selectedElement.anchor || ''} />
+                  <Button size="sm" onClick={() => selectedElement.anchor && navigator.clipboard.writeText(selectedElement.anchor!)}>Copy</Button>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">Use #{selectedElement.anchor} for in-page scrolling</p>
+              </div>
               
               <div>
                 <Label className="text-xs">Element ID</Label>
