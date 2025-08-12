@@ -2,7 +2,6 @@
 
 export interface PageBuilderElement {
   id: string;
-  anchor?: string;
   type: string;
   content: {
     text?: string;
@@ -59,7 +58,6 @@ export interface PageBuilderElement {
 
 export interface PageBuilderColumn {
   id: string;
-  anchor?: string;
   width: number; // 1-12 based on grid system
   elements: PageBuilderElement[];
   customWidth?: string; // Custom width override (px, %, vw, etc.)
@@ -111,7 +109,6 @@ export interface PageBuilderColumn {
 
 export interface PageBuilderRow {
   id: string;
-  anchor?: string;
   columns: PageBuilderColumn[];
   columnLayout: '1' | '1-1' | '1-2' | '2-1' | '1-1-1' | '1-2-1' | '2-1-1' | '1-1-1-1' | '1-1-1-1-1' | '1-1-1-1-1-1';
   customWidth?: string; // Custom width override (px, %, vw, etc.)
@@ -157,7 +154,6 @@ export interface PageBuilderRow {
 
 export interface PageBuilderSection {
   id: string;
-  anchor?: string;
   rows: PageBuilderRow[];
   width: 'full' | 'wide' | 'medium' | 'small';
   customWidth?: string; // Custom width override (px, %, vw, etc.)
