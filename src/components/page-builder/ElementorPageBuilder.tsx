@@ -63,6 +63,7 @@ import { renderSectionStyles, renderRowStyles, renderColumnStyles, hasUserBackgr
 import { SectionDropZone } from './components/SectionDropZone';
 import { RowDropZone } from './components/RowDropZone';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { sectionAnchor, rowAnchor, columnAnchor, elementAnchor } from './utils/anchor';
 
 // Helper function to get responsive grid classes for a row
 const getResponsiveGridClasses = (columnLayout: string, deviceType: 'desktop' | 'tablet' | 'mobile'): string => {
@@ -181,6 +182,42 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = memo(({
     onChange(newData);
   }, [onChange]);
 
+  const [anchorsNormalized, setAnchorsNormalized] = useState(false);
+  React.useEffect(() => {
+    if (anchorsNormalized) return;
+    let changed = false;
+    const normalized: PageBuilderData = {
+      ...data,
+      sections: data.sections.map((section) => {
+        const s: PageBuilderSection = { ...section } as any;
+        if (!s.anchor) { s.anchor = sectionAnchor(); changed = true; }
+        s.rows = (s.rows || []).map((row) => {
+          const r: PageBuilderRow = { ...row } as any;
+          if (!r.anchor) { r.anchor = rowAnchor(); changed = true; }
+          r.columns = r.columns.map((col) => {
+            const c: PageBuilderColumn = { ...col } as any;
+            if (!c.anchor) { c.anchor = columnAnchor(); changed = true; }
+            c.elements = c.elements.map((el) => {
+              const e: PageBuilderElement = { ...el } as any;
+              if (!e.anchor) { e.anchor = elementAnchor(e.type); changed = true; }
+              return e;
+            });
+            return c;
+          });
+          return r;
+        });
+        return s;
+      })
+    };
+    if (changed) {
+      setAnchorsNormalized(true);
+      updateData(normalized);
+    } else {
+      setAnchorsNormalized(true);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data, updateData, anchorsNormalized]);
+
   const generateId = () => `pb-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
 
@@ -188,6 +225,7 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = memo(({
   const addSection = useCallback((width: PageBuilderSection['width'] = 'wide', insertIndex?: number) => {
     const newSection: PageBuilderSection = {
       id: generateId(),
+      anchor: sectionAnchor(),
       width,
       rows: [],
       styles: {
@@ -232,15 +270,19 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = memo(({
     const duplicatedSection: PageBuilderSection = {
       ...section,
       id: generateId(),
+      anchor: sectionAnchor(),
       rows: (section.rows || []).map(row => ({
         ...row,
         id: generateId(),
+        anchor: rowAnchor(),
         columns: row.columns.map(col => ({
           ...col,
           id: generateId(),
+          anchor: columnAnchor(),
           elements: col.elements.map(el => ({
             ...el,
-            id: generateId()
+            id: generateId(),
+            anchor: elementAnchor(el.type)
           }))
         }))
       }))
@@ -299,6 +341,7 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = memo(({
     const columnWidths = COLUMN_LAYOUTS[columnLayout];
     const newRow: PageBuilderRow = {
       id: generateId(),
+      anchor: rowAnchor(),
       columnLayout,
       styles: {
         paddingTop: '10px',
@@ -308,6 +351,7 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = memo(({
       },
       columns: columnWidths.map(width => ({
         id: generateId(),
+        anchor: columnAnchor(),
         width,
         elements: [],
         styles: {
@@ -409,6 +453,7 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = memo(({
 
     const newElement: PageBuilderElement = {
       id: generateId(),
+      anchor: elementAnchor(elementType),
       type: elementType,
       content: { ...elementDef.defaultContent }
     };
@@ -1019,7 +1064,7 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
   return (
     <div 
       ref={dragRef}
-      id={`pb-section-${section.id}`}
+      id={section.anchor || `pb-section-${section.id}`}
       data-pb-section-id={section.id}
       className={`relative group transition-all duration-200 ${
         // Only apply border/background styles if no user-defined styles and not in preview mode
@@ -1210,7 +1255,7 @@ const RowComponent: React.FC<RowComponentProps> = ({
   return (
     <div 
       ref={dragRef}
-      id={`pb-row-${row.id}`}
+      id={row.anchor || `pb-row-${row.id}`}
       data-pb-row-id={row.id}
       className={`relative group transition-all duration-200 rounded-lg ${
         // Only apply border/background styles if no user-defined styles
@@ -1332,7 +1377,7 @@ const ColumnComponent: React.FC<ColumnComponentProps> = ({
 
   return (
     <div 
-      id={`pb-column-${column.id}`}
+      id={column.anchor || `pb-column-${column.id}`}
       data-pb-column-id={column.id}
       className={`relative min-h-24 rounded-lg transition-all duration-200 ${
         // Only apply border/background styles if no user-defined styles
@@ -1484,7 +1529,7 @@ const ElementWrapper: React.FC<ElementWrapperProps> = ({
   return (
     <div
       ref={dragRef}
-      id={`pb-el-${element.id}`}
+      id={element.anchor || `pb-el-${element.id}`}
       data-pb-element-id={element.id}
       className={`relative group border transition-all duration-200 rounded ${
         isSelected 

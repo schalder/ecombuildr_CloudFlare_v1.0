@@ -12,6 +12,7 @@ import { PageBuilderElement } from '../types';
 import { ImageContentProperties } from './ImageContentProperties';
 import { VideoContentProperties } from './VideoContentProperties';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { IconPicker } from '@/components/ui/icon-picker';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { ICONS_MAP } from '@/components/icons/fontawesome-list';
@@ -30,6 +31,7 @@ export const ContentProperties: React.FC<ContentPropertiesProps> = ({
   const { websiteId } = useParams();
   const [pages, setPages] = React.useState<Array<{ id: string; title: string; slug: string; is_homepage?: boolean }>>([]);
   const [sectionOptions, setSectionOptions] = React.useState<Array<{ id: string; label: string }>>([]);
+  const [scrollOpen, setScrollOpen] = React.useState(false);
 
   React.useEffect(() => {
     if (element.type === 'button' && websiteId) {
@@ -192,20 +194,35 @@ export const ContentProperties: React.FC<ContentPropertiesProps> = ({
         {linkType === 'scroll' && (
           <div>
             <Label htmlFor="button-scroll">Scroll Target</Label>
-            <Select
-              value={element.content.scrollTarget || ''}
-              onValueChange={(value) => onUpdate('scrollTarget', value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select a section on this page" />
-              </SelectTrigger>
-              <SelectContent>
-                {sectionOptions.map(opt => (
-                  <SelectItem key={opt.id} value={opt.id}>{opt.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <p className="text-xs text-muted-foreground mt-1">Select a section to scroll to on click.</p>
+            <Popover open={scrollOpen} onOpenChange={setScrollOpen}>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="w-full justify-between">
+                  {element.content.scrollTarget
+                    ? (sectionOptions.find(o => o.id === element.content.scrollTarget)?.label || `#${element.content.scrollTarget}`)
+                    : 'Select a section on this page'}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[320px] p-0" align="start">
+                <Command>
+                  <CommandInput placeholder="Search targets..." />
+                  <CommandEmpty>No targets found.</CommandEmpty>
+                  <CommandList>
+                    <CommandGroup heading="On this page">
+                      {sectionOptions.map((opt) => (
+                        <CommandItem key={opt.id} value={opt.id} onSelect={(value) => {
+                          const normalized = value.startsWith('#') ? value.slice(1) : value;
+                          onUpdate('scrollTarget', normalized);
+                          setScrollOpen(false);
+                        }}>
+                          {opt.label}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
+            <p className="text-xs text-muted-foreground mt-1">Select a section, row, column, or element to scroll to.</p>
           </div>
         )}
 

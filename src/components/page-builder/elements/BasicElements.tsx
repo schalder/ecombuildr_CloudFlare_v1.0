@@ -342,7 +342,7 @@ const ButtonElement: React.FC<{
   const url = element.content.url || '#';
   const target = element.content.target || '_blank';
 
-  const linkType: 'page' | 'url' | 'scroll' | undefined = element.content.linkType || (element.content.url ? 'url' : undefined);
+  const linkType: 'page' | 'url' | 'scroll' | undefined = element.content.linkType || (element.content.pageSlug ? 'page' : element.content.url ? 'url' : undefined);
   const pageSlug: string | undefined = element.content.pageSlug;
   const scrollTarget: string | undefined = element.content.scrollTarget;
   const paths = useEcomPaths();
@@ -369,15 +369,16 @@ const ButtonElement: React.FC<{
       e.preventDefault();
       e.stopPropagation();
       if (scrollTarget) {
-        const targetEl = document.getElementById(scrollTarget)
-          || document.getElementById(`pb-section-${scrollTarget}`)
-          || (document.querySelector(`[data-pb-section-id="${scrollTarget}"]`) as HTMLElement | null)
-          || document.getElementById(`pb-row-${scrollTarget}`)
-          || (document.querySelector(`[data-pb-row-id="${scrollTarget}"]`) as HTMLElement | null)
-          || document.getElementById(`pb-column-${scrollTarget}`)
-          || (document.querySelector(`[data-pb-column-id="${scrollTarget}"]`) as HTMLElement | null)
-          || document.getElementById(`pb-el-${scrollTarget}`)
-          || (document.querySelector(`[data-pb-element-id="${scrollTarget}"]`) as HTMLElement | null);
+        const targetId = scrollTarget.replace(/^#/, '');
+        const targetEl = document.getElementById(targetId)
+          || document.getElementById(`pb-section-${targetId}`)
+          || (document.querySelector(`[data-pb-section-id="${targetId}"]`) as HTMLElement | null)
+          || document.getElementById(`pb-row-${targetId}`)
+          || (document.querySelector(`[data-pb-row-id="${targetId}"]`) as HTMLElement | null)
+          || document.getElementById(`pb-column-${targetId}`)
+          || (document.querySelector(`[data-pb-column-id="${targetId}"]`) as HTMLElement | null)
+          || document.getElementById(`pb-el-${targetId}`)
+          || (document.querySelector(`[data-pb-element-id="${targetId}"]`) as HTMLElement | null);
         if (targetEl && 'scrollIntoView' in targetEl) {
           targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
