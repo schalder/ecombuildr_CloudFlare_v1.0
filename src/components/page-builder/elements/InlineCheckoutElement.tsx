@@ -97,12 +97,20 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
     if (orderBump.enabled && bumpChecked && bumpProduct?.allowed_payment_methods && bumpProduct.allowed_payment_methods.length > 0) {
       methods = methods.filter(m => (bumpProduct.allowed_payment_methods as string[]).includes(m));
     }
+    // Intersect with store-level enabled gateways
+    const storeAllowed: Record<string, boolean> = {
+      cod: true,
+      bkash: !!store?.settings?.bkash?.enabled,
+      nagad: !!store?.settings?.nagad?.enabled,
+      sslcommerz: !!store?.settings?.sslcommerz?.enabled,
+    };
+    methods = methods.filter((m) => (storeAllowed as any)[m]);
     if (methods.length === 0) methods = ['cod'];
     setAllowedMethods(methods as any);
     if (!methods.includes(form.payment_method)) {
       setForm(prev => ({ ...prev, payment_method: methods[0] as any }));
     }
-  }, [selectedProduct?.id, bumpProduct?.id, bumpChecked, orderBump.enabled]);
+  }, [selectedProduct?.id, bumpProduct?.id, bumpChecked, orderBump.enabled, store]);
 
   // Styles
   const buttonStyles = (element.styles as any)?.checkoutButton || { responsive: { desktop: {}, mobile: {} } };

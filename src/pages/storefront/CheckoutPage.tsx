@@ -79,10 +79,27 @@ useEffect(() => {
   }
 }, [websiteShipping, form.shipping_city, form.shipping_area, form.shipping_address]);
 
-  // Derive allowed payment methods based on products in cart
+  // Derive allowed payment methods based on products in cart AND enabled gateways
   useEffect(() => {
     const loadAllowed = async () => {
-      if (!items.length) return setAllowedMethods(['cod','bkash','nagad','sslcommerz']);
+      const storeAllowed: Record<string, boolean> = {
+        cod: true,
+        bkash: !!store?.settings?.bkash?.enabled,
+        nagad: !!store?.settings?.nagad?.enabled,
+        sslcommerz: !!store?.settings?.sslcommerz?.enabled,
+      };
+
+      // Empty cart: fall back to store-level enabled list
+      if (!items.length) {
+        let base = ['cod','bkash','nagad','sslcommerz'].filter((m) => (storeAllowed as any)[m]);
+        if (base.length === 0) base = ['cod'];
+        setAllowedMethods(base as any);
+        if (!base.includes(form.payment_method)) {
+          setForm(prev => ({ ...prev, payment_method: (base[0] as any) }));
+        }
+        return;
+      }
+
       const ids = Array.from(new Set(items.map(i => i.productId)));
       const { data } = await supabase
         .from('products')
@@ -95,6 +112,8 @@ useEffect(() => {
           acc = acc.filter(m => arr.includes(m));
         }
       });
+      // Intersect with store-level enabled methods
+      acc = acc.filter((m) => (storeAllowed as any)[m]);
       if (acc.length === 0) acc = ['cod'];
       setAllowedMethods(acc as any);
       if (!acc.includes(form.payment_method)) {
@@ -102,7 +121,7 @@ useEffect(() => {
       }
     };
     loadAllowed();
-  }, [items]);
+  }, [items, store]);
 
   const handleInputChange = (field: keyof CheckoutForm, value: string) => {
     setForm(prev => ({ ...prev, [field]: value }));
@@ -519,6 +538,13 @@ useEffect(() => {
                         )}
                       </SelectContent>
                     </Select>
+
+                    {form.payment_method === 'bkash' && store?.settings?.bkash?.mode === 'number' && store?.settings?.bkash?.number && (
+                      <p className="text-sm text-muted-foreground">Pay to bKash number: {store.settings.bkash.number}</p>
+                    )}
+                    {form.payment_method === 'nagad' && store?.settings?.nagad?.mode === 'number' && store?.settings?.nagad?.number && (
+                      <p className="text-sm text-muted-foreground">Pay to Nagad number: {store.settings.nagad.number}</p>
+                    )}
                     
                     <div>
                       <Label htmlFor="notes">Order Notes (Optional)</Label>

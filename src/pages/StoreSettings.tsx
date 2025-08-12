@@ -141,113 +141,7 @@ export default function StoreSettings() {
       description="Manage your store configuration and branding"
     >
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Basic Information */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Store className="h-5 w-5" />
-              Basic Information
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="name">Store Name</Label>
-                <Input
-                  id="name"
-                  value={store.name}
-                  onChange={(e) => setStore({ ...store, name: e.target.value })}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="slug">Store Slug</Label>
-                <Input
-                  id="slug"
-                  value={store.slug}
-                  disabled
-                  className="bg-muted"
-                />
-                <p className="text-xs text-muted-foreground">
-                  Store URL: yourstore.com/{store.slug}
-                </p>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                value={store.description || ''}
-                onChange={(e) => setStore({ ...store, description: e.target.value })}
-                placeholder="Tell customers about your store..."
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="domain">Custom Domain</Label>
-              <Input
-                id="domain"
-                value={store.domain || ''}
-                onChange={(e) => setStore({ ...store, domain: e.target.value })}
-                placeholder="www.yourstore.com"
-              />
-              <p className="text-xs text-muted-foreground">
-                Connect your own domain to your store
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Branding */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Settings className="h-5 w-5" />
-              Branding & Design
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="primary_color">Primary Color</Label>
-                <div className="flex gap-2">
-                  <Input
-                    id="primary_color"
-                    type="color"
-                    value={store.primary_color}
-                    onChange={(e) => setStore({ ...store, primary_color: e.target.value })}
-                    className="w-16 h-10 p-1"
-                  />
-                  <Input
-                    value={store.primary_color}
-                    onChange={(e) => setStore({ ...store, primary_color: e.target.value })}
-                    placeholder="#10B981"
-                    className="flex-1"
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="secondary_color">Secondary Color</Label>
-                <div className="flex gap-2">
-                  <Input
-                    id="secondary_color"
-                    type="color"
-                    value={store.secondary_color}
-                    onChange={(e) => setStore({ ...store, secondary_color: e.target.value })}
-                    className="w-16 h-10 p-1"
-                  />
-                  <Input
-                    value={store.secondary_color}
-                    onChange={(e) => setStore({ ...store, secondary_color: e.target.value })}
-                    placeholder="#059669"
-                    className="flex-1"
-                  />
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Payment Gateways */}
+        {/* Payment Gateways Only */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -258,184 +152,307 @@ export default function StoreSettings() {
           <CardContent className="space-y-6">
             {/* bKash */}
             <div className="space-y-4 p-4 border rounded-lg">
-              <h4 className="font-medium">bKash Configuration</h4>
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="bkash_app_key">App Key</Label>
-                  <Input
-                    id="bkash_app_key"
-                    value={store.settings?.bkash?.app_key || ''}
-                    onChange={(e) => setStore({
+              <div className="flex items-center justify-between">
+                <h4 className="font-medium">bKash</h4>
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="bkash_enabled" className="text-sm text-muted-foreground">Enabled</Label>
+                  <Switch
+                    id="bkash_enabled"
+                    checked={!!store.settings?.bkash?.enabled}
+                    onCheckedChange={(enabled) => setStore({
                       ...store,
                       settings: {
                         ...store.settings,
-                        bkash: { ...store.settings?.bkash, app_key: e.target.value }
+                        bkash: { mode: 'api', ...(store.settings?.bkash || {}), enabled }
                       }
                     })}
-                    placeholder="bKash App Key"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="bkash_app_secret">App Secret</Label>
-                  <Input
-                    id="bkash_app_secret"
-                    type="password"
-                    value={store.settings?.bkash?.app_secret || ''}
-                    onChange={(e) => setStore({
-                      ...store,
-                      settings: {
-                        ...store.settings,
-                        bkash: { ...store.settings?.bkash, app_secret: e.target.value }
-                      }
-                    })}
-                    placeholder="bKash App Secret"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="bkash_username">Username</Label>
-                  <Input
-                    id="bkash_username"
-                    value={store.settings?.bkash?.username || ''}
-                    onChange={(e) => setStore({
-                      ...store,
-                      settings: {
-                        ...store.settings,
-                        bkash: { ...store.settings?.bkash, username: e.target.value }
-                      }
-                    })}
-                    placeholder="bKash Username"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="bkash_password">Password</Label>
-                  <Input
-                    id="bkash_password"
-                    type="password"
-                    value={store.settings?.bkash?.password || ''}
-                    onChange={(e) => setStore({
-                      ...store,
-                      settings: {
-                        ...store.settings,
-                        bkash: { ...store.settings?.bkash, password: e.target.value }
-                      }
-                    })}
-                    placeholder="bKash Password"
                   />
                 </div>
               </div>
+
+              {store.settings?.bkash?.enabled && (
+                <>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label>Mode</Label>
+                      <Select
+                        value={store.settings?.bkash?.mode || 'api'}
+                        onValueChange={(mode) => setStore({
+                          ...store,
+                          settings: {
+                            ...store.settings,
+                            bkash: { ...(store.settings?.bkash || {}), mode }
+                          }
+                        })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select mode" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="api">API</SelectItem>
+                          <SelectItem value="number">Number only</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  {store.settings?.bkash?.mode === 'number' ? (
+                    <div className="space-y-2">
+                      <Label htmlFor="bkash_number">bKash Number</Label>
+                      <Input
+                        id="bkash_number"
+                        value={store.settings?.bkash?.number || ''}
+                        onChange={(e) => setStore({
+                          ...store,
+                          settings: {
+                            ...store.settings,
+                            bkash: { ...(store.settings?.bkash || {}), number: e.target.value }
+                          }
+                        })}
+                        placeholder="01XXXXXXXXX"
+                      />
+                    </div>
+                  ) : (
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label htmlFor="bkash_app_key">App Key</Label>
+                        <Input
+                          id="bkash_app_key"
+                          value={store.settings?.bkash?.app_key || ''}
+                          onChange={(e) => setStore({
+                            ...store,
+                            settings: {
+                              ...store.settings,
+                              bkash: { ...(store.settings?.bkash || {}), app_key: e.target.value }
+                            }
+                          })}
+                          placeholder="bKash App Key"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="bkash_app_secret">App Secret</Label>
+                        <Input
+                          id="bkash_app_secret"
+                          type="password"
+                          value={store.settings?.bkash?.app_secret || ''}
+                          onChange={(e) => setStore({
+                            ...store,
+                            settings: {
+                              ...store.settings,
+                              bkash: { ...(store.settings?.bkash || {}), app_secret: e.target.value }
+                            }
+                          })}
+                          placeholder="bKash App Secret"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="bkash_username">Username</Label>
+                        <Input
+                          id="bkash_username"
+                          value={store.settings?.bkash?.username || ''}
+                          onChange={(e) => setStore({
+                            ...store,
+                            settings: {
+                              ...store.settings,
+                              bkash: { ...(store.settings?.bkash || {}), username: e.target.value }
+                            }
+                          })}
+                          placeholder="bKash Username"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="bkash_password">Password</Label>
+                        <Input
+                          id="bkash_password"
+                          type="password"
+                          value={store.settings?.bkash?.password || ''}
+                          onChange={(e) => setStore({
+                            ...store,
+                            settings: {
+                              ...store.settings,
+                              bkash: { ...(store.settings?.bkash || {}), password: e.target.value }
+                            }
+                          })}
+                          placeholder="bKash Password"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
 
             {/* Nagad */}
             <div className="space-y-4 p-4 border rounded-lg">
-              <h4 className="font-medium">Nagad Configuration</h4>
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="nagad_merchant_id">Merchant ID</Label>
-                  <Input
-                    id="nagad_merchant_id"
-                    value={store.settings?.nagad?.merchant_id || ''}
-                    onChange={(e) => setStore({
+              <div className="flex items-center justify-between">
+                <h4 className="font-medium">Nagad</h4>
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="nagad_enabled" className="text-sm text-muted-foreground">Enabled</Label>
+                  <Switch
+                    id="nagad_enabled"
+                    checked={!!store.settings?.nagad?.enabled}
+                    onCheckedChange={(enabled) => setStore({
                       ...store,
                       settings: {
                         ...store.settings,
-                        nagad: { ...store.settings?.nagad, merchant_id: e.target.value }
+                        nagad: { mode: 'api', ...(store.settings?.nagad || {}), enabled }
                       }
                     })}
-                    placeholder="Nagad Merchant ID"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="nagad_public_key">Public Key</Label>
-                  <Input
-                    id="nagad_public_key"
-                    value={store.settings?.nagad?.public_key || ''}
-                    onChange={(e) => setStore({
-                      ...store,
-                      settings: {
-                        ...store.settings,
-                        nagad: { ...store.settings?.nagad, public_key: e.target.value }
-                      }
-                    })}
-                    placeholder="Nagad Public Key"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="nagad_private_key">Private Key</Label>
-                  <Input
-                    id="nagad_private_key"
-                    type="password"
-                    value={store.settings?.nagad?.private_key || ''}
-                    onChange={(e) => setStore({
-                      ...store,
-                      settings: {
-                        ...store.settings,
-                        nagad: { ...store.settings?.nagad, private_key: e.target.value }
-                      }
-                    })}
-                    placeholder="Nagad Private Key"
                   />
                 </div>
               </div>
+
+              {store.settings?.nagad?.enabled && (
+                <>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label>Mode</Label>
+                      <Select
+                        value={store.settings?.nagad?.mode || 'api'}
+                        onValueChange={(mode) => setStore({
+                          ...store,
+                          settings: {
+                            ...store.settings,
+                            nagad: { ...(store.settings?.nagad || {}), mode }
+                          }
+                        })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select mode" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="api">API</SelectItem>
+                          <SelectItem value="number">Number only</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  {store.settings?.nagad?.mode === 'number' ? (
+                    <div className="space-y-2">
+                      <Label htmlFor="nagad_number">Nagad Number</Label>
+                      <Input
+                        id="nagad_number"
+                        value={store.settings?.nagad?.number || ''}
+                        onChange={(e) => setStore({
+                          ...store,
+                          settings: {
+                            ...store.settings,
+                            nagad: { ...(store.settings?.nagad || {}), number: e.target.value }
+                          }
+                        })}
+                        placeholder="01XXXXXXXXX"
+                      />
+                    </div>
+                  ) : (
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label htmlFor="nagad_merchant_id">Merchant ID</Label>
+                        <Input
+                          id="nagad_merchant_id"
+                          value={store.settings?.nagad?.merchant_id || ''}
+                          onChange={(e) => setStore({
+                            ...store,
+                            settings: {
+                              ...store.settings,
+                              nagad: { ...(store.settings?.nagad || {}), merchant_id: e.target.value }
+                            }
+                          })}
+                          placeholder="Nagad Merchant ID"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="nagad_public_key">Public Key</Label>
+                        <Input
+                          id="nagad_public_key"
+                          value={store.settings?.nagad?.public_key || ''}
+                          onChange={(e) => setStore({
+                            ...store,
+                            settings: {
+                              ...store.settings,
+                              nagad: { ...(store.settings?.nagad || {}), public_key: e.target.value }
+                            }
+                          })}
+                          placeholder="Nagad Public Key"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="nagad_private_key">Private Key</Label>
+                        <Input
+                          id="nagad_private_key"
+                          type="password"
+                          value={store.settings?.nagad?.private_key || ''}
+                          onChange={(e) => setStore({
+                            ...store,
+                            settings: {
+                              ...store.settings,
+                              nagad: { ...(store.settings?.nagad || {}), private_key: e.target.value }
+                            }
+                          })}
+                          placeholder="Nagad Private Key"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
 
             {/* SSLCommerz */}
             <div className="space-y-4 p-4 border rounded-lg">
-              <h4 className="font-medium">SSLCommerz Configuration</h4>
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="sslcommerz_store_id">Store ID</Label>
-                  <Input
-                    id="sslcommerz_store_id"
-                    value={store.settings?.sslcommerz?.store_id || ''}
-                    onChange={(e) => setStore({
+              <div className="flex items-center justify-between">
+                <h4 className="font-medium">SSLCommerz</h4>
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="ssl_enabled" className="text-sm text-muted-foreground">Enabled</Label>
+                  <Switch
+                    id="ssl_enabled"
+                    checked={!!store.settings?.sslcommerz?.enabled}
+                    onCheckedChange={(enabled) => setStore({
                       ...store,
                       settings: {
                         ...store.settings,
-                        sslcommerz: { ...store.settings?.sslcommerz, store_id: e.target.value }
+                        sslcommerz: { ...(store.settings?.sslcommerz || {}), enabled }
                       }
                     })}
-                    placeholder="SSLCommerz Store ID"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="sslcommerz_store_password">Store Password</Label>
-                  <Input
-                    id="sslcommerz_store_password"
-                    type="password"
-                    value={store.settings?.sslcommerz?.store_password || ''}
-                    onChange={(e) => setStore({
-                      ...store,
-                      settings: {
-                        ...store.settings,
-                        sslcommerz: { ...store.settings?.sslcommerz, store_password: e.target.value }
-                      }
-                    })}
-                    placeholder="SSLCommerz Store Password"
                   />
                 </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
 
-        {/* Store Status */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Store Status</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label htmlFor="is_active">Store Active</Label>
-                <p className="text-sm text-muted-foreground">
-                  When disabled, your store will not be accessible to customers
-                </p>
-              </div>
-              <Switch
-                id="is_active"
-                checked={store.is_active}
-                onCheckedChange={(checked) => setStore({ ...store, is_active: checked })}
-              />
+              {store.settings?.sslcommerz?.enabled && (
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="sslcommerz_store_id">Store ID</Label>
+                    <Input
+                      id="sslcommerz_store_id"
+                      value={store.settings?.sslcommerz?.store_id || ''}
+                      onChange={(e) => setStore({
+                        ...store,
+                        settings: {
+                          ...store.settings,
+                          sslcommerz: { ...(store.settings?.sslcommerz || {}), store_id: e.target.value }
+                        }
+                      })}
+                      placeholder="SSLCommerz Store ID"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="sslcommerz_store_password">Store Password</Label>
+                    <Input
+                      id="sslcommerz_store_password"
+                      type="password"
+                      value={store.settings?.sslcommerz?.store_password || ''}
+                      onChange={(e) => setStore({
+                        ...store,
+                        settings: {
+                          ...store.settings,
+                          sslcommerz: { ...(store.settings?.sslcommerz || {}), store_password: e.target.value }
+                        }
+                      })}
+                      placeholder="SSLCommerz Store Password"
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>

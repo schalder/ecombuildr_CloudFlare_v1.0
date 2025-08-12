@@ -448,7 +448,19 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
   const [allowedMethods, setAllowedMethods] = useState<Array<'cod' | 'bkash' | 'nagad' | 'sslcommerz'>>(['cod','bkash','nagad','sslcommerz']);
 
   useEffect(() => {
-    if (!items.length) { setAllowedMethods(['cod','bkash','nagad','sslcommerz']); return; }
+    if (!items.length) {
+      const storeAllowed: Record<string, boolean> = {
+        cod: true,
+        bkash: !!store?.settings?.bkash?.enabled,
+        nagad: !!store?.settings?.nagad?.enabled,
+        sslcommerz: !!store?.settings?.sslcommerz?.enabled,
+      };
+      let base = ['cod','bkash','nagad','sslcommerz'].filter((m) => (storeAllowed as any)[m]);
+      if (base.length === 0) base = ['cod'];
+      setAllowedMethods(base as any);
+      if (!base.includes(form.payment_method)) setForm(prev => ({ ...prev, payment_method: base[0] as any }));
+      return;
+    }
     const loadAllowed = async () => {
       const ids = Array.from(new Set(items.map(i => i.productId)));
       const { data } = await supabase
@@ -462,14 +474,19 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
           acc = acc.filter(m => arr.includes(m));
         }
       });
+      const storeAllowed: Record<string, boolean> = {
+        cod: true,
+        bkash: !!store?.settings?.bkash?.enabled,
+        nagad: !!store?.settings?.nagad?.enabled,
+        sslcommerz: !!store?.settings?.sslcommerz?.enabled,
+      };
+      acc = acc.filter((m) => (storeAllowed as any)[m]);
       if (acc.length === 0) acc = ['cod'];
       setAllowedMethods(acc as any);
-      if (!acc.includes(form.payment_method)) {
-        setForm(prev => ({ ...prev, payment_method: acc[0] as any }));
-      }
+      if (!acc.includes(form.payment_method)) setForm(prev => ({ ...prev, payment_method: acc[0] as any }));
     };
     loadAllowed();
-  }, [items]);
+  }, [items, store]);
 
   // Button and header responsive CSS + background settings
   const buttonStyles = (element.styles as any)?.checkoutButton || { responsive: { desktop: {}, mobile: {} } };
@@ -729,6 +746,12 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
                       {allowedMethods.includes('sslcommerz') && (<SelectItem value="sslcommerz">Credit/Debit Card (SSLCommerz)</SelectItem>)}
                     </SelectContent>
                   </Select>
+                  {form.payment_method === 'bkash' && store?.settings?.bkash?.mode === 'number' && store?.settings?.bkash?.number && (
+                    <p className="text-sm text-muted-foreground">Pay to bKash number: {store.settings.bkash.number}</p>
+                  )}
+                  {form.payment_method === 'nagad' && store?.settings?.nagad?.mode === 'number' && store?.settings?.nagad?.number && (
+                    <p className="text-sm text-muted-foreground">Pay to Nagad number: {store.settings.nagad.number}</p>
+                  )}
                   
                 </section>
               )}
