@@ -183,25 +183,25 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
         {/* Pricing */}
         <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <span className="font-bold text-lg text-foreground">
+          <div className="flex flex-col items-start gap-1 sm:flex-row sm:items-center sm:gap-2">
+            <span className="font-bold text-base md:text-lg text-foreground">
               {formatCurrency(product.price)}
             </span>
             {product.compare_price && product.compare_price > product.price && (
-              <span className="text-sm text-muted-foreground line-through">
+              <span className="text-xs md:text-sm text-muted-foreground line-through">
                 {formatCurrency(product.compare_price)}
               </span>
             )}
           </div>
-          
-          {/* Stock Status */}
-          <div className="flex items-center justify-between">
+
+          {/* Stock Status + CTA */}
+          <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <span className="text-xs text-emerald-600 font-medium">In Stock</span>
             <Button
               size="sm"
               variant="ghost"
               onClick={() => onAddToCart(product)}
-              className="h-8 px-3 text-xs opacity-70 group-hover/card:opacity-100 transition-opacity"
+              className="h-9 px-3 text-xs w-full sm:w-auto opacity-80 group-hover/card:opacity-100 transition-opacity"
             >
               <ShoppingCart className="h-3 w-3 mr-1" />
               {ctaLabel || 'Add to Cart'}

@@ -226,11 +226,11 @@ const ProductGridElement: React.FC<{
               )}
               
               {showPrice && (
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex flex-col">
-                    <span style={{ color: elementStyles.color, fontSize: elementStyles.fontSize, fontWeight: elementStyles.fontWeight }} className="font-bold text-lg">{formatCurrency(product.price)}</span>
+                    <span style={{ color: elementStyles.color, fontSize: elementStyles.fontSize, fontWeight: elementStyles.fontWeight }} className="font-bold text-base md:text-lg">{formatCurrency(product.price)}</span>
                     {product.compare_price && product.compare_price > product.price && (
-                      <span className="text-sm text-muted-foreground line-through">
+                      <span className="text-xs md:text-sm text-muted-foreground line-through">
                         {formatCurrency(product.compare_price)}
                       </span>
                     )}
@@ -240,6 +240,7 @@ const ProductGridElement: React.FC<{
                       size="sm" 
                       onClick={() => handleAddToCart(product)}
                       style={buttonStyles as React.CSSProperties}
+                      className="w-full sm:w-auto"
                     >
                       {ctaBehavior === 'buy_now' ? 'Buy Now' : 'Add to Cart'}
                     </Button>
@@ -399,16 +400,16 @@ const FeaturedProductsElement: React.FC<{
                    </h4>
                   <Star className="h-4 w-4 text-primary shrink-0" aria-label="Featured" />
                 </div>
-                <div className="mt-2 flex items-center justify-between">
+                <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                    <div className="flex flex-col">
-                     <span style={{ color: elementStyles.color, fontSize: elementStyles.fontSize, fontWeight: elementStyles.fontWeight }} className="font-bold">{formatCurrency(p.price)}</span>
+                     <span style={{ color: elementStyles.color, fontSize: elementStyles.fontSize, fontWeight: elementStyles.fontWeight }} className="font-bold text-base md:text-lg">{formatCurrency(p.price)}</span>
                     {p.compare_price && p.compare_price > p.price && (
-                      <span className="text-sm text-muted-foreground line-through">
+                      <span className="text-xs md:text-sm text-muted-foreground line-through">
                         {formatCurrency(p.compare_price)}
                       </span>
                     )}
                   </div>
-                  <Button size="sm" onClick={() => handleAddToCartGeneric(p)} style={buttonStyles as React.CSSProperties}>
+                  <Button size="sm" onClick={() => handleAddToCartGeneric(p)} style={buttonStyles as React.CSSProperties} className="w-full sm:w-auto">
                     {ctaBehavior === 'buy_now' ? 'Buy Now' : 'Add to Cart'}
                   </Button>
                 </div>

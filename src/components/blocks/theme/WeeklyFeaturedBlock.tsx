@@ -343,12 +343,12 @@ const WeeklyFeaturedSave: React.FC<BlockSaveProps> = ({ block }) => {
               <span className="text-xs text-muted-foreground ml-1">(4.5)</span>
             </div>
 
-            <div className="flex items-center gap-2 mb-3">
-              <span className="font-bold text-primary">
+            <div className="flex flex-col items-start gap-1 sm:flex-row sm:items-center sm:gap-2 mb-3">
+              <span className="font-bold text-primary text-base md:text-lg">
                 {formatCurrency(product.price)}
               </span>
               {product.compare_price && product.compare_price > product.price && (
-                <span className="text-sm text-muted-foreground line-through">
+                <span className="text-xs md:text-sm text-muted-foreground line-through">
                   {formatCurrency(product.compare_price)}
                 </span>
               )}
