@@ -114,7 +114,7 @@ serve(async (req) => {
       .from('orders')
       .update({
         payment_method: 'sslcommerz',
-        status: 'payment_pending',
+        status: 'processing',
         updated_at: new Date().toISOString(),
       })
       .eq('id', orderId);

@@ -217,8 +217,10 @@ useEffect(() => {
     setLoading(true);
     try {
       // Determine manual number-only mode
-      const isBkashManual = !!(store?.settings?.bkash?.enabled && store?.settings?.bkash?.mode === 'number' && store?.settings?.bkash?.number);
-      const isNagadManual = !!(store?.settings?.nagad?.enabled && store?.settings?.nagad?.mode === 'number' && store?.settings?.nagad?.number);
+      const hasBkashApi = !!(store?.settings?.bkash?.app_key && store?.settings?.bkash?.app_secret && store?.settings?.bkash?.username && store?.settings?.bkash?.password);
+      const isBkashManual = !!(store?.settings?.bkash?.enabled && (store?.settings?.bkash?.mode === 'number' || !hasBkashApi) && store?.settings?.bkash?.number);
+      const hasNagadApi = !!(store?.settings?.nagad?.merchant_id && store?.settings?.nagad?.public_key && store?.settings?.nagad?.private_key);
+      const isNagadManual = !!(store?.settings?.nagad?.enabled && (store?.settings?.nagad?.mode === 'number' || !hasNagadApi) && store?.settings?.nagad?.number);
       const isManual = (form.payment_method === 'bkash' && isBkashManual) || (form.payment_method === 'nagad' && isNagadManual);
 
       // Create order

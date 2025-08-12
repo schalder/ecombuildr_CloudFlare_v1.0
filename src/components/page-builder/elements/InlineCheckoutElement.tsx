@@ -174,8 +174,10 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
 
     const total = subtotal + shippingCost;
     try {
-      const isBkashManual = !!(store?.settings?.bkash?.enabled && store?.settings?.bkash?.mode === 'number' && store?.settings?.bkash?.number);
-      const isNagadManual = !!(store?.settings?.nagad?.enabled && store?.settings?.nagad?.mode === 'number' && store?.settings?.nagad?.number);
+      const hasBkashApi = !!(store?.settings?.bkash?.app_key && store?.settings?.bkash?.app_secret && store?.settings?.bkash?.username && store?.settings?.bkash?.password);
+      const isBkashManual = !!(store?.settings?.bkash?.enabled && (store?.settings?.bkash?.mode === 'number' || !hasBkashApi) && store?.settings?.bkash?.number);
+      const hasNagadApi = !!(store?.settings?.nagad?.merchant_id && store?.settings?.nagad?.public_key && store?.settings?.nagad?.private_key);
+      const isNagadManual = !!(store?.settings?.nagad?.enabled && (store?.settings?.nagad?.mode === 'number' || !hasNagadApi) && store?.settings?.nagad?.number);
       const isManual = (form.payment_method === 'bkash' && isBkashManual) || (form.payment_method === 'nagad' && isNagadManual);
 
       const orderData: any = {
@@ -195,7 +197,7 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
         shipping_cost: shippingCost,
         discount_amount: 0,
         total: total,
-        status: form.payment_method === 'cod' ? 'pending' : ( isManual ? 'payment_pending' : 'processing' ),
+        status: form.payment_method === 'cod' ? 'pending' : ( isManual ? 'pending' : 'processing' ),
         custom_fields: (customFields || []).filter((cf:any)=>cf.enabled).map((cf:any)=>{ const value=(form.custom_fields as any)[cf.id]; if (value===undefined||value===null||value==='') return null; return { id: cf.id, label: cf.label || cf.id, value }; }).filter(Boolean),
       };
 

@@ -65,11 +65,16 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Prepare order insert with safe defaults
+    // Prepare order insert with safe defaults and status normalization
+    const allowedStatuses = new Set(['pending','confirmed','processing','shipped','delivered','cancelled']);
+    const defaultStatus = (order.payment_method === 'cod') ? 'pending' : 'processing';
+    const incomingStatus = (order.status || '').toLowerCase();
+    const safeStatus = allowedStatuses.has(incomingStatus) ? incomingStatus : defaultStatus;
+
     const toInsert: any = {
       ...order,
       order_number: order && (order as any).order_number ? (order as any).order_number : generateOrderNumber(),
-      status: order.status || (order.payment_method === 'cod' ? 'pending' : 'processing'),
+      status: safeStatus,
       discount_amount: order.discount_amount ?? 0,
       shipping_cost: order.shipping_cost ?? 0,
       subtotal: order.subtotal ?? 0,
