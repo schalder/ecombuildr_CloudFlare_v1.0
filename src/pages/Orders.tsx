@@ -35,6 +35,7 @@ import { nameWithVariant } from '@/lib/utils';
 
 interface Order {
   id: string;
+  store_id: string;
   order_number: string;
   customer_name: string;
   customer_email: string;
@@ -100,6 +101,7 @@ export default function Orders() {
           .from('orders')
           .select(`
             id,
+            store_id,
             order_number,
             customer_name,
             customer_email,
@@ -433,6 +435,28 @@ export default function Orders() {
                               }}
                             >
                               Invoice / PDF
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={async () => {
+                                try {
+                                  toast({ title: "Sending to Steadfast...", description: "Creating consignment" });
+                                  const { data, error } = await supabase.functions.invoke('steadfast-create-order', {
+                                    body: { store_id: order.store_id, order_id: order.id },
+                                  });
+                                  if (error) throw error;
+                                  if (data?.ok) {
+                                    const tracking = data?.consignment?.tracking_code || data?.consignment?.consignment_id || data?.message;
+                                    toast({ title: "Pushed to Steadfast", description: tracking ? String(tracking) : "Consignment created." });
+                                  } else {
+                                    throw new Error(data?.error || "Failed to create consignment");
+                                  }
+                                } catch (e: any) {
+                                  console.error(e);
+                                  toast({ title: "Steadfast error", description: e?.message || "Failed to create consignment", variant: "destructive" });
+                                }
+                              }}
+                            >
+                              Push to Steadfast
                             </DropdownMenuItem>
                             {order.status !== 'cancelled' && order.status !== 'delivered' && (
                               <DropdownMenuItem
