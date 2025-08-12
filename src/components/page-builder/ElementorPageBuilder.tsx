@@ -1019,6 +1019,8 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
   return (
     <div 
       ref={dragRef}
+      id={`pb-section-${section.id}`}
+      data-pb-section-id={section.id}
       className={`relative group transition-all duration-200 ${
         // Only apply border/background styles if no user-defined styles and not in preview mode
         !userBackground && !userShadow ? 'border-2 border-dashed' : ''
@@ -1208,6 +1210,8 @@ const RowComponent: React.FC<RowComponentProps> = ({
   return (
     <div 
       ref={dragRef}
+      id={`pb-row-${row.id}`}
+      data-pb-row-id={row.id}
       className={`relative group transition-all duration-200 rounded-lg ${
         // Only apply border/background styles if no user-defined styles
         !userBackground && !userShadow ? 'border border-dashed' : ''
@@ -1328,6 +1332,8 @@ const ColumnComponent: React.FC<ColumnComponentProps> = ({
 
   return (
     <div 
+      id={`pb-column-${column.id}`}
+      data-pb-column-id={column.id}
       className={`relative min-h-24 rounded-lg transition-all duration-200 ${
         // Only apply border/background styles if no user-defined styles
         !userBackground && !userShadow ? 'border border-dashed' : ''
@@ -1478,6 +1484,8 @@ const ElementWrapper: React.FC<ElementWrapperProps> = ({
   return (
     <div
       ref={dragRef}
+      id={`pb-el-${element.id}`}
+      data-pb-element-id={element.id}
       className={`relative group border transition-all duration-200 rounded ${
         isSelected 
           ? 'border-primary bg-primary/5' 

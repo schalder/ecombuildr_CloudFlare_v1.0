@@ -51,6 +51,18 @@ export const SectionSettings: React.FC<SectionSettingsProps> = ({ section, onUpd
     <div className="p-4 space-y-6">
       <Card>
         <CardHeader>
+          <CardTitle className="text-sm">Anchor</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          <div className="flex items-center gap-2">
+            <Input readOnly value={`pb-section-${section.id}`} />
+            <Button size="sm" onClick={() => navigator.clipboard.writeText(`pb-section-${section.id}`)}>Copy</Button>
+          </div>
+          <p className="text-xs text-muted-foreground">Use #{`pb-section-${section.id}`} for in-page scrolling</p>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
           <CardTitle className="text-sm">Section Layout</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -378,6 +390,18 @@ export const RowSettings: React.FC<RowSettingsProps> = ({ row, onUpdate }) => {
 
   return (
     <div className="p-4 space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm">Anchor</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          <div className="flex items-center gap-2">
+            <Input readOnly value={`pb-row-${row.id}`} />
+            <Button size="sm" onClick={() => navigator.clipboard.writeText(`pb-row-${row.id}`)}>Copy</Button>
+          </div>
+          <p className="text-xs text-muted-foreground">Use #{`pb-row-${row.id}`} for in-page scrolling</p>
+        </CardContent>
+      </Card>
       <Card>
         <CardHeader>
           <CardTitle className="text-sm">Row Layout</CardTitle>
@@ -709,6 +733,18 @@ export const ColumnSettings: React.FC<ColumnSettingsProps> = ({ column, onUpdate
 
   return (
     <div className="p-4 space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm">Anchor</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          <div className="flex items-center gap-2">
+            <Input readOnly value={`pb-column-${column.id}`} />
+            <Button size="sm" onClick={() => navigator.clipboard.writeText(`pb-column-${column.id}`)}>Copy</Button>
+          </div>
+          <p className="text-xs text-muted-foreground">Use #{`pb-column-${column.id}`} for in-page scrolling</p>
+        </CardContent>
+      </Card>
       <Card>
         <CardHeader>
           <CardTitle className="text-sm">Column Layout</CardTitle>

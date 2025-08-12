@@ -364,18 +364,20 @@ const ButtonElement: React.FC<{
   };
 
   const handleClick = (e: React.MouseEvent) => {
-    if (isEditing && linkType !== 'scroll') {
-      e.preventDefault();
-      return;
-    }
-
+    // Handle in-page scroll always within editor/live
     if (linkType === 'scroll') {
       e.preventDefault();
       e.stopPropagation();
       if (scrollTarget) {
-        const targetEl = (document.querySelector(`[data-pb-section-id="${scrollTarget}"]`) as HTMLElement | null)
+        const targetEl = document.getElementById(scrollTarget)
           || document.getElementById(`pb-section-${scrollTarget}`)
-          || document.getElementById(scrollTarget);
+          || (document.querySelector(`[data-pb-section-id="${scrollTarget}"]`) as HTMLElement | null)
+          || document.getElementById(`pb-row-${scrollTarget}`)
+          || (document.querySelector(`[data-pb-row-id="${scrollTarget}"]`) as HTMLElement | null)
+          || document.getElementById(`pb-column-${scrollTarget}`)
+          || (document.querySelector(`[data-pb-column-id="${scrollTarget}"]`) as HTMLElement | null)
+          || document.getElementById(`pb-el-${scrollTarget}`)
+          || (document.querySelector(`[data-pb-element-id="${scrollTarget}"]`) as HTMLElement | null);
         if (targetEl && 'scrollIntoView' in targetEl) {
           targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
@@ -384,12 +386,26 @@ const ButtonElement: React.FC<{
     }
 
     const finalUrl = computedUrl;
-    if (finalUrl && finalUrl !== '#') {
-      if (target === '_blank') {
+    if (!finalUrl || finalUrl === '#') {
+      e.preventDefault();
+      return;
+    }
+
+    if (isEditing) {
+      // Allow testing links in editor with cmd/ctrl-click or target=_blank
+      if (e.metaKey || e.ctrlKey || target === '_blank') {
+        e.preventDefault();
         window.open(finalUrl, '_blank');
       } else {
-        window.location.href = finalUrl;
+        e.preventDefault();
       }
+      return;
+    }
+
+    if (target === '_blank') {
+      window.open(finalUrl, '_blank');
+    } else {
+      window.location.href = finalUrl;
     }
   };
 

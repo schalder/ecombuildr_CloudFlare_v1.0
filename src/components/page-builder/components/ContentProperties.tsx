@@ -45,12 +45,26 @@ export const ContentProperties: React.FC<ContentPropertiesProps> = ({
 
   React.useEffect(() => {
     if (element.type === 'button') {
-      const nodes = Array.from(document.querySelectorAll('[data-pb-section-id]')) as HTMLElement[];
-      const opts = nodes.map((node, idx) => ({
-        id: node.getAttribute('data-pb-section-id') || '',
-        label: node.id || `Section ${idx + 1}`
-      })).filter(o => o.id);
-      setSectionOptions(opts);
+      const scan = () => {
+        const nodes = Array.from(document.querySelectorAll(
+          '[data-pb-section-id],[data-pb-row-id],[data-pb-column-id],[data-pb-element-id]'
+        )) as HTMLElement[];
+        const opts = nodes.map((node) => {
+          let type = 'Section';
+          if (node.hasAttribute('data-pb-row-id')) type = 'Row';
+          else if (node.hasAttribute('data-pb-column-id')) type = 'Column';
+          else if (node.hasAttribute('data-pb-element-id')) type = 'Element';
+          return {
+            id: node.id,
+            label: `${type}: #${node.id}`,
+          };
+        }).filter(o => o.id);
+        setSectionOptions(opts);
+      };
+      scan();
+      const observer = new MutationObserver(() => scan());
+      observer.observe(document.body, { childList: true, subtree: true });
+      return () => observer.disconnect();
     }
   }, [element.type]);
   // Image element content
