@@ -368,16 +368,13 @@ const ButtonElement: React.FC<{
     if (linkType === 'scroll') {
       e.preventDefault();
       e.stopPropagation();
-      if (scrollTarget) {
-        const targetEl = document.getElementById(scrollTarget)
-          || document.getElementById(`pb-section-${scrollTarget}`)
-          || (document.querySelector(`[data-pb-section-id="${scrollTarget}"]`) as HTMLElement | null)
-          || document.getElementById(`pb-row-${scrollTarget}`)
-          || (document.querySelector(`[data-pb-row-id="${scrollTarget}"]`) as HTMLElement | null)
-          || document.getElementById(`pb-column-${scrollTarget}`)
-          || (document.querySelector(`[data-pb-column-id="${scrollTarget}"]`) as HTMLElement | null)
-          || document.getElementById(`pb-el-${scrollTarget}`)
-          || (document.querySelector(`[data-pb-element-id="${scrollTarget}"]`) as HTMLElement | null);
+      const raw = (scrollTarget || '').replace(/^#/, '');
+      if (raw) {
+        const targetEl = document.getElementById(raw)
+          || (document.querySelector(`[data-pb-section-id="${raw}"]`) as HTMLElement | null)
+          || (document.querySelector(`[data-pb-row-id="${raw}"]`) as HTMLElement | null)
+          || (document.querySelector(`[data-pb-column-id="${raw}"]`) as HTMLElement | null)
+          || (document.querySelector(`[data-pb-element-id="${raw}"]`) as HTMLElement | null);
         if (targetEl && 'scrollIntoView' in targetEl) {
           targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }

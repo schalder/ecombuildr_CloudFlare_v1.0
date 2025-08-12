@@ -158,6 +158,8 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
   return (
     <div
       ref={drop}
+      id={row.anchor}
+      data-pb-row-id={row.id}
       className={cn(
         'relative group min-h-[80px] transition-all duration-200',
         // Only apply border/background styles if not in preview mode

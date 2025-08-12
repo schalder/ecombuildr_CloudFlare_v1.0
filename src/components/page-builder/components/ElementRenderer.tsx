@@ -129,6 +129,8 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
   return (
     <div
       ref={drag}
+      id={element.anchor}
+      data-pb-element-id={element.id}
       className={cn(
         'relative group transition-all duration-200 w-full',
         isDragging && 'opacity-50',

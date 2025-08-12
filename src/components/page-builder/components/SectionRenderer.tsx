@@ -132,7 +132,7 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({
   return (
     <div
       ref={drop}
-      id={`pb-section-${section.id}`}
+      id={section.anchor}
       data-pb-section-id={section.id}
       className={cn(
         'relative group transition-all duration-200',

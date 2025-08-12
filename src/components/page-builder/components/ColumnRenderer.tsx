@@ -95,6 +95,8 @@ export const ColumnRenderer: React.FC<ColumnRendererProps> = ({
   return (
     <div
       ref={drop}
+      id={column.anchor}
+      data-pb-column-id={column.id}
       className={cn(
         'relative min-h-[60px] transition-colors',
         // Only apply border/background styles if not in preview mode

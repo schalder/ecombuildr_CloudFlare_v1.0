@@ -30,6 +30,7 @@ export const ContentProperties: React.FC<ContentPropertiesProps> = ({
   const { websiteId } = useParams();
   const [pages, setPages] = React.useState<Array<{ id: string; title: string; slug: string; is_homepage?: boolean }>>([]);
   const [sectionOptions, setSectionOptions] = React.useState<Array<{ id: string; label: string }>>([]);
+  const [scrollSearch, setScrollSearch] = React.useState('');
 
   React.useEffect(() => {
     if (element.type === 'button' && websiteId) {
@@ -192,20 +193,28 @@ export const ContentProperties: React.FC<ContentPropertiesProps> = ({
         {linkType === 'scroll' && (
           <div>
             <Label htmlFor="button-scroll">Scroll Target</Label>
+            <Input
+              placeholder="Search targets..."
+              value={scrollSearch}
+              onChange={(e) => setScrollSearch(e.target.value)}
+              className="mb-2"
+            />
             <Select
               value={element.content.scrollTarget || ''}
-              onValueChange={(value) => onUpdate('scrollTarget', value)}
+              onValueChange={(value) => onUpdate('scrollTarget', value.replace(/^#/, ''))}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select a section on this page" />
               </SelectTrigger>
               <SelectContent>
-                {sectionOptions.map(opt => (
-                  <SelectItem key={opt.id} value={opt.id}>{opt.label}</SelectItem>
-                ))}
+                {sectionOptions
+                  .filter(opt => opt.label.toLowerCase().includes(scrollSearch.toLowerCase()))
+                  .map(opt => (
+                    <SelectItem key={opt.id} value={opt.id}>{opt.label}</SelectItem>
+                  ))}
               </SelectContent>
             </Select>
-            <p className="text-xs text-muted-foreground mt-1">Select a section to scroll to on click.</p>
+            <p className="text-xs text-muted-foreground mt-1">Select a target. Value saved without the #.</p>
           </div>
         )}
 

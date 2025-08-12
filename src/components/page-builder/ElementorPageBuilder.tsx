@@ -63,6 +63,7 @@ import { renderSectionStyles, renderRowStyles, renderColumnStyles, hasUserBackgr
 import { SectionDropZone } from './components/SectionDropZone';
 import { RowDropZone } from './components/RowDropZone';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { ensureAnchors, buildAnchor } from './utils/anchor';
 
 // Helper function to get responsive grid classes for a row
 const getResponsiveGridClasses = (columnLayout: string, deviceType: 'desktop' | 'tablet' | 'mobile'): string => {
@@ -167,7 +168,7 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = memo(({
   isSaving = false
 }) => {
   const [data, setData] = useState<PageBuilderData>(
-    initialData || { sections: [] }
+    () => ensureAnchors(initialData || { sections: [] })
   );
   const [selection, setSelection] = useState<SelectionType | null>(null);
   const [showColumnModal, setShowColumnModal] = useState<{ sectionId: string; insertIndex?: number } | null>(null);
@@ -177,8 +178,9 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = memo(({
   const [propertiesPanelCollapsed, setPropertiesPanelCollapsed] = useState(false);
 
   const updateData = useCallback((newData: PageBuilderData) => {
-    setData(newData);
-    onChange(newData);
+    const ensured = ensureAnchors(newData);
+    setData(ensured);
+    onChange(ensured);
   }, [onChange]);
 
   const generateId = () => `pb-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
@@ -188,6 +190,7 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = memo(({
   const addSection = useCallback((width: PageBuilderSection['width'] = 'wide', insertIndex?: number) => {
     const newSection: PageBuilderSection = {
       id: generateId(),
+      anchor: buildAnchor('section'),
       width,
       rows: [],
       styles: {
@@ -299,6 +302,7 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = memo(({
     const columnWidths = COLUMN_LAYOUTS[columnLayout];
     const newRow: PageBuilderRow = {
       id: generateId(),
+      anchor: buildAnchor('row'),
       columnLayout,
       styles: {
         paddingTop: '10px',
@@ -308,6 +312,7 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = memo(({
       },
       columns: columnWidths.map(width => ({
         id: generateId(),
+        anchor: buildAnchor('col'),
         width,
         elements: [],
         styles: {
@@ -409,6 +414,7 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = memo(({
 
     const newElement: PageBuilderElement = {
       id: generateId(),
+      anchor: buildAnchor('element', elementType),
       type: elementType,
       content: { ...elementDef.defaultContent }
     };
