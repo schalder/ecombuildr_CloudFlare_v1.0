@@ -174,6 +174,10 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
 
     const total = subtotal + shippingCost;
     try {
+      const isBkashManual = !!(store?.settings?.bkash?.enabled && store?.settings?.bkash?.mode === 'number' && store?.settings?.bkash?.number);
+      const isNagadManual = !!(store?.settings?.nagad?.enabled && store?.settings?.nagad?.mode === 'number' && store?.settings?.nagad?.number);
+      const isManual = (form.payment_method === 'bkash' && isBkashManual) || (form.payment_method === 'nagad' && isNagadManual);
+
       const orderData: any = {
         store_id: store.id,
         customer_name: form.customer_name,
@@ -191,7 +195,7 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
         shipping_cost: shippingCost,
         discount_amount: 0,
         total: total,
-        status: form.payment_method === 'cod' ? 'pending' : 'processing',
+        status: form.payment_method === 'cod' ? 'pending' : ( isManual ? 'payment_pending' : 'processing' ),
         custom_fields: (customFields || []).filter((cf:any)=>cf.enabled).map((cf:any)=>{ const value=(form.custom_fields as any)[cf.id]; if (value===undefined||value===null||value==='') return null; return { id: cf.id, label: cf.label || cf.id, value }; }).filter(Boolean),
       };
 
@@ -225,8 +229,8 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
       const orderId: string | undefined = data?.order?.id;
       if (!orderId) throw new Error('Order was not created');
 
-      if (form.payment_method === 'cod') {
-        toast.success('Order placed!');
+      if (form.payment_method === 'cod' || isManual) {
+        toast.success(isManual ? 'Order placed! Please complete payment to the provided number.' : 'Order placed!');
         navigate(paths.orderConfirmation(orderId));
       } else {
         await initiatePayment(orderId, orderData.total, form.payment_method);

@@ -563,6 +563,10 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
 
     setLoading(true);
     try {
+      const isBkashManual = Boolean(store?.settings?.bkash?.enabled && store?.settings?.bkash?.mode === 'number' && store?.settings?.bkash?.number);
+      const isNagadManual = Boolean(store?.settings?.nagad?.enabled && store?.settings?.nagad?.mode === 'number' && store?.settings?.nagad?.number);
+      const isManual = (form.payment_method === 'bkash' && isBkashManual) || (form.payment_method === 'nagad' && isNagadManual);
+
       const orderData: any = {
         store_id: store.id,
         customer_name: form.customer_name,
@@ -580,7 +584,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
         shipping_cost: shippingCost,
         discount_amount: 0,
         total: total + shippingCost,
-        status: form.payment_method === 'cod' ? 'pending' as const : 'processing' as const,
+        status: form.payment_method === 'cod' ? 'pending' as const : (isManual ? 'payment_pending' as const : 'processing' as const),
         // Persist custom fields with labels for better display later
         custom_fields: (customFields || [])
           .filter((cf: any) => cf.enabled)
@@ -613,9 +617,9 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
       const orderId: string | undefined = data?.order?.id;
       if (!orderId) throw new Error('Order was not created');
 
-      if (form.payment_method === 'cod') {
+      if (form.payment_method === 'cod' || isManual) {
         clearCart();
-        toast.success('Order placed!');
+        toast.success(isManual ? 'Order placed! Please complete payment to the provided number.' : 'Order placed!');
         navigate(paths.orderConfirmation(orderId));
       } else {
         await initiatePayment(orderId, orderData.total, form.payment_method);

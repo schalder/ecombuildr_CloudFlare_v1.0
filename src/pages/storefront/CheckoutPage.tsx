@@ -216,6 +216,11 @@ useEffect(() => {
 
     setLoading(true);
     try {
+      // Determine manual number-only mode
+      const isBkashManual = !!(store?.settings?.bkash?.enabled && store?.settings?.bkash?.mode === 'number' && store?.settings?.bkash?.number);
+      const isNagadManual = !!(store?.settings?.nagad?.enabled && store?.settings?.nagad?.mode === 'number' && store?.settings?.nagad?.number);
+      const isManual = (form.payment_method === 'bkash' && isBkashManual) || (form.payment_method === 'nagad' && isNagadManual);
+
       // Create order
       const orderData = {
         store_id: store.id,
@@ -232,7 +237,7 @@ useEffect(() => {
         discount_amount: discountAmount,
         discount_code: form.discount_code || null,
         total: total + shippingCost - discountAmount,
-        status: form.payment_method === 'cod' ? 'pending' as const : 'processing' as const,
+        status: form.payment_method === 'cod' ? 'pending' as const : (isManual ? 'pending' as const : 'processing' as const),
         order_number: `ORD-${Date.now()}`,
       };
 
@@ -285,13 +290,13 @@ useEffect(() => {
       }
 
       // Handle payment processing
-      if (form.payment_method === 'cod') {
-        // For COD, just clear cart and redirect
+      if (form.payment_method === 'cod' || isManual) {
+        // For COD or manual number-only payments, just clear cart and redirect
         clearCart();
-        toast.success('Order placed successfully!');
+        toast.success(isManual ? 'Order placed! Please complete payment to the provided number.' : 'Order placed successfully!');
         navigate(paths.orderConfirmation(order.id));
       } else {
-        // For online payments, initiate payment process
+        // For online payments via API, initiate payment process
         await initiatePayment(order.id, finalTotal, form.payment_method);
       }
     } catch (error) {
