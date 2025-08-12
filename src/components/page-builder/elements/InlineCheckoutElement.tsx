@@ -263,7 +263,7 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
       <style>{buttonCSS + headerCSS}</style>
       <div className="max-w-5xl mx-auto" style={{ backgroundColor: (backgrounds as any).containerBg || undefined }}>
         <Card className={formBorderWidth > 0 ? undefined : 'border-0'} style={{ backgroundColor: (backgrounds as any).formBg || undefined, borderColor: (backgrounds as any).formBorderColor || undefined, borderWidth: formBorderWidth || 0 }}>
-          <CardContent className="p-4 md:p-6 space-y-6 w-full overflow-x-hidden">
+          <CardContent className="p-4 md:p-6 space-y-6 w-full overflow-x-hidden" dir="auto">
             {/* Product chooser */}
             <section className="space-y-4">
               <h3 className={`mb-3 font-semibold element-${element.id}-section-header`} style={headerInline as React.CSSProperties}>Select Product</h3>
@@ -308,27 +308,6 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
                 </div>
               )}
 
-              {orderBump.enabled && bumpProduct && (
-                <div className="border border-dashed rounded-md overflow-hidden">
-                  <div className="px-3 py-2 bg-muted/50">
-                    <label className="flex items-center gap-2">
-                      <input type="checkbox" checked={bumpChecked} onChange={(e)=>setBumpChecked(e.target.checked)} />
-                      <span className="text-sm font-semibold">{orderBump.label || 'Add this to my order'}</span>
-                    </label>
-                  </div>
-                  <div className="p-3 flex items-start gap-3">
-                    {Array.isArray(bumpProduct.images) && bumpProduct.images[0] && (
-                      <img src={bumpProduct.images[0]} alt={`${bumpProduct.name} product`} className="w-12 h-12 object-cover rounded border" />
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium break-words">{bumpProduct.name} · {formatCurrency(Number(bumpProduct.price))}</div>
-                      {orderBump.description && (
-                        <p className="text-xs text-muted-foreground mt-1 break-words">{orderBump.description}</p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
             </section>
 
             {(sections.info || sections.shipping || sections.payment || sections.summary) && <Separator />}
@@ -412,6 +391,30 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
                   </SelectContent>
                 </Select>
                 <Textarea placeholder="Order notes (optional)" value={form.notes} onChange={e=>setForm(f=>({...f,notes:e.target.value}))} />
+              </section>
+            )}
+
+            {orderBump.enabled && bumpProduct && (
+              <section className="space-y-3">
+                <div className="border border-dashed rounded-md overflow-hidden" style={{ borderColor: 'hsl(55 97% 80%)' }}>
+                  <div className="px-3 py-2" style={{ backgroundColor: 'hsl(55 97% 88%)' }}>
+                    <label className="flex items-center gap-2">
+                      <input type="checkbox" checked={bumpChecked} onChange={(e)=>setBumpChecked(e.target.checked)} />
+                      <span className="text-sm font-semibold" style={{ color: 'hsl(120 60% 35%)' }}>{orderBump.label || 'Add this to my order'}</span>
+                    </label>
+                  </div>
+                  <div className="p-3 flex items-start gap-3">
+                    {Array.isArray(bumpProduct.images) && bumpProduct.images[0] && (
+                      <img src={bumpProduct.images[0]} alt={`${bumpProduct.name} product`} className="w-12 h-12 object-cover rounded border" />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium break-words">{bumpProduct.name} · {formatCurrency(Number(bumpProduct.price))}</div>
+                      {orderBump.description && (
+                        <p className="text-xs text-muted-foreground mt-1 break-words">{orderBump.description}</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </section>
             )}
 
