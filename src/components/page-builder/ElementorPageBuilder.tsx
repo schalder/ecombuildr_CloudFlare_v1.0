@@ -413,7 +413,15 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = memo(({
       content: { ...elementDef.defaultContent }
     };
 
-    console.log('New element created:', newElement);
+    // Default styles for specific elements
+    if (elementType === 'video') {
+      newElement.styles = {
+        paddingTop: '10px',
+        paddingRight: '10px',
+        paddingBottom: '10px',
+        paddingLeft: '10px',
+      };
+    }
 
     const newData = {
       ...data,

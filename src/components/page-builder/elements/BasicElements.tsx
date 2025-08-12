@@ -563,7 +563,7 @@ const VideoElement: React.FC<{
     muted = false
   } = element.content;
   
-  const containerStyles = renderElementStyles(element);
+  const containerStyles = renderElementStyles(element, (deviceType ?? 'desktop'));
 
   // Import video utilities
   const { parseVideoUrl, getVideoWidthClasses, buildEmbedUrl, sanitizeEmbedCode } = React.useMemo(() => {
