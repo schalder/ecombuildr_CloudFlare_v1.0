@@ -86,6 +86,7 @@ export const InlineRTE: React.FC<InlineRTEProps> = ({ value, onChange, placehold
   const toolbarRef = useRef<HTMLDivElement>(null);
   const [selectedFont, setSelectedFont] = useState('default');
   const keepOpenRef = useRef(false);
+  const [fontOpen, setFontOpen] = useState(false);
 
   // Keep editor content in sync
   useEffect(() => {
@@ -277,13 +278,21 @@ export const InlineRTE: React.FC<InlineRTEProps> = ({ value, onChange, placehold
             style={{ top: toolbarPos.top, left: toolbarPos.left }}
             data-rte-floating
           >
-            <Select value={selectedFont} onValueChange={(v) => {
+            <Select value={selectedFont} open={fontOpen} onOpenChange={(o) => {
+              setFontOpen(o);
+              if (o) {
+                keepOpenRef.current = true;
+                setShowToolbar(true);
+              } else {
+                setTimeout(() => { keepOpenRef.current = false; }, 0);
+              }
+            }} onValueChange={(v) => {
               setSelectedFont(v);
               const meta = (fonts as any[]).find((f: any) => f.value === v);
               if (meta && meta.family) ensureGoogleFontLoaded(meta.family, meta.weights);
               applyFont(v);
             }}>
-              <SelectTrigger className="h-7 min-w-[140px] bg-popover" onMouseDown={(e) => e.preventDefault()}>
+              <SelectTrigger className="h-7 min-w-[140px] bg-popover" onMouseDown={(e) => e.preventDefault()} onPointerDown={(e) => e.preventDefault()}>
                 <SelectValue placeholder="Default" />
               </SelectTrigger>
               <SelectContent className="z-[90] bg-popover" data-rte-floating>
