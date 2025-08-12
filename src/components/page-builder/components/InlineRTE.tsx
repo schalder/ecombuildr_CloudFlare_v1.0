@@ -49,11 +49,11 @@ export function sanitizeHtml(input: string): string {
     }
     if (el.tagName === 'SPAN') {
       const style = el.getAttribute('style') || '';
-      // allow only color and font-family styles
+      // allow only safe inline styles we use
       const allowedStyles = style
         .split(';')
         .map((s) => s.trim())
-        .filter((s) => /^(color|font-family)\s*:/i.test(s));
+        .filter((s) => /^(color|font-family|font-weight|font-style|text-decoration(?:-line)?)\s*:/i.test(s));
       if (allowedStyles.length) newEl.setAttribute('style', allowedStyles.join('; '));
     }
     if (el.tagName === 'FONT') {
