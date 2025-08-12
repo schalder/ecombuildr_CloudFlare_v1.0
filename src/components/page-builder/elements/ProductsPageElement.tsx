@@ -108,8 +108,18 @@ export const ProductsPageElement: React.FC<{
     const mobileConfigured = (element.content as any).mobileColumns as number | undefined;
     const mobile = typeof mobileConfigured === 'number' ? Math.max(1, Math.min(3, mobileConfigured)) : 2;
 
-    const cls = (n: number) => `grid-cols-${n}`;
-    return `${cls(mobile)} md:${cls(tablet)} lg:${cls(desktop)}`;
+    // Use explicit mappings so Tailwind includes these classes in production
+    const map = (n: number) => {
+      switch (n) {
+        case 1: return 'grid-cols-1';
+        case 2: return 'grid-cols-2';
+        case 3: return 'grid-cols-3';
+        case 4: return 'grid-cols-4';
+        default: return 'grid-cols-2';
+      }
+    };
+
+    return `${map(mobile)} md:${map(tablet)} lg:${map(desktop)}`;
   };
 
   useEffect(() => {
