@@ -791,6 +791,23 @@ export const ProductsPageContentProperties: React.FC<EcommerceContentPropertiesP
         </Select>
       </div>
 
+      <div>
+        <Label className="text-xs">Mobile Columns</Label>
+        <Select
+          value={(element.content as any).mobileColumns?.toString() || '2'}
+          onValueChange={(v) => onUpdate('mobileColumns', parseInt(v))}
+        >
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="1">1 Column</SelectItem>
+            <SelectItem value="2">2 Columns</SelectItem>
+            <SelectItem value="3">3 Columns</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-2">
           <div className="flex items-center space-x-2">
