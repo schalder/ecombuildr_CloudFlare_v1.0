@@ -85,6 +85,7 @@ export const InlineRTE: React.FC<InlineRTEProps> = ({ value, onChange, placehold
   const [currentColor, setCurrentColor] = useState<string>('');
   const toolbarRef = useRef<HTMLDivElement>(null);
   const [selectedFont, setSelectedFont] = useState('default');
+  const keepOpenRef = useRef(false);
 
   // Keep editor content in sync
   useEffect(() => {
@@ -101,6 +102,10 @@ export const InlineRTE: React.FC<InlineRTEProps> = ({ value, onChange, placehold
     if (!el) return;
 
     const handleSelection = () => {
+      if (keepOpenRef.current) {
+        setShowToolbar(true);
+        return;
+      }
       const sel = window.getSelection();
       const active = document.activeElement as HTMLElement | null;
       const floatingEls = Array.from(document.querySelectorAll('[data-rte-floating]')) as HTMLElement[];
@@ -138,8 +143,40 @@ export const InlineRTE: React.FC<InlineRTEProps> = ({ value, onChange, placehold
     return () => document.removeEventListener('selectionchange', handleSelection);
   }, []);
 
+  useEffect(() => {
+    const onDocMouseDown = (e: MouseEvent) => {
+      const target = e.target as Node | null;
+      const toolbarEl = toolbarRef.current;
+      const inToolbar = !!toolbarEl && !!target && toolbarEl.contains(target);
+      const inFloating = !!(target as Element | null) && (target as Element).closest?.('[data-rte-floating]');
+      if (inToolbar || inFloating) {
+        keepOpenRef.current = true;
+        // Preserve current selection
+        const sel = window.getSelection();
+        if (sel && sel.rangeCount > 0) {
+          lastRangeRef.current = sel.getRangeAt(0).cloneRange();
+        }
+      }
+    };
+    const onDocMouseUp = () => {
+      // release latch after current event loop to allow handlers to run
+      setTimeout(() => {
+        keepOpenRef.current = false;
+      }, 0);
+    };
+    document.addEventListener('mousedown', onDocMouseDown, true);
+    document.addEventListener('mouseup', onDocMouseUp, true);
+    return () => {
+      document.removeEventListener('mousedown', onDocMouseDown, true);
+      document.removeEventListener('mouseup', onDocMouseUp, true);
+    };
+  }, []);
+
+
   const exec = (command: string, valueArg?: string) => {
-    // restore selection before executing
+    // focus editor and restore selection before executing
+    const editorEl = editorRef.current;
+    if (editorEl) editorEl.focus();
     const sel = window.getSelection();
     if (lastRangeRef.current && sel) {
       sel.removeAllRanges();
@@ -309,6 +346,12 @@ export const InlineRTE: React.FC<InlineRTEProps> = ({ value, onChange, placehold
         data-placeholder={placeholder}
         onFocus={() => setIsEditing(true)}
         onBlur={() => {
+          if (keepOpenRef.current) {
+            setIsEditing(true);
+            setShowToolbar(true);
+            onInput();
+            return;
+          }
           const active = document.activeElement as HTMLElement | null;
           const toolbarEl = toolbarRef.current;
           const floatingEls = Array.from(document.querySelectorAll('[data-rte-floating]')) as HTMLElement[];
