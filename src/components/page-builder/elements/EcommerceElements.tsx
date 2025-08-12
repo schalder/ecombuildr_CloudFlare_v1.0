@@ -821,10 +821,10 @@ const WeeklyFeaturedElement: React.FC<{
                   />
                 </div>
                 <h4 className="font-medium mb-2" style={productTitleStyles as any}>{p.name}</h4>
-                <div className="mb-3">
-                  <span className="font-bold text-primary" style={priceStyles as any}>{formatCurrency(Number(p.price))}</span>
+                <div className="mb-3 flex flex-col items-start gap-1 sm:flex-row sm:items-center sm:gap-2">
+                  <span className="font-bold text-primary text-base md:text-lg" style={priceStyles as any}>{formatCurrency(Number(p.price))}</span>
                   {p.compare_price && p.compare_price > p.price && (
-                    <span className="text-sm text-muted-foreground line-through ml-2">
+                    <span className="text-xs md:text-sm text-muted-foreground line-through">
                       {formatCurrency(Number(p.compare_price))}
                     </span>
                   )}
