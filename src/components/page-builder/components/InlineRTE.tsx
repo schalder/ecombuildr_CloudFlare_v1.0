@@ -202,10 +202,15 @@ export const InlineRTE: React.FC<InlineRTEProps> = ({ value, onChange, placehold
   };
 
   const applyFont = (font: string) => {
-    const useFont = font === 'default'
-      ? getComputedStyle(editorRef.current as HTMLElement).fontFamily || 'inherit'
-      : font;
-    exec('fontName', useFont);
+    let useFont = font;
+    if (font === 'default') {
+      useFont = getComputedStyle(editorRef.current as HTMLElement).fontFamily || 'inherit';
+    }
+    const primary = (useFont || '')
+      .split(',')[0]
+      ?.trim()
+      .replace(/^['"]|['"]$/g, '') || useFont;
+    exec('fontName', primary);
   };
 
   const toggleLink = () => {
