@@ -1,6 +1,7 @@
 import React from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
@@ -19,7 +20,7 @@ export const InlineCheckoutContentProperties: React.FC<InlineCheckoutContentProp
   const defaultProductId: string = cfg.defaultProductId || '';
   const allowSwitching: boolean = cfg.allowSwitching !== false; // default true
   const showQuantity: boolean = cfg.showQuantity !== false; // default true
-  const orderBump = cfg.orderBump || { enabled: false, productId: '', label: 'Add this to my order', prechecked: false };
+  const orderBump = cfg.orderBump || { enabled: false, productId: '', label: 'Add this to my order', description: '', prechecked: false };
 
   const { products, loading } = useStoreProducts();
 
@@ -119,6 +120,10 @@ export const InlineCheckoutContentProperties: React.FC<InlineCheckoutContentProp
             <div>
               <Label className="text-sm">Bump Label</Label>
               <Input value={orderBump.label || ''} onChange={(e) => onUpdate('orderBump', { ...orderBump, label: e.target.value })} placeholder="Add this to my order" />
+            </div>
+            <div>
+              <Label className="text-sm">Bump Description</Label>
+              <Textarea value={orderBump.description || ''} onChange={(e) => onUpdate('orderBump', { ...orderBump, description: e.target.value })} placeholder="Brief description shown under the label" rows={3} />
             </div>
             <div className="flex items-center gap-2">
               <input type="checkbox" checked={!!orderBump.prechecked} onChange={(e) => onUpdate('orderBump', { ...orderBump, prechecked: e.target.checked })} />

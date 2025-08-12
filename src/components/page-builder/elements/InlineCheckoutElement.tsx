@@ -47,7 +47,7 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
   const trust = cfg.trustBadge || { enabled: false, imageUrl: '', alt: 'Secure checkout' };
   const buttonLabel: string = cfg.placeOrderLabel || 'Place Order';
   const showItemImages: boolean = cfg.showItemImages ?? true;
-  const orderBump = cfg.orderBump || { enabled: false, productId: '', label: 'Add this to my order', prechecked: false };
+  const orderBump = cfg.orderBump || { enabled: false, productId: '', label: 'Add this to my order', description: '', prechecked: false };
 
   // Load store via websiteId if provided (for domain/website routes)
   useEffect(() => {
@@ -59,8 +59,9 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
     })();
   }, [store, websiteId, loadStoreById]);
 
-  // Load configured products
-  const { products } = useStoreProducts({ specificProductIds: productIds });
+  // Load configured products (include bump product if set)
+  const allProductIds = useMemo(() => Array.from(new Set([...(productIds || []), cfg?.orderBump?.productId].filter(Boolean))), [productIds, cfg?.orderBump?.productId]);
+  const { products } = useStoreProducts({ specificProductIds: allProductIds });
   const defaultProductId: string = useMemo(() => {
     if (cfg.defaultProductId && productIds.includes(cfg.defaultProductId)) return cfg.defaultProductId;
     return productIds[0] || '';
@@ -308,16 +309,25 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
               )}
 
               {orderBump.enabled && bumpProduct && (
-                <label className="flex items-center gap-3 border rounded p-3">
-                  {Array.isArray(bumpProduct.images) && bumpProduct.images[0] && (
-                    <img src={bumpProduct.images[0]} alt={`${bumpProduct.name} product`} className="w-10 h-10 object-cover rounded border" />
-                  )}
-                  <input type="checkbox" checked={bumpChecked} onChange={(e)=>setBumpChecked(e.target.checked)} />
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium truncate">{orderBump.label || 'Add this to my order'}</div>
-                    <div className="text-xs text-muted-foreground">{bumpProduct.name} · {formatCurrency(Number(bumpProduct.price))}</div>
+                <div className="border border-dashed rounded-md overflow-hidden">
+                  <div className="px-3 py-2 bg-muted/50">
+                    <label className="flex items-center gap-2">
+                      <input type="checkbox" checked={bumpChecked} onChange={(e)=>setBumpChecked(e.target.checked)} />
+                      <span className="text-sm font-semibold">{orderBump.label || 'Add this to my order'}</span>
+                    </label>
                   </div>
-                </label>
+                  <div className="p-3 flex items-start gap-3">
+                    {Array.isArray(bumpProduct.images) && bumpProduct.images[0] && (
+                      <img src={bumpProduct.images[0]} alt={`${bumpProduct.name} product`} className="w-12 h-12 object-cover rounded border" />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium break-words">{bumpProduct.name} · {formatCurrency(Number(bumpProduct.price))}</div>
+                      {orderBump.description && (
+                        <p className="text-xs text-muted-foreground mt-1 break-words">{orderBump.description}</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
               )}
             </section>
 
@@ -480,7 +490,7 @@ export const registerInlineCheckoutElements = () => {
       defaultProductId: '',
       allowSwitching: true,
       showQuantity: true,
-      orderBump: { enabled: false, productId: '', label: 'Add this to my order', prechecked: false },
+      orderBump: { enabled: false, productId: '', label: 'Add this to my order', description: '', prechecked: false },
       sections: { info: true, shipping: true, payment: true, summary: true },
       headings: { info: 'Customer Information', shipping: 'Shipping', payment: 'Payment', summary: 'Order Summary' },
       placeOrderLabel: 'Place Order',
