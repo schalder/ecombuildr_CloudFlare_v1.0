@@ -16,6 +16,8 @@ import ReviewsSection from '@/components/storefront/ReviewsSection';
 import RelatedProducts from '@/components/storefront/RelatedProducts';
 import { useEcomPaths } from '@/lib/pathResolver';
 import { PageBuilderRenderer } from '@/components/storefront/PageBuilderRenderer';
+import { AspectRatio } from '@/components/ui/aspect-ratio';
+import { parseVideoUrl, buildEmbedUrl } from '@/components/page-builder/utils/videoUtils';
 
 interface Product {
   id: string;
@@ -251,6 +253,17 @@ export const ProductDetail: React.FC = () => {
     ? Math.round(((product.compare_price - effectivePrice) / product.compare_price) * 100)
     : 0;
 
+  // Build media list (video first if available)
+  const videoInfo = React.useMemo(() => parseVideoUrl((product as any).video_url || ''), [product]);
+  const mediaItems = React.useMemo(() => {
+    const items: Array<{ kind: 'video' | 'image'; src?: string; thumb?: string; }> = [];
+    if (videoInfo && videoInfo.type !== 'unknown' && videoInfo.embedUrl) {
+      items.push({ kind: 'video', src: videoInfo.embedUrl, thumb: videoInfo.thumbnailUrl });
+    }
+    (product.images || []).forEach((img) => items.push({ kind: 'image', src: img }));
+    return items;
+  }, [videoInfo, product]);
+
   return (
     <StorefrontLayout>
       <div className="container mx-auto px-4 py-8">
@@ -258,9 +271,9 @@ export const ProductDetail: React.FC = () => {
           {/* Product Images */}
           <div className="flex flex-col lg:flex-row gap-4">
             {/* Thumbnail Images - Left side on desktop, top on mobile */}
-            {product.images.length > 1 && (
+            {mediaItems.length > 1 && (
               <div className="order-2 lg:order-1 flex flex-row lg:flex-col gap-2 overflow-x-auto lg:overflow-x-visible lg:w-20">
-                {product.images.map((image, index) => (
+                {mediaItems.map((item, index) => (
                   <button
                     key={index}
                     onClick={() => setSelectedImage(index)}
@@ -268,24 +281,38 @@ export const ProductDetail: React.FC = () => {
                       selectedImage === index ? 'border-primary ring-2 ring-primary/20' : 'border-border hover:border-primary/50'
                     }`}
                   >
-                    <img
-                      src={image}
-                      alt={`${product.name} ${index + 1}`}
-                      className="w-full h-full object-cover"
-                    />
+                    {item.kind === 'image' ? (
+                      <img src={item.src!} alt={`${product.name} ${index + 1}`} className="w-full h-full object-cover" />
+                    ) : (
+                      <img src={item.thumb || '/placeholder.svg'} alt={`${product.name} video`} className="w-full h-full object-cover" />
+                    )}
                   </button>
                 ))}
               </div>
             )}
             
-            {/* Main Image */}
+            {/* Main Media */}
             <div className="order-1 lg:order-2 flex-1">
               <div className="aspect-square relative overflow-hidden rounded-lg border bg-muted">
-                <img
-                  src={product.images[selectedImage] || '/placeholder.svg'}
-                  alt={product.name}
-                  className="w-full h-full object-cover transition-opacity duration-300"
-                />
+                {mediaItems[selectedImage]?.kind === 'video' && videoInfo && videoInfo.embedUrl ? (
+                  videoInfo.type === 'hosted' ? (
+                    <video src={videoInfo.embedUrl} controls className="w-full h-full" />
+                  ) : (
+                    <iframe
+                      src={buildEmbedUrl(videoInfo.embedUrl, videoInfo.type, { controls: true })}
+                      className="w-full h-full"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                      title={`${product.name} video`}
+                    />
+                  )
+                ) : (
+                  <img
+                    src={mediaItems[selectedImage]?.src || '/placeholder.svg'}
+                    alt={product.name}
+                    className="w-full h-full object-cover transition-opacity duration-300"
+                  />
+                )}
                 {discountPercentage > 0 && (
                   <Badge variant="destructive" className="absolute top-4 left-4 text-xs">
                     -{discountPercentage}%
