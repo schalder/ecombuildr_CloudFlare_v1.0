@@ -223,7 +223,7 @@ useEffect(() => {
       const isNagadManual = !!(store?.settings?.nagad?.enabled && (store?.settings?.nagad?.mode === 'number' || !hasNagadApi) && store?.settings?.nagad?.number);
       const isManual = (form.payment_method === 'bkash' && isBkashManual) || (form.payment_method === 'nagad' && isNagadManual);
 
-      // Create order
+      // Create order via secure Edge Function to respect RLS
       const orderData = {
         store_id: store.id,
         customer_name: form.customer_name,
@@ -243,49 +243,39 @@ useEffect(() => {
         order_number: `ORD-${Date.now()}`,
       };
 
-      const { data: order, error: orderError } = await supabase
-        .from('orders')
-        .insert(orderData)
-        .select()
-        .single();
-
-      if (orderError) throw orderError;
-
-      // Create order items
-      const orderItems = items.map(item => ({
-        order_id: order.id,
+      const itemsPayload = items.map(item => ({
         product_id: item.productId,
         product_name: item.name,
         product_sku: item.sku,
         price: item.price,
         quantity: item.quantity,
-        total: item.price * item.quantity,
         variation: item.variation || {},
+        image: item.image || null,
       }));
 
-      const { error: itemsError } = await supabase
-        .from('order_items')
-        .insert(orderItems);
+      const { data, error: createErr } = await supabase.functions.invoke('create-order', {
+        body: {
+          order: orderData,
+          items: itemsPayload,
+          storeId: store.id,
+        }
+      });
+      if (createErr) throw createErr;
+      const createdOrderId: string | undefined = data?.order?.id;
+      if (!createdOrderId) throw new Error('Order was not created');
 
-      if (itemsError) throw itemsError;
-
-      // Update discount code usage if applied
+      // Update discount code usage if applied (best-effort; ignored if RLS blocks)
       if (discountAmount > 0 && form.discount_code) {
-        // First get the current discount code to increment used_count
         const { data: currentDiscount } = await supabase
           .from('discount_codes' as any)
           .select('used_count')
           .eq('store_id', store.id)
           .eq('code', form.discount_code.toUpperCase())
-          .single();
-
+          .maybeSingle();
         if (currentDiscount) {
           await supabase
             .from('discount_codes' as any)
-            .update({ 
-              used_count: (currentDiscount as any).used_count + 1,
-              updated_at: new Date().toISOString()
-            })
+            .update({ used_count: (currentDiscount as any).used_count + 1, updated_at: new Date().toISOString() })
             .eq('store_id', store.id)
             .eq('code', form.discount_code.toUpperCase());
         }
@@ -293,13 +283,11 @@ useEffect(() => {
 
       // Handle payment processing
       if (form.payment_method === 'cod' || isManual) {
-        // For COD or manual number-only payments, just clear cart and redirect
         clearCart();
         toast.success(isManual ? 'Order placed! Please complete payment to the provided number.' : 'Order placed successfully!');
-        navigate(paths.orderConfirmation(order.id));
+        navigate(paths.orderConfirmation(createdOrderId));
       } else {
-        // For online payments via API, initiate payment process
-        await initiatePayment(order.id, finalTotal, form.payment_method);
+        await initiatePayment(createdOrderId, finalTotal, form.payment_method);
       }
     } catch (error) {
       console.error('Error creating order:', error);
