@@ -91,6 +91,23 @@ export const EcommerceContentProperties: React.FC<EcommerceContentPropertiesProp
       </div>
 
       <div>
+        <Label className="text-xs">Mobile Columns</Label>
+        <Select
+          value={element.content.mobileColumns?.toString() || '1'}
+          onValueChange={(value) => onUpdate('mobileColumns', parseInt(value))}
+        >
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="1">1 Column</SelectItem>
+            <SelectItem value="2">2 Columns</SelectItem>
+            <SelectItem value="3">3 Columns</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div>
         <Label className="text-xs">Product Limit</Label>
         <div className="space-y-2">
           <Slider
@@ -330,6 +347,23 @@ export const FeaturedProductsContentProperties: React.FC<EcommerceContentPropert
             <SelectItem value="2">2 Columns</SelectItem>
             <SelectItem value="3">3 Columns</SelectItem>
             <SelectItem value="4">4 Columns</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div>
+        <Label className="text-xs">Mobile Columns</Label>
+        <Select
+          value={element.content.mobileColumns?.toString() || '1'}
+          onValueChange={(value) => onUpdate('mobileColumns', parseInt(value))}
+        >
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="1">1 Column</SelectItem>
+            <SelectItem value="2">2 Columns</SelectItem>
+            <SelectItem value="3">3 Columns</SelectItem>
           </SelectContent>
         </Select>
       </div>

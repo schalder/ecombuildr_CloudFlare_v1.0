@@ -48,7 +48,12 @@ const ProductGridElement: React.FC<{
 
   // Get device-responsive grid classes
   const getGridClasses = () => {
-    if (deviceType === 'mobile') return 'grid-cols-1';
+    if (deviceType === 'mobile') {
+      const mCols = (element.content as any).mobileColumns as number | undefined;
+      const m = typeof mCols === 'number' ? Math.max(1, Math.min(3, mCols)) : 1;
+      const map: Record<number, string> = { 1: 'grid-cols-1', 2: 'grid-cols-2', 3: 'grid-cols-3' };
+      return map[m] || 'grid-cols-1';
+    }
     if (deviceType === 'tablet') {
       // Respect single column layout
       if (columnCount === 1) return 'grid-cols-1';
@@ -327,7 +332,12 @@ const FeaturedProductsElement: React.FC<{
   // Responsive grid classes for multi-featured layout
   const getGridClasses = () => {
     const cols = element.content.columns || 2;
-    if (deviceType === 'mobile') return 'grid-cols-1';
+    if (deviceType === 'mobile') {
+      const mCols = (element.content as any).mobileColumns as number | undefined;
+      const m = typeof mCols === 'number' ? Math.max(1, Math.min(3, mCols)) : 1;
+      const map: Record<number, string> = { 1: 'grid-cols-1', 2: 'grid-cols-2', 3: 'grid-cols-3' };
+      return map[m] || 'grid-cols-1';
+    }
     if (deviceType === 'tablet') {
       if (columnCount === 1) return 'grid-cols-1';
       const tCols = element.content.tabletColumns as number | undefined;
@@ -956,6 +966,8 @@ export const registerEcommerceElements = () => {
     defaultContent: { 
       title: 'Our Products',
       columns: 2,
+      tabletColumns: 3,
+      mobileColumns: 1,
       limit: 4,
       showRating: true,
       showPrice: true,
@@ -978,7 +990,10 @@ export const registerEcommerceElements = () => {
       productId: '',
       layout: 'horizontal',
       badgeText: 'Featured Product',
-      ctaText: 'Add to Cart'
+      ctaText: 'Add to Cart',
+      columns: 2,
+      tabletColumns: 2,
+      mobileColumns: 1
     },
     description: 'Highlight a specific product'
   });
