@@ -232,71 +232,73 @@ export const InlineRTE: React.FC<InlineRTEProps> = ({ value, onChange, placehold
   );
 
   return (
-    <div className="relative">
-        <div
-          ref={toolbarRef}
-          className="fixed z-50 -translate-x-1/2 rounded-md border bg-popover text-popover-foreground shadow-md px-2 py-1 flex items-center gap-1"
-          style={{ top: toolbarPos.top, left: toolbarPos.left }}
-          data-rte-floating
-        >
-          <Select value={selectedFont} onValueChange={(v) => {
-            setSelectedFont(v);
-            const meta = (fonts as any[]).find((f: any) => f.value === v);
-            if (meta && meta.family) ensureGoogleFontLoaded(meta.family, meta.weights);
-            applyFont(v);
-          }}>
-            <SelectTrigger className="h-7 min-w-[140px] bg-popover">
-              <SelectValue placeholder="Default" />
-            </SelectTrigger>
-            <SelectContent className="z-[90] bg-popover" data-rte-floating>
-              {(fonts as any[]).map((f: any) => (
-                <SelectItem key={f.label} value={f.value}>{f.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+      <div className="relative">
+        {showToolbar && (
+          <div
+            ref={toolbarRef}
+            className="fixed z-50 -translate-x-1/2 rounded-md border bg-popover text-popover-foreground shadow-md px-2 py-1 flex items-center gap-1"
+            style={{ top: toolbarPos.top, left: toolbarPos.left }}
+            data-rte-floating
+          >
+            <Select value={selectedFont} onValueChange={(v) => {
+              setSelectedFont(v);
+              const meta = (fonts as any[]).find((f: any) => f.value === v);
+              if (meta && meta.family) ensureGoogleFontLoaded(meta.family, meta.weights);
+              applyFont(v);
+            }}>
+              <SelectTrigger className="h-7 min-w-[140px] bg-popover">
+                <SelectValue placeholder="Default" />
+              </SelectTrigger>
+              <SelectContent className="z-[90] bg-popover" data-rte-floating>
+                {(fonts as any[]).map((f: any) => (
+                  <SelectItem key={f.label} value={f.value}>{f.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-          <div className="w-px h-4 bg-border mx-1" />
+            <div className="w-px h-4 bg-border mx-1" />
 
-          <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onMouseDown={(e) => e.preventDefault()} onClick={() => exec('bold')}>
-            <Bold className="h-4 w-4" />
-          </Button>
-          <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onMouseDown={(e) => e.preventDefault()} onClick={() => exec('italic')}>
-            <Italic className="h-4 w-4" />
-          </Button>
-          <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onMouseDown={(e) => e.preventDefault()} onClick={() => exec('underline')}>
-            <Underline className="h-4 w-4" />
-          </Button>
-          <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onMouseDown={(e) => e.preventDefault()} onClick={() => exec('strikeThrough')}>
-            <Strikethrough className="h-4 w-4" />
-          </Button>
+            <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onMouseDown={(e) => e.preventDefault()} onClick={() => exec('bold')}>
+              <Bold className="h-4 w-4" />
+            </Button>
+            <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onMouseDown={(e) => e.preventDefault()} onClick={() => exec('italic')}>
+              <Italic className="h-4 w-4" />
+            </Button>
+            <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onMouseDown={(e) => e.preventDefault()} onClick={() => exec('underline')}>
+              <Underline className="h-4 w-4" />
+            </Button>
+            <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onMouseDown={(e) => e.preventDefault()} onClick={() => exec('strikeThrough')}>
+              <Strikethrough className="h-4 w-4" />
+            </Button>
 
-          <div className="w-px h-4 bg-border mx-1" />
+            <div className="w-px h-4 bg-border mx-1" />
 
-          {/* Full color picker with reset */}
-          <div className="flex items-center gap-2">
-            <ColorPicker
-              compact
-              color={currentColor}
-              onChange={(c) => {
-                if (!c || c === 'transparent') {
-                  applyColor('');
-                } else {
-                  applyColor(c);
-                }
-              }}
-            />
-            <Button size="sm" variant="secondary" className="h-7 px-2 text-[10px]" onMouseDown={(e) => e.preventDefault()} onClick={() => applyColor('')}>
-              Reset
+            {/* Full color picker with reset */}
+            <div className="flex items-center gap-2">
+              <ColorPicker
+                compact
+                color={currentColor}
+                onChange={(c) => {
+                  if (!c || c === 'transparent') {
+                    applyColor('');
+                  } else {
+                    applyColor(c);
+                  }
+                }}
+              />
+              <Button size="sm" variant="secondary" className="h-7 px-2 text-[10px]" onMouseDown={(e) => e.preventDefault()} onClick={() => applyColor('')}>
+                Reset
+              </Button>
+            </div>
+
+            <div className="w-px h-4 bg-border mx-1" />
+
+            <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onMouseDown={(e) => e.preventDefault()} onClick={toggleLink}>
+              <LinkIcon className="h-4 w-4" />
             </Button>
           </div>
+        )}
 
-          <div className="w-px h-4 bg-border mx-1" />
-
-          <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onMouseDown={(e) => e.preventDefault()} onClick={toggleLink}>
-            <LinkIcon className="h-4 w-4" />
-          </Button>
-        </div>
-      )}
 
       <div
         ref={editorRef}
