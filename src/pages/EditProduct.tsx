@@ -19,6 +19,8 @@ import ProductDescriptionBuilderDialog from "@/components/products/ProductDescri
 import type { PageBuilderData } from "@/components/page-builder/types";
 import VariationsBuilder, { VariationOption } from "@/components/products/VariationsBuilder";
 import VariantMatrix, { VariantEntry } from "@/components/products/VariantMatrix";
+import { AspectRatio } from "@/components/ui/aspect-ratio";
+import { parseVideoUrl, buildEmbedUrl } from "@/components/page-builder/utils/videoUtils";
 
 interface Product {
   id: string;
