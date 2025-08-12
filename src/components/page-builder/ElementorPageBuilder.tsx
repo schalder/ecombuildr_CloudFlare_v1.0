@@ -177,6 +177,18 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = memo(({
   const [searchTerm, setSearchTerm] = useState('');
   const [propertiesPanelCollapsed, setPropertiesPanelCollapsed] = useState(false);
 
+  // Ensure legacy long anchors are converted after hot reloads too
+  React.useEffect(() => {
+    setData(prev => ensureAnchors(prev));
+  }, []);
+
+  // When initialData loads/changes asynchronously, normalize anchors
+  React.useEffect(() => {
+    if (initialData) {
+      setData(ensureAnchors(initialData));
+    }
+  }, [initialData]);
+
   const updateData = useCallback((newData: PageBuilderData) => {
     const ensured = ensureAnchors(newData);
     setData(ensured);

@@ -369,8 +369,34 @@ const ButtonElement: React.FC<{
       e.preventDefault();
       e.stopPropagation();
       const raw = (scrollTarget || '').replace(/^#/, '');
+
+      const tryFind = (id: string): HTMLElement | null => {
+        return (document.getElementById(id) as HTMLElement | null) || null;
+      };
+
+      const tryLegacy = (legacy: string): HTMLElement | null => {
+        const patterns: Array<[RegExp, string]> = [
+          [/^pb-section-(.+)$/i, 'section'],
+          [/^pb-row-(.+)$/i, 'row'],
+          [/^pb-column-(.+)$/i, 'column'],
+          [/^pb-col-(.+)$/i, 'column'],
+          [/^pb-el-(.+)$/i, 'element'],
+          [/^pb-element-(.+)$/i, 'element'],
+        ];
+        for (const [rx, kind] of patterns) {
+          const m = legacy.match(rx);
+          if (m) {
+            const innerId = m[1];
+            const node = document.querySelector(`[data-pb-${kind}-id="${innerId}"]`) as HTMLElement | null;
+            if (node) return node;
+          }
+        }
+        return null;
+      };
+
       if (raw) {
-        const targetEl = document.getElementById(raw)
+        const targetEl = tryFind(raw)
+          || tryLegacy(raw)
           || (document.querySelector(`[data-pb-section-id="${raw}"]`) as HTMLElement | null)
           || (document.querySelector(`[data-pb-row-id="${raw}"]`) as HTMLElement | null)
           || (document.querySelector(`[data-pb-column-id="${raw}"]`) as HTMLElement | null)

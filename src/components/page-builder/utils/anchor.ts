@@ -42,24 +42,34 @@ export function ensureAnchors(data: PageBuilderData): PageBuilderData {
     return anchor;
   };
 
+  const isLegacy = (anchor?: string) => {
+    if (!anchor) return false;
+    return /^pb-(section|row|column|col|el|element)-/i.test(anchor);
+  };
+
+  const nextAnchorFor = (existing: string | undefined, kind: 'section' | 'row' | 'col' | 'element', elType?: string) => {
+    const base = !existing || isLegacy(existing) ? buildAnchor(kind, elType) : existing;
+    return ensureUnique(base);
+  };
+
   const clone: PageBuilderData = {
     ...data,
     sections: (data.sections || []).map((section) => {
       const s: PageBuilderSection = {
         ...section,
-        anchor: ensureUnique(section.anchor || buildAnchor('section')),
+        anchor: nextAnchorFor(section.anchor, 'section'),
         rows: (section.rows || []).map((row) => {
           const r: PageBuilderRow = {
             ...row,
-            anchor: ensureUnique(row.anchor || buildAnchor('row')),
+            anchor: nextAnchorFor(row.anchor, 'row'),
             columns: (row.columns || []).map((col) => {
               const c: PageBuilderColumn = {
                 ...col,
-                anchor: ensureUnique(col.anchor || buildAnchor('col')),
+                anchor: nextAnchorFor(col.anchor, 'col'),
                 elements: (col.elements || []).map((el) => {
                   const e: PageBuilderElement = {
                     ...el,
-                    anchor: ensureUnique(el.anchor || buildAnchor('element', el.type)),
+                    anchor: nextAnchorFor(el.anchor, 'element', el.type),
                   };
                   return e;
                 }),
