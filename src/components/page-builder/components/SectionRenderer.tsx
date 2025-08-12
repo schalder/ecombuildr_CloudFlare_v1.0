@@ -132,6 +132,8 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({
   return (
     <div
       ref={drop}
+      id={`pb-section-${section.id}`}
+      data-pb-section-id={section.id}
       className={cn(
         'relative group transition-all duration-200',
         // Only apply border styles if not in preview mode

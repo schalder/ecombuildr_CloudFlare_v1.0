@@ -15,6 +15,8 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { IconPicker } from '@/components/ui/icon-picker';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { ICONS_MAP } from '@/components/icons/fontawesome-list';
+import { useParams } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ContentPropertiesProps {
   element: PageBuilderElement;
@@ -25,6 +27,32 @@ export const ContentProperties: React.FC<ContentPropertiesProps> = ({
   element,
   onUpdate
 }) => {
+  const { websiteId } = useParams();
+  const [pages, setPages] = React.useState<Array<{ id: string; title: string; slug: string; is_homepage?: boolean }>>([]);
+  const [sectionOptions, setSectionOptions] = React.useState<Array<{ id: string; label: string }>>([]);
+
+  React.useEffect(() => {
+    if (element.type === 'button' && websiteId) {
+      supabase
+        .from('website_pages')
+        .select('id,title,slug,is_homepage')
+        .eq('website_id', websiteId)
+        .order('is_homepage', { ascending: false })
+        .order('created_at', { ascending: false })
+        .then(({ data }) => setPages((data as any) || []));
+    }
+  }, [element.type, websiteId]);
+
+  React.useEffect(() => {
+    if (element.type === 'button') {
+      const nodes = Array.from(document.querySelectorAll('[data-pb-section-id]')) as HTMLElement[];
+      const opts = nodes.map((node, idx) => ({
+        id: node.getAttribute('data-pb-section-id') || '',
+        label: node.id || `Section ${idx + 1}`
+      })).filter(o => o.id);
+      setSectionOptions(opts);
+    }
+  }, [element.type]);
   // Image element content
   if (element.type === 'image') {
     return <ImageContentProperties element={element} onUpdate={onUpdate} />;
@@ -86,6 +114,7 @@ export const ContentProperties: React.FC<ContentPropertiesProps> = ({
 
   // Button element content
   if (element.type === 'button') {
+    const linkType = element.content.linkType || (element.content.url ? 'url' : 'page');
     return (
       <div className="space-y-4">
         <div>
@@ -97,15 +126,75 @@ export const ContentProperties: React.FC<ContentPropertiesProps> = ({
             placeholder="Button text..."
           />
         </div>
+
         <div>
-          <Label htmlFor="button-url">Button URL</Label>
-          <Input
-            id="button-url"
-            value={element.content.url || ''}
-            onChange={(e) => onUpdate('url', e.target.value)}
-            placeholder="https://example.com"
-          />
+          <Label>Link to</Label>
+          <Select
+            value={linkType}
+            onValueChange={(value) => onUpdate('linkType', value)}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="page">Page</SelectItem>
+              <SelectItem value="url">Custom URL</SelectItem>
+              <SelectItem value="scroll">Scroll to section</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
+
+        {linkType === 'page' && (
+          <div>
+            <Label htmlFor="button-page">Select Page</Label>
+            <Select
+              value={element.content.pageSlug || pages.find(p=>p.is_homepage)?.slug || ''}
+              onValueChange={(value) => onUpdate('pageSlug', value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Choose a page" />
+              </SelectTrigger>
+              <SelectContent>
+                {pages.map(p => (
+                  <SelectItem key={p.id} value={p.slug}>{p.title || p.slug}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
+        {linkType === 'url' && (
+          <div>
+            <Label htmlFor="button-url">Custom URL</Label>
+            <Input
+              id="button-url"
+              value={element.content.url || ''}
+              onChange={(e) => onUpdate('url', e.target.value)}
+              placeholder="https://example.com"
+            />
+          </div>
+        )}
+
+        {linkType === 'scroll' && (
+          <div>
+            <Label htmlFor="button-scroll">Scroll Target</Label>
+            <Select
+              value={element.content.scrollTarget || ''}
+              onValueChange={(value) => onUpdate('scrollTarget', value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select a section on this page" />
+              </SelectTrigger>
+              <SelectContent>
+                {sectionOptions.map(opt => (
+                  <SelectItem key={opt.id} value={opt.id}>{opt.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground mt-1">Select a section to scroll to on click.</p>
+          </div>
+        )}
+
         <div>
           <Label htmlFor="button-variant">Button Style</Label>
           <Select
@@ -138,7 +227,7 @@ export const ContentProperties: React.FC<ContentPropertiesProps> = ({
               <SelectItem value="default">Default</SelectItem>
               <SelectItem value="sm">Small</SelectItem>
               <SelectItem value="lg">Large</SelectItem>
-              <SelectItem value="icon">Icon</SelectItem>
+              <SelectItem value="xl">Extra Large</SelectItem>
             </SelectContent>
           </Select>
         </div>

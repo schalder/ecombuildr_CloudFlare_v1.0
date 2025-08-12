@@ -11,6 +11,7 @@ import { renderElementStyles } from '../utils/styleRenderer';
 import { generateResponsiveCSS } from '../utils/responsiveStyles';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { ICONS_MAP } from '@/components/icons/fontawesome-list';
+import { useEcomPaths } from '@/lib/pathResolver';
 
 // Heading Element
 const HeadingElement: React.FC<{
@@ -340,6 +341,21 @@ const ButtonElement: React.FC<{
   const url = element.content.url || '#';
   const target = element.content.target || '_blank';
 
+  const linkType: 'page' | 'url' | 'scroll' | undefined = element.content.linkType || (element.content.url ? 'url' : undefined);
+  const pageSlug: string | undefined = element.content.pageSlug;
+  const scrollTarget: string | undefined = element.content.scrollTarget;
+  const paths = useEcomPaths();
+
+  const computedUrl = React.useMemo(() => {
+    if (linkType === 'page') {
+      return pageSlug ? `${paths.base}/${pageSlug}` : paths.home;
+    }
+    if (linkType === 'url' || !linkType) {
+      return url;
+    }
+    return '#';
+  }, [linkType, pageSlug, paths.base, paths.home, url]);
+
   const handleTextChange = (newText: string) => {
     onUpdate?.({
       content: { ...element.content, text: newText }
@@ -349,11 +365,28 @@ const ButtonElement: React.FC<{
   const handleClick = (e: React.MouseEvent) => {
     if (isEditing) {
       e.preventDefault();
-    } else if (url && url !== '#') {
+      return;
+    }
+
+    if (linkType === 'scroll') {
+      e.preventDefault();
+      if (scrollTarget) {
+        const targetEl = document.querySelector(`[data-pb-section-id="${scrollTarget}"]`) as HTMLElement | null
+          || document.getElementById(`pb-section-${scrollTarget}`)
+          || document.getElementById(scrollTarget);
+        if (targetEl && 'scrollIntoView' in targetEl) {
+          targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }
+      return;
+    }
+
+    const finalUrl = computedUrl;
+    if (finalUrl && finalUrl !== '#') {
       if (target === '_blank') {
-        window.open(url, '_blank');
+        window.open(finalUrl, '_blank');
       } else {
-        window.location.href = url;
+        window.location.href = finalUrl;
       }
     }
   };
