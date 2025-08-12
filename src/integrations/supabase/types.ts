@@ -129,6 +129,118 @@ export type Database = {
           },
         ]
       }
+      courier_return_requests: {
+        Row: {
+          consignment_id: string | null
+          created_at: string
+          id: string
+          invoice: string | null
+          order_id: string | null
+          provider: string
+          provider_return_id: string | null
+          reason: string | null
+          response_payload: Json | null
+          status: string | null
+          store_id: string
+          tracking_code: string | null
+          updated_at: string
+        }
+        Insert: {
+          consignment_id?: string | null
+          created_at?: string
+          id?: string
+          invoice?: string | null
+          order_id?: string | null
+          provider: string
+          provider_return_id?: string | null
+          reason?: string | null
+          response_payload?: Json | null
+          status?: string | null
+          store_id: string
+          tracking_code?: string | null
+          updated_at?: string
+        }
+        Update: {
+          consignment_id?: string | null
+          created_at?: string
+          id?: string
+          invoice?: string | null
+          order_id?: string | null
+          provider?: string
+          provider_return_id?: string | null
+          reason?: string | null
+          response_payload?: Json | null
+          status?: string | null
+          store_id?: string
+          tracking_code?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "courier_return_requests_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      courier_shipments: {
+        Row: {
+          consignment_id: string | null
+          created_at: string
+          error: string | null
+          id: string
+          invoice: string | null
+          order_id: string
+          provider: string
+          request_payload: Json
+          response_payload: Json | null
+          status: string | null
+          store_id: string
+          tracking_code: string | null
+          updated_at: string
+        }
+        Insert: {
+          consignment_id?: string | null
+          created_at?: string
+          error?: string | null
+          id?: string
+          invoice?: string | null
+          order_id: string
+          provider: string
+          request_payload?: Json
+          response_payload?: Json | null
+          status?: string | null
+          store_id: string
+          tracking_code?: string | null
+          updated_at?: string
+        }
+        Update: {
+          consignment_id?: string | null
+          created_at?: string
+          error?: string | null
+          id?: string
+          invoice?: string | null
+          order_id?: string
+          provider?: string
+          request_payload?: Json
+          response_payload?: Json | null
+          status?: string | null
+          store_id?: string
+          tracking_code?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "courier_shipments_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customer_addresses: {
         Row: {
           address_line_1: string
@@ -999,6 +1111,42 @@ export type Database = {
           sections?: Json
           store_id?: string
           theme_template_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      store_shipping_accounts: {
+        Row: {
+          api_key: string
+          created_at: string
+          id: string
+          is_active: boolean
+          provider: string
+          secret_key: string
+          settings: Json
+          store_id: string
+          updated_at: string
+        }
+        Insert: {
+          api_key: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          provider: string
+          secret_key: string
+          settings?: Json
+          store_id: string
+          updated_at?: string
+        }
+        Update: {
+          api_key?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          provider?: string
+          secret_key?: string
+          settings?: Json
+          store_id?: string
           updated_at?: string
         }
         Relationships: []

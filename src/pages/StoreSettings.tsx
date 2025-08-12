@@ -11,6 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { toast } from "@/hooks/use-toast";
 import { Store, Settings } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import ShippingIntegrations from "@/components/settings/ShippingIntegrations";
 
 interface Store {
   id: string;
@@ -141,6 +142,9 @@ export default function StoreSettings() {
       description="Manage your store configuration and branding"
     >
       <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Shipping Integrations */}
+        <ShippingIntegrations storeId={store.id} />
+
         {/* Payment Gateways Only */}
         <Card>
           <CardHeader>
