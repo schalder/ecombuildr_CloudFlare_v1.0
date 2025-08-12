@@ -390,7 +390,7 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
                     <SelectItem value="sslcommerz">Credit/Debit Card (SSLCommerz)</SelectItem>
                   </SelectContent>
                 </Select>
-                <Textarea placeholder="Order notes (optional)" value={form.notes} onChange={e=>setForm(f=>({...f,notes:e.target.value}))} />
+                
               </section>
             )}
 
