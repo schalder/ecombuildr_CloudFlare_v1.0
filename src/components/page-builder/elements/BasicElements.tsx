@@ -337,7 +337,8 @@ const ButtonElement: React.FC<{
 }> = ({ element, isEditing, deviceType = 'desktop', onUpdate }) => {
   const text = element.content.text || 'Button';
   const variant = element.content.variant || 'default';
-  const size = element.content.size || 'default';
+  const rawSize = element.content.size;
+  const size = (rawSize === 'icon' ? 'default' : rawSize) || 'default';
   const url = element.content.url || '#';
   const target = element.content.target || '_blank';
 
@@ -363,15 +364,16 @@ const ButtonElement: React.FC<{
   };
 
   const handleClick = (e: React.MouseEvent) => {
-    if (isEditing) {
+    if (isEditing && linkType !== 'scroll') {
       e.preventDefault();
       return;
     }
 
     if (linkType === 'scroll') {
       e.preventDefault();
+      e.stopPropagation();
       if (scrollTarget) {
-        const targetEl = document.querySelector(`[data-pb-section-id="${scrollTarget}"]`) as HTMLElement | null
+        const targetEl = (document.querySelector(`[data-pb-section-id="${scrollTarget}"]`) as HTMLElement | null)
           || document.getElementById(`pb-section-${scrollTarget}`)
           || document.getElementById(scrollTarget);
         if (targetEl && 'scrollIntoView' in targetEl) {
