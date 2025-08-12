@@ -104,10 +104,12 @@ export const InlineRTE: React.FC<InlineRTEProps> = ({ value, onChange, placehold
       const sel = window.getSelection();
       const active = document.activeElement as HTMLElement | null;
       const floatingEls = Array.from(document.querySelectorAll('[data-rte-floating]')) as HTMLElement[];
+      const toolbarEl = toolbarRef.current;
       const interactingWithFloating = !!active && floatingEls.some((f) => f.contains(active));
+      const interactingWithToolbar = !!active && !!toolbarEl && toolbarEl.contains(active);
 
-      if (interactingWithFloating) {
-        // Keep toolbar visible when interacting with its popovers/menus
+      if (interactingWithFloating || interactingWithToolbar) {
+        // Keep toolbar visible when interacting with its popovers/menus or the toolbar itself
         setShowToolbar(true);
         return;
       }
@@ -234,7 +236,6 @@ export const InlineRTE: React.FC<InlineRTEProps> = ({ value, onChange, placehold
       {showToolbar && isEditing && (
         <div
           ref={toolbarRef}
-          onMouseDown={(e) => e.preventDefault()}
           className="fixed z-50 -translate-x-1/2 rounded-md border bg-popover text-popover-foreground shadow-md px-2 py-1 flex items-center gap-1"
           style={{ top: toolbarPos.top, left: toolbarPos.left }}
           data-rte-floating
@@ -245,7 +246,7 @@ export const InlineRTE: React.FC<InlineRTEProps> = ({ value, onChange, placehold
             if (meta && meta.family) ensureGoogleFontLoaded(meta.family, meta.weights);
             applyFont(v);
           }}>
-            <SelectTrigger className="h-7 min-w-[140px] bg-popover" onMouseDown={(e) => e.preventDefault()}>
+            <SelectTrigger className="h-7 min-w-[140px] bg-popover">
               <SelectValue placeholder="Default" />
             </SelectTrigger>
             <SelectContent className="z-[90] bg-popover" data-rte-floating>
