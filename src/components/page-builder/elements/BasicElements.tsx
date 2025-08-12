@@ -558,13 +558,15 @@ const VideoElement: React.FC<{
     url = '', 
     embedCode = '',
     width = 'full',
+    widthByDevice,
     controls = true, 
     autoplay = false,
     muted = false
-  } = element.content;
+  } = element.content as any;
   
   const containerStyles = renderElementStyles(element, (deviceType ?? 'desktop'));
-
+  const activeDevice: 'desktop' | 'mobile' = (deviceType === 'mobile' ? 'mobile' : 'desktop');
+  const effectiveWidth = (widthByDevice?.[activeDevice] as string) || (width as string);
   // Import video utilities
   const { parseVideoUrl, getVideoWidthClasses, buildEmbedUrl, sanitizeEmbedCode } = React.useMemo(() => {
     return {
@@ -683,7 +685,7 @@ const VideoElement: React.FC<{
     );
   }
 
-  const widthClasses = getVideoWidthClasses(String(width));
+  const widthClasses = getVideoWidthClasses(String(effectiveWidth));
 
   // Handle custom embed code
   if (videoType === 'embed' && embedCode) {

@@ -5,6 +5,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { PageBuilderElement } from '../types';
+import { Button } from '@/components/ui/button';
+import { Monitor, Smartphone } from 'lucide-react';
 
 interface VideoContentPropertiesProps {
   element: PageBuilderElement;
@@ -24,6 +26,16 @@ export const VideoContentProperties: React.FC<VideoContentPropertiesProps> = ({
     controls = true,
     muted = false
   } = element.content;
+
+  const [responsiveTab, setResponsiveTab] = React.useState<'desktop' | 'mobile'>('desktop');
+  const widthByDevice = (element.content as any).widthByDevice || { desktop: width, mobile: 'full' };
+  const handleWidthByDeviceChange = (device: 'desktop' | 'mobile', value: string) => {
+    const updated = { ...widthByDevice, [device]: value };
+    onUpdate('widthByDevice', updated);
+    if (device === 'desktop') {
+      onUpdate('width', value);
+    }
+  };
 
   return (
     <div className="space-y-4">
@@ -72,8 +84,18 @@ export const VideoContentProperties: React.FC<VideoContentPropertiesProps> = ({
       )}
 
       <div>
-        <Label htmlFor="video-width">Width</Label>
-        <Select value={String(width)} onValueChange={(value) => onUpdate('width', value)}>
+        <div className="flex items-center justify-between">
+          <Label htmlFor="video-width">Width</Label>
+          <div className="flex space-x-2">
+            <Button size="sm" variant={responsiveTab === 'desktop' ? 'default' : 'outline'} onClick={() => setResponsiveTab('desktop')}>
+              <Monitor className="h-4 w-4 mr-1" /> Desktop
+            </Button>
+            <Button size="sm" variant={responsiveTab === 'mobile' ? 'default' : 'outline'} onClick={() => setResponsiveTab('mobile')}>
+              <Smartphone className="h-4 w-4 mr-1" /> Mobile
+            </Button>
+          </div>
+        </div>
+        <Select value={String(widthByDevice[responsiveTab] || 'full')} onValueChange={(value) => handleWidthByDeviceChange(responsiveTab, value)}>
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>
