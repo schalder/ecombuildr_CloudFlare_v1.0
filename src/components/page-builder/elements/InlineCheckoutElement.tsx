@@ -272,27 +272,27 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
                   {products.filter((p)=>productIds.includes(p.id)).map((p) => {
                     const isOut = p.track_inventory && typeof p.inventory_quantity === 'number' && p.inventory_quantity <= 0;
                     return (
-                      <label key={p.id} className="flex items-center gap-3 border rounded p-3">
+                      <label key={p.id} className="flex items-start gap-3 border rounded p-3 w-full">
                         {Array.isArray(p.images) && p.images[0] && (
-                          <img src={p.images[0]} alt={`${p.name} product`} className="w-12 h-12 object-cover rounded border" />
+                          <img src={p.images[0]} alt={`${p.name} product`} className="w-12 h-12 object-cover rounded border flex-shrink-0" />
                         )}
-                        <input type="radio" name={`inline-product-${element.id}`} checked={selectedId === p.id} disabled={isOut} onChange={() => setSelectedId(p.id)} />
+                        <input type="radio" name={`inline-product-${element.id}`} className="mt-1 flex-shrink-0" checked={selectedId === p.id} disabled={isOut} onChange={() => setSelectedId(p.id)} />
                         <div className="flex-1 min-w-0">
-                          <div className="font-medium truncate">{p.name}</div>
-                          <div className="text-sm text-muted-foreground">{isOut ? 'Out of stock' : formatCurrency(Number(p.price))}</div>
+                          <div className="font-medium break-words whitespace-normal leading-snug text-sm md:text-base">{p.name}</div>
+                          <div className="text-xs text-muted-foreground">{isOut ? 'Out of stock' : formatCurrency(Number(p.price))}</div>
                         </div>
                       </label>
                     );
                   })}
                 </div>
               ) : (
-                <div className="flex items-center gap-3">
+                <div className="flex items-start gap-3">
                   {selectedProduct && Array.isArray(selectedProduct.images) && selectedProduct.images[0] && (
-                    <img src={selectedProduct.images[0]} alt={`${selectedProduct.name} product`} className="w-12 h-12 object-cover rounded border" />
+                    <img src={selectedProduct.images[0]} alt={`${selectedProduct.name} product`} className="w-12 h-12 object-cover rounded border flex-shrink-0" />
                   )}
-                  <div>
-                    <div className="font-medium">{selectedProduct?.name}</div>
-                    <div className="text-sm text-muted-foreground">{selectedProduct ? formatCurrency(Number(selectedProduct.price)) : ''}</div>
+                  <div className="min-w-0 flex-1">
+                    <div className="font-medium break-words whitespace-normal leading-snug text-sm md:text-base">{selectedProduct?.name}</div>
+                    <div className="text-xs text-muted-foreground">{selectedProduct ? formatCurrency(Number(selectedProduct.price)) : ''}</div>
                   </div>
                 </div>
               )}
