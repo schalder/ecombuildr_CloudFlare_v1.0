@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
+import { DomainWebsiteRenderer } from './DomainWebsiteRenderer';
 
 interface DomainConnection {
   id: string;
@@ -100,16 +101,13 @@ export const DomainRouter: React.FC<DomainRouterProps> = ({ children }) => {
   
   // Render content based on type
   if (domainContent.content_type === 'website') {
-    // For now, show a placeholder. Later we'll integrate with WebsiteLayout properly
+    // Render the actual website content
     return (
-      <div className="min-h-screen bg-background text-foreground">
-        <div className="container mx-auto py-8">
-          <h1 className="text-2xl font-bold mb-4">Welcome to {customDomain.domain}</h1>
-          <p>This is a custom domain displaying website content (ID: {domainContent.content_id})</p>
-          <p>Path: {domainContent.path}</p>
-          {domainContent.is_homepage && <p>This is the homepage for this domain.</p>}
-        </div>
-      </div>
+      <DomainWebsiteRenderer 
+        websiteId={domainContent.content_id}
+        path={domainContent.path}
+        isHomepage={domainContent.is_homepage}
+      />
     );
   }
   
