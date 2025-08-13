@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -29,15 +30,23 @@ interface Customer {
 
 export default function Customers() {
   const { user } = useAuth();
+  const [searchParams] = useSearchParams();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
 
   useEffect(() => {
     if (user) {
       fetchCustomers();
     }
   }, [user]);
+
+  useEffect(() => {
+    const search = searchParams.get("search");
+    if (search) {
+      setSearchTerm(search);
+    }
+  }, [searchParams]);
 
   const fetchCustomers = async () => {
     try {

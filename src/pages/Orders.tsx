@@ -65,7 +65,7 @@ export default function Orders() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
   const [statusFilter, setStatusFilter] = useState<string>(searchParams.get("status") || "");
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isOrderDetailsOpen, setIsOrderDetailsOpen] = useState(false);
@@ -85,8 +85,12 @@ export default function Orders() {
 
   useEffect(() => {
     const status = searchParams.get("status");
+    const search = searchParams.get("search");
     if (status) {
       setStatusFilter(status);
+    }
+    if (search) {
+      setSearchTerm(search);
     }
   }, [searchParams]);
 

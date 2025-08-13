@@ -68,7 +68,7 @@ export function useSearch() {
           title: `Order #${order.order_number}`,
           subtitle: `${order.customer_name} • $${order.total} • ${order.status}`,
           type: 'order' as const,
-          url: '/dashboard/orders',
+          url: `/dashboard/orders?search=${encodeURIComponent(order.order_number)}`,
         })));
       }
 
@@ -86,7 +86,7 @@ export function useSearch() {
           title: customer.full_name,
           subtitle: `${customer.email || customer.phone || ''} • ${customer.total_orders} orders`,
           type: 'customer' as const,
-          url: '/dashboard/customers',
+          url: `/dashboard/customers?search=${encodeURIComponent(customer.full_name)}`,
         })));
       }
 
