@@ -193,16 +193,17 @@ export default function Orders() {
   const handlePushToSteadfast = async (order: Order, force: boolean = false) => {
     try {
       if (!force) {
-        const { data: shipment, error: shipErr } = await supabase
+        const { data: shipments, error: shipErr } = await supabase
           .from('courier_shipments')
           .select('id, consignment_id, tracking_code, invoice, status, created_at')
           .eq('order_id', order.id)
           .eq('provider', 'steadfast')
           .order('created_at', { ascending: false })
-          .maybeSingle();
+          .limit(1);
         if (shipErr) {
           console.error('Check shipment error', shipErr);
         }
+        const shipment = Array.isArray(shipments) && shipments.length ? shipments[0] : null;
         if (shipment) {
           setExistingShipment(shipment);
           setOrderToPush(order);
