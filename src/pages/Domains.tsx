@@ -261,11 +261,11 @@ export default function Domains() {
                                     <span className="font-semibold">@ (or {domain.domain.split('.')[0]})</span>
                                     <span></span>
                                   </div>
-                                  <div className="grid grid-cols-3 gap-4">
-                                    <span className="text-muted-foreground font-normal">Target:</span>
-                                    <span className="font-semibold">ecombuildr.netlify.app</span>
-                                    <span></span>
-                                  </div>
+                                   <div className="grid grid-cols-3 gap-4">
+                                     <span className="text-muted-foreground font-normal">Target:</span>
+                                     <span className="font-semibold">ecombuildr.com</span>
+                                     <span></span>
+                                   </div>
                                 </div>
                               </div>
                               
