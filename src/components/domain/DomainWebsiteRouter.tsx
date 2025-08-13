@@ -1,8 +1,5 @@
 import React from 'react';
-import { Routes, Route } from 'react-router-dom';
-import { StorefrontHome } from '@/pages/storefront/StorefrontHome';
-import { StorefrontProducts } from '@/pages/storefront/StorefrontProducts';
-import { ProductDetail } from '@/pages/storefront/ProductDetail';
+import { Routes, Route, useParams } from 'react-router-dom';
 import { CartPage } from '@/pages/storefront/CartPage';
 import { CheckoutPage } from '@/pages/storefront/CheckoutPage';
 import { PaymentProcessing } from '@/pages/storefront/PaymentProcessing';
@@ -10,6 +7,11 @@ import { OrderConfirmation } from '@/pages/storefront/OrderConfirmation';
 import { WebsiteOverrideRoute } from '@/pages/storefront/WebsiteOverrideRoute';
 import { WebsiteProductDetailRoute } from '@/pages/storefront/WebsiteProductDetailRoute';
 import { SearchResults } from '@/pages/storefront/SearchResults';
+
+const DynamicWebsiteRoute: React.FC<{ fallback: React.ReactElement }> = ({ fallback }) => {
+  const { slug } = useParams<{ slug: string }>();
+  return <WebsiteOverrideRoute slug={slug || ''} fallback={fallback} />;
+};
 
 interface DomainWebsiteRouterProps {
   websiteId: string;
@@ -23,10 +25,20 @@ export const DomainWebsiteRouter: React.FC<DomainWebsiteRouterProps> = ({
   return (
     <Routes>
       {/* Homepage */}
-      <Route path="/" element={<StorefrontHome />} />
+      <Route path="/" element={
+        <WebsiteOverrideRoute 
+          slug="" 
+          fallback={<div className="min-h-screen flex items-center justify-center">Page not found</div>} 
+        />
+      } />
       
       {/* Products */}
-      <Route path="/products" element={<StorefrontProducts />} />
+      <Route path="/products" element={
+        <WebsiteOverrideRoute 
+          slug="products" 
+          fallback={<div className="min-h-screen flex items-center justify-center">Products page not found</div>} 
+        />
+      } />
       <Route path="/products/:productSlug" element={<WebsiteProductDetailRoute />} />
       
       {/* Cart & Checkout */}
@@ -42,10 +54,7 @@ export const DomainWebsiteRouter: React.FC<DomainWebsiteRouterProps> = ({
       <Route 
         path="/:slug" 
         element={
-          <WebsiteOverrideRoute 
-            slug="" 
-            fallback={<div className="min-h-screen flex items-center justify-center">Page not found</div>} 
-          />
+          <DynamicWebsiteRoute fallback={<div className="min-h-screen flex items-center justify-center">Page not found</div>} />
         } 
       />
     </Routes>
