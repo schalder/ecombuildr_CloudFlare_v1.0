@@ -30,6 +30,7 @@ interface GlobalHeaderConfig {
   show_search: boolean;
   show_cart: boolean;
   sticky: boolean;
+  font_size?: string;
   style?: {
     bg_color?: string;
     text_color?: string;
@@ -46,6 +47,15 @@ export const WebsiteHeader: React.FC<{ website: WebsiteData; }> = ({ website }) 
   const navigate = useNavigate();
   const { itemCount } = useCart();
 
+  const fontSizeClass = useMemo(() => {
+    switch (cfg?.font_size) {
+      case 'small': return 'text-sm';
+      case 'large': return 'text-lg';
+      case 'extra-large': return 'text-xl';
+      default: return 'text-base';
+    }
+  }, [cfg?.font_size]);
+
   const styleVars = useMemo(() => ({
     backgroundColor: cfg?.style?.bg_color || undefined,
     color: cfg?.style?.text_color || undefined,
@@ -59,7 +69,7 @@ export const WebsiteHeader: React.FC<{ website: WebsiteData; }> = ({ website }) 
   const renderLink = (item: HeaderNavItem) => {
     if (item.type === 'custom' && item.url) {
       return (
-        <a href={item.url} target={item.new_tab ? '_blank' : undefined} rel={item.new_tab ? 'noopener' : undefined} className="text-sm transition-colors" style={{ color: cfg?.style?.text_color || undefined }}>
+        <a href={item.url} target={item.new_tab ? '_blank' : undefined} rel={item.new_tab ? 'noopener' : undefined} className={`${fontSizeClass} transition-colors`} style={{ color: cfg?.style?.text_color || undefined }}>
           {item.label}
         </a>
       );
@@ -67,7 +77,7 @@ export const WebsiteHeader: React.FC<{ website: WebsiteData; }> = ({ website }) 
     const slug = item.page_slug || '';
     const to = slug ? `${paths.base}/${slug}` : paths.home;
     return (
-      <Link to={to} className="text-sm transition-colors" style={{ color: cfg?.style?.text_color || undefined }}>{item.label}</Link>
+      <Link to={to} className={`${fontSizeClass} transition-colors`} style={{ color: cfg?.style?.text_color || undefined }}>{item.label}</Link>
     );
   };
 
@@ -90,27 +100,29 @@ export const WebsiteHeader: React.FC<{ website: WebsiteData; }> = ({ website }) 
             <span className="font-semibold">{website.name}</span>
           )}
         </Link>
-        <nav className="hidden md:flex items-center gap-6">
-          {cfg?.nav_items?.map((item) => (
-            <div key={item.id}>{renderLink(item)}</div>
-          ))}
-        </nav>
-        <div className="hidden md:flex items-center gap-3">
-          {cfg?.show_search && (
-            <Button variant="ghost" size="icon" onClick={handleSearch} aria-label="Search">
-              <Search className="w-5 h-5" style={{ color: cfg?.style?.text_color || undefined }} />
-            </Button>
-          )}
-          {cfg?.show_cart && (
-            <Button variant="ghost" size="icon" onClick={handleCart} aria-label="Cart" className="relative">
-              <ShoppingCart className="w-5 h-5" style={{ color: cfg?.style?.text_color || undefined }} />
-              {itemCount > 0 && (
-                <Badge variant="destructive" className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center text-[10px]">
-                  {itemCount}
-                </Badge>
-              )}
-            </Button>
-          )}
+        <div className="hidden md:flex items-center gap-6 ml-auto">
+          <nav className="flex items-center gap-6">
+            {cfg?.nav_items?.map((item) => (
+              <div key={item.id}>{renderLink(item)}</div>
+            ))}
+          </nav>
+          <div className="flex items-center gap-3 ml-4">
+            {cfg?.show_search && (
+              <Button variant="ghost" size="icon" onClick={handleSearch} aria-label="Search">
+                <Search className="w-5 h-5" style={{ color: cfg?.style?.text_color || undefined }} />
+              </Button>
+            )}
+            {cfg?.show_cart && (
+              <Button variant="ghost" size="icon" onClick={handleCart} aria-label="Cart" className="relative">
+                <ShoppingCart className="w-5 h-5" style={{ color: cfg?.style?.text_color || undefined }} />
+                {itemCount > 0 && (
+                  <Badge variant="destructive" className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center text-[10px]">
+                    {itemCount}
+                  </Badge>
+                )}
+              </Button>
+            )}
+          </div>
         </div>
         <div className="md:hidden">
           <Sheet open={open} onOpenChange={setOpen}>

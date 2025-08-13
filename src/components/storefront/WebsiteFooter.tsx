@@ -17,11 +17,19 @@ interface FooterLinkItem {
   new_tab?: boolean;
 }
 
+interface FooterLinkSection {
+  id: string;
+  title: string;
+  links: FooterLinkItem[];
+}
+
 interface GlobalFooterConfig {
   enabled: boolean;
   logo_url?: string;
   description?: string;
-  links: FooterLinkItem[];
+  disclaimer_content?: string;
+  copyright_text?: string;
+  link_sections: FooterLinkSection[];
   style?: {
     bg_color?: string;
     text_color?: string;
@@ -40,21 +48,36 @@ export const WebsiteFooter: React.FC<{ website: WebsiteData; }> = ({ website }) 
     color: cfg?.style?.text_color || undefined,
   }) as React.CSSProperties, [cfg]);
 
-  const quickLinks: FooterLinkItem[] = (cfg?.links && cfg.links.length > 0)
-    ? cfg.links
+  const linkSections: FooterLinkSection[] = (cfg?.link_sections && cfg.link_sections.length > 0)
+    ? cfg.link_sections
     : [
-        { id: 'home', label: 'Home', type: 'page', page_slug: '' },
-        { id: 'products', label: 'Products', type: 'page', page_slug: 'products' },
-        { id: 'about', label: 'About', type: 'page', page_slug: 'about' },
-        { id: 'contact', label: 'Contact', type: 'page', page_slug: 'contact' },
+        { 
+          id: 'quick-links',
+          title: 'Quick Links',
+          links: [
+            { id: 'home', label: 'Home', type: 'page', page_slug: '' },
+            { id: 'products', label: 'Products', type: 'page', page_slug: 'products' },
+            { id: 'about', label: 'About', type: 'page', page_slug: 'about' },
+            { id: 'contact', label: 'Contact', type: 'page', page_slug: 'contact' },
+          ]
+        },
+        {
+          id: 'customer-service',
+          title: 'Customer Service',
+          links: [
+            { id: 'shipping', label: 'Shipping Info', type: 'custom', url: `${paths.base}/shipping` },
+            { id: 'returns', label: 'Returns', type: 'custom', url: `${paths.base}/returns` },
+            { id: 'privacy', label: 'Privacy Policy', type: 'custom', url: `${paths.base}/privacy-policy` },
+            { id: 'terms', label: 'Terms of Service', type: 'custom', url: `${paths.base}/terms-of-service` },
+          ]
+        }
       ];
 
-  const customerLinks = [
-    { id: 'shipping', label: 'Shipping Info', to: `${paths.base}/shipping` },
-    { id: 'returns', label: 'Returns', to: `${paths.base}/returns` },
-    { id: 'privacy', label: 'Privacy Policy', to: `${paths.base}/privacy-policy` },
-    { id: 'terms', label: 'Terms of Service', to: `${paths.base}/terms-of-service` },
-  ];
+  const copyrightText = cfg?.copyright_text 
+    ? cfg.copyright_text
+        .replace('{year}', new Date().getFullYear().toString())
+        .replace('{website_name}', website.name)
+    : `© ${new Date().getFullYear()} ${website.name}. All rights reserved.`;
 
   return (
     <footer id="website-footer" className="border-t" style={styleVars}>
@@ -77,42 +100,50 @@ export const WebsiteFooter: React.FC<{ website: WebsiteData; }> = ({ website }) 
             {cfg?.description && (
               <p className="text-sm opacity-80">{cfg.description}</p>
             )}
+            {cfg?.disclaimer_content && (
+              <div className="text-xs opacity-70 prose prose-sm max-w-none" 
+                dangerouslySetInnerHTML={{ __html: cfg.disclaimer_content }} 
+                style={{ color: cfg?.style?.text_color || undefined }}
+              />
+            )}
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 md:gap-12 w-full md:w-auto">
-            <div className="md:text-right">
-              <h3 className="font-semibold mb-3" style={{ color: cfg?.style?.heading_color || undefined }}>Quick Links</h3>
-              <ul className="space-y-2">
-                {quickLinks.map((l) => (
-                  <li key={l.id}>
-                    {l.type === 'custom' && l.url ? (
-                      <a href={l.url} target={l.new_tab ? '_blank' : undefined} rel={l.new_tab ? 'noopener' : undefined} className="text-sm transition-colors" style={{ color: cfg?.style?.text_color || undefined }}>
-                        {l.label}
-                      </a>
-                    ) : (
-                      <Link to={l.page_slug ? `${paths.base}/${l.page_slug}` : paths.home} className="text-sm transition-colors" style={{ color: cfg?.style?.text_color || undefined }}>
-                        {l.label}
-                      </Link>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div className="md:text-right">
-              <h3 className="font-semibold mb-3" style={{ color: cfg?.style?.heading_color || undefined }}>Customer Service</h3>
-              <ul className="space-y-2">
-                {customerLinks.map(link => (
-                  <li key={link.id}>
-                    <Link to={link.to} className="text-sm transition-colors" style={{ color: cfg?.style?.text_color || undefined }}>
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
+          <div className={`grid gap-8 md:gap-12 w-full md:w-auto ${linkSections.length <= 2 ? 'grid-cols-1 sm:grid-cols-2' : linkSections.length === 3 ? 'grid-cols-1 sm:grid-cols-3' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4'}`}>
+            {linkSections.map((section) => (
+              <div key={section.id} className="md:text-right">
+                <h3 className="font-semibold mb-3" style={{ color: cfg?.style?.heading_color || undefined }}>
+                  {section.title}
+                </h3>
+                <ul className="space-y-2">
+                  {section.links.map((link) => (
+                    <li key={link.id}>
+                      {link.type === 'custom' && link.url ? (
+                        <a 
+                          href={link.url} 
+                          target={link.new_tab ? '_blank' : undefined} 
+                          rel={link.new_tab ? 'noopener' : undefined} 
+                          className="text-sm transition-colors" 
+                          style={{ color: cfg?.style?.text_color || undefined }}
+                        >
+                          {link.label}
+                        </a>
+                      ) : (
+                        <Link 
+                          to={link.page_slug ? `${paths.base}/${link.page_slug}` : paths.home} 
+                          className="text-sm transition-colors" 
+                          style={{ color: cfg?.style?.text_color || undefined }}
+                        >
+                          {link.label}
+                        </Link>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
           </div>
         </div>
         <div className="border-t mt-8 pt-6 text-center text-sm opacity-80">
-          © {new Date().getFullYear()} {website.name}. All rights reserved.
+          {copyrightText}
         </div>
       </div>
     </footer>

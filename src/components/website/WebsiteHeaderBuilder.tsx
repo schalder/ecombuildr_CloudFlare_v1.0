@@ -10,7 +10,7 @@ import { Plus, Trash2, ArrowUp, ArrowDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { ColorPicker } from '@/components/ui/color-picker';
-import { ImageUpload } from '@/components/ui/image-upload';
+import { MediaSelector } from '@/components/page-builder/components/MediaSelector';
 
 interface Website {
   id: string;
@@ -41,6 +41,7 @@ export interface GlobalHeaderConfig {
   show_search: boolean;
   show_cart: boolean;
   sticky: boolean;
+  font_size?: string;
   style?: {
     bg_color?: string;
     text_color?: string;
@@ -66,6 +67,7 @@ export const WebsiteHeaderBuilder: React.FC<Props> = ({ website }) => {
       show_search: true,
       show_cart: true,
       sticky: true,
+      font_size: 'medium',
       style: {
         bg_color: '',
         text_color: '',
@@ -163,23 +165,38 @@ export const WebsiteHeaderBuilder: React.FC<Props> = ({ website }) => {
 
           <div className="grid md:grid-cols-2 gap-6">
             <div className="space-y-4">
-              <Label>Logo</Label>
-              <ImageUpload value={config.logo_url} onChange={(url) => setField({ logo_url: url })} />
+              <MediaSelector label="Logo" value={config.logo_url} onChange={(url) => setField({ logo_url: url })} />
             </div>
 
             <div className="space-y-4">
-              <Label>Behavior</Label>
-              <div className="flex items-center justify-between">
-                <span className="text-sm">Sticky header</span>
-                <Switch checked={config.sticky} onCheckedChange={(v)=>setField({ sticky: v })} />
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm">Show search</span>
-                <Switch checked={config.show_search} onCheckedChange={(v)=>setField({ show_search: v })} />
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm">Show cart</span>
-                <Switch checked={config.show_cart} onCheckedChange={(v)=>setField({ show_cart: v })} />
+              <Label>Typography & Behavior</Label>
+              <div className="space-y-3">
+                <div>
+                  <Label className="text-sm">Font Size</Label>
+                  <Select value={config.font_size || 'medium'} onValueChange={(v) => setField({ font_size: v })}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select font size" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="small">Small</SelectItem>
+                      <SelectItem value="medium">Medium</SelectItem>
+                      <SelectItem value="large">Large</SelectItem>
+                      <SelectItem value="extra-large">Extra Large</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">Sticky header</span>
+                  <Switch checked={config.sticky} onCheckedChange={(v)=>setField({ sticky: v })} />
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">Show search</span>
+                  <Switch checked={config.show_search} onCheckedChange={(v)=>setField({ show_search: v })} />
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">Show cart</span>
+                  <Switch checked={config.show_cart} onCheckedChange={(v)=>setField({ show_cart: v })} />
+                </div>
               </div>
             </div>
           </div>

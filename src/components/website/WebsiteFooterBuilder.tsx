@@ -6,11 +6,12 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, ArrowUp, ArrowDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { ColorPicker } from '@/components/ui/color-picker';
-import { ImageUpload } from '@/components/ui/image-upload';
+import { MediaSelector } from '@/components/page-builder/components/MediaSelector';
+import { RichTextEditor } from '@/components/ui/RichTextEditor';
 
 interface Website {
   id: string;
@@ -34,11 +35,19 @@ export type FooterLinkItem = {
   new_tab?: boolean;
 };
 
+export interface FooterLinkSection {
+  id: string;
+  title: string;
+  links: FooterLinkItem[];
+}
+
 export interface GlobalFooterConfig {
   enabled: boolean;
   logo_url?: string;
   description?: string;
-  links: FooterLinkItem[];
+  disclaimer_content?: string;
+  copyright_text?: string;
+  link_sections: FooterLinkSection[];
   style?: {
     bg_color?: string;
     text_color?: string;
@@ -61,7 +70,9 @@ export const WebsiteFooterBuilder: React.FC<Props> = ({ website }) => {
       enabled: true,
       logo_url: '',
       description: '',
-      links: [],
+      disclaimer_content: '',
+      copyright_text: '© {year} {website_name}. All rights reserved.',
+      link_sections: [],
       style: {
         bg_color: '',
         text_color: '',
@@ -87,30 +98,116 @@ export const WebsiteFooterBuilder: React.FC<Props> = ({ website }) => {
 
   const setField = (patch: Partial<GlobalFooterConfig>) => setConfig(prev => ({ ...prev, ...patch }));
 
-  const addLink = () => {
+  const addSection = () => {
     setConfig(prev => ({
       ...prev,
-      links: [
-        ...prev.links,
-        { id: Math.random().toString(36).slice(2), label: 'Link', type: 'page', page_slug: pages.find(p=>p.is_homepage)?.slug || '' }
+      link_sections: [
+        ...prev.link_sections,
+        { 
+          id: Math.random().toString(36).slice(2), 
+          title: 'New Section',
+          links: []
+        }
       ]
     }));
   };
 
-  const removeLink = (id: string) => setConfig(prev => ({ ...prev, links: prev.links.filter(i => i.id !== id) }));
+  const removeSection = (id: string) => setConfig(prev => ({ ...prev, link_sections: prev.link_sections.filter(s => s.id !== id) }));
+
+  const moveSection = (index: number, dir: -1 | 1) => {
+    setConfig(prev => {
+      const sections = [...prev.link_sections];
+      const newIndex = index + dir;
+      if (newIndex < 0 || newIndex >= sections.length) return prev;
+      const [moved] = sections.splice(index, 1);
+      sections.splice(newIndex, 0, moved);
+      return { ...prev, link_sections: sections };
+    });
+  };
+
+  const updateSection = (sectionId: string, updates: Partial<FooterLinkSection>) => {
+    setConfig(prev => ({
+      ...prev,
+      link_sections: prev.link_sections.map(s => 
+        s.id === sectionId ? { ...s, ...updates } : s
+      )
+    }));
+  };
+
+  const addLinkToSection = (sectionId: string) => {
+    const newLink: FooterLinkItem = {
+      id: Math.random().toString(36).slice(2),
+      label: 'New Link',
+      type: 'page',
+      page_slug: pages.find(p => p.is_homepage)?.slug || ''
+    };
+
+    setConfig(prev => ({
+      ...prev,
+      link_sections: prev.link_sections.map(section =>
+        section.id === sectionId
+          ? { ...section, links: [...section.links, newLink] }
+          : section
+      )
+    }));
+  };
+
+  const removeLinkFromSection = (sectionId: string, linkId: string) => {
+    setConfig(prev => ({
+      ...prev,
+      link_sections: prev.link_sections.map(section =>
+        section.id === sectionId
+          ? { ...section, links: section.links.filter(l => l.id !== linkId) }
+          : section
+      )
+    }));
+  };
+
+  const updateLinkInSection = (sectionId: string, linkId: string, updates: Partial<FooterLinkItem>) => {
+    setConfig(prev => ({
+      ...prev,
+      link_sections: prev.link_sections.map(section =>
+        section.id === sectionId
+          ? {
+              ...section,
+              links: section.links.map(link =>
+                link.id === linkId ? { ...link, ...updates } : link
+              )
+            }
+          : section
+      )
+    }));
+  };
 
   const loadPreset = () => {
-    const privacy = pages.find(p => p.slug === 'privacy');
-    const terms = pages.find(p => p.slug === 'terms');
+    const home = pages.find(p => p.is_homepage);
+    const about = pages.find(p => p.slug === 'about');
     const contact = pages.find(p => p.slug === 'contact');
+    const privacy = pages.find(p => p.slug === 'privacy-policy');
+    const terms = pages.find(p => p.slug === 'terms-of-service');
+
     setConfig(prev => ({
       ...prev,
       enabled: true,
-      links: [
-        privacy && { id: 'privacy', label: 'Privacy Policy', type: 'page', page_slug: 'privacy' },
-        terms && { id: 'terms', label: 'Terms of Service', type: 'page', page_slug: 'terms' },
-        contact && { id: 'contact', label: 'Contact', type: 'page', page_slug: 'contact' },
-      ].filter(Boolean) as FooterLinkItem[]
+      link_sections: [
+        {
+          id: 'quick-links',
+          title: 'Quick Links',
+          links: [
+            home && { id: 'home', label: 'Home', type: 'page', page_slug: home.slug },
+            about && { id: 'about', label: 'About', type: 'page', page_slug: 'about' },
+            contact && { id: 'contact', label: 'Contact', type: 'page', page_slug: 'contact' },
+          ].filter(Boolean) as FooterLinkItem[]
+        },
+        {
+          id: 'legal',
+          title: 'Legal',
+          links: [
+            privacy && { id: 'privacy', label: 'Privacy Policy', type: 'page', page_slug: 'privacy-policy' },
+            terms && { id: 'terms', label: 'Terms of Service', type: 'page', page_slug: 'terms-of-service' },
+          ].filter(Boolean) as FooterLinkItem[]
+        }
+      ].filter(section => section.links.length > 0)
     }));
   };
 
@@ -147,8 +244,7 @@ export const WebsiteFooterBuilder: React.FC<Props> = ({ website }) => {
 
           <div className="grid md:grid-cols-2 gap-6">
             <div className="space-y-4">
-              <Label>Logo</Label>
-              <ImageUpload value={config.logo_url} onChange={(url) => setField({ logo_url: url })} />
+              <MediaSelector label="Logo" value={config.logo_url} onChange={(url) => setField({ logo_url: url })} />
             </div>
             <div className="space-y-4">
               <Label>Short description</Label>
@@ -158,70 +254,165 @@ export const WebsiteFooterBuilder: React.FC<Props> = ({ website }) => {
 
           <Separator />
 
+          <div className="space-y-4">
+            <Label>Website Disclaimer</Label>
+            <RichTextEditor
+              value={config.disclaimer_content || ''}
+              onChange={(content) => setField({ disclaimer_content: content })}
+              placeholder="Add legal disclaimers, terms, or other important information..."
+              className="min-h-[120px]"
+            />
+          </div>
+
+          <Separator />
+
+          <div className="space-y-4">
+            <Label>Custom Copyright Text</Label>
+            <Input 
+              placeholder="© {year} {website_name}. All rights reserved."
+              value={config.copyright_text || ''}
+              onChange={(e) => setField({ copyright_text: e.target.value })}
+            />
+            <p className="text-xs text-muted-foreground">
+              Use {`{year}`} and {`{website_name}`} as variables that will be automatically replaced.
+            </p>
+          </div>
+
+          <Separator />
+
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <Label>Links</Label>
+              <Label>Link Sections</Label>
               <div className="space-x-2">
                 <Button variant="outline" size="sm" onClick={loadPreset}>Use default preset</Button>
-                <Button size="sm" onClick={addLink}><Plus className="w-4 h-4 mr-2"/>Add link</Button>
+                <Button size="sm" onClick={addSection}><Plus className="w-4 h-4 mr-2"/>Add section</Button>
               </div>
             </div>
-            {config.links.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No links yet. Add links or load the preset.</p>
+            {config.link_sections.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No link sections yet. Add sections or load the preset.</p>
             ) : (
-              <div className="space-y-3">
-                {config.links.map((item) => (
-                  <div key={item.id} className="border rounded-md p-3 grid gap-3 md:grid-cols-12 items-end">
-                    <div className="md:col-span-3">
-                      <Label>Label</Label>
-                      <Input value={item.label} onChange={(e)=>{
-                        const label = e.target.value; setConfig(prev=>({
-                          ...prev, links: prev.links.map(it=> it.id===item.id ? { ...it, label } : it)
-                        }));
-                      }} />
-                    </div>
-                    <div className="md:col-span-2">
-                      <Label>Link Type</Label>
-                      <Select value={item.type} onValueChange={(v: 'page'|'custom')=>{
-                        setConfig(prev=>({
-                          ...prev, links: prev.links.map(it=> it.id===item.id ? { ...it, type: v } : it)
-                        }));
-                      }}>
-                        <SelectTrigger className="w-full"><SelectValue placeholder="Type" /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="page">Website Page</SelectItem>
-                          <SelectItem value="custom">Custom URL</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    {item.type === 'page' ? (
-                      <div className="md:col-span-5">
-                        <Label>Page</Label>
-                        <Select value={item.page_slug || ''} onValueChange={(slug)=>{
-                          setConfig(prev=>({
-                            ...prev, links: prev.links.map(it=> it.id===item.id ? { ...it, page_slug: slug, url: undefined } : it)
-                          }));
-                        }}>
-                          <SelectTrigger className="w-full"><SelectValue placeholder="Select page" /></SelectTrigger>
-                          <SelectContent>
-                            {pages.map(p => (
-                              <SelectItem key={p.id} value={p.slug || ''}>{p.title}{p.is_homepage ? ' (Home)' : ''}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+              <div className="space-y-6">
+                {config.link_sections.map((section, sectionIdx) => (
+                  <div key={section.id} className="border rounded-lg p-4 space-y-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex-1">
+                        <Label>Section Title</Label>
+                        <Input 
+                          value={section.title} 
+                          onChange={(e) => updateSection(section.id, { title: e.target.value })}
+                          placeholder="Section title"
+                        />
                       </div>
-                    ) : (
-                      <div className="md:col-span-5">
-                        <Label>URL</Label>
-                        <Input placeholder="https://example.com" value={item.url || ''} onChange={(e)=>{
-                          const url = e.target.value; setConfig(prev=>({
-                            ...prev, links: prev.links.map(it=> it.id===item.id ? { ...it, url, page_slug: undefined } : it)
-                          }));
-                        }} />
+                      <div className="flex items-center gap-2">
+                        <Button 
+                          variant="outline" 
+                          size="icon" 
+                          onClick={() => moveSection(sectionIdx, -1)}
+                          disabled={sectionIdx === 0}
+                        >
+                          <ArrowUp className="w-4 h-4"/>
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="icon" 
+                          onClick={() => moveSection(sectionIdx, 1)}
+                          disabled={sectionIdx === config.link_sections.length - 1}
+                        >
+                          <ArrowDown className="w-4 h-4"/>
+                        </Button>
+                        <Button variant="destructive" size="icon" onClick={() => removeSection(section.id)}>
+                          <Trash2 className="w-4 h-4"/>
+                        </Button>
                       </div>
-                    )}
-                    <div className="md:col-span-2 flex items-center justify-end">
-                      <Button variant="destructive" size="icon" onClick={()=>removeLink(item.id)}><Trash2 className="w-4 h-4"/></Button>
+                    </div>
+
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-sm">Links in this section</Label>
+                        <Button size="sm" variant="outline" onClick={() => addLinkToSection(section.id)}>
+                          <Plus className="w-4 h-4 mr-2"/>Add link
+                        </Button>
+                      </div>
+                      
+                      {section.links.length === 0 ? (
+                        <p className="text-xs text-muted-foreground">No links in this section yet.</p>
+                      ) : (
+                        <div className="space-y-3">
+                          {section.links.map((link) => (
+                            <div key={link.id} className="border rounded-md p-3 grid gap-3 md:grid-cols-12 items-end bg-muted/30">
+                              <div className="md:col-span-3">
+                                <Label className="text-xs">Label</Label>
+                                <Input 
+                                  value={link.label} 
+                                  onChange={(e) => updateLinkInSection(section.id, link.id, { label: e.target.value })}
+                                  className="text-sm"
+                                />
+                              </div>
+                              <div className="md:col-span-2">
+                                <Label className="text-xs">Type</Label>
+                                <Select 
+                                  value={link.type} 
+                                  onValueChange={(v: 'page'|'custom') => updateLinkInSection(section.id, link.id, { type: v })}
+                                >
+                                  <SelectTrigger className="w-full text-sm">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="page">Page</SelectItem>
+                                    <SelectItem value="custom">URL</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              {link.type === 'page' ? (
+                                <div className="md:col-span-5">
+                                  <Label className="text-xs">Page</Label>
+                                  <Select 
+                                    value={link.page_slug || ''} 
+                                    onValueChange={(slug) => updateLinkInSection(section.id, link.id, { page_slug: slug, url: undefined })}
+                                  >
+                                    <SelectTrigger className="w-full text-sm">
+                                      <SelectValue placeholder="Select page" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {pages.map(p => (
+                                        <SelectItem key={p.id} value={p.slug || ''}>{p.title}{p.is_homepage ? ' (Home)' : ''}</SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                              ) : (
+                                <div className="md:col-span-5">
+                                  <Label className="text-xs">URL</Label>
+                                  <Input 
+                                    placeholder="https://example.com" 
+                                    value={link.url || ''} 
+                                    onChange={(e) => updateLinkInSection(section.id, link.id, { url: e.target.value, page_slug: undefined })}
+                                    className="text-sm"
+                                  />
+                                </div>
+                              )}
+                              <div className="md:col-span-1 flex items-center gap-2">
+                                <div className="flex items-center gap-1">
+                                  <Label className="text-xs">New tab</Label>
+                                  <Switch 
+                                    checked={!!link.new_tab} 
+                                    onCheckedChange={(v) => updateLinkInSection(section.id, link.id, { new_tab: v })}
+                                  />
+                                </div>
+                              </div>
+                              <div className="md:col-span-1 flex justify-end">
+                                <Button 
+                                  variant="destructive" 
+                                  size="icon" 
+                                  onClick={() => removeLinkFromSection(section.id, link.id)}
+                                >
+                                  <Trash2 className="w-4 h-4"/>
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
