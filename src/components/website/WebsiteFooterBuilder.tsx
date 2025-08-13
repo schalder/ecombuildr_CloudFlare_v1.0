@@ -65,19 +65,35 @@ export const WebsiteFooterBuilder: React.FC<Props> = ({ website }) => {
   const [saving, setSaving] = useState(false);
   const [pages, setPages] = useState<WebsitePageLite[]>([]);
   const initial: GlobalFooterConfig = useMemo(() => {
-    const cfg = (website.settings?.global_footer as GlobalFooterConfig | undefined);
-    return cfg ?? {
-      enabled: true,
-      logo_url: '',
-      description: '',
-      disclaimer_content: '',
-      copyright_text: '© {year} {website_name}. All rights reserved.',
-      link_sections: [],
+    const cfg = (website.settings?.global_footer as any);
+    
+    // Handle migration from old structure (links) to new structure (link_sections)
+    let linkSections: FooterLinkSection[] = [];
+    
+    if (cfg?.link_sections) {
+      // New structure already exists
+      linkSections = cfg.link_sections;
+    } else if (cfg?.links && Array.isArray(cfg.links)) {
+      // Migrate from old structure
+      linkSections = [{
+        id: 'quick-links',
+        title: 'Quick Links',
+        links: cfg.links
+      }];
+    }
+    
+    return {
+      enabled: cfg?.enabled ?? true,
+      logo_url: cfg?.logo_url || '',
+      description: cfg?.description || '',
+      disclaimer_content: cfg?.disclaimer_content || '',
+      copyright_text: cfg?.copyright_text || '© {year} {website_name}. All rights reserved.',
+      link_sections: linkSections,
       style: {
-        bg_color: '',
-        text_color: '',
-        heading_color: '',
-        link_hover_color: '',
+        bg_color: cfg?.style?.bg_color || '',
+        text_color: cfg?.style?.text_color || '',
+        heading_color: cfg?.style?.heading_color || '',
+        link_hover_color: cfg?.style?.link_hover_color || '',
       },
     };
   }, [website.settings]);
@@ -288,9 +304,9 @@ export const WebsiteFooterBuilder: React.FC<Props> = ({ website }) => {
                 <Button size="sm" onClick={addSection}><Plus className="w-4 h-4 mr-2"/>Add section</Button>
               </div>
             </div>
-            {config.link_sections.length === 0 ? (
+            {(config.link_sections && config.link_sections.length === 0) ? (
               <p className="text-sm text-muted-foreground">No link sections yet. Add sections or load the preset.</p>
-            ) : (
+            ) : config.link_sections ? (
               <div className="space-y-6">
                 {config.link_sections.map((section, sectionIdx) => (
                   <div key={section.id} className="border rounded-lg p-4 space-y-4">
@@ -316,7 +332,7 @@ export const WebsiteFooterBuilder: React.FC<Props> = ({ website }) => {
                           variant="outline" 
                           size="icon" 
                           onClick={() => moveSection(sectionIdx, 1)}
-                          disabled={sectionIdx === config.link_sections.length - 1}
+                          disabled={sectionIdx === (config.link_sections?.length || 0) - 1}
                         >
                           <ArrowDown className="w-4 h-4"/>
                         </Button>
@@ -374,10 +390,10 @@ export const WebsiteFooterBuilder: React.FC<Props> = ({ website }) => {
                                       <SelectValue placeholder="Select page" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                      {pages.map(p => (
-                                        <SelectItem key={p.id} value={p.slug || ''}>{p.title}{p.is_homepage ? ' (Home)' : ''}</SelectItem>
-                                      ))}
-                                    </SelectContent>
+                                       {pages.map(p => (
+                                         <SelectItem key={p.id} value={p.slug || ''}>{p.title}{p.is_homepage ? ' (Home)' : ''}</SelectItem>
+                                       ))}
+                                     </SelectContent>
                                   </Select>
                                 </div>
                               ) : (
@@ -417,7 +433,7 @@ export const WebsiteFooterBuilder: React.FC<Props> = ({ website }) => {
                   </div>
                 ))}
               </div>
-            )}
+            ) : null}
           </div>
 
           <Separator />
