@@ -103,8 +103,32 @@ export const useDomainManagement = () => {
     }
   };
 
-  const addDomain = async (domain: string) => {
+  const verifyDomainDNS = async (domain: string) => {
     if (!store?.id) throw new Error('No store found');
+
+    try {
+      const { data: result, error } = await supabase.functions.invoke(
+        'dns-domain-manager',
+        {
+          body: {
+            action: 'pre_verify',
+            domain: domain.toLowerCase(),
+            storeId: store.id
+          }
+        }
+      );
+
+      if (error) throw error;
+      return result;
+    } catch (error) {
+      console.error('DNS verification failed:', error);
+      throw error;
+    }
+  };
+
+  const addDomain = async (domain: string, isDnsVerified: boolean = false) => {
+    if (!store?.id) throw new Error('No store found');
+    if (!isDnsVerified) throw new Error('DNS must be verified before adding domain');
 
     const cleanDomain = domain.toLowerCase();
 
@@ -286,6 +310,7 @@ export const useDomainManagement = () => {
     removeConnection,
     setHomepage,
     refetch: fetchDomains,
+    verifyDomainDNS,
     verifyDomain: async (domainId: string) => {
       if (!store?.id) throw new Error('No store found');
 

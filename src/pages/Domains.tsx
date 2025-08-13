@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Plus, Globe, Trash2, Link as LinkIcon, Settings, ExternalLink, Copy, RefreshCw } from 'lucide-react';
 import { useDomainManagement } from '@/hooks/useDomainManagement';
+import { DomainVerificationDialog } from '@/components/domain/DomainVerificationDialog';
 import { toast } from '@/hooks/use-toast';
 
 export default function Domains() {
@@ -26,11 +27,11 @@ export default function Domains() {
     removeConnection, 
     setHomepage,
     verifyDomain,
+    verifyDomainDNS,
     checkSSL
   } = useDomainManagement();
 
-  const [newDomain, setNewDomain] = useState('');
-  const [isAddingDomain, setIsAddingDomain] = useState(false);
+  const [showVerificationDialog, setShowVerificationDialog] = useState(false);
   const [connectionForm, setConnectionForm] = useState({
     domainId: '',
     contentType: 'website' as 'website' | 'funnel',
@@ -39,21 +40,12 @@ export default function Domains() {
     isHomepage: false
   });
 
-  const handleAddDomain = async () => {
-    if (!newDomain.trim()) return;
-    
+  const handleDomainAdded = async (domain: string) => {
     try {
-      setIsAddingDomain(true);
-      await addDomain(newDomain.trim());
-      setNewDomain('');
+      await addDomain(domain, true); // DNS is verified at this point
     } catch (error) {
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to add domain",
-        variant: "destructive"
-      });
-    } finally {
-      setIsAddingDomain(false);
+      console.error('Error adding domain:', error);
+      throw error;
     }
   };
 
@@ -141,24 +133,14 @@ export default function Domains() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex gap-4">
-              <div className="flex-1">
-                <Label htmlFor="domain">Domain Name</Label>
-                <Input
-                  id="domain"
-                  placeholder="yourdomain.com"
-                  value={newDomain}
-                  onChange={(e) => setNewDomain(e.target.value)}
-                />
-              </div>
-              <div className="flex items-end">
-                <Button 
-                  onClick={handleAddDomain}
-                  disabled={isAddingDomain || !newDomain.trim()}
-                >
-                  {isAddingDomain ? "Adding..." : "Add Domain"}
-                </Button>
-              </div>
+            <div className="flex justify-center">
+              <Button 
+                onClick={() => setShowVerificationDialog(true)}
+                className="w-full max-w-md"
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Add Domain
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -446,6 +428,14 @@ export default function Domains() {
             </Card>
           )}
         </div>
+
+        {/* Domain Verification Dialog */}
+        <DomainVerificationDialog
+          open={showVerificationDialog}
+          onOpenChange={setShowVerificationDialog}
+          onDomainAdded={handleDomainAdded}
+          onVerifyDNS={verifyDomainDNS}
+        />
       </div>
     </DashboardLayout>
   );

@@ -6,7 +6,7 @@ const corsHeaders = {
 }
 
 interface DomainRequest {
-  action: 'verify' | 'check_ssl'
+  action: 'verify' | 'check_ssl' | 'pre_verify'
   domain: string
   storeId: string
 }
@@ -56,6 +56,43 @@ Deno.serve(async (req) => {
     let result: any = {}
 
     switch (action) {
+      case 'pre_verify':
+        // Pre-verification: Check DNS only without updating database
+        let preVerifyDnsConfigured = false
+        let preVerifyCnameTarget = ''
+        
+        try {
+          // Check CNAME records
+          const cnameResponse = await fetch(`https://dns.google.com/resolve?name=${domain}&type=CNAME`)
+          if (cnameResponse.ok) {
+            const cnameData = await cnameResponse.json()
+            const cnameRecords = cnameData.Answer?.filter((record: any) => record.type === 5) || []
+            
+            for (const record of cnameRecords) {
+              preVerifyCnameTarget = record.data.replace(/\.$/, '') // Remove trailing dot
+              if (preVerifyCnameTarget.includes('ecombuildr.com')) {
+                preVerifyDnsConfigured = true
+                break
+              }
+            }
+            console.log(`Pre-verification CNAME check for ${domain}: ${cnameRecords.length} records found, target: ${preVerifyCnameTarget}`)
+          }
+        } catch (error) {
+          console.error('Pre-verification DNS check failed:', error)
+        }
+
+        result = {
+          success: true,
+          status: {
+            dnsConfigured: preVerifyDnsConfigured,
+            cnameTarget: preVerifyCnameTarget || null,
+            requiresEcomBuildr: !preVerifyDnsConfigured,
+            errorMessage: !preVerifyDnsConfigured ? 'CNAME record must point to ecombuildr.com' : null
+          }
+        }
+        console.log(`Domain ${domain} pre-verification result:`, result.status)
+        break
+
       case 'verify':
         // Check DNS configuration using multiple methods
         let dnsConfigured = false
