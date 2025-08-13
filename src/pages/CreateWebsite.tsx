@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Globe } from 'lucide-react';
+import { ArrowLeft, Globe, Check, X, Loader2, AlertCircle } from 'lucide-react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,6 +11,9 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useMutation } from '@tanstack/react-query';
 import { useUserStore } from '@/hooks/useUserStore';
+import { debounce } from '@/lib/utils';
+
+type SlugStatus = 'idle' | 'checking' | 'available' | 'taken' | 'error';
 
 export default function CreateWebsite() {
   const navigate = useNavigate();
@@ -22,6 +25,80 @@ export default function CreateWebsite() {
     description: '',
     domain: '',
   });
+  
+  // Slug validation state
+  const [slugStatus, setSlugStatus] = useState<SlugStatus>('idle');
+  const [suggestedSlug, setSuggestedSlug] = useState('');
+  const [isSlugModified, setIsSlugModified] = useState(false);
+  const [finalSlug, setFinalSlug] = useState('');
+
+  // Generate unique slug by appending random numbers
+  const generateUniqueSlug = async (baseSlug: string): Promise<string> => {
+    let attempts = 0;
+    let uniqueSlug = baseSlug;
+    
+    while (attempts < 10) {
+      const { data, error } = await supabase
+        .from('websites')
+        .select('slug')
+        .eq('store_id', store?.id)
+        .eq('slug', uniqueSlug)
+        .maybeSingle();
+      
+      if (error || !data) {
+        return uniqueSlug; // Slug is available
+      }
+      
+      // Generate new slug with random number
+      const randomNum = Math.floor(1000 + Math.random() * 9000);
+      uniqueSlug = `${baseSlug}-${randomNum}`;
+      attempts++;
+    }
+    
+    return uniqueSlug;
+  };
+
+  // Check slug availability
+  const checkSlugAvailability = async (slug: string) => {
+    if (!slug.trim() || !store?.id) return;
+    
+    setSlugStatus('checking');
+    
+    try {
+      const { data, error } = await supabase
+        .from('websites')
+        .select('slug')
+        .eq('store_id', store.id)
+        .eq('slug', slug)
+        .maybeSingle();
+      
+      if (error) {
+        setSlugStatus('error');
+        return;
+      }
+      
+      if (data) {
+        // Slug is taken, generate unique one
+        const uniqueSlug = await generateUniqueSlug(slug);
+        setSuggestedSlug(uniqueSlug);
+        setFinalSlug(uniqueSlug);
+        setSlugStatus('taken');
+      } else {
+        // Slug is available
+        setFinalSlug(slug);
+        setSuggestedSlug('');
+        setSlugStatus('available');
+      }
+    } catch (error) {
+      setSlugStatus('error');
+    }
+  };
+
+  // Debounced slug validation
+  const debouncedCheckSlug = useCallback(
+    debounce((slug: string) => checkSlugAvailability(slug), 500),
+    [store?.id]
+  );
 
   const createWebsiteMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
@@ -61,7 +138,9 @@ export default function CreateWebsite() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.name.trim() || !formData.slug.trim()) {
+    const slugToUse = finalSlug || formData.slug;
+    
+    if (!formData.name.trim() || !slugToUse.trim()) {
       toast({
         title: "Error",
         description: "Please fill in all required fields.",
@@ -70,7 +149,19 @@ export default function CreateWebsite() {
       return;
     }
 
-    createWebsiteMutation.mutate(formData);
+    if (slugStatus === 'taken' && !finalSlug) {
+      toast({
+        title: "Error",
+        description: "Please wait for slug validation to complete.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    createWebsiteMutation.mutate({
+      ...formData,
+      slug: slugToUse,
+    });
   };
 
   const handleSlugChange = (value: string) => {
@@ -82,14 +173,39 @@ export default function CreateWebsite() {
       .trim();
     
     setFormData(prev => ({ ...prev, slug }));
+    setIsSlugModified(true);
+    
+    // Reset validation state and trigger new validation
+    setSlugStatus('idle');
+    setSuggestedSlug('');
+    setFinalSlug('');
+    
+    if (slug.trim()) {
+      debouncedCheckSlug(slug);
+    }
   };
 
   const handleNameChange = (value: string) => {
     setFormData(prev => ({ ...prev, name: value }));
     
-    // Auto-generate slug if slug is empty
-    if (!formData.slug) {
-      handleSlugChange(value);
+    // Auto-generate slug if slug is empty or hasn't been modified by user
+    if (!formData.slug || !isSlugModified) {
+      const slug = value.toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-')
+        .trim();
+      
+      setFormData(prev => ({ ...prev, slug }));
+      
+      // Reset validation state and trigger new validation
+      setSlugStatus('idle');
+      setSuggestedSlug('');
+      setFinalSlug('');
+      
+      if (slug.trim()) {
+        debouncedCheckSlug(slug);
+      }
     }
   };
 
@@ -133,15 +249,63 @@ export default function CreateWebsite() {
 
               <div>
                 <Label htmlFor="slug">Website Slug *</Label>
-                <Input
-                  id="slug"
-                  placeholder="e.g., my-business"
-                  value={formData.slug}
-                  onChange={(e) => handleSlugChange(e.target.value)}
-                  required
-                />
+                <div className="relative">
+                  <Input
+                    id="slug"
+                    placeholder="e.g., my-business"
+                    value={formData.slug}
+                    onChange={(e) => handleSlugChange(e.target.value)}
+                    required
+                    className={`pr-10 ${
+                      slugStatus === 'available' ? 'border-green-500' : 
+                      slugStatus === 'taken' ? 'border-yellow-500' :
+                      slugStatus === 'error' ? 'border-red-500' : ''
+                    }`}
+                  />
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    {slugStatus === 'checking' && (
+                      <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                    )}
+                    {slugStatus === 'available' && (
+                      <Check className="h-4 w-4 text-green-600" />
+                    )}
+                    {slugStatus === 'taken' && (
+                      <AlertCircle className="h-4 w-4 text-yellow-600" />
+                    )}
+                    {slugStatus === 'error' && (
+                      <X className="h-4 w-4 text-red-600" />
+                    )}
+                  </div>
+                </div>
+                
+                {/* Status Messages */}
+                {slugStatus === 'checking' && (
+                  <p className="text-sm text-muted-foreground mt-1 flex items-center gap-1">
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    Checking availability...
+                  </p>
+                )}
+                {slugStatus === 'available' && (
+                  <p className="text-sm text-green-600 mt-1 flex items-center gap-1">
+                    <Check className="h-3 w-3" />
+                    Slug is available
+                  </p>
+                )}
+                {slugStatus === 'taken' && suggestedSlug && (
+                  <p className="text-sm text-yellow-600 mt-1 flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" />
+                    Slug already exists. Using "{suggestedSlug}" instead
+                  </p>
+                )}
+                {slugStatus === 'error' && (
+                  <p className="text-sm text-red-600 mt-1 flex items-center gap-1">
+                    <X className="h-3 w-3" />
+                    Error checking slug availability
+                  </p>
+                )}
+                
                 <p className="text-sm text-muted-foreground mt-1">
-                  URL identifier: website/{formData.slug || 'your-slug'}
+                  URL identifier: website/{finalSlug || formData.slug || 'your-slug'}
                 </p>
               </div>
 
