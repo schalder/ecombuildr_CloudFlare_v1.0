@@ -106,6 +106,7 @@ export const useDomainManagement = () => {
   const addDomain = async (domain: string) => {
     if (!store?.id) throw new Error('No store found');
 
+    // First add to database
     const { data, error } = await supabase
       .from('custom_domains')
       .insert({
@@ -117,24 +118,74 @@ export const useDomainManagement = () => {
       .single();
 
     if (error) throw error;
-    
-    await fetchDomains();
-    
-    toast({
-      title: "Domain added",
-      description: `${domain} has been added. Please configure your DNS settings.`,
-    });
+
+    try {
+      // Add domain to Netlify automatically
+      const { data: netlifyResult, error: netlifyError } = await supabase.functions.invoke(
+        'netlify-domain-manager',
+        {
+          body: {
+            action: 'add',
+            domain: domain.toLowerCase(),
+            storeId: store.id
+          }
+        }
+      );
+
+      if (netlifyError) {
+        console.error('Failed to add domain to Netlify:', netlifyError);
+      }
+
+      await fetchDomains();
+      
+      toast({
+        title: "Domain added successfully",
+        description: `${domain} has been added to Netlify. Please set your CNAME record to ecombuildr.com in your DNS settings.`,
+      });
+
+    } catch (netlifyError) {
+      console.error('Netlify integration failed:', netlifyError);
+      toast({
+        title: "Domain added",
+        description: `${domain} has been added, but automatic Netlify setup failed. Please contact support.`,
+        variant: "destructive"
+      });
+    }
     
     return data;
   };
 
   const removeDomain = async (domainId: string) => {
+    if (!store?.id) throw new Error('No store found');
+
+    // Get domain info before deletion
+    const { data: domainData } = await supabase
+      .from('custom_domains')
+      .select('domain')
+      .eq('id', domainId)
+      .single();
+
     const { error } = await supabase
       .from('custom_domains')
       .delete()
       .eq('id', domainId);
 
     if (error) throw error;
+
+    // Remove from Netlify
+    if (domainData?.domain) {
+      try {
+        await supabase.functions.invoke('netlify-domain-manager', {
+          body: {
+            action: 'remove',
+            domain: domainData.domain,
+            storeId: store.id
+          }
+        });
+      } catch (netlifyError) {
+        console.error('Failed to remove domain from Netlify:', netlifyError);
+      }
+    }
     
     await fetchDomains();
     
@@ -239,6 +290,52 @@ export const useDomainManagement = () => {
     connectContent,
     removeConnection,
     setHomepage,
-    refetch: fetchDomains
+    refetch: fetchDomains,
+    verifyDomain: async (domainId: string) => {
+      if (!store?.id) throw new Error('No store found');
+
+      const domain = domains.find(d => d.id === domainId);
+      if (!domain) throw new Error('Domain not found');
+
+      try {
+        const { data: result, error } = await supabase.functions.invoke(
+          'netlify-domain-manager',
+          {
+            body: {
+              action: 'status',
+              domain: domain.domain,
+              storeId: store.id
+            }
+          }
+        );
+
+        if (error) throw error;
+
+        await fetchDomains();
+
+        if (result?.status?.isVerified) {
+          toast({
+            title: "Domain verified",
+            description: `${domain.domain} is now active and ready to use.`,
+          });
+        } else {
+          toast({
+            title: "Verification in progress",
+            description: "Domain verification is still in progress. Please check again in a few minutes.",
+            variant: "default"
+          });
+        }
+
+        return result?.status;
+      } catch (error) {
+        console.error('Domain verification failed:', error);
+        toast({
+          title: "Verification failed",
+          description: "Unable to verify domain status. Please try again.",
+          variant: "destructive"
+        });
+        throw error;
+      }
+    }
   };
 };

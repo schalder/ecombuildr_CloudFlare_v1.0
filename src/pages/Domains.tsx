@@ -9,22 +9,23 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Plus, Globe, Trash2, Link as LinkIcon, Settings, ExternalLink, Copy } from 'lucide-react';
+import { Plus, Globe, Trash2, Link as LinkIcon, Settings, ExternalLink, Copy, RefreshCw } from 'lucide-react';
 import { useDomainManagement } from '@/hooks/useDomainManagement';
 import { toast } from '@/hooks/use-toast';
 
 export default function Domains() {
-  const {
-    domains,
-    connections,
-    websites,
-    funnels,
-    loading,
-    addDomain,
-    removeDomain,
-    connectContent,
-    removeConnection,
-    setHomepage
+  const { 
+    domains, 
+    connections, 
+    websites, 
+    funnels, 
+    loading, 
+    addDomain, 
+    removeDomain, 
+    connectContent, 
+    removeConnection, 
+    setHomepage,
+    verifyDomain
   } = useDomainManagement();
 
   const [newDomain, setNewDomain] = useState('');
@@ -90,13 +91,16 @@ export default function Domains() {
   };
 
   const getStatusBadge = (domain: any) => {
-    if (domain.is_verified && domain.dns_configured) {
-      return <Badge variant="default" className="bg-green-500">Active</Badge>;
+    if (domain.is_verified && domain.ssl_status === 'issued') {
+      return <Badge variant="default" className="bg-green-500 hover:bg-green-600">Active</Badge>;
+    }
+    if (domain.dns_configured && domain.ssl_status === 'provisioning') {
+      return <Badge variant="secondary" className="bg-blue-500 hover:bg-blue-600">SSL Provisioning</Badge>;
     }
     if (domain.dns_configured) {
-      return <Badge variant="secondary">Pending Verification</Badge>;
+      return <Badge variant="secondary" className="bg-yellow-500 hover:bg-yellow-600">DNS Configured</Badge>;
     }
-    return <Badge variant="outline">DNS Setup Required</Badge>;
+    return <Badge variant="outline">Setup Required</Badge>;
   };
 
   const getContentConnections = (domainId: string) => {
@@ -207,25 +211,73 @@ export default function Domains() {
                   </TabsList>
                   
                   <TabsContent value="setup" className="space-y-4">
-                    <div className="p-4 bg-muted rounded-lg">
-                      <h4 className="font-semibold mb-2">DNS Configuration Required</h4>
-                      <p className="text-sm text-muted-foreground mb-3">
-                        Add this CNAME record in your domain's DNS settings:
-                      </p>
-                      <div className="bg-background p-3 rounded border font-mono text-sm">
-                        <div><strong>Type:</strong> CNAME</div>
-                        <div><strong>Name:</strong> {domain.domain}</div>
-                        <div><strong>Value:</strong> ecombuildr.com</div>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <h4 className="font-medium">DNS Configuration</h4>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => verifyDomain(domain.id)}
+                          className="text-xs"
+                        >
+                          <RefreshCw className="mr-2 h-3 w-3" />
+                          Verify Domain
+                        </Button>
                       </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="mt-2"
-                        onClick={() => copyDNSInstructions(domain.domain)}
-                      >
-                        <Copy className="h-4 w-4 mr-2" />
-                        Copy Instructions
-                      </Button>
+                      
+                      <p className="text-sm text-muted-foreground">
+                        Add this CNAME record in your DNS provider (Cloudflare, etc.):
+                      </p>
+                      
+                      <div className="bg-muted p-4 rounded-lg">
+                        <div className="space-y-2 font-mono text-sm">
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Type:</span>
+                            <span>CNAME</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Name:</span>
+                            <span>@ (or {domain.domain})</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Target:</span>
+                            <span>ecombuildr.com</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">TTL:</span>
+                            <span>Auto (or 3600)</span>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => copyDNSInstructions(domain.domain)}
+                          className="text-xs"
+                        >
+                          <Copy className="mr-2 h-3 w-3" />
+                          Copy Instructions
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => window.open('https://dash.cloudflare.com', '_blank')}
+                          className="text-xs"
+                        >
+                          <ExternalLink className="mr-2 h-3 w-3" />
+                          Open Cloudflare
+                        </Button>
+                      </div>
+
+                      {domain.ssl_status && (
+                        <div className="text-xs text-muted-foreground">
+                          SSL Status: {domain.ssl_status === 'issued' ? '✅ Active' : 
+                                     domain.ssl_status === 'provisioning' ? '⏳ Setting up...' : 
+                                     '❌ Pending'}
+                        </div>
+                      )}
                     </div>
                   </TabsContent>
                   
