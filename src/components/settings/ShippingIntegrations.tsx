@@ -30,7 +30,20 @@ const [account, setAccount] = useState<Account>({
   settings: { webhook_token: "" },
 });
   const [recordId, setRecordId] = useState<string | undefined>(undefined);
-  const webhookUrl = "https://fhqwacmokbtbspkxjixf.functions.supabase.co/steadfast-webhook";
+  const directWebhookUrl = "https://fhqwacmokbtbspkxjixf.functions.supabase.co/steadfast-webhook";
+  const customWebhookUrl = typeof window !== "undefined" ? `${window.location.origin}/steadfast-webhook` : "/steadfast-webhook";
+  const generateToken = () => {
+    try {
+      const arr = new Uint8Array(24);
+      window.crypto.getRandomValues(arr);
+      const token = Array.from(arr, (b) => b.toString(16).padStart(2, "0")).join("");
+      setAccount((a) => ({ ...a, settings: { ...(a.settings || {}), webhook_token: token } }));
+      toast({ title: "Token generated", description: "A secure webhook token was created." });
+    } catch (e) {
+      console.error("Failed to generate token", e);
+      toast({ title: "Error", description: "Could not generate token.", variant: "destructive" });
+    }
+  };
   useEffect(() => {
     let mounted = true;
     async function fetchAccount() {
@@ -179,22 +192,47 @@ const [account, setAccount] = useState<Account>({
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="steadfast_webhook_token">Webhook Token</Label>
-              <Input
-                id="steadfast_webhook_token"
-                value={account.settings?.webhook_token || ""}
-                onChange={(e) => setAccount((a) => ({ ...a, settings: { ...(a.settings || {}), webhook_token: e.target.value } }))}
-                placeholder="Enter a secret token to verify webhooks"
-                disabled={loading || saving}
-              />
+              <div className="flex gap-2">
+                <Input
+                  id="steadfast_webhook_token"
+                  value={account.settings?.webhook_token || ""}
+                  onChange={(e) =>
+                    setAccount((a) => ({
+                      ...a,
+                      settings: { ...(a.settings || {}), webhook_token: e.target.value },
+                    }))
+                  }
+                  placeholder="Enter a secret token to verify webhooks"
+                  disabled={loading || saving}
+                />
+                <Button type="button" variant="outline" onClick={generateToken}>Generate</Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => navigator.clipboard.writeText(account.settings?.webhook_token || "")}
+                >
+                  Copy
+                </Button>
+              </div>
               <p className="text-xs text-muted-foreground">Use this as the Bearer token in Steadfast webhook settings.</p>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="steadfast_webhook_url">Callback URL</Label>
-              <div className="flex gap-2">
-                <Input id="steadfast_webhook_url" readOnly value={webhookUrl} />
-                <Button type="button" variant="outline" onClick={() => navigator.clipboard.writeText(webhookUrl)}>Copy</Button>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="steadfast_webhook_url_custom">Callback URL (Custom domain)</Label>
+                <div className="flex gap-2">
+                  <Input id="steadfast_webhook_url_custom" readOnly value={customWebhookUrl} />
+                  <Button type="button" variant="outline" onClick={() => navigator.clipboard.writeText(customWebhookUrl)}>Copy</Button>
+                </div>
+                <p className="text-xs text-muted-foreground">Works via Netlify proxy on your domain.</p>
               </div>
-              <p className="text-xs text-muted-foreground">Set this URL in Steadfast dashboard.</p>
+              <div className="space-y-2">
+                <Label htmlFor="steadfast_webhook_url_direct">Direct URL (Supabase)</Label>
+                <div className="flex gap-2">
+                  <Input id="steadfast_webhook_url_direct" readOnly value={directWebhookUrl} />
+                  <Button type="button" variant="outline" onClick={() => navigator.clipboard.writeText(directWebhookUrl)}>Copy</Button>
+                </div>
+                <p className="text-xs text-muted-foreground">Use this if the custom domain proxy is not available.</p>
+              </div>
             </div>
           </div>
 

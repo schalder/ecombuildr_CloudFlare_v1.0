@@ -1,3 +1,4 @@
 # SPA fallback for React Router on Netlify
 # Docs: https://docs.netlify.com/routing/redirects/redirect-options/#history-pushstate-and-single-page-apps
+/steadfast-webhook https://fhqwacmokbtbspkxjixf.functions.supabase.co/steadfast-webhook 200
 /*    /index.html   200
