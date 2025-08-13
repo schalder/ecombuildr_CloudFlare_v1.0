@@ -26,7 +26,7 @@ export default function Domains() {
     removeConnection, 
     setHomepage,
     verifyDomain,
-    retryNetlifySetup
+    checkSSL
   } = useDomainManagement();
 
   const [newDomain, setNewDomain] = useState('');
@@ -212,9 +212,9 @@ export default function Domains() {
                   </TabsList>
                   
                   <TabsContent value="setup" className="space-y-4">
-                    <div className="space-y-3">
+                    <div className="space-y-4">
                       <div className="flex items-center justify-between">
-                        <h4 className="font-medium">DNS Configuration</h4>
+                        <h4 className="font-medium">Manual Domain Setup</h4>
                         <div className="flex gap-2">
                           <Button
                             variant="outline"
@@ -225,73 +225,139 @@ export default function Domains() {
                             <RefreshCw className="mr-2 h-3 w-3" />
                             Verify Domain
                           </Button>
-                          {!domain.is_verified && (
+                          {domain.ssl_status === 'provisioning' && (
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => retryNetlifySetup(domain.id)}
+                              onClick={() => checkSSL(domain.id)}
                               className="text-xs"
                             >
                               <RefreshCw className="mr-2 h-3 w-3" />
-                              Retry Netlify Setup
+                              Check SSL
                             </Button>
                           )}
                         </div>
                       </div>
-                      
-                      <p className="text-sm text-muted-foreground">
-                        Add this CNAME record in your DNS provider (Cloudflare, etc.):
-                      </p>
-                      
-                      <div className="bg-muted p-4 rounded-lg">
-                        <div className="space-y-2 font-mono text-sm">
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">Type:</span>
-                            <span>CNAME</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">Name:</span>
-                            <span>@ (or {domain.domain})</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">Target:</span>
-                            <span>ecombuildr.com</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">TTL:</span>
-                            <span>Auto (or 3600)</span>
+
+                      {/* Step-by-step instructions */}
+                      <div className="space-y-4">
+                        <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
+                          <h5 className="font-semibold text-blue-800 mb-2">Step 1: Add Domain to Netlify</h5>
+                          <p className="text-sm text-blue-700 mb-3">
+                            First, you need to manually add this domain to your Netlify site:
+                          </p>
+                          <ol className="list-decimal list-inside text-sm text-blue-700 space-y-1">
+                            <li>Go to your Netlify dashboard</li>
+                            <li>Select your site (ecombuildr)</li>
+                            <li>Go to Domain management → Add custom domain</li>
+                            <li>Enter: <code className="bg-blue-100 px-1 rounded">{domain.domain}</code></li>
+                            <li>Click "Add domain"</li>
+                          </ol>
+                          <div className="mt-3">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => window.open('https://app.netlify.com/sites/ecombuildr/settings/domain', '_blank')}
+                              className="text-xs"
+                            >
+                              <ExternalLink className="mr-2 h-3 w-3" />
+                              Open Netlify Domain Settings
+                            </Button>
                           </div>
                         </div>
-                      </div>
-                      
-                      <div className="grid grid-cols-2 gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => copyDNSInstructions(domain.domain)}
-                          className="text-xs"
-                        >
-                          <Copy className="mr-2 h-3 w-3" />
-                          Copy Instructions
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => window.open('https://dash.cloudflare.com', '_blank')}
-                          className="text-xs"
-                        >
-                          <ExternalLink className="mr-2 h-3 w-3" />
-                          Open Cloudflare
-                        </Button>
+
+                        <div className="bg-amber-50 border border-amber-200 p-4 rounded-lg">
+                          <h5 className="font-semibold text-amber-800 mb-2">Step 2: Configure DNS</h5>
+                          <p className="text-sm text-amber-700 mb-3">
+                            Add this CNAME record in your DNS provider:
+                          </p>
+                          
+                          <div className="bg-white border p-3 rounded-lg">
+                            <div className="space-y-2 font-mono text-xs">
+                              <div className="grid grid-cols-3 gap-4">
+                                <span className="text-muted-foreground font-normal">Type:</span>
+                                <span className="font-semibold">CNAME</span>
+                                <span></span>
+                              </div>
+                              <div className="grid grid-cols-3 gap-4">
+                                <span className="text-muted-foreground font-normal">Name:</span>
+                                <span className="font-semibold">@ (or {domain.domain.split('.')[0]})</span>
+                                <span></span>
+                              </div>
+                              <div className="grid grid-cols-3 gap-4">
+                                <span className="text-muted-foreground font-normal">Target:</span>
+                                <span className="font-semibold">ecombuildr.com</span>
+                                <span></span>
+                              </div>
+                              <div className="grid grid-cols-3 gap-4">
+                                <span className="text-muted-foreground font-normal">TTL:</span>
+                                <span className="font-semibold">Auto (or 3600)</span>
+                                <span></span>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="grid grid-cols-2 gap-2 mt-3">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => copyDNSInstructions(domain.domain)}
+                              className="text-xs"
+                            >
+                              <Copy className="mr-2 h-3 w-3" />
+                              Copy DNS Config
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => window.open('https://dash.cloudflare.com', '_blank')}
+                              className="text-xs"
+                            >
+                              <ExternalLink className="mr-2 h-3 w-3" />
+                              Open Cloudflare
+                            </Button>
+                          </div>
+                        </div>
+
+                        <div className="bg-green-50 border border-green-200 p-4 rounded-lg">
+                          <h5 className="font-semibold text-green-800 mb-2">Step 3: Wait & Verify</h5>
+                          <p className="text-sm text-green-700 mb-2">
+                            After completing steps 1 & 2:
+                          </p>
+                          <ul className="list-disc list-inside text-sm text-green-700 space-y-1">
+                            <li>DNS propagation: 5-30 minutes</li>
+                            <li>SSL certificate: 2-24 hours</li>
+                            <li>Click "Verify Domain" to check status</li>
+                          </ul>
+                        </div>
                       </div>
 
-                      {domain.ssl_status && (
-                        <div className="text-xs text-muted-foreground">
-                          SSL Status: {domain.ssl_status === 'issued' ? '✅ Active' : 
-                                     domain.ssl_status === 'provisioning' ? '⏳ Setting up...' : 
-                                     '❌ Pending'}
+                      {/* Status indicators */}
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between text-sm">
+                          <span>DNS Configuration:</span>
+                          <span className={domain.dns_configured ? 'text-green-600' : 'text-amber-600'}>
+                            {domain.dns_configured ? '✅ Configured' : '⏳ Pending'}
+                          </span>
                         </div>
-                      )}
+                        <div className="flex items-center justify-between text-sm">
+                          <span>SSL Certificate:</span>
+                          <span className={
+                            domain.ssl_status === 'issued' ? 'text-green-600' : 
+                            domain.ssl_status === 'provisioning' ? 'text-blue-600' : 'text-amber-600'
+                          }>
+                            {domain.ssl_status === 'issued' ? '✅ Active' : 
+                             domain.ssl_status === 'provisioning' ? '⏳ Provisioning' : 
+                             '❌ Pending'}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between text-sm">
+                          <span>Domain Status:</span>
+                          <span className={domain.is_verified ? 'text-green-600' : 'text-amber-600'}>
+                            {domain.is_verified ? '✅ Active' : '⏳ Setup Required'}
+                          </span>
+                        </div>
+                      </div>
                     </div>
                   </TabsContent>
                   

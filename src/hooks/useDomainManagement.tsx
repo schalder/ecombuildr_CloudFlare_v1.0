@@ -106,7 +106,7 @@ export const useDomainManagement = () => {
   const addDomain = async (domain: string) => {
     if (!store?.id) throw new Error('No store found');
 
-    // First add to database
+    // Add domain to database only - manual setup approach
     const { data, error } = await supabase
       .from('custom_domains')
       .insert({
@@ -119,49 +119,13 @@ export const useDomainManagement = () => {
 
     if (error) throw error;
 
-    try {
-      // Add domain to Netlify automatically
-      const { data: netlifyResult, error: netlifyError } = await supabase.functions.invoke(
-        'netlify-domain-manager',
-        {
-          body: {
-            action: 'add',
-            domain: domain.toLowerCase(),
-            storeId: store.id
-          }
-        }
-      );
+    // Provide user with manual setup instructions
+    toast({
+      title: "Domain added successfully",
+      description: `${domain} has been added. Please follow the DNS setup instructions to complete configuration.`,
+    });
 
-      if (netlifyError) {
-        console.error('Failed to add domain to Netlify:', netlifyError);
-        toast({
-          title: "Domain added with warning",
-          description: `${domain} has been added to database, but Netlify setup failed: ${netlifyError.message}. Please contact support.`,
-          variant: "destructive"
-        });
-      } else if (netlifyResult?.success) {
-        toast({
-          title: "Domain added successfully",
-          description: `${domain} has been added to Netlify. Please set your CNAME record to ecombuildr.com in your DNS settings.`,
-        });
-      } else {
-        toast({
-          title: "Domain partially added",
-          description: `${domain} has been added to database. Netlify setup may need manual configuration.`,
-          variant: "default"
-        });
-      }
-
-      await fetchDomains();
-
-    } catch (netlifyError) {
-      console.error('Netlify integration failed:', netlifyError);
-      toast({
-        title: "Domain added",
-        description: `${domain} has been added, but automatic Netlify setup failed. Please contact support.`,
-        variant: "destructive"
-      });
-    }
+    await fetchDomains();
     
     return data;
   };
@@ -169,40 +133,19 @@ export const useDomainManagement = () => {
   const removeDomain = async (domainId: string) => {
     if (!store?.id) throw new Error('No store found');
 
-    // Get domain info before deletion
-    const { data: domainData } = await supabase
-      .from('custom_domains')
-      .select('domain')
-      .eq('id', domainId)
-      .single();
-
+    // Remove domain from database
     const { error } = await supabase
       .from('custom_domains')
       .delete()
       .eq('id', domainId);
 
     if (error) throw error;
-
-    // Remove from Netlify
-    if (domainData?.domain) {
-      try {
-        await supabase.functions.invoke('netlify-domain-manager', {
-          body: {
-            action: 'remove',
-            domain: domainData.domain,
-            storeId: store.id
-          }
-        });
-      } catch (netlifyError) {
-        console.error('Failed to remove domain from Netlify:', netlifyError);
-      }
-    }
     
     await fetchDomains();
     
     toast({
       title: "Domain removed",
-      description: "The domain and all its connections have been removed.",
+      description: "The domain and all its connections have been removed. Remember to also remove it from your hosting provider if needed.",
     });
   };
 
@@ -310,10 +253,10 @@ export const useDomainManagement = () => {
 
       try {
         const { data: result, error } = await supabase.functions.invoke(
-          'netlify-domain-manager',
+          'dns-domain-manager',
           {
             body: {
-              action: 'status',
+              action: 'verify',
               domain: domain.domain,
               storeId: store.id
             }
@@ -329,16 +272,22 @@ export const useDomainManagement = () => {
             title: "Domain verified",
             description: `${domain.domain} is now active and ready to use.`,
           });
-        } else if (result?.status?.netlifyStatus === 'not_found') {
+        } else if (result?.status?.dnsConfigured && !result?.status?.isAccessible) {
           toast({
-            title: "Domain not found in Netlify",
-            description: "This domain needs to be added to Netlify. Click 'Retry Netlify Setup' to fix this.",
+            title: "DNS configured, SSL in progress",
+            description: "DNS is set up correctly. SSL certificate is being provisioned. Check again in a few minutes.",
+            variant: "default"
+          });
+        } else if (!result?.status?.dnsConfigured) {
+          toast({
+            title: "DNS setup required",
+            description: "Please configure your DNS settings following the instructions below.",
             variant: "default"
           });
         } else {
           toast({
             title: "Verification in progress",
-            description: "Domain verification is still in progress. Please check again in a few minutes.",
+            description: "Domain configuration is being processed. Please check again in a few minutes.",
             variant: "default"
           });
         }
@@ -354,7 +303,7 @@ export const useDomainManagement = () => {
         throw error;
       }
     },
-    retryNetlifySetup: async (domainId: string) => {
+    checkSSL: async (domainId: string) => {
       if (!store?.id) throw new Error('No store found');
 
       const domain = domains.find(d => d.id === domainId);
@@ -362,10 +311,10 @@ export const useDomainManagement = () => {
 
       try {
         const { data: result, error } = await supabase.functions.invoke(
-          'netlify-domain-manager',
+          'dns-domain-manager',
           {
             body: {
-              action: 'add',
+              action: 'check_ssl',
               domain: domain.domain,
               storeId: store.id
             }
@@ -376,25 +325,25 @@ export const useDomainManagement = () => {
 
         await fetchDomains();
 
-        if (result?.success) {
+        if (result?.isAccessible) {
           toast({
-            title: "Netlify setup completed",
-            description: `${domain.domain} has been successfully added to Netlify.`,
+            title: "SSL active",
+            description: `${domain.domain} is accessible with SSL certificate.`,
           });
         } else {
           toast({
-            title: "Setup failed",
-            description: "Failed to add domain to Netlify. Please contact support.",
-            variant: "destructive"
+            title: "SSL still provisioning",
+            description: "SSL certificate is still being set up. This can take up to 24 hours.",
+            variant: "default"
           });
         }
 
         return result;
       } catch (error) {
-        console.error('Netlify setup retry failed:', error);
+        console.error('SSL check failed:', error);
         toast({
-          title: "Setup failed",
-          description: "Unable to add domain to Netlify. Please try again or contact support.",
+          title: "SSL check failed",
+          description: "Unable to check SSL status. Please try again.",
           variant: "destructive"
         });
         throw error;
