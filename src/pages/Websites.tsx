@@ -16,10 +16,12 @@ interface Website {
   slug: string;
   description?: string;
   domain?: string;
+  canonical_domain?: string;
   is_active: boolean;
   is_published: boolean;
   created_at: string;
   updated_at: string;
+  connected_domain?: string;
 }
 
 export default function Websites() {
@@ -33,14 +35,40 @@ export default function Websites() {
     queryFn: async () => {
       if (!store?.id) return [];
       
-      const { data, error } = await supabase
+      // First get all websites
+      const { data: websitesData, error: websitesError } = await supabase
         .from('websites')
         .select('*')
         .eq('store_id', store.id)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      return data as Website[];
+      if (websitesError) throw websitesError;
+
+      // Then get domain connections with custom domains
+      const { data: connectionsData, error: connectionsError } = await supabase
+        .from('domain_connections')
+        .select(`
+          content_id,
+          custom_domains (domain)
+        `)
+        .eq('content_type', 'website')
+        .in('content_id', websitesData.map(w => w.id));
+
+      if (connectionsError) {
+        // If connections query fails, just return websites without connected domains
+        return websitesData as Website[];
+      }
+
+      // Map the connected domain data
+      const websitesWithDomains = websitesData.map(website => {
+        const connection = connectionsData?.find(c => c.content_id === website.id);
+        return {
+          ...website,
+          connected_domain: (connection?.custom_domains as any)?.domain || website.canonical_domain || null
+        };
+      });
+
+      return websitesWithDomains as Website[];
     },
     enabled: !!store?.id,
   });
@@ -79,8 +107,9 @@ export default function Websites() {
   };
 
   const handlePreviewWebsite = (website: Website) => {
-    const url = website.domain 
-      ? `https://${website.domain}` 
+    const connectedDomain = website.connected_domain || website.canonical_domain;
+    const url = connectedDomain
+      ? `https://${connectedDomain}` 
       : `/site/${website.slug}`;
     window.open(url, '_blank');
   };
@@ -150,7 +179,7 @@ export default function Websites() {
                   <div className="space-y-3">
                     <div className="flex items-center text-sm text-muted-foreground">
                       <Globe className="mr-2 h-4 w-4" />
-                      {website.domain || `site/${website.slug}`}
+                      {website.connected_domain || website.canonical_domain || `site/${website.slug}`}
                     </div>
                     
                     <div className="flex space-x-2">

@@ -153,12 +153,19 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
         shipping: shippingSettings,
       };
 
+      // Determine canonical domain for this website
+      let canonicalDomain = null;
+      if (domain && domain !== 'none') {
+        canonicalDomain = domain;
+      }
+
       // Update the website settings first
       const { error } = await supabase
         .from('websites')
         .update({
           ...basicFields,
           settings,
+          canonical_domain: canonicalDomain,
           updated_at: new Date().toISOString(),
         })
         .eq('id', website.id);
@@ -194,6 +201,7 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['website', website.id] });
+      queryClient.invalidateQueries({ queryKey: ['websites'] });
       toast({ 
         title: 'Settings saved',
         description: 'Website settings have been updated successfully.',
