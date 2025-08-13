@@ -100,12 +100,6 @@ export const WebsiteFooter: React.FC<{ website: WebsiteData; }> = ({ website }) 
             {cfg?.description && (
               <p className="text-sm opacity-80">{cfg.description}</p>
             )}
-            {cfg?.disclaimer_content && (
-              <div className="text-xs opacity-70 prose prose-sm max-w-none" 
-                dangerouslySetInnerHTML={{ __html: cfg.disclaimer_content }} 
-                style={{ color: cfg?.style?.text_color || undefined }}
-              />
-            )}
           </div>
           <div className={`grid gap-8 md:gap-12 w-full md:w-auto ${linkSections.length <= 2 ? 'grid-cols-1 sm:grid-cols-2' : linkSections.length === 3 ? 'grid-cols-1 sm:grid-cols-3' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4'}`}>
             {linkSections.map((section) => (
@@ -142,6 +136,12 @@ export const WebsiteFooter: React.FC<{ website: WebsiteData; }> = ({ website }) 
             ))}
           </div>
         </div>
+        {cfg?.disclaimer_content && (
+          <div className="mt-8 text-xs opacity-70 prose prose-sm max-w-none" 
+            dangerouslySetInnerHTML={{ __html: cfg.disclaimer_content }} 
+            style={{ color: cfg?.style?.text_color || undefined }}
+          />
+        )}
         <div className="border-t mt-8 pt-6 text-center text-sm opacity-80">
           {copyrightText}
         </div>
