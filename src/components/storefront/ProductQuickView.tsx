@@ -219,12 +219,14 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
 
             <Separator />
 
-            {/* Dynamic Variations */}
+            {/* Product Variations */}
             {options.length > 0 && (
-              <div className="space-y-4">
+              <div className="space-y-6">
                 {options.map((opt) => (
-                  <div key={opt.name}>
-                    <h3 className="font-semibold mb-3">{opt.name}</h3>
+                  <div key={opt.name} className="space-y-3">
+                    <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">
+                      {opt.name}
+                    </h3>
                     <div className="flex gap-2 flex-wrap">
                       {opt.values.map((val) => {
                         const selected = selectedOptions[opt.name] === val;
@@ -232,9 +234,14 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
                           <Button
                             key={val}
                             variant={selected ? "default" : "outline"}
-                            size="sm"
+                            size="default"
                             onClick={() => setSelectedOptions(prev => ({ ...prev, [opt.name]: val }))}
-                            className="min-w-[40px]"
+                            className={cn(
+                              "h-12 px-4 min-w-[60px] font-medium transition-all duration-200",
+                              selected 
+                                ? "bg-primary text-primary-foreground shadow-sm" 
+                                : "border-2 hover:border-primary/50 hover:bg-primary/5"
+                            )}
                           >
                             {val}
                           </Button>
@@ -243,7 +250,7 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
                     </div>
                   </div>
                 ))}
-                <Separator />
+                <Separator className="my-6" />
               </div>
             )}
 
