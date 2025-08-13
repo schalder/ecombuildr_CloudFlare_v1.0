@@ -154,14 +154,14 @@ Deno.serve(async (req) => {
 
         console.log('Domain record created/updated:', domainRecord)
 
-        // Add domain as alias to Netlify site
+        // Add domain as alias to Netlify site using PATCH method
         const updateSiteResponse = await fetch(
-          `https://api.netlify.com/api/v1/sites/${netlifySiteId}/domains`,
+          `https://api.netlify.com/api/v1/sites/${netlifySiteId}`,
           {
-            method: 'POST',
+            method: 'PATCH',
             headers: netlifyHeaders,
             body: JSON.stringify({ 
-              name: domain
+              custom_domain: domain
             }),
           }
         )
