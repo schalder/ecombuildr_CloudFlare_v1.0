@@ -50,7 +50,7 @@ export function useSearch() {
           title: product.name,
           subtitle: `SKU: ${product.sku || 'N/A'} • $${product.price}`,
           type: 'product' as const,
-          url: `/dashboard/products/edit/${product.id}`,
+          url: `/dashboard/products/${product.id}`,
         })));
       }
 
