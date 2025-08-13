@@ -1464,6 +1464,57 @@ export type Database = {
         }
         Relationships: []
       }
+      website_analytics: {
+        Row: {
+          avg_session_duration: number | null
+          bounce_rate: number | null
+          browser: string | null
+          country: string | null
+          created_at: string
+          date: string
+          device_type: string | null
+          id: string
+          page_id: string | null
+          page_views: number
+          referrer_source: string | null
+          unique_visitors: number
+          updated_at: string
+          website_id: string
+        }
+        Insert: {
+          avg_session_duration?: number | null
+          bounce_rate?: number | null
+          browser?: string | null
+          country?: string | null
+          created_at?: string
+          date?: string
+          device_type?: string | null
+          id?: string
+          page_id?: string | null
+          page_views?: number
+          referrer_source?: string | null
+          unique_visitors?: number
+          updated_at?: string
+          website_id: string
+        }
+        Update: {
+          avg_session_duration?: number | null
+          bounce_rate?: number | null
+          browser?: string | null
+          country?: string | null
+          created_at?: string
+          date?: string
+          device_type?: string | null
+          id?: string
+          page_id?: string | null
+          page_views?: number
+          referrer_source?: string | null
+          unique_visitors?: number
+          updated_at?: string
+          website_id?: string
+        }
+        Relationships: []
+      }
       website_pages: {
         Row: {
           content: Json

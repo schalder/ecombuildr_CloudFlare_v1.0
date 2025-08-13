@@ -2,6 +2,17 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
+interface WebsiteAnalytics {
+  totalPageViews: number;
+  totalUniqueVisitors: number;
+  averageBounceRate: number;
+  averageSessionDuration: number;
+  topPages: Array<{ page_id: string | null; page_views: number; unique_visitors: number; }>;
+  trafficSources: Array<{ source: string; visitors: number; }>;
+  deviceBreakdown: Array<{ device: string; visitors: number; }>;
+  conversionRate: number;
+}
+
 interface WebsiteStats {
   // Basic website metrics
   totalPages: number;
@@ -13,12 +24,15 @@ interface WebsiteStats {
   totalOrders: number;
   totalRevenue: number;
   
+  // Advanced analytics
+  analytics: WebsiteAnalytics;
+  
   // Website status
   isActive: boolean;
   isPublished: boolean;
   createdAt: string;
   updatedAt: string;
-  connectedDomain?: string;
+  websiteUrl: string;
 }
 
 interface WebsiteStatsHookReturn {
@@ -81,6 +95,13 @@ export function useWebsiteStats(websiteId: string): WebsiteStatsHookReturn {
 
       if (ordersError && ordersError.code !== 'PGRST116') throw ordersError;
 
+      // Get store info for domain construction
+      const { data: store } = await supabase
+        .from('stores')
+        .select('slug')
+        .eq('id', website.store_id)
+        .single();
+
       // Get connected domain info
       const { data: domainConnection } = await supabase
         .from('domain_connections')
@@ -91,15 +112,75 @@ export function useWebsiteStats(websiteId: string): WebsiteStatsHookReturn {
         .eq('content_id', websiteId)
         .maybeSingle();
 
-      const connectedDomain = (domainConnection?.custom_domains as any)?.domain || website.canonical_domain;
+      // Build proper website URL
+      const customDomain = (domainConnection?.custom_domains as any)?.domain;
+      const websiteUrl = customDomain 
+        ? `https://${customDomain}` 
+        : `https://${website.slug}.${store?.slug}.lovable.app`;
 
-      // Calculate stats
+      // Get website analytics data
+      const { data: analyticsData } = await supabase
+        .from('website_analytics')
+        .select('*')
+        .eq('website_id', websiteId)
+        .gte('date', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]); // Last 30 days
+
+      // Process analytics data
+      const totalPageViews = analyticsData?.reduce((sum, row) => sum + (row.page_views || 0), 0) || 0;
+      const totalUniqueVisitors = analyticsData?.reduce((sum, row) => sum + (row.unique_visitors || 0), 0) || 0;
+      const averageBounceRate = analyticsData?.length > 0 
+        ? analyticsData.reduce((sum, row) => sum + (row.bounce_rate || 0), 0) / analyticsData.length 
+        : 0;
+      const averageSessionDuration = analyticsData?.length > 0 
+        ? analyticsData.reduce((sum, row) => sum + (row.avg_session_duration || 0), 0) / analyticsData.length 
+        : 0;
+      
+      // Top pages
+      const pageStats = analyticsData?.reduce((acc, row) => {
+        const key = row.page_id || 'homepage';
+        if (!acc[key]) {
+          acc[key] = { page_id: row.page_id, page_views: 0, unique_visitors: 0 };
+        }
+        acc[key].page_views += row.page_views || 0;
+        acc[key].unique_visitors += row.unique_visitors || 0;
+        return acc;
+      }, {} as Record<string, any>) || {};
+      
+      const topPages = Object.values(pageStats)
+        .sort((a: any, b: any) => b.page_views - a.page_views)
+        .slice(0, 5);
+
+      // Traffic sources
+      const sourceStats = analyticsData?.reduce((acc, row) => {
+        const source = row.referrer_source || 'direct';
+        acc[source] = (acc[source] || 0) + (row.unique_visitors || 0);
+        return acc;
+      }, {} as Record<string, number>) || {};
+      
+      const trafficSources = Object.entries(sourceStats)
+        .map(([source, visitors]) => ({ source, visitors }))
+        .sort((a, b) => b.visitors - a.visitors);
+
+      // Device breakdown
+      const deviceStats = analyticsData?.reduce((acc, row) => {
+        const device = row.device_type || 'desktop';
+        acc[device] = (acc[device] || 0) + (row.unique_visitors || 0);
+        return acc;
+      }, {} as Record<string, number>) || {};
+      
+      const deviceBreakdown = Object.entries(deviceStats)
+        .map(([device, visitors]) => ({ device, visitors }));
+
+      // Calculate basic stats first
       const totalPages = pages?.length || 0;
       const publishedPages = pages?.filter(p => p.is_published).length || 0;
       const totalFormSubmissions = formSubmissions?.length || 0;
       const totalNewsletterSignups = newsletters?.length || 0;
       const totalOrders = orders?.length || 0;
       const totalRevenue = orders?.reduce((sum, order) => sum + (order.total || 0), 0) || 0;
+
+      // Conversion rate (orders / unique visitors * 100)
+      const conversionRate = totalUniqueVisitors > 0 ? (totalOrders / totalUniqueVisitors) * 100 : 0;
 
       setStats({
         totalPages,
@@ -108,11 +189,21 @@ export function useWebsiteStats(websiteId: string): WebsiteStatsHookReturn {
         totalNewsletterSignups,
         totalOrders,
         totalRevenue,
+        analytics: {
+          totalPageViews,
+          totalUniqueVisitors,
+          averageBounceRate: Math.round(averageBounceRate * 100) / 100,
+          averageSessionDuration: Math.round(averageSessionDuration),
+          topPages,
+          trafficSources,
+          deviceBreakdown,
+          conversionRate: Math.round(conversionRate * 100) / 100,
+        },
         isActive: website.is_active,
         isPublished: website.is_published,
         createdAt: website.created_at,
         updatedAt: website.updated_at,
-        connectedDomain,
+        websiteUrl,
       });
 
     } catch (err: any) {
