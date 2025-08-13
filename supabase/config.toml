@@ -36,3 +36,6 @@ verify_jwt = true
 
 [functions.top-sellers]
 verify_jwt = false
+
+[functions.steadfast-webhook]
+verify_jwt = false

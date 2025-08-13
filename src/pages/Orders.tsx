@@ -225,7 +225,7 @@ export default function Orders() {
           o.id === order.id 
             ? { 
                 ...o, 
-                status: 'processing', 
+                status: 'shipped', 
                 courier_name: 'steadfast', 
                 tracking_number: consignment?.tracking_code || consignment?.consignment_id || null 
               }

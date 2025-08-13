@@ -17,18 +17,20 @@ type Account = {
   api_key: string;
   secret_key: string;
   is_active: boolean;
+  settings?: { webhook_token?: string };
 };
 
 export default function ShippingIntegrations({ storeId }: Props) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [account, setAccount] = useState<Account>({
-    api_key: "",
-    secret_key: "",
-    is_active: false,
-  });
+const [account, setAccount] = useState<Account>({
+  api_key: "",
+  secret_key: "",
+  is_active: false,
+  settings: { webhook_token: "" },
+});
   const [recordId, setRecordId] = useState<string | undefined>(undefined);
-
+  const webhookUrl = "https://fhqwacmokbtbspkxjixf.functions.supabase.co/steadfast-webhook";
   useEffect(() => {
     let mounted = true;
     async function fetchAccount() {
@@ -36,7 +38,7 @@ export default function ShippingIntegrations({ storeId }: Props) {
       console.log("[ShippingIntegrations] Fetching steadfast account for store:", storeId);
       const { data, error } = await supabase
         .from("store_shipping_accounts")
-        .select("id, api_key, secret_key, is_active")
+        .select("id, api_key, secret_key, is_active, settings")
         .eq("store_id", storeId)
         .eq("provider", "steadfast")
         .maybeSingle();
@@ -52,6 +54,7 @@ export default function ShippingIntegrations({ storeId }: Props) {
           api_key: data.api_key || "",
           secret_key: data.secret_key || "",
           is_active: !!data.is_active,
+          settings: (data as any).settings || { webhook_token: "" },
         });
       }
       setLoading(false);
@@ -82,6 +85,10 @@ export default function ShippingIntegrations({ storeId }: Props) {
           api_key: account.api_key,
           secret_key: account.secret_key,
           is_active: account.is_active,
+          settings: {
+            ...(account.settings || {}),
+            webhook_token: account.settings?.webhook_token || null,
+          },
         })
         .eq("id", recordId);
       if (error) {
@@ -102,7 +109,7 @@ export default function ShippingIntegrations({ storeId }: Props) {
           provider: "steadfast",
           api_key: account.api_key,
           secret_key: account.secret_key,
-          settings: {},
+          settings: { webhook_token: account.settings?.webhook_token || null },
           is_active: account.is_active,
         })
         .select("id")
@@ -166,6 +173,28 @@ export default function ShippingIntegrations({ storeId }: Props) {
                 placeholder="Enter Steadfast Secret Key"
                 disabled={loading || saving}
               />
+            </div>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="steadfast_webhook_token">Webhook Token</Label>
+              <Input
+                id="steadfast_webhook_token"
+                value={account.settings?.webhook_token || ""}
+                onChange={(e) => setAccount((a) => ({ ...a, settings: { ...(a.settings || {}), webhook_token: e.target.value } }))}
+                placeholder="Enter a secret token to verify webhooks"
+                disabled={loading || saving}
+              />
+              <p className="text-xs text-muted-foreground">Use this as the Bearer token in Steadfast webhook settings.</p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="steadfast_webhook_url">Callback URL</Label>
+              <div className="flex gap-2">
+                <Input id="steadfast_webhook_url" readOnly value={webhookUrl} />
+                <Button type="button" variant="outline" onClick={() => navigator.clipboard.writeText(webhookUrl)}>Copy</Button>
+              </div>
+              <p className="text-xs text-muted-foreground">Set this URL in Steadfast dashboard.</p>
             </div>
           </div>
 

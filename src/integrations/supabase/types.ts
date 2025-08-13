@@ -185,6 +185,54 @@ export type Database = {
           },
         ]
       }
+      courier_shipment_events: {
+        Row: {
+          consignment_id: string | null
+          created_at: string
+          event_type: string | null
+          id: string
+          invoice: string | null
+          message: string | null
+          occurred_at: string
+          order_id: string
+          payload: Json | null
+          provider: string
+          shipment_id: string | null
+          status: string | null
+          store_id: string
+        }
+        Insert: {
+          consignment_id?: string | null
+          created_at?: string
+          event_type?: string | null
+          id?: string
+          invoice?: string | null
+          message?: string | null
+          occurred_at?: string
+          order_id: string
+          payload?: Json | null
+          provider?: string
+          shipment_id?: string | null
+          status?: string | null
+          store_id: string
+        }
+        Update: {
+          consignment_id?: string | null
+          created_at?: string
+          event_type?: string | null
+          id?: string
+          invoice?: string | null
+          message?: string | null
+          occurred_at?: string
+          order_id?: string
+          payload?: Json | null
+          provider?: string
+          shipment_id?: string | null
+          status?: string | null
+          store_id?: string
+        }
+        Relationships: []
+      }
       courier_shipments: {
         Row: {
           consignment_id: string | null

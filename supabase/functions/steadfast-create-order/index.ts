@@ -214,7 +214,7 @@ Deno.serve(async (req: Request) => {
         .update({
           courier_name: 'steadfast',
           tracking_number: tracking,
-          status: 'processing',
+          status: 'shipped',
         })
         .eq('id', order_id)
         .eq('store_id', store_id);
