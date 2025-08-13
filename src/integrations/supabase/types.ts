@@ -289,6 +289,45 @@ export type Database = {
           },
         ]
       }
+      custom_domains: {
+        Row: {
+          created_at: string
+          dns_configured: boolean
+          domain: string
+          id: string
+          is_verified: boolean
+          last_checked_at: string | null
+          ssl_status: string | null
+          store_id: string
+          updated_at: string
+          verification_token: string | null
+        }
+        Insert: {
+          created_at?: string
+          dns_configured?: boolean
+          domain: string
+          id?: string
+          is_verified?: boolean
+          last_checked_at?: string | null
+          ssl_status?: string | null
+          store_id: string
+          updated_at?: string
+          verification_token?: string | null
+        }
+        Update: {
+          created_at?: string
+          dns_configured?: boolean
+          domain?: string
+          id?: string
+          is_verified?: boolean
+          last_checked_at?: string | null
+          ssl_status?: string | null
+          store_id?: string
+          updated_at?: string
+          verification_token?: string | null
+        }
+        Relationships: []
+      }
       customer_addresses: {
         Row: {
           address_line_1: string
@@ -440,6 +479,50 @@ export type Database = {
           value?: number
         }
         Relationships: []
+      }
+      domain_connections: {
+        Row: {
+          content_id: string
+          content_type: string
+          created_at: string
+          domain_id: string
+          id: string
+          is_homepage: boolean
+          path: string
+          store_id: string
+          updated_at: string
+        }
+        Insert: {
+          content_id: string
+          content_type: string
+          created_at?: string
+          domain_id: string
+          id?: string
+          is_homepage?: boolean
+          path?: string
+          store_id: string
+          updated_at?: string
+        }
+        Update: {
+          content_id?: string
+          content_type?: string
+          created_at?: string
+          domain_id?: string
+          id?: string
+          is_homepage?: boolean
+          path?: string
+          store_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "domain_connections_domain_id_fkey"
+            columns: ["domain_id"]
+            isOneToOne: false
+            referencedRelation: "custom_domains"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       form_submissions: {
         Row: {

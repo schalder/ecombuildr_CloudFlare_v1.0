@@ -14,7 +14,8 @@ import {
   Search,
   ChevronDown,
   ChevronRight,
-  Palette
+  Palette,
+  Globe
 } from "lucide-react";
 
 import {
@@ -88,6 +89,11 @@ const navigationItems = [
     title: "Analytics",
     url: "/dashboard/analytics",
     icon: BarChart3,
+  },
+  {
+    title: "Domains",
+    url: "/dashboard/domains",
+    icon: Globe,
   },
   {
     title: "Marketing",

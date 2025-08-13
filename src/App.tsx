@@ -3,6 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { DomainRouter } from "@/components/domain/DomainRouter";
 import { AuthProvider } from "@/hooks/useAuth";
 import { CartProvider } from "@/contexts/CartContext";
 import { StoreProvider } from "@/contexts/StoreContext";
@@ -34,6 +35,7 @@ import Discounts from "./pages/Discounts";
 import StoreSettings from "./pages/StoreSettings";
 import ProfileSettings from "./pages/ProfileSettings";
 import BillingSettings from "./pages/BillingSettings";
+import Domains from "./pages/Domains";
 import NotFound from "./pages/NotFound";
 import StoreManagement from "./pages/StoreManagement";
 import StoreList from "./pages/StoreList";
@@ -66,7 +68,8 @@ const App = () => (
             <Toaster />
             <Sonner />
             <BrowserRouter>
-              <Routes>
+              <DomainRouter>
+                <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/auth" element={<Auth />} />
                 
@@ -101,6 +104,7 @@ const App = () => (
                 <Route path="/dashboard/settings/store" element={<StoreSettings />} />
                 <Route path="/dashboard/settings/profile" element={<ProfileSettings />} />
                 <Route path="/dashboard/settings/billing" element={<BillingSettings />} />
+                <Route path="/dashboard/domains" element={<Domains />} />
                 
                 {/* Store Management Routes */}
                 <Route path="/dashboard/stores" element={<StoreList />} />
@@ -207,7 +211,8 @@ const App = () => (
 
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
-              </Routes>
+                </Routes>
+              </DomainRouter>
             </BrowserRouter>
           </TooltipProvider>
         </CartProvider>
