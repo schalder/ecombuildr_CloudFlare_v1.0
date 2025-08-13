@@ -97,27 +97,59 @@ Deno.serve(async (req) => {
         const siteInfo = await siteCheckResponse.json()
         console.log(`Site verified: ${siteInfo.name} (${siteInfo.url})`)
 
-        // Create or update domain in database first
-        const { data: domainRecord, error: domainError } = await supabase
+        // Check if domain already exists for this store
+        const { data: existingDomain } = await supabase
           .from('custom_domains')
-          .upsert({
-            domain,
-            store_id: storeId,
-            verification_token: crypto.randomUUID(),
-            ssl_status: 'provisioning',
-            dns_configured: false,
-            is_verified: false,
-            last_checked_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          }, {
-            onConflict: 'domain,store_id'
-          })
-          .select()
-          .single()
+          .select('id, domain, store_id')
+          .eq('domain', domain)
+          .eq('store_id', storeId)
+          .maybeSingle()
 
-        if (domainError) {
-          console.error('Failed to create domain record:', domainError)
-          throw new Error(`Failed to create domain record: ${domainError.message}`)
+        let domainRecord: any
+
+        if (existingDomain) {
+          // Update existing domain record
+          const { data, error: updateError } = await supabase
+            .from('custom_domains')
+            .update({
+              verification_token: crypto.randomUUID(),
+              ssl_status: 'provisioning',
+              dns_configured: false,
+              is_verified: false,
+              last_checked_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', existingDomain.id)
+            .select()
+            .single()
+
+          if (updateError) {
+            console.error('Failed to update domain record:', updateError)
+            throw new Error(`Failed to update domain record: ${updateError.message}`)
+          }
+          domainRecord = data
+        } else {
+          // Create new domain record
+          const { data, error: insertError } = await supabase
+            .from('custom_domains')
+            .insert({
+              domain,
+              store_id: storeId,
+              verification_token: crypto.randomUUID(),
+              ssl_status: 'provisioning',
+              dns_configured: false,
+              is_verified: false,
+              last_checked_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            })
+            .select()
+            .single()
+
+          if (insertError) {
+            console.error('Failed to create domain record:', insertError)
+            throw new Error(`Failed to create domain record: ${insertError.message}`)
+          }
+          domainRecord = data
         }
 
         console.log('Domain record created/updated:', domainRecord)
