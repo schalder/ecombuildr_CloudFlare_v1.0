@@ -154,45 +154,71 @@ Deno.serve(async (req) => {
 
         console.log('Domain record created/updated:', domainRecord)
 
-        // Add domain as alias to Netlify site using PATCH method
-        const updateSiteResponse = await fetch(
+        // Get current site configuration to retrieve existing domain aliases
+        const getCurrentSiteResponse = await fetch(
           `https://api.netlify.com/api/v1/sites/${netlifySiteId}`,
           {
-            method: 'PATCH',
-            headers: netlifyHeaders,
-            body: JSON.stringify({ 
-              custom_domain: domain
-            }),
+            method: 'GET',
+            headers: { 'Authorization': `Bearer ${netlifyToken}` },
           }
         )
 
-        const responseText = await updateSiteResponse.text()
-        console.log(`Netlify update site response status: ${updateSiteResponse.status}`)
-        console.log(`Netlify update site response: ${responseText}`)
-
-        if (!updateSiteResponse.ok) {
-          console.error('Netlify update site error:', responseText)
-          // Update database with error status
-          await supabase
-            .from('custom_domains')
-            .update({
-              ssl_status: 'error',
-              last_checked_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            })
-            .eq('domain', domain)
-            .eq('store_id', storeId)
-            
-          throw new Error(`Failed to add custom domain to Netlify (${updateSiteResponse.status}): ${responseText}`)
+        if (!getCurrentSiteResponse.ok) {
+          const error = await getCurrentSiteResponse.text()
+          console.error(`Failed to get current site config (${getCurrentSiteResponse.status}):`, error)
+          throw new Error(`Failed to get current site configuration: ${error}`)
         }
 
-        let siteData = {}
-        try {
-          siteData = JSON.parse(responseText)
-        } catch (e) {
-          console.error('Failed to parse Netlify response as JSON:', e)
+        const currentSiteData = await getCurrentSiteResponse.json()
+        const existingAliases = currentSiteData.domain_aliases || []
+        
+        // Check if domain is already in aliases
+        if (existingAliases.includes(domain)) {
+          console.log(`Domain ${domain} already exists as alias`)
+        } else {
+          // Add domain as alias to Netlify site
+          const updatedAliases = [...existingAliases, domain]
+          console.log(`Adding domain ${domain} to aliases. Current aliases:`, existingAliases)
+          
+          const updateSiteResponse = await fetch(
+            `https://api.netlify.com/api/v1/sites/${netlifySiteId}`,
+            {
+              method: 'PATCH',
+              headers: netlifyHeaders,
+              body: JSON.stringify({ 
+                domain_aliases: updatedAliases
+              }),
+            }
+          )
+
+          const responseText = await updateSiteResponse.text()
+          console.log(`Netlify update site response status: ${updateSiteResponse.status}`)
+          console.log(`Netlify update site response: ${responseText}`)
+
+          if (!updateSiteResponse.ok) {
+            console.error('Netlify update site error:', responseText)
+            // Update database with error status
+            await supabase
+              .from('custom_domains')
+              .update({
+                ssl_status: 'error',
+                last_checked_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+              })
+              .eq('domain', domain)
+              .eq('store_id', storeId)
+              
+            throw new Error(`Failed to add custom domain to Netlify (${updateSiteResponse.status}): ${responseText}`)
+          }
+
+          let siteData = {}
+          try {
+            siteData = JSON.parse(responseText)
+          } catch (e) {
+            console.error('Failed to parse Netlify response as JSON:', e)
+          }
+          console.log('Site updated with domain alias:', siteData)
         }
-        console.log('Site updated with custom domain:', siteData)
 
         // Update database with success status
         const { error: updateError } = await supabase
@@ -211,24 +237,55 @@ Deno.serve(async (req) => {
           console.error('Failed to update domain status:', updateError)
         }
 
-        result = { success: true, netlifyData: siteData, domain: domainRecord }
+        result = { success: true, netlifyData: currentSiteData, domain: domainRecord }
         break
 
       case 'remove':
-        console.log(`Removing domain ${domain} from Netlify`)
+        console.log(`Removing domain ${domain} from Netlify aliases`)
         
-        const removeResponse = await fetch(
-          `https://api.netlify.com/api/v1/sites/${netlifySiteId}/domains/${domain}`,
+        // Get current site configuration to retrieve existing domain aliases
+        const getCurrentSiteForRemoveResponse = await fetch(
+          `https://api.netlify.com/api/v1/sites/${netlifySiteId}`,
           {
-            method: 'DELETE',
-            headers: netlifyHeaders,
+            method: 'GET',
+            headers: { 'Authorization': `Bearer ${netlifyToken}` },
           }
         )
 
-        if (!removeResponse.ok && removeResponse.status !== 404) {
-          const error = await removeResponse.text()
-          console.error('Netlify remove domain error:', error)
-          // Don't throw error for 404 - domain might already be removed
+        if (!getCurrentSiteForRemoveResponse.ok) {
+          const error = await getCurrentSiteForRemoveResponse.text()
+          console.error(`Failed to get current site config for removal (${getCurrentSiteForRemoveResponse.status}):`, error)
+          // Don't throw error - continue with database cleanup
+        } else {
+          const currentSiteDataForRemove = await getCurrentSiteForRemoveResponse.json()
+          const existingAliasesForRemove = currentSiteDataForRemove.domain_aliases || []
+          
+          // Check if domain exists in aliases and remove it
+          if (existingAliasesForRemove.includes(domain)) {
+            const updatedAliasesForRemove = existingAliasesForRemove.filter((alias: string) => alias !== domain)
+            console.log(`Removing domain ${domain} from aliases. Updated aliases:`, updatedAliasesForRemove)
+            
+            const removeSiteResponse = await fetch(
+              `https://api.netlify.com/api/v1/sites/${netlifySiteId}`,
+              {
+                method: 'PATCH',
+                headers: netlifyHeaders,
+                body: JSON.stringify({ 
+                  domain_aliases: updatedAliasesForRemove
+                }),
+              }
+            )
+
+            if (!removeSiteResponse.ok) {
+              const error = await removeSiteResponse.text()
+              console.error('Netlify remove domain alias error:', error)
+              // Don't throw error - domain might already be removed
+            } else {
+              console.log('Domain successfully removed from Netlify aliases')
+            }
+          } else {
+            console.log(`Domain ${domain} not found in aliases, might already be removed`)
+          }
         }
 
         result = { success: true }
