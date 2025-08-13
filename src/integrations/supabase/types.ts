@@ -293,6 +293,7 @@ export type Database = {
         Row: {
           created_at: string
           dns_configured: boolean
+          dns_verified_at: string | null
           domain: string
           id: string
           is_verified: boolean
@@ -300,11 +301,13 @@ export type Database = {
           ssl_status: string | null
           store_id: string
           updated_at: string
+          verification_attempts: number
           verification_token: string | null
         }
         Insert: {
           created_at?: string
           dns_configured?: boolean
+          dns_verified_at?: string | null
           domain: string
           id?: string
           is_verified?: boolean
@@ -312,11 +315,13 @@ export type Database = {
           ssl_status?: string | null
           store_id: string
           updated_at?: string
+          verification_attempts?: number
           verification_token?: string | null
         }
         Update: {
           created_at?: string
           dns_configured?: boolean
+          dns_verified_at?: string | null
           domain?: string
           id?: string
           is_verified?: boolean
@@ -324,6 +329,7 @@ export type Database = {
           ssl_status?: string | null
           store_id?: string
           updated_at?: string
+          verification_attempts?: number
           verification_token?: string | null
         }
         Relationships: []
@@ -731,6 +737,42 @@ export type Database = {
           store_id?: string
           subscribed_at?: string
           unsubscribed_at?: string | null
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          created_at: string
+          id: string
+          is_read: boolean
+          message: string
+          metadata: Json | null
+          store_id: string
+          title: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message: string
+          metadata?: Json | null
+          store_id: string
+          title: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message?: string
+          metadata?: Json | null
+          store_id?: string
+          title?: string
+          type?: string
+          updated_at?: string
         }
         Relationships: []
       }
