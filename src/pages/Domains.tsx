@@ -25,7 +25,8 @@ export default function Domains() {
     connectContent, 
     removeConnection, 
     setHomepage,
-    verifyDomain
+    verifyDomain,
+    retryNetlifySetup
   } = useDomainManagement();
 
   const [newDomain, setNewDomain] = useState('');
@@ -214,15 +215,28 @@ export default function Domains() {
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
                         <h4 className="font-medium">DNS Configuration</h4>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => verifyDomain(domain.id)}
-                          className="text-xs"
-                        >
-                          <RefreshCw className="mr-2 h-3 w-3" />
-                          Verify Domain
-                        </Button>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => verifyDomain(domain.id)}
+                            className="text-xs"
+                          >
+                            <RefreshCw className="mr-2 h-3 w-3" />
+                            Verify Domain
+                          </Button>
+                          {!domain.is_verified && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => retryNetlifySetup(domain.id)}
+                              className="text-xs"
+                            >
+                              <RefreshCw className="mr-2 h-3 w-3" />
+                              Retry Netlify Setup
+                            </Button>
+                          )}
+                        </div>
                       </div>
                       
                       <p className="text-sm text-muted-foreground">

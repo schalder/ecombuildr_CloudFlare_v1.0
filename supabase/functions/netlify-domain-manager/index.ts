@@ -67,7 +67,7 @@ Deno.serve(async (req) => {
 
     switch (action) {
       case 'add':
-        console.log(`Adding domain ${domain} to Netlify`)
+        console.log(`Adding domain ${domain} to Netlify with site ID: ${netlifySiteId}`)
         
         // Add domain to Netlify
         const addResponse = await fetch(
@@ -79,14 +79,25 @@ Deno.serve(async (req) => {
           }
         )
 
+        const responseText = await addResponse.text()
+        console.log(`Netlify add domain response status: ${addResponse.status}`)
+        console.log(`Netlify add domain response: ${responseText}`)
+
         if (!addResponse.ok) {
-          const error = await addResponse.text()
-          console.error('Netlify add domain error:', error)
-          throw new Error(`Failed to add domain to Netlify: ${error}`)
+          console.error('Netlify add domain error:', responseText)
+          // Don't throw error if domain already exists (409 conflict)
+          if (addResponse.status !== 409) {
+            throw new Error(`Failed to add domain to Netlify (${addResponse.status}): ${responseText}`)
+          }
         }
 
-        const domainData = await addResponse.json()
-        console.log('Domain added to Netlify:', domainData)
+        let domainData = {}
+        try {
+          domainData = JSON.parse(responseText)
+        } catch (e) {
+          console.error('Failed to parse Netlify response as JSON:', e)
+        }
+        console.log('Domain processed in Netlify:', domainData)
 
         // Update database with Netlify status
         const { error: updateError } = await supabase
@@ -141,12 +152,17 @@ Deno.serve(async (req) => {
         let netlifyStatus = 'not_found'
         let sslStatus = 'pending'
 
+        console.log(`Domain status check response: ${statusResponse.status}`)
+        
         if (statusResponse.ok) {
           const domainStatus = await statusResponse.json()
           netlifyStatus = 'registered'
           sslStatus = domainStatus.ssl?.state || 'pending'
           
           console.log('Domain status from Netlify:', domainStatus)
+        } else {
+          const errorText = await statusResponse.text()
+          console.log(`Domain not found in Netlify (${statusResponse.status}): ${errorText}`)
         }
 
         // Check DNS configuration

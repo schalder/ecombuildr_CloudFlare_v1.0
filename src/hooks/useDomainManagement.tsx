@@ -134,14 +134,25 @@ export const useDomainManagement = () => {
 
       if (netlifyError) {
         console.error('Failed to add domain to Netlify:', netlifyError);
+        toast({
+          title: "Domain added with warning",
+          description: `${domain} has been added to database, but Netlify setup failed: ${netlifyError.message}. Please contact support.`,
+          variant: "destructive"
+        });
+      } else if (netlifyResult?.success) {
+        toast({
+          title: "Domain added successfully",
+          description: `${domain} has been added to Netlify. Please set your CNAME record to ecombuildr.com in your DNS settings.`,
+        });
+      } else {
+        toast({
+          title: "Domain partially added",
+          description: `${domain} has been added to database. Netlify setup may need manual configuration.`,
+          variant: "default"
+        });
       }
 
       await fetchDomains();
-      
-      toast({
-        title: "Domain added successfully",
-        description: `${domain} has been added to Netlify. Please set your CNAME record to ecombuildr.com in your DNS settings.`,
-      });
 
     } catch (netlifyError) {
       console.error('Netlify integration failed:', netlifyError);
@@ -318,6 +329,12 @@ export const useDomainManagement = () => {
             title: "Domain verified",
             description: `${domain.domain} is now active and ready to use.`,
           });
+        } else if (result?.status?.netlifyStatus === 'not_found') {
+          toast({
+            title: "Domain not found in Netlify",
+            description: "This domain needs to be added to Netlify. Click 'Retry Netlify Setup' to fix this.",
+            variant: "default"
+          });
         } else {
           toast({
             title: "Verification in progress",
@@ -332,6 +349,52 @@ export const useDomainManagement = () => {
         toast({
           title: "Verification failed",
           description: "Unable to verify domain status. Please try again.",
+          variant: "destructive"
+        });
+        throw error;
+      }
+    },
+    retryNetlifySetup: async (domainId: string) => {
+      if (!store?.id) throw new Error('No store found');
+
+      const domain = domains.find(d => d.id === domainId);
+      if (!domain) throw new Error('Domain not found');
+
+      try {
+        const { data: result, error } = await supabase.functions.invoke(
+          'netlify-domain-manager',
+          {
+            body: {
+              action: 'add',
+              domain: domain.domain,
+              storeId: store.id
+            }
+          }
+        );
+
+        if (error) throw error;
+
+        await fetchDomains();
+
+        if (result?.success) {
+          toast({
+            title: "Netlify setup completed",
+            description: `${domain.domain} has been successfully added to Netlify.`,
+          });
+        } else {
+          toast({
+            title: "Setup failed",
+            description: "Failed to add domain to Netlify. Please contact support.",
+            variant: "destructive"
+          });
+        }
+
+        return result;
+      } catch (error) {
+        console.error('Netlify setup retry failed:', error);
+        toast({
+          title: "Setup failed",
+          description: "Unable to add domain to Netlify. Please try again or contact support.",
           variant: "destructive"
         });
         throw error;
