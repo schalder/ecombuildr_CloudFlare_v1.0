@@ -162,6 +162,22 @@ Deno.serve(async (req: Request) => {
         console.error('Failed to insert courier_shipments on success:', insertRes.error);
       }
 
+      // Update order with courier info and set a meaningful status
+      const tracking = consignment.tracking_code || consignment.consignment_id || null;
+      const updRes = await supabase
+        .from('orders')
+        .update({
+          courier_name: 'steadfast',
+          tracking_number: tracking,
+          status: 'processing',
+        })
+        .eq('id', order_id)
+        .eq('store_id', store_id);
+
+      if (updRes.error) {
+        console.error('Failed to update order with courier info:', updRes.error);
+      }
+
       return new Response(
         JSON.stringify({
           ok: true,

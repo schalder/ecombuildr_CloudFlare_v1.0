@@ -48,6 +48,8 @@ interface Order {
   shipping_address?: string;
   shipping_area?: string;
   notes?: string;
+  courier_name?: string | null;
+  tracking_number?: string | null;
 }
 
 const statusColors = {
@@ -113,6 +115,8 @@ export default function Orders() {
             shipping_city,
             shipping_area,
             shipping_address,
+            courier_name,
+            tracking_number,
             notes
           `)
           .in('store_id', stores.map(store => store.id))
@@ -323,6 +327,7 @@ export default function Orders() {
                     <TableHead>Status</TableHead>
                     <TableHead>Total</TableHead>
                     <TableHead>Payment</TableHead>
+                    <TableHead>Shipping</TableHead>
                     <TableHead>Date</TableHead>
                     <TableHead className="w-16"></TableHead>
                   </TableRow>
@@ -371,6 +376,27 @@ export default function Orders() {
                       </TableCell>
                       <TableCell>
                         {order.payment_method.toUpperCase()}
+                      </TableCell>
+                      <TableCell>
+                        {order.courier_name ? (
+                          <div className="space-y-1">
+                            <div className="text-sm">{order.courier_name === 'steadfast' ? 'Steadfast' : order.courier_name}</div>
+                            {order.tracking_number && (
+                              <div className="text-xs">
+                                <a
+                                  href={`https://steadfast.com.bd/t/${encodeURIComponent(order.tracking_number)}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-primary underline"
+                                >
+                                  Track ({order.tracking_number})
+                                </a>
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground text-sm">—</span>
+                        )}
                       </TableCell>
                       <TableCell>
                         {new Date(order.created_at).toLocaleDateString()}
@@ -445,7 +471,18 @@ export default function Orders() {
                                   });
                                   if (error) throw error;
                                   if (data?.ok) {
-                                    const tracking = data?.consignment?.tracking_code || data?.consignment?.consignment_id || data?.message;
+                                    const consignment = data?.consignment || {};
+                                    const tracking = consignment?.tracking_code || consignment?.consignment_id || data?.message;
+                                    setOrders(prev => prev.map(o => 
+                                      o.id === order.id 
+                                        ? { 
+                                            ...o, 
+                                            status: 'processing', 
+                                            courier_name: 'steadfast', 
+                                            tracking_number: consignment?.tracking_code || consignment?.consignment_id || null 
+                                          }
+                                        : o
+                                    ));
                                     toast({ title: "Pushed to Steadfast", description: tracking ? String(tracking) : "Consignment created." });
                                   } else {
                                     throw new Error(data?.error || "Failed to create consignment");
@@ -537,13 +574,21 @@ export default function Orders() {
                     </div>
                   </div>
                 )}
-                <div>
-                  <h4 className="font-medium">Order Summary</h4>
-                  <p>Status: <Badge>{selectedOrder.status}</Badge></p>
-                  <p>Total: ৳{selectedOrder.total.toLocaleString()}</p>
-                  <p>Payment: {selectedOrder.payment_method}</p>
-                  <p>Date: {new Date(selectedOrder.created_at).toLocaleString()}</p>
-                </div>
+                  <div>
+                    <h4 className="font-medium">Order Summary</h4>
+                    <p>Status: <Badge>{selectedOrder.status}</Badge></p>
+                    <p>Total: ৳{selectedOrder.total.toLocaleString()}</p>
+                    <p>Payment: {selectedOrder.payment_method}</p>
+                    <p>Date: {new Date(selectedOrder.created_at).toLocaleString()}</p>
+                    {selectedOrder.courier_name && (
+                      <p>
+                        Shipping: {selectedOrder.courier_name === 'steadfast' ? 'Steadfast' : selectedOrder.courier_name}
+                        {selectedOrder.tracking_number && (
+                          <> — <a href={`https://steadfast.com.bd/t/${encodeURIComponent(selectedOrder.tracking_number)}`} target="_blank" rel="noopener noreferrer" className="text-primary underline">Track</a></>
+                        )}
+                      </p>
+                    )}
+                  </div>
                 <div>
                   <h4 className="font-medium">Order Items</h4>
                   <div className="mt-2 space-y-1">
