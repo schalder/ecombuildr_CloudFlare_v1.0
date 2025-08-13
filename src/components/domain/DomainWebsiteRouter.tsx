@@ -43,11 +43,29 @@ export const DomainWebsiteRouter: React.FC<DomainWebsiteRouterProps> = ({
       } />
       <Route path="/products/:productSlug" element={<WebsiteProductDetailRoute />} />
       
-      {/* Cart & Checkout */}
-      <Route path="/cart" element={<CartPage />} />
-      <Route path="/checkout" element={<CheckoutPage />} />
+      {/* Cart & Checkout - using website pages */}
+      <Route path="/cart" element={
+        <WebsiteOverrideRoute 
+          slug="cart" 
+          websiteId={websiteId}
+          fallback={<div className="min-h-screen flex items-center justify-center">Cart page not found</div>} 
+        />
+      } />
+      <Route path="/checkout" element={
+        <WebsiteOverrideRoute 
+          slug="checkout" 
+          websiteId={websiteId}
+          fallback={<div className="min-h-screen flex items-center justify-center">Checkout page not found</div>} 
+        />
+      } />
       <Route path="/payment-processing" element={<PaymentProcessing />} />
-      <Route path="/order-confirmation" element={<OrderConfirmation />} />
+      <Route path="/order-confirmation" element={
+        <WebsiteOverrideRoute 
+          slug="order-confirmation" 
+          websiteId={websiteId}
+          fallback={<div className="min-h-screen flex items-center justify-center">Order confirmation page not found</div>} 
+        />
+      } />
       
       {/* Search */}
       <Route path="/search" element={<SearchResults />} />
