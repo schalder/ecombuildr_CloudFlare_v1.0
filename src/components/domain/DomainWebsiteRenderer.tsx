@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
 import { useStore } from '@/contexts/StoreContext';
@@ -122,16 +121,14 @@ export const DomainWebsiteRenderer: React.FC<DomainWebsiteRendererProps> = ({
       className="min-h-screen bg-background text-foreground"
       style={styles}
     >
-      <BrowserRouter>
-        <WebsiteHeader website={website} />
-        <main>
-          <DomainWebsiteRouter 
-            websiteId={websiteId} 
-            customDomain={customDomain} 
-          />
-        </main>
-        <WebsiteFooter website={website} />
-      </BrowserRouter>
+      <WebsiteHeader website={website} />
+      <main>
+        <DomainWebsiteRouter 
+          websiteId={websiteId} 
+          customDomain={customDomain} 
+        />
+      </main>
+      <WebsiteFooter website={website} />
     </div>
   );
 };
