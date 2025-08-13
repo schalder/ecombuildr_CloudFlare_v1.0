@@ -11,7 +11,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Plus, Globe, Trash2, Link as LinkIcon, Settings, ExternalLink, Copy, RefreshCw } from 'lucide-react';
 import { useDomainManagement } from '@/hooks/useDomainManagement';
-import { DomainVerificationDialog } from '@/components/domain/DomainVerificationDialog';
 import { toast } from '@/hooks/use-toast';
 
 export default function Domains() {
@@ -27,14 +26,11 @@ export default function Domains() {
     removeConnection, 
     setHomepage,
     verifyDomain,
-    verifyDomainDNS,
     checkSSL
   } = useDomainManagement();
 
   const [newDomain, setNewDomain] = useState('');
   const [isAddingDomain, setIsAddingDomain] = useState(false);
-  const [isVerifyingDNS, setIsVerifyingDNS] = useState(false);
-  const [showVerificationDialog, setShowVerificationDialog] = useState(false);
   const [connectionForm, setConnectionForm] = useState({
     domainId: '',
     contentType: 'website' as 'website' | 'funnel',
@@ -43,19 +39,19 @@ export default function Domains() {
     isHomepage: false
   });
 
-  const handleVerifyDNS = async (domain: string) => {
-    try {
-      setIsVerifyingDNS(true);
-      return await verifyDomainDNS(domain);
-    } finally {
-      setIsVerifyingDNS(false);
-    }
-  };
-
-  const handleAddDomain = async (domain: string) => {
+  const handleAddDomain = async () => {
+    if (!newDomain.trim()) return;
+    
     try {
       setIsAddingDomain(true);
-      await addDomain(domain);
+      await addDomain(newDomain.trim());
+      setNewDomain('');
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to add domain",
+        variant: "destructive"
+      });
     } finally {
       setIsAddingDomain(false);
     }
@@ -138,23 +134,32 @@ export default function Domains() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Plus className="h-5 w-5" />
-              Add New Domain
+              Add Custom Domain
             </CardTitle>
             <CardDescription>
-              Connect your custom domain to this store with DNS verification
+              Connect your own domain to display your websites and funnels
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <Button 
-              onClick={() => setShowVerificationDialog(true)}
-              className="w-full"
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Add Custom Domain
-            </Button>
-            <p className="text-sm text-muted-foreground">
-              We'll verify your DNS configuration before adding the domain
-            </p>
+          <CardContent>
+            <div className="flex gap-4">
+              <div className="flex-1">
+                <Label htmlFor="domain">Domain Name</Label>
+                <Input
+                  id="domain"
+                  placeholder="yourdomain.com"
+                  value={newDomain}
+                  onChange={(e) => setNewDomain(e.target.value)}
+                />
+              </div>
+              <div className="flex items-end">
+                <Button 
+                  onClick={handleAddDomain}
+                  disabled={isAddingDomain || !newDomain.trim()}
+                >
+                  {isAddingDomain ? "Adding..." : "Add Domain"}
+                </Button>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
@@ -170,9 +175,6 @@ export default function Domains() {
                       <CardTitle className="text-lg">{domain.domain}</CardTitle>
                       <CardDescription>
                         Added {new Date(domain.created_at).toLocaleDateString()}
-                        {domain.dns_verified_at && (
-                          <span className="ml-2">• DNS verified {new Date(domain.dns_verified_at).toLocaleDateString()}</span>
-                        )}
                       </CardDescription>
                     </div>
                   </div>
@@ -226,77 +228,79 @@ export default function Domains() {
                         </div>
                       </div>
 
-                      {/* DNS Status Display */}
+                      {/* Simple Status Display */}
                       <div className="bg-card border rounded-lg p-4">
                         <div className="space-y-3">
                           <div className="flex items-center justify-between">
-                            <span className="text-sm font-medium">DNS Configuration:</span>
-                            <span className={domain.dns_configured ? 'text-green-600' : 'text-amber-600'}>
-                              {domain.dns_configured ? '✅ Configured' : '⏳ Pending'}
+                            <span className="text-sm font-medium">Domain Status:</span>
+                            <span className={domain.is_verified ? 'text-green-600' : 'text-amber-600'}>
+                              {domain.is_verified ? '✅ Active & Ready' : '⏳ Setting up...'}
                             </span>
                           </div>
                           
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm font-medium">SSL Status:</span>
-                            <span className={domain.ssl_status === 'issued' ? 'text-green-600' : 'text-amber-600'}>
-                              {domain.ssl_status === 'issued' ? '✅ Active' : '⏳ ' + domain.ssl_status}
-                            </span>
-                          </div>
-                          
-                          {domain.is_verified ? (
-                            <div className="text-sm text-green-700">
-                              Your domain is live and ready to use! 🎉
-                            </div>
-                          ) : (
+                          {!domain.is_verified && (
                             <div className="text-sm text-muted-foreground">
                               {domain.dns_configured 
                                 ? 'DNS configured. SSL certificate is being provisioned...' 
-                                : 'Please configure DNS settings to activate this domain.'}
+                                : 'Automatic setup in progress. This usually takes 5-30 minutes.'}
+                            </div>
+                          )}
+                          
+                          {domain.is_verified && (
+                            <div className="text-sm text-green-700">
+                              Your domain is live and ready to use! 🎉
                             </div>
                           )}
                         </div>
                       </div>
 
-                      {/* DNS Setup Instructions */}
+                      {/* Manual Setup Fallback - Only show if needed */}
                       {!domain.dns_configured && (
-                        <div className="bg-amber-50 border border-amber-200 p-4 rounded-lg">
-                          <h5 className="font-semibold text-amber-800 mb-2">DNS Setup Required</h5>
-                          <p className="text-sm text-amber-700 mb-3">
-                            Add this CNAME record in your DNS provider:
-                          </p>
-                          
-                          <div className="bg-white border p-3 rounded-lg">
-                            <div className="space-y-2 font-mono text-xs">
-                              <div className="grid grid-cols-3 gap-4">
-                                <span className="text-muted-foreground font-normal">Type:</span>
-                                <span className="font-semibold">CNAME</span>
-                                <span></span>
+                        <details className="group">
+                          <summary className="cursor-pointer text-sm font-medium text-muted-foreground hover:text-foreground">
+                            Need to set up manually? Click here for instructions
+                          </summary>
+                          <div className="mt-4 space-y-4">
+                            <div className="bg-amber-50 border border-amber-200 p-4 rounded-lg">
+                              <h5 className="font-semibold text-amber-800 mb-2">Manual DNS Setup</h5>
+                              <p className="text-sm text-amber-700 mb-3">
+                                If automatic setup isn't working, add this CNAME record in your DNS provider:
+                              </p>
+                              
+                              <div className="bg-white border p-3 rounded-lg">
+                                <div className="space-y-2 font-mono text-xs">
+                                  <div className="grid grid-cols-3 gap-4">
+                                    <span className="text-muted-foreground font-normal">Type:</span>
+                                    <span className="font-semibold">CNAME</span>
+                                    <span></span>
+                                  </div>
+                                  <div className="grid grid-cols-3 gap-4">
+                                    <span className="text-muted-foreground font-normal">Name:</span>
+                                    <span className="font-semibold">@ (or {domain.domain.split('.')[0]})</span>
+                                    <span></span>
+                                  </div>
+                                  <div className="grid grid-cols-3 gap-4">
+                                    <span className="text-muted-foreground font-normal">Target:</span>
+                                    <span className="font-semibold">ecombuildr.netlify.app</span>
+                                    <span></span>
+                                  </div>
+                                </div>
                               </div>
-                              <div className="grid grid-cols-3 gap-4">
-                                <span className="text-muted-foreground font-normal">Name:</span>
-                                <span className="font-semibold">{domain.domain}</span>
-                                <span></span>
-                              </div>
-                              <div className="grid grid-cols-3 gap-4">
-                                <span className="text-muted-foreground font-normal">Target:</span>
-                                <span className="font-semibold">ecombuildr.com</span>
-                                <span></span>
+                              
+                              <div className="mt-3">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => copyDNSInstructions(domain.domain)}
+                                  className="text-xs"
+                                >
+                                  <Copy className="mr-2 h-3 w-3" />
+                                  Copy DNS Config
+                                </Button>
                               </div>
                             </div>
                           </div>
-                          
-                          <div className="mt-3">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => copyDNSInstructions(domain.domain)}
-                              className="text-xs"
-                            >
-                              <Copy className="mr-2 h-3 w-3" />
-                              Copy DNS Config
-                            </Button>
-                          </div>
-                        </div>
+                        </details>
                       )}
                     </div>
                   </TabsContent>
@@ -442,17 +446,6 @@ export default function Domains() {
             </Card>
           )}
         </div>
-
-        <DomainVerificationDialog
-          open={showVerificationDialog}
-          onOpenChange={setShowVerificationDialog}
-          domain={newDomain}
-          onDomainChange={setNewDomain}
-          onVerifyDNS={handleVerifyDNS}
-          onAddDomain={handleAddDomain}
-          isVerifying={isVerifyingDNS}
-          isAdding={isAddingDomain}
-        />
       </div>
     </DashboardLayout>
   );

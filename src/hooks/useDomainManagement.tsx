@@ -11,8 +11,6 @@ interface CustomDomain {
   is_verified: boolean;
   ssl_status: string;
   dns_configured: boolean;
-  dns_verified_at?: string;
-  verification_attempts: number;
   created_at: string;
   updated_at: string;
 }
@@ -105,122 +103,91 @@ export const useDomainManagement = () => {
     }
   };
 
-  const verifyDomainDNS = async (domain: string) => {
-    if (!store?.id) {
-      throw new Error('No store selected');
-    }
-
-    try {
-      const { data: result, error } = await supabase.functions.invoke(
-        'verify-domain-dns',
-        {
-          body: {
-            domain: domain,
-            storeId: store.id,
-          },
-        }
-      );
-
-      if (error) {
-        console.error('DNS verification failed:', error);
-        throw new Error('DNS verification failed');
-      }
-
-      return {
-        success: result?.success || false,
-        dnsConfigured: result?.dnsConfigured || false,
-        errorMessage: result?.errorMessage || null
-      };
-    } catch (error) {
-      console.error('Error verifying DNS:', error);
-      throw error;
-    }
-  };
-
   const addDomain = async (domain: string) => {
-    if (!store?.id) {
-      throw new Error('No store selected');
-    }
+    if (!store?.id) throw new Error('No store found');
 
-    setLoading(true);
-    setError(null);
+    const cleanDomain = domain.toLowerCase();
 
     try {
-      // Add domain via Netlify integration (only after DNS verification)
-      console.log('Adding verified domain via Netlify:', domain);
-      
+      // Try automatic Netlify integration first
+      toast({
+        title: "Setting up domain",
+        description: `Adding ${cleanDomain} to Netlify automatically...`,
+      });
+
       const { data: result, error: netlifyError } = await supabase.functions.invoke(
         'netlify-domain-manager',
         {
           body: {
             action: 'add',
-            domain: domain,
-            storeId: store.id,
-          },
+            domain: cleanDomain,
+            storeId: store.id
+          }
         }
       );
 
-      if (netlifyError) {
-        console.error('Netlify integration failed:', netlifyError);
-        throw new Error('Failed to add domain to hosting service');
+      if (!netlifyError && result?.success) {
+        toast({
+          title: "Domain added successfully",
+          description: `${cleanDomain} has been added to Netlify. DNS configuration will be set up automatically.`,
+        });
+        await fetchDomains();
+        return result.domain;
       }
 
-      if (!result?.success) {
-        throw new Error(result?.error || 'Failed to add domain');
-      }
+      // Fallback to manual setup if automatic fails
+      console.log('Automatic Netlify setup failed, falling back to manual:', netlifyError);
+      
+      toast({
+        title: "Auto setup failed",
+        description: "Setting up domain manually. You'll need to configure DNS settings.",
+        variant: "destructive",
+      });
 
-      console.log('Netlify domain added successfully');
+      const { data, error } = await supabase
+        .from('custom_domains')
+        .insert({
+          domain: cleanDomain,
+          store_id: store.id,
+          verification_token: crypto.randomUUID()
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      toast({
+        title: "Domain added (manual setup required)",
+        description: `${cleanDomain} has been added. Please follow the setup instructions to complete configuration.`,
+        variant: "default"
+      });
+
       await fetchDomains();
+      return data;
+
     } catch (error) {
-      console.error('Error adding domain:', error);
-      setError(error instanceof Error ? error.message : 'Failed to add domain');
+      console.error('Domain addition failed:', error);
       throw error;
-    } finally {
-      setLoading(false);
     }
   };
 
   const removeDomain = async (domainId: string) => {
     if (!store?.id) throw new Error('No store found');
 
-    const domain = domains.find(d => d.id === domainId);
-    if (!domain) throw new Error('Domain not found');
+    // Remove domain from database
+    const { error } = await supabase
+      .from('custom_domains')
+      .delete()
+      .eq('id', domainId);
 
-    try {
-      // Remove from Netlify first
-      const { error: netlifyError } = await supabase.functions.invoke(
-        'netlify-domain-manager',
-        {
-          body: {
-            action: 'remove',
-            domain: domain.domain,
-            storeId: store.id,
-          },
-        }
-      );
-
-      if (netlifyError) {
-        console.warn('Failed to remove from Netlify:', netlifyError);
-      }
-
-      // Remove domain from database
-      const { error } = await supabase
-        .from('custom_domains')
-        .delete()
-        .eq('id', domainId);
-
-      if (error) throw error;
-      
-      await fetchDomains();
-      
-      toast({
-        title: "Domain removed",
-        description: "The domain and all its connections have been removed.",
-      });
-    } catch (error) {
-      console.error('Error removing domain:', error);
-      throw error;
-    }
+    if (error) throw error;
+    
+    await fetchDomains();
+    
+    toast({
+      title: "Domain removed",
+      description: "The domain and all its connections have been removed. Remember to also remove it from your hosting provider if needed.",
+    });
   };
 
   const connectContent = async (
@@ -300,112 +267,6 @@ export const useDomainManagement = () => {
     });
   };
 
-  const verifyDomain = async (domainId: string) => {
-    if (!store?.id) throw new Error('No store found');
-
-    const domain = domains.find(d => d.id === domainId);
-    if (!domain) throw new Error('Domain not found');
-
-    try {
-      const { data: result, error } = await supabase.functions.invoke(
-        'dns-domain-manager',
-        {
-          body: {
-            action: 'verify',
-            domain: domain.domain,
-            storeId: store.id
-          }
-        }
-      );
-
-      if (error) throw error;
-
-      await fetchDomains();
-
-      if (result?.status?.isVerified) {
-        toast({
-          title: "Domain verified",
-          description: `${domain.domain} is now active and ready to use.`,
-        });
-      } else if (result?.status?.dnsConfigured && !result?.status?.isAccessible) {
-        toast({
-          title: "DNS configured, SSL in progress",
-          description: "DNS is set up correctly. SSL certificate is being provisioned. Check again in a few minutes.",
-          variant: "default"
-        });
-      } else if (!result?.status?.dnsConfigured) {
-        toast({
-          title: "DNS setup required",
-          description: "Please configure your DNS settings following the instructions below.",
-          variant: "default"
-        });
-      } else {
-        toast({
-          title: "Verification in progress",
-          description: "Domain configuration is being processed. Please check again in a few minutes.",
-          variant: "default"
-        });
-      }
-
-      return result?.status;
-    } catch (error) {
-      console.error('Domain verification failed:', error);
-      toast({
-        title: "Verification failed",
-        description: "Unable to verify domain status. Please try again.",
-        variant: "destructive"
-      });
-      throw error;
-    }
-  };
-
-  const checkSSL = async (domainId: string) => {
-    if (!store?.id) throw new Error('No store found');
-
-    const domain = domains.find(d => d.id === domainId);
-    if (!domain) throw new Error('Domain not found');
-
-    try {
-      const { data: result, error } = await supabase.functions.invoke(
-        'dns-domain-manager',
-        {
-          body: {
-            action: 'check_ssl',
-            domain: domain.domain,
-            storeId: store.id
-          }
-        }
-      );
-
-      if (error) throw error;
-
-      await fetchDomains();
-
-      if (result?.isAccessible) {
-        toast({
-          title: "SSL active",
-          description: `${domain.domain} is accessible with SSL certificate.`,
-        });
-      } else {
-        toast({
-          title: "SSL still provisioning",
-          description: "SSL certificate is still being set up. This can take up to 24 hours.",
-          variant: "default"
-        });
-      }
-
-      return result;
-    } catch (error) {
-      console.error('SSL check failed:', error);
-      toast({
-        title: "SSL check failed",
-        description: "Unable to check SSL status. Please try again.",
-        variant: "destructive"
-      });
-      throw error;
-    }
-  };
-
   useEffect(() => {
     if (user && store?.id) {
       fetchDomains();
@@ -424,9 +285,110 @@ export const useDomainManagement = () => {
     connectContent,
     removeConnection,
     setHomepage,
-    verifyDomain,
-    verifyDomainDNS,
-    checkSSL,
-    refetch: fetchDomains
+    refetch: fetchDomains,
+    verifyDomain: async (domainId: string) => {
+      if (!store?.id) throw new Error('No store found');
+
+      const domain = domains.find(d => d.id === domainId);
+      if (!domain) throw new Error('Domain not found');
+
+      try {
+        const { data: result, error } = await supabase.functions.invoke(
+          'dns-domain-manager',
+          {
+            body: {
+              action: 'verify',
+              domain: domain.domain,
+              storeId: store.id
+            }
+          }
+        );
+
+        if (error) throw error;
+
+        await fetchDomains();
+
+        if (result?.status?.isVerified) {
+          toast({
+            title: "Domain verified",
+            description: `${domain.domain} is now active and ready to use.`,
+          });
+        } else if (result?.status?.dnsConfigured && !result?.status?.isAccessible) {
+          toast({
+            title: "DNS configured, SSL in progress",
+            description: "DNS is set up correctly. SSL certificate is being provisioned. Check again in a few minutes.",
+            variant: "default"
+          });
+        } else if (!result?.status?.dnsConfigured) {
+          toast({
+            title: "DNS setup required",
+            description: "Please configure your DNS settings following the instructions below.",
+            variant: "default"
+          });
+        } else {
+          toast({
+            title: "Verification in progress",
+            description: "Domain configuration is being processed. Please check again in a few minutes.",
+            variant: "default"
+          });
+        }
+
+        return result?.status;
+      } catch (error) {
+        console.error('Domain verification failed:', error);
+        toast({
+          title: "Verification failed",
+          description: "Unable to verify domain status. Please try again.",
+          variant: "destructive"
+        });
+        throw error;
+      }
+    },
+    checkSSL: async (domainId: string) => {
+      if (!store?.id) throw new Error('No store found');
+
+      const domain = domains.find(d => d.id === domainId);
+      if (!domain) throw new Error('Domain not found');
+
+      try {
+        const { data: result, error } = await supabase.functions.invoke(
+          'dns-domain-manager',
+          {
+            body: {
+              action: 'check_ssl',
+              domain: domain.domain,
+              storeId: store.id
+            }
+          }
+        );
+
+        if (error) throw error;
+
+        await fetchDomains();
+
+        if (result?.isAccessible) {
+          toast({
+            title: "SSL active",
+            description: `${domain.domain} is accessible with SSL certificate.`,
+          });
+        } else {
+          toast({
+            title: "SSL still provisioning",
+            description: "SSL certificate is still being set up. This can take up to 24 hours.",
+            variant: "default"
+          });
+        }
+
+        return result;
+      } catch (error) {
+        console.error('SSL check failed:', error);
+        toast({
+          title: "SSL check failed",
+          description: "Unable to check SSL status. Please try again.",
+          variant: "destructive"
+        });
+        throw error;
+      }
+    }
   };
 };
