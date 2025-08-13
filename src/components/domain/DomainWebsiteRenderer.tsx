@@ -1,14 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { AuthProvider } from "@/hooks/useAuth";
-import { CartProvider } from "@/contexts/CartContext";
-import { StoreProvider, useStore } from "@/contexts/StoreContext";
-import { BrowserRouter } from 'react-router-dom';
+import { useStore } from '@/contexts/StoreContext';
 import { setGlobalCurrency } from '@/lib/currency';
 import { DomainWebsiteRouter } from './DomainWebsiteRouter';
 
@@ -29,10 +22,7 @@ interface DomainWebsiteRendererProps {
   customDomain: string;
 }
 
-const queryClient = new QueryClient();
-
-// Inner component that uses the store context
-const DomainWebsiteContent: React.FC<DomainWebsiteRendererProps> = ({ 
+export const DomainWebsiteRenderer: React.FC<DomainWebsiteRendererProps> = ({ 
   websiteId, 
   customDomain 
 }) => {
@@ -139,26 +129,5 @@ const DomainWebsiteContent: React.FC<DomainWebsiteRendererProps> = ({
         website={website}
       />
     </div>
-  );
-};
-
-// Main component with all providers matching App.tsx structure
-export const DomainWebsiteRenderer: React.FC<DomainWebsiteRendererProps> = (props) => {
-  return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <StoreProvider>
-          <CartProvider>
-            <TooltipProvider>
-              <Toaster />
-              <Sonner />
-              <BrowserRouter>
-                <DomainWebsiteContent {...props} />
-              </BrowserRouter>
-            </TooltipProvider>
-          </CartProvider>
-        </StoreProvider>
-      </AuthProvider>
-    </QueryClientProvider>
   );
 };
