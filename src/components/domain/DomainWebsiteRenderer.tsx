@@ -1,9 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
-import { useStore } from '@/contexts/StoreContext';
-import { WebsiteHeader } from '@/components/storefront/WebsiteHeader';
-import { WebsiteFooter } from '@/components/storefront/WebsiteFooter';
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { AuthProvider } from "@/hooks/useAuth";
+import { CartProvider } from "@/contexts/CartContext";
+import { StoreProvider, useStore } from "@/contexts/StoreContext";
+import { BrowserRouter } from 'react-router-dom';
+import { setGlobalCurrency } from '@/lib/currency';
 import { DomainWebsiteRouter } from './DomainWebsiteRouter';
 
 interface WebsiteData {
@@ -23,7 +29,10 @@ interface DomainWebsiteRendererProps {
   customDomain: string;
 }
 
-export const DomainWebsiteRenderer: React.FC<DomainWebsiteRendererProps> = ({ 
+const queryClient = new QueryClient();
+
+// Inner component that uses the store context
+const DomainWebsiteContent: React.FC<DomainWebsiteRendererProps> = ({ 
   websiteId, 
   customDomain 
 }) => {
@@ -83,6 +92,12 @@ export const DomainWebsiteRenderer: React.FC<DomainWebsiteRendererProps> = ({
     fetchWebsiteData();
   }, [websiteId, loadStoreById]);
 
+  // Set global currency when store data is available
+  React.useEffect(() => {
+    const code = (website?.settings?.currency?.code as string) || 'BDT';
+    try { setGlobalCurrency(code as any); } catch {}
+  }, [website?.settings?.currency?.code]);
+
   // Show loading while fetching data
   if (loading) {
     return (
@@ -108,27 +123,42 @@ export const DomainWebsiteRenderer: React.FC<DomainWebsiteRendererProps> = ({
 
   // Set CSS variables for primary/secondary colors if store has them
   const storeData = website.stores;
-  const primaryColor = storeData?.primary_color;
-  const secondaryColor = storeData?.secondary_color;
   
-  const styles: React.CSSProperties = {};
-  if (primaryColor) styles['--primary' as any] = primaryColor;
-  if (secondaryColor) styles['--secondary' as any] = secondaryColor;
-
-  // Render the website with full routing
+  // Render the website with proper layout structure matching WebsiteLayout
   return (
-    <div 
-      className="min-h-screen bg-background text-foreground"
-      style={styles}
-    >
-      <WebsiteHeader website={website} />
-      <main>
-        <DomainWebsiteRouter 
-          websiteId={websiteId} 
-          customDomain={customDomain} 
-        />
-      </main>
-      <WebsiteFooter website={website} />
+    <div className="min-h-screen flex flex-col bg-background">
+      <style>{`
+        :root {
+          --store-primary: ${storeData?.primary_color ?? '#10B981'};
+          --store-secondary: ${storeData?.secondary_color ?? '#059669'};
+        }
+      `}</style>
+      <DomainWebsiteRouter 
+        websiteId={websiteId} 
+        customDomain={customDomain}
+        website={website}
+      />
     </div>
+  );
+};
+
+// Main component with all providers matching App.tsx structure
+export const DomainWebsiteRenderer: React.FC<DomainWebsiteRendererProps> = (props) => {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <StoreProvider>
+          <CartProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
+                <DomainWebsiteContent {...props} />
+              </BrowserRouter>
+            </TooltipProvider>
+          </CartProvider>
+        </StoreProvider>
+      </AuthProvider>
+    </QueryClientProvider>
   );
 };

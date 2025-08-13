@@ -9,6 +9,8 @@ import { WebsiteProductDetailRoute } from '@/pages/storefront/WebsiteProductDeta
 import { SearchResults } from '@/pages/storefront/SearchResults';
 import { StorefrontHome } from '@/pages/storefront/StorefrontHome';
 import { StorefrontProducts } from '@/pages/storefront/StorefrontProducts';
+import { WebsiteHeader } from '@/components/storefront/WebsiteHeader';
+import { WebsiteFooter } from '@/components/storefront/WebsiteFooter';
 
 const DynamicWebsiteRoute: React.FC<{ fallback: React.ReactElement; websiteId: string }> = ({ fallback, websiteId }) => {
   const { slug } = useParams<{ slug: string }>();
@@ -18,14 +20,19 @@ const DynamicWebsiteRoute: React.FC<{ fallback: React.ReactElement; websiteId: s
 interface DomainWebsiteRouterProps {
   websiteId: string;
   customDomain: string;
+  website: any;
 }
 
 export const DomainWebsiteRouter: React.FC<DomainWebsiteRouterProps> = ({ 
   websiteId, 
-  customDomain 
+  customDomain,
+  website
 }) => {
   return (
-    <Routes>
+    <>
+      <WebsiteHeader website={website} />
+      <main className="flex-1">
+        <Routes>
       {/* Homepage */}
       <Route path="/" element={
         <WebsiteOverrideRoute 
@@ -79,6 +86,9 @@ export const DomainWebsiteRouter: React.FC<DomainWebsiteRouterProps> = ({
           <DynamicWebsiteRoute fallback={<div className="min-h-screen flex items-center justify-center">Page not found</div>} websiteId={websiteId} />
         } 
       />
-    </Routes>
+        </Routes>
+      </main>
+      <WebsiteFooter website={website} />
+    </>
   );
 };

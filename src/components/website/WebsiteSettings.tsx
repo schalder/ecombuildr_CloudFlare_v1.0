@@ -126,6 +126,16 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
         shipping: shippingSettings,
       };
 
+      // First, get the website's store_id
+      const { data: websiteData } = await supabase
+        .from('websites')
+        .select('store_id')
+        .eq('id', website.id)
+        .single();
+
+      if (!websiteData) throw new Error('Website not found');
+
+      // Update the website
       const { error } = await supabase
         .from('websites')
         .update({
@@ -136,6 +146,56 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
         .eq('id', website.id);
       
       if (error) throw error;
+
+      // Handle domain connection if domain is provided
+      if (data.domain && data.domain.trim()) {
+        const domain = data.domain.trim();
+        
+        // Check if custom domain already exists
+        const { data: existingDomain, error: domainError } = await supabase
+          .from('custom_domains')
+          .select('*')
+          .eq('domain', domain)
+          .eq('store_id', websiteData.store_id)
+          .maybeSingle();
+
+        let domainId: string;
+
+        if (existingDomain) {
+          domainId = existingDomain.id;
+        } else {
+          // Create new custom domain entry
+          const { data: newDomain, error: createDomainError } = await supabase
+            .from('custom_domains')
+            .insert({
+              domain,
+              store_id: websiteData.store_id,
+              is_verified: false,
+              dns_configured: false,
+            })
+            .select()
+            .single();
+
+          if (createDomainError) throw createDomainError;
+          domainId = newDomain.id;
+        }
+
+        // Create or update domain connection
+        const { error: connectionError } = await supabase
+          .from('domain_connections')
+          .upsert({
+            domain_id: domainId,
+            store_id: websiteData.store_id,
+            content_type: 'website',
+            content_id: website.id,
+            path: '/',
+            is_homepage: true,
+          }, {
+            onConflict: 'domain_id,path'
+          });
+
+        if (connectionError) throw connectionError;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['website', website.id] });
