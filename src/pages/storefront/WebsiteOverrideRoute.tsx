@@ -20,10 +20,12 @@ interface WebsitePageData {
 interface WebsiteOverrideRouteProps {
   slug: string;
   fallback: React.ReactElement;
+  websiteId?: string;
 }
 
-export const WebsiteOverrideRoute: React.FC<WebsiteOverrideRouteProps> = ({ slug, fallback }) => {
-  const { websiteId, websiteSlug } = useParams<{ websiteId?: string; websiteSlug?: string }>();
+export const WebsiteOverrideRoute: React.FC<WebsiteOverrideRouteProps> = ({ slug, fallback, websiteId: propsWebsiteId }) => {
+  const { websiteId: paramsWebsiteId, websiteSlug } = useParams<{ websiteId?: string; websiteSlug?: string }>();
+  const websiteId = propsWebsiteId || paramsWebsiteId;
   const [searchParams] = useSearchParams();
   const isPreview = searchParams.get('preview') === '1';
   const [page, setPage] = React.useState<WebsitePageData | null>(null);
