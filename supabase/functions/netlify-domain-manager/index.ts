@@ -54,9 +54,17 @@ Deno.serve(async (req) => {
     const netlifyToken = Deno.env.get('NETLIFY_ACCESS_TOKEN')
     const netlifySiteId = Deno.env.get('NETLIFY_SITE_ID')
 
-    if (!netlifyToken || !netlifySiteId) {
-      throw new Error('Netlify configuration missing')
+    if (!netlifyToken) {
+      console.error('NETLIFY_ACCESS_TOKEN is not configured')
+      throw new Error('Netlify access token is missing. Please configure NETLIFY_ACCESS_TOKEN in Edge Function secrets.')
     }
+    
+    if (!netlifySiteId) {
+      console.error('NETLIFY_SITE_ID is not configured')  
+      throw new Error('Netlify site ID is missing. Please configure NETLIFY_SITE_ID in Edge Function secrets.')
+    }
+
+    console.log(`Using Netlify site ID: ${netlifySiteId}`)
 
     const netlifyHeaders = {
       'Authorization': `Bearer ${netlifyToken}`,
@@ -67,8 +75,28 @@ Deno.serve(async (req) => {
 
     switch (action) {
       case 'add':
-        console.log(`Adding domain ${domain} to Netlify with site ID: ${netlifySiteId}`)
+        console.log(`Adding domain ${domain} to Netlify site: ${netlifySiteId}`)
         
+        // First, let's verify the site exists by checking site info
+        const siteCheckResponse = await fetch(
+          `https://api.netlify.com/api/v1/sites/${netlifySiteId}`,
+          {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${netlifyToken}`,
+            },
+          }
+        )
+
+        if (!siteCheckResponse.ok) {
+          const siteError = await siteCheckResponse.text()
+          console.error(`Site check failed (${siteCheckResponse.status}):`, siteError)
+          throw new Error(`Netlify site not found (${siteCheckResponse.status}): ${siteError}. Please verify your NETLIFY_SITE_ID is correct.`)
+        }
+
+        const siteInfo = await siteCheckResponse.json()
+        console.log(`Site verified: ${siteInfo.name} (${siteInfo.url})`)
+
         // Add domain to Netlify
         const addResponse = await fetch(
           `https://api.netlify.com/api/v1/sites/${netlifySiteId}/domains`,
