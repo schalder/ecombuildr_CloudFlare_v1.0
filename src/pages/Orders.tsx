@@ -73,6 +73,10 @@ export default function Orders() {
   const [invoiceData, setInvoiceData] = useState<{ order: any; items: any[] } | null>(null);
   const [orderItemsMap, setOrderItemsMap] = useState<Record<string, any[]>>({});
   const [selectedOrderItems, setSelectedOrderItems] = useState<any[]>([]);
+  const [pushDialogOpen, setPushDialogOpen] = useState(false);
+  const [existingShipment, setExistingShipment] = useState<any | null>(null);
+  const [orderToPush, setOrderToPush] = useState<Order | null>(null);
+  const [pushing, setPushing] = useState(false);
   useEffect(() => {
     if (user) {
       fetchOrders();
@@ -181,6 +185,60 @@ export default function Orders() {
         description: "Failed to update order status",
         variant: "destructive",
       });
+    }
+  };
+
+  const steadfastTrackUrl = (code?: string | null) => code ? `https://steadfast.com.bd/t/${encodeURIComponent(code)}` : '#';
+
+  const handlePushToSteadfast = async (order: Order, force: boolean = false) => {
+    try {
+      if (!force) {
+        const { data: shipment, error: shipErr } = await supabase
+          .from('courier_shipments')
+          .select('id, consignment_id, tracking_code, invoice, status, created_at')
+          .eq('order_id', order.id)
+          .eq('provider', 'steadfast')
+          .order('created_at', { ascending: false })
+          .maybeSingle();
+        if (shipErr) {
+          console.error('Check shipment error', shipErr);
+        }
+        if (shipment) {
+          setExistingShipment(shipment);
+          setOrderToPush(order);
+          setPushDialogOpen(true);
+          return;
+        }
+      }
+
+      setPushing(true);
+      toast({ title: "Sending to Steadfast...", description: "Creating consignment" });
+      const { data, error } = await supabase.functions.invoke('steadfast-create-order', {
+        body: { store_id: order.store_id, order_id: order.id },
+      });
+      if (error) throw error;
+      if (data?.ok) {
+        const consignment = data?.consignment || {};
+        const tracking = consignment?.tracking_code || consignment?.consignment_id || data?.message;
+        setOrders(prev => prev.map(o => 
+          o.id === order.id 
+            ? { 
+                ...o, 
+                status: 'processing', 
+                courier_name: 'steadfast', 
+                tracking_number: consignment?.tracking_code || consignment?.consignment_id || null 
+              }
+            : o
+        ));
+        toast({ title: "Pushed to Steadfast", description: tracking ? String(tracking) : "Consignment created." });
+      } else {
+        throw new Error(data?.error || "Failed to create consignment");
+      }
+    } catch (e: any) {
+      console.error(e);
+      toast({ title: "Steadfast error", description: e?.message || "Failed to create consignment", variant: "destructive" });
+    } finally {
+      setPushing(false);
     }
   };
 
@@ -463,35 +521,7 @@ export default function Orders() {
                               Invoice / PDF
                             </DropdownMenuItem>
                             <DropdownMenuItem
-                              onClick={async () => {
-                                try {
-                                  toast({ title: "Sending to Steadfast...", description: "Creating consignment" });
-                                  const { data, error } = await supabase.functions.invoke('steadfast-create-order', {
-                                    body: { store_id: order.store_id, order_id: order.id },
-                                  });
-                                  if (error) throw error;
-                                  if (data?.ok) {
-                                    const consignment = data?.consignment || {};
-                                    const tracking = consignment?.tracking_code || consignment?.consignment_id || data?.message;
-                                    setOrders(prev => prev.map(o => 
-                                      o.id === order.id 
-                                        ? { 
-                                            ...o, 
-                                            status: 'processing', 
-                                            courier_name: 'steadfast', 
-                                            tracking_number: consignment?.tracking_code || consignment?.consignment_id || null 
-                                          }
-                                        : o
-                                    ));
-                                    toast({ title: "Pushed to Steadfast", description: tracking ? String(tracking) : "Consignment created." });
-                                  } else {
-                                    throw new Error(data?.error || "Failed to create consignment");
-                                  }
-                                } catch (e: any) {
-                                  console.error(e);
-                                  toast({ title: "Steadfast error", description: e?.message || "Failed to create consignment", variant: "destructive" });
-                                }
-                              }}
+                              onClick={() => handlePushToSteadfast(order)}
                             >
                               Push to Steadfast
                             </DropdownMenuItem>
@@ -602,6 +632,36 @@ export default function Orders() {
                 </div>
               </div>
             )}
+          </DialogContent>
+        </Dialog>
+        {/* Steadfast Re-push Dialog */}
+        <Dialog open={pushDialogOpen} onOpenChange={setPushDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Order already pushed to Steadfast</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-2 text-sm">
+              <p>This order has already been pushed to Steadfast.</p>
+              {existingShipment && (
+                <div className="space-y-1">
+                  <p>Parcel ID: <strong>{existingShipment.consignment_id || '—'}</strong></p>
+                  {existingShipment.tracking_code && (
+                    <p>
+                      Tracking: <a href={steadfastTrackUrl(existingShipment.tracking_code)} target="_blank" rel="noopener noreferrer" className="text-primary underline">
+                        {existingShipment.tracking_code}
+                      </a>
+                    </p>
+                  )}
+                </div>
+              )}
+              <p>Do you want to push it again?</p>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setPushDialogOpen(false)}>Cancel</Button>
+              <Button onClick={() => { setPushDialogOpen(false); orderToPush && handlePushToSteadfast(orderToPush, true); }} disabled={pushing}>
+                {pushing ? "Pushing..." : "Push Again"}
+              </Button>
+            </div>
           </DialogContent>
         </Dialog>
         <InvoiceDialog open={invoiceOpen} onOpenChange={setInvoiceOpen} data={invoiceData} />

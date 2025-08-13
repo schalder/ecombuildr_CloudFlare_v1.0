@@ -101,6 +101,49 @@ Deno.serve(async (req: Request) => {
     const recipient_address = buildRecipientAddress(order);
     const note = order.notes || null;
 
+    // Load order items to build item_description and total_lot
+    const { data: items, error: itemsErr } = await supabase
+      .from('order_items')
+      .select('product_name, quantity, variation')
+      .eq('order_id', order_id);
+
+    if (itemsErr) {
+      console.error('Error loading order items:', itemsErr);
+    }
+
+    function formatVariant(variation: any): string {
+      try {
+        if (!variation) return '';
+        const source = variation && typeof variation === 'object' && !Array.isArray(variation) && (variation as any).options
+          ? (variation as any).options
+          : variation;
+        if (source && typeof source === 'object' && !Array.isArray(source)) {
+          const entries = Object.entries(source).filter(([_, v]) => v !== undefined && v !== null && v !== '');
+          if (!entries.length) return '';
+          return entries.map(([k, v]) => `${k}: ${String(v)}`).join(', ');
+        }
+        if (Array.isArray(source)) {
+          return source.map(String).join(', ');
+        }
+        return String(source);
+      } catch {
+        return '';
+      }
+    }
+
+    function nameWithVariant(name: string, variation?: any): string {
+      const v = formatVariant(variation);
+      return v ? `${name} — ${v}` : name;
+    }
+
+    const item_description = Array.isArray(items)
+      ? items.map((it: any) => `${nameWithVariant(it.product_name, it.variation)} x${Number(it.quantity || 0)}`).join('; ')
+      : null;
+
+    const total_lot = Array.isArray(items)
+      ? items.reduce((sum: number, it: any) => sum + Number(it.quantity || 0), 0)
+      : 0;
+
     // If prepaid (not COD), set cod_amount = 0; else include order.total
     const isCOD = (order.payment_method || 'cod') === 'cod';
     const totalNum = Number(order.total || 0);
@@ -114,7 +157,9 @@ Deno.serve(async (req: Request) => {
       cod_amount,
       note,
       delivery_type: 0, // default to home delivery
-      // optional fields (not provided here): alternative_phone, recipient_email, item_description, total_lot
+      // optional fields: alternative_phone, recipient_email, item_description, total_lot
+      item_description,
+      total_lot,
     };
 
     console.log('Steadfast create_order payload:', payload);
