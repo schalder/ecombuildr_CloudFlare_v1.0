@@ -30,7 +30,7 @@ const [account, setAccount] = useState<Account>({
   settings: { webhook_token: "" },
 });
   const [recordId, setRecordId] = useState<string | undefined>(undefined);
-  const directWebhookUrl = "https://fhqwacmokbtbspkxjixf.functions.supabase.co/steadfast-webhook";
+  
   const customWebhookUrl = typeof window !== "undefined" ? `${window.location.origin}/steadfast-webhook` : "/steadfast-webhook";
   const generateToken = () => {
     try {
@@ -85,6 +85,16 @@ const [account, setAccount] = useState<Account>({
       toast({
         title: "Missing fields",
         description: "Please provide both API Key and Secret Key.",
+        variant: "destructive",
+      });
+      setSaving(false);
+      return;
+    }
+
+    if (account.is_active && !account.settings?.webhook_token) {
+      toast({
+        title: "Webhook token required",
+        description: "Please generate or enter a webhook token when enabling the integration.",
         variant: "destructive",
       });
       setSaving(false);
@@ -223,15 +233,7 @@ const [account, setAccount] = useState<Account>({
                   <Input id="steadfast_webhook_url_custom" readOnly value={customWebhookUrl} />
                   <Button type="button" variant="outline" onClick={() => navigator.clipboard.writeText(customWebhookUrl)}>Copy</Button>
                 </div>
-                <p className="text-xs text-muted-foreground">Works via Netlify proxy on your domain.</p>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="steadfast_webhook_url_direct">Direct URL (Supabase)</Label>
-                <div className="flex gap-2">
-                  <Input id="steadfast_webhook_url_direct" readOnly value={directWebhookUrl} />
-                  <Button type="button" variant="outline" onClick={() => navigator.clipboard.writeText(directWebhookUrl)}>Copy</Button>
-                </div>
-                <p className="text-xs text-muted-foreground">Use this if the custom domain proxy is not available.</p>
+                <p className="text-xs text-muted-foreground">Set this URL in your Steadfast dashboard.</p>
               </div>
             </div>
           </div>
