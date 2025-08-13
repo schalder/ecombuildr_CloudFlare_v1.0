@@ -58,13 +58,12 @@ export const DomainRouter: React.FC<DomainRouterProps> = ({ children }) => {
         // Get the current path
         const currentPath = window.location.pathname;
         
-        // Look for exact path match first, then homepage
+        // Look for any website connection for this domain (catch-all)
         const { data: connection, error: connectionError } = await supabase
           .from('domain_connections')
           .select('*')
           .eq('domain_id', domain.id)
-          .or(`path.eq.${currentPath},and(path.eq./,is_homepage.eq.true)`)
-          .order('path', { ascending: false }) // Exact path matches first
+          .eq('content_type', 'website')
           .limit(1)
           .maybeSingle();
           
@@ -101,12 +100,11 @@ export const DomainRouter: React.FC<DomainRouterProps> = ({ children }) => {
   
   // Render content based on type
   if (domainContent.content_type === 'website') {
-    // Render the actual website content
+    // Render the entire website with all its routes
     return (
       <DomainWebsiteRenderer 
         websiteId={domainContent.content_id}
-        path={domainContent.path}
-        isHomepage={domainContent.is_homepage}
+        customDomain={customDomain.domain}
       />
     );
   }

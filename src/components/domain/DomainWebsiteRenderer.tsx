@@ -1,11 +1,11 @@
-import React from 'react';
-import { Loader2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { Loader2 } from 'lucide-react';
 import { useStore } from '@/contexts/StoreContext';
 import { WebsiteHeader } from '@/components/storefront/WebsiteHeader';
 import { WebsiteFooter } from '@/components/storefront/WebsiteFooter';
-import { setGlobalCurrency } from '@/lib/currency';
-import { PageBuilderRenderer } from '@/components/storefront/PageBuilderRenderer';
+import { DomainWebsiteRouter } from './DomainWebsiteRouter';
 
 interface WebsiteData {
   id: string;
@@ -16,92 +16,75 @@ interface WebsiteData {
   is_active: boolean;
   store_id: string;
   settings?: any;
-}
-
-interface WebsitePageData {
-  id: string;
-  title: string;
-  slug: string;
-  meta_description?: string;
-  content: any;
-  is_published: boolean;
-  is_homepage: boolean;
+  stores?: any;
 }
 
 interface DomainWebsiteRendererProps {
   websiteId: string;
-  path: string;
-  isHomepage: boolean;
+  customDomain: string;
 }
 
 export const DomainWebsiteRenderer: React.FC<DomainWebsiteRendererProps> = ({ 
   websiteId, 
-  path, 
-  isHomepage 
+  customDomain 
 }) => {
-  const [website, setWebsite] = React.useState<WebsiteData | null>(null);
-  const [page, setPage] = React.useState<WebsitePageData | null>(null);
-  const [loading, setLoading] = React.useState(true);
-  const [error, setError] = React.useState<string | null>(null);
-  const { store, loadStoreById } = useStore();
+  const [website, setWebsite] = useState<WebsiteData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const { loadStoreById } = useStore();
 
-  React.useEffect(() => {
+  useEffect(() => {
     const fetchWebsiteData = async () => {
       try {
-        setLoading(true);
-        
         // Fetch website data
         const { data: websiteData, error: websiteError } = await supabase
           .from('websites')
           .select('*')
           .eq('id', websiteId)
+          .eq('is_published', true)
           .eq('is_active', true)
           .single();
 
-        if (websiteError) throw websiteError;
-        
-        setWebsite(websiteData);
-        
-        // Load the store
-        if (websiteData.store_id) {
-          await loadStoreById(websiteData.store_id);
+        if (websiteError) {
+          throw websiteError;
         }
 
-        // Fetch page content
-        let pageQuery = supabase
-          .from('website_pages')
+        // Fetch the related store data
+        const { data: storeData, error: storeError } = await supabase
+          .from('stores')
           .select('*')
-          .eq('website_id', websiteId)
-          .eq('is_published', true);
+          .eq('id', websiteData.store_id)
+          .eq('is_active', true)
+          .single();
 
-        if (isHomepage || path === '/') {
-          pageQuery = pageQuery.eq('is_homepage', true);
-        } else {
-          pageQuery = pageQuery.eq('slug', path.replace('/', ''));
+        if (storeError) {
+          throw storeError;
         }
 
-        const { data: pageData, error: pageError } = await pageQuery.maybeSingle();
-        
-        if (pageError) throw pageError;
-        
-        setPage(pageData);
-        
-        // Set global currency if store has settings
-        if (store?.settings?.currency) {
-          setGlobalCurrency(store.settings.currency);
+        // Combine the data
+        const combinedWebsiteData = {
+          ...websiteData,
+          stores: storeData
+        };
+
+        setWebsite(combinedWebsiteData as WebsiteData);
+
+        // Load the store into context
+        if (storeData) {
+          await loadStoreById(storeData.id);
         }
-        
-      } catch (err) {
-        console.error('Error loading website data:', err);
-        setError(err instanceof Error ? err.message : 'Unknown error');
+      } catch (error) {
+        console.error('Error fetching website data:', error);
+        setError('Failed to load website');
       } finally {
         setLoading(false);
       }
     };
 
     fetchWebsiteData();
-  }, [websiteId, path, isHomepage, loadStoreById, store?.settings?.currency]);
+  }, [websiteId, loadStoreById]);
 
+  // Show loading while fetching data
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -110,6 +93,7 @@ export const DomainWebsiteRenderer: React.FC<DomainWebsiteRendererProps> = ({
     );
   }
 
+  // Show error if website not found or error occurred
   if (error || !website) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -124,31 +108,30 @@ export const DomainWebsiteRenderer: React.FC<DomainWebsiteRendererProps> = ({
   }
 
   // Set CSS variables for primary/secondary colors if store has them
-  const primaryColor = store?.settings?.primary_color;
-  const secondaryColor = store?.settings?.secondary_color;
+  const storeData = website.stores;
+  const primaryColor = storeData?.primary_color;
+  const secondaryColor = storeData?.secondary_color;
+  
+  const styles: React.CSSProperties = {};
+  if (primaryColor) styles['--primary' as any] = primaryColor;
+  if (secondaryColor) styles['--secondary' as any] = secondaryColor;
 
+  // Render the website with full routing
   return (
     <div 
       className="min-h-screen bg-background text-foreground"
-      style={{
-        ...(primaryColor && { '--primary': primaryColor }),
-        ...(secondaryColor && { '--secondary': secondaryColor }),
-      } as React.CSSProperties}
+      style={styles}
     >
-      <WebsiteHeader website={website} />
-      <main>
-        {page?.content ? (
-          <PageBuilderRenderer data={page.content} />
-        ) : (
-          <div className="container mx-auto py-8">
-            <h1 className="text-2xl font-bold mb-4">{website.name}</h1>
-            <p className="text-muted-foreground">
-              {isHomepage ? 'Welcome to our homepage!' : `Page: ${path}`}
-            </p>
-          </div>
-        )}
-      </main>
-      <WebsiteFooter website={website} />
+      <BrowserRouter>
+        <WebsiteHeader website={website} />
+        <main>
+          <DomainWebsiteRouter 
+            websiteId={websiteId} 
+            customDomain={customDomain} 
+          />
+        </main>
+        <WebsiteFooter website={website} />
+      </BrowserRouter>
     </div>
   );
 };
