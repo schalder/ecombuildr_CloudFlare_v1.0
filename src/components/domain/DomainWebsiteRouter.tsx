@@ -7,6 +7,8 @@ import { OrderConfirmation } from '@/pages/storefront/OrderConfirmation';
 import { WebsiteOverrideRoute } from '@/pages/storefront/WebsiteOverrideRoute';
 import { WebsiteProductDetailRoute } from '@/pages/storefront/WebsiteProductDetailRoute';
 import { SearchResults } from '@/pages/storefront/SearchResults';
+import { StorefrontHome } from '@/pages/storefront/StorefrontHome';
+import { StorefrontProducts } from '@/pages/storefront/StorefrontProducts';
 
 const DynamicWebsiteRoute: React.FC<{ fallback: React.ReactElement; websiteId: string }> = ({ fallback, websiteId }) => {
   const { slug } = useParams<{ slug: string }>();
@@ -29,7 +31,7 @@ export const DomainWebsiteRouter: React.FC<DomainWebsiteRouterProps> = ({
         <WebsiteOverrideRoute 
           slug="home" 
           websiteId={websiteId}
-          fallback={<div className="min-h-screen flex items-center justify-center">Page not found</div>} 
+          fallback={<StorefrontHome />} 
         />
       } />
       
@@ -38,7 +40,7 @@ export const DomainWebsiteRouter: React.FC<DomainWebsiteRouterProps> = ({
         <WebsiteOverrideRoute 
           slug="products" 
           websiteId={websiteId}
-          fallback={<div className="min-h-screen flex items-center justify-center">Products page not found</div>} 
+          fallback={<StorefrontProducts />} 
         />
       } />
       <Route path="/products/:productSlug" element={<WebsiteProductDetailRoute />} />
@@ -48,14 +50,14 @@ export const DomainWebsiteRouter: React.FC<DomainWebsiteRouterProps> = ({
         <WebsiteOverrideRoute 
           slug="cart" 
           websiteId={websiteId}
-          fallback={<div className="min-h-screen flex items-center justify-center">Cart page not found</div>} 
+          fallback={<CartPage />} 
         />
       } />
       <Route path="/checkout" element={
         <WebsiteOverrideRoute 
           slug="checkout" 
           websiteId={websiteId}
-          fallback={<div className="min-h-screen flex items-center justify-center">Checkout page not found</div>} 
+          fallback={<CheckoutPage />} 
         />
       } />
       <Route path="/payment-processing" element={<PaymentProcessing />} />
@@ -63,7 +65,7 @@ export const DomainWebsiteRouter: React.FC<DomainWebsiteRouterProps> = ({
         <WebsiteOverrideRoute 
           slug="order-confirmation" 
           websiteId={websiteId}
-          fallback={<div className="min-h-screen flex items-center justify-center">Order confirmation page not found</div>} 
+          fallback={<OrderConfirmation />} 
         />
       } />
       
