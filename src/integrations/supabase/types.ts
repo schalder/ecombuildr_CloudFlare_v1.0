@@ -293,6 +293,7 @@ export type Database = {
         Row: {
           created_at: string
           dns_configured: boolean
+          dns_verified_at: string | null
           domain: string
           id: string
           is_verified: boolean
@@ -300,11 +301,13 @@ export type Database = {
           ssl_status: string | null
           store_id: string
           updated_at: string
+          verification_attempts: number
           verification_token: string | null
         }
         Insert: {
           created_at?: string
           dns_configured?: boolean
+          dns_verified_at?: string | null
           domain: string
           id?: string
           is_verified?: boolean
@@ -312,11 +315,13 @@ export type Database = {
           ssl_status?: string | null
           store_id: string
           updated_at?: string
+          verification_attempts?: number
           verification_token?: string | null
         }
         Update: {
           created_at?: string
           dns_configured?: boolean
+          dns_verified_at?: string | null
           domain?: string
           id?: string
           is_verified?: boolean
@@ -324,6 +329,7 @@ export type Database = {
           ssl_status?: string | null
           store_id?: string
           updated_at?: string
+          verification_attempts?: number
           verification_token?: string | null
         }
         Relationships: []
