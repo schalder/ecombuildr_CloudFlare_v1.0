@@ -22,6 +22,8 @@ interface Website {
   slug: string;
   description?: string;
   domain?: string;
+  canonical_domain?: string;
+  connected_domain?: string;
   is_active: boolean;
   is_published: boolean;
   settings: any;
@@ -54,14 +56,33 @@ const WebsiteManagement = () => {
   const { data: website, isLoading } = useQuery({
     queryKey: ['website', id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // First get the website data
+      const { data: websiteData, error: websiteError } = await supabase
         .from('websites')
         .select('*')
         .eq('id', id)
         .single();
       
-      if (error) throw error;
-      return data as Website;
+      if (websiteError) throw websiteError;
+
+      // Then get domain connection if any
+      const { data: connectionData, error: connectionError } = await supabase
+        .from('domain_connections')
+        .select(`
+          content_id,
+          custom_domains (domain)
+        `)
+        .eq('content_type', 'website')
+        .eq('content_id', id)
+        .maybeSingle();
+
+      // Add connected domain info (ignore connection errors as domain might not be connected)
+      const connectedDomain = (connectionData?.custom_domains as any)?.domain || websiteData.canonical_domain || null;
+      
+      return {
+        ...websiteData,
+        connected_domain: connectedDomain
+      } as Website;
     },
     enabled: !!id,
   });
@@ -310,7 +331,12 @@ const WebsiteManagement = () => {
                           <div className="flex items-start justify-between mb-2">
                             <div className="flex-1 min-w-0">
                               <h3 className="font-medium truncate">{page.title}</h3>
-                              <p className="text-sm text-muted-foreground">/{page.slug}</p>
+                              <p className="text-sm text-muted-foreground">
+                                {website?.connected_domain || website?.canonical_domain
+                                  ? `https://${website.connected_domain || website.canonical_domain}${page.is_homepage ? '' : `/${page.slug}`}`
+                                  : `/${page.slug}`
+                                }
+                              </p>
                             </div>
                             <button
                               className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity"
@@ -335,7 +361,8 @@ const WebsiteManagement = () => {
                               size="sm"
                               aria-label="Visit page"
                               onClick={() => {
-                                const base = website?.domain ? `https://${website.domain}` : `/site/${website?.slug}`;
+                                const connectedDomain = website?.connected_domain || website?.canonical_domain;
+                                const base = connectedDomain ? `https://${connectedDomain}` : `/site/${website?.slug}`;
                                 const needsOrderId = page.slug === 'order-confirmation' || page.slug === 'payment-processing';
                                 const url = page.is_homepage ? `${base}` : `${base}/${page.slug}${needsOrderId ? '?orderId=demo' : ''}`;
                                 if (!page.is_published) {
