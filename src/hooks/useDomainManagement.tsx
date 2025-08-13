@@ -106,28 +106,63 @@ export const useDomainManagement = () => {
   const addDomain = async (domain: string) => {
     if (!store?.id) throw new Error('No store found');
 
-    // Add domain to database only - manual setup approach
-    const { data, error } = await supabase
-      .from('custom_domains')
-      .insert({
-        domain: domain.toLowerCase(),
-        store_id: store.id,
-        verification_token: crypto.randomUUID()
-      })
-      .select()
-      .single();
+    const cleanDomain = domain.toLowerCase();
 
-    if (error) throw error;
+    try {
+      // Try automatic Netlify integration first
+      toast({
+        title: "Setting up domain",
+        description: `Adding ${cleanDomain} to Netlify automatically...`,
+      });
 
-    // Provide user with manual setup instructions
-    toast({
-      title: "Domain added successfully",
-      description: `${domain} has been added. Please follow the DNS setup instructions to complete configuration.`,
-    });
+      const { data: result, error: netlifyError } = await supabase.functions.invoke(
+        'netlify-domain-manager',
+        {
+          body: {
+            action: 'add',
+            domain: cleanDomain,
+            storeId: store.id
+          }
+        }
+      );
 
-    await fetchDomains();
-    
-    return data;
+      if (!netlifyError && result?.success) {
+        toast({
+          title: "Domain added successfully",
+          description: `${cleanDomain} has been added to Netlify. DNS and SSL will be configured automatically.`,
+        });
+        await fetchDomains();
+        return result.domain;
+      }
+
+      // Fallback to manual setup if automatic fails
+      console.log('Automatic Netlify setup failed, falling back to manual:', netlifyError);
+      
+      const { data, error } = await supabase
+        .from('custom_domains')
+        .insert({
+          domain: cleanDomain,
+          store_id: store.id,
+          verification_token: crypto.randomUUID()
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      toast({
+        title: "Domain added (manual setup required)",
+        description: `${cleanDomain} has been added. Please follow the setup instructions to complete configuration.`,
+        variant: "default"
+      });
+
+      await fetchDomains();
+      return data;
+
+    } catch (error) {
+      console.error('Domain addition failed:', error);
+      throw error;
+    }
   };
 
   const removeDomain = async (domainId: string) => {
