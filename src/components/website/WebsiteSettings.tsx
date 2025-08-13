@@ -13,6 +13,10 @@ import { Separator } from '@/components/ui/separator';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useDomainManagement } from '@/hooks/useDomainManagement';
+import { Badge } from '@/components/ui/badge';
+import { Link } from 'react-router-dom';
+import { ExternalLink, CheckCircle2, AlertCircle } from 'lucide-react';
 
 const websiteSettingsSchema = z.object({
   name: z.string().min(1, 'Website name is required'),
@@ -60,13 +64,30 @@ type ShippingSettings = {
 export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { 
+    domains, 
+    connections, 
+    loading: domainsLoading, 
+    connectContent, 
+    removeConnection 
+  } = useDomainManagement();
+
+  // Find connected domain for this website
+  const connectedDomain = React.useMemo(() => {
+    const connection = connections.find(c => 
+      c.content_type === 'website' && 
+      c.content_id === website.id
+    );
+    if (!connection) return null;
+    return domains.find(d => d.id === connection.domain_id) || null;
+  }, [connections, domains, website.id]);
 
   const form = useForm<WebsiteSettingsForm>({
     resolver: zodResolver(websiteSettingsSchema),
     defaultValues: {
       name: website.name || '',
       description: website.description || '',
-      domain: (website as any).domain || '',
+      domain: connectedDomain?.domain || '',
       is_published: website.is_published,
       is_active: website.is_active,
       favicon_url: website.settings?.favicon_url || '',
@@ -77,9 +98,15 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
       seo_description: (website as any).seo_description || '',
       og_image: (website as any).og_image || '',
       meta_robots: (website as any).meta_robots || 'index, follow',
-      canonical_domain: (website as any).canonical_domain || (website as any).domain || '',
+      canonical_domain: (website as any).canonical_domain || connectedDomain?.domain || '',
     },
   });
+
+  // Update form when connected domain changes
+  React.useEffect(() => {
+    form.setValue('domain', connectedDomain?.domain || '');
+    form.setValue('canonical_domain', connectedDomain?.domain || '');
+  }, [connectedDomain, form]);
 
   const [pages, setPages] = React.useState<{ id: string; title: string; slug: string; is_published: boolean }[]>([]);
   const [loadingPages, setLoadingPages] = React.useState(false);
@@ -111,7 +138,7 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
 
   const updateWebsiteMutation = useMutation({
     mutationFn: async (data: WebsiteSettingsForm) => {
-      const { favicon_url, header_tracking_code, footer_tracking_code, currency_code, ...basicFields } = data;
+      const { favicon_url, header_tracking_code, footer_tracking_code, currency_code, domain, ...basicFields } = data;
       
       const settings = {
         ...website.settings,
@@ -126,16 +153,7 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
         shipping: shippingSettings,
       };
 
-      // First, get the website's store_id
-      const { data: websiteData } = await supabase
-        .from('websites')
-        .select('store_id')
-        .eq('id', website.id)
-        .single();
-
-      if (!websiteData) throw new Error('Website not found');
-
-      // Update the website
+      // Update the website settings first
       const { error } = await supabase
         .from('websites')
         .update({
@@ -147,54 +165,31 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
       
       if (error) throw error;
 
-      // Handle domain connection if domain is provided
-      if (data.domain && data.domain.trim()) {
-        const domain = data.domain.trim();
-        
-        // Check if custom domain already exists
-        const { data: existingDomain, error: domainError } = await supabase
-          .from('custom_domains')
-          .select('*')
-          .eq('domain', domain)
-          .eq('store_id', websiteData.store_id)
-          .maybeSingle();
+      // Handle domain connection changes
+      const currentConnection = connections.find(c => 
+        c.content_type === 'website' && 
+        c.content_id === website.id
+      );
 
-        let domainId: string;
-
-        if (existingDomain) {
-          domainId = existingDomain.id;
-        } else {
-          // Create new custom domain entry
-          const { data: newDomain, error: createDomainError } = await supabase
-            .from('custom_domains')
-            .insert({
-              domain,
-              store_id: websiteData.store_id,
-              is_verified: false,
-              dns_configured: false,
-            })
-            .select()
-            .single();
-
-          if (createDomainError) throw createDomainError;
-          domainId = newDomain.id;
+      // If user selected "none" or empty domain, remove existing connection
+      if (!domain || domain === 'none') {
+        if (currentConnection) {
+          await removeConnection(currentConnection.id);
         }
-
-        // Create or update domain connection
-        const { error: connectionError } = await supabase
-          .from('domain_connections')
-          .upsert({
-            domain_id: domainId,
-            store_id: websiteData.store_id,
-            content_type: 'website',
-            content_id: website.id,
-            path: '/',
-            is_homepage: true,
-          }, {
-            onConflict: 'domain_id,path'
-          });
-
-        if (connectionError) throw connectionError;
+      } else {
+        // User selected a domain
+        const selectedDomain = domains.find(d => d.domain === domain);
+        if (selectedDomain) {
+          // If there's an existing connection to a different domain, remove it first
+          if (currentConnection && currentConnection.domain_id !== selectedDomain.id) {
+            await removeConnection(currentConnection.id);
+          }
+          
+          // Create new connection if needed
+          if (!currentConnection || currentConnection.domain_id !== selectedDomain.id) {
+            await connectContent(selectedDomain.id, 'website', website.id, '/', true);
+          }
+        }
       }
     },
     onSuccess: () => {
@@ -331,18 +326,89 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
               <FormField
                 control={form.control}
                 name="domain"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Custom Domain</FormLabel>
-                    <FormControl>
-                      <Input placeholder="www.mywebsite.com" {...field} />
-                    </FormControl>
-                    <FormDescription>
-                      Optional custom domain for your website.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                render={({ field }) => {
+                  const verifiedDomains = domains.filter(d => d.is_verified && d.dns_configured);
+                  const selectedDomain = verifiedDomains.find(d => d.domain === field.value);
+                  
+                  return (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2">
+                        Custom Domain
+                        {selectedDomain && (
+                          <Badge variant="outline" className="flex items-center gap-1">
+                            <CheckCircle2 className="h-3 w-3 text-green-600" />
+                            Connected
+                          </Badge>
+                        )}
+                      </FormLabel>
+                      <FormControl>
+                        <Select value={field.value || 'none'} onValueChange={field.onChange} disabled={domainsLoading}>
+                          <SelectTrigger>
+                            <SelectValue placeholder={domainsLoading ? "Loading domains..." : "Select a domain"} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">None (no custom domain)</SelectItem>
+                            {verifiedDomains.length > 0 ? (
+                              verifiedDomains.map(domain => {
+                                const isConnectedElsewhere = connections.some(c => 
+                                  c.domain_id === domain.id && 
+                                  c.content_id !== website.id
+                                );
+                                return (
+                                  <SelectItem 
+                                    key={domain.id} 
+                                    value={domain.domain}
+                                    disabled={isConnectedElsewhere}
+                                  >
+                                    <div className="flex items-center gap-2">
+                                      <span>{domain.domain}</span>
+                                      {domain.ssl_status === 'issued' && (
+                                        <CheckCircle2 className="h-3 w-3 text-green-600" />
+                                      )}
+                                      {isConnectedElsewhere && (
+                                        <Badge variant="secondary" className="text-xs">
+                                          In Use
+                                        </Badge>
+                                      )}
+                                    </div>
+                                  </SelectItem>
+                                );
+                              })
+                            ) : (
+                              <div className="px-2 py-3 text-sm text-muted-foreground">
+                                No verified domains available
+                              </div>
+                            )}
+                            <div className="border-t mt-2 pt-2">
+                              <Link to="/dashboard/domains">
+                                <SelectItem value="manage" className="text-primary cursor-pointer">
+                                  <div className="flex items-center gap-2">
+                                    <ExternalLink className="h-3 w-3" />
+                                    <span>Manage Domains</span>
+                                  </div>
+                                </SelectItem>
+                              </Link>
+                            </div>
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
+                      <FormDescription>
+                        {verifiedDomains.length === 0 ? (
+                          <span>
+                            No verified domains available.{' '}
+                            <Link to="/dashboard/domains" className="text-primary hover:underline">
+                              Add and verify a domain first
+                            </Link>
+                            .
+                          </span>
+                        ) : (
+                          'Select a verified domain to connect to this website.'
+                        )}
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  );
+                }}
               />
 
               <FormField
