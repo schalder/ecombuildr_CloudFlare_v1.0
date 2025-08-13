@@ -129,7 +129,7 @@ export const useDomainManagement = () => {
       if (!netlifyError && result?.success) {
         toast({
           title: "Domain added successfully",
-          description: `${cleanDomain} has been added to Netlify. DNS and SSL will be configured automatically.`,
+          description: `${cleanDomain} has been added to Netlify. DNS configuration will be set up automatically.`,
         });
         await fetchDomains();
         return result.domain;
@@ -138,6 +138,12 @@ export const useDomainManagement = () => {
       // Fallback to manual setup if automatic fails
       console.log('Automatic Netlify setup failed, falling back to manual:', netlifyError);
       
+      toast({
+        title: "Auto setup failed",
+        description: "Setting up domain manually. You'll need to configure DNS settings.",
+        variant: "destructive",
+      });
+
       const { data, error } = await supabase
         .from('custom_domains')
         .insert({

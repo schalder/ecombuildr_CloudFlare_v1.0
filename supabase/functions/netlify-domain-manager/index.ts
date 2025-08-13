@@ -77,7 +77,7 @@ Deno.serve(async (req) => {
       case 'add':
         console.log(`Adding domain ${domain} to Netlify site: ${netlifySiteId}`)
         
-        // First, let's verify the site exists by checking site info
+        // First, verify the site exists by checking site info
         const siteCheckResponse = await fetch(
           `https://api.netlify.com/api/v1/sites/${netlifySiteId}`,
           {
@@ -97,41 +97,79 @@ Deno.serve(async (req) => {
         const siteInfo = await siteCheckResponse.json()
         console.log(`Site verified: ${siteInfo.name} (${siteInfo.url})`)
 
-        // Add domain to Netlify
-        const addResponse = await fetch(
-          `https://api.netlify.com/api/v1/sites/${netlifySiteId}/domains`,
+        // Create or update domain in database first
+        const { data: domainRecord, error: domainError } = await supabase
+          .from('custom_domains')
+          .upsert({
+            domain,
+            store_id: storeId,
+            verification_token: crypto.randomUUID(),
+            ssl_status: 'provisioning',
+            dns_configured: false,
+            is_verified: false,
+            last_checked_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          }, {
+            onConflict: 'domain,store_id'
+          })
+          .select()
+          .single()
+
+        if (domainError) {
+          console.error('Failed to create domain record:', domainError)
+          throw new Error(`Failed to create domain record: ${domainError.message}`)
+        }
+
+        console.log('Domain record created/updated:', domainRecord)
+
+        // Add custom domain to Netlify using the updateSite endpoint
+        const updateSiteResponse = await fetch(
+          `https://api.netlify.com/api/v1/sites/${netlifySiteId}`,
           {
-            method: 'POST',
+            method: 'PATCH',
             headers: netlifyHeaders,
-            body: JSON.stringify({ name: domain }),
+            body: JSON.stringify({ 
+              custom_domain: domain,
+              force_ssl: true 
+            }),
           }
         )
 
-        const responseText = await addResponse.text()
-        console.log(`Netlify add domain response status: ${addResponse.status}`)
-        console.log(`Netlify add domain response: ${responseText}`)
+        const responseText = await updateSiteResponse.text()
+        console.log(`Netlify update site response status: ${updateSiteResponse.status}`)
+        console.log(`Netlify update site response: ${responseText}`)
 
-        if (!addResponse.ok) {
-          console.error('Netlify add domain error:', responseText)
-          // Don't throw error if domain already exists (409 conflict)
-          if (addResponse.status !== 409) {
-            throw new Error(`Failed to add domain to Netlify (${addResponse.status}): ${responseText}`)
-          }
+        if (!updateSiteResponse.ok) {
+          console.error('Netlify update site error:', responseText)
+          // Update database with error status
+          await supabase
+            .from('custom_domains')
+            .update({
+              ssl_status: 'error',
+              last_checked_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            })
+            .eq('domain', domain)
+            .eq('store_id', storeId)
+            
+          throw new Error(`Failed to add custom domain to Netlify (${updateSiteResponse.status}): ${responseText}`)
         }
 
-        let domainData = {}
+        let siteData = {}
         try {
-          domainData = JSON.parse(responseText)
+          siteData = JSON.parse(responseText)
         } catch (e) {
           console.error('Failed to parse Netlify response as JSON:', e)
         }
-        console.log('Domain processed in Netlify:', domainData)
+        console.log('Site updated with custom domain:', siteData)
 
-        // Update database with Netlify status
+        // Update database with success status
         const { error: updateError } = await supabase
           .from('custom_domains')
           .update({
             ssl_status: 'provisioning',
+            dns_configured: false,
+            is_verified: false,
             last_checked_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           })
@@ -142,7 +180,7 @@ Deno.serve(async (req) => {
           console.error('Failed to update domain status:', updateError)
         }
 
-        result = { success: true, netlifyData: domainData }
+        result = { success: true, netlifyData: siteData, domain: domainRecord }
         break
 
       case 'remove':
