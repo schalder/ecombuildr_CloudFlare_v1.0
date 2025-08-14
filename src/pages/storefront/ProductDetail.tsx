@@ -57,7 +57,13 @@ export const ProductDetail: React.FC = () => {
   const { addItem } = useCart();
   const navigate = useNavigate();
   const paths = useEcomPaths();
-  const isWebsiteContext = Boolean(websiteId || websiteSlug);
+  
+  // Detect if we're in a website context (either system domain or custom domain)
+  const isCustomDomain = () => {
+    const currentHost = window.location.hostname;
+    return !(currentHost === 'ecombuildr.com' || currentHost === 'localhost' || currentHost.includes('lovable.app'));
+  };
+  const isWebsiteContext = Boolean(websiteId || websiteSlug || isCustomDomain());
   
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
