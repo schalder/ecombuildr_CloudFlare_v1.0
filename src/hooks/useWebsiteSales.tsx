@@ -61,15 +61,20 @@ export function useWebsiteSales(websiteId: string, timeRange: string = '30d'): U
     try {
       setLoading(true);
       setError(null);
+      console.log('Fetching sales data for website:', websiteId);
 
       // Get website info to find store_id
       const { data: website, error: websiteError } = await supabase
         .from('websites')
         .select('store_id')
         .eq('id', websiteId)
-        .single();
+        .maybeSingle();
 
       if (websiteError) throw websiteError;
+      if (!website) {
+        throw new Error('Website not found');
+      }
+      console.log('Website found, store_id:', website.store_id);
 
       // Calculate date range
       const endDate = new Date();
@@ -102,6 +107,7 @@ export function useWebsiteSales(websiteId: string, timeRange: string = '30d'): U
         .order('created_at', { ascending: false });
 
       if (ordersError) throw ordersError;
+      console.log('Orders found:', orders?.length || 0);
 
       // Get website analytics for visitor data (for conversion rate)
       const { data: analytics, error: analyticsError } = await supabase
@@ -112,9 +118,11 @@ export function useWebsiteSales(websiteId: string, timeRange: string = '30d'): U
         .lte('date', endDate.toISOString().split('T')[0]);
 
       if (analyticsError && analyticsError.code !== 'PGRST116') throw analyticsError;
+      console.log('Analytics found:', analytics?.length || 0);
 
       // Process the data
       const processedData = processSalesData(orders || [], analytics || []);
+      console.log('Processed sales data:', processedData);
       setSalesData(processedData);
 
     } catch (err: any) {
