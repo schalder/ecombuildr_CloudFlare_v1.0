@@ -150,12 +150,12 @@ export const DomainWebsiteProductDetailRoute: React.FC<DomainWebsiteProductDetai
   if (!page) return <ProductDetail />;
 
   return (
-    <main>
+    <>
       {page.content?.sections ? (
         <PageBuilderRenderer data={page.content} />
       ) : (
         <ProductDetail />
       )}
-    </main>
+    </>
   );
 };
