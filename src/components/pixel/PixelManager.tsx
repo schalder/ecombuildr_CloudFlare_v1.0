@@ -1,12 +1,19 @@
 import { useEffect } from 'react';
 import { usePixelTracking } from '@/hooks/usePixelTracking';
 
-interface PixelManagerProps {
-  children: React.ReactNode;
+interface PixelConfig {
+  facebookPixelId?: string;
+  googleAnalyticsId?: string;
+  googleAdsId?: string;
 }
 
-export const PixelManager: React.FC<PixelManagerProps> = ({ children }) => {
-  const { trackPageView } = usePixelTracking();
+interface PixelManagerProps {
+  children: React.ReactNode;
+  websitePixels?: PixelConfig;
+}
+
+export const PixelManager: React.FC<PixelManagerProps> = ({ children, websitePixels }) => {
+  const { trackPageView } = usePixelTracking(websitePixels);
 
   // Track page view on mount and route changes
   useEffect(() => {

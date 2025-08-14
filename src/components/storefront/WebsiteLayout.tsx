@@ -130,8 +130,15 @@ export const WebsiteLayout: React.FC = () => {
     );
   }
 
+  // Extract pixel IDs from website settings
+  const websitePixels = React.useMemo(() => ({
+    facebookPixelId: (website as any)?.settings?.facebook_pixel_id,
+    googleAnalyticsId: (website as any)?.settings?.google_analytics_id,
+    googleAdsId: (website as any)?.settings?.google_ads_id,
+  }), [website]);
+
   return (
-    <PixelManager>
+    <PixelManager websitePixels={websitePixels}>
       <div className="min-h-screen flex flex-col bg-background">
         <style>{`
           :root {

@@ -33,7 +33,13 @@ declare global {
   }
 }
 
-export const usePixelTracking = () => {
+interface PixelConfig {
+  facebookPixelId?: string;
+  googleAnalyticsId?: string;
+  googleAdsId?: string;
+}
+
+export const usePixelTracking = (websitePixels?: PixelConfig) => {
   const { store } = useStore();
   const sessionId = useRef<string>();
   const pixelsLoaded = useRef<Set<string>>(new Set());
@@ -99,24 +105,25 @@ export const usePixelTracking = () => {
     console.log('Google Analytics loaded:', trackingId);
   };
 
-  // Load pixels when store changes
+  // Load pixels when store or websitePixels change
   useEffect(() => {
-    if (!store) return;
+    // Prioritize website pixels over store pixels
+    const facebookPixelId = websitePixels?.facebookPixelId || store?.facebook_pixel_id;
+    const googleAnalyticsId = websitePixels?.googleAnalyticsId || store?.google_analytics_id;
+    const googleAdsId = websitePixels?.googleAdsId || store?.google_ads_id;
 
-    const { facebook_pixel_id, google_analytics_id, google_ads_id } = store;
-
-    if (facebook_pixel_id && !pixelsLoaded.current.has(`fb_${facebook_pixel_id}`)) {
-      loadFacebookPixel(facebook_pixel_id);
+    if (facebookPixelId && !pixelsLoaded.current.has(`fb_${facebookPixelId}`)) {
+      loadFacebookPixel(facebookPixelId);
     }
 
-    if (google_analytics_id && !pixelsLoaded.current.has(`ga_${google_analytics_id}`)) {
-      loadGoogleAnalytics(google_analytics_id);
+    if (googleAnalyticsId && !pixelsLoaded.current.has(`ga_${googleAnalyticsId}`)) {
+      loadGoogleAnalytics(googleAnalyticsId);
     }
 
-    if (google_ads_id && !pixelsLoaded.current.has(`ga_${google_ads_id}`)) {
-      loadGoogleAnalytics(google_ads_id);
+    if (googleAdsId && !pixelsLoaded.current.has(`ga_${googleAdsId}`)) {
+      loadGoogleAnalytics(googleAdsId);
     }
-  }, [store]);
+  }, [store, websitePixels]);
 
   // Get URL parameters
   const getUrlParams = () => {
@@ -135,6 +142,11 @@ export const usePixelTracking = () => {
   // Track pixel event
   const trackEvent = async (eventType: string, eventData: Record<string, any> = {}) => {
     if (!store) return;
+
+    // Prioritize website pixels over store pixels
+    const facebookPixelId = websitePixels?.facebookPixelId || store?.facebook_pixel_id;
+    const googleAnalyticsId = websitePixels?.googleAnalyticsId || store?.google_analytics_id;
+    const googleAdsId = websitePixels?.googleAdsId || store?.google_ads_id;
 
     const urlParams = getUrlParams();
     const event: PixelEvent = {
@@ -161,7 +173,7 @@ export const usePixelTracking = () => {
     }
 
     // Fire Facebook Pixel events
-    if (window.fbq && store.facebook_pixel_id) {
+    if (window.fbq && facebookPixelId) {
       try {
         switch (eventType) {
           case 'PageView':
@@ -191,7 +203,7 @@ export const usePixelTracking = () => {
     }
 
     // Fire Google Analytics events
-    if (window.gtag && (store.google_analytics_id || store.google_ads_id)) {
+    if (window.gtag && (googleAnalyticsId || googleAdsId)) {
       try {
         switch (eventType) {
           case 'PageView':
