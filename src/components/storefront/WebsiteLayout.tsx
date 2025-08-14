@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useStore } from '@/contexts/StoreContext';
 import { WebsiteHeader } from '@/components/storefront/WebsiteHeader';
 import { WebsiteFooter } from '@/components/storefront/WebsiteFooter';
+import { PixelManager } from '@/components/pixel/PixelManager';
 import { setGlobalCurrency } from '@/lib/currency';
 
 interface WebsiteData {

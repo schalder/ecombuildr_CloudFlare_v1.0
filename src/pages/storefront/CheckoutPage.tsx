@@ -19,6 +19,7 @@ import { computeShippingForAddress } from '@/lib/shipping';
 import { formatCurrency } from '@/lib/currency';
 import { nameWithVariant } from '@/lib/utils';
 import { useWebsiteShipping } from '@/hooks/useWebsiteShipping';
+import { usePixelTracking } from '@/hooks/usePixelTracking';
 
 interface CheckoutForm {
   customer_name: string;
@@ -40,6 +41,7 @@ export const CheckoutPage: React.FC = () => {
   const { items, total, clearCart } = useCart();
   const paths = useEcomPaths();
   const isWebsiteContext = Boolean(websiteId || websiteSlug);
+  const { trackInitiateCheckout, trackPurchase } = usePixelTracking();
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [discountLoading, setDiscountLoading] = useState(false);
@@ -124,6 +126,28 @@ useEffect(() => {
     };
     loadAllowed();
   }, [items, store]);
+
+  // Track initiate checkout when component mounts with items
+  useEffect(() => {
+    if (currentStep === 1 && items.length > 0) {
+      console.log('Checkout initiated with items:', items);
+      
+      // Track checkout initiation
+      try {
+        trackInitiateCheckout({
+          value: total + shippingCost - discountAmount,
+          currency: 'BDT',
+          contents: items.map(item => ({
+            id: item.productId,
+            quantity: item.quantity,
+            item_price: item.price,
+          })),
+        });
+      } catch (error) {
+        console.error('Error tracking checkout initiation:', error);
+      }
+    }
+  }, [currentStep, items, total, shippingCost, discountAmount, trackInitiateCheckout]);
 
   const handleInputChange = (field: keyof CheckoutForm, value: string) => {
     setForm(prev => ({ ...prev, [field]: value }));
@@ -287,7 +311,7 @@ useEffect(() => {
       try {
         trackPurchase({
           transaction_id: createdOrderId,
-          value: finalTotal,
+          value: total + shippingCost - discountAmount,
           currency: 'BDT',
           contents: items.map(item => ({
             id: item.productId,
@@ -310,7 +334,7 @@ useEffect(() => {
                 client_user_agent: navigator.userAgent,
               },
               custom_data: {
-                value: finalTotal,
+                value: total + shippingCost - discountAmount,
                 currency: 'BDT',
                 content_ids: items.map(item => item.productId),
                 contents: items.map(item => ({
@@ -334,7 +358,7 @@ useEffect(() => {
         toast.success(isManual ? 'Order placed! Please complete payment to the provided number.' : 'Order placed successfully!');
         navigate(paths.orderConfirmation(createdOrderId));
       } else {
-        await initiatePayment(createdOrderId, finalTotal, form.payment_method);
+        await initiatePayment(createdOrderId, total + shippingCost - discountAmount, form.payment_method);
       }
     } catch (error) {
       console.error('Error creating order:', error);
