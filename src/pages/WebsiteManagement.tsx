@@ -244,26 +244,6 @@ const WebsiteManagement = () => {
             </button>
             <button 
               className={`py-4 px-1 border-b-2 font-medium transition-colors ${
-                activeTab === 'security' 
-                  ? 'border-primary text-primary' 
-                  : 'border-transparent text-muted-foreground hover:text-foreground'
-              }`}
-              onClick={() => handleTabChange('security')}
-            >
-              Security
-            </button>
-            <button 
-              className={`py-4 px-1 border-b-2 font-medium transition-colors ${
-                activeTab === 'events' 
-                  ? 'border-primary text-primary' 
-                  : 'border-transparent text-muted-foreground hover:text-foreground'
-              }`}
-              onClick={() => handleTabChange('events')}
-            >
-              Events
-            </button>
-            <button 
-              className={`py-4 px-1 border-b-2 font-medium transition-colors ${
                 activeTab === 'settings' 
                   ? 'border-primary text-primary' 
                   : 'border-transparent text-muted-foreground hover:text-foreground'
@@ -412,17 +392,6 @@ const WebsiteManagement = () => {
             />
           )}
 
-          {activeTab === 'security' && (
-            <div className="text-center py-12">
-              <p className="text-muted-foreground">Security settings coming soon...</p>
-            </div>
-          )}
-
-          {activeTab === 'events' && (
-            <div className="text-center py-12">
-              <p className="text-muted-foreground">Event tracking coming soon...</p>
-            </div>
-          )}
         </div>
       </div>
 
