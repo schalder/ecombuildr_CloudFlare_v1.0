@@ -11,6 +11,12 @@ interface WebsiteAnalytics {
   trafficSources: Array<{ source: string; visitors: number; }>;
   deviceBreakdown: Array<{ device: string; visitors: number; }>;
   conversionRate: number;
+  pagePerformance: Array<{ 
+    pageType: string; 
+    pageViews: number; 
+    uniqueVisitors: number; 
+    bounceRate: number; 
+  }>;
 }
 
 interface WebsiteStats {
@@ -171,6 +177,32 @@ export function useWebsiteStats(websiteId: string): WebsiteStatsHookReturn {
       const deviceBreakdown = Object.entries(deviceStats)
         .map(([device, visitors]) => ({ device, visitors }));
 
+      // Page performance by type (simplified based on available data)
+      const pageTypeStats = analyticsData?.reduce((acc, row) => {
+        // Use page_id to determine page type (simplified categorization)
+        let pageType = 'homepage';
+        if (row.page_id && row.page_id !== null) {
+          // If we have a page_id, it's a custom page
+          pageType = 'custom pages';
+        }
+        
+        if (!acc[pageType]) {
+          acc[pageType] = { pageViews: 0, uniqueVisitors: 0, bounceRateSum: 0, count: 0 };
+        }
+        acc[pageType].pageViews += row.page_views || 0;
+        acc[pageType].uniqueVisitors += row.unique_visitors || 0;
+        acc[pageType].bounceRateSum += row.bounce_rate || 0;
+        acc[pageType].count += 1;
+        return acc;
+      }, {} as Record<string, any>) || {};
+      
+      const pagePerformance = Object.entries(pageTypeStats).map(([pageType, stats]) => ({
+        pageType,
+        pageViews: stats.pageViews,
+        uniqueVisitors: stats.uniqueVisitors,
+        bounceRate: Math.round((stats.bounceRateSum / stats.count) * 100) / 100,
+      })).sort((a, b) => b.pageViews - a.pageViews);
+
       // Calculate basic stats first
       const totalPages = pages?.length || 0;
       const publishedPages = pages?.filter(p => p.is_published).length || 0;
@@ -198,6 +230,7 @@ export function useWebsiteStats(websiteId: string): WebsiteStatsHookReturn {
           trafficSources,
           deviceBreakdown,
           conversionRate: Math.round(conversionRate * 100) / 100,
+          pagePerformance,
         },
         isActive: website.is_active,
         isPublished: website.is_published,

@@ -81,7 +81,7 @@ export function WebsiteStats({ websiteId, websiteName, websiteSlug }: WebsiteSta
             Overview of your website's performance and analytics
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
           <Button
             variant="outline"
             size="sm"
@@ -97,7 +97,7 @@ export function WebsiteStats({ websiteId, websiteName, websiteSlug }: WebsiteSta
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
         {/* Website Overview */}
         <Card>
           <CardHeader>
@@ -145,26 +145,26 @@ export function WebsiteStats({ websiteId, websiteName, websiteSlug }: WebsiteSta
         </Card>
 
         {/* Advanced Analytics */}
-        <Card>
+        <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle className="text-lg">Traffic Analytics (Last 30 Days)</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-              <div className="text-center p-3 border rounded-lg">
-                <div className="text-2xl font-bold text-primary">{stats.analytics.totalPageViews}</div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              <div className="text-center p-4 border rounded-lg">
+                <div className="text-2xl md:text-3xl font-bold text-primary">{stats.analytics.totalPageViews}</div>
                 <div className="text-sm text-muted-foreground">Total Page Views</div>
               </div>
-              <div className="text-center p-3 border rounded-lg">
-                <div className="text-2xl font-bold text-primary">{stats.analytics.totalUniqueVisitors}</div>
+              <div className="text-center p-4 border rounded-lg">
+                <div className="text-2xl md:text-3xl font-bold text-primary">{stats.analytics.totalUniqueVisitors}</div>
                 <div className="text-sm text-muted-foreground">Unique Visitors</div>
               </div>
-              <div className="text-center p-3 border rounded-lg">
-                <div className="text-2xl font-bold text-primary">{stats.analytics.averageBounceRate}%</div>
+              <div className="text-center p-4 border rounded-lg">
+                <div className="text-2xl md:text-3xl font-bold text-primary">{stats.analytics.averageBounceRate}%</div>
                 <div className="text-sm text-muted-foreground">Bounce Rate</div>
               </div>
-              <div className="text-center p-3 border rounded-lg">
-                <div className="text-2xl font-bold text-primary">{Math.floor(stats.analytics.averageSessionDuration / 60)}m {stats.analytics.averageSessionDuration % 60}s</div>
+              <div className="text-center p-4 border rounded-lg">
+                <div className="text-2xl md:text-3xl font-bold text-primary">{Math.floor(stats.analytics.averageSessionDuration / 60)}m {stats.analytics.averageSessionDuration % 60}s</div>
                 <div className="text-sm text-muted-foreground">Avg. Session</div>
               </div>
             </div>
@@ -269,7 +269,7 @@ export function WebsiteStats({ websiteId, websiteName, websiteSlug }: WebsiteSta
         </Card>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
         {/* Device Breakdown */}
         {stats.analytics.deviceBreakdown.length > 0 && (
           <Card>
@@ -296,34 +296,38 @@ export function WebsiteStats({ websiteId, websiteName, websiteSlug }: WebsiteSta
           </Card>
         )}
 
-        {/* Top Pages */}
-        {stats.analytics.topPages.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Top Performing Pages</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {stats.analytics.topPages.map((page, index) => (
-                  <div key={page.page_id || 'homepage'} className="flex items-center justify-between p-3 border rounded-lg">
+        {/* Page Performance */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Page Performance</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {stats.analytics.pagePerformance.map((page, index) => (
+                <div key={page.pageType} className="p-3 border rounded-lg">
+                  <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-3">
                       <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
                         <span className="text-xs font-medium text-primary">{index + 1}</span>
                       </div>
-                      <span className="font-medium">
-                        {page.page_id ? `Page ${page.page_id.slice(0, 8)}...` : 'Homepage'}
-                      </span>
+                      <span className="font-medium capitalize">{page.pageType}</span>
                     </div>
                     <div className="text-right">
-                      <div className="text-sm font-mono">{page.page_views} views</div>
-                      <div className="text-xs text-muted-foreground">{page.unique_visitors} unique</div>
+                      <div className="text-sm font-mono">{page.pageViews} views</div>
+                      <div className="text-xs text-muted-foreground">{page.uniqueVisitors} unique</div>
                     </div>
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Bounce Rate:</span>
+                    <span className={`font-medium ${page.bounceRate > 70 ? 'text-red-600' : page.bounceRate > 40 ? 'text-yellow-600' : 'text-green-600'}`}>
+                      {page.bounceRate}%
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Quick Actions */}
@@ -332,7 +336,7 @@ export function WebsiteStats({ websiteId, websiteName, websiteSlug }: WebsiteSta
           <CardTitle>Quick Actions</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-col sm:flex-row flex-wrap gap-2">
             <Button variant="outline" size="sm" onClick={() => window.open(websiteUrl, '_blank')}>
               <ExternalLink className="h-4 w-4 mr-2" />
               Visit Website
