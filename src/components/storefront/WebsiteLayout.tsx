@@ -102,18 +102,20 @@ export const WebsiteLayout: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
-      <style>{`
-        :root {
-          --store-primary: ${store?.primary_color ?? '#10B981'};
-          --store-secondary: ${store?.secondary_color ?? '#059669'};
-        }
-      `}</style>
-      <WebsiteHeader website={website} />
-      <main className="flex-1">
-        <Outlet />
-      </main>
-      <WebsiteFooter website={website} />
-    </div>
+    <PixelManager>
+      <div className="min-h-screen flex flex-col bg-background">
+        <style>{`
+          :root {
+            --store-primary: ${store?.primary_color ?? '#10B981'};
+            --store-secondary: ${store?.secondary_color ?? '#059669'};
+          }
+        `}</style>
+        <WebsiteHeader website={website} />
+        <main className="flex-1">
+          <Outlet />
+        </main>
+        <WebsiteFooter website={website} />
+      </div>
+    </PixelManager>
   );
 };

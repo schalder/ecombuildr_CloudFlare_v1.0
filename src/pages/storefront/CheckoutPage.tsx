@@ -283,6 +283,51 @@ useEffect(() => {
         }
       }
 
+      // Track purchase event
+      try {
+        trackPurchase({
+          transaction_id: createdOrderId,
+          value: finalTotal,
+          currency: 'BDT',
+          contents: items.map(item => ({
+            id: item.productId,
+            quantity: item.quantity,
+            item_price: item.price,
+          })),
+        });
+
+        // Send server-side event to Facebook CAPI if pixel is configured
+        if (store.facebook_pixel_id && form.customer_email) {
+          await supabase.functions.invoke('facebook-capi-events', {
+            body: {
+              pixel_id: store.facebook_pixel_id,
+              access_token: 'dummy_token', // In production, this should be stored securely
+              event_name: 'Purchase',
+              user_data: {
+                em: [form.customer_email],
+                ph: form.customer_phone ? [form.customer_phone] : undefined,
+                client_ip_address: await fetch('https://api.ipify.org?format=json').then(r => r.json()).then(data => data.ip).catch(() => undefined),
+                client_user_agent: navigator.userAgent,
+              },
+              custom_data: {
+                value: finalTotal,
+                currency: 'BDT',
+                content_ids: items.map(item => item.productId),
+                contents: items.map(item => ({
+                  id: item.productId,
+                  quantity: item.quantity,
+                  item_price: item.price,
+                })),
+                order_id: createdOrderId,
+              },
+              event_source_url: window.location.href,
+            },
+          });
+        }
+      } catch (error) {
+        console.error('Error tracking purchase:', error);
+      }
+
       // Handle payment processing
       if (form.payment_method === 'cod' || isManual) {
         clearCart();

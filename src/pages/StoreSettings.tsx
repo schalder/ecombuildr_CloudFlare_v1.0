@@ -12,6 +12,11 @@ import { toast } from "@/hooks/use-toast";
 import { Store, Settings } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import ShippingIntegrations from "@/components/settings/ShippingIntegrations";
+import { PixelSettings } from "@/components/pixel/PixelSettings";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Form } from "@/components/ui/form";
 
 interface Store {
   id: string;
@@ -26,13 +31,34 @@ interface Store {
   theme_id?: string;
   is_active: boolean;
   settings: any;
+  facebook_pixel_id?: string;
+  google_analytics_id?: string;
+  google_ads_id?: string;
 }
+
+const storeSettingsSchema = z.object({
+  name: z.string().min(1, 'Store name is required'),
+  description: z.string().optional(),
+  domain: z.string().optional(),
+  primary_color: z.string(),
+  secondary_color: z.string(),
+  is_active: z.boolean(),
+  facebook_pixel_id: z.string().optional(),
+  google_analytics_id: z.string().optional(),
+  google_ads_id: z.string().optional(),
+});
+
+type StoreSettingsForm = z.infer<typeof storeSettingsSchema>;
 
 export default function StoreSettings() {
   const { user } = useAuth();
   const [store, setStore] = useState<Store | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+
+  const form = useForm<StoreSettingsForm>({
+    resolver: zodResolver(storeSettingsSchema),
+  });
 
   useEffect(() => {
     if (user) {
@@ -52,6 +78,21 @@ export default function StoreSettings() {
 
       if (error) throw error;
       setStore(stores);
+      
+      // Set form values
+      if (stores) {
+        form.reset({
+          name: stores.name,
+          description: stores.description || '',
+          domain: stores.domain || '',
+          primary_color: stores.primary_color,
+          secondary_color: stores.secondary_color,
+          is_active: stores.is_active,
+          facebook_pixel_id: stores.facebook_pixel_id || '',
+          google_analytics_id: stores.google_analytics_id || '',
+          google_ads_id: stores.google_ads_id || '',
+        });
+      }
     } catch (error) {
       console.error('Error fetching store:', error);
       toast({
@@ -64,8 +105,7 @@ export default function StoreSettings() {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (data: StoreSettingsForm) => {
     if (!store) return;
 
     try {
@@ -74,17 +114,26 @@ export default function StoreSettings() {
       const { error } = await supabase
         .from('stores')
         .update({
-          name: store.name,
-          description: store.description,
-          domain: store.domain,
-          primary_color: store.primary_color,
-          secondary_color: store.secondary_color,
-          is_active: store.is_active,
+          name: data.name,
+          description: data.description,
+          domain: data.domain,
+          primary_color: data.primary_color,
+          secondary_color: data.secondary_color,
+          is_active: data.is_active,
+          facebook_pixel_id: data.facebook_pixel_id || null,
+          google_analytics_id: data.google_analytics_id || null,
+          google_ads_id: data.google_ads_id || null,
           settings: store.settings,
         })
         .eq('id', store.id);
 
       if (error) throw error;
+
+      // Update local state
+      setStore({
+        ...store,
+        ...data,
+      });
 
       toast({
         title: "Success",
@@ -141,7 +190,11 @@ export default function StoreSettings() {
       title="Store Settings" 
       description="Manage your store configuration and branding"
     >
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+          
+          {/* Pixel Settings */}
+          <PixelSettings form={form} title="Store-wide Pixel Integration" description="Configure tracking pixels for this store. These can be overridden at the website level." />
         {/* Shipping Integrations */}
         <ShippingIntegrations storeId={store.id} />
 
@@ -467,7 +520,8 @@ export default function StoreSettings() {
             {saving ? "Saving..." : "Save Changes"}
           </Button>
         </div>
-      </form>
+        </form>
+      </Form>
     </DashboardLayout>
   );
 }

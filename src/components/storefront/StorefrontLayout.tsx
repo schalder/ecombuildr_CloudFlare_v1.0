@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { useStore } from '@/contexts/StoreContext';
 import { StorefrontHeader } from './StorefrontHeader';
 import { StorefrontFooter } from './StorefrontFooter';
+import { PixelManager } from '@/components/pixel/PixelManager';
 import { Loader2 } from 'lucide-react';
 
 interface StorefrontLayoutProps {
@@ -32,18 +33,20 @@ export const StorefrontLayout: React.FC<StorefrontLayoutProps> = ({ children }) 
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
-      <style>{`
-        :root {
-          --store-primary: ${store.primary_color};
-          --store-secondary: ${store.secondary_color};
-        }
-      `}</style>
-      <StorefrontHeader />
-      <main className="flex-1">
-        {children}
-      </main>
-      <StorefrontFooter />
-    </div>
+    <PixelManager>
+      <div className="min-h-screen flex flex-col bg-background">
+        <style>{`
+          :root {
+            --store-primary: ${store.primary_color};
+            --store-secondary: ${store.secondary_color};
+          }
+        `}</style>
+        <StorefrontHeader />
+        <main className="flex-1">
+          {children}
+        </main>
+        <StorefrontFooter />
+      </div>
+    </PixelManager>
   );
 };

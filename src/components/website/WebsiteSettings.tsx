@@ -17,6 +17,7 @@ import { useDomainManagement } from '@/hooks/useDomainManagement';
 import { Badge } from '@/components/ui/badge';
 import { Link } from 'react-router-dom';
 import { ExternalLink, CheckCircle2, AlertCircle } from 'lucide-react';
+import { PixelSettings } from '@/components/pixel/PixelSettings';
 
 const websiteSettingsSchema = z.object({
   name: z.string().min(1, 'Website name is required'),
@@ -28,6 +29,10 @@ const websiteSettingsSchema = z.object({
   header_tracking_code: z.string().optional(),
   footer_tracking_code: z.string().optional(),
   currency_code: z.enum(['BDT','USD','INR','EUR','GBP']).default('BDT'),
+  // Pixel tracking
+  facebook_pixel_id: z.string().optional(),
+  google_analytics_id: z.string().optional(),
+  google_ads_id: z.string().optional(),
   // SEO defaults
   seo_title: z.string().optional(),
   seo_description: z.string().optional(),
@@ -94,6 +99,9 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
       header_tracking_code: website.settings?.header_tracking_code || '',
       footer_tracking_code: website.settings?.footer_tracking_code || '',
       currency_code: website.settings?.currency?.code || 'BDT',
+      facebook_pixel_id: (website as any).facebook_pixel_id || '',
+      google_analytics_id: (website as any).google_analytics_id || '',
+      google_ads_id: (website as any).google_ads_id || '',
       seo_title: (website as any).seo_title || '',
       seo_description: (website as any).seo_description || '',
       og_image: (website as any).og_image || '',
@@ -138,7 +146,17 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
 
   const updateWebsiteMutation = useMutation({
     mutationFn: async (data: WebsiteSettingsForm) => {
-      const { favicon_url, header_tracking_code, footer_tracking_code, currency_code, domain, ...basicFields } = data;
+      const { 
+        favicon_url, 
+        header_tracking_code, 
+        footer_tracking_code, 
+        currency_code, 
+        domain,
+        facebook_pixel_id,
+        google_analytics_id,
+        google_ads_id,
+        ...basicFields 
+      } = data;
       
       const settings = {
         ...website.settings,
@@ -166,6 +184,9 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
           ...basicFields,
           settings,
           canonical_domain: canonicalDomain,
+          facebook_pixel_id: facebook_pixel_id || null,
+          google_analytics_id: google_analytics_id || null,
+          google_ads_id: google_ads_id || null,
           updated_at: new Date().toISOString(),
         })
         .eq('id', website.id);
@@ -701,11 +722,14 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
             </CardContent>
           </Card>
 
+          {/* Pixel Settings */}
+          <PixelSettings form={form} />
+
           <Card>
             <CardHeader>
-              <CardTitle>Tracking & Analytics</CardTitle>
+              <CardTitle>Custom Tracking Codes</CardTitle>
               <CardDescription>
-                Add custom tracking codes to your website header and footer.
+                Add additional custom tracking codes to your website header and footer.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">

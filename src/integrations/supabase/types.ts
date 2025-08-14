@@ -842,6 +842,7 @@ export type Database = {
           discount_amount: number | null
           discount_code: string | null
           facebook_pixel_data: Json | null
+          google_ads_data: Json | null
           id: string
           notes: string | null
           order_number: string
@@ -875,6 +876,7 @@ export type Database = {
           discount_amount?: number | null
           discount_code?: string | null
           facebook_pixel_data?: Json | null
+          google_ads_data?: Json | null
           id?: string
           notes?: string | null
           order_number: string
@@ -908,6 +910,7 @@ export type Database = {
           discount_amount?: number | null
           discount_code?: string | null
           facebook_pixel_data?: Json | null
+          google_ads_data?: Json | null
           id?: string
           notes?: string | null
           order_number?: string
@@ -1002,6 +1005,72 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      pixel_events: {
+        Row: {
+          created_at: string
+          event_data: Json
+          event_type: string
+          fbclid: string | null
+          gclid: string | null
+          id: string
+          ip_address: string | null
+          page_url: string | null
+          referrer: string | null
+          session_id: string | null
+          store_id: string
+          user_agent: string | null
+          user_id: string | null
+          utm_campaign: string | null
+          utm_content: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          utm_term: string | null
+          website_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_data?: Json
+          event_type: string
+          fbclid?: string | null
+          gclid?: string | null
+          id?: string
+          ip_address?: string | null
+          page_url?: string | null
+          referrer?: string | null
+          session_id?: string | null
+          store_id: string
+          user_agent?: string | null
+          user_id?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
+          website_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_data?: Json
+          event_type?: string
+          fbclid?: string | null
+          gclid?: string | null
+          id?: string
+          ip_address?: string | null
+          page_url?: string | null
+          referrer?: string | null
+          session_id?: string | null
+          store_id?: string
+          user_agent?: string | null
+          user_id?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
+          website_id?: string | null
+        }
+        Relationships: []
       }
       product_library: {
         Row: {
@@ -1329,7 +1398,10 @@ export type Database = {
           created_at: string | null
           description: string | null
           domain: string | null
+          facebook_pixel_id: string | null
           favicon_url: string | null
+          google_ads_id: string | null
+          google_analytics_id: string | null
           id: string
           is_active: boolean | null
           logo_url: string | null
@@ -1346,7 +1418,10 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           domain?: string | null
+          facebook_pixel_id?: string | null
           favicon_url?: string | null
+          google_ads_id?: string | null
+          google_analytics_id?: string | null
           id?: string
           is_active?: boolean | null
           logo_url?: string | null
@@ -1363,7 +1438,10 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           domain?: string | null
+          facebook_pixel_id?: string | null
           favicon_url?: string | null
+          google_ads_id?: string | null
+          google_analytics_id?: string | null
           id?: string
           is_active?: boolean | null
           logo_url?: string | null
@@ -1569,6 +1647,9 @@ export type Database = {
           created_at: string
           description: string | null
           domain: string | null
+          facebook_pixel_id: string | null
+          google_ads_id: string | null
+          google_analytics_id: string | null
           id: string
           is_active: boolean
           is_published: boolean
@@ -1587,6 +1668,9 @@ export type Database = {
           created_at?: string
           description?: string | null
           domain?: string | null
+          facebook_pixel_id?: string | null
+          google_ads_id?: string | null
+          google_analytics_id?: string | null
           id?: string
           is_active?: boolean
           is_published?: boolean
@@ -1605,6 +1689,9 @@ export type Database = {
           created_at?: string
           description?: string | null
           domain?: string | null
+          facebook_pixel_id?: string | null
+          google_ads_id?: string | null
+          google_analytics_id?: string | null
           id?: string
           is_active?: boolean
           is_published?: boolean
