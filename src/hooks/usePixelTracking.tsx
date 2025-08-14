@@ -27,6 +27,7 @@ interface ProductData {
 declare global {
   interface Window {
     fbq: (...args: any[]) => void;
+    _fbq?: any;
     gtag: (...args: any[]) => void;
     _fbq_loaded?: boolean;
     _gtag_loaded?: boolean;
@@ -42,7 +43,11 @@ interface PixelConfig {
 export const usePixelTracking = (websitePixels?: PixelConfig) => {
   const { store } = useStore();
   const sessionId = useRef<string>();
-  const pixelsLoaded = useRef<Set<string>>(new Set());
+  const currentPixels = useRef<{
+    facebookPixelId?: string;
+    googleAnalyticsId?: string;
+    googleAdsId?: string;
+  }>({});
 
   // Generate session ID once
   useEffect(() => {
@@ -51,58 +56,103 @@ export const usePixelTracking = (websitePixels?: PixelConfig) => {
     }
   }, []);
 
+  // Cleanup function for removing pixels
+  const cleanupPixels = () => {
+    // Remove Facebook Pixel scripts
+    const fbScripts = document.querySelectorAll('script[data-pixel-id^="fb-"]');
+    fbScripts.forEach(script => script.remove());
+    
+    // Remove Google Analytics scripts
+    const gaScripts = document.querySelectorAll('script[data-pixel-id^="ga-"]');
+    gaScripts.forEach(script => script.remove());
+    
+    // Reset global variables
+    delete window.fbq;
+    delete window._fbq;
+    delete window._fbq_loaded;
+    delete window._gtag_loaded;
+    
+    // Clear current pixels
+    currentPixels.current = {};
+  };
+
   // Load Facebook Pixel
   const loadFacebookPixel = (pixelId: string) => {
-    if (pixelsLoaded.current.has(`fb_${pixelId}`) || window._fbq_loaded) return;
+    // If same pixel is already loaded, skip
+    if (currentPixels.current.facebookPixelId === pixelId) return;
     
-    // Initialize Facebook Pixel
-    (function(f: any, b: any, e: any, v: any, n?: any, t?: any, s?: any) {
-      if (f.fbq) return;
-      n = f.fbq = function() {
-        n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments);
-      };
-      if (!f._fbq) f._fbq = n;
-      n.push = n;
-      n.loaded = !0;
-      n.version = '2.0';
-      n.queue = [];
-      t = b.createElement(e);
-      t.async = !0;
-      t.src = v;
-      s = b.getElementsByTagName(e)[0];
-      s.parentNode.insertBefore(t, s);
-    })(window, document, 'script', 'https://connect.facebook.net/en_US/fbevents.js');
-
-    window.fbq('init', pixelId);
-    window.fbq('track', 'PageView');
-    window._fbq_loaded = true;
-    pixelsLoaded.current.add(`fb_${pixelId}`);
+    // Remove previous Facebook Pixel if different
+    if (currentPixels.current.facebookPixelId && currentPixels.current.facebookPixelId !== pixelId) {
+      const existingScripts = document.querySelectorAll('script[data-pixel-id^="fb-"]');
+      existingScripts.forEach(script => script.remove());
+      delete window.fbq;
+      delete window._fbq;
+      delete window._fbq_loaded;
+    }
     
-    console.log('Facebook Pixel loaded:', pixelId);
+    // Load new pixel
+    if (!document.querySelector(`script[data-pixel-id="fb-${pixelId}"]`)) {
+      const script = document.createElement('script');
+      script.innerHTML = `
+        !function(f,b,e,v,n,t,s)
+        {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+        n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+        if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+        n.queue=[];t=b.createElement(e);t.async=!0;
+        t.src=v;s=b.getElementsByTagName(e)[0];
+        s.parentNode.insertBefore(t,s)}(window, document,'script',
+        'https://connect.facebook.net/en_US/fbevents.js');
+        fbq('init', '${pixelId}');
+        fbq('track', 'PageView');
+      `;
+      script.setAttribute('data-pixel-id', `fb-${pixelId}`);
+      document.head.appendChild(script);
+      
+      currentPixels.current.facebookPixelId = pixelId;
+      console.log('Facebook Pixel loaded:', pixelId);
+    }
   };
 
   // Load Google Analytics/Ads
-  const loadGoogleAnalytics = (trackingId: string) => {
-    if (pixelsLoaded.current.has(`ga_${trackingId}`) || window._gtag_loaded) return;
-
-    // Load gtag script
-    const script = document.createElement('script');
-    script.async = true;
-    script.src = `https://www.googletagmanager.com/gtag/js?id=${trackingId}`;
-    document.head.appendChild(script);
-
-    // Initialize gtag
-    window.gtag = function(...args: any[]) {
-      (window.gtag as any).queue = (window.gtag as any).queue || [];
-      (window.gtag as any).queue.push(args);
-    };
-    window.gtag('js', new Date());
-    window.gtag('config', trackingId);
+  const loadGoogleAnalytics = (trackingId: string, isAds: boolean = false) => {
+    const pixelKey = isAds ? 'googleAdsId' : 'googleAnalyticsId';
     
-    window._gtag_loaded = true;
-    pixelsLoaded.current.add(`ga_${trackingId}`);
+    // If same tracking ID is already loaded, skip
+    if (currentPixels.current[pixelKey] === trackingId) return;
     
-    console.log('Google Analytics loaded:', trackingId);
+    // Remove previous Google Analytics/Ads if different
+    if (currentPixels.current[pixelKey] && currentPixels.current[pixelKey] !== trackingId) {
+      const existingScripts = document.querySelectorAll(`script[data-pixel-id^="ga-"]`);
+      existingScripts.forEach(script => {
+        if (script.getAttribute('data-pixel-id')?.includes(currentPixels.current[pixelKey]!)) {
+          script.remove();
+        }
+      });
+    }
+    
+    // Load new tracking
+    if (!document.querySelector(`script[data-pixel-id="ga-${trackingId}"]`)) {
+      // Load gtag script
+      const gtagScript = document.createElement('script');
+      gtagScript.async = true;
+      gtagScript.src = `https://www.googletagmanager.com/gtag/js?id=${trackingId}`;
+      gtagScript.setAttribute('data-pixel-id', `ga-${trackingId}`);
+      document.head.appendChild(gtagScript);
+
+      // Initialize gtag
+      const initScript = document.createElement('script');
+      initScript.innerHTML = `
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', '${trackingId}');
+      `;
+      initScript.setAttribute('data-pixel-id', `ga-init-${trackingId}`);
+      document.head.appendChild(initScript);
+      
+      currentPixels.current[pixelKey] = trackingId;
+      console.log(`Google ${isAds ? 'Ads' : 'Analytics'} loaded:`, trackingId);
+    }
   };
 
   // Load pixels when store or websitePixels change
@@ -112,17 +162,32 @@ export const usePixelTracking = (websitePixels?: PixelConfig) => {
     const googleAnalyticsId = websitePixels?.googleAnalyticsId || store?.google_analytics_id;
     const googleAdsId = websitePixels?.googleAdsId || store?.google_ads_id;
 
-    if (facebookPixelId && !pixelsLoaded.current.has(`fb_${facebookPixelId}`)) {
+    if (facebookPixelId) {
       loadFacebookPixel(facebookPixelId);
     }
 
-    if (googleAnalyticsId && !pixelsLoaded.current.has(`ga_${googleAnalyticsId}`)) {
-      loadGoogleAnalytics(googleAnalyticsId);
+    if (googleAnalyticsId) {
+      loadGoogleAnalytics(googleAnalyticsId, false);
     }
 
-    if (googleAdsId && !pixelsLoaded.current.has(`ga_${googleAdsId}`)) {
-      loadGoogleAnalytics(googleAdsId);
+    if (googleAdsId) {
+      loadGoogleAnalytics(googleAdsId, true);
     }
+
+    // Cleanup function when component unmounts or pixels change
+    return () => {
+      // Only cleanup if pixels are actually changing, not just unmounting
+      const newFacebookPixelId = websitePixels?.facebookPixelId || store?.facebook_pixel_id;
+      const newGoogleAnalyticsId = websitePixels?.googleAnalyticsId || store?.google_analytics_id;
+      const newGoogleAdsId = websitePixels?.googleAdsId || store?.google_ads_id;
+      
+      if (currentPixels.current.facebookPixelId && currentPixels.current.facebookPixelId !== newFacebookPixelId) {
+        const fbScripts = document.querySelectorAll('script[data-pixel-id^="fb-"]');
+        fbScripts.forEach(script => script.remove());
+        delete window.fbq;
+        delete window._fbq;
+      }
+    };
   }, [store, websitePixels]);
 
   // Get URL parameters

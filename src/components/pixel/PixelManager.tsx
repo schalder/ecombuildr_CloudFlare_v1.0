@@ -53,5 +53,15 @@ export const PixelManager: React.FC<PixelManagerProps> = ({ children, websitePix
     };
   }, []);
 
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      // Clean up pixels when component unmounts (e.g., navigating away from website)
+      if (websitePixels?.facebookPixelId) {
+        console.log('PixelManager unmounting, cleaning up website pixels');
+      }
+    };
+  }, [websitePixels]);
+
   return <>{children}</>;
 };
