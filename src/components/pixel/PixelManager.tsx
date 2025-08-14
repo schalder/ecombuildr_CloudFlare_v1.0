@@ -16,18 +16,29 @@ const PixelContext = React.createContext<{
     google_analytics_id?: string;
     google_ads_id?: string;
   };
+  updatePixels?: (pixels: {
+    facebook_pixel_id?: string;
+    google_analytics_id?: string;
+    google_ads_id?: string;
+  }) => void;
 }>({});
 
 export const usePixelContext = () => React.useContext(PixelContext);
 
-export const PixelManager: React.FC<PixelManagerProps> = ({ websitePixels, children }) => {
-  const { trackPageView } = usePixelTracking(websitePixels);
+export const PixelManager: React.FC<PixelManagerProps> = ({ websitePixels: initialPixels, children }) => {
+  const [currentPixels, setCurrentPixels] = React.useState(initialPixels);
+  const { trackPageView } = usePixelTracking(currentPixels);
+
+  const updatePixels = React.useCallback((newPixels: any) => {
+    console.debug('[PixelManager] Updating pixels:', newPixels);
+    setCurrentPixels(newPixels);
+  }, []);
 
   useEffect(() => {
-    if (!websitePixels) return;
+    if (!currentPixels) return;
 
     // Load Facebook Pixel
-    if (websitePixels.facebook_pixel_id && !window.fbq) {
+    if (currentPixels.facebook_pixel_id && !window.fbq) {
       const script = document.createElement('script');
       script.innerHTML = `
         !function(f,b,e,v,n,t,s)
@@ -38,7 +49,7 @@ export const PixelManager: React.FC<PixelManagerProps> = ({ websitePixels, child
         t.src=v;s=b.getElementsByTagName(e)[0];
         s.parentNode.insertBefore(t,s)}(window, document,'script',
         'https://connect.facebook.net/en_US/fbevents.js');
-        fbq('init', '${websitePixels.facebook_pixel_id}');
+        fbq('init', '${currentPixels.facebook_pixel_id}');
       `;
       document.head.appendChild(script);
       
@@ -47,16 +58,16 @@ export const PixelManager: React.FC<PixelManagerProps> = ({ websitePixels, child
       img.height = 1;
       img.width = 1;
       img.style.display = 'none';
-      img.src = `https://www.facebook.com/tr?id=${websitePixels.facebook_pixel_id}&ev=PageView&noscript=1`;
+      img.src = `https://www.facebook.com/tr?id=${currentPixels.facebook_pixel_id}&ev=PageView&noscript=1`;
       noscript.appendChild(img);
       document.head.appendChild(noscript);
       
-      console.debug('[PixelManager] Facebook Pixel loaded:', websitePixels.facebook_pixel_id);
+      console.debug('[PixelManager] Facebook Pixel loaded:', currentPixels.facebook_pixel_id);
     }
 
     // Load Google Analytics/Ads
-    if ((websitePixels.google_analytics_id || websitePixels.google_ads_id) && !window.gtag) {
-      const gtagId = websitePixels.google_analytics_id || websitePixels.google_ads_id;
+    if ((currentPixels.google_analytics_id || currentPixels.google_ads_id) && !window.gtag) {
+      const gtagId = currentPixels.google_analytics_id || currentPixels.google_ads_id;
       
       const script1 = document.createElement('script');
       script1.async = true;
@@ -68,8 +79,8 @@ export const PixelManager: React.FC<PixelManagerProps> = ({ websitePixels, child
         window.dataLayer = window.dataLayer || [];
         function gtag(){dataLayer.push(arguments);}
         gtag('js', new Date());
-        ${websitePixels.google_analytics_id ? `gtag('config', '${websitePixels.google_analytics_id}');` : ''}
-        ${websitePixels.google_ads_id ? `gtag('config', '${websitePixels.google_ads_id}');` : ''}
+        ${currentPixels.google_analytics_id ? `gtag('config', '${currentPixels.google_analytics_id}');` : ''}
+        ${currentPixels.google_ads_id ? `gtag('config', '${currentPixels.google_ads_id}');` : ''}
       `;
       document.head.appendChild(script2);
       
@@ -82,10 +93,10 @@ export const PixelManager: React.FC<PixelManagerProps> = ({ websitePixels, child
     }, 100);
 
     return () => clearTimeout(timer);
-  }, [websitePixels, trackPageView]);
+  }, [currentPixels, trackPageView]);
 
   return (
-    <PixelContext.Provider value={{ pixels: websitePixels }}>
+    <PixelContext.Provider value={{ pixels: currentPixels, updatePixels }}>
       {children}
     </PixelContext.Provider>
   );

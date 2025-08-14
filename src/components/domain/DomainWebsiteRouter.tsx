@@ -1,5 +1,7 @@
-import React from 'react';
-import { Routes, Route, useParams } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { Routes, Route, useParams, useLocation } from 'react-router-dom';
+import { usePixelTracking } from '@/hooks/usePixelTracking';
+import { usePixelContext } from '@/components/pixel/PixelManager';
 import { CartPage } from '@/pages/storefront/CartPage';
 import { CheckoutPage } from '@/pages/storefront/CheckoutPage';
 import { PaymentProcessing } from '@/pages/storefront/PaymentProcessing';
@@ -28,6 +30,22 @@ export const DomainWebsiteRouter: React.FC<DomainWebsiteRouterProps> = ({
   customDomain,
   website
 }) => {
+  const location = useLocation();
+  const { pixels } = usePixelContext();
+  const { trackPageView } = usePixelTracking(pixels);
+
+  // Track page views on route changes
+  useEffect(() => {
+    console.debug('[DomainWebsiteRouter] Route changed:', location.pathname);
+    const timer = setTimeout(() => {
+      trackPageView({
+        page_title: document.title,
+        page_location: window.location.href
+      });
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [location.pathname, trackPageView]);
+
   return (
     <>
       <WebsiteHeader website={website} />

@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
 import { useStore } from '@/contexts/StoreContext';
 import { setGlobalCurrency } from '@/lib/currency';
+import { usePixelContext } from '@/components/pixel/PixelManager';
 import { DomainWebsiteRouter } from './DomainWebsiteRouter';
 
 interface WebsiteData {
@@ -30,6 +31,7 @@ export const DomainWebsiteRenderer: React.FC<DomainWebsiteRendererProps> = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { loadStoreById } = useStore();
+  const { updatePixels } = usePixelContext();
 
   useEffect(() => {
     const fetchWebsiteData = async () => {
@@ -70,6 +72,17 @@ export const DomainWebsiteRenderer: React.FC<DomainWebsiteRendererProps> = ({
         // Load the store into context
         if (storeData) {
           await loadStoreById(storeData.id);
+        }
+
+        // Update pixels with website-specific settings
+        if (updatePixels && combinedWebsiteData.settings) {
+          console.debug('[DomainWebsiteRenderer] Updating pixels with website settings:', combinedWebsiteData.settings);
+          const settings = combinedWebsiteData.settings as any;
+          updatePixels({
+            facebook_pixel_id: settings?.facebook_pixel_id,
+            google_analytics_id: settings?.google_analytics_id,
+            google_ads_id: settings?.google_ads_id,
+          });
         }
       } catch (error) {
         console.error('Error fetching website data:', error);
