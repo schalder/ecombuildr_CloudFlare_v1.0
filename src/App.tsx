@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { DomainRouter } from "@/components/domain/DomainRouter";
 import { AuthProvider } from "@/hooks/useAuth";
-
+import { CartProvider } from "@/contexts/CartContext";
 import { StoreProvider } from "@/contexts/StoreContext";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
@@ -63,157 +63,159 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
       <StoreProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <DomainRouter>
-              <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/auth" element={<Auth />} />
-              
-              {/* Single Store Dashboard Routes */}
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/dashboard/overview" element={<DashboardOverview />} />
-              <Route path="/dashboard/products" element={<Products />} />
-              <Route path="/dashboard/products/add" element={<AddProduct />} />
-              <Route path="/dashboard/products/:id" element={<ProductView />} />
-              <Route path="/dashboard/products/:id/edit" element={<EditProduct />} />
-              <Route path="/dashboard/categories" element={<Categories />} />
-              <Route path="/dashboard/product-library" element={<ProductLibrary />} />
-              <Route path="/dashboard/orders" element={<Orders />} />
-              <Route path="/dashboard/customers" element={<Customers />} />
-              <Route path="/dashboard/analytics" element={<Analytics />} />
-              <Route path="/dashboard/reviews" element={<Reviews />} />
-              <Route path="/dashboard/websites" element={<Websites />} />
-              <Route path="/dashboard/websites/create" element={<CreateWebsite />} />
-              <Route path="/dashboard/websites/:id" element={<WebsiteManagement />} />
-              <Route path="/dashboard/funnels" element={<Funnels />} />
-              <Route path="/dashboard/funnels/create" element={<CreateFunnel />} />
-              <Route path="/dashboard/funnels/:id" element={<FunnelManagement />} />
-              
-              {/* Context-aware page builder routes */}
-              <Route path="/dashboard/websites/:websiteId/pages/:pageId/builder" element={<PageBuilder />} />
-              <Route path="/dashboard/funnels/:funnelId/steps/:stepId/builder" element={<PageBuilder />} />
-              <Route path="/dashboard/marketing" element={<Marketing />} />
-              <Route path="/dashboard/marketing/facebook" element={<FacebookAds />} />
-              <Route path="/dashboard/marketing/email" element={<EmailCampaigns />} />
-              <Route path="/dashboard/marketing/discounts" element={<Discounts />} />
-              <Route path="/dashboard/settings" element={<StoreSettings />} />
-              <Route path="/dashboard/settings/store" element={<StoreSettings />} />
-              <Route path="/dashboard/settings/profile" element={<ProfileSettings />} />
-              <Route path="/dashboard/settings/billing" element={<BillingSettings />} />
-              <Route path="/dashboard/domains" element={<Domains />} />
-              
-              {/* Store Management Routes */}
-              <Route path="/dashboard/stores" element={<StoreList />} />
-              <Route path="/dashboard/stores/create" element={<CreateStore />} />
-              <Route path="/dashboard/stores/:storeId" element={<StoreManagement />} />
-              
-              {/* Demo and Preview Routes */}
-              <Route path="/preview/demo" element={<DemoPreview />} />
-              
-              {/* Public Storefront Routes */}
-              <Route path="/store/:slug/products" element={<StorefrontProducts />} />
-              <Route path="/store/:slug/products/:productSlug" element={<ProductDetail />} />
-              <Route path="/store/:slug/search" element={<SearchResults />} />
-              <Route path="/store/:slug/cart" element={<CartPage />} />
-              <Route path="/store/:slug/checkout" element={<CheckoutPage />} />
-              <Route path="/store/:slug/payment-processing/:orderId" element={<PaymentProcessing />} />
-              <Route path="/store/:slug/order-confirmation/:orderId" element={<OrderConfirmation />} />
-              <Route path="/store/:slug/:pageSlug" element={<StorefrontPage />} />
-              <Route path="/store/:slug" element={<StorefrontHome />} />
-              
-              {/* Funnel Routes */}
-              <Route path="/funnel/:funnelId/:stepSlug" element={<FunnelStepPage />} />
-              <Route path="/funnel/:funnelId" element={<FunnelStepPage />} />
+        <CartProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <DomainRouter>
+                <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/auth" element={<Auth />} />
+                
+                {/* Single Store Dashboard Routes */}
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/dashboard/overview" element={<DashboardOverview />} />
+                <Route path="/dashboard/products" element={<Products />} />
+                <Route path="/dashboard/products/add" element={<AddProduct />} />
+                <Route path="/dashboard/products/:id" element={<ProductView />} />
+                <Route path="/dashboard/products/:id/edit" element={<EditProduct />} />
+                <Route path="/dashboard/categories" element={<Categories />} />
+                <Route path="/dashboard/product-library" element={<ProductLibrary />} />
+                <Route path="/dashboard/orders" element={<Orders />} />
+                <Route path="/dashboard/customers" element={<Customers />} />
+                <Route path="/dashboard/analytics" element={<Analytics />} />
+                <Route path="/dashboard/reviews" element={<Reviews />} />
+                <Route path="/dashboard/websites" element={<Websites />} />
+                <Route path="/dashboard/websites/create" element={<CreateWebsite />} />
+                <Route path="/dashboard/websites/:id" element={<WebsiteManagement />} />
+                <Route path="/dashboard/funnels" element={<Funnels />} />
+                <Route path="/dashboard/funnels/create" element={<CreateFunnel />} />
+                <Route path="/dashboard/funnels/:id" element={<FunnelManagement />} />
+                
+                {/* Context-aware page builder routes */}
+                <Route path="/dashboard/websites/:websiteId/pages/:pageId/builder" element={<PageBuilder />} />
+                <Route path="/dashboard/funnels/:funnelId/steps/:stepId/builder" element={<PageBuilder />} />
+                <Route path="/dashboard/marketing" element={<Marketing />} />
+                <Route path="/dashboard/marketing/facebook" element={<FacebookAds />} />
+                <Route path="/dashboard/marketing/email" element={<EmailCampaigns />} />
+                <Route path="/dashboard/marketing/discounts" element={<Discounts />} />
+                <Route path="/dashboard/settings" element={<StoreSettings />} />
+                <Route path="/dashboard/settings/store" element={<StoreSettings />} />
+                <Route path="/dashboard/settings/profile" element={<ProfileSettings />} />
+                <Route path="/dashboard/settings/billing" element={<BillingSettings />} />
+                <Route path="/dashboard/domains" element={<Domains />} />
+                
+                {/* Store Management Routes */}
+                <Route path="/dashboard/stores" element={<StoreList />} />
+                <Route path="/dashboard/stores/create" element={<CreateStore />} />
+                <Route path="/dashboard/stores/:storeId" element={<StoreManagement />} />
+                
+                {/* Demo and Preview Routes */}
+                <Route path="/preview/demo" element={<DemoPreview />} />
+                
+                {/* Public Storefront Routes */}
+                <Route path="/store/:slug/products" element={<StorefrontProducts />} />
+                <Route path="/store/:slug/products/:productSlug" element={<ProductDetail />} />
+                <Route path="/store/:slug/search" element={<SearchResults />} />
+                <Route path="/store/:slug/cart" element={<CartPage />} />
+                <Route path="/store/:slug/checkout" element={<CheckoutPage />} />
+                <Route path="/store/:slug/payment-processing/:orderId" element={<PaymentProcessing />} />
+                <Route path="/store/:slug/order-confirmation/:orderId" element={<OrderConfirmation />} />
+                <Route path="/store/:slug/:pageSlug" element={<StorefrontPage />} />
+                <Route path="/store/:slug" element={<StorefrontHome />} />
+                
+                {/* Funnel Routes */}
+                <Route path="/funnel/:funnelId/:stepSlug" element={<FunnelStepPage />} />
+                <Route path="/funnel/:funnelId" element={<FunnelStepPage />} />
 
-              {/* Website Routes */}
-              <Route path="/website/:websiteId" element={<WebsiteLayout />}>
-                <Route index element={<WebsitePage />} />
-                <Route
-                  path="products"
-                  element={<WebsiteOverrideRoute slug="products" fallback={<StorefrontProducts />} />}
-                />
-                <Route path="products/:productSlug" element={<WebsiteProductDetailRoute />} />
-                <Route
-                  path="search"
-                  element={<WebsiteOverrideRoute slug="search" fallback={<SearchResults />} />}
-                />
-                <Route
-                  path="cart"
-                  element={<WebsiteOverrideRoute slug="cart" fallback={<CartPage />} />}
-                />
-                <Route
-                  path="checkout"
-                  element={<WebsiteOverrideRoute slug="checkout" fallback={<CheckoutPage />} />}
-                />
-                {/* Support both param and query styles for order-related pages with override */}
-                <Route
-                  path="payment-processing"
-                  element={<WebsiteOverrideRoute slug="payment-processing" fallback={<PaymentProcessing />} />}
-                />
-                <Route
-                  path="payment-processing/:orderId"
-                  element={<WebsiteOverrideRoute slug="payment-processing" fallback={<PaymentProcessing />} />}
-                />
-                <Route
-                  path="order-confirmation"
-                  element={<WebsiteOverrideRoute slug="order-confirmation" fallback={<OrderConfirmation />} />}
-                />
-                <Route
-                  path="order-confirmation/:orderId"
-                  element={<WebsiteOverrideRoute slug="order-confirmation" fallback={<OrderConfirmation />} />}
-                />
-                <Route path=":pageSlug" element={<WebsitePage />} />
-              </Route>
+                {/* Website Routes */}
+                <Route path="/website/:websiteId" element={<WebsiteLayout />}>
+                  <Route index element={<WebsitePage />} />
+                  <Route
+                    path="products"
+                    element={<WebsiteOverrideRoute slug="products" fallback={<StorefrontProducts />} />}
+                  />
+                  <Route path="products/:productSlug" element={<WebsiteProductDetailRoute />} />
+                  <Route
+                    path="search"
+                    element={<WebsiteOverrideRoute slug="search" fallback={<SearchResults />} />}
+                  />
+                  <Route
+                    path="cart"
+                    element={<WebsiteOverrideRoute slug="cart" fallback={<CartPage />} />}
+                  />
+                  <Route
+                    path="checkout"
+                    element={<WebsiteOverrideRoute slug="checkout" fallback={<CheckoutPage />} />}
+                  />
+                  {/* Support both param and query styles for order-related pages with override */}
+                  <Route
+                    path="payment-processing"
+                    element={<WebsiteOverrideRoute slug="payment-processing" fallback={<PaymentProcessing />} />}
+                  />
+                  <Route
+                    path="payment-processing/:orderId"
+                    element={<WebsiteOverrideRoute slug="payment-processing" fallback={<PaymentProcessing />} />}
+                  />
+                  <Route
+                    path="order-confirmation"
+                    element={<WebsiteOverrideRoute slug="order-confirmation" fallback={<OrderConfirmation />} />}
+                  />
+                  <Route
+                    path="order-confirmation/:orderId"
+                    element={<WebsiteOverrideRoute slug="order-confirmation" fallback={<OrderConfirmation />} />}
+                  />
+                  <Route path=":pageSlug" element={<WebsitePage />} />
+                </Route>
 
-              {/* Clean slug-based Website Routes */}
-              <Route path="/site/:websiteSlug" element={<WebsiteLayout />}>
-                <Route index element={<WebsitePage />} />
-                <Route
-                  path="products"
-                  element={<WebsiteOverrideRoute slug="products" fallback={<StorefrontProducts />} />}
-                />
-                <Route path="products/:productSlug" element={<WebsiteProductDetailRoute />} />
-                <Route
-                  path="search"
-                  element={<WebsiteOverrideRoute slug="search" fallback={<SearchResults />} />}
-                />
-                <Route
-                  path="cart"
-                  element={<WebsiteOverrideRoute slug="cart" fallback={<CartPage />} />}
-                />
-                <Route
-                  path="checkout"
-                  element={<WebsiteOverrideRoute slug="checkout" fallback={<CheckoutPage />} />}
-                />
-                {/* Support both param and query styles for order-related pages with override */}
-                <Route
-                  path="payment-processing"
-                  element={<WebsiteOverrideRoute slug="payment-processing" fallback={<PaymentProcessing />} />}
-                />
-                <Route
-                  path="payment-processing/:orderId"
-                  element={<WebsiteOverrideRoute slug="payment-processing" fallback={<PaymentProcessing />} />}
-                />
-                <Route
-                  path="order-confirmation"
-                  element={<WebsiteOverrideRoute slug="order-confirmation" fallback={<OrderConfirmation />} />}
-                />
-                <Route
-                  path="order-confirmation/:orderId"
-                  element={<WebsiteOverrideRoute slug="order-confirmation" fallback={<OrderConfirmation />} />}
-                />
-                <Route path=":pageSlug" element={<WebsitePage />} />
-              </Route>
+                {/* Clean slug-based Website Routes */}
+                <Route path="/site/:websiteSlug" element={<WebsiteLayout />}>
+                  <Route index element={<WebsitePage />} />
+                  <Route
+                    path="products"
+                    element={<WebsiteOverrideRoute slug="products" fallback={<StorefrontProducts />} />}
+                  />
+                  <Route path="products/:productSlug" element={<WebsiteProductDetailRoute />} />
+                  <Route
+                    path="search"
+                    element={<WebsiteOverrideRoute slug="search" fallback={<SearchResults />} />}
+                  />
+                  <Route
+                    path="cart"
+                    element={<WebsiteOverrideRoute slug="cart" fallback={<CartPage />} />}
+                  />
+                  <Route
+                    path="checkout"
+                    element={<WebsiteOverrideRoute slug="checkout" fallback={<CheckoutPage />} />}
+                  />
+                  {/* Support both param and query styles for order-related pages with override */}
+                  <Route
+                    path="payment-processing"
+                    element={<WebsiteOverrideRoute slug="payment-processing" fallback={<PaymentProcessing />} />}
+                  />
+                  <Route
+                    path="payment-processing/:orderId"
+                    element={<WebsiteOverrideRoute slug="payment-processing" fallback={<PaymentProcessing />} />}
+                  />
+                  <Route
+                    path="order-confirmation"
+                    element={<WebsiteOverrideRoute slug="order-confirmation" fallback={<OrderConfirmation />} />}
+                  />
+                  <Route
+                    path="order-confirmation/:orderId"
+                    element={<WebsiteOverrideRoute slug="order-confirmation" fallback={<OrderConfirmation />} />}
+                  />
+                  <Route path=":pageSlug" element={<WebsitePage />} />
+                </Route>
 
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-              </Routes>
-            </DomainRouter>
-          </BrowserRouter>
-        </TooltipProvider>
+                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                <Route path="*" element={<NotFound />} />
+                </Routes>
+              </DomainRouter>
+            </BrowserRouter>
+          </TooltipProvider>
+        </CartProvider>
       </StoreProvider>
     </AuthProvider>
   </QueryClientProvider>

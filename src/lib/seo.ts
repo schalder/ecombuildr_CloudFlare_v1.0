@@ -12,7 +12,6 @@ export type SEOConfig = {
   locale?: string; // e.g., 'en_US'
   favicon?: string; // URL to favicon (png/ico)
   structuredData?: Record<string, any> | Record<string, any>[]; // JSON-LD
-  headerTrackingCode?: string; // Custom header tracking code
 };
 
 function upsertMeta(selector: string, attrs: Record<string, string>) {
@@ -125,30 +124,5 @@ export function setSEO(input: SEOConfig) {
     script.setAttribute('data-managed', 'seo');
     script.textContent = JSON.stringify(cfg.structuredData);
     document.head.appendChild(script);
-  }
-
-  // Header Tracking Code
-  removeIfExists('[data-tracking="header"]');
-  if (cfg.headerTrackingCode) {
-    const div = document.createElement('div');
-    div.setAttribute('data-tracking', 'header');
-    div.innerHTML = cfg.headerTrackingCode;
-    document.head.appendChild(div);
-  }
-}
-
-// Utility function to inject footer tracking code
-export function setFooterTrackingCode(trackingCode: string | undefined) {
-  // Remove existing footer tracking code
-  const existing = document.querySelector('[data-tracking="footer"]');
-  if (existing) {
-    existing.remove();
-  }
-
-  if (trackingCode && trackingCode.trim()) {
-    const div = document.createElement('div');
-    div.setAttribute('data-tracking', 'footer');
-    div.innerHTML = trackingCode;
-    document.body.appendChild(div);
   }
 }

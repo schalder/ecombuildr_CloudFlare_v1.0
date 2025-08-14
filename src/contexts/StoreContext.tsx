@@ -13,9 +13,6 @@ interface Store {
   domain?: string;
   settings: any;
   is_active: boolean;
-  facebook_pixel_id?: string;
-  google_analytics_id?: string;
-  google_ads_id?: string;
 }
 
 interface StoreContextType {
@@ -48,7 +45,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       
       const { data, error } = await supabase
         .from('stores')
-        .select('id, name, slug, description, logo_url, favicon_url, primary_color, secondary_color, is_active, settings, facebook_pixel_id, google_analytics_id, google_ads_id')
+        .select('id, name, slug, description, logo_url, favicon_url, primary_color, secondary_color, is_active, settings')
         .eq('slug', slug)
         .eq('is_active', true)
         .maybeSingle();
@@ -89,7 +86,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
       const { data, error } = await supabase
         .from('stores')
-        .select('id, name, slug, description, logo_url, favicon_url, primary_color, secondary_color, is_active, settings, facebook_pixel_id, google_analytics_id, google_ads_id')
+        .select('id, name, slug, description, logo_url, favicon_url, primary_color, secondary_color, is_active, settings')
         .eq('id', id)
         .eq('is_active', true)
         .maybeSingle();

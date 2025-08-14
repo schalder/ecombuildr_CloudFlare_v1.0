@@ -19,7 +19,6 @@ import { computeShippingForAddress } from '@/lib/shipping';
 import { formatCurrency } from '@/lib/currency';
 import { nameWithVariant } from '@/lib/utils';
 import { useWebsiteShipping } from '@/hooks/useWebsiteShipping';
-import { usePixelTracking } from '@/hooks/usePixelTracking';
 
 interface CheckoutForm {
   customer_name: string;
@@ -41,7 +40,6 @@ export const CheckoutPage: React.FC = () => {
   const { items, total, clearCart } = useCart();
   const paths = useEcomPaths();
   const isWebsiteContext = Boolean(websiteId || websiteSlug);
-  const { trackInitiateCheckout, trackPurchase } = usePixelTracking();
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [discountLoading, setDiscountLoading] = useState(false);
@@ -126,28 +124,6 @@ useEffect(() => {
     };
     loadAllowed();
   }, [items, store]);
-
-  // Track initiate checkout when component mounts with items
-  useEffect(() => {
-    if (currentStep === 1 && items.length > 0) {
-      console.log('Checkout initiated with items:', items);
-      
-      // Track checkout initiation
-      try {
-        trackInitiateCheckout({
-          value: total + shippingCost - discountAmount,
-          currency: 'BDT',
-          contents: items.map(item => ({
-            id: item.productId,
-            quantity: item.quantity,
-            item_price: item.price,
-          })),
-        });
-      } catch (error) {
-        console.error('Error tracking checkout initiation:', error);
-      }
-    }
-  }, [currentStep, items, total, shippingCost, discountAmount, trackInitiateCheckout]);
 
   const handleInputChange = (field: keyof CheckoutForm, value: string) => {
     setForm(prev => ({ ...prev, [field]: value }));
@@ -307,58 +283,13 @@ useEffect(() => {
         }
       }
 
-      // Track purchase event
-      try {
-        trackPurchase({
-          transaction_id: createdOrderId,
-          value: total + shippingCost - discountAmount,
-          currency: 'BDT',
-          contents: items.map(item => ({
-            id: item.productId,
-            quantity: item.quantity,
-            item_price: item.price,
-          })),
-        });
-
-        // Send server-side event to Facebook CAPI if pixel is configured
-        if (store.facebook_pixel_id && form.customer_email) {
-          await supabase.functions.invoke('facebook-capi-events', {
-            body: {
-              pixel_id: store.facebook_pixel_id,
-              access_token: 'dummy_token', // In production, this should be stored securely
-              event_name: 'Purchase',
-              user_data: {
-                em: [form.customer_email],
-                ph: form.customer_phone ? [form.customer_phone] : undefined,
-                client_ip_address: await fetch('https://api.ipify.org?format=json').then(r => r.json()).then(data => data.ip).catch(() => undefined),
-                client_user_agent: navigator.userAgent,
-              },
-              custom_data: {
-                value: total + shippingCost - discountAmount,
-                currency: 'BDT',
-                content_ids: items.map(item => item.productId),
-                contents: items.map(item => ({
-                  id: item.productId,
-                  quantity: item.quantity,
-                  item_price: item.price,
-                })),
-                order_id: createdOrderId,
-              },
-              event_source_url: window.location.href,
-            },
-          });
-        }
-      } catch (error) {
-        console.error('Error tracking purchase:', error);
-      }
-
       // Handle payment processing
       if (form.payment_method === 'cod' || isManual) {
         clearCart();
         toast.success(isManual ? 'Order placed! Please complete payment to the provided number.' : 'Order placed successfully!');
         navigate(paths.orderConfirmation(createdOrderId));
       } else {
-        await initiatePayment(createdOrderId, total + shippingCost - discountAmount, form.payment_method);
+        await initiatePayment(createdOrderId, finalTotal, form.payment_method);
       }
     } catch (error) {
       console.error('Error creating order:', error);

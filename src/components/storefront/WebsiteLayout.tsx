@@ -5,26 +5,17 @@ import { supabase } from '@/integrations/supabase/client';
 import { useStore } from '@/contexts/StoreContext';
 import { WebsiteHeader } from '@/components/storefront/WebsiteHeader';
 import { WebsiteFooter } from '@/components/storefront/WebsiteFooter';
-import { PixelManager } from '@/components/pixel/PixelManager';
-import { CartProvider } from '@/contexts/CartContext';
 import { setGlobalCurrency } from '@/lib/currency';
-import { setSEO, buildCanonical, setFooterTrackingCode } from '@/lib/seo';
 
 interface WebsiteData {
   id: string;
   name: string;
   slug: string;
   description?: string;
-  domain?: string;
   is_published: boolean;
   is_active: boolean;
   store_id: string;
   settings?: any;
-  seo_title?: string;
-  seo_description?: string;
-  og_image?: string;
-  meta_robots?: string;
-  canonical_domain?: string;
 }
 
 export const WebsiteLayout: React.FC = () => {
@@ -91,27 +82,6 @@ export const WebsiteLayout: React.FC = () => {
     try { setGlobalCurrency(code as any); } catch {}
   }, [website?.settings?.currency?.code]);
 
-  // Inject tracking codes from website settings
-  React.useEffect(() => {
-    if (!website) return;
-    
-    const canonical = buildCanonical(undefined, (website as any)?.canonical_domain || website.domain);
-    setSEO({
-      title: ((website as any)?.seo_title || website.name) || undefined,
-      description: ((website as any)?.seo_description || website.description) || undefined,
-      image: (website as any)?.og_image,
-      canonical,
-      robots: isPreview ? 'noindex, nofollow' : ((website as any)?.meta_robots || 'index, follow'),
-      siteName: website.name,
-      ogType: 'website',
-      favicon: (website as any)?.settings?.favicon_url || '/favicon.ico',
-      headerTrackingCode: (website as any)?.settings?.header_tracking_code || undefined,
-    });
-
-    // Inject footer tracking code
-    setFooterTrackingCode((website as any)?.settings?.footer_tracking_code || undefined);
-  }, [website, isPreview]);
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -131,30 +101,19 @@ export const WebsiteLayout: React.FC = () => {
     );
   }
 
-  // Extract pixel IDs from website properties
-  const websitePixels = React.useMemo(() => ({
-    facebookPixelId: (website as any)?.facebook_pixel_id,
-    googleAnalyticsId: (website as any)?.google_analytics_id,
-    googleAdsId: (website as any)?.google_ads_id,
-  }), [website]);
-
   return (
-    <PixelManager websitePixels={websitePixels}>
-      <CartProvider>
-        <div className="min-h-screen flex flex-col bg-background">
-          <style>{`
-            :root {
-              --store-primary: ${store?.primary_color ?? '#10B981'};
-              --store-secondary: ${store?.secondary_color ?? '#059669'};
-            }
-          `}</style>
-          <WebsiteHeader website={website} />
-          <main className="flex-1">
-            <Outlet />
-          </main>
-          <WebsiteFooter website={website} />
-        </div>
-      </CartProvider>
-    </PixelManager>
+    <div className="min-h-screen flex flex-col bg-background">
+      <style>{`
+        :root {
+          --store-primary: ${store?.primary_color ?? '#10B981'};
+          --store-secondary: ${store?.secondary_color ?? '#059669'};
+        }
+      `}</style>
+      <WebsiteHeader website={website} />
+      <main className="flex-1">
+        <Outlet />
+      </main>
+      <WebsiteFooter website={website} />
+    </div>
   );
 };

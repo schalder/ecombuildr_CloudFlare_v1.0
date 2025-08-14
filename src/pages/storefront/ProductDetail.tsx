@@ -16,7 +16,6 @@ import ReviewsSection from '@/components/storefront/ReviewsSection';
 import RelatedProducts from '@/components/storefront/RelatedProducts';
 import { useEcomPaths } from '@/lib/pathResolver';
 import { PageBuilderRenderer } from '@/components/storefront/PageBuilderRenderer';
-import { ProductPixelTracker } from '@/components/pixel/ProductPixelTracker';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { parseVideoUrl, buildEmbedUrl } from '@/components/page-builder/utils/videoUtils';
 
