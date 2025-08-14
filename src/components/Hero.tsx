@@ -1,10 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Play, Star, Users, TrendingUp } from "lucide-react";
 import heroImage from "@/assets/hero-ecommerce.jpg";
-
 export const Hero = () => {
-  return (
-    <div className="relative min-h-screen bg-gradient-hero overflow-hidden">
+  return <div className="relative min-h-screen bg-gradient-hero overflow-hidden">
       {/* Background Pattern */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_40%,rgba(120,219,226,0.1)_0%,transparent_50%)] pointer-events-none" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,rgba(251,146,60,0.1)_0%,transparent_50%)] pointer-events-none" />
@@ -17,7 +15,7 @@ export const Hero = () => {
             {/* Social Proof Badge */}
             <div className="inline-flex items-center gap-2 bg-success-light/50 backdrop-blur-sm border border-success/20 rounded-full px-4 py-2 text-sm font-medium text-success">
               <Star className="h-4 w-4 fill-current" />
-              <span>১০,০০০+ ব্যবসায়ী ব্যবহার করছেন</span>
+              <span className="text-slate-50">১০,০০০+ ব্যবসায়ী ব্যবহার করছেন</span>
             </div>
 
             {/* Main Heading */}
@@ -80,11 +78,7 @@ export const Hero = () => {
           {/* Right Content - Hero Image */}
           <div className="relative">
             <div className="relative z-10 rounded-2xl overflow-hidden shadow-glow">
-              <img 
-                src={heroImage} 
-                alt="F-Commerce Platform Dashboard"
-                className="w-full h-auto rounded-2xl"
-              />
+              <img src={heroImage} alt="F-Commerce Platform Dashboard" className="w-full h-auto rounded-2xl" />
             </div>
             
             {/* Floating Elements */}
@@ -105,6 +99,5 @@ export const Hero = () => {
 
         </div>
       </div>
-    </div>
-  );
+    </div>;
 };
