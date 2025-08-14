@@ -3,6 +3,9 @@ import { Navigate } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
 import { Hero } from "@/components/Hero";
 import { Features } from "@/components/Features";
+import { ProcessSteps } from "@/components/ProcessSteps";
+import { ToolsShowcase } from "@/components/ToolsShowcase";
+import { Testimonials } from "@/components/Testimonials";
 import { Pricing } from "@/components/Pricing";
 import { Footer } from "@/components/Footer";
 
@@ -20,6 +23,11 @@ const Index = () => {
       <Hero />
       <div id="features">
         <Features />
+      </div>
+      <ProcessSteps />
+      <ToolsShowcase />
+      <div id="testimonials">
+        <Testimonials />
       </div>
       <div id="pricing">
         <Pricing />

@@ -22,13 +22,11 @@ export const Navbar = () => {
           
           {/* Logo */}
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-primary rounded-lg flex items-center justify-center">
-              <Store className="h-6 w-6 text-white" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-foreground">F-Commerce Pro</h1>
-              <p className="text-xs text-muted-foreground">by StoreBuilder</p>
-            </div>
+            <img 
+              src="https://res.cloudinary.com/funnelsninja/image/upload/v1755206321/ecombuildr-logo-big_vifrmg.png" 
+              alt="EcomBuildr Logo" 
+              className="h-10 w-auto"
+            />
           </div>
 
           {/* Desktop Navigation */}
@@ -59,7 +57,7 @@ export const Navbar = () => {
                   </Link>
                 </Button>
                 <Button asChild variant="accent" size="sm">
-                  <Link to="/auth">ফ্রি শুরু করুন</Link>
+                  <Link to="/auth">Get Started Free</Link>
                 </Button>
               </>
             )}
@@ -103,7 +101,7 @@ export const Navbar = () => {
                       </Link>
                     </Button>
                     <Button asChild variant="accent" className="w-full" onClick={() => setIsMenuOpen(false)}>
-                      <Link to="/auth">ফ্রি শুরু করুন</Link>
+                      <Link to="/auth">Get Started Free</Link>
                     </Button>
                   </>
                 )}

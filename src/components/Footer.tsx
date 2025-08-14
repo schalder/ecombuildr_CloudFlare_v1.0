@@ -50,18 +50,18 @@ export const Footer = () => {
         <div className="container mx-auto px-4 py-16">
           <div className="text-center max-w-3xl mx-auto">
             <h3 className="text-3xl md:text-4xl font-bold mb-4">
-              আজই শুরু করুন আপনার ই-কমার্স যাত্রা
+              Start Building Your E-commerce Empire Today
             </h3>
             <p className="text-xl text-primary-light mb-8">
-              হাজারো সফল ব্যবসায়ীর মতো আপনিও তৈরি করুন নিজের প্রফেশনাল অনলাইন স্টোর
+              Join thousands of successful entrepreneurs who've built profitable online stores with our platform
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button variant="accent" size="lg" className="group">
-                ৭ দিন ফ্রি ট্রায়াল শুরু করুন
+                Start Free Trial
                 <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
               </Button>
               <Button variant="outline" size="lg" className="bg-white/10 backdrop-blur-sm border-white/20 text-white hover:bg-white hover:text-primary">
-                বিক্রয় দলের সাথে কথা বলুন
+                Contact Sales Team
               </Button>
             </div>
           </div>
@@ -74,19 +74,17 @@ export const Footer = () => {
           
           {/* Brand Section */}
           <div className="lg:col-span-2 space-y-6">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-accent rounded-lg flex items-center justify-center">
-                <Store className="h-7 w-7 text-white" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold">F-Commerce Pro</h1>
-                <p className="text-primary-light">by StoreBuilder</p>
-              </div>
+            <div className="flex items-center">
+              <img 
+                src="https://res.cloudinary.com/funnelsninja/image/upload/v1755206321/ecombuildr-logo-white-big_xywiil.png" 
+                alt="EcomBuildr Logo" 
+                className="h-12 w-auto"
+              />
             </div>
             
             <p className="text-primary-light leading-relaxed max-w-md">
-              বাংলাদেশী F-Commerce ব্যবসায়ীদের জন্য সবচেয়ে সহজ এবং শক্তিশালী 
-              ই-কমার্স প্ল্যাটফর্ম। কোডিং ছাড়াই তৈরি করুন প্রফেশনাল অনলাইন স্টোর।
+              Build full-featured e-commerce sites with our powerful no-code platform. 
+              Create professional stores, landing pages, and conversion-driven systems that turn visitors into customers.
             </p>
 
             {/* Contact Info */}
@@ -97,11 +95,11 @@ export const Footer = () => {
               </div>
               <div className="flex items-center gap-3 text-primary-light">
                 <Mail className="h-4 w-4" />
-                <span>support@fcommercepro.com</span>
+                <span>support@ecombuildr.com</span>
               </div>
               <div className="flex items-center gap-3 text-primary-light">
                 <MapPin className="h-4 w-4" />
-                <span>ঢাকা, বাংলাদেশ</span>
+                <span>Remote Team</span>
               </div>
             </div>
 
@@ -154,7 +152,7 @@ export const Footer = () => {
         <div className="container mx-auto px-4 py-6">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-primary-light text-sm">
-              © {currentYear} F-Commerce Pro. All rights reserved.
+              © {currentYear} EcomBuildr. All rights reserved.
             </p>
             
             <div className="flex gap-6 text-sm text-primary-light">

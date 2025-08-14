@@ -18,53 +18,53 @@ import {
 const features = [
   {
     icon: Store,
-    title: "নিজস্ব অনলাইন স্টোর",
-    description: "আপনার ব্র্যান্ডের সাথে মানানসই কাস্টমাইজড স্টোর তৈরি করুন",
+    title: "Professional Storefronts",
+    description: "Create stunning, conversion-optimized online stores that represent your brand perfectly",
     color: "text-primary",
     bgColor: "bg-primary-light"
   },
   {
     icon: Palette,
-    title: "Drag & Drop Page Builder",
-    description: "কোডিং ছাড়াই প্রফেশনাল ল্যান্ডিং পেজ ডিজাইন করুন",
+    title: "Visual Page Builder",
+    description: "Design beautiful landing pages and product pages with our intuitive drag-and-drop builder",
     color: "text-accent",
     bgColor: "bg-accent-light"
   },
   {
     icon: ShoppingCart,
-    title: "Product Library",
-    description: "হাজারো ট্রেন্ডিং প্রোডাক্ট আমাদের লাইব্রেরি থেকে ইমপোর্ট করুন",
+    title: "Complete E-commerce Suite",
+    description: "Everything you need to sell online - from product management to order fulfillment",
     color: "text-success",
     bgColor: "bg-success-light"
   },
   {
     icon: CreditCard,
-    title: "Cash on Delivery",
-    description: "bKash, Nagad, SSLCommerz সহ সব পেমেন্ট মেথড একসাথে",
+    title: "Multiple Payment Options",
+    description: "Accept payments via credit cards, digital wallets, and cash on delivery",
     color: "text-primary",
     bgColor: "bg-primary-light"
   },
   {
     icon: TrendingUp,
-    title: "Facebook Marketing Tools",
-    description: "Pixel integration, CAPI, এবং ad copy generator",
+    title: "Conversion Analytics",
+    description: "Track performance with detailed analytics and optimize for maximum conversions",
     color: "text-accent",
     bgColor: "bg-accent-light"
   },
   {
     icon: Truck,
-    title: "Courier Integration",
-    description: "RedX, Paperfly, Pathao - সব কুরিয়ার সার্ভিস একসাথে",
+    title: "Automated Fulfillment",
+    description: "Streamline order processing with automated shipping and inventory management",
     color: "text-success",
     bgColor: "bg-success-light"
   }
 ];
 
 const stats = [
-  { value: "১০,০০০+", label: "Active Stores", icon: Store },
-  { value: "৫০০%", label: "Average ROI Increase", icon: TrendingUp },
-  { value: "৯৮%", label: "Customer Satisfaction", icon: Users },
-  { value: "২৪/৭", label: "Support Available", icon: Shield }
+  { value: "10,000+", label: "Active Stores", icon: Store },
+  { value: "500%", label: "Average ROI Increase", icon: TrendingUp },
+  { value: "98%", label: "Customer Satisfaction", icon: Users },
+  { value: "24/7", label: "Support Available", icon: Shield }
 ];
 
 export const Features = () => {
@@ -75,10 +75,10 @@ export const Features = () => {
         {/* Header */}
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-            সব ফিচার <span className="text-accent">এক জায়গায়</span>
+            Everything You Need <span className="text-accent">In One Platform</span>
           </h2>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            বাংলাদেশী F-Commerce ব্যবসায়ীদের জন্য বিশেষভাবে ডিজাইন করা সব টুলস এবং ফিচার
+            From store creation to conversion optimization - all the tools successful entrepreneurs need to build and scale their online business
           </p>
         </div>
 
@@ -104,7 +104,7 @@ export const Features = () => {
         {/* Stats Section */}
         <div className="bg-gradient-primary rounded-2xl p-8 md:p-12 text-center">
           <h3 className="text-2xl md:text-3xl font-bold text-white mb-8">
-            আমাদের সাফল্যের গল্প
+            Success by the Numbers
           </h3>
           
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
