@@ -12,7 +12,7 @@ import { toast } from "@/hooks/use-toast";
 import { Store, Settings } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import ShippingIntegrations from "@/components/settings/ShippingIntegrations";
-import { PixelSettings } from "@/components/pixel/PixelSettings";
+
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -31,9 +31,6 @@ interface Store {
   theme_id?: string;
   is_active: boolean;
   settings: any;
-  facebook_pixel_id?: string;
-  google_analytics_id?: string;
-  google_ads_id?: string;
 }
 
 const storeSettingsSchema = z.object({
@@ -43,9 +40,6 @@ const storeSettingsSchema = z.object({
   primary_color: z.string(),
   secondary_color: z.string(),
   is_active: z.boolean(),
-  facebook_pixel_id: z.string().optional(),
-  google_analytics_id: z.string().optional(),
-  google_ads_id: z.string().optional(),
 });
 
 type StoreSettingsForm = z.infer<typeof storeSettingsSchema>;
@@ -88,9 +82,6 @@ export default function StoreSettings() {
           primary_color: stores.primary_color,
           secondary_color: stores.secondary_color,
           is_active: stores.is_active,
-          facebook_pixel_id: stores.facebook_pixel_id || '',
-          google_analytics_id: stores.google_analytics_id || '',
-          google_ads_id: stores.google_ads_id || '',
         });
       }
     } catch (error) {
@@ -120,9 +111,6 @@ export default function StoreSettings() {
           primary_color: data.primary_color,
           secondary_color: data.secondary_color,
           is_active: data.is_active,
-          facebook_pixel_id: data.facebook_pixel_id || null,
-          google_analytics_id: data.google_analytics_id || null,
-          google_ads_id: data.google_ads_id || null,
           settings: store.settings,
         })
         .eq('id', store.id);
@@ -193,8 +181,6 @@ export default function StoreSettings() {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
           
-          {/* Pixel Settings */}
-          <PixelSettings form={form} title="Store-wide Pixel Integration" description="Configure tracking pixels for this store. These can be overridden at the website level." />
         {/* Shipping Integrations */}
         <ShippingIntegrations storeId={store.id} />
 
