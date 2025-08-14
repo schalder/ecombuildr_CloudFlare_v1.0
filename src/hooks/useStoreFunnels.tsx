@@ -17,37 +17,61 @@ export const useStoreFunnels = (storeId: string) => {
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
 
+  const fetchFunnels = async () => {
+    if (!user || !storeId) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      const { data, error } = await supabase
+        .from('funnels')
+        .select('id, name, slug, domain, is_published, is_active')
+        .eq('store_id', storeId)
+        .eq('is_active', true)
+        .order('created_at');
+
+      if (error) throw error;
+
+      setFunnels(data || []);
+    } catch (err: any) {
+      console.error('Failed to fetch funnels:', err);
+      setError(err.message || 'Failed to fetch funnels');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchFunnels = async () => {
-      if (!user || !storeId) {
-        setLoading(false);
-        return;
-      }
-
-      try {
-        setLoading(true);
-        setError(null);
-
-        const { data, error } = await supabase
-          .from('funnels')
-          .select('id, name, slug, domain, is_published, is_active')
-          .eq('store_id', storeId)
-          .eq('is_active', true)
-          .order('created_at');
-
-        if (error) throw error;
-
-        setFunnels(data || []);
-      } catch (err: any) {
-        console.error('Failed to fetch funnels:', err);
-        setError(err.message || 'Failed to fetch funnels');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchFunnels();
+
+    // Set up real-time subscription for funnels updates
+    if (user && storeId) {
+      const channel = supabase
+        .channel('funnels-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'funnels',
+            filter: `store_id=eq.${storeId}`
+          },
+          (payload) => {
+            console.log('Funnels real-time update:', payload);
+            fetchFunnels(); // Refetch to maintain filter and order
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
   }, [user, storeId]);
 
-  return { funnels, loading, error };
+  return { funnels, loading, error, refetch: fetchFunnels };
 };

@@ -121,6 +121,34 @@ export const useUserStore = () => {
 
   useEffect(() => {
     fetchUserStore();
+
+    // Set up real-time subscription for store updates
+    if (user) {
+      const channel = supabase
+        .channel('user-store-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'stores',
+            filter: `owner_id=eq.${user.id}`
+          },
+          (payload) => {
+            console.log('Store real-time update:', payload);
+            if (payload.eventType === 'UPDATE' && payload.new) {
+              setStore(payload.new as Store);
+            } else if (payload.eventType === 'DELETE') {
+              setStore(null);
+            }
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
   }, [user]);
 
   return {

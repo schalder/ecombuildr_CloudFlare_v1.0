@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Facebook, Settings, ExternalLink, AlertCircle } from 'lucide-react';
+import { Facebook, Settings, ExternalLink, AlertCircle, RefreshCw } from 'lucide-react';
 import { PixelEventOverview } from '@/components/analytics/PixelEventOverview';
 import { ConversionFunnel } from '@/components/analytics/ConversionFunnel';
 import { EventTimeline } from '@/components/analytics/EventTimeline';
@@ -19,8 +19,9 @@ export default function FacebookAds() {
   const [selectedWebsiteId, setSelectedWebsiteId] = useState<string>('all');
   const [selectedFunnelId, setSelectedFunnelId] = useState<string>('all');
   const { store } = useUserStore();
-  const { websites, loading: websitesLoading } = useStoreWebsites(store?.id || '');
-  const { funnels, loading: funnelsLoading } = useStoreFunnels(store?.id || '');
+  const { websites, loading: websitesLoading, refetch: refetchWebsites } = useStoreWebsites(store?.id || '');
+  const { funnels, loading: funnelsLoading, refetch: refetchFunnels } = useStoreFunnels(store?.id || '');
+  const { refetch: refetchStore } = useUserStore();
   
   // Memoize date range to prevent recreation on every render
   const dateRangeObj = useMemo(() => {
@@ -51,6 +52,15 @@ export default function FacebookAds() {
     : selectedFunnelId !== 'all'
     ? store?.facebook_pixel_id
     : store?.facebook_pixel_id || 'Multiple';
+
+  // Refresh function to manually refresh all data
+  const handleRefresh = async () => {
+    await Promise.all([
+      refetchStore(),
+      refetchWebsites(),
+      refetchFunnels()
+    ]);
+  };
 
   if (!store) {
     return (
@@ -128,6 +138,17 @@ export default function FacebookAds() {
                 <SelectItem value="90">Last 90 days</SelectItem>
               </SelectContent>
             </Select>
+            
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleRefresh}
+              disabled={websitesLoading || funnelsLoading}
+              className="flex items-center space-x-2"
+            >
+              <RefreshCw className={`h-4 w-4 ${websitesLoading || funnelsLoading ? 'animate-spin' : ''}`} />
+              <span>Refresh</span>
+            </Button>
             
             <Button variant="outline" size="sm" asChild>
               <a 

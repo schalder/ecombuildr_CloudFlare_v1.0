@@ -18,37 +18,61 @@ export const useStoreWebsites = (storeId: string) => {
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
 
+  const fetchWebsites = async () => {
+    if (!user || !storeId) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      const { data, error } = await supabase
+        .from('websites')
+        .select('id, name, slug, domain, facebook_pixel_id, is_published, is_active')
+        .eq('store_id', storeId)
+        .eq('is_active', true)
+        .order('created_at');
+
+      if (error) throw error;
+
+      setWebsites(data || []);
+    } catch (err: any) {
+      console.error('Failed to fetch websites:', err);
+      setError(err.message || 'Failed to fetch websites');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchWebsites = async () => {
-      if (!user || !storeId) {
-        setLoading(false);
-        return;
-      }
-
-      try {
-        setLoading(true);
-        setError(null);
-
-        const { data, error } = await supabase
-          .from('websites')
-          .select('id, name, slug, domain, facebook_pixel_id, is_published, is_active')
-          .eq('store_id', storeId)
-          .eq('is_active', true)
-          .order('created_at');
-
-        if (error) throw error;
-
-        setWebsites(data || []);
-      } catch (err: any) {
-        console.error('Failed to fetch websites:', err);
-        setError(err.message || 'Failed to fetch websites');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchWebsites();
+
+    // Set up real-time subscription for websites updates
+    if (user && storeId) {
+      const channel = supabase
+        .channel('websites-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'websites',
+            filter: `store_id=eq.${storeId}`
+          },
+          (payload) => {
+            console.log('Websites real-time update:', payload);
+            fetchWebsites(); // Refetch to maintain filter and order
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
   }, [user, storeId]);
 
-  return { websites, loading, error };
+  return { websites, loading, error, refetch: fetchWebsites };
 };
