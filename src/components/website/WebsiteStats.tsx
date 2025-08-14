@@ -72,7 +72,7 @@ export function WebsiteStats({ websiteId, websiteName, websiteSlug }: WebsiteSta
   const websiteUrl = stats.websiteUrl;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -97,20 +97,21 @@ export function WebsiteStats({ websiteId, websiteName, websiteSlug }: WebsiteSta
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
+      {/* Top Row - Website Overview and Traffic Analytics */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Website Overview */}
         <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Website Overview</CardTitle>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Website Overview</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Status</span>
-              <div className="flex gap-2">
-                <Badge variant={stats.isActive ? "default" : "secondary"}>
+              <div className="flex gap-1">
+                <Badge variant={stats.isActive ? "default" : "secondary"} className="text-xs px-2 py-0">
                   {stats.isActive ? "Active" : "Inactive"}
                 </Badge>
-                <Badge variant={stats.isPublished ? "default" : "outline"}>
+                <Badge variant={stats.isPublished ? "default" : "outline"} className="text-xs px-2 py-0">
                   {stats.isPublished ? "Published" : "Draft"}
                 </Badge>
               </div>
@@ -121,8 +122,8 @@ export function WebsiteStats({ websiteId, websiteName, websiteSlug }: WebsiteSta
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Domain</span>
               <div className="flex items-center gap-2">
-                <Globe className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm font-mono">
+                <Globe className="h-3 w-3 text-muted-foreground" />
+                <span className="text-xs font-mono">
                   {websiteUrl.replace('https://', '')}
                 </span>
               </div>
@@ -130,151 +131,151 @@ export function WebsiteStats({ websiteId, websiteName, websiteSlug }: WebsiteSta
             
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Created</span>
-              <span className="text-sm">
+              <span className="text-xs">
                 {format(new Date(stats.createdAt), 'MMM dd, yyyy')}
               </span>
             </div>
             
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Last Updated</span>
-              <span className="text-sm">
+              <span className="text-xs">
                 {format(new Date(stats.updatedAt), 'MMM dd, yyyy')}
               </span>
             </div>
           </CardContent>
         </Card>
 
-        {/* Advanced Analytics */}
+        {/* Traffic Analytics */}
         <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle className="text-lg">Traffic Analytics (Last 30 Days)</CardTitle>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Traffic Analytics (Last 30 Days)</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-              <div className="text-center p-4 border rounded-lg">
-                <div className="text-2xl md:text-3xl font-bold text-primary">{stats.analytics.totalPageViews}</div>
-                <div className="text-sm text-muted-foreground">Total Page Views</div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="text-center p-3 border rounded-lg">
+                <div className="text-2xl font-bold text-primary">{stats.analytics.totalPageViews}</div>
+                <div className="text-xs text-muted-foreground">Total Page Views</div>
               </div>
-              <div className="text-center p-4 border rounded-lg">
-                <div className="text-2xl md:text-3xl font-bold text-primary">{stats.analytics.totalUniqueVisitors}</div>
-                <div className="text-sm text-muted-foreground">Unique Visitors</div>
+              <div className="text-center p-3 border rounded-lg">
+                <div className="text-2xl font-bold text-primary">{stats.analytics.totalUniqueVisitors}</div>
+                <div className="text-xs text-muted-foreground">Unique Visitors</div>
               </div>
-              <div className="text-center p-4 border rounded-lg">
-                <div className="text-2xl md:text-3xl font-bold text-primary">{stats.analytics.averageBounceRate}%</div>
-                <div className="text-sm text-muted-foreground">Bounce Rate</div>
+              <div className="text-center p-3 border rounded-lg">
+                <div className="text-2xl font-bold text-primary">{stats.analytics.averageBounceRate}%</div>
+                <div className="text-xs text-muted-foreground">Bounce Rate</div>
               </div>
-              <div className="text-center p-4 border rounded-lg">
-                <div className="text-2xl md:text-3xl font-bold text-primary">{Math.floor(stats.analytics.averageSessionDuration / 60)}m {stats.analytics.averageSessionDuration % 60}s</div>
-                <div className="text-sm text-muted-foreground">Avg. Session</div>
+              <div className="text-center p-3 border rounded-lg">
+                <div className="text-2xl font-bold text-primary">{Math.floor(stats.analytics.averageSessionDuration / 60)}m {stats.analytics.averageSessionDuration % 60}s</div>
+                <div className="text-xs text-muted-foreground">Avg. Session</div>
               </div>
             </div>
 
             {stats.analytics.conversionRate > 0 && (
-              <div className="mb-6 p-4 bg-muted rounded-lg">
-                <div className="flex items-center gap-2 mb-2">
-                  <TrendingUp className="h-5 w-5 text-primary" />
-                  <span className="font-medium">Conversion Rate</span>
+              <div className="mt-4 p-3 bg-muted/50 rounded-lg">
+                <div className="flex items-center gap-2 mb-1">
+                  <TrendingUp className="h-4 w-4 text-primary" />
+                  <span className="font-medium text-sm">Conversion Rate</span>
                 </div>
-                <div className="text-2xl font-bold text-primary">{stats.analytics.conversionRate}%</div>
-                <div className="text-sm text-muted-foreground">
+                <div className="text-xl font-bold text-primary">{stats.analytics.conversionRate}%</div>
+                <div className="text-xs text-muted-foreground">
                   {stats.totalOrders} orders from {stats.analytics.totalUniqueVisitors} visitors
                 </div>
               </div>
             )}
           </CardContent>
         </Card>
+      </div>
 
+      {/* Second Row - Key Metrics, Traffic Sources, Device Types */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Key Metrics */}
         <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Key Metrics</CardTitle>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Key Metrics</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-3">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <FileText className="h-4 w-4 text-primary" />
-                <span className="font-medium">Total Pages</span>
+              <div className="flex items-center gap-2">
+                <FileText className="h-3 w-3 text-blue-500" />
+                <span className="text-sm">Total Pages</span>
               </div>
-              <span className="text-lg font-bold">{stats.totalPages}</span>
+              <span className="font-bold">{stats.totalPages}</span>
             </div>
             
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Eye className="h-4 w-4 text-green-600" />
-                <span className="font-medium">Published Pages</span>
+              <div className="flex items-center gap-2">
+                <Eye className="h-3 w-3 text-green-500" />
+                <span className="text-sm">Published Pages</span>
               </div>
-              <span className="text-lg font-bold">{stats.publishedPages}</span>
+              <span className="font-bold">{stats.publishedPages}</span>
             </div>
             
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <MessageSquare className="h-4 w-4 text-blue-600" />
-                <span className="font-medium">Form Submissions</span>
+              <div className="flex items-center gap-2">
+                <MessageSquare className="h-3 w-3 text-purple-500" />
+                <span className="text-sm">Form Submissions</span>
               </div>
-              <span className="text-lg font-bold">{stats.totalFormSubmissions}</span>
+              <span className="font-bold">{stats.totalFormSubmissions}</span>
             </div>
             
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Mail className="h-4 w-4 text-purple-600" />
-                <span className="font-medium">Newsletter Signups</span>
+              <div className="flex items-center gap-2">
+                <Mail className="h-3 w-3 text-orange-500" />
+                <span className="text-sm">Newsletter Signups</span>
               </div>
-              <span className="text-lg font-bold">{stats.totalNewsletterSignups}</span>
+              <span className="font-bold">{stats.totalNewsletterSignups}</span>
             </div>
 
             {stats.totalOrders > 0 && (
               <>
                 <Separator />
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <ShoppingCart className="h-4 w-4 text-orange-600" />
-                    <span className="font-medium">Total Orders</span>
+                  <div className="flex items-center gap-2">
+                    <ShoppingCart className="h-3 w-3 text-orange-600" />
+                    <span className="text-sm">Total Orders</span>
                   </div>
-                  <span className="text-lg font-bold">{stats.totalOrders}</span>
+                  <span className="font-bold">{stats.totalOrders}</span>
                 </div>
                 
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <DollarSign className="h-4 w-4 text-green-600" />
-                    <span className="font-medium">Total Revenue</span>
+                  <div className="flex items-center gap-2">
+                    <DollarSign className="h-3 w-3 text-green-600" />
+                    <span className="text-sm">Total Revenue</span>
                   </div>
-                  <span className="text-lg font-bold">৳{stats.totalRevenue.toLocaleString()}</span>
+                  <span className="font-bold">৳{stats.totalRevenue.toLocaleString()}</span>
                 </div>
               </>
             )}
           </CardContent>
         </Card>
-      </div>
 
-      {/* Traffic Sources */}
-      {stats.analytics.trafficSources.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Traffic Sources</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {stats.analytics.trafficSources.map((source, index) => (
-                <div key={source.source} className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-3 h-3 rounded-full" 
-                         style={{ backgroundColor: `hsl(${index * 60}, 70%, 50%)` }} />
-                    <span className="capitalize font-medium">{source.source}</span>
+        {/* Traffic Sources (Compact) */}
+        {stats.analytics.trafficSources.length > 0 && (
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Traffic Sources</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {stats.analytics.trafficSources.slice(0, 5).map((source, index) => (
+                  <div key={source.source} className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-red-500" />
+                      <span className="text-sm capitalize">{source.source}</span>
+                    </div>
+                    <span className="text-sm font-mono">{source.visitors} visitors</span>
                   </div>
-                  <span className="text-sm font-mono">{source.visitors} visitors</span>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
-        {/* Device Breakdown */}
+        {/* Device Types (Compact) */}
         {stats.analytics.deviceBreakdown.length > 0 && (
           <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Device Types</CardTitle>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Device Types</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
@@ -283,9 +284,9 @@ export function WebsiteStats({ websiteId, websiteName, websiteSlug }: WebsiteSta
                               device.device === 'tablet' ? Tablet : Monitor;
                   return (
                     <div key={device.device} className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <Icon className="h-4 w-4 text-muted-foreground" />
-                        <span className="capitalize font-medium">{device.device}</span>
+                      <div className="flex items-center gap-2">
+                        <Icon className="h-3 w-3 text-muted-foreground" />
+                        <span className="text-sm capitalize">{device.device}</span>
                       </div>
                       <span className="text-sm font-mono">{device.visitors} visitors</span>
                     </div>
@@ -295,45 +296,45 @@ export function WebsiteStats({ websiteId, websiteName, websiteSlug }: WebsiteSta
             </CardContent>
           </Card>
         )}
+      </div>
 
-        {/* Page Performance */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Page Performance</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {stats.analytics.pagePerformance.map((page, index) => (
-                <div key={page.pageType} className="p-3 border rounded-lg">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-3">
-                      <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
-                        <span className="text-xs font-medium text-primary">{index + 1}</span>
-                      </div>
-                      <span className="font-medium capitalize">{page.pageType}</span>
+      {/* Page Performance */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">Page Performance</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {stats.analytics.pagePerformance.map((page, index) => (
+              <div key={page.pageType} className="p-3 border rounded-lg">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center">
+                      <span className="text-xs font-medium text-primary">{index + 1}</span>
                     </div>
-                    <div className="text-right">
-                      <div className="text-sm font-mono">{page.pageViews} views</div>
-                      <div className="text-xs text-muted-foreground">{page.uniqueVisitors} unique</div>
-                    </div>
+                    <span className="font-medium text-sm capitalize">{page.pageType}</span>
                   </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Bounce Rate:</span>
-                    <span className={`font-medium ${page.bounceRate > 70 ? 'text-red-600' : page.bounceRate > 40 ? 'text-yellow-600' : 'text-green-600'}`}>
-                      {page.bounceRate}%
-                    </span>
+                  <div className="text-right">
+                    <div className="text-sm font-mono">{page.pageViews} views</div>
+                    <div className="text-xs text-muted-foreground">{page.uniqueVisitors} unique</div>
                   </div>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Bounce Rate:</span>
+                  <span className={`font-medium ${page.bounceRate > 70 ? 'text-red-500' : page.bounceRate > 40 ? 'text-yellow-500' : 'text-green-500'}`}>
+                    {page.bounceRate}%
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Quick Actions */}
       <Card>
-        <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">Quick Actions</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col sm:flex-row flex-wrap gap-2">
