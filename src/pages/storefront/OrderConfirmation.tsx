@@ -11,6 +11,8 @@ import { CheckCircle, Package, MapPin, CreditCard, Clock } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useEcomPaths } from '@/lib/pathResolver';
 import { nameWithVariant } from '@/lib/utils';
+import { usePixelTracking } from '@/hooks/usePixelTracking';
+import { usePixelContext } from '@/components/pixel/PixelManager';
 
 interface Order {
   id: string;
@@ -54,6 +56,8 @@ export const OrderConfirmation: React.FC = () => {
   const paths = useEcomPaths();
   const orderId = orderIdParam || searchParams.get('orderId') || '';
   const isWebsiteContext = Boolean(websiteId || websiteSlug);
+  const { pixels } = usePixelContext();
+  const { trackPurchase } = usePixelTracking(pixels);
 useEffect(() => {
   if (slug) {
     loadStore(slug);
@@ -90,8 +94,28 @@ useEffect(() => {
         setOrder(null);
         setOrderItems([]);
       } else {
-        setOrder(data.order as Order);
-        setOrderItems((data.items || []) as OrderItem[]);
+        const orderData = data.order as Order;
+        const itemsData = (data.items || []) as OrderItem[];
+        
+        setOrder(orderData);
+        setOrderItems(itemsData);
+        
+        // Track Purchase event when order confirmation page loads (for online payments)
+        if (orderData && itemsData.length > 0) {
+          const trackingItems = itemsData.map(item => ({
+            item_id: item.id,
+            item_name: item.product_name,
+            price: item.price,
+            quantity: item.quantity,
+            item_category: undefined
+          }));
+          
+          trackPurchase({
+            transaction_id: orderData.id,
+            value: orderData.total,
+            items: trackingItems
+          });
+        }
       }
     } catch (error) {
       console.error('Error fetching order via edge function:', error);

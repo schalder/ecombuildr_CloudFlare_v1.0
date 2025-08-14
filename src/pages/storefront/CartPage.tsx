@@ -7,6 +7,8 @@ import { Separator } from '@/components/ui/separator';
 import { useCart } from '@/contexts/CartContext';
 import { useStore } from '@/contexts/StoreContext';
 import { useEcomPaths } from '@/lib/pathResolver';
+import { usePixelTracking } from '@/hooks/usePixelTracking';
+import { usePixelContext } from '@/components/pixel/PixelManager';
 import { Input } from '@/components/ui/input';
 import { Trash2 } from 'lucide-react';
 import { formatCurrency } from '@/lib/currency';
@@ -19,6 +21,8 @@ export const CartPage: React.FC = () => {
   const paths = useEcomPaths();
   const navigate = useNavigate();
   const isWebsiteContext = Boolean(websiteId || websiteSlug);
+  const { pixels } = usePixelContext();
+  const { trackInitiateCheckout } = usePixelTracking(pixels);
 
   // Basic SEO
   useEffect(() => {
@@ -113,7 +117,24 @@ export const CartPage: React.FC = () => {
                     <span>Total</span>
                     <span>{formatCurrency(total)}</span>
                   </div>
-                  <Button className="w-full" onClick={() => navigate(paths.checkout)}>
+                  <Button className="w-full" onClick={() => {
+                    // Track InitiateCheckout pixel event
+                    const trackingItems = items.map(item => ({
+                      item_id: item.id,
+                      item_name: item.name,
+                      price: item.price,
+                      quantity: item.quantity,
+                      item_category: undefined,
+                      item_variant: item.variation ? JSON.stringify(item.variation) : undefined
+                    }));
+                    
+                    trackInitiateCheckout({
+                      value: total,
+                      items: trackingItems
+                    });
+                    
+                    navigate(paths.checkout);
+                  }}>
                     Proceed to Checkout
                   </Button>
                 </CardContent>

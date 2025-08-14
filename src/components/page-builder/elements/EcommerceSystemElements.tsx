@@ -22,6 +22,8 @@ import { computeShippingForAddress } from '@/lib/shipping';
 import { nameWithVariant } from '@/lib/utils';
 import { useWebsiteShipping } from '@/hooks/useWebsiteShipping';
 import { renderElementStyles } from '@/components/page-builder/utils/styleRenderer';
+import { usePixelTracking } from '@/hooks/usePixelTracking';
+import { usePixelContext } from '@/components/pixel/PixelManager';
 
 const CartSummaryElement: React.FC<{ element: PageBuilderElement }> = () => {
   const { items, total, updateQuantity, removeItem } = useCart();
@@ -387,6 +389,8 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
   const { store, loadStore, loadStoreById } = useStore();
   const { items, total, clearCart } = useCart();
   const paths = useEcomPaths();
+  const { pixels } = usePixelContext();
+  const { trackPurchase } = usePixelTracking(pixels);
 
   const cfg: any = element.content || {};
   const fields = cfg.fields || {
@@ -620,6 +624,21 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
       if (!orderId) throw new Error('Order was not created');
 
       if (form.payment_method === 'cod' || isManual) {
+        // Track Purchase event for COD orders
+        const trackingItems = itemsPayload.map(item => ({
+          item_id: item.product_id,
+          item_name: item.product_name,
+          price: item.price,
+          quantity: item.quantity,
+          item_category: undefined
+        }));
+        
+        trackPurchase({
+          transaction_id: orderId,
+          value: orderData.total,
+          items: trackingItems
+        });
+        
         clearCart();
         toast.success(isManual ? 'Order placed! Please complete payment to the provided number.' : 'Order placed!');
         navigate(paths.orderConfirmation(orderId));

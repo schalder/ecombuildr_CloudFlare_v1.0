@@ -18,12 +18,16 @@ import { toast } from 'sonner';
 import { formatCurrency } from '@/lib/currency';
 import { generateResponsiveCSS, mergeResponsiveStyles } from '@/components/page-builder/utils/responsiveStyles';
 import { computeShippingForAddress } from '@/lib/shipping';
+import { usePixelTracking } from '@/hooks/usePixelTracking';
+import { usePixelContext } from '@/components/pixel/PixelManager';
 
 const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?: 'desktop' | 'tablet' | 'mobile' }> = ({ element, deviceType = 'desktop' }) => {
   const navigate = useNavigate();
   const { websiteId } = useParams<{ websiteId?: string }>();
   const paths = useEcomPaths();
   const { store, loadStoreById } = useStore();
+  const { pixels } = usePixelContext();
+  const { trackPurchase } = usePixelTracking(pixels);
 
   const cfg: any = element.content || {};
   const productIds: string[] = Array.isArray(cfg.productIds) ? cfg.productIds : [];
@@ -232,6 +236,21 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
       if (!orderId) throw new Error('Order was not created');
 
       if (form.payment_method === 'cod' || isManual) {
+        // Track Purchase event for COD orders
+        const trackingItems = itemsPayload.map(item => ({
+          item_id: item.product_id,
+          item_name: item.product_name,
+          price: item.price,
+          quantity: item.quantity,
+          item_category: undefined
+        }));
+        
+        trackPurchase({
+          transaction_id: orderId,
+          value: total,
+          items: trackingItems
+        });
+        
         toast.success(isManual ? 'Order placed! Please complete payment to the provided number.' : 'Order placed!');
         navigate(paths.orderConfirmation(orderId));
       } else {
