@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useStore } from '@/contexts/StoreContext';
 import { useCart } from '@/contexts/CartContext';
 import { StorefrontLayout } from '@/components/storefront/StorefrontLayout';
@@ -34,10 +34,12 @@ interface CheckoutForm {
 
 
 export const CheckoutPage: React.FC = () => {
+  const { websiteId, websiteSlug } = useParams<{ websiteId?: string; websiteSlug?: string }>();
   const navigate = useNavigate();
   const { store } = useStore();
   const { items, total, clearCart } = useCart();
   const paths = useEcomPaths();
+  const isWebsiteContext = Boolean(websiteId || websiteSlug);
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [discountLoading, setDiscountLoading] = useState(false);
@@ -388,313 +390,344 @@ useEffect(() => {
   }
   
   const finalTotal = total + shippingCost - discountAmount;
-  return (
-    <StorefrontLayout>
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold">Checkout</h1>
-            <div className="flex justify-center mt-4 space-x-4">
-              {[1, 2, 3, 4].map((step) => (
-                <div
-                  key={step}
-                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                    currentStep >= step
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-muted text-muted-foreground'
-                  }`}
-                >
-                  {step}
-                </div>
-              ))}
+
+  const checkoutContent = (
+    <div className="max-w-4xl mx-auto">
+      <div className="text-center mb-8">
+        <h1 className="text-3xl font-bold">Checkout</h1>
+        <div className="flex justify-center mt-4 space-x-4">
+          {[1, 2, 3, 4].map((step) => (
+            <div
+              key={step}
+              className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                currentStep >= step
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-muted text-muted-foreground'
+              }`}
+            >
+              {step}
             </div>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Main Content */}
-            <div className="lg:col-span-2 space-y-6">
-              {/* Step 1: Customer Information */}
-              {currentStep === 1 && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center">
-                      <MapPin className="h-5 w-5 mr-2" />
-                      Customer Information
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="customer_name">Full Name *</Label>
-                        <Input
-                          id="customer_name"
-                          value={form.customer_name}
-                          onChange={(e) => handleInputChange('customer_name', e.target.value)}
-                          placeholder="Enter your full name"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="customer_phone">Phone Number *</Label>
-                        <Input
-                          id="customer_phone"
-                          value={form.customer_phone}
-                          onChange={(e) => handleInputChange('customer_phone', e.target.value)}
-                          placeholder="Enter your phone number"
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <Label htmlFor="customer_email">Email Address *</Label>
-                      <Input
-                        id="customer_email"
-                        type="email"
-                        value={form.customer_email}
-                        onChange={(e) => handleInputChange('customer_email', e.target.value)}
-                        placeholder="Enter your email address"
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Step 2: Shipping Information */}
-              {currentStep === 2 && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center">
-                      <Truck className="h-5 w-5 mr-2" />
-                      Shipping Information
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div>
-                      <Label htmlFor="shipping_address">Address *</Label>
-                      <Textarea
-                        id="shipping_address"
-                        value={form.shipping_address}
-                        onChange={(e) => handleInputChange('shipping_address', e.target.value)}
-                        placeholder="Enter your complete address"
-                        rows={3}
-                      />
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="shipping_city">City *</Label>
-                        <Input
-                          id="shipping_city"
-                          value={form.shipping_city}
-                          onChange={(e) => handleInputChange('shipping_city', e.target.value)}
-                          placeholder="Enter your city"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="shipping_area">Area</Label>
-                        <Input
-                          id="shipping_area"
-                          value={form.shipping_area}
-                          onChange={(e) => handleInputChange('shipping_area', e.target.value)}
-                          placeholder="Enter your area"
-                        />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Step 3: Payment Method */}
-              {currentStep === 3 && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center">
-                      <CreditCard className="h-5 w-5 mr-2" />
-                      Payment Method
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <Select
-                      value={form.payment_method}
-                      onValueChange={(value) => handleInputChange('payment_method', value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select payment method" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {allowedMethods.includes('cod') && (
-                          <SelectItem value="cod">Cash on Delivery (COD)</SelectItem>
-                        )}
-                        {allowedMethods.includes('bkash') && (
-                          <SelectItem value="bkash">bKash</SelectItem>
-                        )}
-                        {allowedMethods.includes('nagad') && (
-                          <SelectItem value="nagad">Nagad</SelectItem>
-                        )}
-                        {allowedMethods.includes('sslcommerz') && (
-                          <SelectItem value="sslcommerz">Credit/Debit Card (SSLCommerz)</SelectItem>
-                        )}
-                      </SelectContent>
-                    </Select>
-
-                    {form.payment_method === 'bkash' && store?.settings?.bkash?.mode === 'number' && store?.settings?.bkash?.number && (
-                      <p className="text-sm text-muted-foreground">Pay to bKash number: {store.settings.bkash.number}</p>
-                    )}
-                    {form.payment_method === 'nagad' && store?.settings?.nagad?.mode === 'number' && store?.settings?.nagad?.number && (
-                      <p className="text-sm text-muted-foreground">Pay to Nagad number: {store.settings.nagad.number}</p>
-                    )}
-                    
-                    <div>
-                      <Label htmlFor="notes">Order Notes (Optional)</Label>
-                      <Textarea
-                        id="notes"
-                        value={form.notes}
-                        onChange={(e) => handleInputChange('notes', e.target.value)}
-                        placeholder="Any special instructions for your order"
-                        rows={3}
-                      />
-                    </div>
-                    
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Step 4: Order Review */}
-              {currentStep === 4 && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Order Review</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="space-y-2">
-                      <h3 className="font-semibold">Customer Information:</h3>
-                      <p>{form.customer_name}</p>
-                      <p>{form.customer_email}</p>
-                      <p>{form.customer_phone}</p>
-                    </div>
-                    <Separator />
-                    <div className="space-y-2">
-                      <h3 className="font-semibold">Shipping Address:</h3>
-                      <p>{form.shipping_address}</p>
-                      <p>{form.shipping_city}, {form.shipping_area}</p>
-                    </div>
-                    <Separator />
-                    <div className="space-y-2">
-                      <h3 className="font-semibold">Payment Method:</h3>
-                      <p>
-                        {form.payment_method === 'cod' && 'Cash on Delivery (COD)'}
-                        {form.payment_method === 'bkash' && 'bKash'}
-                        {form.payment_method === 'nagad' && 'Nagad'}
-                        {form.payment_method === 'sslcommerz' && 'Credit/Debit Card (SSLCommerz)'}
-                      </p>
-                    </div>
-                    {form.notes && (
-                      <>
-                        <Separator />
-                        <div className="space-y-2">
-                          <h3 className="font-semibold">Notes:</h3>
-                          <p>{form.notes}</p>
-                        </div>
-                      </>
-                    )}
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Navigation Buttons */}
-              <div className="flex justify-between">
-                <Button
-                  variant="outline"
-                  onClick={() => setCurrentStep(prev => Math.max(1, prev - 1))}
-                  disabled={currentStep === 1}
-                >
-                  Previous
-                </Button>
-                {currentStep < 4 ? (
-                  <Button
-                    onClick={() => setCurrentStep(prev => prev + 1)}
-                    disabled={!validateStep(currentStep)}
-                  >
-                    Next
-                  </Button>
-                ) : (
-                  <Button
-                    onClick={handleSubmitOrder}
-                    disabled={loading}
-                  >
-                    {loading ? 'Placing Order...' : 'Place Order'}
-                  </Button>
-                )}
-              </div>
-            </div>
-
-            {/* Order Summary */}
-            <div className="lg:col-span-1">
-              <Card className="sticky top-4">
-                <CardHeader>
-                  <CardTitle>Order Summary</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {/* Items */}
-                  <div className="space-y-2">
-                    {items.map((item) => (
-                      <div key={item.id} className="flex justify-between text-sm">
-                        <span>{nameWithVariant(item.name, item.variation)} × {item.quantity}</span>
-                        <span>{formatCurrency(item.price * item.quantity)}</span>
-                      </div>
-                    ))}
-                  </div>
-
-                  <Separator />
-
-                  {/* Discount Code */}
-                  <div className="space-y-2">
-                    <Label htmlFor="discount_code">Discount Code</Label>
-                    <div className="flex space-x-2">
-                      <Input
-                        id="discount_code"
-                        value={form.discount_code}
-                        onChange={(e) => handleInputChange('discount_code', e.target.value.toUpperCase())}
-                        placeholder="Enter code"
-                      />
-                      <Button
-                        variant="outline"
-                        onClick={applyDiscountCode}
-                        disabled={discountLoading}
-                        size="sm"
-                      >
-                        Apply
-                      </Button>
-                    </div>
-                  </div>
-
-                  <Separator />
-
-                  {/* Totals */}
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span>Subtotal:</span>
-                      <span>{formatCurrency(total)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Shipping:</span>
-                      <span>{formatCurrency(shippingCost)}</span>
-                    </div>
-                    {discountAmount > 0 && (
-                      <div className="flex justify-between text-green-600">
-                        <span>Discount:</span>
-                        <span>-{formatCurrency(discountAmount)}</span>
-                      </div>
-                    )}
-                    <Separator />
-                    <div className="flex justify-between font-bold text-lg">
-                      <span>Total:</span>
-                      <span>{formatCurrency(finalTotal)}</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
+          ))}
         </div>
       </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Main Content */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Step 1: Customer Information */}
+          {currentStep === 1 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <MapPin className="h-5 w-5 mr-2" />
+                  Customer Information
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="customer_name">Full Name *</Label>
+                    <Input
+                      id="customer_name"
+                      value={form.customer_name}
+                      onChange={(e) => handleInputChange('customer_name', e.target.value)}
+                      placeholder="Enter your full name"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="customer_phone">Phone Number *</Label>
+                    <Input
+                      id="customer_phone"
+                      value={form.customer_phone}
+                      onChange={(e) => handleInputChange('customer_phone', e.target.value)}
+                      placeholder="Enter your phone number"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label htmlFor="customer_email">Email Address *</Label>
+                  <Input
+                    id="customer_email"
+                    type="email"
+                    value={form.customer_email}
+                    onChange={(e) => handleInputChange('customer_email', e.target.value)}
+                    placeholder="Enter your email address"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Step 2: Shipping Information */}
+          {currentStep === 2 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Truck className="h-5 w-5 mr-2" />
+                  Shipping Information
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label htmlFor="shipping_address">Address *</Label>
+                  <Textarea
+                    id="shipping_address"
+                    value={form.shipping_address}
+                    onChange={(e) => handleInputChange('shipping_address', e.target.value)}
+                    placeholder="Enter your complete address"
+                    rows={3}
+                  />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="shipping_city">City *</Label>
+                    <Input
+                      id="shipping_city"
+                      value={form.shipping_city}
+                      onChange={(e) => handleInputChange('shipping_city', e.target.value)}
+                      placeholder="Enter your city"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="shipping_area">Area</Label>
+                    <Input
+                      id="shipping_area"
+                      value={form.shipping_area}
+                      onChange={(e) => handleInputChange('shipping_area', e.target.value)}
+                      placeholder="Enter your area"
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Step 3: Payment Method */}
+          {currentStep === 3 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <CreditCard className="h-5 w-5 mr-2" />
+                  Payment Method
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Select
+                  value={form.payment_method}
+                  onValueChange={(value) => handleInputChange('payment_method', value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select payment method" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {allowedMethods.includes('cod') && (
+                      <SelectItem value="cod">Cash on Delivery (COD)</SelectItem>
+                    )}
+                    {allowedMethods.includes('bkash') && (
+                      <SelectItem value="bkash">bKash</SelectItem>
+                    )}
+                    {allowedMethods.includes('nagad') && (
+                      <SelectItem value="nagad">Nagad</SelectItem>
+                    )}
+                    {allowedMethods.includes('sslcommerz') && (
+                      <SelectItem value="sslcommerz">Credit/Debit Card (SSLCommerz)</SelectItem>
+                    )}
+                  </SelectContent>
+                </Select>
+
+                {form.payment_method === 'bkash' && store?.settings?.bkash?.mode === 'number' && store?.settings?.bkash?.number && (
+                  <p className="text-sm text-muted-foreground">Pay to bKash number: {store.settings.bkash.number}</p>
+                )}
+                {form.payment_method === 'nagad' && store?.settings?.nagad?.mode === 'number' && store?.settings?.nagad?.number && (
+                  <p className="text-sm text-muted-foreground">Pay to Nagad number: {store.settings.nagad.number}</p>
+                )}
+                
+                <div>
+                  <Label htmlFor="notes">Order Notes (Optional)</Label>
+                  <Textarea
+                    id="notes"
+                    value={form.notes}
+                    onChange={(e) => handleInputChange('notes', e.target.value)}
+                    placeholder="Any special instructions for your order"
+                    rows={3}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Step 4: Order Review */}
+          {currentStep === 4 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Order Review</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <h3 className="font-semibold">Customer Information:</h3>
+                  <p>{form.customer_name}</p>
+                  <p>{form.customer_email}</p>
+                  <p>{form.customer_phone}</p>
+                </div>
+                <Separator />
+                <div className="space-y-2">
+                  <h3 className="font-semibold">Shipping Address:</h3>
+                  <p>{form.shipping_address}</p>
+                  <p>{form.shipping_city}, {form.shipping_area}</p>
+                </div>
+                <Separator />
+                <div className="space-y-2">
+                  <h3 className="font-semibold">Payment Method:</h3>
+                  <p>
+                    {form.payment_method === 'cod' && 'Cash on Delivery (COD)'}
+                    {form.payment_method === 'bkash' && 'bKash'}
+                    {form.payment_method === 'nagad' && 'Nagad'}
+                    {form.payment_method === 'sslcommerz' && 'Credit/Debit Card (SSLCommerz)'}
+                  </p>
+                </div>
+                {form.notes && (
+                  <>
+                    <Separator />
+                    <div className="space-y-2">
+                      <h3 className="font-semibold">Notes:</h3>
+                      <p>{form.notes}</p>
+                    </div>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Navigation Buttons */}
+          <div className="flex justify-between">
+            <Button
+              variant="outline"
+              onClick={() => setCurrentStep(prev => Math.max(1, prev - 1))}
+              disabled={currentStep === 1}
+            >
+              Previous
+            </Button>
+            {currentStep < 4 ? (
+              <Button
+                onClick={() => setCurrentStep(prev => prev + 1)}
+                disabled={!validateStep(currentStep)}
+              >
+                Next
+              </Button>
+            ) : (
+              <Button
+                onClick={handleSubmitOrder}
+                disabled={loading}
+              >
+                {loading ? 'Placing Order...' : 'Place Order'}
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {/* Order Summary */}
+        <div className="lg:col-span-1">
+          <Card className="sticky top-4">
+            <CardHeader>
+              <CardTitle>Order Summary</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Items */}
+              <div className="space-y-2">
+                {items.map((item) => (
+                  <div key={item.id} className="flex justify-between text-sm">
+                    <span>{nameWithVariant(item.name, item.variation)} × {item.quantity}</span>
+                    <span>{formatCurrency(item.price * item.quantity)}</span>
+                  </div>
+                ))}
+              </div>
+
+              <Separator />
+
+              {/* Discount Code */}
+              <div className="space-y-2">
+                <Label htmlFor="discount_code">Discount Code</Label>
+                <div className="flex space-x-2">
+                  <Input
+                    id="discount_code"
+                    value={form.discount_code}
+                    onChange={(e) => handleInputChange('discount_code', e.target.value.toUpperCase())}
+                    placeholder="Enter code"
+                  />
+                  <Button
+                    variant="outline"
+                    onClick={applyDiscountCode}
+                    disabled={discountLoading}
+                    size="sm"
+                  >
+                    Apply
+                  </Button>
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Totals */}
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span>Subtotal:</span>
+                  <span>{formatCurrency(total)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Shipping:</span>
+                  <span>{formatCurrency(shippingCost)}</span>
+                </div>
+                {discountAmount > 0 && (
+                  <div className="flex justify-between text-green-600">
+                    <span>Discount:</span>
+                    <span>-{formatCurrency(discountAmount)}</span>
+                  </div>
+                )}
+                <Separator />
+                <div className="flex justify-between font-bold text-lg">
+                  <span>Total:</span>
+                  <span>{formatCurrency(finalTotal)}</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
+
+  const fullCheckoutContent = (
+    <div className="container mx-auto px-4 py-8">
+      {!store ? (
+        <div className="text-center">Store not found</div>
+      ) : items.length === 0 ? (
+        <div className="py-12">
+          <Card className="max-w-2xl mx-auto">
+            <CardHeader>
+              <CardTitle>Your cart is empty</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <p className="text-muted-foreground">Add products to your cart before checking out.</p>
+              <div className="flex gap-3">
+                <Button onClick={() => navigate(paths.products)}>Continue Shopping</Button>
+                <Button variant="outline" onClick={() => navigate(paths.home)}>Go to Home</Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      ) : (
+        checkoutContent
+      )}
+    </div>
+  );
+
+  if (isWebsiteContext) {
+    return fullCheckoutContent;
+  }
+
+  return (
+    <StorefrontLayout>
+      {fullCheckoutContent}
     </StorefrontLayout>
   );
 };

@@ -52,11 +52,12 @@ interface ActionButtons {
 
 
 export const ProductDetail: React.FC = () => {
-  const { slug, websiteId, productSlug } = useParams<{ slug?: string; websiteId?: string; productSlug: string }>();
+  const { slug, websiteId, websiteSlug, productSlug } = useParams<{ slug?: string; websiteId?: string; websiteSlug?: string; productSlug: string }>();
   const { store, loadStore, loadStoreById } = useStore();
   const { addItem } = useCart();
   const navigate = useNavigate();
   const paths = useEcomPaths();
+  const isWebsiteContext = Boolean(websiteId || websiteSlug);
   
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
@@ -148,6 +149,9 @@ export const ProductDetail: React.FC = () => {
     }
   };
 
+  // Calculate effective price based on selected variant
+  const effectivePrice = (selectedVariant?.price ?? product?.price) || 0;
+
   const handleAddToCart = () => {
     if (!product) return;
 
@@ -198,21 +202,19 @@ export const ProductDetail: React.FC = () => {
     }
   };
 
-  if (!store) {
-    return (
-      <StorefrontLayout>
+  const renderContent = () => {
+    if (!store) {
+      return (
         <div className="container mx-auto px-4 py-8">
           <div className="text-center">
             <h1 className="text-2xl font-bold">Store not found</h1>
           </div>
         </div>
-      </StorefrontLayout>
-    );
-  }
+      );
+    }
 
-  if (loading) {
-    return (
-      <StorefrontLayout>
+    if (loading) {
+      return (
         <div className="container mx-auto px-4 py-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <div className="space-y-4">
@@ -230,42 +232,37 @@ export const ProductDetail: React.FC = () => {
             </div>
           </div>
         </div>
-      </StorefrontLayout>
-    );
-  }
+      );
+    }
 
-  if (!product) {
-    return (
-      <StorefrontLayout>
+    if (!product) {
+      return (
         <div className="container mx-auto px-4 py-8">
           <div className="text-center">
             <h1 className="text-2xl font-bold">Product not found</h1>
             <p className="text-muted-foreground mt-2">The requested product could not be found.</p>
           </div>
         </div>
-      </StorefrontLayout>
-    );
-  }
-
-  const isOutOfStock = product.track_inventory && product.inventory_quantity !== undefined && product.inventory_quantity <= 0;
-  const effectivePrice = (selectedVariant?.price ?? product.price);
-  const discountPercentage = product.compare_price && product.compare_price > effectivePrice 
-    ? Math.round(((product.compare_price - effectivePrice) / product.compare_price) * 100)
-    : 0;
-
-  // Build media list (video first if available)
-  const videoInfo = parseVideoUrl(((product as any)?.video_url) || '');
-  const mediaItems: Array<{ kind: 'video' | 'image'; src?: string; thumb?: string }> = (() => {
-    const items: Array<{ kind: 'video' | 'image'; src?: string; thumb?: string }> = [];
-    if (videoInfo && videoInfo.type !== 'unknown' && videoInfo.embedUrl) {
-      items.push({ kind: 'video', src: videoInfo.embedUrl, thumb: videoInfo.thumbnailUrl });
+      );
     }
-    (product?.images || []).forEach((img) => items.push({ kind: 'image', src: img }));
-    return items;
-  })();
 
-  return (
-    <StorefrontLayout>
+    const isOutOfStock = product.track_inventory && product.inventory_quantity !== undefined && product.inventory_quantity <= 0;
+    const discountPercentage = product.compare_price && product.compare_price > effectivePrice 
+      ? Math.round(((product.compare_price - effectivePrice) / product.compare_price) * 100)
+      : 0;
+
+    // Build media list (video first if available)
+    const videoInfo = parseVideoUrl(((product as any)?.video_url) || '');
+    const mediaItems: Array<{ kind: 'video' | 'image'; src?: string; thumb?: string }> = (() => {
+      const items: Array<{ kind: 'video' | 'image'; src?: string; thumb?: string }> = [];
+      if (videoInfo && videoInfo.type !== 'unknown' && videoInfo.embedUrl) {
+        items.push({ kind: 'video', src: videoInfo.embedUrl, thumb: videoInfo.thumbnailUrl });
+      }
+      (product?.images || []).forEach((img) => items.push({ kind: 'image', src: img }));
+      return items;
+    })();
+
+    return (
       <div className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Product Images */}
@@ -500,6 +497,18 @@ export const ProductDetail: React.FC = () => {
           <RelatedProducts categoryId={product.category_id || null} currentProductId={product.id} />
         </div>
       </div>
+    );
+  };
+
+  const content = renderContent();
+
+  if (isWebsiteContext) {
+    return content;
+  }
+
+  return (
+    <StorefrontLayout>
+      {content}
     </StorefrontLayout>
   );
 };

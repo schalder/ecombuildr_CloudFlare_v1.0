@@ -11,8 +11,6 @@ interface StorefrontLayoutProps {
 
 export const StorefrontLayout: React.FC<StorefrontLayoutProps> = ({ children }) => {
   const { store, loading, error } = useStore();
-  const { websiteId, websiteSlug } = useParams<{ websiteId?: string; websiteSlug?: string }>();
-  const isWebsiteContext = Boolean(websiteId || websiteSlug);
 
   if (loading) {
     return (
@@ -41,11 +39,11 @@ export const StorefrontLayout: React.FC<StorefrontLayoutProps> = ({ children }) 
           --store-secondary: ${store.secondary_color};
         }
       `}</style>
-      {!isWebsiteContext && <StorefrontHeader />}
+      <StorefrontHeader />
       <main className="flex-1">
         {children}
       </main>
-      {!isWebsiteContext && <StorefrontFooter />}
+      <StorefrontFooter />
     </div>
   );
 };

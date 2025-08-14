@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 import { useEcomPaths } from '@/lib/pathResolver';
 
 export const PaymentProcessing: React.FC = () => {
-  const { slug, websiteId, orderId: orderIdParam } = useParams<{ slug?: string; websiteId?: string; orderId?: string }>();
+  const { slug, websiteId, websiteSlug, orderId: orderIdParam } = useParams<{ slug?: string; websiteId?: string; websiteSlug?: string; orderId?: string }>();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { store, loadStore, loadStoreById } = useStore();
@@ -19,6 +19,7 @@ export const PaymentProcessing: React.FC = () => {
   const [verifying, setVerifying] = useState(false);
   const paths = useEcomPaths();
   const orderId = orderIdParam || searchParams.get('orderId') || '';
+  const isWebsiteContext = Boolean(websiteId || websiteSlug);
 useEffect(() => {
   if (slug) {
     loadStore(slug);
@@ -167,96 +168,104 @@ useEffect(() => {
     );
   }
 
-  return (
-    <StorefrontLayout>
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-2xl mx-auto">
-          <Card>
-            <CardHeader className="text-center">
-              <div className="flex justify-center mb-4">
-                {getStatusIcon()}
-              </div>
-              <CardTitle className="text-2xl">{getStatusText()}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="text-center">
-                <p className="text-muted-foreground">{getStatusDescription()}</p>
-              </div>
+  const content = (
+    <div className="container mx-auto px-4 py-8">
+      <div className="max-w-2xl mx-auto">
+        <Card>
+          <CardHeader className="text-center">
+            <div className="flex justify-center mb-4">
+              {getStatusIcon()}
+            </div>
+            <CardTitle className="text-2xl">{getStatusText()}</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="text-center">
+              <p className="text-muted-foreground">{getStatusDescription()}</p>
+            </div>
 
-              <div className="bg-muted p-4 rounded-lg">
-                <h3 className="font-semibold mb-2">Order Details</h3>
-                <div className="space-y-1 text-sm">
-                  <div className="flex justify-between">
-                    <span>Order Number:</span>
-                    <span className="font-medium">{order.order_number}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Payment Method:</span>
-                    <span className="font-medium">
-                      {order.payment_method === 'bkash' && 'bKash'}
-                      {order.payment_method === 'nagad' && 'Nagad'}
-                      {order.payment_method === 'sslcommerz' && 'Credit/Debit Card'}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Total Amount:</span>
-                    <span className="font-medium">৳{order.total.toFixed(2)}</span>
-                  </div>
+            <div className="bg-muted p-4 rounded-lg">
+              <h3 className="font-semibold mb-2">Order Details</h3>
+              <div className="space-y-1 text-sm">
+                <div className="flex justify-between">
+                  <span>Order Number:</span>
+                  <span className="font-medium">{order.order_number}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Payment Method:</span>
+                  <span className="font-medium">
+                    {order.payment_method === 'bkash' && 'bKash'}
+                    {order.payment_method === 'nagad' && 'Nagad'}
+                    {order.payment_method === 'sslcommerz' && 'Credit/Debit Card'}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Total Amount:</span>
+                  <span className="font-medium">৳{order.total.toFixed(2)}</span>
                 </div>
               </div>
+            </div>
 
-              <div className="flex flex-col gap-3">
-                {order.status === 'processing' && (
-                  <Button 
-                    onClick={verifyPayment} 
-                    disabled={verifying}
-                    className="w-full"
-                  >
-                    {verifying ? (
-                      <>
-                        <RefreshCw className="h-4 w-4 animate-spin mr-2" />
-                        Verifying Payment...
-                      </>
-                    ) : (
-                      'Verify Payment Status'
-                    )}
-                  </Button>
-                )}
-                
-                {order.status === 'paid' && (
-                  <Button 
-                    onClick={() => navigate(paths.orderConfirmation(order.id))}
-                    className="w-full"
-                  >
-                    View Order Details
-                  </Button>
-                )}
-
-                {order.status === 'payment_failed' && (
-                  <Button 
-                    onClick={() => navigate(paths.checkout)}
-                    className="w-full"
-                  >
-                    Try Again
-                  </Button>
-                )}
-
+            <div className="flex flex-col gap-3">
+              {order.status === 'processing' && (
                 <Button 
-                  variant="outline" 
-                  onClick={() => navigate(paths.home)}
+                  onClick={verifyPayment} 
+                  disabled={verifying}
                   className="w-full"
                 >
-                  Continue Shopping
+                  {verifying ? (
+                    <>
+                      <RefreshCw className="h-4 w-4 animate-spin mr-2" />
+                      Verifying Payment...
+                    </>
+                  ) : (
+                    'Verify Payment Status'
+                  )}
                 </Button>
-              </div>
+              )}
+              
+              {order.status === 'paid' && (
+                <Button 
+                  onClick={() => navigate(paths.orderConfirmation(order.id))}
+                  className="w-full"
+                >
+                  View Order Details
+                </Button>
+              )}
 
-              <div className="text-center text-sm text-muted-foreground">
-                <p>If you're experiencing issues, please contact our support team.</p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+              {order.status === 'payment_failed' && (
+                <Button 
+                  onClick={() => navigate(paths.checkout)}
+                  className="w-full"
+                >
+                  Try Again
+                </Button>
+              )}
+
+              <Button 
+                variant="outline" 
+                onClick={() => navigate(paths.home)}
+                className="w-full"
+              >
+                Continue Shopping
+              </Button>
+            </div>
+
+            <div className="text-center text-sm text-muted-foreground">
+              <p>If you're experiencing issues, please contact our support team.</p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
+    </div>
+  );
+
+  if (isWebsiteContext) {
+    return content;
+  }
+
+  return (
+    <StorefrontLayout>
+      {content}
     </StorefrontLayout>
   );
 };

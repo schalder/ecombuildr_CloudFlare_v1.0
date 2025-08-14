@@ -45,7 +45,7 @@ interface OrderItem {
 }
 
 export const OrderConfirmation: React.FC = () => {
-  const { slug, websiteId, orderId: orderIdParam } = useParams<{ slug?: string; websiteId?: string; orderId?: string }>();
+  const { slug, websiteId, websiteSlug, orderId: orderIdParam } = useParams<{ slug?: string; websiteId?: string; websiteSlug?: string; orderId?: string }>();
   const [searchParams] = useSearchParams();
   const { store, loadStore, loadStoreById } = useStore();
   const [order, setOrder] = useState<Order | null>(null);
@@ -53,6 +53,7 @@ export const OrderConfirmation: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const paths = useEcomPaths();
   const orderId = orderIdParam || searchParams.get('orderId') || '';
+  const isWebsiteContext = Boolean(websiteId || websiteSlug);
 useEffect(() => {
   if (slug) {
     loadStore(slug);
@@ -172,195 +173,176 @@ useEffect(() => {
     );
   }
 
-  return (
-    <StorefrontLayout>
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-2xl mx-auto">
-          {/* Success Header */}
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
-              <CheckCircle className="h-8 w-8 text-green-600" />
+  const content = (
+    <div className="container mx-auto px-4 py-8">
+      <div className="max-w-2xl mx-auto">
+        {/* Success Header */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
+            <CheckCircle className="h-8 w-8 text-green-600" />
+          </div>
+          <h1 className="text-3xl font-bold text-foreground mb-2">
+            Order Confirmed!
+          </h1>
+          <p className="text-muted-foreground">
+            Thank you for your order. We'll send you updates via email.
+          </p>
+        </div>
+
+        {/* Order Details */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              <span>Order #{order.order_number}</span>
+              <Badge className={`${getStatusColor(order.status)} text-white`}>
+                <span className="flex items-center">
+                  {getStatusIcon()}
+                  <span className="ml-1 capitalize">{order.status}</span>
+                </span>
+              </Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Customer Information */}
+            <div>
+              <h3 className="font-semibold flex items-center mb-3">
+                <MapPin className="h-4 w-4 mr-2" />
+                Customer Information
+              </h3>
+              <div className="text-sm space-y-1">
+                <p><strong>Name:</strong> {order.customer_name}</p>
+                <p><strong>Email:</strong> {order.customer_email}</p>
+                <p><strong>Phone:</strong> {order.customer_phone}</p>
+              </div>
             </div>
-            <h1 className="text-3xl font-bold text-foreground mb-2">
-              Order Confirmed!
-            </h1>
-            <p className="text-muted-foreground">
-              Thank you for your order. We'll send you updates via email.
-            </p>
-          </div>
 
-          {/* Order Details */}
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <span>Order #{order.order_number}</span>
-                <Badge className={`${getStatusColor(order.status)} text-white`}>
-                  <span className="flex items-center">
-                    {getStatusIcon()}
-                    <span className="ml-1 capitalize">{order.status}</span>
-                  </span>
-                </Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Customer Information */}
-              <div>
-                <h3 className="font-semibold flex items-center mb-3">
-                  <MapPin className="h-4 w-4 mr-2" />
-                  Customer Information
-                </h3>
-                <div className="text-sm space-y-1">
-                  <p><strong>Name:</strong> {order.customer_name}</p>
-                  <p><strong>Email:</strong> {order.customer_email}</p>
-                  <p><strong>Phone:</strong> {order.customer_phone}</p>
-                </div>
+            <Separator />
+
+            {/* Shipping Information */}
+            <div>
+              <h3 className="font-semibold flex items-center mb-3">
+                <Package className="h-4 w-4 mr-2" />
+                Shipping Address
+              </h3>
+              <div className="text-sm">
+                <p>{order.shipping_address}</p>
+                <p>{order.shipping_city}{order.shipping_area && `, ${order.shipping_area}`}</p>
               </div>
+            </div>
 
-              <Separator />
+            <Separator />
 
-              {/* Shipping Information */}
-              <div>
-                <h3 className="font-semibold flex items-center mb-3">
-                  <Package className="h-4 w-4 mr-2" />
-                  Shipping Address
-                </h3>
-                <div className="text-sm">
-                  <p>{order.shipping_address}</p>
-                  <p>{order.shipping_city}{order.shipping_area && `, ${order.shipping_area}`}</p>
-                </div>
-              </div>
+            {/* Payment Information */}
+            <div>
+              <h3 className="font-semibold flex items-center mb-3">
+                <CreditCard className="h-4 w-4 mr-2" />
+                Payment Method
+              </h3>
+              <p className="text-sm capitalize">
+                {order.payment_method === 'cod' ? 'Cash on Delivery' : 'Online Payment'}
+              </p>
+            </div>
 
-              <Separator />
-
-              {/* Payment Information */}
-              <div>
-                <h3 className="font-semibold flex items-center mb-3">
-                  <CreditCard className="h-4 w-4 mr-2" />
-                  Payment Method
-                </h3>
-                <p className="text-sm capitalize">
-                  {order.payment_method === 'cod' ? 'Cash on Delivery' : 'Online Payment'}
-                </p>
-              </div>
-
-              {/* Custom Fields */}
-              {Array.isArray((order as any).custom_fields) && (order as any).custom_fields.length > 0 && (
-                <>
-                  <Separator />
-                  <div>
-                    <h3 className="font-semibold mb-2">Additional Information</h3>
-                    <div className="space-y-1">
-                      {(order as any).custom_fields.map((cf: any, idx: number) => (
-                        <p key={idx} className="text-sm"><strong>{cf.label || cf.id}:</strong> {String(cf.value)}</p>
-                      ))}
-                    </div>
-                  </div>
-                </>
-              )}
-              {!Array.isArray((order as any).custom_fields) && (order as any).custom_fields && (
-                <>
-                  <Separator />
-                  <div>
-                    <h3 className="font-semibold mb-2">Additional Information</h3>
-                    <div className="space-y-1">
-                      {Object.entries((order as any).custom_fields).map(([key, val]: any) => (
-                        <p key={key} className="text-sm"><strong>{key}:</strong> {String(val)}</p>
-                      ))}
-                    </div>
-                  </div>
-                </>
-              )}
-
-              {order.notes && (
-                <>
-                  <Separator />
-                  <div>
-                    <h3 className="font-semibold mb-2">Order Notes</h3>
-                    <p className="text-sm text-muted-foreground">{order.notes}</p>
-                  </div>
-                </>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Order Items */}
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle>Order Items</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {orderItems.map((item) => (
-                  <div key={item.id} className="flex justify-between items-center py-2">
-                    <div className="flex-1">
-                      <p className="font-medium text-sm">{nameWithVariant(item.product_name, (item as any).variation)}</p>
-                      {item.product_sku && (
-                        <p className="text-xs text-muted-foreground">SKU: {item.product_sku}</p>
-                      )}
-                      <p className="text-xs text-muted-foreground">
-                        ${item.price.toFixed(2)} × {item.quantity}
-                      </p>
-                    </div>
-                    <p className="font-medium">${item.total.toFixed(2)}</p>
-                  </div>
-                ))}
-              </div>
-
-              <Separator className="my-4" />
-
-              {/* Order Totals */}
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span>Subtotal:</span>
-                  <span>${order.subtotal.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span>Shipping:</span>
-                  <span>${order.shipping_cost.toFixed(2)}</span>
-                </div>
-                {(order.discount_amount ?? 0) > 0 && (
-                  <div className="flex justify-between text-sm text-green-600">
-                    <span>Discount:</span>
-                    <span>-${(order.discount_amount ?? 0).toFixed(2)}</span>
-                  </div>
-                )}
+            {/* Custom Fields and Notes - simplified for space */}
+            {order.notes && (
+              <>
                 <Separator />
-                <div className="flex justify-between font-bold">
-                  <span>Total:</span>
-                  <span>${order.total.toFixed(2)}</span>
+                <div>
+                  <h3 className="font-semibold mb-2">Order Notes</h3>
+                  <p className="text-sm text-muted-foreground">{order.notes}</p>
                 </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Order Items */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>Order Items</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {orderItems.map((item) => (
+                <div key={item.id} className="flex justify-between items-center py-2">
+                  <div className="flex-1">
+                    <p className="font-medium text-sm">{nameWithVariant(item.product_name, (item as any).variation)}</p>
+                    {item.product_sku && (
+                      <p className="text-xs text-muted-foreground">SKU: {item.product_sku}</p>
+                    )}
+                    <p className="text-xs text-muted-foreground">
+                      ${item.price.toFixed(2)} × {item.quantity}
+                    </p>
+                  </div>
+                  <p className="font-medium">${item.total.toFixed(2)}</p>
+                </div>
+              ))}
+            </div>
+
+            <Separator className="my-4" />
+
+            {/* Order Totals */}
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span>Subtotal:</span>
+                <span>${order.subtotal.toFixed(2)}</span>
               </div>
-            </CardContent>
-          </Card>
+              <div className="flex justify-between text-sm">
+                <span>Shipping:</span>
+                <span>${order.shipping_cost.toFixed(2)}</span>
+              </div>
+              {(order.discount_amount ?? 0) > 0 && (
+                <div className="flex justify-between text-sm text-green-600">
+                  <span>Discount:</span>
+                  <span>-${(order.discount_amount ?? 0).toFixed(2)}</span>
+                </div>
+              )}
+              <Separator />
+              <div className="flex justify-between font-bold">
+                <span>Total:</span>
+                <span>${order.total.toFixed(2)}</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-          {/* Order Date */}
-          <div className="text-center text-sm text-muted-foreground mb-6">
-            Order placed on {new Date(order.created_at).toLocaleDateString('en-US', {
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit'
-            })}
-          </div>
+        {/* Order Date */}
+        <div className="text-center text-sm text-muted-foreground mb-6">
+          Order placed on {new Date(order.created_at).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          })}
+        </div>
 
-          {/* Action Buttons */}
-          <div className="flex space-x-4">
-            <Link to={paths.home} className="flex-1">
-              <Button variant="outline" className="w-full">
-                Continue Shopping
-              </Button>
-            </Link>
-            <Button
-              onClick={() => window.print()}
-              variant="outline"
-              className="flex-1"
-            >
-              Print Order
+        {/* Action Buttons */}
+        <div className="flex space-x-4">
+          <Link to={paths.home} className="flex-1">
+            <Button variant="outline" className="w-full">
+              Continue Shopping
             </Button>
-          </div>
+          </Link>
+          <Button
+            onClick={() => window.print()}
+            variant="outline"
+            className="flex-1"
+          >
+            Print Order
+          </Button>
         </div>
       </div>
+    </div>
+  );
+
+  if (isWebsiteContext) {
+    return content;
+  }
+
+  return (
+    <StorefrontLayout>
+      {content}
     </StorefrontLayout>
   );
 };

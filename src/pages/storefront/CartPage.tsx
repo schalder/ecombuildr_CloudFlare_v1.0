@@ -13,11 +13,12 @@ import { formatCurrency } from '@/lib/currency';
 import { nameWithVariant } from '@/lib/utils';
 
 export const CartPage: React.FC = () => {
-  const { slug, websiteId } = useParams<{ slug?: string; websiteId?: string }>();
+  const { slug, websiteId, websiteSlug } = useParams<{ slug?: string; websiteId?: string; websiteSlug?: string }>();
   const { store, loadStore, loadStoreById } = useStore();
   const { items, total, updateQuantity, removeItem } = useCart();
   const paths = useEcomPaths();
   const navigate = useNavigate();
+  const isWebsiteContext = Boolean(websiteId || websiteSlug);
 
   // Basic SEO
   useEffect(() => {
@@ -43,20 +44,12 @@ export const CartPage: React.FC = () => {
     }
   }, [store, slug, websiteId, loadStore, loadStoreById]);
 
-  if (!store) {
-    return (
-      <StorefrontLayout>
-        <div className="container mx-auto px-4 py-8">
-          <div className="text-center">Loading store...</div>
-        </div>
-      </StorefrontLayout>
-    );
-  }
-
-  if (items.length === 0) {
-    return (
-      <StorefrontLayout>
-        <div className="container mx-auto px-4 py-12">
+  const cartContent = (
+    <div className="container mx-auto px-4 py-8">
+      {!store ? (
+        <div className="text-center">Loading store...</div>
+      ) : items.length === 0 ? (
+        <div className="py-12">
           <Card className="max-w-2xl mx-auto">
             <CardHeader>
               <CardTitle>Your cart is empty</CardTitle>
@@ -70,69 +63,75 @@ export const CartPage: React.FC = () => {
             </CardContent>
           </Card>
         </div>
-      </StorefrontLayout>
-    );
+      ) : (
+        <>
+          <h1 className="text-3xl font-bold mb-6">Your Cart</h1>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2 space-y-4">
+              {items.map((item) => (
+                <Card key={item.id}>
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-4">
+                      {item.image && (
+                        <img src={item.image} alt={`${item.name} image`} className="w-20 h-20 object-cover rounded" loading="lazy" />
+                      )}
+                      <div className="flex-1">
+                        <div className="font-medium">{nameWithVariant(item.name, item.variation)}</div>
+                        <div className="text-sm text-muted-foreground">{formatCurrency(item.price)}</div>
+                        <div className="mt-2 flex items-center gap-2">
+                          <span className="text-sm">Qty:</span>
+                          <Input
+                            type="number"
+                            value={item.quantity}
+                            min={1}
+                            onChange={(e) => updateQuantity(item.id, parseInt(e.target.value || '1', 10))}
+                            className="w-20"
+                          />
+                        </div>
+                      </div>
+                      <Button variant="ghost" size="icon" onClick={() => removeItem(item.id)} aria-label="Remove item">
+                        <Trash2 className="h-5 w-5" />
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            <div>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Order Summary</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex justify-between text-sm">
+                    <span>Subtotal</span>
+                    <span>{formatCurrency(total)}</span>
+                  </div>
+                  <Separator />
+                  <div className="flex justify-between items-center font-semibold text-lg">
+                    <span>Total</span>
+                    <span>{formatCurrency(total)}</span>
+                  </div>
+                  <Button className="w-full" onClick={() => navigate(paths.checkout)}>
+                    Proceed to Checkout
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+
+  if (isWebsiteContext) {
+    return cartContent;
   }
 
   return (
     <StorefrontLayout>
-      <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-6">Your Cart</h1>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 space-y-4">
-            {items.map((item) => (
-              <Card key={item.id}>
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-4">
-                    {item.image && (
-                      <img src={item.image} alt={`${item.name} image`} className="w-20 h-20 object-cover rounded" loading="lazy" />
-                    )}
-                    <div className="flex-1">
-                      <div className="font-medium">{nameWithVariant(item.name, item.variation)}</div>
-                      <div className="text-sm text-muted-foreground">{formatCurrency(item.price)}</div>
-                      <div className="mt-2 flex items-center gap-2">
-                        <span className="text-sm">Qty:</span>
-                        <Input
-                          type="number"
-                          value={item.quantity}
-                          min={1}
-                          onChange={(e) => updateQuantity(item.id, parseInt(e.target.value || '1', 10))}
-                          className="w-20"
-                        />
-                      </div>
-                    </div>
-                    <Button variant="ghost" size="icon" onClick={() => removeItem(item.id)} aria-label="Remove item">
-                      <Trash2 className="h-5 w-5" />
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
-          <div>
-            <Card>
-              <CardHeader>
-                <CardTitle>Order Summary</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex justify-between text-sm">
-                  <span>Subtotal</span>
-                  <span>{formatCurrency(total)}</span>
-                </div>
-                <Separator />
-                <div className="flex justify-between items-center font-semibold text-lg">
-                  <span>Total</span>
-                  <span>{formatCurrency(total)}</span>
-                </div>
-                <Button className="w-full" onClick={() => navigate(paths.checkout)}>
-                  Proceed to Checkout
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </div>
+      {cartContent}
     </StorefrontLayout>
   );
 };
