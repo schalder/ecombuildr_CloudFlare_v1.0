@@ -3,6 +3,8 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useStore } from '@/contexts/StoreContext';
 import { useCart } from '@/contexts/CartContext';
+import { usePixelTracking } from '@/hooks/usePixelTracking';
+import { usePixelContext } from '@/components/pixel/PixelManager';
 import { StorefrontLayout } from '@/components/storefront/StorefrontLayout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -57,6 +59,8 @@ export const ProductDetail: React.FC = () => {
   const { addItem } = useCart();
   const navigate = useNavigate();
   const paths = useEcomPaths();
+  const { pixels } = usePixelContext();
+  const { trackViewContent } = usePixelTracking(pixels);
   
   // Detect if we're in a website context (either system domain or custom domain)
   const isCustomDomain = () => {
@@ -147,6 +151,13 @@ export const ProductDetail: React.FC = () => {
         action_buttons: (data as any).action_buttons as ActionButtons | undefined,
       } as any;
       setProduct(product as Product);
+      
+      // Track view content event
+      trackViewContent({
+        id: product.id,
+        name: product.name,
+        price: product.price,
+      });
     } catch (error) {
       console.error('Error fetching product:', error);
       setProduct(null);

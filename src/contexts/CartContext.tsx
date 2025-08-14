@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
+import { usePixelTracking } from '@/hooks/usePixelTracking';
+import { usePixelContext } from '@/components/pixel/PixelManager';
 
 interface CartItem {
   id: string;
@@ -101,6 +103,8 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [state, dispatch] = useReducer(cartReducer, initialState);
+  const { pixels } = usePixelContext();
+  const { trackAddToCart } = usePixelTracking(pixels);
 
   // Load cart from localStorage on mount
   useEffect(() => {
@@ -122,6 +126,15 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const addItem = (item: Omit<CartItem, 'quantity'> & { quantity?: number }) => {
     dispatch({ type: 'ADD_ITEM', payload: item });
+    
+    // Track add to cart event
+    trackAddToCart({
+      id: item.id,
+      name: item.name,
+      price: item.price,
+      quantity: item.quantity || 1,
+      variant: item.variation ? JSON.stringify(item.variation) : undefined,
+    });
   };
 
   const removeItem = (id: string) => {

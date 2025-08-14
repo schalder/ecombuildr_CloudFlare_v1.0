@@ -27,6 +27,9 @@ const websiteSettingsSchema = z.object({
   favicon_url: z.string().url('Must be a valid URL').optional().or(z.literal('')),
   header_tracking_code: z.string().optional(),
   footer_tracking_code: z.string().optional(),
+  facebook_pixel_id: z.string().optional(),
+  google_analytics_id: z.string().optional(),
+  google_ads_id: z.string().optional(),
   currency_code: z.enum(['BDT','USD','INR','EUR','GBP']).default('BDT'),
   // SEO defaults
   seo_title: z.string().optional(),
@@ -93,6 +96,9 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
       favicon_url: website.settings?.favicon_url || '',
       header_tracking_code: website.settings?.header_tracking_code || '',
       footer_tracking_code: website.settings?.footer_tracking_code || '',
+      facebook_pixel_id: website.settings?.facebook_pixel_id || '',
+      google_analytics_id: website.settings?.google_analytics_id || '',
+      google_ads_id: website.settings?.google_ads_id || '',
       currency_code: website.settings?.currency?.code || 'BDT',
       seo_title: (website as any).seo_title || '',
       seo_description: (website as any).seo_description || '',
@@ -138,13 +144,16 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
 
   const updateWebsiteMutation = useMutation({
     mutationFn: async (data: WebsiteSettingsForm) => {
-      const { favicon_url, header_tracking_code, footer_tracking_code, currency_code, domain, ...basicFields } = data;
+      const { favicon_url, header_tracking_code, footer_tracking_code, facebook_pixel_id, google_analytics_id, google_ads_id, currency_code, domain, ...basicFields } = data;
       
       const settings = {
         ...website.settings,
         favicon_url: favicon_url || null,
         header_tracking_code: header_tracking_code || null,
         footer_tracking_code: footer_tracking_code || null,
+        facebook_pixel_id: facebook_pixel_id || null,
+        google_analytics_id: google_analytics_id || null,
+        google_ads_id: google_ads_id || null,
         system_pages: {
           ...(website.settings?.system_pages || {}),
           product_detail_page_id: productDetailTemplateId || null,
@@ -705,53 +714,114 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
             <CardHeader>
               <CardTitle>Tracking & Analytics</CardTitle>
               <CardDescription>
-                Add custom tracking codes to your website header and footer.
+                Configure pixel IDs for automated tracking and custom code snippets.
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <FormField
-                control={form.control}
-                name="header_tracking_code"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Header Tracking Code</FormLabel>
-                    <FormControl>
-                      <Textarea 
-                        placeholder="<!-- Google Analytics, Facebook Pixel, etc. -->"
-                        className="resize-none font-mono text-sm"
-                        rows={4}
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Code that will be inserted in the &lt;head&gt; section of every page.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            <CardContent className="space-y-6">
+              <div className="space-y-4">
+                <div className="text-sm font-medium">Marketing Pixels</div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="facebook_pixel_id"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Facebook Pixel ID</FormLabel>
+                        <FormControl>
+                          <Input placeholder="123456789012345" {...field} />
+                        </FormControl>
+                        <FormDescription>
+                          Your Facebook Pixel ID for conversion tracking and advertising.
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-              <FormField
-                control={form.control}
-                name="footer_tracking_code"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Footer Tracking Code</FormLabel>
-                    <FormControl>
-                      <Textarea 
-                        placeholder="<!-- Chat widgets, additional tracking, etc. -->"
-                        className="resize-none font-mono text-sm"
-                        rows={4}
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Code that will be inserted before the closing &lt;/body&gt; tag.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                  <FormField
+                    control={form.control}
+                    name="google_analytics_id"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Google Analytics ID</FormLabel>
+                        <FormControl>
+                          <Input placeholder="G-XXXXXXXXXX or UA-XXXXXXXX-X" {...field} />
+                        </FormControl>
+                        <FormDescription>
+                          Your Google Analytics measurement ID for website analytics.
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <FormField
+                  control={form.control}
+                  name="google_ads_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Google Ads ID</FormLabel>
+                      <FormControl>
+                        <Input placeholder="AW-XXXXXXXXX" {...field} />
+                      </FormControl>
+                      <FormDescription>
+                        Your Google Ads conversion ID for tracking ad performance.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <Separator />
+
+              <div className="space-y-4">
+                <div className="text-sm font-medium">Custom Code</div>
+                <FormField
+                  control={form.control}
+                  name="header_tracking_code"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Header Tracking Code</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="<!-- Additional custom tracking code -->"
+                          className="resize-none font-mono text-sm"
+                          rows={4}
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Additional code inserted in the &lt;head&gt; section (pixels above are automatic).
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="footer_tracking_code"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Footer Tracking Code</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="<!-- Chat widgets, additional tracking, etc. -->"
+                          className="resize-none font-mono text-sm"
+                          rows={4}
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Code inserted before the closing &lt;/body&gt; tag.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
             </CardContent>
           </Card>
 

@@ -4,6 +4,8 @@ import { useStore } from '@/contexts/StoreContext';
 import { StorefrontHeader } from './StorefrontHeader';
 import { StorefrontFooter } from './StorefrontFooter';
 import { Loader2 } from 'lucide-react';
+import { PixelManager } from '@/components/pixel/PixelManager';
+import { CartProvider } from '@/contexts/CartContext';
 
 interface StorefrontLayoutProps {
   children: React.ReactNode;
@@ -32,18 +34,22 @@ export const StorefrontLayout: React.FC<StorefrontLayoutProps> = ({ children }) 
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
-      <style>{`
-        :root {
-          --store-primary: ${store.primary_color};
-          --store-secondary: ${store.secondary_color};
-        }
-      `}</style>
-      <StorefrontHeader />
-      <main className="flex-1">
-        {children}
-      </main>
-      <StorefrontFooter />
-    </div>
+    <PixelManager websitePixels={store?.settings}>
+      <CartProvider>
+        <div className="min-h-screen flex flex-col bg-background">
+          <style>{`
+            :root {
+              --store-primary: ${store.primary_color};
+              --store-secondary: ${store.secondary_color};
+            }
+          `}</style>
+          <StorefrontHeader />
+          <main className="flex-1">
+            {children}
+          </main>
+          <StorefrontFooter />
+        </div>
+      </CartProvider>
+    </PixelManager>
   );
 };

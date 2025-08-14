@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useStore } from '@/contexts/StoreContext';
 import { useCart } from '@/contexts/CartContext';
+import { usePixelTracking } from '@/hooks/usePixelTracking';
+import { usePixelContext } from '@/components/pixel/PixelManager';
 import { StorefrontLayout } from '@/components/storefront/StorefrontLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -39,9 +41,12 @@ export const CheckoutPage: React.FC = () => {
   const { store } = useStore();
   const { items, total, clearCart } = useCart();
   const paths = useEcomPaths();
+  const { pixels } = usePixelContext();
+  const { trackInitiateCheckout, trackPurchase } = usePixelTracking(pixels);
   const isWebsiteContext = Boolean(websiteId || websiteSlug);
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [hasTrackedCheckout, setHasTrackedCheckout] = useState(false);
   const [discountLoading, setDiscountLoading] = useState(false);
   const [discountAmount, setDiscountAmount] = useState(0);
   const [shippingCost, setShippingCost] = useState(0); // Default shipping cost
@@ -266,6 +271,21 @@ useEffect(() => {
       const createdOrderId: string | undefined = data?.order?.id;
       if (!createdOrderId) throw new Error('Order was not created');
 
+      // Track purchase event
+      if (form.payment_method === 'cod') {
+        trackPurchase({
+          transaction_id: createdOrderId,
+          value: finalTotal,
+          items: items.map(item => ({
+            item_id: item.productId,
+            item_name: item.name,
+            price: item.price,
+            quantity: item.quantity,
+            item_variant: item.variation ? JSON.stringify(item.variation) : undefined,
+          })),
+        });
+      }
+
       // Update discount code usage if applied (best-effort; ignored if RLS blocks)
       if (discountAmount > 0 && form.discount_code) {
         const { data: currentDiscount } = await supabase
@@ -390,6 +410,23 @@ useEffect(() => {
   }
   
   const finalTotal = total + shippingCost - discountAmount;
+
+  // Track initial checkout when reaching step 2 or 3
+  useEffect(() => {
+    if (!hasTrackedCheckout && currentStep >= 2 && items.length > 0 && store) {
+      trackInitiateCheckout({
+        value: finalTotal,
+        items: items.map(item => ({
+          item_id: item.productId,
+          item_name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          item_variant: item.variation ? JSON.stringify(item.variation) : undefined,
+        })),
+      });
+      setHasTrackedCheckout(true);
+    }
+  }, [currentStep, hasTrackedCheckout, finalTotal, items, trackInitiateCheckout, store]);
 
   const checkoutContent = (
     <div className="max-w-4xl mx-auto">
