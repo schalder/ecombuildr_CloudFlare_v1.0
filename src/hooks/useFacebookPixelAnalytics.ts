@@ -40,7 +40,10 @@ export const useFacebookPixelAnalytics = (storeId: string, dateRange: DateRange)
 
   useEffect(() => {
     const fetchAnalytics = async () => {
-      if (!user || !storeId) return;
+      if (!user || !storeId) {
+        setLoading(false);
+        return;
+      }
       
       setLoading(true);
       setError(null);
@@ -91,7 +94,7 @@ export const useFacebookPixelAnalytics = (storeId: string, dateRange: DateRange)
         // Fetch top products
         const { data: topProductsData, error: topProductsError } = await supabase
           .from('pixel_events')
-          .select('event_data')
+          .select('event_type, event_data')
           .eq('store_id', storeId)
           .in('event_type', ['ViewContent', 'Purchase'])
           .gte('created_at', startDate)
@@ -112,9 +115,9 @@ export const useFacebookPixelAnalytics = (storeId: string, dateRange: DateRange)
               productStats[productId] = { name: productName, views: 0, conversions: 0 };
             }
             
-            if (eventData.event_type === 'ViewContent') {
+            if (event.event_type === 'ViewContent') {
               productStats[productId].views++;
-            } else if (eventData.event_type === 'Purchase') {
+            } else if (event.event_type === 'Purchase') {
               productStats[productId].conversions++;
             }
           }

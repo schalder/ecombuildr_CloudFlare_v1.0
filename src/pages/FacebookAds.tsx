@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -16,12 +16,16 @@ export default function FacebookAds() {
   const [dateRange, setDateRange] = useState('30');
   const { store } = useUserStore();
   
-  const startDate = new Date();
-  startDate.setDate(startDate.getDate() - parseInt(dateRange));
+  // Memoize date range to prevent recreation on every render
+  const dateRangeObj = useMemo(() => {
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - parseInt(dateRange));
+    return { startDate, endDate: new Date() };
+  }, [dateRange]);
   
   const { analytics, loading, error } = useFacebookPixelAnalytics(
     store?.id || '', 
-    { startDate, endDate: new Date() }
+    dateRangeObj
   );
 
   const hasPixelId = store?.facebook_pixel_id;
