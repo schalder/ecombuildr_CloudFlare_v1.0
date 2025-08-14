@@ -64,27 +64,15 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
   // Memoized options/variants to prevent effect loops
   const options = useMemo<VariationOption[]>(() => {
     const v: any = product?.variations;
-    console.log('🔍 ProductQuickView - Raw variations data:', v);
-    console.log('🔍 ProductQuickView - Product ID:', product?.id);
-    console.log('🔍 ProductQuickView - Product name:', product?.name);
-    
-    if (Array.isArray(v)) {
-      console.log('🔍 Variations is array format:', v);
-      return v as any;
-    }
-    
-    const optionsResult = (v?.options || []) as VariationOption[];
-    console.log('🔍 Parsed options result:', optionsResult);
-    return optionsResult;
+    if (Array.isArray(v)) return v as any;
+    return (v?.options || []) as VariationOption[];
   }, [product?.id]);
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
 
   // Variants list (for price overrides)
   const variantList = useMemo<any[]>(() => {
     const v: any = product?.variations;
-    const variants = Array.isArray(v) ? [] : (v?.variants || []);
-    console.log('🔍 ProductQuickView - Parsed variants:', variants);
-    return variants;
+    return Array.isArray(v) ? [] : (v?.variants || []);
   }, [product?.id]);
 
   useEffect(() => {
@@ -242,12 +230,7 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
             <Separator />
 
             {/* Product Variations */}
-            {(() => {
-              console.log('🔍 ProductQuickView - Checking variations render condition:');
-              console.log('🔍 ProductQuickView - options.length:', options.length);
-              console.log('🔍 ProductQuickView - options array:', options);
-              return options.length > 0;
-            })() && (
+            {options.length > 0 && (
               <div className="space-y-6">
                 {options.map((opt) => (
                   <div key={opt.name} className="space-y-3">

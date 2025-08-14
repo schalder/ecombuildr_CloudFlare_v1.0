@@ -30,9 +30,15 @@ interface Product {
   price: number;
   compare_price?: number;
   short_description?: string;
-  images: string[];
+  description?: string;
+  images: any;
   slug: string;
   is_active: boolean;
+  variations?: any;
+  track_inventory?: boolean;
+  inventory_quantity?: number;
+  created_at?: string;
+  updated_at?: string;
 }
 
 interface Category {
@@ -189,9 +195,15 @@ export const ProductsPageElement: React.FC<{
           price: p.price || 0,
           compare_price: p.compare_price || undefined,
           short_description: p.short_description || undefined,
-          images: Array.isArray(p.images) ? p.images.filter((img: any): img is string => typeof img === 'string') : [],
+          description: p.description || undefined,
+          images: p.images || [],
           slug: p.slug || '',
           is_active: p.is_active || false,
+          variations: p.variations || null,
+          track_inventory: p.track_inventory || false,
+          inventory_quantity: p.inventory_quantity || 0,
+          created_at: p.created_at,
+          updated_at: p.updated_at,
         }));
         setProducts(transformed);
       } catch (e) {
