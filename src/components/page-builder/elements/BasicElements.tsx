@@ -9,8 +9,7 @@ import { InlineEditor } from '../components/InlineEditor';
 import { InlineRTE, sanitizeHtml } from '../components/InlineRTE';
 import { renderElementStyles } from '../utils/styleRenderer';
 import { generateResponsiveCSS } from '../utils/responsiveStyles';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { ICONS_MAP } from '@/components/icons/fontawesome-list';
+import { ICONS_MAP } from '@/components/icons/lucide-icon-list';
 import { useEcomPaths } from '@/lib/pathResolver';
 
 // Heading Element
@@ -302,7 +301,7 @@ const ListElement: React.FC<{
           return (
             <li key={index} className="mb-1 flex items-start" style={{ marginBottom: `${itemGap}px` }}>
               <span className="mr-2 mt-0.5" style={{ fontSize: `${iconSize}px`, lineHeight: 1, color: iconColor }}>
-                <FontAwesomeIcon icon={faIcon} />
+                {React.createElement(faIcon, { className: "h-4 w-4" })}
               </span>
               <span>{item.text}</span>
             </li>

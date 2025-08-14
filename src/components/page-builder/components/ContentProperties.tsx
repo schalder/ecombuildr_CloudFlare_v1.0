@@ -13,8 +13,7 @@ import { ImageContentProperties } from './ImageContentProperties';
 import { VideoContentProperties } from './VideoContentProperties';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { IconPicker } from '@/components/ui/icon-picker';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { ICONS_MAP } from '@/components/icons/fontawesome-list';
+import { ICONS_MAP } from '@/components/icons/lucide-icon-list';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -438,7 +437,7 @@ export const ContentProperties: React.FC<ContentPropertiesProps> = ({
                         <PopoverTrigger asChild>
                           <Button variant="outline" size="sm" className="h-8">
                             <span className="mr-2">Icon</span>
-                            {faIcon ? <FontAwesomeIcon icon={faIcon} /> : null}
+                            {faIcon ? React.createElement(faIcon, { className: "h-4 w-4" }) : null}
                           </Button>
                         </PopoverTrigger>
                         <PopoverContent align="start" className="w-[360px]">

@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useWebsiteSales } from '@/hooks/useWebsiteSales';
 import { DateRangeFilter, DateRange } from '@/components/ui/date-range-filter';
+import { ErrorBoundary, ChartErrorFallback } from '@/components/ui/error-boundary';
 import { 
   Loader2, 
   RefreshCw, 
@@ -227,36 +228,38 @@ export function WebsiteSales({ websiteId, websiteName }: WebsiteSalesProps) {
           <CardTitle>Revenue Trend ({sales.dateRange.label})</CardTitle>
         </CardHeader>
         <CardContent>
-          <ChartContainer
-            config={{
-              revenue: {
-                label: "Revenue",
-                color: "hsl(var(--primary))",
-              },
-            }}
-            className="h-[300px]"
-          >
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={sales.analytics.revenueTimeline}>
-                <XAxis 
-                  dataKey="date" 
-                  tickFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                />
-                <YAxis />
-                <ChartTooltip 
-                  content={<ChartTooltipContent />}
-                  labelFormatter={(value) => new Date(value).toLocaleDateString()}
-                  formatter={(value: any) => [`৳${value}`, 'Revenue']}
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="revenue" 
-                  stroke="hsl(var(--primary))" 
-                  strokeWidth={2}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </ChartContainer>
+          <ErrorBoundary fallback={ChartErrorFallback}>
+            <ChartContainer
+              config={{
+                revenue: {
+                  label: "Revenue",
+                  color: "hsl(var(--primary))",
+                },
+              }}
+              className="h-[300px]"
+            >
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={sales.analytics.revenueTimeline}>
+                  <XAxis 
+                    dataKey="date" 
+                    tickFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                  />
+                  <YAxis />
+                  <ChartTooltip 
+                    content={<ChartTooltipContent />}
+                    labelFormatter={(value) => new Date(value).toLocaleDateString()}
+                    formatter={(value: any) => [`৳${value}`, 'Revenue']}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="revenue" 
+                    stroke="hsl(var(--primary))" 
+                    strokeWidth={2}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </ChartContainer>
+          </ErrorBoundary>
         </CardContent>
       </Card>
 
@@ -268,27 +271,29 @@ export function WebsiteSales({ websiteId, websiteName }: WebsiteSalesProps) {
             <CardTitle>Monthly Revenue Trends</CardTitle>
           </CardHeader>
           <CardContent>
-            <ChartContainer
-              config={{
-                revenue: {
-                  label: "Revenue",
-                  color: "hsl(var(--primary))",
-                },
-              }}
-              className="h-[250px]"
-            >
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={sales.analytics.monthlyTrends}>
-                  <XAxis dataKey="month" />
-                  <YAxis />
-                  <ChartTooltip 
-                    content={<ChartTooltipContent />}
-                    formatter={(value: any) => [`৳${value}`, 'Revenue']}
-                  />
-                  <Bar dataKey="revenue" fill="hsl(var(--primary))" />
-                </BarChart>
-              </ResponsiveContainer>
-            </ChartContainer>
+            <ErrorBoundary fallback={ChartErrorFallback}>
+              <ChartContainer
+                config={{
+                  revenue: {
+                    label: "Revenue",
+                    color: "hsl(var(--primary))",
+                  },
+                }}
+                className="h-[250px]"
+              >
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={sales.analytics.monthlyTrends}>
+                    <XAxis dataKey="month" />
+                    <YAxis />
+                    <ChartTooltip 
+                      content={<ChartTooltipContent />}
+                      formatter={(value: any) => [`৳${value}`, 'Revenue']}
+                    />
+                    <Bar dataKey="revenue" fill="hsl(var(--primary))" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </ChartContainer>
+            </ErrorBoundary>
           </CardContent>
         </Card>
 
@@ -298,33 +303,35 @@ export function WebsiteSales({ websiteId, websiteName }: WebsiteSalesProps) {
             <CardTitle>Payment Methods</CardTitle>
           </CardHeader>
           <CardContent>
-            <ChartContainer
-              config={{
-                count: {
-                  label: "Orders",
-                  color: "hsl(var(--primary))",
-                },
-              }}
-              className="h-[250px]"
-            >
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={sales.analytics.paymentMethods}
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={80}
-                    dataKey="count"
-                    nameKey="method"
-                  >
-                    {sales.analytics.paymentMethods.map((_, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <ChartTooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            </ChartContainer>
+            <ErrorBoundary fallback={ChartErrorFallback}>
+              <ChartContainer
+                config={{
+                  count: {
+                    label: "Orders",
+                    color: "hsl(var(--primary))",
+                  },
+                }}
+                className="h-[250px]"
+              >
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={sales.analytics.paymentMethods}
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={80}
+                      dataKey="count"
+                      nameKey="method"
+                    >
+                      {sales.analytics.paymentMethods.map((_, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <ChartTooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              </ChartContainer>
+            </ErrorBoundary>
           </CardContent>
         </Card>
       </div>
