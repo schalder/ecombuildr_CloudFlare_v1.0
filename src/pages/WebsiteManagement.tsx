@@ -16,6 +16,7 @@ import { WebsitePageSettingsModal } from '@/components/modals/WebsitePageSetting
 import { WebsiteHeaderBuilder } from '@/components/website/WebsiteHeaderBuilder';
 import { WebsiteFooterBuilder } from '@/components/website/WebsiteFooterBuilder';
 import { WebsiteStats } from '@/components/website/WebsiteStats';
+import { WebsiteSales } from '@/components/website/WebsiteSales';
 
 interface Website {
   id: string;
@@ -404,10 +405,11 @@ const WebsiteManagement = () => {
             />
           )}
 
-          {activeTab === 'sales' && (
-            <div className="text-center py-12">
-              <p className="text-muted-foreground">Sales analytics coming soon...</p>
-            </div>
+          {activeTab === 'sales' && website && (
+            <WebsiteSales 
+              websiteId={website.id} 
+              websiteName={website.name}
+            />
           )}
 
           {activeTab === 'security' && (
