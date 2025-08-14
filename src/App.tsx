@@ -6,6 +6,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { DomainRouter } from "@/components/domain/DomainRouter";
 import { AuthProvider } from "@/hooks/useAuth";
 import { StoreProvider } from "@/contexts/StoreContext";
+import { PixelManager } from "@/components/pixel/PixelManager";
+import { CartProvider } from "@/contexts/CartContext";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
@@ -62,7 +64,9 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
       <StoreProvider>
-        <TooltipProvider>
+        <PixelManager>
+          <CartProvider>
+            <TooltipProvider>
             <Toaster />
             <Sonner />
             <BrowserRouter>
@@ -212,7 +216,9 @@ const App = () => (
                 </Routes>
               </DomainRouter>
             </BrowserRouter>
-        </TooltipProvider>
+            </TooltipProvider>
+          </CartProvider>
+        </PixelManager>
       </StoreProvider>
     </AuthProvider>
   </QueryClientProvider>

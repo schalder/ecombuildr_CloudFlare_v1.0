@@ -103,7 +103,8 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [state, dispatch] = useReducer(cartReducer, initialState);
-  const { pixels } = usePixelContext();
+  const pixelContext = usePixelContext();
+  const pixels = pixelContext?.pixels;
   const { trackAddToCart } = usePixelTracking(pixels);
 
   // Load cart from localStorage on mount
@@ -127,14 +128,20 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const addItem = (item: Omit<CartItem, 'quantity'> & { quantity?: number }) => {
     dispatch({ type: 'ADD_ITEM', payload: item });
     
-    // Track add to cart event
-    trackAddToCart({
-      id: item.id,
-      name: item.name,
-      price: item.price,
-      quantity: item.quantity || 1,
-      variant: item.variation ? JSON.stringify(item.variation) : undefined,
-    });
+    // Track add to cart event (only if pixels are available)
+    try {
+      if (pixels) {
+        trackAddToCart({
+          id: item.id,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity || 1,
+          variant: item.variation ? JSON.stringify(item.variation) : undefined,
+        });
+      }
+    } catch (error) {
+      console.warn('Failed to track add to cart event:', error);
+    }
   };
 
   const removeItem = (id: string) => {

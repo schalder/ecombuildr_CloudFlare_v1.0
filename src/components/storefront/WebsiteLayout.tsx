@@ -7,7 +7,6 @@ import { WebsiteHeader } from '@/components/storefront/WebsiteHeader';
 import { WebsiteFooter } from '@/components/storefront/WebsiteFooter';
 import { setGlobalCurrency } from '@/lib/currency';
 import { PixelManager } from '@/components/pixel/PixelManager';
-import { CartProvider } from '@/contexts/CartContext';
 
 interface WebsiteData {
   id: string;
@@ -105,8 +104,7 @@ export const WebsiteLayout: React.FC = () => {
 
   return (
     <PixelManager websitePixels={website.settings}>
-      <CartProvider>
-        <div className="min-h-screen flex flex-col bg-background">
+      <div className="min-h-screen flex flex-col bg-background">
           <style>{`
             :root {
               --store-primary: ${store?.primary_color ?? '#10B981'};
@@ -119,7 +117,6 @@ export const WebsiteLayout: React.FC = () => {
           </main>
           <WebsiteFooter website={website} />
         </div>
-      </CartProvider>
     </PixelManager>
   );
 };
