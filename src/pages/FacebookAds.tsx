@@ -11,10 +11,13 @@ import { EventTimeline } from '@/components/analytics/EventTimeline';
 import { TopProductsAnalytics } from '@/components/analytics/TopProductsAnalytics';
 import { useFacebookPixelAnalytics } from '@/hooks/useFacebookPixelAnalytics';
 import { useUserStore } from '@/hooks/useUserStore';
+import { useStoreWebsites } from '@/hooks/useStoreWebsites';
 
 export default function FacebookAds() {
   const [dateRange, setDateRange] = useState('30');
+  const [selectedWebsiteId, setSelectedWebsiteId] = useState<string>('all');
   const { store } = useUserStore();
+  const { websites, loading: websitesLoading } = useStoreWebsites(store?.id || '');
   
   // Memoize date range to prevent recreation on every render
   const dateRangeObj = useMemo(() => {
@@ -25,10 +28,19 @@ export default function FacebookAds() {
   
   const { analytics, loading, error } = useFacebookPixelAnalytics(
     store?.id || '', 
-    dateRangeObj
+    dateRangeObj,
+    selectedWebsiteId === 'all' ? undefined : selectedWebsiteId
   );
 
-  const hasPixelId = store?.facebook_pixel_id;
+  // Get pixel ID based on selection
+  const selectedWebsite = websites.find(w => w.id === selectedWebsiteId);
+  const hasPixelId = selectedWebsiteId === 'all' 
+    ? store?.facebook_pixel_id || websites.some(w => w.facebook_pixel_id)
+    : selectedWebsite?.facebook_pixel_id;
+  
+  const displayPixelId = selectedWebsiteId === 'all' 
+    ? store?.facebook_pixel_id || 'Multiple'
+    : selectedWebsite?.facebook_pixel_id;
 
   if (!store) {
     return (
@@ -53,7 +65,7 @@ export default function FacebookAds() {
               <h1 className="text-xl font-semibold">Facebook Pixel Analytics</h1>
               {hasPixelId ? (
                 <Badge variant="secondary" className="mt-1">
-                  Pixel ID: {store.facebook_pixel_id}
+                  Pixel ID: {displayPixelId}
                 </Badge>
               ) : (
                 <Badge variant="destructive" className="mt-1">
@@ -64,6 +76,22 @@ export default function FacebookAds() {
           </div>
           
           <div className="flex items-center space-x-3">
+            {!websitesLoading && websites.length > 0 && (
+              <Select value={selectedWebsiteId} onValueChange={setSelectedWebsiteId}>
+                <SelectTrigger className="w-48">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Websites</SelectItem>
+                  {websites.map((website) => (
+                    <SelectItem key={website.id} value={website.id}>
+                      {website.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+            
             <Select value={dateRange} onValueChange={setDateRange}>
               <SelectTrigger className="w-40">
                 <SelectValue />
@@ -98,12 +126,15 @@ export default function FacebookAds() {
                 <div className="flex-1">
                   <h3 className="font-semibold text-destructive">Facebook Pixel Not Configured</h3>
                   <p className="text-sm text-muted-foreground mt-1">
-                    To track Facebook pixel events, you need to configure your Facebook Pixel ID in store settings.
+                    {selectedWebsiteId === 'all' 
+                      ? 'To track Facebook pixel events, you need to configure Facebook Pixel ID in store settings or website settings.'
+                      : `The selected website "${selectedWebsite?.name}" doesn't have a Facebook Pixel ID configured.`
+                    }
                   </p>
                   <Button variant="outline" size="sm" className="mt-3" asChild>
-                    <a href="/dashboard/settings/store">
+                    <a href={selectedWebsiteId === 'all' ? "/dashboard/settings/store" : "/dashboard/websites"}>
                       <Settings className="h-4 w-4 mr-2" />
-                      Configure Pixel
+                      {selectedWebsiteId === 'all' ? 'Configure Store Pixel' : 'Configure Website Pixel'}
                     </a>
                   </Button>
                 </div>

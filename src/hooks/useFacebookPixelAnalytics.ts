@@ -32,7 +32,7 @@ interface DateRange {
   endDate: Date;
 }
 
-export const useFacebookPixelAnalytics = (storeId: string, dateRange: DateRange) => {
+export const useFacebookPixelAnalytics = (storeId: string, dateRange: DateRange, websiteId?: string) => {
   const [analytics, setAnalytics] = useState<PixelAnalytics | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -69,12 +69,18 @@ export const useFacebookPixelAnalytics = (storeId: string, dateRange: DateRange)
         const endDate = dateRange.endDate.toISOString().split('T')[0];
 
         // Fetch event counts with abort signal
-        const { data: eventCounts, error: eventError } = await supabase
+        let eventQuery = supabase
           .from('pixel_events')
           .select('event_type')
           .eq('store_id', storeId)
           .gte('created_at', startDate)
-          .lte('created_at', endDate + 'T23:59:59')
+          .lte('created_at', endDate + 'T23:59:59');
+
+        if (websiteId) {
+          eventQuery = eventQuery.eq('website_id', websiteId);
+        }
+
+        const { data: eventCounts, error: eventError } = await eventQuery
           .abortSignal(abortControllerRef.current.signal);
 
         if (eventError) throw eventError;
@@ -117,13 +123,19 @@ export const useFacebookPixelAnalytics = (storeId: string, dateRange: DateRange)
         const revenue = (orders || []).reduce((sum, order) => sum + Number(order.total || 0), 0);
 
         // Fetch top products
-        const { data: topProductsData, error: topProductsError } = await supabase
+        let topProductsQuery = supabase
           .from('pixel_events')
           .select('event_type, event_data')
           .eq('store_id', storeId)
           .in('event_type', ['ViewContent', 'Purchase'])
           .gte('created_at', startDate)
-          .lte('created_at', endDate + 'T23:59:59')
+          .lte('created_at', endDate + 'T23:59:59');
+
+        if (websiteId) {
+          topProductsQuery = topProductsQuery.eq('website_id', websiteId);
+        }
+
+        const { data: topProductsData, error: topProductsError } = await topProductsQuery
           .abortSignal(abortControllerRef.current.signal);
 
         if (topProductsError) throw topProductsError;
@@ -164,13 +176,19 @@ export const useFacebookPixelAnalytics = (storeId: string, dateRange: DateRange)
           .slice(0, 10);
 
         // Fetch daily events data
-        const { data: dailyEventsData, error: dailyError } = await supabase
+        let dailyEventsQuery = supabase
           .from('pixel_events')
           .select('created_at, event_type')
           .eq('store_id', storeId)
           .gte('created_at', startDate)
           .lte('created_at', endDate + 'T23:59:59')
-          .order('created_at')
+          .order('created_at');
+
+        if (websiteId) {
+          dailyEventsQuery = dailyEventsQuery.eq('website_id', websiteId);
+        }
+
+        const { data: dailyEventsData, error: dailyError } = await dailyEventsQuery
           .abortSignal(abortControllerRef.current.signal);
 
         if (dailyError) throw dailyError;
@@ -234,7 +252,7 @@ export const useFacebookPixelAnalytics = (storeId: string, dateRange: DateRange)
       }
       isRequestInProgressRef.current = false;
     };
-  }, [user, storeId, dateRange.startDate.getTime(), dateRange.endDate.getTime()]);
+  }, [user, storeId, websiteId, dateRange.startDate.getTime(), dateRange.endDate.getTime()]);
 
   return { analytics, loading, error };
 };
