@@ -1,10 +1,10 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Calendar } from '@/components/ui/calendar';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CalendarIcon, Check } from 'lucide-react';
-import { format, addDays, startOfDay, endOfDay, startOfMonth, endOfMonth, subMonths, subDays } from 'date-fns';
+import { format, addDays, startOfDay, endOfDay, startOfMonth, endOfMonth, subMonths, subDays, eachDayOfInterval, isAfter } from 'date-fns';
 import { cn } from '@/lib/utils';
 
 export type DateRangePreset = 
@@ -94,6 +94,12 @@ export function DateRangeFilter({ value, onChange, className }: DateRangeFilterP
   const [activeTab, setActiveTab] = React.useState<'presets' | 'custom'>(
     value?.preset === 'custom' ? 'custom' : 'presets'
   );
+  const [fromDate, setFromDate] = React.useState<string>(
+    value?.from ? format(value.from, 'yyyy-MM-dd') : ''
+  );
+  const [toDate, setToDate] = React.useState<string>(
+    value?.to ? format(value.to, 'yyyy-MM-dd') : ''
+  );
 
   const handlePresetSelect = (preset: typeof PRESETS[0]) => {
     const range = preset.getValue();
@@ -106,17 +112,55 @@ export function DateRangeFilter({ value, onChange, className }: DateRangeFilterP
     setIsOpen(false);
   };
 
-  const handleCustomRangeSelect = (range: any) => {
-    if (range?.from && range?.to) {
+  const handleFromDateChange = (dateString: string) => {
+    setFromDate(dateString);
+    const fromDateObj = new Date(dateString);
+    
+    if (toDate && fromDateObj <= new Date(toDate)) {
       onChange({
-        from: range.from,
-        to: range.to,
+        from: startOfDay(fromDateObj),
+        to: endOfDay(new Date(toDate)),
         preset: 'custom',
-        label: `${format(range.from, 'MMM d')} - ${format(range.to, 'MMM d')}`,
+        label: `${format(fromDateObj, 'MMM d')} - ${format(new Date(toDate), 'MMM d')}`,
+      });
+    } else if (toDate && fromDateObj > new Date(toDate)) {
+      // If from date is after to date, reset to date
+      setToDate('');
+    }
+  };
+
+  const handleToDateChange = (dateString: string) => {
+    setToDate(dateString);
+    const toDateObj = new Date(dateString);
+    
+    if (fromDate && new Date(fromDate) <= toDateObj) {
+      onChange({
+        from: startOfDay(new Date(fromDate)),
+        to: endOfDay(toDateObj),
+        preset: 'custom',
+        label: `${format(new Date(fromDate), 'MMM d')} - ${format(toDateObj, 'MMM d')}`,
       });
       setIsOpen(false);
     }
   };
+
+  // Generate date options for the last year and next 30 days
+  const generateDateOptions = () => {
+    const today = new Date();
+    const startDate = subDays(today, 365);
+    const endDate = addDays(today, 30);
+    
+    return eachDayOfInterval({ start: startDate, end: endDate }).map(date => ({
+      value: format(date, 'yyyy-MM-dd'),
+      label: format(date, 'MMM d, yyyy'),
+      date: date
+    }));
+  };
+
+  const dateOptions = generateDateOptions();
+  const availableToDateOptions = fromDate 
+    ? dateOptions.filter(option => option.date >= new Date(fromDate))
+    : dateOptions;
 
   // Group presets for better organization
   const todayYesterday = PRESETS.slice(0, 2);
@@ -222,30 +266,52 @@ export function DateRangeFilter({ value, onChange, className }: DateRangeFilterP
             </TabsContent>
             
             <TabsContent value="custom" className="p-0 m-0">
-              <div className="p-4">
-                <Calendar
-                  mode="range"
-                  selected={{ from: value.from, to: value.to }}
-                  onSelect={handleCustomRangeSelect}
-                  initialFocus
-                  className="pointer-events-auto w-full"
-                  classNames={{
-                    months: "flex flex-col space-y-4",
-                    month: "space-y-4 w-full",
-                    table: "w-full border-collapse",
-                    head_row: "flex w-full",
-                    head_cell: "text-muted-foreground rounded-md w-9 font-normal text-[0.8rem] flex-1 text-center",
-                    row: "flex w-full mt-2",
-                    cell: "flex-1 h-9 text-center text-sm p-0 relative [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-outside)]:bg-accent/50 [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
-                    day: "h-9 w-full p-0 font-normal aria-selected:opacity-100 hover:bg-accent hover:text-accent-foreground rounded-md",
-                    day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
-                    day_today: "bg-accent text-accent-foreground font-medium",
-                    day_outside: "text-muted-foreground opacity-50 aria-selected:bg-accent/50 aria-selected:text-muted-foreground aria-selected:opacity-30",
-                    day_disabled: "text-muted-foreground opacity-50",
-                    day_range_middle: "aria-selected:bg-accent aria-selected:text-accent-foreground",
-                    day_hidden: "invisible",
-                  }}
-                />
+              <div className="p-4 space-y-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground">From Date</label>
+                  <Select value={fromDate} onValueChange={handleFromDateChange}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select start date" />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-[200px]">
+                      {dateOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground">To Date</label>
+                  <Select 
+                    value={toDate} 
+                    onValueChange={handleToDateChange}
+                    disabled={!fromDate}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder={fromDate ? "Select end date" : "Select start date first"} />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-[200px]">
+                      {availableToDateOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                {fromDate && toDate && (
+                  <div className="mt-3 p-2 bg-muted rounded-md">
+                    <p className="text-sm text-muted-foreground">
+                      Selected range: <span className="font-medium text-foreground">
+                        {format(new Date(fromDate), 'MMM d')} - {format(new Date(toDate), 'MMM d')}
+                      </span>
+                    </p>
+                  </div>
+                )}
               </div>
             </TabsContent>
           </Tabs>
