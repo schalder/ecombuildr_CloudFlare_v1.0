@@ -27,8 +27,11 @@ interface WebsiteSalesProps {
 const COLORS = ['hsl(var(--primary))', 'hsl(var(--secondary))', 'hsl(var(--accent))', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6'];
 
 export function WebsiteSales({ websiteId, websiteName }: WebsiteSalesProps) {
+  console.log('WebsiteSales component rendered!', { websiteId, websiteName });
   const [timeRange, setTimeRange] = useState('30d');
   const { salesData, loading, error, refetch } = useWebsiteSales(websiteId, timeRange);
+  
+  console.log('WebsiteSales state:', { loading, error, salesData: !!salesData });
 
   if (loading) {
     return (
@@ -57,6 +60,7 @@ export function WebsiteSales({ websiteId, websiteName }: WebsiteSalesProps) {
   }
 
   if (error || !salesData) {
+    console.log('WebsiteSales error state:', { error, salesData });
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
@@ -69,7 +73,10 @@ export function WebsiteSales({ websiteId, websiteName }: WebsiteSalesProps) {
         <Card>
           <CardContent className="p-6 text-center">
             <p className="text-muted-foreground mb-4">
-              {error || "Failed to load sales analytics"}
+              ERROR: {error || "Failed to load sales analytics"}
+            </p>
+            <p className="text-xs text-muted-foreground mb-4">
+              Website ID: {websiteId} | Loading: {String(loading)} | Has Data: {String(!!salesData)}
             </p>
             <Button variant="outline" onClick={refetch}>
               Try Again
