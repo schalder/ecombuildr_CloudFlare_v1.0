@@ -18,6 +18,9 @@ interface Store {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  facebook_pixel_id?: string | null;
+  google_analytics_id?: string | null;
+  google_ads_id?: string | null;
 }
 
 export const useUserStore = () => {

@@ -1,74 +1,162 @@
+import { useState } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Facebook, Plus, Play, Pause, BarChart3 } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Facebook, Settings, ExternalLink, AlertCircle } from 'lucide-react';
+import { PixelEventOverview } from '@/components/analytics/PixelEventOverview';
+import { ConversionFunnel } from '@/components/analytics/ConversionFunnel';
+import { EventTimeline } from '@/components/analytics/EventTimeline';
+import { TopProductsAnalytics } from '@/components/analytics/TopProductsAnalytics';
+import { useFacebookPixelAnalytics } from '@/hooks/useFacebookPixelAnalytics';
+import { useUserStore } from '@/hooks/useUserStore';
 
 export default function FacebookAds() {
+  const [dateRange, setDateRange] = useState('30');
+  const { store } = useUserStore();
+  
+  const startDate = new Date();
+  startDate.setDate(startDate.getDate() - parseInt(dateRange));
+  
+  const { analytics, loading, error } = useFacebookPixelAnalytics(
+    store?.id || '', 
+    { startDate, endDate: new Date() }
+  );
+
+  const hasPixelId = store?.facebook_pixel_id;
+
+  if (!store) {
+    return (
+      <DashboardLayout title="Facebook Pixel Analytics" description="Track your Facebook pixel events and conversions">
+        <div className="flex items-center justify-center h-40">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
   return (
-    <DashboardLayout title="Facebook Ads" description="Create and manage your Facebook advertising campaigns">
+    <DashboardLayout title="Facebook Pixel Analytics" description="Track your Facebook pixel events and conversions">
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <div className="flex items-center space-x-2">
-            <Badge variant="secondary">0 active campaigns</Badge>
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex items-center space-x-3">
+            <div className="p-2 bg-blue-500/10 rounded-lg">
+              <Facebook className="h-6 w-6 text-blue-600" />
+            </div>
+            <div>
+              <h1 className="text-xl font-semibold">Facebook Pixel Analytics</h1>
+              {hasPixelId ? (
+                <Badge variant="secondary" className="mt-1">
+                  Pixel ID: {store.facebook_pixel_id}
+                </Badge>
+              ) : (
+                <Badge variant="destructive" className="mt-1">
+                  No Pixel Configured
+                </Badge>
+              )}
+            </div>
           </div>
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            Create Campaign
-          </Button>
+          
+          <div className="flex items-center space-x-3">
+            <Select value={dateRange} onValueChange={setDateRange}>
+              <SelectTrigger className="w-40">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="7">Last 7 days</SelectItem>
+                <SelectItem value="30">Last 30 days</SelectItem>
+                <SelectItem value="90">Last 90 days</SelectItem>
+              </SelectContent>
+            </Select>
+            
+            <Button variant="outline" size="sm" asChild>
+              <a 
+                href="https://business.facebook.com/events_manager"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center space-x-2"
+              >
+                <ExternalLink className="h-4 w-4" />
+                <span>Events Manager</span>
+              </a>
+            </Button>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card>
+        {/* Pixel Configuration Warning */}
+        {!hasPixelId && (
+          <Card className="border-destructive/50 bg-destructive/5">
             <CardContent className="p-6">
-              <div className="flex items-center space-x-2">
-                <Facebook className="h-5 w-5 text-blue-600" />
-                <h3 className="font-semibold">Total Reach</h3>
+              <div className="flex items-start space-x-3">
+                <AlertCircle className="h-5 w-5 text-destructive mt-0.5" />
+                <div className="flex-1">
+                  <h3 className="font-semibold text-destructive">Facebook Pixel Not Configured</h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    To track Facebook pixel events, you need to configure your Facebook Pixel ID in store settings.
+                  </p>
+                  <Button variant="outline" size="sm" className="mt-3" asChild>
+                    <a href="/dashboard/settings/store">
+                      <Settings className="h-4 w-4 mr-2" />
+                      Configure Pixel
+                    </a>
+                  </Button>
+                </div>
               </div>
-              <p className="text-2xl font-bold mt-2">0</p>
-              <p className="text-sm text-muted-foreground">Last 30 days</p>
             </CardContent>
           </Card>
+        )}
 
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-2">
-                <BarChart3 className="h-5 w-5 text-green-600" />
-                <h3 className="font-semibold">Total Spend</h3>
-              </div>
-              <p className="text-2xl font-bold mt-2">$0</p>
-              <p className="text-sm text-muted-foreground">Last 30 days</p>
-            </CardContent>
-          </Card>
+        {/* Analytics Overview */}
+        <PixelEventOverview analytics={analytics} loading={loading} />
 
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-2">
-                <Play className="h-5 w-5 text-purple-600" />
-                <h3 className="font-semibold">ROAS</h3>
-              </div>
-              <p className="text-2xl font-bold mt-2">0x</p>
-              <p className="text-sm text-muted-foreground">Return on ad spend</p>
-            </CardContent>
-          </Card>
+        {/* Charts Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <ConversionFunnel analytics={analytics} loading={loading} />
+          <TopProductsAnalytics topProducts={analytics?.topProducts || []} loading={loading} />
         </div>
 
+        {/* Event Timeline */}
+        <EventTimeline dailyEvents={analytics?.dailyEvents || []} loading={loading} />
+
+        {/* Facebook Ads Manager Link */}
         <Card>
           <CardHeader>
-            <CardTitle>Active Campaigns</CardTitle>
+            <CardTitle>Facebook Advertising</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-center py-12 text-muted-foreground">
-              <Facebook className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <h3 className="font-semibold mb-2">No campaigns yet</h3>
-              <p className="mb-4">Create your first Facebook ad campaign to start reaching new customers.</p>
-              <Button>
-                <Plus className="mr-2 h-4 w-4" />
-                Create Your First Campaign
+            <div className="text-center py-6">
+              <Facebook className="h-12 w-12 mx-auto mb-4 text-blue-600" />
+              <h3 className="font-semibold mb-2">Create Facebook Ad Campaigns</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Use Facebook Ads Manager to create campaigns with your pixel data for better targeting and optimization.
+              </p>
+              <Button asChild>
+                <a 
+                  href="https://www.facebook.com/adsmanager"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center space-x-2"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                  <span>Open Ads Manager</span>
+                </a>
               </Button>
             </div>
           </CardContent>
         </Card>
+
+        {error && (
+          <Card className="border-destructive/50 bg-destructive/5">
+            <CardContent className="p-6">
+              <div className="flex items-center space-x-2 text-destructive">
+                <AlertCircle className="h-5 w-5" />
+                <span className="font-medium">Error loading analytics: {error}</span>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </DashboardLayout>
   );

@@ -33,7 +33,7 @@ export const StorefrontLayout: React.FC<StorefrontLayoutProps> = ({ children }) 
   }
 
   return (
-    <PixelManager websitePixels={store?.settings}>
+    <PixelManager websitePixels={store?.settings} storeId={store?.id}>
       <div className="min-h-screen flex flex-col bg-background">
           <style>{`
             :root {

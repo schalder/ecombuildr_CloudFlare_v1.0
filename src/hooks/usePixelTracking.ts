@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
 declare global {
   interface Window {
@@ -33,8 +34,38 @@ interface EcommerceEvent {
   event_id?: string;
 }
 
-export const usePixelTracking = (pixelConfig?: PixelConfig) => {
+export const usePixelTracking = (pixelConfig?: PixelConfig, storeId?: string) => {
+  const storePixelEvent = useCallback(async (eventType: string, eventData: any) => {
+    if (!storeId) return;
+    
+    try {
+      // For now, just log the event since pixel_events table needs to be created
+      console.debug('[PixelTracking] Would store event in database:', eventType, eventData);
+      
+      // TODO: Uncomment when pixel_events table is created
+      // await supabase.from('pixel_events').insert({
+      //   store_id: storeId,
+      //   event_type: eventType,
+      //   event_data: eventData,
+      //   session_id: sessionStorage.getItem('session_id') || crypto.randomUUID(),
+      //   page_url: window.location.href,
+      //   referrer: document.referrer,
+      //   utm_source: new URLSearchParams(window.location.search).get('utm_source'),
+      //   utm_campaign: new URLSearchParams(window.location.search).get('utm_campaign'),
+      //   utm_medium: new URLSearchParams(window.location.search).get('utm_medium'),
+      //   utm_term: new URLSearchParams(window.location.search).get('utm_term'),
+      //   utm_content: new URLSearchParams(window.location.search).get('utm_content'),
+      //   user_agent: navigator.userAgent,
+      // });
+    } catch (error) {
+      console.warn('[PixelTracking] Failed to store event:', error);
+    }
+  }, [storeId]);
+
   const trackEvent = useCallback((eventName: string, eventData: any = {}) => {
+    // Store event in database
+    storePixelEvent(eventName, eventData);
+
     // Facebook Pixel tracking
     if (pixelConfig?.facebook_pixel_id && window.fbq) {
       try {
@@ -57,7 +88,7 @@ export const usePixelTracking = (pixelConfig?: PixelConfig) => {
         console.warn('[PixelTracking] Google tracking error:', error);
       }
     }
-  }, [pixelConfig]);
+  }, [pixelConfig, storePixelEvent]);
 
   const trackViewContent = useCallback((product: {
     id: string;

@@ -8,6 +8,7 @@ interface PixelManagerProps {
     google_ads_id?: string;
   };
   children: React.ReactNode;
+  storeId?: string;
 }
 
 const PixelContext = React.createContext<{
@@ -25,9 +26,9 @@ const PixelContext = React.createContext<{
 
 export const usePixelContext = () => React.useContext(PixelContext);
 
-export const PixelManager: React.FC<PixelManagerProps> = ({ websitePixels: initialPixels, children }) => {
+export const PixelManager: React.FC<PixelManagerProps> = ({ websitePixels: initialPixels, children, storeId }) => {
   const [currentPixels, setCurrentPixels] = React.useState(initialPixels);
-  const { trackPageView } = usePixelTracking(currentPixels);
+  const { trackPageView } = usePixelTracking(currentPixels, storeId);
 
   const updatePixels = React.useCallback((newPixels: any) => {
     console.debug('[PixelManager] Updating pixels:', newPixels);
