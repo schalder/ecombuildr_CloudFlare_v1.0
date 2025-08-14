@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -37,6 +37,8 @@ export const useFacebookPixelAnalytics = (storeId: string, dateRange: DateRange)
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const isRequestInProgressRef = useRef(false);
 
   useEffect(() => {
     const fetchAnalytics = async () => {
@@ -44,6 +46,20 @@ export const useFacebookPixelAnalytics = (storeId: string, dateRange: DateRange)
         setLoading(false);
         return;
       }
+
+      // Prevent multiple simultaneous requests
+      if (isRequestInProgressRef.current) {
+        return;
+      }
+
+      // Cancel any previous request
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+
+      // Create new abort controller
+      abortControllerRef.current = new AbortController();
+      isRequestInProgressRef.current = true;
       
       setLoading(true);
       setError(null);
@@ -52,15 +68,19 @@ export const useFacebookPixelAnalytics = (storeId: string, dateRange: DateRange)
         const startDate = dateRange.startDate.toISOString().split('T')[0];
         const endDate = dateRange.endDate.toISOString().split('T')[0];
 
-        // Fetch event counts
+        // Fetch event counts with abort signal
         const { data: eventCounts, error: eventError } = await supabase
           .from('pixel_events')
           .select('event_type')
           .eq('store_id', storeId)
           .gte('created_at', startDate)
-          .lte('created_at', endDate + 'T23:59:59');
+          .lte('created_at', endDate + 'T23:59:59')
+          .abortSignal(abortControllerRef.current.signal);
 
         if (eventError) throw eventError;
+
+        // Check if request was aborted
+        if (abortControllerRef.current.signal.aborted) return;
 
         // Fetch orders with pixel data for revenue calculation
         const { data: orders, error: ordersError } = await supabase
@@ -69,13 +89,18 @@ export const useFacebookPixelAnalytics = (storeId: string, dateRange: DateRange)
           .eq('store_id', storeId)
           .gte('created_at', startDate)
           .lte('created_at', endDate + 'T23:59:59')
-          .not('facebook_pixel_data', 'is', null);
+          .not('facebook_pixel_data', 'is', null)
+          .abortSignal(abortControllerRef.current.signal);
 
         if (ordersError) throw ordersError;
 
-        // Calculate event counts
-        const eventTypeCount = eventCounts.reduce((acc, event) => {
-          acc[event.event_type] = (acc[event.event_type] || 0) + 1;
+        if (abortControllerRef.current.signal.aborted) return;
+
+        // Calculate event counts with null safety
+        const eventTypeCount = (eventCounts || []).reduce((acc, event) => {
+          if (event?.event_type) {
+            acc[event.event_type] = (acc[event.event_type] || 0) + 1;
+          }
           return acc;
         }, {} as Record<string, number>);
 
@@ -89,7 +114,7 @@ export const useFacebookPixelAnalytics = (storeId: string, dateRange: DateRange)
         const conversionRate = pageViews > 0 ? (purchases / pageViews) * 100 : 0;
 
         // Calculate revenue from orders with pixel data
-        const revenue = orders.reduce((sum, order) => sum + Number(order.total), 0);
+        const revenue = (orders || []).reduce((sum, order) => sum + Number(order.total || 0), 0);
 
         // Fetch top products
         const { data: topProductsData, error: topProductsError } = await supabase
@@ -98,14 +123,19 @@ export const useFacebookPixelAnalytics = (storeId: string, dateRange: DateRange)
           .eq('store_id', storeId)
           .in('event_type', ['ViewContent', 'Purchase'])
           .gte('created_at', startDate)
-          .lte('created_at', endDate + 'T23:59:59');
+          .lte('created_at', endDate + 'T23:59:59')
+          .abortSignal(abortControllerRef.current.signal);
 
         if (topProductsError) throw topProductsError;
 
-        // Process top products data
+        if (abortControllerRef.current.signal.aborted) return;
+
+        // Process top products data with null safety
         const productStats: Record<string, { name: string; views: number; conversions: number }> = {};
         
-        topProductsData.forEach(event => {
+        (topProductsData || []).forEach(event => {
+          if (!event?.event_data || !event?.event_type) return;
+          
           const eventData = event.event_data as any;
           if (eventData?.content_ids?.[0]) {
             const productId = eventData.content_ids[0];
@@ -140,14 +170,19 @@ export const useFacebookPixelAnalytics = (storeId: string, dateRange: DateRange)
           .eq('store_id', storeId)
           .gte('created_at', startDate)
           .lte('created_at', endDate + 'T23:59:59')
-          .order('created_at');
+          .order('created_at')
+          .abortSignal(abortControllerRef.current.signal);
 
         if (dailyError) throw dailyError;
 
-        // Group events by date
+        if (abortControllerRef.current.signal.aborted) return;
+
+        // Group events by date with null safety
         const dailyEventsByDate: Record<string, Record<string, number>> = {};
         
-        dailyEventsData.forEach(event => {
+        (dailyEventsData || []).forEach(event => {
+          if (!event?.created_at || !event?.event_type) return;
+          
           const date = event.created_at.split('T')[0];
           if (!dailyEventsByDate[date]) {
             dailyEventsByDate[date] = {};
@@ -164,28 +199,42 @@ export const useFacebookPixelAnalytics = (storeId: string, dateRange: DateRange)
           purchases: events['Purchase'] || 0,
         }));
 
-        setAnalytics({
-          totalEvents: eventCounts.length,
-          pageViews,
-          viewContent,
-          addToCart,
-          initiateCheckout,
-          purchases,
-          conversionRate,
-          revenue,
-          topProducts,
-          dailyEvents,
-        });
+        if (!abortControllerRef.current.signal.aborted) {
+          setAnalytics({
+            totalEvents: (eventCounts || []).length,
+            pageViews,
+            viewContent,
+            addToCart,
+            initiateCheckout,
+            purchases,
+            conversionRate,
+            revenue,
+            topProducts,
+            dailyEvents,
+          });
+        }
       } catch (err: any) {
-        console.error('Failed to fetch pixel analytics:', err);
-        setError(err.message);
+        if (err.name !== 'AbortError') {
+          console.error('Failed to fetch pixel analytics:', err);
+          setError(err.message || 'Failed to fetch analytics data');
+        }
       } finally {
+        isRequestInProgressRef.current = false;
         setLoading(false);
       }
     };
 
-    fetchAnalytics();
-  }, [user, storeId, dateRange.startDate, dateRange.endDate]);
+    // Add debounce delay to prevent rapid successive calls
+    const timeoutId = setTimeout(fetchAnalytics, 100);
+
+    return () => {
+      clearTimeout(timeoutId);
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+      isRequestInProgressRef.current = false;
+    };
+  }, [user, storeId, dateRange.startDate.getTime(), dateRange.endDate.getTime()]);
 
   return { analytics, loading, error };
 };
