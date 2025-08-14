@@ -5,29 +5,29 @@ import { ArrowRight, MousePointerClick, Palette, Zap, TrendingUp } from "lucide-
 const steps = [
   {
     icon: MousePointerClick,
-    title: "Choose Your Template",
-    description: "Select from our library of conversion-tested templates designed for your industry",
+    title: "Create Your Store",
+    description: "Set up your online store with our intuitive store creation wizard",
     color: "text-primary",
     bgColor: "bg-primary-light"
   },
   {
     icon: Palette,
-    title: "Customize & Brand",
-    description: "Use our visual editor to match your brand colors, fonts, and messaging",
+    title: "Design Your Pages",
+    description: "Use our visual page builder to create custom landing pages and product pages",
     color: "text-accent",
     bgColor: "bg-accent-light"
   },
   {
     icon: Zap,
     title: "Add Your Products",
-    description: "Import products from our library or create your own with built-in tools",
+    description: "Upload your products with descriptions, images, and pricing information",
     color: "text-success",
     bgColor: "bg-success-light"
   },
   {
     icon: TrendingUp,
-    title: "Launch & Scale",
-    description: "Go live with one click and start driving traffic to your new store",
+    title: "Launch & Start Selling",
+    description: "Go live with your store and start accepting orders from customers",
     color: "text-primary",
     bgColor: "bg-primary-light"
   }

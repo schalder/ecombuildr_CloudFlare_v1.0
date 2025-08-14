@@ -14,33 +14,33 @@ import {
 const tools = [
   {
     icon: PaintBucket,
-    title: "Visual Store Builder",
+    title: "Visual Page Builder",
     description: "Drag-and-drop interface for creating stunning product pages and landing pages",
-    features: ["50+ Professional Templates", "Mobile-First Design", "Brand Customization"],
+    features: ["Drag & Drop Editor", "Mobile-Responsive Design", "Custom Branding Options"],
     color: "text-primary",
     bgColor: "bg-primary-light"
   },
   {
     icon: BarChart3,
-    title: "Analytics Dashboard",
-    description: "Real-time insights into your store performance and customer behavior",
-    features: ["Conversion Tracking", "Revenue Analytics", "Customer Journey Maps"],
+    title: "Store Analytics",
+    description: "Track your store performance with detailed insights and reporting",
+    features: ["Sales Tracking", "Order Analytics", "Website Performance"],
     color: "text-accent",
     bgColor: "bg-accent-light"
   },
   {
-    icon: Target,
-    title: "Conversion Optimizer",
-    description: "AI-powered tools to maximize your sales and reduce cart abandonment",
-    features: ["A/B Testing", "Exit-Intent Popups", "Upsell Automation"],
+    icon: ShoppingBag,
+    title: "Product Management",
+    description: "Complete product catalog management with inventory tracking",
+    features: ["Product Catalog", "Inventory Management", "Category Organization"],
     color: "text-success",
     bgColor: "bg-success-light"
   },
   {
     icon: CreditCard,
-    title: "Payment Processing",
-    description: "Secure, fast checkout with multiple payment options for global customers",
-    features: ["Stripe Integration", "PayPal Support", "Local Payment Methods"],
+    title: "Payment Integration",
+    description: "Accept payments through popular local and digital payment methods",
+    features: ["bKash Integration", "Nagad Support", "Cash on Delivery"],
     color: "text-primary",
     bgColor: "bg-primary-light"
   }
