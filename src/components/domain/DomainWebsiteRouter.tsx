@@ -5,7 +5,7 @@ import { CheckoutPage } from '@/pages/storefront/CheckoutPage';
 import { PaymentProcessing } from '@/pages/storefront/PaymentProcessing';
 import { OrderConfirmation } from '@/pages/storefront/OrderConfirmation';
 import { WebsiteOverrideRoute } from '@/pages/storefront/WebsiteOverrideRoute';
-import { WebsiteProductDetailRoute } from '@/pages/storefront/WebsiteProductDetailRoute';
+import { DomainWebsiteProductDetailRoute } from '@/pages/storefront/DomainWebsiteProductDetailRoute';
 import { SearchResults } from '@/pages/storefront/SearchResults';
 import { StorefrontHome } from '@/pages/storefront/StorefrontHome';
 import { StorefrontProducts } from '@/pages/storefront/StorefrontProducts';
@@ -50,7 +50,7 @@ export const DomainWebsiteRouter: React.FC<DomainWebsiteRouterProps> = ({
           fallback={<StorefrontProducts />} 
         />
       } />
-      <Route path="/products/:productSlug" element={<WebsiteProductDetailRoute />} />
+      <Route path="/products/:productSlug" element={<DomainWebsiteProductDetailRoute websiteId={websiteId} website={website} />} />
       
       {/* Cart & Checkout - using website pages */}
       <Route path="/cart" element={
