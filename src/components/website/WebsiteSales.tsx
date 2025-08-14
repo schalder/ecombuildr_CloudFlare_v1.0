@@ -145,12 +145,12 @@ export function WebsiteSales({ websiteId, websiteName }: WebsiteSalesProps) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Header */}
       <div className="flex flex-col space-y-4 lg:flex-row lg:items-center lg:justify-between lg:space-y-0">
         <div>
-          <h2 className="text-xl font-semibold">Sales Analytics</h2>
-          <p className="text-sm text-muted-foreground">
+          <h2 className="text-lg font-semibold">Sales Analytics</h2>
+          <p className="text-xs text-muted-foreground">
             Sales performance and revenue insights for {websiteName}
           </p>
         </div>
@@ -236,7 +236,7 @@ export function WebsiteSales({ websiteId, websiteName }: WebsiteSalesProps) {
                   color: "hsl(var(--primary))",
                 },
               }}
-              className="h-[300px]"
+              className="h-[240px]"
             >
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={sales.analytics.revenueTimeline}>
@@ -264,7 +264,7 @@ export function WebsiteSales({ websiteId, websiteName }: WebsiteSalesProps) {
       </Card>
 
       {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Monthly Trends */}
         <Card>
           <CardHeader>
@@ -279,7 +279,7 @@ export function WebsiteSales({ websiteId, websiteName }: WebsiteSalesProps) {
                     color: "hsl(var(--primary))",
                   },
                 }}
-                className="h-[250px]"
+                className="h-[200px]"
               >
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={sales.analytics.monthlyTrends}>
@@ -311,7 +311,7 @@ export function WebsiteSales({ websiteId, websiteName }: WebsiteSalesProps) {
                     color: "hsl(var(--primary))",
                   },
                 }}
-                className="h-[250px]"
+                className="h-[200px]"
               >
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
@@ -337,7 +337,7 @@ export function WebsiteSales({ websiteId, websiteName }: WebsiteSalesProps) {
       </div>
 
       {/* Bottom Row - Tables */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Top Products */}
         <Card>
           <CardHeader>
@@ -347,20 +347,20 @@ export function WebsiteSales({ websiteId, websiteName }: WebsiteSalesProps) {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
+            <div className="space-y-1">
               {sales.analytics.topProducts.slice(0, 5).map((product, index) => (
-                <div key={product.product_id} className="flex items-center justify-between p-3 border rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
+                <div key={product.product_id} className="flex items-center justify-between py-2 px-1">
+                  <div className="flex items-center gap-2">
+                    <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center">
                       <span className="text-xs font-medium text-primary">{index + 1}</span>
                     </div>
                     <div>
-                      <p className="font-medium text-sm">{product.product_name}</p>
+                      <p className="font-medium text-xs">{product.product_name}</p>
                       <p className="text-xs text-muted-foreground">{product.total_quantity} sold</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="font-medium">৳{product.total_revenue.toLocaleString()}</p>
+                    <p className="font-medium text-xs">৳{product.total_revenue.toLocaleString()}</p>
                     <p className="text-xs text-muted-foreground">{product.total_orders} orders</p>
                   </div>
                 </div>
@@ -381,19 +381,19 @@ export function WebsiteSales({ websiteId, websiteName }: WebsiteSalesProps) {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
+            <div className="space-y-1">
               {sales.analytics.geographicData.slice(0, 5).map((location, index) => (
-                <div key={location.city} className="flex items-center justify-between p-3 border rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
+                <div key={location.city} className="flex items-center justify-between py-2 px-1">
+                  <div className="flex items-center gap-2">
+                    <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center">
                       <span className="text-xs font-medium text-primary">{index + 1}</span>
                     </div>
                     <div>
-                      <p className="font-medium text-sm">{location.city}</p>
+                      <p className="font-medium text-xs">{location.city}</p>
                       <p className="text-xs text-muted-foreground">{location.orders} orders</p>
                     </div>
                   </div>
-                  <p className="font-medium">৳{location.revenue.toLocaleString()}</p>
+                  <p className="font-medium text-xs">৳{location.revenue.toLocaleString()}</p>
                 </div>
               ))}
               {sales.analytics.geographicData.length === 0 && (
@@ -413,14 +413,14 @@ export function WebsiteSales({ websiteId, websiteName }: WebsiteSalesProps) {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
             {sales.analytics.orderStatuses.map((status) => (
-              <div key={status.status} className="text-center p-4 border rounded-lg">
-                <Badge variant="outline" className="mb-2">
+              <div key={status.status} className="text-center p-3 border rounded-lg">
+                <Badge variant="outline" className="mb-1 text-xs">
                   {status.status}
                 </Badge>
-                <div className="text-lg font-bold">{status.count}</div>
-                <div className="text-sm text-muted-foreground">
+                <div className="text-sm font-bold">{status.count}</div>
+                <div className="text-xs text-muted-foreground">
                   ৳{status.revenue.toLocaleString()}
                 </div>
               </div>
