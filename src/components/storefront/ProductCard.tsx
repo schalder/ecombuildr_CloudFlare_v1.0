@@ -14,11 +14,28 @@ interface Product {
   id: string;
   name: string;
   price: number;
-  compare_price?: number;
-  short_description?: string;
-  images: string[];
+  compare_price?: number | null;
+  short_description?: string | null;
+  description?: string | null;
+  images: any; // Json type from Supabase
   slug: string;
   is_active: boolean;
+  track_inventory?: boolean;
+  inventory_quantity?: number | null;
+  variations?: any; // Json type from Supabase
+  store_id?: string;
+  category_id?: string | null;
+  sku?: string | null;
+  cost_price?: number | null;
+  seo_title?: string | null;
+  seo_description?: string | null;
+  free_shipping_min_amount?: number | null;
+  easy_returns_enabled?: boolean;
+  easy_returns_days?: number | null;
+  action_buttons?: any;
+  allowed_payment_methods?: string[] | null;
+  created_at?: string;
+  updated_at?: string;
 }
 
 interface ProductCardProps {
@@ -131,7 +148,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       {/* Product Image */}
       <div className="aspect-square relative overflow-hidden bg-muted">
         <img
-          src={product.images[0] || '/placeholder.svg'}
+          src={(Array.isArray(product.images) ? product.images[0] : product.images?.[0]) || '/placeholder.svg'}
           alt={product.name}
           className="w-full h-full object-cover transition-transform duration-500 group-hover/card:scale-110"
         />

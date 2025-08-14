@@ -18,18 +18,28 @@ interface Product {
   id: string;
   name: string;
   price: number;
-  compare_price?: number;
-  short_description?: string;
-  description?: string;
-  images: string[];
+  compare_price?: number | null;
+  short_description?: string | null;
+  description?: string | null;
+  images: any; // Json type from Supabase
   slug: string;
   is_active: boolean;
   track_inventory?: boolean;
   inventory_quantity?: number | null;
-  variations?: VariationOption[];
+  variations?: any; // Json type from Supabase (can be VariationOption[] or complex structure)
+  store_id?: string;
+  category_id?: string | null;
+  sku?: string | null;
+  cost_price?: number | null;
+  seo_title?: string | null;
+  seo_description?: string | null;
   free_shipping_min_amount?: number | null;
   easy_returns_enabled?: boolean;
   easy_returns_days?: number | null;
+  action_buttons?: any;
+  allowed_payment_methods?: string[] | null;
+  created_at?: string;
+  updated_at?: string;
 }
 
 interface ProductQuickViewProps {
@@ -119,7 +129,7 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
           <div className="relative">
             <div className="aspect-square bg-muted relative overflow-hidden">
               <img
-                src={product.images[selectedImage] || product.images[0] || '/placeholder.svg'}
+                src={(Array.isArray(product.images) ? product.images[selectedImage] || product.images[0] : product.images?.[selectedImage] || product.images?.[0]) || '/placeholder.svg'}
                 alt={product.name}
                 className="w-full h-full object-cover"
               />
@@ -146,9 +156,9 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
             </div>
 
             {/* Thumbnail Images */}
-            {product.images.length > 1 && (
+            {(Array.isArray(product.images) ? product.images : Object.values(product.images || {})).length > 1 && (
               <div className="flex gap-2 p-4 overflow-x-auto">
-                {product.images.map((image, index) => (
+                {(Array.isArray(product.images) ? product.images : Object.values(product.images || {})).map((image, index) => (
                   <button
                     key={index}
                     onClick={() => setSelectedImage(index)}
