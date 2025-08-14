@@ -7,16 +7,23 @@ import { WebsiteHeader } from '@/components/storefront/WebsiteHeader';
 import { WebsiteFooter } from '@/components/storefront/WebsiteFooter';
 import { PixelManager } from '@/components/pixel/PixelManager';
 import { setGlobalCurrency } from '@/lib/currency';
+import { setSEO, buildCanonical, setFooterTrackingCode } from '@/lib/seo';
 
 interface WebsiteData {
   id: string;
   name: string;
   slug: string;
   description?: string;
+  domain?: string;
   is_published: boolean;
   is_active: boolean;
   store_id: string;
   settings?: any;
+  seo_title?: string;
+  seo_description?: string;
+  og_image?: string;
+  meta_robots?: string;
+  canonical_domain?: string;
 }
 
 export const WebsiteLayout: React.FC = () => {
@@ -82,6 +89,27 @@ export const WebsiteLayout: React.FC = () => {
     const code = (website?.settings?.currency?.code as string) || 'BDT';
     try { setGlobalCurrency(code as any); } catch {}
   }, [website?.settings?.currency?.code]);
+
+  // Inject tracking codes from website settings
+  React.useEffect(() => {
+    if (!website) return;
+    
+    const canonical = buildCanonical(undefined, (website as any)?.canonical_domain || website.domain);
+    setSEO({
+      title: ((website as any)?.seo_title || website.name) || undefined,
+      description: ((website as any)?.seo_description || website.description) || undefined,
+      image: (website as any)?.og_image,
+      canonical,
+      robots: isPreview ? 'noindex, nofollow' : ((website as any)?.meta_robots || 'index, follow'),
+      siteName: website.name,
+      ogType: 'website',
+      favicon: (website as any)?.settings?.favicon_url || '/favicon.ico',
+      headerTrackingCode: (website as any)?.settings?.header_tracking_code || undefined,
+    });
+
+    // Inject footer tracking code
+    setFooterTrackingCode((website as any)?.settings?.footer_tracking_code || undefined);
+  }, [website, isPreview]);
 
   if (loading) {
     return (

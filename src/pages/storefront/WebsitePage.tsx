@@ -5,7 +5,7 @@ import { Loader2 } from 'lucide-react';
 import { PageBuilderRenderer } from '@/components/storefront/PageBuilderRenderer';
 import { useStore } from '@/contexts/StoreContext';
 import { setGlobalCurrency } from '@/lib/currency';
-import { setSEO, buildCanonical } from '@/lib/seo';
+import { setSEO, buildCanonical, setFooterTrackingCode } from '@/lib/seo';
 interface WebsitePageData {
   id: string;
   title: string;
@@ -187,7 +187,11 @@ export const WebsitePage: React.FC = () => {
       siteName: website.name,
       ogType: 'website',
       favicon: (website as any)?.settings?.favicon_url || '/favicon.ico',
+      headerTrackingCode: (website as any)?.settings?.header_tracking_code || undefined,
     });
+
+    // Inject footer tracking code
+    setFooterTrackingCode((website as any)?.settings?.footer_tracking_code || undefined);
   }, [website, isPreview]);
 
   // Set up SEO metadata
@@ -208,7 +212,11 @@ export const WebsitePage: React.FC = () => {
       siteName: website.name,
       ogType: 'website',
       favicon: (website as any)?.settings?.favicon_url || '/favicon.ico',
+      headerTrackingCode: (website as any)?.settings?.header_tracking_code || undefined,
     });
+
+    // Inject footer tracking code
+    setFooterTrackingCode((website as any)?.settings?.footer_tracking_code || undefined);
 
     // Inject custom scripts if they exist
     if (page.custom_scripts) {
