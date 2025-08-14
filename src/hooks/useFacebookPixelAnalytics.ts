@@ -49,9 +49,15 @@ export const useFacebookPixelAnalytics = (storeId: string, dateRange: DateRange)
         const startDate = dateRange.startDate.toISOString().split('T')[0];
         const endDate = dateRange.endDate.toISOString().split('T')[0];
 
-        // For now, use mock data since pixel_events table needs to be created
-        const eventCounts: Array<{ event_type: string }> = [];
-        const eventError = null;
+        // Fetch event counts
+        const { data: eventCounts, error: eventError } = await supabase
+          .from('pixel_events')
+          .select('event_type')
+          .eq('store_id', storeId)
+          .gte('created_at', startDate)
+          .lte('created_at', endDate + 'T23:59:59');
+
+        if (eventError) throw eventError;
 
         // Fetch orders with pixel data for revenue calculation
         const { data: orders, error: ordersError } = await supabase
@@ -82,9 +88,16 @@ export const useFacebookPixelAnalytics = (storeId: string, dateRange: DateRange)
         // Calculate revenue from orders with pixel data
         const revenue = orders.reduce((sum, order) => sum + Number(order.total), 0);
 
-        // For now, use mock data since pixel_events table needs to be created
-        const topProductsData: Array<{ event_data: any }> = [];
-        const topProductsError = null;
+        // Fetch top products
+        const { data: topProductsData, error: topProductsError } = await supabase
+          .from('pixel_events')
+          .select('event_data')
+          .eq('store_id', storeId)
+          .in('event_type', ['ViewContent', 'Purchase'])
+          .gte('created_at', startDate)
+          .lte('created_at', endDate + 'T23:59:59');
+
+        if (topProductsError) throw topProductsError;
 
         // Process top products data
         const productStats: Record<string, { name: string; views: number; conversions: number }> = {};
@@ -117,9 +130,16 @@ export const useFacebookPixelAnalytics = (storeId: string, dateRange: DateRange)
           .sort((a, b) => b.views - a.views)
           .slice(0, 10);
 
-        // For now, use mock data since pixel_events table needs to be created
-        const dailyEventsData: Array<{ created_at: string; event_type: string }> = [];
-        const dailyError = null;
+        // Fetch daily events data
+        const { data: dailyEventsData, error: dailyError } = await supabase
+          .from('pixel_events')
+          .select('created_at, event_type')
+          .eq('store_id', storeId)
+          .gte('created_at', startDate)
+          .lte('created_at', endDate + 'T23:59:59')
+          .order('created_at');
+
+        if (dailyError) throw dailyError;
 
         // Group events by date
         const dailyEventsByDate: Record<string, Record<string, number>> = {};
