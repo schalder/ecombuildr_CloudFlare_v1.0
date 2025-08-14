@@ -130,11 +130,11 @@ export const WebsiteLayout: React.FC = () => {
     );
   }
 
-  // Extract pixel IDs from website settings
+  // Extract pixel IDs from website properties
   const websitePixels = React.useMemo(() => ({
-    facebookPixelId: (website as any)?.settings?.facebook_pixel_id,
-    googleAnalyticsId: (website as any)?.settings?.google_analytics_id,
-    googleAdsId: (website as any)?.settings?.google_ads_id,
+    facebookPixelId: (website as any)?.facebook_pixel_id,
+    googleAnalyticsId: (website as any)?.google_analytics_id,
+    googleAdsId: (website as any)?.google_ads_id,
   }), [website]);
 
   return (
