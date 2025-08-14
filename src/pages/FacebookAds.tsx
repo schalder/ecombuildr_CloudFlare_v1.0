@@ -12,12 +12,15 @@ import { TopProductsAnalytics } from '@/components/analytics/TopProductsAnalytic
 import { useFacebookPixelAnalytics } from '@/hooks/useFacebookPixelAnalytics';
 import { useUserStore } from '@/hooks/useUserStore';
 import { useStoreWebsites } from '@/hooks/useStoreWebsites';
+import { useStoreFunnels } from '@/hooks/useStoreFunnels';
 
 export default function FacebookAds() {
   const [dateRange, setDateRange] = useState('30');
   const [selectedWebsiteId, setSelectedWebsiteId] = useState<string>('all');
+  const [selectedFunnelId, setSelectedFunnelId] = useState<string>('all');
   const { store } = useUserStore();
   const { websites, loading: websitesLoading } = useStoreWebsites(store?.id || '');
+  const { funnels, loading: funnelsLoading } = useStoreFunnels(store?.id || '');
   
   // Memoize date range to prevent recreation on every render
   const dateRangeObj = useMemo(() => {
@@ -26,21 +29,28 @@ export default function FacebookAds() {
     return { startDate, endDate: new Date() };
   }, [dateRange]);
   
+  const selectedFunnel = funnels.find(f => f.id === selectedFunnelId);
+  
   const { analytics, loading, error } = useFacebookPixelAnalytics(
     store?.id || '', 
     dateRangeObj,
-    selectedWebsiteId === 'all' ? undefined : selectedWebsiteId
+    selectedWebsiteId === 'all' ? undefined : selectedWebsiteId,
+    selectedFunnelId === 'all' ? undefined : selectedFunnel?.slug
   );
 
   // Get pixel ID based on selection
   const selectedWebsite = websites.find(w => w.id === selectedWebsiteId);
-  const hasPixelId = selectedWebsiteId === 'all' 
-    ? store?.facebook_pixel_id || websites.some(w => w.facebook_pixel_id)
-    : selectedWebsite?.facebook_pixel_id;
+  const hasPixelId = selectedWebsiteId !== 'all' 
+    ? selectedWebsite?.facebook_pixel_id
+    : selectedFunnelId !== 'all'
+    ? store?.facebook_pixel_id
+    : store?.facebook_pixel_id || websites.some(w => w.facebook_pixel_id);
   
-  const displayPixelId = selectedWebsiteId === 'all' 
-    ? store?.facebook_pixel_id || 'Multiple'
-    : selectedWebsite?.facebook_pixel_id;
+  const displayPixelId = selectedWebsiteId !== 'all' 
+    ? selectedWebsite?.facebook_pixel_id 
+    : selectedFunnelId !== 'all'
+    ? store?.facebook_pixel_id
+    : store?.facebook_pixel_id || 'Multiple';
 
   if (!store) {
     return (
@@ -76,20 +86,36 @@ export default function FacebookAds() {
           </div>
           
           <div className="flex items-center space-x-3">
-            {!websitesLoading && websites.length > 0 && (
-              <Select value={selectedWebsiteId} onValueChange={setSelectedWebsiteId}>
-                <SelectTrigger className="w-48">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Websites</SelectItem>
-                  {websites.map((website) => (
-                    <SelectItem key={website.id} value={website.id}>
-                      {website.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            {!websitesLoading && !funnelsLoading && (websites.length > 0 || funnels.length > 0) && (
+              <>
+                <Select value={selectedWebsiteId} onValueChange={(value) => { setSelectedWebsiteId(value); setSelectedFunnelId('all'); }}>
+                  <SelectTrigger className="w-48">
+                    <SelectValue placeholder="Select Website" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Websites</SelectItem>
+                    {websites.map((website) => (
+                      <SelectItem key={website.id} value={website.id}>
+                        {website.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Select value={selectedFunnelId} onValueChange={(value) => { setSelectedFunnelId(value); setSelectedWebsiteId('all'); }}>
+                  <SelectTrigger className="w-48">
+                    <SelectValue placeholder="Select Funnel" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Funnels</SelectItem>
+                    {funnels.map((funnel) => (
+                      <SelectItem key={funnel.id} value={funnel.id}>
+                        {funnel.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </>
             )}
             
             <Select value={dateRange} onValueChange={setDateRange}>
@@ -126,15 +152,17 @@ export default function FacebookAds() {
                 <div className="flex-1">
                   <h3 className="font-semibold text-destructive">Facebook Pixel Not Configured</h3>
                   <p className="text-sm text-muted-foreground mt-1">
-                    {selectedWebsiteId === 'all' 
-                      ? 'To track Facebook pixel events, you need to configure Facebook Pixel ID in store settings or website settings.'
-                      : `The selected website "${selectedWebsite?.name}" doesn't have a Facebook Pixel ID configured.`
+                    {selectedWebsiteId !== 'all' 
+                      ? `The selected website "${selectedWebsite?.name}" doesn't have a Facebook Pixel ID configured.`
+                      : selectedFunnelId !== 'all'
+                      ? `To track funnel events, configure your Facebook Pixel ID in store settings.`
+                      : 'To track Facebook pixel events, you need to configure Facebook Pixel ID in store settings or website settings.'
                     }
                   </p>
                   <Button variant="outline" size="sm" className="mt-3" asChild>
-                    <a href={selectedWebsiteId === 'all' ? "/dashboard/settings/store" : "/dashboard/websites"}>
+                    <a href={selectedWebsiteId !== 'all' ? "/dashboard/websites" : "/dashboard/settings/store"}>
                       <Settings className="h-4 w-4 mr-2" />
-                      {selectedWebsiteId === 'all' ? 'Configure Store Pixel' : 'Configure Website Pixel'}
+                      {selectedWebsiteId !== 'all' ? 'Configure Website Pixel' : 'Configure Store Pixel'}
                     </a>
                   </Button>
                 </div>

@@ -32,7 +32,7 @@ interface DateRange {
   endDate: Date;
 }
 
-export const useFacebookPixelAnalytics = (storeId: string, dateRange: DateRange, websiteId?: string) => {
+export const useFacebookPixelAnalytics = (storeId: string, dateRange: DateRange, websiteId?: string, funnelSlug?: string) => {
   const [analytics, setAnalytics] = useState<PixelAnalytics | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -78,6 +78,8 @@ export const useFacebookPixelAnalytics = (storeId: string, dateRange: DateRange,
 
         if (websiteId) {
           eventQuery = eventQuery.eq('website_id', websiteId);
+        } else if (funnelSlug) {
+          eventQuery = eventQuery.like('page_url', `%/funnel/${funnelSlug}%`);
         }
 
         const { data: eventCounts, error: eventError } = await eventQuery
@@ -133,6 +135,8 @@ export const useFacebookPixelAnalytics = (storeId: string, dateRange: DateRange,
 
         if (websiteId) {
           topProductsQuery = topProductsQuery.eq('website_id', websiteId);
+        } else if (funnelSlug) {
+          topProductsQuery = topProductsQuery.like('page_url', `%/funnel/${funnelSlug}%`);
         }
 
         const { data: topProductsData, error: topProductsError } = await topProductsQuery
@@ -186,6 +190,8 @@ export const useFacebookPixelAnalytics = (storeId: string, dateRange: DateRange,
 
         if (websiteId) {
           dailyEventsQuery = dailyEventsQuery.eq('website_id', websiteId);
+        } else if (funnelSlug) {
+          dailyEventsQuery = dailyEventsQuery.like('page_url', `%/funnel/${funnelSlug}%`);
         }
 
         const { data: dailyEventsData, error: dailyError } = await dailyEventsQuery
@@ -252,7 +258,7 @@ export const useFacebookPixelAnalytics = (storeId: string, dateRange: DateRange,
       }
       isRequestInProgressRef.current = false;
     };
-  }, [user, storeId, websiteId, dateRange.startDate.getTime(), dateRange.endDate.getTime()]);
+  }, [user, storeId, websiteId, funnelSlug, dateRange.startDate.getTime(), dateRange.endDate.getTime()]);
 
   return { analytics, loading, error };
 };
