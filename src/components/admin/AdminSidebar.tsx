@@ -4,7 +4,7 @@ import {
   BarChart3, 
   CreditCard, 
   Settings, 
-  Store,
+  Globe,
   FileText,
   TrendingUp,
   DollarSign,
@@ -39,9 +39,9 @@ const adminMenuItems = [
     icon: Users,
   },
   {
-    title: 'Stores',
-    url: '/admin/stores',
-    icon: Store,
+    title: 'Sites',
+    url: '/admin/sites',
+    icon: Globe,
   },
   {
     title: 'Analytics',

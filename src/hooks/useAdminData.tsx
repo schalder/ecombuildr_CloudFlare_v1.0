@@ -19,12 +19,14 @@ interface PlatformStats {
   active_users: number;
   trial_users: number;
   paid_users: number;
-  total_revenue: number;
-  monthly_revenue: number;
-  total_stores: number;
-  active_stores: number;
+  merchant_gmv: number;
+  monthly_gmv: number;
+  total_websites: number;
+  active_websites: number;
+  total_funnels: number;
+  active_funnels: number;
   total_orders: number;
-  conversion_rate: number;
+  subscription_mrr: number;
 }
 
 export const useAdminData = () => {
@@ -118,13 +120,22 @@ export const useAdminData = () => {
         .select('subscription_plan, account_status')
         .not('subscription_plan', 'is', null);
 
-      // Get store counts
-      const { count: totalStores } = await supabase
-        .from('stores')
+      // Get website and funnel counts
+      const { count: totalWebsites } = await supabase
+        .from('websites')
         .select('*', { count: 'exact' });
 
-      const { count: activeStores } = await supabase
-        .from('stores')
+      const { count: activeWebsites } = await supabase
+        .from('websites')
+        .select('*', { count: 'exact' })
+        .eq('is_active', true);
+
+      const { count: totalFunnels } = await supabase
+        .from('funnels')
+        .select('*', { count: 'exact' });
+
+      const { count: activeFunnels } = await supabase
+        .from('funnels')
         .select('*', { count: 'exact' })
         .eq('is_active', true);
 
@@ -141,29 +152,35 @@ export const useAdminData = () => {
         u.subscription_plan !== 'free' && u.account_status === 'active'
       ).length || 0;
 
-      const totalRevenue = orderData?.reduce((sum, order) => sum + Number(order.total), 0) || 0;
+      // Merchant GMV (Gross Merchandise Value) from orders
+      const merchantGmv = orderData?.reduce((sum, order) => sum + Number(order.total), 0) || 0;
       
-      // Monthly revenue (current month)
+      // Monthly GMV (current month)
       const currentMonth = new Date();
       const monthStart = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
-      const monthlyRevenue = orderData?.filter(order => 
+      const monthlyGmv = orderData?.filter(order => 
         new Date(order.created_at) >= monthStart
       ).reduce((sum, order) => sum + Number(order.total), 0) || 0;
 
       const totalOrders = orderData?.length || 0;
-      const conversionRate = totalUsers > 0 ? (paidUsers / totalUsers) * 100 : 0;
+      
+      // Calculate estimated SaaS MRR (Monthly Recurring Revenue)
+      // For now, use a simple estimation based on paid users
+      const subscriptionMrr = paidUsers * 50; // Assuming average $50/month per paid user
 
       setPlatformStats({
         total_users: totalUsers,
         active_users: activeUsers,
         trial_users: trialUsers,
         paid_users: paidUsers,
-        total_revenue: totalRevenue,
-        monthly_revenue: monthlyRevenue,
-        total_stores: totalStores || 0,
-        active_stores: activeStores || 0,
+        merchant_gmv: merchantGmv,
+        monthly_gmv: monthlyGmv,
+        total_websites: totalWebsites || 0,
+        active_websites: activeWebsites || 0,
+        total_funnels: totalFunnels || 0,
+        active_funnels: activeFunnels || 0,
         total_orders: totalOrders,
-        conversion_rate: conversionRate,
+        subscription_mrr: subscriptionMrr,
       });
     } catch (err) {
       console.error('Error fetching platform stats:', err);

@@ -137,7 +137,7 @@ const BillingManagement = () => {
   const totalRevenue = billingRecords.reduce((sum, record) => 
     record.status === 'paid' ? sum + record.amount : sum, 0);
 
-  const monthlyRevenue = platformStats?.monthly_revenue || 0;
+  const monthlyRevenue = platformStats?.monthly_gmv || 0;
 
   if (!isAdmin) {
     return (

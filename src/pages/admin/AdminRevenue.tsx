@@ -47,35 +47,69 @@ const AdminRevenue = () => {
   ];
 
   return (
-    <AdminLayout title="Revenue Management" description="Track and analyze platform revenue streams">
+    <AdminLayout title="Revenue Management" description="Track SaaS subscription revenue and merchant GMV">
       <div className="space-y-6">
-        {/* Revenue Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* Revenue Overview - SaaS vs Merchant */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <DollarSign className="h-5 w-5 text-green-600" />
+                SaaS Revenue (Platform)
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
-                {formatCurrency(platformStats?.total_revenue || 0)}
+              <div className="space-y-4">
+                <div>
+                  <div className="text-2xl font-bold text-green-600">
+                    ${formatCurrency(platformStats?.subscription_mrr || 0)}
+                  </div>
+                  <p className="text-xs text-muted-foreground">Monthly Recurring Revenue</p>
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  From {platformStats?.paid_users || 0} paying subscribers
+                </div>
               </div>
-              <p className="text-xs text-muted-foreground">All time</p>
             </CardContent>
           </Card>
 
           <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ShoppingBag className="h-5 w-5 text-blue-600" />
+                Merchant GMV (Customer Orders)
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div>
+                  <div className="text-2xl font-bold text-blue-600">
+                    {formatCurrency(platformStats?.merchant_gmv || 0)}
+                  </div>
+                  <p className="text-xs text-muted-foreground">Total merchant sales volume</p>
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  From {platformStats?.total_orders || 0} customer orders
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Platform Performance Metrics */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">This Month</CardTitle>
+              <CardTitle className="text-sm font-medium">Monthly GMV</CardTitle>
               <Calendar className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {formatCurrency((platformStats?.total_revenue || 0) * 0.15)}
+                {formatCurrency(platformStats?.monthly_gmv || 0)}
               </div>
               <p className="text-xs text-green-600 flex items-center gap-1">
                 <TrendingUp className="h-3 w-3" />
-                +12.5% from last month
+                Customer orders this month
               </p>
             </CardContent>
           </Card>

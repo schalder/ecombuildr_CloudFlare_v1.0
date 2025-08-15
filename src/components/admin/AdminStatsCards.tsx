@@ -1,13 +1,14 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
   Users, 
-  Store, 
+  Globe, 
   DollarSign, 
   TrendingUp, 
   UserCheck, 
   Clock, 
   ShoppingCart,
-  Target
+  Target,
+  Zap
 } from 'lucide-react';
 
 interface PlatformStats {
@@ -15,12 +16,14 @@ interface PlatformStats {
   active_users: number;
   trial_users: number;
   paid_users: number;
-  total_revenue: number;
-  monthly_revenue: number;
-  total_stores: number;
-  active_stores: number;
+  merchant_gmv: number;
+  monthly_gmv: number;
+  total_websites: number;
+  active_websites: number;
+  total_funnels: number;
+  active_funnels: number;
   total_orders: number;
-  conversion_rate: number;
+  subscription_mrr: number;
 }
 
 interface AdminStatsCardsProps {
@@ -46,37 +49,37 @@ export const AdminStatsCards = ({ stats, loading }: AdminStatsCardsProps) => {
       color: 'text-blue-600',
     },
     {
-      title: 'Paid Users',
+      title: 'Paid Subscribers',
       value: stats?.paid_users || 0,
       description: `${stats?.trial_users || 0} on trial`,
       icon: UserCheck,
       color: 'text-green-600',
     },
     {
-      title: 'Total Stores',
-      value: stats?.total_stores || 0,
-      description: `${stats?.active_stores || 0} active`,
-      icon: Store,
+      title: 'Websites',
+      value: stats?.total_websites || 0,
+      description: `${stats?.active_websites || 0} active`,
+      icon: Globe,
       color: 'text-purple-600',
     },
     {
-      title: 'Total Revenue',
-      value: formatCurrency(stats?.total_revenue || 0),
-      description: `This month ${formatCurrency(stats?.monthly_revenue || 0)}`,
+      title: 'Funnels',
+      value: stats?.total_funnels || 0,
+      description: `${stats?.active_funnels || 0} active`,
+      icon: Zap,
+      color: 'text-orange-600',
+    },
+    {
+      title: 'SaaS MRR',
+      value: `$${stats?.subscription_mrr || 0}`,
+      description: 'Monthly recurring revenue',
       icon: DollarSign,
       color: 'text-emerald-600',
     },
     {
-      title: 'Conversion Rate',
-      value: formatPercentage(stats?.conversion_rate || 0),
-      description: 'Free to Paid',
-      icon: Target,
-      color: 'text-orange-600',
-    },
-    {
-      title: 'Total Orders',
-      value: stats?.total_orders || 0,
-      description: 'Across all stores',
+      title: 'Merchant GMV',
+      value: formatCurrency(stats?.merchant_gmv || 0),
+      description: `${stats?.total_orders || 0} orders`,
       icon: ShoppingCart,
       color: 'text-indigo-600',
     },

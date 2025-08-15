@@ -47,10 +47,10 @@ const AdminAnalytics = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <BarChart3 className="h-5 w-5" />
-              Revenue Trends
+              Merchant GMV Trends
             </CardTitle>
             <CardDescription>
-              Monthly revenue trends across the platform
+              Monthly merchant gross merchandise value (customer orders)
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -60,7 +60,7 @@ const AdminAnalytics = () => {
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="month" />
                   <YAxis />
-                  <Tooltip formatter={(value) => [`৳${value.toLocaleString('en-US')}`, 'Revenue']} />
+                  <Tooltip formatter={(value) => [`$${value.toLocaleString('en-US')}`, 'Merchant GMV']} />
                   <Area 
                     type="monotone" 
                     dataKey="revenue" 
@@ -101,18 +101,18 @@ const AdminAnalytics = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <TrendingUp className="h-5 w-5" />
-                Store Growth
+                Website Growth
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
                 <div className="flex justify-between">
-                  <span>This Month</span>
-                  <span className="font-medium">+{platformStats?.total_stores || 0}</span>
+                  <span>Total Sites</span>
+                  <span className="font-medium">{(platformStats?.total_websites || 0) + (platformStats?.total_funnels || 0)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Growth Rate</span>
-                  <span className="text-green-600 font-medium">+8.3%</span>
+                  <span>Active Sites</span>
+                  <span className="text-green-600 font-medium">{(platformStats?.active_websites || 0) + (platformStats?.active_funnels || 0)}</span>
                 </div>
               </div>
             </CardContent>
