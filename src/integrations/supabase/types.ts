@@ -1742,7 +1742,14 @@ export type Database = {
         | "delivered"
         | "cancelled"
       payment_method: "cod" | "bkash" | "nagad" | "sslcommerz"
-      subscription_plan: "free" | "pro_monthly" | "pro_yearly" | "reseller"
+      subscription_plan:
+        | "free"
+        | "pro_monthly"
+        | "pro_yearly"
+        | "reseller"
+        | "starter"
+        | "professional"
+        | "enterprise"
       user_role: "store_owner" | "super_admin"
     }
     CompositeTypes: {
@@ -1880,7 +1887,15 @@ export const Constants = {
         "cancelled",
       ],
       payment_method: ["cod", "bkash", "nagad", "sslcommerz"],
-      subscription_plan: ["free", "pro_monthly", "pro_yearly", "reseller"],
+      subscription_plan: [
+        "free",
+        "pro_monthly",
+        "pro_yearly",
+        "reseller",
+        "starter",
+        "professional",
+        "enterprise",
+      ],
       user_role: ["store_owner", "super_admin"],
     },
   },
