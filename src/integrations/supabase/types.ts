@@ -842,6 +842,7 @@ export type Database = {
           discount_amount: number | null
           discount_code: string | null
           facebook_pixel_data: Json | null
+          funnel_id: string | null
           google_ads_data: Json | null
           id: string
           notes: string | null
@@ -864,6 +865,7 @@ export type Database = {
           utm_campaign: string | null
           utm_medium: string | null
           utm_source: string | null
+          website_id: string | null
         }
         Insert: {
           courier_name?: string | null
@@ -876,6 +878,7 @@ export type Database = {
           discount_amount?: number | null
           discount_code?: string | null
           facebook_pixel_data?: Json | null
+          funnel_id?: string | null
           google_ads_data?: Json | null
           id?: string
           notes?: string | null
@@ -898,6 +901,7 @@ export type Database = {
           utm_campaign?: string | null
           utm_medium?: string | null
           utm_source?: string | null
+          website_id?: string | null
         }
         Update: {
           courier_name?: string | null
@@ -910,6 +914,7 @@ export type Database = {
           discount_amount?: number | null
           discount_code?: string | null
           facebook_pixel_data?: Json | null
+          funnel_id?: string | null
           google_ads_data?: Json | null
           id?: string
           notes?: string | null
@@ -932,6 +937,7 @@ export type Database = {
           utm_campaign?: string | null
           utm_medium?: string | null
           utm_source?: string | null
+          website_id?: string | null
         }
         Relationships: [
           {
@@ -1381,6 +1387,51 @@ export type Database = {
           trial_expires_at?: string | null
           trial_started_at?: string | null
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      saas_subscriptions: {
+        Row: {
+          created_at: string
+          expires_at: string | null
+          id: string
+          notes: string | null
+          payment_method: string
+          payment_reference: string | null
+          plan_name: string
+          plan_price_bdt: number
+          starts_at: string
+          subscription_status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          notes?: string | null
+          payment_method?: string
+          payment_reference?: string | null
+          plan_name: string
+          plan_price_bdt?: number
+          starts_at?: string
+          subscription_status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          notes?: string | null
+          payment_method?: string
+          payment_reference?: string | null
+          plan_name?: string
+          plan_price_bdt?: number
+          starts_at?: string
+          subscription_status?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }

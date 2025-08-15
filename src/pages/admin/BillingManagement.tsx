@@ -1,71 +1,50 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { useAdminData } from '@/hooks/useAdminData';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { 
-  DollarSign, 
-  TrendingUp, 
-  Calendar, 
-  Search,
-  Download,
-  RefreshCw,
-  CreditCard,
-  Users,
-  AlertCircle,
-  ExternalLink
-} from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import { CreditCard, DollarSign, Users, TrendingUp, RefreshCw, Download, AlertCircle, Plus } from 'lucide-react';
+import { toast } from 'sonner';
+import { formatCurrency } from '@/lib/currency';
 
-interface SaasSubscriber {
-  id: string;
-  user_email: string;
-  user_name: string;
-  subscription_tier: string;
-  subscribed: boolean;
-  subscription_end: string | null;
-  created_at: string;
-}
-
-const BillingManagement = () => {
-  const { isAdmin, platformStats, loading: adminLoading } = useAdminData();
-  const [subscribers, setSubscribers] = useState<SaasSubscriber[]>([]);
-  const [loading, setLoading] = useState(true);
+export default function BillingManagement() {
+  const { isAdmin, loading: adminLoading, platformStats, saasSubscribers, fetchSaasSubscribers } = useAdminData();
+  const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [tierFilter, setTierFilter] = useState('all');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [tierFilter, setTierFilter] = useState<string>('all');
 
   useEffect(() => {
     if (isAdmin) {
       fetchSaasSubscribers();
     }
-  }, [isAdmin, searchTerm, tierFilter, statusFilter]);
+  }, [isAdmin, statusFilter, tierFilter]);
 
-  const fetchSaasSubscribers = async () => {
-    setLoading(true);
-    try {
-      // This would query a `subscribers` table when Stripe integration is added
-      // For now, show message about connecting Stripe
-      setSubscribers([]);
-    } catch (err) {
-      console.error('Error fetching SaaS subscribers:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const formatCurrency = (amount: number) => {
-    return `$${amount.toLocaleString('en-US')}`;
-  };
-
-  // Calculate SaaS-specific metrics
-  const totalMRR = platformStats?.subscription_mrr || 0;
+  // Calculate SaaS revenue metrics from actual subscriptions
+  const totalMRR = saasSubscribers
+    .filter(s => s.subscription_status === 'active')
+    .reduce((sum, sub) => sum + (sub.plan_price_bdt || 0), 0);
+  
   const totalARR = totalMRR * 12;
-  const activeSubscribers = platformStats?.paid_users || 0;
+  const activeSubscribers = saasSubscribers.filter(s => s.subscription_status === 'active').length;
   const averageARPU = activeSubscribers > 0 ? totalMRR / activeSubscribers : 0;
+
+  // Filter subscribers based on search and filters
+  const filteredSubscribers = saasSubscribers.filter(subscriber => {
+    const matchesSearch = !searchTerm || 
+      subscriber.user_email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      subscriber.user_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      subscriber.plan_name.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesStatus = statusFilter === 'all' || subscriber.subscription_status === statusFilter;
+    const matchesTier = tierFilter === 'all' || subscriber.plan_name === tierFilter;
+    
+    return matchesSearch && matchesStatus && matchesTier;
+  });
 
   if (adminLoading || isAdmin === null) {
     return (
@@ -111,8 +90,8 @@ const BillingManagement = () => {
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{formatCurrency(totalMRR)}</div>
-              <p className="text-xs text-muted-foreground">MRR</p>
+              <div className="text-2xl font-bold">{formatCurrency(totalMRR, { code: 'BDT' })}</div>
+              <p className="text-xs text-muted-foreground">Monthly recurring revenue</p>
             </CardContent>
           </Card>
           
@@ -122,8 +101,8 @@ const BillingManagement = () => {
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{formatCurrency(totalARR)}</div>
-              <p className="text-xs text-muted-foreground">ARR</p>
+              <div className="text-2xl font-bold">{formatCurrency(totalARR, { code: 'BDT' })}</div>
+              <p className="text-xs text-muted-foreground">Annual recurring revenue</p>
             </CardContent>
           </Card>
 
@@ -144,120 +123,161 @@ const BillingManagement = () => {
               <CreditCard className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{formatCurrency(averageARPU)}</div>
-              <p className="text-xs text-muted-foreground">ARPU</p>
+              <div className="text-2xl font-bold">{formatCurrency(averageARPU, { code: 'BDT' })}</div>
+              <p className="text-xs text-muted-foreground">Average revenue per user</p>
             </CardContent>
           </Card>
         </div>
 
-        {/* Stripe Integration Status */}
+        {/* Manual SaaS Management */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CreditCard className="h-5 w-5" />
-              Stripe Integration
+            <CardTitle className="flex items-center justify-between">
+              SaaS Subscription Management
+              <Button size="sm" className="bg-primary text-primary-foreground">
+                <Plus className="mr-2 h-4 w-4" />
+                Add Subscription
+              </Button>
             </CardTitle>
             <CardDescription>
-              Connect Stripe to enable subscription billing and payment management
+              Manage user subscriptions manually. Accept payments via bKash, Nagad, SSL Commerz, or manual transfer.
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/50">
-              <div>
-                <div className="font-medium">Stripe Not Connected</div>
-                <div className="text-sm text-muted-foreground">
-                  Set up Stripe integration to manage SaaS subscriptions, billing, and customer payments.
-                </div>
-              </div>
-              <Button className="shrink-0">
-                <ExternalLink className="h-4 w-4 mr-2" />
-                Connect Stripe
-              </Button>
-            </div>
-          </CardContent>
         </Card>
 
-        {/* Filters (Disabled until Stripe integration) */}
+        {/* Filters and Actions */}
         <Card>
           <CardHeader>
-            <CardTitle>Subscriber Management</CardTitle>
+            <CardTitle>Subscription Records</CardTitle>
             <CardDescription>
-              Search and filter SaaS subscribers (available after Stripe integration)
+              Manage user subscriptions and payment records
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex gap-4 items-end opacity-50">
+            <div className="flex flex-col md:flex-row gap-4 mb-6">
               <div className="flex-1">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                  <Input
-                    placeholder="Search subscribers..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
-                    disabled
-                  />
-                </div>
+                <Input
+                  placeholder="Search subscribers by email, name, or plan..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
               </div>
-              
-              <Select value={statusFilter} onValueChange={setStatusFilter} disabled>
-                <SelectTrigger className="w-[150px]">
-                  <SelectValue placeholder="Status" />
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Filter by status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="all">All Statuses</SelectItem>
                   <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="trial">Trial</SelectItem>
-                  <SelectItem value="canceled">Canceled</SelectItem>
+                  <SelectItem value="expired">Expired</SelectItem>
+                  <SelectItem value="cancelled">Cancelled</SelectItem>
                 </SelectContent>
               </Select>
-
-              <Select value={tierFilter} onValueChange={setTierFilter} disabled>
-                <SelectTrigger className="w-[150px]">
-                  <SelectValue placeholder="Plan" />
+              <Select value={tierFilter} onValueChange={setTierFilter}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Filter by plan" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Plans</SelectItem>
-                  <SelectItem value="starter">Starter</SelectItem>
-                  <SelectItem value="professional">Professional</SelectItem>
+                  <SelectItem value="basic">Basic</SelectItem>
+                  <SelectItem value="pro">Pro</SelectItem>
                   <SelectItem value="enterprise">Enterprise</SelectItem>
                 </SelectContent>
               </Select>
-
-              <Button onClick={fetchSaasSubscribers} variant="outline" disabled>
-                <RefreshCw className="h-4 w-4 mr-2" />
+              <Button variant="outline" onClick={fetchSaasSubscribers}>
+                <RefreshCw className="mr-2 h-4 w-4" />
                 Refresh
               </Button>
-
-              <Button variant="outline" disabled>
-                <Download className="h-4 w-4 mr-2" />
+              <Button variant="outline">
+                <Download className="mr-2 h-4 w-4" />
                 Export
               </Button>
             </div>
-          </CardContent>
-        </Card>
 
-        {/* Subscription Records */}
-        <Card>
-          <CardHeader>
-            <CardTitle>SaaS Subscription Records</CardTitle>
-            <CardDescription>All platform subscriptions and billing history</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-center py-12 text-muted-foreground">
-              <CreditCard className="mx-auto h-12 w-12 mb-4 opacity-50" />
-              <p className="text-lg font-medium mb-2">Connect Stripe to View Subscriptions</p>
-              <p>Once Stripe is integrated, you'll see all subscriber data, billing history, and payment details here.</p>
-              <Button className="mt-4">
-                <ExternalLink className="h-4 w-4 mr-2" />
-                Set up Stripe Integration
-              </Button>
+            {/* Subscribers Table */}
+            <div className="rounded-md border">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b bg-muted/50">
+                      <th className="text-left p-4 font-medium">User</th>
+                      <th className="text-left p-4 font-medium">Plan</th>
+                      <th className="text-left p-4 font-medium">Amount</th>
+                      <th className="text-left p-4 font-medium">Payment Method</th>
+                      <th className="text-left p-4 font-medium">Status</th>
+                      <th className="text-left p-4 font-medium">Expires</th>
+                      <th className="text-left p-4 font-medium">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {loading ? (
+                      Array(5).fill(0).map((_, i) => (
+                        <tr key={i} className="border-b">
+                          <td className="p-4"><Skeleton className="h-4 w-32" /></td>
+                          <td className="p-4"><Skeleton className="h-4 w-20" /></td>
+                          <td className="p-4"><Skeleton className="h-4 w-16" /></td>
+                          <td className="p-4"><Skeleton className="h-4 w-20" /></td>
+                          <td className="p-4"><Skeleton className="h-4 w-16" /></td>
+                          <td className="p-4"><Skeleton className="h-4 w-24" /></td>
+                          <td className="p-4"><Skeleton className="h-4 w-20" /></td>
+                        </tr>
+                      ))
+                    ) : filteredSubscribers.length > 0 ? (
+                      filteredSubscribers.map((subscriber) => (
+                        <tr key={subscriber.id} className="border-b hover:bg-muted/50">
+                          <td className="p-4">
+                            <div>
+                              <div className="font-medium">{subscriber.user_name || 'N/A'}</div>
+                              <div className="text-sm text-muted-foreground">{subscriber.user_email}</div>
+                            </div>
+                          </td>
+                          <td className="p-4">
+                            <Badge variant="outline">{subscriber.plan_name}</Badge>
+                          </td>
+                          <td className="p-4 font-medium">
+                            {formatCurrency(subscriber.plan_price_bdt, { code: 'BDT' })}
+                          </td>
+                          <td className="p-4">
+                            <Badge variant={
+                              subscriber.payment_method === 'bkash' ? 'default' :
+                              subscriber.payment_method === 'nagad' ? 'secondary' :
+                              subscriber.payment_method === 'sslcommerz' ? 'outline' : 'default'
+                            }>
+                              {subscriber.payment_method}
+                            </Badge>
+                          </td>
+                          <td className="p-4">
+                            <Badge variant={
+                              subscriber.subscription_status === 'active' ? 'default' :
+                              subscriber.subscription_status === 'expired' ? 'destructive' : 'secondary'
+                            }>
+                              {subscriber.subscription_status}
+                            </Badge>
+                          </td>
+                          <td className="p-4 text-sm">
+                            {subscriber.expires_at ? new Date(subscriber.expires_at).toLocaleDateString() : 'Never'}
+                          </td>
+                          <td className="p-4">
+                            <Button variant="outline" size="sm">Edit</Button>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={7} className="text-center py-12 text-muted-foreground">
+                          <Users className="mx-auto h-12 w-12 mb-4 opacity-50" />
+                          <h3 className="text-lg font-semibold mb-2">No Subscribers Found</h3>
+                          <p className="text-sm">Start by adding your first SaaS subscriber.</p>
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </CardContent>
         </Card>
       </div>
     </AdminLayout>
   );
-};
-
-export default BillingManagement;
+}

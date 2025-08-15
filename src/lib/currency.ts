@@ -22,7 +22,7 @@ export function getGlobalCurrencyCode(): CurrencyCode {
   if (typeof window !== 'undefined' && (window as any).__CURRENCY_CODE__) {
     return (window as any).__CURRENCY_CODE__ as CurrencyCode;
   }
-  return 'BDT';
+  return 'BDT'; // Default to Bangladeshi Taka
 }
 
 export function getGlobalCurrencyLocale(): string {

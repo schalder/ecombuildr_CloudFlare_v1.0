@@ -15,18 +15,34 @@ interface AdminUser {
 }
 
 interface PlatformStats {
-  total_users: number;
-  active_users: number;
-  trial_users: number;
-  paid_users: number;
-  merchant_gmv: number;
-  monthly_gmv: number;
-  total_websites: number;
-  active_websites: number;
-  total_funnels: number;
-  active_funnels: number;
-  total_orders: number;
-  subscription_mrr: number;
+  totalUsers: number;
+  activeUsers: number;
+  trialUsers: number;
+  totalWebsites: number;
+  activeWebsites: number;
+  totalFunnels: number;
+  activeFunnels: number;
+  totalOrders: number;
+  totalGMV: number;
+  monthlyGMV: number;
+  averageOrderValue: number;
+  estimatedMRR: number;
+}
+
+interface SaasSubscriber {
+  id: string;
+  user_id: string;
+  plan_name: string;
+  plan_price_bdt: number;
+  payment_method: string;
+  subscription_status: string;
+  starts_at: string;
+  expires_at: string | null;
+  payment_reference: string | null;
+  notes: string | null;
+  created_at: string;
+  user_email?: string;
+  user_name?: string;
 }
 
 export const useAdminData = () => {
@@ -36,6 +52,7 @@ export const useAdminData = () => {
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [platformStats, setPlatformStats] = useState<PlatformStats | null>(null);
+  const [saasSubscribers, setSaasSubscribers] = useState<SaasSubscriber[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   // Check if current user is super admin
@@ -170,18 +187,18 @@ export const useAdminData = () => {
       const subscriptionMrr = paidUsers * 50; // Assuming average $50/month per paid user
 
       setPlatformStats({
-        total_users: totalUsers,
-        active_users: activeUsers,
-        trial_users: trialUsers,
-        paid_users: paidUsers,
-        merchant_gmv: merchantGmv,
-        monthly_gmv: monthlyGmv,
-        total_websites: totalWebsites || 0,
-        active_websites: activeWebsites || 0,
-        total_funnels: totalFunnels,
-        active_funnels: activeFunnels,
-        total_orders: totalOrders,
-        subscription_mrr: subscriptionMrr,
+        totalUsers: totalUsers,
+        activeUsers: activeUsers,
+        trialUsers: trialUsers,
+        totalWebsites: totalWebsites || 0,
+        activeWebsites: activeWebsites || 0,
+        totalFunnels: totalFunnels,
+        activeFunnels: activeFunnels,
+        totalOrders: totalOrders,
+        totalGMV: merchantGmv,
+        monthlyGMV: monthlyGmv,
+        averageOrderValue: totalOrders > 0 ? merchantGmv / totalOrders : 0,
+        estimatedMRR: subscriptionMrr,
       });
     } catch (err) {
       console.error('Error fetching platform stats:', err);
@@ -260,10 +277,39 @@ export const useAdminData = () => {
     checkAdminStatus();
   }, [user]);
 
+  const fetchSaasSubscribers = async () => {
+    try {
+      const { data: subscriptions, error } = await supabase
+        .from('saas_subscriptions')
+        .select(`
+          *,
+          profiles:user_id (
+            email,
+            full_name
+          )
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      const formattedSubscriptions = subscriptions?.map(sub => ({
+        ...sub,
+        user_email: sub.profiles?.email,
+        user_name: sub.profiles?.full_name
+      })) || [];
+
+      setSaasSubscribers(formattedSubscriptions);
+    } catch (error) {
+      console.error('Error fetching SaaS subscribers:', error);
+      setError('Failed to fetch SaaS subscribers');
+    }
+  };
+
   useEffect(() => {
     if (isAdmin) {
       fetchUsers();
       fetchPlatformStats();
+      fetchSaasSubscribers();
     }
   }, [isAdmin]);
 
@@ -272,15 +318,18 @@ export const useAdminData = () => {
     loading,
     users,
     platformStats,
+    saasSubscribers,
     error,
     fetchUsers,
     fetchPlatformStats,
+    fetchSaasSubscribers,
     updateUserPlan,
     updateUserStatus,
     loginAsUser,
     refetch: () => {
       fetchUsers();
       fetchPlatformStats();
+      fetchSaasSubscribers();
     }
   };
 };

@@ -5,20 +5,23 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { Globe, Zap, Search, AlertCircle, CheckCircle, XCircle } from 'lucide-react';
 
+// Website and Funnel data interfaces
 interface WebsiteData {
   id: string;
   name: string;
   slug: string;
-  domain: string | null;
+  domain?: string;
   is_active: boolean;
   is_published: boolean;
   created_at: string;
   owner_email?: string;
+  owner_name?: string;
   store_name?: string;
 }
 
@@ -26,165 +29,245 @@ interface FunnelData {
   id: string;
   name: string;
   slug: string;
-  domain: string | null;
+  domain?: string;
   is_active: boolean;
   is_published: boolean;
   created_at: string;
   owner_email?: string;
+  owner_name?: string;
   store_name?: string;
 }
 
-const AdminSites = () => {
+export default function AdminSites() {
   const { isAdmin, loading: adminLoading } = useAdminData();
-  const { toast } = useToast();
   const [websites, setWebsites] = useState<WebsiteData[]>([]);
   const [funnels, setFunnels] = useState<FunnelData[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     if (isAdmin) {
-      loadData();
+      fetchWebsites();
+      fetchFunnels();
     }
   }, [isAdmin]);
 
-  const loadData = async () => {
+  const fetchWebsites = async () => {
     try {
-      console.log('Loading websites and funnels data...');
-      setLoading(true);
-      
-      
-      // Fetch websites with basic data first
-      const { data: websitesData, error: websitesError } = await supabase
+      const { data, error } = await supabase
         .from('websites')
-        .select('id, name, slug, domain, is_active, is_published, created_at, store_id')
+        .select(`
+          id,
+          name,
+          slug,
+          domain,
+          is_active,
+          is_published,
+          created_at,
+          stores!inner(
+            name,
+            owner_id,
+            profiles!inner(email, full_name)
+          )
+        `)
         .order('created_at', { ascending: false });
 
-      if (websitesError) {
-        console.error('Websites query error:', websitesError);
-        throw websitesError;
-      }
+      if (error) throw error;
 
-      // Fetch funnels with basic data first
-      const { data: funnelsData, error: funnelsError } = await supabase
-        .from('funnels')
-        .select('id, name, slug, domain, is_active, is_published, created_at, store_id')
-        .order('created_at', { ascending: false });
-
-      if (funnelsError) {
-        console.error('Funnels query error:', funnelsError);
-        throw funnelsError;
-      }
-
-      // Transform data with simplified structure for now
-      const websitesWithOwner = websitesData?.map(website => ({
-        id: website.id,
-        name: website.name,
-        slug: website.slug,
-        domain: website.domain,
-        is_active: website.is_active,
-        is_published: website.is_published,
-        created_at: website.created_at,
-        store_name: 'Store Info Loading...',
-        owner_email: 'Owner Info Loading...'
+      const formattedWebsites = data?.map(site => ({
+        id: site.id,
+        name: site.name,
+        slug: site.slug,
+        domain: site.domain,
+        is_active: site.is_active,
+        is_published: site.is_published,
+        created_at: site.created_at,
+        owner_email: site.stores?.profiles?.email,
+        owner_name: site.stores?.profiles?.full_name,
+        store_name: site.stores?.name
       })) || [];
 
-      const funnelsWithOwner = funnelsData?.map(funnel => ({
-        id: funnel.id,
-        name: funnel.name,
-        slug: funnel.slug,
-        domain: funnel.domain,
-        is_active: funnel.is_active,
-        is_published: funnel.is_published,
-        created_at: funnel.created_at,
-        store_name: 'Store Info Loading...',
-        owner_email: 'Owner Info Loading...'
-      })) || [];
-
-      setWebsites(websitesWithOwner);
-      setFunnels(funnelsWithOwner);
-    } catch (err) {
-      console.error('Error loading sites:', err);
-      toast({
-        title: 'Load Failed',
-        description: 'Failed to load websites and funnels data.',
-        variant: 'destructive',
-      });
-    } finally {
-      setLoading(false);
+      setWebsites(formattedWebsites);
+    } catch (error) {
+      console.error('Error fetching websites:', error);
     }
   };
 
-  const toggleWebsiteStatus = async (websiteId: string, currentStatus: boolean) => {
+  const fetchFunnels = async () => {
+    try {
+      // First get unique funnel IDs from funnel_steps
+      const { data: stepsData, error: stepsError } = await supabase
+        .from('funnel_steps')
+        .select(`
+          funnel_id,
+          title,
+          slug,
+          is_published,
+          created_at,
+          funnels!inner(
+            id,
+            name,
+            slug,
+            is_active,
+            is_published,
+            created_at,
+            stores!inner(
+              name,
+              owner_id,
+              profiles!inner(email, full_name)
+            )
+          )
+        `)
+        .order('created_at', { ascending: false });
+
+      if (stepsError) throw stepsError;
+
+      // Group by funnel_id to get unique funnels
+      const funnelMap = new Map();
+      stepsData?.forEach(step => {
+        const funnelId = step.funnel_id;
+        if (!funnelMap.has(funnelId)) {
+          funnelMap.set(funnelId, {
+            id: funnelId,
+            name: step.funnels?.name || step.title,
+            slug: step.funnels?.slug || step.slug,
+            domain: null,
+            is_active: step.funnels?.is_active ?? true,
+            is_published: step.funnels?.is_published ?? step.is_published,
+            created_at: step.funnels?.created_at || step.created_at,
+            owner_email: step.funnels?.stores?.profiles?.email,
+            owner_name: step.funnels?.stores?.profiles?.full_name,
+            store_name: step.funnels?.stores?.name
+          });
+        }
+      });
+
+      const formattedFunnels = Array.from(funnelMap.values());
+      setFunnels(formattedFunnels);
+    } catch (error) {
+      console.error('Error fetching funnels:', error);
+    }
+  };
+
+  const toggleWebsiteStatus = async (websiteId: string, newStatus: boolean) => {
     try {
       const { error } = await supabase
         .from('websites')
-        .update({ is_active: !currentStatus })
+        .update({ is_active: newStatus })
         .eq('id', websiteId);
 
       if (error) throw error;
 
       setWebsites(prev => prev.map(website =>
         website.id === websiteId 
-          ? { ...website, is_active: !currentStatus }
+          ? { ...website, is_active: newStatus }
           : website
       ));
 
-      toast({
-        title: 'Status Updated',
-        description: `Website ${!currentStatus ? 'activated' : 'deactivated'} successfully.`,
-      });
-    } catch (err) {
-      console.error('Error updating website status:', err);
-      toast({
-        title: 'Update Failed',
-        description: 'Failed to update website status.',
-        variant: 'destructive',
-      });
+      toast.success(`Website ${newStatus ? 'activated' : 'deactivated'} successfully`);
+    } catch (error) {
+      console.error('Error updating website status:', error);
+      toast.error('Failed to update website status');
     }
   };
 
-  const toggleFunnelStatus = async (funnelId: string, currentStatus: boolean) => {
+  const toggleFunnelStatus = async (funnelId: string, newStatus: boolean) => {
     try {
       const { error } = await supabase
         .from('funnels')
-        .update({ is_active: !currentStatus })
+        .update({ is_active: newStatus })
         .eq('id', funnelId);
 
       if (error) throw error;
 
       setFunnels(prev => prev.map(funnel =>
         funnel.id === funnelId 
-          ? { ...funnel, is_active: !currentStatus }
+          ? { ...funnel, is_active: newStatus }
           : funnel
       ));
 
-      toast({
-        title: 'Status Updated',
-        description: `Funnel ${!currentStatus ? 'activated' : 'deactivated'} successfully.`,
-      });
-    } catch (err) {
-      console.error('Error updating funnel status:', err);
-      toast({
-        title: 'Update Failed',
-        description: 'Failed to update funnel status.',
-        variant: 'destructive',
-      });
+      toast.success(`Funnel ${newStatus ? 'activated' : 'deactivated'} successfully`);
+    } catch (error) {
+      console.error('Error updating funnel status:', error);
+      toast.error('Failed to update funnel status');
     }
   };
 
+  const renderSiteCard = (site: WebsiteData | FunnelData, type: 'website' | 'funnel') => {
+    const isFunnel = type === 'funnel';
+    
+    return (
+      <div key={site.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+        <div className="flex items-start justify-between mb-3">
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-1">
+              <h3 className="font-semibold text-lg">{site.name}</h3>
+              <Badge variant={site.is_active ? 'default' : 'secondary'}>
+                {site.is_active ? 'Active' : 'Inactive'}
+              </Badge>
+              <Badge variant={site.is_published ? 'default' : 'outline'}>
+                {site.is_published ? 'Published' : 'Draft'}
+              </Badge>
+            </div>
+            <p className="text-sm text-muted-foreground mb-2">/{site.slug}</p>
+            {site.domain && (
+              <p className="text-sm text-blue-600 mb-2">{site.domain}</p>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => isFunnel ? toggleFunnelStatus(site.id, !site.is_active) : toggleWebsiteStatus(site.id, !site.is_active)}
+            >
+              {site.is_active ? 'Deactivate' : 'Activate'}
+            </Button>
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-2 gap-4 text-sm">
+          <div>
+            <span className="text-muted-foreground">Site Name:</span>
+            <p className="font-medium">{site.name}</p>
+          </div>
+          <div>
+            <span className="text-muted-foreground">Site Slug:</span>
+            <p className="font-medium">/{site.slug}</p>
+          </div>
+          <div>
+            <span className="text-muted-foreground">Owner Name:</span>
+            <p className="font-medium">{site.owner_name || 'N/A'}</p>
+          </div>
+          <div>
+            <span className="text-muted-foreground">Owner Email:</span>
+            <p className="font-medium">{site.owner_email || 'N/A'}</p>
+          </div>
+          <div>
+            <span className="text-muted-foreground">Created:</span>
+            <p className="font-medium">{new Date(site.created_at).toLocaleDateString()}</p>
+          </div>
+          <div>
+            <span className="text-muted-foreground">Type:</span>
+            <p className="font-medium capitalize">{type}</p>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Filter websites and funnels based on search term
   const filteredWebsites = websites.filter(website =>
     website.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     website.slug.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (website.owner_email?.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (website.store_name?.toLowerCase().includes(searchTerm.toLowerCase()))
+    (website.owner_name?.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const filteredFunnels = funnels.filter(funnel =>
     funnel.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     funnel.slug.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (funnel.owner_email?.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (funnel.store_name?.toLowerCase().includes(searchTerm.toLowerCase()))
+    (funnel.owner_name?.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   if (adminLoading || isAdmin === null) {
@@ -220,78 +303,30 @@ const AdminSites = () => {
     );
   }
 
-  const renderSiteCard = (site: WebsiteData | FunnelData, type: 'website' | 'funnel') => (
-    <div key={site.id} className="flex items-center justify-between p-4 border rounded-lg">
-      <div className="flex-1">
-        <div className="flex items-center gap-3">
-          <h4 className="font-medium">{site.name}</h4>
-          <Badge variant={site.is_active ? "default" : "secondary"}>
-            {site.is_active ? "Active" : "Inactive"}
-          </Badge>
-          {site.is_published && (
-            <Badge variant="outline">Published</Badge>
-          )}
-        </div>
-        <div className="text-sm text-muted-foreground mt-1">
-          <span>Slug: {site.slug}</span>
-          {site.domain && <span className="ml-4">Domain: {site.domain}</span>}
-          <span className="ml-4">Store: {site.store_name}</span>
-          {site.owner_email && (
-            <span className="ml-4">Owner: {site.owner_email}</span>
-          )}
-          <span className="ml-4">
-            Created: {new Date(site.created_at).toLocaleDateString('en-US')}
-          </span>
-        </div>
-      </div>
-      <Button
-        size="sm"
-        variant={site.is_active ? "destructive" : "default"}
-        onClick={() => 
-          type === 'website' 
-            ? toggleWebsiteStatus(site.id, site.is_active)
-            : toggleFunnelStatus(site.id, site.is_active)
-        }
-      >
-        {site.is_active ? (
-          <>
-            <XCircle className="h-4 w-4 mr-2" />
-            Deactivate
-          </>
-        ) : (
-          <>
-            <CheckCircle className="h-4 w-4 mr-2" />
-            Activate
-          </>
-        )}
-      </Button>
-    </div>
-  );
-
   return (
-    <AdminLayout title="Sites Management" description="Manage all websites and funnels across the platform">
+    <AdminLayout title="Sites Management" description="Manage websites and funnels">
       <div className="space-y-6">
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center gap-2">
-                <Globe className="h-5 w-5" />
-                All Sites ({websites.length + funnels.length})
-              </CardTitle>
-              <div className="flex items-center gap-4">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search sites..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 w-64"
-                  />
-                </div>
-              </div>
-            </div>
+            <CardTitle>Sites Overview</CardTitle>
+            <CardDescription>
+              Manage and monitor all websites and funnels across the platform
+            </CardDescription>
           </CardHeader>
           <CardContent>
+            {/* Search */}
+            <div className="flex items-center gap-4 mb-6">
+              <div className="flex-1 relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                <Input
+                  placeholder="Search by site name, slug, owner name, or email..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+
             <Tabs defaultValue="websites" className="w-full">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="websites" className="flex items-center gap-2">
@@ -306,10 +341,18 @@ const AdminSites = () => {
               
               <TabsContent value="websites" className="mt-6">
                 {loading ? (
-                  <div className="text-center py-8">Loading websites...</div>
+                  <div className="space-y-4">
+                    {[...Array(3)].map((_, i) => (
+                      <Skeleton key={i} className="h-32 w-full" />
+                    ))}
+                  </div>
                 ) : filteredWebsites.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
-                    {searchTerm ? 'No websites found matching your search.' : 'No websites found.'}
+                    <Globe className="mx-auto h-12 w-12 mb-4 opacity-50" />
+                    <h3 className="text-lg font-semibold mb-2">No Websites Found</h3>
+                    <p className="text-sm">
+                      {searchTerm ? 'No websites match your search criteria.' : 'No websites have been created yet.'}
+                    </p>
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -320,10 +363,18 @@ const AdminSites = () => {
               
               <TabsContent value="funnels" className="mt-6">
                 {loading ? (
-                  <div className="text-center py-8">Loading funnels...</div>
+                  <div className="space-y-4">
+                    {[...Array(3)].map((_, i) => (
+                      <Skeleton key={i} className="h-32 w-full" />
+                    ))}
+                  </div>
                 ) : filteredFunnels.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
-                    {searchTerm ? 'No funnels found matching your search.' : 'No funnels found.'}
+                    <Zap className="mx-auto h-12 w-12 mb-4 opacity-50" />
+                    <h3 className="text-lg font-semibold mb-2">No Funnels Found</h3>
+                    <p className="text-sm">
+                      {searchTerm ? 'No funnels match your search criteria.' : 'No funnels have been created yet.'}
+                    </p>
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -337,6 +388,4 @@ const AdminSites = () => {
       </div>
     </AdminLayout>
   );
-};
-
-export default AdminSites;
+}

@@ -179,7 +179,7 @@ const AdminRevenue = () => {
     );
   }
 
-  const avgOrderValue = (platformStats?.merchant_gmv || 0) / Math.max(platformStats?.total_orders || 1, 1);
+  const avgOrderValue = (platformStats?.totalGMV || 0) / Math.max(platformStats?.totalOrders || 1, 1);
 
   return (
     <AdminLayout title="Revenue Tracking (Merchants)" description="Track merchant GMV and customer order analytics">
@@ -193,7 +193,7 @@ const AdminRevenue = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-blue-600">
-                {formatCurrency(platformStats?.merchant_gmv || 0)}
+                {formatCurrency(platformStats?.totalGMV || 0)}
               </div>
               <p className="text-xs text-muted-foreground">All-time customer orders</p>
             </CardContent>
@@ -206,7 +206,7 @@ const AdminRevenue = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {formatCurrency(platformStats?.monthly_gmv || 0)}
+                {formatCurrency(platformStats?.monthlyGMV || 0)}
               </div>
               <p className="text-xs text-green-600 flex items-center gap-1">
                 <TrendingUp className="h-3 w-3" />
