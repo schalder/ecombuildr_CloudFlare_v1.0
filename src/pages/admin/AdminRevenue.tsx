@@ -16,7 +16,26 @@ import {
 } from 'lucide-react';
 
 const AdminRevenue = () => {
-  const { isAdmin, platformStats } = useAdminData();
+  const { isAdmin, platformStats, loading } = useAdminData();
+
+  if (loading || isAdmin === null) {
+    return (
+      <AdminLayout title="Revenue Management" description="Track SaaS subscription revenue and merchant GMV">
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {[...Array(2)].map((_, i) => (
+              <div key={i} className="h-32 bg-muted animate-pulse rounded-lg" />
+            ))}
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="h-24 bg-muted animate-pulse rounded-lg" />
+            ))}
+          </div>
+        </div>
+      </AdminLayout>
+    );
+  }
 
   if (!isAdmin) {
     return (
@@ -27,6 +46,9 @@ const AdminRevenue = () => {
               <AlertCircle className="h-5 w-5" />
               Access Denied
             </CardTitle>
+            <CardDescription>
+              You don't have permission to view this page. Only super admins can access the admin panel.
+            </CardDescription>
           </CardHeader>
         </Card>
       </AdminLayout>

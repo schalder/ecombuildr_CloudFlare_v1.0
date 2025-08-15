@@ -33,7 +33,7 @@ interface BillingRecord {
 }
 
 const BillingManagement = () => {
-  const { isAdmin, platformStats } = useAdminData();
+  const { isAdmin, platformStats, loading: adminLoading } = useAdminData();
   const [billingRecords, setBillingRecords] = useState<BillingRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -139,6 +139,21 @@ const BillingManagement = () => {
 
   const monthlyRevenue = platformStats?.monthly_gmv || 0;
 
+  if (adminLoading || isAdmin === null) {
+    return (
+      <AdminLayout title="Billing Management" description="Manage all payments and subscriptions">
+        <div className="space-y-6">
+          <div className="grid gap-4 md:grid-cols-4">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="h-24 bg-muted animate-pulse rounded-lg" />
+            ))}
+          </div>
+          <div className="h-64 bg-muted animate-pulse rounded-lg" />
+        </div>
+      </AdminLayout>
+    );
+  }
+
   if (!isAdmin) {
     return (
       <AdminLayout title="Billing Management">
@@ -148,6 +163,9 @@ const BillingManagement = () => {
               <AlertCircle className="h-5 w-5" />
               Access Denied
             </CardTitle>
+            <CardDescription>
+              You don't have permission to view this page. Only super admins can access the admin panel.
+            </CardDescription>
           </CardHeader>
         </Card>
       </AdminLayout>

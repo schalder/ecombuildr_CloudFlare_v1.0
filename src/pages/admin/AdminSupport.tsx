@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 
 const AdminSupport = () => {
-  const { isAdmin } = useAdminData();
+  const { isAdmin, loading } = useAdminData();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
 
@@ -94,6 +94,21 @@ const AdminSupport = () => {
     return matchesSearch && matchesStatus;
   });
 
+  if (loading || isAdmin === null) {
+    return (
+      <AdminLayout title="Support Center" description="Manage customer support tickets and inquiries">
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="h-24 bg-muted animate-pulse rounded-lg" />
+            ))}
+          </div>
+          <div className="h-64 bg-muted animate-pulse rounded-lg" />
+        </div>
+      </AdminLayout>
+    );
+  }
+
   if (!isAdmin) {
     return (
       <AdminLayout title="Support Center">
@@ -103,6 +118,9 @@ const AdminSupport = () => {
               <AlertCircle className="h-5 w-5" />
               Access Denied
             </CardTitle>
+            <CardDescription>
+              You don't have permission to view this page. Only super admins can access the admin panel.
+            </CardDescription>
           </CardHeader>
         </Card>
       </AdminLayout>

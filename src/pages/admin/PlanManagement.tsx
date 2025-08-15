@@ -31,7 +31,7 @@ interface PlanLimit {
 }
 
 const PlanManagement = () => {
-  const { isAdmin } = useAdminData();
+  const { isAdmin, loading: adminLoading } = useAdminData();
   const { toast } = useToast();
   const [planLimits, setPlanLimits] = useState<PlanLimit[]>([]);
   const [loading, setLoading] = useState(false);
@@ -99,6 +99,18 @@ const PlanManagement = () => {
     ));
   };
 
+  if (adminLoading || isAdmin === null) {
+    return (
+      <AdminLayout title="Plan Management" description="Subscription plan pricing and limits configuration">
+        <div className="space-y-6">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="h-64 bg-muted animate-pulse rounded-lg" />
+          ))}
+        </div>
+      </AdminLayout>
+    );
+  }
+
   if (!isAdmin) {
     return (
       <AdminLayout title="Plan Management">
@@ -108,6 +120,9 @@ const PlanManagement = () => {
               <AlertCircle className="h-5 w-5" />
               Access Denied
             </CardTitle>
+            <CardDescription>
+              You don't have permission to view this page. Only super admins can access the admin panel.
+            </CardDescription>
           </CardHeader>
         </Card>
       </AdminLayout>

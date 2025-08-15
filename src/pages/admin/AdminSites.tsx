@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { useAdminData } from '@/hooks/useAdminData';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -35,8 +35,7 @@ interface FunnelData {
 }
 
 const AdminSites = () => {
-  console.log('AdminSites component loading...');
-  const { isAdmin } = useAdminData();
+  const { isAdmin, loading: adminLoading } = useAdminData();
   const { toast } = useToast();
   const [websites, setWebsites] = useState<WebsiteData[]>([]);
   const [funnels, setFunnels] = useState<FunnelData[]>([]);
@@ -188,6 +187,21 @@ const AdminSites = () => {
     (funnel.store_name?.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
+  if (adminLoading || isAdmin === null) {
+    return (
+      <AdminLayout title="Sites Management" description="Manage websites and funnels">
+        <div className="space-y-6">
+          <div className="h-12 bg-muted animate-pulse rounded-lg" />
+          <div className="space-y-4">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="h-32 bg-muted animate-pulse rounded-lg" />
+            ))}
+          </div>
+        </div>
+      </AdminLayout>
+    );
+  }
+
   if (!isAdmin) {
     return (
       <AdminLayout title="Sites Management">
@@ -197,6 +211,9 @@ const AdminSites = () => {
               <AlertCircle className="h-5 w-5" />
               Access Denied
             </CardTitle>
+            <CardDescription>
+              You don't have permission to view this page. Only super admins can access the admin panel.
+            </CardDescription>
           </CardHeader>
         </Card>
       </AdminLayout>

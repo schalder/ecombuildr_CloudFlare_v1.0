@@ -19,7 +19,22 @@ const mockRevenueData = [
 ];
 
 const AdminAnalytics = () => {
-  const { isAdmin, platformStats } = useAdminData();
+  const { isAdmin, platformStats, loading } = useAdminData();
+
+  if (loading || isAdmin === null) {
+    return (
+      <AdminLayout title="Platform Analytics" description="Comprehensive platform performance metrics">
+        <div className="space-y-6">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="h-32 bg-muted animate-pulse rounded-lg" />
+            ))}
+          </div>
+          <div className="h-80 bg-muted animate-pulse rounded-lg" />
+        </div>
+      </AdminLayout>
+    );
+  }
 
   if (!isAdmin) {
     return (
@@ -30,6 +45,9 @@ const AdminAnalytics = () => {
               <AlertCircle className="h-5 w-5" />
               Access Denied
             </CardTitle>
+            <CardDescription>
+              You don't have permission to view this page. Only super admins can access the admin panel.
+            </CardDescription>
           </CardHeader>
         </Card>
       </AdminLayout>

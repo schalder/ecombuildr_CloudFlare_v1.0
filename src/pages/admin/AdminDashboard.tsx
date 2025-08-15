@@ -211,9 +211,9 @@ const AdminDashboard = () => {
                 </a>
               </Button>
               <Button asChild variant="outline" className="h-20 flex-col gap-2">
-                <a href="/admin/stores">
+                <a href="/admin/sites">
                   <Store className="h-6 w-6" />
-                  Store Management
+                  Sites Management
                 </a>
               </Button>
               <Button asChild variant="outline" className="h-20 flex-col gap-2">

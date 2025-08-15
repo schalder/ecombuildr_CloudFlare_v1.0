@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 
 const AdminSystemSettings = () => {
-  const { isAdmin } = useAdminData();
+  const { isAdmin, loading } = useAdminData();
   const { toast } = useToast();
   
   // Local state for settings (in a real app, this would come from the database)
@@ -67,6 +67,17 @@ const AdminSystemSettings = () => {
     }));
   };
 
+  if (loading || isAdmin === null) {
+    return (
+      <AdminLayout title="System Settings" description="Configure platform-wide settings and preferences">
+        <div className="space-y-6">
+          <div className="h-12 bg-muted animate-pulse rounded-lg" />
+          <div className="h-96 bg-muted animate-pulse rounded-lg" />
+        </div>
+      </AdminLayout>
+    );
+  }
+
   if (!isAdmin) {
     return (
       <AdminLayout title="System Settings">
@@ -76,6 +87,9 @@ const AdminSystemSettings = () => {
               <AlertCircle className="h-5 w-5" />
               Access Denied
             </CardTitle>
+            <CardDescription>
+              You don't have permission to view this page. Only super admins can access the admin panel.
+            </CardDescription>
           </CardHeader>
         </Card>
       </AdminLayout>
