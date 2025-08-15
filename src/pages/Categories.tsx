@@ -49,6 +49,7 @@ export default function Categories() {
   const [storeId, setStoreId] = useState<string>('');
   const [selectedWebsites, setSelectedWebsites] = useState<string[]>([]);
   const [editSelectedWebsites, setEditSelectedWebsites] = useState<string[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const [formData, setFormData] = useState({
     name: '',
@@ -225,6 +226,25 @@ export default function Categories() {
 
       if (error) throw error;
 
+      // Update website visibility
+      await supabase
+        .from('category_website_visibility')
+        .delete()
+        .eq('category_id', editingCategory.id);
+
+      if (editSelectedWebsites.length > 0) {
+        const visibilityRecords = editSelectedWebsites.map(websiteId => ({
+          category_id: editingCategory.id,
+          website_id: websiteId
+        }));
+
+        const { error: visibilityError } = await supabase
+          .from('category_website_visibility')
+          .insert(visibilityRecords);
+
+        if (visibilityError) throw visibilityError;
+      }
+
       toast({
         title: "Success",
         description: "Category updated successfully!",
@@ -232,6 +252,7 @@ export default function Categories() {
 
       setIsEditDialogOpen(false);
       setEditingCategory(null);
+      setEditSelectedWebsites([]);
       fetchCategories();
     } catch (error: any) {
       toast({
@@ -337,6 +358,15 @@ export default function Categories() {
 
         {/* Categories by Website */}
         <div className="space-y-6">
+          <div className="flex items-center gap-4">
+            <Input
+              placeholder="Search categories..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="max-w-sm"
+            />
+          </div>
+          
           {loading ? (
             <div className="text-center py-8">Loading...</div>
           ) : (
@@ -349,13 +379,19 @@ export default function Categories() {
                     <p className="text-sm text-muted-foreground">Categories visible on all websites</p>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid gap-4">
-                      {categoriesByWebsite.all.map((category) => (
-                        <div key={category.id} className="flex items-center justify-between p-4 border rounded-lg">
-                          <div className="flex-1">
-                            <h4 className="font-medium">{category.name}</h4>
-                            <p className="text-sm text-muted-foreground">{category.description}</p>
-                            <code className="text-xs bg-muted px-2 py-1 rounded mt-2 inline-block">
+                    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                      {categoriesByWebsite.all
+                        .filter(category => 
+                          searchQuery === '' || 
+                          category.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          category.description.toLowerCase().includes(searchQuery.toLowerCase())
+                        )
+                        .map((category) => (
+                        <div key={category.id} className="flex items-center justify-between p-3 border rounded-lg">
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-medium text-sm">{category.name}</h4>
+                            <p className="text-xs text-muted-foreground truncate">{category.description}</p>
+                            <code className="text-xs bg-muted px-1.5 py-0.5 rounded mt-1 inline-block">
                               {category.slug}
                             </code>
                           </div>
@@ -365,15 +401,23 @@ export default function Categories() {
                                 <MoreVertical className="h-4 w-4" />
                               </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
+                            <DropdownMenuContent align="end" className="z-50 bg-popover">
                               <DropdownMenuItem 
-                               onClick={() => {
+                               onClick={async () => {
                                    setEditingCategory(category);
                                    setEditFormData({
                                      name: category.name,
                                      description: category.description,
                                      image_url: category.image_url || '',
                                    });
+                                   
+                                   // Load existing visibility
+                                   const { data: visibilityData } = await supabase
+                                     .from('category_website_visibility')
+                                     .select('website_id')
+                                     .eq('category_id', category.id);
+                                   
+                                   setEditSelectedWebsites(visibilityData?.map(v => v.website_id) || []);
                                    setIsEditDialogOpen(true);
                                  }}
                               >
@@ -409,13 +453,19 @@ export default function Categories() {
                         No categories specific to {website.name}
                       </div>
                     ) : (
-                      <div className="grid gap-4">
-                        {categoriesByWebsite[website.id].map((category) => (
-                          <div key={category.id} className="flex items-center justify-between p-4 border rounded-lg">
-                            <div className="flex-1">
-                              <h4 className="font-medium">{category.name}</h4>
-                              <p className="text-sm text-muted-foreground">{category.description}</p>
-                              <code className="text-xs bg-muted px-2 py-1 rounded mt-2 inline-block">
+                      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                        {categoriesByWebsite[website.id]
+                          .filter(category => 
+                            searchQuery === '' || 
+                            category.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                            category.description.toLowerCase().includes(searchQuery.toLowerCase())
+                          )
+                          .map((category) => (
+                          <div key={category.id} className="flex items-center justify-between p-3 border rounded-lg">
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-medium text-sm">{category.name}</h4>
+                              <p className="text-xs text-muted-foreground truncate">{category.description}</p>
+                              <code className="text-xs bg-muted px-1.5 py-0.5 rounded mt-1 inline-block">
                                 {category.slug}
                               </code>
                             </div>
@@ -425,15 +475,23 @@ export default function Categories() {
                                   <MoreVertical className="h-4 w-4" />
                                 </Button>
                               </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
+                              <DropdownMenuContent align="end" className="z-50 bg-popover">
                                 <DropdownMenuItem 
-                                 onClick={() => {
+                                 onClick={async () => {
                                      setEditingCategory(category);
                                      setEditFormData({
                                        name: category.name,
                                        description: category.description,
                                        image_url: category.image_url || '',
                                      });
+                                     
+                                     // Load existing visibility
+                                     const { data: visibilityData } = await supabase
+                                       .from('category_website_visibility')
+                                       .select('website_id')
+                                       .eq('category_id', category.id);
+                                     
+                                     setEditSelectedWebsites(visibilityData?.map(v => v.website_id) || []);
                                      setIsEditDialogOpen(true);
                                    }}
                                 >
@@ -502,6 +560,18 @@ export default function Categories() {
                   value={editFormData.image_url}
                   onChange={(e) => setEditFormData(prev => ({ ...prev, image_url: e.target.value }))}
                 />
+              </div>
+              <div className="space-y-2">
+                <Label>Website Visibility</Label>
+                <MultiSelect
+                  options={storeWebsites.map(w => ({ label: w.name, value: w.id }))}
+                  selected={editSelectedWebsites}
+                  onChange={setEditSelectedWebsites}
+                  placeholder="Select websites to show this category on..."
+                />
+                <p className="text-sm text-muted-foreground">
+                  Choose which websites this category will be visible on. Leave empty to show on all websites.
+                </p>
               </div>
               <div className="flex justify-end space-x-2">
                 <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>

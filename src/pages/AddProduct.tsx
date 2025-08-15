@@ -87,11 +87,18 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
     }
   }, [user]);
 
-  // Filter categories based on selected website
+  // Preselect first website if available
+  useEffect(() => {
+    if (storeWebsites.length > 0 && !selectedWebsiteId) {
+      setSelectedWebsiteId(storeWebsites[0].id);
+    }
+  }, [storeWebsites, selectedWebsiteId]);
+
+  // Filter categories based on selected website (strict filtering)
   useEffect(() => {
     const filterCategories = async () => {
       if (!selectedWebsiteId) {
-        setFilteredCategories(categories);
+        setFilteredCategories([]);
         return;
       }
 
@@ -103,15 +110,13 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
 
         const visibleCategoryIds = visibilityData?.map(v => v.category_id) || [];
         
-        // Show categories that are either visible on this website or not assigned to any website
-        const filtered = categories.filter(cat => 
-          visibleCategoryIds.includes(cat.id) || visibleCategoryIds.length === 0
-        );
+        // Only show categories assigned to this specific website
+        const filtered = categories.filter(cat => visibleCategoryIds.includes(cat.id));
         
         setFilteredCategories(filtered);
       } catch (error) {
         console.error('Error filtering categories:', error);
-        setFilteredCategories(categories);
+        setFilteredCategories([]);
       }
     };
 
@@ -267,9 +272,10 @@ const { data: newProduct, error: insertError } = await supabase.from('products')
                 <Select 
                   value={formData.category_id} 
                   onValueChange={(value) => setFormData(prev => ({ ...prev, category_id: value }))}
+                  disabled={!selectedWebsiteId}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select a category" />
+                    <SelectValue placeholder={selectedWebsiteId ? "Select a category" : "Select a website first"} />
                   </SelectTrigger>
                   <SelectContent>
                     {filteredCategories.map((category) => (
@@ -280,7 +286,9 @@ const { data: newProduct, error: insertError } = await supabase.from('products')
                   </SelectContent>
                 </Select>
                 <p className="text-sm text-muted-foreground">
-                  {selectedWebsiteId ? 'Categories filtered for selected website' : 'Select a website first to filter categories'}
+                  {selectedWebsiteId 
+                    ? `${filteredCategories.length} categories available for this website` 
+                    : 'Select a website first to see available categories'}
                 </p>
               </div>
             </div>

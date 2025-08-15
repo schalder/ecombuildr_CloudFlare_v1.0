@@ -106,18 +106,20 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
     }
   }, [user, id]);
 
-  // Set selected website from visibility data
+  // Set selected website from visibility data or default to first website
   useEffect(() => {
     if (visibleWebsites.length > 0) {
       setSelectedWebsiteId(visibleWebsites[0]);
+    } else if (storeWebsites.length > 0 && !selectedWebsiteId) {
+      setSelectedWebsiteId(storeWebsites[0].id);
     }
-  }, [visibleWebsites]);
+  }, [visibleWebsites, storeWebsites, selectedWebsiteId]);
 
-  // Filter categories based on selected website
+  // Filter categories based on selected website (strict filtering)
   useEffect(() => {
     const filterCategories = async () => {
       if (!selectedWebsiteId) {
-        setFilteredCategories(categories);
+        setFilteredCategories([]);
         return;
       }
 
@@ -129,15 +131,13 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
 
         const visibleCategoryIds = visibilityData?.map(v => v.category_id) || [];
         
-        // Show categories that are either visible on this website or not assigned to any website
-        const filtered = categories.filter(cat => 
-          visibleCategoryIds.includes(cat.id) || visibleCategoryIds.length === 0
-        );
+        // Only show categories assigned to this specific website
+        const filtered = categories.filter(cat => visibleCategoryIds.includes(cat.id));
         
         setFilteredCategories(filtered);
       } catch (error) {
         console.error('Error filtering categories:', error);
-        setFilteredCategories(categories);
+        setFilteredCategories([]);
       }
     };
 
@@ -262,6 +262,16 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!selectedWebsiteId) {
+      toast({
+        title: "Error",
+        description: "Please select a website for this product",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setSaving(true);
 
     try {
@@ -394,9 +404,10 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
                   <Select 
                     value={formData.category_id} 
                     onValueChange={(value) => handleInputChange('category_id', value)}
+                    disabled={!selectedWebsiteId}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select a category" />
+                      <SelectValue placeholder={selectedWebsiteId ? "Select a category" : "Select a website first"} />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="none">No category</SelectItem>
@@ -408,7 +419,9 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
                     </SelectContent>
                   </Select>
                   <p className="text-sm text-muted-foreground">
-                    {selectedWebsiteId ? 'Categories filtered for selected website' : 'Select a website first to filter categories'}
+                    {selectedWebsiteId 
+                      ? `${filteredCategories.length} categories available for this website` 
+                      : 'Select a website first to see available categories'}
                   </p>
                 </div>
               </div>
