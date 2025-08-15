@@ -38,14 +38,16 @@ export default function CreateWebsite() {
     let uniqueSlug = baseSlug;
     
     while (attempts < 10) {
-      // Get current store for checking
-      const currentStore = store || await getOrCreateStore();
-      if (!currentStore?.id) return baseSlug;
+      // If we don't have a store yet, just return the base slug
+      // The uniqueness will be handled during creation
+      if (!store?.id) {
+        return uniqueSlug;
+      }
       
       const { data, error } = await supabase
         .from('websites')
         .select('slug')
-        .eq('store_id', currentStore.id)
+        .eq('store_id', store.id)
         .eq('slug', uniqueSlug)
         .maybeSingle();
       
@@ -66,38 +68,44 @@ export default function CreateWebsite() {
   const checkSlugAvailability = async (slug: string) => {
     if (!slug.trim()) return;
     
-    // Try to get store, if none exists we'll create one later
-    const currentStore = store || await getOrCreateStore();
-    if (!currentStore?.id) return;
-    
     setSlugStatus('checking');
     
     try {
-      const { data, error } = await supabase
-        .from('websites')
-        .select('slug')
-        .eq('store_id', currentStore.id)
-        .eq('slug', slug)
-        .maybeSingle();
-      
-      if (error) {
-        setSlugStatus('error');
-        return;
-      }
-      
-      if (data) {
-        // Slug is taken, generate unique one
-        const uniqueSlug = await generateUniqueSlug(slug);
-        setSuggestedSlug(uniqueSlug);
-        setFinalSlug(uniqueSlug);
-        setSlugStatus('taken');
+      // If we have a store, check within that store
+      if (store?.id) {
+        const { data, error } = await supabase
+          .from('websites')
+          .select('slug')
+          .eq('store_id', store.id)
+          .eq('slug', slug)
+          .maybeSingle();
+        
+        if (error) {
+          setSlugStatus('error');
+          return;
+        }
+        
+        if (data) {
+          // Slug is taken, generate unique one
+          const uniqueSlug = await generateUniqueSlug(slug);
+          setSuggestedSlug(uniqueSlug);
+          setFinalSlug(uniqueSlug);
+          setSlugStatus('taken');
+        } else {
+          // Slug is available
+          setFinalSlug(slug);
+          setSuggestedSlug('');
+          setSlugStatus('available');
+        }
       } else {
-        // Slug is available
+        // For new users without a store, just validate format and set available
+        // The actual uniqueness check will happen during creation
         setFinalSlug(slug);
         setSuggestedSlug('');
         setSlugStatus('available');
       }
     } catch (error) {
+      console.error('Slug check error:', error);
       setSlugStatus('error');
     }
   };

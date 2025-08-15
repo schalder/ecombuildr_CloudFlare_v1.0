@@ -54,9 +54,10 @@ export const usePlanLimits = () => {
         .from('profiles')
         .select('subscription_plan, account_status, trial_started_at, trial_expires_at, subscription_expires_at')
         .eq('id', user.id)
-        .single();
+        .maybeSingle();
 
       if (profileError) throw profileError;
+      if (!profile) throw new Error('User profile not found');
 
       setUserProfile(profile);
 
@@ -65,9 +66,10 @@ export const usePlanLimits = () => {
         .from('plan_limits')
         .select('*')
         .eq('plan_name', profile.subscription_plan)
-        .single();
+        .maybeSingle();
 
       if (limitsError) throw limitsError;
+      if (!limits) throw new Error(`Plan limits not found for plan: ${profile.subscription_plan}`);
 
       setPlanLimits(limits);
 
@@ -76,11 +78,22 @@ export const usePlanLimits = () => {
         .from('user_usage')
         .select('current_stores, current_websites, current_funnels, current_orders_this_month')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
       if (usageError) throw usageError;
-
-      setUserUsage(usage);
+      if (!usage) {
+        // Initialize usage record if it doesn't exist
+        const { data: newUsage, error: createError } = await supabase
+          .from('user_usage')
+          .insert({ user_id: user.id })
+          .select('current_stores, current_websites, current_funnels, current_orders_this_month')
+          .single();
+        
+        if (createError) throw createError;
+        setUserUsage(newUsage);
+      } else {
+        setUserUsage(usage);
+      }
 
     } catch (err) {
       console.error('Error fetching plan data:', err);

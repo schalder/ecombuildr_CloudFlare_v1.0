@@ -66,6 +66,33 @@ export const useUserStore = () => {
     }
 
     try {
+      // Ensure user profile exists first
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (profileError) {
+        console.error('Error checking profile:', profileError);
+      }
+
+      // Create profile if it doesn't exist
+      if (!profile) {
+        const { error: createProfileError } = await supabase
+          .from('profiles')
+          .insert({
+            id: user.id,
+            email: user.email,
+            full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
+          });
+
+        if (createProfileError && !createProfileError.message.includes('duplicate key')) {
+          console.error('Error creating profile:', createProfileError);
+        }
+      }
+
+      // Try to create the store
       const { data, error } = await supabase
         .from('stores')
         .insert({
