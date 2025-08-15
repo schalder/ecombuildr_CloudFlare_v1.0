@@ -48,6 +48,11 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import UserManagement from "./pages/admin/UserManagement";
 import BillingManagement from "./pages/admin/BillingManagement";
 import PlanManagement from "./pages/admin/PlanManagement";
+import AdminStores from "./pages/admin/AdminStores";
+import AdminAnalytics from "./pages/admin/AdminAnalytics";
+import AdminRevenue from "./pages/admin/AdminRevenue";
+import AdminSupport from "./pages/admin/AdminSupport";
+import AdminSystemSettings from "./pages/admin/AdminSystemSettings";
 import { StorefrontHome } from "./pages/storefront/StorefrontHome";
 import { StorefrontProducts } from "./pages/storefront/StorefrontProducts";
 import ProductDetail from "./pages/storefront/ProductDetail";
@@ -124,6 +129,11 @@ const App = () => (
                 <Route path="/admin/users" element={<UserManagement />} />
                 <Route path="/admin/billing" element={<BillingManagement />} />
                 <Route path="/admin/plans" element={<PlanManagement />} />
+                <Route path="/admin/stores" element={<AdminStores />} />
+                <Route path="/admin/analytics" element={<AdminAnalytics />} />
+                <Route path="/admin/revenue" element={<AdminRevenue />} />
+                <Route path="/admin/support" element={<AdminSupport />} />
+                <Route path="/admin/settings" element={<AdminSystemSettings />} />
                 
                 {/* Demo and Preview Routes */}
                 <Route path="/preview/demo" element={<DemoPreview />} />

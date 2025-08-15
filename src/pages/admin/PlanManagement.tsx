@@ -56,8 +56,8 @@ const PlanManagement = () => {
     } catch (err) {
       console.error('Error loading plan limits:', err);
       toast({
-        title: 'লোড করতে ব্যর্থ',
-        description: 'প্ল্যান তথ্য লোড করতে সমস্যা হয়েছে।',
+        title: 'Failed to Load',
+        description: 'There was a problem loading plan information.',
         variant: 'destructive',
       });
     }
@@ -74,16 +74,16 @@ const PlanManagement = () => {
       if (error) throw error;
 
       toast({
-        title: 'সফলভাবে সংরক্ষিত',
-        description: `${plan.plan_name} প্ল্যানের তথ্য আপডেট করা হয়েছে।`,
+        title: 'Successfully Saved',
+        description: `${plan.plan_name} plan information has been updated.`,
       });
 
       await loadPlanLimits();
     } catch (err) {
       console.error('Error saving plan:', err);
       toast({
-        title: 'সংরক্ষণ ব্যর্থ',
-        description: 'প্ল্যান তথ্য সংরক্ষণ করতে সমস্যা হয়েছে।',
+        title: 'Save Failed',
+        description: 'There was a problem saving plan information.',
         variant: 'destructive',
       });
     } finally {
@@ -101,12 +101,12 @@ const PlanManagement = () => {
 
   if (!isAdmin) {
     return (
-      <AdminLayout title="প্ল্যান ম্যানেজমেন্ট">
+      <AdminLayout title="Plan Management">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-destructive">
               <AlertCircle className="h-5 w-5" />
-              অ্যাক্সেস অস্বীকৃত
+              Access Denied
             </CardTitle>
           </CardHeader>
         </Card>
@@ -115,7 +115,7 @@ const PlanManagement = () => {
   }
 
   return (
-    <AdminLayout title="প্ল্যান ম্যানেজমেন্ট" description="সাবস্ক্রিপশন প্ল্যান ও মূল্য নির্ধারণ">
+    <AdminLayout title="Plan Management" description="Subscription plan pricing and limits configuration">
       <div className="space-y-6">
         {planLimits.map((plan) => (
           <Card key={plan.plan_name}>
@@ -124,10 +124,10 @@ const PlanManagement = () => {
                 <div>
                   <CardTitle className="flex items-center gap-2">
                     <DollarSign className="h-5 w-5" />
-                    {plan.plan_name.charAt(0).toUpperCase() + plan.plan_name.slice(1)} প্ল্যান
+                    {plan.plan_name.charAt(0).toUpperCase() + plan.plan_name.slice(1)} Plan
                   </CardTitle>
                   <CardDescription>
-                    মূল্য ও সীমা নির্ধারণ করুন
+                    Configure pricing and limits
                   </CardDescription>
                 </div>
                 <Button 
@@ -136,7 +136,7 @@ const PlanManagement = () => {
                   size="sm"
                 >
                   <Save className="h-4 w-4 mr-2" />
-                  সংরক্ষণ
+                  Save
                 </Button>
               </div>
             </CardHeader>
@@ -144,91 +144,91 @@ const PlanManagement = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {/* Pricing */}
                 <div className="space-y-2">
-                  <Label htmlFor={`${plan.plan_name}-price`}>মাসিক মূল্য (টাকা)</Label>
+                  <Label htmlFor={`${plan.plan_name}-price`}>Monthly Price (BDT)</Label>
                   <Input
                     id={`${plan.plan_name}-price`}
                     type="number"
                     value={plan.price_bdt}
                     onChange={(e) => updatePlanField(plan.plan_name, 'price_bdt', Number(e.target.value))}
-                    placeholder="৫০০"
+                    placeholder="500"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor={`${plan.plan_name}-trial`}>ট্রায়াল দিন</Label>
+                  <Label htmlFor={`${plan.plan_name}-trial`}>Trial Days</Label>
                   <Input
                     id={`${plan.plan_name}-trial`}
                     type="number"
                     value={plan.trial_days}
                     onChange={(e) => updatePlanField(plan.plan_name, 'trial_days', Number(e.target.value))}
-                    placeholder="৭"
+                    placeholder="7"
                   />
                 </div>
 
                 {/* Resource Limits */}
                 <div className="space-y-2">
-                  <Label htmlFor={`${plan.plan_name}-stores`}>সর্বোচ্চ স্টোর</Label>
+                  <Label htmlFor={`${plan.plan_name}-stores`}>Max Stores</Label>
                   <Input
                     id={`${plan.plan_name}-stores`}
                     type="number"
                     value={plan.max_stores || ''}
                     onChange={(e) => updatePlanField(plan.plan_name, 'max_stores', e.target.value ? Number(e.target.value) : null)}
-                    placeholder="সীমাহীনের জন্য খালি রাখুন"
+                    placeholder="Leave empty for unlimited"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor={`${plan.plan_name}-websites`}>সর্বোচ্চ ওয়েবসাইট</Label>
+                  <Label htmlFor={`${plan.plan_name}-websites`}>Max Websites</Label>
                   <Input
                     id={`${plan.plan_name}-websites`}
                     type="number"
                     value={plan.max_websites || ''}
                     onChange={(e) => updatePlanField(plan.plan_name, 'max_websites', e.target.value ? Number(e.target.value) : null)}
-                    placeholder="সীমাহীনের জন্য খালি রাখুন"
+                    placeholder="Leave empty for unlimited"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor={`${plan.plan_name}-funnels`}>সর্বোচ্চ ফানেল</Label>
+                  <Label htmlFor={`${plan.plan_name}-funnels`}>Max Funnels</Label>
                   <Input
                     id={`${plan.plan_name}-funnels`}
                     type="number"
                     value={plan.max_funnels || ''}
                     onChange={(e) => updatePlanField(plan.plan_name, 'max_funnels', e.target.value ? Number(e.target.value) : null)}
-                    placeholder="সীমাহীনের জন্য খালি রাখুন"
+                    placeholder="Leave empty for unlimited"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor={`${plan.plan_name}-pages`}>প্রতি স্টোরে পেজ</Label>
+                  <Label htmlFor={`${plan.plan_name}-pages`}>Pages per Store</Label>
                   <Input
                     id={`${plan.plan_name}-pages`}
                     type="number"
                     value={plan.max_pages_per_store || ''}
                     onChange={(e) => updatePlanField(plan.plan_name, 'max_pages_per_store', e.target.value ? Number(e.target.value) : null)}
-                    placeholder="সীমাহীনের জন্য খালি রাখুন"
+                    placeholder="Leave empty for unlimited"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor={`${plan.plan_name}-products`}>প্রতি স্টোরে পণ্য</Label>
+                  <Label htmlFor={`${plan.plan_name}-products`}>Products per Store</Label>
                   <Input
                     id={`${plan.plan_name}-products`}
                     type="number"
                     value={plan.max_products_per_store || ''}
                     onChange={(e) => updatePlanField(plan.plan_name, 'max_products_per_store', e.target.value ? Number(e.target.value) : null)}
-                    placeholder="সীমাহীনের জন্য খালি রাখুন"
+                    placeholder="Leave empty for unlimited"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor={`${plan.plan_name}-orders`}>মাসিক অর্ডার</Label>
+                  <Label htmlFor={`${plan.plan_name}-orders`}>Monthly Orders</Label>
                   <Input
                     id={`${plan.plan_name}-orders`}
                     type="number"
                     value={plan.max_orders_per_month || ''}
                     onChange={(e) => updatePlanField(plan.plan_name, 'max_orders_per_month', e.target.value ? Number(e.target.value) : null)}
-                    placeholder="সীমাহীনের জন্য খালি রাখুন"
+                    placeholder="Leave empty for unlimited"
                   />
                 </div>
 
@@ -242,7 +242,7 @@ const PlanManagement = () => {
                       onChange={(e) => updatePlanField(plan.plan_name, 'custom_domain_allowed', e.target.checked)}
                       className="rounded"
                     />
-                    <Label htmlFor={`${plan.plan_name}-domain`}>কাস্টম ডোমেইন</Label>
+                    <Label htmlFor={`${plan.plan_name}-domain`}>Custom Domain</Label>
                   </div>
 
                   <div className="flex items-center space-x-2">
@@ -253,7 +253,7 @@ const PlanManagement = () => {
                       onChange={(e) => updatePlanField(plan.plan_name, 'priority_support', e.target.checked)}
                       className="rounded"
                     />
-                    <Label htmlFor={`${plan.plan_name}-support`}>প্রাইরিটি সাপোর্ট</Label>
+                    <Label htmlFor={`${plan.plan_name}-support`}>Priority Support</Label>
                   </div>
 
                   <div className="flex items-center space-x-2">
@@ -264,7 +264,7 @@ const PlanManagement = () => {
                       onChange={(e) => updatePlanField(plan.plan_name, 'white_label', e.target.checked)}
                       className="rounded"
                     />
-                    <Label htmlFor={`${plan.plan_name}-whitelabel`}>হোয়াইট লেবেল</Label>
+                    <Label htmlFor={`${plan.plan_name}-whitelabel`}>White Label</Label>
                   </div>
                 </div>
               </div>
