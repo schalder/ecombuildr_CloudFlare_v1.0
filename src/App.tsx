@@ -118,6 +118,13 @@ const App = () => (
                 <Route path="/dashboard/stores/create" element={<CreateStore />} />
                 <Route path="/dashboard/stores/:storeId" element={<StoreManagement />} />
                 
+                {/* Admin Routes */}
+                <Route path="/admin" element={<AdminDashboard />} />
+                <Route path="/admin/dashboard" element={<AdminDashboard />} />
+                <Route path="/admin/users" element={<UserManagement />} />
+                <Route path="/admin/billing" element={<BillingManagement />} />
+                <Route path="/admin/plans" element={<PlanManagement />} />
+                
                 {/* Demo and Preview Routes */}
                 <Route path="/preview/demo" element={<DemoPreview />} />
                 
