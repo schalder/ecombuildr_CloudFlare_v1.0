@@ -9,12 +9,42 @@ interface PlanStatusBannerProps {
 }
 
 export const PlanStatusBanner = ({ onUpgrade }: PlanStatusBannerProps) => {
-  const { userProfile, getTrialDaysRemaining, isTrialExpired } = usePlanLimits();
+  const { 
+    userProfile, 
+    getTrialDaysRemaining, 
+    isTrialExpired, 
+    getGraceDaysRemaining, 
+    isInGracePeriod, 
+    isAccountReadOnly 
+  } = usePlanLimits();
 
   if (!userProfile) return null;
 
   const trialDaysRemaining = getTrialDaysRemaining();
   const trialExpired = isTrialExpired();
+  const graceDaysRemaining = getGraceDaysRemaining();
+  const inGracePeriod = isInGracePeriod();
+  const accountReadOnly = isAccountReadOnly();
+
+  // Account read-only (after grace period)
+  if (accountReadOnly) {
+    return (
+      <Alert variant="destructive" className="mb-6">
+        <AlertTriangle className="h-4 w-4" />
+        <AlertDescription className="flex items-center justify-between">
+          <div>
+            <span className="font-medium">অ্যাকাউন্ট সীমাবদ্ধ</span>
+            <p className="text-sm mt-1">
+              আপনার অ্যাকাউন্ট রিড-অনলি মোডে আছে। সব ওয়েবসাইট ও ফানেল প্রাইভেট হয়ে গেছে। অ্যাকাউন্ট আপগ্রেড করুন।
+            </p>
+          </div>
+          <Button onClick={onUpgrade} size="sm">
+            অ্যাকাউন্ট আপগ্রেড করুন
+          </Button>
+        </AlertDescription>
+      </Alert>
+    );
+  }
 
   // Account suspended
   if (userProfile.account_status === 'suspended') {
@@ -34,15 +64,17 @@ export const PlanStatusBanner = ({ onUpgrade }: PlanStatusBannerProps) => {
     );
   }
 
-  // Trial expired
-  if (trialExpired) {
+  // Trial expired but in grace period
+  if (trialExpired && inGracePeriod && userProfile.account_status === 'trial') {
     return (
       <Alert variant="destructive" className="mb-6">
         <AlertTriangle className="h-4 w-4" />
         <AlertDescription className="flex items-center justify-between">
           <div>
-            <span className="font-medium">ট্রায়াল সময় শেষ</span>
-            <p className="text-sm mt-1">আপনার ট্রায়াল সময় শেষ হয়ে গেছে। পেমেন্ট করে প্ল্যান সক্রিয় করুন।</p>
+            <span className="font-medium">ট্রায়াল শেষ - {graceDaysRemaining} দিন বাকি</span>
+            <p className="text-sm mt-1">
+              আপনার ট্রায়াল শেষ হয়েছে। পেমেন্ট না করলে আরও {graceDaysRemaining} দিন পর অ্যাকাউন্ট রিড-অনলি হয়ে যাবে।
+            </p>
           </div>
           <Button onClick={onUpgrade} size="sm">
             এখনই পেমেন্ট করুন
@@ -50,6 +82,31 @@ export const PlanStatusBanner = ({ onUpgrade }: PlanStatusBannerProps) => {
         </AlertDescription>
       </Alert>
     );
+  }
+
+  // Active subscription expired but in grace period
+  if (userProfile.account_status === 'active' && userProfile.subscription_expires_at) {
+    const subscriptionExpiry = new Date(userProfile.subscription_expires_at);
+    const now = new Date();
+    
+    if (now > subscriptionExpiry && inGracePeriod) {
+      return (
+        <Alert variant="destructive" className="mb-6">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription className="flex items-center justify-between">
+            <div>
+              <span className="font-medium">সাবস্ক্রিপশন শেষ - {graceDaysRemaining} দিন বাকি</span>
+              <p className="text-sm mt-1">
+                আপনার সাবস্ক্রিপশন শেষ হয়েছে। পেমেন্ট না করলে আরও {graceDaysRemaining} দিন পর অ্যাকাউন্ট রিড-অনলি হয়ে যাবে।
+              </p>
+            </div>
+            <Button onClick={onUpgrade} size="sm">
+              পেমেন্ট করুন
+            </Button>
+          </AlertDescription>
+        </Alert>
+      );
+    }
   }
 
   // Active trial with warning
@@ -88,7 +145,7 @@ export const PlanStatusBanner = ({ onUpgrade }: PlanStatusBannerProps) => {
             </p>
           </div>
           <Button onClick={onUpgrade} size="sm">
-            আপগ্রেড করুন
+            ট্রায়াল শুরু করুন
           </Button>
         </AlertDescription>
       </Alert>
@@ -114,7 +171,7 @@ export const PlanStatusBanner = ({ onUpgrade }: PlanStatusBannerProps) => {
             </p>
           </div>
           <Button onClick={onUpgrade} variant="outline" size="sm">
-            এখনই পেমেন্ট করুন
+            পেমেন্ট করুন
           </Button>
         </AlertDescription>
       </Alert>

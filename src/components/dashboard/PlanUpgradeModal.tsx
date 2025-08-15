@@ -198,7 +198,7 @@ export const PlanUpgradeModal = ({ open, onOpenChange }: PlanUpgradeModalProps) 
               <p className="font-medium mb-1">গুরুত্বপূর্ণ তথ্য:</p>
               <ul className="space-y-1">
                 <li>• সকল প্রিমিয়াম প্ল্যানে ৭ দিনের ফ্রি ট্রায়াল আছে</li>
-                <li>• ট্রায়ালের পর স্বয়ংক্রিয়ভাবে পেমেন্ট কাটা হবে</li>
+                
                 <li>• যে কোনো সময় প্ল্যান পরিবর্তন বা বাতিল করা যাবে</li>
                 <li>• পেমেন্ট bKash, Nagad, ও ব্যাংক ট্রান্সফারের মাধ্যমে সম্ভব</li>
               </ul>

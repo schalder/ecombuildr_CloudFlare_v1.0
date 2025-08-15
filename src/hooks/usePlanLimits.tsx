@@ -29,6 +29,7 @@ export interface UserProfile {
   account_status: string;
   trial_started_at?: string;
   trial_expires_at?: string;
+  subscription_expires_at?: string;
 }
 
 export const usePlanLimits = () => {
@@ -51,7 +52,7 @@ export const usePlanLimits = () => {
       // Get user profile with plan info
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('subscription_plan, account_status, trial_started_at, trial_expires_at')
+        .select('subscription_plan, account_status, trial_started_at, trial_expires_at, subscription_expires_at')
         .eq('id', user.id)
         .single();
 
@@ -110,6 +111,72 @@ export const usePlanLimits = () => {
     if (userProfile?.account_status === 'trial' && userProfile?.trial_expires_at) {
       return new Date(userProfile.trial_expires_at) < new Date();
     }
+    return false;
+  };
+
+  const getGraceDaysRemaining = (): number => {
+    if (!userProfile) return 0;
+    
+    // For trial users who have expired
+    if (userProfile.account_status === 'trial' && userProfile.trial_expires_at) {
+      const trialExpiry = new Date(userProfile.trial_expires_at);
+      const graceEnd = new Date(trialExpiry.getTime() + (3 * 24 * 60 * 60 * 1000)); // 3 days after trial expiry
+      const now = new Date();
+      
+      if (now > trialExpiry && now < graceEnd) {
+        const diffTime = graceEnd.getTime() - now.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        return Math.max(0, diffDays);
+      }
+    }
+    
+    // For active users whose subscription has expired
+    if (userProfile.account_status === 'active' && userProfile.subscription_expires_at) {
+      const subscriptionExpiry = new Date(userProfile.subscription_expires_at);
+      const graceEnd = new Date(subscriptionExpiry.getTime() + (3 * 24 * 60 * 60 * 1000)); // 3 days after subscription expiry
+      const now = new Date();
+      
+      if (now > subscriptionExpiry && now < graceEnd) {
+        const diffTime = graceEnd.getTime() - now.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        return Math.max(0, diffDays);
+      }
+    }
+    
+    return 0;
+  };
+
+  const isInGracePeriod = (): boolean => {
+    return getGraceDaysRemaining() > 0;
+  };
+
+  const isAccountReadOnly = (): boolean => {
+    if (userProfile?.account_status === 'suspended' || userProfile?.account_status === 'read_only') {
+      return true;
+    }
+    
+    // Trial expired and grace period over
+    if (userProfile?.account_status === 'trial' && userProfile?.trial_expires_at) {
+      const trialExpiry = new Date(userProfile.trial_expires_at);
+      const graceEnd = new Date(trialExpiry.getTime() + (3 * 24 * 60 * 60 * 1000));
+      const now = new Date();
+      
+      if (now > graceEnd) {
+        return true;
+      }
+    }
+    
+    // Active subscription expired and grace period over
+    if (userProfile?.account_status === 'active' && userProfile?.subscription_expires_at) {
+      const subscriptionExpiry = new Date(userProfile.subscription_expires_at);
+      const graceEnd = new Date(subscriptionExpiry.getTime() + (3 * 24 * 60 * 60 * 1000));
+      const now = new Date();
+      
+      if (now > graceEnd) {
+        return true;
+      }
+    }
+    
     return false;
   };
 
@@ -222,6 +289,9 @@ export const usePlanLimits = () => {
     canCreateResource,
     isTrialExpired,
     getTrialDaysRemaining,
+    getGraceDaysRemaining,
+    isInGracePeriod,
+    isAccountReadOnly,
     getUsagePercentage,
     isAtLimit,
     refetch: fetchPlanData,

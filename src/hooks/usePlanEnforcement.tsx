@@ -9,7 +9,7 @@ interface EnforcementResult {
 }
 
 export const usePlanEnforcement = () => {
-  const { canCreateResource, isTrialExpired, userProfile, planLimits } = usePlanLimits();
+  const { canCreateResource, isTrialExpired, userProfile, planLimits, isAccountReadOnly } = usePlanLimits();
   const { toast } = useToast();
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
@@ -17,6 +17,18 @@ export const usePlanEnforcement = () => {
     resourceType: 'store' | 'website' | 'funnel',
     showToast: boolean = true
   ): Promise<EnforcementResult> => {
+    // Check if account is read-only
+    if (isAccountReadOnly()) {
+      if (showToast) {
+        toast({
+          title: 'অ্যাকাউন্ট সীমাবদ্ধ',
+          description: 'আপনার অ্যাকাউন্ট রিড-অনলি মোডে আছে। নতুন কিছু তৈরি করতে অ্যাকাউন্ট আপগ্রেড করুন।',
+          variant: 'destructive',
+        });
+      }
+      return { allowed: false, reason: 'Account read-only', action: 'upgrade' };
+    }
+
     // Check if account is suspended
     if (userProfile?.account_status === 'suspended') {
       if (showToast) {
