@@ -4,6 +4,7 @@ import { useAdminData } from '@/hooks/useAdminData';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatCurrency } from '@/lib/currency';
 import { 
   DollarSign, 
@@ -13,7 +14,9 @@ import {
   Calendar,
   Users,
   ShoppingBag,
-  Store
+  Store,
+  Globe,
+  Zap
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -41,12 +44,33 @@ interface StoreRevenue {
   orders_count: number;
 }
 
+interface WebsiteRevenue {
+  website_id: string;
+  website_name: string;
+  owner_email: string;
+  store_name: string;
+  revenue: number;
+  orders_count: number;
+}
+
+interface FunnelRevenue {
+  funnel_id: string;
+  funnel_name: string;
+  owner_email: string;
+  store_name: string;
+  revenue: number;
+  orders_count: number;
+}
+
 const AdminRevenue = () => {
   const { isAdmin, platformStats, loading: adminLoading } = useAdminData();
   const [topCustomers, setTopCustomers] = useState<TopCustomer[]>([]);
   const [topProducts, setTopProducts] = useState<TopProduct[]>([]);
   const [storeRevenues, setStoreRevenues] = useState<StoreRevenue[]>([]);
+  const [websiteRevenues, setWebsiteRevenues] = useState<WebsiteRevenue[]>([]);
+  const [funnelRevenues, setFunnelRevenues] = useState<FunnelRevenue[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedTab, setSelectedTab] = useState('stores');
 
   useEffect(() => {
     if (isAdmin) {
@@ -135,6 +159,126 @@ const AdminRevenue = () => {
         .slice(0, 10) as StoreRevenue[];
 
       setStoreRevenues(storeRevenueList);
+
+      // Fetch website revenue breakdown
+      const { data: websiteOrders } = await supabase
+        .from('orders')
+        .select('website_id, total')
+        .not('website_id', 'is', null);
+
+      if (websiteOrders && websiteOrders.length > 0) {
+        const websiteIds = [...new Set(websiteOrders.map(o => o.website_id))];
+        
+        const { data: websites } = await supabase
+          .from('websites')
+          .select('id, name, store_id')
+          .in('id', websiteIds);
+
+        const websiteStoreIds = websites?.map(w => w.store_id).filter(Boolean) || [];
+        const { data: websiteStores } = await supabase
+          .from('stores')
+          .select('id, name, owner_id')
+          .in('id', websiteStoreIds);
+
+        const websiteOwnerIds = websiteStores?.map(s => s.owner_id).filter(Boolean) || [];
+        const { data: websiteOwners } = await supabase
+          .from('profiles')
+          .select('id, email')
+          .in('id', websiteOwnerIds);
+
+        const websiteMap: Record<string, any> = {};
+        const websiteDataMap = new Map(websites?.map(w => [w.id, w]) || []);
+        const websiteStoreMap = new Map(websiteStores?.map(s => [s.id, s]) || []);
+        const websiteOwnerMap = new Map(websiteOwners?.map(o => [o.id, o]) || []);
+
+        websiteOrders.forEach(order => {
+          const websiteId = order.website_id;
+          const website = websiteDataMap.get(websiteId);
+          const store = website ? websiteStoreMap.get(website.store_id) : null;
+          const owner = store ? websiteOwnerMap.get(store.owner_id) : null;
+
+          if (!websiteMap[websiteId] && website) {
+            websiteMap[websiteId] = {
+              website_id: websiteId,
+              website_name: website.name,
+              owner_email: owner?.email || 'N/A',
+              store_name: store?.name || 'N/A',
+              revenue: 0,
+              orders_count: 0
+            };
+          }
+          if (websiteMap[websiteId]) {
+            websiteMap[websiteId].revenue += Number(order.total);
+            websiteMap[websiteId].orders_count += 1;
+          }
+        });
+
+        const websiteRevenueList = Object.values(websiteMap)
+          .sort((a: any, b: any) => b.revenue - a.revenue)
+          .slice(0, 10) as WebsiteRevenue[];
+
+        setWebsiteRevenues(websiteRevenueList);
+      }
+
+      // Fetch funnel revenue breakdown
+      const { data: funnelOrders } = await supabase
+        .from('orders')
+        .select('funnel_id, total')
+        .not('funnel_id', 'is', null);
+
+      if (funnelOrders && funnelOrders.length > 0) {
+        const funnelIds = [...new Set(funnelOrders.map(o => o.funnel_id))];
+        
+        const { data: funnels } = await supabase
+          .from('funnels')
+          .select('id, name, store_id')
+          .in('id', funnelIds);
+
+        const funnelStoreIds = funnels?.map(f => f.store_id).filter(Boolean) || [];
+        const { data: funnelStores } = await supabase
+          .from('stores')
+          .select('id, name, owner_id')
+          .in('id', funnelStoreIds);
+
+        const funnelOwnerIds = funnelStores?.map(s => s.owner_id).filter(Boolean) || [];
+        const { data: funnelOwners } = await supabase
+          .from('profiles')
+          .select('id, email')
+          .in('id', funnelOwnerIds);
+
+        const funnelMap: Record<string, any> = {};
+        const funnelDataMap = new Map(funnels?.map(f => [f.id, f]) || []);
+        const funnelStoreMap = new Map(funnelStores?.map(s => [s.id, s]) || []);
+        const funnelOwnerMap = new Map(funnelOwners?.map(o => [o.id, o]) || []);
+
+        funnelOrders.forEach(order => {
+          const funnelId = order.funnel_id;
+          const funnel = funnelDataMap.get(funnelId);
+          const store = funnel ? funnelStoreMap.get(funnel.store_id) : null;
+          const owner = store ? funnelOwnerMap.get(store.owner_id) : null;
+
+          if (!funnelMap[funnelId] && funnel) {
+            funnelMap[funnelId] = {
+              funnel_id: funnelId,
+              funnel_name: funnel.name,
+              owner_email: owner?.email || 'N/A',
+              store_name: store?.name || 'N/A',
+              revenue: 0,
+              orders_count: 0
+            };
+          }
+          if (funnelMap[funnelId]) {
+            funnelMap[funnelId].revenue += Number(order.total);
+            funnelMap[funnelId].orders_count += 1;
+          }
+        });
+
+        const funnelRevenueList = Object.values(funnelMap)
+          .sort((a: any, b: any) => b.revenue - a.revenue)
+          .slice(0, 10) as FunnelRevenue[];
+
+        setFunnelRevenues(funnelRevenueList);
+      }
     } catch (err) {
       console.error('Error fetching revenue data:', err);
     } finally {
@@ -332,37 +476,112 @@ const AdminRevenue = () => {
           </Card>
         </div>
 
-        {/* Store Performance */}
+        {/* Performance Breakdown */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Store className="h-5 w-5" />
-              Store Performance
+              {selectedTab === 'stores' && <Store className="h-5 w-5" />}
+              {selectedTab === 'websites' && <Globe className="h-5 w-5" />}
+              {selectedTab === 'funnels' && <Zap className="h-5 w-5" />}
+              {selectedTab === 'stores' && 'Store Performance'}
+              {selectedTab === 'websites' && 'Website Performance'}  
+              {selectedTab === 'funnels' && 'Funnel Performance'}
             </CardTitle>
-            <CardDescription>Revenue breakdown by merchant stores</CardDescription>
+            <CardDescription>
+              {selectedTab === 'stores' && 'Revenue breakdown by merchant stores'}
+              {selectedTab === 'websites' && 'Revenue breakdown by websites'}
+              {selectedTab === 'funnels' && 'Revenue breakdown by sales funnels'}
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {storeRevenues.length > 0 ? (
-                storeRevenues.map((store) => (
-                  <div key={store.store_id} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div>
-                      <div className="font-medium">{store.store_name}</div>
-                      <div className="text-sm text-muted-foreground">{store.owner_email}</div>
+            <Tabs value={selectedTab} onValueChange={setSelectedTab} className="mb-6">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="stores" className="flex items-center gap-2">
+                  <Store className="h-4 w-4" />
+                  Stores
+                </TabsTrigger>
+                <TabsTrigger value="websites" className="flex items-center gap-2">
+                  <Globe className="h-4 w-4" />
+                  Websites
+                </TabsTrigger>
+                <TabsTrigger value="funnels" className="flex items-center gap-2">
+                  <Zap className="h-4 w-4" />
+                  Funnels
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="stores" className="mt-6">
+                <div className="space-y-4">
+                  {storeRevenues.length > 0 ? (
+                    storeRevenues.map((store) => (
+                      <div key={store.store_id} className="flex items-center justify-between p-4 border rounded-lg">
+                        <div>
+                          <div className="font-medium">{store.store_name}</div>
+                          <div className="text-sm text-muted-foreground">{store.owner_email}</div>
+                        </div>
+                        <div className="text-right">
+                          <div className="font-medium">{formatCurrency(store.revenue)}</div>
+                          <div className="text-sm text-muted-foreground">{store.orders_count} orders</div>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Store className="mx-auto h-8 w-8 mb-2 opacity-50" />
+                      <p>No store data available</p>
                     </div>
-                    <div className="text-right">
-                      <div className="font-medium">{formatCurrency(store.revenue)}</div>
-                      <div className="text-sm text-muted-foreground">{store.orders_count} orders</div>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  <Store className="mx-auto h-8 w-8 mb-2 opacity-50" />
-                  <p>No store data available</p>
+                  )}
                 </div>
-              )}
-            </div>
+              </TabsContent>
+
+              <TabsContent value="websites" className="mt-6">
+                <div className="space-y-4">
+                  {websiteRevenues.length > 0 ? (
+                    websiteRevenues.map((website) => (
+                      <div key={website.website_id} className="flex items-center justify-between p-4 border rounded-lg">
+                        <div>
+                          <div className="font-medium">{website.website_name}</div>
+                          <div className="text-sm text-muted-foreground">{website.store_name} • {website.owner_email}</div>
+                        </div>
+                        <div className="text-right">
+                          <div className="font-medium">{formatCurrency(website.revenue)}</div>
+                          <div className="text-sm text-muted-foreground">{website.orders_count} orders</div>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Globe className="mx-auto h-8 w-8 mb-2 opacity-50" />
+                      <p>No website data available</p>
+                    </div>
+                  )}
+                </div>
+              </TabsContent>
+
+              <TabsContent value="funnels" className="mt-6">
+                <div className="space-y-4">
+                  {funnelRevenues.length > 0 ? (
+                    funnelRevenues.map((funnel) => (
+                      <div key={funnel.funnel_id} className="flex items-center justify-between p-4 border rounded-lg">
+                        <div>
+                          <div className="font-medium">{funnel.funnel_name}</div>
+                          <div className="text-sm text-muted-foreground">{funnel.store_name} • {funnel.owner_email}</div>
+                        </div>
+                        <div className="text-right">
+                          <div className="font-medium">{formatCurrency(funnel.revenue)}</div>
+                          <div className="text-sm text-muted-foreground">{funnel.orders_count} orders</div>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Zap className="mx-auto h-8 w-8 mb-2 opacity-50" />
+                      <p>No funnel data available</p>
+                    </div>
+                  )}
+                </div>
+              </TabsContent>
+            </Tabs>
           </CardContent>
         </Card>
       </div>
