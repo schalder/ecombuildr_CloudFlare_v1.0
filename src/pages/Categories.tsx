@@ -26,10 +26,22 @@ interface Category {
   created_at: string;
 }
 
+interface Website {
+  id: string;
+  name: string;
+  slug: string;
+}
+
+interface CategoryWithWebsites extends Category {
+  websites?: Website[];
+}
+
 export default function Categories() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [categories, setCategories] = useState<Category[]>([]);
+  const [categoriesByWebsite, setCategoriesByWebsite] = useState<{[key: string]: CategoryWithWebsites[]}>({});
+  const [websites, setWebsites] = useState<Website[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
@@ -69,16 +81,58 @@ export default function Categories() {
       if (!stores || stores.length === 0) return;
 
       setStoreId(stores[0].id); // Set the first store as default
-
       const storeIds = stores.map(store => store.id);
-      const { data, error } = await supabase
+
+      // Fetch websites
+      const { data: websitesData } = await supabase
+        .from('websites')
+        .select('id, name, slug')
+        .in('store_id', storeIds)
+        .eq('is_active', true)
+        .order('name');
+
+      setWebsites(websitesData || []);
+
+      // Fetch categories
+      const { data: categoriesData, error } = await supabase
         .from('categories')
         .select('*')
         .in('store_id', storeIds)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setCategories(data || []);
+
+      // Fetch category visibility data separately
+      const { data: visibilityData } = await supabase
+        .from('category_website_visibility')
+        .select(`
+          category_id,
+          website_id,
+          websites(id, name, slug)
+        `);
+
+      const processedCategories = (categoriesData || []).map(cat => ({
+        ...cat,
+        websites: (visibilityData || [])
+          .filter(v => v.category_id === cat.id)
+          .map((v: any) => v.websites)
+          .filter(Boolean)
+      }));
+
+      setCategories(processedCategories);
+
+      // Group categories by website
+      const grouped: {[key: string]: CategoryWithWebsites[]} = {
+        'all': processedCategories.filter(cat => cat.websites.length === 0)
+      };
+
+      websitesData?.forEach(website => {
+        grouped[website.id] = processedCategories.filter(cat => 
+          cat.websites.some((w: Website) => w.id === website.id)
+        );
+      });
+
+      setCategoriesByWebsite(grouped);
     } catch (error: any) {
       toast({
         title: "Error",
@@ -281,80 +335,139 @@ export default function Categories() {
           </Dialog>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>All Categories</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="text-center py-8">Loading...</div>
-            ) : categories.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                No categories found. Create your first category to get started.
-              </div>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Description</TableHead>
-                    <TableHead>Slug</TableHead>
-                    <TableHead>Created</TableHead>
-                    <TableHead className="w-[70px]">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {categories.map((category) => (
-                    <TableRow key={category.id}>
-                      <TableCell className="font-medium">{category.name}</TableCell>
-                      <TableCell className="max-w-xs truncate">{category.description}</TableCell>
-                      <TableCell>
-                        <code className="text-sm bg-muted px-2 py-1 rounded">
-                          {category.slug}
-                        </code>
-                      </TableCell>
-                      <TableCell>
-                        {new Date(category.created_at).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm">
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem 
-                             onClick={() => {
-                                 setEditingCategory(category);
-                                 setEditFormData({
-                                   name: category.name,
-                                   description: category.description,
-                                   image_url: category.image_url || '',
-                                 });
-                                 setIsEditDialogOpen(true);
-                               }}
-                            >
-                              <Edit className="mr-2 h-4 w-4" />
-                              Edit
-                            </DropdownMenuItem>
-                            <DropdownMenuItem 
-                              className="text-destructive"
-                              onClick={() => handleDeleteCategory(category.id)}
-                            >
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
+        {/* Categories by Website */}
+        <div className="space-y-6">
+          {loading ? (
+            <div className="text-center py-8">Loading...</div>
+          ) : (
+            <>
+              {/* All Websites Categories */}
+              {categoriesByWebsite.all && categoriesByWebsite.all.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>All Websites ({categoriesByWebsite.all.length} categories)</CardTitle>
+                    <p className="text-sm text-muted-foreground">Categories visible on all websites</p>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid gap-4">
+                      {categoriesByWebsite.all.map((category) => (
+                        <div key={category.id} className="flex items-center justify-between p-4 border rounded-lg">
+                          <div className="flex-1">
+                            <h4 className="font-medium">{category.name}</h4>
+                            <p className="text-sm text-muted-foreground">{category.description}</p>
+                            <code className="text-xs bg-muted px-2 py-1 rounded mt-2 inline-block">
+                              {category.slug}
+                            </code>
+                          </div>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm">
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem 
+                               onClick={() => {
+                                   setEditingCategory(category);
+                                   setEditFormData({
+                                     name: category.name,
+                                     description: category.description,
+                                     image_url: category.image_url || '',
+                                   });
+                                   setIsEditDialogOpen(true);
+                                 }}
+                              >
+                                <Edit className="mr-2 h-4 w-4" />
+                                Edit
+                              </DropdownMenuItem>
+                              <DropdownMenuItem 
+                                className="text-destructive"
+                                onClick={() => handleDeleteCategory(category.id)}
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Website-specific Categories */}
+              {websites.map((website) => (
+                <Card key={website.id}>
+                  <CardHeader>
+                    <CardTitle>{website.name} ({categoriesByWebsite[website.id]?.length || 0} categories)</CardTitle>
+                    <p className="text-sm text-muted-foreground">Categories visible only on {website.name}</p>
+                  </CardHeader>
+                  <CardContent>
+                    {!categoriesByWebsite[website.id] || categoriesByWebsite[website.id].length === 0 ? (
+                      <div className="text-center py-8 text-muted-foreground">
+                        No categories specific to {website.name}
+                      </div>
+                    ) : (
+                      <div className="grid gap-4">
+                        {categoriesByWebsite[website.id].map((category) => (
+                          <div key={category.id} className="flex items-center justify-between p-4 border rounded-lg">
+                            <div className="flex-1">
+                              <h4 className="font-medium">{category.name}</h4>
+                              <p className="text-sm text-muted-foreground">{category.description}</p>
+                              <code className="text-xs bg-muted px-2 py-1 rounded mt-2 inline-block">
+                                {category.slug}
+                              </code>
+                            </div>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="sm">
+                                  <MoreVertical className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem 
+                                 onClick={() => {
+                                     setEditingCategory(category);
+                                     setEditFormData({
+                                       name: category.name,
+                                       description: category.description,
+                                       image_url: category.image_url || '',
+                                     });
+                                     setIsEditDialogOpen(true);
+                                   }}
+                                >
+                                  <Edit className="mr-2 h-4 w-4" />
+                                  Edit
+                                </DropdownMenuItem>
+                                <DropdownMenuItem 
+                                  className="text-destructive"
+                                  onClick={() => handleDeleteCategory(category.id)}
+                                >
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  Delete
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+
+              {/* No categories at all */}
+              {categories.length === 0 && (
+                <Card>
+                  <CardContent className="text-center py-8 text-muted-foreground">
+                    No categories found. Create your first category to get started.
+                  </CardContent>
+                </Card>
+              )}
+            </>
+          )}
+        </div>
 
         {/* Edit Category Dialog */}
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>

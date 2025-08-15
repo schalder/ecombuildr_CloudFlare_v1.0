@@ -33,6 +33,9 @@ export default function AddProduct() {
   const [storeId, setStoreId] = useState<string>('');
   const [selectedWebsites, setSelectedWebsites] = useState<string[]>([]);
 
+  const [selectedWebsiteId, setSelectedWebsiteId] = useState<string>('');
+  const [filteredCategories, setFilteredCategories] = useState<any[]>([]);
+
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -83,6 +86,37 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
       fetchCategories();
     }
   }, [user]);
+
+  // Filter categories based on selected website
+  useEffect(() => {
+    const filterCategories = async () => {
+      if (!selectedWebsiteId) {
+        setFilteredCategories(categories);
+        return;
+      }
+
+      try {
+        const { data: visibilityData } = await supabase
+          .from('category_website_visibility')
+          .select('category_id')
+          .eq('website_id', selectedWebsiteId);
+
+        const visibleCategoryIds = visibilityData?.map(v => v.category_id) || [];
+        
+        // Show categories that are either visible on this website or not assigned to any website
+        const filtered = categories.filter(cat => 
+          visibleCategoryIds.includes(cat.id) || visibleCategoryIds.length === 0
+        );
+        
+        setFilteredCategories(filtered);
+      } catch (error) {
+        console.error('Error filtering categories:', error);
+        setFilteredCategories(categories);
+      }
+    };
+
+    filterCategories();
+  }, [selectedWebsiteId, categories]);
 
   const fetchCategories = async () => {
     try {
@@ -171,15 +205,13 @@ const { data: newProduct, error: insertError } = await supabase.from('products')
       if (insertError) throw insertError;
 
       // Add website visibility records
-      if (selectedWebsites.length > 0 && newProduct?.id) {
-        const visibilityRecords = selectedWebsites.map(websiteId => ({
-          product_id: newProduct.id,
-          website_id: websiteId
-        }));
-
+      if (selectedWebsiteId && newProduct?.id) {
         const { error: visibilityError } = await supabase
           .from('product_website_visibility')
-          .insert(visibilityRecords);
+          .insert({
+            product_id: newProduct.id,
+            website_id: selectedWebsiteId
+          });
 
         if (visibilityError) throw visibilityError;
       }
@@ -204,6 +236,57 @@ const { data: newProduct, error: insertError } = await supabase.from('products')
   return (
     <DashboardLayout title="Add Product" description="Create a new product for your store">
       <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Selling Website & Category - Moved to Top */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Selling Channel & Category</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="website_id">Selling Website *</Label>
+                <Select value={selectedWebsiteId} onValueChange={(value) => setSelectedWebsiteId(value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a website" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {storeWebsites.map((website) => (
+                      <SelectItem key={website.id} value={website.id}>
+                        {website.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-sm text-muted-foreground">
+                  Choose which website this product will be sold on.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="category_id">Category</Label>
+                <Select 
+                  value={formData.category_id} 
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, category_id: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {filteredCategories.map((category) => (
+                      <SelectItem key={category.id} value={category.id}>
+                        {category.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-sm text-muted-foreground">
+                  {selectedWebsiteId ? 'Categories filtered for selected website' : 'Select a website first to filter categories'}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader>
             <CardTitle>Product Information</CardTitle>
@@ -589,38 +672,9 @@ const { data: newProduct, error: insertError } = await supabase.from('products')
 
         <Card>
           <CardHeader>
-            <CardTitle>Category & SEO</CardTitle>
+            <CardTitle>SEO</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="category_id">Category</Label>
-              <Select value={formData.category_id} onValueChange={(value) => setFormData(prev => ({ ...prev, category_id: value }))}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a category" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map((category) => (
-                    <SelectItem key={category.id} value={category.id}>
-                      {category.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Website Visibility</Label>
-              <MultiSelect
-                options={storeWebsites.map(w => ({ label: w.name, value: w.id }))}
-                selected={selectedWebsites}
-                onChange={setSelectedWebsites}
-                placeholder="Select websites to show this product on..."
-              />
-              <p className="text-sm text-muted-foreground">
-                Choose which websites this product will be visible on. Leave empty to show on all websites.
-              </p>
-            </div>
-            
+          <CardContent className="space-y-4">            
             <div className="space-y-2">
               <Label htmlFor="seo_title">SEO Title</Label>
               <Input

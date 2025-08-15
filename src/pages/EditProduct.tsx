@@ -21,6 +21,7 @@ import VariationsBuilder, { VariationOption } from "@/components/products/Variat
 import VariantMatrix, { VariantEntry } from "@/components/products/VariantMatrix";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { parseVideoUrl, buildEmbedUrl } from "@/components/page-builder/utils/videoUtils";
+import { useStoreWebsitesForSelection, useProductWebsiteVisibility } from '@/hooks/useWebsiteVisibility';
 
 interface Product {
   id: string;
@@ -49,6 +50,9 @@ export default function EditProduct() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [filteredCategories, setFilteredCategories] = useState<Category[]>([]);
+  const [selectedWebsiteId, setSelectedWebsiteId] = useState<string>('');
+  const [storeId, setStoreId] = useState<string>('');
   
   const [formData, setFormData] = useState({
     name: '',
@@ -91,6 +95,9 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
   const [descriptionBuilder, setDescriptionBuilder] = useState<PageBuilderData>({ sections: [] });
   const [isBuilderOpen, setIsBuilderOpen] = useState(false);
 
+  // Get websites and visibility for the product
+  const { websites: storeWebsites } = useStoreWebsitesForSelection(storeId);
+  const { visibleWebsites, updateVisibility } = useProductWebsiteVisibility(id || '');
 
   useEffect(() => {
     if (user && id) {
@@ -98,6 +105,44 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
       fetchCategories();
     }
   }, [user, id]);
+
+  // Set selected website from visibility data
+  useEffect(() => {
+    if (visibleWebsites.length > 0) {
+      setSelectedWebsiteId(visibleWebsites[0]);
+    }
+  }, [visibleWebsites]);
+
+  // Filter categories based on selected website
+  useEffect(() => {
+    const filterCategories = async () => {
+      if (!selectedWebsiteId) {
+        setFilteredCategories(categories);
+        return;
+      }
+
+      try {
+        const { data: visibilityData } = await supabase
+          .from('category_website_visibility')
+          .select('category_id')
+          .eq('website_id', selectedWebsiteId);
+
+        const visibleCategoryIds = visibilityData?.map(v => v.category_id) || [];
+        
+        // Show categories that are either visible on this website or not assigned to any website
+        const filtered = categories.filter(cat => 
+          visibleCategoryIds.includes(cat.id) || visibleCategoryIds.length === 0
+        );
+        
+        setFilteredCategories(filtered);
+      } catch (error) {
+        console.error('Error filtering categories:', error);
+        setFilteredCategories(categories);
+      }
+    };
+
+    filterCategories();
+  }, [selectedWebsiteId, categories]);
 
   const fetchProduct = async () => {
     try {
@@ -118,6 +163,9 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
           .single();
 
         if (productError) throw productError;
+        
+        // Set store ID for filtering
+        setStoreId(product.store_id);
         
         setFormData({
           name: product.name || '',
@@ -251,6 +299,11 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
 
       if (error) throw error;
 
+      // Update website visibility if changed
+      if (selectedWebsiteId && selectedWebsiteId !== visibleWebsites[0]) {
+        await updateVisibility([selectedWebsiteId]);
+      }
+
       toast({
         title: "Success",
         description: "Product updated successfully",
@@ -310,6 +363,58 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Selling Website & Category - Moved to Top */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Selling Channel & Category</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="website_id">Selling Website *</Label>
+                  <Select value={selectedWebsiteId} onValueChange={setSelectedWebsiteId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a website" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {storeWebsites.map((website) => (
+                        <SelectItem key={website.id} value={website.id}>
+                          {website.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-sm text-muted-foreground">
+                    Choose which website this product will be sold on.
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="category_id">Category</Label>
+                  <Select 
+                    value={formData.category_id} 
+                    onValueChange={(value) => handleInputChange('category_id', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">No category</SelectItem>
+                      {filteredCategories.map((category) => (
+                        <SelectItem key={category.id} value={category.id}>
+                          {category.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-sm text-muted-foreground">
+                    {selectedWebsiteId ? 'Categories filtered for selected website' : 'Select a website first to filter categories'}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Product Information */}
             <Card>
@@ -667,29 +772,12 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
             </CardContent>
           </Card>
 
-          {/* Category & SEO */}
+          {/* SEO */}
           <Card>
             <CardHeader>
-              <CardTitle>Category & SEO</CardTitle>
+              <CardTitle>SEO</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="category_id">Category</Label>
-                <Select value={formData.category_id} onValueChange={(value) => handleInputChange('category_id', value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">No category</SelectItem>
-                    {categories.map((category) => (
-                      <SelectItem key={category.id} value={category.id}>
-                        {category.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
               <div className="space-y-2">
                 <Label htmlFor="seo_title">SEO Title</Label>
                 <Input

@@ -49,6 +49,11 @@ interface Product {
   categories?: {
     name: string;
   };
+  product_website_visibility?: {
+    websites: {
+      name: string;
+    };
+  }[];
 }
 
 export default function Products() {
@@ -123,7 +128,38 @@ export default function Products() {
           .order('created_at', { ascending: false });
 
         if (productsError) throw productsError;
-        setProducts(products || []);
+
+        // Fetch product visibility data separately
+        const { data: visibilityData } = await supabase
+          .from('product_website_visibility')
+          .select('product_id, website_id');
+
+        // Fetch websites data
+        const { data: websitesData } = await supabase
+          .from('websites')
+          .select('id, name')
+          .in('store_id', stores.map(store => store.id));
+
+        // Merge the visibility data with products
+        const productsWithVisibility = (products || []).map(product => {
+          const productVisibility = (visibilityData || [])
+            .filter(v => v.product_id === product.id)
+            .map(v => {
+              const website = websitesData?.find(w => w.id === v.website_id);
+              return {
+                websites: {
+                  name: website?.name || 'Unknown Website'
+                }
+              };
+            });
+          
+          return {
+            ...product,
+            product_website_visibility: productVisibility
+          };
+        });
+
+        setProducts(productsWithVisibility);
       }
     } catch (error) {
       console.error('Error fetching products:', error);
@@ -375,6 +411,7 @@ export default function Products() {
                     <TableHead>Stock</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Category</TableHead>
+                    <TableHead>Channel</TableHead>
                     <TableHead className="w-16"></TableHead>
                   </TableRow>
                 </TableHeader>
@@ -432,6 +469,12 @@ export default function Products() {
                       </TableCell>
                       <TableCell>
                         {product.categories?.name || '-'}
+                      </TableCell>
+                      <TableCell>
+                        {product.product_website_visibility && product.product_website_visibility.length > 0 
+                          ? product.product_website_visibility[0].websites.name 
+                          : '-'
+                        }
                       </TableCell>
                       <TableCell>
                         <DropdownMenu>
