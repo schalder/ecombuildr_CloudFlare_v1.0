@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { useAdminData } from '@/hooks/useAdminData';
@@ -17,6 +16,13 @@ import { toast } from 'sonner';
 import { formatCurrency } from '@/lib/currency';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
+
+type PlanName = "free" | "pro_monthly" | "pro_yearly" | "reseller" | "starter" | "professional" | "enterprise";
+
+const isValidPlanName = (plan: string): plan is PlanName => {
+  const validPlans: PlanName[] = ["free", "pro_monthly", "pro_yearly", "reseller", "starter", "professional", "enterprise"];
+  return validPlans.includes(plan as PlanName);
+};
 
 export default function BillingManagement() {
   const { isAdmin, loading: adminLoading, platformStats, saasSubscribers, fetchSaasSubscribers } = useAdminData();
@@ -89,11 +95,13 @@ export default function BillingManagement() {
 
       if (subError) throw subError;
 
-      // Update user's profile plan
+      // Update user's profile plan - only if plan_name is valid
+      const planName = isValidPlanName(subscription.plan_name) ? subscription.plan_name : 'starter';
+      
       const { error: profileError } = await supabase
         .from('profiles')
         .update({
-          subscription_plan: subscription.plan_name,
+          subscription_plan: planName,
           account_status: 'active'
         })
         .eq('id', subscription.user_id);
