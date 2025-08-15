@@ -39,14 +39,14 @@ export function AdminLayout({ children, title, description }: AdminLayoutProps) 
                   className="text-muted-foreground hover:text-foreground"
                 >
                   <ArrowLeft className="h-4 w-4 mr-1" />
-                  ব্যাক টু ড্যাশবোর্ড
+                  Back to Dashboard
                 </Button>
               </div>
             </div>
 
             <div className="flex items-center gap-4">
               <Badge variant="destructive" className="font-medium">
-                অ্যাডমিন মোড
+                Admin Mode
               </Badge>
               <Button
                 variant="outline"
@@ -55,7 +55,7 @@ export function AdminLayout({ children, title, description }: AdminLayoutProps) 
                 className="gap-2"
               >
                 <LogOut className="h-4 w-4" />
-                সাইন আউট
+                Sign Out
               </Button>
             </div>
           </header>

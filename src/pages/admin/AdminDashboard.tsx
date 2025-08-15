@@ -36,7 +36,7 @@ const AdminDashboard = () => {
 
   if (loading || isAdmin === null) {
     return (
-      <AdminLayout title="ড্যাশবোর্ড" description="প্ল্যাটফর্মের সার্বিক চিত্র">
+      <AdminLayout title="Dashboard" description="Platform Overview">
         <div className="space-y-6">
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {[...Array(6)].map((_, i) => (
@@ -50,15 +50,15 @@ const AdminDashboard = () => {
 
   if (!isAdmin) {
     return (
-      <AdminLayout title="অ্যাক্সেস অস্বীকৃত">
+      <AdminLayout title="Access Denied">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-destructive">
               <AlertTriangle className="h-5 w-5" />
-              অ্যাক্সেস অস্বীকৃত
+              Access Denied
             </CardTitle>
             <CardDescription>
-              আপনার এই পেজ দেখার অনুমতি নেই। শুধুমাত্র সুপার অ্যাডমিনরা এই পেজ দেখতে পারেন।
+              You don't have permission to view this page. Only super admins can access the admin panel.
             </CardDescription>
           </CardHeader>
         </Card>
@@ -89,7 +89,7 @@ const AdminDashboard = () => {
   };
 
   return (
-    <AdminLayout title="অ্যাডমিন ড্যাশবোর্ড" description="প্ল্যাটফর্মের সার্বিক পরিস্থিতি ও পরিসংখ্যান">
+    <AdminLayout title="Admin Dashboard" description="Platform Overview & Statistics">
       <div className="space-y-6">
         {/* Refresh Button */}
         <div className="flex justify-end">
@@ -100,7 +100,7 @@ const AdminDashboard = () => {
             className="gap-2"
           >
             <RefreshCw className="h-4 w-4" />
-            রিফ্রেশ
+            Refresh
           </Button>
         </div>
 
@@ -112,12 +112,12 @@ const AdminDashboard = () => {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
-                <CardTitle>সাম্প্রতিক ব্যবহারকারী</CardTitle>
-                <CardDescription>নতুন নিবন্ধিত ব্যবহারকারীগণ</CardDescription>
+                <CardTitle>Recent Users</CardTitle>
+                <CardDescription>Newly registered users</CardDescription>
               </div>
               <Button asChild variant="outline" size="sm">
                 <a href="/admin/users">
-                  সব দেখুন
+                  View All
                 </a>
               </Button>
             </CardHeader>
@@ -146,7 +146,7 @@ const AdminDashboard = () => {
               ) : (
                 <div className="text-center py-6 text-muted-foreground">
                   <Users className="mx-auto h-12 w-12 mb-4 opacity-50" />
-                  <p>কোন ব্যবহারকারী পাওয়া যায়নি</p>
+                  <p>No users found</p>
                 </div>
               )}
             </CardContent>
@@ -155,40 +155,40 @@ const AdminDashboard = () => {
           {/* Platform Health */}
           <Card>
             <CardHeader>
-              <CardTitle>প্ল্যাটফর্ম স্বাস্থ্য</CardTitle>
-              <CardDescription>সিস্টেমের বর্তমান অবস্থা</CardDescription>
+              <CardTitle>Platform Health</CardTitle>
+              <CardDescription>Current system status</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">সিস্টেম স্ট্যাটাস</span>
+                <span className="text-sm font-medium">System Status</span>
                 <div className="flex items-center gap-2">
                   <CheckCircle className="h-4 w-4 text-green-500" />
-                  <span className="text-sm text-green-600">সক্রিয়</span>
+                  <span className="text-sm text-green-600">Active</span>
                 </div>
               </div>
               
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">ডেটাবেস</span>
+                <span className="text-sm font-medium">Database</span>
                 <div className="flex items-center gap-2">
                   <CheckCircle className="h-4 w-4 text-green-500" />
-                  <span className="text-sm text-green-600">সংযুক্ত</span>
+                  <span className="text-sm text-green-600">Connected</span>
                 </div>
               </div>
               
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">পেমেন্ট গেটওয়ে</span>
+                <span className="text-sm font-medium">Payment Gateway</span>
                 <div className="flex items-center gap-2">
                   <CheckCircle className="h-4 w-4 text-green-500" />
-                  <span className="text-sm text-green-600">কার্যকর</span>
+                  <span className="text-sm text-green-600">Operational</span>
                 </div>
               </div>
 
               {error && (
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">ত্রুটি</span>
+                  <span className="text-sm font-medium">Errors</span>
                   <div className="flex items-center gap-2">
                     <AlertTriangle className="h-4 w-4 text-red-500" />
-                    <span className="text-sm text-red-600">সমস্যা আছে</span>
+                    <span className="text-sm text-red-600">Issues Detected</span>
                   </div>
                 </div>
               )}
@@ -199,33 +199,33 @@ const AdminDashboard = () => {
         {/* Quick Actions */}
         <Card>
           <CardHeader>
-            <CardTitle>দ্রুত অ্যাকশন</CardTitle>
-            <CardDescription>সাধারণ অ্যাডমিন কাজ</CardDescription>
+            <CardTitle>Quick Actions</CardTitle>
+            <CardDescription>Common admin tasks</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
               <Button asChild variant="outline" className="h-20 flex-col gap-2">
                 <a href="/admin/users">
                   <Users className="h-6 w-6" />
-                  ব্যবহারকারী পরিচালনা
+                  User Management
                 </a>
               </Button>
               <Button asChild variant="outline" className="h-20 flex-col gap-2">
                 <a href="/admin/stores">
                   <Store className="h-6 w-6" />
-                  স্টোর পরিচালনা
+                  Store Management
                 </a>
               </Button>
               <Button asChild variant="outline" className="h-20 flex-col gap-2">
                 <a href="/admin/billing">
                   <DollarSign className="h-6 w-6" />
-                  বিলিং ম্যানেজমেন্ট
+                  Billing Management
                 </a>
               </Button>
               <Button asChild variant="outline" className="h-20 flex-col gap-2">
                 <a href="/admin/analytics">
                   <TrendingUp className="h-6 w-6" />
-                  বিস্তারিত অ্যানালিটিক্স
+                  Detailed Analytics
                 </a>
               </Button>
             </div>

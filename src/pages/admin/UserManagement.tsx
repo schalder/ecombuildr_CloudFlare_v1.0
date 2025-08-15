@@ -41,13 +41,13 @@ const UserManagement = () => {
     const success = await updateUserPlan(userId, newPlan);
     if (success) {
       toast({
-        title: 'প্ল্যান আপডেট সফল',
-        description: 'ব্যবহারকারীর প্ল্যান সফলভাবে আপডেট করা হয়েছে।',
+        title: 'Plan Updated Successfully',
+        description: 'User plan has been updated successfully.',
       });
     } else {
       toast({
-        title: 'প্ল্যান আপডেট ব্যর্থ',
-        description: 'প্ল্যান আপডেট করতে সমস্যা হয়েছে।',
+        title: 'Plan Update Failed',
+        description: 'There was an error updating the plan.',
         variant: 'destructive',
       });
     }
@@ -57,13 +57,13 @@ const UserManagement = () => {
     const success = await updateUserStatus(userId, newStatus);
     if (success) {
       toast({
-        title: 'স্ট্যাটাস আপডেট সফল',
-        description: 'ব্যবহারকারীর স্ট্যাটাস সফলভাবে আপডেট করা হয়েছে।',
+        title: 'Status Updated Successfully',
+        description: 'User status has been updated successfully.',
       });
     } else {
       toast({
-        title: 'স্ট্যাটাস আপডেট ব্যর্থ',
-        description: 'স্ট্যাটাস আপডেট করতে সমস্যা হয়েছে।',
+        title: 'Status Update Failed',
+        description: 'There was an error updating the status.',
         variant: 'destructive',
       });
     }
@@ -73,14 +73,14 @@ const UserManagement = () => {
     const success = await loginAsUser(userId);
     if (success) {
       toast({
-        title: 'ব্যবহারকারী হিসেবে লগইন',
-        description: 'সাপোর্টের জন্য ব্যবহারকারী অ্যাকাউন্টে প্রবেশ করা হয়েছে।',
+        title: 'Logged in as User',
+        description: 'Successfully logged in as user for support purposes.',
       });
       // Redirect would happen in the hook
     } else {
       toast({
-        title: 'লগইন ব্যর্থ',
-        description: 'ব্যবহারকারী হিসেবে লগইন করতে সমস্যা হয়েছে।',
+        title: 'Login Failed',
+        description: 'There was an error logging in as user.',
         variant: 'destructive',
       });
     }
@@ -107,12 +107,12 @@ const UserManagement = () => {
   };
 
   return (
-    <AdminLayout title="ব্যবহারকারী ব্যবস্থাপনা" description="সকল ব্যবহারকারী পরিচালনা ও নিয়ন্ত্রণ">
+    <AdminLayout title="User Management" description="Manage all users and their accounts">
       <div className="space-y-6">
         {/* Search and Filters */}
         <Card>
           <CardHeader>
-            <CardTitle>ফিল্টার ও অনুসন্ধান</CardTitle>
+            <CardTitle>Filters & Search</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex gap-4">
@@ -120,7 +120,7 @@ const UserManagement = () => {
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                   <Input
-                    placeholder="ইমেইল বা নাম দিয়ে খুঁজুন..."
+                    placeholder="Search by email or name..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-10"
@@ -129,14 +129,14 @@ const UserManagement = () => {
               </div>
               <Select value={planFilter} onValueChange={setPlanFilter}>
                 <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="প্ল্যান ফিল্টার" />
+                  <SelectValue placeholder="Filter by Plan" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">সব প্ল্যান</SelectItem>
-                  <SelectItem value="free">ফ্রি</SelectItem>
-                  <SelectItem value="starter">স্টার্টার</SelectItem>
-                  <SelectItem value="professional">প্রফেশনাল</SelectItem>
-                  <SelectItem value="enterprise">এন্টারপ্রাইজ</SelectItem>
+                  <SelectItem value="all">All Plans</SelectItem>
+                  <SelectItem value="free">Free</SelectItem>
+                  <SelectItem value="starter">Starter</SelectItem>
+                  <SelectItem value="professional">Professional</SelectItem>
+                  <SelectItem value="enterprise">Enterprise</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -146,8 +146,8 @@ const UserManagement = () => {
         {/* Users List */}
         <Card>
           <CardHeader>
-            <CardTitle>ব্যবহারকারীর তালিকা</CardTitle>
-            <CardDescription>মোট {users.length} জন ব্যবহারকারী</CardDescription>
+            <CardTitle>Users List</CardTitle>
+            <CardDescription>Total {users.length} users</CardDescription>
           </CardHeader>
           <CardContent>
             {loading ? (
@@ -163,7 +163,7 @@ const UserManagement = () => {
                     <div className="flex-1">
                       <div className="flex items-center gap-3">
                         <div>
-                          <div className="font-medium">{user.full_name || 'নাম নেই'}</div>
+                          <div className="font-medium">{user.full_name || 'No Name'}</div>
                           <div className="text-sm text-muted-foreground">{user.email}</div>
                         </div>
                       </div>
@@ -177,7 +177,7 @@ const UserManagement = () => {
                         {user.trial_expires_at && (
                           <div className="text-xs text-muted-foreground flex items-center gap-1">
                             <Calendar className="h-3 w-3" />
-                            ট্রায়াল: {new Date(user.trial_expires_at).toLocaleDateString('bn-BD')}
+                            Trial: {new Date(user.trial_expires_at).toLocaleDateString()}
                           </div>
                         )}
                       </div>
@@ -193,7 +193,7 @@ const UserManagement = () => {
                         size="sm"
                       >
                         <Eye className="h-4 w-4 mr-1" />
-                        বিস্তারিত
+                        Details
                       </Button>
 
                       <DropdownMenu>
@@ -205,7 +205,7 @@ const UserManagement = () => {
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => handleLoginAsUser(user.id)}>
                             <UserCheck className="h-4 w-4 mr-2" />
-                            ব্যবহারকারী হিসেবে লগইন
+                            Login as User
                           </DropdownMenuItem>
                           
                           {user.account_status === 'active' ? (
@@ -214,7 +214,7 @@ const UserManagement = () => {
                               className="text-red-600"
                             >
                               <UserX className="h-4 w-4 mr-2" />
-                              স্থগিত করুন
+                              Suspend User
                             </DropdownMenuItem>
                           ) : (
                             <DropdownMenuItem 
@@ -222,13 +222,13 @@ const UserManagement = () => {
                               className="text-green-600"
                             >
                               <UserCheck className="h-4 w-4 mr-2" />
-                              সক্রিয় করুন
+                              Activate User
                             </DropdownMenuItem>
                           )}
 
                           <DropdownMenuItem onClick={() => handlePlanUpdate(user.id, 'enterprise')}>
                             <Crown className="h-4 w-4 mr-2" />
-                            এন্টারপ্রাইজ প্ল্যান দিন
+                            Upgrade to Enterprise
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -239,7 +239,7 @@ const UserManagement = () => {
             ) : (
               <div className="text-center py-12 text-muted-foreground">
                 <UserCheck className="mx-auto h-12 w-12 mb-4 opacity-50" />
-                <p>কোন ব্যবহারকারী পাওয়া যায়নি</p>
+                <p>No users found</p>
               </div>
             )}
           </CardContent>
@@ -249,9 +249,9 @@ const UserManagement = () => {
         <Dialog open={showUserModal} onOpenChange={setShowUserModal}>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
-              <DialogTitle>ব্যবহারকারীর বিস্তারিত তথ্য</DialogTitle>
+              <DialogTitle>User Details</DialogTitle>
               <DialogDescription>
-                {selectedUser?.email} এর সম্পূর্ণ প্রোফাইল
+                Complete profile for {selectedUser?.email}
               </DialogDescription>
             </DialogHeader>
             
@@ -259,17 +259,17 @@ const UserManagement = () => {
               <div className="space-y-6">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="text-sm font-medium">নাম</label>
+                    <label className="text-sm font-medium">Name</label>
                     <p className="text-sm text-muted-foreground">
-                      {selectedUser.full_name || 'নাম দেওয়া হয়নি'}
+                      {selectedUser.full_name || 'No name provided'}
                     </p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium">ইমেইল</label>
+                    <label className="text-sm font-medium">Email</label>
                     <p className="text-sm text-muted-foreground">{selectedUser.email}</p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium">বর্তমান প্ল্যান</label>
+                    <label className="text-sm font-medium">Current Plan</label>
                     <div className="mt-1">
                       <Badge className={getPlanColor(selectedUser.subscription_plan)}>
                         {selectedUser.subscription_plan}
@@ -277,7 +277,7 @@ const UserManagement = () => {
                     </div>
                   </div>
                   <div>
-                    <label className="text-sm font-medium">অ্যাকাউন্ট স্ট্যাটাস</label>
+                    <label className="text-sm font-medium">Account Status</label>
                     <div className="mt-1">
                       <Badge className={getStatusColor(selectedUser.account_status)}>
                         {selectedUser.account_status}
@@ -285,16 +285,16 @@ const UserManagement = () => {
                     </div>
                   </div>
                   <div>
-                    <label className="text-sm font-medium">নিবন্ধনের তারিখ</label>
+                    <label className="text-sm font-medium">Registration Date</label>
                     <p className="text-sm text-muted-foreground">
-                      {new Date(selectedUser.created_at).toLocaleDateString('bn-BD')}
+                      {new Date(selectedUser.created_at).toLocaleDateString()}
                     </p>
                   </div>
                   {selectedUser.trial_expires_at && (
                     <div>
-                      <label className="text-sm font-medium">ট্রায়াল শেষের তারিখ</label>
+                      <label className="text-sm font-medium">Trial Expiry Date</label>
                       <p className="text-sm text-muted-foreground">
-                        {new Date(selectedUser.trial_expires_at).toLocaleDateString('bn-BD')}
+                        {new Date(selectedUser.trial_expires_at).toLocaleDateString()}
                       </p>
                     </div>
                   )}
@@ -302,17 +302,17 @@ const UserManagement = () => {
 
                 <div className="flex gap-2">
                   <Button onClick={() => handleLoginAsUser(selectedUser.id)}>
-                    ব্যবহারকারী হিসেবে লগইন
+                    Login as User
                   </Button>
                   <Select onValueChange={(value) => handlePlanUpdate(selectedUser.id, value)}>
                     <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="প্ল্যান পরিবর্তন" />
+                      <SelectValue placeholder="Change Plan" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="free">ফ্রি</SelectItem>
-                      <SelectItem value="starter">স্টার্টার</SelectItem>
-                      <SelectItem value="professional">প্রফেশনাল</SelectItem>
-                      <SelectItem value="enterprise">এন্টারপ্রাইজ</SelectItem>
+                      <SelectItem value="free">Free</SelectItem>
+                      <SelectItem value="starter">Starter</SelectItem>
+                      <SelectItem value="professional">Professional</SelectItem>
+                      <SelectItem value="enterprise">Enterprise</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

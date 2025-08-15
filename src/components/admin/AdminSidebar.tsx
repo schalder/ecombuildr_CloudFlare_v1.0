@@ -29,32 +29,32 @@ import { Badge } from '@/components/ui/badge';
 
 const adminMenuItems = [
   {
-    title: 'ড্যাশবোর্ড',
+    title: 'Dashboard',
     url: '/admin/dashboard',
     icon: Home,
   },
   {
-    title: 'ব্যবহারকারী',
+    title: 'Users',
     url: '/admin/users',
     icon: Users,
   },
   {
-    title: 'স্টোর সমূহ',
+    title: 'Stores',
     url: '/admin/stores',
     icon: Store,
   },
   {
-    title: 'অ্যানালিটিক্স',
+    title: 'Analytics',
     url: '/admin/analytics',
     icon: BarChart3,
   },
   {
-    title: 'বিলিং ও পেমেন্ট',
+    title: 'Billing & Payments',
     url: '/admin/billing',
     icon: CreditCard,
   },
   {
-    title: 'প্ল্যান ম্যানেজমেন্ট',
+    title: 'Plan Management',
     url: '/admin/plans',
     icon: DollarSign,
   },
@@ -62,17 +62,17 @@ const adminMenuItems = [
 
 const quickActions = [
   {
-    title: 'রিভিনিউ ট্র্যাকিং',
+    title: 'Revenue Tracking',
     url: '/admin/revenue',
     icon: TrendingUp,
   },
   {
-    title: 'সাপোর্ট টিকেট',
+    title: 'Support Tickets',
     url: '/admin/support',
     icon: AlertCircle,
   },
   {
-    title: 'সিস্টেম সেটিংস',
+    title: 'System Settings',
     url: '/admin/settings',
     icon: Settings,
   },
@@ -101,9 +101,9 @@ export function AdminSidebar() {
           </div>
           {!isCollapsed && (
             <div>
-              <h2 className="text-lg font-semibold">অ্যাডমিন প্যানেল</h2>
+              <h2 className="text-lg font-semibold">Admin Panel</h2>
               <Badge variant="outline" className="text-xs">
-                সুপার অ্যাডমিন
+                Super Admin
               </Badge>
             </div>
           )}
@@ -112,7 +112,7 @@ export function AdminSidebar() {
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>মূল মেনু</SidebarGroupLabel>
+          <SidebarGroupLabel>Main Menu</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {adminMenuItems.map((item) => (
@@ -134,7 +134,7 @@ export function AdminSidebar() {
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel>দ্রুত অ্যাকশন</SidebarGroupLabel>
+          <SidebarGroupLabel>Quick Actions</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {quickActions.map((item) => (
