@@ -1,31 +1,76 @@
+
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { CreditCard, Download, Calendar, CheckCircle } from 'lucide-react';
+import { CreditCard, Download, Calendar, CheckCircle, Crown } from 'lucide-react';
+import { usePlanLimits } from '@/hooks/usePlanLimits';
+import { PlanUpgradeModal2 } from '@/components/dashboard/PlanUpgradeModal2';
+import { useState } from 'react';
 
 export default function BillingSettings() {
+  const { planLimits, userProfile, loading } = usePlanLimits();
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+
+  const getPlanDisplayName = (planName: string) => {
+    const planNames: Record<string, string> = {
+      free: 'Free Plan',
+      basic: 'Basic Plan',
+      pro: 'Pro Plan',
+      enterprise: 'Enterprise Plan'
+    };
+    return planNames[planName] || planName;
+  };
+
+  if (loading) {
+    return (
+      <DashboardLayout title="Billing & Subscription" description="Manage your subscription and billing information">
+        <div className="space-y-6">
+          <div className="h-32 bg-muted animate-pulse rounded-lg" />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="h-48 bg-muted animate-pulse rounded-lg" />
+            <div className="h-48 bg-muted animate-pulse rounded-lg" />
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
   return (
     <DashboardLayout title="Billing & Subscription" description="Manage your subscription and billing information">
       <div className="space-y-6">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
-              <CreditCard className="h-5 w-5" />
+              <Crown className="h-5 w-5" />
               <span>Current Plan</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-2xl font-bold">Free Plan</h3>
-                <p className="text-muted-foreground">Perfect for getting started</p>
-                <Badge variant="secondary" className="mt-2">Active</Badge>
+                <h3 className="text-2xl font-bold">
+                  {getPlanDisplayName(userProfile?.subscription_plan || 'free')}
+                </h3>
+                <p className="text-muted-foreground">
+                  {userProfile?.subscription_plan === 'free' ? 'Perfect for getting started' : 'Advanced features included'}
+                </p>
+                <Badge 
+                  variant={userProfile?.account_status === 'active' ? 'default' : 'secondary'} 
+                  className="mt-2"
+                >
+                  {userProfile?.account_status === 'active' ? 'Active' : 
+                   userProfile?.account_status === 'trial' ? 'Trial' : 'Inactive'}
+                </Badge>
               </div>
               <div className="text-right">
-                <p className="text-3xl font-bold">$0</p>
+                <p className="text-3xl font-bold">
+                  ৳{planLimits?.price_bdt || 0}
+                </p>
                 <p className="text-muted-foreground">per month</p>
-                <Button className="mt-2">Upgrade Plan</Button>
+                <Button className="mt-2" onClick={() => setShowUpgradeModal(true)}>
+                  {userProfile?.subscription_plan === 'free' ? 'Upgrade Plan' : 'Change Plan'}
+                </Button>
               </div>
             </div>
           </CardContent>
@@ -39,20 +84,46 @@ export default function BillingSettings() {
             <CardContent className="space-y-3">
               <div className="flex items-center space-x-2">
                 <CheckCircle className="h-4 w-4 text-green-500" />
-                <span className="text-sm">Up to 100 products</span>
+                <span className="text-sm">
+                  {planLimits?.max_websites === null ? 'Unlimited' : planLimits?.max_websites || 1} websites
+                </span>
               </div>
               <div className="flex items-center space-x-2">
                 <CheckCircle className="h-4 w-4 text-green-500" />
-                <span className="text-sm">Basic analytics</span>
+                <span className="text-sm">
+                  {planLimits?.max_funnels === null ? 'Unlimited' : planLimits?.max_funnels || 1} funnels
+                </span>
               </div>
               <div className="flex items-center space-x-2">
                 <CheckCircle className="h-4 w-4 text-green-500" />
-                <span className="text-sm">Email support</span>
+                <span className="text-sm">
+                  {planLimits?.max_products_per_store === null ? 'Unlimited' : planLimits?.max_products_per_store || 100} products per store
+                </span>
               </div>
               <div className="flex items-center space-x-2">
                 <CheckCircle className="h-4 w-4 text-green-500" />
-                <span className="text-sm">SSL certificate</span>
+                <span className="text-sm">
+                  {planLimits?.max_orders_per_month === null ? 'Unlimited' : planLimits?.max_orders_per_month || 50} orders per month
+                </span>
               </div>
+              {planLimits?.custom_domain_allowed && (
+                <div className="flex items-center space-x-2">
+                  <CheckCircle className="h-4 w-4 text-green-500" />
+                  <span className="text-sm">Custom domain support</span>
+                </div>
+              )}
+              {planLimits?.priority_support && (
+                <div className="flex items-center space-x-2">
+                  <CheckCircle className="h-4 w-4 text-green-500" />
+                  <span className="text-sm">Priority support</span>
+                </div>
+              )}
+              {planLimits?.white_label && (
+                <div className="flex items-center space-x-2">
+                  <CheckCircle className="h-4 w-4 text-green-500" />
+                  <span className="text-sm">White label solution</span>
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -64,11 +135,15 @@ export default function BillingSettings() {
               <div className="space-y-4">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Next billing date</span>
-                  <span>N/A (Free Plan)</span>
+                  <span>
+                    {userProfile?.subscription_plan === 'free' ? 'N/A (Free Plan)' : 'Monthly renewal'}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Payment method</span>
-                  <span>None required</span>
+                  <span>
+                    {userProfile?.subscription_plan === 'free' ? 'None required' : 'Manual payment'}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Billing email</span>
@@ -90,15 +165,25 @@ export default function BillingSettings() {
             <div className="text-center py-8 text-muted-foreground">
               <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
               <h3 className="font-semibold mb-2">No billing history</h3>
-              <p className="mb-4">You're currently on the free plan. Upgrade to see billing history.</p>
-              <Button>
+              <p className="mb-4">
+                {userProfile?.subscription_plan === 'free' 
+                  ? "You're currently on the free plan. Upgrade to see billing history."
+                  : "Your billing history will appear here after your first payment."
+                }
+              </p>
+              <Button onClick={() => setShowUpgradeModal(true)}>
                 <Download className="mr-2 h-4 w-4" />
-                Upgrade Plan
+                {userProfile?.subscription_plan === 'free' ? 'Upgrade Plan' : 'Change Plan'}
               </Button>
             </div>
           </CardContent>
         </Card>
       </div>
+
+      <PlanUpgradeModal2 
+        open={showUpgradeModal} 
+        onOpenChange={setShowUpgradeModal} 
+      />
     </DashboardLayout>
   );
 }

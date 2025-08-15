@@ -1156,6 +1156,42 @@ export type Database = {
         }
         Relationships: []
       }
+      platform_payment_options: {
+        Row: {
+          account_number: string | null
+          created_at: string
+          display_name: string | null
+          id: string
+          instructions: string | null
+          is_enabled: boolean
+          provider: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          account_number?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          instructions?: string | null
+          is_enabled?: boolean
+          provider: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          account_number?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          instructions?: string | null
+          is_enabled?: boolean
+          provider?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       product_library: {
         Row: {
           ad_copy: string | null

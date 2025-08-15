@@ -1,18 +1,24 @@
+
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { usePlanLimits } from '@/hooks/usePlanLimits';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { PlanUpgradeModal2 } from '@/components/dashboard/PlanUpgradeModal2';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { User, Mail, Phone, Save } from 'lucide-react';
+import { User, Mail, Phone, Save, CreditCard, Crown } from 'lucide-react';
 
 export default function ProfileSettings() {
   const { user } = useAuth();
+  const { planLimits, userProfile, loading: planLoading } = usePlanLimits();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [formData, setFormData] = useState({
     full_name: '',
     email: '',
@@ -77,6 +83,27 @@ export default function ProfileSettings() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const getPlanDisplayName = (planName: string) => {
+    const planNames: Record<string, string> = {
+      free: 'ফ্রি প্ল্যান',
+      basic: 'বেসিক প্ল্যান',
+      pro: 'প্রো প্ল্যান',
+      enterprise: 'এন্টারপ্রাইজ প্ল্যান'
+    };
+    return planNames[planName] || planName;
+  };
+
+  const getStatusBadge = (status: string) => {
+    const statusConfig: Record<string, { label: string; variant: any }> = {
+      active: { label: 'সক্রিয়', variant: 'default' },
+      trial: { label: 'ট্রায়াল', variant: 'secondary' },
+      suspended: { label: 'স্থগিত', variant: 'destructive' },
+      expired: { label: 'মেয়াদ শেষ', variant: 'destructive' }
+    };
+    const config = statusConfig[status] || { label: status, variant: 'outline' };
+    return <Badge variant={config.variant}>{config.label}</Badge>;
   };
 
   return (
@@ -145,6 +172,75 @@ export default function ProfileSettings() {
 
         <Card>
           <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <Crown className="h-5 w-5" />
+              <span>Plan & Billing</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {planLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-medium">Current Plan</h4>
+                    <p className="text-sm text-muted-foreground">
+                      {getPlanDisplayName(userProfile?.subscription_plan || 'free')}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {getStatusBadge(userProfile?.account_status || 'active')}
+                    {planLimits && (
+                      <span className="text-sm font-mono">
+                        ৳{planLimits.price_bdt}/month
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {planLimits && (
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-muted/50 rounded-lg">
+                    <div className="text-center">
+                      <p className="text-sm text-muted-foreground">Websites</p>
+                      <p className="font-semibold">
+                        {planLimits.max_websites === null ? '∞' : planLimits.max_websites}
+                      </p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-sm text-muted-foreground">Funnels</p>
+                      <p className="font-semibold">
+                        {planLimits.max_funnels === null ? '∞' : planLimits.max_funnels}
+                      </p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-sm text-muted-foreground">Products</p>
+                      <p className="font-semibold">
+                        {planLimits.max_products_per_store === null ? '∞' : planLimits.max_products_per_store}
+                      </p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-sm text-muted-foreground">Orders/Month</p>
+                      <p className="font-semibold">
+                        {planLimits.max_orders_per_month === null ? '∞' : planLimits.max_orders_per_month}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                <Button onClick={() => setShowUpgradeModal(true)} className="w-full">
+                  <CreditCard className="mr-2 h-4 w-4" />
+                  Upgrade Plan
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
             <CardTitle>Account Security</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -174,6 +270,11 @@ export default function ProfileSettings() {
           </CardContent>
         </Card>
       </div>
+
+      <PlanUpgradeModal2 
+        open={showUpgradeModal} 
+        onOpenChange={setShowUpgradeModal} 
+      />
     </DashboardLayout>
   );
 }
