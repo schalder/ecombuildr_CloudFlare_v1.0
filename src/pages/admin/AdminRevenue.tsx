@@ -552,7 +552,8 @@ const AdminRevenue = () => {
                   ) : (
                     <div className="text-center py-8 text-muted-foreground">
                       <Globe className="mx-auto h-8 w-8 mb-2 opacity-50" />
-                      <p>No website data available</p>
+                      <p className="font-medium">No website orders found</p>
+                      <p className="text-sm">Orders need to be placed through specific websites to appear here</p>
                     </div>
                   )}
                 </div>
@@ -576,7 +577,8 @@ const AdminRevenue = () => {
                   ) : (
                     <div className="text-center py-8 text-muted-foreground">
                       <Zap className="mx-auto h-8 w-8 mb-2 opacity-50" />
-                      <p>No funnel data available</p>
+                      <p className="font-medium">No funnel orders found</p>
+                      <p className="text-sm">Orders need to be placed through sales funnels to appear here</p>
                     </div>
                   )}
                 </div>
