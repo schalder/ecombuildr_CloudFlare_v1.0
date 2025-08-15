@@ -43,6 +43,11 @@ import StoreList from "./pages/StoreList";
 import CreateStore from "./pages/CreateStore";
 import DemoPreview from "./pages/DemoPreview";
 import DashboardOverview from "./pages/DashboardOverview";
+// Admin Pages
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import UserManagement from "./pages/admin/UserManagement";
+import BillingManagement from "./pages/admin/BillingManagement";
+import PlanManagement from "./pages/admin/PlanManagement";
 import { StorefrontHome } from "./pages/storefront/StorefrontHome";
 import { StorefrontProducts } from "./pages/storefront/StorefrontProducts";
 import ProductDetail from "./pages/storefront/ProductDetail";
