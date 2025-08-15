@@ -50,6 +50,8 @@ interface Order {
   notes?: string;
   courier_name?: string | null;
   tracking_number?: string | null;
+  website_id?: string;
+  funnel_id?: string;
 }
 
 const statusColors = {
@@ -77,6 +79,8 @@ export default function Orders() {
   const [existingShipment, setExistingShipment] = useState<any | null>(null);
   const [orderToPush, setOrderToPush] = useState<Order | null>(null);
   const [pushing, setPushing] = useState(false);
+  const [websiteMap, setWebsiteMap] = useState<Record<string, string>>({});
+  const [funnelMap, setFunnelMap] = useState<Record<string, string>>({});
   useEffect(() => {
     if (user) {
       fetchOrders();
@@ -107,28 +111,64 @@ export default function Orders() {
       if (storesError) throw storesError;
 
       if (stores && stores.length > 0) {
-        const { data: orders, error: ordersError } = await supabase
-          .from('orders')
-          .select(`
-            id,
-            store_id,
-            order_number,
-            customer_name,
-            customer_email,
-            customer_phone,
-            status,
-            total,
-            created_at,
-            payment_method,
-            shipping_city,
-            shipping_area,
-            shipping_address,
-            courier_name,
-            tracking_number,
-            notes
-          `)
-          .in('store_id', stores.map(store => store.id))
-          .order('created_at', { ascending: false });
+        const storeIds = stores.map(store => store.id);
+        
+        // Fetch orders, websites, and funnels in parallel
+        const [
+          { data: orders, error: ordersError },
+          { data: websites, error: websitesError },
+          { data: funnels, error: funnelsError }
+        ] = await Promise.all([
+          supabase
+            .from('orders')
+            .select(`
+              id,
+              store_id,
+              order_number,
+              customer_name,
+              customer_email,
+              customer_phone,
+              status,
+              total,
+              created_at,
+              payment_method,
+              shipping_city,
+              shipping_area,
+              shipping_address,
+              courier_name,
+              tracking_number,
+              notes,
+              website_id,
+              funnel_id
+            `)
+            .in('store_id', storeIds)
+            .order('created_at', { ascending: false }),
+          supabase
+            .from('websites')
+            .select('id, name')
+            .in('store_id', storeIds)
+            .eq('is_active', true),
+          supabase
+            .from('funnels')
+            .select('id, name')
+            .in('store_id', storeIds)
+            .eq('is_active', true)
+        ]);
+
+        // Create lookup maps
+        const websiteNameMap: Record<string, string> = {};
+        const funnelNameMap: Record<string, string> = {};
+        
+        (websites || []).forEach(w => {
+          websiteNameMap[w.id] = w.name;
+        });
+        
+        (funnels || []).forEach(f => {
+          funnelNameMap[f.id] = f.name;
+        });
+
+        setWebsiteMap(websiteNameMap);
+        setFunnelMap(funnelNameMap);
 
         if (ordersError) throw ordersError;
         setOrders(orders || []);
@@ -387,6 +427,7 @@ export default function Orders() {
                   <TableRow>
                     <TableHead>Order</TableHead>
                     <TableHead>Customer</TableHead>
+                    <TableHead>Channel</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Total</TableHead>
                     <TableHead>Payment</TableHead>
@@ -428,6 +469,15 @@ export default function Orders() {
                             </div>
                           )}
                         </div>
+                      </TableCell>
+                      <TableCell>
+                        {order.website_id || order.funnel_id ? (
+                          <div className="text-sm">
+                            {order.website_id ? websiteMap[order.website_id] || 'Website' : funnelMap[order.funnel_id!] || 'Funnel'}
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground text-sm">—</span>
+                        )}
                       </TableCell>
                       <TableCell>
                         <Badge variant={statusColors[order.status as keyof typeof statusColors] || "secondary"}>

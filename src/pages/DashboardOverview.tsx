@@ -10,7 +10,7 @@ import { StatsCards } from "@/components/dashboard/StatsCards";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { CalendarDays, Plus, Eye, Edit, ExternalLink, ShoppingCart, Store, FileText, Users, BarChart3 } from "lucide-react";
+import { CalendarDays, Plus, Eye, Edit, ExternalLink, ShoppingCart, Store, FileText, Users, BarChart3, Globe, Zap } from "lucide-react";
 import { NavLink } from "react-router-dom";
 
 interface Store {
@@ -36,6 +36,20 @@ interface RecentOrder {
   total: number;
   status: string;
   created_at: string;
+  website_id?: string;
+  funnel_id?: string;
+}
+
+interface Website {
+  id: string;
+  name: string;
+  slug: string;
+}
+
+interface Funnel {
+  id: string;
+  name: string;
+  slug: string;
 }
 
 export default function DashboardOverview() {
@@ -43,6 +57,10 @@ export default function DashboardOverview() {
   const { store, loading: storeLoading } = useUserStore();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
+  const [websites, setWebsites] = useState<Website[]>([]);
+  const [funnels, setFunnels] = useState<Funnel[]>([]);
+  const [websiteMap, setWebsiteMap] = useState<Record<string, string>>({});
+  const [funnelMap, setFunnelMap] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
@@ -78,13 +96,46 @@ export default function DashboardOverview() {
         .select('*', { count: 'exact' })
         .eq('store_id', store.id);
 
-      // Get recent orders
-      const { data: recentOrdersData } = await supabase
-        .from('orders')
-        .select('id, order_number, customer_name, total, status, created_at')
-        .eq('store_id', store.id)
-        .order('created_at', { ascending: false })
-        .limit(5);
+      // Get websites and funnels
+      const [
+        { data: websitesData },
+        { data: funnelsData },
+        { data: recentOrdersData }
+      ] = await Promise.all([
+        supabase
+          .from('websites')
+          .select('id, name, slug')
+          .eq('store_id', store.id)
+          .eq('is_active', true),
+        supabase
+          .from('funnels')
+          .select('id, name, slug')
+          .eq('store_id', store.id)
+          .eq('is_active', true),
+        supabase
+          .from('orders')
+          .select('id, order_number, customer_name, total, status, created_at, website_id, funnel_id')
+          .eq('store_id', store.id)
+          .order('created_at', { ascending: false })
+          .limit(5)
+      ]);
+
+      // Create lookup maps
+      const websiteNameMap: Record<string, string> = {};
+      const funnelNameMap: Record<string, string> = {};
+      
+      (websitesData || []).forEach(w => {
+        websiteNameMap[w.id] = w.name;
+      });
+      
+      (funnelsData || []).forEach(f => {
+        funnelNameMap[f.id] = f.name;
+      });
+
+      setWebsites(websitesData || []);
+      setFunnels(funnelsData || []);
+      setWebsiteMap(websiteNameMap);
+      setFunnelMap(funnelNameMap);
 
       const totalRevenue = ordersData?.reduce((sum, order) => sum + Number(order.total), 0) || 0;
       const totalOrders = ordersData?.length || 0;
@@ -124,7 +175,7 @@ export default function DashboardOverview() {
   return (
     <DashboardLayout 
       title="Dashboard" 
-      description="Welcome back! Here's what's happening with your store"
+      description="Welcome back! Here's what's happening with your business"
     >
       <div className="space-y-6">
         <PlanStatusBanner onUpgrade={() => setShowUpgradeModal(true)} />
@@ -170,6 +221,11 @@ export default function DashboardOverview() {
                         <div className="text-sm text-muted-foreground">
                           {order.customer_name} • {new Date(order.created_at).toLocaleDateString()}
                         </div>
+                        {(order.website_id || order.funnel_id) && (
+                          <div className="text-xs text-muted-foreground">
+                            from {order.website_id ? websiteMap[order.website_id] : funnelMap[order.funnel_id!]}
+                          </div>
+                        )}
                       </div>
                       <div className="flex items-center gap-2">
                         <Badge className={getStatusColor(order.status)}>
@@ -190,73 +246,138 @@ export default function DashboardOverview() {
             </CardContent>
           </Card>
 
-            {/* Your Store */}
-            <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>Your Store</CardTitle>
-                <CardDescription>Manage your store</CardDescription>
-              </div>
-              {store && (
-                <Button asChild variant="outline" size="sm">
-                  <NavLink to="/dashboard/settings">
-                    <Edit className="h-4 w-4" />
-                  </NavLink>
-                </Button>
-              )}
-            </CardHeader>
-            <CardContent>
-              {storeLoading ? (
-                <div className="p-3 border rounded">
-                  <div className="h-4 w-full bg-muted animate-pulse rounded mb-2" />
-                  <div className="h-3 w-20 bg-muted animate-pulse rounded" />
-                </div>
-              ) : store ? (
-                <div className="p-3 border rounded">
-                  <div className="flex justify-between items-start mb-2">
-                    <div className="font-medium">{store.name}</div>
-                    <Badge variant={store.is_active ? "default" : "secondary"}>
-                      {store.is_active ? "Active" : "Inactive"}
-                    </Badge>
-                  </div>
-                  <div className="text-sm text-muted-foreground mb-3">
-                    {store.domain || `${store.slug}.lovable.app`}
-                  </div>
-                  <div className="flex gap-2">
-                    <Button asChild variant="outline" size="sm">
-                      <NavLink to="/dashboard/settings">
-                        <Edit className="h-3 w-3 mr-1" />
-                        Settings
-                      </NavLink>
-                    </Button>
-                    <Button asChild variant="outline" size="sm">
-                      <a href={`/store/${store.slug}`} target="_blank" rel="noopener noreferrer">
-                        <Eye className="h-3 w-3 mr-1" />
-                        View Store
-                      </a>
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center py-6 text-muted-foreground">
-                  <Store className="mx-auto h-12 w-12 mb-4 opacity-50" />
-                  <p>No store created yet</p>
-                  <Button asChild className="mt-2">
-                    <NavLink to="/dashboard/stores/create">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Create Your Store
-                    </NavLink>
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-            </Card>
           
           </div>
           
-          {/* Usage Card Sidebar */}
-          <div className="lg:col-span-2">
+          {/* Quick Access Sidebar */}
+          <div className="lg:col-span-2 space-y-6">
             <UsageCard onUpgrade={() => setShowUpgradeModal(true)} />
+            
+            {/* Websites Quick Access */}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle className="text-lg">Websites</CardTitle>
+                  <CardDescription>Quick access to your websites</CardDescription>
+                </div>
+                <Button asChild variant="outline" size="sm">
+                  <NavLink to="/dashboard/websites/create">
+                    <Plus className="h-4 w-4" />
+                  </NavLink>
+                </Button>
+              </CardHeader>
+              <CardContent>
+                {loading ? (
+                  <div className="space-y-2">
+                    {[...Array(2)].map((_, i) => (
+                      <div key={i} className="h-12 bg-muted animate-pulse rounded" />
+                    ))}
+                  </div>
+                ) : websites.length > 0 ? (
+                  <div className="space-y-2">
+                    {websites.slice(0, 3).map((website) => (
+                      <div key={website.id} className="flex justify-between items-center p-2 border rounded">
+                        <div>
+                          <div className="font-medium text-sm">{website.name}</div>
+                          <div className="text-xs text-muted-foreground">{website.slug}</div>
+                        </div>
+                        <div className="flex gap-1">
+                          <Button asChild variant="ghost" size="sm">
+                            <NavLink to={`/dashboard/websites/${website.id}/edit`}>
+                              <Edit className="h-3 w-3" />
+                            </NavLink>
+                          </Button>
+                          <Button asChild variant="ghost" size="sm">
+                            <a href={`/site/${website.slug}`} target="_blank" rel="noopener noreferrer">
+                              <Eye className="h-3 w-3" />
+                            </a>
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                    {websites.length > 3 && (
+                      <Button asChild variant="outline" size="sm" className="w-full">
+                        <NavLink to="/dashboard/websites">View All ({websites.length})</NavLink>
+                      </Button>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-center py-4 text-muted-foreground">
+                    <Globe className="mx-auto h-8 w-8 mb-2 opacity-50" />
+                    <p className="text-sm">No websites yet</p>
+                    <Button asChild variant="outline" size="sm" className="mt-2">
+                      <NavLink to="/dashboard/websites/create">
+                        <Plus className="h-3 w-3 mr-1" />
+                        Create Website
+                      </NavLink>
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Funnels Quick Access */}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle className="text-lg">Funnels</CardTitle>
+                  <CardDescription>Quick access to your funnels</CardDescription>
+                </div>
+                <Button asChild variant="outline" size="sm">
+                  <NavLink to="/dashboard/funnels/create">
+                    <Plus className="h-4 w-4" />
+                  </NavLink>
+                </Button>
+              </CardHeader>
+              <CardContent>
+                {loading ? (
+                  <div className="space-y-2">
+                    {[...Array(2)].map((_, i) => (
+                      <div key={i} className="h-12 bg-muted animate-pulse rounded" />
+                    ))}
+                  </div>
+                ) : funnels.length > 0 ? (
+                  <div className="space-y-2">
+                    {funnels.slice(0, 3).map((funnel) => (
+                      <div key={funnel.id} className="flex justify-between items-center p-2 border rounded">
+                        <div>
+                          <div className="font-medium text-sm">{funnel.name}</div>
+                          <div className="text-xs text-muted-foreground">{funnel.slug}</div>
+                        </div>
+                        <div className="flex gap-1">
+                          <Button asChild variant="ghost" size="sm">
+                            <NavLink to={`/dashboard/funnels/${funnel.id}/edit`}>
+                              <Edit className="h-3 w-3" />
+                            </NavLink>
+                          </Button>
+                          <Button asChild variant="ghost" size="sm">
+                            <a href={`/funnel/${funnel.slug}`} target="_blank" rel="noopener noreferrer">
+                              <Eye className="h-3 w-3" />
+                            </a>
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                    {funnels.length > 3 && (
+                      <Button asChild variant="outline" size="sm" className="w-full">
+                        <NavLink to="/dashboard/funnels">View All ({funnels.length})</NavLink>
+                      </Button>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-center py-4 text-muted-foreground">
+                    <Zap className="mx-auto h-8 w-8 mb-2 opacity-50" />
+                    <p className="text-sm">No funnels yet</p>
+                    <Button asChild variant="outline" size="sm" className="mt-2">
+                      <NavLink to="/dashboard/funnels/create">
+                        <Plus className="h-3 w-3 mr-1" />
+                        Create Funnel
+                      </NavLink>
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </div>
         </div>
 
