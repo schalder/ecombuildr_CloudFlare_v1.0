@@ -10,6 +10,7 @@ import { Slider } from '@/components/ui/slider';
 import { useStoreProducts, useStoreCategories } from '@/hooks/useStoreData';
 import { PageBuilderElement } from '../types';
 import { Trash2 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface EcommerceContentPropertiesProps {
   element: PageBuilderElement;
@@ -22,6 +23,31 @@ export const EcommerceContentProperties: React.FC<EcommerceContentPropertiesProp
 }) => {
   const { categories } = useStoreCategories();
   const { products } = useStoreProducts();
+  
+  // Import useStoreWebsites hook
+  const [websites, setWebsites] = React.useState<any[]>([]);
+  const [loadingWebsites, setLoadingWebsites] = React.useState(false);
+  
+  // Fetch websites for website selector
+  React.useEffect(() => {
+    const fetchWebsites = async () => {
+      setLoadingWebsites(true);
+      try {
+        const { data } = await supabase
+          .from('websites')
+          .select('id, name, slug')
+          .eq('is_active', true)
+          .eq('is_published', true)
+          .order('name');
+        setWebsites(data || []);
+      } catch (error) {
+        console.error('Error fetching websites:', error);
+      } finally {
+        setLoadingWebsites(false);
+      }
+    };
+    fetchWebsites();
+  }, []);
 
   const selectionMode = element.content.selectionMode || 'all';
   const categoryIds = element.content.categoryIds || [];
@@ -138,6 +164,30 @@ export const EcommerceContentProperties: React.FC<EcommerceContentPropertiesProp
             <SelectItem value="specific">Specific Products</SelectItem>
           </SelectContent>
         </Select>
+      </div>
+
+      <div>
+        <Label className="text-xs">Website Filter</Label>
+        <Select
+          value={element.content.websiteId || 'auto'}
+          onValueChange={(value) => onUpdate('websiteId', value === 'auto' ? undefined : value)}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Auto-detect from URL" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="auto">Auto-detect from URL</SelectItem>
+            <SelectItem value="">All Websites (Store-wide)</SelectItem>
+            {!loadingWebsites && websites.map((website) => (
+              <SelectItem key={website.id} value={website.id}>
+                {website.name} ({website.slug})
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <p className="text-xs text-muted-foreground mt-1">
+          Auto-detect will show products based on the current website URL. Choose a specific website to always show products from that site.
+        </p>
       </div>
 
       {selectionMode === 'category' && (

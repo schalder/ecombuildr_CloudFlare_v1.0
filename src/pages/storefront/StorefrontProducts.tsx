@@ -115,39 +115,90 @@ export const StorefrontProducts: React.FC = () => {
     }
   }, [filters.categories, setSearchParams, searchParams]);
 
-  // Fetch categories
+  // Fetch categories with website filtering
   const fetchCategories = async () => {
     if (!store?.id) return;
     
     try {
-      const { data, error } = await supabase
-        .from('categories')
-        .select('id, name, slug')
-        .eq('store_id', store.id)
-        .order('name');
+      // If websiteId is present, filter categories by website visibility
+      if (websiteId) {
+        // Get visible category IDs for this website
+        const { data: visibilityData } = await supabase
+          .from('category_website_visibility')
+          .select('category_id')
+          .eq('website_id', websiteId);
 
-      if (error) throw error;
-      setCategories(data || []);
+        const visibleCategoryIds = visibilityData?.map(v => v.category_id) || [];
+        
+        if (visibleCategoryIds.length === 0) {
+          setCategories([]);
+          return;
+        }
+
+        // Fetch categories that are visible on this website
+        const { data, error } = await supabase
+          .from('categories')
+          .select('id, name, slug')
+          .eq('store_id', store.id)
+          .in('id', visibleCategoryIds)
+          .order('name');
+
+        if (error) throw error;
+        setCategories(data || []);
+      } else {
+        // No website filtering - show all store categories
+        const { data, error } = await supabase
+          .from('categories')
+          .select('id, name, slug')
+          .eq('store_id', store.id)
+          .order('name');
+
+        if (error) throw error;
+        setCategories(data || []);
+      }
     } catch (error) {
       console.error('Error fetching categories:', error);
     }
   };
 
-  // Fetch products with filters
+  // Fetch products with filters and website visibility
   const fetchProducts = async () => {
     if (!store?.id) {
       console.log('No store ID available for product fetch');
       return;
     }
     
-    console.log('Fetching products for store:', store.id);
+    console.log('Fetching products for store:', store.id, 'websiteId:', websiteId);
     setLoading(true);
     try {
+      let productIds: string[] | undefined = undefined;
+
+      // If websiteId is present, get visible product IDs for this website
+      if (websiteId) {
+        const { data: visibilityData } = await supabase
+          .from('product_website_visibility')
+          .select('product_id')
+          .eq('website_id', websiteId);
+
+        productIds = visibilityData?.map(v => v.product_id) || [];
+        
+        if (productIds.length === 0) {
+          setProducts([]);
+          setLoading(false);
+          return;
+        }
+      }
+
       let query = supabase
         .from('products')
         .select('*')
         .eq('store_id', store.id)
         .eq('is_active', true);
+
+      // Apply website visibility filter if we have specific product IDs
+      if (productIds) {
+        query = query.in('id', productIds);
+      }
 
       // Apply search filter
       if (searchQuery) {

@@ -132,10 +132,26 @@ export const ProductsPageElement: React.FC<{
     const fetchCategories = async () => {
       if (!store?.id) return;
       
-      // Get website ID from URL if available for filtering
-      const websiteId = window.location.pathname.includes('/website/') 
-        ? window.location.pathname.split('/website/')[1]?.split('/')[0]
-        : undefined;
+      // Check for website selection from element content or URL
+      let websiteId = element.content.websiteId;
+      
+      // If auto-detect is enabled or no website selected, try to get from URL
+      if (!websiteId || websiteId === 'auto') {
+        if (window.location.pathname.includes('/website/')) {
+          websiteId = window.location.pathname.split('/website/')[1]?.split('/')[0];
+        } else if (window.location.pathname.includes('/site/')) {
+          // For site URLs like /site/natural-energy, we need to find the website ID
+          const siteSlug = window.location.pathname.split('/site/')[1]?.split('/')[0];
+          if (siteSlug) {
+            const { data: websiteData } = await supabase
+              .from('websites')
+              .select('id')
+              .eq('slug', siteSlug)
+              .single();
+            websiteId = websiteData?.id;
+          }
+        }
+      }
 
       let query = supabase
         .from('categories')
@@ -162,18 +178,62 @@ export const ProductsPageElement: React.FC<{
       if (!error) setCategories(data || []);
     };
     fetchCategories();
-  }, [store?.id]);
+  }, [store?.id, element.content.websiteId]);
 
   useEffect(() => {
     const fetchProducts = async () => {
       if (!store?.id) return;
       setLoading(true);
       try {
+        // Check for website selection from element content or URL
+        let websiteId = element.content.websiteId;
+        
+        // If auto-detect is enabled or no website selected, try to get from URL
+        if (!websiteId || websiteId === 'auto') {
+          if (window.location.pathname.includes('/website/')) {
+            websiteId = window.location.pathname.split('/website/')[1]?.split('/')[0];
+          } else if (window.location.pathname.includes('/site/')) {
+            // For site URLs like /site/natural-energy, we need to find the website ID
+            const siteSlug = window.location.pathname.split('/site/')[1]?.split('/')[0];
+            if (siteSlug) {
+              const { data: websiteData } = await supabase
+                .from('websites')
+                .select('id')
+                .eq('slug', siteSlug)
+                .single();
+              websiteId = websiteData?.id;
+            }
+          }
+        }
+
+        let productIds: string[] | undefined = undefined;
+
+        // If websiteId is present, get visible product IDs for this website
+        if (websiteId) {
+          const { data: visibilityData } = await supabase
+            .from('product_website_visibility')
+            .select('product_id')
+            .eq('website_id', websiteId);
+
+          productIds = visibilityData?.map(v => v.product_id) || [];
+          
+          if (productIds.length === 0) {
+            setProducts([]);
+            setLoading(false);
+            return;
+          }
+        }
+
         let query = supabase
           .from('products')
           .select('*')
           .eq('store_id', store.id)
           .eq('is_active', true);
+
+        // Apply website visibility filter if we have specific product IDs
+        if (productIds) {
+          query = query.in('id', productIds);
+        }
 
         if (searchQuery) {
           query = query.or(`name.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`);
@@ -236,7 +296,7 @@ export const ProductsPageElement: React.FC<{
       }
     };
     fetchProducts();
-  }, [store?.id, searchQuery, sortBy, JSON.stringify(filters), categories.length]);
+  }, [store?.id, searchQuery, sortBy, JSON.stringify(filters), categories.length, element.content.websiteId]);
 
   const handleAddToCart = (product: Product, quantity?: number, variation?: any) => {
     addItem({
