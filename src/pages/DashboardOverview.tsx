@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserStore } from "@/hooks/useUserStore";
+import { PlanStatusBanner } from "@/components/dashboard/PlanStatusBanner";
+import { UsageCard } from "@/components/dashboard/UsageCard";
+import { PlanUpgradeModal } from "@/components/dashboard/PlanUpgradeModal";
 import { supabase } from "@/integrations/supabase/client";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { StatsCards } from "@/components/dashboard/StatsCards";
@@ -41,6 +44,7 @@ export default function DashboardOverview() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
   useEffect(() => {
     if (store) {
@@ -123,12 +127,15 @@ export default function DashboardOverview() {
       description="Welcome back! Here's what's happening with your store"
     >
       <div className="space-y-6">
+        <PlanStatusBanner onUpgrade={() => setShowUpgradeModal(true)} />
+        
         {/* Stats Cards */}
         <StatsCards stats={stats || undefined} loading={loading} />
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {/* Recent Orders */}
-          <Card className="md:col-span-2">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
+          <div className="md:col-span-2 lg:col-span-5 space-y-6">
+            {/* Recent Orders */}
+            <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
                 <CardTitle>Recent Orders</CardTitle>
@@ -183,8 +190,8 @@ export default function DashboardOverview() {
             </CardContent>
           </Card>
 
-          {/* Your Store */}
-          <Card>
+            {/* Your Store */}
+            <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
                 <CardTitle>Your Store</CardTitle>
@@ -243,7 +250,14 @@ export default function DashboardOverview() {
                 </div>
               )}
             </CardContent>
-          </Card>
+            </Card>
+          
+          </div>
+          
+          {/* Usage Card Sidebar */}
+          <div className="lg:col-span-2">
+            <UsageCard onUpgrade={() => setShowUpgradeModal(true)} />
+          </div>
         </div>
 
         {/* Quick Actions */}
@@ -282,6 +296,11 @@ export default function DashboardOverview() {
           </CardContent>
         </Card>
       </div>
+      
+      <PlanUpgradeModal 
+        open={showUpgradeModal} 
+        onOpenChange={setShowUpgradeModal}
+      />
     </DashboardLayout>
   );
 }

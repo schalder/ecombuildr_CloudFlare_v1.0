@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { PlanUpgradeModal } from '@/components/dashboard/PlanUpgradeModal';
+import { usePlanEnforcement } from '@/hooks/usePlanEnforcement';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,6 +19,7 @@ const CreateStore = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { store, createStore } = useUserStore();
+  const { enforceAndShowUpgrade, showUpgradeModal, setShowUpgradeModal } = usePlanEnforcement();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -66,6 +69,12 @@ const CreateStore = () => {
         description: "Store name and slug are required",
         variant: "destructive"
       });
+      return;
+    }
+
+    // Check plan limits before creating store
+    const canCreate = await enforceAndShowUpgrade('store');
+    if (!canCreate) {
       return;
     }
 
@@ -245,6 +254,11 @@ const CreateStore = () => {
           </CardContent>
         </Card>
       </div>
+      
+      <PlanUpgradeModal 
+        open={showUpgradeModal} 
+        onOpenChange={setShowUpgradeModal}
+      />
     </DashboardLayout>
   );
 };
