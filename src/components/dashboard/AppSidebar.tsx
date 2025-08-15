@@ -9,7 +9,7 @@ import {
   BarChart3, 
   Megaphone,
   Settings,
-  Store,
+  
   Plus,
   Search,
   ChevronDown,
@@ -262,18 +262,6 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Store Selector */}
-        {!collapsed && (
-          <div className="p-4 border-t border-sidebar-border">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Store className="h-4 w-4" />
-              <span className="truncate">Current Store</span>
-            </div>
-            <div className="mt-1 text-sm font-medium text-sidebar-foreground truncate">
-              My F-Commerce Store
-            </div>
-          </div>
-        )}
       </SidebarContent>
     </Sidebar>
   );

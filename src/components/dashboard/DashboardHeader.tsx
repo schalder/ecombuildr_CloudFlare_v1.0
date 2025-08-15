@@ -18,8 +18,7 @@ import { useSearch } from "@/hooks/useSearch";
 import { useNotifications } from "@/hooks/useNotifications";
 import { SearchDropdown } from "./SearchDropdown";
 import { NavLink, useNavigate } from "react-router-dom";
-import { useState, useEffect, useRef } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useState, useRef, useEffect } from "react";
 import { formatDistanceToNow } from "date-fns";
 
 interface DashboardHeaderProps {
@@ -43,7 +42,6 @@ const getNotificationIcon = (type: string) => {
 export function DashboardHeader({ title, description }: DashboardHeaderProps) {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
-  const [store, setStore] = useState<any>(null);
   const [showMobileSearch, setShowMobileSearch] = useState(false);
   const [searchFocused, setSearchFocused] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
@@ -52,11 +50,6 @@ export function DashboardHeader({ title, description }: DashboardHeaderProps) {
   const { query, results, loading, handleSearch, clearSearch } = useSearch();
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
 
-  useEffect(() => {
-    if (user) {
-      fetchStore();
-    }
-  }, [user]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -69,21 +62,6 @@ export function DashboardHeader({ title, description }: DashboardHeaderProps) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const fetchStore = async () => {
-    try {
-      const { data } = await supabase
-        .from('stores')
-        .select('slug, name')
-        .eq('owner_id', user?.id)
-        .single();
-      
-      if (data) {
-        setStore(data);
-      }
-    } catch (error) {
-      console.error('Error fetching store:', error);
-    }
-  };
 
   const handleNotificationClick = async (notification: any, event: React.MouseEvent) => {
     event.stopPropagation();
@@ -281,22 +259,9 @@ export function DashboardHeader({ title, description }: DashboardHeaderProps) {
                 <DropdownMenuItem asChild>
                   <NavLink to="/dashboard/settings/store" className="flex items-center">
                     <Settings className="mr-2 h-4 w-4" />
-                    Store Settings
+                    Settings
                   </NavLink>
                 </DropdownMenuItem>
-                {store && (
-                  <DropdownMenuItem asChild>
-                    <a 
-                      href={`/store/${store.slug}`} 
-                      target="_blank" 
-                      rel="noopener noreferrer" 
-                      className="flex items-center"
-                    >
-                      <ExternalLink className="mr-2 h-4 w-4" />
-                      View Store
-                    </a>
-                  </DropdownMenuItem>
-                )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={signOut} className="text-destructive">
                   <LogOut className="mr-2 h-4 w-4" />

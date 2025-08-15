@@ -51,11 +51,7 @@ export const useUserStore = () => {
       }
 
       setStore(data);
-      
-      // If no store exists, redirect to store creation
-      if (!data && window.location.pathname.startsWith('/dashboard') && !window.location.pathname.includes('/stores/create')) {
-        navigate('/dashboard/stores/create');
-      }
+      // Store creation will now happen automatically when needed (creating websites/funnels)
     } catch (err) {
       console.error('Error in fetchUserStore:', err);
       setError(err instanceof Error ? err.message : 'Unknown error');
@@ -91,6 +87,26 @@ export const useUserStore = () => {
       console.error('Error creating store:', error);
       throw error;
     }
+  };
+
+  // Auto-create store when needed (for websites/funnels)
+  const ensureStore = async () => {
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+
+    if (store) {
+      return store;
+    }
+
+    // Create default store silently
+    const defaultStore = {
+      name: `${user.user_metadata?.full_name || user.email?.split('@')[0] || 'User'}'s Store`,
+      slug: `store-${user.id.slice(0, 8)}`,
+      description: 'My online store'
+    };
+
+    return await createStore(defaultStore);
   };
 
   const updateStore = async (updates: Partial<Store>) => {
@@ -158,5 +174,6 @@ export const useUserStore = () => {
     refetch: fetchUserStore,
     createStore,
     updateStore,
+    ensureStore,
   };
 };

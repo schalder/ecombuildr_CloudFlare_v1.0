@@ -38,9 +38,6 @@ import ProfileSettings from "./pages/ProfileSettings";
 import BillingSettings from "./pages/BillingSettings";
 import Domains from "./pages/Domains";
 import NotFound from "./pages/NotFound";
-import StoreManagement from "./pages/StoreManagement";
-import StoreList from "./pages/StoreList";
-import CreateStore from "./pages/CreateStore";
 import DemoPreview from "./pages/DemoPreview";
 import DashboardOverview from "./pages/DashboardOverview";
 // Admin Pages
@@ -118,10 +115,6 @@ const App = () => (
                 <Route path="/dashboard/settings/billing" element={<BillingSettings />} />
                 <Route path="/dashboard/domains" element={<Domains />} />
                 
-                {/* Store Management Routes */}
-                <Route path="/dashboard/stores" element={<StoreList />} />
-                <Route path="/dashboard/stores/create" element={<CreateStore />} />
-                <Route path="/dashboard/stores/:storeId" element={<StoreManagement />} />
                 
                 {/* Admin Routes */}
                 <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />

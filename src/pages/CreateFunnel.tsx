@@ -10,14 +10,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useMutation } from '@tanstack/react-query';
-import { useUserStore } from '@/hooks/useUserStore';
+import { useAutoStore } from '@/hooks/useAutoStore';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useStoreWebsitesForSelection } from '@/hooks/useWebsiteVisibility';
 
 export default function CreateFunnel() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { store } = useUserStore();
+  const { store, getOrCreateStore } = useAutoStore();
   const [formData, setFormData] = useState({
     name: '',
     slug: '',
@@ -31,12 +31,13 @@ export default function CreateFunnel() {
 
   const createFunnelMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
-      if (!store?.id) throw new Error('No store selected');
+      // Ensure store exists, create if necessary
+      const currentStore = await getOrCreateStore();
 
       const { data: funnel, error } = await supabase
         .from('funnels')
         .insert({
-          store_id: store.id,
+          store_id: currentStore.id,
           name: data.name,
           slug: data.slug,
           description: data.description,

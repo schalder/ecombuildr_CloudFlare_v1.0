@@ -10,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useMutation } from '@tanstack/react-query';
-import { useUserStore } from '@/hooks/useUserStore';
+import { useAutoStore } from '@/hooks/useAutoStore';
 import { debounce } from '@/lib/utils';
 
 type SlugStatus = 'idle' | 'checking' | 'available' | 'taken' | 'error';
@@ -18,7 +18,7 @@ type SlugStatus = 'idle' | 'checking' | 'available' | 'taken' | 'error';
 export default function CreateWebsite() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { store } = useUserStore();
+  const { store, getOrCreateStore } = useAutoStore();
   const [formData, setFormData] = useState({
     name: '',
     slug: '',
@@ -38,10 +38,14 @@ export default function CreateWebsite() {
     let uniqueSlug = baseSlug;
     
     while (attempts < 10) {
+      // Get current store for checking
+      const currentStore = store || await getOrCreateStore();
+      if (!currentStore?.id) return baseSlug;
+      
       const { data, error } = await supabase
         .from('websites')
         .select('slug')
-        .eq('store_id', store?.id)
+        .eq('store_id', currentStore.id)
         .eq('slug', uniqueSlug)
         .maybeSingle();
       
@@ -60,7 +64,11 @@ export default function CreateWebsite() {
 
   // Check slug availability
   const checkSlugAvailability = async (slug: string) => {
-    if (!slug.trim() || !store?.id) return;
+    if (!slug.trim()) return;
+    
+    // Try to get store, if none exists we'll create one later
+    const currentStore = store || await getOrCreateStore();
+    if (!currentStore?.id) return;
     
     setSlugStatus('checking');
     
@@ -68,7 +76,7 @@ export default function CreateWebsite() {
       const { data, error } = await supabase
         .from('websites')
         .select('slug')
-        .eq('store_id', store.id)
+        .eq('store_id', currentStore.id)
         .eq('slug', slug)
         .maybeSingle();
       
@@ -97,17 +105,18 @@ export default function CreateWebsite() {
   // Debounced slug validation
   const debouncedCheckSlug = useCallback(
     debounce((slug: string) => checkSlugAvailability(slug), 500),
-    [store?.id]
+    [store?.id, getOrCreateStore]
   );
 
   const createWebsiteMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
-      if (!store?.id) throw new Error('No store selected');
+      // Ensure store exists, create if necessary
+      const currentStore = await getOrCreateStore();
 
       const { data: website, error } = await supabase
         .from('websites')
         .insert({
-          store_id: store.id,
+          store_id: currentStore.id,
           name: data.name,
           slug: data.slug,
           description: data.description,
