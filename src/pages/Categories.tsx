@@ -106,17 +106,18 @@ export default function Categories() {
       // Fetch category visibility data separately
       const { data: visibilityData } = await supabase
         .from('category_website_visibility')
-        .select(`
-          category_id,
-          website_id,
-          websites(id, name, slug)
-        `);
+        .select('category_id, website_id');
+
+      // Create a map of website_id to website data for quick lookup
+      const websiteMap = new Map(
+        (websitesData || []).map(site => [site.id, site])
+      );
 
       const processedCategories = (categoriesData || []).map(cat => ({
         ...cat,
         websites: (visibilityData || [])
           .filter(v => v.category_id === cat.id)
-          .map((v: any) => v.websites)
+          .map(v => websiteMap.get(v.website_id))
           .filter(Boolean)
       }));
 
