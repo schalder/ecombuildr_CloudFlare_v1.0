@@ -1072,6 +1072,60 @@ export type Database = {
         }
         Relationships: []
       }
+      plan_limits: {
+        Row: {
+          created_at: string
+          custom_domain_allowed: boolean | null
+          id: string
+          max_funnels: number | null
+          max_orders_per_month: number | null
+          max_pages_per_store: number | null
+          max_products_per_store: number | null
+          max_stores: number | null
+          max_websites: number | null
+          plan_name: Database["public"]["Enums"]["subscription_plan"]
+          price_bdt: number
+          priority_support: boolean | null
+          trial_days: number
+          updated_at: string
+          white_label: boolean | null
+        }
+        Insert: {
+          created_at?: string
+          custom_domain_allowed?: boolean | null
+          id?: string
+          max_funnels?: number | null
+          max_orders_per_month?: number | null
+          max_pages_per_store?: number | null
+          max_products_per_store?: number | null
+          max_stores?: number | null
+          max_websites?: number | null
+          plan_name: Database["public"]["Enums"]["subscription_plan"]
+          price_bdt?: number
+          priority_support?: boolean | null
+          trial_days?: number
+          updated_at?: string
+          white_label?: boolean | null
+        }
+        Update: {
+          created_at?: string
+          custom_domain_allowed?: boolean | null
+          id?: string
+          max_funnels?: number | null
+          max_orders_per_month?: number | null
+          max_pages_per_store?: number | null
+          max_products_per_store?: number | null
+          max_stores?: number | null
+          max_websites?: number | null
+          plan_name?: Database["public"]["Enums"]["subscription_plan"]
+          price_bdt?: number
+          priority_support?: boolean | null
+          trial_days?: number
+          updated_at?: string
+          white_label?: boolean | null
+        }
+        Relationships: []
+      }
       product_library: {
         Row: {
           ad_copy: string | null
@@ -1281,6 +1335,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          account_status: string | null
           created_at: string | null
           email: string
           full_name: string | null
@@ -1291,9 +1346,12 @@ export type Database = {
           subscription_plan:
             | Database["public"]["Enums"]["subscription_plan"]
             | null
+          trial_expires_at: string | null
+          trial_started_at: string | null
           updated_at: string | null
         }
         Insert: {
+          account_status?: string | null
           created_at?: string | null
           email: string
           full_name?: string | null
@@ -1304,9 +1362,12 @@ export type Database = {
           subscription_plan?:
             | Database["public"]["Enums"]["subscription_plan"]
             | null
+          trial_expires_at?: string | null
+          trial_started_at?: string | null
           updated_at?: string | null
         }
         Update: {
+          account_status?: string | null
           created_at?: string | null
           email?: string
           full_name?: string | null
@@ -1317,6 +1378,8 @@ export type Database = {
           subscription_plan?:
             | Database["public"]["Enums"]["subscription_plan"]
             | null
+          trial_expires_at?: string | null
+          trial_started_at?: string | null
           updated_at?: string | null
         }
         Relationships: []
@@ -1542,6 +1605,50 @@ export type Database = {
         }
         Relationships: []
       }
+      user_usage: {
+        Row: {
+          created_at: string
+          current_funnels: number
+          current_orders_this_month: number
+          current_stores: number
+          current_websites: number
+          id: string
+          last_reset_date: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_funnels?: number
+          current_orders_this_month?: number
+          current_stores?: number
+          current_websites?: number
+          id?: string
+          last_reset_date?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_funnels?: number
+          current_orders_this_month?: number
+          current_stores?: number
+          current_websites?: number
+          id?: string
+          last_reset_date?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_usage_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       website_analytics: {
         Row: {
           avg_session_duration: number | null
@@ -1712,9 +1819,21 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_create_resource: {
+        Args: { _resource_type: string; _user_id: string }
+        Returns: boolean
+      }
       cleanup_expired_cart_sessions: {
         Args: Record<PropertyKey, never>
         Returns: number
+      }
+      decrement_usage: {
+        Args: { _resource_type: string; _user_id: string }
+        Returns: undefined
+      }
+      increment_usage: {
+        Args: { _resource_type: string; _user_id: string }
+        Returns: undefined
       }
       is_store_owner: {
         Args: { store_uuid: string }
