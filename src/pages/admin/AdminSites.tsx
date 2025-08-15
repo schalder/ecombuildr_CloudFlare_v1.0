@@ -35,6 +35,7 @@ interface FunnelData {
 }
 
 const AdminSites = () => {
+  console.log('AdminSites component loading...');
   const { isAdmin } = useAdminData();
   const { toast } = useToast();
   const [websites, setWebsites] = useState<WebsiteData[]>([]);
@@ -50,49 +51,33 @@ const AdminSites = () => {
 
   const loadData = async () => {
     try {
+      console.log('Loading websites and funnels data...');
       setLoading(true);
       
-      // Fetch websites with owner info
+      
+      // Fetch websites with basic data first
       const { data: websitesData, error: websitesError } = await supabase
         .from('websites')
-        .select(`
-          id,
-          name,
-          slug,
-          domain,
-          is_active,
-          is_published,
-          created_at,
-          stores!websites_store_id_fkey(
-            name,
-            profiles!stores_owner_id_fkey(email)
-          )
-        `)
+        .select('id, name, slug, domain, is_active, is_published, created_at, store_id')
         .order('created_at', { ascending: false });
 
-      if (websitesError) throw websitesError;
+      if (websitesError) {
+        console.error('Websites query error:', websitesError);
+        throw websitesError;
+      }
 
-      // Fetch funnels with owner info
+      // Fetch funnels with basic data first
       const { data: funnelsData, error: funnelsError } = await supabase
         .from('funnels')
-        .select(`
-          id,
-          name,
-          slug,
-          domain,
-          is_active,
-          is_published,
-          created_at,
-          stores!funnels_store_id_fkey(
-            name,
-            profiles!stores_owner_id_fkey(email)
-          )
-        `)
+        .select('id, name, slug, domain, is_active, is_published, created_at, store_id')
         .order('created_at', { ascending: false });
 
-      if (funnelsError) throw funnelsError;
+      if (funnelsError) {
+        console.error('Funnels query error:', funnelsError);
+        throw funnelsError;
+      }
 
-      // Transform data
+      // Transform data with simplified structure for now
       const websitesWithOwner = websitesData?.map(website => ({
         id: website.id,
         name: website.name,
@@ -101,8 +86,8 @@ const AdminSites = () => {
         is_active: website.is_active,
         is_published: website.is_published,
         created_at: website.created_at,
-        store_name: (website.stores as any)?.name || 'Unknown Store',
-        owner_email: (website.stores as any)?.profiles?.email || 'Unknown'
+        store_name: 'Store Info Loading...',
+        owner_email: 'Owner Info Loading...'
       })) || [];
 
       const funnelsWithOwner = funnelsData?.map(funnel => ({
@@ -113,8 +98,8 @@ const AdminSites = () => {
         is_active: funnel.is_active,
         is_published: funnel.is_published,
         created_at: funnel.created_at,
-        store_name: (funnel.stores as any)?.name || 'Unknown Store',
-        owner_email: (funnel.stores as any)?.profiles?.email || 'Unknown'
+        store_name: 'Store Info Loading...',
+        owner_email: 'Owner Info Loading...'
       })) || [];
 
       setWebsites(websitesWithOwner);
