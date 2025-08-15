@@ -153,7 +153,7 @@ const AdminAnalytics = () => {
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="month" />
                   <YAxis />
-                  <Tooltip formatter={(value) => [`$${Number(value).toLocaleString('en-US')}`, 'Merchant GMV']} />
+                  <Tooltip formatter={(value) => [`৳${Number(value).toLocaleString('en-US')}`, 'Merchant GMV']} />
                   <Area 
                     type="monotone" 
                     dataKey="gmv" 
@@ -180,11 +180,11 @@ const AdminAnalytics = () => {
               <div className="space-y-2">
                 <div className="flex justify-between">
                   <span>Total Users</span>
-                  <span className="font-medium">{platformStats?.total_users || 0}</span>
+                  <span className="font-medium">{platformStats?.totalUsers || 0}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Active Users</span>
-                  <span className="text-green-600 font-medium">{platformStats?.active_users || 0}</span>
+                  <span className="text-green-600 font-medium">{platformStats?.activeUsers || 0}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>This Month</span>
@@ -205,11 +205,11 @@ const AdminAnalytics = () => {
               <div className="space-y-2">
                 <div className="flex justify-between">
                   <span>Total Sites</span>
-                  <span className="font-medium">{(platformStats?.total_websites || 0) + (platformStats?.total_funnels || 0)}</span>
+                  <span className="font-medium">{(platformStats?.totalWebsites || 0) + (platformStats?.totalFunnels || 0)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Active Sites</span>
-                  <span className="text-green-600 font-medium">{(platformStats?.active_websites || 0) + (platformStats?.active_funnels || 0)}</span>
+                  <span className="text-green-600 font-medium">{(platformStats?.activeWebsites || 0) + (platformStats?.activeFunnels || 0)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>This Month</span>
@@ -230,15 +230,15 @@ const AdminAnalytics = () => {
               <div className="space-y-2">
                 <div className="flex justify-between">
                   <span>Total Orders</span>
-                  <span className="font-medium">{platformStats?.total_orders || 0}</span>
+                  <span className="font-medium">{platformStats?.totalOrders || 0}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Monthly GMV</span>
-                  <span className="text-green-600 font-medium">${(platformStats?.monthly_gmv || 0).toLocaleString('en-US')}</span>
+                  <span className="text-green-600 font-medium">৳{(platformStats?.monthlyGMV || 0).toLocaleString('en-US')}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Avg Order Value</span>
-                  <span className="font-medium">${((platformStats?.merchant_gmv || 0) / Math.max(platformStats?.total_orders || 1, 1)).toFixed(0)}</span>
+                  <span className="font-medium">৳{((platformStats?.totalGMV || 0) / Math.max(platformStats?.totalOrders || 1, 1)).toFixed(0)}</span>
                 </div>
               </div>
             </CardContent>

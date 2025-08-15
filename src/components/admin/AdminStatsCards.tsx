@@ -12,18 +12,18 @@ import {
 } from 'lucide-react';
 
 interface PlatformStats {
-  total_users: number;
-  active_users: number;
-  trial_users: number;
-  paid_users: number;
-  merchant_gmv: number;
-  monthly_gmv: number;
-  total_websites: number;
-  active_websites: number;
-  total_funnels: number;
-  active_funnels: number;
-  total_orders: number;
-  subscription_mrr: number;
+  totalUsers: number;
+  activeUsers: number;
+  trialUsers: number;
+  totalWebsites: number;
+  activeWebsites: number;
+  totalFunnels: number;
+  activeFunnels: number;
+  totalOrders: number;
+  totalGMV: number;
+  monthlyGMV: number;
+  averageOrderValue: number;
+  estimatedMRR: number;
 }
 
 interface AdminStatsCardsProps {
@@ -43,43 +43,43 @@ export const AdminStatsCards = ({ stats, loading }: AdminStatsCardsProps) => {
   const statsCards = [
     {
       title: 'Total Users',
-      value: stats?.total_users || 0,
-      description: `${stats?.active_users || 0} active`,
+      value: stats?.totalUsers || 0,
+      description: `${stats?.activeUsers || 0} active`,
       icon: Users,
       color: 'text-blue-600',
     },
     {
-      title: 'Paid Subscribers',
-      value: stats?.paid_users || 0,
-      description: `${stats?.trial_users || 0} on trial`,
+      title: 'Active Users',
+      value: stats?.activeUsers || 0,
+      description: `${stats?.trialUsers || 0} on trial`,
       icon: UserCheck,
       color: 'text-green-600',
     },
     {
       title: 'Websites',
-      value: stats?.total_websites || 0,
-      description: `${stats?.active_websites || 0} active`,
+      value: stats?.totalWebsites || 0,
+      description: `${stats?.activeWebsites || 0} active`,
       icon: Globe,
       color: 'text-purple-600',
     },
     {
       title: 'Funnels',
-      value: stats?.total_funnels || 0,
-      description: `${stats?.active_funnels || 0} active`,
+      value: stats?.totalFunnels || 0,
+      description: `${stats?.activeFunnels || 0} active`,
       icon: Zap,
       color: 'text-orange-600',
     },
     {
       title: 'SaaS MRR',
-      value: `$${stats?.subscription_mrr || 0}`,
+      value: formatCurrency(stats?.estimatedMRR || 0),
       description: 'Monthly recurring revenue',
       icon: DollarSign,
       color: 'text-emerald-600',
     },
     {
       title: 'Merchant GMV',
-      value: formatCurrency(stats?.merchant_gmv || 0),
-      description: `${stats?.total_orders || 0} orders`,
+      value: formatCurrency(stats?.totalGMV || 0),
+      description: `${stats?.totalOrders || 0} orders`,
       icon: ShoppingCart,
       color: 'text-indigo-600',
     },

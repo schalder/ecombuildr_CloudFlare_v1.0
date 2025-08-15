@@ -54,73 +54,64 @@ export default function AdminSites() {
 
   const fetchWebsites = async () => {
     try {
-      const { data, error } = await supabase
+      // Fetch websites with basic data
+      const { data: websitesData, error } = await supabase
         .from('websites')
-        .select(`
-          id,
-          name,
-          slug,
-          domain,
-          is_active,
-          is_published,
-          created_at,
-          stores!inner(
-            name,
-            owner_id,
-            profiles!inner(email, full_name)
-          )
-        `)
+        .select('id, name, slug, domain, is_active, is_published, created_at, store_id')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
 
-      const formattedWebsites = data?.map(site => ({
-        id: site.id,
-        name: site.name,
-        slug: site.slug,
-        domain: site.domain,
-        is_active: site.is_active,
-        is_published: site.is_published,
-        created_at: site.created_at,
-        owner_email: site.stores?.profiles?.email,
-        owner_name: site.stores?.profiles?.full_name,
-        store_name: site.stores?.name
-      })) || [];
+      // Get store and owner data separately
+      const storeIds = websitesData?.map(w => w.store_id).filter(Boolean) || [];
+      const { data: storesData } = await supabase
+        .from('stores')
+        .select('id, name, owner_id')
+        .in('id', storeIds);
+
+      const ownerIds = storesData?.map(s => s.owner_id).filter(Boolean) || [];
+      const { data: ownersData } = await supabase
+        .from('profiles')
+        .select('id, email, full_name')
+        .in('id', ownerIds);
+
+      const storeMap = new Map(storesData?.map(s => [s.id, s]) || []);
+      const ownerMap = new Map(ownersData?.map(o => [o.id, o]) || []);
+
+      const formattedWebsites = websitesData?.map(site => {
+        const store = storeMap.get(site.store_id);
+        const owner = store ? ownerMap.get(store.owner_id) : null;
+        
+        return {
+          id: site.id,
+          name: site.name,
+          slug: site.slug,
+          domain: site.domain,
+          is_active: site.is_active,
+          is_published: site.is_published,
+          created_at: site.created_at,
+          owner_email: owner?.email || 'N/A',
+          owner_name: owner?.full_name || 'N/A',
+          store_name: store?.name || 'N/A'
+        };
+      }) || [];
 
       setWebsites(formattedWebsites);
     } catch (error) {
       console.error('Error fetching websites:', error);
+      toast.error('Failed to fetch websites');
     }
   };
 
   const fetchFunnels = async () => {
     try {
-      // First get unique funnel IDs from funnel_steps
-      const { data: stepsData, error: stepsError } = await supabase
+      // Fetch funnel steps to derive funnels
+      const { data: stepsData, error } = await supabase
         .from('funnel_steps')
-        .select(`
-          funnel_id,
-          title,
-          slug,
-          is_published,
-          created_at,
-          funnels!inner(
-            id,
-            name,
-            slug,
-            is_active,
-            is_published,
-            created_at,
-            stores!inner(
-              name,
-              owner_id,
-              profiles!inner(email, full_name)
-            )
-          )
-        `)
+        .select('funnel_id, title, slug, is_published, created_at')
         .order('created_at', { ascending: false });
 
-      if (stepsError) throw stepsError;
+      if (error) throw error;
 
       // Group by funnel_id to get unique funnels
       const funnelMap = new Map();
@@ -129,15 +120,15 @@ export default function AdminSites() {
         if (!funnelMap.has(funnelId)) {
           funnelMap.set(funnelId, {
             id: funnelId,
-            name: step.funnels?.name || step.title,
-            slug: step.funnels?.slug || step.slug,
+            name: step.title,
+            slug: step.slug,
             domain: null,
-            is_active: step.funnels?.is_active ?? true,
-            is_published: step.funnels?.is_published ?? step.is_published,
-            created_at: step.funnels?.created_at || step.created_at,
-            owner_email: step.funnels?.stores?.profiles?.email,
-            owner_name: step.funnels?.stores?.profiles?.full_name,
-            store_name: step.funnels?.stores?.name
+            is_active: true, // Derive from steps
+            is_published: step.is_published,
+            created_at: step.created_at,
+            owner_email: 'N/A',
+            owner_name: 'N/A',
+            store_name: 'N/A'
           });
         }
       });
@@ -146,6 +137,7 @@ export default function AdminSites() {
       setFunnels(formattedFunnels);
     } catch (error) {
       console.error('Error fetching funnels:', error);
+      toast.error('Failed to fetch funnels');
     }
   };
 
@@ -173,16 +165,17 @@ export default function AdminSites() {
 
   const toggleFunnelStatus = async (funnelId: string, newStatus: boolean) => {
     try {
+      // Update all funnel steps for this funnel
       const { error } = await supabase
-        .from('funnels')
-        .update({ is_active: newStatus })
-        .eq('id', funnelId);
+        .from('funnel_steps')
+        .update({ is_published: newStatus })
+        .eq('funnel_id', funnelId);
 
       if (error) throw error;
 
       setFunnels(prev => prev.map(funnel =>
         funnel.id === funnelId 
-          ? { ...funnel, is_active: newStatus }
+          ? { ...funnel, is_active: newStatus, is_published: newStatus }
           : funnel
       ));
 

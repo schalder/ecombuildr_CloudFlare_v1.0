@@ -281,21 +281,24 @@ export const useAdminData = () => {
     try {
       const { data: subscriptions, error } = await supabase
         .from('saas_subscriptions')
-        .select(`
-          *,
-          profiles:user_id (
-            email,
-            full_name
-          )
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
 
+      // Get user details separately to avoid foreign key issues
+      const userIds = subscriptions?.map(sub => sub.user_id).filter(Boolean) || [];
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, email, full_name')
+        .in('id', userIds);
+
+      const profileMap = new Map(profiles?.map(profile => [profile.id, profile]) || []);
+
       const formattedSubscriptions = subscriptions?.map(sub => ({
         ...sub,
-        user_email: sub.profiles?.email,
-        user_name: sub.profiles?.full_name
+        user_email: profileMap.get(sub.user_id)?.email || 'N/A',
+        user_name: profileMap.get(sub.user_id)?.full_name || 'N/A'
       })) || [];
 
       setSaasSubscribers(formattedSubscriptions);
