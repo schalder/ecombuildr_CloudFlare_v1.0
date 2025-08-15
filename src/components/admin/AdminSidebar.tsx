@@ -88,7 +88,7 @@ export function AdminSidebar() {
   const isQuickActionsExpanded = quickActions.some((item) => isActive(item.url));
 
   const getNavCls = ({ isActive }: { isActive: boolean }) =>
-    isActive ? 'bg-primary text-primary-foreground font-medium' : 'hover:bg-muted/50';
+    isActive ? 'bg-sidebar-accent text-sidebar-accent-foreground font-medium' : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground';
 
   const isCollapsed = state === 'collapsed';
 

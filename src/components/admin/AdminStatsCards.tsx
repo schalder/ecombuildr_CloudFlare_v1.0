@@ -30,7 +30,7 @@ interface AdminStatsCardsProps {
 
 export const AdminStatsCards = ({ stats, loading }: AdminStatsCardsProps) => {
   const formatCurrency = (amount: number) => {
-    return `৳${amount.toLocaleString('bn-BD')}`;
+    return `৳${amount.toLocaleString('en-US')}`;
   };
 
   const formatPercentage = (value: number) => {
@@ -39,44 +39,44 @@ export const AdminStatsCards = ({ stats, loading }: AdminStatsCardsProps) => {
 
   const statsCards = [
     {
-      title: 'মোট ব্যবহারকারী',
+      title: 'Total Users',
       value: stats?.total_users || 0,
-      description: `${stats?.active_users || 0} জন সক্রিয়`,
+      description: `${stats?.active_users || 0} active`,
       icon: Users,
       color: 'text-blue-600',
     },
     {
-      title: 'পেইড ব্যবহারকারী',
+      title: 'Paid Users',
       value: stats?.paid_users || 0,
-      description: `${stats?.trial_users || 0} জন ট্রায়ালে`,
+      description: `${stats?.trial_users || 0} on trial`,
       icon: UserCheck,
       color: 'text-green-600',
     },
     {
-      title: 'মোট স্টোর',
+      title: 'Total Stores',
       value: stats?.total_stores || 0,
-      description: `${stats?.active_stores || 0} টি সক্রিয়`,
+      description: `${stats?.active_stores || 0} active`,
       icon: Store,
       color: 'text-purple-600',
     },
     {
-      title: 'মোট রিভিনিউ',
+      title: 'Total Revenue',
       value: formatCurrency(stats?.total_revenue || 0),
-      description: `এই মাসে ${formatCurrency(stats?.monthly_revenue || 0)}`,
+      description: `This month ${formatCurrency(stats?.monthly_revenue || 0)}`,
       icon: DollarSign,
       color: 'text-emerald-600',
     },
     {
-      title: 'কনভার্সন রেট',
+      title: 'Conversion Rate',
       value: formatPercentage(stats?.conversion_rate || 0),
-      description: 'ফ্রি থেকে পেইড',
+      description: 'Free to Paid',
       icon: Target,
       color: 'text-orange-600',
     },
     {
-      title: 'মোট অর্ডার',
+      title: 'Total Orders',
       value: stats?.total_orders || 0,
-      description: 'সকল স্টোর মিলিয়ে',
+      description: 'Across all stores',
       icon: ShoppingCart,
       color: 'text-indigo-600',
     },

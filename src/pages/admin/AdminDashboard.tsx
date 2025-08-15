@@ -129,7 +129,7 @@ const AdminDashboard = () => {
                       <div>
                         <div className="font-medium">{user.full_name || user.email}</div>
                         <div className="text-sm text-muted-foreground">
-                          {user.email} • {new Date(user.created_at).toLocaleDateString('bn-BD')}
+                          {user.email} • {new Date(user.created_at).toLocaleDateString('en-US')}
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
