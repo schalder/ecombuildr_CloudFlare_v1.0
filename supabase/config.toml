@@ -7,22 +7,28 @@ schemas = ["public", "graphql_public"]
 extra_search_path = ["public", "extensions"]
 max_rows = 1000
 
+[functions.account-enforcement]
+verify_jwt = false
+
 [functions.bkash-payment]
-verify_jwt = false
-
-[functions.nagad-payment]
-verify_jwt = false
-
-[functions.sslcommerz-payment]
-verify_jwt = false
-
-[functions.verify-payment]
 verify_jwt = false
 
 [functions.create-order]
 verify_jwt = false
 
+[functions.delete-order]
+verify_jwt = true
+
 [functions.get-order]
+verify_jwt = false
+
+[functions.nagad-payment]
+verify_jwt = false
+
+[functions.netlify-domain-manager]
+verify_jwt = false
+
+[functions.dns-domain-manager]
 verify_jwt = false
 
 [functions.robots]
@@ -31,11 +37,23 @@ verify_jwt = false
 [functions.sitemap]
 verify_jwt = false
 
-[functions.delete-order]
-verify_jwt = true
+[functions.sslcommerz-payment]
+verify_jwt = false
+
+[functions.steadfast-create-order]
+verify_jwt = false
+
+[functions.steadfast-webhook]
+verify_jwt = false
+
+[functions.submit-contact-form]
+verify_jwt = false
+
+[functions.subscribe-newsletter]
+verify_jwt = false
 
 [functions.top-sellers]
 verify_jwt = false
 
-[functions.steadfast-webhook]
+[functions.verify-payment]
 verify_jwt = false
