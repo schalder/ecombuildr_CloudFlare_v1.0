@@ -129,6 +129,27 @@ export type Database = {
           },
         ]
       }
+      category_website_visibility: {
+        Row: {
+          category_id: string
+          created_at: string
+          id: string
+          website_id: string
+        }
+        Insert: {
+          category_id: string
+          created_at?: string
+          id?: string
+          website_id: string
+        }
+        Update: {
+          category_id?: string
+          created_at?: string
+          id?: string
+          website_id?: string
+        }
+        Relationships: []
+      }
       courier_return_requests: {
         Row: {
           consignment_id: string | null
@@ -641,6 +662,7 @@ export type Database = {
           slug: string
           store_id: string
           updated_at: string
+          website_id: string | null
         }
         Insert: {
           canonical_domain?: string | null
@@ -659,6 +681,7 @@ export type Database = {
           slug: string
           store_id: string
           updated_at?: string
+          website_id?: string | null
         }
         Update: {
           canonical_domain?: string | null
@@ -677,6 +700,7 @@ export type Database = {
           slug?: string
           store_id?: string
           updated_at?: string
+          website_id?: string | null
         }
         Relationships: []
       }
@@ -1228,6 +1252,27 @@ export type Database = {
           store_id?: string
           title?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      product_website_visibility: {
+        Row: {
+          created_at: string
+          id: string
+          product_id: string
+          website_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          product_id: string
+          website_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          product_id?: string
+          website_id?: string
         }
         Relationships: []
       }

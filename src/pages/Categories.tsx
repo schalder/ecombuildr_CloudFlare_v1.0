@@ -13,6 +13,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Plus, MoreVertical, Edit, Trash2 } from 'lucide-react';
+import { MultiSelect } from '@/components/ui/multi-select';
+import { useStoreWebsitesForSelection, useCategoryWebsiteVisibility } from '@/hooks/useWebsiteVisibility';
 
 interface Category {
   id: string;
@@ -32,6 +34,10 @@ export default function Categories() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [storeId, setStoreId] = useState<string>('');
+  const [selectedWebsites, setSelectedWebsites] = useState<string[]>([]);
+  const [editSelectedWebsites, setEditSelectedWebsites] = useState<string[]>([]);
+
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -43,6 +49,9 @@ export default function Categories() {
     description: '',
     image_url: '',
   });
+
+  // Get websites for store
+  const { websites: storeWebsites } = useStoreWebsitesForSelection(storeId);
 
   useEffect(() => {
     if (user) {
@@ -58,6 +67,8 @@ export default function Categories() {
         .eq('owner_id', user?.id);
 
       if (!stores || stores.length === 0) return;
+
+      setStoreId(stores[0].id); // Set the first store as default
 
       const storeIds = stores.map(store => store.id);
       const { data, error } = await supabase
@@ -101,13 +112,27 @@ export default function Categories() {
 
       const slug = formData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 
-      const { error } = await supabase.from('categories').insert({
+      const { data: categoryData, error: insertError } = await supabase.from('categories').insert({
         ...formData,
         slug,
         store_id: stores[0].id,
-      });
+      }).select('id').single();
 
-      if (error) throw error;
+      if (insertError) throw insertError;
+
+      // Add website visibility records
+      if (selectedWebsites.length > 0 && categoryData?.id) {
+        const visibilityRecords = selectedWebsites.map(websiteId => ({
+          category_id: categoryData.id,
+          website_id: websiteId
+        }));
+
+        const { error: visibilityError } = await supabase
+          .from('category_website_visibility')
+          .insert(visibilityRecords);
+
+        if (visibilityError) throw visibilityError;
+      }
 
       toast({
         title: "Success",
@@ -115,6 +140,7 @@ export default function Categories() {
       });
 
       setFormData({ name: '', description: '', image_url: '' });
+      setSelectedWebsites([]);
       setIsAddModalOpen(false);
       fetchCategories();
     } catch (error: any) {
@@ -223,15 +249,27 @@ export default function Categories() {
                     rows={3}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="image_url">Image URL</Label>
-                  <Input
-                    id="image_url"
-                    type="url"
-                    value={formData.image_url}
-                    onChange={(e) => setFormData(prev => ({ ...prev, image_url: e.target.value }))}
-                  />
-                </div>
+                 <div className="space-y-2">
+                   <Label htmlFor="image_url">Image URL</Label>
+                   <Input
+                     id="image_url"
+                     type="url"
+                     value={formData.image_url}
+                     onChange={(e) => setFormData(prev => ({ ...prev, image_url: e.target.value }))}
+                   />
+                 </div>
+                 <div className="space-y-2">
+                   <Label>Website Visibility</Label>
+                   <MultiSelect
+                     options={storeWebsites.map(w => ({ label: w.name, value: w.id }))}
+                     selected={selectedWebsites}
+                     onChange={setSelectedWebsites}
+                     placeholder="Select websites to show this category on..."
+                   />
+                   <p className="text-sm text-muted-foreground">
+                     Choose which websites this category will be visible on. Leave empty to show on all websites.
+                   </p>
+                 </div>
                 <div className="flex justify-end space-x-2">
                   <Button type="button" variant="outline" onClick={() => setIsAddModalOpen(false)}>
                     Cancel

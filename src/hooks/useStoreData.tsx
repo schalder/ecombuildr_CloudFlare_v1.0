@@ -40,6 +40,7 @@ export const useStoreProducts = (options?: {
   categoryIds?: string[];
   limit?: number;
   specificProductIds?: string[];
+  websiteId?: string;
 }) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -53,42 +54,97 @@ export const useStoreProducts = (options?: {
 
     try {
       setLoading(true);
-      let query = supabase
-        .from('products')
-        .select('*')
-        .eq('store_id', store.id)
-        .eq('is_active', true)
-        .order('created_at', { ascending: false });
+      
+      // If websiteId is provided, filter by website visibility
+      if (options?.websiteId) {
+        const { data: visibleProductIds } = await supabase
+          .from('product_website_visibility')
+          .select('product_id')
+          .eq('website_id', options.websiteId);
 
-      // Filter by specific product IDs
-      if (options?.specificProductIds && options.specificProductIds.length > 0) {
-        query = query.in('id', options.specificProductIds);
+        const productIds = visibleProductIds?.map(v => v.product_id) || [];
+        
+        // If no products are visible on this website, return empty array
+        if (productIds.length === 0) {
+          setProducts([]);
+          return;
+        }
+
+        let query = supabase
+          .from('products')
+          .select('*')
+          .eq('store_id', store.id)
+          .eq('is_active', true)
+          .in('id', productIds)
+          .order('created_at', { ascending: false });
+
+        // Filter by specific product IDs (intersection with visible products)
+        if (options?.specificProductIds && options.specificProductIds.length > 0) {
+          const filteredIds = options.specificProductIds.filter(id => productIds.includes(id));
+          if (filteredIds.length === 0) {
+            setProducts([]);
+            return;
+          }
+          query = query.in('id', filteredIds);
+        }
+
+        // Filter by categories
+        if (options?.categoryIds && options.categoryIds.length > 0) {
+          query = query.in('category_id', options.categoryIds);
+        }
+
+        // Apply limit
+        if (options?.limit) {
+          query = query.limit(options.limit);
+        }
+
+        const { data, error } = await query;
+
+        if (error) {
+          setError(error.message);
+          return;
+        }
+
+        setProducts(data as Product[] || []);
+      } else {
+        // Original logic for when no website filtering is needed
+        let query = supabase
+          .from('products')
+          .select('*')
+          .eq('store_id', store.id)
+          .eq('is_active', true)
+          .order('created_at', { ascending: false });
+
+        // Filter by specific product IDs
+        if (options?.specificProductIds && options.specificProductIds.length > 0) {
+          query = query.in('id', options.specificProductIds);
+        }
+
+        // Filter by categories
+        if (options?.categoryIds && options.categoryIds.length > 0) {
+          query = query.in('category_id', options.categoryIds);
+        }
+
+        // Apply limit
+        if (options?.limit) {
+          query = query.limit(options.limit);
+        }
+
+        const { data, error } = await query;
+
+        if (error) {
+          setError(error.message);
+          return;
+        }
+
+        setProducts(data as Product[] || []);
       }
-
-      // Filter by categories
-      if (options?.categoryIds && options.categoryIds.length > 0) {
-        query = query.in('category_id', options.categoryIds);
-      }
-
-      // Apply limit
-      if (options?.limit) {
-        query = query.limit(options.limit);
-      }
-
-      const { data, error } = await query;
-
-      if (error) {
-        setError(error.message);
-        return;
-      }
-
-      setProducts(data as Product[] || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
       setLoading(false);
     }
-  }, [store, options?.categoryIds, options?.limit, options?.specificProductIds]);
+  }, [store, options?.categoryIds, options?.limit, options?.specificProductIds, options?.websiteId]);
 
   useEffect(() => {
     fetchProducts();
@@ -97,7 +153,7 @@ export const useStoreProducts = (options?: {
   return { products, loading, error, refetch: fetchProducts };
 };
 
-export const useStoreCategories = () => {
+export const useStoreCategories = (websiteId?: string) => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -110,24 +166,56 @@ export const useStoreCategories = () => {
 
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('categories')
-        .select('*')
-        .eq('store_id', store.id)
-        .order('name');
+      
+      // If websiteId is provided, filter by website visibility
+      if (websiteId) {
+        const { data: visibleCategoryIds } = await supabase
+          .from('category_website_visibility')
+          .select('category_id')
+          .eq('website_id', websiteId);
 
-      if (error) {
-        setError(error.message);
-        return;
+        const categoryIds = visibleCategoryIds?.map(v => v.category_id) || [];
+        
+        // If no categories are visible on this website, return empty array
+        if (categoryIds.length === 0) {
+          setCategories([]);
+          return;
+        }
+
+        const { data, error } = await supabase
+          .from('categories')
+          .select('*')
+          .eq('store_id', store.id)
+          .in('id', categoryIds)
+          .order('name');
+
+        if (error) {
+          setError(error.message);
+          return;
+        }
+
+        setCategories(data || []);
+      } else {
+        // Original logic for when no website filtering is needed
+        const { data, error } = await supabase
+          .from('categories')
+          .select('*')
+          .eq('store_id', store.id)
+          .order('name');
+
+        if (error) {
+          setError(error.message);
+          return;
+        }
+
+        setCategories(data || []);
       }
-
-      setCategories(data || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
       setLoading(false);
     }
-  }, [store]);
+  }, [store, websiteId]);
 
   useEffect(() => {
     fetchCategories();

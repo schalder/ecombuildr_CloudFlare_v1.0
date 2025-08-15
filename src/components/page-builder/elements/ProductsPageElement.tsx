@@ -131,11 +131,34 @@ export const ProductsPageElement: React.FC<{
   useEffect(() => {
     const fetchCategories = async () => {
       if (!store?.id) return;
-      const { data, error } = await supabase
+      
+      // Get website ID from URL if available for filtering
+      const websiteId = window.location.pathname.includes('/website/') 
+        ? window.location.pathname.split('/website/')[1]?.split('/')[0]
+        : undefined;
+
+      let query = supabase
         .from('categories')
         .select('id, name, slug')
         .eq('store_id', store.id)
         .order('name');
+
+      if (websiteId) {
+        const { data: visibleCategoryIds } = await supabase
+          .from('category_website_visibility')
+          .select('category_id')
+          .eq('website_id', websiteId);
+
+        const categoryIds = visibleCategoryIds?.map(v => v.category_id) || [];
+        if (categoryIds.length > 0) {
+          query = query.in('id', categoryIds);
+        } else {
+          setCategories([]);
+          return;
+        }
+      }
+
+      const { data, error } = await query;
       if (!error) setCategories(data || []);
     };
     fetchCategories();

@@ -11,6 +11,8 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useMutation } from '@tanstack/react-query';
 import { useUserStore } from '@/hooks/useUserStore';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useStoreWebsitesForSelection } from '@/hooks/useWebsiteVisibility';
 
 export default function CreateFunnel() {
   const navigate = useNavigate();
@@ -21,7 +23,11 @@ export default function CreateFunnel() {
     slug: '',
     description: '',
     domain: '',
+    website_id: '',
   });
+
+  // Get websites for store
+  const { websites: storeWebsites } = useStoreWebsitesForSelection(store?.id || '');
 
   const createFunnelMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
@@ -35,6 +41,7 @@ export default function CreateFunnel() {
           slug: data.slug,
           description: data.description,
           domain: data.domain || null,
+          website_id: data.website_id || null,
         })
         .select()
         .single();
@@ -154,6 +161,25 @@ export default function CreateFunnel() {
                   onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                   rows={3}
                 />
+              </div>
+
+              <div>
+                <Label htmlFor="website">Website</Label>
+                <Select value={formData.website_id} onValueChange={(value) => setFormData(prev => ({ ...prev, website_id: value }))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a website for this funnel" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {storeWebsites.map((website) => (
+                      <SelectItem key={website.id} value={website.id}>
+                        {website.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Choose which website this funnel belongs to for consistent branding
+                </p>
               </div>
 
               <div>

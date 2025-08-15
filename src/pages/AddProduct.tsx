@@ -21,6 +21,8 @@ import VariationsBuilder, { VariationOption } from '@/components/products/Variat
 import VariantMatrix, { VariantEntry } from '@/components/products/VariantMatrix';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { parseVideoUrl, buildEmbedUrl } from '@/components/page-builder/utils/videoUtils';
+import { MultiSelect } from '@/components/ui/multi-select';
+import { useStoreWebsitesForSelection } from '@/hooks/useWebsiteVisibility';
 
 export default function AddProduct() {
   const { user } = useAuth();
@@ -28,6 +30,8 @@ export default function AddProduct() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState<any[]>([]);
+  const [storeId, setStoreId] = useState<string>('');
+  const [selectedWebsites, setSelectedWebsites] = useState<string[]>([]);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -69,6 +73,9 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
   const [descriptionBuilder, setDescriptionBuilder] = useState<PageBuilderData>({ sections: [] });
   const [isBuilderOpen, setIsBuilderOpen] = useState(false);
 
+  // Get websites for store
+  const { websites: storeWebsites } = useStoreWebsitesForSelection(storeId);
+
 
   // Fetch categories for the dropdown
   useEffect(() => {
@@ -85,6 +92,8 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
         .eq('owner_id', user?.id);
 
       if (stores && stores.length > 0) {
+        setStoreId(stores[0].id); // Set the first store as default
+
         const { data: categoriesData } = await supabase
           .from('categories')
           .select('id, name')
@@ -137,7 +146,7 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
         }
       }
 
-const { error } = await supabase.from('products').insert({
+const { data: newProduct, error: insertError } = await supabase.from('products').insert({
         ...formData,
         store_id: stores[0].id,
         slug,
@@ -157,9 +166,23 @@ const { error } = await supabase.from('products').insert({
         allowed_payment_methods: allowedPayments.length ? allowedPayments : null,
         description_mode: descriptionMode,
         description_builder: descriptionBuilder as any,
-      } as any);
+      } as any).select('id').single();
 
-      if (error) throw error;
+      if (insertError) throw insertError;
+
+      // Add website visibility records
+      if (selectedWebsites.length > 0 && newProduct?.id) {
+        const visibilityRecords = selectedWebsites.map(websiteId => ({
+          product_id: newProduct.id,
+          website_id: websiteId
+        }));
+
+        const { error: visibilityError } = await supabase
+          .from('product_website_visibility')
+          .insert(visibilityRecords);
+
+        if (visibilityError) throw visibilityError;
+      }
 
       toast({
         title: "Success",
@@ -583,6 +606,19 @@ const { error } = await supabase.from('products').insert({
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Website Visibility</Label>
+              <MultiSelect
+                options={storeWebsites.map(w => ({ label: w.name, value: w.id }))}
+                selected={selectedWebsites}
+                onChange={setSelectedWebsites}
+                placeholder="Select websites to show this product on..."
+              />
+              <p className="text-sm text-muted-foreground">
+                Choose which websites this product will be visible on. Leave empty to show on all websites.
+              </p>
             </div>
             
             <div className="space-y-2">
