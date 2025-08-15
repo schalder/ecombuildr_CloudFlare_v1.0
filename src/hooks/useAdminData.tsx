@@ -130,14 +130,15 @@ export const useAdminData = () => {
         .select('*', { count: 'exact' })
         .eq('is_active', true);
 
-      const { count: totalFunnels } = await supabase
-        .from('funnels')
-        .select('*', { count: 'exact' });
+      // Get funnel counts from funnel_steps (derive distinct funnel_id)
+      const { data: funnelSteps } = await supabase
+        .from('funnel_steps')
+        .select('funnel_id, is_published');
 
-      const { count: activeFunnels } = await supabase
-        .from('funnels')
-        .select('*', { count: 'exact' })
-        .eq('is_active', true);
+      const totalFunnels = new Set(funnelSteps?.map(step => step.funnel_id)).size || 0;
+      const activeFunnels = new Set(
+        funnelSteps?.filter(step => step.is_published).map(step => step.funnel_id)
+      ).size || 0;
 
       // Get order stats
       const { data: orderData } = await supabase
@@ -177,8 +178,8 @@ export const useAdminData = () => {
         monthly_gmv: monthlyGmv,
         total_websites: totalWebsites || 0,
         active_websites: activeWebsites || 0,
-        total_funnels: totalFunnels || 0,
-        active_funnels: activeFunnels || 0,
+        total_funnels: totalFunnels,
+        active_funnels: activeFunnels,
         total_orders: totalOrders,
         subscription_mrr: subscriptionMrr,
       });

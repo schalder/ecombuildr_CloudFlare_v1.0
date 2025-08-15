@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { useAdminData } from '@/hooks/useAdminData';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,24 +12,148 @@ import {
   AlertCircle,
   Calendar,
   Users,
-  ShoppingBag
+  ShoppingBag,
+  Store
 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+
+interface TopCustomer {
+  id: string;
+  name: string;
+  email: string;
+  total_spent: number;
+  total_orders: number;
+}
+
+interface TopProduct {
+  id: string;
+  name: string;
+  category?: string;
+  revenue: number;
+  units_sold: number;
+}
+
+interface StoreRevenue {
+  store_id: string;
+  store_name: string;
+  owner_email: string;
+  revenue: number;
+  orders_count: number;
+}
 
 const AdminRevenue = () => {
-  const { isAdmin, platformStats, loading } = useAdminData();
+  const { isAdmin, platformStats, loading: adminLoading } = useAdminData();
+  const [topCustomers, setTopCustomers] = useState<TopCustomer[]>([]);
+  const [topProducts, setTopProducts] = useState<TopProduct[]>([]);
+  const [storeRevenues, setStoreRevenues] = useState<StoreRevenue[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  if (loading || isAdmin === null) {
+  useEffect(() => {
+    if (isAdmin) {
+      fetchRevenueData();
+    }
+  }, [isAdmin]);
+
+  const fetchRevenueData = async () => {
+    try {
+      // Fetch top customers
+      const { data: customers } = await supabase
+        .from('customers')
+        .select('id, full_name, email, total_spent, total_orders')
+        .order('total_spent', { ascending: false })
+        .limit(10);
+
+      setTopCustomers(customers?.map(c => ({
+        id: c.id,
+        name: c.full_name,
+        email: c.email || 'No email',
+        total_spent: c.total_spent || 0,
+        total_orders: c.total_orders || 0
+      })) || []);
+
+      // Fetch top products by revenue
+      const { data: productRevenue } = await supabase
+        .from('order_items')
+        .select(`
+          product_id,
+          products!inner(name, categories(name)),
+          total,
+          quantity
+        `);
+
+      // Aggregate product revenue
+      const productMap: Record<string, any> = {};
+      productRevenue?.forEach(item => {
+        const productId = item.product_id;
+        if (!productMap[productId]) {
+          productMap[productId] = {
+            id: productId,
+            name: item.products.name,
+            category: item.products.categories?.name || 'Uncategorized',
+            revenue: 0,
+            units_sold: 0
+          };
+        }
+        productMap[productId].revenue += Number(item.total);
+        productMap[productId].units_sold += item.quantity;
+      });
+
+      const topProductsList = Object.values(productMap)
+        .sort((a: any, b: any) => b.revenue - a.revenue)
+        .slice(0, 10) as TopProduct[];
+
+      setTopProducts(topProductsList);
+
+      // Fetch store revenue breakdown
+      const { data: storeData } = await supabase
+        .from('orders')
+        .select(`
+          store_id,
+          total,
+          stores!inner(name, profiles!inner(email))
+        `);
+
+      // Aggregate by store
+      const storeMap: Record<string, any> = {};
+      storeData?.forEach(order => {
+        const storeId = order.store_id;
+        if (!storeMap[storeId]) {
+          storeMap[storeId] = {
+            store_id: storeId,
+            store_name: order.stores.name,
+            owner_email: order.stores.profiles.email,
+            revenue: 0,
+            orders_count: 0
+          };
+        }
+        storeMap[storeId].revenue += Number(order.total);
+        storeMap[storeId].orders_count += 1;
+      });
+
+      const storeRevenueList = Object.values(storeMap)
+        .sort((a: any, b: any) => b.revenue - a.revenue)
+        .slice(0, 10) as StoreRevenue[];
+
+      setStoreRevenues(storeRevenueList);
+    } catch (err) {
+      console.error('Error fetching revenue data:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (adminLoading || isAdmin === null || loading) {
     return (
-      <AdminLayout title="Revenue Management" description="Track SaaS subscription revenue and merchant GMV">
+      <AdminLayout title="Revenue Tracking (Merchants)" description="Track merchant GMV and customer order analytics">
         <div className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {[...Array(2)].map((_, i) => (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[...Array(3)].map((_, i) => (
               <div key={i} className="h-32 bg-muted animate-pulse rounded-lg" />
             ))}
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="h-24 bg-muted animate-pulse rounded-lg" />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {[...Array(2)].map((_, i) => (
+              <div key={i} className="h-64 bg-muted animate-pulse rounded-lg" />
             ))}
           </div>
         </div>
@@ -39,7 +163,7 @@ const AdminRevenue = () => {
 
   if (!isAdmin) {
     return (
-      <AdminLayout title="Revenue Management">
+      <AdminLayout title="Revenue Tracking (Merchants)">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-destructive">
@@ -55,71 +179,26 @@ const AdminRevenue = () => {
     );
   }
 
-  // Mock data for top customers and products
-  const topCustomers = [
-    { name: 'John Doe', email: 'john@example.com', revenue: 5200, orders: 12 },
-    { name: 'Jane Smith', email: 'jane@example.com', revenue: 4800, orders: 8 },
-    { name: 'Alex Johnson', email: 'alex@example.com', revenue: 3600, orders: 6 },
-  ];
-
-  const topProducts = [
-    { name: 'Premium T-Shirt', category: 'Apparel', revenue: 15000, units: 150 },
-    { name: 'Smart Watch', category: 'Electronics', revenue: 12000, units: 80 },
-    { name: 'Coffee Mug', category: 'Kitchen', revenue: 8500, units: 340 },
-  ];
+  const avgOrderValue = (platformStats?.merchant_gmv || 0) / Math.max(platformStats?.total_orders || 1, 1);
 
   return (
-    <AdminLayout title="Revenue Management" description="Track SaaS subscription revenue and merchant GMV">
+    <AdminLayout title="Revenue Tracking (Merchants)" description="Track merchant GMV and customer order analytics">
       <div className="space-y-6">
-        {/* Revenue Overview - SaaS vs Merchant */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <DollarSign className="h-5 w-5 text-green-600" />
-                SaaS Revenue (Platform)
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div>
-                  <div className="text-2xl font-bold text-green-600">
-                    ${formatCurrency(platformStats?.subscription_mrr || 0)}
-                  </div>
-                  <p className="text-xs text-muted-foreground">Monthly Recurring Revenue</p>
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  From {platformStats?.paid_users || 0} paying subscribers
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <ShoppingBag className="h-5 w-5 text-blue-600" />
-                Merchant GMV (Customer Orders)
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div>
-                  <div className="text-2xl font-bold text-blue-600">
-                    {formatCurrency(platformStats?.merchant_gmv || 0)}
-                  </div>
-                  <p className="text-xs text-muted-foreground">Total merchant sales volume</p>
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  From {platformStats?.total_orders || 0} customer orders
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Platform Performance Metrics */}
+        {/* Merchant GMV Overview */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Merchant GMV</CardTitle>
+              <DollarSign className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-blue-600">
+                {formatCurrency(platformStats?.merchant_gmv || 0)}
+              </div>
+              <p className="text-xs text-muted-foreground">All-time customer orders</p>
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Monthly GMV</CardTitle>
@@ -131,32 +210,21 @@ const AdminRevenue = () => {
               </div>
               <p className="text-xs text-green-600 flex items-center gap-1">
                 <TrendingUp className="h-3 w-3" />
-                Customer orders this month
+                This month's orders
               </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Avg Order Value</CardTitle>
+              <CardTitle className="text-sm font-medium">Average Order Value</CardTitle>
               <ShoppingBag className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {formatCurrency(2850)}
+                {formatCurrency(avgOrderValue)}
               </div>
-              <p className="text-xs text-muted-foreground">Per order</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Conversion Rate</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">3.2%</div>
-              <p className="text-xs text-muted-foreground">Visitors to customers</p>
+              <p className="text-xs text-muted-foreground">Per customer order</p>
             </CardContent>
           </Card>
         </div>
@@ -166,9 +234,9 @@ const AdminRevenue = () => {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle>Revenue Reports</CardTitle>
+                <CardTitle>Merchant Revenue Reports</CardTitle>
                 <CardDescription>
-                  Export detailed revenue reports and analytics
+                  Export detailed merchant GMV reports and analytics
                 </CardDescription>
               </div>
               <Button>
@@ -179,17 +247,17 @@ const AdminRevenue = () => {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Button variant="outline" disabled>
+              <Button variant="outline">
                 <Download className="h-4 w-4 mr-2" />
-                Monthly Report
+                GMV Report
               </Button>
-              <Button variant="outline" disabled>
+              <Button variant="outline">
                 <Download className="h-4 w-4 mr-2" />
                 Customer Report
               </Button>
-              <Button variant="outline" disabled>
+              <Button variant="outline">
                 <Download className="h-4 w-4 mr-2" />
-                Product Report
+                Store Performance
               </Button>
             </div>
           </CardContent>
@@ -199,50 +267,104 @@ const AdminRevenue = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card>
             <CardHeader>
-              <CardTitle>Top Customers</CardTitle>
-              <CardDescription>Highest revenue generating customers</CardDescription>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                Top Customers
+              </CardTitle>
+              <CardDescription>Highest spending customers across all stores</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {topCustomers.map((customer, index) => (
-                  <div key={index} className="flex items-center justify-between">
-                    <div>
-                      <div className="font-medium">{customer.name}</div>
-                      <div className="text-sm text-muted-foreground">{customer.email}</div>
+                {topCustomers.length > 0 ? (
+                  topCustomers.map((customer) => (
+                    <div key={customer.id} className="flex items-center justify-between">
+                      <div>
+                        <div className="font-medium">{customer.name}</div>
+                        <div className="text-sm text-muted-foreground">{customer.email}</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-medium">{formatCurrency(customer.total_spent)}</div>
+                        <div className="text-sm text-muted-foreground">{customer.total_orders} orders</div>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <div className="font-medium">{formatCurrency(customer.revenue)}</div>
-                      <div className="text-sm text-muted-foreground">{customer.orders} orders</div>
-                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Users className="mx-auto h-8 w-8 mb-2 opacity-50" />
+                    <p>No customer data available</p>
                   </div>
-                ))}
+                )}
               </div>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader>
-              <CardTitle>Top Products</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <ShoppingBag className="h-5 w-5" />
+                Top Products
+              </CardTitle>
               <CardDescription>Best performing products by revenue</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {topProducts.map((product, index) => (
-                  <div key={index} className="flex items-center justify-between">
-                    <div>
-                      <div className="font-medium">{product.name}</div>
-                      <Badge variant="secondary" className="text-xs">{product.category}</Badge>
+                {topProducts.length > 0 ? (
+                  topProducts.map((product) => (
+                    <div key={product.id} className="flex items-center justify-between">
+                      <div>
+                        <div className="font-medium">{product.name}</div>
+                        <Badge variant="secondary" className="text-xs">{product.category}</Badge>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-medium">{formatCurrency(product.revenue)}</div>
+                        <div className="text-sm text-muted-foreground">{product.units_sold} units sold</div>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <div className="font-medium">{formatCurrency(product.revenue)}</div>
-                      <div className="text-sm text-muted-foreground">{product.units} units sold</div>
-                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <ShoppingBag className="mx-auto h-8 w-8 mb-2 opacity-50" />
+                    <p>No product data available</p>
                   </div>
-                ))}
+                )}
               </div>
             </CardContent>
           </Card>
         </div>
+
+        {/* Store Performance */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Store className="h-5 w-5" />
+              Store Performance
+            </CardTitle>
+            <CardDescription>Revenue breakdown by merchant stores</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {storeRevenues.length > 0 ? (
+                storeRevenues.map((store) => (
+                  <div key={store.store_id} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div>
+                      <div className="font-medium">{store.store_name}</div>
+                      <div className="text-sm text-muted-foreground">{store.owner_email}</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-medium">{formatCurrency(store.revenue)}</div>
+                      <div className="text-sm text-muted-foreground">{store.orders_count} orders</div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Store className="mx-auto h-8 w-8 mb-2 opacity-50" />
+                  <p>No store data available</p>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </AdminLayout>
   );
