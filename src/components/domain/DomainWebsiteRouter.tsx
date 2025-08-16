@@ -13,7 +13,6 @@ import { StorefrontHome } from '@/pages/storefront/StorefrontHome';
 import { StorefrontProducts } from '@/pages/storefront/StorefrontProducts';
 import { WebsiteHeader } from '@/components/storefront/WebsiteHeader';
 import { WebsiteFooter } from '@/components/storefront/WebsiteFooter';
-import { shouldHideChrome } from '@/lib/systemChrome';
 
 const DynamicWebsiteRoute: React.FC<{ fallback: React.ReactElement; websiteId: string }> = ({ fallback, websiteId }) => {
   const { slug } = useParams<{ slug: string }>();
@@ -34,7 +33,6 @@ export const DomainWebsiteRouter: React.FC<DomainWebsiteRouterProps> = ({
   const location = useLocation();
   const { pixels } = usePixelContext();
   const { trackPageView } = usePixelTracking(pixels);
-  const hideChromeElements = shouldHideChrome(location.pathname);
 
   // Track page views on route changes
   useEffect(() => {
@@ -50,39 +48,65 @@ export const DomainWebsiteRouter: React.FC<DomainWebsiteRouterProps> = ({
 
   return (
     <>
-      {!hideChromeElements && <WebsiteHeader website={website} />}
+      <WebsiteHeader website={website} />
       <main className="flex-1">
         <Routes>
-          <Route path="/" element={<StorefrontHome />} />
-          <Route path="/products" element={<StorefrontProducts />} />
-          <Route 
-            path="/products/:productSlug" 
-            element={<DomainWebsiteProductDetailRoute websiteId={websiteId} />}
-          />
-          <Route path="/cart" element={<CartPage />} />
-          <Route 
-            path="/checkout" 
-            element={<CheckoutPage />} 
-          />
-          <Route 
-            path="/payment-processing" 
-            element={<PaymentProcessing />}
-          />
-          <Route 
-            path="/order-confirmation" 
-            element={<OrderConfirmation />}
-          />
-          <Route 
-            path="/search" 
-            element={<SearchResults />} 
-          />
-          <Route 
-            path="/*" 
-            element={<DynamicWebsiteRoute fallback={<div>Page not found</div>} websiteId={websiteId} />} 
-          />
+      {/* Homepage */}
+      <Route path="/" element={
+        <WebsiteOverrideRoute 
+          slug="home" 
+          websiteId={websiteId}
+          fallback={<StorefrontHome />} 
+        />
+      } />
+      
+      {/* Products */}
+      <Route path="/products" element={
+        <WebsiteOverrideRoute 
+          slug="products" 
+          websiteId={websiteId}
+          fallback={<StorefrontProducts />} 
+        />
+      } />
+      <Route path="/products/:productSlug" element={<DomainWebsiteProductDetailRoute websiteId={websiteId} website={website} />} />
+      
+      {/* Cart & Checkout - using website pages */}
+      <Route path="/cart" element={
+        <WebsiteOverrideRoute 
+          slug="cart" 
+          websiteId={websiteId}
+          fallback={<CartPage />} 
+        />
+      } />
+      <Route path="/checkout" element={
+        <WebsiteOverrideRoute 
+          slug="checkout" 
+          websiteId={websiteId}
+          fallback={<CheckoutPage />} 
+        />
+      } />
+      <Route path="/payment-processing" element={<PaymentProcessing />} />
+      <Route path="/order-confirmation" element={
+        <WebsiteOverrideRoute 
+          slug="order-confirmation" 
+          websiteId={websiteId}
+          fallback={<OrderConfirmation />} 
+        />
+      } />
+      
+      {/* Search */}
+      <Route path="/search" element={<SearchResults />} />
+      
+      {/* Website Pages - catch all other routes */}
+      <Route 
+        path="/:slug" 
+        element={
+          <DynamicWebsiteRoute fallback={<div className="min-h-screen flex items-center justify-center">Page not found</div>} websiteId={websiteId} />
+        } 
+      />
         </Routes>
       </main>
-      {!hideChromeElements && <WebsiteFooter website={website} />}
+      <WebsiteFooter website={website} />
     </>
   );
 };
