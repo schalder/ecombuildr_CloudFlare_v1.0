@@ -60,7 +60,7 @@ export const TextElementStyles: React.FC<TextElementStylesProps> = ({
     return [...base, ...google];
   }, []);
 
-  const currentFontFamily = (element.styles?.fontFamily || '').trim();
+  const currentFontFamily = (currentStyles.fontFamily || element.styles?.fontFamily || '').trim();
   const selectedFontValue = (fontOptions.find((f: any) => f.value === currentFontFamily)?.value as string) || 'default';
   return (
     <div className="space-y-4">
@@ -94,9 +94,9 @@ export const TextElementStyles: React.FC<TextElementStylesProps> = ({
               const meta = (fontOptions as any[]).find((f: any) => f.value === v);
               if (meta && meta.family) ensureGoogleFontLoaded(meta.family, meta.weights);
               if (v === 'default') {
-                onStyleUpdate('fontFamily', '');
+                handleResponsiveUpdate('fontFamily', '');
               } else {
-                onStyleUpdate('fontFamily', v);
+                handleResponsiveUpdate('fontFamily', v);
               }
             }}>
               <SelectTrigger className="h-8 bg-background">
@@ -189,8 +189,8 @@ export const TextElementStyles: React.FC<TextElementStylesProps> = ({
             
             <ColorPicker 
               label="Background Color"
-              color={element.styles?.backgroundColor || ''}
-              onChange={(val) => onStyleUpdate('backgroundColor', val)}
+              color={(currentStyles.backgroundColor || element.styles?.backgroundColor) || ''}
+              onChange={(val) => handleResponsiveUpdate('backgroundColor', val)}
             />
           </div>
         </>
