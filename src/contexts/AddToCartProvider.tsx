@@ -39,10 +39,22 @@ export const AddToCartProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [pendingBuyNow, setPendingBuyNow] = useState(false);
 
   const hasVariations = (product: Product) => {
-    return product.variations && 
-      Array.isArray(product.variations) && 
-      product.variations.length > 0 &&
-      product.variations.some((v: any) => v.options && v.options.length > 0);
+    if (!product.variations) return false;
+    
+    // Handle array format: [{ name: "Size", options: ["S", "M", "L"] }]
+    if (Array.isArray(product.variations)) {
+      return product.variations.length > 0 && 
+        product.variations.some((v: any) => v.options && v.options.length > 0);
+    }
+    
+    // Handle object format: { options: [...], variants: [...] }
+    if (typeof product.variations === 'object') {
+      return product.variations.options && 
+        Array.isArray(product.variations.options) && 
+        product.variations.options.length > 0;
+    }
+    
+    return false;
   };
 
   const addToCart = (product: Product, quantity: number = 1, buyNow: boolean = false) => {
@@ -85,7 +97,7 @@ export const AddToCartProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setPendingBuyNow(false);
   };
 
-  const handleQuickViewAddToCart = (product: Product, selectedOptions: any, quantity: number) => {
+  const handleQuickViewAddToCart = (product: Product, quantity: number, selectedOptions?: any) => {
     // For buy now, clear cart first
     if (pendingBuyNow) {
       clearCart();
