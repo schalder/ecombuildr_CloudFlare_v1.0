@@ -7,6 +7,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { ColorPicker } from '@/components/ui/color-picker';
+import { CompactMediaSelector } from '@/components/page-builder/components/CompactMediaSelector';
 import { ElementorPageBuilder } from '@/components/page-builder/ElementorPageBuilder';
 import { PageBuilderData } from '@/components/page-builder/types';
 import { supabase } from '@/integrations/supabase/client';
@@ -33,7 +36,17 @@ export default function PageBuilder() {
     seo_description: ''
   });
   
-  const [builderData, setBuilderData] = useState<PageBuilderData>({ sections: [] });
+  const [builderData, setBuilderData] = useState<PageBuilderData>({ 
+    sections: [],
+    pageStyles: {
+      backgroundType: 'none',
+      paddingTop: '40px',
+      paddingBottom: '40px',
+      backgroundSize: 'cover',
+      backgroundPosition: 'center center',
+      backgroundRepeat: 'no-repeat'
+    }
+  });
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(!!pageId);
   const [showSettings, setShowSettings] = useState(false);
@@ -82,11 +95,20 @@ export default function PageBuilder() {
         if (data.content) {
           try {
             const content = data.content as any;
-            if (content.sections) {
-              setBuilderData({ sections: content.sections });
-            } else {
-              setBuilderData({ sections: [] });
-            }
+            const pageStyles = content.pageStyles || {
+              backgroundType: 'none',
+              paddingTop: '40px',
+              paddingBottom: '40px',
+              backgroundSize: 'cover',
+              backgroundPosition: 'center center',
+              backgroundRepeat: 'no-repeat'
+            };
+            
+            setBuilderData({ 
+              sections: content.sections || [], 
+              globalStyles: content.globalStyles,
+              pageStyles
+            });
           } catch (error) {
             console.error('Error parsing page content:', error);
             setBuilderData({ sections: [] });
@@ -113,7 +135,8 @@ export default function PageBuilder() {
       // Prepare page content for database
       const pageContent = {
         sections: builderData.sections,
-        globalStyles: builderData.globalStyles || {}
+        globalStyles: builderData.globalStyles || {},
+        pageStyles: builderData.pageStyles || {}
       };
 
       const pagePayload = {
@@ -356,20 +379,195 @@ export default function PageBuilder() {
                   />
                 </div>
 
-                <div>
-                  <Label htmlFor="seo_description">SEO Description</Label>
-                  <Input
-                    id="seo_description"
-                    value={pageData.seo_description}
-                    onChange={(e) => setPageData(prev => ({ ...prev, seo_description: e.target.value }))}
-                    placeholder="SEO meta description"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
+                 <div>
+                   <Label htmlFor="seo_description">SEO Description</Label>
+                   <Input
+                     id="seo_description"
+                     value={pageData.seo_description}
+                     onChange={(e) => setPageData(prev => ({ ...prev, seo_description: e.target.value }))}
+                     placeholder="SEO meta description"
+                   />
+                 </div>
+
+                 {/* Page Background Section */}
+                 <Card className="mt-6">
+                   <CardHeader>
+                     <CardTitle className="text-sm">Page Background</CardTitle>
+                   </CardHeader>
+                   <CardContent className="space-y-4">
+                     <div>
+                       <Label>Background Type</Label>
+                       <RadioGroup
+                         value={builderData.pageStyles?.backgroundType || 'none'}
+                         onValueChange={(value: 'none' | 'color' | 'image') =>
+                           setBuilderData(prev => ({
+                             ...prev,
+                             pageStyles: { ...prev.pageStyles, backgroundType: value }
+                           }))
+                         }
+                         className="flex gap-4 mt-2"
+                       >
+                         <div className="flex items-center space-x-2">
+                           <RadioGroupItem value="none" id="bg-none" />
+                           <Label htmlFor="bg-none">None</Label>
+                         </div>
+                         <div className="flex items-center space-x-2">
+                           <RadioGroupItem value="color" id="bg-color" />
+                           <Label htmlFor="bg-color">Color</Label>
+                         </div>
+                         <div className="flex items-center space-x-2">
+                           <RadioGroupItem value="image" id="bg-image" />
+                           <Label htmlFor="bg-image">Image</Label>
+                         </div>
+                       </RadioGroup>
+                     </div>
+
+                     {builderData.pageStyles?.backgroundType === 'color' && (
+                       <div>
+                         <Label>Background Color</Label>
+                         <ColorPicker
+                           color={builderData.pageStyles?.backgroundColor || ''}
+                           onChange={(color) =>
+                             setBuilderData(prev => ({
+                               ...prev,
+                               pageStyles: { ...prev.pageStyles, backgroundColor: color }
+                             }))
+                           }
+                           label="Background Color"
+                           compact
+                         />
+                       </div>
+                     )}
+
+                     {builderData.pageStyles?.backgroundType === 'image' && (
+                       <div>
+                         <Label>Background Image</Label>
+                         <CompactMediaSelector
+                           value={builderData.pageStyles?.backgroundImage || ''}
+                           onChange={(url) =>
+                             setBuilderData(prev => ({
+                               ...prev,
+                               pageStyles: { ...prev.pageStyles, backgroundImage: url }
+                             }))
+                           }
+                           label="Select background image"
+                         />
+                       </div>
+                     )}
+                   </CardContent>
+                 </Card>
+
+                 {/* Page Spacing Section */}
+                 <Card className="mt-6">
+                   <CardHeader>
+                     <CardTitle className="text-sm">Page Spacing</CardTitle>
+                   </CardHeader>
+                   <CardContent className="space-y-4">
+                     <div className="grid grid-cols-2 gap-3">
+                       <div>
+                         <Label htmlFor="padding-top" className="text-xs">Padding Top</Label>
+                         <Input
+                           id="padding-top"
+                           value={builderData.pageStyles?.paddingTop || '40px'}
+                           onChange={(e) =>
+                             setBuilderData(prev => ({
+                               ...prev,
+                               pageStyles: { ...prev.pageStyles, paddingTop: e.target.value }
+                             }))
+                           }
+                           placeholder="40px"
+                           className="text-xs"
+                         />
+                       </div>
+                       <div>
+                         <Label htmlFor="padding-bottom" className="text-xs">Padding Bottom</Label>
+                         <Input
+                           id="padding-bottom"
+                           value={builderData.pageStyles?.paddingBottom || '40px'}
+                           onChange={(e) =>
+                             setBuilderData(prev => ({
+                               ...prev,
+                               pageStyles: { ...prev.pageStyles, paddingBottom: e.target.value }
+                             }))
+                           }
+                           placeholder="40px"
+                           className="text-xs"
+                         />
+                       </div>
+                     </div>
+
+                     <div className="grid grid-cols-2 gap-3">
+                       <div>
+                         <Label htmlFor="padding-left" className="text-xs">Padding Left</Label>
+                         <Input
+                           id="padding-left"
+                           value={builderData.pageStyles?.paddingLeft || ''}
+                           onChange={(e) =>
+                             setBuilderData(prev => ({
+                               ...prev,
+                               pageStyles: { ...prev.pageStyles, paddingLeft: e.target.value }
+                             }))
+                           }
+                           placeholder="0px"
+                           className="text-xs"
+                         />
+                       </div>
+                       <div>
+                         <Label htmlFor="padding-right" className="text-xs">Padding Right</Label>
+                         <Input
+                           id="padding-right"
+                           value={builderData.pageStyles?.paddingRight || ''}
+                           onChange={(e) =>
+                             setBuilderData(prev => ({
+                               ...prev,
+                               pageStyles: { ...prev.pageStyles, paddingRight: e.target.value }
+                             }))
+                           }
+                           placeholder="0px"
+                           className="text-xs"
+                         />
+                       </div>
+                     </div>
+
+                     <div className="grid grid-cols-2 gap-3">
+                       <div>
+                         <Label htmlFor="margin-left" className="text-xs">Margin Left</Label>
+                         <Input
+                           id="margin-left"
+                           value={builderData.pageStyles?.marginLeft || ''}
+                           onChange={(e) =>
+                             setBuilderData(prev => ({
+                               ...prev,
+                               pageStyles: { ...prev.pageStyles, marginLeft: e.target.value }
+                             }))
+                           }
+                           placeholder="0px"
+                           className="text-xs"
+                         />
+                       </div>
+                       <div>
+                         <Label htmlFor="margin-right" className="text-xs">Margin Right</Label>
+                         <Input
+                           id="margin-right"
+                           value={builderData.pageStyles?.marginRight || ''}
+                           onChange={(e) =>
+                             setBuilderData(prev => ({
+                               ...prev,
+                               pageStyles: { ...prev.pageStyles, marginRight: e.target.value }
+                             }))
+                           }
+                           placeholder="0px"
+                           className="text-xs"
+                         />
+                       </div>
+                     </div>
+                   </CardContent>
+                 </Card>
+               </div>
+             </div>
+           </div>
+         )}
+       </div>
+     </div>
+   );
+ }

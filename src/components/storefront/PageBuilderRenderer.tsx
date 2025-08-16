@@ -67,8 +67,45 @@ export const PageBuilderRenderer: React.FC<PageBuilderRendererProps> = ({
     );
   }
 
+  const getPageStyles = () => {
+    const styles: React.CSSProperties = {};
+    const pageStyles = data.pageStyles;
+    
+    if (!pageStyles) return styles;
+    
+    // Background handling
+    if (pageStyles.backgroundType === 'color' && pageStyles.backgroundColor) {
+      styles.backgroundColor = pageStyles.backgroundColor;
+    } else if (pageStyles.backgroundType === 'image' && pageStyles.backgroundImage) {
+      styles.backgroundImage = `url(${pageStyles.backgroundImage})`;
+      styles.backgroundSize = pageStyles.backgroundSize || 'cover';
+      styles.backgroundPosition = pageStyles.backgroundPosition || 'center center';
+      styles.backgroundRepeat = pageStyles.backgroundRepeat || 'no-repeat';
+    }
+    
+    // Padding
+    if (pageStyles.paddingTop) styles.paddingTop = pageStyles.paddingTop;
+    if (pageStyles.paddingRight) styles.paddingRight = pageStyles.paddingRight;
+    if (pageStyles.paddingBottom) styles.paddingBottom = pageStyles.paddingBottom;
+    if (pageStyles.paddingLeft) styles.paddingLeft = pageStyles.paddingLeft;
+    
+    // Margin and width calculation for centering
+    if (pageStyles.marginLeft || pageStyles.marginRight) {
+      const ml = pageStyles.marginLeft || '0px';
+      const mr = pageStyles.marginRight || '0px';
+      styles.marginLeft = 'auto';
+      styles.marginRight = 'auto';
+      styles.width = `calc(100% - (${ml} + ${mr}))`;
+    }
+    
+    if (pageStyles.marginTop) styles.marginTop = pageStyles.marginTop;
+    if (pageStyles.marginBottom) styles.marginBottom = pageStyles.marginBottom;
+    
+    return styles;
+  };
+
   const content = (
-    <div className={`page-builder-content ${className}`}>
+    <div className={`page-builder-content ${className}`} style={getPageStyles()}>
       {/* Apply global styles if they exist */}
       {data.globalStyles && (
         <style>{`

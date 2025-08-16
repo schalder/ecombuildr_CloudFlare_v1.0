@@ -192,6 +192,22 @@ export interface PageBuilderData {
     primaryColor?: string;
     secondaryColor?: string;
   };
+  pageStyles?: {
+    backgroundType?: 'none' | 'color' | 'image';
+    backgroundColor?: string;
+    backgroundImage?: string;
+    backgroundSize?: 'cover' | 'contain' | 'auto';
+    backgroundPosition?: string;
+    backgroundRepeat?: 'no-repeat' | 'repeat' | 'repeat-x' | 'repeat-y';
+    paddingTop?: string;
+    paddingRight?: string;
+    paddingBottom?: string;
+    paddingLeft?: string;
+    marginTop?: string;
+    marginRight?: string;
+    marginBottom?: string;
+    marginLeft?: string;
+  };
 }
 
 // Element types for the element library
