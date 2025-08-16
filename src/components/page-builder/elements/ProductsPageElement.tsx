@@ -150,6 +150,40 @@ export const ProductsPageElement: React.FC<{
               .single();
             websiteId = websiteData?.id;
           }
+        } else {
+          // Check for custom domain context
+          const currentHost = window.location.hostname;
+          
+          // Skip staging domains
+          if (!(currentHost === 'ecombuildr.com' || 
+                currentHost === 'localhost' || 
+                currentHost.includes('lovable.app') ||
+                currentHost.includes('lovableproject.com'))) {
+            
+            try {
+              // Check if this is a custom domain
+              const { data: domain } = await supabase
+                .from('custom_domains')
+                .select(`
+                  id,
+                  domain_connections!inner (
+                    content_type,
+                    content_id
+                  )
+                `)
+                .eq('domain', currentHost)
+                .eq('is_verified', true)
+                .eq('dns_configured', true)
+                .eq('domain_connections.content_type', 'website')
+                .maybeSingle();
+                
+              if (domain && domain.domain_connections && domain.domain_connections.length > 0) {
+                websiteId = domain.domain_connections[0].content_id;
+              }
+            } catch (error) {
+              console.error('Error detecting custom domain context:', error);
+            }
+          }
         }
       }
 
@@ -202,6 +236,40 @@ export const ProductsPageElement: React.FC<{
                 .eq('slug', siteSlug)
                 .single();
               websiteId = websiteData?.id;
+            }
+          } else {
+            // Check for custom domain context
+            const currentHost = window.location.hostname;
+            
+            // Skip staging domains
+            if (!(currentHost === 'ecombuildr.com' || 
+                  currentHost === 'localhost' || 
+                  currentHost.includes('lovable.app') ||
+                  currentHost.includes('lovableproject.com'))) {
+              
+              try {
+                // Check if this is a custom domain
+                const { data: domain } = await supabase
+                  .from('custom_domains')
+                  .select(`
+                    id,
+                    domain_connections!inner (
+                      content_type,
+                      content_id
+                    )
+                  `)
+                  .eq('domain', currentHost)
+                  .eq('is_verified', true)
+                  .eq('dns_configured', true)
+                  .eq('domain_connections.content_type', 'website')
+                  .maybeSingle();
+                  
+                if (domain && domain.domain_connections && domain.domain_connections.length > 0) {
+                  websiteId = domain.domain_connections[0].content_id;
+                }
+              } catch (error) {
+                console.error('Error detecting custom domain context:', error);
+              }
             }
           }
         }

@@ -32,8 +32,11 @@ export const DomainRouter: React.FC<DomainRouterProps> = ({ children }) => {
     const checkCustomDomain = async () => {
       const currentHost = window.location.hostname;
       
-      // Skip if we're on the main app domain (ecombuildr.com)
-      if (currentHost === 'ecombuildr.com' || currentHost === 'localhost' || currentHost.includes('lovable.app')) {
+      // Skip if we're on staging domains
+      if (currentHost === 'ecombuildr.com' || 
+          currentHost === 'localhost' || 
+          currentHost.includes('lovable.app') ||
+          currentHost.includes('lovableproject.com')) {
         setLoading(false);
         return;
       }

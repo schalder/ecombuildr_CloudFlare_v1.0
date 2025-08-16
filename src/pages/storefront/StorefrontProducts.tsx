@@ -64,10 +64,13 @@ interface FilterState {
 }
 
 export const StorefrontProducts: React.FC = () => {
-  const { slug, websiteId } = useParams<{ slug?: string; websiteId?: string }>();
+  const { slug, websiteId, websiteSlug } = useParams<{ slug?: string; websiteId?: string; websiteSlug?: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const { store, loading: storeLoading, loadStore, loadStoreById } = useStore();
+  
+  // Website context for custom domains
+  const [detectedWebsiteId, setDetectedWebsiteId] = useState<string | null>(null);
   const { addItem } = useCart();
   const { toast } = useToast();
   
@@ -115,18 +118,86 @@ export const StorefrontProducts: React.FC = () => {
     }
   }, [filters.categories, setSearchParams, searchParams]);
 
+  // Detect website context on custom domains
+  useEffect(() => {
+    const detectWebsiteContext = async () => {
+      const currentHost = window.location.hostname;
+      
+      // Skip detection for staging domains
+      if (currentHost === 'ecombuildr.com' || 
+          currentHost === 'localhost' || 
+          currentHost.includes('lovable.app') ||
+          currentHost.includes('lovableproject.com')) {
+        return;
+      }
+      
+      try {
+        // Check if this is a custom domain
+        const { data: domain } = await supabase
+          .from('custom_domains')
+          .select(`
+            id,
+            store_id,
+            domain_connections!inner (
+              content_type,
+              content_id
+            )
+          `)
+          .eq('domain', currentHost)
+          .eq('is_verified', true)
+          .eq('dns_configured', true)
+          .eq('domain_connections.content_type', 'website')
+          .maybeSingle();
+          
+        if (domain && domain.domain_connections && domain.domain_connections.length > 0) {
+          const websiteId = domain.domain_connections[0].content_id;
+          setDetectedWebsiteId(websiteId);
+          
+          // Load the store for this website
+          const { data: website } = await supabase
+            .from('websites')
+            .select('store_id')
+            .eq('id', websiteId)
+            .single();
+            
+          if (website?.store_id) {
+            await loadStoreById(website.store_id);
+          }
+        }
+      } catch (error) {
+        console.error('Error detecting website context:', error);
+      }
+    };
+    
+    detectWebsiteContext();
+  }, []);
+
   // Fetch categories with website filtering
   const fetchCategories = async () => {
     if (!store?.id) return;
     
     try {
-      // If websiteId is present, filter categories by website visibility
-      if (websiteId) {
+      // Get the effective website ID (from params, slug, or custom domain detection)
+      const effectiveWebsiteId = websiteId || detectedWebsiteId;
+      let resolvedWebsiteId = effectiveWebsiteId;
+      
+      // If we have a websiteSlug, resolve it to ID
+      if (websiteSlug && !resolvedWebsiteId) {
+        const { data: websiteData } = await supabase
+          .from('websites')
+          .select('id')
+          .eq('slug', websiteSlug)
+          .single();
+        resolvedWebsiteId = websiteData?.id;
+      }
+      
+      // If website context is present, filter categories by website visibility
+      if (resolvedWebsiteId) {
         // Get visible category IDs for this website
         const { data: visibilityData } = await supabase
           .from('category_website_visibility')
           .select('category_id')
-          .eq('website_id', websiteId);
+          .eq('website_id', resolvedWebsiteId);
 
         const visibleCategoryIds = visibilityData?.map(v => v.category_id) || [];
         
@@ -168,17 +239,31 @@ export const StorefrontProducts: React.FC = () => {
       return;
     }
     
-    console.log('Fetching products for store:', store.id, 'websiteId:', websiteId);
+    // Get the effective website ID (from params, slug, or custom domain detection)
+    const effectiveWebsiteId = websiteId || detectedWebsiteId;
+    let resolvedWebsiteId = effectiveWebsiteId;
+    
+    // If we have a websiteSlug, resolve it to ID
+    if (websiteSlug && !resolvedWebsiteId) {
+      const { data: websiteData } = await supabase
+        .from('websites')
+        .select('id')
+        .eq('slug', websiteSlug)
+        .single();
+      resolvedWebsiteId = websiteData?.id;
+    }
+    
+    console.log('Fetching products for store:', store.id, 'resolvedWebsiteId:', resolvedWebsiteId);
     setLoading(true);
     try {
       let productIds: string[] | undefined = undefined;
 
-      // If websiteId is present, get visible product IDs for this website
-      if (websiteId) {
+      // If website context is present, get visible product IDs for this website
+      if (resolvedWebsiteId) {
         const { data: visibilityData } = await supabase
           .from('product_website_visibility')
           .select('product_id')
-          .eq('website_id', websiteId);
+          .eq('website_id', resolvedWebsiteId);
 
         productIds = visibilityData?.map(v => v.product_id) || [];
         
@@ -313,10 +398,21 @@ export const StorefrontProducts: React.FC = () => {
         if (website?.store_id) {
           await loadStoreById(website.store_id);
         }
+      } else if (websiteSlug) {
+        // Load store via website slug
+        const { data: website } = await supabase
+          .from('websites')
+          .select('store_id')
+          .eq('slug', websiteSlug)
+          .single();
+        if (website?.store_id) {
+          await loadStoreById(website.store_id);
+        }
       }
+      // Note: Custom domain detection is handled in the separate useEffect above
     };
     init();
-  }, [slug, websiteId, loadStore, loadStoreById]);
+  }, [slug, websiteId, websiteSlug, loadStore, loadStoreById]);
 
   useEffect(() => {
     if (store?.id) {
@@ -324,7 +420,7 @@ export const StorefrontProducts: React.FC = () => {
       fetchCategories();
       fetchProducts();
     }
-  }, [store?.id, searchQuery, sortBy, filters]);
+  }, [store?.id, searchQuery, sortBy, filters, detectedWebsiteId]);
 
   // Refetch products once categories load to apply slug->id mapping
   useEffect(() => {
