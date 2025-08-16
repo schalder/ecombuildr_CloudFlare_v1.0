@@ -21,7 +21,7 @@ interface Product {
 }
 
 interface AddToCartContextType {
-  addToCart: (product: Product, quantity?: number, buyNow?: boolean) => void;
+  addToCart: (product: Product, quantity?: number, buyNow?: boolean, selectedOptions?: any) => void;
   openQuickView: (product: Product) => void;
   isQuickViewOpen: boolean;
   closeQuickView: () => void;
@@ -57,17 +57,13 @@ export const AddToCartProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     return false;
   };
 
-  const addToCart = (product: Product, quantity: number = 1, buyNow: boolean = false) => {
-    if (hasVariations(product)) {
+  const addToCart = (product: Product, quantity: number = 1, buyNow: boolean = false, selectedOptions?: any) => {
+    // Only show dialog if product has variations AND no options are pre-selected
+    if (hasVariations(product) && !selectedOptions) {
       // Open quick view for variant selection
       setQuickViewProduct(product);
       setPendingBuyNow(buyNow);
     } else {
-      // For buy now, clear cart first
-      if (buyNow) {
-        clearCart();
-      }
-
       // Add directly to cart
       addItem({
         id: product.id,
@@ -76,7 +72,7 @@ export const AddToCartProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         price: product.price,
         quantity,
         image: product.images?.[0],
-        variation: null,
+        variation: selectedOptions,
       });
 
       toast({
@@ -98,11 +94,6 @@ export const AddToCartProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   };
 
   const handleQuickViewAddToCart = (product: Product, quantity: number, selectedOptions?: any) => {
-    // For buy now, clear cart first
-    if (pendingBuyNow) {
-      clearCart();
-    }
-
     addItem({
       id: product.id,
       productId: product.id,

@@ -171,14 +171,12 @@ export const ProductDetail: React.FC = () => {
 
   const handleAddToCart = () => {
     if (!product) return;
-    addToCart(product as any, quantity);
+    addToCart(product as any, quantity, false, selectedOptions);
   };
 
   const handleOrderNow = () => {
     if (!product) return;
-    // Reuse add to cart then go straight to checkout
-    handleAddToCart();
-    navigate(paths.checkout);
+    addToCart(product as any, quantity, true, selectedOptions);
   };
 
   const handleShare = async () => {
