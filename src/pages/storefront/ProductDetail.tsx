@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useStore } from '@/contexts/StoreContext';
-import { useCart } from '@/contexts/CartContext';
+import { useAddToCart } from '@/contexts/AddToCartProvider';
 import { usePixelTracking } from '@/hooks/usePixelTracking';
 import { usePixelContext } from '@/components/pixel/PixelManager';
 import { StorefrontLayout } from '@/components/storefront/StorefrontLayout';
@@ -56,7 +56,7 @@ interface ActionButtons {
 export const ProductDetail: React.FC = () => {
   const { slug, websiteId, websiteSlug, productSlug } = useParams<{ slug?: string; websiteId?: string; websiteSlug?: string; productSlug: string }>();
   const { store, loadStore, loadStoreById } = useStore();
-  const { addItem } = useCart();
+  const { addToCart } = useAddToCart();
   const navigate = useNavigate();
   const paths = useEcomPaths();
   const { pixels } = usePixelContext();
@@ -171,27 +171,7 @@ export const ProductDetail: React.FC = () => {
 
   const handleAddToCart = () => {
     if (!product) return;
-
-    // Check inventory
-    if (product.track_inventory && product.inventory_quantity !== undefined) {
-      if (product.inventory_quantity < quantity) {
-        toast.error('Insufficient inventory available');
-        return;
-      }
-    }
-
-    addItem({
-      id: `${product.id}${Object.keys(selectedOptions).length ? `-${JSON.stringify(selectedOptions)}` : ''}`,
-      productId: product.id,
-      name: product.name,
-      price: effectivePrice,
-      image: product.images[0],
-      sku: product.sku,
-      quantity,
-      variation: Object.keys(selectedOptions).length ? selectedOptions : undefined,
-    });
-
-    toast.success(`Added ${quantity} ${product.name} to cart`);
+    addToCart(product as any, quantity);
   };
 
   const handleOrderNow = () => {

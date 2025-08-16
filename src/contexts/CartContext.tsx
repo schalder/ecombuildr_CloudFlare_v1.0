@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
 import { usePixelTracking } from '@/hooks/usePixelTracking';
 import { usePixelContext } from '@/components/pixel/PixelManager';
+import { createCartItem, mergeCartItems } from '@/lib/cart';
 
 interface CartItem {
   id: string;
@@ -41,21 +42,17 @@ const calculateTotals = (items: CartItem[]): { total: number; itemCount: number 
 const cartReducer = (state: CartState, action: CartAction): CartState => {
   switch (action.type) {
     case 'ADD_ITEM': {
-      const existingItem = state.items.find(item => item.id === action.payload.id);
-      let newItems: CartItem[];
+      const newItem = createCartItem({
+        ...action.payload,
+        quantity: action.payload.quantity || 1,
+      });
       
-      if (existingItem) {
-        newItems = state.items.map(item =>
-          item.id === action.payload.id
-            ? { ...item, quantity: item.quantity + (action.payload.quantity || 1) }
-            : item
-        );
-      } else {
-        newItems = [...state.items, { ...action.payload, quantity: action.payload.quantity || 1 }];
-      }
+      // Add to existing items and merge duplicates
+      const allItems = [...state.items, newItem];
+      const mergedItems = mergeCartItems(allItems);
       
-      const { total, itemCount } = calculateTotals(newItems);
-      return { items: newItems, total, itemCount };
+      const { total, itemCount } = calculateTotals(mergedItems);
+      return { items: mergedItems, total, itemCount };
     }
     
     case 'REMOVE_ITEM': {
@@ -83,8 +80,9 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
       return initialState;
     
     case 'LOAD_CART': {
-      const { total, itemCount } = calculateTotals(action.payload);
-      return { items: action.payload, total, itemCount };
+      const mergedItems = mergeCartItems(action.payload);
+      const { total, itemCount } = calculateTotals(mergedItems);
+      return { items: mergedItems, total, itemCount };
     }
     
     default:

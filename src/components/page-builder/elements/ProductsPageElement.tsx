@@ -13,8 +13,7 @@ import { ProductCard } from '@/components/storefront/ProductCard';
 import { ProductQuickView } from '@/components/storefront/ProductQuickView';
 import { RecentlyViewed } from '@/components/storefront/RecentlyViewed';
 import { WishlistButton } from '@/components/storefront/WishlistButton';
-import { useCart } from '@/contexts/CartContext';
-import { useToast } from '@/hooks/use-toast';
+import { useAddToCart } from '@/contexts/AddToCartProvider';
 import { useStore } from '@/contexts/StoreContext';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
@@ -65,8 +64,7 @@ export const ProductsPageElement: React.FC<{
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
 }> = ({ element, isEditing = false, deviceType = 'desktop', columnCount = 1 }) => {
   const { store } = useStore();
-  const { addItem } = useCart();
-  const { toast } = useToast();
+  const { addToCart } = useAddToCart();
 
   const paths = useEcomPaths();
 
@@ -76,7 +74,7 @@ export const ProductsPageElement: React.FC<{
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [sortBy, setSortBy] = useState<string>(element.content.defaultSortBy || 'name');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>(element.content.defaultViewMode || 'grid');
-  const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
+  
   const [filters, setFilters] = useState<FilterState>({
     categories: [],
     priceRange: element.content.priceRange || [0, 10000],
@@ -366,17 +364,8 @@ export const ProductsPageElement: React.FC<{
     fetchProducts();
   }, [store?.id, searchQuery, sortBy, JSON.stringify(filters), categories.length, element.content.websiteId]);
 
-  const handleAddToCart = (product: Product, quantity?: number, variation?: any) => {
-    addItem({
-      id: `${product.id}${variation ? `-${JSON.stringify(variation)}` : ''}`,
-      productId: product.id,
-      name: product.name,
-      price: product.price,
-      quantity: quantity || 1,
-      image: product.images[0],
-      variation,
-    });
-    toast({ title: 'Added to cart', description: `${product.name} has been added to your cart.` });
+  const handleAddToCart = (product: Product, quantity?: number) => {
+    addToCart(product, quantity || 1);
   };
 
   const handleClearFilters = () => {
@@ -519,7 +508,7 @@ export const ProductsPageElement: React.FC<{
                       product={product}
                       storeSlug={store?.slug || ''}
                       onAddToCart={handleAddToCart}
-                      onQuickView={(p) => setQuickViewProduct(p as any)}
+                       onQuickView={() => {}}
                     />
                   ) : (
                     <Card key={product.id} className="p-4">
@@ -552,9 +541,9 @@ export const ProductsPageElement: React.FC<{
                             Add to Cart
                           </Button>
                           <div className="hidden sm:flex items-center gap-2 text-muted-foreground">
-                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setQuickViewProduct(product)}>
-                              <Eye className="h-4 w-4" />
-                            </Button>
+                             <Button variant="ghost" size="icon" className="h-8 w-8">
+                               <Eye className="h-4 w-4" />
+                             </Button>
                             <Button
                               variant="ghost"
                               size="icon"
@@ -576,7 +565,7 @@ export const ProductsPageElement: React.FC<{
                 <RecentlyViewed
                   storeSlug={store?.slug || ''}
                   onAddToCart={handleAddToCart}
-                  onQuickView={(p) => setQuickViewProduct(p as any)}
+                  onQuickView={() => {}}
                 />
               )}
             </div>
@@ -584,15 +573,6 @@ export const ProductsPageElement: React.FC<{
         </div>
       </div>
 
-      {quickViewProduct && (
-        <ProductQuickView
-          product={quickViewProduct}
-          isOpen={!!quickViewProduct}
-          onClose={() => setQuickViewProduct(null)}
-          onAddToCart={(p, qty, variation) => handleAddToCart(p as any, qty, variation)}
-          storeSlug={store?.slug || ''}
-        />
-      )}
     </div>
   );
 };

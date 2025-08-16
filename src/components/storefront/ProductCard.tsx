@@ -9,6 +9,7 @@ import { WishlistButton } from './WishlistButton';
 import { useToast } from '@/hooks/use-toast';
 import { useEcomPaths } from '@/lib/pathResolver';
 import { formatCurrency } from '@/lib/currency';
+import { useAddToCart } from '@/contexts/AddToCartProvider';
 
 interface Product {
   id: string;
@@ -58,6 +59,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   const [isHovered, setIsHovered] = useState(false);
   const { toast } = useToast();
   const paths = useEcomPaths();
+  const { addToCart } = useAddToCart();
 
   const discountPercentage = product.compare_price && product.compare_price > product.price
     ? Math.round(((product.compare_price - product.price) / product.compare_price) * 100)
@@ -159,7 +161,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           isHovered ? "opacity-100" : "opacity-0"
         )}>
           <Button
-            onClick={() => onAddToCart(product)}
+            onClick={() => addToCart(product)}
             className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
           >
             <ShoppingCart className="h-4 w-4 mr-2" />
@@ -217,7 +219,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             <Button
               size="sm"
               variant="ghost"
-              onClick={() => onAddToCart(product)}
+              onClick={() => addToCart(product)}
               className="h-9 px-3 text-xs w-full sm:w-auto opacity-80 group-hover/card:opacity-100 transition-opacity"
             >
               <ShoppingCart className="h-3 w-3 mr-1" />

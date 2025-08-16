@@ -8,6 +8,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { StoreProvider } from "@/contexts/StoreContext";
 import { PixelManager } from "@/components/pixel/PixelManager";
 import { CartProvider } from "@/contexts/CartContext";
+import { AddToCartProvider } from "@/contexts/AddToCartProvider";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
@@ -73,7 +74,8 @@ const App = () => (
       <StoreProvider>
         <PixelManager>
           <CartProvider>
-            <TooltipProvider>
+            <AddToCartProvider>
+              <TooltipProvider>
             <Toaster />
             <Sonner />
             <BrowserRouter>
@@ -231,7 +233,8 @@ const App = () => (
                 </Routes>
               </DomainRouter>
             </BrowserRouter>
-            </TooltipProvider>
+              </TooltipProvider>
+            </AddToCartProvider>
           </CartProvider>
         </PixelManager>
       </StoreProvider>
