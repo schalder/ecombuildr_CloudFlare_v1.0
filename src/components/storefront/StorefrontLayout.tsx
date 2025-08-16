@@ -1,11 +1,10 @@
 import React from 'react';
-import { useParams, useLocation } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useStore } from '@/contexts/StoreContext';
 import { StorefrontHeader } from './StorefrontHeader';
 import { StorefrontFooter } from './StorefrontFooter';
 import { Loader2 } from 'lucide-react';
 import { PixelManager } from '@/components/pixel/PixelManager';
-import { shouldHideChrome } from '@/lib/systemChrome';
 
 interface StorefrontLayoutProps {
   children: React.ReactNode;
@@ -13,7 +12,6 @@ interface StorefrontLayoutProps {
 
 export const StorefrontLayout: React.FC<StorefrontLayoutProps> = ({ children }) => {
   const { store, loading, error } = useStore();
-  const location = useLocation();
 
   if (loading) {
     return (
@@ -43,11 +41,11 @@ export const StorefrontLayout: React.FC<StorefrontLayoutProps> = ({ children }) 
               --store-secondary: ${store.secondary_color};
             }
           `}</style>
-          {!shouldHideChrome(location.pathname) && <StorefrontHeader />}
+          <StorefrontHeader />
           <main className="flex-1">
             {children}
           </main>
-          {!shouldHideChrome(location.pathname) && <StorefrontFooter />}
+          <StorefrontFooter />
         </div>
     </PixelManager>
   );

@@ -31,6 +31,7 @@ export const WebsiteLayout: React.FC = () => {
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const { store, loadStoreById } = useStore();
+  const hideChromeElements = shouldHideChrome(location.pathname);
 
   React.useEffect(() => {
     const loadWebsite = async () => {
@@ -115,11 +116,11 @@ export const WebsiteLayout: React.FC = () => {
                 --store-secondary: ${store?.secondary_color ?? '#059669'};
               }
             `}</style>
-            {!shouldHideChrome(location.pathname) && <WebsiteHeader website={website} />}
+            {!hideChromeElements && <WebsiteHeader website={website} />}
             <main className="flex-1">
               <Outlet />
             </main>
-            {!shouldHideChrome(location.pathname) && <WebsiteFooter website={website} />}
+            {!hideChromeElements && <WebsiteFooter website={website} />}
           </div>
       </PixelManager>
     </WebsiteProvider>
