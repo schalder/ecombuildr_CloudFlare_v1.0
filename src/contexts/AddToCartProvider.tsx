@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState } from 'react';
 import { useCart } from '@/contexts/CartContext';
 import { ProductQuickView } from '@/components/storefront/ProductQuickView';
 import { useToast } from '@/hooks/use-toast';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useEcomPaths } from '@/lib/pathResolver';
 
 interface Product {
@@ -33,6 +33,7 @@ export const AddToCartProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const { addItem, clearCart } = useCart();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
   const paths = useEcomPaths();
   
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
