@@ -162,7 +162,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         )}>
           <Button
             onClick={() => addToCart(product)}
-            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
+            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold product-card-button"
           >
             <ShoppingCart className="h-4 w-4 mr-2" />
             {ctaLabel || 'Add to Cart'}
@@ -202,12 +202,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
         {/* Pricing */}
         <div className="space-y-1">
-          <div className="flex flex-col items-start gap-1 sm:flex-row sm:items-center sm:gap-2">
-            <span className="font-bold text-base md:text-lg text-foreground">
+          <div className="flex flex-col items-start gap-1 sm:flex-row sm:items-start sm:gap-2 sm:flex-wrap">
+            <span className="font-bold text-base md:text-lg text-foreground flex-shrink-0">
               {formatCurrency(product.price)}
             </span>
             {product.compare_price && product.compare_price > product.price && (
-              <span className="text-xs md:text-sm text-muted-foreground line-through">
+              <span className="text-xs md:text-sm text-muted-foreground line-through flex-shrink-0">
                 {formatCurrency(product.compare_price)}
               </span>
             )}
@@ -220,7 +220,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
               size="sm"
               variant="ghost"
               onClick={() => addToCart(product)}
-              className="h-9 px-3 text-xs w-full sm:w-auto opacity-80 group-hover/card:opacity-100 transition-opacity"
+              className="h-9 px-3 text-xs w-full sm:w-auto opacity-80 group-hover/card:opacity-100 transition-opacity product-card-button"
             >
               <ShoppingCart className="h-3 w-3 mr-1" />
               {ctaLabel || 'Add to Cart'}
