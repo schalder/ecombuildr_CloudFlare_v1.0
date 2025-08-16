@@ -32,26 +32,86 @@ const initialState: CartState = {
   itemCount: 0,
 };
 
+const stableVariantKey = (variation?: any): string => {
+  if (!variation) return '';
+  try {
+    const source = (variation && typeof variation === 'object' && !Array.isArray(variation) && variation.options)
+      ? variation.options
+      : variation;
+    
+    if (source && typeof source === 'object' && !Array.isArray(source)) {
+      const entries = Object.entries(source)
+        .filter(([_, v]) => v !== undefined && v !== null && v !== '')
+        .sort(([a], [b]) => a.localeCompare(b)); // Sort for consistency
+      return entries.map(([k, v]) => `${k}:${String(v)}`).join('|');
+    }
+    if (Array.isArray(source)) {
+      return source.sort().join('|');
+    }
+    return String(source);
+  } catch {
+    return '';
+  }
+};
+
+const generateStableItemId = (productId: string, variation?: any): string => {
+  const variantKey = stableVariantKey(variation);
+  return variantKey ? `${productId}__${variantKey}` : productId;
+};
+
 const calculateTotals = (items: CartItem[]): { total: number; itemCount: number } => {
   const total = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
   return { total, itemCount };
 };
 
+const deduplicateCartItems = (items: CartItem[]): CartItem[] => {
+  const itemMap = new Map<string, CartItem>();
+  
+  items.forEach(item => {
+    const stableId = generateStableItemId(item.productId, item.variation);
+    const existing = itemMap.get(stableId);
+    
+    if (existing) {
+      // Merge quantities
+      itemMap.set(stableId, {
+        ...existing,
+        quantity: existing.quantity + item.quantity
+      });
+    } else {
+      // Use stable ID for consistency
+      itemMap.set(stableId, {
+        ...item,
+        id: stableId
+      });
+    }
+  });
+  
+  return Array.from(itemMap.values());
+};
+
 const cartReducer = (state: CartState, action: CartAction): CartState => {
   switch (action.type) {
     case 'ADD_ITEM': {
-      const existingItem = state.items.find(item => item.id === action.payload.id);
+      // Generate stable ID based on productId and variation
+      const stableId = generateStableItemId(action.payload.productId, action.payload.variation);
+      const existingItem = state.items.find(item => item.id === stableId);
       let newItems: CartItem[];
       
       if (existingItem) {
+        // Update existing item quantity
         newItems = state.items.map(item =>
-          item.id === action.payload.id
+          item.id === stableId
             ? { ...item, quantity: item.quantity + (action.payload.quantity || 1) }
             : item
         );
       } else {
-        newItems = [...state.items, { ...action.payload, quantity: action.payload.quantity || 1 }];
+        // Add new item with stable ID
+        newItems = [...state.items, { 
+          ...action.payload, 
+          id: stableId,
+          quantity: action.payload.quantity || 1 
+        }];
       }
       
       const { total, itemCount } = calculateTotals(newItems);
@@ -83,8 +143,9 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
       return initialState;
     
     case 'LOAD_CART': {
-      const { total, itemCount } = calculateTotals(action.payload);
-      return { items: action.payload, total, itemCount };
+      const deduplicatedItems = deduplicateCartItems(action.payload);
+      const { total, itemCount } = calculateTotals(deduplicatedItems);
+      return { items: deduplicatedItems, total, itemCount };
     }
     
     default:
