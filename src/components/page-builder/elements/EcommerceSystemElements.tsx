@@ -24,6 +24,7 @@ import { useWebsiteShipping } from '@/hooks/useWebsiteShipping';
 import { renderElementStyles } from '@/components/page-builder/utils/styleRenderer';
 import { usePixelTracking } from '@/hooks/usePixelTracking';
 import { usePixelContext } from '@/components/pixel/PixelManager';
+import { useResolvedWebsiteId } from '@/hooks/useResolvedWebsiteId';
 
 const CartSummaryElement: React.FC<{ element: PageBuilderElement }> = () => {
   const { items, total, updateQuantity, removeItem } = useCart();
@@ -257,9 +258,13 @@ const ProductDetailElement: React.FC<{ element: PageBuilderElement }> = ({ eleme
 
 // Related Products (simple grid)
 const RelatedProductsElement: React.FC<{ element: PageBuilderElement; deviceType?: 'desktop' | 'tablet' | 'mobile'; }> = ({ element, deviceType = 'desktop' }) => {
+  // Resolve websiteId for filtering
+  const resolvedWebsiteId = useResolvedWebsiteId(element);
+  
   const { products } = useStoreProducts({ 
     limit: element.content?.limit || 8,
-    categoryIds: element.content?.categoryIds || []
+    categoryIds: element.content?.categoryIds || [],
+    websiteId: resolvedWebsiteId
   });
   const paths = useEcomPaths();
   const desktopCols = element.content?.columns ?? 4;

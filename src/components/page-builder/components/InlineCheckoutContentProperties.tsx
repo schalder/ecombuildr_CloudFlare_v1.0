@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { PageBuilderElement } from '@/components/page-builder/types';
 import { useStoreProducts } from '@/hooks/useStoreData';
 import { CheckoutContentProperties } from './CheckoutContentProperties';
+import { useResolvedWebsiteId } from '@/hooks/useResolvedWebsiteId';
 
 interface InlineCheckoutContentPropertiesProps {
   element: PageBuilderElement;
@@ -22,7 +23,10 @@ export const InlineCheckoutContentProperties: React.FC<InlineCheckoutContentProp
   const showQuantity: boolean = cfg.showQuantity !== false; // default true
   const orderBump = cfg.orderBump || { enabled: false, productId: '', label: 'Add this to my order', description: '', prechecked: false };
 
-  const { products, loading } = useStoreProducts();
+  // Resolve websiteId for filtering
+  const resolvedWebsiteId = useResolvedWebsiteId(element);
+  
+  const { products, loading } = useStoreProducts({ websiteId: resolvedWebsiteId });
 
   const toggleProduct = (id: string, checked: boolean) => {
     const next = checked ? Array.from(new Set([...(selectedIds || []), id])) : (selectedIds || []).filter((pid) => pid !== id);

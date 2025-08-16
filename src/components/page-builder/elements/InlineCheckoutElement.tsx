@@ -20,6 +20,7 @@ import { generateResponsiveCSS, mergeResponsiveStyles } from '@/components/page-
 import { computeShippingForAddress } from '@/lib/shipping';
 import { usePixelTracking } from '@/hooks/usePixelTracking';
 import { usePixelContext } from '@/components/pixel/PixelManager';
+import { useResolvedWebsiteId } from '@/hooks/useResolvedWebsiteId';
 
 const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?: 'desktop' | 'tablet' | 'mobile' }> = ({ element, deviceType = 'desktop' }) => {
   const navigate = useNavigate();
@@ -28,6 +29,9 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
   const { store, loadStoreById } = useStore();
   const { pixels } = usePixelContext();
   const { trackPurchase } = usePixelTracking(pixels);
+  
+  // Resolve websiteId for filtering
+  const resolvedWebsiteId = useResolvedWebsiteId(element);
 
   const cfg: any = element.content || {};
   const productIds: string[] = Array.isArray(cfg.productIds) ? cfg.productIds : [];
@@ -65,7 +69,7 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
 
   // Load configured products (include bump product if set)
   const allProductIds = useMemo(() => Array.from(new Set([...(productIds || []), cfg?.orderBump?.productId].filter(Boolean))), [productIds, cfg?.orderBump?.productId]);
-  const { products } = useStoreProducts({ specificProductIds: allProductIds });
+  const { products } = useStoreProducts({ specificProductIds: allProductIds, websiteId: resolvedWebsiteId });
   const defaultProductId: string = useMemo(() => {
     if (cfg.defaultProductId && productIds.includes(cfg.defaultProductId)) return cfg.defaultProductId;
     return productIds[0] || '';

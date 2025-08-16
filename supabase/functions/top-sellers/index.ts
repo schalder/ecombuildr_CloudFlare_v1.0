@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { storeId, limit = 6 } = await req.json();
+    const { storeId, limit = 6, websiteId } = await req.json();
     if (!storeId) {
       return new Response(JSON.stringify({ error: "storeId is required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
@@ -63,13 +63,34 @@ serve(async (req) => {
       return new Response(JSON.stringify([]), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // 5) Fetch product details
-    const { data: products, error: prodErr } = await supabase
+    // 5) Fetch product details, optionally filtered by website visibility
+    let productQuery = supabase
       .from('products')
       .select('id, name, slug, price, compare_price, images')
       .in('id', topIds)
-      .eq('is_active', true)
-      .order('name');
+      .eq('is_active', true);
+
+    // If websiteId is provided, only include products visible on this website
+    if (websiteId) {
+      const { data: visibleProductIds, error: visErr } = await supabase
+        .from('product_website_visibility')
+        .select('product_id')
+        .eq('website_id', websiteId);
+
+      if (visErr) throw visErr;
+      
+      const visibleIds = (visibleProductIds || []).map((v: any) => v.product_id);
+      const filteredTopIds = topIds.filter(id => visibleIds.includes(id));
+      
+      // If no products are visible on this website, return empty array
+      if (filteredTopIds.length === 0) {
+        return new Response(JSON.stringify([]), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      
+      productQuery = productQuery.in('id', filteredTopIds);
+    }
+
+    const { data: products, error: prodErr } = await productQuery.order('name');
 
     if (prodErr) throw prodErr;
 

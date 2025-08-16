@@ -11,6 +11,8 @@ import { useStoreProducts, useStoreCategories } from '@/hooks/useStoreData';
 import { PageBuilderElement } from '../types';
 import { Trash2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { useResolvedWebsiteId } from '@/hooks/useResolvedWebsiteId';
+import { useStore } from '@/contexts/StoreContext';
 
 interface EcommerceContentPropertiesProps {
   element: PageBuilderElement;
@@ -21,8 +23,13 @@ export const EcommerceContentProperties: React.FC<EcommerceContentPropertiesProp
   element,
   onUpdate
 }) => {
-  const { categories } = useStoreCategories();
-  const { products } = useStoreProducts();
+  const { store } = useStore();
+  
+  // Resolve websiteId for filtering product/category lists
+  const resolvedWebsiteId = useResolvedWebsiteId(element);
+  
+  const { categories } = useStoreCategories(resolvedWebsiteId);
+  const { products } = useStoreProducts({ websiteId: resolvedWebsiteId });
   
   // Import useStoreWebsites hook
   const [websites, setWebsites] = React.useState<any[]>([]);
@@ -31,11 +38,13 @@ export const EcommerceContentProperties: React.FC<EcommerceContentPropertiesProp
   // Fetch websites for website selector
   React.useEffect(() => {
     const fetchWebsites = async () => {
+      if (!store?.id) return;
       setLoadingWebsites(true);
       try {
         const { data } = await supabase
           .from('websites')
           .select('id, name, slug')
+          .eq('store_id', store.id)
           .eq('is_active', true)
           .eq('is_published', true)
           .order('name');
@@ -47,7 +56,7 @@ export const EcommerceContentProperties: React.FC<EcommerceContentPropertiesProp
       }
     };
     fetchWebsites();
-  }, []);
+  }, [store?.id]);
 
   const selectionMode = element.content.selectionMode || 'all';
   const categoryIds = element.content.categoryIds || [];
@@ -285,14 +294,17 @@ export const FeaturedProductsContentProperties: React.FC<EcommerceContentPropert
   element,
   onUpdate
 }) => {
-  const { products } = useStoreProducts();
+  // Resolve websiteId for filtering
+  const resolvedWebsiteId = useResolvedWebsiteId(element);
+  
+  const { products } = useStoreProducts({ websiteId: resolvedWebsiteId });
 
   return (
     <div className="space-y-4">
       <div>
         <Label className="text-xs">Filter by Categories</Label>
         <div className="space-y-2 max-h-40 overflow-y-auto">
-          {(useStoreCategories().categories || []).map((category) => (
+          {(useStoreCategories(resolvedWebsiteId).categories || []).map((category) => (
             <div key={category.id} className="flex items-center space-x-2">
               <Checkbox
                 checked={(element.content.filterCategoryIds || []).includes(category.id)}
@@ -458,7 +470,10 @@ export const ProductCategoriesContentProperties: React.FC<EcommerceContentProper
   element,
   onUpdate
 }) => {
-  const { categories } = useStoreCategories();
+  // Resolve websiteId for filtering
+  const resolvedWebsiteId = useResolvedWebsiteId(element);
+  
+  const { categories } = useStoreCategories(resolvedWebsiteId);
   const selectedCategoryIds = element.content.selectedCategoryIds || [];
 
   const handleCategoryToggle = (categoryId: string) => {
@@ -537,7 +552,8 @@ export const PriceContentProperties: React.FC<EcommerceContentPropertiesProps> =
   element,
   onUpdate
 }) => {
-  const { products } = useStoreProducts();
+  const resolvedWebsiteId = useResolvedWebsiteId(element);
+  const { products } = useStoreProducts({ websiteId: resolvedWebsiteId });
 
   return (
     <div className="space-y-4">
@@ -617,7 +633,8 @@ export const ContactFormContentProperties: React.FC<EcommerceContentPropertiesPr
   element,
   onUpdate
 }) => {
-  const { products } = useStoreProducts();
+  const resolvedWebsiteId = useResolvedWebsiteId(element);
+  const { products } = useStoreProducts({ websiteId: resolvedWebsiteId });
 
   return (
     <div className="space-y-4">
@@ -955,7 +972,8 @@ export const ProductsPageContentProperties: React.FC<EcommerceContentPropertiesP
 
 // Related Products (Element) Content Properties
 export const RelatedProductsContentProperties: React.FC<EcommerceContentPropertiesProps> = ({ element, onUpdate }) => {
-  const { categories } = useStoreCategories();
+  const resolvedWebsiteId = useResolvedWebsiteId(element);
+  const { categories } = useStoreCategories(resolvedWebsiteId);
   const selected = element.content.categoryIds || [];
   return (
     <div className="space-y-4">

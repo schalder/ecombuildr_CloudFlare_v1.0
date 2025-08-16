@@ -17,6 +17,7 @@ import { mergeResponsiveStyles } from '@/components/page-builder/utils/responsiv
 import { ProductsPageElement } from './ProductsPageElement';
 import { formatCurrency } from '@/lib/currency';
 import { supabase } from '@/integrations/supabase/client';
+import { useResolvedWebsiteId } from '@/hooks/useResolvedWebsiteId';
 // Product Grid Element
 const ProductGridElement: React.FC<{
   element: PageBuilderElement;
@@ -30,6 +31,9 @@ const ProductGridElement: React.FC<{
   const paths = useEcomPaths();
   const { addToCart: addToCartCentral, openQuickView } = useAddToCart();
   const ctaBehavior: 'add_to_cart' | 'buy_now' = element.content.ctaBehavior || 'add_to_cart';
+  
+  // Resolve websiteId for filtering
+  const resolvedWebsiteId = useResolvedWebsiteId(element);
   
   // Quick View support
   const showQuickView = element.content.showQuickView !== false;
@@ -71,7 +75,8 @@ const ProductGridElement: React.FC<{
   const { products, loading } = useStoreProducts({
     categoryIds: selectionMode === 'category' ? categoryIds : undefined,
     specificProductIds: selectionMode === 'specific' ? specificProductIds : undefined,
-    limit: limit
+    limit: limit,
+    websiteId: resolvedWebsiteId
   });
 
   const handleAddToCart = (product: any) => {
@@ -215,15 +220,18 @@ const FeaturedProductsElement: React.FC<{
   const { addToCart: addToCartCentral } = useAddToCart();
   const ctaBehavior: 'add_to_cart' | 'buy_now' = element.content.ctaBehavior || 'add_to_cart';
   
+  // Resolve websiteId for filtering
+  const resolvedWebsiteId = useResolvedWebsiteId(element);
+  
   const productId = element.content.productId;
   const selectedProductIds: string[] = element.content.selectedProductIds || [];
   const layout = element.content.layout || 'horizontal';
   const badgeText = element.content.badgeText || 'Featured Product';
   const ctaText = element.content.ctaText || 'Add to Cart';
   
-  // Multi-featured support
+  // Multi-featured support - only show products visible on this website
   const { products: featuredProducts, loading: loadingFeatured } = useStoreProducts(
-    selectedProductIds.length > 0 ? { specificProductIds: selectedProductIds } : undefined as any
+    selectedProductIds.length > 0 ? { specificProductIds: selectedProductIds, websiteId: resolvedWebsiteId } : undefined as any
   );
   
   const { product, loading } = useProductById(productId);
@@ -641,6 +649,9 @@ const WeeklyFeaturedElement: React.FC<{
   const { store: userStore } = useUserStore();
   const { store: storefrontStore } = useStore();
   const store = storefrontStore || userStore;
+  
+  // Resolve websiteId for filtering
+  const resolvedWebsiteId = useResolvedWebsiteId(element);
   const [items, setItems] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
 
@@ -654,13 +665,13 @@ const WeeklyFeaturedElement: React.FC<{
       if (!store?.id) { setItems([]); setLoading(false); return; }
       setLoading(true);
       const { data, error } = await supabase.functions.invoke('top-sellers', {
-        body: { storeId: store.id, limit }
+        body: { storeId: store.id, limit, websiteId: resolvedWebsiteId }
       });
       if (!error && Array.isArray(data)) setItems(data as any[]);
       setLoading(false);
     };
     loadTopSellers();
-  }, [store?.id, limit]);
+  }, [store?.id, limit, resolvedWebsiteId]);
 
   const buttonStyles = React.useMemo(() => {
     const bs = (element as any).styles?.buttonStyles || {};
