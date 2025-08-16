@@ -16,7 +16,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useStoreProducts } from '@/hooks/useStoreData';
-import { useResolvedWebsiteId } from '@/hooks/useResolvedWebsiteId';
 import { generateResponsiveCSS, mergeResponsiveStyles } from '@/components/page-builder/utils/responsiveStyles';
 import { formatCurrency } from '@/lib/currency';
 import { computeShippingForAddress } from '@/lib/shipping';
@@ -258,8 +257,15 @@ const ProductDetailElement: React.FC<{ element: PageBuilderElement }> = ({ eleme
 
 // Related Products (simple grid)
 const RelatedProductsElement: React.FC<{ element: PageBuilderElement; deviceType?: 'desktop' | 'tablet' | 'mobile'; }> = ({ element, deviceType = 'desktop' }) => {
-  // Resolve websiteId for filtering
-  const resolvedWebsiteId = useResolvedWebsiteId(element);
+  const { websiteId: urlWebsiteId } = useParams<{ websiteId?: string }>();
+  
+  // Resolve websiteId for filtering (inline logic to avoid import issues)
+  const resolvedWebsiteId = React.useMemo(() => {
+    const elementWebsiteId = element?.content?.websiteId;
+    if (elementWebsiteId === '') return undefined;
+    if (elementWebsiteId && elementWebsiteId !== 'auto') return elementWebsiteId;
+    return urlWebsiteId || undefined;
+  }, [element?.content?.websiteId, urlWebsiteId]);
   
   const { products } = useStoreProducts({ 
     limit: element.content?.limit || 8,

@@ -22,7 +22,6 @@ import { mergeResponsiveStyles } from '@/components/page-builder/utils/responsiv
 import { ArrowUpDown, Grid3X3, List, Search, SlidersHorizontal, Eye, GitCompare, Star } from 'lucide-react';
 import { useEcomPaths } from '@/lib/pathResolver';
 import { formatCurrency } from '@/lib/currency';
-import { useResolvedWebsiteId } from '@/hooks/useResolvedWebsiteId';
 
 interface Product {
   id: string;
@@ -66,7 +65,6 @@ export const ProductsPageElement: React.FC<{
 }> = ({ element, isEditing = false, deviceType = 'desktop', columnCount = 1 }) => {
   const { store } = useStore();
   const { addToCart, openQuickView } = useAddToCart();
-  const resolvedWebsiteId = useResolvedWebsiteId(element);
 
   const paths = useEcomPaths();
 
@@ -131,6 +129,61 @@ export const ProductsPageElement: React.FC<{
   useEffect(() => {
     const fetchCategories = async () => {
       if (!store?.id) return;
+      
+      // Check for website selection from element content or URL
+      let websiteId = element.content.websiteId;
+      
+      // If auto-detect is enabled or no website selected, try to get from URL
+      if (!websiteId || websiteId === 'auto') {
+        if (window.location.pathname.includes('/website/')) {
+          websiteId = window.location.pathname.split('/website/')[1]?.split('/')[0];
+        } else if (window.location.pathname.includes('/site/')) {
+          // For site URLs like /site/natural-energy, we need to find the website ID
+          const siteSlug = window.location.pathname.split('/site/')[1]?.split('/')[0];
+          if (siteSlug) {
+            const { data: websiteData } = await supabase
+              .from('websites')
+              .select('id')
+              .eq('slug', siteSlug)
+              .single();
+            websiteId = websiteData?.id;
+          }
+        } else {
+          // Check for custom domain context
+          const currentHost = window.location.hostname;
+          
+          // Skip staging domains
+          if (!(currentHost === 'ecombuildr.com' || 
+                currentHost === 'localhost' || 
+                currentHost.includes('lovable.app') ||
+                currentHost.includes('lovableproject.com'))) {
+            
+            try {
+              // Check if this is a custom domain
+              const { data: domain } = await supabase
+                .from('custom_domains')
+                .select(`
+                  id,
+                  domain_connections!inner (
+                    content_type,
+                    content_id
+                  )
+                `)
+                .eq('domain', currentHost)
+                .eq('is_verified', true)
+                .eq('dns_configured', true)
+                .eq('domain_connections.content_type', 'website')
+                .maybeSingle();
+                
+              if (domain && domain.domain_connections && domain.domain_connections.length > 0) {
+                websiteId = domain.domain_connections[0].content_id;
+              }
+            } catch (error) {
+              console.error('Error detecting custom domain context:', error);
+            }
+          }
+        }
+      }
 
       let query = supabase
         .from('categories')
@@ -138,11 +191,11 @@ export const ProductsPageElement: React.FC<{
         .eq('store_id', store.id)
         .order('name');
 
-      if (resolvedWebsiteId) {
+      if (websiteId) {
         const { data: visibleCategoryIds } = await supabase
           .from('category_website_visibility')
           .select('category_id')
-          .eq('website_id', resolvedWebsiteId);
+          .eq('website_id', websiteId);
 
         const categoryIds = visibleCategoryIds?.map(v => v.category_id) || [];
         if (categoryIds.length > 0) {
@@ -157,21 +210,76 @@ export const ProductsPageElement: React.FC<{
       if (!error) setCategories(data || []);
     };
     fetchCategories();
-  }, [store?.id, resolvedWebsiteId]);
+  }, [store?.id, element.content.websiteId]);
 
   useEffect(() => {
     const fetchProducts = async () => {
       if (!store?.id) return;
       setLoading(true);
       try {
+        // Check for website selection from element content or URL
+        let websiteId = element.content.websiteId;
+        
+        // If auto-detect is enabled or no website selected, try to get from URL
+        if (!websiteId || websiteId === 'auto') {
+          if (window.location.pathname.includes('/website/')) {
+            websiteId = window.location.pathname.split('/website/')[1]?.split('/')[0];
+          } else if (window.location.pathname.includes('/site/')) {
+            // For site URLs like /site/natural-energy, we need to find the website ID
+            const siteSlug = window.location.pathname.split('/site/')[1]?.split('/')[0];
+            if (siteSlug) {
+              const { data: websiteData } = await supabase
+                .from('websites')
+                .select('id')
+                .eq('slug', siteSlug)
+                .single();
+              websiteId = websiteData?.id;
+            }
+          } else {
+            // Check for custom domain context
+            const currentHost = window.location.hostname;
+            
+            // Skip staging domains
+            if (!(currentHost === 'ecombuildr.com' || 
+                  currentHost === 'localhost' || 
+                  currentHost.includes('lovable.app') ||
+                  currentHost.includes('lovableproject.com'))) {
+              
+              try {
+                // Check if this is a custom domain
+                const { data: domain } = await supabase
+                  .from('custom_domains')
+                  .select(`
+                    id,
+                    domain_connections!inner (
+                      content_type,
+                      content_id
+                    )
+                  `)
+                  .eq('domain', currentHost)
+                  .eq('is_verified', true)
+                  .eq('dns_configured', true)
+                  .eq('domain_connections.content_type', 'website')
+                  .maybeSingle();
+                  
+                if (domain && domain.domain_connections && domain.domain_connections.length > 0) {
+                  websiteId = domain.domain_connections[0].content_id;
+                }
+              } catch (error) {
+                console.error('Error detecting custom domain context:', error);
+              }
+            }
+          }
+        }
+
         let productIds: string[] | undefined = undefined;
 
-        // If resolvedWebsiteId is present, get visible product IDs for this website
-        if (resolvedWebsiteId) {
+        // If websiteId is present, get visible product IDs for this website
+        if (websiteId) {
           const { data: visibilityData } = await supabase
             .from('product_website_visibility')
             .select('product_id')
-            .eq('website_id', resolvedWebsiteId);
+            .eq('website_id', websiteId);
 
           productIds = visibilityData?.map(v => v.product_id) || [];
           
@@ -254,7 +362,7 @@ export const ProductsPageElement: React.FC<{
       }
     };
     fetchProducts();
-  }, [store?.id, searchQuery, sortBy, JSON.stringify(filters), categories.length, resolvedWebsiteId]);
+  }, [store?.id, searchQuery, sortBy, JSON.stringify(filters), categories.length, element.content.websiteId]);
 
   const handleAddToCart = (product: Product, quantity?: number) => {
     addToCart(product, quantity || 1);

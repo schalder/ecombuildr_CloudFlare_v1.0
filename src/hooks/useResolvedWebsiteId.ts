@@ -4,7 +4,7 @@ import { PageBuilderElement } from '@/components/page-builder/types';
 
 /**
  * Hook to resolve websiteId for filtering products/categories by website visibility
- * Priority: element.content.websiteId -> URL params -> URL path -> undefined (store-wide)
+ * Priority: element.content.websiteId -> URL params -> undefined (store-wide)
  */
 export const useResolvedWebsiteId = (element?: PageBuilderElement): string | undefined => {
   const { websiteId: urlWebsiteId } = useParams<{ websiteId?: string }>();
@@ -26,19 +26,6 @@ export const useResolvedWebsiteId = (element?: PageBuilderElement): string | und
     // Auto-detect: use URL parameter if available
     if (urlWebsiteId) {
       return urlWebsiteId;
-    }
-    
-    // Fallback: extract from URL path for builder routes
-    if (typeof window !== 'undefined') {
-      const path = window.location.pathname;
-      const builderMatch = path.match(/\/websites\/([a-f0-9-]+)\/pages\/[a-f0-9-]+\/builder/);
-      const websiteMatch = path.match(/\/websites\/([a-f0-9-]+)/);
-      
-      if (builderMatch) {
-        return builderMatch[1];
-      } else if (websiteMatch) {
-        return websiteMatch[1];
-      }
     }
     
     // Fallback to store-wide (no filtering)
