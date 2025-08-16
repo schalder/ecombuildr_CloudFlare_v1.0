@@ -78,7 +78,7 @@ const App = () => (
             <Toaster />
             <Sonner />
             <BrowserRouter>
-              <AddToCartProvider>
+              <AddToCartProvider websiteSettings={undefined}>
               <DomainRouter>
                 <Routes>
                 <Route path="/" element={<Index />} />

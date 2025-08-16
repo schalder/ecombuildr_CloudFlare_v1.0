@@ -30,7 +30,7 @@ interface AddToCartContextType {
 
 const AddToCartContext = createContext<AddToCartContextType | undefined>(undefined);
 
-export const AddToCartProvider: React.FC<{ children: React.ReactNode; websiteSettings?: any }> = ({ children, websiteSettings }) => {
+export const AddToCartProvider: React.FC<{ children: React.ReactNode; websiteSettings?: any }> = ({ children, websiteSettings = null }) => {
   const { addItem, clearCart } = useCart();
   const { toast } = useToast();
   const navigate = useNavigate();
