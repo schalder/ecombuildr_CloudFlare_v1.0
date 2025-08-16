@@ -352,7 +352,7 @@ const CartFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 'des
     return mergeResponsiveStyles({}, bs, deviceType);
   }, [(element.styles as any)?.buttonStyles, deviceType]);
   
-  // Generate CSS for cart buttons with correct class targeting
+  // Generate CSS variables for cart buttons (works with product-cta class)
   const buttonStylesCSS = React.useMemo(() => {
     const bs = (element.styles as any)?.buttonStyles;
     if (!bs?.responsive) return '';
@@ -360,46 +360,51 @@ const CartFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 'des
     const { desktop = {}, mobile = {} } = bs.responsive;
     let css = '';
     
-    // Desktop styles
+    // Desktop CSS variables
     if (Object.keys(desktop).length > 0) {
-      const { hoverColor, hoverBackgroundColor, ...rest } = desktop;
-      const props = Object.entries(rest)
-        .map(([prop, value]) => `${prop.replace(/([A-Z])/g, '-$1').toLowerCase()}: ${value}`)
-        .join('; ');
+      const variables: string[] = [];
+      if (desktop.backgroundColor) variables.push(`--product-button-bg: ${desktop.backgroundColor}`);
+      if (desktop.color) variables.push(`--product-button-text: ${desktop.color}`);
+      if (desktop.hoverBackgroundColor) variables.push(`--product-button-hover-bg: ${desktop.hoverBackgroundColor}`);
+      if (desktop.hoverColor) variables.push(`--product-button-hover-text: ${desktop.hoverColor}`);
       
-      if (props) {
-        css += `.cart-element-${element.id} .cart-action-button { ${props}; }`;
-      }
-      if (hoverColor || hoverBackgroundColor) {
-        const hoverProps = [];
-        if (hoverColor) hoverProps.push(`color: ${hoverColor}`);
-        if (hoverBackgroundColor) hoverProps.push(`background-color: ${hoverBackgroundColor}`);
-        css += `.cart-element-${element.id} .cart-action-button:hover { ${hoverProps.join('; ')}; }`;
+      if (variables.length > 0) {
+        css += `.cart-element-${element.id} { ${variables.join('; ')}; }`;
       }
     }
     
-    // Mobile styles
+    // Mobile CSS variables
     if (Object.keys(mobile).length > 0) {
-      const { hoverColor: mHoverColor, hoverBackgroundColor: mHoverBg, ...rest } = mobile;
-      const props = Object.entries(rest)
-        .map(([prop, value]) => `${prop.replace(/([A-Z])/g, '-$1').toLowerCase()}: ${value}`)
-        .join('; ');
-        
-      css += `@media (max-width: 767px) { `;
-      if (props) {
-        css += `.cart-element-${element.id} .cart-action-button { ${props}; }`;
+      const variables: string[] = [];
+      if (mobile.backgroundColor) variables.push(`--product-button-bg: ${mobile.backgroundColor}`);
+      if (mobile.color) variables.push(`--product-button-text: ${mobile.color}`);
+      if (mobile.hoverBackgroundColor) variables.push(`--product-button-hover-bg: ${mobile.hoverBackgroundColor}`);
+      if (mobile.hoverColor) variables.push(`--product-button-hover-text: ${mobile.hoverColor}`);
+      
+      if (variables.length > 0) {
+        css += `@media (max-width: 767px) { .cart-element-${element.id} { ${variables.join('; ')}; } }`;
       }
-      if (mHoverColor || mHoverBg) {
-        const hoverProps = [];
-        if (mHoverColor) hoverProps.push(`color: ${mHoverColor}`);
-        if (mHoverBg) hoverProps.push(`background-color: ${mHoverBg}`);
-        css += `.cart-element-${element.id} .cart-action-button:hover { ${hoverProps.join('; ')}; }`;
-      }
-      css += ` }`;
     }
     
     return css;
   }, [(element.styles as any)?.buttonStyles, element.id]);
+
+  // Get layout-only inline styles (non-color properties)
+  const layoutStyles = React.useMemo(() => {
+    const currentStyles = mergeResponsiveStyles({}, (element.styles as any)?.buttonStyles, deviceType);
+    const layout: any = {};
+    
+    // Only include layout properties, exclude colors since they're handled by CSS variables
+    if (currentStyles.fontSize) layout.fontSize = currentStyles.fontSize;
+    if (currentStyles.padding) layout.padding = currentStyles.padding;
+    if (currentStyles.borderRadius) layout.borderRadius = currentStyles.borderRadius;
+    if (currentStyles.borderWidth) layout.borderWidth = currentStyles.borderWidth;
+    if (currentStyles.borderColor) layout.borderColor = currentStyles.borderColor;
+    if (currentStyles.letterSpacing) layout.letterSpacing = currentStyles.letterSpacing;
+    if (currentStyles.fontWeight) layout.fontWeight = currentStyles.fontWeight;
+    
+    return layout;
+  }, [(element.styles as any)?.buttonStyles, deviceType]);
   
   if (items.length === 0) {
     return (
@@ -440,6 +445,7 @@ const CartFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 'des
             </p>
             <Button 
               className="product-cta cart-action-button"
+              style={layoutStyles}
               onClick={() => (window.location.href = paths.products)}
             >
               Continue Shopping
@@ -542,6 +548,7 @@ const CartFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 'des
               </div>
               <Button 
                 className="w-full product-cta cart-action-button"
+                style={layoutStyles}
                 onClick={() => (window.location.href = paths.checkout)}
               >
                 Proceed to Checkout
