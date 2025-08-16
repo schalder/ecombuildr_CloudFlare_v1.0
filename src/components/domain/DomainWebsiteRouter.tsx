@@ -13,6 +13,7 @@ import { StorefrontHome } from '@/pages/storefront/StorefrontHome';
 import { StorefrontProducts } from '@/pages/storefront/StorefrontProducts';
 import { WebsiteHeader } from '@/components/storefront/WebsiteHeader';
 import { WebsiteFooter } from '@/components/storefront/WebsiteFooter';
+import { shouldHideChrome } from '@/lib/systemChrome';
 
 const DynamicWebsiteRoute: React.FC<{ fallback: React.ReactElement; websiteId: string }> = ({ fallback, websiteId }) => {
   const { slug } = useParams<{ slug: string }>();
@@ -48,7 +49,7 @@ export const DomainWebsiteRouter: React.FC<DomainWebsiteRouterProps> = ({
 
   return (
     <>
-      <WebsiteHeader website={website} />
+      {!shouldHideChrome(location.pathname) && <WebsiteHeader website={website} />}
       <main className="flex-1">
         <Routes>
       {/* Homepage */}
@@ -106,7 +107,7 @@ export const DomainWebsiteRouter: React.FC<DomainWebsiteRouterProps> = ({
       />
         </Routes>
       </main>
-      <WebsiteFooter website={website} />
+      {!shouldHideChrome(location.pathname) && <WebsiteFooter website={website} />}
     </>
   );
 };

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Outlet, useParams, useSearchParams, useNavigate } from 'react-router-dom';
+import { Outlet, useParams, useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useStore } from '@/contexts/StoreContext';
@@ -8,6 +8,7 @@ import { WebsiteFooter } from '@/components/storefront/WebsiteFooter';
 import { setGlobalCurrency } from '@/lib/currency';
 import { PixelManager } from '@/components/pixel/PixelManager';
 import { WebsiteProvider } from '@/contexts/WebsiteContext';
+import { shouldHideChrome } from '@/lib/systemChrome';
 
 interface WebsiteData {
   id: string;
@@ -24,6 +25,7 @@ export const WebsiteLayout: React.FC = () => {
   const { websiteId, websiteSlug } = useParams<{ websiteId?: string; websiteSlug?: string }>();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const isPreview = searchParams.get('preview') === '1';
   const [website, setWebsite] = React.useState<WebsiteData | null>(null);
   const [loading, setLoading] = React.useState(true);
@@ -113,11 +115,11 @@ export const WebsiteLayout: React.FC = () => {
                 --store-secondary: ${store?.secondary_color ?? '#059669'};
               }
             `}</style>
-            <WebsiteHeader website={website} />
+            {!shouldHideChrome(location.pathname) && <WebsiteHeader website={website} />}
             <main className="flex-1">
               <Outlet />
             </main>
-            <WebsiteFooter website={website} />
+            {!shouldHideChrome(location.pathname) && <WebsiteFooter website={website} />}
           </div>
       </PixelManager>
     </WebsiteProvider>
