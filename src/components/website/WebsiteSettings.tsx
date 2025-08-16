@@ -16,8 +16,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useDomainManagement } from '@/hooks/useDomainManagement';
 import { Badge } from '@/components/ui/badge';
 import { Link } from 'react-router-dom';
-import { ExternalLink, CheckCircle2, AlertCircle } from 'lucide-react';
+import { ExternalLink, CheckCircle2, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { ColorPicker } from '@/components/ui/color-picker';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const websiteSettingsSchema = z.object({
   name: z.string().min(1, 'Website name is required'),
@@ -79,6 +81,7 @@ type ShippingSettings = {
 export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const isMobile = useIsMobile();
   const { 
     domains, 
     connections, 
@@ -86,6 +89,20 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
     connectContent, 
     removeConnection 
   } = useDomainManagement();
+
+  // Accordion state management for mobile optimization
+  const [openSections, setOpenSections] = React.useState<string[]>(
+    isMobile ? [] : ['basic', 'domain', 'buttons', 'currency', 'shipping', 'seo', 'tracking']
+  );
+
+  const toggleAllSections = () => {
+    const allSections = ['basic', 'domain', 'buttons', 'currency', 'shipping', 'seo', 'tracking'];
+    if (openSections.length === allSections.length) {
+      setOpenSections([]);
+    } else {
+      setOpenSections(allSections);
+    }
+  };
 
   // Find connected domain for this website
   const connectedDomain = React.useMemo(() => {
@@ -314,21 +331,49 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-xl font-semibold">Website Settings</h2>
-        <p className="text-muted-foreground">Configure your website's basic information and settings.</p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h2 className="text-xl font-semibold">Website Settings</h2>
+          <p className="text-muted-foreground">Configure your website's basic information and settings.</p>
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={toggleAllSections}
+          className="flex items-center gap-2 self-start sm:self-auto"
+        >
+          {openSections.length === 7 ? (
+            <>
+              <ChevronUp className="h-4 w-4" />
+              Collapse All
+            </>
+          ) : (
+            <>
+              <ChevronDown className="h-4 w-4" />
+              Expand All
+            </>
+          )}
+        </Button>
       </div>
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Basic Information</CardTitle>
-              <CardDescription>
-                Manage your website's basic details and visibility settings.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
+          <Accordion 
+            type="multiple" 
+            value={openSections} 
+            onValueChange={setOpenSections}
+            className="space-y-4"
+          >
+            <AccordionItem value="basic" className="border rounded-lg">
+              <AccordionTrigger className="px-6 py-4 hover:no-underline">
+                <div className="flex flex-col items-start text-left">
+                  <h3 className="text-base font-semibold">Basic Information</h3>
+                  <p className="text-sm text-muted-foreground">Manage your website's basic details and visibility settings.</p>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent forceMount className="px-6 pb-6">
+                <div className={openSections.includes('basic') ? 'block space-y-4' : 'hidden'}>
               <FormField
                 control={form.control}
                 name="name"
@@ -441,17 +486,19 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
                   )}
                 />
               </div>
-            </CardContent>
-          </Card>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Domain & Branding</CardTitle>
-              <CardDescription>
-                Configure your website's domain and visual branding.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
+            <AccordionItem value="domain" className="border rounded-lg">
+              <AccordionTrigger className="px-6 py-4 hover:no-underline">
+                <div className="flex flex-col items-start text-left">
+                  <h3 className="text-base font-semibold">Domain & Branding</h3>
+                  <p className="text-sm text-muted-foreground">Configure your website's domain and visual branding.</p>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent forceMount className="px-6 pb-6">
+                <div className={openSections.includes('domain') ? 'block space-y-4' : 'hidden'}>
               <FormField
                 control={form.control}
                 name="domain"
@@ -556,17 +603,19 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
                   </FormItem>
                 )}
               />
-            </CardContent>
-          </Card>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Product Button Colors</CardTitle>
-              <CardDescription>
-                Customize the appearance of product buttons across your website.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
+            <AccordionItem value="buttons" className="border rounded-lg">
+              <AccordionTrigger className="px-6 py-4 hover:no-underline">
+                <div className="flex flex-col items-start text-left">
+                  <h3 className="text-base font-semibold">Product Button Colors</h3>
+                  <p className="text-sm text-muted-foreground">Customize the appearance of product buttons across your website.</p>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent forceMount className="px-6 pb-6">
+                <div className={openSections.includes('buttons') ? 'block space-y-6' : 'hidden'}>
               <div>
                 <h3 className="text-sm font-semibold mb-4">Add to Cart & Order Now Buttons</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -714,17 +763,19 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
                   />
                 </div>
               </div>
-            </CardContent>
-          </Card>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Localization & Currency</CardTitle>
-              <CardDescription>
-                Choose the currency used across this website.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
+            <AccordionItem value="currency" className="border rounded-lg">
+              <AccordionTrigger className="px-6 py-4 hover:no-underline">
+                <div className="flex flex-col items-start text-left">
+                  <h3 className="text-base font-semibold">Localization & Currency</h3>
+                  <p className="text-sm text-muted-foreground">Choose the currency used across this website.</p>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent forceMount className="px-6 pb-6">
+                <div className={openSections.includes('currency') ? 'block space-y-4' : 'hidden'}>
               <FormField
                 control={form.control}
                 name="currency_code"
@@ -750,20 +801,21 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
-                )}
-              />
-            </CardContent>
-          </Card>
+              )}
+            />
+                </div>
+              </AccordionContent>
+            </AccordionItem>
 
-          {/* Shipping & Delivery */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Shipping & Delivery</CardTitle>
-              <CardDescription>
-                Configure location-based delivery charges for this website.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
+            <AccordionItem value="shipping" className="border rounded-lg">
+              <AccordionTrigger className="px-6 py-4 hover:no-underline">
+                <div className="flex flex-col items-start text-left">
+                  <h3 className="text-base font-semibold">Shipping & Delivery</h3>
+                  <p className="text-sm text-muted-foreground">Configure location-based delivery charges for this website.</p>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent forceMount className="px-6 pb-6">
+                <div className={openSections.includes('shipping') ? 'block space-y-4' : 'hidden'}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                   <div className="space-y-0.5">
@@ -874,18 +926,19 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
                   </div>
                 ))}
               </div>
-            </CardContent>
-          </Card>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
 
-          {/* SEO Defaults */}
-          <Card>
-            <CardHeader>
-              <CardTitle>SEO Defaults</CardTitle>
-              <CardDescription>
-                Set default SEO metadata for this website. Individual pages can override these values.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
+            <AccordionItem value="seo" className="border rounded-lg">
+              <AccordionTrigger className="px-6 py-4 hover:no-underline">
+                <div className="flex flex-col items-start text-left">
+                  <h3 className="text-base font-semibold">SEO Defaults</h3>
+                  <p className="text-sm text-muted-foreground">Set default SEO metadata for this website. Individual pages can override these values.</p>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent forceMount className="px-6 pb-6">
+                <div className={openSections.includes('seo') ? 'block space-y-4' : 'hidden'}>
               <FormField
                 control={form.control}
                 name="seo_title"
@@ -975,19 +1028,21 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
-                )}
-              />
-            </CardContent>
-          </Card>
+            )}
+          />
+                </div>
+              </AccordionContent>
+            </AccordionItem>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Tracking & Analytics</CardTitle>
-              <CardDescription>
-                Configure pixel IDs for automated tracking and custom code snippets.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
+            <AccordionItem value="tracking" className="border rounded-lg">
+              <AccordionTrigger className="px-6 py-4 hover:no-underline">
+                <div className="flex flex-col items-start text-left">
+                  <h3 className="text-base font-semibold">Tracking & Analytics</h3>
+                  <p className="text-sm text-muted-foreground">Configure pixel IDs for automated tracking and custom code snippets.</p>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent forceMount className="px-6 pb-6">
+                <div className={openSections.includes('tracking') ? 'block space-y-6' : 'hidden'}>
               <div className="space-y-4">
                 <div className="text-sm font-medium">Marketing Pixels</div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1092,17 +1147,22 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
                   )}
                 />
               </div>
-            </CardContent>
-          </Card>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
 
-          <div className="flex justify-end">
-            <Button 
-              type="submit" 
-              disabled={updateWebsiteMutation.isPending}
-              className="min-w-32"
-            >
-              {updateWebsiteMutation.isPending ? 'Saving...' : 'Save Settings'}
-            </Button>
+          {/* Save Button - Sticky on mobile for better UX */}
+          <div className="sticky bottom-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-t p-4 -mx-4 sm:mx-0 sm:relative sm:bottom-auto sm:bg-transparent sm:backdrop-blur-none sm:border-0 sm:p-0">
+            <div className="flex justify-end">
+              <Button 
+                type="submit" 
+                disabled={updateWebsiteMutation.isPending}
+                className="min-w-32 w-full sm:w-auto"
+              >
+                {updateWebsiteMutation.isPending ? 'Saving...' : 'Save Settings'}
+              </Button>
+            </div>
           </div>
         </form>
       </Form>
