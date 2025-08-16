@@ -140,8 +140,8 @@ All colors MUST be HSL. Designed for trust, energy, and conversion.
 
 @layer components {
   .product-cta {
-    background-color: var(--product-button-bg, hsl(var(--primary)));
-    color: var(--product-button-text, #fff);
+    background-color: var(--product-button-bg, hsl(var(--primary))) !important;
+    color: var(--product-button-text, #fff) !important;
     transition: all 0.2s ease;
   }
   
@@ -151,8 +151,8 @@ All colors MUST be HSL. Designed for trust, energy, and conversion.
   }
 
   .variant-button-selected {
-    background-color: var(--variant-button-selected-bg, hsl(var(--primary)));
-    color: var(--variant-button-selected-text, #fff);
+    background-color: var(--variant-button-selected-bg, hsl(var(--primary))) !important;
+    color: var(--variant-button-selected-text, #fff) !important;
   }
 
   .variant-button:not(.variant-button-selected):hover {
