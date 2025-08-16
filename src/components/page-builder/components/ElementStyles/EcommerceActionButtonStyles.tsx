@@ -12,11 +12,13 @@ interface EcommerceActionButtonStylesProps {
 }
 
 function ensureResponsive(base: any) {
-  const next = { ...(base || {}) };
-  if (!next.responsive) next.responsive = { desktop: {}, mobile: {} };
-  if (!next.responsive.desktop) next.responsive.desktop = {};
-  if (!next.responsive.mobile) next.responsive.mobile = {};
-  return next;
+  // Create a completely fresh object to avoid deep nesting
+  return {
+    responsive: {
+      desktop: { ...(base?.responsive?.desktop || {}) },
+      mobile: { ...(base?.responsive?.mobile || {}) }
+    }
+  };
 }
 
 function sizeToStyles(size: 'sm' | 'md' | 'lg') {
@@ -37,12 +39,12 @@ export const EcommerceActionButtonStyles: React.FC<EcommerceActionButtonStylesPr
   const stylesForDevice = current.responsive[activeDevice] as any;
 
   const update = (patch: Record<string, any>) => {
-    const next = ensureResponsive((element as any).styles?.buttonStyles);
-    next.responsive[activeDevice] = {
-      ...(next.responsive[activeDevice] || {}),
+    const currentStyles = ensureResponsive((element as any).styles?.buttonStyles);
+    currentStyles.responsive[activeDevice] = {
+      ...(currentStyles.responsive[activeDevice] || {}),
       ...patch,
     };
-    onStyleUpdate('buttonStyles', next);
+    onStyleUpdate('buttonStyles', currentStyles);
   };
 
   const clearProp = (prop: string) => {

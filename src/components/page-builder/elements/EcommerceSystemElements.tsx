@@ -343,22 +343,63 @@ const CartFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 'des
   // Apply responsive element styles
   const elementStyles = renderElementStyles(element, deviceType);
   
-  // Generate dynamic button CSS for responsive/hover styles
-  const buttonStylesCSS = React.useMemo(() => {
-    const buttonStyles = (element.styles as any)?.buttonStyles;
-    if (!buttonStyles?.responsive) return '';
-    
-    return generateResponsiveCSS(`cart-${element.id}`, { responsive: buttonStyles.responsive });
-  }, [(element.styles as any)?.buttonStyles, element.id]);
-  
-  // Compute per-device button styles for inline application (builder preview)
+  // Get button styles safely without deep nesting
   const buttonStyles = React.useMemo(() => {
-    const bs = (element.styles as any)?.buttonStyles || {};
-    if (bs.responsive) {
-      return mergeResponsiveStyles({}, bs, deviceType);
-    }
-    return bs;
+    const bs = (element.styles as any)?.buttonStyles;
+    if (!bs?.responsive) return {};
+    
+    // Use mergeResponsiveStyles to get the current device styles
+    return mergeResponsiveStyles({}, bs, deviceType);
   }, [(element.styles as any)?.buttonStyles, deviceType]);
+  
+  // Generate CSS for cart buttons with correct class targeting
+  const buttonStylesCSS = React.useMemo(() => {
+    const bs = (element.styles as any)?.buttonStyles;
+    if (!bs?.responsive) return '';
+    
+    const { desktop = {}, mobile = {} } = bs.responsive;
+    let css = '';
+    
+    // Desktop styles
+    if (Object.keys(desktop).length > 0) {
+      const { hoverColor, hoverBackgroundColor, ...rest } = desktop;
+      const props = Object.entries(rest)
+        .map(([prop, value]) => `${prop.replace(/([A-Z])/g, '-$1').toLowerCase()}: ${value}`)
+        .join('; ');
+      
+      if (props) {
+        css += `.cart-element-${element.id} .cart-action-button { ${props}; }`;
+      }
+      if (hoverColor || hoverBackgroundColor) {
+        const hoverProps = [];
+        if (hoverColor) hoverProps.push(`color: ${hoverColor}`);
+        if (hoverBackgroundColor) hoverProps.push(`background-color: ${hoverBackgroundColor}`);
+        css += `.cart-element-${element.id} .cart-action-button:hover { ${hoverProps.join('; ')}; }`;
+      }
+    }
+    
+    // Mobile styles
+    if (Object.keys(mobile).length > 0) {
+      const { hoverColor: mHoverColor, hoverBackgroundColor: mHoverBg, ...rest } = mobile;
+      const props = Object.entries(rest)
+        .map(([prop, value]) => `${prop.replace(/([A-Z])/g, '-$1').toLowerCase()}: ${value}`)
+        .join('; ');
+        
+      css += `@media (max-width: 767px) { `;
+      if (props) {
+        css += `.cart-element-${element.id} .cart-action-button { ${props}; }`;
+      }
+      if (mHoverColor || mHoverBg) {
+        const hoverProps = [];
+        if (mHoverColor) hoverProps.push(`color: ${mHoverColor}`);
+        if (mHoverBg) hoverProps.push(`background-color: ${mHoverBg}`);
+        css += `.cart-element-${element.id} .cart-action-button:hover { ${hoverProps.join('; ')}; }`;
+      }
+      css += ` }`;
+    }
+    
+    return css;
+  }, [(element.styles as any)?.buttonStyles, element.id]);
   
   if (items.length === 0) {
     return (
@@ -398,8 +439,7 @@ const CartFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 'des
               Your cart is empty.
             </p>
             <Button 
-              className={`product-cta cart-action-button cart-element-${element.id}-btn`}
-              style={buttonStyles}
+              className="product-cta cart-action-button"
               onClick={() => (window.location.href = paths.products)}
             >
               Continue Shopping
@@ -501,8 +541,7 @@ const CartFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 'des
                 </span>
               </div>
               <Button 
-                className={`w-full product-cta cart-action-button cart-element-${element.id}-btn`}
-                style={buttonStyles}
+                className="w-full product-cta cart-action-button"
                 onClick={() => (window.location.href = paths.checkout)}
               >
                 Proceed to Checkout
