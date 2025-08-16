@@ -101,15 +101,27 @@ export const ProductsPageElement: React.FC<{
 
   const elementId = element.id || 'products-page-element';
   const dynamicCSS = useMemo(() => {
-    if (!buttonStyles || Object.keys(buttonStyles).length === 0) return '';
+    const bs = (element as any).styles?.buttonStyles || {};
     
-    const buttonStylesWithHover = buttonStyles as any; // Type assertion for custom hover properties
-    const { hoverColor, hoverBackgroundColor, ...regularStyles } = buttonStylesWithHover;
+    // Handle both responsive and legacy flat styles
+    let desktopStyles = {};
+    let mobileStyles = {};
+    
+    if (bs.responsive) {
+      desktopStyles = bs.responsive.desktop || {};
+      mobileStyles = bs.responsive.mobile || {};
+    } else {
+      // Legacy: use flat styles as desktop defaults
+      desktopStyles = bs;
+    }
     
     let css = '';
-    if (Object.keys(regularStyles).length > 0) {
-      const styleProps = Object.entries(regularStyles)
-        .filter(([key, value]) => value !== undefined && key !== 'hoverColor' && key !== 'hoverBackgroundColor')
+    
+    // Desktop styles
+    const { hoverColor: desktopHoverColor, hoverBackgroundColor: desktopHoverBg, ...desktopRegular } = desktopStyles as any;
+    if (Object.keys(desktopRegular).length > 0) {
+      const styleProps = Object.entries(desktopRegular)
+        .filter(([key, value]) => value !== undefined)
         .map(([key, value]) => `${key.replace(/([A-Z])/g, '-$1').toLowerCase()}: ${value}`)
         .join('; ');
       if (styleProps) {
@@ -117,17 +129,36 @@ export const ProductsPageElement: React.FC<{
       }
     }
     
-    if (hoverColor || hoverBackgroundColor) {
+    // Desktop hover
+    if (desktopHoverColor || desktopHoverBg) {
       const hoverProps = [];
-      if (hoverColor) hoverProps.push(`color: ${hoverColor}`);
-      if (hoverBackgroundColor) hoverProps.push(`background-color: ${hoverBackgroundColor}`);
-      if (hoverProps.length > 0) {
-        css += `.products-element-${elementId} .product-card-button:hover { ${hoverProps.join('; ')} !important; }`;
+      if (desktopHoverColor) hoverProps.push(`color: ${desktopHoverColor}`);
+      if (desktopHoverBg) hoverProps.push(`background-color: ${desktopHoverBg}`);
+      css += `.products-element-${elementId} .product-card-button:hover { ${hoverProps.join('; ')} !important; }`;
+    }
+    
+    // Mobile styles
+    const { hoverColor: mobileHoverColor, hoverBackgroundColor: mobileHoverBg, ...mobileRegular } = mobileStyles as any;
+    if (Object.keys(mobileRegular).length > 0) {
+      const styleProps = Object.entries(mobileRegular)
+        .filter(([key, value]) => value !== undefined)
+        .map(([key, value]) => `${key.replace(/([A-Z])/g, '-$1').toLowerCase()}: ${value}`)
+        .join('; ');
+      if (styleProps) {
+        css += `@media (max-width: 767px) { .products-element-${elementId} .product-card-button { ${styleProps} !important; } }`;
       }
     }
     
+    // Mobile hover
+    if (mobileHoverColor || mobileHoverBg) {
+      const hoverProps = [];
+      if (mobileHoverColor) hoverProps.push(`color: ${mobileHoverColor}`);
+      if (mobileHoverBg) hoverProps.push(`background-color: ${mobileHoverBg}`);
+      css += `@media (max-width: 767px) { .products-element-${elementId} .product-card-button:hover { ${hoverProps.join('; ')} !important; } }`;
+    }
+    
     return css;
-  }, [buttonStyles, elementId]);
+  }, [(element as any).styles?.buttonStyles, elementId]);
 
   const getGridClasses = () => {
     // Always emit responsive classes so CSS handles breakpoints on live pages

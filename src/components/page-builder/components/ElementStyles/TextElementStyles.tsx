@@ -132,22 +132,22 @@ export const TextElementStyles: React.FC<TextElementStylesProps> = ({
             <div className="flex space-x-1">
               <Button
                 size="sm"
-                variant={element.styles?.textAlign === 'left' ? 'default' : 'outline'}
-                onClick={() => onStyleUpdate('textAlign', 'left')}
+                variant={(currentStyles.textAlign || element.styles?.textAlign) === 'left' ? 'default' : 'outline'}
+                onClick={() => handleResponsiveUpdate('textAlign', 'left')}
               >
                 <AlignLeft className="h-4 w-4" />
               </Button>
               <Button
                 size="sm"
-                variant={element.styles?.textAlign === 'center' ? 'default' : 'outline'}
-                onClick={() => onStyleUpdate('textAlign', 'center')}
+                variant={(currentStyles.textAlign || element.styles?.textAlign) === 'center' ? 'default' : 'outline'}
+                onClick={() => handleResponsiveUpdate('textAlign', 'center')}
               >
                 <AlignCenter className="h-4 w-4" />
               </Button>
               <Button
                 size="sm"
-                variant={element.styles?.textAlign === 'right' ? 'default' : 'outline'}
-                onClick={() => onStyleUpdate('textAlign', 'right')}
+                variant={(currentStyles.textAlign || element.styles?.textAlign) === 'right' ? 'default' : 'outline'}
+                onClick={() => handleResponsiveUpdate('textAlign', 'right')}
               >
                 <AlignRight className="h-4 w-4" />
               </Button>
@@ -173,8 +173,8 @@ export const TextElementStyles: React.FC<TextElementStylesProps> = ({
 
             <ColorPicker 
               label="Text Color"
-              color={element.styles?.color || ''}
-              onChange={(val) => onStyleUpdate('color', val)}
+              color={(currentStyles.color || element.styles?.color) || ''}
+              onChange={(val) => handleResponsiveUpdate('color', val)}
             />
         </div>
       )}
@@ -207,23 +207,23 @@ export const TextElementStyles: React.FC<TextElementStylesProps> = ({
             <div>
               <Label className="text-xs">Border Width</Label>
               <Input
-                value={element.styles?.borderWidth || ''}
-                onChange={(e) => onStyleUpdate('borderWidth', e.target.value)}
+                value={(currentStyles.borderWidth || element.styles?.borderWidth) || ''}
+                onChange={(e) => handleResponsiveUpdate('borderWidth', e.target.value)}
                 placeholder="e.g., 1px"
               />
             </div>
 
             <ColorPicker 
               label="Border Color"
-              color={element.styles?.borderColor || ''}
-              onChange={(val) => onStyleUpdate('borderColor', val)}
+              color={(currentStyles.borderColor || element.styles?.borderColor) || ''}
+              onChange={(val) => handleResponsiveUpdate('borderColor', val)}
             />
 
             <div>
               <Label className="text-xs">Border Radius</Label>
               <Input
-                value={element.styles?.borderRadius || ''}
-                onChange={(e) => onStyleUpdate('borderRadius', e.target.value)}
+                value={(currentStyles.borderRadius || element.styles?.borderRadius) || ''}
+                onChange={(e) => handleResponsiveUpdate('borderRadius', e.target.value)}
                 placeholder="e.g., 4px"
               />
             </div>

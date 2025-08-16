@@ -1,9 +1,9 @@
 import React from 'react';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ColorPicker } from '@/components/ui/color-picker';
 import { PageBuilderElement } from '../../types';
 
 interface EcommerceActionButtonStylesProps {
@@ -95,36 +95,29 @@ export const EcommerceActionButtonStyles: React.FC<EcommerceActionButtonStylesPr
         </div>
 
         <div className="space-y-3">
-          <div>
-            <Label className="text-xs">Text color</Label>
-            <div className="flex items-center gap-2">
-              <Input type="color" className="h-8 w-10 p-1" value={(stylesForDevice?.color as string) || '#000000'} onChange={(e) => update({ color: e.target.value })} />
-              <Button variant="ghost" size="sm" onClick={() => clearProp('color')}>Reset</Button>
-            </div>
-          </div>
-          <div>
-            <Label className="text-xs">Background</Label>
-            <div className="flex items-center gap-2">
-              <Input type="color" className="h-8 w-10 p-1" value={(stylesForDevice?.backgroundColor as string) || '#ffffff'} onChange={(e) => update({ backgroundColor: e.target.value })} />
-              <Button variant="ghost" size="sm" onClick={() => clearProp('backgroundColor')}>Reset</Button>
-              <Button variant="outline" size="sm" onClick={() => update({ backgroundColor: 'transparent' })}>Transparent</Button>
-            </div>
-          </div>
-          <div>
-            <Label className="text-xs">Hover text color</Label>
-            <div className="flex items-center gap-2">
-              <Input type="color" className="h-8 w-10 p-1" value={(stylesForDevice?.hoverColor as string) || '#ffffff'} onChange={(e) => update({ hoverColor: e.target.value })} />
-              <Button variant="ghost" size="sm" onClick={() => clearProp('hoverColor')}>Reset</Button>
-            </div>
-          </div>
-          <div>
-            <Label className="text-xs">Hover background</Label>
-            <div className="flex items-center gap-2">
-              <Input type="color" className="h-8 w-10 p-1" value={(stylesForDevice?.hoverBackgroundColor as string) || '#000000'} onChange={(e) => update({ hoverBackgroundColor: e.target.value })} />
-              <Button variant="ghost" size="sm" onClick={() => clearProp('hoverBackgroundColor')}>Reset</Button>
-              <Button variant="outline" size="sm" onClick={() => update({ hoverBackgroundColor: 'transparent' })}>Transparent</Button>
-            </div>
-          </div>
+          <ColorPicker
+            label="Text Color"
+            color={(stylesForDevice?.color as string) || ''}
+            onChange={(val) => update({ color: val })}
+          />
+          
+          <ColorPicker
+            label="Background Color"
+            color={(stylesForDevice?.backgroundColor as string) || ''}
+            onChange={(val) => update({ backgroundColor: val })}
+          />
+          
+          <ColorPicker
+            label="Hover Text Color"
+            color={(stylesForDevice?.hoverColor as string) || ''}
+            onChange={(val) => update({ hoverColor: val })}
+          />
+          
+          <ColorPicker
+            label="Hover Background Color"
+            color={(stylesForDevice?.hoverBackgroundColor as string) || ''}
+            onChange={(val) => update({ hoverBackgroundColor: val })}
+          />
         </div>
 
         <div className="flex items-center gap-2">
