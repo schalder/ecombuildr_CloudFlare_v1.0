@@ -110,6 +110,21 @@ export const EcommerceActionButtonStyles: React.FC<EcommerceActionButtonStylesPr
               <Button variant="outline" size="sm" onClick={() => update({ backgroundColor: 'transparent' })}>Transparent</Button>
             </div>
           </div>
+          <div>
+            <Label className="text-xs">Hover text color</Label>
+            <div className="flex items-center gap-2">
+              <Input type="color" className="h-8 w-10 p-1" value={(stylesForDevice?.hoverColor as string) || '#ffffff'} onChange={(e) => update({ hoverColor: e.target.value })} />
+              <Button variant="ghost" size="sm" onClick={() => clearProp('hoverColor')}>Reset</Button>
+            </div>
+          </div>
+          <div>
+            <Label className="text-xs">Hover background</Label>
+            <div className="flex items-center gap-2">
+              <Input type="color" className="h-8 w-10 p-1" value={(stylesForDevice?.hoverBackgroundColor as string) || '#000000'} onChange={(e) => update({ hoverBackgroundColor: e.target.value })} />
+              <Button variant="ghost" size="sm" onClick={() => clearProp('hoverBackgroundColor')}>Reset</Button>
+              <Button variant="outline" size="sm" onClick={() => update({ hoverBackgroundColor: 'transparent' })}>Transparent</Button>
+            </div>
+          </div>
         </div>
 
         <div className="flex items-center gap-2">

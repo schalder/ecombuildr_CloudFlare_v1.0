@@ -99,6 +99,36 @@ export const ProductsPageElement: React.FC<{
     return bs as React.CSSProperties;
   }, [deviceType, (element as any).styles?.buttonStyles]);
 
+  const elementId = element.id || 'products-page-element';
+  const dynamicCSS = useMemo(() => {
+    if (!buttonStyles || Object.keys(buttonStyles).length === 0) return '';
+    
+    const buttonStylesWithHover = buttonStyles as any; // Type assertion for custom hover properties
+    const { hoverColor, hoverBackgroundColor, ...regularStyles } = buttonStylesWithHover;
+    
+    let css = '';
+    if (Object.keys(regularStyles).length > 0) {
+      const styleProps = Object.entries(regularStyles)
+        .filter(([key, value]) => value !== undefined && key !== 'hoverColor' && key !== 'hoverBackgroundColor')
+        .map(([key, value]) => `${key.replace(/([A-Z])/g, '-$1').toLowerCase()}: ${value}`)
+        .join('; ');
+      if (styleProps) {
+        css += `.products-element-${elementId} .product-card-button { ${styleProps} !important; }`;
+      }
+    }
+    
+    if (hoverColor || hoverBackgroundColor) {
+      const hoverProps = [];
+      if (hoverColor) hoverProps.push(`color: ${hoverColor}`);
+      if (hoverBackgroundColor) hoverProps.push(`background-color: ${hoverBackgroundColor}`);
+      if (hoverProps.length > 0) {
+        css += `.products-element-${elementId} .product-card-button:hover { ${hoverProps.join('; ')} !important; }`;
+      }
+    }
+    
+    return css;
+  }, [buttonStyles, elementId]);
+
   const getGridClasses = () => {
     // Always emit responsive classes so CSS handles breakpoints on live pages
     const desktopColsRaw = Number(element.content.columns ?? 4);
@@ -383,7 +413,8 @@ export const ProductsPageElement: React.FC<{
   };
 
   return (
-    <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-7xl mx-auto'}`} style={elementStyles}>
+    <div className={`products-element-${elementId} ${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-7xl mx-auto'}`} style={elementStyles}>
+      {dynamicCSS && <style dangerouslySetInnerHTML={{ __html: dynamicCSS }} />}
       {/* Header */}
       <div className="mb-6">
         {element.content.title && (
@@ -525,9 +556,9 @@ export const ProductsPageElement: React.FC<{
                         <a href={paths.productDetail(product.slug)} className="w-28 sm:w-40 h-28 sm:h-40 rounded-md overflow-hidden bg-muted flex-shrink-0">
                           <img src={product.images[0] || '/placeholder.svg'} alt={product.name} className="w-full h-full object-cover" />
                         </a>
-                        <div className="flex-1 space-y-2">
+                        <div className="flex-1 min-w-0 space-y-2">
                           <a href={paths.productDetail(product.slug)} className="hover:text-primary transition-colors">
-                            <h3 className="font-semibold text-base sm:text-lg leading-snug">{product.name}</h3>
+                            <h3 className="font-semibold text-base sm:text-lg leading-snug truncate">{product.name}</h3>
                           </a>
                           <div className="flex items-center gap-1">
                             {[...Array(5)].map((_, i) => (
@@ -539,14 +570,16 @@ export const ProductsPageElement: React.FC<{
                             <p className="text-sm text-muted-foreground line-clamp-2 sm:line-clamp-3">{product.short_description}</p>
                           )}
                         </div>
-                        <div className="w-40 sm:w-48 flex flex-col items-end gap-2">
-                          <div className="text-right">
-                            <div className="font-bold text-lg">{formatCurrency(product.price)}</div>
-                            {product.compare_price && product.compare_price > product.price && (
-                              <div className="text-sm text-muted-foreground line-through">{formatCurrency(product.compare_price)}</div>
-                            )}
+                        <div className="flex-shrink-0 flex flex-col items-end gap-2 min-w-[120px] sm:min-w-[140px]">
+                          <div className="text-right w-full">
+                            <div className="font-bold text-base sm:text-lg flex flex-wrap items-center justify-end gap-1">
+                              <span>{formatCurrency(product.price)}</span>
+                              {product.compare_price && product.compare_price > product.price && (
+                                <span className="text-sm text-muted-foreground line-through">{formatCurrency(product.compare_price)}</span>
+                              )}
+                            </div>
                           </div>
-                          <Button onClick={() => handleAddToCart(product)} className="w-full sm:w-auto">
+                          <Button onClick={() => handleAddToCart(product)} className="w-full product-card-button">
                             Add to Cart
                           </Button>
                           <div className="hidden sm:flex items-center gap-2 text-muted-foreground">

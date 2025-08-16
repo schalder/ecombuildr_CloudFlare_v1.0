@@ -371,6 +371,14 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
           <TabsContent value="style" className="space-y-4 mt-4">
             {/* Render element-specific styles based on element type */}
             {renderElementStyles()}
+            
+            {/* Add button styles for products-page element */}
+            {selectedElement.type === 'products-page' && (
+              <EcommerceActionButtonStyles
+                element={selectedElement}
+                onStyleUpdate={handleStyleUpdate}
+              />
+            )}
           </TabsContent>
 
           <TabsContent value="advanced" className="space-y-4 mt-4">
