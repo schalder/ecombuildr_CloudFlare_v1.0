@@ -25,12 +25,6 @@ interface DomainWebsiteRouterProps {
   website: any;
 }
 
-const isSystemPage = (pathname: string): boolean => {
-  const segments = pathname.split('/');
-  const lastSegment = segments[segments.length - 1];
-  return ['cart', 'checkout', 'payment-processing', 'order-confirmation'].includes(lastSegment);
-};
-
 export const DomainWebsiteRouter: React.FC<DomainWebsiteRouterProps> = ({ 
   websiteId, 
   customDomain,
@@ -52,11 +46,9 @@ export const DomainWebsiteRouter: React.FC<DomainWebsiteRouterProps> = ({
     return () => clearTimeout(timer);
   }, [location.pathname, trackPageView]);
 
-  const hideChrome = isSystemPage(location.pathname);
-
   return (
     <>
-      {!hideChrome && <WebsiteHeader website={website} />}
+      <WebsiteHeader website={website} />
       <main className="flex-1">
         <Routes>
       {/* Homepage */}
@@ -114,7 +106,7 @@ export const DomainWebsiteRouter: React.FC<DomainWebsiteRouterProps> = ({
       />
         </Routes>
       </main>
-      {!hideChrome && <WebsiteFooter website={website} />}
+      <WebsiteFooter website={website} />
     </>
   );
 };
