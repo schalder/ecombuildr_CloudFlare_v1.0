@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { MapPin, Code, Share2, Facebook, Twitter, Linkedin, Link2, MessageCircle, Send, Mail, ExternalLink } from 'lucide-react';
+import { MapPin, Code, Share2, Facebook, Twitter, Linkedin, Link2, MessageCircle, Send, Mail, ExternalLink, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';

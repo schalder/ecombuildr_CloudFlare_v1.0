@@ -7,3 +7,4 @@ export { OrderConfirmationElementStyles } from './OrderConfirmationElementStyles
 export { EcommerceActionButtonStyles } from './EcommerceActionButtonStyles';
 export { WeeklyFeaturedTypographyStyles } from './WeeklyFeaturedTypographyStyles';
 export { ListElementStyles } from './ListElementStyles';
+export { CountdownElementStyles } from './CountdownElementStyles';

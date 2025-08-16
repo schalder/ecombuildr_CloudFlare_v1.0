@@ -51,6 +51,7 @@ import {
   CustomHTMLProperties, 
   SocialShareProperties 
 } from './AdvancedProperties';
+import { CountdownProperties } from './CountdownProperties';
 import {
   TextElementStyles,
   MediaElementStyles, 
@@ -62,6 +63,7 @@ import {
   WeeklyFeaturedTypographyStyles,
   ListElementStyles
 } from './ElementStyles';
+import { CountdownElementStyles } from './ElementStyles/CountdownElementStyles';
 import { CheckoutElementStyles } from './ElementStyles/CheckoutElementStyles';
 
 import { PageBuilderElement } from '../types';
@@ -173,6 +175,11 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
     // Checkout element button styles
     if (['checkout-full', 'checkout-inline'].includes(selectedElement.type)) {
       return <CheckoutElementStyles element={selectedElement} onStyleUpdate={handleStyleUpdate} />;
+    }
+
+    // Countdown timer element styles
+    if (selectedElement.type === 'countdown-timer') {
+      return <CountdownElementStyles element={selectedElement} onStyleUpdate={handleStyleUpdate} />;
     }
     
     // Default fallback for any other element types (ecommerce, content, media, advanced)
@@ -362,6 +369,13 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
 
                 {selectedElement.type === 'social-share' && (
                   <SocialShareProperties 
+                    element={selectedElement} 
+                    onUpdate={handleContentUpdate} 
+                  />
+                )}
+
+                {selectedElement.type === 'countdown-timer' && (
+                  <CountdownProperties 
                     element={selectedElement} 
                     onUpdate={handleContentUpdate} 
                   />

@@ -8,6 +8,7 @@ import { registerAdvancedElements } from './AdvancedElements';
 import { registerNavigationElements } from './NavigationElements';
 import { registerEcommerceSystemElements } from './EcommerceSystemElements';
 import { registerInlineCheckoutElements } from './InlineCheckoutElement';
+import { registerMarketingElements } from './MarketingElements';
  
  // Register all elements when module loads
  registerBasicElements();
@@ -19,6 +20,7 @@ import { registerInlineCheckoutElements } from './InlineCheckoutElement';
  registerMediaElements();
  registerAdvancedElements();
  registerNavigationElements();
+ registerMarketingElements();
  
  // Export the registry
  export { elementRegistry } from './ElementRegistry';
