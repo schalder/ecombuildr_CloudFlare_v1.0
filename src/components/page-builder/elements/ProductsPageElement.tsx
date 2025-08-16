@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useParams } from 'react-router-dom';
 import { PageBuilderElement } from '../types';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -65,6 +66,7 @@ export const ProductsPageElement: React.FC<{
 }> = ({ element, isEditing = false, deviceType = 'desktop', columnCount = 1 }) => {
   const { store } = useStore();
   const { addToCart, openQuickView } = useAddToCart();
+  const { websiteId: builderWebsiteId } = useParams<{ websiteId?: string }>();
 
   const paths = useEcomPaths();
 
@@ -135,6 +137,10 @@ export const ProductsPageElement: React.FC<{
       
       // If auto-detect is enabled or no website selected, try to get from URL
       if (!websiteId || websiteId === 'auto') {
+        // First priority: builder websiteId from URL params
+        if (builderWebsiteId) {
+          websiteId = builderWebsiteId;
+        } else
         if (window.location.pathname.includes('/website/')) {
           websiteId = window.location.pathname.split('/website/')[1]?.split('/')[0];
         } else if (window.location.pathname.includes('/site/')) {
@@ -210,7 +216,7 @@ export const ProductsPageElement: React.FC<{
       if (!error) setCategories(data || []);
     };
     fetchCategories();
-  }, [store?.id, element.content.websiteId]);
+  }, [store?.id, element.content.websiteId, builderWebsiteId]);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -222,7 +228,10 @@ export const ProductsPageElement: React.FC<{
         
         // If auto-detect is enabled or no website selected, try to get from URL
         if (!websiteId || websiteId === 'auto') {
-          if (window.location.pathname.includes('/website/')) {
+          // First priority: builder websiteId from URL params
+          if (builderWebsiteId) {
+            websiteId = builderWebsiteId;
+          } else if (window.location.pathname.includes('/website/')) {
             websiteId = window.location.pathname.split('/website/')[1]?.split('/')[0];
           } else if (window.location.pathname.includes('/site/')) {
             // For site URLs like /site/natural-energy, we need to find the website ID
@@ -362,7 +371,7 @@ export const ProductsPageElement: React.FC<{
       }
     };
     fetchProducts();
-  }, [store?.id, searchQuery, sortBy, JSON.stringify(filters), categories.length, element.content.websiteId]);
+  }, [store?.id, searchQuery, sortBy, JSON.stringify(filters), categories.length, element.content.websiteId, builderWebsiteId]);
 
   const handleAddToCart = (product: Product, quantity?: number) => {
     addToCart(product, quantity || 1);
