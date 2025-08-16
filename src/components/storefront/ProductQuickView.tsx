@@ -245,13 +245,31 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
                             key={val}
                             variant={selected ? "default" : "outline"}
                             size="default"
-                            onClick={() => setSelectedOptions(prev => ({ ...prev, [opt.name]: val }))}
                             className={cn(
-                              "h-12 px-4 min-w-[60px] font-medium transition-all duration-200",
+                              "h-12 px-4 min-w-[60px] font-medium transition-all duration-200 variant-button",
                               selected 
                                 ? "bg-primary text-primary-foreground shadow-sm" 
                                 : "border-2 hover:border-primary/50 hover:bg-primary/5"
                             )}
+                            onClick={() => setSelectedOptions(prev => ({ ...prev, [opt.name]: val }))}
+                            style={selected ? {
+                              backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--variant-button-selected-bg') || undefined,
+                              color: getComputedStyle(document.documentElement).getPropertyValue('--variant-button-selected-text') || undefined,
+                            } : undefined}
+                            onMouseEnter={(e) => {
+                              if (!selected) {
+                                const hoverBg = getComputedStyle(document.documentElement).getPropertyValue('--variant-button-hover-bg');
+                                const hoverText = getComputedStyle(document.documentElement).getPropertyValue('--variant-button-hover-text');
+                                if (hoverBg) e.currentTarget.style.backgroundColor = hoverBg;
+                                if (hoverText) e.currentTarget.style.color = hoverText;
+                              }
+                            }}
+                            onMouseLeave={(e) => {
+                              if (!selected) {
+                                e.currentTarget.style.backgroundColor = '';
+                                e.currentTarget.style.color = '';
+                              }
+                            }}
                           >
                             {val}
                           </Button>
@@ -297,8 +315,24 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
               <div className="flex gap-3">
                 <Button 
                   onClick={handleAddToCart}
-                  className="flex-1 h-12 text-base font-semibold"
+                  className="flex-1 h-12 text-base font-semibold product-button"
                   disabled={!inStock}
+                  style={{
+                    backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--product-button-bg') || undefined,
+                    color: getComputedStyle(document.documentElement).getPropertyValue('--product-button-text') || undefined,
+                  }}
+                  onMouseEnter={(e) => {
+                    const hoverBg = getComputedStyle(document.documentElement).getPropertyValue('--product-button-hover-bg');
+                    const hoverText = getComputedStyle(document.documentElement).getPropertyValue('--product-button-hover-text');
+                    if (hoverBg) e.currentTarget.style.backgroundColor = hoverBg;
+                    if (hoverText) e.currentTarget.style.color = hoverText;
+                  }}
+                  onMouseLeave={(e) => {
+                    const defaultBg = getComputedStyle(document.documentElement).getPropertyValue('--product-button-bg');
+                    const defaultText = getComputedStyle(document.documentElement).getPropertyValue('--product-button-text');
+                    if (defaultBg) e.currentTarget.style.backgroundColor = defaultBg;
+                    if (defaultText) e.currentTarget.style.color = defaultText;
+                  }}
                 >
                   <ShoppingCart className="h-5 w-5 mr-2" />
                   {inStock ? "Add to Cart" : "Out of Stock"}

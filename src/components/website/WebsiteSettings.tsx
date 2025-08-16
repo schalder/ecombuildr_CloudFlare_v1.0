@@ -17,10 +17,12 @@ import { useDomainManagement } from '@/hooks/useDomainManagement';
 import { Badge } from '@/components/ui/badge';
 import { Link } from 'react-router-dom';
 import { ExternalLink, CheckCircle2, AlertCircle } from 'lucide-react';
+import { ColorPicker } from '@/components/ui/color-picker';
 
 const websiteSettingsSchema = z.object({
   name: z.string().min(1, 'Website name is required'),
   description: z.string().optional(),
+  slug: z.string().min(1, 'Website slug is required'),
   domain: z.string().optional(),
   is_published: z.boolean(),
   is_active: z.boolean(),
@@ -37,6 +39,15 @@ const websiteSettingsSchema = z.object({
   og_image: z.string().optional(),
   meta_robots: z.string().optional(),
   canonical_domain: z.string().optional(),
+  // Product button styles
+  product_button_bg: z.string().optional(),
+  product_button_text: z.string().optional(),
+  product_button_hover_bg: z.string().optional(),
+  product_button_hover_text: z.string().optional(),
+  variant_button_selected_bg: z.string().optional(),
+  variant_button_selected_text: z.string().optional(),
+  variant_button_hover_bg: z.string().optional(),
+  variant_button_hover_text: z.string().optional(),
 });
 
 type WebsiteSettingsForm = z.infer<typeof websiteSettingsSchema>;
@@ -45,6 +56,7 @@ interface Website {
   id: string;
   name: string;
   description?: string;
+  slug?: string;
   domain?: string;
   is_active: boolean;
   is_published: boolean;
@@ -90,6 +102,7 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
     defaultValues: {
       name: website.name || '',
       description: website.description || '',
+      slug: website.slug || '',
       domain: connectedDomain?.domain || '',
       is_published: website.is_published,
       is_active: website.is_active,
@@ -105,6 +118,14 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
       og_image: (website as any).og_image || '',
       meta_robots: (website as any).meta_robots || 'index, follow',
       canonical_domain: (website as any).canonical_domain || connectedDomain?.domain || '',
+      product_button_bg: website.settings?.product_button_bg || '',
+      product_button_text: website.settings?.product_button_text || '',
+      product_button_hover_bg: website.settings?.product_button_hover_bg || '',
+      product_button_hover_text: website.settings?.product_button_hover_text || '',
+      variant_button_selected_bg: website.settings?.variant_button_selected_bg || '',
+      variant_button_selected_text: website.settings?.variant_button_selected_text || '',
+      variant_button_hover_bg: website.settings?.variant_button_hover_bg || '',
+      variant_button_hover_text: website.settings?.variant_button_hover_text || '',
     },
   });
 
@@ -128,6 +149,9 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
     }
   );
 
+  const [slugError, setSlugError] = React.useState<string>('');
+  const [checkingSlug, setCheckingSlug] = React.useState(false);
+
   React.useEffect(() => {
     const fetchPages = async () => {
       setLoadingPages(true);
@@ -142,9 +166,56 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
     fetchPages();
   }, [website.id]);
 
+  const checkSlugAvailability = async (slug: string) => {
+    if (!slug || slug === website.slug) {
+      setSlugError('');
+      return;
+    }
+
+    setCheckingSlug(true);
+    try {
+      const { data, error } = await supabase
+        .from('websites')
+        .select('id')
+        .eq('slug', slug)
+        .neq('id', website.id);
+      
+      if (error) throw error;
+      
+      if (data && data.length > 0) {
+        setSlugError('This slug is already taken');
+      } else {
+        setSlugError('');
+      }
+    } catch (error) {
+      console.error('Error checking slug:', error);
+      setSlugError('Error checking slug availability');
+    } finally {
+      setCheckingSlug(false);
+    }
+  };
+
   const updateWebsiteMutation = useMutation({
     mutationFn: async (data: WebsiteSettingsForm) => {
-      const { favicon_url, header_tracking_code, footer_tracking_code, facebook_pixel_id, google_analytics_id, google_ads_id, currency_code, domain, ...basicFields } = data;
+      const { 
+        favicon_url, 
+        header_tracking_code, 
+        footer_tracking_code, 
+        facebook_pixel_id, 
+        google_analytics_id, 
+        google_ads_id, 
+        currency_code, 
+        domain,
+        product_button_bg,
+        product_button_text,
+        product_button_hover_bg,
+        product_button_hover_text,
+        variant_button_selected_bg,
+        variant_button_selected_text,
+        variant_button_hover_bg,
+        variant_button_hover_text,
+        ...basicFields 
+      } = data;
       
       const settings = {
         ...website.settings,
@@ -160,6 +231,14 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
         },
         currency: { code: currency_code || 'BDT' },
         shipping: shippingSettings,
+        product_button_bg: product_button_bg || null,
+        product_button_text: product_button_text || null,
+        product_button_hover_bg: product_button_hover_bg || null,
+        product_button_hover_text: product_button_hover_text || null,
+        variant_button_selected_bg: variant_button_selected_bg || null,
+        variant_button_selected_text: variant_button_selected_text || null,
+        variant_button_hover_bg: variant_button_hover_bg || null,
+        variant_button_hover_text: variant_button_hover_text || null,
       };
 
       // Determine canonical domain for this website
@@ -284,6 +363,36 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
                     <FormDescription>
                       Optional description for your website.
                     </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="slug"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Website Slug</FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="my-awesome-website" 
+                        {...field}
+                        onChange={(e) => {
+                          const slug = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-');
+                          field.onChange(slug);
+                          const timeoutId = setTimeout(() => checkSlugAvailability(slug), 500);
+                          return () => clearTimeout(timeoutId);
+                        }}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      URL-friendly identifier for your website. Only lowercase letters, numbers, and hyphens.
+                      {checkingSlug && ' Checking availability...'}
+                    </FormDescription>
+                    {slugError && (
+                      <p className="text-sm text-destructive">{slugError}</p>
+                    )}
                     <FormMessage />
                   </FormItem>
                 )}
@@ -447,6 +556,164 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
                   </FormItem>
                 )}
               />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Product Button Colors</CardTitle>
+              <CardDescription>
+                Customize the appearance of product buttons across your website.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div>
+                <h3 className="text-sm font-semibold mb-4">Add to Cart & Order Now Buttons</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="product_button_bg"
+                    render={({ field }) => (
+                      <FormItem>
+                        <ColorPicker 
+                          color={field.value || ''} 
+                          onChange={field.onChange}
+                          label="Background Color"
+                        />
+                        <FormDescription>
+                          Default background color for product buttons.
+                        </FormDescription>
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="product_button_text"
+                    render={({ field }) => (
+                      <FormItem>
+                        <ColorPicker 
+                          color={field.value || ''} 
+                          onChange={field.onChange}
+                          label="Text Color"
+                        />
+                        <FormDescription>
+                          Text color for product buttons.
+                        </FormDescription>
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="product_button_hover_bg"
+                    render={({ field }) => (
+                      <FormItem>
+                        <ColorPicker 
+                          color={field.value || ''} 
+                          onChange={field.onChange}
+                          label="Hover Background Color"
+                        />
+                        <FormDescription>
+                          Background color when hovering over buttons.
+                        </FormDescription>
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="product_button_hover_text"
+                    render={({ field }) => (
+                      <FormItem>
+                        <ColorPicker 
+                          color={field.value || ''} 
+                          onChange={field.onChange}
+                          label="Hover Text Color"
+                        />
+                        <FormDescription>
+                          Text color when hovering over buttons.
+                        </FormDescription>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+
+              <Separator />
+
+              <div>
+                <h3 className="text-sm font-semibold mb-4">Product Variant Buttons</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="variant_button_selected_bg"
+                    render={({ field }) => (
+                      <FormItem>
+                        <ColorPicker 
+                          color={field.value || ''} 
+                          onChange={field.onChange}
+                          label="Selected Background Color"
+                        />
+                        <FormDescription>
+                          Background color for selected variant buttons.
+                        </FormDescription>
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="variant_button_selected_text"
+                    render={({ field }) => (
+                      <FormItem>
+                        <ColorPicker 
+                          color={field.value || ''} 
+                          onChange={field.onChange}
+                          label="Selected Text Color"
+                        />
+                        <FormDescription>
+                          Text color for selected variant buttons.
+                        </FormDescription>
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="variant_button_hover_bg"
+                    render={({ field }) => (
+                      <FormItem>
+                        <ColorPicker 
+                          color={field.value || ''} 
+                          onChange={field.onChange}
+                          label="Hover Background Color"
+                        />
+                        <FormDescription>
+                          Background color when hovering over variant buttons.
+                        </FormDescription>
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="variant_button_hover_text"
+                    render={({ field }) => (
+                      <FormItem>
+                        <ColorPicker 
+                          color={field.value || ''} 
+                          onChange={field.onChange}
+                          label="Hover Text Color"
+                        />
+                        <FormDescription>
+                          Text color when hovering over variant buttons.
+                        </FormDescription>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
             </CardContent>
           </Card>
 

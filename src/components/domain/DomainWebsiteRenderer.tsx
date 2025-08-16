@@ -136,6 +136,14 @@ export const DomainWebsiteRenderer: React.FC<DomainWebsiteRendererProps> = ({
           :root {
             --store-primary: ${storeData?.primary_color ?? '#10B981'};
             --store-secondary: ${storeData?.secondary_color ?? '#059669'};
+            --product-button-bg: ${website.settings?.product_button_bg ?? ''};
+            --product-button-text: ${website.settings?.product_button_text ?? ''};
+            --product-button-hover-bg: ${website.settings?.product_button_hover_bg ?? ''};
+            --product-button-hover-text: ${website.settings?.product_button_hover_text ?? ''};
+            --variant-button-selected-bg: ${website.settings?.variant_button_selected_bg ?? ''};
+            --variant-button-selected-text: ${website.settings?.variant_button_selected_text ?? ''};
+            --variant-button-hover-bg: ${website.settings?.variant_button_hover_bg ?? ''};
+            --variant-button-hover-text: ${website.settings?.variant_button_hover_text ?? ''};
           }
         `}</style>
         <DomainWebsiteRouter 

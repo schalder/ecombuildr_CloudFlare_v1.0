@@ -117,7 +117,25 @@ export const CartPage: React.FC = () => {
                     <span>Total</span>
                     <span>{formatCurrency(total)}</span>
                   </div>
-                  <Button className="w-full" onClick={() => {
+                  <Button 
+                    className="w-full product-button" 
+                    style={{
+                      backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--product-button-bg') || undefined,
+                      color: getComputedStyle(document.documentElement).getPropertyValue('--product-button-text') || undefined,
+                    }}
+                    onMouseEnter={(e) => {
+                      const hoverBg = getComputedStyle(document.documentElement).getPropertyValue('--product-button-hover-bg');
+                      const hoverText = getComputedStyle(document.documentElement).getPropertyValue('--product-button-hover-text');
+                      if (hoverBg) e.currentTarget.style.backgroundColor = hoverBg;
+                      if (hoverText) e.currentTarget.style.color = hoverText;
+                    }}
+                    onMouseLeave={(e) => {
+                      const defaultBg = getComputedStyle(document.documentElement).getPropertyValue('--product-button-bg');
+                      const defaultText = getComputedStyle(document.documentElement).getPropertyValue('--product-button-text');
+                      if (defaultBg) e.currentTarget.style.backgroundColor = defaultBg;
+                      if (defaultText) e.currentTarget.style.color = defaultText;
+                    }}
+                    onClick={() => {
                     // Track InitiateCheckout pixel event
                     const trackingItems = items.map(item => ({
                       item_id: item.id,
