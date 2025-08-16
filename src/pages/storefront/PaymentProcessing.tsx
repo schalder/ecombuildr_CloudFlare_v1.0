@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useStore } from '@/contexts/StoreContext';
-import { StorefrontLayout } from '@/components/storefront/StorefrontLayout';
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
@@ -139,32 +139,28 @@ useEffect(() => {
 
   if (loading) {
     return (
-      <StorefrontLayout>
-        <div className="container mx-auto px-4 py-8">
-          <div className="flex items-center justify-center min-h-[400px]">
-            <div className="text-center">
-              <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4" />
-              <p>Loading order details...</p>
-            </div>
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4" />
+            <p>Loading order details...</p>
           </div>
         </div>
-      </StorefrontLayout>
+      </div>
     );
   }
 
   if (!order) {
     return (
-      <StorefrontLayout>
-        <div className="container mx-auto px-4 py-8">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold text-destructive mb-2">Order Not Found</h1>
-            <p className="text-muted-foreground mb-4">The requested order could not be found.</p>
-            <Button onClick={() => navigate(paths.home)}>
-              Continue Shopping
-            </Button>
-          </div>
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-destructive mb-2">Order Not Found</h1>
+          <p className="text-muted-foreground mb-4">The requested order could not be found.</p>
+          <Button onClick={() => navigate(paths.home)}>
+            Continue Shopping
+          </Button>
         </div>
-      </StorefrontLayout>
+      </div>
     );
   }
 
@@ -259,13 +255,5 @@ useEffect(() => {
     </div>
   );
 
-  if (isWebsiteContext) {
-    return content;
-  }
-
-  return (
-    <StorefrontLayout>
-      {content}
-    </StorefrontLayout>
-  );
+  return content;
 };

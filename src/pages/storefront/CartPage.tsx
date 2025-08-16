@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { StorefrontLayout } from '@/components/storefront/StorefrontLayout';
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -146,15 +146,7 @@ export const CartPage: React.FC = () => {
     </div>
   );
 
-  if (isWebsiteContext) {
-    return cartContent;
-  }
-
-  return (
-    <StorefrontLayout>
-      {cartContent}
-    </StorefrontLayout>
-  );
+  return cartContent;
 };
 
 export default CartPage;

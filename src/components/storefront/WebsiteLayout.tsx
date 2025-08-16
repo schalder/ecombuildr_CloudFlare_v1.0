@@ -1,5 +1,5 @@
 import React from 'react';
-import { Outlet, useParams, useSearchParams, useNavigate } from 'react-router-dom';
+import { Outlet, useParams, useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useStore } from '@/contexts/StoreContext';
@@ -20,10 +20,17 @@ interface WebsiteData {
   settings?: any;
 }
 
+const isSystemPage = (pathname: string): boolean => {
+  const segments = pathname.split('/');
+  const lastSegment = segments[segments.length - 1];
+  return ['cart', 'checkout', 'payment-processing', 'order-confirmation'].includes(lastSegment);
+};
+
 export const WebsiteLayout: React.FC = () => {
   const { websiteId, websiteSlug } = useParams<{ websiteId?: string; websiteSlug?: string }>();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const isPreview = searchParams.get('preview') === '1';
   const [website, setWebsite] = React.useState<WebsiteData | null>(null);
   const [loading, setLoading] = React.useState(true);
@@ -103,6 +110,8 @@ export const WebsiteLayout: React.FC = () => {
     );
   }
 
+  const hideChrome = isSystemPage(location.pathname);
+
   return (
     <WebsiteProvider websiteId={website.id} websiteSlug={website.slug}>
       <PixelManager websitePixels={website.settings}>
@@ -113,11 +122,11 @@ export const WebsiteLayout: React.FC = () => {
                 --store-secondary: ${store?.secondary_color ?? '#059669'};
               }
             `}</style>
-            <WebsiteHeader website={website} />
+            {!hideChrome && <WebsiteHeader website={website} />}
             <main className="flex-1">
               <Outlet />
             </main>
-            <WebsiteFooter website={website} />
+            {!hideChrome && <WebsiteFooter website={website} />}
           </div>
       </PixelManager>
     </WebsiteProvider>

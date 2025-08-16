@@ -4,7 +4,7 @@ import { useStore } from '@/contexts/StoreContext';
 import { useCart } from '@/contexts/CartContext';
 import { usePixelTracking } from '@/hooks/usePixelTracking';
 import { usePixelContext } from '@/components/pixel/PixelManager';
-import { StorefrontLayout } from '@/components/storefront/StorefrontLayout';
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -380,32 +380,28 @@ useEffect(() => {
 
   if (!store) {
     return (
-      <StorefrontLayout>
-        <div className="container mx-auto px-4 py-8">
-          <div className="text-center">Store not found</div>
-        </div>
-      </StorefrontLayout>
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center">Store not found</div>
+      </div>
     );
   }
   
   if (items.length === 0) {
     return (
-      <StorefrontLayout>
-        <div className="container mx-auto px-4 py-12">
-          <Card className="max-w-2xl mx-auto">
-            <CardHeader>
-              <CardTitle>Your cart is empty</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <p className="text-muted-foreground">Add products to your cart before checking out.</p>
-              <div className="flex gap-3">
-                <Button onClick={() => navigate(paths.products)}>Continue Shopping</Button>
-                <Button variant="outline" onClick={() => navigate(paths.home)}>Go to Home</Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </StorefrontLayout>
+      <div className="container mx-auto px-4 py-12">
+        <Card className="max-w-2xl mx-auto">
+          <CardHeader>
+            <CardTitle>Your cart is empty</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <p className="text-muted-foreground">Add products to your cart before checking out.</p>
+            <div className="flex gap-3">
+              <Button onClick={() => navigate(paths.products)}>Continue Shopping</Button>
+              <Button variant="outline" onClick={() => navigate(paths.home)}>Go to Home</Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     );
   }
   
@@ -758,13 +754,5 @@ useEffect(() => {
     </div>
   );
 
-  if (isWebsiteContext) {
-    return fullCheckoutContent;
-  }
-
-  return (
-    <StorefrontLayout>
-      {fullCheckoutContent}
-    </StorefrontLayout>
-  );
+  return fullCheckoutContent;
 };
