@@ -25,11 +25,12 @@ interface AddToCartContextType {
   openQuickView: (product: Product) => void;
   isQuickViewOpen: boolean;
   closeQuickView: () => void;
+  websiteSettings?: any;
 }
 
 const AddToCartContext = createContext<AddToCartContextType | undefined>(undefined);
 
-export const AddToCartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const AddToCartProvider: React.FC<{ children: React.ReactNode; websiteSettings?: any }> = ({ children, websiteSettings }) => {
   const { addItem, clearCart } = useCart();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -131,6 +132,7 @@ export const AddToCartProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       openQuickView,
       isQuickViewOpen: !!quickViewProduct,
       closeQuickView,
+      websiteSettings,
     }}>
       {children}
       {quickViewProduct && (
@@ -140,6 +142,7 @@ export const AddToCartProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           onClose={closeQuickView}
           onAddToCart={handleQuickViewAddToCart}
           storeSlug=""
+          websiteSettings={websiteSettings}
         />
       )}
     </AddToCartContext.Provider>

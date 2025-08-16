@@ -48,6 +48,7 @@ interface ProductQuickViewProps {
   onClose: () => void;
   onAddToCart: (product: Product, quantity: number, variation?: any) => void;
   storeSlug: string;
+  websiteSettings?: any;
 }
 
 export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
@@ -55,7 +56,8 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
   isOpen,
   onClose,
   onAddToCart,
-  storeSlug
+  storeSlug,
+  websiteSettings
 }) => {
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
@@ -114,6 +116,21 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
     return product.description.replace(/<[^>]+>/g, "").slice(0, 180) + (product.description.length > 180 ? "..." : "");
   })();
 
+  // Create button styles based on website settings
+  const buttonStyles = {
+    ...(websiteSettings?.product_button_color && {
+      backgroundColor: websiteSettings.product_button_color,
+      borderColor: websiteSettings.product_button_color,
+    }),
+  };
+
+  const buttonHoverStyles = websiteSettings?.product_button_hover_color ? `
+    .product-quick-view-button:hover {
+      background-color: ${websiteSettings.product_button_hover_color} !important;
+      border-color: ${websiteSettings.product_button_hover_color} !important;
+    }
+  ` : '';
+
   const handleAddToCart = () => {
     const unitPrice = selectedVariant?.price ?? product.price;
     const pWithPrice = { ...product, price: unitPrice } as any;
@@ -124,6 +141,9 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0">
+        {buttonHoverStyles && (
+          <style dangerouslySetInnerHTML={{ __html: buttonHoverStyles }} />
+        )}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-0">
           {/* Image Gallery */}
           <div className="relative">
@@ -297,8 +317,9 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
               <div className="flex gap-3">
                 <Button 
                   onClick={handleAddToCart}
-                  className="flex-1 h-12 text-base font-semibold"
+                  className="flex-1 h-12 text-base font-semibold product-quick-view-button"
                   disabled={!inStock}
+                  style={buttonStyles}
                 >
                   <ShoppingCart className="h-5 w-5 mr-2" />
                   {inStock ? "Add to Cart" : "Out of Stock"}
