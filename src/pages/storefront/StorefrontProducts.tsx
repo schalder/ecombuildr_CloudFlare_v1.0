@@ -3,7 +3,7 @@ import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { StorefrontLayout } from '@/components/storefront/StorefrontLayout';
 import { StorefrontHeader } from '@/components/storefront/StorefrontHeader';
 import { ProductCard } from '@/components/storefront/ProductCard';
-import { ProductQuickView } from '@/components/storefront/ProductQuickView';
+
 import { ProductFilters } from '@/components/storefront/ProductFilters';
 import { ProductGridSkeleton } from '@/components/storefront/ProductGridSkeleton';
 import { RecentlyViewed } from '@/components/storefront/RecentlyViewed';
@@ -27,6 +27,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useAddToCart } from '@/contexts/AddToCartProvider';
 import { useToast } from '@/hooks/use-toast';
 
 interface Product {
@@ -71,7 +72,7 @@ export const StorefrontProducts: React.FC = () => {
   
   // Website context for custom domains
   const [detectedWebsiteId, setDetectedWebsiteId] = useState<string | null>(null);
-  const { addItem } = useCart();
+  const { addToCart, openQuickView } = useAddToCart();
   const { toast } = useToast();
   
   const [products, setProducts] = useState<Product[]>([]);
@@ -80,7 +81,7 @@ export const StorefrontProducts: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
   const [sortBy, setSortBy] = useState('name');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
+  
   const [filters, setFilters] = useState<FilterState>({
     categories: [],
     priceRange: [0, 10000],
@@ -429,26 +430,6 @@ export const StorefrontProducts: React.FC = () => {
     }
   }, [categories]);
 
-  const handleAddToCart = (product: Product, quantity?: number, variation?: any) => {
-    addItem({
-      id: `${product.id}${variation ? `-${JSON.stringify(variation)}` : ''}`,
-      productId: product.id,
-      name: product.name,
-      price: product.price,
-      quantity: quantity || 1,
-      image: product.images[0],
-      variation
-    });
-
-    toast({
-      title: "Added to cart",
-      description: `${product.name} has been added to your cart.`,
-    });
-  };
-
-  const handleQuickView = (product: Product) => {
-    setQuickViewProduct(product);
-  };
 
   const handleClearFilters = () => {
     setFilters({
@@ -636,8 +617,8 @@ export const StorefrontProducts: React.FC = () => {
                       <ProductCard
                         product={product}
                         storeSlug={store.slug}
-                        onAddToCart={handleAddToCart}
-                        onQuickView={handleQuickView}
+                  onAddToCart={addToCart}
+                  onQuickView={openQuickView}
                         className={viewMode === 'list' ? "flex flex-row" : ""}
                       />
                     </div>
@@ -647,8 +628,8 @@ export const StorefrontProducts: React.FC = () => {
                 {/* Recently Viewed Products */}
                 <RecentlyViewed
                   storeSlug={store.slug}
-                  onAddToCart={handleAddToCart}
-                  onQuickView={handleQuickView}
+                  onAddToCart={addToCart}
+                  onQuickView={openQuickView}
                 />
               </div>
             )}
@@ -656,21 +637,11 @@ export const StorefrontProducts: React.FC = () => {
         </div>
       </div>
 
-      {/* Quick View Modal */}
-      {quickViewProduct && (
-        <ProductQuickView
-          product={quickViewProduct}
-          isOpen={!!quickViewProduct}
-          onClose={() => setQuickViewProduct(null)}
-          onAddToCart={handleAddToCart}
-          storeSlug={store.slug}
-        />
-      )}
 
       {/* Product Comparison */}
       <ProductComparison
         storeSlug={store.slug}
-        onAddToCart={handleAddToCart}
+        onAddToCart={addToCart}
       />
     </StorefrontLayout>
   );

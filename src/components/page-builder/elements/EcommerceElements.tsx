@@ -11,7 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useStore } from '@/contexts/StoreContext';
 import { useUserStore } from '@/hooks/useUserStore';
 import { useEcomPaths } from '@/lib/pathResolver';
-import { ProductQuickView } from '@/components/storefront/ProductQuickView';
+import { useAddToCart } from '@/contexts/AddToCartProvider';
 import { renderElementStyles } from '@/components/page-builder/utils/styleRenderer';
 import { mergeResponsiveStyles } from '@/components/page-builder/utils/responsiveStyles';
 import { ProductsPageElement } from './ProductsPageElement';
@@ -26,15 +26,13 @@ const ProductGridElement: React.FC<{
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
 }> = ({ element, isEditing = false, deviceType = 'desktop', columnCount = 1 }) => {
   const { addItem, clearCart } = useCart();
-  const { toast } = useToast();
   const { store } = useStore();
   const paths = useEcomPaths();
+  const { addToCart: addToCartCentral, openQuickView } = useAddToCart();
   const ctaBehavior: 'add_to_cart' | 'buy_now' = element.content.ctaBehavior || 'add_to_cart';
   
   // Quick View support
   const showQuickView = element.content.showQuickView !== false;
-  const [quickViewOpen, setQuickViewOpen] = React.useState(false);
-  const [quickViewProduct, setQuickViewProduct] = React.useState<any>(null);
   
   // Extract configuration from element content
   const columns = element.content.columns || 2;
@@ -78,73 +76,15 @@ const ProductGridElement: React.FC<{
 
   const handleAddToCart = (product: any) => {
     if (ctaBehavior === 'buy_now' && store?.slug && !isEditing) {
-      // Replace cart with this item and go to checkout
-      clearCart();
-      addItem({
-        id: `cart-${product.id}`,
-        productId: product.id,
-        name: product.name,
-        price: product.price,
-        image: Array.isArray(product.images) ? product.images[0] : product.images,
-        sku: product.sku
-      });
-      window.location.href = paths.checkout;
+      // For buy now, use centralized system but navigate to checkout
+      addToCartCentral(product, 1, true);
       return;
     }
 
-    addItem({
-      id: `cart-${product.id}`,
-      productId: product.id,
-      name: product.name,
-      price: product.price,
-      image: Array.isArray(product.images) ? product.images[0] : product.images,
-      sku: product.sku
-    });
-    
-    toast({
-      title: "Added to cart",
-      description: `${product.name} has been added to your cart.`,
-    });
+    // Use centralized add to cart system
+    addToCartCentral(product);
   };
 
-  const openQuickView = (product: any) => {
-    setQuickViewProduct(product);
-    setQuickViewOpen(true);
-  };
-
-  const closeQuickView = () => {
-    setQuickViewOpen(false);
-    setQuickViewProduct(null);
-  };
-
-  const handleQuickViewAddToCart = (p: any, quantity: number, variation?: any) => {
-    if (ctaBehavior === 'buy_now' && store?.slug && !isEditing) {
-      clearCart();
-      addItem({
-        id: `cart-${p.id}`,
-        productId: p.id,
-        name: p.name,
-        price: p.price,
-        image: Array.isArray(p.images) ? p.images[0] : p.images,
-        sku: p.sku,
-        quantity,
-        variation
-      });
-      window.location.href = paths.checkout;
-      return;
-    }
-    addItem({
-      id: `cart-${p.id}`,
-      productId: p.id,
-      name: p.name,
-      price: p.price,
-      image: Array.isArray(p.images) ? p.images[0] : p.images,
-      sku: p.sku,
-      quantity,
-      variation
-    });
-    toast({ title: 'Added to cart', description: `${p.name} has been added to your cart.` });
-  };
 
   const buttonStyles = React.useMemo(() => {
     const bs = (element as any).styles?.buttonStyles || {};
@@ -257,15 +197,6 @@ const ProductGridElement: React.FC<{
         </div>
       )}
 
-      {showQuickView && (
-        <ProductQuickView
-          product={quickViewProduct}
-          isOpen={quickViewOpen}
-          onClose={closeQuickView}
-          onAddToCart={handleQuickViewAddToCart}
-          storeSlug={store?.slug || ''}
-        />
-      )}
     </div>
   );
 };
@@ -279,9 +210,9 @@ const FeaturedProductsElement: React.FC<{
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
 }> = ({ element, isEditing = false, deviceType = 'desktop', columnCount = 1 }) => {
   const { addItem, clearCart } = useCart();
-  const { toast } = useToast();
   const { store } = useStore();
   const paths = useEcomPaths();
+  const { addToCart: addToCartCentral } = useAddToCart();
   const ctaBehavior: 'add_to_cart' | 'buy_now' = element.content.ctaBehavior || 'add_to_cart';
   
   const productId = element.content.productId;
@@ -299,27 +230,10 @@ const FeaturedProductsElement: React.FC<{
 
   const handleAddToCartGeneric = (p: any) => {
     if (ctaBehavior === 'buy_now' && store?.slug && !isEditing) {
-      clearCart();
-      addItem({
-        id: `cart-${p.id}`,
-        productId: p.id,
-        name: p.name,
-        price: p.price,
-        image: Array.isArray(p.images) ? p.images[0] : p.images,
-        sku: p.sku
-      });
-      window.location.href = paths.checkout;
+      addToCartCentral(p, 1, true);
       return;
     }
-    addItem({
-      id: `cart-${p.id}`,
-      productId: p.id,
-      name: p.name,
-      price: p.price,
-      image: Array.isArray(p.images) ? p.images[0] : p.images,
-      sku: p.sku
-    });
-    toast({ title: 'Added to cart', description: `${p.name} has been added to your cart.` });
+    addToCartCentral(p);
   };
 
   const buttonStyles = React.useMemo(() => {

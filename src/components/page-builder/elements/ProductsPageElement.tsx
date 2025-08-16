@@ -10,7 +10,7 @@ import { Separator } from '@/components/ui/separator';
 import { ProductFilters } from '@/components/storefront/ProductFilters';
 import { ProductGridSkeleton } from '@/components/storefront/ProductGridSkeleton';
 import { ProductCard } from '@/components/storefront/ProductCard';
-import { ProductQuickView } from '@/components/storefront/ProductQuickView';
+
 import { RecentlyViewed } from '@/components/storefront/RecentlyViewed';
 import { WishlistButton } from '@/components/storefront/WishlistButton';
 import { useAddToCart } from '@/contexts/AddToCartProvider';
@@ -64,7 +64,7 @@ export const ProductsPageElement: React.FC<{
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
 }> = ({ element, isEditing = false, deviceType = 'desktop', columnCount = 1 }) => {
   const { store } = useStore();
-  const { addToCart } = useAddToCart();
+  const { addToCart, openQuickView } = useAddToCart();
 
   const paths = useEcomPaths();
 
@@ -508,7 +508,7 @@ export const ProductsPageElement: React.FC<{
                       product={product}
                       storeSlug={store?.slug || ''}
                       onAddToCart={handleAddToCart}
-                       onQuickView={() => {}}
+                       onQuickView={openQuickView}
                     />
                   ) : (
                     <Card key={product.id} className="p-4">
@@ -565,7 +565,7 @@ export const ProductsPageElement: React.FC<{
                 <RecentlyViewed
                   storeSlug={store?.slug || ''}
                   onAddToCart={handleAddToCart}
-                  onQuickView={() => {}}
+                  onQuickView={openQuickView}
                 />
               )}
             </div>

@@ -22,6 +22,7 @@ interface Product {
 
 interface AddToCartContextType {
   addToCart: (product: Product, quantity?: number, buyNow?: boolean) => void;
+  openQuickView: (product: Product) => void;
   isQuickViewOpen: boolean;
   closeQuickView: () => void;
 }
@@ -29,7 +30,7 @@ interface AddToCartContextType {
 const AddToCartContext = createContext<AddToCartContextType | undefined>(undefined);
 
 export const AddToCartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { addItem } = useCart();
+  const { addItem, clearCart } = useCart();
   const { toast } = useToast();
   const navigate = useNavigate();
   const paths = useEcomPaths();
@@ -37,18 +38,24 @@ export const AddToCartProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
   const [pendingBuyNow, setPendingBuyNow] = useState(false);
 
-  const addToCart = (product: Product, quantity: number = 1, buyNow: boolean = false) => {
-    // Check if product has variations that need selection
-    const hasVariations = product.variations && 
+  const hasVariations = (product: Product) => {
+    return product.variations && 
       Array.isArray(product.variations) && 
       product.variations.length > 0 &&
       product.variations.some((v: any) => v.options && v.options.length > 0);
+  };
 
-    if (hasVariations) {
+  const addToCart = (product: Product, quantity: number = 1, buyNow: boolean = false) => {
+    if (hasVariations(product)) {
       // Open quick view for variant selection
       setQuickViewProduct(product);
       setPendingBuyNow(buyNow);
     } else {
+      // For buy now, clear cart first
+      if (buyNow) {
+        clearCart();
+      }
+
       // Add directly to cart
       addItem({
         id: product.id,
@@ -61,17 +68,29 @@ export const AddToCartProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       });
 
       toast({
-        title: 'Added to cart',
-        description: `${product.name} has been added to your cart.`,
+        title: buyNow ? 'Proceeding to checkout' : 'Added to cart',
+        description: buyNow 
+          ? `${product.name} added. Taking you to checkout...`
+          : `${product.name} has been added to your cart.`,
       });
 
       if (buyNow) {
-        navigate(paths.cart);
+        navigate(paths.checkout);
       }
     }
   };
 
+  const openQuickView = (product: Product) => {
+    setQuickViewProduct(product);
+    setPendingBuyNow(false);
+  };
+
   const handleQuickViewAddToCart = (product: Product, selectedOptions: any, quantity: number) => {
+    // For buy now, clear cart first
+    if (pendingBuyNow) {
+      clearCart();
+    }
+
     addItem({
       id: product.id,
       productId: product.id,
@@ -83,12 +102,14 @@ export const AddToCartProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     });
 
     toast({
-      title: 'Added to cart',
-      description: `${product.name} has been added to your cart.`,
+      title: pendingBuyNow ? 'Proceeding to checkout' : 'Added to cart',
+      description: pendingBuyNow 
+        ? `${product.name} added. Taking you to checkout...`
+        : `${product.name} has been added to your cart.`,
     });
 
     if (pendingBuyNow) {
-      navigate(paths.cart);
+      navigate(paths.checkout);
       setPendingBuyNow(false);
     }
 
@@ -103,6 +124,7 @@ export const AddToCartProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   return (
     <AddToCartContext.Provider value={{
       addToCart,
+      openQuickView,
       isQuickViewOpen: !!quickViewProduct,
       closeQuickView,
     }}>
