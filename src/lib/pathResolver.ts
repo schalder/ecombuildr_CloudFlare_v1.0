@@ -3,7 +3,12 @@ import { useStore } from '@/contexts/StoreContext';
 
 const isCustomDomain = () => {
   const currentHost = window.location.hostname;
-  return !(currentHost === 'ecombuildr.com' || currentHost === 'localhost' || currentHost.includes('lovable.app'));
+  return !(
+    currentHost === 'ecombuildr.com' || 
+    currentHost === 'localhost' || 
+    currentHost.includes('lovable.app') ||
+    currentHost.includes('lovableproject.com')
+  );
 };
 
 export const useEcomPaths = () => {
