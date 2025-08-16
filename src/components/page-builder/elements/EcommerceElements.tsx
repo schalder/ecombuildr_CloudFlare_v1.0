@@ -467,7 +467,9 @@ const CategoryNavigationElement: React.FC<{
   columnCount?: number;
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
 }> = ({ element, deviceType = 'desktop', columnCount = 1 }) => {
-  const { categories, loading } = useStoreCategories();
+  // Resolve websiteId for filtering
+  const resolvedWebsiteId = useResolvedWebsiteId(element);
+  const { categories, loading } = useStoreCategories(resolvedWebsiteId);
   const paths = useEcomPaths();
   const layout = element.content.layout || 'grid';
   const selectedCategoryIds = element.content.selectedCategoryIds || [];
@@ -491,12 +493,36 @@ const CategoryNavigationElement: React.FC<{
       await Promise.all(
         displayCategories.map(async (cat) => {
           try {
-            const { count } = await supabase
-              .from('products')
-              .select('id', { head: true, count: 'exact' })
-              .eq('category_id', cat.id)
-              .eq('is_active', true);
-            results[cat.id] = count ?? 0;
+            // If websiteId is provided, filter by website visibility
+            if (resolvedWebsiteId) {
+              const { data: visibleProductIds } = await supabase
+                .from('product_website_visibility')
+                .select('product_id')
+                .eq('website_id', resolvedWebsiteId);
+
+              const productIds = visibleProductIds?.map(v => v.product_id) || [];
+              
+              if (productIds.length === 0) {
+                results[cat.id] = 0;
+                return;
+              }
+
+              const { count } = await supabase
+                .from('products')
+                .select('id', { head: true, count: 'exact' })
+                .eq('category_id', cat.id)
+                .eq('is_active', true)
+                .in('id', productIds);
+              results[cat.id] = count ?? 0;
+            } else {
+              // Original logic for store-wide counting
+              const { count } = await supabase
+                .from('products')
+                .select('id', { head: true, count: 'exact' })
+                .eq('category_id', cat.id)
+                .eq('is_active', true);
+              results[cat.id] = count ?? 0;
+            }
           } catch (e) {
             results[cat.id] = 0;
           }
@@ -506,8 +532,8 @@ const CategoryNavigationElement: React.FC<{
     };
     fetchCounts();
     return () => { cancelled = true; };
-  // Key off IDs string to avoid deep deps
-  }, [showProductCount, displayCategories.map(c => c.id).join(',')]);
+  // Key off IDs string and resolvedWebsiteId to avoid deep deps
+  }, [showProductCount, displayCategories.map(c => c.id).join(','), resolvedWebsiteId]);
   
   // Get device-responsive grid classes
   const getCircleGridClasses = () => {

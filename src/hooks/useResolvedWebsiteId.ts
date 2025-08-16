@@ -1,13 +1,15 @@
 import { useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { PageBuilderElement } from '@/components/page-builder/types';
+import { useWebsiteContext } from '@/contexts/WebsiteContext';
 
 /**
  * Hook to resolve websiteId for filtering products/categories by website visibility
- * Priority: element.content.websiteId -> URL params -> undefined (store-wide)
+ * Priority: element.content.websiteId -> WebsiteContext -> URL params -> undefined (store-wide)
  */
 export const useResolvedWebsiteId = (element?: PageBuilderElement): string | undefined => {
   const { websiteId: urlWebsiteId } = useParams<{ websiteId?: string }>();
+  const { websiteId: contextWebsiteId } = useWebsiteContext();
   
   return useMemo(() => {
     // Check element content first
@@ -23,12 +25,17 @@ export const useResolvedWebsiteId = (element?: PageBuilderElement): string | und
       return elementWebsiteId;
     }
     
-    // Auto-detect: use URL parameter if available
+    // Auto-detect: use context websiteId if available
+    if (contextWebsiteId) {
+      return contextWebsiteId;
+    }
+    
+    // Fallback: use URL parameter if available
     if (urlWebsiteId) {
       return urlWebsiteId;
     }
     
-    // Fallback to store-wide (no filtering)
+    // Final fallback: store-wide (no filtering)
     return undefined;
-  }, [element?.content?.websiteId, urlWebsiteId]);
+  }, [element?.content?.websiteId, contextWebsiteId, urlWebsiteId]);
 };

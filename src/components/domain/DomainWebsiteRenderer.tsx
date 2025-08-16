@@ -5,6 +5,7 @@ import { useStore } from '@/contexts/StoreContext';
 import { setGlobalCurrency } from '@/lib/currency';
 import { usePixelContext } from '@/components/pixel/PixelManager';
 import { DomainWebsiteRouter } from './DomainWebsiteRouter';
+import { WebsiteProvider } from '@/contexts/WebsiteContext';
 
 interface WebsiteData {
   id: string;
@@ -129,18 +130,20 @@ export const DomainWebsiteRenderer: React.FC<DomainWebsiteRendererProps> = ({
   
   // Render the website with proper layout structure matching WebsiteLayout
   return (
-    <div className="min-h-screen flex flex-col bg-background">
-      <style>{`
-        :root {
-          --store-primary: ${storeData?.primary_color ?? '#10B981'};
-          --store-secondary: ${storeData?.secondary_color ?? '#059669'};
-        }
-      `}</style>
-      <DomainWebsiteRouter 
-        websiteId={websiteId} 
-        customDomain={customDomain}
-        website={website}
-      />
-    </div>
+    <WebsiteProvider websiteId={websiteId} websiteSlug={website.slug}>
+      <div className="min-h-screen flex flex-col bg-background">
+        <style>{`
+          :root {
+            --store-primary: ${storeData?.primary_color ?? '#10B981'};
+            --store-secondary: ${storeData?.secondary_color ?? '#059669'};
+          }
+        `}</style>
+        <DomainWebsiteRouter 
+          websiteId={websiteId} 
+          customDomain={customDomain}
+          website={website}
+        />
+      </div>
+    </WebsiteProvider>
   );
 };
