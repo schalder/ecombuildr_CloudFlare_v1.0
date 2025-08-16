@@ -107,20 +107,20 @@ export const WebsiteLayout: React.FC = () => {
     <WebsiteProvider websiteId={website.id} websiteSlug={website.slug}>
       <PixelManager websitePixels={website.settings}>
         <div className="min-h-screen flex flex-col bg-background">
-            <style>{`
-              :root {
-                --store-primary: ${store?.primary_color ?? '#10B981'};
-                --store-secondary: ${store?.secondary_color ?? '#059669'};
-                --product-button-bg: ${website.settings?.product_button_bg ?? ''};
-                --product-button-text: ${website.settings?.product_button_text ?? ''};
-                --product-button-hover-bg: ${website.settings?.product_button_hover_bg ?? ''};
-                --product-button-hover-text: ${website.settings?.product_button_hover_text ?? ''};
-                --variant-button-selected-bg: ${website.settings?.variant_button_selected_bg ?? ''};
-                --variant-button-selected-text: ${website.settings?.variant_button_selected_text ?? ''};
-                --variant-button-hover-bg: ${website.settings?.variant_button_hover_bg ?? ''};
-                --variant-button-hover-text: ${website.settings?.variant_button_hover_text ?? ''};
-              }
-            `}</style>
+        <style>{`
+          :root {
+            ${store?.primary_color ? `--store-primary: ${store.primary_color};` : '--store-primary: #10B981;'}
+            ${store?.secondary_color ? `--store-secondary: ${store.secondary_color};` : '--store-secondary: #059669;'}
+            ${website.settings?.product_button_bg ? `--product-button-bg: ${website.settings.product_button_bg};` : ''}
+            ${website.settings?.product_button_text ? `--product-button-text: ${website.settings.product_button_text};` : ''}
+            ${website.settings?.product_button_hover_bg ? `--product-button-hover-bg: ${website.settings.product_button_hover_bg};` : ''}
+            ${website.settings?.product_button_hover_text ? `--product-button-hover-text: ${website.settings.product_button_hover_text};` : ''}
+            ${website.settings?.variant_button_selected_bg ? `--variant-button-selected-bg: ${website.settings.variant_button_selected_bg};` : ''}
+            ${website.settings?.variant_button_selected_text ? `--variant-button-selected-text: ${website.settings.variant_button_selected_text};` : ''}
+            ${website.settings?.variant_button_hover_bg ? `--variant-button-hover-bg: ${website.settings.variant_button_hover_bg};` : ''}
+            ${website.settings?.variant_button_hover_text ? `--variant-button-hover-text: ${website.settings.variant_button_hover_text};` : ''}
+          }
+        `}</style>
             <WebsiteHeader website={website} />
             <main className="flex-1">
               <Outlet />

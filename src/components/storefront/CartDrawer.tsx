@@ -121,7 +121,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ children }) => {
                 </div>
               </div>
               <Link to={paths.checkout} className="block">
-                <Button className="w-full" size="lg">
+                <Button className="w-full product-cta" size="lg">
                   Proceed to Checkout
                 </Button>
               </Link>

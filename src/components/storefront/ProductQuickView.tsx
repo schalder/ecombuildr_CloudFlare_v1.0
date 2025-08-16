@@ -246,30 +246,12 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
                             variant={selected ? "default" : "outline"}
                             size="default"
                             className={cn(
-                              "h-12 px-4 min-w-[60px] font-medium transition-all duration-200 variant-button",
+                              "h-12 px-4 min-w-[60px] font-medium transition-all duration-200",
                               selected 
-                                ? "bg-primary text-primary-foreground shadow-sm" 
-                                : "border-2 hover:border-primary/50 hover:bg-primary/5"
+                                ? "variant-button-selected" 
+                                : "variant-button border-2 hover:border-primary/50 hover:bg-primary/5"
                             )}
                             onClick={() => setSelectedOptions(prev => ({ ...prev, [opt.name]: val }))}
-                            style={selected ? {
-                              backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--variant-button-selected-bg') || undefined,
-                              color: getComputedStyle(document.documentElement).getPropertyValue('--variant-button-selected-text') || undefined,
-                            } : undefined}
-                            onMouseEnter={(e) => {
-                              if (!selected) {
-                                const hoverBg = getComputedStyle(document.documentElement).getPropertyValue('--variant-button-hover-bg');
-                                const hoverText = getComputedStyle(document.documentElement).getPropertyValue('--variant-button-hover-text');
-                                if (hoverBg) e.currentTarget.style.backgroundColor = hoverBg;
-                                if (hoverText) e.currentTarget.style.color = hoverText;
-                              }
-                            }}
-                            onMouseLeave={(e) => {
-                              if (!selected) {
-                                e.currentTarget.style.backgroundColor = '';
-                                e.currentTarget.style.color = '';
-                              }
-                            }}
                           >
                             {val}
                           </Button>
