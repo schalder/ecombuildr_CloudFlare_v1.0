@@ -354,26 +354,8 @@ export const ProductDetail: React.FC = () => {
                             key={val}
                             variant={selected ? 'default' : 'outline'}
                             size="sm"
-                            className="variant-button"
+                            className={`variant-button ${selected ? 'variant-button-selected' : ''}`}
                             onClick={() => setSelectedOptions(prev => ({ ...prev, [opt.name]: val }))}
-                            style={selected ? {
-                              backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--variant-button-selected-bg') || undefined,
-                              color: getComputedStyle(document.documentElement).getPropertyValue('--variant-button-selected-text') || undefined,
-                            } : undefined}
-                            onMouseEnter={(e) => {
-                              if (!selected) {
-                                const hoverBg = getComputedStyle(document.documentElement).getPropertyValue('--variant-button-hover-bg');
-                                const hoverText = getComputedStyle(document.documentElement).getPropertyValue('--variant-button-hover-text');
-                                if (hoverBg) e.currentTarget.style.backgroundColor = hoverBg;
-                                if (hoverText) e.currentTarget.style.color = hoverText;
-                              }
-                            }}
-                            onMouseLeave={(e) => {
-                              if (!selected) {
-                                e.currentTarget.style.backgroundColor = '';
-                                e.currentTarget.style.color = '';
-                              }
-                            }}
                           >
                             {val}
                           </Button>
@@ -422,24 +404,8 @@ export const ProductDetail: React.FC = () => {
                 <Button
                   onClick={handleAddToCart}
                   disabled={isOutOfStock}
-                  className="w-full product-button"
+                  className="w-full product-cta"
                   size="lg"
-                  style={{
-                    backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--product-button-bg') || undefined,
-                    color: getComputedStyle(document.documentElement).getPropertyValue('--product-button-text') || undefined,
-                  }}
-                  onMouseEnter={(e) => {
-                    const hoverBg = getComputedStyle(document.documentElement).getPropertyValue('--product-button-hover-bg');
-                    const hoverText = getComputedStyle(document.documentElement).getPropertyValue('--product-button-hover-text');
-                    if (hoverBg) e.currentTarget.style.backgroundColor = hoverBg;
-                    if (hoverText) e.currentTarget.style.color = hoverText;
-                  }}
-                  onMouseLeave={(e) => {
-                    const defaultBg = getComputedStyle(document.documentElement).getPropertyValue('--product-button-bg');
-                    const defaultText = getComputedStyle(document.documentElement).getPropertyValue('--product-button-text');
-                    if (defaultBg) e.currentTarget.style.backgroundColor = defaultBg;
-                    if (defaultText) e.currentTarget.style.color = defaultText;
-                  }}
                 >
                   <ShoppingCart className="h-4 w-4 mr-2" />
                   {isOutOfStock ? 'Out of Stock' : 'Add to Cart'}
@@ -448,24 +414,8 @@ export const ProductDetail: React.FC = () => {
                 {((product as any).action_buttons?.order_now?.enabled) && (
                   <Button 
                     size="lg" 
-                    className="w-full product-button" 
+                    className="w-full product-cta" 
                     onClick={handleOrderNow}
-                    style={{
-                      backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--product-button-bg') || undefined,
-                      color: getComputedStyle(document.documentElement).getPropertyValue('--product-button-text') || undefined,
-                    }}
-                    onMouseEnter={(e) => {
-                      const hoverBg = getComputedStyle(document.documentElement).getPropertyValue('--product-button-hover-bg');
-                      const hoverText = getComputedStyle(document.documentElement).getPropertyValue('--product-button-hover-text');
-                      if (hoverBg) e.currentTarget.style.backgroundColor = hoverBg;
-                      if (hoverText) e.currentTarget.style.color = hoverText;
-                    }}
-                    onMouseLeave={(e) => {
-                      const defaultBg = getComputedStyle(document.documentElement).getPropertyValue('--product-button-bg');
-                      const defaultText = getComputedStyle(document.documentElement).getPropertyValue('--product-button-text');
-                      if (defaultBg) e.currentTarget.style.backgroundColor = defaultBg;
-                      if (defaultText) e.currentTarget.style.color = defaultText;
-                    }}
                   >
                     {(product as any).action_buttons?.order_now?.label || 'Order Now'}
                   </Button>

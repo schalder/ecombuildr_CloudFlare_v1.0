@@ -315,24 +315,8 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
               <div className="flex gap-3">
                 <Button 
                   onClick={handleAddToCart}
-                  className="flex-1 h-12 text-base font-semibold product-button"
+                  className="flex-1 h-12 text-base font-semibold product-cta"
                   disabled={!inStock}
-                  style={{
-                    backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--product-button-bg') || undefined,
-                    color: getComputedStyle(document.documentElement).getPropertyValue('--product-button-text') || undefined,
-                  }}
-                  onMouseEnter={(e) => {
-                    const hoverBg = getComputedStyle(document.documentElement).getPropertyValue('--product-button-hover-bg');
-                    const hoverText = getComputedStyle(document.documentElement).getPropertyValue('--product-button-hover-text');
-                    if (hoverBg) e.currentTarget.style.backgroundColor = hoverBg;
-                    if (hoverText) e.currentTarget.style.color = hoverText;
-                  }}
-                  onMouseLeave={(e) => {
-                    const defaultBg = getComputedStyle(document.documentElement).getPropertyValue('--product-button-bg');
-                    const defaultText = getComputedStyle(document.documentElement).getPropertyValue('--product-button-text');
-                    if (defaultBg) e.currentTarget.style.backgroundColor = defaultBg;
-                    if (defaultText) e.currentTarget.style.color = defaultText;
-                  }}
                 >
                   <ShoppingCart className="h-5 w-5 mr-2" />
                   {inStock ? "Add to Cart" : "Out of Stock"}

@@ -137,3 +137,26 @@ All colors MUST be HSL. Designed for trust, energy, and conversion.
     @apply bg-background text-foreground;
   }
 }
+
+@layer components {
+  .product-cta {
+    background-color: var(--product-button-bg, hsl(var(--primary)));
+    color: var(--product-button-text, #fff);
+    transition: all 0.2s ease;
+  }
+  
+  .product-cta:hover {
+    background-color: var(--product-button-hover-bg, hsl(var(--primary-glow))) !important;
+    color: var(--product-button-hover-text, #fff) !important;
+  }
+
+  .variant-button-selected {
+    background-color: var(--variant-button-selected-bg, hsl(var(--primary)));
+    color: var(--variant-button-selected-text, #fff);
+  }
+
+  .variant-button:not(.variant-button-selected):hover {
+    background-color: var(--variant-button-hover-bg, hsl(var(--secondary))) !important;
+    color: var(--variant-button-hover-text, hsl(var(--secondary-foreground))) !important;
+  }
+}
