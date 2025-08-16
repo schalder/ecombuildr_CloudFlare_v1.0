@@ -65,17 +65,7 @@ export const ProductsPageElement: React.FC<{
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
 }> = ({ element, isEditing = false, deviceType = 'desktop', columnCount = 1 }) => {
   const { store } = useStore();
-  
-  // Only use cart context when not in editing mode
-  let addItem: any = null;
-  try {
-    const cartContext = useCart();
-    addItem = cartContext.addItem;
-  } catch (error) {
-    // Cart context not available (likely in builder mode)
-    addItem = null;
-  }
-  
+  const { addItem } = useCart();
   const { toast } = useToast();
 
   const paths = useEcomPaths();
@@ -377,12 +367,6 @@ export const ProductsPageElement: React.FC<{
   }, [store?.id, searchQuery, sortBy, JSON.stringify(filters), categories.length, element.content.websiteId]);
 
   const handleAddToCart = (product: Product, quantity?: number, variation?: any) => {
-    if (!addItem) {
-      // In builder mode, just show a toast
-      toast({ title: 'Builder mode', description: 'Cart functionality is not available in builder mode.' });
-      return;
-    }
-    
     addItem({
       id: `${product.id}${variation ? `-${JSON.stringify(variation)}` : ''}`,
       productId: product.id,
