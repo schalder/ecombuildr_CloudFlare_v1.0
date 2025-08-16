@@ -336,58 +336,180 @@ const RelatedProductsElement: React.FC<{ element: PageBuilderElement; deviceType
 };
 
 // Full Cart Element
-const CartFullElement: React.FC<{ element: PageBuilderElement }> = () => {
+const CartFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 'desktop' | 'tablet' | 'mobile' }> = ({ element, deviceType = 'desktop' }) => {
   const { items, total, updateQuantity, removeItem } = useCart();
   const paths = useEcomPaths();
+  
+  // Apply responsive element styles
+  const elementStyles = renderElementStyles(element, deviceType);
+  
+  // Generate dynamic button CSS for responsive/hover styles
+  const buttonStylesCSS = React.useMemo(() => {
+    const buttonStyles = (element.styles as any)?.buttonStyles;
+    if (!buttonStyles?.responsive) return '';
+    
+    return generateResponsiveCSS(`cart-${element.id}`, { responsive: buttonStyles.responsive });
+  }, [(element.styles as any)?.buttonStyles, element.id]);
+  
+  // Compute per-device button styles for inline application (builder preview)
+  const buttonStyles = React.useMemo(() => {
+    const bs = (element.styles as any)?.buttonStyles || {};
+    if (bs.responsive) {
+      return mergeResponsiveStyles({}, bs, deviceType);
+    }
+    return bs;
+  }, [(element.styles as any)?.buttonStyles, deviceType]);
+  
   if (items.length === 0) {
     return (
-      <Card className="max-w-3xl mx-auto">
-        <CardHeader><CardTitle>Cart</CardTitle></CardHeader>
-        <CardContent className="space-y-4">
-          <p className="text-muted-foreground">Your cart is empty.</p>
-          <Button onClick={() => (window.location.href = paths.products)}>Continue Shopping</Button>
-        </CardContent>
-      </Card>
-    );
-  }
-  return (
-    <div className="max-w-4xl mx-auto grid md:grid-cols-3 gap-6">
-      <div className="md:col-span-2 space-y-4">
-        {items.map((item) => (
-          <Card key={item.id}>
-            <CardContent className="p-4">
-              <div className={`grid items-start gap-3 ${item.image ? 'grid-cols-[auto_1fr_auto]' : 'grid-cols-[1fr_auto]'}`}>
-                {item.image && (
-                  <img src={item.image} alt={item.name} className="w-16 h-16 object-cover rounded border shrink-0" />
-                )}
-                <div className="min-w-0">
-                  <div className="font-medium break-words">{nameWithVariant(item.name, (item as any).variation)}</div>
-                </div>
-                <div className="text-sm font-medium shrink-0 whitespace-nowrap text-right self-start">
-                  {formatCurrency(item.price)}
-                </div>
-                <div className={`${item.image ? 'col-span-3' : 'col-span-2'} flex items-center gap-2 pt-2`}>
-                  <Button variant="outline" size="sm" onClick={() => updateQuantity(item.id, Math.max(1, item.quantity-1))}>-</Button>
-                  <span className="w-8 text-center">{item.quantity}</span>
-                  <Button variant="outline" size="sm" onClick={() => updateQuantity(item.id, item.quantity+1)}>+</Button>
-                  <Button variant="ghost" size="sm" onClick={() => removeItem(item.id)}>Remove</Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-      <div>
-        <Card>
-          <CardHeader><CardTitle>Order Summary</CardTitle></CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <span>Subtotal</span>
-              <span className="font-semibold">{formatCurrency(total)}</span>
-            </div>
-            <Button className="w-full" onClick={() => (window.location.href = paths.checkout)}>Proceed to Checkout</Button>
+      <div className={`cart-element-${element.id}`} style={elementStyles}>
+        {buttonStylesCSS && <style>{buttonStylesCSS}</style>}
+        <Card className="max-w-3xl mx-auto">
+          <CardHeader>
+            <CardTitle 
+              style={{
+                color: elementStyles.color,
+                fontSize: elementStyles.fontSize,
+                fontFamily: elementStyles.fontFamily,
+                lineHeight: elementStyles.lineHeight,
+                textAlign: elementStyles.textAlign
+              }}
+            >
+              Cart
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4" style={{
+            padding: elementStyles.padding,
+            paddingTop: elementStyles.paddingTop,
+            paddingRight: elementStyles.paddingRight,
+            paddingBottom: elementStyles.paddingBottom,
+            paddingLeft: elementStyles.paddingLeft,
+          }}>
+            <p 
+              className="text-muted-foreground"
+              style={{
+                color: elementStyles.color,
+                fontSize: elementStyles.fontSize,
+                fontFamily: elementStyles.fontFamily,
+                lineHeight: elementStyles.lineHeight,
+                textAlign: elementStyles.textAlign
+              }}
+            >
+              Your cart is empty.
+            </p>
+            <Button 
+              className={`product-cta cart-action-button cart-element-${element.id}-btn`}
+              style={buttonStyles}
+              onClick={() => (window.location.href = paths.products)}
+            >
+              Continue Shopping
+            </Button>
           </CardContent>
         </Card>
+      </div>
+    );
+  }
+  
+  return (
+    <div className={`cart-element-${element.id}`} style={elementStyles}>
+      {buttonStylesCSS && <style>{buttonStylesCSS}</style>}
+      <div className="max-w-4xl mx-auto grid md:grid-cols-3 gap-6">
+        <div className="md:col-span-2 space-y-4">
+          {items.map((item) => (
+            <Card key={item.id}>
+              <CardContent className="p-4">
+                <div className={`grid items-start gap-3 ${item.image ? 'grid-cols-[auto_1fr_auto]' : 'grid-cols-[1fr_auto]'}`}>
+                  {item.image && (
+                    <img src={item.image} alt={item.name} className="w-16 h-16 object-cover rounded border shrink-0" />
+                  )}
+                  <div className="min-w-0">
+                    <div 
+                      className="font-medium break-words"
+                      style={{
+                        color: elementStyles.color,
+                        fontSize: elementStyles.fontSize,
+                        fontFamily: elementStyles.fontFamily,
+                        lineHeight: elementStyles.lineHeight
+                      }}
+                    >
+                      {nameWithVariant(item.name, (item as any).variation)}
+                    </div>
+                  </div>
+                  <div 
+                    className="text-sm font-medium shrink-0 whitespace-nowrap text-right self-start"
+                    style={{
+                      color: elementStyles.color,
+                      fontSize: elementStyles.fontSize,
+                      fontFamily: elementStyles.fontFamily
+                    }}
+                  >
+                    {formatCurrency(item.price)}
+                  </div>
+                  <div className={`${item.image ? 'col-span-3' : 'col-span-2'} flex items-center gap-2 pt-2`}>
+                    <Button variant="outline" size="sm" onClick={() => updateQuantity(item.id, Math.max(1, item.quantity-1))}>-</Button>
+                    <span className="w-8 text-center">{item.quantity}</span>
+                    <Button variant="outline" size="sm" onClick={() => updateQuantity(item.id, item.quantity+1)}>+</Button>
+                    <Button variant="ghost" size="sm" onClick={() => removeItem(item.id)}>Remove</Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+        <div>
+          <Card>
+            <CardHeader>
+              <CardTitle 
+                style={{
+                  color: elementStyles.color,
+                  fontSize: elementStyles.fontSize,
+                  fontFamily: elementStyles.fontFamily,
+                  lineHeight: elementStyles.lineHeight,
+                  textAlign: elementStyles.textAlign
+                }}
+              >
+                Order Summary
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4" style={{
+              padding: elementStyles.padding,
+              paddingTop: elementStyles.paddingTop,
+              paddingRight: elementStyles.paddingRight,
+              paddingBottom: elementStyles.paddingBottom,
+              paddingLeft: elementStyles.paddingLeft,
+            }}>
+              <div className="flex items-center justify-between">
+                <span 
+                  style={{
+                    color: elementStyles.color,
+                    fontSize: elementStyles.fontSize,
+                    fontFamily: elementStyles.fontFamily,
+                    lineHeight: elementStyles.lineHeight
+                  }}
+                >
+                  Subtotal
+                </span>
+                <span 
+                  className="font-semibold"
+                  style={{
+                    color: elementStyles.color,
+                    fontSize: elementStyles.fontSize,
+                    fontFamily: elementStyles.fontFamily
+                  }}
+                >
+                  {formatCurrency(total)}
+                </span>
+              </div>
+              <Button 
+                className={`w-full product-cta cart-action-button cart-element-${element.id}-btn`}
+                style={buttonStyles}
+                onClick={() => (window.location.href = paths.checkout)}
+              >
+                Proceed to Checkout
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );

@@ -119,7 +119,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
     }
 
     // For elements that need both text and button styling
-    if (['related-products'].includes(selectedElement.type)) {
+    if (['related-products', 'cart-full'].includes(selectedElement.type)) {
       return (
         <>
           <TextElementStyles key={`text-${selectedElement.id}`} element={selectedElement} onStyleUpdate={handleStyleUpdate} />

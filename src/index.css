@@ -159,4 +159,9 @@ All colors MUST be HSL. Designed for trust, energy, and conversion.
     background-color: var(--variant-button-hover-bg, hsl(var(--secondary))) !important;
     color: var(--variant-button-hover-text, hsl(var(--secondary-foreground))) !important;
   }
+
+  /* Cart action buttons - inherits global product button styling and responsive overrides */
+  .cart-action-button {
+    transition: all 0.2s ease;
+  }
 }
