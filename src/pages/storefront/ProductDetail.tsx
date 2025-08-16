@@ -73,7 +73,6 @@ export const ProductDetail: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
-  const [websiteSettings, setWebsiteSettings] = useState<any>(null);
 
   // Variations handling
   const options = React.useMemo<any[]>(() => {
@@ -111,20 +110,19 @@ export const ProductDetail: React.FC = () => {
     const init = async () => {
       if (slug) {
         loadStore(slug);
-      } else if (websiteId || websiteSlug) {
-        const query = websiteId 
-          ? supabase.from('websites').select('store_id, settings').eq('id', websiteId)
-          : supabase.from('websites').select('store_id, settings').eq('slug', websiteSlug);
-        
-        const { data: website } = await query.single();
+      } else if (websiteId) {
+        const { data: website } = await supabase
+          .from('websites')
+          .select('store_id')
+          .eq('id', websiteId)
+          .single();
         if (website?.store_id) {
           await loadStoreById(website.store_id);
-          setWebsiteSettings(website.settings || {});
         }
       }
     };
     init();
-  }, [slug, websiteId, websiteSlug, loadStore, loadStoreById]);
+  }, [slug, websiteId, loadStore, loadStoreById]);
 
   useEffect(() => {
     if (store && productSlug) {
@@ -248,21 +246,6 @@ export const ProductDetail: React.FC = () => {
       ? Math.round(((product.compare_price - effectivePrice) / product.compare_price) * 100)
       : 0;
 
-    // Create button styles based on website settings
-    const buttonStyles = {
-      ...(websiteSettings?.product_button_color && {
-        backgroundColor: websiteSettings.product_button_color,
-        borderColor: websiteSettings.product_button_color,
-      }),
-    };
-
-    const buttonHoverStyles = websiteSettings?.product_button_hover_color ? `
-      .product-button:hover {
-        background-color: ${websiteSettings.product_button_hover_color} !important;
-        border-color: ${websiteSettings.product_button_hover_color} !important;
-      }
-    ` : '';
-
     // Build media list (video first if available)
     const videoInfo = parseVideoUrl(((product as any)?.video_url) || '');
     const mediaItems: Array<{ kind: 'video' | 'image'; src?: string; thumb?: string }> = (() => {
@@ -276,9 +259,6 @@ export const ProductDetail: React.FC = () => {
 
     return (
       <div className="container mx-auto px-4 py-8">
-        {buttonHoverStyles && (
-          <style dangerouslySetInnerHTML={{ __html: buttonHoverStyles }} />
-        )}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Product Images */}
           <div className="flex flex-col lg:flex-row gap-4">
@@ -423,49 +403,31 @@ export const ProductDetail: React.FC = () => {
                 <Button
                   onClick={handleAddToCart}
                   disabled={isOutOfStock}
-                  className="w-full product-button"
+                  className="w-full"
                   size="lg"
-                  style={buttonStyles}
                 >
                   <ShoppingCart className="h-4 w-4 mr-2" />
                   {isOutOfStock ? 'Out of Stock' : 'Add to Cart'}
                 </Button>
                 {/* Optional Action Buttons */}
                 {((product as any).action_buttons?.order_now?.enabled) && (
-                  <Button 
-                    size="lg" 
-                    className="w-full product-button" 
-                    onClick={handleOrderNow}
-                    style={buttonStyles}
-                  >
+                  <Button size="lg" className="w-full" onClick={handleOrderNow}>
                     {(product as any).action_buttons?.order_now?.label || 'Order Now'}
                   </Button>
                 )}
                 {((product as any).action_buttons?.call?.enabled) && (
-                  <Button 
-                    size="lg" 
-                    variant="outline" 
-                    className="w-full product-button" 
-                    onClick={() => {
-                      const num = (product as any).action_buttons?.call?.phone;
-                      if (num) window.location.href = `tel:${num}`;
-                    }}
-                    style={buttonStyles}
-                  >
+                  <Button size="lg" variant="outline" className="w-full" onClick={() => {
+                    const num = (product as any).action_buttons?.call?.phone;
+                    if (num) window.location.href = `tel:${num}`;
+                  }}>
                     {(product as any).action_buttons?.call?.label || 'Call Now'}
                   </Button>
                 )}
                 {((product as any).action_buttons?.whatsapp?.enabled) && (
-                  <Button 
-                    size="lg" 
-                    variant="outline" 
-                    className="w-full product-button" 
-                    onClick={() => {
-                      const url = (product as any).action_buttons?.whatsapp?.url;
-                      if (url) window.open(url, '_blank');
-                    }}
-                    style={buttonStyles}
-                  >
+                  <Button size="lg" variant="outline" className="w-full" onClick={() => {
+                    const url = (product as any).action_buttons?.whatsapp?.url;
+                    if (url) window.open(url, '_blank');
+                  }}>
                     {(product as any).action_buttons?.whatsapp?.label || 'WhatsApp'}
                   </Button>
                 )}

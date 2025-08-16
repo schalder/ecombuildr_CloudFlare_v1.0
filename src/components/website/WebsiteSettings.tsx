@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -16,14 +16,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useDomainManagement } from '@/hooks/useDomainManagement';
 import { Badge } from '@/components/ui/badge';
 import { Link } from 'react-router-dom';
-import { ExternalLink, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
-import { ColorPicker } from '@/components/ui/color-picker';
-import { debounce } from '@/lib/utils';
+import { ExternalLink, CheckCircle2, AlertCircle } from 'lucide-react';
 
 const websiteSettingsSchema = z.object({
   name: z.string().min(1, 'Website name is required'),
   description: z.string().optional(),
-  slug: z.string().min(1, 'Website slug is required'),
   domain: z.string().optional(),
   is_published: z.boolean(),
   is_active: z.boolean(),
@@ -34,9 +31,6 @@ const websiteSettingsSchema = z.object({
   google_analytics_id: z.string().optional(),
   google_ads_id: z.string().optional(),
   currency_code: z.enum(['BDT','USD','INR','EUR','GBP']).default('BDT'),
-  // Product button styling
-  product_button_color: z.string().optional(),
-  product_button_hover_color: z.string().optional(),
   // SEO defaults
   seo_title: z.string().optional(),
   seo_description: z.string().optional(),
@@ -51,14 +45,11 @@ interface Website {
   id: string;
   name: string;
   description?: string;
-  slug?: string;
   domain?: string;
   is_active: boolean;
   is_published: boolean;
   settings: any;
 }
-
-type SlugStatus = 'idle' | 'checking' | 'available' | 'taken' | 'error';
 
 interface WebsiteSettingsProps {
   website: Website;
@@ -94,16 +85,11 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
     return domains.find(d => d.id === connection.domain_id) || null;
   }, [connections, domains, website.id]);
 
-  // Slug validation state
-  const [slugStatus, setSlugStatus] = useState<SlugStatus>('idle');
-  const [suggestedSlug, setSuggestedSlug] = useState('');
-
   const form = useForm<WebsiteSettingsForm>({
     resolver: zodResolver(websiteSettingsSchema),
     defaultValues: {
       name: website.name || '',
       description: website.description || '',
-      slug: website.slug || '',
       domain: connectedDomain?.domain || '',
       is_published: website.is_published,
       is_active: website.is_active,
@@ -114,8 +100,6 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
       google_analytics_id: website.settings?.google_analytics_id || '',
       google_ads_id: website.settings?.google_ads_id || '',
       currency_code: website.settings?.currency?.code || 'BDT',
-      product_button_color: website.settings?.product_button_color || '',
-      product_button_hover_color: website.settings?.product_button_hover_color || '',
       seo_title: (website as any).seo_title || '',
       seo_description: (website as any).seo_description || '',
       og_image: (website as any).og_image || '',
@@ -144,70 +128,6 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
     }
   );
 
-  // Slug validation functions
-  const checkSlugAvailability = async (slug: string) => {
-    if (!slug.trim()) return;
-    
-    setSlugStatus('checking');
-    
-    try {
-      const { data, error } = await supabase
-        .from('websites')
-        .select('slug')
-        .eq('store_id', (website as any).store_id)
-        .eq('slug', slug)
-        .neq('id', website.id)  // Exclude current website
-        .maybeSingle();
-      
-      if (error) {
-        setSlugStatus('error');
-        return;
-      }
-      
-      if (data) {
-        // Slug is taken, generate unique one
-        const uniqueSlug = await generateUniqueSlug(slug);
-        setSuggestedSlug(uniqueSlug);
-        setSlugStatus('taken');
-      } else {
-        // Slug is available
-        setSuggestedSlug('');
-        setSlugStatus('available');
-      }
-    } catch (error) {
-      console.error('Slug check error:', error);
-      setSlugStatus('error');
-    }
-  };
-
-  const generateUniqueSlug = async (baseSlug: string): Promise<string> => {
-    let counter = 1;
-    let candidateSlug = `${baseSlug}-${counter}`;
-    
-    while (true) {
-      const { data } = await supabase
-        .from('websites')
-        .select('slug')
-        .eq('store_id', (website as any).store_id)
-        .eq('slug', candidateSlug)
-        .neq('id', website.id)
-        .maybeSingle();
-      
-      if (!data) {
-        return candidateSlug;
-      }
-      
-      counter++;
-      candidateSlug = `${baseSlug}-${counter}`;
-    }
-  };
-
-  // Debounced slug validation
-  const debouncedCheckSlug = useCallback(
-    debounce((slug: string) => checkSlugAvailability(slug), 500),
-    [(website as any).store_id, website.id]
-  );
-
   React.useEffect(() => {
     const fetchPages = async () => {
       setLoadingPages(true);
@@ -224,7 +144,7 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
 
   const updateWebsiteMutation = useMutation({
     mutationFn: async (data: WebsiteSettingsForm) => {
-      const { favicon_url, header_tracking_code, footer_tracking_code, facebook_pixel_id, google_analytics_id, google_ads_id, currency_code, product_button_color, product_button_hover_color, domain, ...basicFields } = data;
+      const { favicon_url, header_tracking_code, footer_tracking_code, facebook_pixel_id, google_analytics_id, google_ads_id, currency_code, domain, ...basicFields } = data;
       
       const settings = {
         ...website.settings,
@@ -234,8 +154,6 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
         facebook_pixel_id: facebook_pixel_id || null,
         google_analytics_id: google_analytics_id || null,
         google_ads_id: google_ads_id || null,
-        product_button_color: product_button_color || null,
-        product_button_hover_color: product_button_hover_color || null,
         system_pages: {
           ...(website.settings?.system_pages || {}),
           product_detail_page_id: productDetailTemplateId || null,
@@ -365,71 +283,6 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
                     </FormControl>
                     <FormDescription>
                       Optional description for your website.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="slug"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Website Slug</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Input
-                          placeholder="my-website"
-                          {...field}
-                          onChange={(e) => {
-                            field.onChange(e);
-                            if (e.target.value) {
-                              debouncedCheckSlug(e.target.value);
-                            } else {
-                              setSlugStatus('idle');
-                            }
-                          }}
-                        />
-                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                          {slugStatus === 'checking' && (
-                            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                          )}
-                          {slugStatus === 'available' && (
-                            <CheckCircle2 className="h-4 w-4 text-green-600" />
-                          )}
-                          {slugStatus === 'taken' && (
-                            <AlertCircle className="h-4 w-4 text-yellow-600" />
-                          )}
-                          {slugStatus === 'error' && (
-                            <AlertCircle className="h-4 w-4 text-destructive" />
-                          )}
-                        </div>
-                      </div>
-                    </FormControl>
-                    
-                    {/* Status Messages */}
-                    {slugStatus === 'checking' && (
-                      <p className="text-sm text-muted-foreground mt-1 flex items-center gap-1">
-                        <Loader2 className="h-3 w-3 animate-spin" />
-                        Checking availability...
-                      </p>
-                    )}
-                    {slugStatus === 'available' && (
-                      <p className="text-sm text-green-600 mt-1 flex items-center gap-1">
-                        <CheckCircle2 className="h-3 w-3" />
-                        Slug is available
-                      </p>
-                    )}
-                    {slugStatus === 'taken' && suggestedSlug && (
-                      <p className="text-sm text-yellow-600 mt-1 flex items-center gap-1">
-                        <AlertCircle className="h-3 w-3" />
-                        Slug already exists. Using "{suggestedSlug}" instead
-                      </p>
-                    )}
-                    
-                    <FormDescription>
-                      Used in the URL to identify your website (letters, numbers, hyphens only).
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -632,60 +485,6 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
                   </FormItem>
                 )}
               />
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Product Button Styling</CardTitle>
-              <CardDescription>
-                Customize the appearance of product buttons (Add to Cart, Order Now, etc.) across all product pages.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="product_button_color"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Button Color</FormLabel>
-                      <FormControl>
-                        <ColorPicker
-                          color={field.value || ''}
-                          onChange={field.onChange}
-                          label=""
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        Default color for product action buttons.
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="product_button_hover_color"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Button Hover Color</FormLabel>
-                      <FormControl>
-                        <ColorPicker
-                          color={field.value || ''}
-                          onChange={field.onChange}
-                          label=""
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        Color when hovering over buttons.
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
             </CardContent>
           </Card>
 
