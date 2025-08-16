@@ -170,14 +170,14 @@ export const EcommerceContentProperties: React.FC<EcommerceContentPropertiesProp
         <Label className="text-xs">Website Filter</Label>
         <Select
           value={element.content.websiteId || 'auto'}
-          onValueChange={(value) => onUpdate('websiteId', value === 'auto' ? undefined : value)}
+          onValueChange={(value) => onUpdate('websiteId', value === 'auto' ? undefined : (value === 'all' ? '' : value))}
         >
           <SelectTrigger>
             <SelectValue placeholder="Auto-detect from URL" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="auto">Auto-detect from URL</SelectItem>
-            <SelectItem value="">All Websites (Store-wide)</SelectItem>
+            <SelectItem value="all">All Websites (Store-wide)</SelectItem>
             {!loadingWebsites && websites.map((website) => (
               <SelectItem key={website.id} value={website.id}>
                 {website.name} ({website.slug})
