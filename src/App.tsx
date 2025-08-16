@@ -74,11 +74,11 @@ const App = () => (
       <StoreProvider>
         <PixelManager>
           <CartProvider>
-            <AddToCartProvider>
-              <TooltipProvider>
+            <TooltipProvider>
             <Toaster />
             <Sonner />
             <BrowserRouter>
+              <AddToCartProvider>
               <DomainRouter>
                 <Routes>
                 <Route path="/" element={<Index />} />
@@ -232,9 +232,9 @@ const App = () => (
                 <Route path="*" element={<NotFound />} />
                 </Routes>
               </DomainRouter>
+              </AddToCartProvider>
             </BrowserRouter>
-              </TooltipProvider>
-            </AddToCartProvider>
+            </TooltipProvider>
           </CartProvider>
         </PixelManager>
       </StoreProvider>
