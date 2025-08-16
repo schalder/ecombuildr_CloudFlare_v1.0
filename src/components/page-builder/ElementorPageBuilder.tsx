@@ -655,6 +655,38 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = memo(({
     }
   };
 
+  const getPageStyles = () => {
+    const pageStyles = data.pageStyles;
+    if (!pageStyles) return {};
+
+    const styles: React.CSSProperties = {};
+
+    // Background styles
+    if (pageStyles.backgroundColor) {
+      styles.backgroundColor = pageStyles.backgroundColor;
+    }
+
+    if (pageStyles.backgroundImage) {
+      styles.backgroundImage = `url(${pageStyles.backgroundImage})`;
+      styles.backgroundRepeat = pageStyles.backgroundRepeat || 'no-repeat';
+      styles.backgroundPosition = pageStyles.backgroundPosition || 'center';
+      styles.backgroundSize = pageStyles.backgroundSize || 'cover';
+    }
+
+    // Padding and margins
+    if (pageStyles.paddingTop) styles.paddingTop = pageStyles.paddingTop;
+    if (pageStyles.paddingRight) styles.paddingRight = pageStyles.paddingRight;
+    if (pageStyles.paddingBottom) styles.paddingBottom = pageStyles.paddingBottom;
+    if (pageStyles.paddingLeft) styles.paddingLeft = pageStyles.paddingLeft;
+
+    if (pageStyles.marginTop) styles.marginTop = pageStyles.marginTop;
+    if (pageStyles.marginRight) styles.marginRight = pageStyles.marginRight;
+    if (pageStyles.marginBottom) styles.marginBottom = pageStyles.marginBottom;
+    if (pageStyles.marginLeft) styles.marginLeft = pageStyles.marginLeft;
+
+    return styles;
+  };
+
   // Build element library from registry
   const allElements = elementRegistry.getAll();
   const elementsByCategory = allElements.reduce((acc, el) => {
@@ -777,7 +809,7 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = memo(({
           {/* Canvas Area */}
           <ScrollArea scrollbarType="always" className="flex-1 min-h-0 bg-muted/30">
             <div className="p-8">
-              <div style={getDevicePreviewStyles()} className="min-h-full bg-background rounded-lg shadow-sm">
+              <div style={{ ...getDevicePreviewStyles(), ...getPageStyles() }} className="min-h-full bg-background rounded-lg shadow-sm">
                 {data.sections.length === 0 ? (
                   <div className="p-16 text-center">
                     <h3 className="text-lg font-medium mb-2">Start Building Your Page</h3>
