@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Monitor, Smartphone } from 'lucide-react';
 import { PageBuilderElement } from '../../types';
-import { Button } from '@/components/ui/button';
+import { ColorPicker } from '@/components/ui/color-picker';
 
 interface CheckoutElementStylesProps {
   element: PageBuilderElement;
@@ -90,22 +90,34 @@ export const CheckoutElementStyles: React.FC<CheckoutElementStylesProps> = ({ el
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label className="text-xs">Text Color</Label>
-              <Input type="color" value={current.color || '#ffffff'} onChange={(e) => updateResponsive('color', e.target.value)} className="h-10" />
+              <ColorPicker 
+                label="Text Color"
+                color={current.color || '#ffffff'}
+                onChange={(val) => updateResponsive('color', val)}
+              />
             </div>
             <div>
-              <Label className="text-xs">Background</Label>
-              <Input type="color" value={current.backgroundColor || '#10B981'} onChange={(e) => updateResponsive('backgroundColor', e.target.value)} className="h-10" />
+              <ColorPicker 
+                label="Background"
+                color={current.backgroundColor || '#10B981'}
+                onChange={(val) => updateResponsive('backgroundColor', val)}
+              />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label className="text-xs">Hover Text</Label>
-              <Input type="color" value={current.hoverColor || current.color || '#ffffff'} onChange={(e) => updateResponsive('hoverColor', e.target.value)} className="h-10" />
+              <ColorPicker 
+                label="Hover Text"
+                color={current.hoverColor || current.color || '#ffffff'}
+                onChange={(val) => updateResponsive('hoverColor', val)}
+              />
             </div>
             <div>
-              <Label className="text-xs">Hover Background</Label>
-              <Input type="color" value={current.hoverBackgroundColor || current.backgroundColor || '#0f766e'} onChange={(e) => updateResponsive('hoverBackgroundColor', e.target.value)} className="h-10" />
+              <ColorPicker 
+                label="Hover Background"
+                color={current.hoverBackgroundColor || current.backgroundColor || '#0f766e'}
+                onChange={(val) => updateResponsive('hoverBackgroundColor', val)}
+              />
             </div>
           </div>
           <div>
@@ -127,22 +139,34 @@ export const CheckoutElementStyles: React.FC<CheckoutElementStylesProps> = ({ el
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label className="text-xs">Text Color</Label>
-              <Input type="color" value={current.color || '#ffffff'} onChange={(e) => updateResponsive('color', e.target.value)} className="h-10" />
+              <ColorPicker 
+                label="Text Color"
+                color={current.color || '#ffffff'}
+                onChange={(val) => updateResponsive('color', val)}
+              />
             </div>
             <div>
-              <Label className="text-xs">Background</Label>
-              <Input type="color" value={current.backgroundColor || '#10B981'} onChange={(e) => updateResponsive('backgroundColor', e.target.value)} className="h-10" />
+              <ColorPicker 
+                label="Background"
+                color={current.backgroundColor || '#10B981'}
+                onChange={(val) => updateResponsive('backgroundColor', val)}
+              />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label className="text-xs">Hover Text</Label>
-              <Input type="color" value={current.hoverColor || current.color || '#ffffff'} onChange={(e) => updateResponsive('hoverColor', e.target.value)} className="h-10" />
+              <ColorPicker 
+                label="Hover Text"
+                color={current.hoverColor || current.color || '#ffffff'}
+                onChange={(val) => updateResponsive('hoverColor', val)}
+              />
             </div>
             <div>
-              <Label className="text-xs">Hover Background</Label>
-              <Input type="color" value={current.hoverBackgroundColor || current.backgroundColor || '#0f766e'} onChange={(e) => updateResponsive('hoverBackgroundColor', e.target.value)} className="h-10" />
+              <ColorPicker 
+                label="Hover Background"
+                color={current.hoverBackgroundColor || current.backgroundColor || '#0f766e'}
+                onChange={(val) => updateResponsive('hoverBackgroundColor', val)}
+              />
             </div>
           </div>
           <div>
@@ -195,12 +219,11 @@ export const CheckoutElementStyles: React.FC<CheckoutElementStylesProps> = ({ el
 
         {/* Container Background */}
         <div className="space-y-2">
-          <Label className="text-xs">Outer Container Background</Label>
-          <div className="flex items-center gap-2">
-            <Input type="color" value={backgrounds.containerBg || '#ffffff'} onChange={(e) => updateBackgrounds('containerBg', e.target.value)} className="h-10 w-14 p-0" />
-            <Button variant="ghost" size="sm" onClick={() => updateBackgrounds('containerBg', undefined)}>Reset</Button>
-            <Button variant="ghost" size="sm" onClick={() => updateBackgrounds('containerBg', 'transparent')}>Transparent</Button>
-          </div>
+          <ColorPicker 
+            label="Outer Container Background"
+            color={backgrounds.containerBg || '#ffffff'}
+            onChange={(val) => updateBackgrounds('containerBg', val)}
+          />
         </div>
 
         <Separator />
@@ -208,17 +231,16 @@ export const CheckoutElementStyles: React.FC<CheckoutElementStylesProps> = ({ el
         {/* Form Area */}
         <div className="space-y-2">
           <h5 className="text-xs font-medium">Form Area</h5>
-          <Label className="text-xs">Background</Label>
-          <div className="flex items-center gap-2">
-            <Input type="color" value={backgrounds.formBg || '#ffffff'} onChange={(e) => updateBackgrounds('formBg', e.target.value)} className="h-10 w-14 p-0" />
-            <Button variant="ghost" size="sm" onClick={() => updateBackgrounds('formBg', undefined)}>Reset</Button>
-            <Button variant="ghost" size="sm" onClick={() => updateBackgrounds('formBg', 'transparent')}>Transparent</Button>
-          </div>
-          <Label className="text-xs">Border Color</Label>
-          <div className="flex items-center gap-2">
-            <Input type="color" value={backgrounds.formBorderColor || '#e2e8f0'} onChange={(e) => updateBackgrounds('formBorderColor', e.target.value)} className="h-10 w-14 p-0" />
-            <Button variant="ghost" size="sm" onClick={() => updateBackgrounds('formBorderColor', undefined)}>Reset</Button>
-          </div>
+          <ColorPicker 
+            label="Background"
+            color={backgrounds.formBg || '#ffffff'}
+            onChange={(val) => updateBackgrounds('formBg', val)}
+          />
+          <ColorPicker 
+            label="Border Color"
+            color={backgrounds.formBorderColor || '#e2e8f0'}
+            onChange={(val) => updateBackgrounds('formBorderColor', val)}
+          />
           <div>
             <Label className="text-xs">Border Width</Label>
             <div className="flex items-center gap-2">
@@ -233,17 +255,16 @@ export const CheckoutElementStyles: React.FC<CheckoutElementStylesProps> = ({ el
         {/* Summary Area */}
         <div className="space-y-2">
           <h5 className="text-xs font-medium">Summary Area</h5>
-          <Label className="text-xs">Background</Label>
-          <div className="flex items-center gap-2">
-            <Input type="color" value={backgrounds.summaryBg || '#ffffff'} onChange={(e) => updateBackgrounds('summaryBg', e.target.value)} className="h-10 w-14 p-0" />
-            <Button variant="ghost" size="sm" onClick={() => updateBackgrounds('summaryBg', undefined)}>Reset</Button>
-            <Button variant="ghost" size="sm" onClick={() => updateBackgrounds('summaryBg', 'transparent')}>Transparent</Button>
-          </div>
-          <Label className="text-xs">Border Color</Label>
-          <div className="flex items-center gap-2">
-            <Input type="color" value={backgrounds.summaryBorderColor || '#e2e8f0'} onChange={(e) => updateBackgrounds('summaryBorderColor', e.target.value)} className="h-10 w-14 p-0" />
-            <Button variant="ghost" size="sm" onClick={() => updateBackgrounds('summaryBorderColor', undefined)}>Reset</Button>
-          </div>
+          <ColorPicker 
+            label="Background"
+            color={backgrounds.summaryBg || '#ffffff'}
+            onChange={(val) => updateBackgrounds('summaryBg', val)}
+          />
+          <ColorPicker 
+            label="Border Color"
+            color={backgrounds.summaryBorderColor || '#e2e8f0'}
+            onChange={(val) => updateBackgrounds('summaryBorderColor', val)}
+          />
           <div>
             <Label className="text-xs">Border Width</Label>
             <div className="flex items-center gap-2">
