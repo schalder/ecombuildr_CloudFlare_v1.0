@@ -93,11 +93,11 @@ export function useWebsiteStats(websiteId: string): WebsiteStatsHookReturn {
 
       if (newsletterError && newsletterError.code !== 'PGRST116') throw newsletterError;
 
-      // Get orders (basic count and revenue)
+      // Get orders (basic count and revenue) - filtered by website_id
       const { data: orders, error: ordersError } = await supabase
         .from('orders')
         .select('total')
-        .eq('store_id', website.store_id);
+        .eq('website_id', websiteId);
 
       if (ordersError && ordersError.code !== 'PGRST116') throw ordersError;
 

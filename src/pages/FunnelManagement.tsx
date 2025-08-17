@@ -13,6 +13,8 @@ import { ArrowLeft, Plus, Edit, ExternalLink, Settings, Eye, ArrowUp, ArrowDown,
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { CreateStepModal } from '@/components/modals/CreateStepModal';
+import { FunnelStats } from '@/components/funnel/FunnelStats';
+import { FunnelSales } from '@/components/funnel/FunnelSales';
 
 interface Funnel {
   id: string;
@@ -409,8 +411,32 @@ const FunnelManagement = () => {
           </div>
         )}
 
-        {/* Other tab content including Settings */}
-        {activeTab !== 'steps' && (
+        {/* Stats Tab */}
+        {activeTab === 'stats' && (
+          <div className="p-6">
+            <FunnelStats funnelId={id!} />
+          </div>
+        )}
+
+        {/* Sales Tab */}
+        {activeTab === 'sales' && (
+          <div className="p-6">
+            <FunnelSales funnelId={id!} />
+          </div>
+        )}
+
+        {/* Other tabs */}
+        {(activeTab === 'security' || activeTab === 'events') && (
+          <div className="p-6">
+            <div className="max-w-3xl mx-auto text-center py-12">
+              <h3 className="text-lg font-semibold mb-2 capitalize">{activeTab}</h3>
+              <p className="text-muted-foreground">This section is coming soon.</p>
+            </div>
+          </div>
+        )}
+
+        {/* Settings Tab */}
+        {activeTab === 'settings' && (
           <div className="p-6">
             {activeTab === 'settings' ? (
               <div className="max-w-3xl mx-auto space-y-6">

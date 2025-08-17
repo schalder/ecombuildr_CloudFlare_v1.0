@@ -90,14 +90,24 @@ export const useFacebookPixelAnalytics = (storeId: string, dateRange: DateRange,
         // Check if request was aborted
         if (abortControllerRef.current.signal.aborted) return;
 
-        // Fetch orders with pixel data for revenue calculation
-        const { data: orders, error: ordersError } = await supabase
+        // Fetch orders with pixel data for revenue calculation - filter by website or funnel
+        let ordersQuery = supabase
           .from('orders')
           .select('total, facebook_pixel_data')
-          .eq('store_id', storeId)
           .gte('created_at', startDate)
           .lte('created_at', endDate + 'T23:59:59')
-          .not('facebook_pixel_data', 'is', null)
+          .not('facebook_pixel_data', 'is', null);
+
+        if (websiteId) {
+          ordersQuery = ordersQuery.eq('website_id', websiteId);
+        } else if (funnelSlug) {
+          // For funnels, we need to find orders with funnel_id
+          ordersQuery = ordersQuery.eq('funnel_id', funnelSlug);
+        } else {
+          ordersQuery = ordersQuery.eq('store_id', storeId);
+        }
+
+        const { data: orders, error: ordersError } = await ordersQuery
           .abortSignal(abortControllerRef.current.signal);
 
         if (ordersError) throw ordersError;

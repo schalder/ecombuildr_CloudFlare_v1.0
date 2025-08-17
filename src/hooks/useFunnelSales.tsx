@@ -2,85 +2,73 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { DateRange } from '@/components/ui/date-range-filter';
-import { startOfDay, endOfDay, subDays, startOfMonth, endOfMonth, subMonths } from 'date-fns';
+import { startOfDay, endOfDay, subDays } from 'date-fns';
 
-interface SalesAnalytics {
+interface FunnelSalesAnalytics {
   totalRevenue: number;
   totalOrders: number;
   averageOrderValue: number;
   conversionRate: number;
   revenueTimeline: Array<{ date: string; revenue: number; orders: number; }>;
-  topProducts: Array<{ 
-    product_name: string; 
-    product_id: string;
-    total_revenue: number; 
-    total_quantity: number;
-    total_orders: number;
+  stepPerformance: Array<{ 
+    step_title: string; 
+    step_type: string;
+    views: number; 
+    conversions: number;
+    conversion_rate: number;
   }>;
   paymentMethods: Array<{ method: string; count: number; revenue: number; }>;
   orderStatuses: Array<{ status: string; count: number; revenue: number; }>;
-  geographicData: Array<{ city: string; orders: number; revenue: number; }>;
-  monthlyTrends: Array<{ month: string; revenue: number; orders: number; }>;
 }
 
-interface SalesComparison {
+interface FunnelSalesComparison {
   currentPeriod: {
     revenue: number;
     orders: number;
-    customers: number;
+    visitors: number;
   };
   previousPeriod: {
     revenue: number;
     orders: number;
-    customers: number;
+    visitors: number;
   };
   changes: {
     revenue: { value: number; percentage: number };
     orders: { value: number; percentage: number };
-    customers: { value: number; percentage: number };
+    visitors: { value: number; percentage: number };
   };
 }
 
-interface WebsiteSales {
-  // Core sales metrics
+interface FunnelSales {
   totalRevenue: number;
   totalOrders: number;
-  totalCustomers: number;
+  totalVisitors: number;
   averageOrderValue: number;
-  
-  // Advanced analytics
-  analytics: SalesAnalytics;
-  
-  // Comparison data
-  comparison: SalesComparison;
-  
-  // Today's specific metrics
+  analytics: FunnelSalesAnalytics;
+  comparison: FunnelSalesComparison;
   todayRevenue: number;
   yesterdayRevenue: number;
-  
-  // Website info
-  websiteName: string;
-  websiteUrl: string;
-  storeId: string;
+  funnelName: string;
+  funnelUrl: string;
   dateRange: DateRange;
 }
 
-interface WebsiteSalesHookReturn {
-  sales: WebsiteSales | null;
+interface FunnelSalesHookReturn {
+  sales: FunnelSales | null;
   loading: boolean;
   error: string | null;
   refetch: () => Promise<void>;
   updateDateRange: (dateRange: DateRange) => void;
 }
 
-export function useWebsiteSales(websiteId: string, initialDateRange?: DateRange): WebsiteSalesHookReturn {
-  const [sales, setSales] = useState<WebsiteSales | null>(null);
+export function useFunnelSales(funnelId: string, initialDateRange?: DateRange): FunnelSalesHookReturn {
+  const [sales, setSales] = useState<FunnelSales | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [dateRange, setDateRange] = useState<DateRange>(initialDateRange || {
     from: startOfDay(subDays(new Date(), 29)),
     to: endOfDay(new Date()),
-    preset: 'last3months',
+    preset: 'last7days',
     label: 'Last 30 days'
   });
   const { toast } = useToast();
@@ -103,46 +91,28 @@ export function useWebsiteSales(websiteId: string, initialDateRange?: DateRange)
       setLoading(true);
       setError(null);
 
-      // Get website basic info
-      const { data: website, error: websiteError } = await supabase
-        .from('websites')
+      // Get funnel basic info
+      const { data: funnel, error: funnelError } = await supabase
+        .from('funnels')
         .select('*')
-        .eq('id', websiteId)
+        .eq('id', funnelId)
         .single();
 
-      if (websiteError) throw websiteError;
+      if (funnelError) throw funnelError;
 
-      // Get store info for domain construction
-      const { data: store } = await supabase
-        .from('stores')
-        .select('*')
-        .eq('id', website.store_id)
-        .single();
-
-      if (!store) throw new Error('Store not found');
-
-      // Get connected domain info
-      const { data: domainConnection } = await supabase
-        .from('domain_connections')
-        .select(`
-          custom_domains (domain)
-        `)
-        .eq('content_type', 'website')
-        .eq('content_id', websiteId)
-        .maybeSingle();
-
-      // Build proper website URL
-      const customDomain = (domainConnection?.custom_domains as any)?.domain;
-      const websiteUrl = customDomain 
-        ? `https://${customDomain}` 
-        : `https://${website.slug}.${store.slug}.lovable.app`;
+      // Get funnel steps for step performance analysis
+      const { data: funnelSteps } = await supabase
+        .from('funnel_steps')
+        .select('id, title, step_type')
+        .eq('funnel_id', funnelId)
+        .order('step_order');
 
       // Get comparison period dates
       const comparisonPeriod = getComparisonPeriod(dateRange);
       const startDate = comparisonPeriod.from.toISOString();
       const endDate = dateRange.to.toISOString();
 
-      // Get orders for both current and comparison periods - filtered by website_id
+      // Get orders for both current and comparison periods
       const { data: allOrders, error: ordersError } = await supabase
         .from('orders')
         .select(`
@@ -151,13 +121,11 @@ export function useWebsiteSales(websiteId: string, initialDateRange?: DateRange)
           subtotal,
           status,
           payment_method,
-          shipping_city,
-          shipping_country,
           customer_name,
           customer_email,
           created_at
         `)
-        .eq('website_id', websiteId)
+        .eq('funnel_id', funnelId)
         .gte('created_at', startDate)
         .lte('created_at', endDate)
         .order('created_at', { ascending: false });
@@ -175,7 +143,7 @@ export function useWebsiteSales(websiteId: string, initialDateRange?: DateRange)
         new Date(o.created_at || '') <= comparisonPeriod.to
       ) || [];
 
-      // Get today's and yesterday's orders for specific metrics
+      // Get today's and yesterday's orders
       const today = startOfDay(new Date());
       const yesterday = startOfDay(subDays(new Date(), 1));
       const todayOrders = allOrders?.filter(o => {
@@ -188,30 +156,31 @@ export function useWebsiteSales(websiteId: string, initialDateRange?: DateRange)
         return orderDate >= yesterday && orderDate < today;
       }) || [];
 
-      // Get order items for product analysis (current period only)
-      const currentOrderIds = currentOrders.map(o => o.id);
-      const { data: orderItems } = await supabase
-        .from('order_items')
-        .select('*')
-        .in('order_id', currentOrderIds);
+      // Get pixel events for visitor count and step performance
+      const { data: pixelEvents } = await supabase
+        .from('pixel_events')
+        .select('event_type, page_url, created_at')
+        .like('page_url', `%/funnel/${funnel.slug}%`)
+        .gte('created_at', dateRange.from.toISOString())
+        .lte('created_at', dateRange.to.toISOString());
 
-      // Get website analytics for conversion rate calculation
-      const { data: analyticsData } = await supabase
-        .from('website_analytics')
-        .select('unique_visitors')
-        .eq('website_id', websiteId)
-        .gte('date', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]); // Last 30 days
+      const { data: comparisonPixelEvents } = await supabase
+        .from('pixel_events')
+        .select('event_type')
+        .like('page_url', `%/funnel/${funnel.slug}%`)
+        .gte('created_at', comparisonPeriod.from.toISOString())
+        .lte('created_at', comparisonPeriod.to.toISOString());
 
       // Calculate current period metrics
       const totalOrders = currentOrders.length;
       const totalRevenue = currentOrders.reduce((sum, order) => sum + (order.total || 0), 0);
-      const totalCustomers = new Set(currentOrders.map(o => o.customer_email).filter(Boolean)).size;
+      const totalVisitors = pixelEvents?.filter(e => e.event_type === 'PageView').length || 0;
       const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
 
       // Calculate comparison period metrics
       const comparisonRevenue = comparisonOrders.reduce((sum, order) => sum + (order.total || 0), 0);
       const comparisonOrdersCount = comparisonOrders.length;
-      const comparisonCustomers = new Set(comparisonOrders.map(o => o.customer_email).filter(Boolean)).size;
+      const comparisonVisitors = comparisonPixelEvents?.filter(e => e.event_type === 'PageView').length || 0;
 
       // Calculate today and yesterday revenue
       const todayRevenue = todayOrders.reduce((sum, order) => sum + (order.total || 0), 0);
@@ -220,25 +189,24 @@ export function useWebsiteSales(websiteId: string, initialDateRange?: DateRange)
       // Calculate changes and percentages
       const revenueChange = totalRevenue - comparisonRevenue;
       const ordersChange = totalOrders - comparisonOrdersCount;
-      const customersChange = totalCustomers - comparisonCustomers;
+      const visitorsChange = totalVisitors - comparisonVisitors;
 
-      const comparison: SalesComparison = {
-        currentPeriod: { revenue: totalRevenue, orders: totalOrders, customers: totalCustomers },
-        previousPeriod: { revenue: comparisonRevenue, orders: comparisonOrdersCount, customers: comparisonCustomers },
+      const comparison: FunnelSalesComparison = {
+        currentPeriod: { revenue: totalRevenue, orders: totalOrders, visitors: totalVisitors },
+        previousPeriod: { revenue: comparisonRevenue, orders: comparisonOrdersCount, visitors: comparisonVisitors },
         changes: {
           revenue: { value: revenueChange, percentage: calculatePercentageChange(totalRevenue, comparisonRevenue) },
           orders: { value: ordersChange, percentage: calculatePercentageChange(totalOrders, comparisonOrdersCount) },
-          customers: { value: customersChange, percentage: calculatePercentageChange(totalCustomers, comparisonCustomers) },
+          visitors: { value: visitorsChange, percentage: calculatePercentageChange(totalVisitors, comparisonVisitors) },
         }
       };
 
       // Calculate conversion rate
-      const totalUniqueVisitors = analyticsData?.reduce((sum, row) => sum + (row.unique_visitors || 0), 0) || 0;
-      const conversionRate = totalUniqueVisitors > 0 ? (totalOrders / totalUniqueVisitors) * 100 : 0;
+      const conversionRate = totalVisitors > 0 ? (totalOrders / totalVisitors) * 100 : 0;
 
-      // Revenue timeline for the current period (day by day)
+      // Revenue timeline for the current period
       const revenueTimeline = [];
-      const diffDays = Math.ceil((dateRange.to.getTime() - dateRange.from.getTime()) / (1000 * 60 * 60 * 24));
+      const diffDays = Math.ceil((dateRange.to.getTime() - dateRange.from.getTime()) / (1000 * 60 * 60 * 1000));
       
       for (let i = 0; i <= diffDays; i++) {
         const date = new Date(dateRange.from.getTime() + i * 24 * 60 * 60 * 1000);
@@ -251,27 +219,23 @@ export function useWebsiteSales(websiteId: string, initialDateRange?: DateRange)
         });
       }
 
-      // Top products analysis
-      const productStats = (orderItems || []).reduce((acc, item) => {
-        const key = item.product_id;
-        if (!acc[key]) {
-          acc[key] = {
-            product_name: item.product_name || 'Unknown Product',
-            product_id: item.product_id,
-            total_revenue: 0,
-            total_quantity: 0,
-            total_orders: 0
-          };
-        }
-        acc[key].total_revenue += item.total || 0;
-        acc[key].total_quantity += item.quantity || 0;
-        acc[key].total_orders += 1;
-        return acc;
-      }, {} as Record<string, any>);
+      // Step performance analysis
+      const stepPerformance = (funnelSteps || []).map(step => {
+        const stepViews = pixelEvents?.filter(e => 
+          e.event_type === 'PageView' && e.page_url?.includes(`/step/${step.id}`)
+        ).length || 0;
 
-      const topProducts = Object.values(productStats)
-        .sort((a: any, b: any) => b.total_revenue - a.total_revenue)
-        .slice(0, 10);
+        const stepConversions = currentOrders.length; // All orders count as conversions for funnel
+        const conversionRate = stepViews > 0 ? (stepConversions / stepViews) * 100 : 0;
+
+        return {
+          step_title: step.title,
+          step_type: step.step_type,
+          views: stepViews,
+          conversions: stepConversions,
+          conversion_rate: conversionRate
+        };
+      });
 
       // Payment methods breakdown
       const paymentStats = currentOrders.reduce((acc, order) => {
@@ -301,45 +265,10 @@ export function useWebsiteSales(websiteId: string, initialDateRange?: DateRange)
       const orderStatuses = Object.values(statusStats)
         .sort((a: any, b: any) => b.count - a.count);
 
-      // Geographic breakdown
-      const geoStats = currentOrders.reduce((acc, order) => {
-        const city = order.shipping_city || 'Unknown';
-        if (!acc[city]) {
-          acc[city] = { city, orders: 0, revenue: 0 };
-        }
-        acc[city].orders += 1;
-        acc[city].revenue += order.total || 0;
-        return acc;
-      }, {} as Record<string, any>);
-
-      const geographicData = Object.values(geoStats)
-        .sort((a: any, b: any) => b.revenue - a.revenue)
-        .slice(0, 10);
-
-      // Monthly trends (last 6 months)
-      const monthlyTrends = [];
-      for (let i = 5; i >= 0; i--) {
-        const date = new Date();
-        date.setMonth(date.getMonth() - i);
-        const monthStart = new Date(date.getFullYear(), date.getMonth(), 1);
-        const monthEnd = new Date(date.getFullYear(), date.getMonth() + 1, 0);
-        
-        const monthOrders = currentOrders.filter(o => {
-          const orderDate = new Date(o.created_at || '');
-          return orderDate >= monthStart && orderDate <= monthEnd;
-        });
-
-        monthlyTrends.push({
-          month: date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
-          revenue: monthOrders.reduce((sum, o) => sum + (o.total || 0), 0),
-          orders: monthOrders.length
-        });
-      }
-
       setSales({
         totalRevenue,
         totalOrders,
-        totalCustomers,
+        totalVisitors,
         averageOrderValue,
         comparison,
         todayRevenue,
@@ -350,24 +279,21 @@ export function useWebsiteSales(websiteId: string, initialDateRange?: DateRange)
           averageOrderValue,
           conversionRate: Math.round(conversionRate * 100) / 100,
           revenueTimeline,
-          topProducts,
+          stepPerformance,
           paymentMethods,
           orderStatuses,
-          geographicData,
-          monthlyTrends,
         },
-        websiteName: website.name,
-        websiteUrl,
-        storeId: website.store_id,
+        funnelName: funnel.name,
+        funnelUrl: `https://lovable.app/funnel/${funnel.slug}`,
         dateRange,
       });
 
     } catch (err: any) {
-      console.error('Error fetching website sales:', err);
-      setError(err.message || 'Failed to fetch website sales data');
+      console.error('Error fetching funnel sales:', err);
+      setError(err.message || 'Failed to fetch funnel sales data');
       toast({
         title: "Error",
-        description: err.message || "Failed to fetch website sales data",
+        description: err.message || "Failed to fetch funnel sales data",
         variant: "destructive",
       });
     } finally {
@@ -380,10 +306,10 @@ export function useWebsiteSales(websiteId: string, initialDateRange?: DateRange)
   };
 
   useEffect(() => {
-    if (websiteId) {
+    if (funnelId) {
       fetchSales();
     }
-  }, [websiteId, dateRange]);
+  }, [funnelId, dateRange]);
 
   return {
     sales,
