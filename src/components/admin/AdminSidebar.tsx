@@ -9,7 +9,9 @@ import {
   TrendingUp,
   DollarSign,
   UserCheck,
-  AlertCircle
+  AlertCircle,
+  Star,
+  Crown
 } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router-dom';
 import {
@@ -56,7 +58,12 @@ const adminMenuItems = [
   {
     title: 'Plan Management',
     url: '/admin/plans',
-    icon: DollarSign,
+    icon: Crown,
+  },
+  {
+    title: 'Site Pricing',
+    url: '/admin/site-pricing',
+    icon: Star,
   },
 ];
 

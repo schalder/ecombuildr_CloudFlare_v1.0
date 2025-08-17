@@ -89,6 +89,7 @@ export default function ProfileSettings() {
     const planNames: Record<string, string> = {
       free: 'ফ্রি প্ল্যান',
       basic: 'বেসিক প্ল্যান',
+      professional: 'প্রফেশনাল প্ল্যান',
       pro: 'প্রো প্ল্যান',
       enterprise: 'এন্টারপ্রাইজ প্ল্যান'
     };

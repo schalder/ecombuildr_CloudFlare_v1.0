@@ -17,9 +17,9 @@ export default function BillingSettings() {
   const getPlanDisplayName = (planName: string) => {
     const planNames: Record<string, string> = {
       free: 'Free Plan',
-      basic: 'Basic Plan',
+      basic: 'Professional Plan',
       professional: 'Professional Plan',
-      pro: 'Pro Plan',
+      pro: 'Enterprise Plan',
       enterprise: 'Enterprise Plan'
     };
     return planNames[planName] || planName;

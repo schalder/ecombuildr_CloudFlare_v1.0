@@ -1522,6 +1522,69 @@ export type Database = {
         }
         Relationships: []
       }
+      site_pricing_plans: {
+        Row: {
+          button_variant: string | null
+          color_class: string | null
+          created_at: string
+          description: string | null
+          description_en: string | null
+          display_name: string
+          display_name_en: string | null
+          features: Json
+          features_en: Json
+          icon: string | null
+          id: string
+          is_active: boolean
+          is_popular: boolean
+          period: string
+          plan_name: string
+          price_bdt: number
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          button_variant?: string | null
+          color_class?: string | null
+          created_at?: string
+          description?: string | null
+          description_en?: string | null
+          display_name: string
+          display_name_en?: string | null
+          features?: Json
+          features_en?: Json
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          is_popular?: boolean
+          period?: string
+          plan_name: string
+          price_bdt?: number
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          button_variant?: string | null
+          color_class?: string | null
+          created_at?: string
+          description?: string | null
+          description_en?: string | null
+          display_name?: string
+          display_name_en?: string | null
+          features?: Json
+          features_en?: Json
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          is_popular?: boolean
+          period?: string
+          plan_name?: string
+          price_bdt?: number
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       store_customizations: {
         Row: {
           created_at: string

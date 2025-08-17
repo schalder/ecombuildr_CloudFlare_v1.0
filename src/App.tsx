@@ -46,6 +46,7 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import UserManagement from "./pages/admin/UserManagement";
 import BillingManagement from "./pages/admin/BillingManagement";
 import PlanManagement from "./pages/admin/PlanManagement";
+import SitePricingManagement from "./pages/admin/SitePricingManagement";
 import AdminSites from "./pages/admin/AdminSites";
 import AdminAnalytics from "./pages/admin/AdminAnalytics";
 import AdminRevenue from "./pages/admin/AdminRevenue";
@@ -125,6 +126,7 @@ const App = () => (
                 <Route path="/admin/users" element={<UserManagement />} />
                 <Route path="/admin/billing" element={<BillingManagement />} />
                 <Route path="/admin/plans" element={<PlanManagement />} />
+                <Route path="/admin/site-pricing" element={<SitePricingManagement />} />
                 <Route path="/admin/sites" element={<AdminSites />} />
                 <Route path="/admin/analytics" element={<AdminAnalytics />} />
                 <Route path="/admin/revenue" element={<AdminRevenue />} />
