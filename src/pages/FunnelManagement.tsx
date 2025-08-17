@@ -53,6 +53,7 @@ const FunnelManagement = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('steps');
   const [activeMainTab, setActiveMainTab] = useState('overview');
+  const [selectedStepId, setSelectedStepId] = useState<string | null>(null);
   const [seo, setSeo] = useState({
     seo_title: '',
     seo_description: '',
@@ -136,6 +137,23 @@ const FunnelManagement = () => {
     navigate(`/dashboard/funnels/${id}/steps/${stepId}/builder`);
   };
 
+  const handleSelectStep = (stepId: string) => {
+    setSelectedStepId(stepId);
+    setActiveMainTab('overview');
+  };
+
+  const handlePreviewStep = (stepId: string, stepSlug: string) => {
+    if (funnel?.domain) {
+      window.open(`https://${funnel.domain}/${stepSlug}`, '_blank');
+    } else {
+      toast({ 
+        title: 'Domain required', 
+        description: 'Please add a domain in settings to preview your funnel steps',
+        variant: 'destructive' 
+      });
+    }
+  };
+
   const getStepTypeLabel = (stepType: string) => {
     switch (stepType) {
       case 'landing': return 'Landing Page';
@@ -184,14 +202,7 @@ const FunnelManagement = () => {
               </div>
             </div>
             <div className="flex items-center space-x-2">
-              <Button variant="outline" size="sm">
-                <ExternalLink className="h-4 w-4 sm:mr-2" />
-                <span className="hidden sm:inline">Share</span>
-              </Button>
-              <Button variant="outline" size="sm" className="hidden sm:flex">
-                <Settings className="h-4 w-4 mr-2" />
-                Settings
-              </Button>
+              {/* Removed Share and Settings buttons */}
             </div>
           </div>
         </div>
@@ -286,8 +297,10 @@ const FunnelManagement = () => {
                       steps.map((step, index) => (
                         <div
                           key={step.id}
-                          className="flex items-center space-x-3 p-3 rounded-lg bg-background border cursor-pointer hover:bg-muted/50"
-                          onClick={() => handleEditStep(step.id)}
+                          className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer hover:bg-muted/50 ${
+                            selectedStepId === step.id ? 'bg-primary/10 border-primary' : 'bg-background'
+                          }`}
+                          onClick={() => handleSelectStep(step.id)}
                         >
                           <div className="flex-shrink-0">
                             <Mail className="h-4 w-4 text-blue-500" />
@@ -313,8 +326,7 @@ const FunnelManagement = () => {
                     size="sm"
                   >
                     <Plus className="h-4 w-4 mr-2" />
-                    <span className="hidden sm:inline">Add New Step or Import</span>
-                    <span className="sm:hidden">Add Step</span>
+                    Add New Step
                   </Button>
                 </div>
               </div>
@@ -351,36 +363,58 @@ const FunnelManagement = () => {
                   <>
                     {/* Selected Step Content */}
                     {steps.length > 0 ? (
-                      <div className="bg-background border rounded-lg p-6">
-                        <div className="flex items-center justify-between mb-4">
-                          <h3 className="text-lg font-semibold">{steps[0]?.title || 'Select a step'}</h3>
-                          <div className="flex flex-wrap sm:flex-nowrap gap-2">
-                            <Button variant="outline" size="sm">
-                              <Eye className="h-4 w-4 sm:mr-2" />
-                              <span className="hidden sm:inline">Preview</span>
-                            </Button>
-                            <Button size="sm" onClick={() => handleEditStep(steps[0]?.id)}>
-                              <Edit className="h-4 w-4 sm:mr-2" />
-                              <span className="hidden sm:inline">Edit</span>
-                            </Button>
-                            <Button variant="outline" size="sm">
-                              <Settings className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
+                      (() => {
+                        const selectedStep = selectedStepId 
+                          ? steps.find(s => s.id === selectedStepId)
+                          : steps[0];
                         
-                        <div className="bg-muted/30 rounded-lg p-8 text-center">
-                          <p className="text-muted-foreground mb-4">Please add a domain in the settings to see your Funnel live!</p>
-                          <div className="bg-background border-2 border-dashed border-muted-foreground/25 rounded-lg p-8">
-                            <div className="text-center">
-                              <div className="w-16 h-16 bg-green-100 rounded-lg mx-auto mb-4 flex items-center justify-center">
-                                <div className="w-8 h-1 bg-green-500 rounded"></div>
+                        return selectedStep ? (
+                          <div className="bg-background border rounded-lg p-6">
+                            <div className="flex items-center justify-between mb-4">
+                              <h3 className="text-lg font-semibold">{selectedStep.title}</h3>
+                              <div className="flex flex-wrap sm:flex-nowrap gap-2">
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  onClick={() => handlePreviewStep(selectedStep.id, selectedStep.slug)}
+                                >
+                                  <Eye className="h-4 w-4 sm:mr-2" />
+                                  <span className="hidden sm:inline">Preview</span>
+                                </Button>
+                                <Button size="sm" onClick={() => handleEditStep(selectedStep.id)}>
+                                  <Edit className="h-4 w-4 sm:mr-2" />
+                                  <span className="hidden sm:inline">Edit</span>
+                                </Button>
                               </div>
-                              <p className="text-sm text-muted-foreground">Step preview will appear here</p>
+                            </div>
+                            
+                            <div className="bg-muted/30 rounded-lg p-8 text-center">
+                              {funnel?.domain ? (
+                                <p className="text-muted-foreground mb-4">
+                                  Live URL: <code className="bg-background px-2 py-1 rounded text-sm">
+                                    {funnel.domain}/{selectedStep.slug}
+                                  </code>
+                                </p>
+                              ) : (
+                                <p className="text-muted-foreground mb-4">Please add a domain in the settings to see your Funnel live!</p>
+                              )}
+                              <div className="bg-background border-2 border-dashed border-muted-foreground/25 rounded-lg p-8">
+                                <div className="text-center">
+                                  <div className="w-16 h-16 bg-green-100 rounded-lg mx-auto mb-4 flex items-center justify-center">
+                                    <div className="w-8 h-1 bg-green-500 rounded"></div>
+                                  </div>
+                                  <p className="text-sm text-muted-foreground">
+                                    {getStepTypeLabel(selectedStep.step_type)} - {selectedStep.title}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground mt-2">
+                                    {selectedStep.is_published ? 'Published' : 'Draft'}
+                                  </p>
+                                </div>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </div>
+                        ) : null;
+                      })()
                     ) : (
                       <div className="bg-background border rounded-lg p-12 text-center">
                         <div className="w-16 h-16 bg-muted rounded-lg mx-auto mb-4 flex items-center justify-center">
