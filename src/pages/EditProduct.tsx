@@ -12,7 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Save, Package } from "lucide-react";
+import { ArrowLeft, Save, Package, ChevronUp, ChevronDown } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import RichTextEditor from "@/components/ui/RichTextEditor";
 import ProductDescriptionBuilderDialog from "@/components/products/ProductDescriptionBuilderDialog";
@@ -22,6 +22,8 @@ import VariantMatrix, { VariantEntry } from "@/components/products/VariantMatrix
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { parseVideoUrl, buildEmbedUrl } from "@/components/page-builder/utils/videoUtils";
 import { useStoreWebsitesForSelection, useProductWebsiteVisibility } from '@/hooks/useWebsiteVisibility';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface Product {
   id: string;
@@ -70,7 +72,15 @@ export default function EditProduct() {
     video_url: '',
     seo_title: '',
     seo_description: '',
+    weight_kg: '', // Store weight in kg for UI, convert to grams for backend
   });
+
+  // Collapsible sections state
+  const [allSectionsExpanded, setAllSectionsExpanded] = useState(true);
+  const [expandedSections, setExpandedSections] = useState([
+    "channel-category", "product-info", "pricing", "status", 
+    "variations", "actions-payments", "media", "seo", "shipping"
+  ]);
 
   const [hasVariants, setHasVariants] = useState(false);
   const [variations, setVariations] = useState<VariationOption[]>([]);
@@ -183,9 +193,7 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
           video_url: (product as any).video_url || '',
           seo_title: (product as any).seo_title || '',
           seo_description: (product as any).seo_description || '',
-          
-          // Action buttons & payments
-          
+          weight_kg: (product as any).weight_grams ? ((product as any).weight_grams / 1000).toString() : '',
         });
 
         // Shipping & returns
@@ -290,6 +298,7 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
         video_url: formData.video_url || null,
         seo_title: formData.seo_title || null,
         seo_description: formData.seo_description || null,
+        weight_grams: formData.weight_kg ? parseFloat(formData.weight_kg) * 1000 : null, // Convert kg to grams
         free_shipping_min_amount: enableFreeShipping && freeShippingMin ? parseFloat(freeShippingMin) : null,
         easy_returns_enabled: easyReturnsEnabled,
         easy_returns_days: easyReturnsEnabled && easyReturnsDays ? parseInt(easyReturnsDays) : null,
@@ -339,6 +348,19 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
     }));
   };
 
+  const toggleAllSections = () => {
+    const newExpanded = !allSectionsExpanded;
+    setAllSectionsExpanded(newExpanded);
+    if (newExpanded) {
+      setExpandedSections([
+        "channel-category", "product-info", "pricing", "status", 
+        "variations", "actions-payments", "media", "seo", "shipping"
+      ]);
+    } else {
+      setExpandedSections([]);
+    }
+  };
+
   if (loading) {
     return (
       <DashboardLayout title="Loading..." description="Loading product for editing">
@@ -370,492 +392,446 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
             <ArrowLeft className="h-4 w-4" />
             Back to Products
           </Button>
+          <Button
+            variant="outline"
+            onClick={toggleAllSections}
+            className="gap-2"
+          >
+            {allSectionsExpanded ? (
+              <>
+                <ChevronUp className="h-4 w-4" />
+                Collapse All
+              </>
+            ) : (
+              <>
+                <ChevronDown className="h-4 w-4" />
+                Expand All
+              </>
+            )}
+          </Button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Selling Website & Category - Moved to Top */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Selling Channel & Category</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="website_id">Selling Website *</Label>
-                  <Select value={selectedWebsiteId} onValueChange={setSelectedWebsiteId}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a website" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {storeWebsites.map((website) => (
-                        <SelectItem key={website.id} value={website.id}>
-                          {website.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-sm text-muted-foreground">
-                    Choose which website this product will be sold on.
-                  </p>
-                </div>
+          <Accordion type="multiple" value={expandedSections} onValueChange={setExpandedSections} className="w-full space-y-4">
+            {/* Selling Website & Category - Moved to Top */}
+            <AccordionItem value="channel-category" className="border rounded-lg">
+              <Card>
+                <AccordionTrigger className="hover:no-underline px-6 py-4">
+                  <CardTitle className="flex items-center gap-2">
+                    Selling Channel & Category
+                  </CardTitle>
+                </AccordionTrigger>
+                <AccordionContent>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="website_id">Selling Website *</Label>
+                        <Select value={selectedWebsiteId} onValueChange={setSelectedWebsiteId}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a website" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {storeWebsites.map((website) => (
+                              <SelectItem key={website.id} value={website.id}>
+                                {website.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <p className="text-sm text-muted-foreground">
+                          Choose which website this product will be sold on.
+                        </p>
+                      </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="category_id">Category</Label>
-                  <Select 
-                    value={formData.category_id} 
-                    onValueChange={(value) => handleInputChange('category_id', value)}
-                    disabled={!selectedWebsiteId}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder={selectedWebsiteId ? "Select a category" : "Select a website first"} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">No category</SelectItem>
-                      {filteredCategories.map((category) => (
-                        <SelectItem key={category.id} value={category.id}>
-                          {category.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-sm text-muted-foreground">
-                    {selectedWebsiteId 
-                      ? `${filteredCategories.length} categories available for this website` 
-                      : 'Select a website first to see available categories'}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+                      <div className="space-y-2">
+                        <Label htmlFor="category_id">Category</Label>
+                        <Select 
+                          value={formData.category_id} 
+                          onValueChange={(value) => handleInputChange('category_id', value)}
+                          disabled={!selectedWebsiteId}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder={selectedWebsiteId ? "Select a category" : "Select a website first"} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">No category</SelectItem>
+                            {filteredCategories.map((category) => (
+                              <SelectItem key={category.id} value={category.id}>
+                                {category.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <p className="text-sm text-muted-foreground">
+                          {selectedWebsiteId 
+                            ? `${filteredCategories.length} categories available for this website` 
+                            : 'Select a website first to see available categories'}
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </AccordionContent>
+              </Card>
+            </AccordionItem>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Product Information */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Package className="h-5 w-5" />
-                  Product Information
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label htmlFor="name">Product Name *</Label>
-                  <Input
-                    id="name"
-                    value={formData.name}
-                    onChange={(e) => handleInputChange('name', e.target.value)}
-                    placeholder="Enter product name"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="short_description">Short Description</Label>
-                  <Input
-                    id="short_description"
-                    value={formData.short_description}
-                    onChange={(e) => handleInputChange('short_description', e.target.value)}
-                    placeholder="Brief product description"
-                  />
-                </div>
-
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <Switch
-                      id="use_builder"
-                      checked={descriptionMode === 'builder'}
-                      onCheckedChange={(v) => setDescriptionMode(v ? 'builder' : 'rich_text')}
-                    />
-                    <Label htmlFor="use_builder">Use Page Builder for Description</Label>
-                  </div>
-
-                  {descriptionMode === 'rich_text' ? (
-                    <div className="space-y-2">
-                      <Label htmlFor="description">Description</Label>
-                      <RichTextEditor
-                        value={formData.description}
-                        onChange={(html) => handleInputChange('description', html)}
-                        placeholder="Write a detailed description..."
+            <AccordionItem value="product-info" className="border rounded-lg">
+              <Card>
+                <AccordionTrigger className="hover:no-underline px-6 py-4">
+                  <CardTitle className="flex items-center gap-2">
+                    <Package className="h-5 w-5" />
+                    Product Information
+                  </CardTitle>
+                </AccordionTrigger>
+                <AccordionContent>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <Label htmlFor="name">Product Name *</Label>
+                      <Input
+                        id="name"
+                        value={formData.name}
+                        onChange={(e) => handleInputChange('name', e.target.value)}
+                        placeholder="Enter product name"
+                        required
                       />
                     </div>
-                  ) : (
-                    <div className="space-y-2">
-                      <Button type="button" onClick={() => setIsBuilderOpen(true)}>
-                        Edit Description with Page Builder
-                      </Button>
-                      <p className="text-sm text-muted-foreground">
-                        {descriptionBuilder.sections && descriptionBuilder.sections.length
-                          ? 'Builder content saved. Click Edit to update.'
-                          : 'No builder content yet. Click Edit to start.'}
-                      </p>
-                    </div>
-                  )}
-                </div>
 
-              </CardContent>
-            </Card>
-
-            {/* Pricing & Inventory */}
-            <div className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Pricing</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <Label htmlFor="price">Price (৳) *</Label>
-                    <Input
-                      id="price"
-                      type="number"
-                      value={formData.price}
-                      onChange={(e) => handleInputChange('price', e.target.value)}
-                      placeholder="0.00"
-                      step="0.01"
-                      min="0"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="compare_price">Compare at Price (৳)</Label>
-                    <Input
-                      id="compare_price"
-                      type="number"
-                      value={formData.compare_price}
-                      onChange={(e) => handleInputChange('compare_price', e.target.value)}
-                      placeholder="0.00"
-                      step="0.01"
-                      min="0"
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="cost_price">Cost Price (৳)</Label>
-                    <Input
-                      id="cost_price"
-                      type="number"
-                      value={formData.cost_price}
-                      onChange={(e) => handleInputChange('cost_price', e.target.value)}
-                      placeholder="0.00"
-                      step="0.01"
-                      min="0"
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Inventory</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="sku">SKU</Label>
-                    <Input
-                      id="sku"
-                      value={formData.sku}
-                      onChange={(e) => handleInputChange('sku', e.target.value)}
-                      placeholder="Product SKU"
-                    />
-                  </div>
-
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="track_inventory"
-                      checked={!!formData.track_inventory}
-                      onCheckedChange={(checked) => handleInputChange('track_inventory', checked)}
-                    />
-                    <Label htmlFor="track_inventory">Track inventory</Label>
-                  </div>
-
-                  {formData.track_inventory && (
-                    <div className="space-y-2">
-                      <Label htmlFor="inventory_quantity">Quantity</Label>
+                    <div>
+                      <Label htmlFor="short_description">Short Description</Label>
                       <Input
-                        id="inventory_quantity"
+                        id="short_description"
+                        value={formData.short_description}
+                        onChange={(e) => handleInputChange('short_description', e.target.value)}
+                        placeholder="Brief product description"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="weight_kg">Weight (kg)</Label>
+                      <Input
+                        id="weight_kg"
                         type="number"
-                        value={formData.inventory_quantity}
-                        onChange={(e) => handleInputChange('inventory_quantity', e.target.value)}
-                        placeholder="0"
+                        value={formData.weight_kg}
+                        onChange={(e) => handleInputChange('weight_kg', e.target.value)}
+                        placeholder="e.g. 0.5 for 500g, 2 for 2kg"
+                        step="0.01"
                         min="0"
                       />
+                      <p className="text-sm text-muted-foreground">
+                        Used for shipping calculations. Enter in kilograms (e.g., 0.2 for 200g, 1.5 for 1.5kg)
+                      </p>
                     </div>
-                  )}
-                </CardContent>
-              </Card>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle>Status</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="is_active"
-                      checked={formData.is_active}
-                      onCheckedChange={(checked) => handleInputChange('is_active', checked)}
-                    />
-                    <Label htmlFor="is_active">
-                      Product is active
-                    </Label>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-
-          {/* Variations */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Variations</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center gap-2">
-                <Switch id="has_variants" checked={hasVariants} onCheckedChange={setHasVariants} />
-                <Label htmlFor="has_variants">This product has variants (e.g., Size, Color)</Label>
-              </div>
-              {hasVariants && (
-                <>
-                  <VariationsBuilder options={variations} onChange={setVariations} />
-                  <VariantMatrix options={variations} variants={variantEntries} onChange={setVariantEntries} />
-                </>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Actions & Payments */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Product Actions & Payments</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2">
-                    <Switch
-                      id="order_now_enabled"
-                      checked={actionButtons.order_now.enabled}
-                      onCheckedChange={(v) => setActionButtons(prev => ({ ...prev, order_now: { ...prev.order_now, enabled: v } }))}
-                    />
-                    <Label htmlFor="order_now_enabled">Enable "Order Now" button</Label>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="order_now_label">Order Now Button Text</Label>
-                    <Input id="order_now_label" value={actionButtons.order_now.label}
-                      onChange={(e) => setActionButtons(prev => ({ ...prev, order_now: { ...prev.order_now, label: e.target.value } }))}
-                    />
-                  </div>
-                  <Separator />
-                  <div className="flex items-center gap-2">
-                    <Switch
-                      id="call_enabled"
-                      checked={actionButtons.call.enabled}
-                      onCheckedChange={(v) => setActionButtons(prev => ({ ...prev, call: { ...prev.call, enabled: v } }))}
-                    />
-                    <Label htmlFor="call_enabled">Enable Call button</Label>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="call_label">Call Button Text</Label>
-                    <Input id="call_label" value={actionButtons.call.label}
-                      onChange={(e) => setActionButtons(prev => ({ ...prev, call: { ...prev.call, label: e.target.value } }))}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="call_phone">Phone Number</Label>
-                    <Input id="call_phone" placeholder="e.g. +8801XXXXXXXXX" value={actionButtons.call.phone || ''}
-                      onChange={(e) => setActionButtons(prev => ({ ...prev, call: { ...prev.call, phone: e.target.value } }))}
-                    />
-                  </div>
-                </div>
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2">
-                    <Switch
-                      id="whatsapp_enabled"
-                      checked={actionButtons.whatsapp.enabled}
-                      onCheckedChange={(v) => setActionButtons(prev => ({ ...prev, whatsapp: { ...prev.whatsapp, enabled: v } }))}
-                    />
-                    <Label htmlFor="whatsapp_enabled">Enable WhatsApp button</Label>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="whatsapp_label">WhatsApp Button Text</Label>
-                    <Input id="whatsapp_label" value={actionButtons.whatsapp.label}
-                      onChange={(e) => setActionButtons(prev => ({ ...prev, whatsapp: { ...prev.whatsapp, label: e.target.value } }))}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="whatsapp_url">WhatsApp URL</Label>
-                    <Input id="whatsapp_url" placeholder="e.g. https://wa.me/8801XXXXXXXXX?text=Hello" value={actionButtons.whatsapp.url || ''}
-                      onChange={(e) => setActionButtons(prev => ({ ...prev, whatsapp: { ...prev.whatsapp, url: e.target.value } }))}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Allowed Payment Methods</Label>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  {['cod','bkash','nagad','sslcommerz'].map((m) => (
-                    <label key={m} className="flex items-center gap-2">
-                      <Checkbox
-                        checked={allowedPayments.includes(m)}
-                        onCheckedChange={(v) => setAllowedPayments(prev => v ? [...prev, m] : prev.filter(x => x !== m))}
-                      />
-                      <span className="capitalize">{m === 'sslcommerz' ? 'SSLCommerz' : m}</span>
-                    </label>
-                  ))}
-                </div>
-                <p className="text-sm text-muted-foreground">Leave all unchecked to allow all methods.</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Media */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Media</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="images">Product Images</Label>
-                <div className="space-y-2">
-                  {formData.images.map((image, index) => (
-                    <div key={index} className="flex gap-2">
-                      <Input
-                        value={image}
-                        onChange={(e) => {
-                          const newImages = [...formData.images];
-                          newImages[index] = e.target.value;
-                          setFormData((prev) => ({ ...prev, images: newImages }));
-                        }}
-                        placeholder="Image URL"
-                      />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => {
-                          const newImages = formData.images.filter((_, i) => i !== index);
-                          setFormData((prev) => ({ ...prev, images: newImages }));
-                        }}
-                      >
-                        Remove
-                      </Button>
-                    </div>
-                  ))}
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      setFormData((prev) => ({ ...prev, images: [...prev.images, ""] }));
-                    }}
-                  >
-                    Add Image URL
-                  </Button>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="video_url">Product Video (optional)</Label>
-                <Input
-                  id="video_url"
-                  value={formData.video_url}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, video_url: e.target.value }))}
-                  placeholder="YouTube/Vimeo/Wistia link or direct MP4/WebM URL"
-                />
-                {formData.video_url && (() => {
-                  const info = parseVideoUrl(formData.video_url);
-                  if (info.type === 'unknown') return null;
-                  return (
-                    <AspectRatio ratio={16/9}>
-                      {info.type === 'hosted' ? (
-                        <video src={info.embedUrl} controls className="w-full h-full rounded border" />
-                      ) : (
-                        <iframe
-                          src={buildEmbedUrl(info.embedUrl!, info.type, { controls: true })}
-                          className="w-full h-full rounded border"
-                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                          allowFullScreen
-                          title="Product Video Preview"
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <Switch
+                          id="use_builder"
+                          checked={descriptionMode === 'builder'}
+                          onCheckedChange={(v) => setDescriptionMode(v ? 'builder' : 'rich_text')}
                         />
+                        <Label htmlFor="use_builder">Use Page Builder for Description</Label>
+                      </div>
+
+                      {descriptionMode === 'rich_text' ? (
+                        <div className="space-y-2">
+                          <Label htmlFor="description">Description</Label>
+                          <RichTextEditor
+                            value={formData.description}
+                            onChange={(html) => handleInputChange('description', html)}
+                            placeholder="Write a detailed description..."
+                          />
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          <Button type="button" onClick={() => setIsBuilderOpen(true)}>
+                            Edit Description with Page Builder
+                          </Button>
+                          <p className="text-sm text-muted-foreground">
+                            {descriptionBuilder.sections && descriptionBuilder.sections.length
+                              ? 'Builder content saved. Click Edit to update.'
+                              : 'No builder content yet. Click Edit to start.'}
+                          </p>
+                        </div>
                       )}
-                    </AspectRatio>
-                  );
-                })()}
-                <p className="text-xs text-muted-foreground">Supports YouTube, Vimeo, Wistia, or direct .mp4/.webm links.</p>
-              </div>
-            </CardContent>
-          </Card>
+                    </div>
+                  </CardContent>
+                </AccordionContent>
+              </Card>
+            </AccordionItem>
 
-          {/* SEO */}
-          <Card>
-            <CardHeader>
-              <CardTitle>SEO</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="seo_title">SEO Title</Label>
-                <Input
-                  id="seo_title"
-                  value={formData.seo_title}
-                  onChange={(e) => handleInputChange('seo_title', e.target.value)}
-                  placeholder="SEO optimized title"
-                />
-              </div>
+            {/* Variations */}
+            <AccordionItem value="variations" className="border rounded-lg">
+              <Card>
+                <AccordionTrigger className="hover:no-underline px-6 py-4">
+                  <CardTitle>Variations</CardTitle>
+                </AccordionTrigger>
+                <AccordionContent>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center gap-2">
+                      <Switch id="has_variants" checked={hasVariants} onCheckedChange={setHasVariants} />
+                      <Label htmlFor="has_variants">This product has variants (e.g., Size, Color)</Label>
+                    </div>
+                    {hasVariants && (
+                      <>
+                        <VariationsBuilder options={variations} onChange={setVariations} />
+                        <VariantMatrix options={variations} variants={variantEntries} onChange={setVariantEntries} />
+                      </>
+                    )}
+                  </CardContent>
+                </AccordionContent>
+              </Card>
+            </AccordionItem>
 
-              <div className="space-y-2">
-                <Label htmlFor="seo_description">SEO Description</Label>
-                <Textarea
-                  id="seo_description"
-                  value={formData.seo_description}
-                  onChange={(e) => handleInputChange('seo_description', e.target.value)}
-                  placeholder="SEO meta description"
-                  rows={3}
-                />
-              </div>
-            </CardContent>
-          </Card>
+            {/* Actions & Payments */}
+            <AccordionItem value="actions-payments" className="border rounded-lg">
+              <Card>
+                <AccordionTrigger className="hover:no-underline px-6 py-4">
+                  <CardTitle>Product Actions & Payments</CardTitle>
+                </AccordionTrigger>
+                <AccordionContent>
+                  <CardContent className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-2">
+                          <Switch
+                            id="order_now_enabled"
+                            checked={actionButtons.order_now.enabled}
+                            onCheckedChange={(v) => setActionButtons(prev => ({ ...prev, order_now: { ...prev.order_now, enabled: v } }))}
+                          />
+                          <Label htmlFor="order_now_enabled">Enable "Order Now" button</Label>
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="order_now_label">Order Now Button Text</Label>
+                          <Input id="order_now_label" value={actionButtons.order_now.label}
+                            onChange={(e) => setActionButtons(prev => ({ ...prev, order_now: { ...prev.order_now, label: e.target.value } }))}
+                          />
+                        </div>
+                        <Separator />
+                        <div className="flex items-center gap-2">
+                          <Switch
+                            id="call_enabled"
+                            checked={actionButtons.call.enabled}
+                            onCheckedChange={(v) => setActionButtons(prev => ({ ...prev, call: { ...prev.call, enabled: v } }))}
+                          />
+                          <Label htmlFor="call_enabled">Enable Call button</Label>
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="call_label">Call Button Text</Label>
+                          <Input id="call_label" value={actionButtons.call.label}
+                            onChange={(e) => setActionButtons(prev => ({ ...prev, call: { ...prev.call, label: e.target.value } }))}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="call_phone">Phone Number</Label>
+                          <Input id="call_phone" placeholder="e.g. +8801XXXXXXXXX" value={actionButtons.call.phone || ''}
+                            onChange={(e) => setActionButtons(prev => ({ ...prev, call: { ...prev.call, phone: e.target.value } }))}
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-2">
+                          <Switch
+                            id="whatsapp_enabled"
+                            checked={actionButtons.whatsapp.enabled}
+                            onCheckedChange={(v) => setActionButtons(prev => ({ ...prev, whatsapp: { ...prev.whatsapp, enabled: v } }))}
+                          />
+                          <Label htmlFor="whatsapp_enabled">Enable WhatsApp button</Label>
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="whatsapp_label">WhatsApp Button Text</Label>
+                          <Input id="whatsapp_label" value={actionButtons.whatsapp.label}
+                            onChange={(e) => setActionButtons(prev => ({ ...prev, whatsapp: { ...prev.whatsapp, label: e.target.value } }))}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="whatsapp_url">WhatsApp URL</Label>
+                          <Input id="whatsapp_url" placeholder="e.g. https://wa.me/8801XXXXXXXXX?text=Hello" value={actionButtons.whatsapp.url || ''}
+                            onChange={(e) => setActionButtons(prev => ({ ...prev, whatsapp: { ...prev.whatsapp, url: e.target.value } }))}
+                          />
+                        </div>
+                      </div>
+                    </div>
 
-          {/* Shipping & Returns */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Shipping & Returns</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <Switch id="free_shipping" checked={enableFreeShipping} onCheckedChange={setEnableFreeShipping} />
-                  <Label htmlFor="free_shipping">Offer free shipping over a minimum amount</Label>
-                </div>
-                {enableFreeShipping && (
-                  <div className="grid grid-cols-1 md:grid-cols-[200px] gap-2">
-                    <Input
-                      type="number"
-                      step="0.01"
-                      placeholder="Minimum amount (e.g., 1000)"
-                      value={freeShippingMin}
-                      onChange={(e) => setFreeShippingMin(e.target.value)}
-                    />
-                  </div>
-                )}
-              </div>
+                    <div className="space-y-2">
+                      <Label>Allowed Payment Methods</Label>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        {['cod','bkash','nagad','sslcommerz'].map((m) => (
+                          <label key={m} className="flex items-center gap-2">
+                            <Checkbox
+                              checked={allowedPayments.includes(m)}
+                              onCheckedChange={(v) => setAllowedPayments(prev => v ? [...prev, m] : prev.filter(x => x !== m))}
+                            />
+                            <span className="capitalize">{m === 'sslcommerz' ? 'SSLCommerz' : m}</span>
+                          </label>
+                        ))}
+                      </div>
+                      <p className="text-sm text-muted-foreground">Leave all unchecked to allow all methods.</p>
+                    </div>
+                  </CardContent>
+                </AccordionContent>
+              </Card>
+            </AccordionItem>
 
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <Switch id="easy_returns" checked={easyReturnsEnabled} onCheckedChange={setEasyReturnsEnabled} />
-                  <Label htmlFor="easy_returns">Enable Easy Returns</Label>
-                </div>
-                {easyReturnsEnabled && (
-                  <div className="grid grid-cols-1 md:grid-cols-[200px] gap-2">
-                    <Input
-                      type="number"
-                      placeholder="Days (e.g., 30)"
-                      value={easyReturnsDays}
-                      onChange={(e) => setEasyReturnsDays(e.target.value)}
-                    />
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+            {/* Media */}
+            <AccordionItem value="media" className="border rounded-lg">
+              <Card>
+                <AccordionTrigger className="hover:no-underline px-6 py-4">
+                  <CardTitle>Media</CardTitle>
+                </AccordionTrigger>
+                <AccordionContent>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="images">Product Images</Label>
+                      <div className="space-y-2">
+                        {formData.images.map((image, index) => (
+                          <div key={index} className="flex gap-2">
+                            <Input
+                              value={image}
+                              onChange={(e) => {
+                                const newImages = [...formData.images];
+                                newImages[index] = e.target.value;
+                                setFormData((prev) => ({ ...prev, images: newImages }));
+                              }}
+                              placeholder="Image URL"
+                            />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={() => {
+                                const newImages = formData.images.filter((_, i) => i !== index);
+                                setFormData((prev) => ({ ...prev, images: newImages }));
+                              }}
+                            >
+                              Remove
+                            </Button>
+                          </div>
+                        ))}
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => {
+                            setFormData((prev) => ({ ...prev, images: [...prev.images, ""] }));
+                          }}
+                        >
+                          Add Image URL
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="video_url">Product Video (optional)</Label>
+                      <Input
+                        id="video_url"
+                        value={formData.video_url}
+                        onChange={(e) => setFormData((prev) => ({ ...prev, video_url: e.target.value }))}
+                        placeholder="YouTube/Vimeo/Wistia link or direct MP4/WebM URL"
+                      />
+                      {formData.video_url && (() => {
+                        const info = parseVideoUrl(formData.video_url);
+                        if (info.type === 'unknown') return null;
+                        return (
+                          <AspectRatio ratio={16/9}>
+                            {info.type === 'hosted' ? (
+                              <video src={info.embedUrl} controls className="w-full h-full rounded border" />
+                            ) : (
+                              <iframe
+                                src={buildEmbedUrl(info.embedUrl!, info.type, { controls: true })}
+                                className="w-full h-full rounded border"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                allowFullScreen
+                                title="Product Video Preview"
+                              />
+                            )}
+                          </AspectRatio>
+                        );
+                      })()}
+                      <p className="text-xs text-muted-foreground">Supports YouTube, Vimeo, Wistia, or direct .mp4/.webm links.</p>
+                    </div>
+                  </CardContent>
+                </AccordionContent>
+              </Card>
+            </AccordionItem>
+
+            {/* SEO */}
+            <AccordionItem value="seo" className="border rounded-lg">
+              <Card>
+                <AccordionTrigger className="hover:no-underline px-6 py-4">
+                  <CardTitle>SEO</CardTitle>
+                </AccordionTrigger>
+                <AccordionContent>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="seo_title">SEO Title</Label>
+                      <Input
+                        id="seo_title"
+                        value={formData.seo_title}
+                        onChange={(e) => handleInputChange('seo_title', e.target.value)}
+                        placeholder="SEO optimized title"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="seo_description">SEO Description</Label>
+                      <Textarea
+                        id="seo_description"
+                        value={formData.seo_description}
+                        onChange={(e) => handleInputChange('seo_description', e.target.value)}
+                        placeholder="SEO meta description"
+                        rows={3}
+                      />
+                    </div>
+                  </CardContent>
+                </AccordionContent>
+              </Card>
+            </AccordionItem>
+
+            {/* Shipping & Returns */}
+            <AccordionItem value="shipping" className="border rounded-lg">
+              <Card>
+                <AccordionTrigger className="hover:no-underline px-6 py-4">
+                  <CardTitle>Shipping & Returns</CardTitle>
+                </AccordionTrigger>
+                <AccordionContent>
+                  <CardContent className="space-y-6">
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Switch id="free_shipping" checked={enableFreeShipping} onCheckedChange={setEnableFreeShipping} />
+                        <Label htmlFor="free_shipping">Offer free shipping over a minimum amount</Label>
+                      </div>
+                      {enableFreeShipping && (
+                        <div className="grid grid-cols-1 md:grid-cols-[200px] gap-2">
+                          <Input
+                            type="number"
+                            step="0.01"
+                            placeholder="Minimum amount (e.g., 1000)"
+                            value={freeShippingMin}
+                            onChange={(e) => setFreeShippingMin(e.target.value)}
+                          />
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Switch id="easy_returns" checked={easyReturnsEnabled} onCheckedChange={setEasyReturnsEnabled} />
+                        <Label htmlFor="easy_returns">Enable Easy Returns</Label>
+                      </div>
+                      {easyReturnsEnabled && (
+                        <div className="grid grid-cols-1 md:grid-cols-[200px] gap-2">
+                          <Input
+                            type="number"
+                            placeholder="Days (e.g., 30)"
+                            value={easyReturnsDays}
+                            onChange={(e) => setEasyReturnsDays(e.target.value)}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </AccordionContent>
+              </Card>
+            </AccordionItem>
+          </Accordion>
 
           {/* Actions */}
           <div className="flex justify-end gap-4">
@@ -878,12 +854,12 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
             </Button>
           </div>
 
-          <ProductDescriptionBuilderDialog
-            open={isBuilderOpen}
-            onOpenChange={setIsBuilderOpen}
-            initialData={descriptionBuilder}
-            onSave={(data) => setDescriptionBuilder(data)}
-          />
+        <ProductDescriptionBuilderDialog
+          open={isBuilderOpen}
+          onOpenChange={setIsBuilderOpen}
+          initialData={descriptionBuilder}
+          onSave={setDescriptionBuilder}
+        />
         </form>
       </div>
     </DashboardLayout>

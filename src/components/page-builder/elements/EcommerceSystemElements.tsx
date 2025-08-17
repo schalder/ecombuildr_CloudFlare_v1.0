@@ -18,7 +18,7 @@ import { toast } from 'sonner';
 import { useStoreProducts } from '@/hooks/useStoreData';
 import { generateResponsiveCSS, mergeResponsiveStyles } from '@/components/page-builder/utils/responsiveStyles';
 import { formatCurrency } from '@/lib/currency';
-import { computeShippingForAddress } from '@/lib/shipping';
+import { computeOrderShipping } from '@/lib/shipping-enhanced';
 import { nameWithVariant } from '@/lib/utils';
 import { useWebsiteShipping } from '@/hooks/useWebsiteShipping';
 import { renderElementStyles } from '@/components/page-builder/utils/styleRenderer';
@@ -691,14 +691,42 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
 
   // Recompute shipping cost when address details change (primarily city)
   useEffect(() => {
-    if (websiteShipping && websiteShipping.enabled) {
-      const cost = computeShippingForAddress(websiteShipping, {
-        city: form.shipping_city,
-        area: form.shipping_area,
-        address: form.shipping_address,
-        postal: form.shipping_postal_code,
-      });
-      if (typeof cost === 'number') setShippingCost(cost);
+    const computeShipping = async () => {
+      if (!websiteShipping || !websiteShipping.enabled) {
+        setShippingCost(0);
+        return;
+      }
+
+      // Get product weights for cart items
+      const itemsWithWeight = await Promise.all(
+        items.map(async (item) => {
+          const { data: product } = await supabase
+            .from('products')
+            .select('weight_grams')
+            .eq('id', item.productId)
+            .single();
+          
+          return {
+            ...item,
+            weight_grams: product?.weight_grams || 0,
+          };
+        })
+      );
+
+      const result = computeOrderShipping(
+        websiteShipping,
+        itemsWithWeight,
+        {
+          city: form.shipping_city,
+          area: form.shipping_area,
+          address: form.shipping_address,
+          postal: form.shipping_postal_code,
+        },
+        total
+      );
+
+      const cost = result.shippingCost;
+      setShippingCost(cost);
       // Debug: observe when shipping recalculates
       console.debug('[Checkout] Recomputed shipping', {
         city: form.shipping_city,
@@ -707,10 +735,10 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
         address: form.shipping_address,
         cost,
       });
-    } else {
-      setShippingCost(0);
-    }
-  }, [websiteShipping, form.shipping_city, form.shipping_area, form.shipping_postal_code, form.shipping_address]);
+    };
+
+    computeShipping();
+  }, [websiteShipping, form.shipping_city, form.shipping_area, form.shipping_postal_code, form.shipping_address, items, total]);
 
   const handleSubmit = async () => {
     if (!store || items.length === 0) return;

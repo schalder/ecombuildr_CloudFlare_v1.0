@@ -17,7 +17,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { CreditCard, Truck, MapPin } from 'lucide-react';
 import { toast } from 'sonner';
 import { useEcomPaths } from '@/lib/pathResolver';
-import { computeShippingForAddress } from '@/lib/shipping';
+import { computeOrderShipping } from '@/lib/shipping-enhanced';
 import { formatCurrency } from '@/lib/currency';
 import { nameWithVariant } from '@/lib/utils';
 import { useWebsiteShipping } from '@/hooks/useWebsiteShipping';
@@ -72,23 +72,52 @@ export const CheckoutPage: React.FC = () => {
 
 // Recompute shipping cost when address details or settings change
 useEffect(() => {
-  if (websiteShipping && websiteShipping.enabled) {
-    const cost = computeShippingForAddress(websiteShipping, {
-      city: form.shipping_city,
-      area: form.shipping_area,
-      address: form.shipping_address,
-    });
-    if (typeof cost === 'number') setShippingCost(cost);
+  const computeShipping = async () => {
+    if (!websiteShipping || !websiteShipping.enabled) {
+      setShippingCost(0);
+      return;
+    }
+
+    // Get product weights for cart items
+    const itemsWithWeight = await Promise.all(
+      items.map(async (item) => {
+        const { data: product } = await supabase
+          .from('products')
+          .select('weight_grams')
+          .eq('id', item.productId)
+          .single();
+        
+        return {
+          ...item,
+          weight_grams: product?.weight_grams || 0,
+        };
+      })
+    );
+
+    const result = computeOrderShipping(
+      websiteShipping,
+      itemsWithWeight,
+      {
+        city: form.shipping_city,
+        area: form.shipping_area,
+        address: form.shipping_address,
+      },
+      total
+    );
+
+    setShippingCost(result.shippingCost);
     console.debug('[CheckoutPage] Recomputed shipping', {
       city: form.shipping_city,
       area: form.shipping_area,
       address: form.shipping_address,
-      cost,
+      cost: result.shippingCost,
+      breakdown: result.breakdown,
+      isFreeShipping: result.isFreeShipping,
     });
-  } else {
-    setShippingCost(0);
-  }
-}, [websiteShipping, form.shipping_city, form.shipping_area, form.shipping_address]);
+  };
+
+  computeShipping();
+}, [websiteShipping, form.shipping_city, form.shipping_area, form.shipping_address, items, total]);
 
   // Derive allowed payment methods based on products in cart AND enabled gateways
   useEffect(() => {
