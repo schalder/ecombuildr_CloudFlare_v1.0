@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useParams, useNavigate } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
@@ -64,6 +64,8 @@ const statusColors = {
 
 export default function Orders() {
   const { user } = useAuth();
+  const { orderId } = useParams<{ orderId?: string }>();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -97,6 +99,35 @@ export default function Orders() {
       setSearchTerm(search);
     }
   }, [searchParams]);
+
+  // Handle orderId parameter from notifications
+  useEffect(() => {
+    if (orderId && orders.length > 0) {
+      const order = orders.find(o => o.id === orderId);
+      if (order) {
+        // Open the order details dialog
+        const openOrderDetails = async () => {
+          try {
+            const { data, error } = await supabase.functions.invoke('get-order', { body: { orderId: order.id } });
+            if (error) throw error;
+            if (data) {
+              setSelectedOrder({ ...order, ...data.order });
+              setSelectedOrderItems(data.items || []);
+              setIsOrderDetailsOpen(true);
+            }
+          } catch (e) { 
+            console.error('Error fetching order details:', e);
+            toast({
+              title: "Error",
+              description: "Could not load order details",
+              variant: "destructive",
+            });
+          }
+        };
+        openOrderDetails();
+      }
+    }
+  }, [orderId, orders]);
 
   const fetchOrders = async () => {
     try {
@@ -618,7 +649,16 @@ export default function Orders() {
         </Card>
 
         {/* Order Details Dialog */}
-        <Dialog open={isOrderDetailsOpen} onOpenChange={setIsOrderDetailsOpen}>
+        <Dialog 
+          open={isOrderDetailsOpen} 
+          onOpenChange={(open) => {
+            setIsOrderDetailsOpen(open);
+            // If closing the dialog and we came from a notification link, navigate back to orders
+            if (!open && orderId) {
+              navigate('/dashboard/orders', { replace: true });
+            }
+          }}
+        >
           <DialogContent className="max-w-2xl">
             <DialogHeader>
               <DialogTitle>Order Details - #{selectedOrder?.order_number}</DialogTitle>

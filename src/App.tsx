@@ -93,7 +93,8 @@ const App = () => (
                 <Route path="/dashboard/products/:id/edit" element={<EditProduct />} />
                 <Route path="/dashboard/categories" element={<Categories />} />
                 <Route path="/dashboard/product-library" element={<ProductLibrary />} />
-                <Route path="/dashboard/orders" element={<Orders />} />
+                 <Route path="/dashboard/orders" element={<Orders />} />
+                 <Route path="/dashboard/orders/:orderId" element={<Orders />} />
                 <Route path="/dashboard/customers" element={<Customers />} />
                 <Route path="/dashboard/analytics" element={<Analytics />} />
                 <Route path="/dashboard/reviews" element={<Reviews />} />
