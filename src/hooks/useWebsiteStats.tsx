@@ -154,22 +154,37 @@ export function useWebsiteStats(websiteId: string): WebsiteStatsHookReturn {
         avg_time: avgSessionDuration,
       }));
 
-      // Get store info for URL construction
-      const { data: store } = await supabase
-        .from('stores')
-        .select('slug, settings')
-        .eq('id', website.store_id)
-        .single();
+      // Get store and domain info for URL construction
+      const [storeRes, domainRes] = await Promise.all([
+        supabase
+          .from('stores')
+          .select('slug, settings')
+          .eq('id', website.store_id)
+          .single(),
+        supabase
+          .from('domain_connections')
+          .select(`
+            custom_domains (domain)
+          `)
+          .eq('content_type', 'website')
+          .eq('content_id', websiteId)
+          .maybeSingle()
+      ]);
 
-      // Build website URL  
+      const store = storeRes.data;
+      
+      // Build website URL properly
       let websiteUrl = '';
-      const settings = store?.settings as any;
-      if (website.domain) {
+      const customDomain = (domainRes.data?.custom_domains as any)?.domain;
+      
+      if (customDomain) {
+        websiteUrl = `https://${customDomain}`;
+      } else if (website.domain) {
         websiteUrl = `https://${website.domain}`;
-      } else if (settings?.custom_domain) {
-        websiteUrl = `https://${settings.custom_domain}`;
+      } else if (store?.slug && website.slug) {
+        websiteUrl = `https://${website.slug}.${store.slug}.lovable.app`;
       } else {
-        websiteUrl = `https://${website.slug}.sellbetter.app`;
+        websiteUrl = `https://${website.slug}.demo-store.app`;
       }
 
       const stats: WebsiteStats = {
