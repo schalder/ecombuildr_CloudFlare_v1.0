@@ -16,6 +16,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useUserStore } from '@/hooks/useUserStore';
 import { setGlobalCurrency } from '@/lib/currency';
 import { useStore } from '@/contexts/StoreContext';
+import { WebsiteProvider } from '@/contexts/WebsiteContext';
 
 export default function PageBuilder() {
   const navigate = useNavigate();
@@ -199,11 +200,14 @@ export default function PageBuilder() {
   }, [entityId, currentStore, context, loadPage]);
 
   // Preload store context and currency for builder preview
+  const [resolvedWebsiteId, setResolvedWebsiteId] = useState<string | undefined>();
+
   useEffect(() => {
     if (parentId) {
       (async () => {
         try {
           if (context === 'website') {
+            setResolvedWebsiteId(parentId);
             const { data } = await supabase
               .from('websites')
               .select('settings, store_id')
@@ -221,22 +225,27 @@ export default function PageBuilder() {
           } else if (context === 'funnel') {
             const { data } = await supabase
               .from('funnels')
-              .select('store_id')
+              .select('store_id, website_id')
               .eq('id', parentId)
               .maybeSingle();
             
-            if (data?.store_id) {
-              // Load store context for e-commerce elements
-              await loadStoreById(data.store_id);
+            if (data) {
+              // Set resolved website ID for WebsiteContext
+              setResolvedWebsiteId(data.website_id);
               
-              // Set currency from store settings
-              const { data: store } = await supabase
-                .from('stores')
-                .select('settings')
-                .eq('id', data.store_id)
-                .maybeSingle();
-              const code = (store as any)?.settings?.currency || 'BDT';
-              setGlobalCurrency(code as any);
+              if (data.store_id) {
+                // Load store context for e-commerce elements
+                await loadStoreById(data.store_id);
+                
+                // Set currency from store settings
+                const { data: store } = await supabase
+                  .from('stores')
+                  .select('settings')
+                  .eq('id', data.store_id)
+                  .maybeSingle();
+                const code = (store as any)?.settings?.currency || 'BDT';
+                setGlobalCurrency(code as any);
+              }
             }
           }
         } catch {
@@ -296,7 +305,8 @@ export default function PageBuilder() {
   }
 
   return (
-    <div className="h-screen bg-background flex flex-col">
+    <WebsiteProvider websiteId={resolvedWebsiteId}>
+      <div className="h-screen bg-background flex flex-col">
       {/* Top Navigation */}
       <div className="border-b bg-card px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-4">
@@ -596,9 +606,10 @@ export default function PageBuilder() {
                  </Card>
                </div>
              </div>
-           </div>
-         )}
-       </div>
-     </div>
-   );
- }
+            </div>
+          )}
+        </div>
+      </div>
+    </WebsiteProvider>
+  );
+}

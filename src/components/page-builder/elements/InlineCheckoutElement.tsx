@@ -17,7 +17,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { formatCurrency } from '@/lib/currency';
 import { generateResponsiveCSS, mergeResponsiveStyles } from '@/components/page-builder/utils/responsiveStyles';
-import { computeShippingForAddress } from '@/lib/shipping';
+import { computeOrderShipping } from '@/lib/shipping-enhanced';
+import type { CartItem } from '@/lib/shipping-enhanced';
 import { usePixelTracking } from '@/hooks/usePixelTracking';
 import { usePixelContext } from '@/components/pixel/PixelManager';
 import { useResolvedWebsiteId } from '@/hooks/useResolvedWebsiteId';
@@ -137,21 +138,64 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
   const buttonInline = useMemo(() => mergeResponsiveStyles({}, buttonStyles, deviceType as any), [buttonStyles, deviceType]);
   const headerInline = useMemo(() => mergeResponsiveStyles({}, headerStyles, deviceType as any), [headerStyles, deviceType]);
 
-  // Shipping
+  // Shipping calculation using enhanced shipping
   const { websiteShipping } = useWebsiteShipping();
-  const [shippingCost, setShippingCost] = useState(0);
-  useEffect(() => {
-    if (websiteShipping && websiteShipping.enabled) {
-      const cost = computeShippingForAddress(websiteShipping, {
-        city: form.shipping_city,
-        area: form.shipping_area,
-        address: form.shipping_address,
-        postal: form.shipping_postal_code,
-      });
-      if (typeof cost === 'number') setShippingCost(cost);
-    } else setShippingCost(0);
-  }, [websiteShipping, form.shipping_city, form.shipping_area, form.shipping_postal_code, form.shipping_address]);
 
+  // Calculate shipping cost using enhanced shipping calculation
+  const shippingCalculation = useMemo(() => {
+    if (!websiteShipping || !websiteShipping.enabled || !selectedProduct) {
+      return {
+        shippingCost: 0,
+        isFreeShipping: true,
+        breakdown: {
+          baseFee: 0,
+          weightFee: 0,
+          productSpecificFees: 0,
+          totalBeforeDiscount: 0,
+          discount: 0,
+        },
+      };
+    }
+    
+    const address = {
+      city: form.shipping_city,
+      area: form.shipping_area,
+      address: form.shipping_address,
+      postal: form.shipping_postal_code
+    };
+
+    // Convert selected products to cart items format
+    const cartItems: CartItem[] = [
+      {
+        id: selectedProduct.id,
+        productId: selectedProduct.id,
+        quantity: parseInt(String(quantity)) || 1,
+        price: selectedProduct.price,
+        weight_grams: (selectedProduct as any).weight_grams || 0,
+        shipping_config: (selectedProduct as any).shipping_config,
+      }
+    ];
+
+    // Add bump product if selected
+    if (orderBump.enabled && bumpChecked && bumpProduct) {
+      cartItems.push({
+        id: bumpProduct.id,
+        productId: bumpProduct.id,
+        quantity: 1,
+        price: bumpProduct.price,
+        weight_grams: (bumpProduct as any).weight_grams || 0,
+        shipping_config: (bumpProduct as any).shipping_config,
+      });
+    }
+
+    const main = selectedProduct ? Number(selectedProduct.price) * Math.max(1, quantity || 1) : 0;
+    const bump = (orderBump.enabled && bumpChecked && bumpProduct) ? Number(bumpProduct.price) : 0;
+    const subtotal = main + bump;
+    
+    return computeOrderShipping(websiteShipping, cartItems, address, subtotal);
+  }, [websiteShipping, form, selectedProduct, bumpProduct, orderBump.enabled, bumpChecked, quantity]);
+
+  const shippingCost = shippingCalculation.shippingCost;
   const subtotal = useMemo(() => {
     const main = selectedProduct ? Number(selectedProduct.price) * Math.max(1, quantity || 1) : 0;
     const bump = (orderBump.enabled && bumpChecked && bumpProduct) ? Number(bumpProduct.price) : 0;
@@ -185,7 +229,7 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
     (customFields || []).filter((cf:any)=>cf.enabled && cf.required).forEach((cf:any)=>{ const v=(form.custom_fields as any)[cf.id]; if (!String(v ?? '').trim()) missing.push(cf.label || 'Custom field'); });
     if (missing.length) { toast.error(`Please fill in: ${missing.join(', ')}`); return; }
 
-    const total = subtotal + shippingCost;
+  const total = subtotal + shippingCost;
     try {
       const hasBkashApi = !!(store?.settings?.bkash?.app_key && store?.settings?.bkash?.app_secret && store?.settings?.bkash?.username && store?.settings?.bkash?.password);
       const isBkashManual = !!(store?.settings?.bkash?.enabled && (store?.settings?.bkash?.mode === 'number' || !hasBkashApi) && store?.settings?.bkash?.number);

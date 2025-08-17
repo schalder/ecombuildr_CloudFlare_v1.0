@@ -11,10 +11,11 @@ import type { ShippingSettings } from '@/lib/shipping';
 // 3) store slug param (loads store; falls back to store.settings.shipping)
 // 4) window.location.hostname matches websites.domain or websites.canonical_domain
 export function useWebsiteShipping() {
-  const { slug, websiteId, websiteSlug } = useParams<{
+  const { slug, websiteId, websiteSlug, funnelId } = useParams<{
     slug?: string;
     websiteId?: string;
     websiteSlug?: string;
+    funnelId?: string;
   }>();
   const { store, loadStore, loadStoreById } = useStore();
   const [websiteShipping, setWebsiteShipping] = useState<ShippingSettings | undefined>(undefined);
@@ -49,13 +50,35 @@ export function useWebsiteShipping() {
           return;
         }
 
-        // 3) Storefront slug route ("/store/:slug")
+        // 3) Funnel route - resolve website from funnel
+        if (funnelId) {
+          const { data } = await supabase
+            .from('funnels')
+            .select('website_id, store_id')
+            .eq('id', funnelId)
+            .maybeSingle();
+          
+          if (data?.store_id) await loadStoreById(data.store_id);
+          
+          if (data?.website_id) {
+            const { data: websiteData } = await supabase
+              .from('websites')
+              .select('settings')
+              .eq('id', data.website_id)
+              .maybeSingle();
+            const ship = (websiteData as any)?.settings?.shipping;
+            if (ship) setWebsiteShipping(ship as ShippingSettings);
+          }
+          return;
+        }
+
+        // 4) Storefront slug route ("/store/:slug")
         if (slug) {
           await loadStore(slug);
           // No website-level config here; fallback handled below
         }
 
-        // 4) Domain-based resolution (custom domains)
+        // 5) Domain-based resolution (custom domains)
         const host = typeof window !== 'undefined' ? window.location.hostname : '';
         if (host) {
           const { data } = await supabase
@@ -73,7 +96,7 @@ export function useWebsiteShipping() {
         // console.warn('[useWebsiteShipping] resolution error', e);
       }
     })();
-  }, [slug, websiteId, websiteSlug, loadStore, loadStoreById]);
+  }, [slug, websiteId, websiteSlug, funnelId, loadStore, loadStoreById]);
 
   // Fallback: use store-level shipping settings if website-level not present
   useEffect(() => {

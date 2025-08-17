@@ -1334,6 +1334,7 @@ export type Database = {
           price: number
           seo_description: string | null
           seo_title: string | null
+          shipping_config: Json | null
           short_description: string | null
           sku: string | null
           slug: string
@@ -1342,6 +1343,7 @@ export type Database = {
           updated_at: string | null
           variations: Json | null
           video_url: string | null
+          weight_grams: number | null
         }
         Insert: {
           action_buttons?: Json
@@ -1364,6 +1366,7 @@ export type Database = {
           price?: number
           seo_description?: string | null
           seo_title?: string | null
+          shipping_config?: Json | null
           short_description?: string | null
           sku?: string | null
           slug: string
@@ -1372,6 +1375,7 @@ export type Database = {
           updated_at?: string | null
           variations?: Json | null
           video_url?: string | null
+          weight_grams?: number | null
         }
         Update: {
           action_buttons?: Json
@@ -1394,6 +1398,7 @@ export type Database = {
           price?: number
           seo_description?: string | null
           seo_title?: string | null
+          shipping_config?: Json | null
           short_description?: string | null
           sku?: string | null
           slug?: string
@@ -1402,6 +1407,7 @@ export type Database = {
           updated_at?: string | null
           variations?: Json | null
           video_url?: string | null
+          weight_grams?: number | null
         }
         Relationships: [
           {
