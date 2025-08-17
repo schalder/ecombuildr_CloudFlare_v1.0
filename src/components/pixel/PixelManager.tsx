@@ -30,7 +30,15 @@ export const usePixelContext = () => React.useContext(PixelContext);
 export const PixelManager: React.FC<PixelManagerProps> = ({ websitePixels: initialPixels, children, storeId }) => {
   const [currentPixels, setCurrentPixels] = React.useState(initialPixels);
   const { websiteId } = useWebsiteContext();
-  const { trackPageView } = usePixelTracking(currentPixels, storeId, websiteId);
+  
+  // Extract funnelId from current URL if it's a funnel route
+  const funnelId = React.useMemo(() => {
+    const path = window.location.pathname;
+    const funnelMatch = path.match(/\/funnel\/([^\/]+)/);
+    return funnelMatch ? funnelMatch[1] : undefined;
+  }, []);
+  
+  const { trackPageView } = usePixelTracking(currentPixels, storeId, websiteId, funnelId);
 
   const updatePixels = React.useCallback((newPixels: any) => {
     console.debug('[PixelManager] Updating pixels:', newPixels);

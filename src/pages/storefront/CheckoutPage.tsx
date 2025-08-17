@@ -22,6 +22,7 @@ import { formatCurrency } from '@/lib/currency';
 import { nameWithVariant } from '@/lib/utils';
 import { useWebsiteShipping } from '@/hooks/useWebsiteShipping';
 import { useWebsiteContext } from '@/contexts/WebsiteContext';
+import { useChannelContext } from '@/hooks/useChannelContext';
 
 interface CheckoutForm {
   customer_name: string;
@@ -45,6 +46,7 @@ export const CheckoutPage: React.FC = () => {
   const { pixels } = usePixelContext();
   const { trackInitiateCheckout, trackPurchase } = usePixelTracking(pixels);
   const { websiteId: contextWebsiteId } = useWebsiteContext();
+  const { websiteId: resolvedWebsiteId, funnelId: resolvedFunnelId } = useChannelContext();
   const isWebsiteContext = Boolean(websiteId || websiteSlug || contextWebsiteId);
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -235,8 +237,8 @@ useEffect(() => {
       // Create order via secure Edge Function to respect RLS
       const orderData = {
         store_id: store.id,
-        website_id: websiteId || contextWebsiteId || null,
-        funnel_id: null, // Add funnel context if available from URL params
+        website_id: resolvedWebsiteId,
+        funnel_id: resolvedFunnelId,
         customer_name: form.customer_name,
         customer_email: form.customer_email,
         customer_phone: form.customer_phone,
@@ -274,6 +276,13 @@ useEffect(() => {
       if (createErr) throw createErr;
       const createdOrderId: string | undefined = data?.order?.id;
       if (!createdOrderId) throw new Error('Order was not created');
+      
+      console.debug('[CheckoutPage] Order created:', { 
+        orderId: createdOrderId, 
+        websiteId: resolvedWebsiteId, 
+        funnelId: resolvedFunnelId,
+        total: finalTotal 
+      });
 
       // Track purchase event
       if (form.payment_method === 'cod') {

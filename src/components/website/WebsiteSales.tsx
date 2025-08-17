@@ -228,8 +228,11 @@ export function WebsiteSales({ websiteId, websiteName }: WebsiteSalesProps) {
           <CardContent className="p-6 text-center">
             <ShoppingCart className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
             <h3 className="text-lg font-medium">No sales yet</h3>
-            <p className="text-muted-foreground">
+            <p className="text-muted-foreground mb-2">
               Sales data will appear here when customers place orders through this website.
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Note: Only orders with website tracking will show here. Orders placed through the main storefront appear in the general Orders page.
             </p>
           </CardContent>
         </Card>

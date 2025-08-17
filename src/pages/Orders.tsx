@@ -476,7 +476,7 @@ export default function Orders() {
                             {order.website_id ? websiteMap[order.website_id] || 'Website' : funnelMap[order.funnel_id!] || 'Funnel'}
                           </div>
                         ) : (
-                          <span className="text-muted-foreground text-sm">—</span>
+                          <span className="text-sm text-muted-foreground">Storefront</span>
                         )}
                       </TableCell>
                       <TableCell>
