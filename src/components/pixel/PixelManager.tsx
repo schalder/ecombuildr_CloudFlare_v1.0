@@ -1,17 +1,6 @@
 import React, { useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
 import { usePixelTracking } from '@/hooks/usePixelTracking';
 import { useWebsiteContext } from '@/contexts/WebsiteContext';
-
-// Safe hook to use location only when inside a Router context
-const useSafeLocation = () => {
-  try {
-    return useLocation();
-  } catch (error) {
-    // Not inside a Router context, return null
-    return null;
-  }
-};
 
 interface PixelManagerProps {
   websitePixels?: {
@@ -41,7 +30,6 @@ export const usePixelContext = () => React.useContext(PixelContext);
 export const PixelManager: React.FC<PixelManagerProps> = ({ websitePixels: initialPixels, children, storeId }) => {
   const [currentPixels, setCurrentPixels] = React.useState(initialPixels);
   const { websiteId } = useWebsiteContext();
-  const location = useSafeLocation(); // Safe location hook
   const { trackPageView } = usePixelTracking(currentPixels, storeId, websiteId);
 
   const updatePixels = React.useCallback((newPixels: any) => {
@@ -110,12 +98,43 @@ export const PixelManager: React.FC<PixelManagerProps> = ({ websitePixels: initi
     return () => clearTimeout(timer);
   }, [currentPixels, trackPageView]);
 
-  // Track SPA navigation (location changes) - only when in Router context
+  // Track navigation changes using browser's History API (works everywhere)
   useEffect(() => {
-    if (currentPixels && location) {
-      trackPageView();
-    }
-  }, [location?.pathname, location?.search, trackPageView, currentPixels]);
+    if (!currentPixels) return;
+
+    let lastUrl = window.location.href;
+    
+    const handleNavigation = () => {
+      const currentUrl = window.location.href;
+      if (currentUrl !== lastUrl) {
+        lastUrl = currentUrl;
+        trackPageView();
+      }
+    };
+
+    // Listen to popstate (back/forward buttons)
+    window.addEventListener('popstate', handleNavigation);
+    
+    // Listen to pushstate/replacestate (programmatic navigation)
+    const originalPushState = history.pushState;
+    const originalReplaceState = history.replaceState;
+    
+    history.pushState = function(...args) {
+      originalPushState.apply(history, args);
+      setTimeout(handleNavigation, 0);
+    };
+    
+    history.replaceState = function(...args) {
+      originalReplaceState.apply(history, args);
+      setTimeout(handleNavigation, 0);
+    };
+
+    return () => {
+      window.removeEventListener('popstate', handleNavigation);
+      history.pushState = originalPushState;
+      history.replaceState = originalReplaceState;
+    };
+  }, [currentPixels, trackPageView]);
 
   return (
     <PixelContext.Provider value={{ pixels: currentPixels, updatePixels }}>
