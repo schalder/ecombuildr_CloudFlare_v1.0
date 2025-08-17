@@ -175,17 +175,6 @@ export function AppSidebar() {
                   Add Product
                 </NavLink>
               </Button>
-              <Button 
-                asChild 
-                variant="outline" 
-                size="sm" 
-                className="w-full justify-start border-sidebar-border"
-              >
-                <NavLink to="/dashboard/websites/create">
-                  <FileText className="mr-2 h-4 w-4" />
-                  Website Builder
-                </NavLink>
-              </Button>
             </div>
           </div>
         )}
