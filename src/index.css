@@ -164,4 +164,14 @@ All colors MUST be HSL. Designed for trust, energy, and conversion.
   .cart-action-button {
     transition: all 0.2s ease;
   }
+
+  /* Mobile optimizations */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
 }

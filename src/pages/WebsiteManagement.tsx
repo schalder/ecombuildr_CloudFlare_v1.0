@@ -166,34 +166,37 @@ const WebsiteManagement = () => {
     <DashboardLayout>
       <div className="min-h-screen bg-background">
         {/* Header */}
-        <div className="border-b bg-background px-6 py-4">
+        <div className="border-b bg-background px-4 sm:px-6 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2 sm:space-x-4">
               <Button variant="ghost" size="sm" onClick={() => navigate('/dashboard/websites')}>
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back
+                <ArrowLeft className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Back</span>
               </Button>
               <div>
-                <h1 className="text-2xl font-semibold">{website.name}</h1>
+                <h1 className="text-lg sm:text-2xl font-semibold truncate">{website.name}</h1>
               </div>
             </div>
             <div className="flex items-center space-x-2">
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" className="hidden sm:flex">
                 <ExternalLink className="h-4 w-4 mr-2" />
                 Share
               </Button>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" className="hidden sm:flex">
                 Help
+              </Button>
+              <Button variant="outline" size="sm" className="sm:hidden">
+                <ExternalLink className="h-4 w-4" />
               </Button>
             </div>
           </div>
         </div>
 
         {/* Navigation Tabs */}
-        <div className="border-b px-6">
-          <div className="flex space-x-8">
+        <div className="border-b px-2 sm:px-6">
+          <div className="flex space-x-1 sm:space-x-8 overflow-x-auto scrollbar-hide">
             <button 
-              className={`py-4 px-1 border-b-2 font-medium transition-colors ${
+              className={`py-4 px-3 sm:px-1 border-b-2 font-medium transition-colors whitespace-nowrap text-sm sm:text-base min-w-0 flex-shrink-0 ${
                 activeTab === 'pages' 
                   ? 'border-primary text-primary' 
                   : 'border-transparent text-muted-foreground hover:text-foreground'
@@ -203,7 +206,7 @@ const WebsiteManagement = () => {
               Pages
             </button>
             <button 
-              className={`py-4 px-1 border-b-2 font-medium transition-colors ${
+              className={`py-4 px-3 sm:px-1 border-b-2 font-medium transition-colors whitespace-nowrap text-sm sm:text-base min-w-0 flex-shrink-0 ${
                 activeTab === 'header' 
                   ? 'border-primary text-primary' 
                   : 'border-transparent text-muted-foreground hover:text-foreground'
@@ -213,7 +216,7 @@ const WebsiteManagement = () => {
               Header
             </button>
             <button 
-              className={`py-4 px-1 border-b-2 font-medium transition-colors ${
+              className={`py-4 px-3 sm:px-1 border-b-2 font-medium transition-colors whitespace-nowrap text-sm sm:text-base min-w-0 flex-shrink-0 ${
                 activeTab === 'footer' 
                   ? 'border-primary text-primary' 
                   : 'border-transparent text-muted-foreground hover:text-foreground'
@@ -223,7 +226,7 @@ const WebsiteManagement = () => {
               Footer
             </button>
             <button 
-              className={`py-4 px-1 border-b-2 font-medium transition-colors ${
+              className={`py-4 px-3 sm:px-1 border-b-2 font-medium transition-colors whitespace-nowrap text-sm sm:text-base min-w-0 flex-shrink-0 ${
                 activeTab === 'stats' 
                   ? 'border-primary text-primary' 
                   : 'border-transparent text-muted-foreground hover:text-foreground'
@@ -233,7 +236,7 @@ const WebsiteManagement = () => {
               Stats
             </button>
             <button 
-              className={`py-4 px-1 border-b-2 font-medium transition-colors ${
+              className={`py-4 px-3 sm:px-1 border-b-2 font-medium transition-colors whitespace-nowrap text-sm sm:text-base min-w-0 flex-shrink-0 ${
                 activeTab === 'sales' 
                   ? 'border-primary text-primary' 
                   : 'border-transparent text-muted-foreground hover:text-foreground'
@@ -243,7 +246,7 @@ const WebsiteManagement = () => {
               Sales
             </button>
             <button 
-              className={`py-4 px-1 border-b-2 font-medium transition-colors ${
+              className={`py-4 px-3 sm:px-1 border-b-2 font-medium transition-colors whitespace-nowrap text-sm sm:text-base min-w-0 flex-shrink-0 ${
                 activeTab === 'settings' 
                   ? 'border-primary text-primary' 
                   : 'border-transparent text-muted-foreground hover:text-foreground'
@@ -256,14 +259,14 @@ const WebsiteManagement = () => {
         </div>
 
         {/* Main Content */}
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           {activeTab === 'pages' && (
             <>
-              <div className="flex items-center justify-between mb-6">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
                 <div>
-                  <h2 className="text-xl font-semibold">Pages</h2>
+                  <h2 className="text-lg sm:text-xl font-semibold">Pages</h2>
                 </div>
-                <Button onClick={handleCreatePage}>
+                <Button onClick={handleCreatePage} className="w-full sm:w-auto">
                   <Plus className="h-4 w-4 mr-2" />
                   Add New Page
                 </Button>
@@ -278,7 +281,7 @@ const WebsiteManagement = () => {
                   </Button>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
                   {pages.map((page) => (
                     <div key={page.id} className="group relative">
                       <div className="border rounded-lg overflow-hidden hover:shadow-md transition-shadow">
@@ -286,8 +289,8 @@ const WebsiteManagement = () => {
                         <div className="aspect-[4/3] bg-muted/30 relative">
                           <div className="absolute inset-0 flex items-center justify-center">
                             <div className="text-center">
-                              <div className="w-16 h-16 bg-background border-2 rounded-lg mx-auto mb-2 flex items-center justify-center">
-                                <div className="w-8 h-8 bg-muted rounded"></div>
+                              <div className="w-12 h-12 sm:w-16 sm:h-16 bg-background border-2 rounded-lg mx-auto mb-2 flex items-center justify-center">
+                                <div className="w-6 h-6 sm:w-8 sm:h-8 bg-muted rounded"></div>
                               </div>
                               <p className="text-xs text-muted-foreground">Page Preview</p>
                             </div>
@@ -306,14 +309,23 @@ const WebsiteManagement = () => {
                               <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                             </div>
                           )}
+
+                          {/* Mobile Settings Button - Always Visible */}
+                          <button
+                            className="absolute top-2 right-8 sm:hidden bg-background/80 backdrop-blur-sm rounded p-1.5 shadow-sm border"
+                            aria-label="Page settings"
+                            onClick={() => { setSelectedPage(page); setIsSettingsOpen(true); }}
+                          >
+                            <Settings className="h-3 w-3 text-muted-foreground" />
+                          </button>
                         </div>
 
                         {/* Page Info */}
-                        <div className="p-4">
+                        <div className="p-3 sm:p-4">
                           <div className="flex items-start justify-between mb-2">
-                            <div className="flex-1 min-w-0">
-                              <h3 className="font-medium truncate">{page.title}</h3>
-                              <p className="text-sm text-muted-foreground">
+                            <div className="flex-1 min-w-0 pr-2">
+                              <h3 className="font-medium truncate text-sm sm:text-base">{page.title}</h3>
+                              <p className="text-xs sm:text-sm text-muted-foreground truncate">
                                 {website?.connected_domain || website?.canonical_domain
                                   ? `https://${website.connected_domain || website.canonical_domain}${page.is_homepage ? '' : `/${page.slug}`}`
                                   : `/${page.slug}`
@@ -321,7 +333,7 @@ const WebsiteManagement = () => {
                               </p>
                             </div>
                             <button
-                              className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                              className="hidden sm:block ml-2 opacity-0 group-hover:opacity-100 transition-opacity p-1"
                               aria-label="Page settings"
                               onClick={() => { setSelectedPage(page); setIsSettingsOpen(true); }}
                             >
@@ -333,14 +345,16 @@ const WebsiteManagement = () => {
                             <Button 
                               variant="default" 
                               size="sm" 
-                              className="flex-1"
+                              className="flex-1 text-xs sm:text-sm"
                               onClick={() => handleEditPage(page.id)}
                             >
-                              Edit
+                              <Edit className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-1" />
+                              <span className="hidden sm:inline">Edit</span>
                             </Button>
                             <Button
                               variant="outline"
                               size="sm"
+                              className="px-2 sm:px-3"
                               aria-label="Visit page"
                               onClick={() => {
                                 const connectedDomain = website?.connected_domain || website?.canonical_domain;
@@ -353,7 +367,7 @@ const WebsiteManagement = () => {
                                 window.open(url, '_blank', 'noopener');
                               }}
                             >
-                              <ExternalLink className="h-4 w-4" />
+                              <ExternalLink className="h-3 w-3 sm:h-4 sm:w-4" />
                             </Button>
                           </div>
                         </div>

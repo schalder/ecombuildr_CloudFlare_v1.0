@@ -67,21 +67,21 @@ export function WebsiteSales({ websiteId, websiteName }: WebsiteSalesProps) {
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-semibold">Sales Analytics</h2>
+          <h2 className="text-lg sm:text-xl font-semibold">Sales Analytics</h2>
           <p className="text-sm text-muted-foreground">
             Sales performance and revenue insights for {websiteName}
           </p>
         </div>
-        <Button variant="outline" size="sm" onClick={refetch}>
+        <Button variant="outline" size="sm" onClick={refetch} className="w-full sm:w-auto">
           <RefreshCw className="h-4 w-4 mr-2" />
           Refresh
         </Button>
       </div>
 
       {/* Key Metrics Row */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Today's Sales */}
         <Card>
           <CardContent className="p-6">
@@ -154,7 +154,7 @@ export function WebsiteSales({ websiteId, websiteName }: WebsiteSalesProps) {
       </div>
 
       {/* Additional Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {/* New Customers */}
         <Card>
           <CardContent className="p-6">

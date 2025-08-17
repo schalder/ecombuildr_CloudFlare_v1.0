@@ -163,7 +163,7 @@ export const WebsiteHeaderBuilder: React.FC<Props> = ({ website }) => {
 
           <Separator />
 
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4">
               <MediaSelector label="Logo" value={config.logo_url} onChange={(url) => setField({ logo_url: url })} />
             </div>
@@ -204,11 +204,11 @@ export const WebsiteHeaderBuilder: React.FC<Props> = ({ website }) => {
           <Separator />
 
           <div className="space-y-3">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <Label>Navigation Menu</Label>
-              <div className="space-x-2">
-                <Button variant="outline" size="sm" onClick={loadPreset}>Use default preset</Button>
-                <Button size="sm" onClick={addMenuItem}><Plus className="w-4 h-4 mr-2"/>Add item</Button>
+              <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                <Button variant="outline" size="sm" onClick={loadPreset} className="w-full sm:w-auto">Use default preset</Button>
+                <Button size="sm" onClick={addMenuItem} className="w-full sm:w-auto"><Plus className="w-4 h-4 mr-2"/>Add item</Button>
               </div>
             </div>
 
@@ -217,7 +217,7 @@ export const WebsiteHeaderBuilder: React.FC<Props> = ({ website }) => {
             ) : (
               <div className="space-y-3">
                 {config.nav_items.map((item, idx) => (
-                  <div key={item.id} className="border rounded-md p-3 grid gap-3 md:grid-cols-12 items-end">
+                  <div key={item.id} className="border rounded-md p-3 space-y-3 md:space-y-0 md:grid md:gap-3 md:grid-cols-12 md:items-end">
                     <div className="md:col-span-3">
                       <Label>Label</Label>
                       <Input value={item.label} onChange={(e)=>{
@@ -266,20 +266,31 @@ export const WebsiteHeaderBuilder: React.FC<Props> = ({ website }) => {
                         }} />
                       </div>
                     )}
-                    <div className="md:col-span-1 flex items-center gap-2">
-                      <Button variant="outline" size="icon" onClick={()=>moveItem(idx,-1)}><ArrowUp className="w-4 h-4"/></Button>
-                      <Button variant="outline" size="icon" onClick={()=>moveItem(idx,1)}><ArrowDown className="w-4 h-4"/></Button>
-                    </div>
-                    <div className="md:col-span-2 flex items-center justify-end gap-3">
-                      <div className="flex items-center gap-2">
-                        <Label className="text-xs">New tab</Label>
-                        <Switch checked={!!item.new_tab} onCheckedChange={(v)=>{
-                          setConfig(prev=>({
-                            ...prev, nav_items: prev.nav_items.map(it=> it.id===item.id ? { ...it, new_tab: v } : it)
-                          }));
-                        }} />
+                    
+                    {/* Mobile-optimized controls */}
+                    <div className="flex flex-col sm:flex-row gap-3 md:col-span-3">
+                      <div className="flex items-center gap-2 md:order-2">
+                        <Button variant="outline" size="icon" onClick={()=>moveItem(idx,-1)} disabled={idx === 0}>
+                          <ArrowUp className="w-4 h-4"/>
+                        </Button>
+                        <Button variant="outline" size="icon" onClick={()=>moveItem(idx,1)} disabled={idx === config.nav_items.length - 1}>
+                          <ArrowDown className="w-4 h-4"/>
+                        </Button>
                       </div>
-                      <Button variant="destructive" size="icon" onClick={()=>removeMenuItem(item.id)}><Trash2 className="w-4 h-4"/></Button>
+                      
+                      <div className="flex items-center justify-between sm:justify-start gap-3 md:order-1">
+                        <div className="flex items-center gap-2">
+                          <Label className="text-xs">New tab</Label>
+                          <Switch checked={!!item.new_tab} onCheckedChange={(v)=>{
+                            setConfig(prev=>({
+                              ...prev, nav_items: prev.nav_items.map(it=> it.id===item.id ? { ...it, new_tab: v } : it)
+                            }));
+                          }} />
+                        </div>
+                        <Button variant="destructive" size="icon" onClick={()=>removeMenuItem(item.id)}>
+                          <Trash2 className="w-4 h-4"/>
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -289,16 +300,16 @@ export const WebsiteHeaderBuilder: React.FC<Props> = ({ website }) => {
 
           <Separator />
 
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <ColorPicker label="Background color" color={config.style?.bg_color || '#ffffff'} onChange={(v)=> setConfig(prev=>({ ...prev, style: { ...(prev.style||{}), bg_color: v } }))} />
             <ColorPicker label="Text color" color={config.style?.text_color || '#000000'} onChange={(v)=> setConfig(prev=>({ ...prev, style: { ...(prev.style||{}), text_color: v } }))} />
             <ColorPicker label="Hover color" color={config.style?.hover_color || '#555555'} onChange={(v)=> setConfig(prev=>({ ...prev, style: { ...(prev.style||{}), hover_color: v } }))} />
             <ColorPicker label="Hamburger icon color" color={config.style?.hamburger_color || '#000000'} onChange={(v)=> setConfig(prev=>({ ...prev, style: { ...(prev.style||{}), hamburger_color: v } }))} />
           </div>
 
-          <div className="flex items-center justify-end gap-3">
-            <Button variant="outline" onClick={loadPreset}>Reset to preset</Button>
-            <Button onClick={save} disabled={saving}>{saving ? 'Saving...' : 'Save Header'}</Button>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3">
+            <Button variant="outline" onClick={loadPreset} className="w-full sm:w-auto">Reset to preset</Button>
+            <Button onClick={save} disabled={saving} className="w-full sm:w-auto">{saving ? 'Saving...' : 'Save Header'}</Button>
           </div>
         </CardContent>
       </Card>
