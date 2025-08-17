@@ -9,6 +9,7 @@ import { usePlanLimits } from "@/hooks/usePlanLimits";
 import { supabase } from "@/integrations/supabase/client";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { StatsCards } from "@/components/dashboard/StatsCards";
+import { DateFilter, DateFilterOption, getDateRange } from "@/components/dashboard/DateFilter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -66,6 +67,7 @@ export default function DashboardOverview() {
   const [funnelMap, setFunnelMap] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [dateFilter, setDateFilter] = useState<DateFilterOption>('allTime');
 
   useEffect(() => {
     if (store) {
@@ -73,7 +75,7 @@ export default function DashboardOverview() {
     } else if (!storeLoading) {
       setLoading(false);
     }
-  }, [store, storeLoading]);
+  }, [store, storeLoading, dateFilter]);
 
   const fetchDashboardData = async () => {
     if (!store) return;
@@ -81,23 +83,42 @@ export default function DashboardOverview() {
     try {
       setLoading(true);
       
-      // Get total products
+      // Get date range for filtering
+      const { start, end } = getDateRange(dateFilter);
+      
+      // Get total products (always unfiltered)
       const { count: productsCount } = await supabase
         .from('products')
         .select('*', { count: 'exact' })
         .eq('store_id', store.id);
 
-      // Get total orders and revenue
-      const { data: ordersData } = await supabase
+      // Build orders query with date filter
+      let ordersQuery = supabase
         .from('orders')
-        .select('total')
+        .select('total, created_at')
         .eq('store_id', store.id);
 
-      // Get total customers
-      const { count: customersCount } = await supabase
+      if (start && end) {
+        ordersQuery = ordersQuery
+          .gte('created_at', start.toISOString())
+          .lte('created_at', end.toISOString());
+      }
+
+      const { data: ordersData } = await ordersQuery;
+
+      // Build customers query with date filter
+      let customersQuery = supabase
         .from('customers')
         .select('*', { count: 'exact' })
         .eq('store_id', store.id);
+
+      if (start && end) {
+        customersQuery = customersQuery
+          .gte('created_at', start.toISOString())
+          .lte('created_at', end.toISOString());
+      }
+
+      const { count: customersCount } = await customersQuery;
 
       // Get websites and funnels
       const [
@@ -183,8 +204,19 @@ export default function DashboardOverview() {
       <div className="space-y-6">
         <PlanStatusBanner onUpgrade={() => setShowUpgradeModal(true)} />
         
+        {/* Date Filter */}
+        <Card className="bg-gradient-card border-border shadow-soft">
+          <CardHeader>
+            <CardTitle className="text-lg">Dashboard Analytics</CardTitle>
+            <CardDescription>Filter your revenue, orders, and customer data by time period</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <DateFilter value={dateFilter} onChange={setDateFilter} />
+          </CardContent>
+        </Card>
+        
         {/* Stats Cards */}
-        <StatsCards stats={stats || undefined} loading={loading} />
+        <StatsCards stats={stats || undefined} loading={loading} dateFilter={dateFilter} />
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
           <div className="md:col-span-2 lg:col-span-5 space-y-6">

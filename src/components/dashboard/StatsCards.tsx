@@ -1,5 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp, TrendingDown, DollarSign, ShoppingCart, Users, Package } from "lucide-react";
+import { DateFilterOption } from "./DateFilter";
 
 interface StatCardProps {
   title: string;
@@ -65,9 +66,10 @@ interface StatsCardsProps {
     totalProducts: number;
   };
   loading?: boolean;
+  dateFilter?: DateFilterOption;
 }
 
-export function StatsCards({ stats, loading = false }: StatsCardsProps) {
+export function StatsCards({ stats, loading = false, dateFilter = 'allTime' }: StatsCardsProps) {
   const defaultStats = {
     totalRevenue: 0,
     totalOrders: 0,
@@ -77,12 +79,32 @@ export function StatsCards({ stats, loading = false }: StatsCardsProps) {
 
   const data = stats || defaultStats;
 
+  const getFilterDescription = (filter: DateFilterOption) => {
+    switch (filter) {
+      case 'today':
+        return 'Today';
+      case 'yesterday':
+        return 'Yesterday';
+      case 'last7days':
+        return 'Last 7 days';
+      case 'thisMonth':
+        return 'This month';
+      case 'lastMonth':
+        return 'Last month';
+      case 'allTime':
+      default:
+        return 'All time';
+    }
+  };
+
+  const filterDescription = getFilterDescription(dateFilter);
+
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
       <StatCard
         title="Total Revenue"
         value={`৳${data.totalRevenue.toLocaleString()}`}
-        description="This month"
+        description={filterDescription}
         icon={DollarSign}
         trend={{ value: 12.5, isPositive: true }}
         loading={loading}
@@ -90,7 +112,7 @@ export function StatsCards({ stats, loading = false }: StatsCardsProps) {
       <StatCard
         title="Orders"
         value={data.totalOrders.toLocaleString()}
-        description="Total orders"
+        description={filterDescription}
         icon={ShoppingCart}
         trend={{ value: 8.2, isPositive: true }}
         loading={loading}
@@ -98,7 +120,7 @@ export function StatsCards({ stats, loading = false }: StatsCardsProps) {
       <StatCard
         title="Customers"
         value={data.totalCustomers.toLocaleString()}
-        description="Active customers"
+        description={filterDescription}
         icon={Users}
         trend={{ value: 3.1, isPositive: true }}
         loading={loading}
