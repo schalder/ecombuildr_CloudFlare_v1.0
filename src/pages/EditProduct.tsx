@@ -86,7 +86,12 @@ export default function EditProduct() {
   const [variations, setVariations] = useState<VariationOption[]>([]);
   const [variantEntries, setVariantEntries] = useState<VariantEntry[]>([]);
 
-  // Shipping & returns toggles
+  // Shipping configuration
+  const [shippingType, setShippingType] = useState<'default' | 'fixed' | 'weight_surcharge' | 'free'>('default');
+  const [fixedShippingFee, setFixedShippingFee] = useState<string>('');
+  const [weightSurcharge, setWeightSurcharge] = useState<string>('');
+  
+  // Legacy shipping options (for backward compatibility)
   const [enableFreeShipping, setEnableFreeShipping] = useState(false);
   const [freeShippingMin, setFreeShippingMin] = useState<string>('');
   const [easyReturnsEnabled, setEasyReturnsEnabled] = useState(false);
@@ -196,7 +201,15 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
           weight_kg: (product as any).weight_grams ? ((product as any).weight_grams / 1000).toString() : '',
         });
 
-        // Shipping & returns
+        // Shipping configuration
+        const shippingConfig = (product as any).shipping_config;
+        if (shippingConfig) {
+          setShippingType(shippingConfig.type || 'default');
+          setFixedShippingFee(shippingConfig.fixedFee?.toString() || '');
+          setWeightSurcharge(shippingConfig.weightSurcharge?.toString() || '');
+        }
+
+        // Legacy shipping & returns
         setEnableFreeShipping(!!(product as any).free_shipping_min_amount);
         setFreeShippingMin((product as any).free_shipping_min_amount?.toString() || '');
         setEasyReturnsEnabled(!!(product as any).easy_returns_enabled);
@@ -299,6 +312,12 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
         seo_title: formData.seo_title || null,
         seo_description: formData.seo_description || null,
         weight_grams: formData.weight_kg ? parseFloat(formData.weight_kg) * 1000 : null, // Convert kg to grams
+        shipping_config: {
+          type: shippingType,
+          fixedFee: shippingType === 'fixed' && fixedShippingFee ? parseFloat(fixedShippingFee) : undefined,
+          weightSurcharge: shippingType === 'weight_surcharge' && weightSurcharge ? parseFloat(weightSurcharge) : undefined,
+          freeShippingEnabled: shippingType === 'free',
+        },
         free_shipping_min_amount: enableFreeShipping && freeShippingMin ? parseFloat(freeShippingMin) : null,
         easy_returns_enabled: easyReturnsEnabled,
         easy_returns_days: easyReturnsEnabled && easyReturnsDays ? parseInt(easyReturnsDays) : null,
@@ -789,20 +808,100 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
                 </AccordionTrigger>
                 <AccordionContent>
                   <CardContent className="space-y-6">
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        <Switch id="free_shipping" checked={enableFreeShipping} onCheckedChange={setEnableFreeShipping} />
-                        <Label htmlFor="free_shipping">Offer free shipping over a minimum amount</Label>
+                    {/* Product Shipping Configuration */}
+                    <div className="space-y-4">
+                      <div className="space-y-3">
+                        <Label htmlFor="shipping_type" className="text-sm font-medium">Shipping Configuration</Label>
+                        <Select value={shippingType} onValueChange={(value: 'default' | 'fixed' | 'weight_surcharge' | 'free') => setShippingType(value)}>
+                          <SelectTrigger className="max-w-xs">
+                            <SelectValue placeholder="Select shipping type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="default">Use Website Default</SelectItem>
+                            <SelectItem value="fixed">Fixed Shipping Fee</SelectItem>
+                            <SelectItem value="weight_surcharge">Weight Surcharge</SelectItem>
+                            <SelectItem value="free">Free Shipping</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <p className="text-sm text-muted-foreground">
+                          Choose how shipping is calculated for this product
+                        </p>
                       </div>
-                      {enableFreeShipping && (
-                        <div className="grid grid-cols-1 md:grid-cols-[200px] gap-2">
+
+                      {shippingType === 'fixed' && (
+                        <div className="space-y-3 pl-4 border-l-2 border-muted">
+                          <Label htmlFor="fixed_shipping_fee" className="text-sm font-medium">Fixed Shipping Fee</Label>
                           <Input
+                            id="fixed_shipping_fee"
                             type="number"
                             step="0.01"
-                            placeholder="Minimum amount (e.g., 1000)"
+                            min="0"
+                            placeholder="e.g., 50"
+                            value={fixedShippingFee}
+                            onChange={(e) => setFixedShippingFee(e.target.value)}
+                            className="max-w-xs"
+                          />
+                          <p className="text-sm text-muted-foreground">
+                            Fixed fee charged per item regardless of location or weight
+                          </p>
+                        </div>
+                      )}
+
+                      {shippingType === 'weight_surcharge' && (
+                        <div className="space-y-3 pl-4 border-l-2 border-muted">
+                          <Label htmlFor="weight_surcharge" className="text-sm font-medium">Weight Surcharge (per gram)</Label>
+                          <Input
+                            id="weight_surcharge"
+                            type="number"
+                            step="0.001"
+                            min="0"
+                            placeholder="e.g., 0.1"
+                            value={weightSurcharge}
+                            onChange={(e) => setWeightSurcharge(e.target.value)}
+                            className="max-w-xs"
+                          />
+                          <p className="text-sm text-muted-foreground">
+                            Additional fee per gram on top of base shipping (e.g., 0.1 = 10 BDT per 100g)
+                          </p>
+                        </div>
+                      )}
+
+                      {shippingType === 'free' && (
+                        <div className="space-y-3 pl-4 border-l-2 border-muted">
+                          <div className="flex items-center gap-2 text-green-600">
+                            <div className="w-2 h-2 bg-green-600 rounded-full"></div>
+                            <span className="text-sm font-medium">Free shipping enabled for this product</span>
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            This product will have free shipping regardless of location or order amount
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    <Separator />
+
+                    {/* Legacy Free Shipping Threshold */}
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-3">
+                        <Switch id="free_shipping" checked={enableFreeShipping} onCheckedChange={setEnableFreeShipping} />
+                        <Label htmlFor="free_shipping" className="text-sm font-medium">Store-wide free shipping over minimum amount</Label>
+                      </div>
+                      {enableFreeShipping && (
+                        <div className="space-y-3 ml-6">
+                          <Label htmlFor="free_shipping_min">Minimum Amount</Label>
+                          <Input
+                            id="free_shipping_min"
+                            type="number"
+                            step="0.01"
+                            placeholder="e.g., 1000"
                             value={freeShippingMin}
                             onChange={(e) => setFreeShippingMin(e.target.value)}
+                            className="max-w-xs"
                           />
+                          <p className="text-sm text-muted-foreground">
+                            This applies to the entire store, not just this product
+                          </p>
                         </div>
                       )}
                     </div>
