@@ -33,7 +33,7 @@ interface FunnelData {
 }
 
 export const FunnelStepPage: React.FC = () => {
-  const { funnelId, stepSlug } = useParams<{ funnelId: string; stepSlug: string }>();
+  const { funnelId, stepSlug } = useParams<{ funnelId: string; stepSlug?: string }>();
   const [funnel, setFunnel] = useState<FunnelData | null>(null);
   const [step, setStep] = useState<FunnelStepData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -41,8 +41,8 @@ export const FunnelStepPage: React.FC = () => {
   const { loadStoreById, store } = useStore();
   useEffect(() => {
     const fetchFunnelAndStep = async () => {
-      if (!funnelId || !stepSlug) {
-        setError('Invalid funnel or step URL');
+      if (!funnelId) {
+        setError('Invalid funnel URL');
         setLoading(false);
         return;
       }
@@ -83,7 +83,28 @@ export const FunnelStepPage: React.FC = () => {
           console.warn('FunnelStepPage: loadStoreById failed', e);
         }
 
-        // Then fetch the funnel step
+        // If no stepSlug provided, redirect to first published step
+        if (!stepSlug) {
+          const { data: firstStep, error: firstStepError } = await supabase
+            .from('funnel_steps')
+            .select('slug')
+            .eq('funnel_id', funnelId)
+            .eq('is_published', true)
+            .order('step_order', { ascending: true })
+            .limit(1)
+            .maybeSingle();
+
+          if (firstStepError || !firstStep) {
+            setError('No published steps found');
+            return;
+          }
+
+          // Redirect to the first step
+          window.location.replace(`/funnel/${funnelId}/${firstStep.slug}`);
+          return;
+        }
+
+        // Fetch the specific funnel step
         const { data: stepData, error: stepError } = await supabase
           .from('funnel_steps')
           .select('*')

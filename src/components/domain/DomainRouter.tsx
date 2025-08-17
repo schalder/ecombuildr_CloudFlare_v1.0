@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
 import { DomainWebsiteRenderer } from './DomainWebsiteRenderer';
+import { DomainFunnelRenderer } from './DomainFunnelRenderer';
 
 interface DomainConnection {
   id: string;
@@ -61,12 +62,11 @@ export const DomainRouter: React.FC<DomainRouterProps> = ({ children }) => {
         // Get the current path
         const currentPath = window.location.pathname;
         
-        // Look for any website connection for this domain (catch-all)
+        // Look for any connection for this domain (website or funnel)
         const { data: connection, error: connectionError } = await supabase
           .from('domain_connections')
           .select('*')
           .eq('domain_id', domain.id)
-          .eq('content_type', 'website')
           .limit(1)
           .maybeSingle();
           
@@ -113,16 +113,11 @@ export const DomainRouter: React.FC<DomainRouterProps> = ({ children }) => {
   }
   
   if (domainContent.content_type === 'funnel') {
-    // For now, show a placeholder. Later we'll integrate with funnel routing properly
     return (
-      <div className="min-h-screen bg-background text-foreground">
-        <div className="container mx-auto py-8">
-          <h1 className="text-2xl font-bold mb-4">Welcome to {customDomain.domain}</h1>
-          <p>This is a custom domain displaying funnel content (ID: {domainContent.content_id})</p>
-          <p>Path: {domainContent.path}</p>
-          {domainContent.is_homepage && <p>This is the homepage for this domain.</p>}
-        </div>
-      </div>
+      <DomainFunnelRenderer 
+        funnelId={domainContent.content_id}
+        customDomain={customDomain.domain}
+      />
     );
   }
   

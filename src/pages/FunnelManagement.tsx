@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
-import { ArrowLeft, Plus, Edit, ExternalLink, Settings, Eye, ArrowUp, ArrowDown, CheckCircle, Mail, BarChart3, DollarSign } from 'lucide-react';
+import { ArrowLeft, Plus, Edit, ExternalLink, Settings, Eye, ArrowUp, ArrowDown, CheckCircle, Mail, BarChart3, DollarSign, GripVertical, Home } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { CreateStepModal } from '@/components/modals/CreateStepModal';
@@ -105,12 +106,53 @@ const FunnelManagement = () => {
     },
   });
 
-  const handleToggleActive = (isActive: boolean) => {
-    updateFunnelMutation.mutate({ is_active: isActive });
+  const reorderStepsMutation = useMutation({
+    mutationFn: async (reorderedSteps: FunnelStep[]) => {
+      const updates = reorderedSteps.map((step, index) => ({
+        id: step.id,
+        step_order: index + 1
+      }));
+
+      const promises = updates.map(update =>
+        supabase
+          .from('funnel_steps')
+          .update({ step_order: update.step_order })
+          .eq('id', update.id)
+      );
+
+      const results = await Promise.all(promises);
+      const errors = results.filter(result => result.error);
+      
+      if (errors.length > 0) {
+        throw new Error('Failed to reorder steps');
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['funnel-steps', id] });
+      toast({ title: 'Steps reordered successfully' });
+    },
+  });
+
+  const handleDragEnd = (result: any) => {
+    if (!result.destination) return;
+
+    const reorderedSteps = Array.from(steps);
+    const [reorderedItem] = reorderedSteps.splice(result.source.index, 1);
+    reorderedSteps.splice(result.destination.index, 0, reorderedItem);
+
+    reorderStepsMutation.mutate(reorderedSteps);
   };
 
-  const handleTogglePublished = (isPublished: boolean) => {
-    updateFunnelMutation.mutate({ is_published: isPublished });
+  const handleSetAsHomepage = (stepId: string) => {
+    const stepToMove = steps.find(s => s.id === stepId);
+    if (!stepToMove) return;
+
+    const reorderedSteps = Array.from(steps);
+    const currentIndex = reorderedSteps.findIndex(s => s.id === stepId);
+    const [movedStep] = reorderedSteps.splice(currentIndex, 1);
+    reorderedSteps.unshift(movedStep);
+
+    reorderStepsMutation.mutate(reorderedSteps);
   };
 
   const handleCreateStep = () => {
@@ -127,15 +169,12 @@ const FunnelManagement = () => {
   };
 
   const handlePreviewStep = (stepId: string, stepSlug: string) => {
-    if (funnel?.domain) {
-      window.open(`https://${funnel.domain}/${stepSlug}`, '_blank');
-    } else {
-      toast({ 
-        title: 'Domain required', 
-        description: 'Please add a domain in settings to preview your funnel steps',
-        variant: 'destructive' 
-      });
-    }
+    // Use custom domain if connected, otherwise use system route
+    const previewUrl = funnel?.canonical_domain 
+      ? `https://${funnel.canonical_domain}/${stepSlug}`
+      : `${window.location.origin}/funnel/${id}/${stepSlug}`;
+    
+    window.open(previewUrl, '_blank');
   };
 
   const getStepTypeLabel = (stepType: string) => {
@@ -228,41 +267,6 @@ const FunnelManagement = () => {
             {/* Left Sidebar */}
             <div className="w-full md:w-80 border-r-0 md:border-r bg-muted/30 p-4 sm:p-6">
               <div className="space-y-6">
-                {/* Funnel Status Cards */}
-                <div className="grid grid-cols-1 gap-4">
-                  <Card>
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h4 className="font-medium mb-1">Active</h4>
-                          <p className="text-xs text-muted-foreground">Enable or disable the funnel</p>
-                        </div>
-                        <Switch
-                          checked={funnel.is_active}
-                          onCheckedChange={handleToggleActive}
-                          disabled={updateFunnelMutation.isPending}
-                        />
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h4 className="font-medium mb-1">Published</h4>
-                          <p className="text-xs text-muted-foreground">Make publicly accessible</p>
-                        </div>
-                        <Switch
-                          checked={funnel.is_published}
-                          onCheckedChange={handleTogglePublished}
-                          disabled={updateFunnelMutation.isPending}
-                        />
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-
                 {/* Steps Section */}
                 <div>
                   <div className="flex items-center space-x-2 mb-4">
@@ -270,40 +274,66 @@ const FunnelManagement = () => {
                     <h3 className="font-medium">Funnel Steps</h3>
                   </div>
                   
-                  <div className="space-y-3">
-                    {steps.length === 0 ? (
-                      <div className="text-center py-8">
-                        <p className="text-muted-foreground mb-4">No steps created yet</p>
-                        <Button onClick={handleCreateStep} size="sm">
-                          <Plus className="h-4 w-4 mr-2" />
-                          Create Your First Step
-                        </Button>
-                      </div>
-                    ) : (
-                      steps.map((step, index) => (
+                  <DragDropContext onDragEnd={handleDragEnd}>
+                    <Droppable droppableId="funnel-steps">
+                      {(provided) => (
                         <div
-                          key={step.id}
-                          className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer hover:bg-muted/50 ${
-                            selectedStepId === step.id ? 'bg-primary/10 border-primary' : 'bg-background'
-                          }`}
-                          onClick={() => handleSelectStep(step.id)}
+                          {...provided.droppableProps}
+                          ref={provided.innerRef}
+                          className="space-y-3"
                         >
-                          <div className="flex-shrink-0">
-                            <Mail className="h-4 w-4 text-blue-500" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium truncate">{step.title}</p>
-                            <p className="text-sm text-muted-foreground">
-                              {getStepTypeLabel(step.step_type)}
-                            </p>
-                          </div>
-                          {step.is_published && (
-                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                          {steps.length === 0 ? (
+                            <div className="text-center py-8">
+                              <p className="text-muted-foreground mb-4">No steps created yet</p>
+                              <Button onClick={handleCreateStep} size="sm">
+                                <Plus className="h-4 w-4 mr-2" />
+                                Create Your First Step
+                              </Button>
+                            </div>
+                          ) : (
+                            steps.map((step, index) => (
+                              <Draggable key={step.id} draggableId={step.id} index={index}>
+                                {(provided, snapshot) => (
+                                  <div
+                                    ref={provided.innerRef}
+                                    {...provided.draggableProps}
+                                    className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer hover:bg-muted/50 ${
+                                      selectedStepId === step.id ? 'bg-primary/10 border-primary' : 'bg-background'
+                                    } ${snapshot.isDragging ? 'shadow-lg' : ''}`}
+                                    onClick={() => handleSelectStep(step.id)}
+                                  >
+                                    <div className="flex-shrink-0" {...provided.dragHandleProps}>
+                                      <GripVertical className="h-4 w-4 text-muted-foreground" />
+                                    </div>
+                                    <div className="flex-shrink-0">
+                                      <Mail className="h-4 w-4 text-blue-500" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-center gap-2">
+                                        <p className="font-medium truncate">{step.title}</p>
+                                        {index === 0 && (
+                                          <Badge variant="secondary" className="text-xs px-1 py-0">
+                                            <Home className="h-3 w-3" />
+                                          </Badge>
+                                        )}
+                                      </div>
+                                      <p className="text-sm text-muted-foreground">
+                                        {getStepTypeLabel(step.step_type)}
+                                      </p>
+                                    </div>
+                                    {step.is_published && (
+                                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                                    )}
+                                  </div>
+                                )}
+                              </Draggable>
+                            ))
                           )}
+                          {provided.placeholder}
                         </div>
-                      ))
-                    )}
-                  </div>
+                      )}
+                    </Droppable>
+                  </DragDropContext>
 
                   <Button 
                     onClick={handleCreateStep} 
@@ -374,16 +404,37 @@ const FunnelManagement = () => {
                               </div>
                             </div>
                             
-                            <div className="bg-muted/30 rounded-lg p-8 text-center">
-                              {funnel?.domain ? (
-                                <p className="text-muted-foreground mb-4">
-                                  Live URL: <code className="bg-background px-2 py-1 rounded text-sm">
-                                    {funnel.domain}/{selectedStep.slug}
-                                  </code>
-                                </p>
-                              ) : (
-                                <p className="text-muted-foreground mb-4">Please add a domain in the settings to see your Funnel live!</p>
-                              )}
+                          <div className="bg-muted/30 rounded-lg p-8 text-center">
+                              <div className="flex justify-between items-center mb-4">
+                                <div className="text-left">
+                                  {funnel?.canonical_domain ? (
+                                    <p className="text-muted-foreground mb-2">
+                                      Live URL: <code className="bg-background px-2 py-1 rounded text-sm">
+                                        {funnel.canonical_domain}/{selectedStep.slug}
+                                      </code>
+                                    </p>
+                                  ) : (
+                                    <p className="text-muted-foreground mb-2">
+                                      System URL: <code className="bg-background px-2 py-1 rounded text-sm">
+                                        {window.location.origin}/funnel/{id}/{selectedStep.slug}
+                                      </code>
+                                    </p>
+                                  )}
+                                </div>
+                                <div className="flex gap-2">
+                                  {steps.findIndex(s => s.id === selectedStep.id) > 0 && (
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => handleSetAsHomepage(selectedStep.id)}
+                                      disabled={reorderStepsMutation.isPending}
+                                    >
+                                      <Home className="h-4 w-4 mr-2" />
+                                      Set as Homepage
+                                    </Button>
+                                  )}
+                                </div>
+                              </div>
                               <div className="bg-background border-2 border-dashed border-muted-foreground/25 rounded-lg p-8">
                                 <div className="text-center">
                                   <div className="w-16 h-16 bg-green-100 rounded-lg mx-auto mb-4 flex items-center justify-center">
