@@ -86,7 +86,7 @@ const App = () => (
                 <Route path="/auth" element={<Auth />} />
                 
                 {/* Single Store Dashboard Routes */}
-                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/dashboard" element={<Navigate to="/dashboard/overview" replace />} />
                 <Route path="/dashboard/overview" element={<DashboardOverview />} />
                 <Route path="/dashboard/products" element={<Products />} />
                 <Route path="/dashboard/products/add" element={<AddProduct />} />

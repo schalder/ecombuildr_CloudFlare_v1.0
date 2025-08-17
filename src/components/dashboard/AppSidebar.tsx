@@ -41,7 +41,7 @@ import { useAdminData } from "@/hooks/useAdminData";
 const navigationItems = [
   {
     title: "Dashboard",
-    url: "/dashboard",
+    url: "/dashboard/overview",
     icon: LayoutDashboard,
   },
   // Stores menu removed per requirements
@@ -77,9 +77,9 @@ const navigationItems = [
     icon: ShoppingCart,
     items: [
       { title: "All Orders", url: "/dashboard/orders" },
-      { title: "Pending", url: "/dashboard/orders?status=pending" },
-      { title: "Processing", url: "/dashboard/orders?status=processing" },
-      { title: "Shipped", url: "/dashboard/orders?status=shipped" },
+      { title: "Pending", url: { pathname: "/dashboard/orders", search: "?status=pending" } },
+      { title: "Processing", url: { pathname: "/dashboard/orders", search: "?status=processing" } },
+      { title: "Shipped", url: { pathname: "/dashboard/orders", search: "?status=shipped" } },
     ],
   },
   {
@@ -127,9 +127,20 @@ export function AppSidebar() {
 
   const currentPath = location.pathname;
 
-  const isActive = (url: string) => currentPath === url;
-  const isGroupActive = (items: { url: string }[]) => 
-    items.some(item => currentPath.startsWith(item.url));
+  const isActive = (url: string | { pathname: string; search: string }) => {
+    if (typeof url === 'string') {
+      return currentPath === url;
+    }
+    return currentPath === url.pathname && location.search === url.search;
+  };
+  
+  const isGroupActive = (items: { url: string | { pathname: string; search: string } }[]) => 
+    items.some(item => {
+      if (typeof item.url === 'string') {
+        return currentPath.startsWith(item.url);
+      }
+      return currentPath.startsWith(item.url.pathname);
+    });
 
   const toggleGroup = (title: string) => {
     setExpandedGroups(prev => 
@@ -217,18 +228,16 @@ export function AppSidebar() {
                               <SidebarMenuSubItem key={subItem.title}>
                                  <SidebarMenuSubButton 
                                    asChild
-                                   isActive={isActive(subItem.url)}
                                    className="min-h-[44px] touch-manipulation"
                                  >
                                    <NavLink 
                                      to={subItem.url}
-                                     className={() => {
-                                       const isActive = location.pathname === subItem.url || 
-                                         (subItem.url.includes('?') && location.pathname + location.search === subItem.url);
-                                       return isActive 
+                                     end
+                                     className={({ isActive }) => 
+                                       isActive 
                                          ? "bg-primary text-primary-foreground hover:bg-primary-glow min-h-[44px] touch-manipulation" 
-                                         : "hover:bg-sidebar-accent min-h-[44px] touch-manipulation";
-                                     }}
+                                         : "hover:bg-sidebar-accent min-h-[44px] touch-manipulation"
+                                     }
                                   >
                                     {subItem.title}
                                   </NavLink>
@@ -240,10 +249,15 @@ export function AppSidebar() {
                       )}
                     </Collapsible>
                   ) : (
-                    <SidebarMenuButton asChild isActive={isActive(item.url!)} className="min-h-[44px] touch-manipulation">
+                    <SidebarMenuButton asChild className="min-h-[44px] touch-manipulation">
                        <NavLink 
                          to={item.url!}
-                         className="min-h-[44px] touch-manipulation"
+                         end
+                         className={({ isActive }) => 
+                           isActive 
+                             ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium min-h-[44px] touch-manipulation" 
+                             : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground min-h-[44px] touch-manipulation"
+                         }
                       >
                         <item.icon className="mr-3 h-4 w-4" />
                         {!collapsed && <span>{item.title}</span>}
