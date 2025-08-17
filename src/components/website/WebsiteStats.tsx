@@ -132,14 +132,22 @@ export function WebsiteStats({ websiteId, websiteName, websiteSlug }: WebsiteSta
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Created</span>
               <span className="text-xs">
-                {format(new Date(stats.website.created_at), 'MMM dd, yyyy')}
+                {(() => {
+                  if (!stats.website.created_at) return 'Unknown';
+                  const date = new Date(stats.website.created_at);
+                  return isNaN(date.getTime()) ? 'Unknown' : format(date, 'MMM dd, yyyy');
+                })()}
               </span>
             </div>
             
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Last Updated</span>
               <span className="text-xs">
-                {format(new Date(stats.website.updated_at), 'MMM dd, yyyy')}
+                {(() => {
+                  if (!stats.website.updated_at) return 'Unknown';
+                  const date = new Date(stats.website.updated_at);
+                  return isNaN(date.getTime()) ? 'Unknown' : format(date, 'MMM dd, yyyy');
+                })()}
               </span>
             </div>
           </CardContent>
