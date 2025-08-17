@@ -839,8 +839,8 @@ export default function AddProduct() {
         <ProductDescriptionBuilderDialog
           open={isBuilderOpen}
           onOpenChange={setIsBuilderOpen}
-          data={descriptionBuilder}
-          onChange={setDescriptionBuilder}
+          initialData={descriptionBuilder}
+          onSave={setDescriptionBuilder}
         />
       </form>
     </DashboardLayout>
