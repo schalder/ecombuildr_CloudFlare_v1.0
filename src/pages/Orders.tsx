@@ -479,11 +479,16 @@ export default function Orders() {
                           </div>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                              <Button variant="ghost" size="sm" className="h-9 w-9 p-0 touch-manipulation">
                                 <MoreHorizontal className="h-4 w-4" />
+                                <span className="sr-only">Open menu</span>
                               </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="z-50 bg-background border shadow-md">
+                            <DropdownMenuContent 
+                              align="end" 
+                              className="z-[100] bg-background border shadow-lg min-w-[200px] touch-manipulation"
+                              sideOffset={5}
+                            >
                               <DropdownMenuItem 
                                 onClick={async () => {
                                   setSelectedOrder(order);
@@ -497,13 +502,15 @@ export default function Orders() {
                                   } catch (e) { console.error(e); }
                                   setIsOrderDetailsOpen(true);
                                 }}
+                                className="flex items-center py-3 px-4 text-sm cursor-pointer touch-manipulation"
                               >
-                                <Eye className="mr-2 h-4 w-4" />
+                                <Eye className="mr-3 h-4 w-4" />
                                 View Details
                               </DropdownMenuItem>
                               {order.status === 'pending' && (
                                 <DropdownMenuItem
                                   onClick={() => updateOrderStatus(order.id, 'processing')}
+                                  className="flex items-center py-3 px-4 text-sm cursor-pointer touch-manipulation"
                                 >
                                   Mark Processing
                                 </DropdownMenuItem>
@@ -511,6 +518,7 @@ export default function Orders() {
                               {order.status === 'processing' && (
                                 <DropdownMenuItem
                                   onClick={() => updateOrderStatus(order.id, 'shipped')}
+                                  className="flex items-center py-3 px-4 text-sm cursor-pointer touch-manipulation"
                                 >
                                   Mark Shipped
                                 </DropdownMenuItem>
@@ -518,6 +526,7 @@ export default function Orders() {
                               {order.status === 'shipped' && (
                                 <DropdownMenuItem
                                   onClick={() => updateOrderStatus(order.id, 'delivered')}
+                                  className="flex items-center py-3 px-4 text-sm cursor-pointer touch-manipulation"
                                 >
                                   Mark Delivered
                                 </DropdownMenuItem>
@@ -533,11 +542,13 @@ export default function Orders() {
                                     }
                                   } catch (e) { console.error(e); }
                                 }}
+                                className="flex items-center py-3 px-4 text-sm cursor-pointer touch-manipulation"
                               >
                                 Invoice / PDF
                               </DropdownMenuItem>
                               <DropdownMenuItem
                                 onClick={() => handlePushToSteadfast(order)}
+                                className="flex items-center py-3 px-4 text-sm cursor-pointer touch-manipulation"
                               >
                                 Push to Steadfast
                               </DropdownMenuItem>
@@ -547,6 +558,7 @@ export default function Orders() {
                                     if (!confirm('Cancel this order?')) return;
                                     await updateOrderStatus(order.id, 'cancelled');
                                   }}
+                                  className="flex items-center py-3 px-4 text-sm cursor-pointer touch-manipulation"
                                 >
                                   Cancel Order
                                 </DropdownMenuItem>
@@ -564,6 +576,7 @@ export default function Orders() {
                                     toast({ title: 'Error', description: 'Failed to delete order', variant: 'destructive' });
                                   }
                                 }}
+                                className="flex items-center py-3 px-4 text-sm cursor-pointer touch-manipulation text-destructive"
                               >
                                 Delete Order
                               </DropdownMenuItem>
@@ -748,11 +761,16 @@ export default function Orders() {
                       <TableCell>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-8 w-8 p-0">
+                            <Button variant="ghost" className="h-9 w-9 p-0 touch-manipulation">
                               <MoreHorizontal className="h-4 w-4" />
+                              <span className="sr-only">Open menu</span>
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="z-50 bg-background border shadow-md">
+                          <DropdownMenuContent 
+                            align="end" 
+                            className="z-[100] bg-background border shadow-lg min-w-[200px] touch-manipulation"
+                            sideOffset={5}
+                          >
                             <DropdownMenuItem 
                               onClick={async () => {
                                 setSelectedOrder(order);
@@ -766,6 +784,7 @@ export default function Orders() {
                                 } catch (e) { console.error(e); }
                                 setIsOrderDetailsOpen(true);
                               }}
+                              className="flex items-center py-2 px-3 text-sm cursor-pointer"
                             >
                               <Eye className="mr-2 h-4 w-4" />
                               View Details
