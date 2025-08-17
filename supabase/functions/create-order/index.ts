@@ -18,6 +18,8 @@ type OrderItemInput = {
 
 type OrderInput = {
   store_id: string;
+  website_id?: string | null;
+  funnel_id?: string | null;
   customer_name: string;
   customer_email?: string | null;
   customer_phone: string;

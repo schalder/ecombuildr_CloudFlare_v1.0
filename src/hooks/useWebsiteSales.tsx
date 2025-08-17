@@ -232,9 +232,25 @@ export function useWebsiteSales(websiteId: string, initialDateRange?: DateRange)
         }
       };
 
-      // Calculate conversion rate
-      const totalUniqueVisitors = analyticsData?.reduce((sum, row) => sum + (row.unique_visitors || 0), 0) || 0;
-      const conversionRate = totalUniqueVisitors > 0 ? (totalOrders / totalUniqueVisitors) * 100 : 0;
+      // Calculate conversion rate from pixel events
+      const [pixelEventsRes] = await Promise.all([
+        supabase.from('pixel_events')
+          .select('session_id, event_type')
+          .eq('website_id', websiteId)
+          .gte('created_at', dateRange.from.toISOString())
+          .lte('created_at', dateRange.to.toISOString())
+      ]);
+      
+      const pixelEvents = pixelEventsRes.data || [];
+      const pageViewSessions = new Set(
+        pixelEvents
+          .filter(e => e.event_type === 'PageView' || e.event_type === 'page_view')
+          .map(e => e.session_id)
+          .filter(Boolean)
+      );
+      
+      const uniqueVisitors = pageViewSessions.size;
+      const conversionRate = uniqueVisitors > 0 ? (totalOrders / uniqueVisitors) * 100 : 0;
 
       // Revenue timeline for the current period (day by day)
       const revenueTimeline = [];

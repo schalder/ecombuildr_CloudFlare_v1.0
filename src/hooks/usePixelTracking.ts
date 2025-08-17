@@ -34,30 +34,45 @@ interface EcommerceEvent {
   event_id?: string;
 }
 
-export const usePixelTracking = (pixelConfig?: PixelConfig, storeId?: string) => {
+export const usePixelTracking = (pixelConfig?: PixelConfig, storeId?: string, websiteId?: string, funnelId?: string) => {
   const storePixelEvent = useCallback(async (eventType: string, eventData: any) => {
     if (!storeId) return;
     
     try {
-      await supabase.from('pixel_events').insert({
+      // Ensure session consistency
+      let sessionId = sessionStorage.getItem('session_id');
+      if (!sessionId) {
+        sessionId = crypto.randomUUID();
+        sessionStorage.setItem('session_id', sessionId);
+      }
+      
+      const eventRecord = {
         store_id: storeId,
+        website_id: websiteId || null,
         event_type: eventType,
         event_data: eventData,
-        session_id: sessionStorage.getItem('session_id') || crypto.randomUUID(),
+        session_id: sessionId,
         page_url: window.location.href,
-        referrer: document.referrer,
+        referrer: document.referrer || null,
         utm_source: new URLSearchParams(window.location.search).get('utm_source'),
         utm_campaign: new URLSearchParams(window.location.search).get('utm_campaign'),
         utm_medium: new URLSearchParams(window.location.search).get('utm_medium'),
         utm_term: new URLSearchParams(window.location.search).get('utm_term'),
         utm_content: new URLSearchParams(window.location.search).get('utm_content'),
         user_agent: navigator.userAgent,
-      });
-      console.debug('[PixelTracking] Stored event in database:', eventType, eventData);
+      };
+      
+      // Add funnel context if available
+      if (funnelId) {
+        eventRecord.event_data = { ...eventData, funnel_id: funnelId };
+      }
+
+      await supabase.from('pixel_events').insert(eventRecord);
+      console.debug('[PixelTracking] Stored event in database:', eventType, eventData, { websiteId, funnelId });
     } catch (error) {
       console.warn('[PixelTracking] Failed to store event:', error);
     }
-  }, [storeId]);
+  }, [storeId, websiteId, funnelId]);
 
   const trackEvent = useCallback((eventName: string, eventData: any = {}) => {
     // Store event in database

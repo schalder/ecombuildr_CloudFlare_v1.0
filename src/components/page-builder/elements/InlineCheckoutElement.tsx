@@ -190,6 +190,8 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
 
       const orderData: any = {
         store_id: store.id,
+        website_id: resolvedWebsiteId || null,
+        funnel_id: null, // Could be added for funnel contexts
         customer_name: form.customer_name,
         customer_email: form.customer_email,
         customer_phone: form.customer_phone,

@@ -233,6 +233,8 @@ useEffect(() => {
       // Create order via secure Edge Function to respect RLS
       const orderData = {
         store_id: store.id,
+        website_id: websiteId || websiteSlug ? (websiteId || null) : null,
+        funnel_id: null, // Add funnel context if available from URL params
         customer_name: form.customer_name,
         customer_email: form.customer_email,
         customer_phone: form.customer_phone,

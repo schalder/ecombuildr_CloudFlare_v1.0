@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { usePixelTracking } from '@/hooks/usePixelTracking';
+import { useWebsiteContext } from '@/contexts/WebsiteContext';
 
 interface PixelManagerProps {
   websitePixels?: {
@@ -28,7 +29,8 @@ export const usePixelContext = () => React.useContext(PixelContext);
 
 export const PixelManager: React.FC<PixelManagerProps> = ({ websitePixels: initialPixels, children, storeId }) => {
   const [currentPixels, setCurrentPixels] = React.useState(initialPixels);
-  const { trackPageView } = usePixelTracking(currentPixels, storeId);
+  const { websiteId } = useWebsiteContext();
+  const { trackPageView } = usePixelTracking(currentPixels, storeId, websiteId);
 
   const updatePixels = React.useCallback((newPixels: any) => {
     console.debug('[PixelManager] Updating pixels:', newPixels);

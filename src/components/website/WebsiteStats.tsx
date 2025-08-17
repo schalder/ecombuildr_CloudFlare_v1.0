@@ -69,7 +69,7 @@ export function WebsiteStats({ websiteId, websiteName, websiteSlug }: WebsiteSta
   }
 
   // Get website URL from stats
-  const websiteUrl = stats.websiteUrl;
+  const websiteUrl = stats.website.url;
 
   return (
     <div className="space-y-4">
@@ -108,11 +108,11 @@ export function WebsiteStats({ websiteId, websiteName, websiteSlug }: WebsiteSta
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Status</span>
               <div className="flex gap-1">
-                <Badge variant={stats.isActive ? "default" : "secondary"} className="text-xs px-2 py-0">
-                  {stats.isActive ? "Active" : "Inactive"}
+                <Badge variant={stats.website.is_active ? "default" : "secondary"} className="text-xs px-2 py-0">
+                  {stats.website.is_active ? "Active" : "Inactive"}
                 </Badge>
-                <Badge variant={stats.isPublished ? "default" : "outline"} className="text-xs px-2 py-0">
-                  {stats.isPublished ? "Published" : "Draft"}
+                <Badge variant={stats.website.is_published ? "default" : "outline"} className="text-xs px-2 py-0">
+                  {stats.website.is_published ? "Published" : "Draft"}
                 </Badge>
               </div>
             </div>
@@ -132,14 +132,14 @@ export function WebsiteStats({ websiteId, websiteName, websiteSlug }: WebsiteSta
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Created</span>
               <span className="text-xs">
-                {format(new Date(stats.createdAt), 'MMM dd, yyyy')}
+                {format(new Date(stats.website.created_at), 'MMM dd, yyyy')}
               </span>
             </div>
             
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Last Updated</span>
               <span className="text-xs">
-                {format(new Date(stats.updatedAt), 'MMM dd, yyyy')}
+                {format(new Date(stats.website.updated_at), 'MMM dd, yyyy')}
               </span>
             </div>
           </CardContent>
@@ -178,7 +178,7 @@ export function WebsiteStats({ websiteId, websiteName, websiteSlug }: WebsiteSta
                 </div>
                 <div className="text-xl font-bold text-primary">{stats.analytics.conversionRate}%</div>
                 <div className="text-xs text-muted-foreground">
-                  {stats.totalOrders} orders from {stats.analytics.totalUniqueVisitors} visitors
+                  {stats.revenue.total_orders} orders from {stats.analytics.totalUniqueVisitors} visitors
                 </div>
               </div>
             )}
@@ -199,15 +199,7 @@ export function WebsiteStats({ websiteId, websiteName, websiteSlug }: WebsiteSta
                 <FileText className="h-3 w-3 text-blue-500" />
                 <span className="text-sm">Total Pages</span>
               </div>
-              <span className="font-bold">{stats.totalPages}</span>
-            </div>
-            
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Eye className="h-3 w-3 text-green-500" />
-                <span className="text-sm">Published Pages</span>
-              </div>
-              <span className="font-bold">{stats.publishedPages}</span>
+              <span className="font-bold">{stats.metrics.pages}</span>
             </div>
             
             <div className="flex items-center justify-between">
@@ -215,7 +207,7 @@ export function WebsiteStats({ websiteId, websiteName, websiteSlug }: WebsiteSta
                 <MessageSquare className="h-3 w-3 text-purple-500" />
                 <span className="text-sm">Form Submissions</span>
               </div>
-              <span className="font-bold">{stats.totalFormSubmissions}</span>
+              <span className="font-bold">{stats.metrics.form_submissions}</span>
             </div>
             
             <div className="flex items-center justify-between">
@@ -223,10 +215,10 @@ export function WebsiteStats({ websiteId, websiteName, websiteSlug }: WebsiteSta
                 <Mail className="h-3 w-3 text-orange-500" />
                 <span className="text-sm">Newsletter Signups</span>
               </div>
-              <span className="font-bold">{stats.totalNewsletterSignups}</span>
+              <span className="font-bold">{stats.metrics.newsletter_signups}</span>
             </div>
 
-            {stats.totalOrders > 0 && (
+            {stats.revenue.total_orders > 0 && (
               <>
                 <Separator />
                 <div className="flex items-center justify-between">
@@ -234,7 +226,7 @@ export function WebsiteStats({ websiteId, websiteName, websiteSlug }: WebsiteSta
                     <ShoppingCart className="h-3 w-3 text-orange-600" />
                     <span className="text-sm">Total Orders</span>
                   </div>
-                  <span className="font-bold">{stats.totalOrders}</span>
+                  <span className="font-bold">{stats.revenue.total_orders}</span>
                 </div>
                 
                 <div className="flex items-center justify-between">
@@ -242,7 +234,7 @@ export function WebsiteStats({ websiteId, websiteName, websiteSlug }: WebsiteSta
                     <DollarSign className="h-3 w-3 text-green-600" />
                     <span className="text-sm">Total Revenue</span>
                   </div>
-                  <span className="font-bold">৳{stats.totalRevenue.toLocaleString()}</span>
+                  <span className="font-bold">৳{stats.revenue.total_revenue.toLocaleString()}</span>
                 </div>
               </>
             )}
@@ -306,23 +298,22 @@ export function WebsiteStats({ websiteId, websiteName, websiteSlug }: WebsiteSta
         <CardContent>
           <div className="space-y-3">
             {stats.analytics.pagePerformance.map((page, index) => (
-              <div key={page.pageType} className="p-3 border rounded-lg">
+              <div key={page.path} className="p-3 border rounded-lg">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
                     <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center">
                       <span className="text-xs font-medium text-primary">{index + 1}</span>
                     </div>
-                    <span className="font-medium text-sm capitalize">{page.pageType}</span>
+                    <span className="font-medium text-sm capitalize">{page.title}</span>
                   </div>
                   <div className="text-right">
-                    <div className="text-sm font-mono">{page.pageViews} views</div>
-                    <div className="text-xs text-muted-foreground">{page.uniqueVisitors} unique</div>
+                    <div className="text-sm font-mono">{page.views} views</div>
                   </div>
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">Bounce Rate:</span>
-                  <span className={`font-medium ${page.bounceRate > 70 ? 'text-red-500' : page.bounceRate > 40 ? 'text-yellow-500' : 'text-green-500'}`}>
-                    {page.bounceRate}%
+                  <span className={`font-medium ${page.bounce_rate > 70 ? 'text-red-500' : page.bounce_rate > 40 ? 'text-yellow-500' : 'text-green-500'}`}>
+                    {page.bounce_rate}%
                   </span>
                 </div>
               </div>

@@ -105,7 +105,7 @@ export const WebsiteLayout: React.FC = () => {
 
   return (
     <WebsiteProvider websiteId={website.id} websiteSlug={website.slug}>
-      <PixelManager websitePixels={website.settings}>
+      <PixelManager websitePixels={website.settings} storeId={website.store_id}>
         <div className="min-h-screen flex flex-col bg-background">
         <style>{`
           :root {
