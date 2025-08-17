@@ -12,6 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { CreatePageModal } from '@/components/modals/CreatePageModal';
 import { WebsiteSettings } from '@/components/website/WebsiteSettings';
+import { WebsiteShipping } from '@/components/website/WebsiteShipping';
 import { WebsitePageSettingsModal } from '@/components/modals/WebsitePageSettingsModal';
 import { WebsiteHeaderBuilder } from '@/components/website/WebsiteHeaderBuilder';
 import { WebsiteFooterBuilder } from '@/components/website/WebsiteFooterBuilder';
@@ -247,6 +248,16 @@ const WebsiteManagement = () => {
             </button>
             <button 
               className={`py-4 px-3 sm:px-1 border-b-2 font-medium transition-colors whitespace-nowrap text-sm sm:text-base min-w-0 flex-shrink-0 ${
+                activeTab === 'shipping' 
+                  ? 'border-primary text-primary' 
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
+              }`}
+              onClick={() => handleTabChange('shipping')}
+            >
+              Shipping & Delivery
+            </button>
+            <button 
+              className={`py-4 px-3 sm:px-1 border-b-2 font-medium transition-colors whitespace-nowrap text-sm sm:text-base min-w-0 flex-shrink-0 ${
                 activeTab === 'settings' 
                   ? 'border-primary text-primary' 
                   : 'border-transparent text-muted-foreground hover:text-foreground'
@@ -404,6 +415,10 @@ const WebsiteManagement = () => {
               websiteId={website.id} 
               websiteName={website.name}
             />
+          )}
+
+          {activeTab === 'shipping' && website && (
+            <WebsiteShipping website={website} />
           )}
 
         </div>
