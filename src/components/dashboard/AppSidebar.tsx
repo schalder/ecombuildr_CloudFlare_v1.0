@@ -155,7 +155,7 @@ export function AppSidebar() {
                 placeholder="Search..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-8 bg-sidebar-accent border-sidebar-border"
+                className="pl-8 bg-sidebar-accent border-sidebar-border min-h-[44px] touch-manipulation"
               />
             </div>
           </div>
@@ -168,7 +168,7 @@ export function AppSidebar() {
               <Button 
                 asChild 
                 size="sm" 
-                className="w-full justify-start bg-primary hover:bg-primary-glow"
+                className="w-full justify-start bg-primary hover:bg-primary-glow min-h-[44px] touch-manipulation"
               >
                 <NavLink to="/dashboard/products/add">
                   <Plus className="mr-2 h-4 w-4" />
@@ -192,7 +192,7 @@ export function AppSidebar() {
                     >
                       <CollapsibleTrigger asChild>
                         <SidebarMenuButton
-                          className={`w-full justify-between hover:bg-sidebar-accent ${
+                          className={`w-full justify-between hover:bg-sidebar-accent min-h-[44px] touch-manipulation ${
                             isGroupActive(item.items) ? "bg-sidebar-accent text-sidebar-accent-foreground" : ""
                           }`}
                         >
@@ -212,18 +212,19 @@ export function AppSidebar() {
                           <SidebarMenuSub>
                             {item.items.map((subItem) => (
                               <SidebarMenuSubItem key={subItem.title}>
-                                <SidebarMenuSubButton 
-                                  asChild
-                                  isActive={isActive(subItem.url)}
-                                >
+                                 <SidebarMenuSubButton 
+                                   asChild
+                                   isActive={isActive(subItem.url)}
+                                   className="min-h-[44px] touch-manipulation"
+                                 >
                                    <NavLink 
                                      to={subItem.url}
                                      className={() => {
                                        const isActive = location.pathname === subItem.url || 
                                          (subItem.url.includes('?') && location.pathname + location.search === subItem.url);
                                        return isActive 
-                                         ? "bg-primary text-primary-foreground hover:bg-primary-glow" 
-                                         : "hover:bg-sidebar-accent";
+                                         ? "bg-primary text-primary-foreground hover:bg-primary-glow min-h-[44px] touch-manipulation" 
+                                         : "hover:bg-sidebar-accent min-h-[44px] touch-manipulation";
                                      }}
                                   >
                                     {subItem.title}
@@ -236,9 +237,10 @@ export function AppSidebar() {
                       )}
                     </Collapsible>
                   ) : (
-                    <SidebarMenuButton asChild isActive={isActive(item.url!)}>
+                    <SidebarMenuButton asChild isActive={isActive(item.url!)} className="min-h-[44px] touch-manipulation">
                        <NavLink 
                          to={item.url!}
+                         className="min-h-[44px] touch-manipulation"
                       >
                         <item.icon className="mr-3 h-4 w-4" />
                         {!collapsed && <span>{item.title}</span>}
