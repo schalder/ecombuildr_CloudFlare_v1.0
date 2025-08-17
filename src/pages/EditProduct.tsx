@@ -687,6 +687,192 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
               </Card>
             </AccordionItem>
 
+            {/* Status */}
+            <AccordionItem value="status" className="border rounded-lg">
+              <Card>
+                <AccordionTrigger className="hover:no-underline px-6 py-4">
+                  <CardTitle>Status</CardTitle>
+                </AccordionTrigger>
+                <AccordionContent>
+                  <CardContent className="space-y-6">
+                    <div className="flex items-center gap-3">
+                      <Switch
+                        id="is_active"
+                        checked={formData.is_active}
+                        onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_active: checked }))}
+                      />
+                      <Label htmlFor="is_active" className="text-sm font-medium">
+                        Product is active and visible to customers
+                      </Label>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Inactive products won't appear on your website but remain in your catalog.
+                    </p>
+                  </CardContent>
+                </AccordionContent>
+              </Card>
+            </AccordionItem>
+
+            {/* Variations */}
+            <AccordionItem value="variations" className="border rounded-lg">
+              <Card>
+                <AccordionTrigger className="hover:no-underline px-6 py-4">
+                  <CardTitle>Variations</CardTitle>
+                </AccordionTrigger>
+                <AccordionContent>
+                  <CardContent className="space-y-6">
+                    <div className="flex items-center gap-3">
+                      <Switch id="has_variants" checked={hasVariants} onCheckedChange={setHasVariants} />
+                      <Label htmlFor="has_variants" className="text-sm font-medium">This product has variants (e.g., Size, Color)</Label>
+                    </div>
+                    
+                    {hasVariants && (
+                      <div className="space-y-6 pt-4 border-t">
+                        <div>
+                          <h4 className="text-sm font-medium mb-3">Product Options</h4>
+                          <VariationsBuilder options={variations} onChange={setVariations} />
+                        </div>
+                        
+                        {variations.length > 0 && (
+                          <div>
+                            <h4 className="text-sm font-medium mb-3">Variant Pricing</h4>
+                            <VariantMatrix options={variations} variants={variantEntries} onChange={setVariantEntries} />
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </CardContent>
+                </AccordionContent>
+              </Card>
+            </AccordionItem>
+
+            {/* Actions & Payments */}
+            <AccordionItem value="actions-payments" className="border rounded-lg">
+              <Card>
+                <AccordionTrigger className="hover:no-underline px-6 py-4">
+                  <CardTitle>Product Actions & Payments</CardTitle>
+                </AccordionTrigger>
+                <AccordionContent>
+                  <CardContent className="space-y-8">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                      {/* Order Now Button */}
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-3">
+                          <Switch
+                            id="order_now_enabled"
+                            checked={actionButtons.order_now.enabled}
+                            onCheckedChange={(v) => setActionButtons(prev => ({ ...prev, order_now: { ...prev.order_now, enabled: v } }))}
+                          />
+                          <Label htmlFor="order_now_enabled" className="text-sm font-medium">Enable "Order Now" button</Label>
+                        </div>
+                        <div className="space-y-3 ml-6">
+                          <Label htmlFor="order_now_label">Button Text</Label>
+                          <Input 
+                            id="order_now_label" 
+                            value={actionButtons.order_now.label}
+                            onChange={(e) => setActionButtons(prev => ({ ...prev, order_now: { ...prev.order_now, label: e.target.value } }))}
+                            className="mt-2"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Call Button */}
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-3">
+                          <Switch
+                            id="call_enabled"
+                            checked={actionButtons.call.enabled}
+                            onCheckedChange={(v) => setActionButtons(prev => ({ ...prev, call: { ...prev.call, enabled: v } }))}
+                          />
+                          <Label htmlFor="call_enabled" className="text-sm font-medium">Enable Call button</Label>
+                        </div>
+                        <div className="space-y-3 ml-6">
+                          <div>
+                            <Label htmlFor="call_label">Button Text</Label>
+                            <Input 
+                              id="call_label" 
+                              value={actionButtons.call.label}
+                              onChange={(e) => setActionButtons(prev => ({ ...prev, call: { ...prev.call, label: e.target.value } }))}
+                              className="mt-2"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="call_phone">Phone Number</Label>
+                            <Input 
+                              id="call_phone" 
+                              placeholder="e.g. +8801XXXXXXXXX" 
+                              value={actionButtons.call.phone || ''}
+                              onChange={(e) => setActionButtons(prev => ({ ...prev, call: { ...prev.call, phone: e.target.value } }))}
+                              className="mt-2"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <Separator />
+
+                    {/* WhatsApp Button */}
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-3">
+                        <Switch
+                          id="whatsapp_enabled"
+                          checked={actionButtons.whatsapp.enabled}
+                          onCheckedChange={(v) => setActionButtons(prev => ({ ...prev, whatsapp: { ...prev.whatsapp, enabled: v } }))}
+                        />
+                        <Label htmlFor="whatsapp_enabled" className="text-sm font-medium">Enable WhatsApp button</Label>
+                      </div>
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 ml-6">
+                        <div className="space-y-3">
+                          <Label htmlFor="whatsapp_label">Button Text</Label>
+                          <Input 
+                            id="whatsapp_label" 
+                            value={actionButtons.whatsapp.label}
+                            onChange={(e) => setActionButtons(prev => ({ ...prev, whatsapp: { ...prev.whatsapp, label: e.target.value } }))}
+                            className="mt-2"
+                          />
+                        </div>
+                        <div className="space-y-3">
+                          <Label htmlFor="whatsapp_url">WhatsApp URL</Label>
+                          <Input 
+                            id="whatsapp_url" 
+                            placeholder="e.g. https://wa.me/8801XXXXXXXXX?text=Hello" 
+                            value={actionButtons.whatsapp.url || ''}
+                            onChange={(e) => setActionButtons(prev => ({ ...prev, whatsapp: { ...prev.whatsapp, url: e.target.value } }))}
+                            className="mt-2"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <Separator />
+
+                    {/* Payment Methods */}
+                    <div className="space-y-4">
+                      <div>
+                        <Label className="text-sm font-medium">Allowed Payment Methods</Label>
+                        <p className="text-sm text-muted-foreground mt-1">Select which payment methods customers can use for this product</p>
+                      </div>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+                        {['cod','bkash','nagad','sslcommerz'].map((method) => (
+                          <label key={method} className="flex items-center gap-3 p-3 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors">
+                            <Checkbox
+                              checked={allowedPayments.includes(method)}
+                              onCheckedChange={(v) => setAllowedPayments(prev => v ? [...prev, method] : prev.filter(x => x !== method))}
+                            />
+                            <span className="capitalize text-sm font-medium">{method === 'sslcommerz' ? 'SSLCommerz' : method}</span>
+                          </label>
+                        ))}
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Leave all unchecked to allow all available payment methods from your store settings.
+                      </p>
+                    </div>
+                  </CardContent>
+                </AccordionContent>
+              </Card>
+            </AccordionItem>
+
             {/* Media */}
             <AccordionItem value="media" className="border rounded-lg">
               <Card>
