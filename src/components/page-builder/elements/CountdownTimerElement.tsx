@@ -124,51 +124,66 @@ export const CountdownTimerElement: React.FC<CountdownTimerElementProps> = ({
     
     switch (layout) {
       case 'inline':
-        return `flex items-center ${alignmentClass} gap-2 text-center`;
+        return `flex items-center ${alignmentClass} text-center`;
       case 'pill':
-        return `flex items-center ${alignmentClass} gap-4 text-center`;
+        return `flex items-center ${alignmentClass} text-center`;
       case 'stacked':
-        return `grid grid-cols-4 gap-4 text-center`;
+        return `grid grid-cols-4 text-center`;
       default: // boxes
-        return `flex items-center ${alignmentClass} gap-4 text-center`;
+        return `flex items-center ${alignmentClass} text-center`;
     }
   };
 
-  const getSegmentClasses = () => {
-    const baseStyles = mergeResponsiveStyles(
-      {
-        padding: '12px',
-        borderRadius: '8px',
-        backgroundColor: 'hsl(var(--primary))',
-        color: 'hsl(var(--primary-foreground))'
-      },
-      element.styles,
-      deviceType
-    );
+  const getSegmentStyles = () => {
+    const responsiveStyles = element.styles?.responsive || { desktop: {}, mobile: {} };
+    const currentStyles = (responsiveStyles as any)[deviceType] || {};
+    
+    return {
+      fontSize: currentStyles.numberFontSize || '24px',
+      color: currentStyles.numberColor || 'hsl(var(--primary-foreground))',
+      backgroundColor: currentStyles.numberBackgroundColor || 'hsl(var(--primary))',
+      padding: currentStyles.segmentPadding || '12px',
+      borderRadius: currentStyles.segmentBorderRadius || '8px',
+      border: currentStyles.segmentBorderWidth && currentStyles.segmentBorderWidth !== '0px' 
+        ? `${currentStyles.segmentBorderWidth} solid ${currentStyles.segmentBorderColor || 'hsl(var(--border))'}`
+        : 'none',
+      minWidth: '60px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      fontWeight: 'bold'
+    };
+  };
 
-    switch (layout) {
-      case 'inline':
-        return { ...baseStyles, padding: '4px 8px', borderRadius: '4px' };
-      case 'pill':
-        return { ...baseStyles, borderRadius: '24px', padding: '8px 16px' };
-      case 'stacked':
-        return { ...baseStyles, padding: '16px 8px' };
-      default: // boxes
-        return baseStyles;
-    }
+  const getLabelStyles = () => {
+    const responsiveStyles = element.styles?.responsive || { desktop: {}, mobile: {} };
+    const currentStyles = (responsiveStyles as any)[deviceType] || {};
+    
+    return {
+      fontSize: currentStyles.labelFontSize || '12px',
+      color: currentStyles.labelColor || 'hsl(var(--muted-foreground))',
+      marginTop: '4px',
+      opacity: '0.8'
+    };
+  };
+
+  const getContainerStyles = () => {
+    const responsiveStyles = element.styles?.responsive || { desktop: {}, mobile: {} };
+    const currentStyles = (responsiveStyles as any)[deviceType] || {};
+    
+    return {
+      gap: currentStyles.segmentGap || '16px'
+    };
   };
 
   const renderTimeSegment = (value: number, label: string, showSeparator: boolean) => (
     <div key={label} className="flex items-center">
       <div className="text-center">
-        <div 
-          className="font-bold text-2xl"
-          style={getSegmentClasses()}
-        >
+        <div style={getSegmentStyles()}>
           {value.toString().padStart(2, '0')}
         </div>
         {showLabels && (
-          <div className="text-sm mt-1 opacity-70">{label}</div>
+          <div style={getLabelStyles()}>{label}</div>
         )}
       </div>
       {showSeparator && layout === 'inline' && (
@@ -189,7 +204,7 @@ export const CountdownTimerElement: React.FC<CountdownTimerElementProps> = ({
             {mode === 'date' && targetDate && `Until ${new Date(targetDate).toLocaleDateString()}`}
           </p>
         </div>
-        <div className={getLayoutClasses()}>
+        <div className={getLayoutClasses()} style={getContainerStyles()}>
           {renderTimeSegment(1, labels.days, false)}
           {renderTimeSegment(23, labels.hours, false)}
           {renderTimeSegment(59, labels.minutes, false)}
@@ -209,13 +224,13 @@ export const CountdownTimerElement: React.FC<CountdownTimerElementProps> = ({
   }
 
   return (
-    <div className="max-w-2xl mx-auto" style={element.styles}>
-      <div className={getLayoutClasses()}>
-        {renderTimeSegment(timeLeft.days, labels.days, true)}
-        {renderTimeSegment(timeLeft.hours, labels.hours, true)}
-        {renderTimeSegment(timeLeft.minutes, labels.minutes, true)}
-        {renderTimeSegment(timeLeft.seconds, labels.seconds, false)}
+      <div className="max-w-2xl mx-auto" style={element.styles}>
+        <div className={getLayoutClasses()} style={getContainerStyles()}>
+          {renderTimeSegment(timeLeft.days, labels.days, true)}
+          {renderTimeSegment(timeLeft.hours, labels.hours, true)}
+          {renderTimeSegment(timeLeft.minutes, labels.minutes, true)}
+          {renderTimeSegment(timeLeft.seconds, labels.seconds, false)}
+        </div>
       </div>
-    </div>
   );
 };
