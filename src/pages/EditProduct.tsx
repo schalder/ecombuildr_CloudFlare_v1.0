@@ -436,7 +436,7 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
             <AccordionItem value="channel-category" className="border rounded-lg">
               <Card>
                 <AccordionTrigger className="hover:no-underline px-6 py-4">
-                  <CardTitle className="flex items-center gap-2">
+                  <CardTitle className="flex items-center gap-2 text-base font-semibold">
                     Selling Channel & Category
                   </CardTitle>
                 </AccordionTrigger>
@@ -497,7 +497,7 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
             <AccordionItem value="product-info" className="border rounded-lg">
               <Card>
                 <AccordionTrigger className="hover:no-underline px-6 py-4">
-                  <CardTitle className="flex items-center gap-2">
+                  <CardTitle className="flex items-center gap-2 text-base font-semibold">
                     <Package className="h-5 w-5" />
                     Product Information
                   </CardTitle>
@@ -590,7 +590,7 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
             <AccordionItem value="pricing" className="border rounded-lg">
               <Card>
                 <AccordionTrigger className="hover:no-underline px-6 py-4">
-                  <CardTitle>Pricing & Inventory</CardTitle>
+                  <CardTitle className="text-base font-semibold">Pricing & Inventory</CardTitle>
                 </AccordionTrigger>
                 <AccordionContent>
                   <CardContent className="space-y-6">
@@ -691,7 +691,7 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
             <AccordionItem value="status" className="border rounded-lg">
               <Card>
                 <AccordionTrigger className="hover:no-underline px-6 py-4">
-                  <CardTitle>Status</CardTitle>
+                  <CardTitle className="text-base font-semibold">Status</CardTitle>
                 </AccordionTrigger>
                 <AccordionContent>
                   <CardContent className="space-y-6">
@@ -717,7 +717,7 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
             <AccordionItem value="variations" className="border rounded-lg">
               <Card>
                 <AccordionTrigger className="hover:no-underline px-6 py-4">
-                  <CardTitle>Variations</CardTitle>
+                  <CardTitle className="text-base font-semibold">Variations</CardTitle>
                 </AccordionTrigger>
                 <AccordionContent>
                   <CardContent className="space-y-6">
@@ -750,7 +750,7 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
             <AccordionItem value="actions-payments" className="border rounded-lg">
               <Card>
                 <AccordionTrigger className="hover:no-underline px-6 py-4">
-                  <CardTitle>Product Actions & Payments</CardTitle>
+                  <CardTitle className="text-base font-semibold">Product Actions & Payments</CardTitle>
                 </AccordionTrigger>
                 <AccordionContent>
                   <CardContent className="space-y-8">
@@ -877,7 +877,7 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
             <AccordionItem value="media" className="border rounded-lg">
               <Card>
                 <AccordionTrigger className="hover:no-underline px-6 py-4">
-                  <CardTitle>Media</CardTitle>
+                  <CardTitle className="text-base font-semibold">Media</CardTitle>
                 </AccordionTrigger>
                 <AccordionContent>
                   <CardContent className="space-y-4">
@@ -957,7 +957,7 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
             <AccordionItem value="seo" className="border rounded-lg">
               <Card>
                 <AccordionTrigger className="hover:no-underline px-6 py-4">
-                  <CardTitle>SEO</CardTitle>
+                  <CardTitle className="text-base font-semibold">SEO</CardTitle>
                 </AccordionTrigger>
                 <AccordionContent>
                   <CardContent className="space-y-4">
@@ -990,7 +990,7 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
             <AccordionItem value="shipping" className="border rounded-lg">
               <Card>
                 <AccordionTrigger className="hover:no-underline px-6 py-4">
-                  <CardTitle>Shipping & Returns</CardTitle>
+                  <CardTitle className="text-base font-semibold">Shipping & Returns</CardTitle>
                 </AccordionTrigger>
                 <AccordionContent>
                   <CardContent className="space-y-6">
