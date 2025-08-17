@@ -19,9 +19,9 @@ export const FunnelSales: React.FC<FunnelSalesProps> = ({ funnelId }) => {
   if (loading) {
     return (
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
           <h2 className="text-2xl font-semibold">Funnel Sales</h2>
-        <DateRangeFilter value={sales?.dateRange || { from: new Date(), to: new Date(), preset: 'last7days', label: 'Last 7 days' }} onChange={updateDateRange} />
+          <DateRangeFilter value={sales?.dateRange || { from: new Date(), to: new Date(), preset: 'last7days', label: 'Last 7 days' }} onChange={updateDateRange} />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {[1, 2, 3, 4].map(i => (
@@ -42,9 +42,9 @@ export const FunnelSales: React.FC<FunnelSalesProps> = ({ funnelId }) => {
   if (error || !sales) {
     return (
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
           <h2 className="text-2xl font-semibold">Funnel Sales</h2>
-        <DateRangeFilter value={sales?.dateRange || { from: new Date(), to: new Date(), preset: 'last7days', label: 'Last 7 days' }} onChange={updateDateRange} />
+          <DateRangeFilter value={sales?.dateRange || { from: new Date(), to: new Date(), preset: 'last7days', label: 'Last 7 days' }} onChange={updateDateRange} />
         </div>
         <Card>
           <CardContent className="p-6 text-center">
@@ -57,7 +57,7 @@ export const FunnelSales: React.FC<FunnelSalesProps> = ({ funnelId }) => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
         <div>
           <h2 className="text-2xl font-semibold">Funnel Sales</h2>
           <p className="text-muted-foreground">{sales.funnelName}</p>

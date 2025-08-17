@@ -50,9 +50,11 @@ export const FunnelStats: React.FC<FunnelStatsProps> = ({ funnelId }) => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-semibold">Funnel Statistics</h2>
-        <p className="text-muted-foreground">Overview of your funnel performance</p>
+      <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-semibold">Funnel Statistics</h2>
+          <p className="text-muted-foreground">Overview of your funnel performance</p>
+        </div>
       </div>
 
       {/* Key Metrics */}
