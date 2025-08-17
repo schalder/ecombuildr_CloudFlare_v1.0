@@ -415,158 +415,150 @@ export default function Products() {
                 </p>
               </div>
             ) : isMobile ? (
-              // Mobile Card View
-              <div className="space-y-4">
+              // Mobile Card View  
+              <div className="space-y-3">
                 {/* Select All for Mobile */}
-                <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                <div className="flex items-center justify-between p-2 bg-muted/30 rounded-md">
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => handleSelectAll(selectedProducts.length !== filteredProducts.length)}
-                    className="text-muted-foreground"
+                    className="text-muted-foreground h-8"
                   >
                     {selectedProducts.length === filteredProducts.length ? (
                       <CheckSquare className="h-4 w-4" />
                     ) : (
                       <Square className="h-4 w-4" />
                     )}
-                    <span className="ml-2">Select All</span>
+                    <span className="ml-2 text-sm">Select All</span>
                   </Button>
-                  <span className="text-sm text-muted-foreground">
-                    {selectedProducts.length} of {filteredProducts.length} selected
+                  <span className="text-xs text-muted-foreground">
+                    {selectedProducts.length} of {filteredProducts.length}
                   </span>
                 </div>
                 
                 {filteredProducts.map((product) => (
-                  <Card key={product.id} className="border-l-4 border-l-primary/20">
-                    <CardContent className="p-4">
-                      <div className="flex items-start gap-3">
-                        {/* Selection Checkbox */}
+                  <Card key={product.id} className="border-l-2 border-l-primary/30 overflow-hidden">
+                    <CardContent className="p-3">
+                      {/* Header Row - Checkbox, Image, Title, Actions */}
+                      <div className="flex items-start gap-2 mb-3">
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => handleSelectProduct(product.id, !selectedProducts.includes(product.id))}
-                          className="mt-1 h-8 w-8 p-0"
+                          className="h-6 w-6 p-0 flex-shrink-0"
                         >
                           {selectedProducts.includes(product.id) ? (
-                            <CheckSquare className="h-4 w-4 text-primary" />
+                            <CheckSquare className="h-3.5 w-3.5 text-primary" />
                           ) : (
-                            <Square className="h-4 w-4" />
+                            <Square className="h-3.5 w-3.5" />
                           )}
                         </Button>
 
-                        {/* Product Image */}
                         <div className="flex-shrink-0">
                           {product.images?.[0] ? (
                             <img 
                               src={product.images[0]} 
                               alt={product.name}
-                              className="w-16 h-16 rounded-lg object-cover"
+                              className="w-12 h-12 rounded-md object-cover"
                             />
                           ) : (
-                            <div className="w-16 h-16 rounded-lg bg-muted flex items-center justify-center">
-                              <Package className="h-8 w-8 text-muted-foreground" />
+                            <div className="w-12 h-12 rounded-md bg-muted flex items-center justify-center">
+                              <Package className="h-6 w-6 text-muted-foreground" />
                             </div>
                           )}
                         </div>
 
-                        {/* Product Details */}
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-start justify-between">
-                            <div className="min-w-0 flex-1">
-                              <h3 className="font-semibold text-base truncate">{product.name}</h3>
-                              <div className="flex items-center gap-2 mt-1">
-                                <Badge variant={product.is_active ? "default" : "secondary"} className="text-xs">
-                                  {product.is_active ? 'Active' : 'Inactive'}
-                                </Badge>
-                                {product.sku && (
-                                  <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">
-                                    {product.sku}
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                            
-                            {/* Actions Menu */}
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                                  <MoreHorizontal className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" className="w-36">
-                                <DropdownMenuItem onClick={() => navigate(`/dashboard/products/${product.id}`)}>
-                                  <Eye className="mr-2 h-4 w-4" />
-                                  View
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => navigate(`/dashboard/products/${product.id}/edit`)}>
-                                  <Edit className="mr-2 h-4 w-4" />
-                                  Edit
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  onClick={() => toggleProductStatus(product.id, product.is_active)}
-                                >
-                                  {product.is_active ? 'Deactivate' : 'Activate'}
-                                </DropdownMenuItem>
-                                <DropdownMenuItem 
-                                  className="text-destructive"
-                                  onClick={() => {
-                                    if (confirm('Are you sure you want to delete this product?')) {
-                                      deleteProduct(product.id);
-                                    }
-                                  }}
-                                >
-                                  <Trash2 className="mr-2 h-4 w-4" />
-                                  Delete
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
+                          <h3 className="font-medium text-sm leading-tight mb-1">{product.name}</h3>
+                          <div className="flex flex-wrap items-center gap-1">
+                            <Badge variant={product.is_active ? "default" : "secondary"} className="text-xs px-1.5 py-0.5">
+                              {product.is_active ? 'Active' : 'Inactive'}
+                            </Badge>
+                            {product.sku && (
+                              <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded truncate max-w-16">
+                                {product.sku}
+                              </span>
+                            )}
                           </div>
-
-                          {/* Price and Stock Info */}
-                          <div className="grid grid-cols-2 gap-4 mt-3">
-                            <div>
-                              <p className="text-sm text-muted-foreground">Price</p>
-                              <div className="flex flex-col">
-                                <span className="font-semibold text-lg">৳{product.price.toLocaleString()}</span>
-                                {product.compare_price && (
-                                  <span className="text-sm text-muted-foreground line-through">
-                                    ৳{product.compare_price.toLocaleString()}
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                            <div>
-                              <p className="text-sm text-muted-foreground">Stock</p>
-                              <p className="font-medium">
-                                {product.inventory_quantity ?? 'Not tracked'}
-                              </p>
-                            </div>
-                          </div>
-
-                          {/* Category and Channel */}
-                          <div className="grid grid-cols-2 gap-4 mt-3 pt-3 border-t border-muted">
-                            <div>
-                              <p className="text-xs text-muted-foreground">Category</p>
-                              <p className="text-sm font-medium">
-                                {product.categories?.name || '-'}
-                              </p>
-                            </div>
-                            <div>
-                              <p className="text-xs text-muted-foreground">Channel</p>
-                              <p className="text-sm font-medium">
-                                {product.product_website_visibility && product.product_website_visibility.length > 0 
-                                  ? product.product_website_visibility[0].websites.name 
-                                  : '-'
+                        </div>
+                        
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm" className="h-6 w-6 p-0 flex-shrink-0">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-32">
+                            <DropdownMenuItem onClick={() => navigate(`/dashboard/products/${product.id}`)}>
+                              <Eye className="mr-2 h-3.5 w-3.5" />
+                              View
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => navigate(`/dashboard/products/${product.id}/edit`)}>
+                              <Edit className="mr-2 h-3.5 w-3.5" />
+                              Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => toggleProductStatus(product.id, product.is_active)}
+                            >
+                              {product.is_active ? 'Deactivate' : 'Activate'}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              className="text-destructive"
+                              onClick={() => {
+                                if (confirm('Are you sure you want to delete this product?')) {
+                                  deleteProduct(product.id);
                                 }
-                              </p>
+                              }}
+                            >
+                              <Trash2 className="mr-2 h-3.5 w-3.5" />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+
+                      {/* Price and Stock Info - Single column layout for small screens */}
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <p className="text-xs text-muted-foreground mb-1">Price</p>
+                            <div className="flex flex-col">
+                              <span className="font-semibold text-base">৳{product.price.toLocaleString()}</span>
+                              {product.compare_price && (
+                                <span className="text-xs text-muted-foreground line-through">
+                                  ৳{product.compare_price.toLocaleString()}
+                                </span>
+                              )}
                             </div>
                           </div>
-
-                          <div className="mt-3 pt-2 border-t border-muted">
-                            <p className="text-xs text-muted-foreground">
-                              Added {new Date(product.created_at).toLocaleDateString()}
+                          <div>
+                            <p className="text-xs text-muted-foreground mb-1">Stock</p>
+                            <p className="font-medium text-sm">
+                              {product.inventory_quantity ?? 'Not tracked'}
                             </p>
+                          </div>
+                        </div>
+
+                        {/* Category and Channel - Stacked on very small screens */}
+                        <div className="pt-2 border-t border-muted/50 space-y-1">
+                          <div className="flex justify-between text-xs">
+                            <span className="text-muted-foreground">Category:</span>
+                            <span className="font-medium truncate ml-2">
+                              {product.categories?.name || '-'}
+                            </span>
+                          </div>
+                          <div className="flex justify-between text-xs">
+                            <span className="text-muted-foreground">Channel:</span>
+                            <span className="font-medium truncate ml-2">
+                              {product.product_website_visibility && product.product_website_visibility.length > 0 
+                                ? product.product_website_visibility[0].websites.name 
+                                : '-'
+                              }
+                            </span>
+                          </div>
+                          <div className="text-xs text-muted-foreground pt-1">
+                            Added {new Date(product.created_at).toLocaleDateString()}
                           </div>
                         </div>
                       </div>
