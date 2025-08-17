@@ -14,9 +14,10 @@ import {
   TableHeader, 
   TableRow 
 } from "@/components/ui/table";
-import { Search, Users, Mail, Phone, MapPin, RefreshCw } from "lucide-react";
+import { Search, Users, Mail, Phone, MapPin, RefreshCw, Calendar } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface Customer {
   id: string;
@@ -37,6 +38,7 @@ export default function Customers() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (user) {
@@ -165,14 +167,14 @@ export default function Customers() {
         </div>
 
         {/* Header */}
-        <div className="flex justify-between items-center">
-          <div className="relative">
+        <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center">
+          <div className="relative flex-1 sm:flex-none">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search customers..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 w-80"
+              className={`pl-10 ${isMobile ? 'w-full' : 'w-80'}`}
             />
           </div>
           <Button
@@ -180,6 +182,7 @@ export default function Customers() {
             disabled={refreshing}
             variant="outline"
             size="sm"
+            className={isMobile ? 'w-full justify-center' : ''}
           >
             <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
             Refresh
@@ -220,7 +223,70 @@ export default function Customers() {
                   </Button>
                 )}
               </div>
+            ) : isMobile ? (
+              // Mobile Card View
+              <div className="space-y-4">
+                {filteredCustomers.map((customer) => (
+                  <Card key={customer.id} className="p-4">
+                    <div className="space-y-3">
+                      {/* Header Row */}
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                          <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
+                            <span className="text-sm font-medium text-primary">
+                              {customer.full_name.charAt(0).toUpperCase()}
+                            </span>
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="font-semibold text-sm truncate">{customer.full_name}</div>
+                            <div className="text-xs text-muted-foreground">
+                              {customer.total_orders} order{customer.total_orders !== 1 ? 's' : ''}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="text-right flex-shrink-0">
+                          <div className="font-semibold">৳{customer.total_spent.toLocaleString()}</div>
+                          <div className="text-xs text-muted-foreground">Total</div>
+                        </div>
+                      </div>
+
+                      {/* Contact Info */}
+                      <div className="space-y-2">
+                        {customer.email && (
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Mail className="h-3 w-3 flex-shrink-0" />
+                            <span className="truncate">{customer.email}</span>
+                          </div>
+                        )}
+                        {customer.phone && (
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Phone className="h-3 w-3 flex-shrink-0" />
+                            <span>{customer.phone}</span>
+                          </div>
+                        )}
+                        {(customer.city || customer.area) && (
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <MapPin className="h-3 w-3 flex-shrink-0" />
+                            <span className="truncate">
+                              {[customer.area, customer.city].filter(Boolean).join(', ')}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Footer Info */}
+                      <div className="flex items-center justify-between pt-2 border-t text-xs text-muted-foreground">
+                        <div className="flex items-center gap-2">
+                          <Calendar className="h-3 w-3" />
+                          First order: {new Date(customer.created_at).toLocaleDateString()}
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
             ) : (
+              // Desktop Table View
               <Table>
                 <TableHeader>
                   <TableRow>
