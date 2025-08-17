@@ -122,7 +122,7 @@ export function AppSidebar() {
   const collapsed = !open;
   const location = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
-  const [expandedGroups, setExpandedGroups] = useState<string[]>(["Websites", "Funnels"]);
+  const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
   const { isAdmin } = useAdminData();
 
   const currentPath = location.pathname;
