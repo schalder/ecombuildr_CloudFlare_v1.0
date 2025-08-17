@@ -1975,6 +1975,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
+      normalize_phone: {
+        Args: { p: string }
+        Returns: string
+      }
       set_homepage: {
         Args: { page_uuid: string }
         Returns: undefined
