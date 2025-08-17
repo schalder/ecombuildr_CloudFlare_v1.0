@@ -15,7 +15,8 @@ import {
   ChevronDown,
   ChevronRight,
   Palette,
-  Globe
+  Globe,
+  Shield
 } from "lucide-react";
 
 import {
@@ -35,6 +36,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { useAdminData } from "@/hooks/useAdminData";
 
 const navigationItems = [
   {
@@ -121,6 +123,7 @@ export function AppSidebar() {
   const location = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedGroups, setExpandedGroups] = useState<string[]>(["Websites", "Funnels"]);
+  const { isAdmin } = useAdminData();
 
   const currentPath = location.pathname;
 
@@ -252,6 +255,27 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {/* Super Admin Dashboard Button */}
+        {isAdmin && (
+          <SidebarGroup>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild isActive={currentPath.startsWith('/admin')} className="min-h-[44px] touch-manipulation">
+                    <NavLink 
+                      to="/admin/dashboard"
+                      className="min-h-[44px] touch-manipulation bg-gradient-to-r from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700"
+                    >
+                      <Shield className="mr-3 h-4 w-4" />
+                      {!collapsed && <span>Super Admin</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
 
       </SidebarContent>
     </Sidebar>
