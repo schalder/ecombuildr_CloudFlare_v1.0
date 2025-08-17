@@ -28,10 +28,15 @@ import {
   MoreHorizontal, 
   Eye,
   ShoppingCart,
-  Filter
+  Filter,
+  Calendar,
+  MapPin,
+  Phone,
+  Mail
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { nameWithVariant } from '@/lib/utils';
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface Order {
   id: string;
@@ -83,6 +88,7 @@ export default function Orders() {
   const [pushing, setPushing] = useState(false);
   const [websiteMap, setWebsiteMap] = useState<Record<string, string>>({});
   const [funnelMap, setFunnelMap] = useState<Record<string, string>>({});
+  const isMobile = useIsMobile();
   useEffect(() => {
     if (user) {
       fetchOrders();
@@ -387,25 +393,25 @@ export default function Orders() {
         </div>
 
         {/* Header */}
-        <div className="flex justify-between items-center">
-          <div className="flex items-center gap-4">
-            <div className="relative">
+        <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+            <div className="relative flex-1 sm:flex-none">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search orders..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 w-80"
+                className={`pl-10 ${isMobile ? 'w-full' : 'w-80'}`}
               />
             </div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline">
+                <Button variant="outline" className={isMobile ? 'w-full justify-start' : ''}>
                   <Filter className="h-4 w-4 mr-2" />
                   Status
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent>
+              <DropdownMenuContent className="z-50 bg-background border shadow-md">
                 <DropdownMenuItem onClick={() => setStatusFilter("")}>
                   All Status
                 </DropdownMenuItem>
@@ -452,7 +458,200 @@ export default function Orders() {
                   {searchTerm || statusFilter ? 'Try adjusting your filters' : 'Orders will appear here when customers place them'}
                 </p>
               </div>
+            ) : isMobile ? (
+              // Mobile Card View
+              <div className="space-y-4">
+                {filteredOrders.map((order) => (
+                  <Card key={order.id} className="p-4">
+                    <div className="space-y-3">
+                      {/* Header Row */}
+                      <div className="flex items-start justify-between">
+                        <div className="space-y-1">
+                          <div className="font-semibold text-sm"># {order.order_number}</div>
+                          <Badge variant={statusColors[order.status as keyof typeof statusColors] || "secondary"} className="text-xs">
+                            {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="text-right">
+                            <div className="font-semibold">৳{order.total.toLocaleString()}</div>
+                            <div className="text-xs text-muted-foreground">{order.payment_method.toUpperCase()}</div>
+                          </div>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="z-50 bg-background border shadow-md">
+                              <DropdownMenuItem 
+                                onClick={async () => {
+                                  setSelectedOrder(order);
+                                  try {
+                                    const { data, error } = await supabase.functions.invoke('get-order', { body: { orderId: order.id } });
+                                    if (error) throw error;
+                                    if (data) {
+                                      setSelectedOrder({ ...order, ...data.order });
+                                      setSelectedOrderItems(data.items || []);
+                                    }
+                                  } catch (e) { console.error(e); }
+                                  setIsOrderDetailsOpen(true);
+                                }}
+                              >
+                                <Eye className="mr-2 h-4 w-4" />
+                                View Details
+                              </DropdownMenuItem>
+                              {order.status === 'pending' && (
+                                <DropdownMenuItem
+                                  onClick={() => updateOrderStatus(order.id, 'processing')}
+                                >
+                                  Mark Processing
+                                </DropdownMenuItem>
+                              )}
+                              {order.status === 'processing' && (
+                                <DropdownMenuItem
+                                  onClick={() => updateOrderStatus(order.id, 'shipped')}
+                                >
+                                  Mark Shipped
+                                </DropdownMenuItem>
+                              )}
+                              {order.status === 'shipped' && (
+                                <DropdownMenuItem
+                                  onClick={() => updateOrderStatus(order.id, 'delivered')}
+                                >
+                                  Mark Delivered
+                                </DropdownMenuItem>
+                              )}
+                              <DropdownMenuItem
+                                onClick={async () => {
+                                  setSelectedOrder(order);
+                                  try {
+                                    const { data } = await supabase.functions.invoke('get-order', { body: { orderId: order.id } });
+                                    if (data) {
+                                      setInvoiceData({ order: data.order, items: data.items || [] });
+                                      setInvoiceOpen(true);
+                                    }
+                                  } catch (e) { console.error(e); }
+                                }}
+                              >
+                                Invoice / PDF
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handlePushToSteadfast(order)}
+                              >
+                                Push to Steadfast
+                              </DropdownMenuItem>
+                              {order.status !== 'cancelled' && order.status !== 'delivered' && (
+                                <DropdownMenuItem
+                                  onClick={async () => {
+                                    if (!confirm('Cancel this order?')) return;
+                                    await updateOrderStatus(order.id, 'cancelled');
+                                  }}
+                                >
+                                  Cancel Order
+                                </DropdownMenuItem>
+                              )}
+                              <DropdownMenuItem
+                                onClick={async () => {
+                                  if (!confirm('Delete this order permanently? This cannot be undone.')) return;
+                                  try {
+                                    const { error } = await supabase.functions.invoke('delete-order', { body: { orderId: order.id } });
+                                    if (error) throw error;
+                                    setOrders(orders.filter(o => o.id !== order.id));
+                                    toast({ title: 'Deleted', description: 'Order deleted successfully.' });
+                                  } catch (e) {
+                                    console.error(e);
+                                    toast({ title: 'Error', description: 'Failed to delete order', variant: 'destructive' });
+                                  }
+                                }}
+                              >
+                                Delete Order
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </div>
+
+                      {/* Customer Info */}
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 text-sm">
+                          <span className="font-medium">{order.customer_name}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Phone className="h-3 w-3" />
+                          <span>{order.customer_phone}</span>
+                        </div>
+                        {order.customer_email && (
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Mail className="h-3 w-3" />
+                            <span className="truncate">{order.customer_email}</span>
+                          </div>
+                        )}
+                        {order.shipping_city && (
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <MapPin className="h-3 w-3" />
+                            <span>{order.shipping_city}{order.shipping_area ? `, ${order.shipping_area}` : ''}</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Items Summary */}
+                      {Array.isArray(orderItemsMap[order.id]) && orderItemsMap[order.id].length > 0 && (
+                        <div className="space-y-1">
+                          <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Items</div>
+                          <div className="text-sm space-y-1">
+                            {orderItemsMap[order.id].slice(0, 2).map((it: any, i: number) => (
+                              <div key={i} className="flex justify-between">
+                                <span className="truncate">{nameWithVariant(it.product_name, it.variation)} × {it.quantity}</span>
+                              </div>
+                            ))}
+                            {orderItemsMap[order.id].length > 2 && (
+                              <div className="text-xs text-muted-foreground">+{orderItemsMap[order.id].length - 2} more item(s)</div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Footer Info */}
+                      <div className="flex items-center justify-between pt-2 border-t text-xs text-muted-foreground">
+                        <div className="flex items-center gap-2">
+                          <Calendar className="h-3 w-3" />
+                          {new Date(order.created_at).toLocaleDateString()}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {order.website_id || order.funnel_id ? (
+                            <span>{order.website_id ? websiteMap[order.website_id] || 'Website' : funnelMap[order.funnel_id!] || 'Funnel'}</span>
+                          ) : (
+                            <span>Storefront</span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Shipping Info */}
+                      {order.courier_name && (
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-muted-foreground">Shipped via:</span>
+                          <div className="text-right">
+                            <div>{order.courier_name === 'steadfast' ? 'Steadfast' : order.courier_name}</div>
+                            {order.tracking_number && (
+                              <a
+                                href={`https://steadfast.com.bd/t/${encodeURIComponent(order.tracking_number)}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-primary underline"
+                              >
+                                Track
+                              </a>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </Card>
+                ))}
+              </div>
             ) : (
+              // Desktop Table View
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -552,11 +751,10 @@ export default function Orders() {
                               <MoreHorizontal className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
+                          <DropdownMenuContent align="end" className="z-50 bg-background border shadow-md">
                             <DropdownMenuItem 
                               onClick={async () => {
                                 setSelectedOrder(order);
-                                // Fetch full details for dialog
                                 try {
                                   const { data, error } = await supabase.functions.invoke('get-order', { body: { orderId: order.id } });
                                   if (error) throw error;
@@ -659,13 +857,13 @@ export default function Orders() {
             }
           }}
         >
-          <DialogContent className="max-w-2xl">
+          <DialogContent className={`${isMobile ? 'max-w-[95vw] h-[90vh] overflow-y-auto' : 'max-w-2xl'}`}>
             <DialogHeader>
               <DialogTitle>Order Details - #{selectedOrder?.order_number}</DialogTitle>
             </DialogHeader>
             {selectedOrder && (
               <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className={`grid ${isMobile ? 'grid-cols-1' : 'grid-cols-2'} gap-4`}>
                   <div>
                     <h4 className="font-medium">Customer</h4>
                     <p>{selectedOrder.customer_name}</p>
@@ -731,7 +929,7 @@ export default function Orders() {
         </Dialog>
         {/* Steadfast Re-push Dialog */}
         <Dialog open={pushDialogOpen} onOpenChange={setPushDialogOpen}>
-          <DialogContent>
+          <DialogContent className={isMobile ? 'max-w-[95vw]' : ''}>
             <DialogHeader>
               <DialogTitle>Order already pushed to Steadfast</DialogTitle>
             </DialogHeader>
