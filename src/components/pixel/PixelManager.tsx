@@ -3,6 +3,16 @@ import { useLocation } from 'react-router-dom';
 import { usePixelTracking } from '@/hooks/usePixelTracking';
 import { useWebsiteContext } from '@/contexts/WebsiteContext';
 
+// Safe hook to use location only when inside a Router context
+const useSafeLocation = () => {
+  try {
+    return useLocation();
+  } catch (error) {
+    // Not inside a Router context, return null
+    return null;
+  }
+};
+
 interface PixelManagerProps {
   websitePixels?: {
     facebook_pixel_id?: string;
@@ -31,7 +41,7 @@ export const usePixelContext = () => React.useContext(PixelContext);
 export const PixelManager: React.FC<PixelManagerProps> = ({ websitePixels: initialPixels, children, storeId }) => {
   const [currentPixels, setCurrentPixels] = React.useState(initialPixels);
   const { websiteId } = useWebsiteContext();
-  const location = useLocation();
+  const location = useSafeLocation(); // Safe location hook
   const { trackPageView } = usePixelTracking(currentPixels, storeId, websiteId);
 
   const updatePixels = React.useCallback((newPixels: any) => {
@@ -100,12 +110,12 @@ export const PixelManager: React.FC<PixelManagerProps> = ({ websitePixels: initi
     return () => clearTimeout(timer);
   }, [currentPixels, trackPageView]);
 
-  // Track SPA navigation (location changes)
+  // Track SPA navigation (location changes) - only when in Router context
   useEffect(() => {
-    if (currentPixels) {
+    if (currentPixels && location) {
       trackPageView();
     }
-  }, [location.pathname, location.search, trackPageView, currentPixels]);
+  }, [location?.pathname, location?.search, trackPageView, currentPixels]);
 
   return (
     <PixelContext.Provider value={{ pixels: currentPixels, updatePixels }}>
