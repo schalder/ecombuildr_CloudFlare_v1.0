@@ -5,21 +5,73 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { CreditCard, Download, Calendar, CheckCircle, Crown } from 'lucide-react';
 import { usePlanLimits } from '@/hooks/usePlanLimits';
+import { useAuth } from '@/hooks/useAuth';
 import { PlanUpgradeModal2 } from '@/components/dashboard/PlanUpgradeModal2';
 import { useState } from 'react';
 
 export default function BillingSettings() {
   const { planLimits, userProfile, loading } = usePlanLimits();
+  const { user } = useAuth();
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
   const getPlanDisplayName = (planName: string) => {
     const planNames: Record<string, string> = {
       free: 'Free Plan',
       basic: 'Basic Plan',
+      professional: 'Professional Plan',
       pro: 'Pro Plan',
       enterprise: 'Enterprise Plan'
     };
     return planNames[planName] || planName;
+  };
+
+  const getNextBillingDate = () => {
+    if (userProfile?.subscription_plan === 'free') {
+      return 'N/A (Free Plan)';
+    }
+
+    if (userProfile?.account_status === 'trial' && userProfile?.trial_expires_at) {
+      const trialEndDate = new Date(userProfile.trial_expires_at);
+      return trialEndDate.toLocaleDateString('en-US', { 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      });
+    }
+
+    if (userProfile?.subscription_expires_at) {
+      const subscriptionDate = new Date(userProfile.subscription_expires_at);
+      return subscriptionDate.toLocaleDateString('en-US', { 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      });
+    }
+
+    // If no specific date, show monthly renewal for active subscriptions
+    if (userProfile?.account_status === 'active') {
+      const nextMonth = new Date();
+      nextMonth.setMonth(nextMonth.getMonth() + 1);
+      return nextMonth.toLocaleDateString('en-US', { 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      });
+    }
+
+    return 'Monthly renewal';
+  };
+
+  const getBillingStatus = () => {
+    if (userProfile?.subscription_plan === 'free') {
+      return 'N/A (Free Plan)';
+    }
+
+    if (userProfile?.account_status === 'trial') {
+      return 'Trial period';
+    }
+
+    return 'Monthly renewal';
   };
 
   if (loading) {
@@ -136,7 +188,7 @@ export default function BillingSettings() {
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Next billing date</span>
                   <span>
-                    {userProfile?.subscription_plan === 'free' ? 'N/A (Free Plan)' : 'Monthly renewal'}
+                    {getNextBillingDate()}
                   </span>
                 </div>
                 <div className="flex justify-between">
@@ -147,7 +199,7 @@ export default function BillingSettings() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Billing email</span>
-                  <span>user@example.com</span>
+                  <span>{user?.email || 'Not available'}</span>
                 </div>
               </div>
             </CardContent>
