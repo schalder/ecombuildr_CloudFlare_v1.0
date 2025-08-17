@@ -117,9 +117,12 @@ const ProductDetailElement: React.FC<{ element: PageBuilderElement }> = ({ eleme
 
   useEffect(() => {
     (async () => {
-      if (!store && websiteId) {
-        const { data: website } = await supabase.from('websites').select('store_id').eq('id', websiteId).single();
-        if (website?.store_id) await loadStoreById(website.store_id);
+      if (!store) {
+        if (websiteId) {
+          const { data: website } = await supabase.from('websites').select('store_id').eq('id', websiteId).maybeSingle();
+          if (website?.store_id) await loadStoreById(website.store_id);
+        }
+        // Note: For funnels, store should be preloaded in PageBuilder context
       }
     })();
   }, [store, websiteId, loadStoreById]);

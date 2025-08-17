@@ -57,15 +57,20 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
   const showItemImages: boolean = cfg.showItemImages ?? true;
   const orderBump = cfg.orderBump || { enabled: false, productId: '', label: 'Add this to my order', description: '', prechecked: false };
 
-  // Load store via websiteId if provided (for domain/website routes)
+  // Load store via websiteId or funnelId if provided
   useEffect(() => {
     (async () => {
-      if (!store && websiteId) {
-        const { data: website } = await supabase.from('websites').select('store_id').eq('id', websiteId).maybeSingle();
-        if (website?.store_id) await loadStoreById(website.store_id);
+      if (!store) {
+        if (websiteId) {
+          const { data: website } = await supabase.from('websites').select('store_id').eq('id', websiteId).maybeSingle();
+          if (website?.store_id) await loadStoreById(website.store_id);
+        } else if (funnelId) {
+          const { data: funnel } = await supabase.from('funnels').select('store_id').eq('id', funnelId).maybeSingle();
+          if (funnel?.store_id) await loadStoreById(funnel.store_id);
+        }
       }
     })();
-  }, [store, websiteId, loadStoreById]);
+  }, [store, websiteId, funnelId, loadStoreById]);
 
   // Load configured products (include bump product if set)
   const allProductIds = useMemo(() => Array.from(new Set([...(productIds || []), cfg?.orderBump?.productId].filter(Boolean))), [productIds, cfg?.orderBump?.productId]);

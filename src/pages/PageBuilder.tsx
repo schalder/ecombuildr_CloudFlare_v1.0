@@ -15,12 +15,14 @@ import { PageBuilderData } from '@/components/page-builder/types';
 import { supabase } from '@/integrations/supabase/client';
 import { useUserStore } from '@/hooks/useUserStore';
 import { setGlobalCurrency } from '@/lib/currency';
+import { useStore } from '@/contexts/StoreContext';
 
 export default function PageBuilder() {
   const navigate = useNavigate();
   const { pageId, websiteId, funnelId, stepId } = useParams();
   const location = useLocation();
   const { store: currentStore } = useUserStore();
+  const { loadStoreById } = useStore();
   
   // Determine context based on URL parameters
   const context = websiteId ? 'website' : funnelId ? 'funnel' : 'store';
@@ -196,24 +198,53 @@ export default function PageBuilder() {
     }
   }, [entityId, currentStore, context, loadPage]);
 
-  // Ensure currency is initialized in builder preview for website pages
+  // Preload store context and currency for builder preview
   useEffect(() => {
-    if (context === 'website' && parentId) {
+    if (parentId) {
       (async () => {
         try {
-          const { data } = await supabase
-            .from('websites')
-            .select('settings')
-            .eq('id', parentId)
-            .maybeSingle();
-          const code = (data as any)?.settings?.currency?.code || 'BDT';
-          setGlobalCurrency(code as any);
+          if (context === 'website') {
+            const { data } = await supabase
+              .from('websites')
+              .select('settings, store_id')
+              .eq('id', parentId)
+              .maybeSingle();
+            
+            if (data) {
+              // Load store context for e-commerce elements
+              if (data.store_id) await loadStoreById(data.store_id);
+              
+              // Set currency
+              const code = (data as any)?.settings?.currency?.code || 'BDT';
+              setGlobalCurrency(code as any);
+            }
+          } else if (context === 'funnel') {
+            const { data } = await supabase
+              .from('funnels')
+              .select('store_id')
+              .eq('id', parentId)
+              .maybeSingle();
+            
+            if (data?.store_id) {
+              // Load store context for e-commerce elements
+              await loadStoreById(data.store_id);
+              
+              // Set currency from store settings
+              const { data: store } = await supabase
+                .from('stores')
+                .select('settings')
+                .eq('id', data.store_id)
+                .maybeSingle();
+              const code = (store as any)?.settings?.currency || 'BDT';
+              setGlobalCurrency(code as any);
+            }
+          }
         } catch {
           // ignore
         }
       })();
     }
-  }, [context, parentId]);
+  }, [context, parentId, loadStoreById]);
 
   // Tab visibility handling to prevent unnecessary operations
   const isPageVisible = useRef(true);
