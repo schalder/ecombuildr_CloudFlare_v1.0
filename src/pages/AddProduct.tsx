@@ -52,6 +52,13 @@ export default function AddProduct() {
     seo_description: '',
     images: [] as string[],
     video_url: '',
+    weight_grams: '0',
+    shipping_config: {
+      type: 'default' as 'default' | 'fixed' | 'weight_surcharge' | 'free',
+      fixedFee: 0,
+      weightSurcharge: 0,
+      freeShippingEnabled: false,
+    },
   });
 
   // New local states
@@ -193,6 +200,8 @@ const { data: newProduct, error: insertError } = await supabase.from('products')
         compare_price: formData.compare_price ? parseFloat(formData.compare_price) : null,
         cost_price: formData.cost_price ? parseFloat(formData.cost_price) : null,
         inventory_quantity: parseInt(formData.inventory_quantity) || 0,
+        weight_grams: parseInt(formData.weight_grams) || 0,
+        shipping_config: formData.shipping_config,
         category_id: formData.category_id || null,
         images: formData.images,
         video_url: formData.video_url || null,
@@ -429,6 +438,111 @@ const { data: newProduct, error: insertError } = await supabase.from('products')
                   value={formData.inventory_quantity}
                   onChange={(e) => setFormData(prev => ({ ...prev, inventory_quantity: e.target.value }))}
                 />
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Shipping Configuration */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Shipping Configuration</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label htmlFor="weight_grams">Weight (grams)</Label>
+              <Input
+                id="weight_grams"
+                type="number"
+                min="0"
+                placeholder="0"
+                value={formData.weight_grams}
+                onChange={(e) => setFormData(prev => ({ ...prev, weight_grams: e.target.value }))}
+              />
+              <p className="text-sm text-muted-foreground mt-1">
+                Used for weight-based shipping calculations
+              </p>
+            </div>
+
+            <div>
+              <Label>Shipping Type</Label>
+              <Select 
+                value={formData.shipping_config.type} 
+                onValueChange={(value: 'default' | 'fixed' | 'weight_surcharge' | 'free') => 
+                  setFormData(prev => ({ 
+                    ...prev, 
+                    shipping_config: { ...prev.shipping_config, type: value }
+                  }))
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="default">Use Website Rules</SelectItem>
+                  <SelectItem value="fixed">Fixed Shipping Fee</SelectItem>
+                  <SelectItem value="weight_surcharge">Weight Surcharge</SelectItem>
+                  <SelectItem value="free">Free Shipping</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-sm text-muted-foreground mt-1">
+                Override website shipping rules for this product
+              </p>
+            </div>
+
+            {formData.shipping_config.type === 'fixed' && (
+              <div>
+                <Label htmlFor="fixed_fee">Fixed Shipping Fee</Label>
+                <Input
+                  id="fixed_fee"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="50.00"
+                  value={formData.shipping_config.fixedFee}
+                  onChange={(e) => setFormData(prev => ({ 
+                    ...prev, 
+                    shipping_config: { 
+                      ...prev.shipping_config, 
+                      fixedFee: Number(e.target.value) || 0 
+                    }
+                  }))}
+                />
+                <p className="text-sm text-muted-foreground mt-1">
+                  Fixed shipping cost per item regardless of quantity
+                </p>
+              </div>
+            )}
+
+            {formData.shipping_config.type === 'weight_surcharge' && (
+              <div>
+                <Label htmlFor="weight_surcharge">Weight Surcharge (per gram)</Label>
+                <Input
+                  id="weight_surcharge"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="0.05"
+                  value={formData.shipping_config.weightSurcharge}
+                  onChange={(e) => setFormData(prev => ({ 
+                    ...prev, 
+                    shipping_config: { 
+                      ...prev.shipping_config, 
+                      weightSurcharge: Number(e.target.value) || 0 
+                    }
+                  }))}
+                />
+                <p className="text-sm text-muted-foreground mt-1">
+                  Additional cost per gram of product weight
+                </p>
+              </div>
+            )}
+
+            {formData.shipping_config.type === 'free' && (
+              <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+                <p className="text-sm text-green-800 dark:text-green-200">
+                  This product will always ship for free, regardless of order total or weight.
+                </p>
               </div>
             )}
           </CardContent>

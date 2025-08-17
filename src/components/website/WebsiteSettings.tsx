@@ -71,11 +71,16 @@ interface WebsiteSettingsProps {
 
 // Shipping settings types for per-website configuration
 type ShippingCityRule = { city: string; fee: number; label?: string };
+type ShippingWeightTier = { maxWeight: number; fee: number; label?: string };
 type ShippingSettings = {
   enabled: boolean;
   country?: string;
   restOfCountryFee: number;
   cityRules: ShippingCityRule[];
+  // Enhanced settings
+  weightTiers?: ShippingWeightTier[];
+  freeShippingThreshold?: number; // minimum order amount for free shipping
+  freeShippingMinWeight?: number; // minimum weight for free shipping (in grams)
 };
 
 export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => {
@@ -163,6 +168,9 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
       country: '',
       restOfCountryFee: 0,
       cityRules: [],
+      weightTiers: [],
+      freeShippingThreshold: 0,
+      freeShippingMinWeight: 0,
     }
   );
 
@@ -925,6 +933,156 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
                     </div>
                   </div>
                 ))}
+              </div>
+
+              <Separator />
+
+              {/* Free Shipping Thresholds */}
+              <div className="space-y-4">
+                <FormLabel>Free Shipping Rules</FormLabel>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormItem>
+                    <FormLabel>Free shipping threshold (amount)</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min={0}
+                        step="0.01"
+                        placeholder="0"
+                        value={shippingSettings.freeShippingThreshold || ''}
+                        onChange={(e) => setShippingSettings((s) => ({ 
+                          ...s, 
+                          freeShippingThreshold: Number(e.target.value) || 0 
+                        }))}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Minimum order amount for free shipping. Set to 0 to disable.
+                    </FormDescription>
+                  </FormItem>
+                  
+                  <FormItem>
+                    <FormLabel>Free shipping min weight (grams)</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min={0}
+                        placeholder="0"
+                        value={shippingSettings.freeShippingMinWeight || ''}
+                        onChange={(e) => setShippingSettings((s) => ({ 
+                          ...s, 
+                          freeShippingMinWeight: Number(e.target.value) || 0 
+                        }))}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Minimum total weight for free shipping. Set to 0 to disable.
+                    </FormDescription>
+                  </FormItem>
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Weight-based Shipping Tiers */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <FormLabel>Weight-based shipping tiers</FormLabel>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShippingSettings((s) => ({ 
+                      ...s, 
+                      weightTiers: [...(s.weightTiers || []), { maxWeight: 1000, fee: 0, label: '' }] 
+                    }))}
+                  >
+                    Add Weight Tier
+                  </Button>
+                </div>
+
+                <FormDescription>
+                  Configure shipping fees based on total order weight. Products need to have weight specified.
+                </FormDescription>
+
+                {(!shippingSettings.weightTiers || shippingSettings.weightTiers.length === 0) && (
+                  <p className="text-sm text-muted-foreground">No weight tiers configured. Add one to charge based on total order weight.</p>
+                )}
+
+                {(shippingSettings.weightTiers || []).map((tier, idx) => (
+                  <div key={idx} className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
+                    <FormItem>
+                      <FormLabel>Max Weight (grams)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min={1}
+                          placeholder="1000"
+                          value={tier.maxWeight}
+                          onChange={(e) => setShippingSettings((s) => {
+                            const weightTiers = [...(s.weightTiers || [])];
+                            weightTiers[idx] = { ...weightTiers[idx], maxWeight: Number(e.target.value) || 1 };
+                            return { ...s, weightTiers };
+                          })}
+                        />
+                      </FormControl>
+                    </FormItem>
+                    <FormItem>
+                      <FormLabel>Fee</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min={0}
+                          step="0.01"
+                          placeholder="50.00"
+                          value={tier.fee}
+                          onChange={(e) => setShippingSettings((s) => {
+                            const weightTiers = [...(s.weightTiers || [])];
+                            weightTiers[idx] = { ...weightTiers[idx], fee: Number(e.target.value) || 0 };
+                            return { ...s, weightTiers };
+                          })}
+                        />
+                      </FormControl>
+                    </FormItem>
+                    <FormItem>
+                      <FormLabel>Label (optional)</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Light items"
+                          value={tier.label || ''}
+                          onChange={(e) => setShippingSettings((s) => {
+                            const weightTiers = [...(s.weightTiers || [])];
+                            weightTiers[idx] = { ...weightTiers[idx], label: e.target.value };
+                            return { ...s, weightTiers };
+                          })}
+                        />
+                      </FormControl>
+                    </FormItem>
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => setShippingSettings((s) => ({ 
+                          ...s, 
+                          weightTiers: (s.weightTiers || []).filter((_, i) => i !== idx) 
+                        }))}
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+
+                {(shippingSettings.weightTiers && shippingSettings.weightTiers.length > 0) && (
+                  <div className="mt-4 p-4 bg-muted rounded-lg">
+                    <p className="text-sm text-muted-foreground">
+                      <strong>Note:</strong> Weight tiers are applied in ascending order. 
+                      If order weight is ≤ max weight, that tier's fee is used. 
+                      If weight exceeds all tiers, the highest tier fee applies.
+                    </p>
+                  </div>
+                )}
               </div>
                 </div>
               </AccordionContent>
