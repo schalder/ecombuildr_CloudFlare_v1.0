@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserStore } from "@/hooks/useUserStore";
 import { PlanStatusBanner } from "@/components/dashboard/PlanStatusBanner";
-import { UsageCard } from "@/components/dashboard/UsageCard";
+
 import { PlanUpgradeModal } from "@/components/dashboard/PlanUpgradeModal";
 import { PlanUpgradeModal2 } from "@/components/dashboard/PlanUpgradeModal2";
 import { usePlanLimits } from "@/hooks/usePlanLimits";
@@ -254,7 +254,7 @@ export default function DashboardOverview() {
           
           {/* Quick Access Sidebar */}
           <div className="lg:col-span-2 space-y-6">
-            <UsageCard onUpgrade={() => setShowUpgradeModal(true)} />
+            
             
             {/* Websites Quick Access */}
             <Card>
@@ -384,41 +384,6 @@ export default function DashboardOverview() {
           </div>
         </div>
 
-        {/* Quick Actions */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Quick Actions</CardTitle>
-            <CardDescription>Common tasks to get you started</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              <Button asChild variant="outline" className="h-24 flex-col gap-2">
-                <NavLink to="/dashboard/products/add">
-                  <Plus className="h-6 w-6" />
-                  Add Product
-                </NavLink>
-              </Button>
-              <Button asChild variant="outline" className="h-24 flex-col gap-2">
-                <NavLink to="/dashboard/pages/builder">
-                  <FileText className="h-6 w-6" />
-                  Build Page
-                </NavLink>
-              </Button>
-              <Button asChild variant="outline" className="h-24 flex-col gap-2">
-                <NavLink to="/dashboard/customers">
-                  <Users className="h-6 w-6" />
-                  View Customers
-                </NavLink>
-              </Button>
-              <Button asChild variant="outline" className="h-24 flex-col gap-2">
-                <NavLink to="/dashboard/analytics">
-                  <BarChart3 className="h-6 w-6" />
-                  Analytics
-                </NavLink>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
       </div>
       
       {/* Show different modals based on user status */}
