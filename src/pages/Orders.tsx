@@ -601,8 +601,9 @@ export default function Orders() {
                           <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Items</div>
                           <div className="text-sm space-y-1">
                             {orderItemsMap[order.id].slice(0, 2).map((it: any, i: number) => (
-                              <div key={i} className="flex justify-between">
-                                <span className="truncate">{nameWithVariant(it.product_name, it.variation)} × {it.quantity}</span>
+                              <div key={i} className="flex items-start gap-2">
+                                <span className="flex-1 truncate min-w-0">{nameWithVariant(it.product_name, it.variation)}</span>
+                                <span className="flex-shrink-0 text-muted-foreground">× {it.quantity}</span>
                               </div>
                             ))}
                             {orderItemsMap[order.id].length > 2 && (
