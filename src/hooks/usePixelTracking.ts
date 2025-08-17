@@ -237,6 +237,14 @@ export const usePixelTracking = (pixelConfig?: PixelConfig, storeId?: string, we
     page_title?: string;
     page_location?: string;
   }) => {
+    // Store PageView event in database
+    const eventData = {
+      page_title: data?.page_title || document.title,
+      page_location: data?.page_location || window.location.href,
+      referrer: document.referrer || null,
+    };
+    storePixelEvent('PageView', eventData);
+
     // Facebook Pixel
     if (pixelConfig?.facebook_pixel_id && window.fbq) {
       window.fbq('track', 'PageView');
@@ -249,7 +257,7 @@ export const usePixelTracking = (pixelConfig?: PixelConfig, storeId?: string, we
         page_location: data?.page_location || window.location.href,
       });
     }
-  }, [pixelConfig]);
+  }, [pixelConfig, storePixelEvent]);
 
   return {
     trackEvent,

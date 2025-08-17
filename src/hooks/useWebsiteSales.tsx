@@ -195,12 +195,7 @@ export function useWebsiteSales(websiteId: string, initialDateRange?: DateRange)
         .select('*')
         .in('order_id', currentOrderIds);
 
-      // Get website analytics for conversion rate calculation
-      const { data: analyticsData } = await supabase
-        .from('website_analytics')
-        .select('unique_visitors')
-        .eq('website_id', websiteId)
-        .gte('date', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]); // Last 30 days
+      // Note: Conversion rate is now calculated from pixel events below
 
       // Calculate current period metrics
       const totalOrders = currentOrders.length;

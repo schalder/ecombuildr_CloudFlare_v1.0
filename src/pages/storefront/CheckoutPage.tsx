@@ -21,6 +21,7 @@ import { computeShippingForAddress } from '@/lib/shipping';
 import { formatCurrency } from '@/lib/currency';
 import { nameWithVariant } from '@/lib/utils';
 import { useWebsiteShipping } from '@/hooks/useWebsiteShipping';
+import { useWebsiteContext } from '@/contexts/WebsiteContext';
 
 interface CheckoutForm {
   customer_name: string;
@@ -43,7 +44,8 @@ export const CheckoutPage: React.FC = () => {
   const paths = useEcomPaths();
   const { pixels } = usePixelContext();
   const { trackInitiateCheckout, trackPurchase } = usePixelTracking(pixels);
-  const isWebsiteContext = Boolean(websiteId || websiteSlug);
+  const { websiteId: contextWebsiteId } = useWebsiteContext();
+  const isWebsiteContext = Boolean(websiteId || websiteSlug || contextWebsiteId);
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [hasTrackedCheckout, setHasTrackedCheckout] = useState(false);
@@ -233,7 +235,7 @@ useEffect(() => {
       // Create order via secure Edge Function to respect RLS
       const orderData = {
         store_id: store.id,
-        website_id: websiteId || websiteSlug ? (websiteId || null) : null,
+        website_id: websiteId || contextWebsiteId || null,
         funnel_id: null, // Add funnel context if available from URL params
         customer_name: form.customer_name,
         customer_email: form.customer_email,

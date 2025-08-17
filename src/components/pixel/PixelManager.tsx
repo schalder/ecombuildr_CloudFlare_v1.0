@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { usePixelTracking } from '@/hooks/usePixelTracking';
 import { useWebsiteContext } from '@/contexts/WebsiteContext';
 
@@ -30,6 +31,7 @@ export const usePixelContext = () => React.useContext(PixelContext);
 export const PixelManager: React.FC<PixelManagerProps> = ({ websitePixels: initialPixels, children, storeId }) => {
   const [currentPixels, setCurrentPixels] = React.useState(initialPixels);
   const { websiteId } = useWebsiteContext();
+  const location = useLocation();
   const { trackPageView } = usePixelTracking(currentPixels, storeId, websiteId);
 
   const updatePixels = React.useCallback((newPixels: any) => {
@@ -97,6 +99,13 @@ export const PixelManager: React.FC<PixelManagerProps> = ({ websitePixels: initi
 
     return () => clearTimeout(timer);
   }, [currentPixels, trackPageView]);
+
+  // Track SPA navigation (location changes)
+  useEffect(() => {
+    if (currentPixels) {
+      trackPageView();
+    }
+  }, [location.pathname, location.search, trackPageView, currentPixels]);
 
   return (
     <PixelContext.Provider value={{ pixels: currentPixels, updatePixels }}>

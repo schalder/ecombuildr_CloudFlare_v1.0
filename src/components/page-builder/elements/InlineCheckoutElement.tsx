@@ -24,7 +24,7 @@ import { useResolvedWebsiteId } from '@/hooks/useResolvedWebsiteId';
 
 const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?: 'desktop' | 'tablet' | 'mobile' }> = ({ element, deviceType = 'desktop' }) => {
   const navigate = useNavigate();
-  const { websiteId } = useParams<{ websiteId?: string }>();
+  const { websiteId, funnelId } = useParams<{ websiteId?: string; funnelId?: string }>();
   const paths = useEcomPaths();
   const { store, loadStoreById } = useStore();
   const { pixels } = usePixelContext();
@@ -191,7 +191,7 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
       const orderData: any = {
         store_id: store.id,
         website_id: resolvedWebsiteId || null,
-        funnel_id: null, // Could be added for funnel contexts
+        funnel_id: funnelId || null,
         customer_name: form.customer_name,
         customer_email: form.customer_email,
         customer_phone: form.customer_phone,

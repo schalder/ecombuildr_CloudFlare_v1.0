@@ -5,6 +5,7 @@ import { Loader2 } from 'lucide-react';
 import { PageBuilderRenderer } from '@/components/storefront/PageBuilderRenderer';
 import { useStore } from '@/contexts/StoreContext';
 import { setSEO, buildCanonical } from '@/lib/seo';
+import { PixelManager } from '@/components/pixel/PixelManager';
 interface FunnelStepData {
   id: string;
   title: string;
@@ -184,16 +185,18 @@ export const FunnelStepPage: React.FC = () => {
   }
 
   return (
-    <div className="w-full min-h-screen">
-      {/* Render funnel step content using PageBuilderRenderer */}
-      {step.content?.sections ? (
-        <PageBuilderRenderer data={step.content} />
-      ) : (
-        <div className="container mx-auto px-4 py-8">
-          <h1 className="text-3xl font-bold mb-6">{step.title}</h1>
-          <p className="text-muted-foreground">This step is still being set up.</p>
-        </div>
-      )}
-    </div>
+    <PixelManager storeId={funnel.store_id}>
+      <div className="w-full min-h-screen">
+        {/* Render funnel step content using PageBuilderRenderer */}
+        {step.content?.sections ? (
+          <PageBuilderRenderer data={step.content} />
+        ) : (
+          <div className="container mx-auto px-4 py-8">
+            <h1 className="text-3xl font-bold mb-6">{step.title}</h1>
+            <p className="text-muted-foreground">This step is still being set up.</p>
+          </div>
+        )}
+      </div>
+    </PixelManager>
   );
 };
