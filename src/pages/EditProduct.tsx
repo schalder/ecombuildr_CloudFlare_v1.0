@@ -484,188 +484,184 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
                   </CardTitle>
                 </AccordionTrigger>
                 <AccordionContent>
-                  <CardContent className="space-y-4">
-                    <div>
-                      <Label htmlFor="name">Product Name *</Label>
-                      <Input
-                        id="name"
-                        value={formData.name}
-                        onChange={(e) => handleInputChange('name', e.target.value)}
-                        placeholder="Enter product name"
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <Label htmlFor="short_description">Short Description</Label>
-                      <Input
-                        id="short_description"
-                        value={formData.short_description}
-                        onChange={(e) => handleInputChange('short_description', e.target.value)}
-                        placeholder="Brief product description"
-                      />
-                    </div>
-
-                    <div>
-                      <Label htmlFor="weight_kg">Weight (kg)</Label>
-                      <Input
-                        id="weight_kg"
-                        type="number"
-                        value={formData.weight_kg}
-                        onChange={(e) => handleInputChange('weight_kg', e.target.value)}
-                        placeholder="e.g. 0.5 for 500g, 2 for 2kg"
-                        step="0.01"
-                        min="0"
-                      />
-                      <p className="text-sm text-muted-foreground">
-                        Used for shipping calculations. Enter in kilograms (e.g., 0.2 for 200g, 1.5 for 1.5kg)
-                      </p>
-                    </div>
-
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2">
-                        <Switch
-                          id="use_builder"
-                          checked={descriptionMode === 'builder'}
-                          onCheckedChange={(v) => setDescriptionMode(v ? 'builder' : 'rich_text')}
+                  <CardContent className="space-y-6">
+                    <div className="space-y-4">
+                      <div>
+                        <Label htmlFor="name">Product Name *</Label>
+                        <Input
+                          id="name"
+                          value={formData.name}
+                          onChange={(e) => handleInputChange('name', e.target.value)}
+                          placeholder="Enter product name"
+                          required
+                          className="mt-2"
                         />
-                        <Label htmlFor="use_builder">Use Page Builder for Description</Label>
                       </div>
 
-                      {descriptionMode === 'rich_text' ? (
-                        <div className="space-y-2">
-                          <Label htmlFor="description">Description</Label>
-                          <RichTextEditor
-                            value={formData.description}
-                            onChange={(html) => handleInputChange('description', html)}
-                            placeholder="Write a detailed description..."
+                      <div>
+                        <Label htmlFor="short_description">Short Description</Label>
+                        <Input
+                          id="short_description"
+                          value={formData.short_description}
+                          onChange={(e) => handleInputChange('short_description', e.target.value)}
+                          placeholder="Brief product description"
+                          className="mt-2"
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="weight_kg">Weight (kg)</Label>
+                        <Input
+                          id="weight_kg"
+                          type="number"
+                          value={formData.weight_kg}
+                          onChange={(e) => handleInputChange('weight_kg', e.target.value)}
+                          placeholder="e.g. 0.5 for 500g, 2 for 2kg"
+                          step="0.01"
+                          min="0"
+                          className="mt-2 max-w-xs"
+                        />
+                        <p className="text-sm text-muted-foreground mt-2">
+                          Used for shipping calculations. Enter in kilograms (e.g., 0.2 for 200g, 1.5 for 1.5kg)
+                        </p>
+                      </div>
+
+                      <Separator className="my-6" />
+
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-3">
+                          <Switch
+                            id="use_builder"
+                            checked={descriptionMode === 'builder'}
+                            onCheckedChange={(v) => setDescriptionMode(v ? 'builder' : 'rich_text')}
                           />
+                          <Label htmlFor="use_builder" className="text-sm font-medium">Use Page Builder for Description</Label>
                         </div>
-                      ) : (
-                        <div className="space-y-2">
-                          <Button type="button" onClick={() => setIsBuilderOpen(true)}>
-                            Edit Description with Page Builder
-                          </Button>
-                          <p className="text-sm text-muted-foreground">
-                            {descriptionBuilder.sections && descriptionBuilder.sections.length
-                              ? 'Builder content saved. Click Edit to update.'
-                              : 'No builder content yet. Click Edit to start.'}
-                          </p>
-                        </div>
-                      )}
+
+                        {descriptionMode === 'rich_text' ? (
+                          <div className="space-y-3">
+                            <Label htmlFor="description">Description</Label>
+                            <RichTextEditor
+                              value={formData.description}
+                              onChange={(html) => handleInputChange('description', html)}
+                              placeholder="Write a detailed description..."
+                              className="mt-2"
+                            />
+                          </div>
+                        ) : (
+                          <div className="space-y-3">
+                            <Button type="button" onClick={() => setIsBuilderOpen(true)} className="w-full sm:w-auto">
+                              Edit Description with Page Builder
+                            </Button>
+                            <p className="text-sm text-muted-foreground">
+                              {descriptionBuilder.sections && descriptionBuilder.sections.length
+                                ? 'Builder content saved. Click Edit to update.'
+                                : 'No builder content yet. Click Edit to start.'}
+                            </p>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </CardContent>
                 </AccordionContent>
               </Card>
             </AccordionItem>
 
-            {/* Variations */}
-            <AccordionItem value="variations" className="border rounded-lg">
+            {/* Pricing & Inventory */}
+            <AccordionItem value="pricing" className="border rounded-lg">
               <Card>
                 <AccordionTrigger className="hover:no-underline px-6 py-4">
-                  <CardTitle>Variations</CardTitle>
-                </AccordionTrigger>
-                <AccordionContent>
-                  <CardContent className="space-y-4">
-                    <div className="flex items-center gap-2">
-                      <Switch id="has_variants" checked={hasVariants} onCheckedChange={setHasVariants} />
-                      <Label htmlFor="has_variants">This product has variants (e.g., Size, Color)</Label>
-                    </div>
-                    {hasVariants && (
-                      <>
-                        <VariationsBuilder options={variations} onChange={setVariations} />
-                        <VariantMatrix options={variations} variants={variantEntries} onChange={setVariantEntries} />
-                      </>
-                    )}
-                  </CardContent>
-                </AccordionContent>
-              </Card>
-            </AccordionItem>
-
-            {/* Actions & Payments */}
-            <AccordionItem value="actions-payments" className="border rounded-lg">
-              <Card>
-                <AccordionTrigger className="hover:no-underline px-6 py-4">
-                  <CardTitle>Product Actions & Payments</CardTitle>
+                  <CardTitle>Pricing & Inventory</CardTitle>
                 </AccordionTrigger>
                 <AccordionContent>
                   <CardContent className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                       <div className="space-y-4">
-                        <div className="flex items-center gap-2">
-                          <Switch
-                            id="order_now_enabled"
-                            checked={actionButtons.order_now.enabled}
-                            onCheckedChange={(v) => setActionButtons(prev => ({ ...prev, order_now: { ...prev.order_now, enabled: v } }))}
-                          />
-                          <Label htmlFor="order_now_enabled">Enable "Order Now" button</Label>
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="order_now_label">Order Now Button Text</Label>
-                          <Input id="order_now_label" value={actionButtons.order_now.label}
-                            onChange={(e) => setActionButtons(prev => ({ ...prev, order_now: { ...prev.order_now, label: e.target.value } }))}
-                          />
-                        </div>
-                        <Separator />
-                        <div className="flex items-center gap-2">
-                          <Switch
-                            id="call_enabled"
-                            checked={actionButtons.call.enabled}
-                            onCheckedChange={(v) => setActionButtons(prev => ({ ...prev, call: { ...prev.call, enabled: v } }))}
-                          />
-                          <Label htmlFor="call_enabled">Enable Call button</Label>
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="call_label">Call Button Text</Label>
-                          <Input id="call_label" value={actionButtons.call.label}
-                            onChange={(e) => setActionButtons(prev => ({ ...prev, call: { ...prev.call, label: e.target.value } }))}
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="call_phone">Phone Number</Label>
-                          <Input id="call_phone" placeholder="e.g. +8801XXXXXXXXX" value={actionButtons.call.phone || ''}
-                            onChange={(e) => setActionButtons(prev => ({ ...prev, call: { ...prev.call, phone: e.target.value } }))}
-                          />
-                        </div>
+                        <Label htmlFor="price">Price (৳) *</Label>
+                        <Input
+                          id="price"
+                          type="number"
+                          value={formData.price}
+                          onChange={(e) => handleInputChange('price', e.target.value)}
+                          placeholder="0.00"
+                          step="0.01"
+                          min="0"
+                          required
+                          className="mt-2"
+                        />
                       </div>
+
                       <div className="space-y-4">
-                        <div className="flex items-center gap-2">
-                          <Switch
-                            id="whatsapp_enabled"
-                            checked={actionButtons.whatsapp.enabled}
-                            onCheckedChange={(v) => setActionButtons(prev => ({ ...prev, whatsapp: { ...prev.whatsapp, enabled: v } }))}
-                          />
-                          <Label htmlFor="whatsapp_enabled">Enable WhatsApp button</Label>
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="whatsapp_label">WhatsApp Button Text</Label>
-                          <Input id="whatsapp_label" value={actionButtons.whatsapp.label}
-                            onChange={(e) => setActionButtons(prev => ({ ...prev, whatsapp: { ...prev.whatsapp, label: e.target.value } }))}
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="whatsapp_url">WhatsApp URL</Label>
-                          <Input id="whatsapp_url" placeholder="e.g. https://wa.me/8801XXXXXXXXX?text=Hello" value={actionButtons.whatsapp.url || ''}
-                            onChange={(e) => setActionButtons(prev => ({ ...prev, whatsapp: { ...prev.whatsapp, url: e.target.value } }))}
-                          />
-                        </div>
+                        <Label htmlFor="compare_price">Compare at Price (৳)</Label>
+                        <Input
+                          id="compare_price"
+                          type="number"
+                          value={formData.compare_price}
+                          onChange={(e) => handleInputChange('compare_price', e.target.value)}
+                          placeholder="0.00"
+                          step="0.01"
+                          min="0"
+                          className="mt-2"
+                        />
+                      </div>
+
+                      <div className="space-y-4">
+                        <Label htmlFor="cost_price">Cost Price (৳)</Label>
+                        <Input
+                          id="cost_price"
+                          type="number"
+                          value={formData.cost_price}
+                          onChange={(e) => handleInputChange('cost_price', e.target.value)}
+                          placeholder="0.00"
+                          step="0.01"
+                          min="0"
+                          className="mt-2"
+                        />
                       </div>
                     </div>
 
-                    <div className="space-y-2">
-                      <Label>Allowed Payment Methods</Label>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                        {['cod','bkash','nagad','sslcommerz'].map((m) => (
-                          <label key={m} className="flex items-center gap-2">
-                            <Checkbox
-                              checked={allowedPayments.includes(m)}
-                              onCheckedChange={(v) => setAllowedPayments(prev => v ? [...prev, m] : prev.filter(x => x !== m))}
-                            />
-                            <span className="capitalize">{m === 'sslcommerz' ? 'SSLCommerz' : m}</span>
-                          </label>
-                        ))}
+                    <Separator />
+
+                    <div className="space-y-6">
+                      <div className="space-y-4">
+                        <Label htmlFor="sku">SKU (Stock Keeping Unit)</Label>
+                        <Input
+                          id="sku"
+                          value={formData.sku}
+                          onChange={(e) => handleInputChange('sku', e.target.value)}
+                          placeholder="Enter product SKU"
+                          className="mt-2 max-w-md"
+                        />
+                        <p className="text-sm text-muted-foreground">
+                          Unique identifier for inventory tracking (optional)
+                        </p>
                       </div>
-                      <p className="text-sm text-muted-foreground">Leave all unchecked to allow all methods.</p>
+
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-3">
+                          <Switch
+                            id="track_inventory"
+                            checked={!!formData.track_inventory}
+                            onCheckedChange={(checked) => handleInputChange('track_inventory', checked)}
+                          />
+                          <Label htmlFor="track_inventory" className="text-sm font-medium">Track inventory</Label>
+                        </div>
+
+                        {formData.track_inventory && (
+                          <div className="space-y-4 ml-6">
+                            <Label htmlFor="inventory_quantity">Quantity</Label>
+                            <Input
+                              id="inventory_quantity"
+                              type="number"
+                              value={formData.inventory_quantity}
+                              onChange={(e) => handleInputChange('inventory_quantity', e.target.value)}
+                              placeholder="0"
+                              min="0"
+                              className="mt-2 max-w-xs"
+                            />
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </CardContent>
                 </AccordionContent>
