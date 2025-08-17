@@ -144,13 +144,7 @@ export function AppSidebar() {
   );
 
   return (
-    <Sidebar className="border-sidebar-border bg-sidebar touch-pan-y"
-      style={{ 
-        WebkitTouchCallout: 'none',
-        WebkitUserSelect: 'none',
-        userSelect: 'none'
-      }}
-    >
+    <Sidebar className="border-sidebar-border bg-sidebar">
       <SidebarContent className="gap-0">
         {/* Search */}
         {!collapsed && (
@@ -170,14 +164,14 @@ export function AppSidebar() {
         {/* Quick Actions */}
         {!collapsed && (
           <div className="p-4 border-b border-sidebar-border">
-            <div className="space-y-3">
+            <div className="space-y-2">
               <Button 
                 asChild 
-                size="default" 
-                className="w-full justify-start bg-primary hover:bg-primary-glow active:bg-primary-glow touch-manipulation min-h-[44px] text-base"
+                size="sm" 
+                className="w-full justify-start bg-primary hover:bg-primary-glow"
               >
                 <NavLink to="/dashboard/products/add">
-                  <Plus className="mr-2 h-5 w-5" />
+                  <Plus className="mr-2 h-4 w-4" />
                   Add Product
                 </NavLink>
               </Button>
@@ -188,7 +182,7 @@ export function AppSidebar() {
         {/* Navigation Menu */}
         <SidebarGroup className="flex-1">
           <SidebarGroupContent>
-            <SidebarMenu className="gap-2 px-2">
+            <SidebarMenu className="gap-1">
               {filteredItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   {item.items ? (
@@ -198,18 +192,18 @@ export function AppSidebar() {
                     >
                       <CollapsibleTrigger asChild>
                         <SidebarMenuButton
-                          className={`w-full justify-between hover:bg-sidebar-accent active:bg-sidebar-accent touch-manipulation min-h-[44px] text-base px-3 py-2 ${
+                          className={`w-full justify-between hover:bg-sidebar-accent ${
                             isGroupActive(item.items) ? "bg-sidebar-accent text-sidebar-accent-foreground" : ""
                           }`}
                         >
                           <div className="flex items-center">
-                            <item.icon className="mr-3 h-5 w-5" />
-                            {!collapsed && <span className="text-base">{item.title}</span>}
+                            <item.icon className="mr-3 h-4 w-4" />
+                            {!collapsed && <span>{item.title}</span>}
                           </div>
                           {!collapsed && (
                             expandedGroups.includes(item.title) ? 
-                            <ChevronDown className="h-5 w-5" /> : 
-                            <ChevronRight className="h-5 w-5" />
+                            <ChevronDown className="h-4 w-4" /> : 
+                            <ChevronRight className="h-4 w-4" />
                           )}
                         </SidebarMenuButton>
                       </CollapsibleTrigger>
@@ -217,20 +211,19 @@ export function AppSidebar() {
                         <CollapsibleContent>
                           <SidebarMenuSub>
                             {item.items.map((subItem) => (
-                              <SidebarMenuSubItem key={subItem.title} className="my-1">
+                              <SidebarMenuSubItem key={subItem.title}>
                                 <SidebarMenuSubButton 
                                   asChild
                                   isActive={isActive(subItem.url)}
-                                  className="min-h-[40px] touch-manipulation"
                                 >
                                    <NavLink 
                                      to={subItem.url}
                                      className={() => {
                                        const isActive = location.pathname === subItem.url || 
                                          (subItem.url.includes('?') && location.pathname + location.search === subItem.url);
-                                       return `touch-manipulation px-4 py-2 text-base min-h-[40px] flex items-center ${isActive 
-                                         ? "bg-primary text-primary-foreground hover:bg-primary-glow active:bg-primary-glow" 
-                                         : "hover:bg-sidebar-accent active:bg-sidebar-accent"}`;
+                                       return isActive 
+                                         ? "bg-primary text-primary-foreground hover:bg-primary-glow" 
+                                         : "hover:bg-sidebar-accent";
                                      }}
                                   >
                                     {subItem.title}
@@ -243,13 +236,12 @@ export function AppSidebar() {
                       )}
                     </Collapsible>
                   ) : (
-                    <SidebarMenuButton asChild isActive={isActive(item.url!)} className="min-h-[44px] touch-manipulation text-base px-3 py-2">
+                    <SidebarMenuButton asChild isActive={isActive(item.url!)}>
                        <NavLink 
                          to={item.url!}
-                         className="touch-manipulation hover:bg-sidebar-accent active:bg-sidebar-accent flex items-center w-full"
                       >
-                        <item.icon className="mr-3 h-5 w-5" />
-                        {!collapsed && <span className="text-base">{item.title}</span>}
+                        <item.icon className="mr-3 h-4 w-4" />
+                        {!collapsed && <span>{item.title}</span>}
                       </NavLink>
                     </SidebarMenuButton>
                   )}
