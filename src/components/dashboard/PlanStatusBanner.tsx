@@ -129,28 +129,7 @@ export const PlanStatusBanner = ({ onUpgrade }: PlanStatusBannerProps) => {
     );
   }
 
-  // Free plan user
-  if (userProfile.subscription_plan === 'free') {
-    return (
-      <Alert className="mb-6 border-primary bg-primary/10">
-        <Zap className="h-4 w-4 text-primary" />
-        <AlertDescription className="flex items-center justify-between">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="font-medium">ফ্রি প্ল্যান ব্যবহার করছেন</span>
-              <Badge variant="outline">ফ্রি</Badge>
-            </div>
-            <p className="text-sm mt-1">
-              প্রিমিয়াম ফিচার ও আরও রিসোর্স পেতে প্ল্যান আপগ্রেড করুন। ৭ দিন ফ্রি ট্রায়াল!
-            </p>
-          </div>
-          <Button onClick={onUpgrade} size="sm">
-            ট্রায়াল শুরু করুন
-          </Button>
-        </AlertDescription>
-      </Alert>
-    );
-  }
+  // No longer needed - "free" plan removed from system
 
   // Active trial (early days)
   if (userProfile.account_status === 'trial' && trialDaysRemaining > 3) {

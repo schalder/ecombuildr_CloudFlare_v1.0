@@ -132,7 +132,7 @@ export const UsageCard = ({ onUpgrade }: UsageCardProps) => {
         )}
 
         {/* Upgrade Button */}
-        {(hasAnyLimitReached || userProfile?.subscription_plan === 'free') && (
+        {hasAnyLimitReached && (
           <Button 
             onClick={onUpgrade}
             className="w-full mt-4"

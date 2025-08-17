@@ -418,18 +418,11 @@ export default function DashboardOverview() {
 
       </div>
       
-      {/* Show different modals based on user status */}
-      {userProfile?.subscription_plan === 'free' ? (
-        <PlanUpgradeModal 
-          open={showUpgradeModal} 
-          onOpenChange={setShowUpgradeModal}
-        />
-      ) : (
-        <PlanUpgradeModal2 
-          open={showUpgradeModal} 
-          onOpenChange={setShowUpgradeModal}
-        />
-      )}
+      {/* Use unified upgrade modal */}
+      <PlanUpgradeModal2 
+        open={showUpgradeModal} 
+        onOpenChange={setShowUpgradeModal}
+      />
     </DashboardLayout>
   );
 }

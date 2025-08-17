@@ -167,7 +167,7 @@ export const useAdminData = () => {
       const activeUsers = userStats?.filter(u => u.account_status === 'active').length || 0;
       const trialUsers = userStats?.filter(u => u.account_status === 'trial').length || 0;
       const paidUsers = userStats?.filter(u => 
-        u.subscription_plan !== 'free' && u.account_status === 'active'
+        u.account_status === 'active'
       ).length || 0;
 
       // Merchant GMV (Gross Merchandise Value) from orders

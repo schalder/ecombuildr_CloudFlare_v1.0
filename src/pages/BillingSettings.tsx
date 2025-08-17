@@ -16,7 +16,7 @@ export default function BillingSettings() {
 
   const getPlanDisplayName = (planName: string) => {
     const planNames: Record<string, string> = {
-      free: 'Free Plan',
+      starter: 'Starter Plan',
       basic: 'Professional Plan',
       professional: 'Professional Plan',
       pro: 'Enterprise Plan',
@@ -26,10 +26,6 @@ export default function BillingSettings() {
   };
 
   const getNextBillingDate = () => {
-    if (userProfile?.subscription_plan === 'free') {
-      return 'N/A (Free Plan)';
-    }
-
     if (userProfile?.account_status === 'trial' && userProfile?.trial_expires_at) {
       const trialEndDate = new Date(userProfile.trial_expires_at);
       return trialEndDate.toLocaleDateString('en-US', { 
@@ -63,10 +59,6 @@ export default function BillingSettings() {
   };
 
   const getBillingStatus = () => {
-    if (userProfile?.subscription_plan === 'free') {
-      return 'N/A (Free Plan)';
-    }
-
     if (userProfile?.account_status === 'trial') {
       return 'Trial period';
     }
@@ -102,10 +94,10 @@ export default function BillingSettings() {
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-2xl font-bold">
-                  {getPlanDisplayName(userProfile?.subscription_plan || 'free')}
+                  {getPlanDisplayName(userProfile?.subscription_plan || 'starter')}
                 </h3>
                 <p className="text-muted-foreground">
-                  {userProfile?.subscription_plan === 'free' ? 'Perfect for getting started' : 'Advanced features included'}
+                  Advanced features included
                 </p>
                 <Badge 
                   variant={userProfile?.account_status === 'active' ? 'default' : 'secondary'} 
@@ -121,7 +113,7 @@ export default function BillingSettings() {
                 </p>
                 <p className="text-muted-foreground">per month</p>
                 <Button className="mt-2" onClick={() => setShowUpgradeModal(true)}>
-                  {userProfile?.subscription_plan === 'free' ? 'Upgrade Plan' : 'Change Plan'}
+                  Change Plan
                 </Button>
               </div>
             </div>
@@ -194,7 +186,7 @@ export default function BillingSettings() {
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Payment method</span>
                   <span>
-                    {userProfile?.subscription_plan === 'free' ? 'None required' : 'Manual payment'}
+                    Manual payment
                   </span>
                 </div>
                 <div className="flex justify-between">
@@ -218,14 +210,11 @@ export default function BillingSettings() {
               <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
               <h3 className="font-semibold mb-2">No billing history</h3>
               <p className="mb-4">
-                {userProfile?.subscription_plan === 'free' 
-                  ? "You're currently on the free plan. Upgrade to see billing history."
-                  : "Your billing history will appear here after your first payment."
-                }
+                Your billing history will appear here after your first payment.
               </p>
               <Button onClick={() => setShowUpgradeModal(true)}>
                 <Download className="mr-2 h-4 w-4" />
-                {userProfile?.subscription_plan === 'free' ? 'Upgrade Plan' : 'Change Plan'}
+                Change Plan
               </Button>
             </div>
           </CardContent>
