@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useSearchParams } from "react-router-dom";
@@ -13,8 +14,9 @@ import {
   TableHeader, 
   TableRow 
 } from "@/components/ui/table";
-import { Search, Users, Mail, Phone, MapPin } from "lucide-react";
+import { Search, Users, Mail, Phone, MapPin, RefreshCw } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
 
 interface Customer {
   id: string;
@@ -33,6 +35,7 @@ export default function Customers() {
   const [searchParams] = useSearchParams();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
 
   useEffect(() => {
@@ -79,6 +82,8 @@ export default function Customers() {
 
         if (customersError) throw customersError;
         setCustomers(customers || []);
+        
+        console.log('Fetched customers:', customers?.length || 0);
       }
     } catch (error) {
       console.error('Error fetching customers:', error);
@@ -90,6 +95,16 @@ export default function Customers() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await fetchCustomers();
+    setRefreshing(false);
+    toast({
+      title: "Refreshed",
+      description: "Customer data has been refreshed",
+    });
   };
 
   const filteredCustomers = customers.filter(customer =>
@@ -109,7 +124,7 @@ export default function Customers() {
   return (
     <DashboardLayout 
       title="Customers" 
-      description="Manage your customer relationships"
+      description="Manage your customer relationships and view analytics"
     >
       <div className="space-y-6">
         {/* Stats Cards */}
@@ -141,7 +156,7 @@ export default function Customers() {
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Avg. Order Value</p>
                   <p className="text-2xl font-bold">
-                    ৳{customerStats.averageOrderValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                    ৳{isNaN(customerStats.averageOrderValue) ? 0 : customerStats.averageOrderValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}
                   </p>
                 </div>
               </div>
@@ -160,6 +175,15 @@ export default function Customers() {
               className="pl-10 w-80"
             />
           </div>
+          <Button
+            onClick={handleRefresh}
+            disabled={refreshing}
+            variant="outline"
+            size="sm"
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
         </div>
 
         {/* Customers Table */}
@@ -180,10 +204,21 @@ export default function Customers() {
             ) : filteredCustomers.length === 0 ? (
               <div className="text-center py-8">
                 <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <h3 className="text-lg font-medium">No customers found</h3>
-                <p className="text-muted-foreground">
-                  {searchTerm ? 'Try adjusting your search' : 'Customers will appear here when they place orders'}
+                <h3 className="text-lg font-medium">
+                  {customers.length === 0 ? 'No customers yet' : 'No customers found'}
+                </h3>
+                <p className="text-muted-foreground mb-4">
+                  {customers.length === 0 
+                    ? 'Customers will automatically appear here when they place orders' 
+                    : 'Try adjusting your search terms'
+                  }
                 </p>
+                {customers.length === 0 && (
+                  <Button onClick={handleRefresh} disabled={refreshing}>
+                    <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+                    Check for new customers
+                  </Button>
+                )}
               </div>
             ) : (
               <Table>
@@ -194,7 +229,7 @@ export default function Customers() {
                     <TableHead>Location</TableHead>
                     <TableHead>Orders</TableHead>
                     <TableHead>Total Spent</TableHead>
-                    <TableHead>Joined</TableHead>
+                    <TableHead>First Order</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
