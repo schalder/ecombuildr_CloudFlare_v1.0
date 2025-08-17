@@ -24,6 +24,7 @@ import { useWebsiteShipping } from '@/hooks/useWebsiteShipping';
 import { renderElementStyles } from '@/components/page-builder/utils/styleRenderer';
 import { usePixelTracking } from '@/hooks/usePixelTracking';
 import { usePixelContext } from '@/components/pixel/PixelManager';
+import { useChannelContext } from '@/hooks/useChannelContext';
 
 const CartSummaryElement: React.FC<{ element: PageBuilderElement }> = () => {
   const { items, total, updateQuantity, removeItem } = useCart();
@@ -563,13 +564,14 @@ const CartFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 'des
 
 // Full Checkout Element (wired to builder options and responsive styles)
 const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 'desktop' | 'tablet' | 'mobile' }> = ({ element, deviceType = 'desktop' }) => {
-  const { slug, websiteId } = useParams<{ slug?: string; websiteId?: string }>();
+  const { slug } = useParams<{ slug?: string }>();
   const navigate = useNavigate();
   const { store, loadStore, loadStoreById } = useStore();
   const { items, total, clearCart } = useCart();
   const paths = useEcomPaths();
   const { pixels } = usePixelContext();
   const { trackPurchase } = usePixelTracking(pixels);
+  const { websiteId, funnelId } = useChannelContext();
 
   const cfg: any = element.content || {};
   const fields = cfg.fields || {
@@ -752,8 +754,12 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
       const isNagadManual = Boolean(store?.settings?.nagad?.enabled && (store?.settings?.nagad?.mode === 'number' || !hasNagadApi) && store?.settings?.nagad?.number);
       const isManual = (form.payment_method === 'bkash' && isBkashManual) || (form.payment_method === 'nagad' && isNagadManual);
 
+      console.debug('[CheckoutFullElement] Channel context:', { websiteId, funnelId });
+      
       const orderData: any = {
         store_id: store.id,
+        website_id: websiteId || null,
+        funnel_id: funnelId || null,
         customer_name: form.customer_name,
         customer_email: form.customer_email,
         customer_phone: form.customer_phone,
@@ -791,6 +797,12 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
         variation: (i as any).variation ?? null,
       }));
 
+      console.debug('[CheckoutFullElement] Creating order with payload:', { 
+        orderData, 
+        items: itemsPayload.length,
+        channel: { websiteId, funnelId }
+      });
+
       const { data, error } = await supabase.functions.invoke('create-order', {
         body: {
           order: orderData,
@@ -801,6 +813,8 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
       if (error) throw error;
       const orderId: string | undefined = data?.order?.id;
       if (!orderId) throw new Error('Order was not created');
+      
+      console.debug('[CheckoutFullElement] Order created successfully:', { orderId, websiteId, funnelId });
 
       if (form.payment_method === 'cod' || isManual) {
         // Track Purchase event for COD orders
