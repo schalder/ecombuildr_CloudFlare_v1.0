@@ -7,6 +7,7 @@ import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AlignLeft, AlignCenter, AlignRight, Monitor, Smartphone } from 'lucide-react';
+import { ColorPicker } from '@/components/ui/color-picker';
 import { PageBuilderElement } from '../../types';
 
 interface ButtonElementStylesProps {
@@ -18,8 +19,6 @@ export const ButtonElementStyles: React.FC<ButtonElementStylesProps> = ({
   element,
   onStyleUpdate,
 }) => {
-  console.log('🔧 ButtonElementStyles component loaded for element:', element.type, element.id);
-  console.log('🔧 Element styles:', element.styles);
   const [responsiveTab, setResponsiveTab] = useState<'desktop' | 'mobile'>('desktop');
 
   // Get responsive styles
@@ -37,38 +36,15 @@ export const ButtonElementStyles: React.FC<ButtonElementStylesProps> = ({
     onStyleUpdate('responsive', updatedResponsive);
   };
 
+  // Helper to get current value with fallback
+  const getCurrentValue = (prop: string, fallback: any = '') => {
+    return currentStyles[prop] || element.styles?.[prop] || fallback;
+  };
+
   return (
     <div className="space-y-4">
-      {/* Width Controls */}
+      {/* Device Toggle */}
       <div className="space-y-3">
-        <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Width</h4>
-        
-        <div className="flex items-center justify-between">
-          <Label className="text-xs">Full Width</Label>
-          <Switch
-            checked={element.styles?.width === '100%'}
-            onCheckedChange={(checked) => onStyleUpdate('width', checked ? '100%' : 'auto')}
-          />
-        </div>
-
-        {element.styles?.width !== '100%' && (
-          <div>
-            <Label className="text-xs">Custom Width</Label>
-            <Input
-              value={element.styles?.width || ''}
-              onChange={(e) => onStyleUpdate('width', e.target.value)}
-              placeholder="e.g., 200px, 50%"
-            />
-          </div>
-        )}
-      </div>
-
-      <Separator />
-
-      {/* Responsive Typography */}
-      <div className="space-y-3">
-        <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Responsive Typography</h4>
-        
         <Tabs value={responsiveTab} onValueChange={(value) => setResponsiveTab(value as 'desktop' | 'mobile')}>
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="desktop" className="flex items-center gap-2">
@@ -80,85 +56,77 @@ export const ButtonElementStyles: React.FC<ButtonElementStylesProps> = ({
               Mobile
             </TabsTrigger>
           </TabsList>
-
-          <TabsContent value="desktop" className="space-y-3 mt-3">
-            <div>
-              <Label className="text-xs">Font Size (Desktop)</Label>
-              <div className="flex items-center space-x-2">
-                <Slider
-                  value={[parseInt(currentStyles.fontSize?.replace(/\D/g, '') || element.styles?.fontSize?.replace(/\D/g, '') || '16')]}
-                  onValueChange={(value) => handleResponsiveUpdate('fontSize', `${value[0]}px`)}
-                  max={48}
-                  min={8}
-                  step={1}
-                  className="flex-1"
-                />
-                <span className="text-xs text-muted-foreground w-12">
-                  {currentStyles.fontSize || element.styles?.fontSize || '16px'}
-                </span>
-              </div>
-            </div>
-
-            <div>
-              <Label className="text-xs">Font Weight</Label>
-              <div className="flex space-x-1">
-                <Button
-                  size="sm"
-                  variant={currentStyles.fontWeight === 'normal' ? 'default' : 'outline'}
-                  onClick={() => handleResponsiveUpdate('fontWeight', 'normal')}
-                >
-                  Normal
-                </Button>
-                <Button
-                  size="sm"
-                  variant={currentStyles.fontWeight === 'bold' ? 'default' : 'outline'}
-                  onClick={() => handleResponsiveUpdate('fontWeight', 'bold')}
-                >
-                  Bold
-                </Button>
-              </div>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="mobile" className="space-y-3 mt-3">
-            <div>
-              <Label className="text-xs">Font Size (Mobile)</Label>
-              <div className="flex items-center space-x-2">
-                <Slider
-                  value={[parseInt(currentStyles.fontSize?.replace(/\D/g, '') || '14')]}
-                  onValueChange={(value) => handleResponsiveUpdate('fontSize', `${value[0]}px`)}
-                  max={32}
-                  min={8}
-                  step={1}
-                  className="flex-1"
-                />
-                <span className="text-xs text-muted-foreground w-12">
-                  {currentStyles.fontSize || '14px'}
-                </span>
-              </div>
-            </div>
-
-            <div>
-              <Label className="text-xs">Font Weight</Label>
-              <div className="flex space-x-1">
-                <Button
-                  size="sm"
-                  variant={currentStyles.fontWeight === 'normal' ? 'default' : 'outline'}
-                  onClick={() => handleResponsiveUpdate('fontWeight', 'normal')}
-                >
-                  Normal
-                </Button>
-                <Button
-                  size="sm"
-                  variant={currentStyles.fontWeight === 'bold' ? 'default' : 'outline'}
-                  onClick={() => handleResponsiveUpdate('fontWeight', 'bold')}
-                >
-                  Bold
-                </Button>
-              </div>
-            </div>
-          </TabsContent>
         </Tabs>
+      </div>
+
+      <Separator />
+
+      {/* Width Controls */}
+      <div className="space-y-3">
+        <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Width</h4>
+        
+        <div className="flex items-center justify-between">
+          <Label className="text-xs">Full Width</Label>
+          <Switch
+            checked={getCurrentValue('width') === '100%'}
+            onCheckedChange={(checked) => handleResponsiveUpdate('width', checked ? '100%' : 'auto')}
+          />
+        </div>
+
+        {getCurrentValue('width') !== '100%' && (
+          <div>
+            <Label className="text-xs">Custom Width</Label>
+            <Input
+              value={getCurrentValue('width')}
+              onChange={(e) => handleResponsiveUpdate('width', e.target.value)}
+              placeholder="e.g., 200px, 50%"
+            />
+          </div>
+        )}
+      </div>
+
+      <Separator />
+
+      {/* Typography */}
+      <div className="space-y-3">
+        <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Typography</h4>
+        
+        <div>
+          <Label className="text-xs">Font Size</Label>
+          <div className="flex items-center space-x-2">
+            <Slider
+              value={[parseInt(getCurrentValue('fontSize', '16px').replace(/\D/g, ''))]}
+              onValueChange={(value) => handleResponsiveUpdate('fontSize', `${value[0]}px`)}
+              max={responsiveTab === 'desktop' ? 48 : 32}
+              min={8}
+              step={1}
+              className="flex-1"
+            />
+            <span className="text-xs text-muted-foreground w-12">
+              {getCurrentValue('fontSize', '16px')}
+            </span>
+          </div>
+        </div>
+
+        <div>
+          <Label className="text-xs">Font Weight</Label>
+          <div className="flex space-x-1">
+            <Button
+              size="sm"
+              variant={getCurrentValue('fontWeight') === 'normal' ? 'default' : 'outline'}
+              onClick={() => handleResponsiveUpdate('fontWeight', 'normal')}
+            >
+              Normal
+            </Button>
+            <Button
+              size="sm"
+              variant={getCurrentValue('fontWeight') === 'bold' ? 'default' : 'outline'}
+              onClick={() => handleResponsiveUpdate('fontWeight', 'bold')}
+            >
+              Bold
+            </Button>
+          </div>
+        </div>
       </div>
 
       <Separator />
@@ -172,22 +140,22 @@ export const ButtonElementStyles: React.FC<ButtonElementStylesProps> = ({
           <div className="flex space-x-1">
             <Button
               size="sm"
-              variant={element.styles?.textAlign === 'left' ? 'default' : 'outline'}
-              onClick={() => onStyleUpdate('textAlign', 'left')}
+              variant={getCurrentValue('textAlign', 'left') === 'left' ? 'default' : 'outline'}
+              onClick={() => handleResponsiveUpdate('textAlign', 'left')}
             >
               <AlignLeft className="h-4 w-4" />
             </Button>
             <Button
               size="sm"
-              variant={element.styles?.textAlign === 'center' ? 'default' : 'outline'}
-              onClick={() => onStyleUpdate('textAlign', 'center')}
+              variant={getCurrentValue('textAlign', 'left') === 'center' ? 'default' : 'outline'}
+              onClick={() => handleResponsiveUpdate('textAlign', 'center')}
             >
               <AlignCenter className="h-4 w-4" />
             </Button>
             <Button
               size="sm"
-              variant={element.styles?.textAlign === 'right' ? 'default' : 'outline'}
-              onClick={() => onStyleUpdate('textAlign', 'right')}
+              variant={getCurrentValue('textAlign', 'left') === 'right' ? 'default' : 'outline'}
+              onClick={() => handleResponsiveUpdate('textAlign', 'right')}
             >
               <AlignRight className="h-4 w-4" />
             </Button>
@@ -203,21 +171,19 @@ export const ButtonElementStyles: React.FC<ButtonElementStylesProps> = ({
         
         <div>
           <Label className="text-xs">Text Color</Label>
-          <Input
-            type="color"
-            value={element.styles?.color || '#ffffff'}
-            onChange={(e) => onStyleUpdate('color', e.target.value)}
-            className="w-full h-10"
+          <ColorPicker
+            color={getCurrentValue('color', '#ffffff')}
+            onChange={(color) => handleResponsiveUpdate('color', color)}
+            label="Text Color"
           />
         </div>
 
         <div>
           <Label className="text-xs">Background Color</Label>
-          <Input
-            type="color"
-            value={element.styles?.backgroundColor || '#3b82f6'}
-            onChange={(e) => onStyleUpdate('backgroundColor', e.target.value)}
-            className="w-full h-10"
+          <ColorPicker
+            color={getCurrentValue('backgroundColor', '#3b82f6')}
+            onChange={(color) => handleResponsiveUpdate('backgroundColor', color)}
+            label="Background Color"
           />
         </div>
       </div>
@@ -231,19 +197,18 @@ export const ButtonElementStyles: React.FC<ButtonElementStylesProps> = ({
         <div>
           <Label className="text-xs">Border Width</Label>
           <Input
-            value={element.styles?.borderWidth || ''}
-            onChange={(e) => onStyleUpdate('borderWidth', e.target.value)}
+            value={getCurrentValue('borderWidth')}
+            onChange={(e) => handleResponsiveUpdate('borderWidth', e.target.value)}
             placeholder="e.g., 1px"
           />
         </div>
 
         <div>
           <Label className="text-xs">Border Color</Label>
-          <Input
-            type="color"
-            value={element.styles?.borderColor || '#e5e7eb'}
-            onChange={(e) => onStyleUpdate('borderColor', e.target.value)}
-            className="w-full h-10"
+          <ColorPicker
+            color={getCurrentValue('borderColor', '#e5e7eb')}
+            onChange={(color) => handleResponsiveUpdate('borderColor', color)}
+            label="Border Color"
           />
         </div>
 
@@ -251,15 +216,15 @@ export const ButtonElementStyles: React.FC<ButtonElementStylesProps> = ({
           <Label className="text-xs">Border Radius</Label>
           <div className="flex items-center space-x-2">
             <Slider
-              value={[parseInt(element.styles?.borderRadius?.replace(/\D/g, '') || '6')]}
-              onValueChange={(value) => onStyleUpdate('borderRadius', `${value[0]}px`)}
+              value={[parseInt(getCurrentValue('borderRadius', '6px').replace(/\D/g, ''))]}
+              onValueChange={(value) => handleResponsiveUpdate('borderRadius', `${value[0]}px`)}
               max={50}
               min={0}
               step={1}
               className="flex-1"
             />
             <span className="text-xs text-muted-foreground w-12">
-              {element.styles?.borderRadius || '6px'}
+              {getCurrentValue('borderRadius', '6px')}
             </span>
           </div>
         </div>
@@ -267,8 +232,8 @@ export const ButtonElementStyles: React.FC<ButtonElementStylesProps> = ({
         <div>
           <Label className="text-xs">Box Shadow</Label>
           <Input
-            value={element.styles?.boxShadow || ''}
-            onChange={(e) => onStyleUpdate('boxShadow', e.target.value)}
+            value={getCurrentValue('boxShadow')}
+            onChange={(e) => handleResponsiveUpdate('boxShadow', e.target.value)}
             placeholder="e.g., 0 2px 4px rgba(0,0,0,0.1)"
           />
         </div>
@@ -282,20 +247,62 @@ export const ButtonElementStyles: React.FC<ButtonElementStylesProps> = ({
         
         <div>
           <Label className="text-xs">Margin</Label>
-          <Input
-            value={element.styles?.margin || ''}
-            onChange={(e) => onStyleUpdate('margin', e.target.value)}
-            placeholder="e.g., 10px 20px"
-          />
+          <div className="grid grid-cols-4 gap-1">
+            <Input
+              value={getCurrentValue('marginTop')}
+              onChange={(e) => handleResponsiveUpdate('marginTop', e.target.value)}
+              placeholder="Top"
+              className="text-xs"
+            />
+            <Input
+              value={getCurrentValue('marginRight')}
+              onChange={(e) => handleResponsiveUpdate('marginRight', e.target.value)}
+              placeholder="Right"
+              className="text-xs"
+            />
+            <Input
+              value={getCurrentValue('marginBottom')}
+              onChange={(e) => handleResponsiveUpdate('marginBottom', e.target.value)}
+              placeholder="Bottom"
+              className="text-xs"
+            />
+            <Input
+              value={getCurrentValue('marginLeft')}
+              onChange={(e) => handleResponsiveUpdate('marginLeft', e.target.value)}
+              placeholder="Left"
+              className="text-xs"
+            />
+          </div>
         </div>
 
         <div>
           <Label className="text-xs">Padding</Label>
-          <Input
-            value={element.styles?.padding || ''}
-            onChange={(e) => onStyleUpdate('padding', e.target.value)}
-            placeholder="Smart padding applied automatically"
-          />
+          <div className="grid grid-cols-4 gap-1">
+            <Input
+              value={getCurrentValue('paddingTop')}
+              onChange={(e) => handleResponsiveUpdate('paddingTop', e.target.value)}
+              placeholder="Top"
+              className="text-xs"
+            />
+            <Input
+              value={getCurrentValue('paddingRight')}
+              onChange={(e) => handleResponsiveUpdate('paddingRight', e.target.value)}
+              placeholder="Right"
+              className="text-xs"
+            />
+            <Input
+              value={getCurrentValue('paddingBottom')}
+              onChange={(e) => handleResponsiveUpdate('paddingBottom', e.target.value)}
+              placeholder="Bottom"
+              className="text-xs"
+            />
+            <Input
+              value={getCurrentValue('paddingLeft')}
+              onChange={(e) => handleResponsiveUpdate('paddingLeft', e.target.value)}
+              placeholder="Left"
+              className="text-xs"
+            />
+          </div>
         </div>
       </div>
     </div>

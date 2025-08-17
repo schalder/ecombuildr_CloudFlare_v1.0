@@ -431,97 +431,58 @@ const ButtonElement: React.FC<{
     }
   };
 
-  const alignment = element.styles?.textAlign || 'left';
+  // Get responsive alignment
+  const responsiveStyles = element.styles?.responsive || {};
+  const currentDeviceStyles = responsiveStyles[deviceType === 'tablet' ? 'desktop' : deviceType] || {};
+  const alignment = currentDeviceStyles.textAlign || element.styles?.textAlign || 'left';
+  
   const containerClass = 
     alignment === 'center' ? 'flex justify-center' :
     alignment === 'right' ? 'flex justify-end' : 
     'flex justify-start';
 
-  // Get responsive styles
-  const responsiveStyles = element.styles?.responsive || {};
-  const currentDeviceStyles = responsiveStyles[deviceType === 'tablet' ? 'desktop' : deviceType] || {};
+  // Use renderElementStyles for consistent styling
+  const elementStyles = renderElementStyles(element, deviceType);
 
-  // Smart padding based on font size
-  const fontSize = currentDeviceStyles.fontSize || element.styles?.fontSize || '16px';
-  const smartPadding = element.styles?.padding || (() => {
+  // Smart padding fallback when no padding is set
+  const hasExistingPadding = elementStyles.padding || elementStyles.paddingTop || elementStyles.paddingRight || 
+                           elementStyles.paddingBottom || elementStyles.paddingLeft;
+  
+  if (!hasExistingPadding) {
+    const fontSize = String(elementStyles.fontSize || '16px');
     const size = parseInt(fontSize.replace(/\D/g, ''));
-    if (size <= 12) return '6px 12px';
-    if (size <= 16) return '8px 16px';
-    if (size <= 20) return '10px 20px';
-    if (size <= 24) return '12px 24px';
-    if (size <= 32) return '16px 32px';
-    return '20px 40px';
-  })();
+    if (size <= 12) elementStyles.padding = '6px 12px';
+    else if (size <= 16) elementStyles.padding = '8px 16px';
+    else if (size <= 20) elementStyles.padding = '10px 20px';
+    else if (size <= 24) elementStyles.padding = '12px 24px';
+    else if (size <= 32) elementStyles.padding = '16px 32px';
+    else elementStyles.padding = '20px 40px';
+  }
 
-  // Combine styles with responsive overrides
-  const baseStyles = {
-    backgroundColor: element.styles?.backgroundColor,
-    color: element.styles?.color,
-    fontSize: element.styles?.fontSize,
-    fontWeight: element.styles?.fontWeight,
-    borderWidth: element.styles?.borderWidth,
-    borderColor: element.styles?.borderColor,
-    borderRadius: element.styles?.borderRadius,
-    boxShadow: element.styles?.boxShadow,
-    padding: smartPadding,
-    margin: element.styles?.margin,
-    width: element.styles?.width,
-    cursor: 'pointer'
-  };
-
-  const finalStyles = {
-    ...baseStyles,
-    ...currentDeviceStyles
-  };
-
-  // Remove undefined values from styles
-  const cleanStyles = Object.fromEntries(
-    Object.entries(finalStyles).filter(([_, v]) => v !== undefined && v !== '')
-  );
-
-  // Generate responsive CSS for different devices
-  const generateResponsiveCSS = () => {
-    if (!responsiveStyles.desktop && !responsiveStyles.mobile) return '';
-    
-    let css = '';
-    
-    if (responsiveStyles.desktop && Object.keys(responsiveStyles.desktop).length > 0) {
-      const desktopProps = Object.entries(responsiveStyles.desktop)
-        .map(([prop, value]) => `${prop.replace(/([A-Z])/g, '-$1').toLowerCase()}: ${value}`)
-        .join('; ');
-      css += `.element-${element.id} { ${desktopProps}; }`;
-    }
-    
-    if (responsiveStyles.mobile && Object.keys(responsiveStyles.mobile).length > 0) {
-      const mobileProps = Object.entries(responsiveStyles.mobile)
-        .map(([prop, value]) => `${prop.replace(/([A-Z])/g, '-$1').toLowerCase()}: ${value}`)
-        .join('; ');
-      css += `@media (max-width: 767px) { .element-${element.id} { ${mobileProps}; } }`;
-    }
-    
-    return css;
-  };
+  // Handle width for full width behavior
+  const isFullWidth = elementStyles.width === '100%';
+  
+  // Generate responsive CSS
+  const responsiveCSS = generateResponsiveCSS(element.id, element.styles);
 
   const customClassName = [
     `element-${element.id}`,
     'outline-none cursor-pointer transition-all duration-200',
-    element.styles?.width === '100%' ? 'w-full' : ''
+    isFullWidth ? 'w-full' : ''
   ].filter(Boolean).join(' ');
 
   return (
     <>
       {/* Inject responsive CSS */}
-      <style>
-        {generateResponsiveCSS()}
-      </style>
+      {responsiveCSS && <style>{responsiveCSS}</style>}
       
-      <div className={containerClass} style={{ margin: element.styles?.margin }}>
+      <div className={containerClass}>
         <Button 
           variant={variant as any} 
           size={size as any}
           className={customClassName}
           onClick={handleClick}
-          style={cleanStyles}
+          style={elementStyles}
         >
           {isEditing ? (
             <InlineEditor
