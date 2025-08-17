@@ -6,6 +6,8 @@ import { PageBuilderRenderer } from '@/components/storefront/PageBuilderRenderer
 import { useStore } from '@/contexts/StoreContext';
 import { setSEO, buildCanonical } from '@/lib/seo';
 import { PixelManager } from '@/components/pixel/PixelManager';
+import { FunnelHeader } from '@/components/storefront/FunnelHeader';
+import { FunnelFooter } from '@/components/storefront/FunnelFooter';
 interface FunnelStepData {
   id: string;
   title: string;
@@ -187,6 +189,7 @@ export const FunnelStepPage: React.FC = () => {
   return (
     <PixelManager storeId={funnel.store_id}>
       <div className="w-full min-h-screen">
+        <FunnelHeader funnel={funnel} />
         {/* Render funnel step content using PageBuilderRenderer */}
         {step.content?.sections ? (
           <PageBuilderRenderer data={step.content} />
@@ -196,6 +199,7 @@ export const FunnelStepPage: React.FC = () => {
             <p className="text-muted-foreground">This step is still being set up.</p>
           </div>
         )}
+        <FunnelFooter funnel={funnel} />
       </div>
     </PixelManager>
   );

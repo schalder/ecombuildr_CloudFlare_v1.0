@@ -15,6 +15,8 @@ import { useToast } from '@/hooks/use-toast';
 import { CreateStepModal } from '@/components/modals/CreateStepModal';
 import { FunnelStats } from '@/components/funnel/FunnelStats';
 import { FunnelSales } from '@/components/funnel/FunnelSales';
+import { FunnelHeaderBuilder } from '@/components/funnel/FunnelHeaderBuilder';
+import { FunnelFooterBuilder } from '@/components/funnel/FunnelFooterBuilder';
 
 interface Funnel {
   id: string;
@@ -215,7 +217,9 @@ const FunnelManagement = () => {
                 { id: 'steps', label: 'Steps', icon: CheckCircle },
                 { id: 'stats', label: 'Stats', icon: BarChart3 },
                 { id: 'sales', label: 'Sales', icon: DollarSign },
-                { id: 'settings', label: 'Settings', icon: Settings }
+                { id: 'settings', label: 'Settings', icon: Settings },
+                { id: 'header', label: 'Header', icon: ArrowUp },
+                { id: 'footer', label: 'Footer', icon: ArrowDown }
               ].map((tab) => {
                 const Icon = tab.icon;
                 return (
@@ -466,89 +470,96 @@ const FunnelManagement = () => {
         {/* Settings Tab */}
         {activeTab === 'settings' && (
           <div className="p-4 sm:p-6">
-            {activeTab === 'settings' ? (
-              <div className="max-w-3xl mx-auto space-y-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>SEO Defaults</CardTitle>
-                    <CardDescription>Set default SEO metadata for this funnel. Steps can override these.</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium mb-2">Default SEO Title</label>
-                        <Input
-                          placeholder="Amazing Funnel - High Conversions"
-                          value={seo.seo_title}
-                          onChange={(e) => setSeo((s) => ({ ...s, seo_title: e.target.value }))}
-                        />
-                        <p className="text-xs text-muted-foreground mt-1">Under 60 characters recommended.</p>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-2">Robots</label>
-                        <Input
-                          placeholder="index, follow"
-                          value={seo.meta_robots}
-                          onChange={(e) => setSeo((s) => ({ ...s, meta_robots: e.target.value }))}
-                        />
-                        <p className="text-xs text-muted-foreground mt-1">e.g., index, follow or noindex, nofollow</p>
-                      </div>
-                    </div>
-
+            <div className="max-w-3xl mx-auto space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>SEO Defaults</CardTitle>
+                  <CardDescription>Set default SEO metadata for this funnel. Steps can override these.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium mb-2">Default Meta Description</label>
-                      <Textarea
-                        rows={3}
-                        placeholder="Compelling funnel that converts visitors into customers."
-                        value={seo.seo_description}
-                        onChange={(e) => setSeo((s) => ({ ...s, seo_description: e.target.value }))}
+                      <label className="block text-sm font-medium mb-2">Default SEO Title</label>
+                      <Input
+                        placeholder="Amazing Funnel - High Conversions"
+                        value={seo.seo_title}
+                        onChange={(e) => setSeo((s) => ({ ...s, seo_title: e.target.value }))}
                       />
-                      <p className="text-xs text-muted-foreground mt-1">Keep under 160 characters.</p>
+                      <p className="text-xs text-muted-foreground mt-1">Under 60 characters recommended.</p>
                     </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Robots</label>
+                      <Input
+                        placeholder="index, follow"
+                        value={seo.meta_robots}
+                        onChange={(e) => setSeo((s) => ({ ...s, meta_robots: e.target.value }))}
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">e.g., index, follow or noindex, nofollow</p>
+                    </div>
+                  </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium mb-2">Default OG Image URL</label>
-                        <Input
-                          placeholder="https://example.com/og.jpg"
-                          value={seo.og_image}
-                          onChange={(e) => setSeo((s) => ({ ...s, og_image: e.target.value }))}
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-2">Canonical Domain</label>
-                        <Input
-                          placeholder="example.com"
-                          value={seo.canonical_domain}
-                          onChange={(e) => setSeo((s) => ({ ...s, canonical_domain: e.target.value }))}
-                        />
-                        <p className="text-xs text-muted-foreground mt-1">Used to build canonical URLs.</p>
-                      </div>
-                    </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Default Meta Description</label>
+                    <Textarea
+                      rows={3}
+                      placeholder="Compelling funnel that converts visitors into customers."
+                      value={seo.seo_description}
+                      onChange={(e) => setSeo((s) => ({ ...s, seo_description: e.target.value }))}
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">Keep under 160 characters.</p>
+                  </div>
 
-                    <div className="flex justify-end">
-                      <Button
-                        onClick={() => updateFunnelMutation.mutate({
-                          seo_title: seo.seo_title,
-                          seo_description: seo.seo_description,
-                          og_image: seo.og_image,
-                          meta_robots: seo.meta_robots,
-                          canonical_domain: seo.canonical_domain,
-                        })}
-                        disabled={updateFunnelMutation.isPending}
-                      >
-                        {updateFunnelMutation.isPending ? 'Saving...' : 'Save SEO Settings'}
-                      </Button>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Default OG Image URL</label>
+                      <Input
+                        placeholder="https://example.com/og.jpg"
+                        value={seo.og_image}
+                        onChange={(e) => setSeo((s) => ({ ...s, og_image: e.target.value }))}
+                      />
                     </div>
-                  </CardContent>
-                </Card>
-              </div>
-            ) : (
-              <div className="bg-background border rounded-lg p-12 text-center">
-                <h3 className="text-lg font-semibold mb-2 capitalize">{activeTab}</h3>
-                <p className="text-muted-foreground">Content for {activeTab} tab coming soon</p>
-              </div>
-            )}
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Canonical Domain</label>
+                      <Input
+                        placeholder="example.com"
+                        value={seo.canonical_domain}
+                        onChange={(e) => setSeo((s) => ({ ...s, canonical_domain: e.target.value }))}
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">Used to build canonical URLs.</p>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end">
+                    <Button
+                      onClick={() => updateFunnelMutation.mutate({
+                        seo_title: seo.seo_title,
+                        seo_description: seo.seo_description,
+                        og_image: seo.og_image,
+                        meta_robots: seo.meta_robots,
+                        canonical_domain: seo.canonical_domain,
+                      })}
+                      disabled={updateFunnelMutation.isPending}
+                    >
+                      {updateFunnelMutation.isPending ? 'Saving...' : 'Save SEO Settings'}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        )}
+
+        {/* Header Tab */}
+        {activeTab === 'header' && (
+          <div className="p-4 sm:p-6">
+            {funnel && <FunnelHeaderBuilder funnel={funnel} />}
+          </div>
+        )}
+
+        {/* Footer Tab */}
+        {activeTab === 'footer' && (
+          <div className="p-4 sm:p-6">
+            {funnel && <FunnelFooterBuilder funnel={funnel} />}
           </div>
         )}
 
