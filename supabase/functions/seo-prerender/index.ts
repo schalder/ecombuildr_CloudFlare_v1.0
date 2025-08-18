@@ -60,7 +60,7 @@ async function getHTMLSnapshot(supabase: any, domain: string, path: string): Pro
   try {
     // Handle custom domains first
     if (domain !== 'ecombuildr.com' && !domain.includes('lovable.app')) {
-      console.log('Custom domain detected:', domain)
+      console.log('🌐 Custom domain detected:', domain, 'path:', path)
       
       // Look up custom domain mapping to get content_id and content_type
       const { data: customDomainData, error: domainError } = await supabase
@@ -79,21 +79,26 @@ async function getHTMLSnapshot(supabase: any, domain: string, path: string): Pro
         .maybeSingle()
       
       if (domainError) {
-        console.error('Error fetching custom domain:', domainError)
+        console.error('❌ Error fetching custom domain:', domainError)
         return null
       }
       
-      if (customDomainData?.domain_connections?.length) {
-        const connection = customDomainData.domain_connections[0]
-        
-        if (connection.content_type === 'website') {
-          return await getWebsitePageSnapshot(supabase, connection.content_id, path, domain)
-        } else if (connection.content_type === 'funnel') {
-          return await getFunnelStepSnapshot(supabase, connection.content_id, path, domain)
-        }
+      if (!customDomainData?.domain_connections?.length) {
+        console.log('❌ No domain connections found for:', domain)
+        return null
+      }
+      
+      const connection = customDomainData.domain_connections[0]
+      console.log('✅ Found connection:', connection)
+      
+      if (connection.content_type === 'website') {
+        return await getWebsitePageSnapshot(supabase, connection.content_id, path === '/' ? '' : path.substring(1), domain)
+      } else if (connection.content_type === 'funnel') {
+        return await getFunnelStepSnapshot(supabase, connection.content_id, path === '/' ? '' : path.substring(1), domain)
       }
     } else {
       // Handle ecombuildr.com domain routes
+      console.log('🏠 EcomBuildr domain detected:', domain, 'path:', path)
       
       // Parse website routes: /w/:websiteSlug/:pageSlug?
       const websiteMatch = path.match(/^\/w\/([^\/]+)(?:\/([^\/]+))?$/)
@@ -126,38 +131,47 @@ async function getHTMLSnapshot(supabase: any, domain: string, path: string): Pro
 // Get website page HTML snapshot
 async function getWebsitePageSnapshot(supabase: any, websiteId: string, pageSlug: string, customDomain: string | null): Promise<string | null> {
   try {
+    console.log(`🔍 Looking for website page: websiteId=${websiteId}, pageSlug="${pageSlug}", customDomain=${customDomain}`)
+    
     // First get the page ID
     let pageQuery = supabase
       .from('website_pages')
-      .select('id')
+      .select('id, slug, is_homepage, title')
       .eq('website_id', websiteId)
       .eq('is_published', true)
     
-    if (pageSlug) {
+    if (pageSlug && pageSlug !== '') {
+      // Looking for specific page by slug
       pageQuery = pageQuery.eq('slug', pageSlug)
     } else {
+      // Looking for homepage
       pageQuery = pageQuery.eq('is_homepage', true)
     }
     
     const { data: page, error: pageError } = await pageQuery.maybeSingle()
+    console.log('📄 Page query result:', { page, pageError })
     
-    if (pageError || !page) {
-      console.error('Page not found:', pageError)
-      // Try website-level snapshot
+    if (pageError) {
+      console.error('❌ Page query error:', pageError)
       return await getContentSnapshot(supabase, websiteId, 'website', customDomain)
     }
     
-    // Look for page-specific snapshot first
-    const pageSnapshot = await getContentSnapshot(supabase, page.id, 'website_page', customDomain)
-    if (pageSnapshot) {
-      return pageSnapshot
+    if (page) {
+      // Look for page-specific snapshot first
+      console.log(`🎯 Found page: ${page.title} (${page.slug}), looking for snapshot...`)
+      const pageSnapshot = await getContentSnapshot(supabase, page.id, 'website_page', customDomain)
+      if (pageSnapshot) {
+        console.log('✅ Found page-specific snapshot')
+        return pageSnapshot
+      }
     }
     
     // Fallback to website-level snapshot
+    console.log('🔄 Falling back to website-level snapshot')
     return await getContentSnapshot(supabase, websiteId, 'website', customDomain)
     
   } catch (error) {
-    console.error('Error getting website page snapshot:', error)
+    console.error('💥 Error getting website page snapshot:', error)
     return null
   }
 }
