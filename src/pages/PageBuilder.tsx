@@ -11,6 +11,12 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { ColorPicker } from '@/components/ui/color-picker';
 import { CompactMediaSelector } from '@/components/page-builder/components/CompactMediaSelector';
 import { ElementorPageBuilder } from '@/components/page-builder/ElementorPageBuilder';
+import { SEOKeywordsInput } from '@/components/seo/SEOKeywordsInput';
+import { SEOAuthorSection } from '@/components/seo/SEOAuthorSection';
+import { SEOSocialImageSection } from '@/components/seo/SEOSocialImageSection';
+import { SEOAdvancedSection } from '@/components/seo/SEOAdvancedSection';
+import { SEOLanguageSection } from '@/components/seo/SEOLanguageSection';
+import { SEOAnalysisSection } from '@/components/seo/SEOAnalysisSection';
 import { PageBuilderData } from '@/components/page-builder/types';
 import { supabase } from '@/integrations/supabase/client';
 import { useUserStore } from '@/hooks/useUserStore';
@@ -36,7 +42,14 @@ export default function PageBuilder() {
     is_published: false,
     is_homepage: false,
     seo_title: '',
-    seo_description: ''
+    seo_description: '',
+    seo_keywords: [] as string[],
+    meta_author: '',
+    canonical_url: '',
+    custom_meta_tags: [] as { name: string; content: string }[],
+    social_image_url: '',
+    language_code: 'en',
+    meta_robots: 'index,follow'
   });
   
   const [builderData, setBuilderData] = useState<PageBuilderData>({ 
@@ -91,7 +104,14 @@ export default function PageBuilder() {
           is_published: data.is_published,
           is_homepage: data.is_homepage || false,
           seo_title: data.seo_title || '',
-          seo_description: data.seo_description || ''
+          seo_description: data.seo_description || '',
+          seo_keywords: data.seo_keywords || [],
+          meta_author: data.meta_author || '',
+          canonical_url: data.canonical_url || '',
+          custom_meta_tags: data.custom_meta_tags || [],
+          social_image_url: data.social_image_url || '',
+          language_code: data.language_code || 'en',
+          meta_robots: data.meta_robots || 'index,follow'
         });
 
         // Convert page content to page builder format
@@ -149,6 +169,13 @@ export default function PageBuilder() {
         is_published: pageData.is_published,
         seo_title: pageData.seo_title,
         seo_description: pageData.seo_description,
+        seo_keywords: pageData.seo_keywords,
+        meta_author: pageData.meta_author,
+        canonical_url: pageData.canonical_url,
+        custom_meta_tags: pageData.custom_meta_tags,
+        social_image_url: pageData.social_image_url,
+        language_code: pageData.language_code,
+        meta_robots: pageData.meta_robots,
         ...(context === 'website' && { is_homepage: pageData.is_homepage })
       };
 
@@ -429,6 +456,45 @@ export default function PageBuilder() {
                      placeholder="SEO meta description"
                    />
                  </div>
+
+                 {/* SEO Keywords */}
+                 <SEOKeywordsInput
+                   keywords={pageData.seo_keywords}
+                   onChange={(keywords) => setPageData(prev => ({ ...prev, seo_keywords: keywords }))}
+                 />
+
+                 {/* SEO Author Section */}
+                 <SEOAuthorSection
+                   author={pageData.meta_author}
+                   onChange={(author) => setPageData(prev => ({ ...prev, meta_author: author }))}
+                 />
+
+                 {/* SEO Social Image Section */}
+                 <SEOSocialImageSection
+                   socialImageUrl={pageData.social_image_url}
+                   onChange={(url) => setPageData(prev => ({ ...prev, social_image_url: url }))}
+                 />
+
+                 {/* SEO Advanced Section */}
+                 <SEOAdvancedSection
+                   canonicalUrl={pageData.canonical_url}
+                   metaRobots={pageData.meta_robots}
+                   customMetaTags={pageData.custom_meta_tags}
+                   onCanonicalChange={(url) => setPageData(prev => ({ ...prev, canonical_url: url }))}
+                   onMetaRobotsChange={(robots) => setPageData(prev => ({ ...prev, meta_robots: robots }))}
+                   onCustomMetaTagsChange={(tags) => setPageData(prev => ({ ...prev, custom_meta_tags: tags }))}
+                 />
+
+                 {/* SEO Language Section */}
+                 <SEOLanguageSection
+                   languageCode={pageData.language_code}
+                   onChange={(code) => setPageData(prev => ({ ...prev, language_code: code }))}
+                 />
+
+                 {/* SEO Analysis Section */}
+                 <SEOAnalysisSection
+                   data={pageData}
+                 />
 
                  {/* Page Background Section */}
                  <Card className="mt-6">

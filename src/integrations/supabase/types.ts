@@ -595,48 +595,69 @@ export type Database = {
       }
       funnel_steps: {
         Row: {
+          canonical_url: string | null
           content: Json
           created_at: string
+          custom_meta_tags: Json | null
           custom_scripts: string | null
           funnel_id: string
           id: string
           is_published: boolean
+          language_code: string | null
+          meta_author: string | null
+          meta_robots: string | null
           og_image: string | null
           seo_description: string | null
+          seo_keywords: string[] | null
           seo_title: string | null
           slug: string
+          social_image_url: string | null
           step_order: number
           step_type: string
           title: string
           updated_at: string
         }
         Insert: {
+          canonical_url?: string | null
           content?: Json
           created_at?: string
+          custom_meta_tags?: Json | null
           custom_scripts?: string | null
           funnel_id: string
           id?: string
           is_published?: boolean
+          language_code?: string | null
+          meta_author?: string | null
+          meta_robots?: string | null
           og_image?: string | null
           seo_description?: string | null
+          seo_keywords?: string[] | null
           seo_title?: string | null
           slug: string
+          social_image_url?: string | null
           step_order?: number
           step_type?: string
           title: string
           updated_at?: string
         }
         Update: {
+          canonical_url?: string | null
           content?: Json
           created_at?: string
+          custom_meta_tags?: Json | null
           custom_scripts?: string | null
           funnel_id?: string
           id?: string
           is_published?: boolean
+          language_code?: string | null
+          meta_author?: string | null
+          meta_robots?: string | null
           og_image?: string | null
           seo_description?: string | null
+          seo_keywords?: string[] | null
           seo_title?: string | null
           slug?: string
+          social_image_url?: string | null
           step_order?: number
           step_type?: string
           title?: string
@@ -982,46 +1003,67 @@ export type Database = {
       }
       pages: {
         Row: {
+          canonical_url: string | null
           content: Json | null
           created_at: string | null
+          custom_meta_tags: Json | null
           custom_scripts: string | null
           id: string
           is_homepage: boolean | null
           is_published: boolean | null
+          language_code: string | null
+          meta_author: string | null
+          meta_robots: string | null
           og_image: string | null
           seo_description: string | null
+          seo_keywords: string[] | null
           seo_title: string | null
           slug: string
+          social_image_url: string | null
           store_id: string
           title: string
           updated_at: string | null
         }
         Insert: {
+          canonical_url?: string | null
           content?: Json | null
           created_at?: string | null
+          custom_meta_tags?: Json | null
           custom_scripts?: string | null
           id?: string
           is_homepage?: boolean | null
           is_published?: boolean | null
+          language_code?: string | null
+          meta_author?: string | null
+          meta_robots?: string | null
           og_image?: string | null
           seo_description?: string | null
+          seo_keywords?: string[] | null
           seo_title?: string | null
           slug: string
+          social_image_url?: string | null
           store_id: string
           title: string
           updated_at?: string | null
         }
         Update: {
+          canonical_url?: string | null
           content?: Json | null
           created_at?: string | null
+          custom_meta_tags?: Json | null
           custom_scripts?: string | null
           id?: string
           is_homepage?: boolean | null
           is_published?: boolean | null
+          language_code?: string | null
+          meta_author?: string | null
+          meta_robots?: string | null
           og_image?: string | null
           seo_description?: string | null
+          seo_keywords?: string[] | null
           seo_title?: string | null
           slug?: string
+          social_image_url?: string | null
           store_id?: string
           title?: string
           updated_at?: string | null
@@ -1972,46 +2014,67 @@ export type Database = {
       }
       website_pages: {
         Row: {
+          canonical_url: string | null
           content: Json
           created_at: string
+          custom_meta_tags: Json | null
           custom_scripts: string | null
           id: string
           is_homepage: boolean
           is_published: boolean
+          language_code: string | null
+          meta_author: string | null
+          meta_robots: string | null
           og_image: string | null
           seo_description: string | null
+          seo_keywords: string[] | null
           seo_title: string | null
           slug: string
+          social_image_url: string | null
           title: string
           updated_at: string
           website_id: string
         }
         Insert: {
+          canonical_url?: string | null
           content?: Json
           created_at?: string
+          custom_meta_tags?: Json | null
           custom_scripts?: string | null
           id?: string
           is_homepage?: boolean
           is_published?: boolean
+          language_code?: string | null
+          meta_author?: string | null
+          meta_robots?: string | null
           og_image?: string | null
           seo_description?: string | null
+          seo_keywords?: string[] | null
           seo_title?: string | null
           slug: string
+          social_image_url?: string | null
           title: string
           updated_at?: string
           website_id: string
         }
         Update: {
+          canonical_url?: string | null
           content?: Json
           created_at?: string
+          custom_meta_tags?: Json | null
           custom_scripts?: string | null
           id?: string
           is_homepage?: boolean
           is_published?: boolean
+          language_code?: string | null
+          meta_author?: string | null
+          meta_robots?: string | null
           og_image?: string | null
           seo_description?: string | null
+          seo_keywords?: string[] | null
           seo_title?: string | null
           slug?: string
+          social_image_url?: string | null
           title?: string
           updated_at?: string
           website_id?: string

@@ -5,21 +5,32 @@ interface SEOHeadProps {
   title?: string;
   description?: string;
   ogImage?: string;
+  socialImageUrl?: string;
   keywords?: string[];
   canonical?: string;
   noIndex?: boolean;
+  author?: string;
+  languageCode?: string;
+  metaRobots?: string;
+  customMetaTags?: { name: string; content: string }[];
 }
 
 export const SEOHead: React.FC<SEOHeadProps> = ({
   title = 'EcomBuildr - Build Your E-commerce Empire in Minutes',
   description = 'Create professional e-commerce stores with our no-code platform. Build websites, funnels, and conversion systems that turn visitors into customers.',
   ogImage = 'https://res.cloudinary.com/funnelsninja/image/upload/v1755206321/ecombuildr-og-image_default.jpg',
+  socialImageUrl,
   keywords = [],
   canonical,
-  noIndex = false
+  noIndex = false,
+  author,
+  languageCode = 'en',
+  metaRobots = 'index,follow',
+  customMetaTags = []
 }) => {
   const currentUrl = canonical || window.location.href;
   const keywordsString = keywords.length > 0 ? keywords.join(', ') : 'ecommerce builder, online store, no code, bangladesh ecommerce';
+  const finalOgImage = socialImageUrl || ogImage;
 
   useEffect(() => {
     // Update document title
@@ -39,15 +50,25 @@ export const SEOHead: React.FC<SEOHeadProps> = ({
       <link rel="canonical" href={currentUrl} />
       
       {/* Robots */}
-      {noIndex && <meta name="robots" content="noindex, nofollow" />}
-      {!noIndex && <meta name="robots" content="index, follow" />}
+      <meta name="robots" content={noIndex ? 'noindex, nofollow' : metaRobots} />
+      
+      {/* Author */}
+      {author && <meta name="author" content={author} />}
+      
+      {/* Language */}
+      <meta name="language" content={languageCode} />
+      
+      {/* Custom Meta Tags */}
+      {customMetaTags.map((tag, index) => (
+        <meta key={index} name={tag.name} content={tag.content} />
+      ))}
       
       {/* Open Graph / Facebook */}
       <meta property="og:type" content="website" />
       <meta property="og:url" content={currentUrl} />
       <meta property="og:title" content={title} />
       <meta property="og:description" content={description} />
-      <meta property="og:image" content={ogImage} />
+      <meta property="og:image" content={finalOgImage} />
       <meta property="og:site_name" content="EcomBuildr" />
       
       {/* Twitter */}
@@ -55,12 +76,10 @@ export const SEOHead: React.FC<SEOHeadProps> = ({
       <meta name="twitter:url" content={currentUrl} />
       <meta name="twitter:title" content={title} />
       <meta name="twitter:description" content={description} />
-      <meta name="twitter:image" content={ogImage} />
+      <meta name="twitter:image" content={finalOgImage} />
       <meta name="twitter:site" content="@ecombuildr" />
       
       {/* Additional SEO Tags */}
-      <meta name="author" content="EcomBuildr" />
-      <meta name="language" content="en" />
       <meta name="theme-color" content="#10B981" />
       
       {/* Structured Data */}
