@@ -20,7 +20,8 @@ serve(async (req) => {
 
     const { contentType, contentId, customDomain } = await req.json()
     
-    console.log(`Generating HTML snapshot for ${contentType}:${contentId}`)
+    console.log(`🔍 Generating HTML snapshot for ${contentType}:${contentId}`)
+    console.log(`📋 Request body:`, { contentType, contentId, customDomain })
 
     let htmlContent = ''
     
@@ -141,7 +142,8 @@ serve(async (req) => {
     }
 
     // Store the snapshot
-    await supabase
+    console.log(`💾 Storing HTML snapshot: ${contentType}:${contentId}`)
+    const { error: upsertError } = await supabase
       .from('html_snapshots')
       .upsert({
         content_type: contentType,
@@ -149,7 +151,17 @@ serve(async (req) => {
         custom_domain: customDomain,
         html_content: htmlContent,
         generated_at: new Date().toISOString()
+      }, {
+        onConflict: 'content_id,content_type,custom_domain',
+        ignoreDuplicates: false
       })
+
+    if (upsertError) {
+      console.error('❌ Upsert error:', upsertError)
+      throw upsertError
+    }
+
+    console.log('✅ HTML snapshot stored successfully')
 
     return new Response(
       JSON.stringify({ 
