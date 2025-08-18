@@ -11,11 +11,11 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { User, Mail, Phone, Save, CreditCard, Crown } from 'lucide-react';
+import { User, Mail, Phone, Save, CreditCard, Crown, Calendar, Clock } from 'lucide-react';
 
 export default function ProfileSettings() {
   const { user } = useAuth();
-  const { planLimits, userProfile, loading: planLoading } = usePlanLimits();
+  const { planLimits, userProfile, loading: planLoading, getTrialDaysRemaining } = usePlanLimits();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
@@ -104,10 +104,57 @@ export default function ProfileSettings() {
       active: { label: 'সক্রিয়', variant: 'default' },
       trial: { label: 'ট্রায়াল', variant: 'secondary' },
       suspended: { label: 'স্থগিত', variant: 'destructive' },
-      expired: { label: 'মেয়াদ শেষ', variant: 'destructive' }
+      expired: { label: 'মেয়াদ শেষ', variant: 'destructive' },
+      read_only: { label: 'শুধুমাত্র পড়া', variant: 'outline' }
     };
     const config = statusConfig[status] || { label: status, variant: 'outline' };
     return <Badge variant={config.variant}>{config.label}</Badge>;
+  };
+
+  const formatTrialInfo = () => {
+    if (!userProfile) return null;
+
+    if (userProfile.account_status === 'trial') {
+      const daysRemaining = getTrialDaysRemaining();
+      const trialExpiryDate = userProfile.trial_expires_at 
+        ? new Date(userProfile.trial_expires_at).toLocaleDateString('bn-BD')
+        : '';
+
+      return (
+        <div className="mt-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
+          <div className="flex items-center gap-2">
+            <Clock className="h-4 w-4 text-blue-600" />
+            <span className="text-sm font-medium text-blue-800">
+              ট্রায়াল প্ল্যান - {daysRemaining} দিন বাকি
+            </span>
+          </div>
+          {trialExpiryDate && (
+            <div className="flex items-center gap-2 mt-1">
+              <Calendar className="h-4 w-4 text-blue-600" />
+              <span className="text-xs text-blue-600">
+                মেয়াদ শেষ: {trialExpiryDate}
+              </span>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    if (userProfile.account_status === 'active' && userProfile.subscription_expires_at) {
+      const expiryDate = new Date(userProfile.subscription_expires_at).toLocaleDateString('bn-BD');
+      return (
+        <div className="mt-2 p-3 bg-green-50 rounded-lg border border-green-200">
+          <div className="flex items-center gap-2">
+            <Calendar className="h-4 w-4 text-green-600" />
+            <span className="text-sm font-medium text-green-800">
+              সক্রিয় সাবস্ক্রিপশন - মেয়াদ শেষ: {expiryDate}
+            </span>
+          </div>
+        </div>
+      );
+    }
+
+    return null;
   };
 
   return (
@@ -188,15 +235,15 @@ export default function ProfileSettings() {
               </div>
             ) : (
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
                     <h4 className="font-medium">Current Plan</h4>
                     <p className="text-sm text-muted-foreground">
                       {getPlanDisplayName(userProfile?.subscription_plan || 'starter')}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
-                    {getStatusBadge(userProfile?.account_status || 'active')}
+                    {getStatusBadge(userProfile?.account_status || 'trial')}
                     {planLimits && (
                       <span className="text-sm font-mono">
                         ৳{planLimits.price_bdt}/month
@@ -205,8 +252,16 @@ export default function ProfileSettings() {
                   </div>
                 </div>
 
+                {formatTrialInfo()}
+
                 {planLimits && (
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-muted/50 rounded-lg">
+                    <div className="text-center">
+                      <p className="text-sm text-muted-foreground">Stores</p>
+                      <p className="font-semibold">
+                        {planLimits.max_stores === null ? '∞' : planLimits.max_stores}
+                      </p>
+                    </div>
                     <div className="text-center">
                       <p className="text-sm text-muted-foreground">Websites</p>
                       <p className="font-semibold">
@@ -236,7 +291,7 @@ export default function ProfileSettings() {
 
                 <Button onClick={() => setShowUpgradeModal(true)} className="w-full">
                   <CreditCard className="mr-2 h-4 w-4" />
-                  Upgrade Plan
+                  {userProfile?.account_status === 'trial' ? 'Upgrade Plan' : 'Change Plan'}
                 </Button>
               </div>
             )}

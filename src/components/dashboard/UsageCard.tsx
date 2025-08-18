@@ -1,16 +1,17 @@
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { usePlanLimits } from '@/hooks/usePlanLimits';
-import { AlertTriangle, ArrowUp } from 'lucide-react';
+import { AlertTriangle, ArrowUp, Clock, Calendar } from 'lucide-react';
 
 interface UsageCardProps {
   onUpgrade?: () => void;
 }
 
 export const UsageCard = ({ onUpgrade }: UsageCardProps) => {
-  const { planLimits, userUsage, userProfile, loading, isAtLimit, getUsagePercentage } = usePlanLimits();
+  const { planLimits, userUsage, userProfile, loading, isAtLimit, getUsagePercentage, getTrialDaysRemaining } = usePlanLimits();
 
   if (loading) {
     return (
@@ -69,6 +70,7 @@ export const UsageCard = ({ onUpgrade }: UsageCardProps) => {
   ];
 
   const hasAnyLimitReached = usageItems.some(item => item.isAtLimit);
+  const trialDaysRemaining = getTrialDaysRemaining();
 
   return (
     <Card>
@@ -116,30 +118,55 @@ export const UsageCard = ({ onUpgrade }: UsageCardProps) => {
 
         {/* Trial Status */}
         {userProfile?.account_status === 'trial' && (
-          <div className="mt-4 p-3 bg-primary/10 rounded-lg">
+          <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
             <div className="flex items-center justify-between">
               <div className="text-sm">
-                <span className="font-medium">ট্রায়াল অ্যাকাউন্ট</span>
-                <p className="text-muted-foreground text-xs mt-1">
-                  {userProfile.trial_expires_at && 
-                    `${Math.ceil((new Date(userProfile.trial_expires_at).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))} দিন বাকি`
-                  }
+                <div className="flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-blue-600" />
+                  <span className="font-medium text-blue-800">ট্রায়াল অ্যাকাউন্ট</span>
+                </div>
+                <div className="flex items-center gap-2 mt-1">
+                  <Calendar className="h-4 w-4 text-blue-600" />
+                  <span className="text-xs text-blue-600">
+                    {trialDaysRemaining} দিন বাকি
+                    {userProfile.trial_expires_at && 
+                      ` (${new Date(userProfile.trial_expires_at).toLocaleDateString('bn-BD')})`
+                    }
+                  </span>
+                </div>
+              </div>
+              <Badge variant="secondary">ট্রায়াল</Badge>
+            </div>
+          </div>
+        )}
+
+        {/* Active Subscription Status */}
+        {userProfile?.account_status === 'active' && userProfile?.subscription_expires_at && (
+          <div className="mt-4 p-3 bg-green-50 rounded-lg border border-green-200">
+            <div className="flex items-center justify-between">
+              <div className="text-sm">
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-green-600" />
+                  <span className="font-medium text-green-800">সক্রিয় সাবস্ক্রিপশন</span>
+                </div>
+                <p className="text-xs text-green-600 mt-1">
+                  মেয়াদ শেষ: {new Date(userProfile.subscription_expires_at).toLocaleDateString('bn-BD')}
                 </p>
               </div>
-              <Badge variant="outline">ট্রায়াল</Badge>
+              <Badge variant="default">সক্রিয়</Badge>
             </div>
           </div>
         )}
 
         {/* Upgrade Button */}
-        {hasAnyLimitReached && (
+        {(hasAnyLimitReached || userProfile?.account_status === 'trial') && (
           <Button 
             onClick={onUpgrade}
             className="w-full mt-4"
             variant="default"
           >
             <ArrowUp className="h-4 w-4 mr-2" />
-            প্ল্যান আপগ্রেড করুন
+            {userProfile?.account_status === 'trial' ? 'প্ল্যান আপগ্রেড করুন' : 'প্ল্যান পরিবর্তন করুন'}
           </Button>
         )}
       </CardContent>
