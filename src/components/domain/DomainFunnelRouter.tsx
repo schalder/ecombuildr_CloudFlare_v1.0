@@ -34,6 +34,13 @@ interface FunnelStepData {
   step_order: number;
   funnel_id: string;
   is_published: boolean;
+  seo_keywords?: string[];
+  meta_author?: string;
+  canonical_url?: string;
+  custom_meta_tags?: any;
+  social_image_url?: string;
+  language_code?: string;
+  meta_robots?: string;
 }
 
 interface DomainFunnelRouterProps {
@@ -120,15 +127,25 @@ export const DomainFunnelRouter: React.FC<DomainFunnelRouterProps> = ({ funnel }
 
     const title = step.seo_title || (step.title && funnel.name ? `${step.title} - ${funnel.name}` : step.title);
     const description = step.seo_description || funnel.seo_description || funnel.description;
-    const image = step.og_image || funnel.og_image;
-    const canonical = buildCanonical(undefined, funnel.canonical_domain);
+    const image = step.social_image_url || step.og_image || funnel.og_image;
+    const canonical = step.canonical_url || buildCanonical(undefined, funnel.canonical_domain);
+    const keywords = step.seo_keywords || [];
+    const author = step.meta_author;
+    const robots = step.meta_robots || funnel.meta_robots || 'index, follow';
+    const languageCode = step.language_code || 'en';
+    const customMetaTags = Object.entries((step.custom_meta_tags as Record<string, string>) || {}).map(([name, content]) => ({ name, content }));
 
     setSEO({
       title: title || undefined,
       description,
       image,
+      socialImageUrl: step.social_image_url,
+      keywords,
       canonical,
-      robots: funnel.meta_robots || 'index, follow',
+      robots,
+      author,
+      languageCode,
+      customMetaTags,
       siteName: funnel.name,
       ogType: 'website',
       favicon: store?.favicon_url || '/favicon.ico',

@@ -24,6 +24,12 @@ interface FunnelData {
   og_image?: string;
   meta_robots?: string;
   canonical_domain?: string;
+  seo_keywords?: string[];
+  meta_author?: string;
+  canonical_url?: string;
+  custom_meta_tags?: any;
+  social_image_url?: string;
+  language_code?: string;
 }
 
 export const DomainFunnelRenderer: React.FC<DomainFunnelRendererProps> = ({ 
@@ -84,13 +90,27 @@ export const DomainFunnelRenderer: React.FC<DomainFunnelRendererProps> = ({
   useEffect(() => {
     if (!funnel) return;
 
-    const canonical = buildCanonical(undefined, customDomain);
+    const title = funnel.seo_title || funnel.name || undefined;
+    const description = funnel.seo_description || funnel.description || undefined;
+    const image = funnel.social_image_url || funnel.og_image;
+    const canonical = funnel.canonical_url || buildCanonical(undefined, customDomain);
+    const keywords = funnel.seo_keywords || [];
+    const author = funnel.meta_author;
+    const robots = funnel.meta_robots || 'index, follow';
+    const languageCode = funnel.language_code || 'en';
+    const customMetaTags = Object.entries((funnel.custom_meta_tags as Record<string, string>) || {}).map(([name, content]) => ({ name, content }));
+
     setSEO({
-      title: funnel.seo_title || funnel.name || undefined,
-      description: funnel.seo_description || funnel.description || undefined,
-      image: funnel.og_image,
+      title,
+      description,
+      image,
+      socialImageUrl: funnel.social_image_url,
+      keywords,
       canonical,
-      robots: funnel.meta_robots || 'index, follow',
+      robots,
+      author,
+      languageCode,
+      customMetaTags,
       siteName: funnel.name,
       ogType: 'website',
       favicon: store?.favicon_url || '/favicon.ico',

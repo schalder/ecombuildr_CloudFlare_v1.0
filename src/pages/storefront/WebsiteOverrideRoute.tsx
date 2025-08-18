@@ -15,6 +15,13 @@ interface WebsitePageData {
   seo_description?: string;
   og_image?: string;
   custom_scripts?: string;
+  seo_keywords?: string[];
+  meta_author?: string;
+  canonical_url?: string;
+  custom_meta_tags?: any;
+  social_image_url?: string;
+  language_code?: string;
+  meta_robots?: string;
 }
 
 interface WebsiteOverrideRouteProps {
@@ -91,7 +98,7 @@ export const WebsiteOverrideRoute: React.FC<WebsiteOverrideRouteProps> = ({ slug
       try {
         const { data } = await supabase
           .from('websites')
-          .select('name, settings, domain, seo_title, seo_description, og_image, meta_robots, canonical_domain')
+          .select('name, settings, domain, seo_title, seo_description, og_image, meta_robots, canonical_domain, seo_keywords, meta_author, canonical_url, custom_meta_tags, social_image_url, language_code')
           .eq('id', resolvedWebsiteId)
           .maybeSingle();
         const code = (data as any)?.settings?.currency?.code || 'BDT';
@@ -125,15 +132,25 @@ export const WebsiteOverrideRoute: React.FC<WebsiteOverrideRouteProps> = ({ slug
 
     const title = page.seo_title || (websiteMeta?.name ? `${page.title} - ${websiteMeta.name}` : page.title);
     const description = page.seo_description || websiteMeta?.seo_description;
-    const image = page.og_image || websiteMeta?.og_image;
-    const canonical = buildCanonical(undefined, websiteMeta?.canonical_domain || websiteMeta?.domain);
+    const image = page.social_image_url || page.og_image || websiteMeta?.og_image;
+    const canonical = page.canonical_url || buildCanonical(undefined, websiteMeta?.canonical_domain || websiteMeta?.domain);
+    const keywords = page.seo_keywords || websiteMeta?.seo_keywords || [];
+    const author = page.meta_author || websiteMeta?.meta_author;
+    const robots = page.meta_robots || websiteMeta?.meta_robots || 'index, follow';
+    const languageCode = page.language_code || websiteMeta?.language_code || 'en';
+    const customMetaTags = Object.entries((page.custom_meta_tags as Record<string, string>) || (websiteMeta?.custom_meta_tags as Record<string, string>) || {}).map(([name, content]) => ({ name, content }));
 
     setSEO({
       title,
       description,
       image,
+      socialImageUrl: page.social_image_url,
+      keywords,
       canonical,
-      robots: websiteMeta?.meta_robots || 'index, follow',
+      robots: isPreview ? 'noindex, nofollow' : robots,
+      author,
+      languageCode,
+      customMetaTags,
       siteName: websiteMeta?.name,
       ogType: 'website',
       favicon: websiteMeta?.settings?.favicon_url || '/favicon.ico',
@@ -147,7 +164,7 @@ export const WebsiteOverrideRoute: React.FC<WebsiteOverrideRouteProps> = ({ slug
         document.head.removeChild(scriptElement);
       };
     }
-  }, [page, websiteMeta]);
+  }, [page, websiteMeta, isPreview]);
 
   if (loading) {
     return (

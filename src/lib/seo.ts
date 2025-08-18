@@ -5,8 +5,13 @@ export type SEOConfig = {
   title?: string;
   description?: string;
   image?: string;
+  socialImageUrl?: string;
+  keywords?: string[];
   canonical?: string;
   robots?: string; // e.g., "index, follow" or "noindex, nofollow"
+  author?: string;
+  languageCode?: string;
+  customMetaTags?: { name: string; content: string }[];
   siteName?: string;
   ogType?: string; // e.g., 'website', 'article', 'product'
   locale?: string; // e.g., 'en_US'
@@ -77,9 +82,33 @@ export function setSEO(input: SEOConfig) {
   }
 
   // Image
-  if (cfg.image) {
-    upsertMeta('meta[property="og:image"]', { property: 'og:image', content: cfg.image });
-    upsertMeta('meta[name="twitter:image"]', { name: 'twitter:image', content: cfg.image });
+  const imageUrl = cfg.socialImageUrl || cfg.image;
+  if (imageUrl) {
+    upsertMeta('meta[property="og:image"]', { property: 'og:image', content: imageUrl });
+    upsertMeta('meta[name="twitter:image"]', { name: 'twitter:image', content: imageUrl });
+  }
+
+  // Keywords
+  if (cfg.keywords && cfg.keywords.length > 0) {
+    upsertMeta('meta[name="keywords"]', { name: 'keywords', content: cfg.keywords.join(', ') });
+  }
+
+  // Author
+  if (cfg.author) {
+    upsertMeta('meta[name="author"]', { name: 'author', content: cfg.author });
+  }
+
+  // Language
+  if (cfg.languageCode) {
+    upsertMeta('meta[name="language"]', { name: 'language', content: cfg.languageCode });
+    document.documentElement.lang = cfg.languageCode;
+  }
+
+  // Custom Meta Tags
+  if (cfg.customMetaTags) {
+    cfg.customMetaTags.forEach((tag, index) => {
+      upsertMeta(`meta[name="${tag.name}"]`, { name: tag.name, content: tag.content });
+    });
   }
 
   // Site name & type
