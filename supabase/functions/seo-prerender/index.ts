@@ -18,32 +18,13 @@ serve(async (req) => {
   )
 
   const url = new URL(req.url)
-  // Get path from query params (from Netlify rewrite) or fall back to URL parsing
-  let path = '/' + (url.searchParams.get('path') || '').replace(/^\/+/, '')
-  // Fix empty path to root
-  if (path === '/') path = ''
-  // Get actual domain from request headers
-  const domain = req.headers.get('x-forwarded-host') || req.headers.get('host') || url.hostname || 'ecombuildr.com'
+  const path = url.searchParams.get('path') || url.pathname || '/'
+  const domain = url.searchParams.get('domain') || url.hostname || req.headers.get('host') || 'ecombuildr.com'
   
   console.log('SEO Prerender request:', { path, domain, userAgent: req.headers.get('user-agent') })
 
   try {
-    // First, try to get static HTML snapshot if available
-    const staticHTML = await getStaticHTMLSnapshot(supabase, domain, path)
-    if (staticHTML) {
-      console.log('Serving static HTML snapshot for:', domain, path)
-      return new Response(staticHTML, {
-        headers: {
-          ...corsHeaders,
-          'Content-Type': 'text/html; charset=UTF-8',
-          'Cache-Control': 'public, max-age=300, s-maxage=3600',
-          'X-Served-From': 'static-snapshot',
-          'X-Domain-Path': `${domain}${path}`
-        },
-      })
-    }
-    
-    // Fallback to dynamic generation with head injection
+    // Fetch the base index.html template from the live site
     const templateResponse = await fetch('https://ecombuildr.lovable.app/index.html')
     let html = await templateResponse.text()
     
@@ -67,8 +48,6 @@ serve(async (req) => {
         ...corsHeaders,
         'Content-Type': 'text/html; charset=UTF-8',
         'Cache-Control': 'public, max-age=300, s-maxage=3600',
-        'X-Served-From': 'dynamic-head-injection',
-        'X-Domain-Path': `${domain}${path}`
       },
     })
   } catch (error) {
@@ -76,123 +55,6 @@ serve(async (req) => {
     return generateFallbackHTML(domain, path)
   }
 })
-
-// Try to get static HTML snapshot for the given domain and path
-async function getStaticHTMLSnapshot(supabase: any, domain: string, path: string): Promise<string | null> {
-  try {
-    // Handle custom domains first
-    if (domain !== 'ecombuildr.com' && !domain.includes('lovable.app')) {
-      console.log('Looking for static snapshot for custom domain:', domain, path)
-      
-      // Look up custom domain mapping to find the website/funnel and specific page
-      const { data: customDomainData, error: domainError } = await supabase
-        .from('custom_domains')
-        .select(`
-          *,
-          domain_connections(
-            content_type,
-            content_id,
-            path
-          )
-        `)
-        .eq('domain', domain)
-        .eq('is_verified', true)
-        .eq('dns_configured', true)
-        .maybeSingle()
-      
-      if (domainError || !customDomainData?.domain_connections?.length) {
-        console.log('No custom domain connection found')
-        return null
-      }
-      
-      const connection = customDomainData.domain_connections[0]
-      
-      if (connection.content_type === 'website') {
-        // Find the specific page for this website
-        const { data: page } = await supabase
-          .from('website_pages')
-          .select('id')
-          .eq('website_id', connection.content_id)
-          .eq('slug', path === '/' || path === '' ? '' : path.replace(/^\//, ''))
-          .eq('is_published', true)
-          .maybeSingle()
-        
-        if (page) {
-          // Look for static HTML snapshot for this specific page (try domain-specific first)
-          let { data: snapshot } = await supabase
-            .from('html_snapshots')
-            .select('html_content')
-            .eq('content_type', 'website_page')
-            .eq('content_id', page.id)
-            .eq('custom_domain', domain)
-            .maybeSingle()
-          
-          // Fallback to null domain if no domain-specific snapshot found
-          if (!snapshot?.html_content) {
-            const { data: nullSnapshot } = await supabase
-              .from('html_snapshots')
-              .select('html_content')
-              .eq('content_type', 'website_page')
-              .eq('content_id', page.id)
-              .is('custom_domain', null)
-              .maybeSingle()
-            snapshot = nullSnapshot
-          }
-          
-          if (snapshot?.html_content) {
-            return snapshot.html_content
-          }
-        }
-      }
-    } else {
-      // Handle ecombuildr.com domain routes
-      // Parse website routes: /w/:websiteSlug/:pageSlug?
-      const websiteMatch = path.match(/^\/w\/([^\/]+)(?:\/([^\/]+))?$/)
-      if (websiteMatch) {
-        const [, websiteSlug, pageSlug] = websiteMatch
-        
-        // Get website ID
-        const { data: website } = await supabase
-          .from('websites')
-          .select('id')
-          .eq('slug', websiteSlug)
-          .eq('is_active', true)
-          .maybeSingle()
-        
-        if (website) {
-          // Find the specific page
-          const { data: page } = await supabase
-            .from('website_pages')
-            .select('id')
-            .eq('website_id', website.id)
-            .eq('slug', pageSlug || '')
-            .eq('is_published', true)
-            .maybeSingle()
-          
-          if (page) {
-            // Look for static HTML snapshot for this specific page (no custom domain)
-            const { data: snapshot } = await supabase
-              .from('html_snapshots')
-              .select('html_content')
-              .eq('content_type', 'website_page')
-              .eq('content_id', page.id)
-              .is('custom_domain', null)
-              .maybeSingle()
-            
-            if (snapshot?.html_content) {
-              return snapshot.html_content
-            }
-          }
-        }
-      }
-    }
-    
-    return null
-  } catch (error) {
-    console.error('Error fetching static HTML snapshot:', error)
-    return null
-  }
-}
 
 async function generateSEOContent(supabase: any, domain: string, path: string): Promise<string> {
   // Handle custom domains first
@@ -213,15 +75,10 @@ async function generateSEOContent(supabase: any, domain: string, path: string): 
       .eq('domain', domain)
       .eq('is_verified', true)
       .eq('dns_configured', true)
-      .maybeSingle()
+      .single()
     
     if (domainError) {
       console.error('Error fetching custom domain:', domainError)
-      return getDefaultSEO()
-    }
-    
-    if (!customDomainData) {
-      console.log('No custom domain connection found')
       return getDefaultSEO()
     }
     
@@ -315,14 +172,14 @@ async function generateWebsitePageSEO(supabase: any, websiteId: string, pageSlug
       return getDefaultSEO()
     }
     
-    // Fetch page data - for custom domains, use pageSlug directly; for homepage, find is_homepage=true
+    // Fetch page data - use homepage if no slug provided
     let pageQuery = supabase
       .from('website_pages')
       .select('*')
       .eq('website_id', websiteId)
       .eq('is_published', true)
     
-    if (pageSlug && pageSlug !== '') {
+    if (pageSlug) {
       pageQuery = pageQuery.eq('slug', pageSlug)
     } else {
       pageQuery = pageQuery.eq('is_homepage', true)
