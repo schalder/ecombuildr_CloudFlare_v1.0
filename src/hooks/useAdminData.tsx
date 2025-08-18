@@ -192,9 +192,14 @@ export const useAdminData = () => {
 
       const totalOrders = orderData?.length || 0;
       
-      // Calculate estimated SaaS MRR (Monthly Recurring Revenue)
-      // For now, use a simple estimation based on paid users
-      const subscriptionMrr = paidUsers * 50; // Assuming average $50/month per paid user
+      // Calculate real SaaS MRR from active subscriptions
+      const { data: activeSubscriptions } = await supabase
+        .from('saas_subscriptions')
+        .select('plan_price_bdt')
+        .eq('subscription_status', 'active')
+        .or('expires_at.is.null,expires_at.gt.' + new Date().toISOString());
+
+      const realMrr = activeSubscriptions?.reduce((sum, sub) => sum + Number(sub.plan_price_bdt), 0) || 0;
 
       setPlatformStats({
         totalUsers: totalUsers,
@@ -208,7 +213,7 @@ export const useAdminData = () => {
         totalGMV: merchantGmv,
         monthlyGMV: monthlyGmv,
         averageOrderValue: totalOrders > 0 ? merchantGmv / totalOrders : 0,
-        estimatedMRR: subscriptionMrr,
+        estimatedMRR: realMrr,
       });
     } catch (err) {
       console.error('Error fetching platform stats:', err);
