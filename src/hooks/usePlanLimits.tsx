@@ -55,16 +55,27 @@ export const usePlanLimits = () => {
       let userProfile: UserProfile;
       if (profileError && profileError.code === 'PGRST116') {
         // If profile doesn't exist, create a default one
+        const selectedPlan = user.user_metadata?.selected_plan || 'starter';
+        
+        // Get trial days for the selected plan
+        const { data: planData } = await supabase
+          .from('plan_limits')
+          .select('trial_days')
+          .eq('plan_name', selectedPlan)
+          .single();
+        
+        const trialDays = planData?.trial_days || 7;
+        
         const { data: newProfile, error: createError } = await supabase
           .from('profiles')
           .insert({
             id: user.id,
             email: user.email,
             full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
-            subscription_plan: 'starter',
+            subscription_plan: selectedPlan,
             account_status: 'trial',
             trial_started_at: new Date().toISOString(),
-            trial_expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() // 7 days from now
+            trial_expires_at: new Date(Date.now() + trialDays * 24 * 60 * 60 * 1000).toISOString()
           })
           .select('subscription_plan, account_status, trial_started_at, trial_expires_at, subscription_expires_at')
           .single();

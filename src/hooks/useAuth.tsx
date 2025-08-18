@@ -6,7 +6,7 @@ import { toast } from '@/hooks/use-toast';
 interface AuthContextType {
   user: User | null;
   session: Session | null;
-  signUp: (email: string, password: string, fullName?: string) => Promise<{ error: any }>;
+  signUp: (email: string, password: string, fullName?: string, planName?: string | null) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   loading: boolean;
@@ -112,7 +112,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     };
   }, []);
 
-  const signUp = async (email: string, password: string, fullName?: string) => {
+  const signUp = async (email: string, password: string, fullName?: string, planName?: string | null) => {
     try {
       const redirectUrl = `${window.location.origin}/`;
       
@@ -123,6 +123,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           emailRedirectTo: redirectUrl,
           data: {
             full_name: fullName || email.split('@')[0],
+            selected_plan: planName || 'starter'
           },
         },
       });

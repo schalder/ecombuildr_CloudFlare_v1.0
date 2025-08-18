@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Check, Crown, Zap, Rocket, Star, Loader } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 
 interface PricingPlan {
   id: string;
@@ -30,6 +31,7 @@ type IconName = keyof typeof iconMap;
 export const Pricing = () => {
   const [plans, setPlans] = useState<PricingPlan[]>([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchPlans();
@@ -80,7 +82,7 @@ export const Pricing = () => {
   }
 
   return (
-    <section className="py-20 bg-gradient-to-br from-muted/30 to-background">
+    <section id="pricing" className="py-20 bg-gradient-to-br from-muted/30 to-background">
       <div className="container mx-auto px-4">
         
         {/* Header */}
@@ -157,6 +159,7 @@ export const Pricing = () => {
                   variant={plan.button_variant as any}
                   className="w-full"
                   size="lg"
+                  onClick={() => navigate(`/auth?plan=${plan.plan_name}`)}
                 >
                   {plan.price_bdt === 0 ? "ফ্রি শুরু করুন" : "এই প্ল্যান নিন"}
                 </Button>

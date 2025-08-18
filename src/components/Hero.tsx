@@ -52,12 +52,20 @@ export const Hero = () => {
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-              <a href="/auth">
-                <Button variant="accent" size="lg" className="group">
-                  Start Building Free
-                  <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
-                </Button>
-              </a>
+              <Button 
+                variant="accent" 
+                size="lg" 
+                className="group"
+                onClick={() => {
+                  const pricingSection = document.getElementById('pricing');
+                  if (pricingSection) {
+                    pricingSection.scrollIntoView({ behavior: 'smooth' });
+                  }
+                }}
+              >
+                Start Building Free
+                <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+              </Button>
               
               <a href="https://shop.powerkits.net/" target="_blank" rel="noopener noreferrer">
                 <Button variant="outline" size="lg" className="bg-white/10 backdrop-blur-sm border-white/20 text-white hover:bg-white hover:text-primary">

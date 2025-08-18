@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Navigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,9 +11,20 @@ import { Loader2, Store } from 'lucide-react';
 
 const Auth = () => {
   const { user, signIn, signUp, loading } = useAuth();
+  const [searchParams] = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
   const [signInData, setSignInData] = useState({ email: '', password: '' });
   const [signUpData, setSignUpData] = useState({ email: '', password: '', fullName: '', confirmPassword: '' });
+  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+  const [defaultTab, setDefaultTab] = useState("signin");
+
+  useEffect(() => {
+    const plan = searchParams.get('plan');
+    if (plan) {
+      setSelectedPlan(plan);
+      setDefaultTab("signup");
+    }
+  }, [searchParams]);
 
   // Redirect if already authenticated
   if (user && !loading) {
@@ -74,7 +85,7 @@ const Auth = () => {
     }
 
     setIsLoading(true);
-    const { error } = await signUp(signUpData.email, signUpData.password, signUpData.fullName);
+    const { error } = await signUp(signUpData.email, signUpData.password, signUpData.fullName, selectedPlan);
     
     if (error) {
       toast({
@@ -115,7 +126,14 @@ const Auth = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="signin" className="w-full">
+            {selectedPlan && (
+              <div className="mb-4 p-3 bg-accent/10 rounded-md border border-accent/20">
+                <p className="text-sm text-center">
+                  <span className="font-medium text-accent">Selected Plan:</span> {selectedPlan}
+                </p>
+              </div>
+            )}
+            <Tabs defaultValue={defaultTab} className="w-full">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="signin">Sign In</TabsTrigger>
                 <TabsTrigger value="signup">Sign Up</TabsTrigger>

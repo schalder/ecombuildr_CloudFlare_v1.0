@@ -56,8 +56,17 @@ export const Navbar = () => {
                     Login
                   </Link>
                 </Button>
-                <Button asChild variant="accent" size="sm">
-                  <Link to="/auth">Get Started Free</Link>
+                <Button 
+                  variant="accent" 
+                  size="sm"
+                  onClick={() => {
+                    const pricingSection = document.getElementById('pricing');
+                    if (pricingSection) {
+                      pricingSection.scrollIntoView({ behavior: 'smooth' });
+                    }
+                  }}
+                >
+                  Get Started Free
                 </Button>
               </>
             )}
@@ -100,8 +109,18 @@ export const Navbar = () => {
                         Login
                       </Link>
                     </Button>
-                    <Button asChild variant="accent" className="w-full" onClick={() => setIsMenuOpen(false)}>
-                      <Link to="/auth">Get Started Free</Link>
+                    <Button 
+                      variant="accent" 
+                      className="w-full" 
+                      onClick={() => {
+                        setIsMenuOpen(false);
+                        const pricingSection = document.getElementById('pricing');
+                        if (pricingSection) {
+                          pricingSection.scrollIntoView({ behavior: 'smooth' });
+                        }
+                      }}
+                    >
+                      Get Started Free
                     </Button>
                   </>
                 )}
