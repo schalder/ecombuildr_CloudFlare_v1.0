@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useStore } from '@/contexts/StoreContext';
 import { setSEO, buildCanonical } from '@/lib/seo';
-import { PixelManager } from '@/components/pixel/PixelManager';
 import { Loader2 } from 'lucide-react';
 import { DomainFunnelRouter } from './DomainFunnelRouter';
 
@@ -118,8 +117,6 @@ export const DomainFunnelRenderer: React.FC<DomainFunnelRendererProps> = ({
   }
 
   return (
-    <PixelManager storeId={funnel.store_id}>
-      <DomainFunnelRouter funnel={funnel} />
-    </PixelManager>
+    <DomainFunnelRouter funnel={funnel} />
   );
 };

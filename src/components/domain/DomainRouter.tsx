@@ -3,6 +3,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
 import { DomainWebsiteRenderer } from './DomainWebsiteRenderer';
 import { DomainFunnelRenderer } from './DomainFunnelRenderer';
+import { StoreProvider } from '@/contexts/StoreContext';
+import { CartProvider } from '@/contexts/CartContext';
+import { AddToCartProvider } from '@/contexts/AddToCartProvider';
+import { AuthProvider } from '@/hooks/useAuth';
+import { PixelManager } from '@/components/pixel/PixelManager';
 
 interface DomainConnection {
   id: string;
@@ -101,23 +106,43 @@ export const DomainRouter: React.FC<DomainRouterProps> = ({ children }) => {
     return <>{children}</>;
   }
   
-  // Render content based on type
+  // Render content based on type with proper provider context
   if (domainContent.content_type === 'website') {
-    // Render the entire website with all its routes
+    // Render the entire website with all its routes wrapped in providers
     return (
-      <DomainWebsiteRenderer 
-        websiteId={domainContent.content_id}
-        customDomain={customDomain.domain}
-      />
+      <AuthProvider>
+        <StoreProvider>
+          <PixelManager>
+            <CartProvider>
+              <AddToCartProvider>
+                <DomainWebsiteRenderer 
+                  websiteId={domainContent.content_id}
+                  customDomain={customDomain.domain}
+                />
+              </AddToCartProvider>
+            </CartProvider>
+          </PixelManager>
+        </StoreProvider>
+      </AuthProvider>
     );
   }
   
   if (domainContent.content_type === 'funnel') {
     return (
-      <DomainFunnelRenderer 
-        funnelId={domainContent.content_id}
-        customDomain={customDomain.domain}
-      />
+      <AuthProvider>
+        <StoreProvider>
+          <PixelManager>
+            <CartProvider>
+              <AddToCartProvider>
+                <DomainFunnelRenderer 
+                  funnelId={domainContent.content_id}
+                  customDomain={customDomain.domain}
+                />
+              </AddToCartProvider>
+            </CartProvider>
+          </PixelManager>
+        </StoreProvider>
+      </AuthProvider>
     );
   }
   
