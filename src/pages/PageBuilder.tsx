@@ -211,6 +211,24 @@ export default function PageBuilder() {
       if (result.error) throw result.error;
 
       toast.success('Content updated successfully!');
+
+      // Generate HTML snapshot if page is published for better SEO
+      if (pageData.is_published && (context === 'website' || context === 'funnel')) {
+        try {
+          console.log(`Triggering HTML snapshot for ${context}: ${parentId}`);
+          await supabase.functions.invoke('html-snapshot', {
+            body: {
+              contentType: context,
+              contentId: parentId
+            }
+          });
+          console.log('HTML snapshot generated successfully');
+        } catch (snapshotError) {
+          console.warn('Failed to generate HTML snapshot:', snapshotError);
+          // Don't show error to user - this is background optimization
+        }
+      }
+
     } catch (error) {
       console.error('Error saving content:', error);
       toast.error('Failed to save content');

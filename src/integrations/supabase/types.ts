@@ -678,6 +678,7 @@ export type Database = {
           name: string
           og_image: string | null
           seo_description: string | null
+          seo_keywords: string[] | null
           seo_title: string | null
           settings: Json
           slug: string
@@ -697,6 +698,7 @@ export type Database = {
           name: string
           og_image?: string | null
           seo_description?: string | null
+          seo_keywords?: string[] | null
           seo_title?: string | null
           settings?: Json
           slug: string
@@ -716,12 +718,46 @@ export type Database = {
           name?: string
           og_image?: string | null
           seo_description?: string | null
+          seo_keywords?: string[] | null
           seo_title?: string | null
           settings?: Json
           slug?: string
           store_id?: string
           updated_at?: string
           website_id?: string | null
+        }
+        Relationships: []
+      }
+      html_snapshots: {
+        Row: {
+          content_id: string
+          content_type: string
+          created_at: string
+          custom_domain: string | null
+          generated_at: string
+          html_content: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          content_id: string
+          content_type: string
+          created_at?: string
+          custom_domain?: string | null
+          generated_at?: string
+          html_content: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          content_id?: string
+          content_type?: string
+          created_at?: string
+          custom_domain?: string | null
+          generated_at?: string
+          html_content?: string
+          id?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -2097,6 +2133,7 @@ export type Database = {
           name: string
           og_image: string | null
           seo_description: string | null
+          seo_keywords: string[] | null
           seo_title: string | null
           settings: Json
           slug: string
@@ -2118,6 +2155,7 @@ export type Database = {
           name: string
           og_image?: string | null
           seo_description?: string | null
+          seo_keywords?: string[] | null
           seo_title?: string | null
           settings?: Json
           slug: string
@@ -2139,6 +2177,7 @@ export type Database = {
           name?: string
           og_image?: string | null
           seo_description?: string | null
+          seo_keywords?: string[] | null
           seo_title?: string | null
           settings?: Json
           slug?: string
