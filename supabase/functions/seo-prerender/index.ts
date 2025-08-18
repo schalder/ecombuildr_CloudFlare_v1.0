@@ -19,8 +19,10 @@ serve(async (req) => {
 
   const url = new URL(req.url)
   // Get path from query params (from Netlify rewrite) or fall back to URL parsing
-  const path = '/' + (url.searchParams.get('path') || '').replace(/^\/+/, '')
-  // Get domain from headers (more reliable for custom domains)
+  let path = '/' + (url.searchParams.get('path') || '').replace(/^\/+/, '')
+  // Fix empty path to root
+  if (path === '/') path = ''
+  // Get actual domain from request headers
   const domain = req.headers.get('x-forwarded-host') || req.headers.get('host') || url.hostname || 'ecombuildr.com'
   
   console.log('SEO Prerender request:', { path, domain, userAgent: req.headers.get('user-agent') })
@@ -111,7 +113,7 @@ async function getStaticHTMLSnapshot(supabase: any, domain: string, path: string
           .from('website_pages')
           .select('id')
           .eq('website_id', connection.content_id)
-          .eq('slug', path === '/' ? '' : path.replace(/^\//, ''))
+          .eq('slug', path === '/' || path === '' ? '' : path.replace(/^\//, ''))
           .eq('is_published', true)
           .maybeSingle()
         
@@ -211,10 +213,15 @@ async function generateSEOContent(supabase: any, domain: string, path: string): 
       .eq('domain', domain)
       .eq('is_verified', true)
       .eq('dns_configured', true)
-      .single()
+      .maybeSingle()
     
     if (domainError) {
       console.error('Error fetching custom domain:', domainError)
+      return getDefaultSEO()
+    }
+    
+    if (!customDomainData) {
+      console.log('No custom domain connection found')
       return getDefaultSEO()
     }
     
@@ -308,14 +315,14 @@ async function generateWebsitePageSEO(supabase: any, websiteId: string, pageSlug
       return getDefaultSEO()
     }
     
-    // Fetch page data - use homepage if no slug provided
+    // Fetch page data - for custom domains, use pageSlug directly; for homepage, find is_homepage=true
     let pageQuery = supabase
       .from('website_pages')
       .select('*')
       .eq('website_id', websiteId)
       .eq('is_published', true)
     
-    if (pageSlug) {
+    if (pageSlug && pageSlug !== '') {
       pageQuery = pageQuery.eq('slug', pageSlug)
     } else {
       pageQuery = pageQuery.eq('is_homepage', true)
