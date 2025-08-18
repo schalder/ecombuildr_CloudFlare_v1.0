@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Navigate, useSearchParams, Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { useSEO } from '@/hooks/useSEO';
+import { SEOHead } from '@/components/SEOHead';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,6 +13,7 @@ import { Loader2, Store } from 'lucide-react';
 
 const Auth = () => {
   const { user, signIn, signUp, loading } = useAuth();
+  const { seoData } = useSEO('auth');
   const [searchParams] = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
   const [signInData, setSignInData] = useState({ email: '', password: '' });
@@ -107,6 +110,12 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5 flex items-center justify-center p-4">
+      <SEOHead
+        title={seoData?.title}
+        description={seoData?.description}
+        ogImage={seoData?.og_image}
+        keywords={seoData?.keywords}
+      />
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Link to="/" className="flex items-center justify-center mb-4 hover:opacity-80 transition-opacity">

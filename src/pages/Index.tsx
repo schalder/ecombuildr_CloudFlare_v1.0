@@ -1,5 +1,6 @@
 import { useAuth } from "@/hooks/useAuth";
-import { Navigate } from "react-router-dom";
+import { useSEO } from "@/hooks/useSEO";
+import { SEOHead } from "@/components/SEOHead";
 import { Navbar } from "@/components/Navbar";
 import { Hero } from "@/components/Hero";
 import { Features } from "@/components/Features";
@@ -12,11 +13,18 @@ import { WhatsAppWidget } from "@/components/WhatsAppWidget";
 
 const Index = () => {
   const { user, loading } = useAuth();
+  const { seoData, loading: seoLoading } = useSEO('/');
 
   // Don't redirect authenticated users - let them see the home page
 
   return (
     <div className="min-h-screen">
+      <SEOHead
+        title={seoData?.title}
+        description={seoData?.description}
+        ogImage={seoData?.og_image}
+        keywords={seoData?.keywords}
+      />
       <Navbar />
       <Hero />
       <div id="features">

@@ -11,7 +11,8 @@ import {
   UserCheck,
   AlertCircle,
   Star,
-  Crown
+  Crown,
+  Search
 } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router-dom';
 import {
@@ -77,6 +78,11 @@ const quickActions = [
     title: 'Support Tickets',
     url: '/admin/support',
     icon: AlertCircle,
+  },
+  {
+    title: 'SEO Settings',
+    url: '/admin/seo',
+    icon: Search,
   },
   {
     title: 'System Settings',

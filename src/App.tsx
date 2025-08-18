@@ -3,6 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { HelmetProvider } from 'react-helmet-async';
 import { DomainRouter } from "@/components/domain/DomainRouter";
 import { AuthProvider } from "@/hooks/useAuth";
 import { StoreProvider } from "@/contexts/StoreContext";
@@ -51,6 +52,7 @@ import AdminSites from "./pages/admin/AdminSites";
 import AdminAnalytics from "./pages/admin/AdminAnalytics";
 import AdminRevenue from "./pages/admin/AdminRevenue";
 import AdminSupport from "./pages/admin/AdminSupport";
+import SEOSettings from "./pages/admin/SEOSettings";
 import AdminSystemSettings from "./pages/admin/AdminSystemSettings";
 import { StorefrontHome } from "./pages/storefront/StorefrontHome";
 import { StorefrontProducts } from "./pages/storefront/StorefrontProducts";
@@ -80,13 +82,14 @@ const queryClient = new QueryClient({
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <StoreProvider>
-        <PixelManager>
-          <CartProvider>
-            <TooltipProvider>
-            <Toaster />
-            <Sonner />
+    <HelmetProvider>
+      <AuthProvider>
+        <StoreProvider>
+          <PixelManager>
+            <CartProvider>
+              <TooltipProvider>
+                <Toaster />
+                <Sonner />
             <BrowserRouter>
               <AddToCartProvider>
               <DomainRouter>
@@ -146,6 +149,7 @@ const App = () => (
                 <Route path="/admin/analytics" element={<AdminAnalytics />} />
                 <Route path="/admin/revenue" element={<AdminRevenue />} />
                 <Route path="/admin/support" element={<AdminSupport />} />
+                <Route path="/admin/seo" element={<SEOSettings />} />
                 <Route path="/admin/settings" element={<AdminSystemSettings />} />
                 
                 {/* Demo and Preview Routes */}
@@ -251,12 +255,13 @@ const App = () => (
                 </Routes>
               </DomainRouter>
               </AddToCartProvider>
-            </BrowserRouter>
-            </TooltipProvider>
-          </CartProvider>
-        </PixelManager>
-      </StoreProvider>
-    </AuthProvider>
+                </BrowserRouter>
+              </TooltipProvider>
+            </CartProvider>
+          </PixelManager>
+        </StoreProvider>
+      </AuthProvider>
+    </HelmetProvider>
   </QueryClientProvider>
 );
 

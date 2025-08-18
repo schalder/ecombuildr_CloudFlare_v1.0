@@ -1555,6 +1555,42 @@ export type Database = {
         }
         Relationships: []
       }
+      seo_pages: {
+        Row: {
+          created_at: string | null
+          description: string
+          id: string
+          is_active: boolean | null
+          keywords: string[] | null
+          og_image: string | null
+          page_slug: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description: string
+          id?: string
+          is_active?: boolean | null
+          keywords?: string[] | null
+          og_image?: string | null
+          page_slug: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string
+          id?: string
+          is_active?: boolean | null
+          keywords?: string[] | null
+          og_image?: string | null
+          page_slug?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       site_pricing_plans: {
         Row: {
           button_variant: string | null
