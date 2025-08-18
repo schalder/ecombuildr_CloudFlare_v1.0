@@ -135,22 +135,55 @@ export function setSEO(input: SEOConfig) {
     upsertMeta('meta[name="robots"]', { name: 'robots', content: cfg.robots });
   }
 
-  // Favicon with cache-busting for better browser updates
+  // Favicon with aggressive cache-busting and proper cleanup
   if (cfg.favicon) {
-    // Remove existing favicon links to prevent conflicts
-    removeIfExists('link[rel="icon"]');
-    removeIfExists('link[rel="shortcut icon"]');
-    removeIfExists('link[rel="apple-touch-icon"]');
+    // Remove ALL existing favicon-related links to prevent conflicts
+    const faviconSelectors = [
+      'link[rel="icon"]',
+      'link[rel="shortcut icon"]', 
+      'link[rel="apple-touch-icon"]',
+      'link[rel="apple-touch-icon-precomposed"]',
+      'link[type="image/x-icon"]',
+      'link[type="image/png"]'
+    ];
     
-    // Add cache-busting parameter to force browser refresh
-    const cacheBustingUrl = cfg.favicon + (cfg.favicon.includes('?') ? '&' : '?') + 't=' + Date.now();
-    
-    // Standard icon
-    upsertLink('icon', cacheBustingUrl);
-    // Legacy/Windows support  
-    upsertLink('shortcut icon', cacheBustingUrl);
-    // iOS home screen (PNG recommended)
-    upsertLink('apple-touch-icon', cfg.favicon); // No cache-busting for Apple touch icon
+    faviconSelectors.forEach(selector => {
+      document.head.querySelectorAll(selector).forEach(el => el.remove());
+    });
+
+    // Force browser cache clear with timestamp + random
+    const timestamp = Date.now();
+    const random = Math.random().toString(36).substring(7);
+    const cacheBuster = `t=${timestamp}&r=${random}`;
+    const faviconUrl = cfg.favicon + (cfg.favicon.includes('?') ? '&' : '?') + cacheBuster;
+
+    // Create new favicon link with proper attributes
+    const link = document.createElement('link');
+    link.rel = 'icon';
+    link.type = 'image/png'; // Be specific about type
+    link.href = faviconUrl;
+    link.setAttribute('data-dynamic-favicon', 'true'); // Mark as dynamic
+    document.head.appendChild(link);
+
+    // Also add shortcut icon for legacy browsers
+    const shortcutLink = document.createElement('link');
+    shortcutLink.rel = 'shortcut icon';
+    shortcutLink.type = 'image/png';
+    shortcutLink.href = faviconUrl;
+    shortcutLink.setAttribute('data-dynamic-favicon', 'true');
+    document.head.appendChild(shortcutLink);
+
+    // Force browser to refresh favicon (works in some browsers)
+    setTimeout(() => {
+      const links = document.head.querySelectorAll('link[rel*="icon"][data-dynamic-favicon]');
+      links.forEach(link => {
+        const parent = link.parentNode;
+        if (parent) {
+          parent.removeChild(link);
+          parent.appendChild(link);
+        }
+      });
+    }, 100);
   }
 
   // JSON-LD Structured Data
