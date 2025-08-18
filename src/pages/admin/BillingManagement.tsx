@@ -26,7 +26,7 @@ const isValidPlanName = (plan: string): plan is PlanName => {
 
 export default function BillingManagement() {
   const { isAdmin, loading: adminLoading, platformStats, saasSubscribers, fetchSaasSubscribers } = useAdminData();
-  const { paymentOptions, updatePaymentOption, refetch: refetchPaymentOptions } = usePaymentOptions();
+  const { paymentOptions, updatePaymentOption, refetch: refetchPaymentOptions } = usePaymentOptions({ enabled: true });
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 interface AdminUser {
   id: string;
@@ -48,6 +48,7 @@ interface SaasSubscriber {
 export const useAdminData = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<AdminUser[]>([]);
@@ -63,6 +64,13 @@ export const useAdminData = () => {
       return;
     }
 
+    // Only check admin status if user is trying to access admin routes
+    if (!location.pathname.startsWith('/admin')) {
+      setIsAdmin(false);
+      setLoading(false);
+      return;
+    }
+
     try {
       const { data, error } = await supabase.rpc('is_super_admin');
       
@@ -71,13 +79,15 @@ export const useAdminData = () => {
       setIsAdmin(data);
       
       if (!data) {
-        // Redirect non-admin users
+        // Redirect non-admin users only if they're trying to access admin routes
         navigate('/dashboard');
       }
     } catch (err) {
       console.error('Error checking admin status:', err);
       setIsAdmin(false);
-      navigate('/dashboard');
+      if (location.pathname.startsWith('/admin')) {
+        navigate('/dashboard');
+      }
     } finally {
       setLoading(false);
     }

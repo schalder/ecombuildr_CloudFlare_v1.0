@@ -36,7 +36,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { useAdminData } from "@/hooks/useAdminData";
+
 
 const navigationItems = [
   {
@@ -123,7 +123,7 @@ export function AppSidebar() {
   const location = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
-  const { isAdmin } = useAdminData();
+  
 
   const currentPath = location.pathname;
 
@@ -270,8 +270,8 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Super Admin Dashboard Button */}
-        {isAdmin && (
+        {/* Super Admin Dashboard Button - only show if on admin routes */}
+        {currentPath.startsWith('/admin') && (
           <SidebarGroup>
             <SidebarGroupContent>
               <SidebarMenu>

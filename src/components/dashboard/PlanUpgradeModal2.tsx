@@ -37,7 +37,7 @@ interface PlanWithLimits {
 
 export const PlanUpgradeModal2: React.FC<PlanUpgradeModal2Props> = ({ open, onOpenChange }) => {
   const { user } = useAuth();
-  const { paymentOptions } = usePaymentOptions();
+  const { paymentOptions } = usePaymentOptions({ enabled: open });
   const { userProfile } = usePlanLimits();
   const [step, setStep] = useState(1);
   const [selectedPlan, setSelectedPlan] = useState<string>('');

@@ -15,14 +15,14 @@ interface PaymentOption {
   updated_at: string;
 }
 
-export const usePaymentOptions = () => {
+export const usePaymentOptions = (options: { enabled?: boolean } = { enabled: false }) => {
   const { user } = useAuth();
   const [paymentOptions, setPaymentOptions] = useState<PaymentOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchPaymentOptions = async () => {
-    if (!user) return;
+    if (!user || !options.enabled) return;
 
     try {
       setLoading(true);
@@ -63,8 +63,10 @@ export const usePaymentOptions = () => {
   };
 
   useEffect(() => {
-    fetchPaymentOptions();
-  }, [user]);
+    if (options.enabled) {
+      fetchPaymentOptions();
+    }
+  }, [user, options.enabled]);
 
   return {
     paymentOptions,
