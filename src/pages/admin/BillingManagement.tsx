@@ -11,10 +11,12 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { CreditCard, DollarSign, Users, TrendingUp, RefreshCw, Download, AlertCircle, Plus, Check, X, Settings, Edit, Trash2 } from 'lucide-react';
+import { CreditCard, DollarSign, Users, TrendingUp, RefreshCw, Download, AlertCircle, Plus, Check, X, Settings, Edit, Trash2, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatCurrency } from '@/lib/currency';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { supabase } from '@/integrations/supabase/client';
 
 type PlanName = "free" | "pro_monthly" | "pro_yearly" | "reseller" | "starter" | "professional" | "enterprise";
@@ -44,6 +46,7 @@ export default function BillingManagement() {
     payment_reference: '',
     notes: ''
   });
+  const [userSearchOpen, setUserSearchOpen] = useState(false);
 
   useEffect(() => {
     if (isAdmin) {
@@ -483,18 +486,47 @@ export default function BillingManagement() {
                   <div className="space-y-4">
                     <div>
                       <Label htmlFor="user-select">User</Label>
-                      <Select value={subscriptionForm.user_id} onValueChange={(value) => setSubscriptionForm(prev => ({ ...prev, user_id: value }))}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a user" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {users.map((user) => (
-                            <SelectItem key={user.id} value={user.id}>
-                              {user.full_name} ({user.email})
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <Popover open={userSearchOpen} onOpenChange={setUserSearchOpen}>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            aria-expanded={userSearchOpen}
+                            className="w-full justify-between"
+                          >
+                            {subscriptionForm.user_id
+                              ? users.find((user) => user.id === subscriptionForm.user_id)?.full_name + 
+                                ` (${users.find((user) => user.id === subscriptionForm.user_id)?.email})`
+                              : "Select a user..."}
+                            <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-full p-0">
+                          <Command>
+                            <CommandInput placeholder="Search users by name or email..." />
+                            <CommandList>
+                              <CommandEmpty>No user found.</CommandEmpty>
+                              <CommandGroup>
+                                {users.map((user) => (
+                                  <CommandItem
+                                    key={user.id}
+                                    value={`${user.full_name} ${user.email}`}
+                                    onSelect={() => {
+                                      setSubscriptionForm(prev => ({ ...prev, user_id: user.id }));
+                                      setUserSearchOpen(false);
+                                    }}
+                                  >
+                                    <div className="flex flex-col">
+                                      <span className="font-medium">{user.full_name}</span>
+                                      <span className="text-sm text-muted-foreground">{user.email}</span>
+                                    </div>
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
                     </div>
                     
                     <div className="grid grid-cols-2 gap-4">
