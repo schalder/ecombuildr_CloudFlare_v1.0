@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
-import { ArrowLeft, Plus, Edit, ExternalLink, Settings, Eye } from 'lucide-react';
+import { ArrowLeft, Plus, Edit, ExternalLink, Settings, Eye, RefreshCw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { CreatePageModal } from '@/components/modals/CreatePageModal';
@@ -140,6 +140,36 @@ const WebsiteManagement = () => {
     },
   });
 
+  const regeneratePreviewMutation = useMutation({
+    mutationFn: async () => {
+      if (!website) throw new Error('No website found');
+      
+      const { error } = await supabase.functions.invoke('html-snapshot', {
+        body: {
+          contentType: 'website',
+          contentId: website.id,
+          customDomain: website.connected_domain
+        }
+      });
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({ 
+        title: 'Share preview updated', 
+        description: 'Your social media sharing preview has been refreshed.' 
+      });
+    },
+    onError: (error) => {
+      console.error('Failed to regenerate preview:', error);
+      toast({ 
+        title: 'Failed to update preview', 
+        description: 'Please try again later.',
+        variant: 'destructive'
+      });
+    }
+  });
+
   const handleToggleActive = (isActive: boolean) => {
     updateWebsiteMutation.mutate({ is_active: isActive });
   };
@@ -196,6 +226,16 @@ const WebsiteManagement = () => {
               </div>
             </div>
             <div className="flex items-center space-x-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="hidden sm:flex"
+                onClick={() => regeneratePreviewMutation.mutate()}
+                disabled={regeneratePreviewMutation.isPending}
+              >
+                <RefreshCw className={`h-4 w-4 mr-2 ${regeneratePreviewMutation.isPending ? 'animate-spin' : ''}`} />
+                Update Share Preview
+              </Button>
               <Button variant="outline" size="sm" className="hidden sm:flex">
                 <ExternalLink className="h-4 w-4 mr-2" />
                 Share

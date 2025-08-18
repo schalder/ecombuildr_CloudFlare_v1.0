@@ -89,8 +89,10 @@ serve(async (req) => {
         }
       }
     } else {
-      // Handle ecombuildr.com routes
-      if (path.startsWith('/w/')) {
+      // Handle root path for marketing site on ecombuildr.com
+      if (path === '/' || path === '' || path === '/index.html') {
+        htmlContent = generateMarketingHTML()
+      } else if (path.startsWith('/w/')) {
         // Website route
         const slug = path.split('/')[2]
         const { data: website } = await supabase
@@ -221,6 +223,48 @@ async function generateFunnelHTML(funnel: any): Promise<string> {
 </html>`
 }
 
+function generateMarketingHTML(): string {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EcomBuildr - Build Professional E-commerce Stores & Sales Funnels</title>
+    <meta name="description" content="Create stunning online stores and high-converting sales funnels with EcomBuildr. No coding required. Start selling online in minutes with our drag-and-drop builder." />
+    <meta name="keywords" content="ecommerce builder, online store, sales funnel, website builder, no-code, drag and drop, online selling" />
+    <meta name="robots" content="index, follow" />
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="EcomBuildr - Build Professional E-commerce Stores & Sales Funnels" />
+    <meta property="og:description" content="Create stunning online stores and high-converting sales funnels with EcomBuildr. No coding required. Start selling online in minutes with our drag-and-drop builder." />
+    <meta property="og:image" content="https://ecombuildr.com/og-image.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:url" content="https://ecombuildr.com" />
+    <meta property="og:site_name" content="EcomBuildr" />
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="EcomBuildr - Build Professional E-commerce Stores & Sales Funnels" />
+    <meta name="twitter:description" content="Create stunning online stores and high-converting sales funnels with EcomBuildr. No coding required. Start selling online in minutes with our drag-and-drop builder." />
+    <meta name="twitter:image" content="https://ecombuildr.com/og-image.jpg" />
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://ecombuildr.com" />
+</head>
+<body>
+    <div id="root">
+        <main>
+            <h1>EcomBuildr - Professional E-commerce Builder</h1>
+            <p>Build stunning online stores and high-converting sales funnels without coding. Start your business today!</p>
+        </main>
+    </div>
+    <script type="module" src="/src/main.tsx"></script>
+</body>
+</html>`
+}
+
 function generateFallbackHTML(): string {
   return `<!DOCTYPE html>
 <html lang="en">
@@ -230,6 +274,9 @@ function generateFallbackHTML(): string {
     <title>EcomBuildr - Create Beautiful Online Stores</title>
     <meta name="description" content="Build stunning e-commerce websites and sales funnels with EcomBuildr's powerful page builder." />
     <meta name="robots" content="index, follow" />
+    <meta property="og:title" content="EcomBuildr - Create Beautiful Online Stores" />
+    <meta property="og:description" content="Build stunning e-commerce websites and sales funnels with EcomBuildr's powerful page builder." />
+    <meta property="og:type" content="website" />
 </head>
 <body>
     <div id="root">
