@@ -61,10 +61,17 @@ export function buildCanonical(currentPath?: string, canonicalDomain?: string) {
 }
 
 export function setSEO(input: SEOConfig) {
+  console.log('🔍 setSEO called with:', { favicon: input.favicon, title: input.title });
+  
+  // Preserve existing favicon if none provided to prevent race conditions
+  const existingFavicon = document.head.querySelector('link[data-dynamic-favicon="true"]')?.getAttribute('href');
+  const preservedFavicon = input.favicon || (existingFavicon ? existingFavicon.split('?')[0] : undefined);
+  
   const cfg: SEOConfig = {
     ogType: 'website',
     locale: 'en_US',
     ...input,
+    favicon: preservedFavicon, // Use preserved favicon if none provided
   };
 
   // Title
@@ -135,8 +142,10 @@ export function setSEO(input: SEOConfig) {
     upsertMeta('meta[name="robots"]', { name: 'robots', content: cfg.robots });
   }
 
-  // Favicon with aggressive cache-busting and proper cleanup
+  // Favicon with race condition protection
   if (cfg.favicon) {
+    console.log('🔥 Setting favicon to:', cfg.favicon);
+    
     // Remove ALL existing favicon-related links to prevent conflicts
     const faviconSelectors = [
       'link[rel="icon"]',
@@ -163,6 +172,7 @@ export function setSEO(input: SEOConfig) {
     link.type = 'image/png'; // Be specific about type
     link.href = faviconUrl;
     link.setAttribute('data-dynamic-favicon', 'true'); // Mark as dynamic
+    link.setAttribute('data-original-url', cfg.favicon); // Store original URL
     document.head.appendChild(link);
 
     // Also add shortcut icon for legacy browsers
@@ -172,18 +182,6 @@ export function setSEO(input: SEOConfig) {
     shortcutLink.href = faviconUrl;
     shortcutLink.setAttribute('data-dynamic-favicon', 'true');
     document.head.appendChild(shortcutLink);
-
-    // Force browser to refresh favicon (works in some browsers)
-    setTimeout(() => {
-      const links = document.head.querySelectorAll('link[rel*="icon"][data-dynamic-favicon]');
-      links.forEach(link => {
-        const parent = link.parentNode;
-        if (parent) {
-          parent.removeChild(link);
-          parent.appendChild(link);
-        }
-      });
-    }, 100);
   }
 
   // JSON-LD Structured Data
