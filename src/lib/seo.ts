@@ -135,14 +135,22 @@ export function setSEO(input: SEOConfig) {
     upsertMeta('meta[name="robots"]', { name: 'robots', content: cfg.robots });
   }
 
-  // Favicon
+  // Favicon with cache-busting for better browser updates
   if (cfg.favicon) {
+    // Remove existing favicon links to prevent conflicts
+    removeIfExists('link[rel="icon"]');
+    removeIfExists('link[rel="shortcut icon"]');
+    removeIfExists('link[rel="apple-touch-icon"]');
+    
+    // Add cache-busting parameter to force browser refresh
+    const cacheBustingUrl = cfg.favicon + (cfg.favicon.includes('?') ? '&' : '?') + 't=' + Date.now();
+    
     // Standard icon
-    upsertLink('icon', cfg.favicon);
-    // Legacy/Windows support
-    upsertLink('shortcut icon', cfg.favicon);
+    upsertLink('icon', cacheBustingUrl);
+    // Legacy/Windows support  
+    upsertLink('shortcut icon', cacheBustingUrl);
     // iOS home screen (PNG recommended)
-    upsertLink('apple-touch-icon', cfg.favicon);
+    upsertLink('apple-touch-icon', cfg.favicon); // No cache-busting for Apple touch icon
   }
 
   // JSON-LD Structured Data
