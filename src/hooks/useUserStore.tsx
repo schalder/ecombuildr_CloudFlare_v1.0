@@ -27,8 +27,12 @@ export const useUserStore = () => {
   const [store, setStore] = useState<Store | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
+  const [lastFetchTime, setLastFetchTime] = useState(0);
   const { user } = useAuth();
   const navigate = useNavigate();
+  const MAX_RETRIES = 3;
+  const DEBOUNCE_TIME = 5000; // 5 seconds
 
   const fetchUserStore = async () => {
     if (!user) {
@@ -36,8 +40,23 @@ export const useUserStore = () => {
       return;
     }
 
+    // Prevent concurrent requests and debounce
+    const now = Date.now();
+    if (loading || (now - lastFetchTime < DEBOUNCE_TIME)) {
+      return;
+    }
+
+    // Stop retrying after max retries
+    if (retryCount >= MAX_RETRIES) {
+      setError('Maximum retries exceeded. Please refresh the page.');
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
+      setLastFetchTime(now);
+      setError(null);
       const { data, error } = await supabase
         .from('stores')
         .select('*')
@@ -46,15 +65,39 @@ export const useUserStore = () => {
 
       if (error) {
         console.error('Error fetching user store:', error);
-        setError(error.message);
-        return;
+        
+        // Don't set error state if it's a network issue and we can retry
+        if (error.message.includes('Failed to fetch') && retryCount < MAX_RETRIES) {
+          setRetryCount(prev => prev + 1);
+          // Retry after a delay
+          setTimeout(() => {
+            fetchUserStore();
+          }, 2000 * (retryCount + 1)); // Exponential backoff
+          return;
+        } else {
+          setError(error.message);
+          return;
+        }
       }
 
       setStore(data);
+      // Reset retry count on success
+      setRetryCount(0);
       // Store creation will now happen automatically when needed (creating websites/funnels)
     } catch (err) {
       console.error('Error in fetchUserStore:', err);
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      
+      // Don't set error state if it's a network issue and we can retry
+      if (errorMessage.includes('Failed to fetch') && retryCount < MAX_RETRIES) {
+        setRetryCount(prev => prev + 1);
+        // Retry after a delay
+        setTimeout(() => {
+          fetchUserStore();
+        }, 2000 * (retryCount + 1)); // Exponential backoff
+      } else {
+        setError(errorMessage);
+      }
     } finally {
       setLoading(false);
     }
@@ -192,6 +235,7 @@ export const useUserStore = () => {
         supabase.removeChannel(channel);
       };
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   return {

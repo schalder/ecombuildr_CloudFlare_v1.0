@@ -37,8 +37,13 @@ export const usePlanLimits = () => {
   const [planLimits, setPlanLimits] = useState<PlanLimits | null>(null);
   const [userUsage, setUserUsage] = useState<UserUsage | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
+  const [lastFetchTime, setLastFetchTime] = useState(0);
+  
+  const MAX_RETRIES = 3;
+  const DEBOUNCE_TIME = 5000; // 5 seconds
 
   const fetchPlanData = async () => {
     if (!user) {
@@ -46,8 +51,23 @@ export const usePlanLimits = () => {
       return;
     }
 
+    // Prevent concurrent requests and debounce
+    const now = Date.now();
+    if (loading || (now - lastFetchTime < DEBOUNCE_TIME)) {
+      return;
+    }
+
+    // Stop retrying after max retries
+    if (retryCount >= MAX_RETRIES) {
+      setError('Maximum retries exceeded. Please refresh the page.');
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
+      setLastFetchTime(now);
+      setError(null);
       
       // Get user profile with plan info
       const { data: profile, error: profileError } = await supabase
@@ -90,14 +110,32 @@ export const usePlanLimits = () => {
           .single();
         
         if (createError) throw createError;
-        setUserUsage(newUsage);
+        setUserUsage(newUsage || { 
+          current_stores: 0, 
+          current_websites: 0, 
+          current_funnels: 0, 
+          current_orders_this_month: 0 
+        });
       } else {
         setUserUsage(usage);
       }
 
+      // Reset retry count on success
+      setRetryCount(0);
     } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
       console.error('Error fetching plan data:', err);
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      
+      // Don't set error state if it's a network issue and we can retry
+      if (errorMessage.includes('Failed to fetch') && retryCount < MAX_RETRIES) {
+        setRetryCount(prev => prev + 1);
+        // Retry after a delay
+        setTimeout(() => {
+          fetchPlanData();
+        }, 2000 * (retryCount + 1)); // Exponential backoff
+      } else {
+        setError(errorMessage);
+      }
     } finally {
       setLoading(false);
     }
@@ -257,7 +295,10 @@ export const usePlanLimits = () => {
   };
 
   useEffect(() => {
-    fetchPlanData();
+    if (user) {
+      fetchPlanData();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   // Set up real-time subscription for usage updates
