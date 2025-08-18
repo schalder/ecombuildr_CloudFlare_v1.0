@@ -44,13 +44,19 @@ export function useHTMLGeneration() {
 
       // Save to html_snapshots table using a more reliable upsert approach
       // First try to update existing record
-      const { data: existingRecord } = await supabase
+      let query = supabase
         .from('html_snapshots')
         .select('id')
         .eq('content_id', contentId)
-        .eq('content_type', contentType)
-        .eq('custom_domain', customDomain || null)
-        .single();
+        .eq('content_type', contentType);
+
+      if (customDomain) {
+        query = query.eq('custom_domain', customDomain);
+      } else {
+        query = query.is('custom_domain', null);
+      }
+
+      const { data: existingRecord } = await query.maybeSingle();
 
       let result;
       if (existingRecord) {
