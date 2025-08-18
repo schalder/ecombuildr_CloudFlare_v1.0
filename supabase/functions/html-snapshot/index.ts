@@ -80,6 +80,40 @@ serve(async (req) => {
         .single()
 
       htmlContent = generateFunnelHTML(funnel, firstStep, customDomain)
+      
+    } else if (contentType === 'website_page') {
+      // Fetch specific website page
+      const { data: page } = await supabase
+        .from('website_pages')
+        .select(`
+          *,
+          websites(*)
+        `)
+        .eq('id', contentId)
+        .single()
+
+      if (!page) {
+        throw new Error('Website page not found')
+      }
+
+      htmlContent = generateWebsiteHTML(page.websites, page, customDomain)
+      
+    } else if (contentType === 'funnel_step') {
+      // Fetch specific funnel step
+      const { data: step } = await supabase
+        .from('funnel_steps')
+        .select(`
+          *,
+          funnels(*)
+        `)
+        .eq('id', contentId)
+        .single()
+
+      if (!step) {
+        throw new Error('Funnel step not found')
+      }
+
+      htmlContent = generateFunnelHTML(step.funnels, step, customDomain)
     }
 
     // Store the snapshot
