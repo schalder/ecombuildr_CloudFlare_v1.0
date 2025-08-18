@@ -18,10 +18,18 @@ serve(async (req) => {
   )
 
   const url = new URL(req.url)
-  const path = url.searchParams.get('path') || '/'
-  const domain = url.searchParams.get('domain') || req.headers.get('host') || req.headers.get('x-forwarded-host') || 'ecombuildr.com'
+  // Get path from URL pathname, removing query parameters
+  const path = url.pathname || '/'
+  // Get domain from headers (Netlify passes the original host in x-forwarded-host)
+  const domain = req.headers.get('x-forwarded-host') || req.headers.get('host') || 'ecombuildr.com'
   
-  console.log('SEO Prerender request:', { path, domain, fullUrl: req.url, userAgent: req.headers.get('user-agent') })
+  console.log('🔍 SEO Prerender request:', { 
+    path, 
+    domain, 
+    'x-forwarded-host': req.headers.get('x-forwarded-host'),
+    'host': req.headers.get('host'),
+    userAgent: req.headers.get('user-agent') 
+  })
 
   try {
     // First try to get HTML snapshot from database
@@ -466,7 +474,7 @@ function generateFallbackHTML(domain?: string, path?: string): Response {
       </p>
     </div>
     <p style="margin-top: 20px; font-size: 12px; color: #9ca3af;">
-      Domain: ${domain} | Path: ${path}
+      Domain: ${domain || 'unknown'} | Path: ${path || 'unknown'}
     </p>
   </div>
 </body>
