@@ -140,7 +140,8 @@ export function generateStaticHTML(
   </style>
   
   ${structuredData}
-  ${seoConfig.customMetaTags?.map(tag => `<meta name="${tag.name}" content="${tag.content}">`).join('\n') || ''}
+  ${seoConfig.customMetaTags && Array.isArray(seoConfig.customMetaTags) ? 
+    seoConfig.customMetaTags.map(tag => `<meta name="${tag.name}" content="${tag.content}">`).join('\n') : ''}
 </head>
 <body>
   ${contentHTML}
@@ -189,7 +190,8 @@ export function generateStaticHTML(
   </script>
   
   ${websiteSettings?.customScripts || funnelSettings?.customScripts || ''}
-  ${seoConfig.customMetaTags?.find(tag => tag.name === 'custom-scripts')?.content || ''}
+  ${seoConfig.customMetaTags && Array.isArray(seoConfig.customMetaTags) ? 
+    seoConfig.customMetaTags.find(tag => tag.name === 'custom-scripts')?.content || '' : ''}
 </body>
 </html>`;
 }
