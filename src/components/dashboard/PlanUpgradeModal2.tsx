@@ -80,7 +80,7 @@ export const PlanUpgradeModal2: React.FC<PlanUpgradeModal2Props> = ({ open, onOp
       // Combine pricing and limits data
       const combinedPlans = pricingPlans
         .filter(plan => plan.plan_name !== 'free') // Exclude free plan from upgrade options
-        .filter(plan => plan.plan_name !== userProfile?.subscription_plan) // Exclude current plan
+        // Show all plans including current plan for trial/grace period upgrades
         .map(plan => {
           const limits = planLimits.find(limit => limit.plan_name === plan.plan_name);
           return {
