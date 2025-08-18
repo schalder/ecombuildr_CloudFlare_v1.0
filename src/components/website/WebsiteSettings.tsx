@@ -35,12 +35,6 @@ const websiteSettingsSchema = z.object({
   google_analytics_id: z.string().optional(),
   google_ads_id: z.string().optional(),
   currency_code: z.enum(['BDT','USD','INR','EUR','GBP']).default('BDT'),
-  // SEO defaults
-  seo_title: z.string().optional(),
-  seo_description: z.string().optional(),
-  og_image: z.string().optional(),
-  meta_robots: z.string().optional(),
-  canonical_domain: z.string().optional(),
   // Product button styles
   product_button_bg: z.string().optional(),
   product_button_text: z.string().optional(),
@@ -99,11 +93,11 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
 
   // Accordion state management for mobile optimization
   const [openSections, setOpenSections] = React.useState<string[]>(
-    isMobile ? [] : ['basic', 'domain', 'buttons', 'currency', 'shipping', 'seo', 'tracking']
+    isMobile ? [] : ['basic', 'domain', 'buttons', 'currency', 'tracking']
   );
 
   const toggleAllSections = () => {
-    const allSections = ['basic', 'domain', 'buttons', 'currency', 'seo', 'tracking'];
+    const allSections = ['basic', 'domain', 'buttons', 'currency', 'tracking'];
     if (openSections.length === allSections.length) {
       setOpenSections([]);
     } else {
@@ -137,11 +131,6 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
       google_analytics_id: website.settings?.google_analytics_id || '',
       google_ads_id: website.settings?.google_ads_id || '',
       currency_code: website.settings?.currency?.code || 'BDT',
-      seo_title: (website as any).seo_title || '',
-      seo_description: (website as any).seo_description || '',
-      og_image: (website as any).og_image || '',
-      meta_robots: (website as any).meta_robots || 'index, follow',
-      canonical_domain: (website as any).canonical_domain || connectedDomain?.domain || '',
       product_button_bg: website.settings?.product_button_bg || '',
       product_button_text: website.settings?.product_button_text || '',
       product_button_hover_bg: website.settings?.product_button_hover_bg || '',
@@ -156,7 +145,6 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
   // Update form when connected domain changes
   React.useEffect(() => {
     form.setValue('domain', connectedDomain?.domain || '');
-    form.setValue('canonical_domain', connectedDomain?.domain || '');
   }, [connectedDomain, form]);
 
   const [pages, setPages] = React.useState<{ id: string; title: string; slug: string; is_published: boolean }[]>([]);
@@ -255,12 +243,6 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
         variant_button_hover_text: variant_button_hover_text || null,
       };
 
-      // Determine canonical domain for this website
-      let canonicalDomain = null;
-      if (domain && domain !== 'none') {
-        canonicalDomain = domain;
-      }
-
       // Update the website settings first
       const { error } = await supabase
         .from('websites')
@@ -270,7 +252,6 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
           google_analytics_id: google_analytics_id || null,
           google_ads_id: google_ads_id || null,
           settings,
-          canonical_domain: canonicalDomain,
           updated_at: new Date().toISOString(),
         })
         .eq('id', website.id);
@@ -340,7 +321,7 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
           onClick={toggleAllSections}
           className="flex items-center gap-2 self-start sm:self-auto"
         >
-          {openSections.length === 6 ? (
+          {openSections.length === 5 ? (
             <>
               <ChevronUp className="h-4 w-4" />
               Collapse All
@@ -805,109 +786,6 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
             </AccordionItem>
 
 
-            <AccordionItem value="seo" className="border rounded-lg">
-              <AccordionTrigger className="px-6 py-4 hover:no-underline">
-                <div className="flex flex-col items-start text-left">
-                  <h3 className="text-base font-semibold">SEO Defaults</h3>
-                  <p className="text-sm text-muted-foreground">Set default SEO metadata for this website. Individual pages can override these values.</p>
-                </div>
-              </AccordionTrigger>
-              <AccordionContent forceMount className="px-6 pb-6">
-                <div className={openSections.includes('seo') ? 'block space-y-4' : 'hidden'}>
-              <FormField
-                control={form.control}
-                name="seo_title"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Default SEO Title</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Awesome Store - Great Products" {...field} />
-                    </FormControl>
-                    <FormDescription>
-                      Recommended under 60 characters.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="seo_description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Default Meta Description</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Shop quality products with fast shipping and great support."
-                        className="resize-none"
-                        rows={3}
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Keep it under 160 characters.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="og_image"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Default OG Image URL</FormLabel>
-                      <FormControl>
-                        <Input placeholder="https://example.com/og-image.jpg" {...field} />
-                      </FormControl>
-                      <FormDescription>
-                        Used for social sharing previews.
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="meta_robots"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Robots</FormLabel>
-                      <FormControl>
-                        <Input placeholder="index, follow" {...field} />
-                      </FormControl>
-                      <FormDescription>
-                        e.g., "index, follow" or "noindex, nofollow".
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <FormField
-                control={form.control}
-                name="canonical_domain"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Canonical Domain</FormLabel>
-                    <FormControl>
-                      <Input placeholder="example.com" {...field} />
-                    </FormControl>
-                    <FormDescription>
-                      Used to build canonical URLs (protocol added automatically). Leave blank to use current host.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-            )}
-          />
-                </div>
-              </AccordionContent>
-            </AccordionItem>
 
             <AccordionItem value="tracking" className="border rounded-lg">
               <AccordionTrigger className="px-6 py-4 hover:no-underline">

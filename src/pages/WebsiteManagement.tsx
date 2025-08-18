@@ -80,7 +80,7 @@ const WebsiteManagement = () => {
         .maybeSingle();
 
       // Add connected domain info (ignore connection errors as domain might not be connected)
-      const connectedDomain = (connectionData?.custom_domains as any)?.domain || websiteData.canonical_domain || null;
+      const connectedDomain = (connectionData?.custom_domains as any)?.domain || null;
       
       return {
         ...websiteData,

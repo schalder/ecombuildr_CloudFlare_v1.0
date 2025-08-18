@@ -1,24 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useLocation, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { Loader2 } from 'lucide-react';
 import { PageBuilderRenderer } from '@/components/storefront/PageBuilderRenderer';
 import { FunnelHeader } from '@/components/storefront/FunnelHeader';
 import { FunnelFooter } from '@/components/storefront/FunnelFooter';
-import { setSEO, buildCanonical } from '@/lib/seo';
+import { setSEO } from '@/lib/seo';
 import { useStore } from '@/contexts/StoreContext';
-import { Loader2 } from 'lucide-react';
 
 interface FunnelData {
   id: string;
   name: string;
   slug: string;
   description?: string;
-  store_id: string;
-  settings: any;
-  seo_title?: string;
-  seo_description?: string;
-  og_image?: string;
-  meta_robots?: string;
-  canonical_domain?: string;
+  settings?: any;
+  // Add any other funnel properties you need
 }
 
 interface FunnelStepData {
@@ -29,18 +25,16 @@ interface FunnelStepData {
   seo_title?: string;
   seo_description?: string;
   og_image?: string;
-  custom_scripts?: string;
-  step_type: string;
-  step_order: number;
-  funnel_id: string;
-  is_published: boolean;
-  seo_keywords?: string[];
-  meta_author?: string;
-  canonical_url?: string;
-  custom_meta_tags?: any;
   social_image_url?: string;
-  language_code?: string;
+  seo_keywords?: string[];
+  canonical_url?: string;
   meta_robots?: string;
+  meta_author?: string;
+  language_code?: string;
+  custom_meta_tags?: any;
+  custom_scripts?: string;
+  is_published: boolean;
+  is_homepage?: boolean;
 }
 
 interface DomainFunnelRouterProps {
@@ -48,10 +42,18 @@ interface DomainFunnelRouterProps {
 }
 
 export const DomainFunnelRouter: React.FC<DomainFunnelRouterProps> = ({ funnel }) => {
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
   const [step, setStep] = useState<FunnelStepData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { store } = useStore();
+
+  const isPreview = searchParams.get('preview') === '1';
+
+  // Extract step slug from pathname
+  const pathSegments = location.pathname.split('/').filter(Boolean);
+  const stepSlug = pathSegments[pathSegments.length - 1]; // Last segment
 
   useEffect(() => {
     const fetchStep = async () => {
@@ -59,79 +61,61 @@ export const DomainFunnelRouter: React.FC<DomainFunnelRouterProps> = ({ funnel }
         setLoading(true);
         setError(null);
 
-        const currentPath = window.location.pathname;
-        let stepSlug = '';
+        let query = supabase
+          .from('funnel_steps')
+          .select('*')
+          .eq('funnel_id', funnel.id);
 
-        if (currentPath === '/') {
-          // Homepage - get the first published step (lowest step_order)
-          const { data: firstStep, error: firstStepError } = await supabase
-            .from('funnel_steps')
-            .select('*')
-            .eq('funnel_id', funnel.id)
-            .eq('is_published', true)
-            .order('step_order', { ascending: true })
-            .limit(1)
-            .maybeSingle();
-
-          if (firstStepError) {
-            console.error('Error fetching first step:', firstStepError);
-            setError('Failed to load homepage');
-            return;
-          }
-
-          if (!firstStep) {
-            setError('No published steps found');
-            return;
-          }
-
-          setStep(firstStep);
+        // If no specific step slug or it's empty/homepage, get the first published step
+        if (!stepSlug || stepSlug === '' || stepSlug === 'home') {
+          query = query.eq('is_published', true).order('created_at', { ascending: true }).limit(1);
         } else {
-          // Specific step - extract stepSlug from path
-          stepSlug = currentPath.startsWith('/') ? currentPath.slice(1) : currentPath;
-          
-          const { data: stepData, error: stepError } = await supabase
-            .from('funnel_steps')
-            .select('*')
-            .eq('funnel_id', funnel.id)
-            .eq('slug', stepSlug)
-            .eq('is_published', true)
-            .maybeSingle();
-
-          if (stepError) {
-            console.error('Error fetching step:', stepError);
-            setError('Failed to load step');
-            return;
+          // Get specific step by slug
+          query = query.eq('slug', stepSlug);
+          if (!isPreview) {
+            query = query.eq('is_published', true);
           }
-
-          if (!stepData) {
-            setError(`Step "${stepSlug}" not found`);
-            return;
-          }
-
-          setStep(stepData);
         }
+
+        const { data, error: fetchError } = await query.maybeSingle();
+
+        if (fetchError) {
+          console.error('Error fetching funnel step:', fetchError);
+          setError('Failed to load funnel step');
+          return;
+        }
+
+        if (!data) {
+          setError('Step not found');
+          return;
+        }
+
+        setStep(data as any);
       } catch (err) {
-        console.error('Error in DomainFunnelRouter:', err);
-        setError('Failed to load page');
+        console.error('Error in fetchStep:', err);
+        setError('Failed to load funnel step');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchStep();
-  }, [funnel.id]);
+    if (funnel?.id) {
+      fetchStep();
+    }
+  }, [funnel.id, stepSlug, isPreview]);
 
-  // Set up step-specific SEO metadata
+  // SEO and script management - using only step-level SEO data
   useEffect(() => {
     if (!step || !funnel) return;
 
-    const title = step.seo_title || (step.title && funnel.name ? `${step.title} - ${funnel.name}` : step.title);
-    const description = step.seo_description || funnel.seo_description || funnel.description;
-    const image = step.social_image_url || step.og_image || funnel.og_image;
-    const canonical = step.canonical_url || buildCanonical(undefined, funnel.canonical_domain);
+    // Use only step-level SEO - no funnel fallbacks
+    const title = step.seo_title || `${step.title} - ${funnel.name}`;
+    const description = step.seo_description;
+    const image = step.social_image_url || step.og_image;
+    const canonical = step.canonical_url;
     const keywords = step.seo_keywords || [];
     const author = step.meta_author;
-    const robots = step.meta_robots || funnel.meta_robots || 'index, follow';
+    const robots = step.meta_robots || 'index, follow';
     const languageCode = step.language_code || 'en';
     const customMetaTags = Object.entries((step.custom_meta_tags as Record<string, string>) || {}).map(([name, content]) => ({ name, content }));
 
@@ -177,24 +161,25 @@ export const DomainFunnelRouter: React.FC<DomainFunnelRouterProps> = ({ funnel }
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-destructive mb-2">Page Not Found</h1>
-          <p className="text-muted-foreground">{error || 'The requested page could not be found.'}</p>
+          <p className="text-muted-foreground">{error || 'The requested funnel step could not be found.'}</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="w-full min-h-screen">
+    <div className="w-full min-h-screen flex flex-col">
       <FunnelHeader funnel={funnel} />
-      {/* Render funnel step content */}
-      {step.content?.sections ? (
-        <PageBuilderRenderer data={step.content} />
-      ) : (
-        <div className="container mx-auto px-4 py-8">
-          <h1 className="text-3xl font-bold mb-6">{step.title}</h1>
-          <p className="text-muted-foreground">This step is still being set up.</p>
-        </div>
-      )}
+      <main className="flex-1">
+        {step.content?.sections ? (
+          <PageBuilderRenderer data={step.content} />
+        ) : (
+          <div className="container mx-auto px-4 py-8">
+            <h1 className="text-3xl font-bold mb-6">{step.title}</h1>
+            <p className="text-muted-foreground">This funnel step is still being set up.</p>
+          </div>
+        )}
+      </main>
       <FunnelFooter funnel={funnel} />
     </div>
   );

@@ -2119,7 +2119,6 @@ export type Database = {
       }
       websites: {
         Row: {
-          canonical_domain: string | null
           created_at: string
           description: string | null
           domain: string | null
@@ -2129,19 +2128,13 @@ export type Database = {
           id: string
           is_active: boolean
           is_published: boolean
-          meta_robots: string | null
           name: string
-          og_image: string | null
-          seo_description: string | null
-          seo_keywords: string[] | null
-          seo_title: string | null
           settings: Json
           slug: string
           store_id: string
           updated_at: string
         }
         Insert: {
-          canonical_domain?: string | null
           created_at?: string
           description?: string | null
           domain?: string | null
@@ -2151,19 +2144,13 @@ export type Database = {
           id?: string
           is_active?: boolean
           is_published?: boolean
-          meta_robots?: string | null
           name: string
-          og_image?: string | null
-          seo_description?: string | null
-          seo_keywords?: string[] | null
-          seo_title?: string | null
           settings?: Json
           slug: string
           store_id: string
           updated_at?: string
         }
         Update: {
-          canonical_domain?: string | null
           created_at?: string
           description?: string | null
           domain?: string | null
@@ -2173,12 +2160,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           is_published?: boolean
-          meta_robots?: string | null
           name?: string
-          og_image?: string | null
-          seo_description?: string | null
-          seo_keywords?: string[] | null
-          seo_title?: string | null
           settings?: Json
           slug?: string
           store_id?: string

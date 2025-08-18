@@ -17,6 +17,8 @@ interface WebsitePageData {
   custom_scripts?: string;
   is_homepage: boolean;
   website_id: string;
+  canonical_url?: string;
+  meta_robots?: string;
 }
 
 interface WebsiteData {
@@ -29,11 +31,6 @@ interface WebsiteData {
   is_active: boolean;
   store_id: string;
   settings?: any;
-  seo_title?: string;
-  seo_description?: string;
-  og_image?: string;
-  meta_robots?: string;
-  canonical_domain?: string;
 }
 
 export const WebsitePage: React.FC = () => {
@@ -174,37 +171,22 @@ export const WebsitePage: React.FC = () => {
     fetchWebsiteAndPage();
   }, [resolvedWebsiteId, pageSlug, loadStoreById, isPreview, resolvingSiteId]);
 
-  // Provisional website-level SEO (runs as soon as website loads)
-  useEffect(() => {
-    if (!website) return;
-    const canonical = buildCanonical(undefined, (website as any)?.canonical_domain || website.domain);
-    setSEO({
-      title: ((website as any)?.seo_title || website.name) || undefined,
-      description: ((website as any)?.seo_description || website.description) || undefined,
-      image: (website as any)?.og_image,
-      canonical,
-      robots: isPreview ? 'noindex, nofollow' : ((website as any)?.meta_robots || 'index, follow'),
-      siteName: website.name,
-      ogType: 'website',
-      favicon: (website as any)?.settings?.favicon_url,
-    });
-  }, [website, isPreview]);
-
-  // Set up SEO metadata
+  // Set up SEO metadata from page-level settings only
   useEffect(() => {
     if (!page || !website) return;
 
-    const title = page.seo_title || (page.title && website.name ? `${page.title} - ${website.name}` : (website as any)?.seo_title);
-    const description = page.seo_description || (website as any)?.seo_description || website.description || undefined;
-    const image = page.og_image || (website as any)?.og_image || undefined;
-    const canonical = buildCanonical(undefined, (website as any)?.canonical_domain || website.domain);
+    // Use only page-level SEO - no website fallbacks
+    const title = page.seo_title || `${page.title} - ${website.name}`;
+    const description = page.seo_description;
+    const image = page.og_image;
+    const canonical = page.canonical_url;
 
     setSEO({
       title: title || undefined,
       description,
       image,
       canonical,
-      robots: (website as any)?.meta_robots || 'index, follow',
+      robots: isPreview ? 'noindex, nofollow' : (page.meta_robots || 'index, follow'),
       siteName: website.name,
       ogType: 'website',
       favicon: (website as any)?.settings?.favicon_url,

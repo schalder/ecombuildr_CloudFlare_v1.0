@@ -64,7 +64,7 @@ export default function Websites() {
         const connection = connectionsData?.find(c => c.content_id === website.id);
         return {
           ...website,
-          connected_domain: (connection?.custom_domains as any)?.domain || website.canonical_domain || null
+          connected_domain: (connection?.custom_domains as any)?.domain || null
         };
       });
 
