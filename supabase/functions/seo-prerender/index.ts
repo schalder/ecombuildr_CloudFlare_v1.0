@@ -18,8 +18,10 @@ serve(async (req) => {
   )
 
   const url = new URL(req.url)
-  const path = url.searchParams.get('path') || url.pathname || '/'
-  const domain = url.searchParams.get('domain') || url.hostname || req.headers.get('host') || 'ecombuildr.com'
+  // Get path from query params (from Netlify rewrite) or fall back to URL parsing
+  const path = '/' + (url.searchParams.get('path') || '').replace(/^\/+/, '')
+  // Get domain from headers (more reliable for custom domains)
+  const domain = req.headers.get('x-forwarded-host') || req.headers.get('host') || url.hostname || 'ecombuildr.com'
   
   console.log('SEO Prerender request:', { path, domain, userAgent: req.headers.get('user-agent') })
 
@@ -33,7 +35,8 @@ serve(async (req) => {
           ...corsHeaders,
           'Content-Type': 'text/html; charset=UTF-8',
           'Cache-Control': 'public, max-age=300, s-maxage=3600',
-          'X-Served-From': 'static-snapshot'
+          'X-Served-From': 'static-snapshot',
+          'X-Domain-Path': `${domain}${path}`
         },
       })
     }
@@ -62,7 +65,8 @@ serve(async (req) => {
         ...corsHeaders,
         'Content-Type': 'text/html; charset=UTF-8',
         'Cache-Control': 'public, max-age=300, s-maxage=3600',
-        'X-Served-From': 'dynamic-head-injection'
+        'X-Served-From': 'dynamic-head-injection',
+        'X-Domain-Path': `${domain}${path}`
       },
     })
   } catch (error) {
@@ -112,14 +116,26 @@ async function getStaticHTMLSnapshot(supabase: any, domain: string, path: string
           .maybeSingle()
         
         if (page) {
-          // Look for static HTML snapshot for this specific page
-          const { data: snapshot } = await supabase
+          // Look for static HTML snapshot for this specific page (try domain-specific first)
+          let { data: snapshot } = await supabase
             .from('html_snapshots')
             .select('html_content')
             .eq('content_type', 'website_page')
             .eq('content_id', page.id)
             .eq('custom_domain', domain)
             .maybeSingle()
+          
+          // Fallback to null domain if no domain-specific snapshot found
+          if (!snapshot?.html_content) {
+            const { data: nullSnapshot } = await supabase
+              .from('html_snapshots')
+              .select('html_content')
+              .eq('content_type', 'website_page')
+              .eq('content_id', page.id)
+              .is('custom_domain', null)
+              .maybeSingle()
+            snapshot = nullSnapshot
+          }
           
           if (snapshot?.html_content) {
             return snapshot.html_content

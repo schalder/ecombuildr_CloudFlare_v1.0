@@ -10,4 +10,4 @@
 /robots.txt /robots.txt 200
 
 # SEO-enhanced HTML routes via Supabase function (higher priority than SPA fallback)
-/* https://fhqwacmokbtbspkxjixf.supabase.co/functions/v1/seo-prerender?domain=:host&path=:path 200
+/* https://fhqwacmokbtbspkxjixf.supabase.co/functions/v1/seo-prerender?path=/:splat 200
