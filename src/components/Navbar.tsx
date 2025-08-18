@@ -22,11 +22,13 @@ export const Navbar = () => {
           
           {/* Logo */}
           <div className="flex items-center gap-3">
-            <img 
-              src="https://res.cloudinary.com/funnelsninja/image/upload/v1755206321/ecombuildr-logo-big_vifrmg.png" 
-              alt="EcomBuildr Logo" 
-              className="h-10 w-auto"
-            />
+            <Link to="/">
+              <img 
+                src="https://res.cloudinary.com/funnelsninja/image/upload/v1755206321/ecombuildr-logo-big_vifrmg.png" 
+                alt="EcomBuildr Logo" 
+                className="h-10 w-auto hover:opacity-80 transition-opacity cursor-pointer"
+              />
+            </Link>
           </div>
 
           {/* Desktop Navigation */}
