@@ -110,7 +110,7 @@ export const DomainWebsiteProductDetailRoute: React.FC<DomainWebsiteProductDetai
       robots: isPreview ? 'noindex, nofollow' : (currentWebsite?.meta_robots || 'index, follow'),
       siteName: currentWebsite?.name,
       ogType: 'website',
-      favicon: currentWebsite?.settings?.favicon_url || '/favicon.ico',
+      favicon: currentWebsite?.settings?.favicon_url,
     });
   }, [websiteMeta, website, isPreview]);
 

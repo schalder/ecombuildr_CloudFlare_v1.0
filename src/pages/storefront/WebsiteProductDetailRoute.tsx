@@ -129,7 +129,7 @@ export const WebsiteProductDetailRoute: React.FC = () => {
       robots: isPreview ? 'noindex, nofollow' : (websiteMeta?.meta_robots || 'index, follow'),
       siteName: websiteMeta?.name,
       ogType: 'website',
-      favicon: websiteMeta?.settings?.favicon_url || '/favicon.ico',
+      favicon: websiteMeta?.settings?.favicon_url,
     });
   }, [websiteMeta, isPreview]);
 
@@ -150,7 +150,7 @@ export const WebsiteProductDetailRoute: React.FC = () => {
       robots: websiteMeta?.meta_robots || 'index, follow',
       siteName: websiteMeta?.name,
       ogType: 'product',
-      favicon: websiteMeta?.settings?.favicon_url || '/favicon.ico',
+      favicon: websiteMeta?.settings?.favicon_url,
     });
 
     if (page.custom_scripts) {
