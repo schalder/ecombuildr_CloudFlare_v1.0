@@ -23,6 +23,8 @@ import { useUserStore } from '@/hooks/useUserStore';
 import { setGlobalCurrency } from '@/lib/currency';
 import { useStore } from '@/contexts/StoreContext';
 import { WebsiteProvider } from '@/contexts/WebsiteContext';
+import { useHTMLGeneration } from '@/hooks/useHTMLGeneration';
+import { SEOConfig } from '@/lib/seo';
 
 export default function PageBuilder() {
   const navigate = useNavigate();
@@ -66,6 +68,8 @@ export default function PageBuilder() {
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(!!pageId);
   const [showSettings, setShowSettings] = useState(false);
+  
+  const { generateAndSaveHTML, isGenerating } = useHTMLGeneration();
 
   const loadPage = useCallback(async () => {
     if (!entityId || !currentStore) return;
@@ -212,19 +216,36 @@ export default function PageBuilder() {
 
       toast.success('Content updated successfully!');
 
-      // Generate HTML snapshot if page is published for better SEO
-      if (pageData.is_published && (context === 'website' || context === 'funnel')) {
+      // Generate static HTML if page is published for better SEO
+      if (pageData.is_published && (context === 'website' || context === 'funnel') && parentId) {
         try {
-          console.log(`Triggering HTML snapshot for ${context}: ${parentId}`);
-          await supabase.functions.invoke('html-snapshot', {
-            body: {
-              contentType: context,
-              contentId: parentId
-            }
+          console.log(`Generating static HTML for ${context}: ${parentId}`);
+          
+          // Prepare SEO config from page data
+          const seoConfig: SEOConfig = {
+            title: pageData.seo_title || pageData.title,
+            description: pageData.seo_description,
+            keywords: pageData.seo_keywords,
+            author: pageData.meta_author,
+            canonical: pageData.canonical_url,
+            robots: pageData.meta_robots,
+            socialImageUrl: pageData.social_image_url,
+            languageCode: pageData.language_code,
+            customMetaTags: pageData.custom_meta_tags,
+            ogType: context === 'website' ? 'website' : 'article'
+          };
+
+          // Generate HTML for the parent entity (website or funnel)
+          await generateAndSaveHTML({
+            pageData: builderData,
+            contentType: context as 'website' | 'funnel',
+            contentId: parentId,
+            seoConfig
           });
-          console.log('HTML snapshot generated successfully');
-        } catch (snapshotError) {
-          console.warn('Failed to generate HTML snapshot:', snapshotError);
+          
+          console.log('✅ Static HTML generated successfully');
+        } catch (htmlError) {
+          console.warn('Failed to generate static HTML:', htmlError);
           // Don't show error to user - this is background optimization
         }
       }
