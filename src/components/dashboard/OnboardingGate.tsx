@@ -30,7 +30,7 @@ export function OnboardingGate() {
 
   // If user has no store or no websites, redirect to create website page
   if (!store || (!websitesLoading && websites.length === 0)) {
-    return <Navigate to="/dashboard/websites/create" replace />;
+    return <Navigate to="../websites/create" replace />;
   }
 
   // User is authenticated and has store + websites, proceed normally
