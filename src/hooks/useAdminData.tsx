@@ -345,6 +345,108 @@ export const useAdminData = () => {
     }
   };
 
+  // Create subscription manually
+  const createSubscription = async (subscriptionData: {
+    user_id: string;
+    plan_name: string;
+    plan_price_bdt: number;
+    payment_method: string;
+    payment_reference?: string;
+    notes?: string;
+  }) => {
+    if (!isAdmin) return false;
+
+    try {
+      const { error } = await supabase
+        .from('saas_subscriptions')
+        .insert({
+          ...subscriptionData,
+          subscription_status: 'active',
+          starts_at: new Date().toISOString(),
+          expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days from now
+        });
+
+      if (error) throw error;
+
+      // Update user profile
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({
+          subscription_plan: subscriptionData.plan_name as any,
+          account_status: 'active',
+          trial_expires_at: null,
+          trial_started_at: null,
+        })
+        .eq('id', subscriptionData.user_id);
+
+      if (profileError) throw profileError;
+
+      fetchSaasSubscribers();
+      return true;
+    } catch (err) {
+      console.error('Error creating subscription:', err);
+      return false;
+    }
+  };
+
+  // Update subscription
+  const updateSubscription = async (subscriptionId: string, updates: {
+    plan_name?: string;
+    plan_price_bdt?: number;
+    payment_method?: string;
+    payment_reference?: string;
+    subscription_status?: string;
+    notes?: string;
+  }) => {
+    if (!isAdmin) return false;
+
+    try {
+      const { error } = await supabase
+        .from('saas_subscriptions')
+        .update(updates)
+        .eq('id', subscriptionId);
+
+      if (error) throw error;
+
+      fetchSaasSubscribers();
+      return true;
+    } catch (err) {
+      console.error('Error updating subscription:', err);
+      return false;
+    }
+  };
+
+  // Delete subscription
+  const deleteSubscription = async (subscriptionId: string, userId: string) => {
+    if (!isAdmin) return false;
+
+    try {
+      const { error } = await supabase
+        .from('saas_subscriptions')
+        .delete()
+        .eq('id', subscriptionId);
+
+      if (error) throw error;
+
+      // Update user profile to trial or read-only
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({
+          account_status: 'read_only',
+          subscription_plan: 'starter',
+        })
+        .eq('id', userId);
+
+      if (profileError) throw profileError;
+
+      fetchSaasSubscribers();
+      return true;
+    } catch (err) {
+      console.error('Error deleting subscription:', err);
+      return false;
+    }
+  };
+
   useEffect(() => {
     checkAdminStatus();
   }, [user]);
@@ -402,6 +504,9 @@ export const useAdminData = () => {
     updateUserStatus,
     extendTrial,
     loginAsUser,
+    createSubscription,
+    updateSubscription,
+    deleteSubscription,
     refetch: () => {
       fetchUsers();
       fetchPlatformStats();

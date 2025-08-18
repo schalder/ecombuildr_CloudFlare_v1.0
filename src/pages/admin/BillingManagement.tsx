@@ -11,7 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { CreditCard, DollarSign, Users, TrendingUp, RefreshCw, Download, AlertCircle, Plus, Check, X, Settings } from 'lucide-react';
+import { CreditCard, DollarSign, Users, TrendingUp, RefreshCw, Download, AlertCircle, Plus, Check, X, Settings, Edit, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatCurrency } from '@/lib/currency';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -25,7 +25,7 @@ const isValidPlanName = (plan: string): plan is PlanName => {
 };
 
 export default function BillingManagement() {
-  const { isAdmin, loading: adminLoading, platformStats, saasSubscribers, fetchSaasSubscribers } = useAdminData();
+  const { isAdmin, loading: adminLoading, platformStats, saasSubscribers, users, fetchUsers, fetchSaasSubscribers, createSubscription, updateSubscription, deleteSubscription } = useAdminData();
   const { paymentOptions, updatePaymentOption, refetch: refetchPaymentOptions } = usePaymentOptions({ enabled: true });
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -33,10 +33,22 @@ export default function BillingManagement() {
   const [tierFilter, setTierFilter] = useState<string>('all');
   const [showPaymentConfig, setShowPaymentConfig] = useState(false);
   const [paymentConfigData, setPaymentConfigData] = useState<Record<string, any>>({});
+  const [showAddSubscription, setShowAddSubscription] = useState(false);
+  const [showEditSubscription, setShowEditSubscription] = useState(false);
+  const [selectedSubscription, setSelectedSubscription] = useState<any>(null);
+  const [subscriptionForm, setSubscriptionForm] = useState({
+    user_id: '',
+    plan_name: '',
+    plan_price_bdt: '',
+    payment_method: '',
+    payment_reference: '',
+    notes: ''
+  });
 
   useEffect(() => {
     if (isAdmin) {
       fetchSaasSubscribers();
+      fetchUsers();
     }
   }, [isAdmin, statusFilter, tierFilter]);
 
@@ -158,6 +170,99 @@ export default function BillingManagement() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleCreateSubscription = async () => {
+    try {
+      setLoading(true);
+      const success = await createSubscription({
+        user_id: subscriptionForm.user_id,
+        plan_name: subscriptionForm.plan_name,
+        plan_price_bdt: parseFloat(subscriptionForm.plan_price_bdt),
+        payment_method: subscriptionForm.payment_method,
+        payment_reference: subscriptionForm.payment_reference,
+        notes: subscriptionForm.notes
+      });
+
+      if (success) {
+        toast.success('Subscription created successfully!');
+        setShowAddSubscription(false);
+        setSubscriptionForm({
+          user_id: '',
+          plan_name: '',
+          plan_price_bdt: '',
+          payment_method: '',
+          payment_reference: '',
+          notes: ''
+        });
+      } else {
+        toast.error('Failed to create subscription');
+      }
+    } catch (error) {
+      toast.error('Failed to create subscription');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpdateSubscription = async () => {
+    try {
+      setLoading(true);
+      const success = await updateSubscription(selectedSubscription.id, {
+        plan_name: subscriptionForm.plan_name,
+        plan_price_bdt: parseFloat(subscriptionForm.plan_price_bdt),
+        payment_method: subscriptionForm.payment_method,
+        payment_reference: subscriptionForm.payment_reference,
+        subscription_status: selectedSubscription.subscription_status,
+        notes: subscriptionForm.notes
+      });
+
+      if (success) {
+        toast.success('Subscription updated successfully!');
+        setShowEditSubscription(false);
+        setSelectedSubscription(null);
+      } else {
+        toast.error('Failed to update subscription');
+      }
+    } catch (error) {
+      toast.error('Failed to update subscription');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteSubscription = async (subscriptionId: string, userId: string) => {
+    if (!confirm('Are you sure you want to delete this subscription? This will revert the user to read-only status.')) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const success = await deleteSubscription(subscriptionId, userId);
+
+      if (success) {
+        toast.success('Subscription deleted successfully!');
+      } else {
+        toast.error('Failed to delete subscription');
+      }
+    } catch (error) {
+      toast.error('Failed to delete subscription');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const openEditDialog = (subscription: any) => {
+    setSelectedSubscription(subscription);
+    setSubscriptionForm({
+      user_id: subscription.user_id,
+      plan_name: subscription.plan_name,
+      plan_price_bdt: subscription.plan_price_bdt.toString(),
+      payment_method: subscription.payment_method,
+      payment_reference: subscription.payment_reference || '',
+      notes: subscription.notes || ''
+    });
+    setShowEditSubscription(true);
   };
 
   if (adminLoading || isAdmin === null) {
@@ -361,16 +466,200 @@ export default function BillingManagement() {
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               SaaS Subscription Management
-              <Button size="sm" className="bg-primary text-primary-foreground">
-                <Plus className="mr-2 h-4 w-4" />
-                Add Subscription
-              </Button>
+              <Dialog open={showAddSubscription} onOpenChange={setShowAddSubscription}>
+                <DialogTrigger asChild>
+                  <Button size="sm" className="bg-primary text-primary-foreground">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add Subscription
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-lg">
+                  <DialogHeader>
+                    <DialogTitle>Create New Subscription</DialogTitle>
+                    <DialogDescription>
+                      Manually create a subscription for a user
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="user-select">User</Label>
+                      <Select value={subscriptionForm.user_id} onValueChange={(value) => setSubscriptionForm(prev => ({ ...prev, user_id: value }))}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a user" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {users.map((user) => (
+                            <SelectItem key={user.id} value={user.id}>
+                              {user.full_name} ({user.email})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="plan-select">Plan</Label>
+                        <Select value={subscriptionForm.plan_name} onValueChange={(value) => setSubscriptionForm(prev => ({ ...prev, plan_name: value }))}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select plan" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="starter">Starter</SelectItem>
+                            <SelectItem value="professional">Professional</SelectItem>
+                            <SelectItem value="enterprise">Enterprise</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label htmlFor="price">Price (BDT)</Label>
+                        <Input
+                          id="price"
+                          type="number"
+                          value={subscriptionForm.plan_price_bdt}
+                          onChange={(e) => setSubscriptionForm(prev => ({ ...prev, plan_price_bdt: e.target.value }))}
+                          placeholder="500"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="payment-method">Payment Method</Label>
+                        <Select value={subscriptionForm.payment_method} onValueChange={(value) => setSubscriptionForm(prev => ({ ...prev, payment_method: value }))}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select method" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="bkash">bKash</SelectItem>
+                            <SelectItem value="nagad">Nagad</SelectItem>
+                            <SelectItem value="sslcommerz">SSL Commerz</SelectItem>
+                            <SelectItem value="manual">Manual Transfer</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label htmlFor="transaction-id">Transaction ID</Label>
+                        <Input
+                          id="transaction-id"
+                          value={subscriptionForm.payment_reference}
+                          onChange={(e) => setSubscriptionForm(prev => ({ ...prev, payment_reference: e.target.value }))}
+                          placeholder="Enter transaction ID"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="notes">Notes (Optional)</Label>
+                      <Input
+                        id="notes"
+                        value={subscriptionForm.notes}
+                        onChange={(e) => setSubscriptionForm(prev => ({ ...prev, notes: e.target.value }))}
+                        placeholder="Additional notes"
+                      />
+                    </div>
+
+                    <div className="flex justify-end gap-2 pt-4">
+                      <Button variant="outline" onClick={() => setShowAddSubscription(false)}>
+                        Cancel
+                      </Button>
+                      <Button onClick={handleCreateSubscription} disabled={loading || !subscriptionForm.user_id || !subscriptionForm.plan_name || !subscriptionForm.plan_price_bdt}>
+                        {loading ? 'Creating...' : 'Create Subscription'}
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </CardTitle>
             <CardDescription>
               Manage user subscriptions manually. Accept payments via bKash, Nagad, SSL Commerz, or manual transfer.
             </CardDescription>
           </CardHeader>
         </Card>
+
+        {/* Edit Subscription Dialog */}
+        <Dialog open={showEditSubscription} onOpenChange={setShowEditSubscription}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Edit Subscription</DialogTitle>
+              <DialogDescription>
+                Update subscription details for {selectedSubscription?.user_name}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="edit-plan-select">Plan</Label>
+                  <Select value={subscriptionForm.plan_name} onValueChange={(value) => setSubscriptionForm(prev => ({ ...prev, plan_name: value }))}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select plan" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="starter">Starter</SelectItem>
+                      <SelectItem value="professional">Professional</SelectItem>
+                      <SelectItem value="enterprise">Enterprise</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="edit-price">Price (BDT)</Label>
+                  <Input
+                    id="edit-price"
+                    type="number"
+                    value={subscriptionForm.plan_price_bdt}
+                    onChange={(e) => setSubscriptionForm(prev => ({ ...prev, plan_price_bdt: e.target.value }))}
+                    placeholder="500"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="edit-payment-method">Payment Method</Label>
+                  <Select value={subscriptionForm.payment_method} onValueChange={(value) => setSubscriptionForm(prev => ({ ...prev, payment_method: value }))}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select method" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="bkash">bKash</SelectItem>
+                      <SelectItem value="nagad">Nagad</SelectItem>
+                      <SelectItem value="sslcommerz">SSL Commerz</SelectItem>
+                      <SelectItem value="manual">Manual Transfer</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="edit-transaction-id">Transaction ID</Label>
+                  <Input
+                    id="edit-transaction-id"
+                    value={subscriptionForm.payment_reference}
+                    onChange={(e) => setSubscriptionForm(prev => ({ ...prev, payment_reference: e.target.value }))}
+                    placeholder="Enter transaction ID"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="edit-notes">Notes (Optional)</Label>
+                <Input
+                  id="edit-notes"
+                  value={subscriptionForm.notes}
+                  onChange={(e) => setSubscriptionForm(prev => ({ ...prev, notes: e.target.value }))}
+                  placeholder="Additional notes"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-4">
+                <Button variant="outline" onClick={() => setShowEditSubscription(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={handleUpdateSubscription} disabled={loading}>
+                  {loading ? 'Updating...' : 'Update Subscription'}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {/* Filters and Actions */}
         <Card>
@@ -519,7 +808,23 @@ export default function BillingManagement() {
                                 </>
                               )}
                               {subscriber.subscription_status !== 'pending' && (
-                                <Button variant="outline" size="sm">Edit</Button>
+                                <div className="flex gap-1">
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm"
+                                    onClick={() => openEditDialog(subscriber)}
+                                  >
+                                    <Edit className="h-4 w-4" />
+                                  </Button>
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm"
+                                    className="text-red-600 hover:text-red-700"
+                                    onClick={() => handleDeleteSubscription(subscriber.id, subscriber.user_id)}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
                               )}
                             </div>
                           </td>
