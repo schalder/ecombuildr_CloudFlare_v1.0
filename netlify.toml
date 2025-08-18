@@ -2,9 +2,7 @@
   command = "npm run build"
   publish = "dist"
 
-[[plugins]]
-  package = "@netlify/plugin-prerendering"
-  
+# Enable post-processing for prerendering
 [context.production]
   [context.production.processing]
     skip_processing = false
@@ -14,7 +12,6 @@
   from = "/*"
   to = "/index.html"
   status = 200
-  conditions = {Role = ["admin"]}
 
 # Cache static assets
 [[headers]]
