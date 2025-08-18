@@ -3,9 +3,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useUserStore } from "@/hooks/useUserStore";
 import { PlanStatusBanner } from "@/components/dashboard/PlanStatusBanner";
 
-import { PlanUpgradeModal } from "@/components/dashboard/PlanUpgradeModal";
 import { PlanUpgradeModal2 } from "@/components/dashboard/PlanUpgradeModal2";
-import { usePlanLimits } from "@/hooks/usePlanLimits";
 import { supabase } from "@/integrations/supabase/client";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { StatsCards } from "@/components/dashboard/StatsCards";
@@ -58,7 +56,6 @@ interface Funnel {
 export default function DashboardOverview() {
   const { user } = useAuth();
   const { store, loading: storeLoading } = useUserStore();
-  const { userProfile } = usePlanLimits();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
   const [websites, setWebsites] = useState<Website[]>([]);
@@ -418,11 +415,13 @@ export default function DashboardOverview() {
 
       </div>
       
-      {/* Use unified upgrade modal */}
-      <PlanUpgradeModal2 
-        open={showUpgradeModal} 
-        onOpenChange={setShowUpgradeModal}
-      />
+      {/* Use unified upgrade modal - only mount when needed */}
+      {showUpgradeModal && (
+        <PlanUpgradeModal2 
+          open={true} 
+          onOpenChange={setShowUpgradeModal}
+        />
+      )}
     </DashboardLayout>
   );
 }

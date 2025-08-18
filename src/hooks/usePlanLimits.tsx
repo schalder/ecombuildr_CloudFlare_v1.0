@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 
@@ -34,41 +34,17 @@ export interface UserProfile {
 
 export const usePlanLimits = () => {
   const { user } = useAuth();
-  const [planLimits, setPlanLimits] = useState<PlanLimits | null>(null);
-  const [userUsage, setUserUsage] = useState<UserUsage | null>(null);
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [retryCount, setRetryCount] = useState(0);
-  const [lastFetchTime, setLastFetchTime] = useState(0);
-  
-  const MAX_RETRIES = 3;
-  const DEBOUNCE_TIME = 5000; // 5 seconds
 
-  const fetchPlanData = async () => {
-    if (!user) {
-      setLoading(false);
-      return;
-    }
+  const {
+    data: planData,
+    isLoading: loading,
+    error: queryError,
+    refetch
+  } = useQuery({
+    queryKey: ['planData', user?.id],
+    queryFn: async () => {
+      if (!user) throw new Error('No user found');
 
-    // Prevent concurrent requests and debounce
-    const now = Date.now();
-    if (loading || (now - lastFetchTime < DEBOUNCE_TIME)) {
-      return;
-    }
-
-    // Stop retrying after max retries
-    if (retryCount >= MAX_RETRIES) {
-      setError('Maximum retries exceeded. Please refresh the page.');
-      setLoading(false);
-      return;
-    }
-
-    try {
-      setLoading(true);
-      setLastFetchTime(now);
-      setError(null);
-      
       // Get user profile with plan info
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
@@ -76,37 +52,35 @@ export const usePlanLimits = () => {
         .eq('id', user.id)
         .maybeSingle();
 
-      if (profileError) {
+      let userProfile: UserProfile;
+      if (profileError && profileError.code === 'PGRST116') {
         // If profile doesn't exist, create a default one
-        if (profileError.code === 'PGRST116') {
-          const { data: newProfile, error: createError } = await supabase
-            .from('profiles')
-            .insert({
-              id: user.id,
-              email: user.email,
-              full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
-              subscription_plan: 'starter',
-              account_status: 'trial',
-              trial_started_at: new Date().toISOString(),
-              trial_expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() // 7 days from now
-            })
-            .select('subscription_plan, account_status, trial_started_at, trial_expires_at, subscription_expires_at')
-            .single();
-          
-          if (createError) throw createError;
-          setUserProfile(newProfile);
-        } else {
-          throw profileError;
-        }
+        const { data: newProfile, error: createError } = await supabase
+          .from('profiles')
+          .insert({
+            id: user.id,
+            email: user.email,
+            full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
+            subscription_plan: 'starter',
+            account_status: 'trial',
+            trial_started_at: new Date().toISOString(),
+            trial_expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() // 7 days from now
+          })
+          .select('subscription_plan, account_status, trial_started_at, trial_expires_at, subscription_expires_at')
+          .single();
+        
+        if (createError) throw createError;
+        userProfile = newProfile;
+      } else if (profileError) {
+        throw profileError;
       } else if (!profile) {
         throw new Error('User profile not found');
       } else {
-        setUserProfile(profile);
+        userProfile = profile;
       }
 
       // Get plan limits for user's current plan  
-      const currentProfile = userProfile || profile;
-      const planName = currentProfile?.subscription_plan || 'starter';
+      const planName = userProfile?.subscription_plan || 'starter';
       const validPlanName = ['starter', 'professional', 'enterprise', 'free', 'pro_monthly', 'pro_yearly', 'reseller'].includes(planName) 
         ? planName as any 
         : 'starter' as any;
@@ -118,26 +92,21 @@ export const usePlanLimits = () => {
         .maybeSingle();
 
       if (limitsError) throw limitsError;
-      if (!limits) {
-        // Create default limits if not found
-        console.warn(`Plan limits not found for plan: ${validPlanName}, using defaults`);
-        setPlanLimits({
-          plan_name: validPlanName,
-          price_bdt: 500,
-          trial_days: 7,
-          max_stores: 1,
-          max_websites: 1,
-          max_funnels: 1,
-          max_pages_per_store: 20,
-          max_products_per_store: 50,
-          max_orders_per_month: 100,
-          custom_domain_allowed: true,
-          priority_support: true,
-          white_label: false,
-        });
-      } else {
-        setPlanLimits(limits);
-      }
+      
+      const planLimits: PlanLimits = limits || {
+        plan_name: validPlanName,
+        price_bdt: 500,
+        trial_days: 7,
+        max_stores: 1,
+        max_websites: 1,
+        max_funnels: 1,
+        max_pages_per_store: 20,
+        max_products_per_store: 50,
+        max_orders_per_month: 100,
+        custom_domain_allowed: true,
+        priority_support: true,
+        white_label: false,
+      };
 
       // Get user's current usage
       const { data: usage, error: usageError } = await supabase
@@ -147,6 +116,8 @@ export const usePlanLimits = () => {
         .maybeSingle();
 
       if (usageError) throw usageError;
+      
+      let userUsage: UserUsage;
       if (!usage) {
         // Initialize usage record if it doesn't exist
         const { data: newUsage, error: createError } = await supabase
@@ -156,36 +127,30 @@ export const usePlanLimits = () => {
           .single();
         
         if (createError) throw createError;
-        setUserUsage(newUsage || { 
+        userUsage = newUsage || { 
           current_stores: 0, 
           current_websites: 0, 
           current_funnels: 0, 
           current_orders_this_month: 0 
-        });
+        };
       } else {
-        setUserUsage(usage);
+        userUsage = usage;
       }
 
-      // Reset retry count on success
-      setRetryCount(0);
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-      console.error('Error fetching plan data:', err);
-      
-      // Don't set error state if it's a network issue and we can retry
-      if (errorMessage.includes('Failed to fetch') && retryCount < MAX_RETRIES) {
-        setRetryCount(prev => prev + 1);
-        // Retry after a delay
-        setTimeout(() => {
-          fetchPlanData();
-        }, 2000 * (retryCount + 1)); // Exponential backoff
-      } else {
-        setError(errorMessage);
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
+      return { planLimits, userUsage, userProfile };
+    },
+    enabled: !!user,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: 1,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: true,
+  });
+
+  // Extract data from the query result
+  const planLimits = planData?.planLimits || null;
+  const userUsage = planData?.userUsage || null;
+  const userProfile = planData?.userProfile || null;
+  const error = queryError ? (queryError instanceof Error ? queryError.message : 'Unknown error') : null;
 
   const canCreateResource = async (resourceType: 'store' | 'website' | 'funnel'): Promise<boolean> => {
     if (!user) return false;
@@ -340,12 +305,6 @@ export const usePlanLimits = () => {
     return usage >= limit;
   };
 
-  useEffect(() => {
-    if (user) {
-      fetchPlanData();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
 
   // Disable realtime subscription temporarily to fix WebSocket issues
   // useEffect(() => {
@@ -406,6 +365,6 @@ export const usePlanLimits = () => {
     isAccountReadOnly,
     getUsagePercentage,
     isAtLimit,
-    refetch: fetchPlanData,
+    refetch,
   };
 };

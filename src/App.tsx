@@ -67,7 +67,15 @@ import { WebsiteLayout } from "@/components/storefront/WebsiteLayout";
 import { WebsiteOverrideRoute } from "./pages/storefront/WebsiteOverrideRoute";
 import { WebsiteProductDetailRoute } from "./pages/storefront/WebsiteProductDetailRoute";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 60_000, // 1 minute
+      retry: 1,
+      refetchOnWindowFocus: false,
+    }
+  }
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
