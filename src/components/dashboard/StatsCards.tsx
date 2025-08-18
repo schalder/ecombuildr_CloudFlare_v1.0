@@ -106,7 +106,6 @@ export function StatsCards({ stats, loading = false, dateFilter = 'allTime' }: S
         value={`৳${data.totalRevenue.toLocaleString()}`}
         description={filterDescription}
         icon={DollarSign}
-        trend={{ value: 12.5, isPositive: true }}
         loading={loading}
       />
       <StatCard
@@ -114,7 +113,6 @@ export function StatsCards({ stats, loading = false, dateFilter = 'allTime' }: S
         value={data.totalOrders.toLocaleString()}
         description={filterDescription}
         icon={ShoppingCart}
-        trend={{ value: 8.2, isPositive: true }}
         loading={loading}
       />
       <StatCard
@@ -122,7 +120,6 @@ export function StatsCards({ stats, loading = false, dateFilter = 'allTime' }: S
         value={data.totalCustomers.toLocaleString()}
         description={filterDescription}
         icon={Users}
-        trend={{ value: 3.1, isPositive: true }}
         loading={loading}
       />
       <StatCard
@@ -130,7 +127,6 @@ export function StatsCards({ stats, loading = false, dateFilter = 'allTime' }: S
         value={data.totalProducts.toLocaleString()}
         description="In catalog"
         icon={Package}
-        trend={{ value: 5.4, isPositive: false }}
         loading={loading}
       />
     </div>
