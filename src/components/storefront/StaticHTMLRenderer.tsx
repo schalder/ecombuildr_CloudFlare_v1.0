@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { PageBuilderRenderer } from './PageBuilderRenderer';
 
 interface StaticHTMLRendererProps {
-  contentType: 'website' | 'funnel';
+  contentType: 'website' | 'funnel' | 'website_page' | 'funnel_step';
   contentId: string;
   customDomain?: string;
   fallbackComponent?: React.ReactNode;

@@ -7,7 +7,7 @@ import { useToast } from '@/components/ui/use-toast';
 
 export interface GenerateHTMLParams {
   pageData: PageBuilderData;
-  contentType: 'website' | 'funnel';
+  contentType: 'website' | 'funnel' | 'website_page' | 'funnel_step';
   contentId: string;
   customDomain?: string;
   seoConfig?: SEOConfig;
@@ -42,13 +42,16 @@ export function useHTMLGeneration() {
 
       const htmlContent = generateStaticHTML(pageData, options);
 
+      // For backward compatibility, convert website to website_page for individual pages
+      const finalContentType = contentType === 'website' ? 'website_page' : contentType;
+
       // Save to html_snapshots table using a more reliable upsert approach
       // First try to update existing record
       let query = supabase
         .from('html_snapshots')
         .select('id')
         .eq('content_id', contentId)
-        .eq('content_type', contentType);
+        .eq('content_type', finalContentType);
 
       if (customDomain) {
         query = query.eq('custom_domain', customDomain);
@@ -75,7 +78,7 @@ export function useHTMLGeneration() {
           .from('html_snapshots')
           .insert({
             content_id: contentId,
-            content_type: contentType,
+            content_type: finalContentType,
             custom_domain: customDomain || null,
             html_content: htmlContent,
             generated_at: new Date().toISOString(),
@@ -109,7 +112,7 @@ export function useHTMLGeneration() {
     }
   };
 
-  const deleteHTMLSnapshot = async (contentId: string, contentType: 'website' | 'funnel', customDomain?: string) => {
+  const deleteHTMLSnapshot = async (contentId: string, contentType: 'website' | 'funnel' | 'website_page' | 'funnel_step', customDomain?: string) => {
     try {
       let query = supabase
         .from('html_snapshots')
@@ -137,7 +140,7 @@ export function useHTMLGeneration() {
     }
   };
 
-  const regenerateAllSnapshots = async (contentId: string, contentType: 'website' | 'funnel', pageData: PageBuilderData, seoConfig: SEOConfig) => {
+  const regenerateAllSnapshots = async (contentId: string, contentType: 'website' | 'funnel' | 'website_page' | 'funnel_step', pageData: PageBuilderData, seoConfig: SEOConfig) => {
     try {
       // Get all domains for this content
       let domains: string[] = [];

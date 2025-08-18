@@ -3,6 +3,7 @@ import { useParams, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
 import { PageBuilderRenderer } from '@/components/storefront/PageBuilderRenderer';
+import { StaticHTMLRenderer } from '@/components/storefront/StaticHTMLRenderer';
 import { setGlobalCurrency } from '@/lib/currency';
 import { setSEO, buildCanonical } from '@/lib/seo';
 
@@ -180,7 +181,12 @@ export const WebsiteOverrideRoute: React.FC<WebsiteOverrideRouteProps> = ({ slug
   return (
     <main>
       {page.content?.sections ? (
-        <PageBuilderRenderer data={page.content} />
+        <StaticHTMLRenderer
+          contentType="website_page"
+          contentId={page.id}
+          fallbackComponent={<PageBuilderRenderer data={page.content} />}
+          className="w-full"
+        />
       ) : (
         <div className="container mx-auto px-4 py-8">
           <h1 className="text-3xl font-bold mb-6">{page.title}</h1>
