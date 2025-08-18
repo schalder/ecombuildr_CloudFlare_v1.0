@@ -45,9 +45,29 @@ serve(async (req) => {
       })
     }
 
-    // Fallback: Return empty response with message to regenerate
-    console.log('⚠️ No HTML snapshot found, returning fallback')
-    return generateFallbackHTML(domain, path)
+    // If no snapshot found, return a basic response that shows the React app
+    console.log('⚠️ No HTML snapshot found, serving React app fallback')
+    const basicHTML = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Loading...</title>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="module" crossorigin src="/assets/index.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index.css" />
+</body>
+</html>`
+
+    return new Response(basicHTML, {
+      headers: {
+        ...corsHeaders,
+        'Content-Type': 'text/html; charset=UTF-8',
+        'Cache-Control': 'public, max-age=60',
+      },
+    })
     
   } catch (error) {
     console.error('SEO Prerender error:', error)
