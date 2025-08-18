@@ -64,7 +64,7 @@ export default function DashboardOverview() {
   const [funnelMap, setFunnelMap] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-  const [dateFilter, setDateFilter] = useState<DateFilterOption>('allTime');
+  const [dateFilter, setDateFilter] = useState<DateFilterOption>('today');
 
   useEffect(() => {
     if (store) {
