@@ -30,9 +30,12 @@ export function useSearch() {
         .from('stores')
         .select('id')
         .eq('owner_id', user.id)
-        .single();
+        .maybeSingle();
       
-      if (!store) return;
+      if (!store) {
+        setResults([]);
+        return;
+      }
 
       const searchResults: SearchResult[] = [];
 

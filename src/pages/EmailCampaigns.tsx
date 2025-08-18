@@ -114,7 +114,7 @@ const EmailCampaigns: React.FC = () => {
         .select('id')
         .eq('owner_id', user?.id)
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (!stores) {
         toast.error('Store not found');

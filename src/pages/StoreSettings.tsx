@@ -48,7 +48,7 @@ export default function StoreSettings() {
         .from('stores')
         .select('*')
         .eq('owner_id', user?.id)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
       setStore(stores);

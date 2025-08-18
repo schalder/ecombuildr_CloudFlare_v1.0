@@ -30,9 +30,13 @@ export function useNotifications() {
         .from('stores')
         .select('id')
         .eq('owner_id', user.id)
-        .single();
+        .maybeSingle();
       
-      if (!store) return;
+      if (!store) {
+        setNotifications([]);
+        setUnreadCount(0);
+        return;
+      }
       
       const { data, error } = await supabase
         .from('notifications')
@@ -83,7 +87,7 @@ export function useNotifications() {
         .from('stores')
         .select('id')
         .eq('owner_id', user.id)
-        .single();
+        .maybeSingle();
       
       if (!store) return;
 
@@ -113,7 +117,7 @@ export function useNotifications() {
         .from('stores')
         .select('id')
         .eq('owner_id', user.id)
-        .single();
+        .maybeSingle();
       
       if (!store) return;
 
