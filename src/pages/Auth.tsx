@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Navigate, useSearchParams } from 'react-router-dom';
+import { Navigate, useSearchParams, Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -109,12 +109,15 @@ const Auth = () => {
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="flex items-center justify-center mb-4">
-            <Store className="h-8 w-8 text-primary mr-2" />
-            <h1 className="text-2xl font-bold text-foreground">F-Commerce Builder</h1>
-          </div>
+          <Link to="/" className="flex items-center justify-center mb-4 hover:opacity-80 transition-opacity">
+            <img 
+              src="https://res.cloudinary.com/funnelsninja/image/upload/v1755206321/ecombuildr-logo-big_vifrmg.png" 
+              alt="EcomBuildr Logo" 
+              className="h-12 w-auto"
+            />
+          </Link>
           <p className="text-muted-foreground">
-            Build your F-Commerce store in minutes
+            Build your e-commerce store in minutes
           </p>
         </div>
 

@@ -13,10 +13,7 @@ import { WhatsAppWidget } from "@/components/WhatsAppWidget";
 const Index = () => {
   const { user, loading } = useAuth();
 
-  // Redirect authenticated users to dashboard
-  if (user && !loading) {
-    return <Navigate to="/dashboard" replace />;
-  }
+  // Don't redirect authenticated users - let them see the home page
 
   return (
     <div className="min-h-screen">

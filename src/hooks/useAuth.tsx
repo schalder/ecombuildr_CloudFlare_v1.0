@@ -163,6 +163,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           description: "Failed to sign out. Please try again.",
           variant: "destructive",
         });
+      } else {
+        // Redirect to home page after successful signout
+        window.location.href = '/';
       }
     } catch (error) {
       toast({
