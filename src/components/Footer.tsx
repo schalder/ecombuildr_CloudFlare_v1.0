@@ -56,11 +56,32 @@ export const Footer = () => {
               Join thousands of successful entrepreneurs who've built profitable online stores with our platform
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button variant="accent" size="lg" className="group">
+              <Button 
+                variant="accent" 
+                size="lg" 
+                className="group"
+                onClick={() => {
+                  const pricingSection = document.getElementById('pricing');
+                  if (pricingSection) {
+                    pricingSection.scrollIntoView({ behavior: 'smooth' });
+                  }
+                }}
+              >
                 Start Free Trial
                 <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
               </Button>
-              <Button variant="outline" size="lg" className="bg-white/10 backdrop-blur-sm border-white/20 text-white hover:bg-white hover:text-primary">
+              <Button 
+                variant="outline" 
+                size="lg" 
+                className="bg-white/10 backdrop-blur-sm border-white/20 text-white hover:bg-white hover:text-primary"
+                onClick={() => {
+                  // First try to open the widget if it's minimized
+                  const whatsappButton = document.querySelector('.whatsapp-widget button') as HTMLElement;
+                  if (whatsappButton) {
+                    whatsappButton.click();
+                  }
+                }}
+              >
                 Contact Sales Team
               </Button>
             </div>
@@ -76,7 +97,7 @@ export const Footer = () => {
           <div className="lg:col-span-2 space-y-6">
             <div className="flex items-center">
               <img 
-                src="https://res.cloudinary.com/funnelsninja/image/upload/v1755206321/ecombuildr-logo-white-big_xywiil.png" 
+                src="https://res.cloudinary.com/funnelsninja/image/upload/v1755206321/ecombuildr-logo-big_vifrmg.png" 
                 alt="EcomBuildr Logo" 
                 className="h-12 w-auto"
               />

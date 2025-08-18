@@ -63,7 +63,7 @@ export const WhatsAppWidget = () => {
   const position = settings.widget_position as keyof typeof positionClasses;
 
   return (
-    <div className={`fixed ${positionClasses[position] || positionClasses['bottom-right']} z-50`}>
+    <div className={`whatsapp-widget fixed ${positionClasses[position] || positionClasses['bottom-right']} z-50`}>
       {!isMinimized && (
         <div className="mb-4 bg-background border border-border rounded-lg shadow-lg p-4 max-w-sm">
           <div className="flex items-start justify-between mb-3">
