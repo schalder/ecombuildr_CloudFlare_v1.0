@@ -45,27 +45,35 @@ serve(async (req) => {
       })
     }
 
-    // If no snapshot found, return a basic response that shows the React app
-    console.log('⚠️ No HTML snapshot found, serving React app fallback')
-    const basicHTML = `<!DOCTYPE html>
+    // NO FALLBACK - If no snapshot exists, something is wrong
+    console.log('❌ No HTML snapshot found - page needs to be published!')
+    
+    return new Response(`<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Loading...</title>
+  <title>Page Not Published</title>
+  <style>
+    body { font-family: system-ui; margin: 0; padding: 20px; background: #f5f5f5; }
+    .container { max-width: 500px; margin: 50px auto; background: white; padding: 30px; border-radius: 8px; text-align: center; }
+    .error { color: #dc2626; font-size: 18px; margin-bottom: 20px; }
+    .instruction { color: #666; line-height: 1.6; }
+  </style>
 </head>
 <body>
-  <div id="root"></div>
-  <script type="module" crossorigin src="/assets/index.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/index.css" />
+  <div class="container">
+    <div class="error">⚠️ This page hasn't been published yet</div>
+    <div class="instruction">
+      Please go to your page builder and click <strong>"Save & Publish"</strong> to generate this page.
+    </div>
+  </div>
 </body>
-</html>`
-
-    return new Response(basicHTML, {
+</html>`, {
+      status: 200,
       headers: {
         ...corsHeaders,
         'Content-Type': 'text/html; charset=UTF-8',
-        'Cache-Control': 'public, max-age=60',
       },
     })
     
