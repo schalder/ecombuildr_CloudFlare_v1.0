@@ -217,33 +217,24 @@ export default function PageBuilder() {
       toast.success('Content updated successfully!');
 
       // Generate static HTML if page is published for better SEO
-      if (pageData.is_published && (context === 'website' || context === 'funnel') && parentId) {
+      if (pageData.is_published && (context === 'website' || context === 'funnel') && entityId) {
         try {
-          console.log(`Generating static HTML for ${context}: ${parentId}`);
+          console.log(`Generating static HTML for ${context} page: ${entityId}`);
           
-          // Prepare SEO config from page data
-          const seoConfig: SEOConfig = {
-            title: pageData.seo_title || pageData.title,
-            description: pageData.seo_description,
-            keywords: pageData.seo_keywords,
-            author: pageData.meta_author,
-            canonical: pageData.canonical_url,
-            robots: pageData.meta_robots,
-            socialImageUrl: pageData.social_image_url,
-            languageCode: pageData.language_code,
-            customMetaTags: pageData.custom_meta_tags,
-            ogType: context === 'website' ? 'website' : 'article'
-          };
-
-          // Generate HTML for the parent entity (website or funnel)
-          await generateAndSaveHTML({
-            pageData: builderData,
-            contentType: context as 'website' | 'funnel',
-            contentId: parentId,
-            seoConfig
+          // Generate HTML snapshot for the specific page/step using html-snapshot function
+          const contentType = context === 'website' ? 'website_page' : 'funnel_step';
+          const { error } = await supabase.functions.invoke('html-snapshot', {
+            body: {
+              contentType,
+              contentId: entityId
+            }
           });
+
+          if (error) {
+            throw error;
+          }
           
-          console.log('✅ Static HTML generated successfully');
+          console.log('✅ Static HTML generated successfully for page');
         } catch (htmlError) {
           console.warn('Failed to generate static HTML:', htmlError);
           // Don't show error to user - this is background optimization
