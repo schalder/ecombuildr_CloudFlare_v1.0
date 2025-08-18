@@ -10,11 +10,28 @@
     command = "npm run build"
     environment = { NETLIFY_PRERENDER = "true" }
 
-# Redirect rules for domain-based routing
+# Pass-through for static assets (JS, CSS, images, etc.)
+[[redirects]]
+  from = "/assets/*"
+  to = "/assets/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/favicon.ico"
+  to = "/favicon.ico" 
+  status = 200
+
+[[redirects]]
+  from = "/robots.txt"
+  to = "/robots.txt"
+  status = 200
+
+# SEO-enhanced HTML routes via Supabase function
 [[redirects]]
   from = "/*"
-  to = "/index.html"
+  to = "https://fhqwacmokbtbspkxjixf.supabase.co/functions/v1/seo-prerender?domain=:host&path=:path"
   status = 200
+  force = true
 
 # Cache static assets
 [[headers]]

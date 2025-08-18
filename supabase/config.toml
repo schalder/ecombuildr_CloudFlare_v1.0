@@ -7,6 +7,12 @@ schemas = ["public", "graphql_public"]
 extra_search_path = ["public", "extensions"]
 max_rows = 1000
 
+[functions.seo-prerender]
+verify_jwt = false
+
+[functions.html-snapshot]
+verify_jwt = false
+
 [functions.account-enforcement]
 verify_jwt = false
 
