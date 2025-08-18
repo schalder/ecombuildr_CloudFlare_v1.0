@@ -66,6 +66,7 @@ import { WebsitePage } from "./pages/storefront/WebsitePage";
 import { WebsiteLayout } from "@/components/storefront/WebsiteLayout";
 import { WebsiteOverrideRoute } from "./pages/storefront/WebsiteOverrideRoute";
 import { WebsiteProductDetailRoute } from "./pages/storefront/WebsiteProductDetailRoute";
+import { OnboardingGate } from "@/components/dashboard/OnboardingGate";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -93,39 +94,41 @@ const App = () => (
                 <Route path="/" element={<Index />} />
                 <Route path="/auth" element={<Auth />} />
                 
-                {/* Single Store Dashboard Routes */}
-                <Route path="/dashboard" element={<Navigate to="/dashboard/overview" replace />} />
-                <Route path="/dashboard/overview" element={<DashboardOverview />} />
-                <Route path="/dashboard/products" element={<Products />} />
-                <Route path="/dashboard/products/add" element={<AddProduct />} />
-                <Route path="/dashboard/products/:id" element={<ProductView />} />
-                <Route path="/dashboard/products/:id/edit" element={<EditProduct />} />
-                <Route path="/dashboard/categories" element={<Categories />} />
-                <Route path="/dashboard/product-library" element={<ProductLibrary />} />
-                 <Route path="/dashboard/orders" element={<Orders />} />
-                 <Route path="/dashboard/orders/:orderId" element={<Orders />} />
-                <Route path="/dashboard/customers" element={<Customers />} />
-                <Route path="/dashboard/analytics" element={<Analytics />} />
-                <Route path="/dashboard/reviews" element={<Reviews />} />
-                <Route path="/dashboard/websites" element={<Websites />} />
-                <Route path="/dashboard/websites/create" element={<CreateWebsite />} />
-                <Route path="/dashboard/websites/:id" element={<WebsiteManagement />} />
-                <Route path="/dashboard/funnels" element={<Funnels />} />
-                <Route path="/dashboard/funnels/create" element={<CreateFunnel />} />
-                <Route path="/dashboard/funnels/:id" element={<FunnelManagement />} />
-                
-                {/* Context-aware page builder routes */}
-                <Route path="/dashboard/websites/:websiteId/pages/:pageId/builder" element={<PageBuilder />} />
-                <Route path="/dashboard/funnels/:funnelId/steps/:stepId/builder" element={<PageBuilder />} />
-                <Route path="/dashboard/marketing" element={<Marketing />} />
-                <Route path="/dashboard/marketing/facebook" element={<FacebookAds />} />
-                <Route path="/dashboard/marketing/email" element={<EmailCampaigns />} />
-                <Route path="/dashboard/marketing/discounts" element={<Discounts />} />
-                <Route path="/dashboard/settings" element={<StoreSettings />} />
-                <Route path="/dashboard/settings/store" element={<StoreSettings />} />
-                <Route path="/dashboard/settings/profile" element={<ProfileSettings />} />
-                <Route path="/dashboard/settings/billing" element={<BillingSettings />} />
-                <Route path="/dashboard/domains" element={<Domains />} />
+                {/* Single Store Dashboard Routes - Protected by OnboardingGate */}
+                <Route element={<OnboardingGate />}>
+                  <Route path="/dashboard" element={<Navigate to="/dashboard/overview" replace />} />
+                  <Route path="/dashboard/overview" element={<DashboardOverview />} />
+                  <Route path="/dashboard/products" element={<Products />} />
+                  <Route path="/dashboard/products/add" element={<AddProduct />} />
+                  <Route path="/dashboard/products/:id" element={<ProductView />} />
+                  <Route path="/dashboard/products/:id/edit" element={<EditProduct />} />
+                  <Route path="/dashboard/categories" element={<Categories />} />
+                  <Route path="/dashboard/product-library" element={<ProductLibrary />} />
+                  <Route path="/dashboard/orders" element={<Orders />} />
+                  <Route path="/dashboard/orders/:orderId" element={<Orders />} />
+                  <Route path="/dashboard/customers" element={<Customers />} />
+                  <Route path="/dashboard/analytics" element={<Analytics />} />
+                  <Route path="/dashboard/reviews" element={<Reviews />} />
+                  <Route path="/dashboard/websites" element={<Websites />} />
+                  <Route path="/dashboard/websites/create" element={<CreateWebsite />} />
+                  <Route path="/dashboard/websites/:id" element={<WebsiteManagement />} />
+                  <Route path="/dashboard/funnels" element={<Funnels />} />
+                  <Route path="/dashboard/funnels/create" element={<CreateFunnel />} />
+                  <Route path="/dashboard/funnels/:id" element={<FunnelManagement />} />
+                  
+                  {/* Context-aware page builder routes */}
+                  <Route path="/dashboard/websites/:websiteId/pages/:pageId/builder" element={<PageBuilder />} />
+                  <Route path="/dashboard/funnels/:funnelId/steps/:stepId/builder" element={<PageBuilder />} />
+                  <Route path="/dashboard/marketing" element={<Marketing />} />
+                  <Route path="/dashboard/marketing/facebook" element={<FacebookAds />} />
+                  <Route path="/dashboard/marketing/email" element={<EmailCampaigns />} />
+                  <Route path="/dashboard/marketing/discounts" element={<Discounts />} />
+                  <Route path="/dashboard/settings" element={<StoreSettings />} />
+                  <Route path="/dashboard/settings/store" element={<StoreSettings />} />
+                  <Route path="/dashboard/settings/profile" element={<ProfileSettings />} />
+                  <Route path="/dashboard/settings/billing" element={<BillingSettings />} />
+                  <Route path="/dashboard/domains" element={<Domains />} />
+                </Route>
                 
                 
                 {/* Admin Routes */}
