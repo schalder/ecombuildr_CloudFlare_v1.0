@@ -150,7 +150,7 @@ export default function PageBuilder() {
     }
   }, [entityId, currentStore, context, parentId]);
 
-  const handleSave = useCallback(async () => {
+  const handleSave = useCallback(async (overridePublished?: boolean) => {
     if (!currentStore) {
       toast.error('No store selected');
       return;
@@ -158,6 +158,9 @@ export default function PageBuilder() {
 
     try {
       setIsSaving(true);
+
+      // Use override if provided, otherwise use current state
+      const publishedState = overridePublished !== undefined ? overridePublished : pageData.is_published;
 
       // Prepare page content for database
       const pageContent = {
@@ -170,7 +173,7 @@ export default function PageBuilder() {
         title: pageData.title,
         slug: pageData.slug,
         content: JSON.parse(JSON.stringify(pageContent)),
-        is_published: pageData.is_published,
+        is_published: publishedState,
         seo_title: pageData.seo_title,
         seo_description: pageData.seo_description,
         seo_keywords: pageData.seo_keywords,
@@ -214,10 +217,15 @@ export default function PageBuilder() {
 
       if (result.error) throw result.error;
 
-      toast.success('Content updated successfully!');
+      // Update local state if we used override
+      if (overridePublished !== undefined) {
+        setPageData(prev => ({ ...prev, is_published: publishedState }));
+      }
+
+      toast.success(publishedState ? 'Page saved and published successfully!' : 'Page saved successfully!');
 
       // Generate static HTML if page is published for better SEO
-      if (pageData.is_published && (context === 'website' || context === 'funnel') && entityId) {
+      if (publishedState && (context === 'website' || context === 'funnel') && entityId) {
         try {
           console.log(`Generating static HTML for ${context} page: ${entityId}`);
           
@@ -401,9 +409,25 @@ export default function PageBuilder() {
             <Eye className="h-4 w-4 mr-2" />
             Preview
           </Button>
-          <Button onClick={handleSave} disabled={isSaving}>
+          <Button 
+            onClick={async () => {
+              if (!pageData.is_published) {
+                // Save with published = true
+                await handleSave(true);
+              } else {
+                await handleSave();
+              }
+            }} 
+            disabled={isSaving}
+            className={pageData.is_published ? "" : "bg-green-600 hover:bg-green-700"}
+          >
             <Save className="h-4 w-4 mr-2" />
-            {isSaving ? 'Saving...' : 'Save'}
+            {isSaving 
+              ? 'Saving...' 
+              : pageData.is_published 
+                ? 'Save' 
+                : 'Save & Publish'
+            }
           </Button>
         </div>
       </div>
