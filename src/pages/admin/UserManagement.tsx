@@ -26,7 +26,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 const UserManagement = () => {
-  const { users, loading, fetchUsers, updateUserPlan, updateUserStatus, loginAsUser } = useAdminData();
+  const { users, loading, fetchUsers, updateUserPlan, updateUserStatus, extendTrial, loginAsUser } = useAdminData();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [planFilter, setPlanFilter] = useState('all');
@@ -86,6 +86,22 @@ const UserManagement = () => {
     }
   };
 
+  const handleExtendTrial = async (userId: string) => {
+    const success = await extendTrial(userId);
+    if (success) {
+      toast({
+        title: 'Trial Extended Successfully',
+        description: 'User trial has been extended by 7 days.',
+      });
+    } else {
+      toast({
+        title: 'Trial Extension Failed',
+        description: 'There was an error extending the trial.',
+        variant: 'destructive',
+      });
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'active': return 'bg-green-100 text-green-800';
@@ -133,7 +149,7 @@ const UserManagement = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Plans</SelectItem>
-                  <SelectItem value="free">Free</SelectItem>
+                  
                   <SelectItem value="starter">Starter</SelectItem>
                   <SelectItem value="professional">Professional</SelectItem>
                   <SelectItem value="enterprise">Enterprise</SelectItem>
@@ -226,9 +242,9 @@ const UserManagement = () => {
                             </DropdownMenuItem>
                           )}
 
-                          <DropdownMenuItem onClick={() => handlePlanUpdate(user.id, 'enterprise')}>
-                            <Crown className="h-4 w-4 mr-2" />
-                            Upgrade to Enterprise
+                          <DropdownMenuItem onClick={() => handleExtendTrial(user.id)}>
+                            <Calendar className="h-4 w-4 mr-2" />
+                            Extend Trial (7 days)
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -304,12 +320,18 @@ const UserManagement = () => {
                   <Button onClick={() => handleLoginAsUser(selectedUser.id)}>
                     Login as User
                   </Button>
-                  <Select onValueChange={(value) => handlePlanUpdate(selectedUser.id, value)}>
+                  <Select onValueChange={(value) => {
+                    if (value === 'extend_trial') {
+                      handleExtendTrial(selectedUser.id);
+                    } else {
+                      handlePlanUpdate(selectedUser.id, value);
+                    }
+                  }}>
                     <SelectTrigger className="w-[180px]">
                       <SelectValue placeholder="Change Plan" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="free">Free</SelectItem>
+                      <SelectItem value="extend_trial">Extend Trial (7 days)</SelectItem>
                       <SelectItem value="starter">Starter</SelectItem>
                       <SelectItem value="professional">Professional</SelectItem>
                       <SelectItem value="enterprise">Enterprise</SelectItem>

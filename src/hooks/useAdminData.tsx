@@ -223,19 +223,76 @@ export const useAdminData = () => {
     try {
       const { error } = await supabase
         .from('profiles')
-        .update({ subscription_plan: newPlan as any })
+        .update({ 
+          subscription_plan: newPlan as any,
+          account_status: 'active',
+          trial_expires_at: null,
+          trial_started_at: null,
+          updated_at: new Date().toISOString()
+        })
         .eq('id', userId);
 
       if (error) throw error;
 
       // Update local state
       setUsers(prev => prev.map(user => 
-        user.id === userId ? { ...user, subscription_plan: newPlan } : user
+        user.id === userId ? { 
+          ...user, 
+          subscription_plan: newPlan,
+          account_status: 'active',
+          trial_expires_at: null
+        } : user
       ));
 
       return true;
     } catch (err) {
       console.error('Error updating user plan:', err);
+      return false;
+    }
+  };
+
+  // Extend user trial by 7 days
+  const extendTrial = async (userId: string) => {
+    if (!isAdmin) return false;
+
+    try {
+      // Get current user data
+      const { data: userData, error: userError } = await supabase
+        .from('profiles')
+        .select('trial_expires_at, account_status')
+        .eq('id', userId)
+        .single();
+
+      if (userError) throw userError;
+
+      // Calculate new expiry date (current expiry + 7 days, or now + 7 days if expired/null)
+      const currentExpiry = userData.trial_expires_at ? new Date(userData.trial_expires_at) : new Date();
+      const extendFromDate = currentExpiry > new Date() ? currentExpiry : new Date();
+      const newExpiryDate = new Date(extendFromDate.getTime() + (7 * 24 * 60 * 60 * 1000));
+
+      const { error } = await supabase
+        .from('profiles')
+        .update({ 
+          account_status: 'trial',
+          trial_expires_at: newExpiryDate.toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', userId);
+
+      if (error) throw error;
+
+      // Update local state
+      setUsers(prev => prev.map(user => 
+        user.id === userId ? { 
+          ...user, 
+          account_status: 'trial',
+          trial_expires_at: newExpiryDate.toISOString()
+        } : user
+      ));
+
+      return true;
+    } catch (err) {
+      console.error('Error extending trial:', err);
       return false;
     }
   };
@@ -338,6 +395,7 @@ export const useAdminData = () => {
     fetchSaasSubscribers,
     updateUserPlan,
     updateUserStatus,
+    extendTrial,
     loginAsUser,
     refetch: () => {
       fetchUsers();
