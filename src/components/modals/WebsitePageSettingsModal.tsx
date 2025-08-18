@@ -84,7 +84,31 @@ export const WebsitePageSettingsModal: React.FC<WebsitePageSettingsModalProps> =
     },
     onSuccess: async () => {
       await qc.invalidateQueries({ queryKey: ["website-pages", websiteId] });
-      toast({ title: "Page updated" });
+      
+      // Generate HTML snapshot if page is being published
+      if (published && page) {
+        try {
+          console.log(`Generating HTML snapshot for website page: ${page.id}`);
+          const { error } = await supabase.functions.invoke('html-snapshot', {
+            body: {
+              contentType: 'website_page',
+              contentId: page.id
+            }
+          });
+          if (error) {
+            console.warn('Failed to generate HTML snapshot:', error);
+          } else {
+            console.log('✅ HTML snapshot generated successfully');
+          }
+        } catch (error) {
+          console.warn('Failed to generate HTML snapshot:', error);
+        }
+      }
+      
+      toast({ 
+        title: published ? "Page published successfully" : "Page updated",
+        description: published ? "Your page is now live and accessible to visitors" : undefined
+      });
       onClose();
     },
     onError: (err: any) => {
