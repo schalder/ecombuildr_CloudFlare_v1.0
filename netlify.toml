@@ -2,10 +2,30 @@
   command = "npm run build"
   publish = "dist"
 
-# Enable post-processing for prerendering
+# Enable Netlify Prerender for better SEO
 [context.production]
   [context.production.processing]
     skip_processing = false
+  [context.production.build]
+    command = "npm run build"
+    environment = { NETLIFY_PRERENDER = "true" }
+
+# Prerender specific routes for SEO
+[[plugins]]
+  package = "@netlify/plugin-prerender-spa"
+  [plugins.inputs]
+    # Prerender routes that match storefront patterns
+    routes = [
+      "/w/*",
+      "/f/*", 
+      "/storefront/*"
+    ]
+    # Don't prerender dashboard routes
+    exclude = [
+      "/dashboard/*",
+      "/admin/*",
+      "/auth/*"
+    ]
 
 # Redirect rules for domain-based routing
 [[redirects]]
