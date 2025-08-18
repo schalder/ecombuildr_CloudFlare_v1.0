@@ -61,17 +61,10 @@ export function buildCanonical(currentPath?: string, canonicalDomain?: string) {
 }
 
 export function setSEO(input: SEOConfig) {
-  console.log('🔍 setSEO called with:', { favicon: input.favicon, title: input.title });
-  
-  // Preserve existing favicon if none provided to prevent race conditions
-  const existingFavicon = document.head.querySelector('link[data-dynamic-favicon="true"]')?.getAttribute('href');
-  const preservedFavicon = input.favicon || (existingFavicon ? existingFavicon.split('?')[0] : undefined);
-  
   const cfg: SEOConfig = {
     ogType: 'website',
     locale: 'en_US',
     ...input,
-    favicon: preservedFavicon, // Use preserved favicon if none provided
   };
 
   // Title

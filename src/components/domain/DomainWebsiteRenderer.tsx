@@ -103,14 +103,15 @@ export const DomainWebsiteRenderer: React.FC<DomainWebsiteRendererProps> = ({
     try { setGlobalCurrency(code as any); } catch {}
   }, [website?.settings?.currency?.code]);
 
-  // Provisional favicon setting
+  // Set favicon - check website first, then store fallback
   React.useEffect(() => {
-    if (website?.settings?.favicon_url) {
+    const faviconUrl = website?.settings?.favicon_url || website?.stores?.favicon_url;
+    if (faviconUrl) {
       setSEO({
-        favicon: website.settings.favicon_url,
+        favicon: faviconUrl,
       });
     }
-  }, [website?.settings?.favicon_url]);
+  }, [website?.settings?.favicon_url, website?.stores?.favicon_url]);
 
   // Show loading while fetching data
   if (loading) {
