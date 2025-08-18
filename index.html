@@ -6,7 +6,12 @@
     <!-- Dynamic SEO tags are managed per-page via setSEO() function -->
     <meta name="theme-color" content="#10B981" />
     
-    <!-- Dynamic SEO tags are managed in code per-page via SEOHead component -->
+    <!-- Fallback SEO tags for bots (will be overridden by dynamic SEO) -->
+    <title>Loading...</title>
+    <meta name="description" content="E-commerce website" />
+    <meta name="robots" content="index, follow" />
+    
+    <!-- Dynamic SEO tags are managed in code per-page via setSEO function -->
     <!-- Favicon is set dynamically per website/funnel in setSEO() function -->
     <!-- Font Awesome for icon lists -->
     <link

@@ -92,6 +92,7 @@ export const WebsiteOverrideRoute: React.FC<WebsiteOverrideRouteProps> = ({ slug
   }, [resolvedWebsiteId, slug, isPreview]);
 
   // Ensure global currency is set and load website meta
+  // Also set provisional SEO (especially favicon) as early as possible
   React.useEffect(() => {
     (async () => {
       if (!resolvedWebsiteId) return;
