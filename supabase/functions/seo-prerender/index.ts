@@ -18,108 +18,227 @@ serve(async (req) => {
   )
 
   const url = new URL(req.url)
-  const path = url.searchParams.get('path') || url.pathname || '/'
-  const domain = url.searchParams.get('domain') || url.hostname || req.headers.get('host') || 'ecombuildr.com'
+  const path = url.searchParams.get('path') || '/'
+  const domain = url.searchParams.get('domain') || req.headers.get('host') || req.headers.get('x-forwarded-host') || 'ecombuildr.com'
   
-  console.log('SEO Prerender request:', { path, domain, userAgent: req.headers.get('user-agent') })
+  console.log('SEO Prerender request:', { path, domain, fullUrl: req.url, userAgent: req.headers.get('user-agent') })
 
   try {
-    // Fetch the base index.html template from the live site
-    const templateResponse = await fetch('https://ecombuildr.lovable.app/index.html')
-    let html = await templateResponse.text()
+    // First try to get HTML snapshot from database
+    const htmlSnapshot = await getHTMLSnapshot(supabase, domain, path)
+    if (htmlSnapshot) {
+      console.log('✅ Serving HTML snapshot from database')
+      return new Response(htmlSnapshot, {
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'text/html; charset=UTF-8',
+          'Cache-Control': 'public, max-age=300, s-maxage=3600',
+        },
+      })
+    }
+
+    // Fallback: Return empty response with message to regenerate
+    console.log('⚠️ No HTML snapshot found, returning fallback')
+    return generateFallbackHTML(domain, path)
     
-    // Generate page-specific SEO content
-    const seoContent = await generateSEOContent(supabase, domain, path)
-    
-    // Replace the <head> section with our enhanced SEO content, but preserve Vite assets
-    html = html.replace(
-      /<head>[\s\S]*?<\/head>/i,
-      `<head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        ${seoContent}
-        <script type="module" crossorigin src="/assets/index.js"></script>
-        <link rel="stylesheet" crossorigin href="/assets/index.css" />
-      </head>`
-    )
-    
-    return new Response(html, {
-      headers: {
-        ...corsHeaders,
-        'Content-Type': 'text/html; charset=UTF-8',
-        'Cache-Control': 'public, max-age=300, s-maxage=3600',
-      },
-    })
   } catch (error) {
     console.error('SEO Prerender error:', error)
     return generateFallbackHTML(domain, path)
   }
 })
 
-async function generateSEOContent(supabase: any, domain: string, path: string): Promise<string> {
-  // Handle custom domains first
-  if (domain !== 'ecombuildr.com' && !domain.includes('lovable.app')) {
-    console.log('Custom domain detected:', domain)
-    
-    // Look up custom domain mapping
-    const { data: customDomainData, error: domainError } = await supabase
-      .from('custom_domains')
-      .select(`
-        *,
-        domain_connections(
-          content_type,
-          content_id,
-          path
-        )
-      `)
-      .eq('domain', domain)
-      .eq('is_verified', true)
-      .eq('dns_configured', true)
-      .single()
-    
-    if (domainError) {
-      console.error('Error fetching custom domain:', domainError)
-      return getDefaultSEO()
-    }
-    
-    if (customDomainData?.domain_connections?.length) {
-      const connection = customDomainData.domain_connections[0]
+// Get HTML snapshot from database
+async function getHTMLSnapshot(supabase: any, domain: string, path: string): Promise<string | null> {
+  try {
+    // Handle custom domains first
+    if (domain !== 'ecombuildr.com' && !domain.includes('lovable.app')) {
+      console.log('Custom domain detected:', domain)
       
-      if (connection.content_type === 'website') {
-        return await generateWebsitePageSEO(supabase, connection.content_id, path, domain)
-      } else if (connection.content_type === 'funnel') {
-        return await generateFunnelStepSEO(supabase, connection.content_id, path, domain)
+      // Look up custom domain mapping to get content_id and content_type
+      const { data: customDomainData, error: domainError } = await supabase
+        .from('custom_domains')
+        .select(`
+          *,
+          domain_connections(
+            content_type,
+            content_id,
+            path
+          )
+        `)
+        .eq('domain', domain)
+        .eq('is_verified', true)
+        .eq('dns_configured', true)
+        .maybeSingle()
+      
+      if (domainError) {
+        console.error('Error fetching custom domain:', domainError)
+        return null
       }
-    }
-  } else {
-    // Handle ecombuildr.com domain routes
-    if (path === '/' || path === '' || path === '/index.html') {
-      return getMarketingSEO()
+      
+      if (customDomainData?.domain_connections?.length) {
+        const connection = customDomainData.domain_connections[0]
+        
+        if (connection.content_type === 'website') {
+          return await getWebsitePageSnapshot(supabase, connection.content_id, path, domain)
+        } else if (connection.content_type === 'funnel') {
+          return await getFunnelStepSnapshot(supabase, connection.content_id, path, domain)
+        }
+      }
+    } else {
+      // Handle ecombuildr.com domain routes
+      
+      // Parse website routes: /w/:websiteSlug/:pageSlug?
+      const websiteMatch = path.match(/^\/w\/([^\/]+)(?:\/([^\/]+))?$/)
+      if (websiteMatch) {
+        const [, websiteSlug, pageSlug] = websiteMatch
+        const websiteId = await resolveWebsiteSlug(supabase, websiteSlug)
+        if (websiteId) {
+          return await getWebsitePageSnapshot(supabase, websiteId, pageSlug || '', null)
+        }
+      }
+      
+      // Parse funnel routes: /f/:funnelSlug/:stepSlug?
+      const funnelMatch = path.match(/^\/f\/([^\/]+)(?:\/([^\/]+))?$/)
+      if (funnelMatch) {
+        const [, funnelSlug, stepSlug] = funnelMatch
+        const funnelId = await resolveFunnelSlug(supabase, funnelSlug)
+        if (funnelId) {
+          return await getFunnelStepSnapshot(supabase, funnelId, stepSlug || '', null)
+        }
+      }
     }
     
-    // Parse website routes: /w/:websiteSlug/:pageSlug?
-    const websiteMatch = path.match(/^\/w\/([^\/]+)(?:\/([^\/]+))?$/)
-    if (websiteMatch) {
-      const [, websiteSlug, pageSlug] = websiteMatch
-      const websiteId = await resolveWebsiteSlug(supabase, websiteSlug)
-      if (websiteId) {
-        return await generateWebsitePageSEO(supabase, websiteId, pageSlug || '', domain)
-      }
-    }
-    
-    // Parse funnel routes: /f/:funnelSlug/:stepSlug?
-    const funnelMatch = path.match(/^\/f\/([^\/]+)(?:\/([^\/]+))?$/)
-    if (funnelMatch) {
-      const [, funnelSlug, stepSlug] = funnelMatch
-      const funnelId = await resolveFunnelSlug(supabase, funnelSlug)
-      if (funnelId) {
-        return await generateFunnelStepSEO(supabase, funnelId, stepSlug || '', domain)
-      }
-    }
+    return null
+  } catch (error) {
+    console.error('Error getting HTML snapshot:', error)
+    return null
   }
-  
-  // Fallback for unmatched routes
-  return getDefaultSEO()
+}
+
+// Get website page HTML snapshot
+async function getWebsitePageSnapshot(supabase: any, websiteId: string, pageSlug: string, customDomain: string | null): Promise<string | null> {
+  try {
+    // First get the page ID
+    let pageQuery = supabase
+      .from('website_pages')
+      .select('id')
+      .eq('website_id', websiteId)
+      .eq('is_published', true)
+    
+    if (pageSlug) {
+      pageQuery = pageQuery.eq('slug', pageSlug)
+    } else {
+      pageQuery = pageQuery.eq('is_homepage', true)
+    }
+    
+    const { data: page, error: pageError } = await pageQuery.maybeSingle()
+    
+    if (pageError || !page) {
+      console.error('Page not found:', pageError)
+      // Try website-level snapshot
+      return await getContentSnapshot(supabase, websiteId, 'website', customDomain)
+    }
+    
+    // Look for page-specific snapshot first
+    const pageSnapshot = await getContentSnapshot(supabase, page.id, 'website_page', customDomain)
+    if (pageSnapshot) {
+      return pageSnapshot
+    }
+    
+    // Fallback to website-level snapshot
+    return await getContentSnapshot(supabase, websiteId, 'website', customDomain)
+    
+  } catch (error) {
+    console.error('Error getting website page snapshot:', error)
+    return null
+  }
+}
+
+// Get funnel step HTML snapshot
+async function getFunnelStepSnapshot(supabase: any, funnelId: string, stepSlug: string, customDomain: string | null): Promise<string | null> {
+  try {
+    // First get the step ID
+    let stepQuery = supabase
+      .from('funnel_steps')
+      .select('id')
+      .eq('funnel_id', funnelId)
+      .eq('is_published', true)
+    
+    if (stepSlug) {
+      stepQuery = stepQuery.eq('slug', stepSlug)
+    } else {
+      stepQuery = stepQuery.order('step_order', { ascending: true }).limit(1)
+    }
+    
+    const { data: step, error: stepError } = await stepQuery.maybeSingle()
+    
+    if (stepError || !step) {
+      console.error('Step not found:', stepError)
+      // Try funnel-level snapshot
+      return await getContentSnapshot(supabase, funnelId, 'funnel', customDomain)
+    }
+    
+    // Look for step-specific snapshot first
+    const stepSnapshot = await getContentSnapshot(supabase, step.id, 'funnel_step', customDomain)
+    if (stepSnapshot) {
+      return stepSnapshot
+    }
+    
+    // Fallback to funnel-level snapshot
+    return await getContentSnapshot(supabase, funnelId, 'funnel', customDomain)
+    
+  } catch (error) {
+    console.error('Error getting funnel step snapshot:', error)
+    return null
+  }
+}
+
+// Get content snapshot by ID and type
+async function getContentSnapshot(supabase: any, contentId: string, contentType: string, customDomain: string | null): Promise<string | null> {
+  try {
+    // First try to get domain-specific snapshot
+    if (customDomain) {
+      let query = supabase
+        .from('html_snapshots')
+        .select('html_content')
+        .eq('content_id', contentId)
+        .eq('content_type', contentType)
+        .eq('custom_domain', customDomain)
+        .order('generated_at', { ascending: false })
+        .limit(1)
+      
+      const { data: domainSnapshot } = await query.maybeSingle()
+      
+      if (domainSnapshot?.html_content) {
+        console.log(`✅ Found domain-specific snapshot for ${contentType}:${contentId}`)
+        return domainSnapshot.html_content
+      }
+    }
+    
+    // Fallback to null domain snapshot
+    let fallbackQuery = supabase
+      .from('html_snapshots')
+      .select('html_content')
+      .eq('content_id', contentId)
+      .eq('content_type', contentType)
+      .is('custom_domain', null)
+      .order('generated_at', { ascending: false })
+      .limit(1)
+    
+    const { data: fallbackSnapshot } = await fallbackQuery.maybeSingle()
+    
+    if (fallbackSnapshot?.html_content) {
+      console.log(`✅ Found fallback snapshot for ${contentType}:${contentId}`)
+      return fallbackSnapshot.html_content
+    }
+    
+    console.log(`❌ No snapshot found for ${contentType}:${contentId}`)
+    return null
+    
+  } catch (error) {
+    console.error('Error getting content snapshot:', error)
+    return null
+  }
 }
 
 // Helper function to resolve website slug to ID
@@ -319,34 +438,42 @@ function getDefaultSEO(): string {
 
 // Generate fallback HTML response
 function generateFallbackHTML(domain?: string, path?: string): Response {
-  const fallbackSEO = generateSEOTags({
-    title: 'Page Not Found - EcomBuildr',
-    description: 'The requested page could not be found.',
-    canonicalUrl: domain && domain !== 'ecombuildr.com' ? `https://${domain}${path || ''}` : 'https://ecombuildr.com',
-    robots: 'noindex, nofollow',
-    siteName: 'EcomBuildr',
-    ogType: 'website'
-  })
-  
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  ${fallbackSEO}
+  <title>Page Not Generated - EcomBuildr</title>
+  <meta name="description" content="This page has not been generated yet. Please publish the page first." />
+  <meta name="robots" content="noindex, nofollow" />
 </head>
-<body>
-  <div style="min-height: 100vh; display: flex; align-items: center; justify-content: center;">
-    <div style="text-align: center;">
-      <h1 style="font-size: 2rem; font-weight: bold; margin-bottom: 1rem;">Page Not Found</h1>
-      <p>The requested page could not be found.</p>
+<body style="font-family: system-ui, -apple-system, sans-serif; margin: 0; padding: 20px; background: #f5f5f5;">
+  <div style="max-width: 600px; margin: 50px auto; background: white; padding: 40px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+    <h1 style="color: #e11d48; margin-bottom: 20px; font-size: 24px;">⚠️ Page Not Generated</h1>
+    <p style="color: #666; line-height: 1.6; margin-bottom: 20px;">
+      This page hasn't been generated yet. To fix this:
+    </p>
+    <ol style="color: #666; line-height: 1.8; margin-bottom: 30px; padding-left: 20px;">
+      <li>Go to your page builder</li>
+      <li>Make sure your content is designed</li>
+      <li>Set up SEO information in page settings</li>
+      <li><strong>Save and Publish</strong> the page</li>
+      <li>Wait a few moments for generation to complete</li>
+    </ol>
+    <div style="background: #f8f9fa; padding: 15px; border-radius: 4px; border-left: 4px solid #0ea5e9;">
+      <p style="margin: 0; color: #374151; font-size: 14px;">
+        <strong>Note:</strong> Each time you publish, a static HTML version is generated with your SEO settings. This ensures fast loading and proper search engine indexing.
+      </p>
     </div>
+    <p style="margin-top: 20px; font-size: 12px; color: #9ca3af;">
+      Domain: ${domain} | Path: ${path}
+    </p>
   </div>
 </body>
 </html>`
   
   return new Response(html, {
-    status: 404,
+    status: 200, // Return 200 instead of 404 to avoid redirect loops
     headers: {
       ...corsHeaders,
       'Content-Type': 'text/html'
