@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserStore } from '@/hooks/useUserStore';
@@ -38,70 +38,76 @@ interface Funnel {
 }
 
 export const useDomainManagement = () => {
-  const [domains, setDomains] = useState<CustomDomain[]>([]);
-  const [connections, setConnections] = useState<DomainConnection[]>([]);
-  const [websites, setWebsites] = useState<Website[]>([]);
-  const [funnels, setFunnels] = useState<Funnel[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  
   const { user } = useAuth();
   const { store } = useUserStore();
+  const queryClient = useQueryClient();
 
-  const fetchDomains = async () => {
-    if (!store?.id) return;
+  const {
+    data: domainData,
+    isLoading: loading,
+    error: queryError,
+    refetch
+  } = useQuery({
+    queryKey: ['domainData', store?.id],
+    queryFn: async () => {
+      if (!store?.id) return {
+        domains: [],
+        connections: [],
+        websites: [],
+        funnels: []
+      };
 
-    try {
-      setLoading(true);
-      
-      // Fetch domains
-      const { data: domainsData, error: domainsError } = await supabase
-        .from('custom_domains')
-        .select('*')
-        .eq('store_id', store.id)
-        .order('created_at', { ascending: false });
+      // Fetch all domain-related data in parallel
+      const [domainsRes, connectionsRes, websitesRes, funnelsRes] = await Promise.all([
+        supabase
+          .from('custom_domains')
+          .select('*')
+          .eq('store_id', store.id)
+          .order('created_at', { ascending: false }),
+        
+        supabase
+          .from('domain_connections')
+          .select('*')
+          .eq('store_id', store.id)
+          .order('created_at', { ascending: false }),
+        
+        supabase
+          .from('websites')
+          .select('id, name, slug')
+          .eq('store_id', store.id)
+          .eq('is_active', true),
+        
+        supabase
+          .from('funnels')
+          .select('id, name, slug')
+          .eq('store_id', store.id)
+          .eq('is_active', true)
+      ]);
 
-      if (domainsError) throw domainsError;
-      
-      // Fetch domain connections
-      const { data: connectionsData, error: connectionsError } = await supabase
-        .from('domain_connections')
-        .select('*')
-        .eq('store_id', store.id)
-        .order('created_at', { ascending: false });
+      if (domainsRes.error) throw domainsRes.error;
+      if (connectionsRes.error) throw connectionsRes.error;
+      if (websitesRes.error) throw websitesRes.error;
+      if (funnelsRes.error) throw funnelsRes.error;
 
-      if (connectionsError) throw connectionsError;
-      
-      // Fetch websites
-      const { data: websitesData, error: websitesError } = await supabase
-        .from('websites')
-        .select('id, name, slug')
-        .eq('store_id', store.id)
-        .eq('is_active', true);
+      return {
+        domains: (domainsRes.data || []) as CustomDomain[],
+        connections: (connectionsRes.data || []) as DomainConnection[],
+        websites: (websitesRes.data || []) as Website[],
+        funnels: (funnelsRes.data || []) as Funnel[]
+      };
+    },
+    enabled: !!store?.id,
+    staleTime: 2 * 60 * 1000, // 2 minutes
+    retry: 1,
+    refetchOnWindowFocus: false,
+  });
 
-      if (websitesError) throw websitesError;
-      
-      // Fetch funnels
-      const { data: funnelsData, error: funnelsError } = await supabase
-        .from('funnels')
-        .select('id, name, slug')
-        .eq('store_id', store.id)
-        .eq('is_active', true);
-
-      if (funnelsError) throw funnelsError;
-
-      setDomains(domainsData || []);
-      setConnections((connectionsData || []) as DomainConnection[]);
-      setWebsites(websitesData || []);
-      setFunnels(funnelsData || []);
-      setError(null);
-    } catch (err) {
-      console.error('Error fetching domains:', err);
-      setError(err instanceof Error ? err.message : 'Unknown error');
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Extract data from the query result
+  const domains = domainData?.domains || [];
+  const connections = domainData?.connections || [];
+  const websites = domainData?.websites || [];
+  const funnels = domainData?.funnels || [];
+  const error = queryError ? (queryError instanceof Error ? queryError.message : 'Unknown error') : null;
 
   const verifyDomainDNS = async (domain: string) => {
     if (!store?.id) throw new Error('No store found');
@@ -155,7 +161,7 @@ export const useDomainManagement = () => {
           title: "Domain added successfully",
           description: `${cleanDomain} has been added to Netlify. DNS configuration will be set up automatically.`,
         });
-        await fetchDomains();
+        queryClient.invalidateQueries({ queryKey: ['domainData', store.id] });
         return result.domain;
       }
 
@@ -186,7 +192,7 @@ export const useDomainManagement = () => {
         variant: "default"
       });
 
-      await fetchDomains();
+      queryClient.invalidateQueries({ queryKey: ['domainData', store.id] });
       return data;
 
     } catch (error) {
@@ -206,7 +212,7 @@ export const useDomainManagement = () => {
 
     if (error) throw error;
     
-    await fetchDomains();
+    queryClient.invalidateQueries({ queryKey: ['domainData', store.id] });
     
     toast({
       title: "Domain removed",
@@ -238,7 +244,7 @@ export const useDomainManagement = () => {
 
     if (error) throw error;
     
-    await fetchDomains();
+    queryClient.invalidateQueries({ queryKey: ['domainData', store.id] });
     
     toast({
       title: "Content connected",
@@ -256,7 +262,7 @@ export const useDomainManagement = () => {
 
     if (error) throw error;
     
-    await fetchDomains();
+    queryClient.invalidateQueries({ queryKey: ['domainData', store.id] });
     
     toast({
       title: "Connection removed",
@@ -283,7 +289,7 @@ export const useDomainManagement = () => {
 
     if (error) throw error;
     
-    await fetchDomains();
+    queryClient.invalidateQueries({ queryKey: ['domainData', store.id] });
     
     toast({
       title: "Homepage set",
@@ -291,11 +297,6 @@ export const useDomainManagement = () => {
     });
   };
 
-  useEffect(() => {
-    if (user && store?.id) {
-      fetchDomains();
-    }
-  }, [user, store?.id]);
 
   return {
     domains,
@@ -309,7 +310,7 @@ export const useDomainManagement = () => {
     connectContent,
     removeConnection,
     setHomepage,
-    refetch: fetchDomains,
+    refetch,
     verifyDomainDNS,
     verifyDomain: async (domainId: string) => {
       if (!store?.id) throw new Error('No store found');
@@ -331,7 +332,7 @@ export const useDomainManagement = () => {
 
         if (error) throw error;
 
-        await fetchDomains();
+        queryClient.invalidateQueries({ queryKey: ['domainData', store.id] });
 
         if (result?.status?.isVerified) {
           toast({
@@ -389,7 +390,7 @@ export const useDomainManagement = () => {
 
         if (error) throw error;
 
-        await fetchDomains();
+        queryClient.invalidateQueries({ queryKey: ['domainData', store.id] });
 
         if (result?.isAccessible) {
           toast({

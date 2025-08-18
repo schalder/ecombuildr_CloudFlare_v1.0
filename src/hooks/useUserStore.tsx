@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { useNavigate } from 'react-router-dom';
@@ -24,91 +24,44 @@ interface Store {
 }
 
 export const useUserStore = () => {
-  const [store, setStore] = useState<Store | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [retryCount, setRetryCount] = useState(0);
-  const [lastFetchTime, setLastFetchTime] = useState(0);
   const { user } = useAuth();
   const navigate = useNavigate();
-  const MAX_RETRIES = 3;
-  const DEBOUNCE_TIME = 5000; // 5 seconds
+  const queryClient = useQueryClient();
 
-  const fetchUserStore = async () => {
-    if (!user) {
-      setLoading(false);
-      return;
-    }
+  const {
+    data: store,
+    isLoading: loading,
+    error: queryError,
+    refetch
+  } = useQuery({
+    queryKey: ['userStore', user?.id],
+    queryFn: async () => {
+      if (!user) return null;
 
-    // Prevent concurrent requests and debounce
-    const now = Date.now();
-    if (loading || (now - lastFetchTime < DEBOUNCE_TIME)) {
-      return;
-    }
-
-    // Stop retrying after max retries
-    if (retryCount >= MAX_RETRIES) {
-      setError('Maximum retries exceeded. Please refresh the page.');
-      setLoading(false);
-      return;
-    }
-
-    try {
-      setLoading(true);
-      setLastFetchTime(now);
-      setError(null);
       const { data, error } = await supabase
         .from('stores')
         .select('*')
         .eq('owner_id', user.id)
         .maybeSingle();
 
-      if (error) {
-        console.error('Error fetching user store:', error);
-        
-        // Don't set error state if it's a network issue and we can retry
-        if (error.message.includes('Failed to fetch') && retryCount < MAX_RETRIES) {
-          setRetryCount(prev => prev + 1);
-          // Retry after a delay
-          setTimeout(() => {
-            fetchUserStore();
-          }, 2000 * (retryCount + 1)); // Exponential backoff
-          return;
-        } else {
-          setError(error.message);
-          return;
-        }
+      if (error) throw error;
+      return data as Store | null;
+    },
+    enabled: !!user,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: 1,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: true,
+  });
+
+  const error = queryError ? (queryError instanceof Error ? queryError.message : 'Unknown error') : null;
+
+  const createStoreMutation = useMutation({
+    mutationFn: async (storeData: { name: string; slug: string; [key: string]: any }) => {
+      if (!user) {
+        throw new Error('User not authenticated');
       }
 
-      setStore(data);
-      // Reset retry count on success
-      setRetryCount(0);
-      // Store creation will now happen automatically when needed (creating websites/funnels)
-    } catch (err) {
-      console.error('Error in fetchUserStore:', err);
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-      
-      // Don't set error state if it's a network issue and we can retry
-      if (errorMessage.includes('Failed to fetch') && retryCount < MAX_RETRIES) {
-        setRetryCount(prev => prev + 1);
-        // Retry after a delay
-        setTimeout(() => {
-          fetchUserStore();
-        }, 2000 * (retryCount + 1)); // Exponential backoff
-      } else {
-        setError(errorMessage);
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const createStore = async (storeData: { name: string; slug: string; [key: string]: any }) => {
-    if (!user) {
-      throw new Error('User not authenticated');
-    }
-
-    try {
       // Ensure user profile exists first
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
@@ -147,16 +100,16 @@ export const useUserStore = () => {
         .select()
         .single();
 
-      if (error) {
-        throw error;
-      }
-
-      setStore(data as Store);
+      if (error) throw error;
       return data as Store;
-    } catch (error) {
-      console.error('Error creating store:', error);
-      throw error;
-    }
+    },
+    onSuccess: (data) => {
+      queryClient.setQueryData(['userStore', user?.id], data);
+    },
+  });
+
+  const createStore = (storeData: { name: string; slug: string; [key: string]: any }) => {
+    return createStoreMutation.mutateAsync(storeData);
   };
 
   // Auto-create store when needed (for websites/funnels)
@@ -179,12 +132,12 @@ export const useUserStore = () => {
     return await createStore(defaultStore);
   };
 
-  const updateStore = async (updates: Partial<Store>) => {
-    if (!store || !user) {
-      throw new Error('No store found or user not authenticated');
-    }
+  const updateStoreMutation = useMutation({
+    mutationFn: async (updates: Partial<Store>) => {
+      if (!store || !user) {
+        throw new Error('No store found or user not authenticated');
+      }
 
-    try {
       const { data, error } = await supabase
         .from('stores')
         .update(updates)
@@ -193,24 +146,18 @@ export const useUserStore = () => {
         .select()
         .single();
 
-      if (error) {
-        throw error;
-      }
-
-      setStore(data as Store);
+      if (error) throw error;
       return data as Store;
-    } catch (error) {
-      console.error('Error updating store:', error);
-      throw error;
-    }
+    },
+    onSuccess: (data) => {
+      queryClient.setQueryData(['userStore', user?.id], data);
+    },
+  });
+
+  const updateStore = (updates: Partial<Store>) => {
+    return updateStoreMutation.mutateAsync(updates);
   };
 
-  useEffect(() => {
-    if (user) {
-      fetchUserStore();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
 
   // Disable realtime subscription temporarily to fix WebSocket issues  
   // useEffect(() => {
@@ -258,7 +205,7 @@ export const useUserStore = () => {
     store,
     loading,
     error,
-    refetch: fetchUserStore,
+    refetch,
     createStore,
     updateStore,
     ensureStore,

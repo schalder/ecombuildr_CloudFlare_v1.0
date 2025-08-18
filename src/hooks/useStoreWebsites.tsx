@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 
@@ -13,20 +13,17 @@ interface Website {
 }
 
 export const useStoreWebsites = (storeId: string) => {
-  const [websites, setWebsites] = useState<Website[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
 
-  const fetchWebsites = async () => {
-    if (!user || !storeId) {
-      setLoading(false);
-      return;
-    }
-
-    try {
-      setLoading(true);
-      setError(null);
+  const {
+    data: websites = [],
+    isLoading: loading,
+    error: queryError,
+    refetch
+  } = useQuery({
+    queryKey: ['storeWebsites', storeId],
+    queryFn: async () => {
+      if (!user || !storeId) return [];
 
       const { data, error } = await supabase
         .from('websites')
@@ -36,43 +33,22 @@ export const useStoreWebsites = (storeId: string) => {
         .order('created_at');
 
       if (error) throw error;
+      return (data || []) as Website[];
+    },
+    enabled: !!(user && storeId),
+    staleTime: 2 * 60 * 1000, // 2 minutes
+    retry: 1,
+  });
 
-      setWebsites(data || []);
-    } catch (err: any) {
-      console.error('Failed to fetch websites:', err);
-      setError(err.message || 'Failed to fetch websites');
-    } finally {
-      setLoading(false);
-    }
+  const error = queryError ? (queryError instanceof Error ? queryError.message : 'Unknown error') : null;
+
+  return {
+    websites,
+    loading,
+    error,
+    refetch
   };
-
-  useEffect(() => {
-    fetchWebsites();
-
-    // Set up real-time subscription for websites updates
-    if (user && storeId) {
-      const channel = supabase
-        .channel('websites-changes')
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'websites',
-            filter: `store_id=eq.${storeId}`
-          },
-          (payload) => {
-            console.log('Websites real-time update:', payload);
-            fetchWebsites(); // Refetch to maintain filter and order
-          }
-        )
-        .subscribe();
-
-      return () => {
-        supabase.removeChannel(channel);
-      };
-    }
-  }, [user, storeId]);
-
-  return { websites, loading, error, refetch: fetchWebsites };
 };
+
+// Export the interface for external use
+export type { Website };

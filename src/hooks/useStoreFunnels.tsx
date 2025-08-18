@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 
@@ -12,20 +12,17 @@ interface Funnel {
 }
 
 export const useStoreFunnels = (storeId: string) => {
-  const [funnels, setFunnels] = useState<Funnel[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
 
-  const fetchFunnels = async () => {
-    if (!user || !storeId) {
-      setLoading(false);
-      return;
-    }
-
-    try {
-      setLoading(true);
-      setError(null);
+  const {
+    data: funnels = [],
+    isLoading: loading,
+    error: queryError,
+    refetch
+  } = useQuery({
+    queryKey: ['storeFunnels', storeId],
+    queryFn: async () => {
+      if (!user || !storeId) return [];
 
       const { data, error } = await supabase
         .from('funnels')
@@ -35,43 +32,22 @@ export const useStoreFunnels = (storeId: string) => {
         .order('created_at');
 
       if (error) throw error;
+      return (data || []) as Funnel[];
+    },
+    enabled: !!(user && storeId),
+    staleTime: 2 * 60 * 1000, // 2 minutes
+    retry: 1,
+  });
 
-      setFunnels(data || []);
-    } catch (err: any) {
-      console.error('Failed to fetch funnels:', err);
-      setError(err.message || 'Failed to fetch funnels');
-    } finally {
-      setLoading(false);
-    }
+  const error = queryError ? (queryError instanceof Error ? queryError.message : 'Unknown error') : null;
+
+  return {
+    funnels,
+    loading,
+    error,
+    refetch
   };
-
-  useEffect(() => {
-    fetchFunnels();
-
-    // Set up real-time subscription for funnels updates
-    if (user && storeId) {
-      const channel = supabase
-        .channel('funnels-changes')
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'funnels',
-            filter: `store_id=eq.${storeId}`
-          },
-          (payload) => {
-            console.log('Funnels real-time update:', payload);
-            fetchFunnels(); // Refetch to maintain filter and order
-          }
-        )
-        .subscribe();
-
-      return () => {
-        supabase.removeChannel(channel);
-      };
-    }
-  }, [user, storeId]);
-
-  return { funnels, loading, error, refetch: fetchFunnels };
 };
+
+// Export the interface for external use
+export type { Funnel };
