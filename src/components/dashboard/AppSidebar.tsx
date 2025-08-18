@@ -295,18 +295,10 @@ export function AppSidebar() {
                   <SidebarMenuButton asChild className="min-h-[44px] touch-manipulation">
                     <NavLink 
                       to={currentPath.startsWith('/admin') ? '/dashboard/overview' : '/admin/dashboard'}
-                      className={({ isActive }) => 
-                        currentPath.startsWith('/admin')
-                          ? "bg-gradient-to-r from-orange-500 to-orange-600 text-white hover:from-orange-600 hover:to-orange-700 min-h-[44px] touch-manipulation"
-                          : "bg-gradient-to-r from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700 min-h-[44px] touch-manipulation"
-                      }
+                      className="bg-gradient-to-r from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700 min-h-[44px] touch-manipulation font-medium shadow-md"
                     >
                       <Shield className="mr-3 h-4 w-4" />
-                      {!collapsed && (
-                        <span>
-                          {currentPath.startsWith('/admin') ? 'Switch to User Dashboard' : 'Switch to Admin Dashboard'}
-                        </span>
-                      )}
+                      {!collapsed && <span>Admin</span>}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
