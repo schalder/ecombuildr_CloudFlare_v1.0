@@ -60,88 +60,177 @@ serve(async (req) => {
       if (customDomain?.domain_connections?.length) {
         const connection = customDomain.domain_connections[0]
         
-        // Try to get cached snapshot first
-        const { data: snapshot } = await supabase
-          .from('html_snapshots')
-          .select('html_content')
-          .eq('content_type', connection.content_type)
-          .eq('content_id', connection.content_id)
-          .eq('custom_domain', domain)
-          .order('generated_at', { ascending: false })
-          .limit(1)
-          .maybeSingle()
+        if (connection.content_type === 'website') {
+          // Get website and resolve specific page based on path
+          const { data: website } = await supabase
+            .from('websites')
+            .select('*')
+            .eq('id', connection.content_id)
+            .single()
 
-        if (snapshot) {
-          htmlContent = snapshot.html_content
-        } else {
-          // Generate on-demand
-          const { data: generatedSnapshot } = await supabase.functions.invoke('html-snapshot', {
-            body: {
-              contentType: connection.content_type,
-              contentId: connection.content_id,
-              customDomain: domain
+          if (website) {
+            let page = null
+            
+            // Handle different path scenarios for custom domains
+            if (path === '/' || path === '') {
+              // Get homepage
+              const { data: homePage } = await supabase
+                .from('website_pages')
+                .select('*')
+                .eq('website_id', website.id)
+                .eq('is_homepage', true)
+                .eq('is_published', true)
+                .single()
+              page = homePage
+            } else {
+              // Try to find page by path/slug
+              const pageSlug = path.startsWith('/') ? path.substring(1) : path
+              const { data: specificPage } = await supabase
+                .from('website_pages')
+                .select('*')
+                .eq('website_id', website.id)
+                .eq('slug', pageSlug)
+                .eq('is_published', true)
+                .single()
+              page = specificPage
             }
-          })
-          
-          if (generatedSnapshot?.preview) {
-            htmlContent = generatedSnapshot.preview
+
+            if (page) {
+              htmlContent = await generateWebsitePageHTML(website, page, domain)
+            }
+          }
+        } else if (connection.content_type === 'funnel') {
+          // Get funnel and resolve specific step based on path
+          const { data: funnel } = await supabase
+            .from('funnels')
+            .select('*')
+            .eq('id', connection.content_id)
+            .single()
+
+          if (funnel) {
+            let step = null
+            
+            if (path === '/' || path === '') {
+              // Get first step
+              const { data: firstStep } = await supabase
+                .from('funnel_steps')
+                .select('*')
+                .eq('funnel_id', funnel.id)
+                .eq('is_published', true)
+                .order('step_order')
+                .limit(1)
+                .single()
+              step = firstStep
+            } else {
+              // Try to find step by path/slug
+              const stepSlug = path.startsWith('/') ? path.substring(1) : path
+              const { data: specificStep } = await supabase
+                .from('funnel_steps')
+                .select('*')
+                .eq('funnel_id', funnel.id)
+                .eq('slug', stepSlug)
+                .eq('is_published', true)
+                .single()
+              step = specificStep
+            }
+
+            if (step) {
+              htmlContent = await generateFunnelStepHTML(funnel, step, domain)
+            }
           }
         }
       }
-    } else {
-      // Handle root path for marketing site on ecombuildr.com
-      if (path === '/' || path === '' || path === '/index.html') {
-        htmlContent = generateMarketingHTML()
-      } else if (path.startsWith('/w/')) {
-        // Website route
-        const slug = path.split('/')[2]
-        const { data: website } = await supabase
-          .from('websites')
-          .select('*')
-          .eq('slug', slug)
-          .eq('is_published', true)
-          .eq('is_active', true)
-          .single()
+      } else {
+        // Handle root path for marketing site on ecombuildr.com
+        if (path === '/' || path === '' || path === '/index.html') {
+          htmlContent = generateMarketingHTML()
+        } else if (path.startsWith('/w/')) {
+          // Website route: /w/website-slug or /w/website-slug/page-slug
+          const pathParts = path.split('/').filter(Boolean)
+          const websiteSlug = pathParts[1]
+          const pageSlug = pathParts[2] || ''
 
-        if (website) {
-          const { data: snapshot } = await supabase
-            .from('html_snapshots')
-            .select('html_content')
-            .eq('content_type', 'website')
-            .eq('content_id', website.id)
-            .is('custom_domain', null)
-            .order('generated_at', { ascending: false })
-            .limit(1)
-            .maybeSingle()
+          const { data: website } = await supabase
+            .from('websites')
+            .select('*')
+            .eq('slug', websiteSlug)
+            .eq('is_published', true)
+            .eq('is_active', true)
+            .single()
 
-          htmlContent = snapshot?.html_content || await generateWebsiteHTML(website)
-        }
-      } else if (path.startsWith('/f/')) {
-        // Funnel route
-        const slug = path.split('/')[2]
-        const { data: funnel } = await supabase
-          .from('funnels')
-          .select('*')
-          .eq('slug', slug)
-          .eq('is_published', true)
-          .eq('is_active', true)
-          .single()
+          if (website) {
+            // Get specific page or homepage
+            let page = null
+            if (pageSlug) {
+              const { data: specificPage } = await supabase
+                .from('website_pages')
+                .select('*')
+                .eq('website_id', website.id)
+                .eq('slug', pageSlug)
+                .eq('is_published', true)
+                .single()
+              page = specificPage
+            } else {
+              // Get homepage
+              const { data: homePage } = await supabase
+                .from('website_pages')
+                .select('*')
+                .eq('website_id', website.id)
+                .eq('is_homepage', true)
+                .eq('is_published', true)
+                .single()
+              page = homePage
+            }
 
-        if (funnel) {
-          const { data: snapshot } = await supabase
-            .from('html_snapshots')
-            .select('html_content')
-            .eq('content_type', 'funnel')
-            .eq('content_id', funnel.id)
-            .is('custom_domain', null)
-            .order('generated_at', { ascending: false })
-            .limit(1)
-            .maybeSingle()
+            if (page) {
+              htmlContent = await generateWebsitePageHTML(website, page)
+            }
+          }
+        } else if (path.startsWith('/f/')) {
+          // Funnel route: /f/funnel-slug or /f/funnel-slug/step-slug  
+          const pathParts = path.split('/').filter(Boolean)
+          const funnelSlug = pathParts[1]
+          const stepSlug = pathParts[2] || ''
 
-          htmlContent = snapshot?.html_content || await generateFunnelHTML(funnel)
+          const { data: funnel } = await supabase
+            .from('funnels')
+            .select('*')
+            .eq('slug', funnelSlug)
+            .eq('is_published', true)
+            .eq('is_active', true)
+            .single()
+
+          if (funnel) {
+            // Get specific step or first step
+            let step = null
+            if (stepSlug) {
+              const { data: specificStep } = await supabase
+                .from('funnel_steps')
+                .select('*')
+                .eq('funnel_id', funnel.id)
+                .eq('slug', stepSlug)
+                .eq('is_published', true)
+                .single()
+              step = specificStep
+            } else {
+              // Get first step
+              const { data: firstStep } = await supabase
+                .from('funnel_steps')
+                .select('*')
+                .eq('funnel_id', funnel.id)
+                .eq('is_published', true)
+                .order('step_order')
+                .limit(1)
+                .single()
+              step = firstStep
+            }
+
+            if (step) {
+              htmlContent = await generateFunnelStepHTML(funnel, step)
+            }
+          }
         }
       }
-    }
 
     // Fallback to basic HTML if no content found
     if (!htmlContent) {
@@ -170,26 +259,61 @@ serve(async (req) => {
   }
 })
 
-async function generateWebsiteHTML(website: any): Promise<string> {
-  // Simplified version - in production this would be more comprehensive
-  const title = website.seo_title || website.name
-  const description = website.seo_description || website.description || 'Discover amazing products'
+async function generateWebsitePageHTML(website: any, page: any, customDomain?: string): Promise<string> {
+  // Use page-level SEO data only
+  const title = page.seo_title || page.title
+  const description = page.seo_description || 'Discover amazing products'
+  const image = page.og_image || page.social_image_url
+  const keywords = (page.seo_keywords || []).join(', ')
+  const canonical = page.canonical_url || (customDomain ? `https://${customDomain}/${page.slug}` : `https://ecombuildr.com/w/${website.slug}/${page.slug}`)
+  const robots = page.meta_robots || 'index,follow'
+  const author = page.meta_author
+  const language = page.language_code || 'en'
   
   return `<!DOCTYPE html>
-<html lang="en">
+<html lang="${language}">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>${title}</title>
     <meta name="description" content="${description}" />
-    <meta name="robots" content="index, follow" />
-    <link rel="canonical" href="https://ecombuildr.com/w/${website.slug}" />
+    ${keywords ? `<meta name="keywords" content="${keywords}" />` : ''}
+    ${author ? `<meta name="author" content="${author}" />` : ''}
+    <meta name="robots" content="${robots}" />
+    <link rel="canonical" href="${canonical}" />
+    
+    <!-- Open Graph -->
+    <meta property="og:title" content="${title}" />
+    <meta property="og:description" content="${description}" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="${canonical}" />
+    ${image ? `<meta property="og:image" content="${image}" />` : ''}
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="${title}" />
+    <meta name="twitter:description" content="${description}" />
+    ${image ? `<meta name="twitter:image" content="${image}" />` : ''}
+    
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "${title}",
+      "description": "${description}",
+      "url": "${canonical}"
+    }
+    </script>
+    
+    ${page.custom_scripts || ''}
 </head>
 <body>
     <div id="root">
         <main>
             <h1>${title}</h1>
             <p>${description}</p>
+            <div id="loading">Loading page content...</div>
         </main>
     </div>
     <script type="module" src="/src/main.tsx"></script>
@@ -197,25 +321,61 @@ async function generateWebsiteHTML(website: any): Promise<string> {
 </html>`
 }
 
-async function generateFunnelHTML(funnel: any): Promise<string> {
-  const title = funnel.seo_title || funnel.name
-  const description = funnel.seo_description || funnel.description || 'High converting sales funnel'
+async function generateFunnelStepHTML(funnel: any, step: any, customDomain?: string): Promise<string> {
+  // Use step-level SEO data only
+  const title = step.seo_title || step.title
+  const description = step.seo_description || 'High converting sales funnel'
+  const image = step.og_image || step.social_image_url
+  const keywords = (step.seo_keywords || []).join(', ')
+  const canonical = step.canonical_url || (customDomain ? `https://${customDomain}/${step.slug}` : `https://ecombuildr.com/f/${funnel.slug}/${step.slug}`)
+  const robots = step.meta_robots || 'index,follow'
+  const author = step.meta_author
+  const language = step.language_code || 'en'
   
   return `<!DOCTYPE html>
-<html lang="en">
+<html lang="${language}">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>${title}</title>
     <meta name="description" content="${description}" />
-    <meta name="robots" content="index, follow" />
-    <link rel="canonical" href="https://ecombuildr.com/f/${funnel.slug}" />
+    ${keywords ? `<meta name="keywords" content="${keywords}" />` : ''}
+    ${author ? `<meta name="author" content="${author}" />` : ''}
+    <meta name="robots" content="${robots}" />
+    <link rel="canonical" href="${canonical}" />
+    
+    <!-- Open Graph -->
+    <meta property="og:title" content="${title}" />
+    <meta property="og:description" content="${description}" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="${canonical}" />
+    ${image ? `<meta property="og:image" content="${image}" />` : ''}
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="${title}" />
+    <meta name="twitter:description" content="${description}" />
+    ${image ? `<meta name="twitter:image" content="${image}" />` : ''}
+    
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "${title}",
+      "description": "${description}",
+      "url": "${canonical}"
+    }
+    </script>
+    
+    ${step.custom_scripts || ''}
 </head>
 <body>
     <div id="root">
         <main>
             <h1>${title}</h1>
             <p>${description}</p>
+            <div id="loading">Loading funnel content...</div>
         </main>
     </div>
     <script type="module" src="/src/main.tsx"></script>
