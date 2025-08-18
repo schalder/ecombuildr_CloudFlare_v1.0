@@ -15,6 +15,12 @@ interface WebsitePageData {
   seo_description?: string;
   og_image?: string;
   custom_scripts?: string;
+  meta_robots?: string;
+  keywords?: string;
+  author?: string;
+  language_code?: string;
+  custom_meta_tags?: any;
+  structured_data?: any;
 }
 
 interface DomainWebsiteProductDetailRouteProps {
@@ -123,10 +129,15 @@ export const DomainWebsiteProductDetailRoute: React.FC<DomainWebsiteProductDetai
       description,
       image,
       canonical,
-      robots: currentWebsite?.meta_robots || 'index, follow',
+      robots: isPreview ? 'noindex, nofollow' : (page.meta_robots || currentWebsite?.meta_robots || 'index, follow'),
       siteName: currentWebsite?.name,
       ogType: 'product',
-      favicon: currentWebsite?.settings?.favicon_url || '/favicon.ico',
+      favicon: currentWebsite?.settings?.favicon_url,
+      keywords: page.keywords ? page.keywords.split(',').map(k => k.trim()) : undefined,
+      author: page.author,
+      languageCode: page.language_code,
+      customMetaTags: page.custom_meta_tags ? (typeof page.custom_meta_tags === 'string' ? JSON.parse(page.custom_meta_tags) : page.custom_meta_tags) : undefined,
+      structuredData: page.structured_data ? (typeof page.structured_data === 'string' ? JSON.parse(page.structured_data) : page.structured_data) : undefined,
     });
 
     if (page.custom_scripts) {

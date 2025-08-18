@@ -113,7 +113,7 @@ export const DomainFunnelRenderer: React.FC<DomainFunnelRendererProps> = ({
       customMetaTags,
       siteName: funnel.name,
       ogType: 'website',
-      favicon: store?.favicon_url || '/favicon.ico',
+      favicon: funnel?.settings?.favicon_url || store?.favicon_url,
     });
   }, [funnel, customDomain, store]);
 

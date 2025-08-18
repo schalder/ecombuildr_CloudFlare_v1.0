@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
 import { useStore } from '@/contexts/StoreContext';
 import { setGlobalCurrency } from '@/lib/currency';
+import { setSEO } from '@/lib/seo';
 import { usePixelContext } from '@/components/pixel/PixelManager';
 import { DomainWebsiteRouter } from './DomainWebsiteRouter';
 import { WebsiteProvider } from '@/contexts/WebsiteContext';
@@ -101,6 +102,15 @@ export const DomainWebsiteRenderer: React.FC<DomainWebsiteRendererProps> = ({
     const code = (website?.settings?.currency?.code as string) || 'BDT';
     try { setGlobalCurrency(code as any); } catch {}
   }, [website?.settings?.currency?.code]);
+
+  // Provisional favicon setting
+  React.useEffect(() => {
+    if (website?.settings?.favicon_url) {
+      setSEO({
+        favicon: website.settings.favicon_url,
+      });
+    }
+  }, [website?.settings?.favicon_url]);
 
   // Show loading while fetching data
   if (loading) {

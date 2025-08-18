@@ -30,6 +30,7 @@ const funnelSettingsSchema = z.object({
   facebook_pixel_id: z.string().optional(),
   google_analytics_id: z.string().optional(),
   google_ads_id: z.string().optional(),
+  favicon_url: z.string().optional(),
   // SEO defaults
   seo_title: z.string().optional(),
   seo_description: z.string().optional(),
@@ -110,6 +111,7 @@ export const FunnelSettings: React.FC<FunnelSettingsProps> = ({ funnel }) => {
       facebook_pixel_id: funnel.settings?.facebook_pixel_id || '',
       google_analytics_id: funnel.settings?.google_analytics_id || '',
       google_ads_id: funnel.settings?.google_ads_id || '',
+      favicon_url: funnel.settings?.favicon_url || '',
       seo_title: funnel.seo_title || '',
       seo_description: funnel.seo_description || '',
       og_image: funnel.og_image || '',
@@ -164,6 +166,7 @@ export const FunnelSettings: React.FC<FunnelSettingsProps> = ({ funnel }) => {
         facebook_pixel_id, 
         google_analytics_id, 
         google_ads_id, 
+        favicon_url,
         domain,
         seo_title,
         seo_description,
@@ -180,6 +183,7 @@ export const FunnelSettings: React.FC<FunnelSettingsProps> = ({ funnel }) => {
         facebook_pixel_id: facebook_pixel_id || null,
         google_analytics_id: google_analytics_id || null,
         google_ads_id: google_ads_id || null,
+        favicon_url: favicon_url || null,
       };
 
       // Determine canonical domain for this funnel
@@ -566,41 +570,58 @@ export const FunnelSettings: React.FC<FunnelSettingsProps> = ({ funnel }) => {
                     )}
                   />
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="og_image"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Default OG Image URL</FormLabel>
-                          <FormControl>
-                            <Input placeholder="https://example.com/og.jpg" {...field} />
-                          </FormControl>
-                          <FormDescription>
-                            Social sharing image.
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                     <FormField
+                       control={form.control}
+                       name="og_image"
+                       render={({ field }) => (
+                         <FormItem>
+                           <FormLabel>Default OG Image URL</FormLabel>
+                           <FormControl>
+                             <Input placeholder="https://example.com/og.jpg" {...field} />
+                           </FormControl>
+                           <FormDescription>
+                             Social sharing image.
+                           </FormDescription>
+                           <FormMessage />
+                         </FormItem>
+                       )}
+                     />
 
-                    <FormField
-                      control={form.control}
-                      name="canonical_domain"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Canonical Domain</FormLabel>
-                          <FormControl>
-                            <Input placeholder="example.com" {...field} />
-                          </FormControl>
-                          <FormDescription>
-                            Used to build canonical URLs.
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+                     <FormField
+                       control={form.control}
+                       name="favicon_url"
+                       render={({ field }) => (
+                         <FormItem>
+                           <FormLabel>Favicon URL</FormLabel>
+                           <FormControl>
+                             <Input placeholder="https://example.com/favicon.png" {...field} />
+                           </FormControl>
+                           <FormDescription>
+                             Custom favicon for this funnel (PNG/ICO format).
+                           </FormDescription>
+                           <FormMessage />
+                         </FormItem>
+                       )}
+                     />
+                   </div>
+
+                   <FormField
+                     control={form.control}
+                     name="canonical_domain"
+                     render={({ field }) => (
+                       <FormItem>
+                         <FormLabel>Canonical Domain</FormLabel>
+                         <FormControl>
+                           <Input placeholder="example.com" {...field} />
+                         </FormControl>
+                         <FormDescription>
+                           Used to build canonical URLs.
+                         </FormDescription>
+                         <FormMessage />
+                       </FormItem>
+                     )}
+                   />
                 </div>
               </AccordionContent>
             </AccordionItem>

@@ -148,7 +148,7 @@ export const DomainFunnelRouter: React.FC<DomainFunnelRouterProps> = ({ funnel }
       customMetaTags,
       siteName: funnel.name,
       ogType: 'website',
-      favicon: store?.favicon_url || '/favicon.ico',
+      favicon: funnel?.settings?.favicon_url || store?.favicon_url,
     });
 
     // Inject custom scripts if they exist

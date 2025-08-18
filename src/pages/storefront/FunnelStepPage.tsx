@@ -30,6 +30,7 @@ interface FunnelData {
   is_published: boolean;
   is_active: boolean;
   store_id: string;
+  settings?: any;
 }
 
 export const FunnelStepPage: React.FC = () => {
@@ -171,7 +172,7 @@ export const FunnelStepPage: React.FC = () => {
       robots: (funnel as any)?.meta_robots || 'index, follow',
       siteName: funnel.name,
       ogType: 'website',
-      favicon: store?.favicon_url || '/favicon.ico',
+      favicon: funnel?.settings?.favicon_url || store?.favicon_url,
     });
 
     // Inject custom scripts if they exist
