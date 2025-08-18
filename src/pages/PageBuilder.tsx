@@ -217,9 +217,9 @@ export default function PageBuilder() {
       toast.success('Content updated successfully!');
 
       // Generate static HTML if page is published for better SEO
-      if (pageData.is_published && (context === 'website' || context === 'funnel') && parentId) {
+      if (pageData.is_published && entityId && (context === 'website' || context === 'funnel')) {
         try {
-          console.log(`Generating static HTML for ${context}: ${parentId}`);
+          console.log(`Generating static HTML for ${context} page: ${entityId}`);
           
           // Prepare SEO config from page data
           const seoConfig: SEOConfig = {
@@ -235,11 +235,12 @@ export default function PageBuilder() {
             ogType: context === 'website' ? 'website' : 'article'
           };
 
-          // Generate HTML for the parent entity (website or funnel)
+          // Generate HTML for the specific page (not the parent entity)
+          const contentType = context === 'website' ? 'website_page' : 'funnel_step';
           await generateAndSaveHTML({
             pageData: builderData,
-            contentType: context as 'website' | 'funnel',
-            contentId: parentId,
+            contentType: contentType as 'website_page' | 'funnel_step',
+            contentId: entityId, // Use the page/step ID, not the parent ID
             seoConfig
           });
           
