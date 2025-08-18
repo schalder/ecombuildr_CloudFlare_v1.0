@@ -206,37 +206,53 @@ export const useUserStore = () => {
   };
 
   useEffect(() => {
-    fetchUserStore();
-
-    // Set up real-time subscription for store updates
     if (user) {
-      const channel = supabase
-        .channel('user-store-changes')
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'stores',
-            filter: `owner_id=eq.${user.id}`
-          },
-          (payload) => {
-            console.log('Store real-time update:', payload);
-            if (payload.eventType === 'UPDATE' && payload.new) {
-              setStore(payload.new as Store);
-            } else if (payload.eventType === 'DELETE') {
-              setStore(null);
-            }
-          }
-        )
-        .subscribe();
-
-      return () => {
-        supabase.removeChannel(channel);
-      };
+      fetchUserStore();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
+
+  // Disable realtime subscription temporarily to fix WebSocket issues  
+  // useEffect(() => {
+  //   if (!user || !store) return;
+
+  //   let channel: any = null;
+    
+  //   try {
+  //     channel = supabase
+  //       .channel(`user-store-${user.id}`)
+  //       .on(
+  //         'postgres_changes',
+  //         {
+  //           event: '*',
+  //           schema: 'public',
+  //           table: 'stores',
+  //           filter: `owner_id=eq.${user.id}`
+  //         },
+  //         (payload) => {
+  //           console.log('Store real-time update:', payload);
+  //           if (payload.eventType === 'UPDATE' && payload.new) {
+  //             setStore(payload.new as Store);
+  //           } else if (payload.eventType === 'DELETE') {
+  //             setStore(null);
+  //           }
+  //         }
+  //       )
+  //       .subscribe();
+  //   } catch (error) {
+  //     console.warn('Failed to set up realtime subscription:', error);
+  //   }
+
+  //   return () => {
+  //     if (channel) {
+  //       try {
+  //         supabase.removeChannel(channel);
+  //       } catch (error) {
+  //         console.warn('Failed to cleanup realtime subscription:', error);
+  //       }
+  //     }
+  //   };
+  // }, [user, store?.id]);
 
   return {
     store,

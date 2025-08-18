@@ -76,22 +76,68 @@ export const usePlanLimits = () => {
         .eq('id', user.id)
         .maybeSingle();
 
-      if (profileError) throw profileError;
-      if (!profile) throw new Error('User profile not found');
+      if (profileError) {
+        // If profile doesn't exist, create a default one
+        if (profileError.code === 'PGRST116') {
+          const { data: newProfile, error: createError } = await supabase
+            .from('profiles')
+            .insert({
+              id: user.id,
+              email: user.email,
+              full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
+              subscription_plan: 'starter',
+              account_status: 'trial',
+              trial_started_at: new Date().toISOString(),
+              trial_expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() // 7 days from now
+            })
+            .select('subscription_plan, account_status, trial_started_at, trial_expires_at, subscription_expires_at')
+            .single();
+          
+          if (createError) throw createError;
+          setUserProfile(newProfile);
+        } else {
+          throw profileError;
+        }
+      } else if (!profile) {
+        throw new Error('User profile not found');
+      } else {
+        setUserProfile(profile);
+      }
 
-      setUserProfile(profile);
-
-      // Get plan limits for user's current plan
+      // Get plan limits for user's current plan  
+      const currentProfile = userProfile || profile;
+      const planName = currentProfile?.subscription_plan || 'starter';
+      const validPlanName = ['starter', 'professional', 'enterprise', 'free', 'pro_monthly', 'pro_yearly', 'reseller'].includes(planName) 
+        ? planName as any 
+        : 'starter' as any;
+      
       const { data: limits, error: limitsError } = await supabase
         .from('plan_limits')
         .select('*')
-        .eq('plan_name', profile.subscription_plan)
+        .eq('plan_name', validPlanName)
         .maybeSingle();
 
       if (limitsError) throw limitsError;
-      if (!limits) throw new Error(`Plan limits not found for plan: ${profile.subscription_plan}`);
-
-      setPlanLimits(limits);
+      if (!limits) {
+        // Create default limits if not found
+        console.warn(`Plan limits not found for plan: ${validPlanName}, using defaults`);
+        setPlanLimits({
+          plan_name: validPlanName,
+          price_bdt: 500,
+          trial_days: 7,
+          max_stores: 1,
+          max_websites: 1,
+          max_funnels: 1,
+          max_pages_per_store: 20,
+          max_products_per_store: 50,
+          max_orders_per_month: 100,
+          custom_domain_allowed: true,
+          priority_support: true,
+          white_label: false,
+        });
+      } else {
+        setPlanLimits(limits);
+      }
 
       // Get user's current usage
       const { data: usage, error: usageError } = await supabase
@@ -301,38 +347,50 @@ export const usePlanLimits = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
-  // Set up real-time subscription for usage updates
-  useEffect(() => {
-    if (!user) return;
+  // Disable realtime subscription temporarily to fix WebSocket issues
+  // useEffect(() => {
+  //   if (!user || !userUsage) return;
 
-    const channel = supabase
-      .channel('user-usage-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'user_usage',
-          filter: `user_id=eq.${user.id}`
-        },
-        (payload) => {
-          console.log('Usage update:', payload);
-          if (payload.eventType === 'UPDATE' && payload.new) {
-            setUserUsage({
-              current_stores: payload.new.current_stores,
-              current_websites: payload.new.current_websites,
-              current_funnels: payload.new.current_funnels,
-              current_orders_this_month: payload.new.current_orders_this_month,
-            });
-          }
-        }
-      )
-      .subscribe();
+  //   let channel: any = null;
+    
+  //   try {
+  //     channel = supabase
+  //       .channel(`user-usage-${user.id}`)
+  //       .on(
+  //         'postgres_changes',
+  //         {
+  //           event: '*',
+  //           schema: 'public',
+  //           table: 'user_usage',
+  //           filter: `user_id=eq.${user.id}`
+  //         },
+  //         (payload) => {
+  //           console.log('Usage update:', payload);
+  //           if (payload.eventType === 'UPDATE' && payload.new) {
+  //             setUserUsage({
+  //               current_stores: payload.new.current_stores,
+  //               current_websites: payload.new.current_websites,
+  //               current_funnels: payload.new.current_funnels,
+  //               current_orders_this_month: payload.new.current_orders_this_month,
+  //             });
+  //           }
+  //         }
+  //       )
+  //       .subscribe();
+  //   } catch (error) {
+  //     console.warn('Failed to set up usage realtime subscription:', error);
+  //   }
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [user]);
+  //   return () => {
+  //     if (channel) {
+  //       try {
+  //         supabase.removeChannel(channel);
+  //       } catch (error) {
+  //         console.warn('Failed to cleanup usage realtime subscription:', error);
+  //       }
+  //     }
+  //   };
+  // }, [user, userUsage?.current_stores]);
 
   return {
     planLimits,
