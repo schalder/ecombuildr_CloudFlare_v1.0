@@ -6,7 +6,6 @@ import { PageBuilderRenderer } from '@/components/storefront/PageBuilderRenderer
 import { useStore } from '@/contexts/StoreContext';
 import { setGlobalCurrency } from '@/lib/currency';
 import { setSEO, buildCanonical } from '@/lib/seo';
-import { KeywordIntegration } from '@/components/seo/KeywordIntegration';
 interface WebsitePageData {
   id: string;
   title: string;
@@ -14,7 +13,6 @@ interface WebsitePageData {
   content: any;
   seo_title?: string;
   seo_description?: string;
-  seo_keywords?: string[];
   og_image?: string;
   custom_scripts?: string;
   is_homepage: boolean;
@@ -33,7 +31,6 @@ interface WebsiteData {
   settings?: any;
   seo_title?: string;
   seo_description?: string;
-  seo_keywords?: string[];
   og_image?: string;
   meta_robots?: string;
   canonical_domain?: string;
@@ -253,70 +250,14 @@ export const WebsitePage: React.FC = () => {
 
   return (
     <div className="w-full min-h-screen">
-      <main role="main">
+      <main>
         {page.content?.sections ? (
-          <>
-            {/* SEO Enhancement: Add H1 and keywords if missing from content */}
-            {!page.content.sections.some((section: any) => 
-              section.type === 'hero' || 
-              section.elements?.some((el: any) => el.type === 'heading' && el.tag === 'h1')
-            ) && (
-              <header className="bg-gradient-to-b from-background/50 to-background border-b">
-                <div className="container mx-auto px-4 py-6">
-                  <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
-                    {page.seo_title || page.title || website.name}
-                  </h1>
-                  {(page.seo_description || website.seo_description) && (
-                    <p className="mt-2 text-lg text-muted-foreground max-w-3xl">
-                      {page.seo_description || website.seo_description}
-                    </p>
-                  )}
-                  {page.seo_keywords && (
-                    <KeywordIntegration 
-                      keywords={page.seo_keywords}
-                      className="mt-4"
-                    />
-                  )}
-                </div>
-              </header>
-            )}
-            
-            <PageBuilderRenderer data={page.content} />
-            
-            {/* Hidden structured data for page content */}
-            <script
-              type="application/ld+json"
-              dangerouslySetInnerHTML={{
-                __html: JSON.stringify({
-                  "@context": "https://schema.org",
-                  "@type": "WebPage",
-                  "name": page.seo_title || page.title,
-                  "description": page.seo_description || website.seo_description,
-                  "url": window.location.href,
-                  "isPartOf": {
-                    "@type": "WebSite",
-                    "name": website.name,
-                    "url": website.domain ? `https://${website.domain}` : window.location.origin
-                  },
-                  "keywords": page.seo_keywords?.join(', ') || undefined
-                })
-              }}
-            />
-          </>
+          <PageBuilderRenderer data={page.content} />
         ) : (
-          <section className="container mx-auto px-4 py-8">
-            <header>
-              <h1 className="text-3xl font-bold mb-6">{page.title}</h1>
-            </header>
+          <div className="container mx-auto px-4 py-8">
+            <h1 className="text-3xl font-bold mb-6">{page.title}</h1>
             <p className="text-muted-foreground">This page is still being set up.</p>
-            {page.seo_keywords && (
-              <KeywordIntegration 
-                keywords={page.seo_keywords}
-                content="This page is being developed to provide comprehensive information and services."
-                className="mt-6"
-              />
-            )}
-          </section>
+          </div>
         )}
       </main>
     </div>
