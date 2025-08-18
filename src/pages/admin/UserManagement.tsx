@@ -174,7 +174,7 @@ const UserManagement = () => {
                         <Badge className={getStatusColor(user.account_status)}>
                           {user.account_status}
                         </Badge>
-                        {user.trial_expires_at && (
+                        {user.account_status === 'trial' && user.trial_expires_at && (
                           <div className="text-xs text-muted-foreground flex items-center gap-1">
                             <Calendar className="h-3 w-3" />
                             Trial: {new Date(user.trial_expires_at).toLocaleDateString()}
@@ -290,7 +290,7 @@ const UserManagement = () => {
                       {new Date(selectedUser.created_at).toLocaleDateString()}
                     </p>
                   </div>
-                  {selectedUser.trial_expires_at && (
+                  {selectedUser.account_status === 'trial' && selectedUser.trial_expires_at && (
                     <div>
                       <label className="text-sm font-medium">Trial Expiry Date</label>
                       <p className="text-sm text-muted-foreground">
