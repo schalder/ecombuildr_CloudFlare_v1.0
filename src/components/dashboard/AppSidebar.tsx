@@ -110,7 +110,7 @@ const navigationItems = [
     title: "Settings",
     icon: Settings,
     items: [
-      { title: "Store Settings", url: "/dashboard/settings/store" },
+      { title: "Integrations", url: "/dashboard/settings/store" },
       { title: "Profile", url: "/dashboard/settings/profile" },
       { title: "Billing", url: "/dashboard/settings/billing" },
     ],
