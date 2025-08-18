@@ -391,8 +391,8 @@ export default function PageBuilder() {
 
         {/* Settings Sidebar */}
         {showSettings && (
-          <div className="w-80 border-l bg-card">
-            <div className="p-6">
+          <div className="w-80 border-l bg-card flex flex-col h-full">
+            <div className="p-6 overflow-y-auto flex-1">
               <h3 className="text-lg font-semibold mb-4">Page Settings</h3>
               
               <div className="space-y-4">
