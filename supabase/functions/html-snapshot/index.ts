@@ -83,37 +83,61 @@ serve(async (req) => {
       
     } else if (contentType === 'website_page') {
       // Fetch specific website page
-      const { data: page } = await supabase
+      const { data: page, error: pageError } = await supabase
         .from('website_pages')
-        .select(`
-          *,
-          websites(*)
-        `)
+        .select('*')
         .eq('id', contentId)
-        .single()
+        .maybeSingle()
+
+      if (pageError) {
+        throw new Error(`Error fetching website page: ${pageError.message}`)
+      }
 
       if (!page) {
         throw new Error('Website page not found')
       }
 
-      htmlContent = generateWebsiteHTML(page.websites, page, customDomain)
+      // Fetch the related website separately
+      const { data: website, error: websiteError } = await supabase
+        .from('websites')
+        .select('*')
+        .eq('id', page.website_id)
+        .maybeSingle()
+
+      if (websiteError || !website) {
+        throw new Error('Website not found for page')
+      }
+
+      htmlContent = generateWebsiteHTML(website, page, customDomain)
       
     } else if (contentType === 'funnel_step') {
       // Fetch specific funnel step
-      const { data: step } = await supabase
+      const { data: step, error: stepError } = await supabase
         .from('funnel_steps')
-        .select(`
-          *,
-          funnels(*)
-        `)
+        .select('*')
         .eq('id', contentId)
-        .single()
+        .maybeSingle()
+
+      if (stepError) {
+        throw new Error(`Error fetching funnel step: ${stepError.message}`)
+      }
 
       if (!step) {
         throw new Error('Funnel step not found')
       }
 
-      htmlContent = generateFunnelHTML(step.funnels, step, customDomain)
+      // Fetch the related funnel separately
+      const { data: funnel, error: funnelError } = await supabase
+        .from('funnels')
+        .select('*')
+        .eq('id', step.funnel_id)
+        .maybeSingle()
+
+      if (funnelError || !funnel) {
+        throw new Error('Funnel not found for step')
+      }
+
+      htmlContent = generateFunnelHTML(funnel, step, customDomain)
     }
 
     // Store the snapshot
