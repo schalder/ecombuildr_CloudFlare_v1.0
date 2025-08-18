@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { 
   LayoutDashboard, 
@@ -36,6 +36,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { supabase } from "@/integrations/supabase/client";
 
 
 const navigationItems = [
@@ -123,8 +124,23 @@ export function AppSidebar() {
   const location = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   
+  
+  // Check if user is super admin
+  useEffect(() => {
+    const checkSuperAdmin = async () => {
+      try {
+        const { data } = await supabase.rpc('is_super_admin');
+        setIsSuperAdmin(data || false);
+      } catch (error) {
+        console.error('Error checking super admin status:', error);
+        setIsSuperAdmin(false);
+      }
+    };
 
+    checkSuperAdmin();
+  }, []);
   const currentPath = location.pathname;
 
   const isActive = (url: string | { pathname: string; search: string }) => {
@@ -270,19 +286,27 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Super Admin Dashboard Button - only show if on admin routes */}
-        {currentPath.startsWith('/admin') && (
-          <SidebarGroup>
-            <SidebarGroupContent>
+        {/* Super Admin Dashboard Switcher - only visible for super admins */}
+        {isSuperAdmin && (
+          <SidebarGroup className="border-t border-sidebar-border">
+            <SidebarGroupContent className="p-2">
               <SidebarMenu>
                 <SidebarMenuItem>
-                  <SidebarMenuButton asChild isActive={currentPath.startsWith('/admin')} className="min-h-[44px] touch-manipulation">
+                  <SidebarMenuButton asChild className="min-h-[44px] touch-manipulation">
                     <NavLink 
-                      to="/admin/dashboard"
-                      className="min-h-[44px] touch-manipulation bg-gradient-to-r from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700"
+                      to={currentPath.startsWith('/admin') ? '/dashboard/overview' : '/admin/dashboard'}
+                      className={({ isActive }) => 
+                        currentPath.startsWith('/admin')
+                          ? "bg-gradient-to-r from-orange-500 to-orange-600 text-white hover:from-orange-600 hover:to-orange-700 min-h-[44px] touch-manipulation"
+                          : "bg-gradient-to-r from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700 min-h-[44px] touch-manipulation"
+                      }
                     >
                       <Shield className="mr-3 h-4 w-4" />
-                      {!collapsed && <span>Super Admin</span>}
+                      {!collapsed && (
+                        <span>
+                          {currentPath.startsWith('/admin') ? 'Switch to User Dashboard' : 'Switch to Admin Dashboard'}
+                        </span>
+                      )}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
