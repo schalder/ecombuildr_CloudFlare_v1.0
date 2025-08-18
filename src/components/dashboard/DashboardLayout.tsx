@@ -2,6 +2,7 @@ import { ReactNode } from "react";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
 import { DashboardHeader } from "./DashboardHeader";
+import { WhatsAppWidget } from "@/components/WhatsAppWidget";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -22,6 +23,7 @@ export function DashboardLayout({ children, title, description }: DashboardLayou
             </div>
           </main>
         </SidebarInset>
+        <WhatsAppWidget />
       </div>
     </SidebarProvider>
   );

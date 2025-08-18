@@ -1192,6 +1192,39 @@ export type Database = {
         }
         Relationships: []
       }
+      platform_support_settings: {
+        Row: {
+          availability_message: string | null
+          created_at: string
+          id: string
+          is_enabled: boolean
+          updated_at: string
+          welcome_message: string
+          whatsapp_number: string
+          widget_position: string
+        }
+        Insert: {
+          availability_message?: string | null
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          updated_at?: string
+          welcome_message?: string
+          whatsapp_number: string
+          widget_position?: string
+        }
+        Update: {
+          availability_message?: string | null
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          updated_at?: string
+          welcome_message?: string
+          whatsapp_number?: string
+          widget_position?: string
+        }
+        Relationships: []
+      }
       product_library: {
         Row: {
           ad_copy: string | null

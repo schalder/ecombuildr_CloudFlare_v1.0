@@ -8,6 +8,7 @@ import { ToolsShowcase } from "@/components/ToolsShowcase";
 import { Testimonials } from "@/components/Testimonials";
 import { Pricing } from "@/components/Pricing";
 import { Footer } from "@/components/Footer";
+import { WhatsAppWidget } from "@/components/WhatsAppWidget";
 
 const Index = () => {
   const { user, loading } = useAuth();
@@ -33,6 +34,7 @@ const Index = () => {
         <Pricing />
       </div>
       <Footer />
+      <WhatsAppWidget />
     </div>
   );
 };
