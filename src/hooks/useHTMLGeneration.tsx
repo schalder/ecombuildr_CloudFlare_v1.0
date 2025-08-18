@@ -42,22 +42,43 @@ export function useHTMLGeneration() {
 
       const htmlContent = generateStaticHTML(pageData, options);
 
-      // Save to html_snapshots table
-      const { error } = await supabase
+      // Save to html_snapshots table using a more reliable upsert approach
+      // First try to update existing record
+      const { data: existingRecord } = await supabase
         .from('html_snapshots')
-        .upsert({
-          content_id: contentId,
-          content_type: contentType,
-          custom_domain: customDomain || null,
-          html_content: htmlContent,
-          generated_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        }, {
-          onConflict: 'content_id,content_type,custom_domain'
-        });
+        .select('id')
+        .eq('content_id', contentId)
+        .eq('content_type', contentType)
+        .eq('custom_domain', customDomain || null)
+        .single();
 
-      if (error) {
-        console.error('Error saving HTML snapshot:', error);
+      let result;
+      if (existingRecord) {
+        // Update existing record
+        result = await supabase
+          .from('html_snapshots')
+          .update({
+            html_content: htmlContent,
+            generated_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', existingRecord.id);
+      } else {
+        // Insert new record
+        result = await supabase
+          .from('html_snapshots')
+          .insert({
+            content_id: contentId,
+            content_type: contentType,
+            custom_domain: customDomain || null,
+            html_content: htmlContent,
+            generated_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          });
+      }
+
+      if (result.error) {
+        console.error('Error saving HTML snapshot:', result.error);
         toast({
           title: 'HTML Generation Failed',
           description: 'Failed to save static HTML snapshot',
