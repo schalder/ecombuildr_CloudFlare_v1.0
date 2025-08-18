@@ -45,6 +45,15 @@ export const usePlanLimits = () => {
     queryFn: async () => {
       if (!user) throw new Error('No user found');
 
+      // Check for active subscription first
+      const { data: activeSubscription, error: subscriptionError } = await supabase
+        .from('saas_subscriptions')
+        .select('plan_name, subscription_status, expires_at')
+        .eq('user_id', user.id)
+        .eq('subscription_status', 'active')
+        .order('created_at', { ascending: false })
+        .maybeSingle();
+
       // Get user profile with plan info
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
@@ -88,6 +97,16 @@ export const usePlanLimits = () => {
         throw new Error('User profile not found');
       } else {
         userProfile = profile;
+      }
+
+      // Override profile with active subscription data if available
+      if (activeSubscription) {
+        userProfile = {
+          ...userProfile,
+          subscription_plan: activeSubscription.plan_name,
+          account_status: 'active',
+          subscription_expires_at: activeSubscription.expires_at
+        };
       }
 
       // Get plan limits for user's current plan  

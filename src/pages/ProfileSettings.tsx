@@ -87,11 +87,14 @@ export default function ProfileSettings() {
 
   const getPlanDisplayName = (planName: string) => {
     const planNames: Record<string, string> = {
-      free: 'ফ্রি প্ল্যান',
+      starter: 'স্টার্টার প্ল্যান',
       basic: 'বেসিক প্ল্যান',
       professional: 'প্রফেশনাল প্ল্যান',
       pro: 'প্রো প্ল্যান',
-      enterprise: 'এন্টারপ্রাইজ প্ল্যান'
+      enterprise: 'এন্টারপ্রাইজ প্ল্যান',
+      pro_monthly: 'প্রো মাসিক',
+      pro_yearly: 'প্রো বার্ষিক',
+      reseller: 'রিসেলার প্ল্যান'
     };
     return planNames[planName] || planName;
   };
@@ -189,7 +192,7 @@ export default function ProfileSettings() {
                   <div>
                     <h4 className="font-medium">Current Plan</h4>
                     <p className="text-sm text-muted-foreground">
-                      {getPlanDisplayName(userProfile?.subscription_plan || 'free')}
+                      {getPlanDisplayName(userProfile?.subscription_plan || 'starter')}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
