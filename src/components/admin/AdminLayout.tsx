@@ -11,9 +11,10 @@ interface AdminLayoutProps {
   children: ReactNode;
   title?: string;
   description?: string;
+  fluid?: boolean;
 }
 
-export function AdminLayout({ children, title, description }: AdminLayoutProps) {
+export function AdminLayout({ children, title, description, fluid = false }: AdminLayoutProps) {
   const navigate = useNavigate();
   const { signOut } = useAuth();
 
@@ -74,9 +75,13 @@ export function AdminLayout({ children, title, description }: AdminLayoutProps) 
 
           {/* Main Content */}
           <main className="flex-1 overflow-auto">
-            <div className="container mx-auto p-6 space-y-6">
-              {children}
-            </div>
+            {fluid ? (
+              children
+            ) : (
+              <div className="container mx-auto p-6 space-y-6">
+                {children}
+              </div>
+            )}
           </main>
         </SidebarInset>
       </div>
