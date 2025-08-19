@@ -104,13 +104,13 @@ export default function AdminAddLibraryProduct() {
         base_cost: data.base_cost || 0,
         shipping_cost: data.shipping_cost || 0,
         category_id: data.category_id || '',
-        images: data.images || [],
+        images: Array.isArray(data.images) ? (data.images as string[]) : [],
         is_trending: data.is_trending || false,
         supplier_link: data.supplier_link || '',
         ad_copy: data.ad_copy || '',
         video_url: data.video_url || '',
         tags: data.tags || [],
-        status: data.status || 'draft'
+        status: (data.status === 'published' ? 'published' : 'draft') as 'draft' | 'published'
       });
     } catch (error: any) {
       toast({
@@ -299,12 +299,45 @@ export default function AdminAddLibraryProduct() {
                 <CardTitle>Product Images</CardTitle>
               </CardHeader>
               <CardContent>
-                <ImageUpload
-                  value={formData.images}
-                  onChange={(images) => setFormData({ ...formData, images })}
-                  maxFiles={5}
-                  className="w-full"
-                />
+                <div className="space-y-4">
+                  {formData.images.map((image, index) => (
+                    <div key={index} className="flex items-center space-x-2">
+                       <div className="flex-1">
+                         <ImageUpload
+                           value={image}
+                           onChange={(url) => {
+                             const newImages = [...formData.images];
+                             newImages[index] = url;
+                             setFormData({ ...formData, images: newImages });
+                           }}
+                         />
+                       </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const newImages = formData.images.filter((_, i) => i !== index);
+                          setFormData({ ...formData, images: newImages });
+                        }}
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                  ))}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      if (formData.images.length < 5) {
+                        setFormData({ ...formData, images: [...formData.images, ''] });
+                      }
+                    }}
+                    disabled={formData.images.length >= 5}
+                  >
+                    Add Image ({formData.images.length}/5)
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </div>

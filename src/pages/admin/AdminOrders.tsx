@@ -101,7 +101,7 @@ export default function AdminOrders() {
     try {
       const { error } = await supabase
         .from('orders')
-        .update({ status })
+        .update({ status: status as 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled' })
         .eq('id', orderId);
 
       if (error) throw error;
