@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from '@/components/ui/toaster';
 import { ThemeProvider } from 'next-themes';
+import { AuthProvider } from '@/hooks/useAuth';
 
 // Core pages
 import Index from '@/pages/Index';
@@ -30,7 +31,8 @@ import AdminOrders from '@/pages/admin/AdminOrders';
 function App() {
   return (
     <ThemeProvider defaultTheme="system" attribute="class">
-      <Router>
+      <AuthProvider>
+        <Router>
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="*" element={<NotFound />} />
@@ -61,8 +63,9 @@ function App() {
           <Route path="/admin/product-library/edit/:id" element={<AdminAddLibraryProduct />} />
           <Route path="/admin/orders" element={<AdminOrders />} />
         </Routes>
+        <Toaster />
       </Router>
-      <Toaster />
+      </AuthProvider>
     </ThemeProvider>
   );
 }
