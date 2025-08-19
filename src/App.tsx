@@ -23,6 +23,7 @@ import Orders from "./pages/Orders";
 import Customers from "./pages/Customers";
 import Analytics from "./pages/Analytics";
 import Reviews from "./pages/Reviews";
+import MediaStorage from "./pages/MediaStorage";
 
 import PageBuilder from "./pages/PageBuilder";
 import Websites from "./pages/Websites";
@@ -113,6 +114,7 @@ const App = () => (
                     <Route path="customers" element={<Customers />} />
                     <Route path="analytics" element={<Analytics />} />
                     <Route path="reviews" element={<Reviews />} />
+                    <Route path="media" element={<MediaStorage />} />
                     <Route path="websites" element={<Websites />} />
                     <Route path="funnels" element={<Funnels />} />
                     <Route path="funnels/:id" element={<FunnelManagement />} />

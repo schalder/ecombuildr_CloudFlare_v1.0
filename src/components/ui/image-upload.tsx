@@ -38,20 +38,24 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
 
     setIsUploading(true);
     try {
-      // Upload to Supabase Storage
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      // Upload to user-scoped path in Supabase Storage
       const fileExt = file.name.split('.').pop();
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
       
       const { data, error } = await supabase.storage
         .from('images')
-        .upload(fileName, file);
+        .upload(`${user.id}/${fileName}`, file);
 
       if (error) throw error;
 
       // Get public URL
       const { data: { publicUrl } } = supabase.storage
         .from('images')
-        .getPublicUrl(fileName);
+        .getPublicUrl(`${user.id}/${fileName}`);
 
       onChange(publicUrl);
       

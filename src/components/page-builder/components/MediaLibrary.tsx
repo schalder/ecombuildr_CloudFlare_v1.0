@@ -6,6 +6,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Search, Upload, Trash2, ExternalLink } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
 interface MediaItem {
   name: string;
@@ -36,6 +37,7 @@ export const MediaLibrary: React.FC<MediaLibraryProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [selectedItem, setSelectedItem] = useState<string | null>(null);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   useEffect(() => {
     if (isOpen) {
@@ -51,11 +53,13 @@ export const MediaLibrary: React.FC<MediaLibraryProps> = ({
   }, [mediaItems, searchTerm]);
 
   const fetchMediaItems = async () => {
+    if (!user) return;
+    
     setIsLoading(true);
     try {
       const { data, error } = await supabase.storage
         .from('images')
-        .list('', {
+        .list(user.id, {
           limit: 100,
           offset: 0,
           sortBy: { column: 'created_at', order: 'desc' }
@@ -68,7 +72,7 @@ export const MediaLibrary: React.FC<MediaLibraryProps> = ({
         .map(file => {
           const { data: { publicUrl } } = supabase.storage
             .from('images')
-            .getPublicUrl(file.name);
+            .getPublicUrl(`${user.id}/${file.name}`);
           
           return {
             name: file.name,
@@ -96,10 +100,12 @@ export const MediaLibrary: React.FC<MediaLibraryProps> = ({
   };
 
   const handleDelete = async (fileName: string) => {
+    if (!user) return;
+    
     try {
       const { error } = await supabase.storage
         .from('images')
-        .remove([fileName]);
+        .remove([`${user.id}/${fileName}`]);
 
       if (error) throw error;
 
