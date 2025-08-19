@@ -12,8 +12,6 @@ import { toast } from "sonner";
 type Review = {
   id: string;
   reviewer_name: string;
-  reviewer_email?: string | null;
-  reviewer_phone?: string | null;
   rating: number;
   title?: string | null;
   comment?: string | null;
@@ -45,17 +43,14 @@ export const ReviewsSection: React.FC<ReviewsSectionProps> = ({ productId }) => 
 
   const load = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from("product_reviews")
-      .select("id, reviewer_name, reviewer_email, reviewer_phone, rating, title, comment, created_at")
-      .eq("product_id", productId)
-      .eq("is_visible", true)
-      .order("created_at", { ascending: false });
+    const { data, error } = await supabase.rpc('get_public_reviews', { 
+      product_uuid: productId 
+    });
 
     if (error) {
       console.error("Failed to load reviews:", error);
     } else {
-      setReviews((data as any) || []);
+      setReviews((data as Review[]) || []);
     }
     setLoading(false);
   };
@@ -71,29 +66,15 @@ export const ReviewsSection: React.FC<ReviewsSectionProps> = ({ productId }) => 
       return;
     }
     setSubmitting(true);
-    // Fetch store_id for the product to satisfy types and constraints
-    const { data: productData, error: productError } = await supabase
-      .from("products")
-      .select("store_id")
-      .eq("id", productId)
-      .maybeSingle();
 
-    if (productError || !productData?.store_id) {
-      console.error("Failed to resolve product store_id:", productError);
-      toast.error("Unable to submit review at the moment.");
-      setSubmitting(false);
-      return;
-    }
-
-    const { error } = await supabase.from("product_reviews").insert({
-      product_id: productId,
-      store_id: productData.store_id,
-      reviewer_name: form.name,
-      reviewer_email: form.email || null,
-      reviewer_phone: form.phone || null,
-      rating: Number(form.rating),
-      title: form.title || null,
-      comment: form.comment || null,
+    const { error } = await supabase.rpc('submit_product_review', {
+      product_uuid: productId,
+      reviewer_name_param: form.name,
+      rating_param: Number(form.rating),
+      title_param: form.title || null,
+      comment_param: form.comment || null,
+      reviewer_email_param: form.email || null,
+      reviewer_phone_param: form.phone || null,
     });
 
     if (error) {
