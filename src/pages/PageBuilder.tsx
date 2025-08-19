@@ -228,13 +228,14 @@ export default function PageBuilder() {
           const { generateAndSavePreview } = await import('@/lib/pagePreview');
           const previewType = context === 'website' ? 'website_page' : 'funnel_step';
           
-          // Add a small delay to ensure DOM is fully rendered
+          // Add a longer delay to ensure DOM is fully rendered and page builder is loaded
           setTimeout(() => {
-            generateAndSavePreview(entityId, previewType);
-          }, 500);
+            generateAndSavePreview(entityId, previewType).catch(error => {
+              console.warn('Failed to generate preview in background:', error);
+            });
+          }, 2000); // Increased delay
         } catch (previewError) {
-          console.warn('Failed to generate preview:', previewError);
-          // Don't show error to user - this is background enhancement
+          console.warn('Failed to load preview generation module:', previewError);
         }
       }
 

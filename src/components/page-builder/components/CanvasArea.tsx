@@ -103,11 +103,13 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
   };
 
   return (
-    <div className="flex-1 p-8 overflow-auto bg-muted/20">
+    <div className="flex-1 p-8 overflow-auto bg-muted/20 canvas-container">
       <div
         ref={drop}
         data-canvas-area="true"
+        data-testid="canvas-area"
         className={cn(
+          'canvas-area page-builder-canvas',
           getCanvasClasses(),
           isOver && 'ring-2 ring-primary ring-opacity-50',
           isPreviewMode && 'pointer-events-none'
