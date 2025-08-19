@@ -2,11 +2,13 @@ import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserStore } from '@/hooks/useUserStore';
 import { useStoreWebsites } from '@/hooks/useStoreWebsites';
+import { useStoreFunnels } from '@/hooks/useStoreFunnels';
 
 export function OnboardingGate() {
   const { user, loading: authLoading } = useAuth();
   const { store, loading: storeLoading } = useUserStore();
   const { websites, loading: websitesLoading } = useStoreWebsites(store?.id || '');
+  const { funnels, loading: funnelsLoading } = useStoreFunnels(store?.id || '');
   const location = useLocation();
 
   // Redirect if not authenticated
@@ -14,8 +16,8 @@ export function OnboardingGate() {
     return <Navigate to="/auth" replace />;
   }
 
-  // Show loading while checking authentication or store
-  if (authLoading || storeLoading) {
+  // Show loading while checking authentication, store, websites, or funnels
+  if (authLoading || storeLoading || websitesLoading || funnelsLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -23,16 +25,16 @@ export function OnboardingGate() {
     );
   }
 
-  // Don't interfere with the create website page itself
-  if (location.pathname === '/dashboard/websites/create') {
+  // Don't interfere with create pages
+  if (location.pathname === '/dashboard/websites/create' || location.pathname === '/dashboard/funnels/create') {
     return <Outlet />;
   }
 
-  // If user has no store or no websites, redirect to create website page
-  if (!store || (!websitesLoading && websites.length === 0)) {
+  // If user has no store or no websites/funnels, redirect to create website page
+  if (!store || (websites.length === 0 && funnels.length === 0)) {
     return <Navigate to="/dashboard/websites/create" replace />;
   }
 
-  // User is authenticated and has websites, proceed normally
+  // User is authenticated and has websites or funnels, proceed normally
   return <Outlet />;
 }
