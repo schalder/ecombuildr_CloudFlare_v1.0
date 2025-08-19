@@ -247,10 +247,14 @@ export const capturePageBuilderPreview = async (
       return createEmptyPagePreview(pageId, type);
     }
     
-    // Check if page is empty (no sections)
-    const sections = contentElement.querySelectorAll('[class*="section"]');
-    if (sections.length === 0) {
-      console.log('Page is empty, creating placeholder preview');
+    // Check if page has actual content (sections with elements)
+    const sections = contentElement.querySelectorAll('[data-pb-section-id]');
+    const elements = contentElement.querySelectorAll('[data-pb-element-id]');
+    
+    console.log(`Found ${sections.length} sections and ${elements.length} elements in content area`);
+    
+    if (sections.length === 0 || elements.length === 0) {
+      console.log('Page is empty (no sections or elements), creating placeholder preview');
       return createEmptyPagePreview(pageId, type);
     }
     
