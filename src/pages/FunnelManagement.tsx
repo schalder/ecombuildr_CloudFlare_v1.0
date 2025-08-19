@@ -503,8 +503,35 @@ const FunnelManagement = () => {
                                   )}
                                 </div>
                               </div>
-                              <div className="bg-background border-2 border-dashed border-muted-foreground/25 rounded-lg p-8">
-                                <div className="text-center">
+                              <div className="bg-background border-2 border-dashed border-muted-foreground/25 rounded-lg overflow-hidden">
+                                {selectedStep.preview_image_url ? (
+                                  <div className="relative">
+                                    <img 
+                                      src={selectedStep.preview_image_url} 
+                                      alt={`Preview of ${selectedStep.title}`}
+                                      className="w-full h-64 object-cover"
+                                      onError={(e) => {
+                                        // Fallback to placeholder if image fails to load
+                                        e.currentTarget.style.display = 'none';
+                                        const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                                        if (fallback) fallback.style.display = 'block';
+                                      }}
+                                    />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                                    <div className="absolute bottom-4 left-4 text-white">
+                                      <p className="text-sm font-medium">
+                                        {getStepTypeLabel(selectedStep.step_type)} - {selectedStep.title}
+                                      </p>
+                                      <p className="text-xs opacity-90">
+                                        {selectedStep.is_published ? 'Published' : 'Draft'}
+                                      </p>
+                                    </div>
+                                  </div>
+                                ) : null}
+                                <div 
+                                  className={`p-8 text-center ${selectedStep.preview_image_url ? 'hidden' : 'block'}`}
+                                  style={{ display: selectedStep.preview_image_url ? 'none' : 'block' }}
+                                >
                                   <div className="w-16 h-16 bg-green-100 rounded-lg mx-auto mb-4 flex items-center justify-center">
                                     <div className="w-8 h-1 bg-green-500 rounded"></div>
                                   </div>
