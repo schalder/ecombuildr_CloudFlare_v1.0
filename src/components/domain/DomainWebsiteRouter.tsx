@@ -14,6 +14,7 @@ import { StorefrontProducts } from '@/pages/storefront/StorefrontProducts';
 import { WebsiteHeader } from '@/components/storefront/WebsiteHeader';
 import { WebsiteFooter } from '@/components/storefront/WebsiteFooter';
 import { FloatingCartButton } from '@/components/storefront/FloatingCartButton';
+import { WebsiteProvider } from '@/contexts/WebsiteContext';
 
 const DynamicWebsiteRoute: React.FC<{ fallback: React.ReactElement; websiteId: string }> = ({ fallback, websiteId }) => {
   const { slug } = useParams<{ slug: string }>();
@@ -48,7 +49,7 @@ export const DomainWebsiteRouter: React.FC<DomainWebsiteRouterProps> = ({
   }, [location.pathname, trackPageView]);
 
   return (
-    <>
+    <WebsiteProvider websiteId={websiteId}>
       <WebsiteHeader website={website} />
       <main className="flex-1">
         <Routes>
@@ -111,6 +112,6 @@ export const DomainWebsiteRouter: React.FC<DomainWebsiteRouterProps> = ({
         <FloatingCartButton position={website.settings?.floating_cart?.position ?? 'bottom-right'} />
       )}
       <WebsiteFooter website={website} />
-    </>
+    </WebsiteProvider>
   );
 };
