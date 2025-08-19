@@ -412,6 +412,62 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = memo(({
     }
   }, [data, updateData]);
 
+  // Section up/down movement functions
+  const moveSectionUp = useCallback((sectionId: string) => {
+    const sectionIndex = data.sections.findIndex(s => s.id === sectionId);
+    if (sectionIndex > 0) {
+      moveSection(sectionId, sectionIndex - 1);
+    }
+  }, [data.sections, moveSection]);
+
+  const moveSectionDown = useCallback((sectionId: string) => {
+    const sectionIndex = data.sections.findIndex(s => s.id === sectionId);
+    if (sectionIndex < data.sections.length - 1) {
+      moveSection(sectionId, sectionIndex + 1);
+    }
+  }, [data.sections, moveSection]);
+
+  // Row up/down movement functions
+  const moveRowUp = useCallback((sectionId: string, rowId: string) => {
+    const section = data.sections.find(s => s.id === sectionId);
+    if (!section?.rows) return;
+    
+    const rowIndex = section.rows.findIndex(r => r.id === rowId);
+    if (rowIndex > 0) {
+      moveRow(rowId, sectionId, rowIndex - 1);
+    }
+  }, [data.sections, moveRow]);
+
+  const moveRowDown = useCallback((sectionId: string, rowId: string) => {
+    const section = data.sections.find(s => s.id === sectionId);
+    if (!section?.rows) return;
+    
+    const rowIndex = section.rows.findIndex(r => r.id === rowId);
+    if (rowIndex < section.rows.length - 1) {
+      moveRow(rowId, sectionId, rowIndex + 1);
+    }
+  }, [data.sections, moveRow]);
+
+  // Column movement function
+  const moveColumn = useCallback((sectionId: string, rowId: string, columnId: string, direction: 'up' | 'down') => {
+    const newData = { ...data };
+    const section = newData.sections.find(s => s.id === sectionId);
+    const row = section?.rows?.find(r => r.id === rowId);
+    
+    if (!row?.columns) return;
+    
+    const columnIndex = row.columns.findIndex(c => c.id === columnId);
+    const targetIndex = direction === 'up' ? columnIndex - 1 : columnIndex + 1;
+    
+    if (targetIndex >= 0 && targetIndex < row.columns.length) {
+      // Swap columns
+      const temp = row.columns[columnIndex];
+      row.columns[columnIndex] = row.columns[targetIndex];
+      row.columns[targetIndex] = temp;
+      updateData(newData);
+    }
+  }, [data, updateData]);
+
   // Element operations
   const addElement = useCallback((sectionId: string, rowId: string, columnId: string, elementType: string, insertIndex?: number) => {
     console.log('Adding element:', { sectionId, rowId, columnId, elementType, insertIndex });
@@ -832,6 +888,7 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = memo(({
                         <SectionComponent
                           section={section}
                           sectionIndex={sectionIndex}
+                          totalSections={data.sections.length}
                           deviceType={deviceType}
                           isSelected={selection?.type === 'section' && selection.id === section.id}
                           onSelect={() => setSelection({ type: 'section', id: section.id })}
@@ -840,8 +897,13 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = memo(({
                           onAddRow={(insertIndex?: number) => setShowColumnModal({ sectionId: section.id, insertIndex })}
                           onDeleteRow={(rowId) => deleteRow(section.id, rowId)}
                           onMoveRow={moveRow}
+                          onMoveRowUp={moveRowUp}
+                          onMoveRowDown={moveRowDown}
                           onMoveElement={moveElement}
                           onMoveSection={moveSection}
+                          onMoveSectionUp={() => moveSectionUp(section.id)}
+                          onMoveSectionDown={() => moveSectionDown(section.id)}
+                          onMoveColumn={moveColumn}
                           onAddElement={addElement}
                           onUpdateElement={updateElement}
                           onDeleteElement={deleteElement}
@@ -1014,6 +1076,7 @@ const DraggableElement: React.FC<DraggableElementProps> = ({ element }) => {
 interface SectionComponentProps {
   section: PageBuilderSection;
   sectionIndex: number;
+  totalSections: number;
   deviceType: 'desktop' | 'tablet' | 'mobile';
   isSelected: boolean;
   onSelect: () => void;
@@ -1022,8 +1085,13 @@ interface SectionComponentProps {
   onAddRow: (insertIndex?: number) => void;
   onDeleteRow: (rowId: string) => void;
   onMoveRow: (rowId: string, targetSectionId: string, insertIndex: number) => void;
+  onMoveRowUp: (sectionId: string, rowId: string) => void;
+  onMoveRowDown: (sectionId: string, rowId: string) => void;
   onMoveElement: (elementId: string, targetSectionId: string, targetRowId: string, targetColumnId: string, insertIndex: number) => void;
   onMoveSection: (sectionId: string, insertIndex: number) => void;
+  onMoveSectionUp: () => void;
+  onMoveSectionDown: () => void;
+  onMoveColumn: (sectionId: string, rowId: string, columnId: string, direction: 'up' | 'down') => void;
   onAddElement: (sectionId: string, rowId: string, columnId: string, elementType: string, insertIndex?: number) => void;
   onUpdateElement: (elementId: string, updates: Partial<PageBuilderElement>) => void;
   onDeleteElement: (elementId: string) => void;
@@ -1035,6 +1103,8 @@ interface SectionComponentProps {
 
 const SectionComponent: React.FC<SectionComponentProps> = ({
   section,
+  sectionIndex,
+  totalSections,
   deviceType,
   isSelected,
   onSelect,
@@ -1043,8 +1113,13 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
   onAddRow,
   onDeleteRow,
   onMoveRow,
+  onMoveRowUp,
+  onMoveRowDown,
   onMoveElement,
   onMoveSection,
+  onMoveSectionUp,
+  onMoveSectionDown,
+  onMoveColumn,
   onAddElement,
   onUpdateElement,
   onDeleteElement,
@@ -1097,6 +1172,30 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
           <Grip className="h-3 w-3" />
           <span className="font-medium">Section</span>
           <Separator orientation="vertical" className="mx-1 h-4" />
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-6 w-6 p-0 hover:bg-primary-foreground/20" 
+            onClick={(e) => {
+              e.stopPropagation();
+              onMoveSectionUp();
+            }}
+            disabled={sectionIndex === 0}
+          >
+            <ArrowUp className="h-3 w-3" />
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-6 w-6 p-0 hover:bg-primary-foreground/20" 
+            onClick={(e) => {
+              e.stopPropagation();
+              onMoveSectionDown();
+            }}
+            disabled={sectionIndex === totalSections - 1}
+          >
+            <ArrowDown className="h-3 w-3" />
+          </Button>
            <Button 
              variant="ghost" 
              size="sm" 
@@ -1172,13 +1271,18 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
                   <div key={row.id}>
                     <RowComponent
                       row={row}
+                      rowIndex={index}
+                      totalRows={(section.rows || []).length}
                       sectionId={section.id}
                       deviceType={deviceType}
                       isSelected={selection?.type === 'row' && selection.id === row.id}
                       onSelect={() => onSelectionChange({ type: 'row', id: row.id, parentId: section.id })}
                       onDelete={() => onDeleteRow(row.id)}
                       onAddRow={() => onAddRow(index + 1)}
-                        onMoveElement={onMoveElement}
+                      onMoveRowUp={() => onMoveRowUp(section.id, row.id)}
+                      onMoveRowDown={() => onMoveRowDown(section.id, row.id)}
+                      onMoveElement={onMoveElement}
+                      onMoveColumn={onMoveColumn}
                       onAddElement={onAddElement}
                       onUpdateElement={onUpdateElement}
                       onDeleteElement={onDeleteElement}
@@ -1213,13 +1317,18 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
 // Row Component
 interface RowComponentProps {
   row: PageBuilderRow;
+  rowIndex: number;
+  totalRows: number;
   sectionId: string;
   deviceType: 'desktop' | 'tablet' | 'mobile';
   isSelected: boolean;
   onSelect: () => void;
   onDelete: () => void;
   onAddRow: () => void;
+  onMoveRowUp: () => void;
+  onMoveRowDown: () => void;
   onMoveElement: (elementId: string, targetSectionId: string, targetRowId: string, targetColumnId: string, insertIndex: number) => void;
+  onMoveColumn: (sectionId: string, rowId: string, columnId: string, direction: 'up' | 'down') => void;
   onAddElement: (sectionId: string, rowId: string, columnId: string, elementType: string, insertIndex?: number) => void;
   onUpdateElement: (elementId: string, updates: Partial<PageBuilderElement>) => void;
   onDeleteElement: (elementId: string) => void;
@@ -1230,13 +1339,18 @@ interface RowComponentProps {
 
 const RowComponent: React.FC<RowComponentProps> = ({
   row,
+  rowIndex,
+  totalRows,
   sectionId,
   deviceType,
   isSelected,
   onSelect,
   onDelete,
   onAddRow,
+  onMoveRowUp,
+  onMoveRowDown,
   onMoveElement,
+  onMoveColumn,
   onAddElement,
   onUpdateElement,
   onDeleteElement,
@@ -1290,6 +1404,30 @@ const RowComponent: React.FC<RowComponentProps> = ({
           </div>
           <span className="font-medium">Row ({row.columnLayout})</span>
           <Separator orientation="vertical" className="mx-1 h-4" />
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-6 w-6 p-0 hover:bg-secondary-foreground/20"
+            onClick={(e) => {
+              e.stopPropagation();
+              onMoveRowUp();
+            }}
+            disabled={rowIndex === 0}
+          >
+            <ArrowUp className="h-3 w-3" />
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-6 w-6 p-0 hover:bg-secondary-foreground/20"
+            onClick={(e) => {
+              e.stopPropagation();
+              onMoveRowDown();
+            }}
+            disabled={rowIndex === totalRows - 1}
+          >
+            <ArrowDown className="h-3 w-3" />
+          </Button>
           <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-secondary-foreground/20">
             <Columns className="h-3 w-3" />
           </Button>
@@ -1311,10 +1449,12 @@ const RowComponent: React.FC<RowComponentProps> = ({
       )}
 
       <div className={`grid gap-4 p-4 ${getResponsiveGridClasses(row.columnLayout, deviceType)}`}>
-        {row.columns.map((column) => (
+        {row.columns.map((column, columnIndex) => (
           <ColumnComponent
             key={column.id}
             column={column}
+            columnIndex={columnIndex}
+            totalColumns={row.columns.length}
             rowId={row.id}
             sectionId={sectionId}
             deviceType={deviceType}
@@ -1325,6 +1465,8 @@ const RowComponent: React.FC<RowComponentProps> = ({
               parentId: row.id, 
               grandParentId: sectionId 
             })}
+            onMoveColumnUp={() => onMoveColumn(sectionId, row.id, column.id, 'up')}
+            onMoveColumnDown={() => onMoveColumn(sectionId, row.id, column.id, 'down')}
             onAddElement={onAddElement}
             onMoveElement={onMoveElement}
             onUpdateElement={onUpdateElement}
@@ -1342,11 +1484,15 @@ const RowComponent: React.FC<RowComponentProps> = ({
 // Column Component
 interface ColumnComponentProps {
   column: PageBuilderColumn;
+  columnIndex: number;
+  totalColumns: number;
   rowId: string;
   sectionId: string;
   deviceType: 'desktop' | 'tablet' | 'mobile';
   isSelected: boolean;
   onSelect: () => void;
+  onMoveColumnUp: () => void;
+  onMoveColumnDown: () => void;
   onAddElement: (sectionId: string, rowId: string, columnId: string, elementType: string, insertIndex?: number) => void;
   onMoveElement: (elementId: string, targetSectionId: string, targetRowId: string, targetColumnId: string, insertIndex: number) => void;
   onUpdateElement: (elementId: string, updates: Partial<PageBuilderElement>) => void;
@@ -1358,11 +1504,15 @@ interface ColumnComponentProps {
 
 const ColumnComponent: React.FC<ColumnComponentProps> = ({
   column,
+  columnIndex,
+  totalColumns,
   rowId,
   sectionId,
   deviceType,
   isSelected,
   onSelect,
+  onMoveColumnUp,
+  onMoveColumnDown,
   onAddElement,
   onMoveElement,
   onUpdateElement,
@@ -1408,6 +1558,30 @@ const ColumnComponent: React.FC<ColumnComponentProps> = ({
           <Grip className="h-3 w-3" />
           <span className="font-medium">Column</span>
           <Separator orientation="vertical" className="mx-1 h-3" />
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-5 w-5 p-0 hover:bg-accent-foreground/20"
+            onClick={(e) => {
+              e.stopPropagation();
+              onMoveColumnUp();
+            }}
+            disabled={columnIndex === 0}
+          >
+            <ArrowUp className="h-2 w-2" />
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-5 w-5 p-0 hover:bg-accent-foreground/20"
+            onClick={(e) => {
+              e.stopPropagation();
+              onMoveColumnDown();
+            }}
+            disabled={columnIndex === totalColumns - 1}
+          >
+            <ArrowDown className="h-2 w-2" />
+          </Button>
           <Button 
             variant="ghost" 
             size="sm" 
