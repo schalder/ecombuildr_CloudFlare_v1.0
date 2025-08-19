@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { ElementorPageBuilder } from '@/components/page-builder/ElementorPageBuilder';
 import { PageBuilderData } from '@/components/page-builder/types';
-import { ArrowLeft, Save, Eye } from 'lucide-react';
+import { ArrowLeft, Save, Eye, Settings } from 'lucide-react';
 import { toast } from 'sonner';
 import html2canvas from 'html2canvas';
 
@@ -49,6 +49,7 @@ export default function AdminTemplateEditor() {
   const [builderData, setBuilderData] = useState<PageBuilderData>(defaultBuilderData);
   const [isSaving, setIsSaving] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
 
   const { data: template, isLoading } = useQuery({
     queryKey: ['template', templateId],
@@ -189,6 +190,10 @@ export default function AdminTemplateEditor() {
               <Eye className="h-4 w-4" />
               {showPreview ? 'Hide Preview' : 'Show Preview'}
             </Button>
+            <Button onClick={() => setShowSettings(!showSettings)} variant="outline" className="gap-2">
+              <Settings className="h-4 w-4" />
+              Settings
+            </Button>
             <Button onClick={handleSave} disabled={isSaving} className="gap-2">
               <Save className="h-4 w-4" />
               {isSaving ? 'Saving...' : 'Save Template'}
@@ -196,103 +201,120 @@ export default function AdminTemplateEditor() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Template Settings */}
-          <Card className="lg:col-span-1">
-            <CardHeader>
-              <CardTitle>Template Settings</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="name">Name</Label>
-                <Input
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="Template name"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Template description"
-                  rows={3}
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="category">Category</Label>
-                <Select
-                  value={formData.category}
-                  onValueChange={(value) => setFormData({ ...formData, category: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="general">General</SelectItem>
-                    <SelectItem value="business">Business</SelectItem>
-                    <SelectItem value="ecommerce">E-commerce</SelectItem>
-                    <SelectItem value="landing">Landing Page</SelectItem>
-                    <SelectItem value="portfolio">Portfolio</SelectItem>
-                    <SelectItem value="blog">Blog</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label htmlFor="type">Type</Label>
-                <Select
-                  value={formData.template_type}
-                  onValueChange={(value: 'website_page' | 'funnel_step') => 
-                    setFormData({ ...formData, template_type: value })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="website_page">Website Page</SelectItem>
-                    <SelectItem value="funnel_step">Funnel Step</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <Label htmlFor="published">Published</Label>
-                <Switch
-                  id="published"
-                  checked={formData.is_published}
-                  onCheckedChange={(checked) => setFormData({ ...formData, is_published: checked })}
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <Label htmlFor="premium">Premium</Label>
-                <Switch
-                  id="premium"
-                  checked={formData.is_premium}
-                  onCheckedChange={(checked) => setFormData({ ...formData, is_premium: checked })}
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Page Builder */}
-          <div className="lg:col-span-3">
-            <div data-preview="true">
+        <div className="relative">
+          {/* Full Width Page Builder */}
+          <div data-preview="true" className="w-full">
             <ElementorPageBuilder
               initialData={builderData}
               onChange={setBuilderData}
               onSave={handleSave}
               isSaving={isSaving}
             />
-            </div>
           </div>
+
+          {/* Settings Sidebar - Overlay */}
+          {showSettings && (
+            <div className="fixed inset-0 z-50 flex">
+              <div className="flex-1 bg-black/50" onClick={() => setShowSettings(false)} />
+              <div className="w-80 bg-background border-l shadow-lg h-full overflow-y-auto">
+                <Card className="border-0 shadow-none">
+                  <CardHeader className="border-b">
+                    <div className="flex items-center justify-between">
+                      <CardTitle>Template Settings</CardTitle>
+                      <Button variant="ghost" size="sm" onClick={() => setShowSettings(false)}>
+                        ×
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4 p-6">
+                    <div>
+                      <Label htmlFor="name">Name</Label>
+                      <Input
+                        id="name"
+                        value={formData.name}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        placeholder="Template name"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="description">Description</Label>
+                      <Textarea
+                        id="description"
+                        value={formData.description}
+                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                        placeholder="Template description"
+                        rows={3}
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="category">Category</Label>
+                      <Select
+                        value={formData.category}
+                        onValueChange={(value) => setFormData({ ...formData, category: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="general">General</SelectItem>
+                          <SelectItem value="business">Business</SelectItem>
+                          <SelectItem value="ecommerce">E-commerce</SelectItem>
+                          <SelectItem value="landing">Landing Page</SelectItem>
+                          <SelectItem value="portfolio">Portfolio</SelectItem>
+                          <SelectItem value="blog">Blog</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="type">Type</Label>
+                      <Select
+                        value={formData.template_type}
+                        onValueChange={(value: 'website_page' | 'funnel_step') => 
+                          setFormData({ ...formData, template_type: value })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="website_page">Website Page</SelectItem>
+                          <SelectItem value="funnel_step">Funnel Step</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="published">Published</Label>
+                      <Switch
+                        id="published"
+                        checked={formData.is_published}
+                        onCheckedChange={(checked) => setFormData({ ...formData, is_published: checked })}
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="premium">Premium</Label>
+                      <Switch
+                        id="premium"
+                        checked={formData.is_premium}
+                        onCheckedChange={(checked) => setFormData({ ...formData, is_premium: checked })}
+                      />
+                    </div>
+
+                    <div className="pt-4">
+                      <Button onClick={handleSave} disabled={isSaving} className="w-full gap-2">
+                        <Save className="h-4 w-4" />
+                        {isSaving ? 'Saving...' : 'Save Template'}
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </AdminLayout>
