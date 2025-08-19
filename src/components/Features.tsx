@@ -135,7 +135,7 @@ export const Features = () => {
           <div className="flex flex-wrap justify-center items-center gap-8 opacity-60">
             <div className="flex items-center gap-2 text-muted-foreground">
               <Globe className="h-5 w-5" />
-              <span className="font-medium">Multi-tenant Architecture</span>
+              <span className="font-medium">Drag & Drop Builder</span>
             </div>
             <div className="flex items-center gap-2 text-muted-foreground">
               <Zap className="h-5 w-5" />
