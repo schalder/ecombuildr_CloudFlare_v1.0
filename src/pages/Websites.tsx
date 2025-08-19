@@ -190,7 +190,7 @@ export default function Websites() {
                         className="flex-1"
                       >
                         <Edit className="mr-2 h-3 w-3" />
-                        Edit
+                        Manage
                       </Button>
                       <Button
                         variant="outline"

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, TrendingUp, Settings, ExternalLink, Eye, Edit, Trash2, BarChart3 } from 'lucide-react';
+import { Plus, TrendingUp, Settings, ExternalLink, Eye, Edit, Trash2 } from 'lucide-react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -86,9 +86,6 @@ export default function Funnels() {
     window.open(url, '_blank');
   };
 
-  const handleViewAnalytics = (funnelId: string) => {
-    navigate(`/dashboard/funnels/${funnelId}/analytics`);
-  };
 
   const handleDeleteFunnel = (funnelId: string) => {
     if (confirm('Are you sure you want to delete this funnel? This action cannot be undone.')) {
@@ -165,7 +162,7 @@ export default function Funnels() {
                         onClick={() => handleEditFunnel(funnel.id)}
                       >
                         <Edit className="mr-2 h-3 w-3" />
-                        Edit
+                        Manage
                       </Button>
                       <Button
                         variant="outline"
@@ -178,16 +175,8 @@ export default function Funnels() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleViewAnalytics(funnel.id)}
-                      >
-                        <BarChart3 className="mr-2 h-3 w-3" />
-                        Analytics
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
                         onClick={() => handleDeleteFunnel(funnel.id)}
-                        className="text-destructive hover:text-destructive"
+                        className="text-destructive hover:text-destructive col-span-2"
                       >
                         <Trash2 className="h-3 w-3" />
                       </Button>
