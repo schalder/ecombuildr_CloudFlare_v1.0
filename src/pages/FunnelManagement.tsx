@@ -433,7 +433,7 @@ const FunnelManagement = () => {
                                 </div>
                               </div>
                               <div className="bg-background border-2 border-dashed border-muted-foreground/25 rounded-lg overflow-hidden">
-                                {selectedStep.preview_image_url ? <div className="relative aspect-[4/3] bg-white">
+                                {selectedStep.preview_image_url ? <div className="relative aspect-[16/9] max-w-md mx-auto bg-white">
                                     <img src={selectedStep.preview_image_url} alt={`Preview of ${selectedStep.title}`} className="w-full h-full object-contain" onError={e => {
                           // Fallback to placeholder if image fails to load
                           e.currentTarget.style.display = 'none';
