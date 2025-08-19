@@ -9,3 +9,4 @@ export { WeeklyFeaturedTypographyStyles } from './WeeklyFeaturedTypographyStyles
 export { WeeklyFeaturedElementStyles } from './WeeklyFeaturedElementStyles';
 export { ListElementStyles } from './ListElementStyles';
 export { CountdownElementStyles } from './CountdownElementStyles';
+export { PriceElementStyles } from './PriceElementStyles';

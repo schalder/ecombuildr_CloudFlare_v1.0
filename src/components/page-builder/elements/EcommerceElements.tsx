@@ -974,6 +974,83 @@ const PriceElement: React.FC<{
   const layout = element.content.layout || 'horizontal';
   
   const { product, loading } = useProductById(productId);
+  
+  const applyStyles = (styleType: 'price' | 'comparePrice' | 'discount') => {
+    const styles = element.styles || {};
+    const deviceKey = deviceType === 'mobile' ? 'mobile' : 'desktop';
+    
+    let targetStyles = {};
+    
+    if (styleType === 'price') {
+      targetStyles = (styles as any).priceStyles?.responsive?.[deviceKey] || {};
+    } else if (styleType === 'comparePrice') {
+      targetStyles = (styles as any).comparePriceStyles?.responsive?.[deviceKey] || {};
+    } else if (styleType === 'discount') {
+      targetStyles = (styles as any).discountStyles?.responsive?.[deviceKey] || {};
+    }
+    
+    const inlineStyles: React.CSSProperties = {};
+    
+    if ((targetStyles as any).fontSize) inlineStyles.fontSize = (targetStyles as any).fontSize;
+    if ((targetStyles as any).color) inlineStyles.color = (targetStyles as any).color;
+    if ((targetStyles as any).lineHeight) inlineStyles.lineHeight = (targetStyles as any).lineHeight;
+    if ((targetStyles as any).textAlign) inlineStyles.textAlign = (targetStyles as any).textAlign;
+    
+    return { style: inlineStyles };
+  };
+  
+  const getContainerStyles = () => {
+    const styles = element.styles || {};
+    const containerAlignment = (styles as any).containerAlignment || 'left';
+    const spacing = parseInt((styles as any).spacing) || 8;
+    
+    let alignmentClass = '';
+    if (containerAlignment === 'center') alignmentClass = 'mx-auto';
+    if (containerAlignment === 'right') alignmentClass = 'ml-auto';
+    
+    return { 
+      className: alignmentClass,
+      spacing: `${spacing}px`
+    };
+  };
+  
+  const getButtonStyles = () => {
+    const styles = element.styles || {};
+    const variant = (styles as any).buttonVariant || 'default';
+    const size = (styles as any).buttonSize || 'default';
+    const width = (styles as any).buttonWidth === 'full' ? 'w-full' : '';
+    
+    let customStyle: React.CSSProperties = {};
+    let className = width;
+    
+    // Handle custom button colors
+    if (variant === 'custom') {
+      const buttonBg = (styles as any).buttonBackground || '#000000';
+      const buttonText = (styles as any).buttonTextColor || '#ffffff';
+      const buttonHover = (styles as any).buttonHoverBackground || '#333333';
+      
+      customStyle = {
+        backgroundColor: buttonBg,
+        color: buttonText,
+        border: 'none'
+      };
+      
+      return { 
+        variant: 'default' as const,
+        size, 
+        className,
+        style: customStyle,
+        onMouseEnter: (e: React.MouseEvent<HTMLButtonElement>) => {
+          e.currentTarget.style.backgroundColor = buttonHover;
+        },
+        onMouseLeave: (e: React.MouseEvent<HTMLButtonElement>) => {
+          e.currentTarget.style.backgroundColor = buttonBg;
+        }
+      };
+    }
+    
+    return { variant, size, className };
+  };
 
   const handleAddToCart = () => {
     if (!product) return;
@@ -995,7 +1072,7 @@ const PriceElement: React.FC<{
 
   if (loading) {
     return (
-      <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-md mx-auto'}`}>
+      <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-md'} ${getContainerStyles().className}`}>
         <div className="animate-pulse">
           <div className="h-8 w-24 bg-muted rounded mb-2"></div>
           <div className="h-10 w-32 bg-muted rounded"></div>
@@ -1006,7 +1083,7 @@ const PriceElement: React.FC<{
 
   if (!product) {
     return (
-      <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-md mx-auto'}`}>
+      <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-md'} ${getContainerStyles().className}`}>
         <div className="text-center py-4 text-muted-foreground">
           Please select a product from the properties panel.
         </div>
@@ -1019,26 +1096,42 @@ const PriceElement: React.FC<{
     : 0;
 
   const layoutClass = layout === 'vertical' 
-    ? 'flex flex-col gap-2' 
-    : 'flex items-center gap-4';
+    ? 'flex flex-col' 
+    : 'flex items-center';
+    
+  const containerStyles = getContainerStyles();
+  const buttonProps = getButtonStyles();
+  const priceStyleProps = applyStyles('price');
+  const comparePriceStyleProps = applyStyles('comparePrice');
+  const discountStyleProps = applyStyles('discount');
 
   return (
-    <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-md mx-auto'}`}>
-      <div className={layoutClass}>
-        <div className="flex items-center gap-2">
-          <span className="text-2xl font-bold text-primary">{formatCurrency(product.price)}</span>
+    <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-md'} ${containerStyles.className}`}>
+      <div className={layoutClass} style={{ gap: containerStyles.spacing }}>
+        <div className="flex items-center" style={{ gap: containerStyles.spacing }}>
+          <span className="text-2xl font-bold text-primary" style={priceStyleProps.style}>
+            {formatCurrency(product.price)}
+          </span>
           {showComparePrice && product.compare_price && product.compare_price > product.price && (
-            <span className="text-lg text-muted-foreground line-through">
+            <span className="text-lg text-muted-foreground line-through" style={comparePriceStyleProps.style}>
               {formatCurrency(product.compare_price)}
             </span>
           )}
           {showDiscount && discount > 0 && (
-            <Badge variant="destructive">
+            <Badge variant="destructive" style={discountStyleProps.style}>
               -{discount}%
             </Badge>
           )}
         </div>
-        <Button onClick={handleAddToCart}>
+        <Button 
+          onClick={handleAddToCart}
+          variant={buttonProps.variant}
+          size={buttonProps.size}
+          className={buttonProps.className}
+          style={buttonProps.style}
+          onMouseEnter={buttonProps.onMouseEnter}
+          onMouseLeave={buttonProps.onMouseLeave}
+        >
           <DollarSign className="h-4 w-4 mr-2" />
           {ctaText}
         </Button>

@@ -61,7 +61,8 @@ import {
   OrderConfirmationElementStyles,
   EcommerceActionButtonStyles,
   WeeklyFeaturedElementStyles,
-  ListElementStyles
+  ListElementStyles,
+  PriceElementStyles
 } from './ElementStyles';
 import { CountdownElementStyles } from './ElementStyles/CountdownElementStyles';
 import { CheckoutElementStyles } from './ElementStyles/CheckoutElementStyles';
@@ -178,6 +179,18 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
     // Countdown timer element styles
     if (selectedElement.type === 'countdown-timer') {
       return <CountdownElementStyles element={selectedElement} onStyleUpdate={handleStyleUpdate} />;
+    }
+
+    // Price element styles
+    if (selectedElement.type === 'price') {
+      return (
+        <PriceElementStyles
+          key={`price-${selectedElement.id}`}
+          element={selectedElement}
+          onStyleUpdate={handleStyleUpdate}
+          deviceType={deviceType}
+        />
+      );
     }
     
     // Default fallback for any other element types (ecommerce, content, media, advanced)
