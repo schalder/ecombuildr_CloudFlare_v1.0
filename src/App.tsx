@@ -59,6 +59,7 @@ import AdminProductLibrary from "./pages/admin/AdminProductLibrary";
 import AdminAddLibraryProduct from "./pages/admin/AdminAddLibraryProduct";
 import AdminLibraryOrders from "./pages/admin/AdminLibraryOrders";
 import AdminShipping from "./pages/admin/AdminShipping";
+import AdminLibraryOrdersSummary from "./pages/admin/AdminLibraryOrdersSummary";
 import { StorefrontHome } from "./pages/storefront/StorefrontHome";
 import { StorefrontProducts } from "./pages/storefront/StorefrontProducts";
 import ProductDetail from "./pages/storefront/ProductDetail";
@@ -161,7 +162,8 @@ const App = () => (
                 <Route path="/admin/product-library/add" element={<AdminAddLibraryProduct />} />
                 <Route path="/admin/product-library/edit/:id" element={<AdminAddLibraryProduct />} />
                 <Route path="/admin/product-library/orders/:id" element={<AdminLibraryOrders />} />
-                <Route path="/admin/shipping" element={<AdminShipping />} />
+            <Route path="/admin/shipping" element={<AdminShipping />} />
+            <Route path="/admin/library-orders" element={<AdminLibraryOrdersSummary />} />
                 
                 {/* Demo and Preview Routes */}
                 <Route path="/preview/demo" element={<DemoPreview />} />

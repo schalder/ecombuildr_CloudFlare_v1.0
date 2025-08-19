@@ -2346,6 +2346,17 @@ export type Database = {
         Args: { store_id_param: string }
         Returns: string[]
       }
+      get_library_orders_summary: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          last_order_at: string
+          library_item_id: string
+          product_name: string
+          revenue: number
+          total_orders: number
+          total_quantity: number
+        }[]
+      }
       get_library_product_orders: {
         Args: { library_product_id_param: string }
         Returns: {

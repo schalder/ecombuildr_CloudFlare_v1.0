@@ -78,6 +78,11 @@ const adminMenuItems = [
     url: '/admin/shipping',
     icon: Truck,
   },
+  {
+    title: 'Library Orders',
+    url: '/admin/library-orders',
+    icon: FileText,
+  },
 ];
 
 const quickActions = [

@@ -1,115 +1,107 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import { Separator } from '@/components/ui/separator';
-import { Badge } from '@/components/ui/badge';
 import { usePlatformShipping } from '@/hooks/usePlatformShipping';
 import { useToast } from '@/hooks/use-toast';
-import { Truck, Settings, Trash2, Plus } from 'lucide-react';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
+
+type Account = {
+  id?: string;
+  provider: string;
+  api_key: string;
+  secret_key: string;
+  is_active: boolean;
+  settings?: { webhook_token?: string };
+};
 
 export default function AdminShipping() {
-  const { accounts, loading, updateAccount, deleteAccount } = usePlatformShipping({ enabled: true });
+  const { accounts, loading, updateAccount } = usePlatformShipping({ enabled: true });
   const { toast } = useToast();
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingAccount, setEditingAccount] = useState<any>(null);
-
-  const [formData, setFormData] = useState({
-    provider: '',
+  const [saving, setSaving] = useState(false);
+  const [account, setAccount] = useState<Account>({
+    provider: 'steadfast',
     api_key: '',
     secret_key: '',
-    webhook_token: '',
-    is_active: true,
-    settings: {},
+    is_active: false,
+    settings: { webhook_token: '' },
   });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
+  const customWebhookUrl = typeof window !== "undefined" ? `${window.location.origin}/steadfast-webhook` : "/steadfast-webhook";
+  
+  useEffect(() => {
+    const steadfastAccount = accounts.find(acc => acc.provider === 'steadfast');
+    if (steadfastAccount) {
+      setAccount({
+        id: steadfastAccount.id,
+        provider: steadfastAccount.provider,
+        api_key: steadfastAccount.api_key || '',
+        secret_key: steadfastAccount.secret_key || '',
+        is_active: !!steadfastAccount.is_active,
+        settings: steadfastAccount.settings || { webhook_token: '' },
+      });
+    }
+  }, [accounts]);
+
+  const generateToken = () => {
     try {
-      await updateAccount(formData.provider, {
-        api_key: formData.api_key,
-        secret_key: formData.secret_key,
-        webhook_token: formData.webhook_token || null,
-        is_active: formData.is_active,
-        settings: formData.settings,
-      });
+      const arr = new Uint8Array(24);
+      window.crypto.getRandomValues(arr);
+      const token = Array.from(arr, (b) => b.toString(16).padStart(2, "0")).join("");
+      setAccount((a) => ({ ...a, settings: { ...(a.settings || {}), webhook_token: token } }));
+      toast({ title: "Token generated", description: "A secure webhook token was created." });
+    } catch (e) {
+      console.error("Failed to generate token", e);
+      toast({ title: "Error", description: "Could not generate token.", variant: "destructive" });
+    }
+  };
 
+  const onSave = async () => {
+    setSaving(true);
+    
+    if (!account.api_key || !account.secret_key) {
       toast({
-        title: "Success",
-        description: `${formData.provider} account ${editingAccount ? 'updated' : 'added'} successfully`,
+        title: "Missing fields",
+        description: "Please provide both API Key and Secret Key.",
+        variant: "destructive",
+      });
+      setSaving(false);
+      return;
+    }
+
+    if (account.is_active && !account.settings?.webhook_token) {
+      toast({
+        title: "Webhook token required",
+        description: "Please generate or enter a webhook token when enabling the integration.",
+        variant: "destructive",
+      });
+      setSaving(false);
+      return;
+    }
+
+    try {
+      await updateAccount('steadfast', {
+        api_key: account.api_key,
+        secret_key: account.secret_key,
+        webhook_token: account.settings?.webhook_token || null,
+        is_active: account.is_active,
+        settings: {
+          ...(account.settings || {}),
+          webhook_token: account.settings?.webhook_token || null,
+        },
       });
 
-      setIsDialogOpen(false);
-      resetForm();
+      toast({ title: "Saved", description: "Steadfast platform credentials updated." });
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to save shipping account",
+        description: "Failed to save credentials.",
         variant: "destructive",
       });
     }
-  };
-
-  const handleEdit = (account: any) => {
-    setEditingAccount(account);
-    setFormData({
-      provider: account.provider,
-      api_key: account.api_key,
-      secret_key: account.secret_key,
-      webhook_token: account.webhook_token || '',
-      is_active: account.is_active,
-      settings: account.settings,
-    });
-    setIsDialogOpen(true);
-  };
-
-  const handleDelete = async (id: string, provider: string) => {
-    if (window.confirm(`Are you sure you want to delete the ${provider} account?`)) {
-      try {
-        await deleteAccount(id);
-        toast({
-          title: "Success",
-          description: `${provider} account deleted successfully`,
-        });
-      } catch (error) {
-        toast({
-          title: "Error",
-          description: "Failed to delete shipping account",
-          variant: "destructive",
-        });
-      }
-    }
-  };
-
-  const resetForm = () => {
-    setEditingAccount(null);
-    setFormData({
-      provider: '',
-      api_key: '',
-      secret_key: '',
-      webhook_token: '',
-      is_active: true,
-      settings: {},
-    });
-  };
-
-  const openAddDialog = () => {
-    resetForm();
-    setIsDialogOpen(true);
+    setSaving(false);
   };
 
   return (
@@ -122,173 +114,102 @@ export default function AdminShipping() {
               Manage platform-wide shipping provider credentials for library products
             </p>
           </div>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={openAddDialog}>
-                <Plus className="h-4 w-4 mr-2" />
-                Add Account
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
-              <form onSubmit={handleSubmit}>
-                <DialogHeader>
-                  <DialogTitle>
-                    {editingAccount ? 'Edit' : 'Add'} Shipping Account
-                  </DialogTitle>
-                  <DialogDescription>
-                    Configure shipping provider credentials for platform-wide use
-                  </DialogDescription>
-                </DialogHeader>
-                
-                <div className="grid gap-4 py-4">
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="provider" className="text-right">
-                      Provider
-                    </Label>
-                    <Input
-                      id="provider"
-                      value={formData.provider}
-                      onChange={(e) => setFormData({...formData, provider: e.target.value})}
-                      className="col-span-3"
-                      placeholder="e.g., steadfast"
-                      disabled={!!editingAccount}
-                      required
-                    />
-                  </div>
-                  
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="api_key" className="text-right">
-                      API Key
-                    </Label>
-                    <Input
-                      id="api_key"
-                      value={formData.api_key}
-                      onChange={(e) => setFormData({...formData, api_key: e.target.value})}
-                      className="col-span-3"
-                      required
-                    />
-                  </div>
-                  
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="secret_key" className="text-right">
-                      Secret Key
-                    </Label>
-                    <Input
-                      id="secret_key"
-                      type="password"
-                      value={formData.secret_key}
-                      onChange={(e) => setFormData({...formData, secret_key: e.target.value})}
-                      className="col-span-3"
-                      required
-                    />
-                  </div>
-                  
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="webhook_token" className="text-right">
-                      Webhook Token
-                    </Label>
-                    <Input
-                      id="webhook_token"
-                      value={formData.webhook_token}
-                      onChange={(e) => setFormData({...formData, webhook_token: e.target.value})}
-                      className="col-span-3"
-                      placeholder="Optional"
-                    />
-                  </div>
-                  
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="is_active" className="text-right">
-                      Active
-                    </Label>
-                    <Switch
-                      id="is_active"
-                      checked={formData.is_active}
-                      onCheckedChange={(checked) => setFormData({...formData, is_active: checked})}
-                    />
-                  </div>
-                </div>
-                
-                <DialogFooter>
-                  <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
-                    Cancel
-                  </Button>
-                  <Button type="submit">
-                    {editingAccount ? 'Update' : 'Add'} Account
-                  </Button>
-                </DialogFooter>
-              </form>
-            </DialogContent>
-          </Dialog>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Truck className="h-5 w-5" />
-              Shipping Accounts
-            </CardTitle>
-            <CardDescription>
-              Platform-wide shipping provider integrations for fulfilling library product orders
-            </CardDescription>
+            <CardTitle>Shipping Integrations</CardTitle>
           </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="text-center py-8">Loading accounts...</div>
-            ) : accounts.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <Truck className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>No shipping accounts configured yet</p>
-                <p className="text-sm">Add a shipping provider to get started</p>
+          <CardContent className="space-y-6">
+            <div className="space-y-4 p-4 border rounded-lg">
+              <div className="flex items-center justify-between">
+                <h4 className="font-medium">Steadfast Courier</h4>
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="steadfast_enabled" className="text-sm text-muted-foreground">
+                    Enabled
+                  </Label>
+                  <Switch
+                    id="steadfast_enabled"
+                    checked={account.is_active}
+                    onCheckedChange={(is_active) => setAccount((a) => ({ ...a, is_active }))}
+                    disabled={loading || saving}
+                  />
+                </div>
               </div>
-            ) : (
-              <div className="space-y-4">
-                {accounts.map((account) => (
-                  <div key={account.id} className="border rounded-lg p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-primary/10 rounded-lg">
-                          <Truck className="h-4 w-4 text-primary" />
-                        </div>
-                        <div>
-                          <h3 className="font-semibold capitalize">{account.provider}</h3>
-                          <p className="text-sm text-muted-foreground">
-                            API Key: {account.api_key.substring(0, 8)}...
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant={account.is_active ? "default" : "secondary"}>
-                          {account.is_active ? "Active" : "Inactive"}
-                        </Badge>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleEdit(account)}
-                        >
-                          <Settings className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDelete(account.id, account.provider)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                    
-                    {account.webhook_token && (
-                      <>
-                        <Separator className="my-3" />
-                        <div className="text-sm text-muted-foreground">
-                          <strong>Webhook Token:</strong> {account.webhook_token.substring(0, 12)}...
-                        </div>
-                      </>
-                    )}
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="steadfast_api_key">API Key</Label>
+                  <Input
+                    id="steadfast_api_key"
+                    value={account.api_key}
+                    onChange={(e) => setAccount((a) => ({ ...a, api_key: e.target.value }))}
+                    placeholder="Enter Steadfast API Key"
+                    disabled={loading || saving}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="steadfast_secret_key">Secret Key</Label>
+                  <Input
+                    id="steadfast_secret_key"
+                    type="password"
+                    value={account.secret_key}
+                    onChange={(e) => setAccount((a) => ({ ...a, secret_key: e.target.value }))}
+                    placeholder="Enter Steadfast Secret Key"
+                    disabled={loading || saving}
+                  />
+                </div>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="steadfast_webhook_token">Webhook Token</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="steadfast_webhook_token"
+                      value={account.settings?.webhook_token || ""}
+                      onChange={(e) =>
+                        setAccount((a) => ({
+                          ...a,
+                          settings: { ...(a.settings || {}), webhook_token: e.target.value },
+                        }))
+                      }
+                      placeholder="Enter a secret token to verify webhooks"
+                      disabled={loading || saving}
+                    />
+                    <Button type="button" variant="outline" onClick={generateToken}>Generate</Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => navigator.clipboard.writeText(account.settings?.webhook_token || "")}
+                    >
+                      Copy
+                    </Button>
                   </div>
-                ))}
+                  <p className="text-xs text-muted-foreground">Use this as the Bearer token in Steadfast webhook settings.</p>
+                </div>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="steadfast_webhook_url_custom">Callback URL (Custom domain)</Label>
+                    <div className="flex gap-2">
+                      <Input id="steadfast_webhook_url_custom" readOnly value={customWebhookUrl} />
+                      <Button type="button" variant="outline" onClick={() => navigator.clipboard.writeText(customWebhookUrl)}>Copy</Button>
+                    </div>
+                    <p className="text-xs text-muted-foreground">Set this URL in your Steadfast dashboard.</p>
+                  </div>
+                </div>
               </div>
-            )}
+
+              <div className="flex justify-end">
+                <Button onClick={onSave} disabled={loading || saving}>
+                  {saving ? "Saving..." : "Save Steadfast Settings"}
+                </Button>
+              </div>
+
+              <p className="text-sm text-muted-foreground">
+                Once enabled and saved, platform-wide orders for library products will use these credentials automatically.
+              </p>
+            </div>
           </CardContent>
         </Card>
       </div>
