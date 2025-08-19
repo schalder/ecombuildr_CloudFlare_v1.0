@@ -18,7 +18,7 @@ import { toast } from 'sonner';
 import { useStoreProducts } from '@/hooks/useStoreData';
 import { generateResponsiveCSS, mergeResponsiveStyles } from '@/components/page-builder/utils/responsiveStyles';
 import { formatCurrency } from '@/lib/currency';
-import { computeOrderShipping } from '@/lib/shipping-enhanced';
+import { computeOrderShipping, type CartItem, type ShippingAddress } from '@/lib/shipping-enhanced';
 import { nameWithVariant } from '@/lib/utils';
 import { useWebsiteShipping } from '@/hooks/useWebsiteShipping';
 import { renderElementStyles } from '@/components/page-builder/utils/styleRenderer';
@@ -566,7 +566,7 @@ const CartFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 'des
 };
 
 // Full Checkout Element (wired to builder options and responsive styles)
-const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 'desktop' | 'tablet' | 'mobile' }> = ({ element, deviceType = 'desktop' }) => {
+const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 'desktop' | 'tablet' | 'mobile'; isEditing?: boolean }> = ({ element, deviceType = 'desktop', isEditing }) => {
   const { slug } = useParams<{ slug?: string }>();
   const navigate = useNavigate();
   const { store, loadStore, loadStoreById } = useStore();
@@ -634,6 +634,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
   const { websiteShipping } = useWebsiteShipping();
   const [loading, setLoading] = useState(false);
   const [allowedMethods, setAllowedMethods] = useState<Array<'cod' | 'bkash' | 'nagad' | 'sslcommerz'>>(['cod','bkash','nagad','sslcommerz']);
+  const [productShippingData, setProductShippingData] = useState<Map<string, { weight_grams?: number; shipping_config?: any }>>(new Map());
 
   useEffect(() => {
     if (!items.length) {
@@ -689,56 +690,84 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
   const buttonInline = React.useMemo(() => mergeResponsiveStyles({}, buttonStyles, deviceType as any), [buttonStyles, deviceType]);
   const headerInline = React.useMemo(() => mergeResponsiveStyles({}, headerStyles, deviceType as any), [headerStyles, deviceType]);
 
-  // Recompute shipping cost when address details change (primarily city)
+  // Fetch product shipping data when items change
+  useEffect(() => {
+    const fetchProductShippingData = async () => {
+      if (items.length === 0) {
+        setProductShippingData(new Map());
+        return;
+      }
+      
+      const productIds = [...new Set(items.map(item => item.productId))];
+      console.debug('[CheckoutFullElement] Fetching shipping data for products:', productIds);
+      
+      const { data, error } = await supabase
+        .from('products')
+        .select('id, weight_grams, shipping_config')
+        .in('id', productIds);
+        
+      if (error) {
+        console.error('Error fetching product shipping data:', error);
+        return;
+      }
+      
+      const dataMap = new Map();
+      data?.forEach(product => {
+        dataMap.set(product.id, {
+          weight_grams: product.weight_grams,
+          shipping_config: product.shipping_config
+        });
+      });
+      setProductShippingData(dataMap);
+    };
+    
+    fetchProductShippingData();
+  }, [items]);
+
+  // Compute enhanced shipping when form fields or product data changes
   useEffect(() => {
     const computeShipping = async () => {
       if (!websiteShipping || !websiteShipping.enabled) {
         setShippingCost(0);
         return;
       }
-
-      // Get product weights for cart items
-      const itemsWithWeight = await Promise.all(
-        items.map(async (item) => {
-          const { data: product } = await supabase
-            .from('products')
-            .select('weight_grams')
-            .eq('id', item.productId)
-            .single();
-          
-          return {
-            ...item,
-            weight_grams: product?.weight_grams || 0,
-          };
-        })
-      );
-
-      const result = computeOrderShipping(
-        websiteShipping,
-        itemsWithWeight,
-        {
-          city: form.shipping_city,
-          area: form.shipping_area,
-          address: form.shipping_address,
-          postal: form.shipping_postal_code,
-        },
-        total
-      );
-
-      const cost = result.shippingCost;
+      
+      const shippingAddress: ShippingAddress = { 
+        city: form.shipping_city, 
+        area: form.shipping_area, 
+        address: form.shipping_address, 
+        postal: form.shipping_postal_code 
+      };
+      
+      const cartItemsWithShipping: CartItem[] = items.map(item => {
+        const productData = productShippingData.get(item.productId);
+        return {
+          id: item.id,
+          productId: item.productId,
+          quantity: item.quantity,
+          price: item.price,
+          weight_grams: productData?.weight_grams,
+          shipping_config: productData?.shipping_config
+        };
+      });
+      
+      const shippingCalculation = computeOrderShipping(websiteShipping, cartItemsWithShipping, shippingAddress, total);
+      const cost = shippingCalculation.shippingCost;
+      
       setShippingCost(cost);
-      // Debug: observe when shipping recalculates
-      console.debug('[Checkout] Recomputed shipping', {
-        city: form.shipping_city,
-        area: form.shipping_area,
-        postal: form.shipping_postal_code,
-        address: form.shipping_address,
-        cost,
+      
+      console.debug('[CheckoutFullElement] Enhanced shipping calculation:', {
+        websiteShipping: !!websiteShipping,
+        cartItems: cartItemsWithShipping.length,
+        shippingResult: shippingCalculation,
+        cost
       });
     };
 
-    computeShipping();
-  }, [websiteShipping, form.shipping_city, form.shipping_area, form.shipping_postal_code, form.shipping_address, items, total]);
+    if (productShippingData.size > 0 || items.length === 0) {
+      computeShipping();
+    }
+  }, [websiteShipping, form.shipping_city, form.shipping_area, form.shipping_postal_code, form.shipping_address, items, total, productShippingData]);
 
   const handleSubmit = async () => {
     if (!store || items.length === 0) return;
@@ -909,7 +938,19 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
   };
 
   if (!store) return <div className="text-center">Loading store...</div>;
-  if (items.length === 0) return <div className="text-center text-muted-foreground">Your cart is empty.</div>;
+  
+  // Show preview with mock data in builder mode when cart is empty
+  const displayItems = items.length > 0 ? items : (isEditing ? [
+    { id: 'preview-1', productId: 'preview-1', name: 'Sample Product', price: 49.99, quantity: 2, image: '/placeholder.svg' },
+    { id: 'preview-2', productId: 'preview-2', name: 'Another Product', price: 29.99, quantity: 1, image: '/placeholder.svg' }
+  ] : []);
+  
+  const displayTotal = items.length > 0 ? total : (isEditing ? 129.97 : 0);
+  const displayShippingCost = items.length > 0 ? shippingCost : (isEditing ? 10 : 0);
+  
+  if (!isEditing && items.length === 0) {
+    return <div className="text-center text-muted-foreground">Your cart is empty.</div>;
+  }
 
   return (
     <>
@@ -1011,7 +1052,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
                   <div className="rounded-md p-4" style={{ backgroundColor: backgrounds.summaryBg || undefined, borderColor: (backgrounds as any).summaryBorderColor || undefined, borderWidth: summaryBorderWidth || 0, borderStyle: summaryBorderWidth ? 'solid' as any : undefined }}>
                     {/* Items */}
                     <div className="space-y-2">
-                      {items.map((it)=> (
+                      {displayItems.map((it)=> (
                         <div key={it.id} className={`grid items-center gap-3 ${showItemImages && it.image ? 'grid-cols-[auto_1fr_auto]' : 'grid-cols-[1fr_auto]'}`}>
                           {showItemImages && it.image && (
                             <img src={it.image} alt={it.name} className="w-10 h-10 object-cover rounded border shrink-0" />
@@ -1025,12 +1066,12 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement, deviceType?: 
                       ))}
                     </div>
                     <Separator className="my-3" />
-                    <div className="flex flex-wrap items-center justify-between gap-2 min-w-0"><span className="truncate">Subtotal</span><span className="font-semibold shrink-0 whitespace-nowrap text-right">{formatCurrency(total)}</span></div>
-                    <div className="flex flex-wrap items-center justify-between gap-2 min-w-0"><span className="truncate">Shipping</span><span className="font-semibold shrink-0 whitespace-nowrap text-right">{formatCurrency(shippingCost)}</span></div>
-                    <div className="flex flex-wrap items-center justify-between gap-2 min-w-0 font-bold"><span className="truncate">Total</span><span className="shrink-0 whitespace-nowrap text-right">{formatCurrency(total+shippingCost)}</span></div>
+                    <div className="flex flex-wrap items-center justify-between gap-2 min-w-0"><span className="truncate">Subtotal</span><span className="font-semibold shrink-0 whitespace-nowrap text-right">{formatCurrency(displayTotal)}</span></div>
+                    <div className="flex flex-wrap items-center justify-between gap-2 min-w-0"><span className="truncate">Shipping</span><span className="font-semibold shrink-0 whitespace-nowrap text-right">{formatCurrency(displayShippingCost)}</span></div>
+                    <div className="flex flex-wrap items-center justify-between gap-2 min-w-0 font-bold"><span className="truncate">Total</span><span className="shrink-0 whitespace-nowrap text-right">{formatCurrency(displayTotal+displayShippingCost)}</span></div>
 
-                    <Button size={buttonSize as any} className={`w-full mt-2 element-${element.id}`} style={buttonInline as React.CSSProperties} onClick={handleSubmit} disabled={loading}>
-                      {loading? 'Placing Order...' : buttonLabel}
+                    <Button size={buttonSize as any} className={`w-full mt-2 element-${element.id}`} style={buttonInline as React.CSSProperties} onClick={handleSubmit} disabled={loading || isEditing}>
+                      {isEditing ? 'Preview Mode - Order Disabled' : (loading? 'Placing Order...' : buttonLabel)}
                     </Button>
 
                     {terms.enabled && (
