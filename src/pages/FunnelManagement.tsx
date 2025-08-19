@@ -347,19 +347,19 @@ const FunnelManagement = () => {
                                        <GripVertical className="h-4 w-4 text-muted-foreground" />
                                      </div>
                                      
-                                     {/* Step Preview Thumbnail */}
-                                     <div className="flex-shrink-0">
-                                       {step.preview_image_url ? (
-                                         <img 
-                                           src={step.preview_image_url} 
-                                           alt={`Preview of ${step.title}`}
-                                           className="w-10 h-8 object-cover rounded border"
-                                         />
-                                       ) : (
-                                         <div className="w-10 h-8 bg-muted border rounded flex items-center justify-center">
-                                           <Mail className="h-3 w-3 text-muted-foreground" />
-                                         </div>
-                                       )}
+                                      {/* Step Preview Thumbnail */}
+                                      <div className="flex-shrink-0">
+                                        {step.preview_image_url ? (
+                                          <img 
+                                            src={step.preview_image_url} 
+                                            alt={`Preview of ${step.title}`}
+                                            className="w-12 h-9 object-contain bg-white rounded border"
+                                          />
+                                        ) : (
+                                          <div className="w-12 h-9 bg-muted border rounded flex items-center justify-center">
+                                            <Mail className="h-3 w-3 text-muted-foreground" />
+                                          </div>
+                                        )}
                                      </div>
                                      
                                       <div className="flex-1 min-w-0">
@@ -505,11 +505,11 @@ const FunnelManagement = () => {
                               </div>
                               <div className="bg-background border-2 border-dashed border-muted-foreground/25 rounded-lg overflow-hidden">
                                 {selectedStep.preview_image_url ? (
-                                  <div className="relative">
+                                  <div className="relative aspect-[4/3] bg-white">
                                     <img 
                                       src={selectedStep.preview_image_url} 
                                       alt={`Preview of ${selectedStep.title}`}
-                                      className="w-full h-64 object-cover"
+                                      className="w-full h-full object-contain"
                                       onError={(e) => {
                                         // Fallback to placeholder if image fails to load
                                         e.currentTarget.style.display = 'none';
@@ -517,7 +517,7 @@ const FunnelManagement = () => {
                                         if (fallback) fallback.style.display = 'block';
                                       }}
                                     />
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent pointer-events-none" />
                                     <div className="absolute bottom-4 left-4 text-white">
                                       <p className="text-sm font-medium">
                                         {getStepTypeLabel(selectedStep.step_type)} - {selectedStep.title}

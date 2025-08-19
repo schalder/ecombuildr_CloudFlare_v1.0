@@ -343,7 +343,7 @@ const WebsiteManagement = () => {
                             <img 
                               src={page.preview_image_url} 
                               alt={`Preview of ${page.title}`}
-                              className="w-full h-full object-cover"
+                              className="w-full h-full object-contain bg-white"
                               onError={(e) => {
                                 // Fallback to placeholder if image fails to load
                                 (e.target as HTMLImageElement).style.display = 'none';
