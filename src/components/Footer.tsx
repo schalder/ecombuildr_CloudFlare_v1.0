@@ -127,7 +127,9 @@ export const Footer = () => {
             {/* Social Links */}
             <div className="flex gap-4">
               <a 
-                href="#" 
+                href="https://www.facebook.com/ecombuildrbd/" 
+                target="_blank"
+                rel="noopener noreferrer"
                 className="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center hover:bg-accent transition-colors"
               >
                 <Facebook className="h-5 w-5" />
