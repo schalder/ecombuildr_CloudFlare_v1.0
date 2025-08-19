@@ -8,8 +8,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
-import { ArrowLeft, Plus, Edit, ExternalLink, Settings, Eye, ArrowUp, ArrowDown, CheckCircle, Mail, BarChart3, DollarSign, GripVertical, Home } from 'lucide-react';
+import { ArrowLeft, Plus, Edit, ExternalLink, Settings, Eye, ArrowUp, ArrowDown, CheckCircle, Mail, BarChart3, DollarSign, GripVertical, Home, Trash2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { CreateStepModal } from '@/components/modals/CreateStepModal';
 import { FunnelStats } from '@/components/funnel/FunnelStats';
@@ -56,6 +57,7 @@ const FunnelManagement = () => {
   const [activeTab, setActiveTab] = useState('steps');
   const [activeMainTab, setActiveMainTab] = useState('overview');
   const [selectedStepId, setSelectedStepId] = useState<string | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; stepId: string; stepTitle: string }>({ open: false, stepId: '', stepTitle: '' });
 
   const { data: funnel, isLoading } = useQuery({
     queryKey: ['funnel', id],
@@ -133,6 +135,34 @@ const FunnelManagement = () => {
     },
   });
 
+  const deleteStepMutation = useMutation({
+    mutationFn: async (stepId: string) => {
+      const { error } = await supabase
+        .from('funnel_steps')
+        .delete()
+        .eq('id', stepId);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['funnel-steps', id] });
+      toast({ title: 'Funnel step deleted successfully' });
+      setDeleteConfirm({ open: false, stepId: '', stepTitle: '' });
+      // If deleted step was selected, clear selection
+      if (selectedStepId === deleteConfirm.stepId) {
+        setSelectedStepId(null);
+      }
+    },
+    onError: (error: any) => {
+      console.error('Error deleting step:', error);
+      toast({ 
+        title: 'Error deleting step',
+        description: 'Please try again.',
+        variant: 'destructive'
+      });
+    }
+  });
+
   const handleDragEnd = (result: any) => {
     if (!result.destination) return;
 
@@ -175,6 +205,16 @@ const FunnelManagement = () => {
       : `${window.location.origin}/funnel/${id}/${stepSlug}`;
     
     window.open(previewUrl, '_blank');
+  };
+
+  const handleDeleteStep = (stepId: string, stepTitle: string) => {
+    setDeleteConfirm({ open: true, stepId, stepTitle });
+  };
+
+  const confirmDeleteStep = () => {
+    if (deleteConfirm.stepId) {
+      deleteStepMutation.mutate(deleteConfirm.stepId);
+    }
   };
 
   const getStepTypeLabel = (stepType: string) => {
@@ -308,28 +348,42 @@ const FunnelManagement = () => {
                                     <div className="flex-shrink-0">
                                       <Mail className="h-4 w-4 text-blue-500" />
                                     </div>
-                                    <div className="flex-1 min-w-0">
-                                      <div className="flex items-center gap-2">
-                                        <p className="font-medium truncate">{step.title}</p>
-                                        {index === 0 && (
-                                          <Badge variant="secondary" className="text-xs px-1 py-0">
-                                            <Home className="h-3 w-3" />
-                                          </Badge>
-                                        )}
-                                      </div>
-                                      <p className="text-sm text-muted-foreground">
-                                        {getStepTypeLabel(step.step_type)}
-                                      </p>
-                                    </div>
-                                    {step.is_published && (
-                                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                                    )}
-                                  </div>
-                                )}
-                              </Draggable>
-                            ))
-                          )}
-                          {provided.placeholder}
+                                     <div className="flex-1 min-w-0">
+                                       <div className="flex items-center gap-2">
+                                         <p className="font-medium truncate">{step.title}</p>
+                                         {index === 0 && (
+                                           <Badge variant="secondary" className="text-xs px-1 py-0">
+                                             <Home className="h-3 w-3" />
+                                           </Badge>
+                                         )}
+                                       </div>
+                                       <p className="text-sm text-muted-foreground">
+                                         {getStepTypeLabel(step.step_type)}
+                                       </p>
+                                     </div>
+                                     <div className="flex items-center gap-2">
+                                       {step.is_published && (
+                                         <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                                       )}
+                                       <Button
+                                         variant="ghost"
+                                         size="sm"
+                                         onClick={(e) => {
+                                           e.stopPropagation();
+                                           handleDeleteStep(step.id, step.title);
+                                         }}
+                                         className="text-destructive hover:text-destructive h-8 w-8 p-0"
+                                         disabled={deleteStepMutation.isPending}
+                                       >
+                                         <Trash2 className="h-3 w-3" />
+                                       </Button>
+                                     </div>
+                                   </div>
+                                 )}
+                               </Draggable>
+                             ))
+                           )}
+                           {provided.placeholder}
                         </div>
                       )}
                     </Droppable>
@@ -527,7 +581,18 @@ const FunnelManagement = () => {
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         funnelId={id!}
-        currentStepsCount={steps.length}
+        existingSteps={steps}
+      />
+
+      <ConfirmationDialog
+        open={deleteConfirm.open}
+        onOpenChange={(open) => !open && setDeleteConfirm({ open: false, stepId: '', stepTitle: '' })}
+        title="Delete Funnel Step"
+        description={`Are you sure you want to delete "${deleteConfirm.stepTitle}"? This action cannot be undone and will permanently delete all associated data.`}
+        confirmText="Delete Step"
+        variant="destructive"
+        onConfirm={confirmDeleteStep}
+        isLoading={deleteStepMutation.isPending}
       />
     </DashboardLayout>
   );

@@ -16,20 +16,26 @@ interface CreateStepModalProps {
   isOpen: boolean;
   onClose: () => void;
   funnelId: string;
-  currentStepsCount: number;
+  existingSteps: Array<{ step_order: number }>;
 }
 
 export const CreateStepModal: React.FC<CreateStepModalProps> = ({
   isOpen,
   onClose,
   funnelId,
-  currentStepsCount
+  existingSteps
 }) => {
+  // Calculate next available step order
+  const getNextStepOrder = () => {
+    if (existingSteps.length === 0) return 1;
+    const maxOrder = Math.max(...existingSteps.map(step => step.step_order));
+    return maxOrder + 1;
+  };
   const [formData, setFormData] = useState({
     title: '',
     slug: '',
     stepType: 'landing',
-    stepOrder: currentStepsCount + 1
+    stepOrder: getNextStepOrder()
   });
 
   // Slug validation state
@@ -141,11 +147,12 @@ export const CreateStepModal: React.FC<CreateStepModalProps> = ({
   });
 
   const handleClose = () => {
+    const nextOrder = getNextStepOrder();
     setFormData({ 
       title: '', 
       slug: '', 
       stepType: 'landing', 
-      stepOrder: currentStepsCount + 1 
+      stepOrder: nextOrder
     });
     setSlugStatus('idle');
     setSuggestedSlug('');
