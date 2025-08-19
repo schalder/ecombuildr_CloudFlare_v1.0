@@ -14,7 +14,8 @@ import {
   Crown,
   Search,
   Package,
-  Truck
+  Truck,
+  Layout
 } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router-dom';
 import {
@@ -72,6 +73,11 @@ const adminMenuItems = [
     title: 'Product Library',
     url: '/admin/product-library',
     icon: Package,
+  },
+  {
+    title: 'Templates',
+    url: '/admin/templates',
+    icon: Layout,
   },
   {
     title: 'Shipping',
