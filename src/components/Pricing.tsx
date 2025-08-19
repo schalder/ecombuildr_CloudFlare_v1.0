@@ -181,7 +181,15 @@ export const Pricing = () => {
           <p className="text-muted-foreground mb-6">
             কোন প্ল্যান আপনার জন্য উপযুক্ত তা নিশ্চিত নন?
           </p>
-          <Button variant="outline" size="lg">
+          <Button 
+            variant="outline" 
+            size="lg" 
+            onClick={() => {
+              const message = encodeURIComponent("Hi, I'm interested in learning more about your pricing plans. Can you help me choose the right plan for my business?");
+              const whatsappUrl = `https://wa.me/+8801234567890?text=${message}`;
+              window.open(whatsappUrl, '_blank');
+            }}
+          >
             Contact Sales Team
           </Button>
         </div>
