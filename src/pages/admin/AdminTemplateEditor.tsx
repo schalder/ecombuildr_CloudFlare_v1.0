@@ -12,7 +12,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { ElementorPageBuilder } from '@/components/page-builder/ElementorPageBuilder';
 import { PageBuilderData } from '@/components/page-builder/types';
-import { ArrowLeft, Save, Eye, Settings } from 'lucide-react';
+import { PageBuilderRenderer } from '@/components/storefront/PageBuilderRenderer';
+import { ArrowLeft, Save, Eye, Settings, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import html2canvas from 'html2canvas';
 
@@ -50,6 +51,7 @@ export default function AdminTemplateEditor() {
   const [isSaving, setIsSaving] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [isGeneratingThumbnail, setIsGeneratingThumbnail] = useState(false);
 
   const { data: template, isLoading } = useQuery({
     queryKey: ['template', templateId],
@@ -115,22 +117,99 @@ export default function AdminTemplateEditor() {
     },
   });
 
+  const uploadImageToSupabase = async (imageBlob: Blob): Promise<string | null> => {
+    try {
+      const fileName = `template-preview-${Date.now()}.png`;
+      const { data, error } = await supabase.storage
+        .from('images')
+        .upload(`templates/${fileName}`, imageBlob, {
+          contentType: 'image/png',
+          upsert: false
+        });
+
+      if (error) throw error;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('images')
+        .getPublicUrl(data.path);
+
+      return publicUrl;
+    } catch (error) {
+      console.warn('Failed to upload to storage:', error);
+      return null;
+    }
+  };
+
+  const waitForImagesAndFonts = async (): Promise<void> => {
+    // Wait for images to load
+    const images = document.querySelectorAll('#template-preview-hidden img');
+    const imagePromises = Array.from(images).map((img: HTMLImageElement) => {
+      if (img.complete) return Promise.resolve();
+      return new Promise((resolve) => {
+        img.onload = resolve;
+        img.onerror = resolve; // Continue even if image fails to load
+        setTimeout(resolve, 3000); // Timeout after 3 seconds
+      });
+    });
+
+    await Promise.all(imagePromises);
+
+    // Wait a bit for fonts to render
+    await new Promise(resolve => setTimeout(resolve, 500));
+  };
+
   const generatePreviewImage = async (): Promise<string | null> => {
     try {
-      // Find the preview element
-      const previewElement = document.querySelector('[data-preview="true"]') as HTMLElement;
-      if (!previewElement) return null;
+      setIsGeneratingThumbnail(true);
+      
+      // Wait for images and fonts to load
+      await waitForImagesAndFonts();
+
+      // Find the hidden preview element
+      const previewElement = document.getElementById('template-preview-hidden');
+      if (!previewElement) {
+        console.warn('Preview element not found');
+        return null;
+      }
 
       const canvas = await html2canvas(previewElement, {
         width: 1200,
         height: 675,
-        scale: 0.5,
+        scale: 2,
+        useCORS: true,
+        allowTaint: false,
+        backgroundColor: '#ffffff',
+        removeContainer: true,
       });
 
-      return canvas.toDataURL('image/png');
+      // Convert to blob
+      const blob = await new Promise<Blob>((resolve) => {
+        canvas.toBlob((blob) => resolve(blob!), 'image/png', 1.0);
+      });
+
+      // Try to upload to Supabase Storage
+      const publicUrl = await uploadImageToSupabase(blob);
+      
+      if (publicUrl) {
+        return publicUrl;
+      } else {
+        // Fallback to data URL
+        return canvas.toDataURL('image/png');
+      }
     } catch (error) {
       console.warn('Failed to generate preview image:', error);
       return null;
+    } finally {
+      setIsGeneratingThumbnail(false);
+    }
+  };
+
+  const handleRegenerateThumbnail = async () => {
+    const previewImage = await generatePreviewImage();
+    if (previewImage) {
+      toast.success('Thumbnail generated successfully');
+    } else {
+      toast.error('Failed to generate thumbnail');
     }
   };
 
@@ -197,6 +276,15 @@ export default function AdminTemplateEditor() {
               <Eye className="h-4 w-4" />
               {showPreview ? 'Hide Preview' : 'Show Preview'}
             </Button>
+            <Button 
+              onClick={handleRegenerateThumbnail} 
+              disabled={isGeneratingThumbnail}
+              variant="outline" 
+              className="gap-2"
+            >
+              <RefreshCw className={`h-4 w-4 ${isGeneratingThumbnail ? 'animate-spin' : ''}`} />
+              {isGeneratingThumbnail ? 'Generating...' : 'Regenerate Thumbnail'}
+            </Button>
             <Button onClick={() => setShowSettings(!showSettings)} variant="outline" className="gap-2">
               <Settings className="h-4 w-4" />
               Settings
@@ -209,13 +297,26 @@ export default function AdminTemplateEditor() {
         </div>
 
         {/* Page Builder - Viewport Bounded */}
-        <div className="flex-1 min-h-0" data-preview="true">
+        <div className="flex-1 min-h-0">
           <ElementorPageBuilder
             initialData={builderData}
             onChange={setBuilderData}
             onSave={handleSave}
             isSaving={isSaving}
           />
+        </div>
+
+        {/* Hidden Preview for Screenshot Generation */}
+        <div 
+          id="template-preview-hidden"
+          className="fixed -top-[10000px] left-0 bg-white"
+          style={{ 
+            width: '1200px', 
+            height: '675px',
+            overflow: 'hidden'
+          }}
+        >
+          <PageBuilderRenderer data={builderData} />
         </div>
       </div>
       {/* Settings Sidebar - Overlay */}
