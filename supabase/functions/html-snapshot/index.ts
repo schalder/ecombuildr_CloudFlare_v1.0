@@ -74,6 +74,49 @@ serve(async (req) => {
         console.log(`🎨 Generating HTML for page: ${page.title}`)
         htmlContent = generateWebsiteHTML(website, page, customDomain)
         
+      } else if (contentType === 'funnel_step') {
+        // Fetch specific funnel step
+        console.log(`📄 Fetching funnel step: ${contentId}`)
+        const { data: step, error: stepError } = await supabase
+          .from('funnel_steps')
+          .select('*')
+          .eq('id', contentId)
+          .maybeSingle()
+
+        if (stepError) {
+          console.error('❌ Error fetching funnel step:', stepError)
+          throw new Error(`Error fetching funnel step: ${stepError.message}`)
+        }
+
+        if (!step) {
+          console.error('❌ Funnel step not found:', contentId)
+          throw new Error('Funnel step not found')
+        }
+
+        console.log(`✅ Found funnel step: ${step.title} (funnel_id: ${step.funnel_id})`)
+
+        // Fetch the related funnel
+        console.log(`🎯 Fetching funnel: ${step.funnel_id}`)
+        const { data: funnel, error: funnelError } = await supabase
+          .from('funnels')
+          .select('*')
+          .eq('id', step.funnel_id)
+          .maybeSingle()
+
+        if (funnelError) {
+          console.error('❌ Error fetching funnel:', funnelError)
+          throw new Error(`Error fetching funnel: ${funnelError.message}`)
+        }
+
+        if (!funnel) {
+          console.error('❌ Funnel not found for step:', step.funnel_id)
+          throw new Error('Funnel not found for step')
+        }
+
+        console.log(`✅ Found funnel: ${funnel.name}`)
+        console.log(`🎨 Generating HTML for step: ${step.title}`)
+        htmlContent = generateFunnelHTML(funnel, step, customDomain)
+        
       } else {
         throw new Error(`Unsupported content type: ${contentType}`)
       }
