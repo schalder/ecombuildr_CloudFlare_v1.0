@@ -664,134 +664,232 @@ const CategoryNavigationElement: React.FC<{
   );
 };
 
-// Weekly Featured Element
-const WeeklyFeaturedElement: React.FC<{
-  element: PageBuilderElement;
-  isEditing?: boolean;
-  deviceType?: 'desktop' | 'tablet' | 'mobile';
-  columnCount?: number;
-  onUpdate?: (updates: Partial<PageBuilderElement>) => void;
-}> = ({ element, deviceType = 'desktop', columnCount = 1 }) => {
-  const { store: userStore } = useUserStore();
-  const { store: storefrontStore } = useStore();
-  const store = storefrontStore || userStore;
-  
-  // Resolve websiteId for filtering
-  const resolvedWebsiteId = useResolvedWebsiteId(element);
-  const [items, setItems] = React.useState<any[]>([]);
-  const [loading, setLoading] = React.useState(true);
-
-  const limit = element.content?.limit ?? 6;
-  const desktopCols = element.content?.columns ?? 3;
-  const tabletCols = element.content?.tabletColumns ?? 2;
-  const mobileCols = element.content?.mobileColumns ?? 1;
-
-  React.useEffect(() => {
-    const loadTopSellers = async () => {
-      if (!store?.id) { setItems([]); setLoading(false); return; }
-      setLoading(true);
-      const { data, error } = await supabase.functions.invoke('top-sellers', {
-        body: { storeId: store.id, limit, websiteId: resolvedWebsiteId }
-      });
-      if (!error && Array.isArray(data)) setItems(data as any[]);
-      setLoading(false);
+  // Weekly Featured Element
+  const WeeklyFeaturedElement: React.FC<{
+    element: PageBuilderElement;
+    isEditing?: boolean;
+    deviceType?: 'desktop' | 'tablet' | 'mobile';
+    columnCount?: number;
+    onUpdate?: (updates: Partial<PageBuilderElement>) => void;
+  }> = ({ element, deviceType = 'desktop', columnCount = 1 }) => {
+    const { store } = useStore();
+    const resolvedWebsiteId = useResolvedWebsiteId(element);
+    
+    const [topProducts, setTopProducts] = React.useState<any[]>([]);
+    const [loading, setLoading] = React.useState(true);
+    
+    const sourceType = element.content.sourceType || 'auto';
+    const selectedProductIds = element.content.selectedProductIds || [];
+    
+    const { products: allProducts } = useStoreProducts({ websiteId: resolvedWebsiteId });
+    
+    // Fetch top selling products for auto mode or selected products for manual mode
+    React.useEffect(() => {
+      const fetchProducts = async () => {
+        if (!store?.id) {
+          setTopProducts([]);
+          setLoading(false);
+          return;
+        }
+        
+        if (sourceType === 'manual') {
+          // For manual mode, get selected products
+          const selectedProducts = allProducts.filter(p => selectedProductIds.includes(p.id));
+          setTopProducts(selectedProducts);
+          setLoading(false);
+          return;
+        }
+        
+        // For auto mode, fetch from top-sellers function
+        setLoading(true);
+        try {
+          const { data } = await supabase.functions.invoke('top-sellers', {
+            body: { storeId: store.id, limit: element.content.limit || 6, websiteId: resolvedWebsiteId }
+          });
+          
+          setTopProducts(data || []);
+        } catch (error) {
+          console.error('Error fetching top products:', error);
+          setTopProducts([]);
+        } finally {
+          setLoading(false);
+        }
+      };
+      
+      fetchProducts();
+    }, [store?.id, element.content.limit, resolvedWebsiteId, sourceType, selectedProductIds, allProducts]);
+    
+    const { addToCart } = useAddToCart();
+    
+    const getResponsiveColumns = () => {
+      const columns = element.content.columns || 3;
+      const tabletColumns = element.content.tabletColumns || Math.max(2, Math.min(columns, 3));
+      const mobileColumns = element.content.mobileColumns || 1;
+      
+      if (deviceType === 'mobile') return mobileColumns;
+      if (deviceType === 'tablet') return tabletColumns;
+      return columns;
     };
-    loadTopSellers();
-  }, [store?.id, limit, resolvedWebsiteId]);
-
-  const buttonStyles = React.useMemo(() => {
-    const bs = (element as any).styles?.buttonStyles || {};
-    if ((bs as any).responsive) {
-      return mergeResponsiveStyles({}, bs, deviceType as any) as React.CSSProperties;
+    
+    const handleAddToCart = async (product: any) => {
+      await addToCart(product, 1);
+    };
+    
+    const applyStyles = (baseClasses: string) => {
+      const styles = element.styles || {};
+      let classes = baseClasses;
+      
+      // Apply typography styles for different parts (simplified for now)
+      const responsiveStyles = (styles as any).responsiveStyles?.desktop || {};
+      const headlineStyles = responsiveStyles.headline || {};
+      const subheadlineStyles = responsiveStyles.subheadline || {};
+      const productTitleStyles = responsiveStyles.productTitle || {};
+      const priceStyles = responsiveStyles.price || {};
+      
+      // Apply styles based on the element being styled
+      if (baseClasses.includes('headline')) {
+        if (headlineStyles.fontSize) classes += ` text-[${headlineStyles.fontSize}]`;
+        if (headlineStyles.color) classes += ` text-[${headlineStyles.color}]`;
+        if (headlineStyles.textAlign) classes += ` text-${headlineStyles.textAlign}`;
+        if (headlineStyles.lineHeight) classes += ` leading-[${headlineStyles.lineHeight}]`;
+      }
+      
+      if (baseClasses.includes('subheadline')) {
+        if (subheadlineStyles.fontSize) classes += ` text-[${subheadlineStyles.fontSize}]`;
+        if (subheadlineStyles.color) classes += ` text-[${subheadlineStyles.color}]`;
+        if (subheadlineStyles.textAlign) classes += ` text-${subheadlineStyles.textAlign}`;
+        if (subheadlineStyles.lineHeight) classes += ` leading-[${subheadlineStyles.lineHeight}]`;
+      }
+      
+      if (baseClasses.includes('product-title')) {
+        if (productTitleStyles.fontSize) classes += ` text-[${productTitleStyles.fontSize}]`;
+        if (productTitleStyles.color) classes += ` text-[${productTitleStyles.color}]`;
+        if (productTitleStyles.lineHeight) classes += ` leading-[${productTitleStyles.lineHeight}]`;
+      }
+      
+      if (baseClasses.includes('price')) {
+        if (priceStyles.fontSize) classes += ` text-[${priceStyles.fontSize}]`;
+        if (priceStyles.color) classes += ` text-[${priceStyles.color}]`;
+        if (priceStyles.lineHeight) classes += ` leading-[${priceStyles.lineHeight}]`;
+      }
+      
+      return classes;
+    };
+    
+    const getCardStyles = () => {
+      const styles = element.styles || {};
+      let cardClasses = "border rounded-lg p-4 hover:shadow-md transition-shadow";
+      
+      // Apply card styles
+      if ((styles as any).cardBackground) {
+        cardClasses += ` bg-[${(styles as any).cardBackground}]`;
+      }
+      if (styles.borderRadius) {
+        cardClasses = cardClasses.replace('rounded-lg', `rounded-[${styles.borderRadius}]`);
+      }
+      if ((styles as any).borderWidth && parseInt((styles as any).borderWidth) > 0) {
+        cardClasses = cardClasses.replace('border', `border-[${(styles as any).borderWidth}]`);
+        if ((styles as any).borderColor) {
+          cardClasses += ` border-[${(styles as any).borderColor}]`;
+        }
+      }
+      if ((styles as any).cardPadding) {
+        cardClasses = cardClasses.replace('p-4', `p-[${(styles as any).cardPadding}]`);
+      }
+      
+      return cardClasses;
+    };
+    
+    const getButtonStyles = () => {
+      const styles = element.styles || {};
+      const variant = (styles as any).buttonVariant || 'default';
+      const size = (styles as any).buttonSize || 'sm';
+      const width = (styles as any).buttonWidth === 'full' ? 'w-full' : '';
+      
+      return { variant, size, className: width };
+    };
+    
+    if (loading) {
+      return (
+        <div className="w-full py-8">
+          <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${getResponsiveColumns()}, 1fr)` }}>
+            {Array.from({ length: element.content.limit || 6 }).map((_, index) => (
+              <div key={index} className="animate-pulse">
+                <div className="aspect-square bg-muted rounded-lg mb-3"></div>
+                <div className="h-4 bg-muted rounded w-3/4 mb-2"></div>
+                <div className="h-4 bg-muted rounded w-1/2"></div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
     }
-    return bs as React.CSSProperties;
-  }, [deviceType, (element as any).styles?.buttonStyles]);
-
-  const elementStyles = renderElementStyles(element, deviceType);
-  const headlineStyles = mergeResponsiveStyles({}, (element as any).styles?.headlineStyles, deviceType as any);
-  const subheadlineStyles = mergeResponsiveStyles({}, (element as any).styles?.subheadlineStyles, deviceType as any);
-  const productTitleStyles = mergeResponsiveStyles({}, (element as any).styles?.productTitleStyles, deviceType as any);
-  const priceStyles = mergeResponsiveStyles({}, (element as any).styles?.priceStyles, deviceType as any);
-
-  const gridClass = `grid grid-cols-${mobileCols} md:grid-cols-${tabletCols} lg:grid-cols-${desktopCols} gap-4`;
-
-  if (loading) {
+    
+    if (topProducts.length === 0) {
+      const emptyMessage = sourceType === 'manual' 
+        ? "No products selected. Please select products in the element settings."
+        : "No top products found for this week. Products need delivered orders to appear here.";
+      
+      return (
+        <div className="w-full py-12 text-center text-muted-foreground">
+          <p className="text-sm">{emptyMessage}</p>
+        </div>
+      );
+    }
+    
+    const containerGap = (element.styles as any)?.gap ? `gap-[${(element.styles as any).gap}]` : 'gap-4';
+    
     return (
-      <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-4xl mx-auto'}`}>
-        <div className="grid grid-cols-3 gap-4">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="h-40 bg-muted rounded animate-pulse" />
+      <div className="w-full">
+        {element.content.showTitle !== false && element.content.title && (
+          <h2 className={applyStyles("headline text-2xl font-bold mb-2")}>
+            {element.content.title}
+          </h2>
+        )}
+        
+        {element.content.showSubtitle !== false && element.content.subtitle && (
+          <p className={applyStyles("subheadline text-muted-foreground mb-6")}>
+            {element.content.subtitle}
+          </p>
+        )}
+        
+        <div className={`grid ${containerGap}`} style={{ gridTemplateColumns: `repeat(${getResponsiveColumns()}, 1fr)` }}>
+          {topProducts.slice(0, element.content.limit || 6).map((product) => (
+            <div key={product.id} className={getCardStyles()}>
+              <div className="aspect-square bg-muted rounded-lg mb-3 overflow-hidden">
+                {product.images && product.images.length > 0 ? (
+                  <img
+                    src={product.images[0]}
+                    alt={product.name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                    No Image
+                  </div>
+                )}
+              </div>
+              
+              <h3 className={applyStyles("product-title font-medium text-sm mb-1")}>
+                {product.name}
+              </h3>
+              
+              <p className={applyStyles("price font-bold text-lg mb-3")}>
+                ${product.price}
+              </p>
+              
+              <Button
+                onClick={() => handleAddToCart(product)}
+                {...getButtonStyles()}
+              >
+                {element.content.ctaText || 'Add to Cart'}
+              </Button>
+            </div>
           ))}
         </div>
       </div>
     );
-  }
-
-  const title = element.content?.title || 'Weekly Featured Products';
-  const showTitle = element.content?.showTitle !== false;
-  const subtitle = element.content?.subtitle || 'Top selling products this week';
-  const showSubtitle = element.content?.showSubtitle !== false;
-  return (
-    <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-4xl mx-auto'}`}>
-      <div className="bg-card rounded-lg p-6 border">
-        <div className="text-center mb-6">
-          {showTitle && (
-            <h2 className="font-bold mb-2" style={headlineStyles as any}>{title}</h2>
-          )}
-          {showSubtitle && (
-            <p className="text-muted-foreground" style={subheadlineStyles as any}>{subtitle}</p>
-          )}
-        </div>
-        <div className={gridClass}>
-          {items.map((p) => (
-            <div key={p.id} className="group/card" style={{
-              backgroundColor: elementStyles.backgroundColor,
-              borderColor: elementStyles.borderColor,
-              borderWidth: elementStyles.borderWidth as any,
-              borderStyle: elementStyles.borderWidth ? 'solid' : undefined,
-              borderRadius: elementStyles.borderRadius as any,
-              margin: elementStyles.margin as any,
-              marginTop: elementStyles.marginTop as any,
-              marginRight: elementStyles.marginRight as any,
-              marginBottom: elementStyles.marginBottom as any,
-              marginLeft: elementStyles.marginLeft as any,
-              textAlign: elementStyles.textAlign as any,
-            }}>
-              <div className="p-3" style={{
-                padding: elementStyles.padding as any,
-                paddingTop: elementStyles.paddingTop as any,
-                paddingRight: elementStyles.paddingRight as any,
-                paddingBottom: elementStyles.paddingBottom as any,
-                paddingLeft: elementStyles.paddingLeft as any,
-              }}>
-                <div className="relative overflow-hidden rounded-lg mb-3 aspect-square">
-                  <img
-                    src={(Array.isArray(p.images) ? p.images[0] : p.images) || '/placeholder.svg'}
-                    alt={p.name}
-                    className="w-full h-full object-cover group-hover/card:scale-105 transition-transform"
-                  />
-                </div>
-                <h4 className="font-medium mb-2" style={productTitleStyles as any}>{p.name}</h4>
-                <div className="mb-3 flex flex-col items-start gap-1 sm:flex-row sm:items-center sm:gap-2">
-                  <span className="font-bold text-primary text-base md:text-lg" style={priceStyles as any}>{formatCurrency(Number(p.price))}</span>
-                  {p.compare_price && p.compare_price > p.price && (
-                    <span className="text-xs md:text-sm text-muted-foreground line-through">
-                      {formatCurrency(Number(p.compare_price))}
-                    </span>
-                  )}
-                </div>
-                <Button size="sm" className="w-full" style={buttonStyles as React.CSSProperties}>{element.content?.ctaText || 'Add to Cart'}</Button>
-              </div>
-            </div>
-          ))}
-          {items.length === 0 && (
-            <div className="col-span-full text-center text-muted-foreground py-8">No data yet.</div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-};
+  };
 
 // Price Element
 const PriceElement: React.FC<{
