@@ -1,7 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from '@/components/ui/toaster';
 import { ThemeProvider } from 'next-themes';
-import { AuthProvider } from '@/hooks/useAuth';
 
 // Core pages
 import Index from '@/pages/Index';
@@ -31,7 +30,6 @@ import AdminOrders from '@/pages/admin/AdminOrders';
 function App() {
   return (
     <ThemeProvider defaultTheme="system" attribute="class">
-      <AuthProvider>
         <Router>
         <Routes>
           <Route path="/" element={<Index />} />
@@ -65,7 +63,6 @@ function App() {
         </Routes>
         <Toaster />
       </Router>
-      </AuthProvider>
     </ThemeProvider>
   );
 }
