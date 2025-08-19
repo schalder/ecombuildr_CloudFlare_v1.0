@@ -20,10 +20,6 @@ interface SectionRendererProps {
   onRemoveElement: (elementId: string) => void;
   onAddSectionAfter: () => void;
   onAddRowAfter: (rowIndex: number) => void;
-  hoveredItem?: { type: string; id: string; depth: number } | null;
-  onMouseEnter?: (type: 'section' | 'row' | 'column' | 'element', id: string, depth: number) => void;
-  onMouseLeave?: () => void;
-  shouldShowToolbar?: (type: 'section' | 'row' | 'column' | 'element', id: string) => boolean;
 }
 
 export const SectionRenderer: React.FC<SectionRendererProps> = ({
@@ -38,19 +34,15 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({
   onMoveElement,
   onRemoveElement,
   onAddSectionAfter,
-  onAddRowAfter,
-  hoveredItem,
-  onMouseEnter,
-  onMouseLeave,
-  shouldShowToolbar
+  onAddRowAfter
 }) => {
-  const showToolbar = shouldShowToolbar && shouldShowToolbar('section', section.id);
-
+  const [isHovered, setIsHovered] = React.useState(false);
   const [{ isOver }, drop] = isPreviewMode 
     ? [{ isOver: false }, React.useRef(null)]
     : useDrop({
         accept: 'element',
         drop: (item: { elementType: string }) => {
+          // For now, sections don't directly accept elements - they get rows
           console.log('Section drop - not implemented for direct elements');
         },
         collect: (monitor) => ({
@@ -148,24 +140,26 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({
         !isPreviewMode && 'border-2 border-dashed',
         !isPreviewMode && isSelected && 'border-primary',
         !isPreviewMode && isSelected && !userBackground && 'bg-primary/5',
-        !isPreviewMode && !isSelected && 'border-transparent',
+        !isPreviewMode && isHovered && !isSelected && 'border-primary/30',
+        !isPreviewMode && isHovered && !isSelected && !userBackground && 'bg-primary/2',
+        !isPreviewMode && !isHovered && !isSelected && 'border-transparent',
         !isPreviewMode && isOver && !userBackground && 'bg-primary/5'
       )}
       style={getSectionStyles()}
-      onMouseEnter={onMouseEnter ? () => onMouseEnter('section', section.id, 0) : undefined}
-      onMouseLeave={onMouseLeave}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       onClick={handleSectionClick}
     >
       {/* Section Controls */}
-      {!isPreviewMode && showToolbar && (
-        <div className="absolute -top-10 left-0 flex items-center space-x-1 bg-blue-100 border border-blue-200 text-gray-800 px-2 py-1 rounded-md text-xs z-10">
+      {!isPreviewMode && (isSelected || isHovered) && (
+        <div className="absolute -top-10 left-0 flex items-center space-x-1 bg-primary text-primary-foreground px-2 py-1 rounded-md text-xs z-10">
           <GripVertical className="h-3 w-3" />
           <span>Section</span>
           <div className="flex items-center space-x-1 ml-2">
             <Button
               size="sm"
               variant="ghost"
-              className="h-6 w-6 p-0 hover:bg-blue-200"
+              className="h-6 w-6 p-0 hover:bg-primary-foreground/20"
               onClick={handleDuplicateSection}
             >
               <Copy className="h-3 w-3" />
@@ -173,7 +167,7 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({
             <Button
               size="sm"
               variant="ghost"
-              className="h-6 w-6 p-0 hover:bg-red-200 hover:text-red-600"
+              className="h-6 w-6 p-0 hover:bg-destructive/20"
               onClick={handleDeleteSection}
             >
               <Trash2 className="h-3 w-3" />
@@ -181,7 +175,7 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({
             <Button
               size="sm"
               variant="ghost"
-              className="h-6 w-6 p-0 hover:bg-blue-200"
+              className="h-6 w-6 p-0 hover:bg-primary-foreground/20"
               onClick={(e) => {
                 e.stopPropagation();
                 onAddSectionAfter();
