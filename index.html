@@ -27,48 +27,19 @@
           }
         }
 
-        // Determine if this is a SaaS domain or custom domain
-        const isSaasDomain = currentDomain === 'ecombuildr.com' || currentDomain.includes('lovable.app');
-        
-        if (isSaasDomain) {
-          // For SaaS domains, fetch from seo_pages table
-          fetchSaasSEO(currentPath).then(seoData => {
-            if (seoData) {
-              updateSEOTags(seoData);
-              // Cache the result
-              localStorage.setItem(cacheKey, JSON.stringify({
-                data: seoData,
-                timestamp: Date.now()
-              }));
-            }
-          }).catch(console.error);
-        } else {
-          // For custom domains, fetch from seo-prerender function
-          fetchCustomDomainSEO(currentDomain, currentPath).then(seoData => {
-            if (seoData) {
-              updateSEOTags(seoData);
-              // Cache the result
-              localStorage.setItem(cacheKey, JSON.stringify({
-                data: seoData,
-                timestamp: Date.now()
-              }));
-            }
-          }).catch(console.error);
-        }
+        // Always fetch SEO data from seo-prerender function for consistency
+        fetchSEOFromPrerender(currentDomain, currentPath).then(seoData => {
+          if (seoData) {
+            updateSEOTags(seoData);
+            // Cache the result
+            localStorage.setItem(cacheKey, JSON.stringify({
+              data: seoData,
+              timestamp: Date.now()
+            }));
+          }
+        }).catch(console.error);
 
-        function fetchSaasSEO(path) {
-          // Default SaaS SEO data
-          return Promise.resolve({
-            title: 'EcomBuildr - Build Professional E-commerce Stores & Sales Funnels',
-            description: 'Create stunning online stores and high-converting sales funnels with EcomBuildr. No coding required. Start selling online in minutes with our drag-and-drop builder.',
-            og_image: 'https://ecombuildr.com/og-image.jpg',
-            keywords: ['ecommerce builder', 'online store', 'sales funnel', 'website builder', 'no-code', 'drag and drop', 'online selling'],
-            canonical: 'https://ecombuildr.com' + path,
-            robots: 'index, follow'
-          });
-        }
-
-        function fetchCustomDomainSEO(domain, path) {
+        function fetchSEOFromPrerender(domain, path) {
           const url = `https://fhqwacmokbtbspkxjixf.supabase.co/functions/v1/seo-prerender?domain=${encodeURIComponent(domain)}&path=${encodeURIComponent(path)}&format=json`;
           return fetch(url)
             .then(response => response.json())

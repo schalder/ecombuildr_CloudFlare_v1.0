@@ -780,6 +780,16 @@ async function getSEODataAsJSON(supabase: any, domain: string, path: string): Pr
 // Get website page SEO data as JSON
 async function getWebsitePageSEOData(supabase: any, websiteId: string, pageSlug: string, domain: string | null): Promise<any> {
   try {
+    // First, try to extract SEO from HTML snapshot
+    const snapshotSEO = await extractSEOFromSnapshot(supabase, websiteId, pageSlug, 'website', domain)
+    if (snapshotSEO) {
+      console.log('✅ Extracted SEO from website page snapshot')
+      return snapshotSEO
+    }
+
+    // Fallback to database tables
+    console.log('🔄 Falling back to database for website page SEO')
+    
     // Fetch website data
     const { data: website, error: websiteError } = await supabase
       .from('websites')
@@ -834,6 +844,16 @@ async function getWebsitePageSEOData(supabase: any, websiteId: string, pageSlug:
 // Get funnel step SEO data as JSON
 async function getFunnelStepSEOData(supabase: any, funnelId: string, stepSlug: string, domain: string | null): Promise<any> {
   try {
+    // First, try to extract SEO from HTML snapshot
+    const snapshotSEO = await extractSEOFromSnapshot(supabase, funnelId, stepSlug, 'funnel', domain)
+    if (snapshotSEO) {
+      console.log('✅ Extracted SEO from funnel step snapshot')
+      return snapshotSEO
+    }
+
+    // Fallback to database tables
+    console.log('🔄 Falling back to database for funnel step SEO')
+    
     // Fetch funnel data
     const { data: funnel, error: funnelError } = await supabase
       .from('funnels')
@@ -896,6 +916,141 @@ function getDefaultSEOData(): any {
     keywords: ['ecommerce builder', 'online store', 'sales funnel', 'website builder', 'no-code', 'drag and drop', 'online selling'],
     author: null,
     language: 'en'
+  }
+}
+
+// Extract SEO data from HTML snapshot
+async function extractSEOFromSnapshot(supabase: any, contentId: string, pageSlug: string, contentType: 'website' | 'funnel', domain: string | null): Promise<any> {
+  try {
+    // For website, first try to get page-specific snapshot
+    if (contentType === 'website') {
+      // Get page ID first
+      let pageQuery = supabase
+        .from('website_pages')
+        .select('id, slug, is_homepage')
+        .eq('website_id', contentId)
+        .eq('is_published', true)
+      
+      if (pageSlug) {
+        pageQuery = pageQuery.eq('slug', pageSlug)
+      } else {
+        pageQuery = pageQuery.eq('is_homepage', true)
+      }
+      
+      const { data: page } = await pageQuery.maybeSingle()
+      
+      if (page) {
+        // Try to get page-specific snapshot
+        const pageSnapshot = await getContentSnapshot(supabase, page.id, 'website_page', domain)
+        if (pageSnapshot) {
+          const seoData = parseHTMLForSEO(pageSnapshot)
+          if (seoData) return seoData
+        }
+      }
+      
+      // Fallback to website-level snapshot
+      const websiteSnapshot = await getContentSnapshot(supabase, contentId, 'website', domain)
+      if (websiteSnapshot) {
+        const seoData = parseHTMLForSEO(websiteSnapshot)
+        if (seoData) return seoData
+      }
+    }
+    
+    // For funnel, first try to get step-specific snapshot
+    if (contentType === 'funnel') {
+      // Get step ID first
+      let stepQuery = supabase
+        .from('funnel_steps')
+        .select('id')
+        .eq('funnel_id', contentId)
+        .eq('is_published', true)
+      
+      if (pageSlug) {
+        stepQuery = stepQuery.eq('slug', pageSlug)
+      } else {
+        stepQuery = stepQuery.order('step_order', { ascending: true }).limit(1)
+      }
+      
+      const { data: step } = await stepQuery.maybeSingle()
+      
+      if (step) {
+        // Try to get step-specific snapshot
+        const stepSnapshot = await getContentSnapshot(supabase, step.id, 'funnel_step', domain)
+        if (stepSnapshot) {
+          const seoData = parseHTMLForSEO(stepSnapshot)
+          if (seoData) return seoData
+        }
+      }
+      
+      // Fallback to funnel-level snapshot
+      const funnelSnapshot = await getContentSnapshot(supabase, contentId, 'funnel', domain)
+      if (funnelSnapshot) {
+        const seoData = parseHTMLForSEO(funnelSnapshot)
+        if (seoData) return seoData
+      }
+    }
+    
+    return null
+  } catch (error) {
+    console.error('Error extracting SEO from snapshot:', error)
+    return null
+  }
+}
+
+// Parse HTML content to extract SEO data
+function parseHTMLForSEO(htmlContent: string): any {
+  try {
+    // Extract title
+    const titleMatch = htmlContent.match(/<title[^>]*>([^<]*)<\/title>/i)
+    const title = titleMatch ? titleMatch[1].trim() : null
+    
+    // Extract meta description
+    const descMatch = htmlContent.match(/<meta\s+name=["']description["']\s+content=["']([^"']*?)["']/i)
+    const description = descMatch ? descMatch[1] : null
+    
+    // Extract meta keywords
+    const keywordsMatch = htmlContent.match(/<meta\s+name=["']keywords["']\s+content=["']([^"']*?)["']/i)
+    const keywords = keywordsMatch ? keywordsMatch[1].split(',').map(k => k.trim()) : []
+    
+    // Extract meta robots
+    const robotsMatch = htmlContent.match(/<meta\s+name=["']robots["']\s+content=["']([^"']*?)["']/i)
+    const robots = robotsMatch ? robotsMatch[1] : 'index,follow'
+    
+    // Extract canonical URL
+    const canonicalMatch = htmlContent.match(/<link\s+rel=["']canonical["']\s+href=["']([^"']*?)["']/i)
+    const canonical = canonicalMatch ? canonicalMatch[1] : null
+    
+    // Extract OG image
+    const ogImageMatch = htmlContent.match(/<meta\s+property=["']og:image["']\s+content=["']([^"']*?)["']/i)
+    const og_image = ogImageMatch ? ogImageMatch[1] : null
+    
+    // Extract author
+    const authorMatch = htmlContent.match(/<meta\s+name=["']author["']\s+content=["']([^"']*?)["']/i)
+    const author = authorMatch ? authorMatch[1] : null
+    
+    // Extract language
+    const langMatch = htmlContent.match(/<html[^>]+lang=["']([^"']*?)["']/i)
+    const language = langMatch ? langMatch[1] : 'en'
+    
+    // Only return data if we found at least title or description
+    if (title || description) {
+      console.log('🎯 Extracted SEO from HTML snapshot:', { title, description, canonical })
+      return {
+        title,
+        description,
+        og_image,
+        canonical,
+        robots,
+        keywords,
+        author,
+        language
+      }
+    }
+    
+    return null
+  } catch (error) {
+    console.error('Error parsing HTML for SEO:', error)
+    return null
   }
 }
 

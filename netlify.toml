@@ -10,6 +10,13 @@
     command = "npm run build"
     environment = { NETLIFY_PRERENDER = "true" }
 
+# Bot-specific routing: redirect bots to seo-prerender function
+[[redirects]]
+  from = "/*"
+  to = "https://fhqwacmokbtbspkxjixf.supabase.co/functions/v1/seo-prerender?domain=:host&path=:path"
+  status = 200
+  conditions = {User-Agent = ["*bot*", "*crawler*", "*spider*", "*Googlebot*", "*Bingbot*", "*facebookexternalhit*", "*Twitterbot*"]}
+
 # Pass-through for static assets (JS, CSS, images, etc.)
 [[redirects]]
   from = "/assets/*"
