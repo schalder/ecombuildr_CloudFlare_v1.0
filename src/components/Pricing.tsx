@@ -185,9 +185,11 @@ export const Pricing = () => {
             variant="outline" 
             size="lg" 
             onClick={() => {
-              const message = encodeURIComponent("Hi, I'm interested in learning more about your pricing plans. Can you help me choose the right plan for my business?");
-              const whatsappUrl = `https://wa.me/+8801234567890?text=${message}`;
-              window.open(whatsappUrl, '_blank');
+              // First try to open the widget if it's minimized
+              const whatsappButton = document.querySelector('.whatsapp-widget button') as HTMLElement;
+              if (whatsappButton) {
+                whatsappButton.click();
+              }
             }}
           >
             Contact Sales Team
