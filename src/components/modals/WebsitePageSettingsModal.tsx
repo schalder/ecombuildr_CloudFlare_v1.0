@@ -127,11 +127,18 @@ export const WebsitePageSettingsModal: React.FC<WebsitePageSettingsModalProps> =
     },
     onSuccess: async () => {
       await qc.invalidateQueries({ queryKey: ["website-pages", websiteId] });
-      toast({ title: "Page deleted" });
+      toast({ 
+        title: "Page deleted",
+        description: "The page and all related data have been permanently deleted."
+      });
       onClose();
     },
     onError: (err: any) => {
-      toast({ title: "Failed to delete page", description: err?.message ?? "", variant: "destructive" });
+      toast({ 
+        title: "Failed to delete page", 
+        description: err?.message ?? "This action cannot be undone.", 
+        variant: "destructive" 
+      });
     },
   });
 
@@ -155,7 +162,7 @@ export const WebsitePageSettingsModal: React.FC<WebsitePageSettingsModalProps> =
   const handleSetHomepage = () => setHomepageMutation.mutate();
   const handleDelete = () => {
     if (!page) return;
-    if (confirm("Delete this page? This action cannot be undone.")) {
+    if (confirm(`Are you sure you want to delete "${page.title}"? This action cannot be undone and will permanently delete all associated data.`)) {
       deleteMutation.mutate();
     }
   };
@@ -210,8 +217,12 @@ export const WebsitePageSettingsModal: React.FC<WebsitePageSettingsModalProps> =
               <Button variant="secondary" onClick={handleSetHomepage} disabled={page.is_homepage || setHomepageMutation.isPending}>
                 {page.is_homepage ? "Already homepage" : "Set as homepage"}
               </Button>
-              <Button variant="destructive" onClick={handleDelete} disabled={deleteMutation.isPending}>
-                Delete page
+              <Button 
+                variant="destructive" 
+                onClick={handleDelete} 
+                disabled={deleteMutation.isPending}
+              >
+                {deleteMutation.isPending ? "Deleting..." : "Delete page"}
               </Button>
             </div>
           </div>

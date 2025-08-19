@@ -86,15 +86,29 @@ export default function Websites() {
       queryClient.invalidateQueries({ queryKey: ['websites'] });
       toast({
         title: "Website deleted",
-        description: "The website has been successfully deleted.",
+        description: "The website and all related data have been permanently deleted.",
       });
     },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: "Failed to delete website. Please try again.",
-        variant: "destructive",
-      });
+    onError: (error: any) => {
+      console.error('Delete website error:', error);
+      
+      // Check if it's our custom constraint error
+      if (error.message && error.message.includes('page(s) still exist')) {
+        const match = error.message.match(/(\d+) page\(s\) still exist/);
+        const pageCount = match ? match[1] : 'some';
+        
+        toast({
+          title: "Cannot delete website",
+          description: `This website has ${pageCount} page(s). Please delete all pages first. This action cannot be undone.`,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to delete website. Please try again.",
+          variant: "destructive",
+        });
+      }
     },
   });
 
@@ -114,8 +128,8 @@ export default function Websites() {
     window.open(url, '_blank');
   };
 
-  const handleDeleteWebsite = (websiteId: string) => {
-    if (confirm('Are you sure you want to delete this website? This action cannot be undone.')) {
+  const handleDeleteWebsite = (websiteId: string, websiteName: string) => {
+    if (confirm(`Are you sure you want to delete "${websiteName}"? This action cannot be undone and will permanently delete all associated data.`)) {
       deleteWebsiteMutation.mutate(websiteId);
     }
   };
@@ -204,8 +218,9 @@ export default function Websites() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleDeleteWebsite(website.id)}
+                        onClick={() => handleDeleteWebsite(website.id, website.name)}
                         className="text-destructive hover:text-destructive"
+                        disabled={deleteWebsiteMutation.isPending}
                       >
                         <Trash2 className="h-3 w-3" />
                       </Button>

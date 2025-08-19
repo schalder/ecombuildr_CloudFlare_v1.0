@@ -59,15 +59,29 @@ export default function Funnels() {
       queryClient.invalidateQueries({ queryKey: ['funnels'] });
       toast({
         title: "Funnel deleted",
-        description: "The funnel has been successfully deleted.",
+        description: "The funnel and all related data have been permanently deleted.",
       });
     },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: "Failed to delete funnel. Please try again.",
-        variant: "destructive",
-      });
+    onError: (error: any) => {
+      console.error('Delete funnel error:', error);
+      
+      // Check if it's our custom constraint error
+      if (error.message && error.message.includes('step(s) still exist')) {
+        const match = error.message.match(/(\d+) step\(s\) still exist/);
+        const stepCount = match ? match[1] : 'some';
+        
+        toast({
+          title: "Cannot delete funnel",
+          description: `This funnel has ${stepCount} step(s). Please delete all steps first. This action cannot be undone.`,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to delete funnel. Please try again.",
+          variant: "destructive",
+        });
+      }
     },
   });
 
@@ -86,9 +100,8 @@ export default function Funnels() {
     window.open(url, '_blank');
   };
 
-
-  const handleDeleteFunnel = (funnelId: string) => {
-    if (confirm('Are you sure you want to delete this funnel? This action cannot be undone.')) {
+  const handleDeleteFunnel = (funnelId: string, funnelName: string) => {
+    if (confirm(`Are you sure you want to delete "${funnelName}"? This action cannot be undone and will permanently delete all associated data.`)) {
       deleteFunnelMutation.mutate(funnelId);
     }
   };
@@ -175,8 +188,9 @@ export default function Funnels() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleDeleteFunnel(funnel.id)}
+                        onClick={() => handleDeleteFunnel(funnel.id, funnel.name)}
                         className="text-destructive hover:text-destructive col-span-2"
+                        disabled={deleteFunnelMutation.isPending}
                       >
                         <Trash2 className="h-3 w-3" />
                       </Button>
