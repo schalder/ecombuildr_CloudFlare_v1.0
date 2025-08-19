@@ -8,7 +8,9 @@ import {
   ArrowRight,
   Zap,
   Target,
-  CreditCard
+  CreditCard,
+  Truck,
+  Calculator
 } from "lucide-react";
 
 const tools = [
@@ -43,6 +45,22 @@ const tools = [
     features: ["bKash Integration", "Nagad Support", "Cash on Delivery"],
     color: "text-primary",
     bgColor: "bg-primary-light"
+  },
+  {
+    icon: Truck,
+    title: "Integrate with Shipping Partner",
+    description: "Connect with trusted delivery partners like SteadFast to handle your product shipping",
+    features: ["SteadFast Integration", "Real-time Tracking", "Automated Order Processing"],
+    color: "text-success",
+    bgColor: "bg-success-light"
+  },
+  {
+    icon: Calculator,
+    title: "Setup Shipping Fee",
+    description: "Configure flexible shipping options to match your business needs",
+    features: ["Global Shipping Rates", "Product-wise Fees", "Weight-based Pricing", "Free Shipping Options"],
+    color: "text-accent",
+    bgColor: "bg-accent-light"
   }
 ];
 
