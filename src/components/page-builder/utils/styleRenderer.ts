@@ -53,6 +53,19 @@ export const renderSectionStyles = (section: PageBuilderSection, deviceType: 'de
     styles.width = section.customWidth;
   }
   
+  // Auto-center sections when width is less than 100% and no explicit horizontal margins
+  const hasExplicitHorizontalMargin = styles.marginLeft || styles.marginRight || section.styles?.marginLeft || section.styles?.marginRight;
+  const responsiveWidth = section.styles?.responsive?.[deviceType]?.width;
+  const hasCustomWidth = section.customWidth || responsiveWidth;
+  
+  if (hasCustomWidth && !hasExplicitHorizontalMargin) {
+    const widthValue = responsiveWidth || section.customWidth;
+    if (widthValue && widthValue !== '100%' && !widthValue.includes('100%')) {
+      styles.marginLeft = 'auto';
+      styles.marginRight = 'auto';
+    }
+  }
+
   // Merge responsive overrides
   const merged = mergeResponsiveStyles(styles, section.styles, deviceType);
   return merged;
@@ -109,6 +122,19 @@ export const renderRowStyles = (row: PageBuilderRow, deviceType: 'desktop' | 'ta
     styles.width = row.customWidth;
   }
   
+  // Auto-center rows when width is less than 100% and no explicit horizontal margins
+  const hasExplicitHorizontalMargin = styles.marginLeft || styles.marginRight || row.styles?.marginLeft || row.styles?.marginRight;
+  const responsiveWidth = row.styles?.responsive?.[deviceType]?.width;
+  const hasCustomWidth = row.customWidth || responsiveWidth;
+  
+  if (hasCustomWidth && !hasExplicitHorizontalMargin) {
+    const widthValue = responsiveWidth || row.customWidth;
+    if (widthValue && widthValue !== '100%' && !widthValue.includes('100%')) {
+      styles.marginLeft = 'auto';
+      styles.marginRight = 'auto';
+    }
+  }
+
   // Merge responsive overrides
   const merged = mergeResponsiveStyles(styles, row.styles, deviceType);
   return merged;
@@ -182,6 +208,18 @@ export const renderColumnStyles = (column: PageBuilderColumn, deviceType: 'deskt
     if (column.styles.width) styles.width = column.styles.width;
   }
   
+  // Auto-center columns when width is set and no explicit horizontal margins
+  const hasExplicitHorizontalMargin = styles.marginLeft || styles.marginRight || column.styles?.marginLeft || column.styles?.marginRight;
+  const responsiveWidth = column.styles?.responsive?.[deviceType]?.width;
+  const hasCustomWidth = column.customWidth || responsiveWidth;
+  
+  if (hasCustomWidth && !hasExplicitHorizontalMargin) {
+    const widthValue = responsiveWidth || column.customWidth;
+    if (widthValue && widthValue !== '100%' && !widthValue.includes('100%')) {
+      styles.justifySelf = 'center';
+    }
+  }
+
   // Merge responsive overrides
   const merged = mergeResponsiveStyles(styles, column.styles, deviceType);
   return merged;
