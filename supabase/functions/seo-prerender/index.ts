@@ -19,6 +19,10 @@ serve(async (req) => {
 
   const url = new URL(req.url)
   
+  // Check if JSON format is requested
+  const format = url.searchParams.get('format')
+  const isJsonRequest = format === 'json'
+  
   // Get domain and path from query parameters first (Netlify prerendering), then fall back to headers/pathname
   let domainParam = url.searchParams.get('domain') 
   let pathParam = url.searchParams.get('path')
@@ -42,11 +46,43 @@ serve(async (req) => {
   console.log('🔍 SEO Prerender request:', { 
     path, 
     domain,
+    format,
+    isJsonRequest,
     originalDomainParam: url.searchParams.get('domain'), 
     'x-forwarded-host': req.headers.get('x-forwarded-host'),
     'host': req.headers.get('host'),
     userAgent 
   })
+
+  // Handle JSON format requests (for dynamic SEO loading)
+  if (isJsonRequest) {
+    try {
+      const seoData = await getSEODataAsJSON(supabase, domain, path)
+      console.log('📋 Returning SEO JSON data:', seoData)
+      return new Response(JSON.stringify({
+        success: true,
+        seo: seoData
+      }), {
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json',
+          'Cache-Control': 'public, max-age=300, s-maxage=3600',
+        },
+      })
+    } catch (error) {
+      console.error('❌ Error generating SEO JSON:', error)
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'Failed to generate SEO data'
+      }), {
+        status: 500,
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json'
+        }
+      })
+    }
+  }
 
   // Detect if request is from a human browser vs bot
   const isBot = isLikelyBot(userAgent)
@@ -672,6 +708,195 @@ function isLikelyBot(userAgent: string): boolean {
   
   const lowercaseUA = userAgent.toLowerCase()
   return botPatterns.some(pattern => lowercaseUA.includes(pattern))
+}
+
+// Get SEO data as JSON for dynamic loading
+async function getSEODataAsJSON(supabase: any, domain: string, path: string): Promise<any> {
+  try {
+    // Handle custom domains first
+    if (domain !== 'ecombuildr.com' && !domain.includes('lovable.app')) {
+      console.log('🌐 Custom domain SEO JSON request:', domain, 'path:', path)
+      
+      // Look up custom domain mapping to get content_id and content_type
+      const { data: customDomainData, error: domainError } = await supabase
+        .from('custom_domains')
+        .select(`
+          *,
+          domain_connections(
+            content_type,
+            content_id,
+            path
+          )
+        `)
+        .eq('domain', domain)
+        .maybeSingle()
+      
+      if (domainError || !customDomainData?.domain_connections?.length) {
+        console.log('❌ No domain connections found for:', domain)
+        return getDefaultSEOData()
+      }
+      
+      const connection = customDomainData.domain_connections[0]
+      console.log('✅ Found connection:', connection)
+      
+      if (connection.content_type === 'website') {
+        return await getWebsitePageSEOData(supabase, connection.content_id, path === '/' ? '' : path.substring(1), domain)
+      } else if (connection.content_type === 'funnel') {
+        return await getFunnelStepSEOData(supabase, connection.content_id, path === '/' ? '' : path.substring(1), domain)
+      }
+    } else {
+      // Handle ecombuildr.com domain routes
+      console.log('🏠 EcomBuildr domain SEO JSON request:', domain, 'path:', path)
+      
+      // Parse website routes: /w/:websiteSlug/:pageSlug?
+      const websiteMatch = path.match(/^\/w\/([^\/]+)(?:\/([^\/]+))?$/)
+      if (websiteMatch) {
+        const [, websiteSlug, pageSlug] = websiteMatch
+        const websiteId = await resolveWebsiteSlug(supabase, websiteSlug)
+        if (websiteId) {
+          return await getWebsitePageSEOData(supabase, websiteId, pageSlug || '', null)
+        }
+      }
+      
+      // Parse funnel routes: /f/:funnelSlug/:stepSlug?
+      const funnelMatch = path.match(/^\/f\/([^\/]+)(?:\/([^\/]+))?$/)
+      if (funnelMatch) {
+        const [, funnelSlug, stepSlug] = funnelMatch
+        const funnelId = await resolveFunnelSlug(supabase, funnelSlug)
+        if (funnelId) {
+          return await getFunnelStepSEOData(supabase, funnelId, stepSlug || '', null)
+        }
+      }
+    }
+    
+    // Default SaaS SEO data for marketing pages
+    return getDefaultSEOData()
+  } catch (error) {
+    console.error('Error getting SEO JSON data:', error)
+    return getDefaultSEOData()
+  }
+}
+
+// Get website page SEO data as JSON
+async function getWebsitePageSEOData(supabase: any, websiteId: string, pageSlug: string, domain: string | null): Promise<any> {
+  try {
+    // Fetch website data
+    const { data: website, error: websiteError } = await supabase
+      .from('websites')
+      .select('name, slug, description')
+      .eq('id', websiteId)
+      .eq('is_active', true)
+      .single()
+    
+    if (websiteError || !website) {
+      return getDefaultSEOData()
+    }
+    
+    // Fetch page data
+    let pageQuery = supabase
+      .from('website_pages')
+      .select('*')
+      .eq('website_id', websiteId)
+      .eq('is_published', true)
+    
+    if (pageSlug) {
+      pageQuery = pageQuery.eq('slug', pageSlug)
+    } else {
+      pageQuery = pageQuery.eq('is_homepage', true)
+    }
+    
+    const { data: page, error: pageError } = await pageQuery.maybeSingle()
+    
+    if (pageError || !page) {
+      return getDefaultSEOData()
+    }
+    
+    const canonicalUrl = page.canonical_url || (domain
+      ? `https://${domain}${pageSlug ? `/${pageSlug}` : ''}`
+      : `https://ecombuildr.com/w/${website.slug}${pageSlug ? `/${pageSlug}` : ''}`)
+    
+    return {
+      title: page.seo_title || `${page.title} - ${website.name}`,
+      description: page.seo_description || website.description,
+      og_image: page.og_image,
+      canonical: canonicalUrl,
+      robots: page.meta_robots || 'index, follow',
+      keywords: Array.isArray(page.seo_keywords) ? page.seo_keywords : [],
+      author: page.meta_author,
+      language: page.language_code || 'en'
+    }
+  } catch (error) {
+    console.error('Error getting website page SEO data:', error)
+    return getDefaultSEOData()
+  }
+}
+
+// Get funnel step SEO data as JSON
+async function getFunnelStepSEOData(supabase: any, funnelId: string, stepSlug: string, domain: string | null): Promise<any> {
+  try {
+    // Fetch funnel data
+    const { data: funnel, error: funnelError } = await supabase
+      .from('funnels')
+      .select('name, slug, description')
+      .eq('id', funnelId)
+      .eq('is_active', true)
+      .single()
+    
+    if (funnelError || !funnel) {
+      return getDefaultSEOData()
+    }
+    
+    // Fetch step data
+    let stepQuery = supabase
+      .from('funnel_steps')
+      .select('*')
+      .eq('funnel_id', funnelId)
+      .eq('is_published', true)
+    
+    if (stepSlug) {
+      stepQuery = stepQuery.eq('slug', stepSlug)
+    } else {
+      stepQuery = stepQuery.order('step_order', { ascending: true }).limit(1)
+    }
+    
+    const { data: step, error: stepError } = await stepQuery.maybeSingle()
+    
+    if (stepError || !step) {
+      return getDefaultSEOData()
+    }
+    
+    const canonicalUrl = step.canonical_url || (domain
+      ? `https://${domain}${stepSlug ? `/${stepSlug}` : ''}`
+      : `https://ecombuildr.com/f/${funnel.slug}${stepSlug ? `/${stepSlug}` : ''}`)
+    
+    return {
+      title: step.seo_title || `${step.title} - ${funnel.name}`,
+      description: step.seo_description || funnel.description,
+      og_image: step.social_image_url || step.og_image,
+      canonical: canonicalUrl,
+      robots: step.meta_robots || 'index, follow',
+      keywords: Array.isArray(step.seo_keywords) ? step.seo_keywords : [],
+      author: step.meta_author,
+      language: step.language_code || 'en'
+    }
+  } catch (error) {
+    console.error('Error getting funnel step SEO data:', error)
+    return getDefaultSEOData()
+  }
+}
+
+// Get default SEO data
+function getDefaultSEOData(): any {
+  return {
+    title: 'EcomBuildr - Build Professional E-commerce Stores & Sales Funnels',
+    description: 'Create stunning online stores and high-converting sales funnels with EcomBuildr. No coding required. Start selling online in minutes with our drag-and-drop builder.',
+    og_image: 'https://ecombuildr.com/og-image.jpg',
+    canonical: 'https://ecombuildr.com',
+    robots: 'index, follow',
+    keywords: ['ecommerce builder', 'online store', 'sales funnel', 'website builder', 'no-code', 'drag and drop', 'online selling'],
+    author: null,
+    language: 'en'
+  }
 }
 
 // Fallback function to find published website pages by path

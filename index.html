@@ -3,34 +3,147 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <!-- Dynamic SEO tags are managed per-page via setSEO() function -->
     <meta name="theme-color" content="#10B981" />
     
-    <!-- Static SEO for root domain and marketing pages -->
-    <title>EcomBuildr - Build Professional E-commerce Stores & Sales Funnels</title>
-    <meta name="description" content="Create stunning online stores and high-converting sales funnels with EcomBuildr. No coding required. Start selling online in minutes with our drag-and-drop builder." />
-    <meta name="keywords" content="ecommerce builder, online store, sales funnel, website builder, no-code, drag and drop, online selling" />
-    <meta name="robots" content="index, follow" />
-    
-    <!-- Open Graph / Facebook -->
-    <meta property="og:type" content="website" />
-    <meta property="og:title" content="EcomBuildr - Build Professional E-commerce Stores & Sales Funnels" />
-    <meta property="og:description" content="Create stunning online stores and high-converting sales funnels with EcomBuildr. No coding required. Start selling online in minutes with our drag-and-drop builder." />
-    <meta property="og:image" content="https://ecombuildr.com/og-image.jpg" />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
-    <meta property="og:url" content="https://ecombuildr.com" />
-    <meta property="og:site_name" content="EcomBuildr" />
-    
-    <!-- Twitter -->
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="EcomBuildr - Build Professional E-commerce Stores & Sales Funnels" />
-    <meta name="twitter:description" content="Create stunning online stores and high-converting sales funnels with EcomBuildr. No coding required. Start selling online in minutes with our drag-and-drop builder." />
-    <meta name="twitter:image" content="https://ecombuildr.com/og-image.jpg" />
-    
-    <!-- Canonical URL -->
-    <link rel="canonical" href="https://ecombuildr.com" />
-    <!-- Favicon will be set dynamically per website/funnel -->
+    <!-- Dynamic SEO tags will be loaded here -->
+    <script>
+      (function() {
+        // Get current domain and path
+        const currentDomain = window.location.hostname;
+        const currentPath = window.location.pathname;
+        const cacheKey = `seo_${currentDomain}${currentPath}`;
+        
+        // Check cache first (1 hour expiry)
+        const cached = localStorage.getItem(cacheKey);
+        if (cached) {
+          try {
+            const { data, timestamp } = JSON.parse(cached);
+            if (Date.now() - timestamp < 3600000) { // 1 hour
+              updateSEOTags(data);
+              return;
+            }
+          } catch (e) {
+            localStorage.removeItem(cacheKey);
+          }
+        }
+
+        // Determine if this is a SaaS domain or custom domain
+        const isSaasDomain = currentDomain === 'ecombuildr.com' || currentDomain.includes('lovable.app');
+        
+        if (isSaasDomain) {
+          // For SaaS domains, fetch from seo_pages table
+          fetchSaasSEO(currentPath).then(seoData => {
+            if (seoData) {
+              updateSEOTags(seoData);
+              // Cache the result
+              localStorage.setItem(cacheKey, JSON.stringify({
+                data: seoData,
+                timestamp: Date.now()
+              }));
+            }
+          }).catch(console.error);
+        } else {
+          // For custom domains, fetch from seo-prerender function
+          fetchCustomDomainSEO(currentDomain, currentPath).then(seoData => {
+            if (seoData) {
+              updateSEOTags(seoData);
+              // Cache the result
+              localStorage.setItem(cacheKey, JSON.stringify({
+                data: seoData,
+                timestamp: Date.now()
+              }));
+            }
+          }).catch(console.error);
+        }
+
+        function fetchSaasSEO(path) {
+          // Default SaaS SEO data
+          return Promise.resolve({
+            title: 'EcomBuildr - Build Professional E-commerce Stores & Sales Funnels',
+            description: 'Create stunning online stores and high-converting sales funnels with EcomBuildr. No coding required. Start selling online in minutes with our drag-and-drop builder.',
+            og_image: 'https://ecombuildr.com/og-image.jpg',
+            keywords: ['ecommerce builder', 'online store', 'sales funnel', 'website builder', 'no-code', 'drag and drop', 'online selling'],
+            canonical: 'https://ecombuildr.com' + path,
+            robots: 'index, follow'
+          });
+        }
+
+        function fetchCustomDomainSEO(domain, path) {
+          const url = `https://fhqwacmokbtbspkxjixf.supabase.co/functions/v1/seo-prerender?domain=${encodeURIComponent(domain)}&path=${encodeURIComponent(path)}&format=json`;
+          return fetch(url)
+            .then(response => response.json())
+            .then(data => data.success ? data.seo : null)
+            .catch(() => null);
+        }
+
+        function updateSEOTags(seo) {
+          if (!seo) return;
+
+          // Update title
+          if (seo.title) {
+            document.title = seo.title;
+            updateOrCreateMeta('og:title', seo.title, 'property');
+            updateOrCreateMeta('twitter:title', seo.title, 'name');
+          }
+
+          // Update description
+          if (seo.description) {
+            updateOrCreateMeta('description', seo.description);
+            updateOrCreateMeta('og:description', seo.description, 'property');
+            updateOrCreateMeta('twitter:description', seo.description, 'name');
+          }
+
+          // Update keywords
+          if (seo.keywords && Array.isArray(seo.keywords)) {
+            updateOrCreateMeta('keywords', seo.keywords.join(', '));
+          }
+
+          // Update robots
+          if (seo.robots) {
+            updateOrCreateMeta('robots', seo.robots);
+          }
+
+          // Update canonical
+          if (seo.canonical) {
+            updateOrCreateLink('canonical', seo.canonical);
+            updateOrCreateMeta('og:url', seo.canonical, 'property');
+          }
+
+          // Update images
+          if (seo.og_image) {
+            updateOrCreateMeta('og:image', seo.og_image, 'property');
+            updateOrCreateMeta('twitter:image', seo.og_image, 'name');
+          }
+
+          // Set default Open Graph and Twitter properties
+          updateOrCreateMeta('og:type', 'website', 'property');
+          updateOrCreateMeta('og:site_name', 'EcomBuildr', 'property');
+          updateOrCreateMeta('twitter:card', 'summary_large_image', 'name');
+        }
+
+        function updateOrCreateMeta(name, content, property = 'name') {
+          const selector = `meta[${property}="${name}"]`;
+          let meta = document.querySelector(selector);
+          if (!meta) {
+            meta = document.createElement('meta');
+            meta.setAttribute(property, name);
+            document.head.appendChild(meta);
+          }
+          meta.setAttribute('content', content);
+        }
+
+        function updateOrCreateLink(rel, href) {
+          const selector = `link[rel="${rel}"]`;
+          let link = document.querySelector(selector);
+          if (!link) {
+            link = document.createElement('link');
+            link.setAttribute('rel', rel);
+            document.head.appendChild(link);
+          }
+          link.setAttribute('href', href);
+        }
+      })();
+    </script>
     
     <!-- Dynamic SEO tags are managed in code per-page via setSEO function -->
     <!-- Favicon is set dynamically per website/funnel in setSEO() function -->
