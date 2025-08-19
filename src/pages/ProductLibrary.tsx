@@ -6,7 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Search, Plus, TrendingUp } from 'lucide-react';
+import { useUserStore } from '@/hooks/useUserStore';
+import { Search, Plus, TrendingUp, Check } from 'lucide-react';
 
 interface ProductLibraryItem {
   id: string;
@@ -27,19 +28,24 @@ interface ProductLibraryItem {
 
 export default function ProductLibrary() {
   const { toast } = useToast();
+  const { store, ensureStore } = useUserStore();
   const [products, setProducts] = useState<ProductLibraryItem[]>([]);
+  const [importedProducts, setImportedProducts] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [importingIds, setImportingIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     fetchProducts();
-  }, []);
+    fetchImportedProducts();
+  }, [store?.id]);
 
   const fetchProducts = async () => {
     try {
       const { data, error } = await supabase
         .from('product_library')
         .select('*')
+        .eq('status', 'published')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -55,6 +61,22 @@ export default function ProductLibrary() {
     }
   };
 
+  const fetchImportedProducts = async () => {
+    if (!store?.id) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('product_library_imports')
+        .select('library_item_id')
+        .eq('store_id', store.id);
+
+      if (error) throw error;
+      setImportedProducts(data?.map(item => item.library_item_id) || []);
+    } catch (error: any) {
+      console.error('Failed to fetch imported products:', error);
+    }
+  };
+
   const filteredProducts = products.filter(product =>
     product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     product.category?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -62,11 +84,78 @@ export default function ProductLibrary() {
   );
 
   const addToStore = async (product: ProductLibraryItem) => {
-    // Implementation would add product to user's store
-    toast({
-      title: "Success",
-      description: `${product.name} added to your store!`,
-    });
+    if (!store) {
+      try {
+        await ensureStore();
+      } catch (error: any) {
+        toast({
+          title: "Error",
+          description: "Failed to create store. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
+    setImportingIds(prev => new Set(prev.add(product.id)));
+
+    try {
+      const currentStore = store || await ensureStore();
+      
+      // First, add the product to the products table
+      const { data: newProduct, error: productError } = await supabase
+        .from('products')
+        .insert({
+          store_id: currentStore.id,
+          name: product.name,
+          description: product.description || product.short_description,
+          price: product.suggested_price || 0,
+          images: product.images || [],
+          variations: product.variations || [],
+          is_active: true,
+          track_inventory: false,
+          category_id: null, // Could be enhanced to map categories
+          sku: null,
+          meta_title: product.name,
+          meta_description: product.short_description
+        })
+        .select()
+        .single();
+
+      if (productError) throw productError;
+
+      // Then, record the import in the tracking table
+      const { error: importError } = await supabase
+        .from('product_library_imports')
+        .insert({
+          library_item_id: product.id,
+          store_id: currentStore.id,
+          product_id: newProduct.id,
+          status: 'imported'
+        });
+
+      if (importError) throw importError;
+
+      setImportedProducts(prev => [...prev, product.id]);
+      
+      toast({
+        title: "Success",
+        description: `${product.name} has been added to your store!`,
+      });
+
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to add product to store",
+        variant: "destructive",
+      });
+    } finally {
+      setImportingIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(product.id);
+        return newSet;
+      });
+    }
   };
 
   return (
@@ -164,14 +253,27 @@ export default function ProductLibrary() {
                       </div>
                     )}
                     
-                    <Button 
-                      onClick={() => addToStore(product)}
-                      className="w-full mt-4"
-                      size="sm"
-                    >
-                      <Plus className="w-4 h-4 mr-2" />
-                      Add to Store
-                    </Button>
+                    {importedProducts.includes(product.id) ? (
+                      <Button 
+                        disabled
+                        className="w-full mt-4"
+                        size="sm"
+                        variant="secondary"
+                      >
+                        <Check className="w-4 h-4 mr-2" />
+                        Added to Store
+                      </Button>
+                    ) : (
+                      <Button 
+                        onClick={() => addToStore(product)}
+                        disabled={importingIds.has(product.id)}
+                        className="w-full mt-4"
+                        size="sm"
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        {importingIds.has(product.id) ? 'Adding...' : 'Add to Store'}
+                      </Button>
+                    )}
                   </div>
                 </CardContent>
               </Card>

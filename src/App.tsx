@@ -55,6 +55,8 @@ import AdminRevenue from "./pages/admin/AdminRevenue";
 import AdminSupport from "./pages/admin/AdminSupport";
 import SEOSettings from "./pages/admin/SEOSettings";
 import AdminSystemSettings from "./pages/admin/AdminSystemSettings";
+import AdminProductLibrary from "./pages/admin/AdminProductLibrary";
+import AdminAddLibraryProduct from "./pages/admin/AdminAddLibraryProduct";
 import { StorefrontHome } from "./pages/storefront/StorefrontHome";
 import { StorefrontProducts } from "./pages/storefront/StorefrontProducts";
 import ProductDetail from "./pages/storefront/ProductDetail";
@@ -153,6 +155,9 @@ const App = () => (
                 <Route path="/admin/support" element={<AdminSupport />} />
                 <Route path="/admin/seo" element={<SEOSettings />} />
                 <Route path="/admin/settings" element={<AdminSystemSettings />} />
+                <Route path="/admin/product-library" element={<AdminProductLibrary />} />
+                <Route path="/admin/product-library/add" element={<AdminAddLibraryProduct />} />
+                <Route path="/admin/product-library/edit/:id" element={<AdminAddLibraryProduct />} />
                 
                 {/* Demo and Preview Routes */}
                 <Route path="/preview/demo" element={<DemoPreview />} />
