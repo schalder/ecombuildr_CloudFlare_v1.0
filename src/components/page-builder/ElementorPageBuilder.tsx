@@ -64,6 +64,7 @@ import { SectionDropZone } from './components/SectionDropZone';
 import { RowDropZone } from './components/RowDropZone';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ensureAnchors, buildAnchor } from './utils/anchor';
+import { HoverProvider, useHover, HoverTarget } from './contexts/HoverContext';
 
 // Helper function to get responsive grid classes for a row
 const getResponsiveGridClasses = (columnLayout: string, deviceType: 'desktop' | 'tablet' | 'mobile'): string => {
@@ -162,6 +163,24 @@ const ELEMENT_CATEGORIES = [
 ];
 
 export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = memo(({
+  initialData,
+  onChange,
+  onSave,
+  isSaving = false
+}) => {
+  return (
+    <HoverProvider>
+      <ElementorPageBuilderContent
+        initialData={initialData}
+        onChange={onChange}
+        onSave={onSave}
+        isSaving={isSaving}
+      />
+    </HoverProvider>
+  );
+});
+
+const ElementorPageBuilderContent: React.FC<ElementorPageBuilderProps> = memo(({
   initialData,
   onChange,
   onSave,
@@ -1171,9 +1190,12 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
   onSelectionChange,
   onAddSectionAfter
 }) => {
-  const [isHovered, setIsHovered] = useState(false);
+  const { hoveredTarget, setHoveredTarget } = useHover();
   const userBackground = hasUserBackground(section.styles);
   const userShadow = hasUserShadow(section.styles);
+  
+  const isHoveredTarget = hoveredTarget?.type === 'section' && hoveredTarget?.id === section.id;
+  const shouldShowToolbar = isSelected || isHoveredTarget;
 
   // Section drag functionality
   const [{ isDragging }, dragRef] = useDrag({
@@ -1195,23 +1217,23 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
       } ${
         isSelected && !userBackground 
           ? 'border-primary bg-primary/5' 
-          : isHovered && !userBackground
+          : isHoveredTarget && !userBackground
             ? 'border-primary/50 bg-primary/2' 
             : !userBackground ? 'border-transparent' : ''
       } ${
         isDragging ? 'opacity-50' : ''
       }`}
       style={renderSectionStyles(section)}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      onMouseEnter={() => setHoveredTarget({ type: 'section', id: section.id })}
+      onMouseLeave={() => setHoveredTarget(null)}
       onClick={(e) => {
         e.stopPropagation();
         onSelect();
       }}
     >
       {/* Section Toolbar */}
-      {(isHovered || isSelected) && (
-        <div className="absolute -top-12 left-0 z-20 flex items-center gap-1 bg-white text-gray-800 border px-3 py-1 rounded-md text-xs shadow-lg">
+      {shouldShowToolbar && (
+        <div className="absolute -top-12 left-0 z-20 flex items-center gap-1 bg-sky-100 text-gray-800 border border-sky-200 px-3 py-1 rounded-md text-xs shadow-lg">
           <Grip className="h-3 w-3" />
           <span className="font-medium">Section</span>
           <Separator orientation="vertical" className="mx-1 h-4" />
@@ -1407,9 +1429,12 @@ const RowComponent: React.FC<RowComponentProps> = ({
   selection,
   onSelectionChange
 }) => {
-  const [isHovered, setIsHovered] = useState(false);
+  const { hoveredTarget, setHoveredTarget } = useHover();
   const userBackground = hasUserBackground(row.styles);
   const userShadow = hasUserShadow(row.styles);
+  
+  const isHoveredTarget = hoveredTarget?.type === 'row' && hoveredTarget?.id === row.id;
+  const shouldShowToolbar = isSelected || isHoveredTarget;
 
   // Row drag functionality
   const [{ isDragging }, dragRef] = useDrag({
@@ -1431,23 +1456,23 @@ const RowComponent: React.FC<RowComponentProps> = ({
       } ${
         isSelected && !userBackground
           ? 'border-secondary bg-secondary/10' 
-          : isHovered && !userBackground
+          : isHoveredTarget && !userBackground
             ? 'border-secondary/50 bg-secondary/5' 
             : !userBackground ? 'border-transparent' : ''
       } ${
         isDragging ? 'opacity-50' : ''
       }`}
       style={renderRowStyles(row)}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      onMouseEnter={() => setHoveredTarget({ type: 'row', id: row.id, parentId: sectionId })}
+      onMouseLeave={() => setHoveredTarget(null)}
       onClick={(e) => {
         e.stopPropagation();
         onSelect();
       }}
     >
       {/* Row Toolbar */}
-      {(isHovered || isSelected) && (
-        <div className="absolute -top-10 left-0 z-10 flex items-center gap-1 bg-white text-gray-800 border px-3 py-1 rounded-md text-xs shadow-lg">
+      {shouldShowToolbar && (
+        <div className="absolute -top-10 left-0 z-10 flex items-center gap-1 bg-violet-100 text-gray-800 border border-violet-200 px-3 py-1 rounded-md text-xs shadow-lg">
           <div ref={dragRef} className="cursor-move">
             <Grip className="h-3 w-3" />
           </div>
@@ -1576,9 +1601,12 @@ const ColumnComponent: React.FC<ColumnComponentProps> = ({
   selection,
   onSelectionChange
 }) => {
-  const [isHovered, setIsHovered] = useState(false);
+  const { hoveredTarget, setHoveredTarget } = useHover();
   const userBackground = hasUserBackground(column.styles);
   const userShadow = hasUserShadow(column.styles);
+  
+  const isHoveredTarget = hoveredTarget?.type === 'column' && hoveredTarget?.id === column.id;
+  const shouldShowToolbar = isSelected || isHoveredTarget;
 
   const handleAddElement = (elementType: string, insertIndex: number) => {
     console.log('ColumnComponent handleAddElement:', { elementType, sectionId, rowId, columnId: column.id, insertIndex });
@@ -1595,21 +1623,21 @@ const ColumnComponent: React.FC<ColumnComponentProps> = ({
       } ${
         isSelected && !userBackground
           ? 'border-accent bg-accent/5' 
-          : isHovered && !userBackground
+          : isHoveredTarget && !userBackground
             ? 'border-accent/50 bg-accent/2' 
             : !userBackground ? 'border-border' : ''
       }`}
       style={renderColumnStyles(column)}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      onMouseEnter={() => setHoveredTarget({ type: 'column', id: column.id, parentId: rowId, grandParentId: sectionId })}
+      onMouseLeave={() => setHoveredTarget(null)}
       onClick={(e) => {
         e.stopPropagation();
         onSelect();
       }}
     >
       {/* Column Toolbar */}
-      {(isHovered || isSelected) && (
-        <div className="absolute -top-8 left-0 z-10 flex items-center gap-1 bg-white text-gray-800 border px-2 py-1 rounded text-xs shadow-lg">
+      {shouldShowToolbar && (
+        <div className="absolute -top-8 left-0 z-10 flex items-center gap-1 bg-emerald-100 text-gray-800 border border-emerald-200 px-2 py-1 rounded text-xs shadow-lg">
           <Grip className="h-3 w-3" />
           <span className="font-medium">Column</span>
           <Separator orientation="vertical" className="mx-1 h-3" />
@@ -1747,8 +1775,11 @@ const ElementWrapper: React.FC<ElementWrapperProps> = ({
   onMoveElementUp,
   onMoveElementDown
 }) => {
-  const [isHovered, setIsHovered] = useState(false);
+  const { hoveredTarget, setHoveredTarget } = useHover();
   const elementDef = elementRegistry.get(element.type);
+  
+  const isHoveredTarget = hoveredTarget?.type === 'element' && hoveredTarget?.id === element.id;
+  const shouldShowToolbar = isSelected || isHoveredTarget;
 
   // Element drag functionality
   const [{ isDragging }, dragRef] = useDrag({
@@ -1780,22 +1811,22 @@ const ElementWrapper: React.FC<ElementWrapperProps> = ({
       className={`relative group border transition-all duration-200 rounded ${
         isSelected 
           ? 'border-primary bg-primary/5' 
-          : isHovered 
+          : isHoveredTarget 
             ? 'border-primary/50' 
             : 'border-transparent'
       } ${
         isDragging ? 'opacity-50' : ''
       }`}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      onMouseEnter={() => setHoveredTarget({ type: 'element', id: element.id, parentId: columnId, grandParentId: rowId })}
+      onMouseLeave={() => setHoveredTarget(null)}
       onClick={(e) => {
         e.stopPropagation();
         onSelect();
       }}
     >
       {/* Element Toolbar */}
-      {(isHovered || isSelected) && (
-        <div className="absolute -top-8 left-0 z-20 flex items-center gap-1 bg-white text-gray-800 border px-2 py-1 rounded text-xs shadow-lg">
+      {shouldShowToolbar && (
+        <div className="absolute -top-8 left-0 z-20 flex items-center gap-1 bg-amber-100 text-gray-800 border border-amber-200 px-2 py-1 rounded text-xs shadow-lg">
           <div 
             ref={dragRef}
             className="flex items-center cursor-move hover:bg-gray-100 p-1 rounded"
