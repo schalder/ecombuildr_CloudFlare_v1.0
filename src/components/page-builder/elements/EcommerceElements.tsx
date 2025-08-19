@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShoppingCart, Grid, Star, Tag, Package, DollarSign, Eye, TrendingUp } from 'lucide-react';
+import { ShoppingCart, Grid, Star, Tag, Package, DollarSign, Eye } from 'lucide-react';
 import { PageBuilderElement, ElementType } from '../types';
 import { elementRegistry } from './ElementRegistry';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -971,7 +971,7 @@ export const registerEcommerceElements = () => {
     id: 'weekly-featured',
     name: 'Weekly Featured',
     category: 'ecommerce',
-    icon: TrendingUp,
+    icon: Star,
     component: WeeklyFeaturedElement,
     defaultContent: {
       sourceType: 'auto',
