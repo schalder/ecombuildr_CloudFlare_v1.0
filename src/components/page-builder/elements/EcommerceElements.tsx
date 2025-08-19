@@ -735,42 +735,43 @@ const CategoryNavigationElement: React.FC<{
       await addToCart(product, 1);
     };
     
-    const applyStyles = (baseClasses: string) => {
+    const applyStyles = (baseClasses: string, styleType?: string) => {
       const styles = element.styles || {};
       let classes = baseClasses;
       
-      // Apply typography styles for different parts (simplified for now)
-      const responsiveStyles = (styles as any).responsiveStyles?.desktop || {};
+      // Get responsive styles based on device type
+      const deviceKey = deviceType === 'mobile' ? 'mobile' : 'desktop';
+      const responsiveStyles = (styles as any).responsiveStyles?.[deviceKey] || {};
       const headlineStyles = responsiveStyles.headline || {};
       const subheadlineStyles = responsiveStyles.subheadline || {};
       const productTitleStyles = responsiveStyles.productTitle || {};
       const priceStyles = responsiveStyles.price || {};
       
       // Apply styles based on the element being styled
-      if (baseClasses.includes('headline')) {
-        if (headlineStyles.fontSize) classes += ` text-[${headlineStyles.fontSize}]`;
-        if (headlineStyles.color) classes += ` text-[${headlineStyles.color}]`;
-        if (headlineStyles.textAlign) classes += ` text-${headlineStyles.textAlign}`;
-        if (headlineStyles.lineHeight) classes += ` leading-[${headlineStyles.lineHeight}]`;
+      if (baseClasses.includes('headline') || styleType === 'headline') {
+        if (headlineStyles.fontSize) classes += ` !text-[${headlineStyles.fontSize}]`;
+        if (headlineStyles.color) classes += ` !text-[${headlineStyles.color}]`;
+        if (headlineStyles.textAlign) classes += ` !text-${headlineStyles.textAlign}`;
+        if (headlineStyles.lineHeight) classes += ` !leading-[${headlineStyles.lineHeight}]`;
       }
       
-      if (baseClasses.includes('subheadline')) {
-        if (subheadlineStyles.fontSize) classes += ` text-[${subheadlineStyles.fontSize}]`;
-        if (subheadlineStyles.color) classes += ` text-[${subheadlineStyles.color}]`;
-        if (subheadlineStyles.textAlign) classes += ` text-${subheadlineStyles.textAlign}`;
-        if (subheadlineStyles.lineHeight) classes += ` leading-[${subheadlineStyles.lineHeight}]`;
+      if (baseClasses.includes('subheadline') || styleType === 'subheadline') {
+        if (subheadlineStyles.fontSize) classes += ` !text-[${subheadlineStyles.fontSize}]`;
+        if (subheadlineStyles.color) classes += ` !text-[${subheadlineStyles.color}]`;
+        if (subheadlineStyles.textAlign) classes += ` !text-${subheadlineStyles.textAlign}`;
+        if (subheadlineStyles.lineHeight) classes += ` !leading-[${subheadlineStyles.lineHeight}]`;
       }
       
-      if (baseClasses.includes('product-title')) {
-        if (productTitleStyles.fontSize) classes += ` text-[${productTitleStyles.fontSize}]`;
-        if (productTitleStyles.color) classes += ` text-[${productTitleStyles.color}]`;
-        if (productTitleStyles.lineHeight) classes += ` leading-[${productTitleStyles.lineHeight}]`;
+      if (baseClasses.includes('product-title') || styleType === 'product-title') {
+        if (productTitleStyles.fontSize) classes += ` !text-[${productTitleStyles.fontSize}]`;
+        if (productTitleStyles.color) classes += ` !text-[${productTitleStyles.color}]`;
+        if (productTitleStyles.lineHeight) classes += ` !leading-[${productTitleStyles.lineHeight}]`;
       }
       
-      if (baseClasses.includes('price')) {
-        if (priceStyles.fontSize) classes += ` text-[${priceStyles.fontSize}]`;
-        if (priceStyles.color) classes += ` text-[${priceStyles.color}]`;
-        if (priceStyles.lineHeight) classes += ` leading-[${priceStyles.lineHeight}]`;
+      if (baseClasses.includes('price') || styleType === 'price') {
+        if (priceStyles.fontSize) classes += ` !text-[${priceStyles.fontSize}]`;
+        if (priceStyles.color) classes += ` !text-[${priceStyles.color}]`;
+        if (priceStyles.lineHeight) classes += ` !leading-[${priceStyles.lineHeight}]`;
       }
       
       return classes;
@@ -778,23 +779,25 @@ const CategoryNavigationElement: React.FC<{
     
     const getCardStyles = () => {
       const styles = element.styles || {};
-      let cardClasses = "border rounded-lg p-4 hover:shadow-md transition-shadow";
+      let cardClasses = "border rounded-lg p-4 hover:shadow-md transition-shadow bg-card";
       
       // Apply card styles
       if ((styles as any).cardBackground) {
-        cardClasses += ` bg-[${(styles as any).cardBackground}]`;
+        cardClasses = cardClasses.replace('bg-card', `!bg-[${(styles as any).cardBackground}]`);
       }
       if (styles.borderRadius) {
-        cardClasses = cardClasses.replace('rounded-lg', `rounded-[${styles.borderRadius}]`);
+        cardClasses = cardClasses.replace('rounded-lg', `!rounded-[${styles.borderRadius}]`);
       }
       if ((styles as any).borderWidth && parseInt((styles as any).borderWidth) > 0) {
-        cardClasses = cardClasses.replace('border', `border-[${(styles as any).borderWidth}]`);
+        cardClasses = cardClasses.replace('border ', `!border-[${(styles as any).borderWidth}] `);
         if ((styles as any).borderColor) {
-          cardClasses += ` border-[${(styles as any).borderColor}]`;
+          cardClasses += ` !border-[${(styles as any).borderColor}]`;
         }
+      } else if ((styles as any).borderWidth === '0px') {
+        cardClasses = cardClasses.replace('border', '!border-0');
       }
       if ((styles as any).cardPadding) {
-        cardClasses = cardClasses.replace('p-4', `p-[${(styles as any).cardPadding}]`);
+        cardClasses = cardClasses.replace('p-4', `!p-[${(styles as any).cardPadding}]`);
       }
       
       return cardClasses;
@@ -804,9 +807,35 @@ const CategoryNavigationElement: React.FC<{
       const styles = element.styles || {};
       const variant = (styles as any).buttonVariant || 'default';
       const size = (styles as any).buttonSize || 'sm';
-      const width = (styles as any).buttonWidth === 'full' ? 'w-full' : '';
+      const width = (styles as any).buttonWidth === 'full' ? '!w-full' : '';
       
-      return { variant, size, className: width };
+      let customStyle = {};
+      let className = width;
+      
+      // Handle custom button colors
+      if (variant === 'custom') {
+        const buttonBg = (styles as any).buttonBackground || '#000000';
+        const buttonText = (styles as any).buttonTextColor || '#ffffff';
+        const buttonHover = (styles as any).buttonHoverBackground || '#333333';
+        
+        customStyle = {
+          backgroundColor: buttonBg,
+          color: buttonText,
+          border: 'none',
+          '--hover-bg': buttonHover
+        } as React.CSSProperties;
+        
+        className += ` hover:!bg-[${buttonHover}] !bg-[${buttonBg}] !text-[${buttonText}]`;
+        
+        return { 
+          variant: 'default' as const,
+          size, 
+          className,
+          style: customStyle
+        };
+      }
+      
+      return { variant, size, className };
     };
     
     if (loading) {
@@ -837,55 +866,64 @@ const CategoryNavigationElement: React.FC<{
       );
     }
     
-    const containerGap = (element.styles as any)?.gap ? `gap-[${(element.styles as any).gap}]` : 'gap-4';
+    const containerGap = (element.styles as any)?.gap ? `!gap-[${(element.styles as any).gap}]` : 'gap-4';
     
     return (
       <div className="w-full">
         {element.content.showTitle !== false && element.content.title && (
-          <h2 className={applyStyles("headline text-2xl font-bold mb-2")}>
+          <h2 className={applyStyles("text-2xl font-bold mb-2", 'headline')}>
             {element.content.title}
           </h2>
         )}
         
         {element.content.showSubtitle !== false && element.content.subtitle && (
-          <p className={applyStyles("subheadline text-muted-foreground mb-6")}>
+          <p className={applyStyles("text-muted-foreground mb-6", 'subheadline')}>
             {element.content.subtitle}
           </p>
         )}
         
-        <div className={`grid ${containerGap}`} style={{ gridTemplateColumns: `repeat(${getResponsiveColumns()}, 1fr)` }}>
-          {topProducts.slice(0, element.content.limit || 6).map((product) => (
-            <div key={product.id} className={getCardStyles()}>
-              <div className="aspect-square bg-muted rounded-lg mb-3 overflow-hidden">
-                {product.images && product.images.length > 0 ? (
-                  <img
-                    src={product.images[0]}
-                    alt={product.name}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                    No Image
-                  </div>
-                )}
+        <div 
+          className={`grid ${containerGap}`} 
+          style={{ gridTemplateColumns: `repeat(${getResponsiveColumns()}, 1fr)` }}
+        >
+          {topProducts.slice(0, element.content.limit || 6).map((product) => {
+            const buttonProps = getButtonStyles();
+            return (
+              <div key={product.id} className={getCardStyles()}>
+                <div className="aspect-square bg-muted rounded-lg mb-3 overflow-hidden">
+                  {product.images && product.images.length > 0 ? (
+                    <img
+                      src={product.images[0]}
+                      alt={product.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                      No Image
+                    </div>
+                  )}
+                </div>
+                
+                <h3 className={applyStyles("font-medium text-sm mb-1", 'product-title')}>
+                  {product.name}
+                </h3>
+                
+                <p className={applyStyles("font-bold text-lg mb-3", 'price')}>
+                  ${product.price}
+                </p>
+                
+                <Button
+                  onClick={() => handleAddToCart(product)}
+                  variant={buttonProps.variant}
+                  size={buttonProps.size}
+                  className={buttonProps.className}
+                  style={buttonProps.style}
+                >
+                  {element.content.ctaText || 'Add to Cart'}
+                </Button>
               </div>
-              
-              <h3 className={applyStyles("product-title font-medium text-sm mb-1")}>
-                {product.name}
-              </h3>
-              
-              <p className={applyStyles("price font-bold text-lg mb-3")}>
-                ${product.price}
-              </p>
-              
-              <Button
-                onClick={() => handleAddToCart(product)}
-                {...getButtonStyles()}
-              >
-                {element.content.ctaText || 'Add to Cart'}
-              </Button>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     );
