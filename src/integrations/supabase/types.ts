@@ -607,6 +607,7 @@ export type Database = {
           meta_author: string | null
           meta_robots: string | null
           og_image: string | null
+          preview_image_url: string | null
           seo_description: string | null
           seo_keywords: string[] | null
           seo_title: string | null
@@ -630,6 +631,7 @@ export type Database = {
           meta_author?: string | null
           meta_robots?: string | null
           og_image?: string | null
+          preview_image_url?: string | null
           seo_description?: string | null
           seo_keywords?: string[] | null
           seo_title?: string | null
@@ -653,6 +655,7 @@ export type Database = {
           meta_author?: string | null
           meta_robots?: string | null
           og_image?: string | null
+          preview_image_url?: string | null
           seo_description?: string | null
           seo_keywords?: string[] | null
           seo_title?: string | null
@@ -2264,6 +2267,7 @@ export type Database = {
           meta_author: string | null
           meta_robots: string | null
           og_image: string | null
+          preview_image_url: string | null
           seo_description: string | null
           seo_keywords: string[] | null
           seo_title: string | null
@@ -2286,6 +2290,7 @@ export type Database = {
           meta_author?: string | null
           meta_robots?: string | null
           og_image?: string | null
+          preview_image_url?: string | null
           seo_description?: string | null
           seo_keywords?: string[] | null
           seo_title?: string | null
@@ -2308,6 +2313,7 @@ export type Database = {
           meta_author?: string | null
           meta_robots?: string | null
           og_image?: string | null
+          preview_image_url?: string | null
           seo_description?: string | null
           seo_keywords?: string[] | null
           seo_title?: string | null

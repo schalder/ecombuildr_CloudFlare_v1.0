@@ -46,6 +46,7 @@ interface FunnelStep {
   is_published: boolean;
   created_at: string;
   updated_at: string;
+  preview_image_url?: string;
 }
 
 const FunnelManagement = () => {
@@ -334,33 +335,46 @@ const FunnelManagement = () => {
                             steps.map((step, index) => (
                               <Draggable key={step.id} draggableId={step.id} index={index}>
                                 {(provided, snapshot) => (
-                                  <div
-                                    ref={provided.innerRef}
-                                    {...provided.draggableProps}
-                                    className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer hover:bg-muted/50 ${
-                                      selectedStepId === step.id ? 'bg-primary/10 border-primary' : 'bg-background'
-                                    } ${snapshot.isDragging ? 'shadow-lg' : ''}`}
-                                    onClick={() => handleSelectStep(step.id)}
-                                  >
-                                    <div className="flex-shrink-0" {...provided.dragHandleProps}>
-                                      <GripVertical className="h-4 w-4 text-muted-foreground" />
-                                    </div>
-                                    <div className="flex-shrink-0">
-                                      <Mail className="h-4 w-4 text-blue-500" />
-                                    </div>
-                                     <div className="flex-1 min-w-0">
-                                       <div className="flex items-center gap-2">
-                                         <p className="font-medium truncate">{step.title}</p>
-                                         {index === 0 && (
-                                           <Badge variant="secondary" className="text-xs px-1 py-0">
-                                             <Home className="h-3 w-3" />
-                                           </Badge>
-                                         )}
-                                       </div>
-                                       <p className="text-sm text-muted-foreground">
-                                         {getStepTypeLabel(step.step_type)}
-                                       </p>
+                                   <div
+                                     ref={provided.innerRef}
+                                     {...provided.draggableProps}
+                                     className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer hover:bg-muted/50 ${
+                                       selectedStepId === step.id ? 'bg-primary/10 border-primary' : 'bg-background'
+                                     } ${snapshot.isDragging ? 'shadow-lg' : ''}`}
+                                     onClick={() => handleSelectStep(step.id)}
+                                   >
+                                     <div className="flex-shrink-0" {...provided.dragHandleProps}>
+                                       <GripVertical className="h-4 w-4 text-muted-foreground" />
                                      </div>
+                                     
+                                     {/* Step Preview Thumbnail */}
+                                     <div className="flex-shrink-0">
+                                       {step.preview_image_url ? (
+                                         <img 
+                                           src={step.preview_image_url} 
+                                           alt={`Preview of ${step.title}`}
+                                           className="w-10 h-8 object-cover rounded border"
+                                         />
+                                       ) : (
+                                         <div className="w-10 h-8 bg-muted border rounded flex items-center justify-center">
+                                           <Mail className="h-3 w-3 text-muted-foreground" />
+                                         </div>
+                                       )}
+                                     </div>
+                                     
+                                      <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-2">
+                                          <p className="font-medium truncate">{step.title}</p>
+                                          {index === 0 && (
+                                            <Badge variant="secondary" className="text-xs px-1 py-0">
+                                              <Home className="h-3 w-3" />
+                                            </Badge>
+                                          )}
+                                        </div>
+                                        <p className="text-sm text-muted-foreground">
+                                          {getStepTypeLabel(step.step_type)}
+                                        </p>
+                                      </div>
                                      <div className="flex items-center gap-2">
                                        {step.is_published && (
                                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>

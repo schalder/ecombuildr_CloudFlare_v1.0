@@ -222,6 +222,22 @@ export default function PageBuilder() {
         setPageData(prev => ({ ...prev, is_published: publishedState }));
       }
 
+      // Generate preview image after successful save
+      if (entityId && (context === 'website' || context === 'funnel')) {
+        try {
+          const { generateAndSavePreview } = await import('@/lib/pagePreview');
+          const previewType = context === 'website' ? 'website_page' : 'funnel_step';
+          
+          // Add a small delay to ensure DOM is fully rendered
+          setTimeout(() => {
+            generateAndSavePreview(entityId, previewType);
+          }, 500);
+        } catch (previewError) {
+          console.warn('Failed to generate preview:', previewError);
+          // Don't show error to user - this is background enhancement
+        }
+      }
+
       toast.success(publishedState ? 'Page saved and published successfully!' : 'Page saved successfully!');
 
       // Generate static HTML if page is published for better SEO

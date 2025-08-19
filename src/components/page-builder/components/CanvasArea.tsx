@@ -106,6 +106,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
     <div className="flex-1 p-8 overflow-auto bg-muted/20">
       <div
         ref={drop}
+        data-canvas-area="true"
         className={cn(
           getCanvasClasses(),
           isOver && 'ring-2 ring-primary ring-opacity-50',

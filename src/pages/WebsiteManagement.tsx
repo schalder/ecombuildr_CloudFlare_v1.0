@@ -42,6 +42,7 @@ interface WebsitePage {
   is_homepage: boolean;
   created_at: string;
   updated_at: string;
+  preview_image_url?: string;
 }
 
 const WebsiteManagement = () => {
@@ -337,8 +338,23 @@ const WebsiteManagement = () => {
                     <div key={page.id} className="group relative">
                       <div className="border rounded-lg overflow-hidden hover:shadow-md transition-shadow">
                         {/* Page Preview */}
-                        <div className="aspect-[4/3] bg-muted/30 relative">
-                          <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="aspect-[4/3] bg-muted/30 relative overflow-hidden">
+                          {page.preview_image_url ? (
+                            <img 
+                              src={page.preview_image_url} 
+                              alt={`Preview of ${page.title}`}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                // Fallback to placeholder if image fails to load
+                                (e.target as HTMLImageElement).style.display = 'none';
+                                const fallback = e.currentTarget.nextElementSibling;
+                                if (fallback) (fallback as HTMLElement).style.display = 'flex';
+                              }}
+                            />
+                          ) : null}
+                          
+                          {/* Fallback placeholder */}
+                          <div className={`absolute inset-0 flex items-center justify-center ${page.preview_image_url ? 'hidden' : ''}`}>
                             <div className="text-center">
                               <div className="w-12 h-12 sm:w-16 sm:h-16 bg-background border-2 rounded-lg mx-auto mb-2 flex items-center justify-center">
                                 <div className="w-6 h-6 sm:w-8 sm:h-8 bg-muted rounded"></div>
