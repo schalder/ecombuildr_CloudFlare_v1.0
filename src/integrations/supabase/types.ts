@@ -2306,6 +2306,10 @@ export type Database = {
         Args: { _resource_type: string; _user_id: string }
         Returns: undefined
       }
+      get_imported_products: {
+        Args: { store_id_param: string }
+        Returns: string[]
+      }
       increment_usage: {
         Args: { _resource_type: string; _user_id: string }
         Returns: undefined
@@ -2321,6 +2325,14 @@ export type Database = {
       normalize_phone: {
         Args: { p: string }
         Returns: string
+      }
+      record_product_import: {
+        Args: {
+          library_item_id_param: string
+          product_id_param: string
+          store_id_param: string
+        }
+        Returns: undefined
       }
       set_homepage: {
         Args: { page_uuid: string }

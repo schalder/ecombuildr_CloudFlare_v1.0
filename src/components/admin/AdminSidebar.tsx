@@ -12,7 +12,8 @@ import {
   AlertCircle,
   Star,
   Crown,
-  Search
+  Search,
+  Package
 } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router-dom';
 import {
@@ -65,6 +66,11 @@ const adminMenuItems = [
     title: 'Site Pricing',
     url: '/admin/site-pricing',
     icon: Star,
+  },
+  {
+    title: 'Product Library',
+    url: '/admin/product-library',
+    icon: Package,
   },
 ];
 

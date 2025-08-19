@@ -72,9 +72,11 @@ export default function AdminAddLibraryProduct() {
         video_url: data.video_url || '',
         is_trending: data.is_trending || false,
         status: (data as any).status || 'draft',
-        images: Array.isArray(data.images) ? (data.images as string[]) : [],
+        images: Array.isArray(data.images) 
+          ? (data.images as string[]) 
+          : (typeof data.images === 'string' ? [data.images] : []),
         tags: data.tags || [],
-        variations: data.variations || []
+        variations: Array.isArray(data.variations) ? data.variations : []
       });
     } catch (error: any) {
       toast({

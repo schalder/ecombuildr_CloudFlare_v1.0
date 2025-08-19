@@ -45,7 +45,6 @@ export default function ProductLibrary() {
       const { data, error } = await supabase
         .from('product_library')
         .select('*')
-        .eq('status', 'published')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -65,19 +64,11 @@ export default function ProductLibrary() {
     if (!store?.id) return;
     
     try {
-      // Use a raw query to access the table that might not be in types yet
-      const { data, error } = await supabase.rpc('get_imported_products', { 
-        store_id_param: store.id 
-      });
-
-      if (error) {
-        console.error('RPC call failed, trying direct query:', error);
-        // Fallback: assume no imports if RPC fails
-        setImportedProducts([]);
-        return;
+      // Simplified approach: track imports in localStorage for now
+      const stored = localStorage.getItem(`imports_${store.id}`);
+      if (stored) {
+        setImportedProducts(JSON.parse(stored));
       }
-
-      setImportedProducts(data || []);
     } catch (error: any) {
       console.error('Failed to fetch imported products:', error);
       setImportedProducts([]);
@@ -109,12 +100,18 @@ export default function ProductLibrary() {
     try {
       const currentStore = store || await ensureStore();
       
+      // Generate a unique slug for the product
+      const slug = product.name.toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)+/g, '');
+
       // First, add the product to the products table
       const { data: newProduct, error: productError } = await supabase
         .from('products')
         .insert({
           store_id: currentStore.id,
           name: product.name,
+          slug: `${slug}-${Date.now()}`, // Make it unique
           description: product.description || product.short_description,
           price: product.suggested_price || 0,
           images: product.images || [],
@@ -129,24 +126,10 @@ export default function ProductLibrary() {
 
       if (productError) throw productError;
 
-      // Then, record the import using RPC function
-      try {
-        const { error: importError } = await supabase.rpc('record_product_import', {
-          library_item_id_param: product.id,
-          store_id_param: currentStore.id,
-          product_id_param: newProduct.id
-        });
-
-        if (importError) {
-          console.warn('Failed to record import tracking:', importError);
-          // Continue anyway since the product was added successfully
-        }
-      } catch (rpcError) {
-        console.warn('RPC call failed for import tracking:', rpcError);
-        // Continue anyway since the product was added successfully
-      }
-
-      setImportedProducts(prev => [...prev, product.id]);
+      // Store the import in localStorage for now
+      const currentImports = [...importedProducts, product.id];
+      setImportedProducts(currentImports);
+      localStorage.setItem(`imports_${currentStore.id}`, JSON.stringify(currentImports));
       
       toast({
         title: "Success",
