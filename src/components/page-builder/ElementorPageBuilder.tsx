@@ -1,4 +1,4 @@
-import React, { useState, useCallback, memo } from 'react';
+import React, { useState, useCallback, memo, useEffect } from 'react';
 import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { 
@@ -60,6 +60,7 @@ import {
 } from './types';
 import { elementRegistry } from './elements';
 import { renderSectionStyles, renderRowStyles, renderColumnStyles, hasUserBackground, hasUserShadow } from './utils/styleRenderer';
+import { generateBackgroundOpacityCSS } from './utils/backgroundOpacityCSS';
 import { SectionDropZone } from './components/SectionDropZone';
 import { RowDropZone } from './components/RowDropZone';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -207,6 +208,28 @@ const ElementorPageBuilderContent: React.FC<ElementorPageBuilderProps> = memo(({
       setData(ensureAnchors(initialData));
     }
   }, [initialData]);
+
+  // Inject CSS for background image opacity using pseudo-elements
+  useEffect(() => {
+    const styleId = 'page-builder-background-opacity-styles';
+    let existingStyle = document.getElementById(styleId);
+    
+    if (!existingStyle) {
+      existingStyle = document.createElement('style');
+      existingStyle.id = styleId;
+      document.head.appendChild(existingStyle);
+    }
+    
+    const css = generateBackgroundOpacityCSS(data.sections);
+    existingStyle.textContent = css;
+    
+    return () => {
+      const style = document.getElementById(styleId);
+      if (style) {
+        style.remove();
+      }
+    };
+  }, [data.sections]);
 
   const updateData = useCallback((newData: PageBuilderData) => {
     const ensured = ensureAnchors(newData);
@@ -1209,7 +1232,8 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
   return (
     <div 
       ref={dragRef}
-      id={section.anchor}
+      id={`section-${section.id}`}
+      data-anchor={section.anchor}
       data-pb-section-id={section.id}
       className={`relative group transition-all duration-200 ${
         // Only apply border/background styles if no user-defined styles and not in preview mode
@@ -1448,7 +1472,8 @@ const RowComponent: React.FC<RowComponentProps> = ({
   return (
     <div 
       ref={dragRef}
-      id={row.anchor}
+      id={`row-${row.id}`}
+      data-anchor={row.anchor}
       data-pb-row-id={row.id}
       className={`relative group transition-all duration-200 rounded-lg ${
         // Only apply border/background styles if no user-defined styles
@@ -1615,7 +1640,8 @@ const ColumnComponent: React.FC<ColumnComponentProps> = ({
 
   return (
     <div 
-      id={column.anchor}
+      id={`column-${column.id}`}
+      data-anchor={column.anchor}
       data-pb-column-id={column.id}
       className={`relative min-h-24 rounded-lg transition-all duration-200 ${
         // Only apply border/background styles if no user-defined styles

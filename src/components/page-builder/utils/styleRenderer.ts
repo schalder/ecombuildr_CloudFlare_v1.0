@@ -1,26 +1,30 @@
 import { PageBuilderSection, PageBuilderRow, PageBuilderColumn, PageBuilderElement } from '../types';
 import { mergeResponsiveStyles } from './responsiveStyles';
+import { applyColorOpacity, applyGradientOpacity, generateBackgroundImageOpacityCSS } from './backgroundOpacity';
 
 // Universal style renderer that creates pure inline styles
 export const renderSectionStyles = (section: PageBuilderSection, deviceType: 'desktop' | 'tablet' | 'mobile' = 'desktop'): React.CSSProperties => {
   const styles: React.CSSProperties = {};
   
   if (section.styles) {
+    const opacity = section.styles.backgroundOpacity ?? 1;
+    
     // Background styles - priority: gradient > image > color
     if (section.styles.backgroundGradient) {
-      styles.background = section.styles.backgroundGradient;
+      styles.background = applyGradientOpacity(section.styles.backgroundGradient, opacity);
     } else if (section.styles.backgroundImage) {
-      styles.backgroundImage = `url(${section.styles.backgroundImage})`;
-      styles.backgroundSize = 'cover';
-      styles.backgroundPosition = 'center';
-      styles.backgroundRepeat = 'no-repeat';
+      // For background images with opacity, we'll handle this via CSS classes
+      if (opacity < 1) {
+        styles.backgroundImage = 'none'; // Remove inline background image
+        // The pseudo-element CSS will be injected separately
+      } else {
+        styles.backgroundImage = `url(${section.styles.backgroundImage})`;
+        styles.backgroundSize = 'cover';
+        styles.backgroundPosition = 'center';
+        styles.backgroundRepeat = 'no-repeat';
+      }
     } else if (section.styles.backgroundColor && section.styles.backgroundColor !== 'transparent') {
-      styles.backgroundColor = section.styles.backgroundColor;
-    }
-    
-    // Background opacity
-    if (section.styles.backgroundOpacity !== undefined && section.styles.backgroundOpacity < 1) {
-      styles.opacity = section.styles.backgroundOpacity;
+      styles.backgroundColor = applyColorOpacity(section.styles.backgroundColor, opacity);
     }
     
     // Box shadow styles
@@ -80,21 +84,24 @@ export const renderRowStyles = (row: PageBuilderRow, deviceType: 'desktop' | 'ta
   const styles: React.CSSProperties = {};
   
   if (row.styles) {
+    const opacity = row.styles.backgroundOpacity ?? 1;
+    
     // Background styles - priority: gradient > image > color
     if (row.styles.backgroundGradient) {
-      styles.background = row.styles.backgroundGradient;
+      styles.background = applyGradientOpacity(row.styles.backgroundGradient, opacity);
     } else if (row.styles.backgroundImage) {
-      styles.backgroundImage = `url(${row.styles.backgroundImage})`;
-      styles.backgroundSize = 'cover';
-      styles.backgroundPosition = 'center';
-      styles.backgroundRepeat = 'no-repeat';
+      // For background images with opacity, we'll handle this via CSS classes
+      if (opacity < 1) {
+        styles.backgroundImage = 'none'; // Remove inline background image
+        // The pseudo-element CSS will be injected separately
+      } else {
+        styles.backgroundImage = `url(${row.styles.backgroundImage})`;
+        styles.backgroundSize = 'cover';
+        styles.backgroundPosition = 'center';
+        styles.backgroundRepeat = 'no-repeat';
+      }
     } else if (row.styles.backgroundColor && row.styles.backgroundColor !== 'transparent') {
-      styles.backgroundColor = row.styles.backgroundColor;
-    }
-    
-    // Background opacity
-    if (row.styles.backgroundOpacity !== undefined && row.styles.backgroundOpacity < 1) {
-      styles.opacity = row.styles.backgroundOpacity;
+      styles.backgroundColor = applyColorOpacity(row.styles.backgroundColor, opacity);
     }
     
     // Box shadow styles
@@ -154,21 +161,24 @@ export const renderColumnStyles = (column: PageBuilderColumn, deviceType: 'deskt
   const styles: React.CSSProperties = {};
   
   if (column.styles) {
+    const opacity = column.styles.backgroundOpacity ?? 1;
+    
     // Background styles - priority: gradient > image > color
     if (column.styles.backgroundGradient) {
-      styles.background = column.styles.backgroundGradient;
+      styles.background = applyGradientOpacity(column.styles.backgroundGradient, opacity);
     } else if (column.styles.backgroundImage) {
-      styles.backgroundImage = `url(${column.styles.backgroundImage})`;
-      styles.backgroundSize = 'cover';
-      styles.backgroundPosition = 'center';
-      styles.backgroundRepeat = 'no-repeat';
+      // For background images with opacity, we'll handle this via CSS classes
+      if (opacity < 1) {
+        styles.backgroundImage = 'none'; // Remove inline background image
+        // The pseudo-element CSS will be injected separately
+      } else {
+        styles.backgroundImage = `url(${column.styles.backgroundImage})`;
+        styles.backgroundSize = 'cover';
+        styles.backgroundPosition = 'center';
+        styles.backgroundRepeat = 'no-repeat';
+      }
     } else if (column.styles.backgroundColor && column.styles.backgroundColor !== 'transparent') {
-      styles.backgroundColor = column.styles.backgroundColor;
-    }
-    
-    // Background opacity
-    if (column.styles.backgroundOpacity !== undefined && column.styles.backgroundOpacity < 1) {
-      styles.opacity = column.styles.backgroundOpacity;
+      styles.backgroundColor = applyColorOpacity(column.styles.backgroundColor, opacity);
     }
     
     // Box shadow styles
