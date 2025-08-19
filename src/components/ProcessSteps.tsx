@@ -5,17 +5,10 @@ import { ArrowRight, MousePointerClick, Palette, Zap, TrendingUp } from "lucide-
 const steps = [
   {
     icon: MousePointerClick,
-    title: "Create Your Store",
-    description: "Set up your online store with our intuitive store creation wizard",
+    title: "Create Your Website",
+    description: "Set up your online website with our intuitive website creation wizard",
     color: "text-primary",
     bgColor: "bg-primary-light"
-  },
-  {
-    icon: Palette,
-    title: "Design Your Pages",
-    description: "Use our visual page builder to create custom landing pages and product pages",
-    color: "text-accent",
-    bgColor: "bg-accent-light"
   },
   {
     icon: Zap,
@@ -25,9 +18,16 @@ const steps = [
     bgColor: "bg-success-light"
   },
   {
+    icon: Palette,
+    title: "Design Your Pages",
+    description: "Use our visual page builder to create custom landing pages and product pages",
+    color: "text-accent",
+    bgColor: "bg-accent-light"
+  },
+  {
     icon: TrendingUp,
     title: "Launch & Start Selling",
-    description: "Go live with your store and start accepting orders from customers",
+    description: "Go live with your website and start accepting orders from customers",
     color: "text-primary",
     bgColor: "bg-primary-light"
   }
@@ -84,7 +84,7 @@ export const ProcessSteps = () => {
         {/* CTA */}
         <div className="text-center">
           <Button variant="accent" size="lg" className="group">
-            Start Your Store Today
+            Start Your Website Today
             <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
           </Button>
         </div>
