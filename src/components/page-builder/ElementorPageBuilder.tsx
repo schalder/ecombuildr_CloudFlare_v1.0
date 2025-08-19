@@ -468,6 +468,43 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = memo(({
     }
   }, [data, updateData]);
 
+  // Element up/down movement functions
+  const moveElementUp = useCallback((sectionId: string, rowId: string, columnId: string, elementId: string) => {
+    const newData = { ...data };
+    const section = newData.sections.find(s => s.id === sectionId);
+    const row = section?.rows?.find(r => r.id === rowId);
+    const column = row?.columns.find(c => c.id === columnId);
+    
+    if (!column?.elements) return;
+    
+    const elementIndex = column.elements.findIndex(e => e.id === elementId);
+    if (elementIndex > 0) {
+      // Swap elements
+      const temp = column.elements[elementIndex];
+      column.elements[elementIndex] = column.elements[elementIndex - 1];
+      column.elements[elementIndex - 1] = temp;
+      updateData(newData);
+    }
+  }, [data, updateData]);
+
+  const moveElementDown = useCallback((sectionId: string, rowId: string, columnId: string, elementId: string) => {
+    const newData = { ...data };
+    const section = newData.sections.find(s => s.id === sectionId);
+    const row = section?.rows?.find(r => r.id === rowId);
+    const column = row?.columns.find(c => c.id === columnId);
+    
+    if (!column?.elements) return;
+    
+    const elementIndex = column.elements.findIndex(e => e.id === elementId);
+    if (elementIndex < column.elements.length - 1) {
+      // Swap elements
+      const temp = column.elements[elementIndex];
+      column.elements[elementIndex] = column.elements[elementIndex + 1];
+      column.elements[elementIndex + 1] = temp;
+      updateData(newData);
+    }
+  }, [data, updateData]);
+
   // Element operations
   const addElement = useCallback((sectionId: string, rowId: string, columnId: string, elementType: string, insertIndex?: number) => {
     console.log('Adding element:', { sectionId, rowId, columnId, elementType, insertIndex });
@@ -900,6 +937,8 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = memo(({
                           onMoveRowUp={moveRowUp}
                           onMoveRowDown={moveRowDown}
                           onMoveElement={moveElement}
+                          onMoveElementUp={moveElementUp}
+                          onMoveElementDown={moveElementDown}
                           onMoveSection={moveSection}
                           onMoveSectionUp={() => moveSectionUp(section.id)}
                           onMoveSectionDown={() => moveSectionDown(section.id)}
@@ -1088,6 +1127,8 @@ interface SectionComponentProps {
   onMoveRowUp: (sectionId: string, rowId: string) => void;
   onMoveRowDown: (sectionId: string, rowId: string) => void;
   onMoveElement: (elementId: string, targetSectionId: string, targetRowId: string, targetColumnId: string, insertIndex: number) => void;
+  onMoveElementUp: (sectionId: string, rowId: string, columnId: string, elementId: string) => void;
+  onMoveElementDown: (sectionId: string, rowId: string, columnId: string, elementId: string) => void;
   onMoveSection: (sectionId: string, insertIndex: number) => void;
   onMoveSectionUp: () => void;
   onMoveSectionDown: () => void;
@@ -1116,6 +1157,8 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
   onMoveRowUp,
   onMoveRowDown,
   onMoveElement,
+  onMoveElementUp,
+  onMoveElementDown,
   onMoveSection,
   onMoveSectionUp,
   onMoveSectionDown,
@@ -1168,14 +1211,14 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
     >
       {/* Section Toolbar */}
       {(isHovered || isSelected) && (
-        <div className="absolute -top-12 left-0 z-20 flex items-center gap-1 bg-primary text-primary-foreground px-3 py-1 rounded-md text-xs shadow-lg">
+        <div className="absolute -top-12 left-0 z-20 flex items-center gap-1 bg-white text-gray-800 border px-3 py-1 rounded-md text-xs shadow-lg">
           <Grip className="h-3 w-3" />
           <span className="font-medium">Section</span>
           <Separator orientation="vertical" className="mx-1 h-4" />
           <Button 
             variant="ghost" 
             size="sm" 
-            className="h-6 w-6 p-0 hover:bg-primary-foreground/20" 
+            className="h-6 w-6 p-0 hover:bg-gray-100" 
             onClick={(e) => {
               e.stopPropagation();
               onMoveSectionUp();
@@ -1187,7 +1230,7 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
           <Button 
             variant="ghost" 
             size="sm" 
-            className="h-6 w-6 p-0 hover:bg-primary-foreground/20" 
+            className="h-6 w-6 p-0 hover:bg-gray-100" 
             onClick={(e) => {
               e.stopPropagation();
               onMoveSectionDown();
@@ -1199,7 +1242,7 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
            <Button 
              variant="ghost" 
              size="sm" 
-             className="h-6 w-6 p-0 hover:bg-primary-foreground/20" 
+             className="h-6 w-6 p-0 hover:bg-gray-100" 
              onClick={(e) => {
                e.stopPropagation();
                onAddRow();
@@ -1210,7 +1253,7 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
            <Button 
              variant="ghost" 
              size="sm" 
-             className="h-6 w-6 p-0 hover:bg-primary-foreground/20" 
+             className="h-6 w-6 p-0 hover:bg-gray-100" 
              onClick={(e) => {
                e.stopPropagation();
                onAddSectionAfter();
@@ -1218,16 +1261,16 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
            >
              <Plus className="h-3 w-3" />
            </Button>
-          <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-primary-foreground/20" onClick={onDuplicate}>
+          <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-gray-100" onClick={onDuplicate}>
             <Copy className="h-3 w-3" />
           </Button>
-          <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-primary-foreground/20" onClick={onDelete}>
+          <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-red-100 hover:text-red-600" onClick={onDelete}>
             <Trash2 className="h-3 w-3" />
           </Button>
           <Button 
             variant="ghost" 
             size="sm" 
-            className="h-6 w-6 p-0 hover:bg-primary-foreground/20"
+            className="h-6 w-6 p-0 hover:bg-gray-100"
             onClick={(e) => {
               e.stopPropagation();
               onSelectionChange({ type: 'section', id: section.id });
@@ -1281,6 +1324,8 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
                       onAddRow={() => onAddRow(index + 1)}
                       onMoveRowUp={() => onMoveRowUp(section.id, row.id)}
                       onMoveRowDown={() => onMoveRowDown(section.id, row.id)}
+                      onMoveElementUp={onMoveElementUp}
+                      onMoveElementDown={onMoveElementDown}
                       onMoveElement={onMoveElement}
                       onMoveColumn={onMoveColumn}
                       onAddElement={onAddElement}
@@ -1328,6 +1373,8 @@ interface RowComponentProps {
   onMoveRowUp: () => void;
   onMoveRowDown: () => void;
   onMoveElement: (elementId: string, targetSectionId: string, targetRowId: string, targetColumnId: string, insertIndex: number) => void;
+  onMoveElementUp: (sectionId: string, rowId: string, columnId: string, elementId: string) => void;
+  onMoveElementDown: (sectionId: string, rowId: string, columnId: string, elementId: string) => void;
   onMoveColumn: (sectionId: string, rowId: string, columnId: string, direction: 'up' | 'down') => void;
   onAddElement: (sectionId: string, rowId: string, columnId: string, elementType: string, insertIndex?: number) => void;
   onUpdateElement: (elementId: string, updates: Partial<PageBuilderElement>) => void;
@@ -1350,6 +1397,8 @@ const RowComponent: React.FC<RowComponentProps> = ({
   onMoveRowUp,
   onMoveRowDown,
   onMoveElement,
+  onMoveElementUp,
+  onMoveElementDown,
   onMoveColumn,
   onAddElement,
   onUpdateElement,
@@ -1398,7 +1447,7 @@ const RowComponent: React.FC<RowComponentProps> = ({
     >
       {/* Row Toolbar */}
       {(isHovered || isSelected) && (
-        <div className="absolute -top-10 left-0 z-10 flex items-center gap-1 bg-secondary text-secondary-foreground px-3 py-1 rounded-md text-xs shadow-lg">
+        <div className="absolute -top-10 left-0 z-10 flex items-center gap-1 bg-white text-gray-800 border px-3 py-1 rounded-md text-xs shadow-lg">
           <div ref={dragRef} className="cursor-move">
             <Grip className="h-3 w-3" />
           </div>
@@ -1407,7 +1456,7 @@ const RowComponent: React.FC<RowComponentProps> = ({
           <Button 
             variant="ghost" 
             size="sm" 
-            className="h-6 w-6 p-0 hover:bg-secondary-foreground/20"
+            className="h-6 w-6 p-0 hover:bg-gray-100"
             onClick={(e) => {
               e.stopPropagation();
               onMoveRowUp();
@@ -1419,7 +1468,7 @@ const RowComponent: React.FC<RowComponentProps> = ({
           <Button 
             variant="ghost" 
             size="sm" 
-            className="h-6 w-6 p-0 hover:bg-secondary-foreground/20"
+            className="h-6 w-6 p-0 hover:bg-gray-100"
             onClick={(e) => {
               e.stopPropagation();
               onMoveRowDown();
@@ -1428,16 +1477,16 @@ const RowComponent: React.FC<RowComponentProps> = ({
           >
             <ArrowDown className="h-3 w-3" />
           </Button>
-          <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-secondary-foreground/20">
+          <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-gray-100">
             <Columns className="h-3 w-3" />
           </Button>
-          <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-secondary-foreground/20" onClick={onDelete}>
+          <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-red-100 hover:text-red-600" onClick={onDelete}>
             <Trash2 className="h-3 w-3" />
           </Button>
           <Button 
             variant="ghost" 
             size="sm" 
-            className="h-6 w-6 p-0 hover:bg-secondary-foreground/20"
+            className="h-6 w-6 p-0 hover:bg-gray-100"
             onClick={(e) => {
               e.stopPropagation();
               onSelectionChange({ type: 'row', id: row.id, parentId: sectionId });
@@ -1467,6 +1516,8 @@ const RowComponent: React.FC<RowComponentProps> = ({
             })}
             onMoveColumnUp={() => onMoveColumn(sectionId, row.id, column.id, 'up')}
             onMoveColumnDown={() => onMoveColumn(sectionId, row.id, column.id, 'down')}
+            onMoveElementUp={onMoveElementUp}
+            onMoveElementDown={onMoveElementDown}
             onAddElement={onAddElement}
             onMoveElement={onMoveElement}
             onUpdateElement={onUpdateElement}
@@ -1493,6 +1544,8 @@ interface ColumnComponentProps {
   onSelect: () => void;
   onMoveColumnUp: () => void;
   onMoveColumnDown: () => void;
+  onMoveElementUp: (sectionId: string, rowId: string, columnId: string, elementId: string) => void;
+  onMoveElementDown: (sectionId: string, rowId: string, columnId: string, elementId: string) => void;
   onAddElement: (sectionId: string, rowId: string, columnId: string, elementType: string, insertIndex?: number) => void;
   onMoveElement: (elementId: string, targetSectionId: string, targetRowId: string, targetColumnId: string, insertIndex: number) => void;
   onUpdateElement: (elementId: string, updates: Partial<PageBuilderElement>) => void;
@@ -1513,6 +1566,8 @@ const ColumnComponent: React.FC<ColumnComponentProps> = ({
   onSelect,
   onMoveColumnUp,
   onMoveColumnDown,
+  onMoveElementUp,
+  onMoveElementDown,
   onAddElement,
   onMoveElement,
   onUpdateElement,
@@ -1554,14 +1609,14 @@ const ColumnComponent: React.FC<ColumnComponentProps> = ({
     >
       {/* Column Toolbar */}
       {(isHovered || isSelected) && (
-        <div className="absolute -top-8 left-0 z-10 flex items-center gap-1 bg-accent text-accent-foreground px-2 py-1 rounded text-xs shadow-lg">
+        <div className="absolute -top-8 left-0 z-10 flex items-center gap-1 bg-white text-gray-800 border px-2 py-1 rounded text-xs shadow-lg">
           <Grip className="h-3 w-3" />
           <span className="font-medium">Column</span>
           <Separator orientation="vertical" className="mx-1 h-3" />
           <Button 
             variant="ghost" 
             size="sm" 
-            className="h-5 w-5 p-0 hover:bg-accent-foreground/20"
+            className="h-5 w-5 p-0 hover:bg-gray-100"
             onClick={(e) => {
               e.stopPropagation();
               onMoveColumnUp();
@@ -1573,7 +1628,7 @@ const ColumnComponent: React.FC<ColumnComponentProps> = ({
           <Button 
             variant="ghost" 
             size="sm" 
-            className="h-5 w-5 p-0 hover:bg-accent-foreground/20"
+            className="h-5 w-5 p-0 hover:bg-gray-100"
             onClick={(e) => {
               e.stopPropagation();
               onMoveColumnDown();
@@ -1585,7 +1640,7 @@ const ColumnComponent: React.FC<ColumnComponentProps> = ({
           <Button 
             variant="ghost" 
             size="sm" 
-            className="h-5 w-5 p-0 hover:bg-accent-foreground/20"
+            className="h-5 w-5 p-0 hover:bg-gray-100"
             onClick={(e) => {
               e.stopPropagation();
               onSelect();
@@ -1619,6 +1674,8 @@ const ColumnComponent: React.FC<ColumnComponentProps> = ({
               <div key={element.id}>
                 <ElementWrapper
                   element={element}
+                  elementIndex={index}
+                  totalElements={column.elements.length}
                   columnId={column.id}
                   rowId={rowId}
                   sectionId={sectionId}
@@ -1633,6 +1690,8 @@ const ColumnComponent: React.FC<ColumnComponentProps> = ({
                   onUpdate={onUpdateElement}
                   onDelete={onDeleteElement}
                   onDuplicate={onDuplicateElement}
+                  onMoveElementUp={() => onMoveElementUp(sectionId, rowId, column.id, element.id)}
+                  onMoveElementDown={() => onMoveElementDown(sectionId, rowId, column.id, element.id)}
                 />
                 
                 {/* Drop zone after each element */}
@@ -1657,6 +1716,8 @@ const ColumnComponent: React.FC<ColumnComponentProps> = ({
 // Element Wrapper Component
 interface ElementWrapperProps {
   element: PageBuilderElement;
+  elementIndex: number;
+  totalElements: number;
   columnId: string;
   rowId: string;
   sectionId: string;
@@ -1666,10 +1727,14 @@ interface ElementWrapperProps {
   onUpdate: (elementId: string, updates: Partial<PageBuilderElement>) => void;
   onDelete: (elementId: string) => void;
   onDuplicate: (elementId: string) => void;
+  onMoveElementUp: () => void;
+  onMoveElementDown: () => void;
 }
 
 const ElementWrapper: React.FC<ElementWrapperProps> = ({
   element,
+  elementIndex,
+  totalElements,
   columnId,
   rowId,
   sectionId,
@@ -1678,7 +1743,9 @@ const ElementWrapper: React.FC<ElementWrapperProps> = ({
   onSelect,
   onUpdate,
   onDelete,
-  onDuplicate
+  onDuplicate,
+  onMoveElementUp,
+  onMoveElementDown
 }) => {
   const [isHovered, setIsHovered] = useState(false);
   const elementDef = elementRegistry.get(element.type);
@@ -1728,23 +1795,23 @@ const ElementWrapper: React.FC<ElementWrapperProps> = ({
     >
       {/* Element Toolbar */}
       {(isHovered || isSelected) && (
-        <div className="absolute -top-8 left-0 z-20 flex items-center gap-1 bg-primary text-primary-foreground px-2 py-1 rounded text-xs shadow-lg">
+        <div className="absolute -top-8 left-0 z-20 flex items-center gap-1 bg-white text-gray-800 border px-2 py-1 rounded text-xs shadow-lg">
           <div 
             ref={dragRef}
-            className="flex items-center cursor-move hover:bg-primary-foreground/20 p-1 rounded"
+            className="flex items-center cursor-move hover:bg-gray-100 p-1 rounded"
           >
             <Grip className="h-3 w-3" />
           </div>
           <elementDef.icon className="h-3 w-3" />
           <span className="font-medium">{elementDef.name}</span>
           <Separator orientation="vertical" className="mx-1 h-3" />
-          <Button variant="ghost" size="sm" className="h-5 w-5 p-0 hover:bg-primary-foreground/20">
+          <Button variant="ghost" size="sm" className="h-5 w-5 p-0 hover:bg-gray-100">
             <Edit className="h-2 w-2" />
           </Button>
           <Button 
             variant="ghost" 
             size="sm" 
-            className="h-5 w-5 p-0 hover:bg-primary-foreground/20"
+            className="h-5 w-5 p-0 hover:bg-gray-100"
             onClick={(e) => {
               e.stopPropagation();
               onDuplicate(element.id);
@@ -1752,16 +1819,34 @@ const ElementWrapper: React.FC<ElementWrapperProps> = ({
           >
             <Copy className="h-2 w-2" />
           </Button>
-          <Button variant="ghost" size="sm" className="h-5 w-5 p-0 hover:bg-primary-foreground/20">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-5 w-5 p-0 hover:bg-gray-100"
+            onClick={(e) => {
+              e.stopPropagation();
+              onMoveElementUp();
+            }}
+            disabled={elementIndex === 0}
+          >
             <ArrowUp className="h-2 w-2" />
           </Button>
-          <Button variant="ghost" size="sm" className="h-5 w-5 p-0 hover:bg-primary-foreground/20">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-5 w-5 p-0 hover:bg-gray-100"
+            onClick={(e) => {
+              e.stopPropagation();
+              onMoveElementDown();
+            }}
+            disabled={elementIndex === totalElements - 1}
+          >
             <ArrowDown className="h-2 w-2" />
           </Button>
           <Button 
             variant="ghost" 
             size="sm" 
-            className="h-5 w-5 p-0 hover:bg-destructive hover:text-destructive-foreground" 
+            className="h-5 w-5 p-0 hover:bg-red-100 hover:text-red-600" 
             onClick={(e) => {
               e.stopPropagation();
               onDelete(element.id);
