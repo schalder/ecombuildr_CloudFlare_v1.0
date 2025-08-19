@@ -8,17 +8,5 @@
 /favicon.ico  200
 /robots.txt  200
 
-# Domain-specific rules for shop.powerkits.net (must be at top)
-# Bot detection and human routing - check if no_prerender param exists
-/*  /index.html  200!  Condition=Query:no_prerender,Host:shop.powerkits.net
-/*  /index.html  200!  Condition=Query:no_prerender,Host:www.shop.powerkits.net
-# SEO prerender for shop.powerkits.net bots 
-/*  https://fhqwacmokbtbspkxjixf.functions.supabase.co/seo-prerender?domain=shop.powerkits.net&path=/:splat  200  Host:shop.powerkits.net
-/*  https://fhqwacmokbtbspkxjixf.functions.supabase.co/seo-prerender?domain=shop.powerkits.net&path=/:splat  200  Host:www.shop.powerkits.net
-
-# Generic rules for other domains
-# Bot detection and human routing - check if no_prerender param exists
-/*  /index.html  200!  Condition=Query:no_prerender
-
-# SEO prerender for bots (other domains, fallback to :host) 
-/*  https://fhqwacmokbtbspkxjixf.functions.supabase.co/seo-prerender?domain=:host&path=/:splat  200
+# SPA fallback - serve React app for all routes
+/*  /index.html  200

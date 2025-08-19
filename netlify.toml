@@ -26,19 +26,11 @@
   to = "/robots.txt"
   status = 200
 
-# Human users get SPA directly if no_prerender param is set
+# Serve SPA for all routes
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
-  conditions = {Query = {no_prerender = ["1"]}}
-
-# SEO-enhanced HTML routes via Supabase function for bots
-[[redirects]]
-  from = "/*"  
-  to = "https://fhqwacmokbtbspkxjixf.supabase.co/functions/v1/seo-prerender?domain=:host&path=:path"
-  status = 200
-  force = true
 
 # Cache static assets
 [[headers]]
