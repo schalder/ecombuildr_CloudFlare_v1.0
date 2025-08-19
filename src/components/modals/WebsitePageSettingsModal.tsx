@@ -3,10 +3,11 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 
 export interface WebsitePageSettingsModalProps {
   open: boolean;
@@ -39,10 +40,10 @@ const getPublicUrlForPage = (
 export const WebsitePageSettingsModal: React.FC<WebsitePageSettingsModalProps> = ({ open, onClose, websiteId, page }) => {
   const { toast } = useToast();
   const qc = useQueryClient();
+  const navigate = useNavigate();
 
   const [title, setTitle] = useState("");
   const [slug, setSlug] = useState("");
-  const [published, setPublished] = useState(false);
   const [websiteMeta, setWebsiteMeta] = useState<{ slug?: string; domain?: string } | null>(null);
 
   useEffect(() => {
@@ -64,7 +65,6 @@ export const WebsitePageSettingsModal: React.FC<WebsitePageSettingsModalProps> =
     if (page) {
       setTitle(page.title);
       setSlug(page.slug);
-      setPublished(page.is_published);
     }
   }, [page]);
 
@@ -78,37 +78,13 @@ export const WebsitePageSettingsModal: React.FC<WebsitePageSettingsModalProps> =
       if (!page) return;
       const { error } = await supabase
         .from("website_pages")
-        .update({ title, slug, is_published: published })
+        .update({ title, slug })
         .eq("id", page.id);
       if (error) throw error;
     },
     onSuccess: async () => {
       await qc.invalidateQueries({ queryKey: ["website-pages", websiteId] });
-      
-      // Generate HTML snapshot if page is being published
-      if (published && page) {
-        try {
-          console.log(`Generating HTML snapshot for website page: ${page.id}`);
-          const { error } = await supabase.functions.invoke('html-snapshot', {
-            body: {
-              contentType: 'website_page',
-              contentId: page.id
-            }
-          });
-          if (error) {
-            console.warn('Failed to generate HTML snapshot:', error);
-          } else {
-            console.log('✅ HTML snapshot generated successfully');
-          }
-        } catch (error) {
-          console.warn('Failed to generate HTML snapshot:', error);
-        }
-      }
-      
-      toast({ 
-        title: published ? "Page published successfully" : "Page updated",
-        description: published ? "Your page is now live and accessible to visitors" : undefined
-      });
+      toast({ title: "Page updated successfully" });
       onClose();
     },
     onError: (err: any) => {
@@ -169,6 +145,12 @@ export const WebsitePageSettingsModal: React.FC<WebsitePageSettingsModalProps> =
     }
   };
 
+  const handleOpenInBuilder = () => {
+    if (!page) return;
+    navigate(`/dashboard/websites/${websiteId}/pages/${page.id}/builder`);
+    onClose();
+  };
+
   const handleSave = () => updateMutation.mutate();
   const handleSetHomepage = () => setHomepageMutation.mutate();
   const handleDelete = () => {
@@ -200,10 +182,20 @@ export const WebsitePageSettingsModal: React.FC<WebsitePageSettingsModalProps> =
 
             <div className="flex items-center justify-between">
               <div>
-                <Label htmlFor="published" className="block">Published</Label>
-                <p className="text-sm text-muted-foreground">Make this page publicly accessible.</p>
+                <Label className="block">Publication Status</Label>
+                <p className="text-sm text-muted-foreground">Use the page builder to publish changes.</p>
               </div>
-              <Switch id="published" checked={published} onCheckedChange={setPublished} />
+              <Badge variant={page.is_published ? "default" : "secondary"}>
+                {page.is_published ? "Published" : "Not Published"}
+              </Badge>
+            </div>
+
+            <div className="grid gap-2">
+              <Label>Page Builder</Label>
+              <Button variant="outline" onClick={handleOpenInBuilder} className="justify-start">
+                Open in Page Builder
+              </Button>
+              <p className="text-sm text-muted-foreground">Use "Save & Publish" in the builder to publish your changes.</p>
             </div>
 
             <div className="grid gap-2">

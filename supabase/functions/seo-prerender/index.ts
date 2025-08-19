@@ -18,10 +18,13 @@ serve(async (req) => {
   )
 
   const url = new URL(req.url)
-  // Get path from URL pathname, removing query parameters
-  const path = url.pathname || '/'
-  // Get domain from headers (Netlify passes the original host in x-forwarded-host)
-  const domain = req.headers.get('x-forwarded-host') || req.headers.get('host') || 'ecombuildr.com'
+  
+  // Get domain and path from query parameters first (Netlify prerendering), then fall back to headers/pathname
+  const domainParam = url.searchParams.get('domain')
+  const pathParam = url.searchParams.get('path')
+  
+  const path = pathParam || url.pathname || '/'
+  const domain = domainParam || req.headers.get('x-forwarded-host') || req.headers.get('host') || 'ecombuildr.com'
   
   console.log('🔍 SEO Prerender request:', { 
     path, 
