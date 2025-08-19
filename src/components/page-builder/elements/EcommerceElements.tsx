@@ -738,78 +738,84 @@ const CategoryNavigationElement: React.FC<{
     const applyStyles = (baseClasses: string, styleType?: string) => {
       const styles = element.styles || {};
       let classes = baseClasses;
+      let inlineStyles: React.CSSProperties = {};
       
-      // Get responsive styles based on device type
+      // Get responsive styles based on device type - fix the structure mismatch
       const deviceKey = deviceType === 'mobile' ? 'mobile' : 'desktop';
+      
+      // Check multiple possible structure locations for styles
       const responsiveStyles = (styles as any).responsiveStyles?.[deviceKey] || {};
-      const headlineStyles = responsiveStyles.headline || {};
-      const subheadlineStyles = responsiveStyles.subheadline || {};
-      const productTitleStyles = responsiveStyles.productTitle || {};
-      const priceStyles = responsiveStyles.price || {};
+      const headlineStyles = responsiveStyles.headline || 
+                            (styles as any).headlineStyles?.responsive?.[deviceKey] || {};
+      const subheadlineStyles = responsiveStyles.subheadline || 
+                               (styles as any).subheadlineStyles?.responsive?.[deviceKey] || {};
+      const productTitleStyles = responsiveStyles.productTitle || 
+                                (styles as any).productTitleStyles?.responsive?.[deviceKey] || {};
+      const priceStyles = responsiveStyles.price || 
+                         (styles as any).priceStyles?.responsive?.[deviceKey] || {};
       
       // Apply styles based on the element being styled
       if (baseClasses.includes('headline') || styleType === 'headline') {
-        if (headlineStyles.fontSize) classes += ` !text-[${headlineStyles.fontSize}]`;
-        if (headlineStyles.color) classes += ` !text-[${headlineStyles.color}]`;
-        if (headlineStyles.textAlign) classes += ` !text-${headlineStyles.textAlign}`;
-        if (headlineStyles.lineHeight) classes += ` !leading-[${headlineStyles.lineHeight}]`;
+        if (headlineStyles.fontSize) inlineStyles.fontSize = headlineStyles.fontSize;
+        if (headlineStyles.color) inlineStyles.color = headlineStyles.color;
+        if (headlineStyles.textAlign) inlineStyles.textAlign = headlineStyles.textAlign;
+        if (headlineStyles.lineHeight) inlineStyles.lineHeight = headlineStyles.lineHeight;
       }
       
       if (baseClasses.includes('subheadline') || styleType === 'subheadline') {
-        if (subheadlineStyles.fontSize) classes += ` !text-[${subheadlineStyles.fontSize}]`;
-        if (subheadlineStyles.color) classes += ` !text-[${subheadlineStyles.color}]`;
-        if (subheadlineStyles.textAlign) classes += ` !text-${subheadlineStyles.textAlign}`;
-        if (subheadlineStyles.lineHeight) classes += ` !leading-[${subheadlineStyles.lineHeight}]`;
+        if (subheadlineStyles.fontSize) inlineStyles.fontSize = subheadlineStyles.fontSize;
+        if (subheadlineStyles.color) inlineStyles.color = subheadlineStyles.color;
+        if (subheadlineStyles.textAlign) inlineStyles.textAlign = subheadlineStyles.textAlign;
+        if (subheadlineStyles.lineHeight) inlineStyles.lineHeight = subheadlineStyles.lineHeight;
       }
       
       if (baseClasses.includes('product-title') || styleType === 'product-title') {
-        if (productTitleStyles.fontSize) classes += ` !text-[${productTitleStyles.fontSize}]`;
-        if (productTitleStyles.color) classes += ` !text-[${productTitleStyles.color}]`;
-        if (productTitleStyles.lineHeight) classes += ` !leading-[${productTitleStyles.lineHeight}]`;
+        if (productTitleStyles.fontSize) inlineStyles.fontSize = productTitleStyles.fontSize;
+        if (productTitleStyles.color) inlineStyles.color = productTitleStyles.color;
+        if (productTitleStyles.lineHeight) inlineStyles.lineHeight = productTitleStyles.lineHeight;
       }
       
       if (baseClasses.includes('price') || styleType === 'price') {
-        if (priceStyles.fontSize) classes += ` !text-[${priceStyles.fontSize}]`;
-        if (priceStyles.color) classes += ` !text-[${priceStyles.color}]`;
-        if (priceStyles.lineHeight) classes += ` !leading-[${priceStyles.lineHeight}]`;
+        if (priceStyles.fontSize) inlineStyles.fontSize = priceStyles.fontSize;
+        if (priceStyles.color) inlineStyles.color = priceStyles.color;
+        if (priceStyles.lineHeight) inlineStyles.lineHeight = priceStyles.lineHeight;
       }
       
-      return classes;
+      return { className: classes, style: inlineStyles };
     };
     
     const getCardStyles = () => {
       const styles = element.styles || {};
       let cardClasses = "border rounded-lg p-4 hover:shadow-md transition-shadow bg-card";
+      let inlineStyles: React.CSSProperties = {};
       
-      // Apply card styles
+      // Apply card styles using inline styles for reliability
       if ((styles as any).cardBackground) {
-        cardClasses = cardClasses.replace('bg-card', `!bg-[${(styles as any).cardBackground}]`);
+        inlineStyles.backgroundColor = (styles as any).cardBackground;
       }
       if (styles.borderRadius) {
-        cardClasses = cardClasses.replace('rounded-lg', `!rounded-[${styles.borderRadius}]`);
+        inlineStyles.borderRadius = styles.borderRadius;
       }
-      if ((styles as any).borderWidth && parseInt((styles as any).borderWidth) > 0) {
-        cardClasses = cardClasses.replace('border ', `!border-[${(styles as any).borderWidth}] `);
+      if ((styles as any).borderWidth) {
+        inlineStyles.borderWidth = (styles as any).borderWidth;
         if ((styles as any).borderColor) {
-          cardClasses += ` !border-[${(styles as any).borderColor}]`;
+          inlineStyles.borderColor = (styles as any).borderColor;
         }
-      } else if ((styles as any).borderWidth === '0px') {
-        cardClasses = cardClasses.replace('border', '!border-0');
       }
       if ((styles as any).cardPadding) {
-        cardClasses = cardClasses.replace('p-4', `!p-[${(styles as any).cardPadding}]`);
+        inlineStyles.padding = (styles as any).cardPadding;
       }
       
-      return cardClasses;
+      return { className: cardClasses, style: inlineStyles };
     };
     
     const getButtonStyles = () => {
       const styles = element.styles || {};
       const variant = (styles as any).buttonVariant || 'default';
       const size = (styles as any).buttonSize || 'sm';
-      const width = (styles as any).buttonWidth === 'full' ? '!w-full' : '';
+      const width = (styles as any).buttonWidth === 'full' ? 'w-full' : '';
       
-      let customStyle = {};
+      let customStyle: React.CSSProperties = {};
       let className = width;
       
       // Handle custom button colors
@@ -821,17 +827,23 @@ const CategoryNavigationElement: React.FC<{
         customStyle = {
           backgroundColor: buttonBg,
           color: buttonText,
-          border: 'none',
-          '--hover-bg': buttonHover
-        } as React.CSSProperties;
+          border: 'none'
+        };
         
-        className += ` hover:!bg-[${buttonHover}] !bg-[${buttonBg}] !text-[${buttonText}]`;
+        // Add hover effect via CSS custom properties
+        className += ' custom-button-hover';
         
         return { 
           variant: 'default' as const,
           size, 
           className,
-          style: customStyle
+          style: customStyle,
+          onMouseEnter: (e: React.MouseEvent<HTMLButtonElement>) => {
+            e.currentTarget.style.backgroundColor = buttonHover;
+          },
+          onMouseLeave: (e: React.MouseEvent<HTMLButtonElement>) => {
+            e.currentTarget.style.backgroundColor = buttonBg;
+          }
         };
       }
       
@@ -866,30 +878,43 @@ const CategoryNavigationElement: React.FC<{
       );
     }
     
-    const containerGap = (element.styles as any)?.gap ? `!gap-[${(element.styles as any).gap}]` : 'gap-4';
+    const containerGap = (element.styles as any)?.gap ? parseInt((element.styles as any).gap) : 16;
     
     return (
       <div className="w-full">
         {element.content.showTitle !== false && element.content.title && (
-          <h2 className={applyStyles("text-2xl font-bold mb-2", 'headline')}>
+          <h2 
+            className={applyStyles("text-2xl font-bold mb-2", 'headline').className}
+            style={applyStyles("text-2xl font-bold mb-2", 'headline').style}
+          >
             {element.content.title}
           </h2>
         )}
         
         {element.content.showSubtitle !== false && element.content.subtitle && (
-          <p className={applyStyles("text-muted-foreground mb-6", 'subheadline')}>
+          <p 
+            className={applyStyles("text-muted-foreground mb-6", 'subheadline').className}
+            style={applyStyles("text-muted-foreground mb-6", 'subheadline').style}
+          >
             {element.content.subtitle}
           </p>
         )}
         
         <div 
-          className={`grid ${containerGap}`} 
-          style={{ gridTemplateColumns: `repeat(${getResponsiveColumns()}, 1fr)` }}
+          className="grid" 
+          style={{ 
+            gridTemplateColumns: `repeat(${getResponsiveColumns()}, 1fr)`,
+            gap: `${containerGap}px`
+          }}
         >
           {topProducts.slice(0, element.content.limit || 6).map((product) => {
             const buttonProps = getButtonStyles();
+            const cardProps = getCardStyles();
+            const titleProps = applyStyles("font-medium text-sm mb-1", 'product-title');
+            const priceProps = applyStyles("font-bold text-lg mb-3", 'price');
+            
             return (
-              <div key={product.id} className={getCardStyles()}>
+              <div key={product.id} className={cardProps.className} style={cardProps.style}>
                 <div className="aspect-square bg-muted rounded-lg mb-3 overflow-hidden">
                   {product.images && product.images.length > 0 ? (
                     <img
@@ -904,11 +929,11 @@ const CategoryNavigationElement: React.FC<{
                   )}
                 </div>
                 
-                <h3 className={applyStyles("font-medium text-sm mb-1", 'product-title')}>
+                <h3 className={titleProps.className} style={titleProps.style}>
                   {product.name}
                 </h3>
                 
-                <p className={applyStyles("font-bold text-lg mb-3", 'price')}>
+                <p className={priceProps.className} style={priceProps.style}>
                   ${product.price}
                 </p>
                 
@@ -918,6 +943,8 @@ const CategoryNavigationElement: React.FC<{
                   size={buttonProps.size}
                   className={buttonProps.className}
                   style={buttonProps.style}
+                  onMouseEnter={buttonProps.onMouseEnter}
+                  onMouseLeave={buttonProps.onMouseLeave}
                 >
                   {element.content.ctaText || 'Add to Cart'}
                 </Button>
