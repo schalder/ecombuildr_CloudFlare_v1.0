@@ -135,7 +135,9 @@ export const Footer = () => {
                 <Facebook className="h-5 w-5" />
               </a>
               <a 
-                href="#" 
+                href="https://www.youtube.com/@learnwith-samir" 
+                target="_blank"
+                rel="noopener noreferrer"
                 className="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center hover:bg-accent transition-colors"
               >
                 <Youtube className="h-5 w-5" />
