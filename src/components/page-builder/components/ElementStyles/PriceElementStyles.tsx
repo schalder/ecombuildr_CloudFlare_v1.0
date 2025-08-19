@@ -3,6 +3,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import { ColorPicker } from '@/components/ui/color-picker';
+import { ResponsiveControls } from '../ResponsiveControls';
 import { PageBuilderElement } from '../../types';
 
 interface PriceElementStylesProps {
@@ -24,34 +25,16 @@ const ensureResponsive = (base: any) => {
   return base;
 };
 
-// Device toggle component
-const DeviceToggle: React.FC<{
-  value: 'desktop' | 'mobile';
-  onChange: (device: 'desktop' | 'mobile') => void;
-}> = ({ value, onChange }) => (
-  <div className="flex rounded-lg border p-1 bg-muted">
-    <button
-      className={`px-3 py-1 text-xs rounded ${value === 'desktop' ? 'bg-background shadow-sm' : ''}`}
-      onClick={() => onChange('desktop')}
-    >
-      Desktop
-    </button>
-    <button
-      className={`px-3 py-1 text-xs rounded ${value === 'mobile' ? 'bg-background shadow-sm' : ''}`}
-      onClick={() => onChange('mobile')}
-    >
-      Mobile
-    </button>
-  </div>
-);
+// Convert device type for ResponsiveControls
+const mapDeviceType = (device: 'desktop' | 'mobile'): 'desktop' | 'tablet' | 'mobile' => 
+  device === 'mobile' ? 'mobile' : 'desktop';
 
 // Typography group component
 const TypographyGroup: React.FC<{
   label: string;
   styles: Record<string, any>;
   onChange: (patch: Record<string, any>) => void;
-  showAlignment?: boolean;
-}> = ({ label, styles, onChange, showAlignment = true }) => (
+}> = ({ label, styles, onChange }) => (
   <div className="space-y-3 p-3 border rounded-lg bg-muted/50">
     <Label className="text-xs font-medium">{label}</Label>
     
@@ -92,25 +75,6 @@ const TypographyGroup: React.FC<{
         onChange={(color) => onChange({ color })}
       />
     </div>
-
-    {showAlignment && (
-      <div>
-        <Label className="text-xs">Text Alignment</Label>
-        <Select
-          value={styles.textAlign || 'left'}
-          onValueChange={(value) => onChange({ textAlign: value })}
-        >
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="left">Left</SelectItem>
-            <SelectItem value="center">Center</SelectItem>
-            <SelectItem value="right">Right</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-    )}
   </div>
 );
 
@@ -131,14 +95,24 @@ export const PriceElementStyles: React.FC<PriceElementStylesProps> = ({
     onStyleUpdate(key, base);
   };
 
+  const handleDeviceChange = (newDevice: 'desktop' | 'tablet' | 'mobile') => {
+    setDevice(newDevice === 'tablet' ? 'desktop' : newDevice);
+  };
+
   return (
-    <div className="space-y-4">
-      {/* Typography Styles */}
-      <div>
-        <Label className="text-xs font-medium">Typography</Label>
+    <div className="space-y-6">
+      {/* Typography Section */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <Label className="text-sm font-medium">Typography</Label>
+          <ResponsiveControls
+            deviceType={mapDeviceType(device)}
+            onDeviceChange={handleDeviceChange}
+            className="scale-90"
+          />
+        </div>
+        
         <div className="space-y-3">
-          <DeviceToggle value={device} onChange={setDevice} />
-          
           <TypographyGroup 
             label="Main Price" 
             styles={getGroup('priceStyles')} 
@@ -155,14 +129,13 @@ export const PriceElementStyles: React.FC<PriceElementStylesProps> = ({
             label="Discount Badge" 
             styles={getGroup('discountStyles')} 
             onChange={(p) => updateGroup('discountStyles', p)} 
-            showAlignment={false}
           />
         </div>
       </div>
 
-      {/* Layout Options */}
-      <div className="space-y-3">
-        <Label className="text-xs font-medium">Layout</Label>
+      {/* Layout Section */}
+      <div className="space-y-4">
+        <Label className="text-sm font-medium">Layout</Label>
         
         <div>
           <Label className="text-xs">Layout Direction</Label>
@@ -231,9 +204,9 @@ export const PriceElementStyles: React.FC<PriceElementStylesProps> = ({
         </div>
       </div>
 
-      {/* Button Styles */}
-      <div className="space-y-3">
-        <Label className="text-xs font-medium">Button Styles</Label>
+      {/* Button Section */}
+      <div className="space-y-4">
+        <Label className="text-sm font-medium">Button</Label>
         
         <div>
           <Label className="text-xs">Button Style</Label>

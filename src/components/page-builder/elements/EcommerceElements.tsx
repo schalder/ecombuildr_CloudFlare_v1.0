@@ -1005,18 +1005,21 @@ const PriceElement: React.FC<{
     const priceAlignment = (styles as any).priceAlignment || 'left';
     const spacing = parseInt((styles as any).spacing) || 8;
     
+    let outerContainerClass = '';
     let containerClass = 'flex';
     let priceContainerClass = 'flex items-center';
     
-    // Container alignment
-    if (containerAlignment === 'center') containerClass += ' justify-center';
-    if (containerAlignment === 'right') containerClass += ' justify-end';
+    // Outer container alignment (positions entire element within column)
+    if (containerAlignment === 'center') outerContainerClass = 'mx-auto';
+    if (containerAlignment === 'right') outerContainerClass = 'ml-auto';
+    if (containerAlignment === 'left') outerContainerClass = 'mr-auto';
     
-    // Price elements alignment
+    // Price elements alignment (within the price container)
     if (priceAlignment === 'center') priceContainerClass += ' justify-center';
     if (priceAlignment === 'right') priceContainerClass += ' justify-end';
     
     return { 
+      outerContainerClass,
       containerClass,
       priceContainerClass,
       spacing: `${spacing}px`
@@ -1117,7 +1120,7 @@ const PriceElement: React.FC<{
     : `${containerStyles.containerClass} items-center`;
 
   return (
-    <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-md'}`}>
+    <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-md'} ${containerStyles.outerContainerClass}`}>
       <div className={mainLayoutClass} style={{ gap: containerStyles.spacing }}>
         {/* Price Section */}
         <div className={`${containerStyles.priceContainerClass} flex-wrap`} style={{ gap: containerStyles.spacing }}>
