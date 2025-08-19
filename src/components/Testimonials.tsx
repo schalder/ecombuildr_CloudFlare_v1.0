@@ -17,7 +17,7 @@ const testimonials = [
     revenue: "৩৫,০০০ টাকা+ মাসিক",
     content: "ঘরে বসে রান্না করে এখন অনলাইনে বিক্রি করছি। ৩ মাসেই আমার অর্ডার ৩ গুণ বেড়েছে। খুবই সহজ এবং কার্যকর সিস্টেম!",
     rating: 5,
-    avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&h=100&fit=crop&crop=face"
+    avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop&crop=face"
   },
   {
     name: "করিম উদ্দিন",
