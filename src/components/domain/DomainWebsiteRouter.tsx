@@ -49,7 +49,7 @@ export const DomainWebsiteRouter: React.FC<DomainWebsiteRouterProps> = ({
   }, [location.pathname, trackPageView]);
 
   return (
-    <WebsiteProvider websiteId={websiteId}>
+    <WebsiteProvider websiteId={websiteId} websiteSlug={website.slug}>
       <WebsiteHeader website={website} />
       <main className="flex-1">
         <Routes>

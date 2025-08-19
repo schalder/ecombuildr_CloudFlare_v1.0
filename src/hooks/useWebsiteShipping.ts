@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useStore } from '@/contexts/StoreContext';
+import { useWebsiteContext } from '@/contexts/WebsiteContext';
 import type { ShippingSettings } from '@/lib/shipping';
 
 // Resolve website-level shipping settings in a route-agnostic, domain-aware way.
@@ -11,19 +12,30 @@ import type { ShippingSettings } from '@/lib/shipping';
 // 3) store slug param (loads store; falls back to store.settings.shipping)
 // 4) window.location.hostname matches websites.domain or websites.canonical_domain
 export function useWebsiteShipping() {
-  const { slug, websiteId, websiteSlug, funnelId } = useParams<{
+  const { slug, websiteId: urlWebsiteId, websiteSlug: urlWebsiteSlug, funnelId } = useParams<{
     slug?: string;
     websiteId?: string;
     websiteSlug?: string;
     funnelId?: string;
   }>();
+  const { websiteId: contextWebsiteId, websiteSlug: contextWebsiteSlug } = useWebsiteContext();
   const { store, loadStore, loadStoreById } = useStore();
   const [websiteShipping, setWebsiteShipping] = useState<ShippingSettings | undefined>(undefined);
+  
+  // Priority: Context -> URL params -> hostname
+  const websiteId = contextWebsiteId || urlWebsiteId;
+  const websiteSlug = contextWebsiteSlug || urlWebsiteSlug;
 
   useEffect(() => {
     (async () => {
       try {
-        // 1) Explicit websiteId param
+        console.debug('[useWebsiteShipping] Resolution attempt:', { 
+          websiteId, 
+          websiteSlug, 
+          source: contextWebsiteId ? 'Context' : urlWebsiteId ? 'URL' : 'None' 
+        });
+        
+        // 1) Explicit websiteId (context or param)
         if (websiteId) {
           const { data } = await supabase
             .from('websites')
@@ -32,11 +44,14 @@ export function useWebsiteShipping() {
             .maybeSingle();
           if (data?.store_id) await loadStoreById(data.store_id);
           const ship = (data as any)?.settings?.shipping;
-          if (ship) setWebsiteShipping(ship as ShippingSettings);
+          if (ship) {
+            console.debug('[useWebsiteShipping] Found shipping via websiteId:', ship);
+            setWebsiteShipping(ship as ShippingSettings);
+          }
           return;
         }
 
-        // 2) Clean slug-based website route
+        // 2) Clean slug-based website route (context or param)
         if (websiteSlug) {
           const { data } = await supabase
             .from('websites')
@@ -46,7 +61,10 @@ export function useWebsiteShipping() {
             .maybeSingle();
           if (data?.store_id) await loadStoreById(data.store_id);
           const ship = (data as any)?.settings?.shipping;
-          if (ship) setWebsiteShipping(ship as ShippingSettings);
+          if (ship) {
+            console.debug('[useWebsiteShipping] Found shipping via websiteSlug:', ship);
+            setWebsiteShipping(ship as ShippingSettings);
+          }
           return;
         }
 
@@ -67,7 +85,10 @@ export function useWebsiteShipping() {
               .eq('id', data.website_id)
               .maybeSingle();
             const ship = (websiteData as any)?.settings?.shipping;
-            if (ship) setWebsiteShipping(ship as ShippingSettings);
+            if (ship) {
+              console.debug('[useWebsiteShipping] Found shipping via funnel:', ship);
+              setWebsiteShipping(ship as ShippingSettings);
+            }
           }
           return;
         }
@@ -89,14 +110,17 @@ export function useWebsiteShipping() {
             .maybeSingle();
           if (data?.store_id) await loadStoreById(data.store_id);
           const ship = (data as any)?.settings?.shipping;
-          if (ship) setWebsiteShipping(ship as ShippingSettings);
+          if (ship) {
+            console.debug('[useWebsiteShipping] Found shipping via hostname:', ship);
+            setWebsiteShipping(ship as ShippingSettings);
+          }
         }
       } catch (e) {
         // Silent failure; components will fall back to store-level shipping if available
         // console.warn('[useWebsiteShipping] resolution error', e);
       }
     })();
-  }, [slug, websiteId, websiteSlug, funnelId, loadStore, loadStoreById]);
+  }, [slug, websiteId, websiteSlug, funnelId, loadStore, loadStoreById, contextWebsiteId, contextWebsiteSlug]);
 
   // Fallback: use store-level shipping settings if website-level not present
   useEffect(() => {
