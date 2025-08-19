@@ -1343,11 +1343,15 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
             />
           ))
         )}
-      </div>
-    </div>
-  );
-};
-        {(!section.rows || section.rows.length === 0) ? (
+
+        {/* Section Content */}
+        <div 
+          className="w-full mx-auto p-4"
+          style={{ 
+            maxWidth: SECTION_WIDTHS[section.width] || '100%'
+          }}
+        >
+          {(!section.rows || section.rows.length === 0) ? (
           <div className="p-12 text-center border border-dashed border-border rounded-lg">
             <p className="text-muted-foreground mb-4">This section is empty</p>
             <Button 
@@ -1394,6 +1398,10 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
                       onDuplicateElement={onDuplicateElement}
                       selection={selection}
                       onSelectionChange={onSelectionChange}
+                      hoveredItem={hoveredItem}
+                      onMouseEnter={handleMouseEnter}
+                      onMouseLeave={handleMouseLeave}
+                      shouldShowToolbar={shouldShowToolbar}
                     />
                     
                     {/* Drop zone after each row */}
