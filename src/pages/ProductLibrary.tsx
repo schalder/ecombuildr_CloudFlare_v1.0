@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,7 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Search, Plus, TrendingUp } from 'lucide-react';
+import { Search, Plus, TrendingUp, Eye, DollarSign } from 'lucide-react';
+import { ProductImportDialog } from '@/components/ProductImportDialog';
 
 interface ProductLibraryItem {
   id: string;
@@ -14,8 +16,9 @@ interface ProductLibraryItem {
   description: string;
   short_description: string;
   suggested_price: number;
-  category: string;
-  tags: string[];
+  base_cost: number;
+  shipping_cost: number;
+  category_id: string | null;
   images: any;
   is_trending: boolean;
   supplier_link: string;
@@ -23,6 +26,10 @@ interface ProductLibraryItem {
   video_url: string;
   variations: any;
   created_at: string;
+  product_library_categories?: {
+    name: string;
+    slug: string;
+  };
 }
 
 export default function ProductLibrary() {
@@ -30,6 +37,8 @@ export default function ProductLibrary() {
   const [products, setProducts] = useState<ProductLibraryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedProduct, setSelectedProduct] = useState<ProductLibraryItem | null>(null);
+  const [showImportDialog, setShowImportDialog] = useState(false);
 
   useEffect(() => {
     fetchProducts();
@@ -39,7 +48,14 @@ export default function ProductLibrary() {
     try {
       const { data, error } = await supabase
         .from('product_library')
-        .select('*')
+        .select(`
+          *,
+          product_library_categories (
+            name,
+            slug
+          )
+        `)
+        .eq('status', 'published')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -55,22 +71,35 @@ export default function ProductLibrary() {
     }
   };
 
-  const filteredProducts = products.filter(product =>
-    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.category?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.tags?.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  const handleImportClick = (product: ProductLibraryItem) => {
+    setSelectedProduct(product);
+    setShowImportDialog(true);
+  };
 
-  const addToStore = async (product: ProductLibraryItem) => {
-    // Implementation would add product to user's store
+  const handleImportSuccess = () => {
     toast({
       title: "Success",
-      description: `${product.name} added to your store!`,
+      description: "Product imported successfully!",
     });
+    // Could refresh or update UI here if needed
+  };
+
+  const filteredProducts = products.filter(product =>
+    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    product.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    product.product_library_categories?.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const calculateProfit = (suggestedPrice: number, baseCost: number, shippingCost: number) => {
+    return suggestedPrice - baseCost - shippingCost;
+  };
+
+  const calculateProfitMargin = (suggestedPrice: number, profit: number) => {
+    return suggestedPrice > 0 ? ((profit / suggestedPrice) * 100).toFixed(1) : '0';
   };
 
   return (
-    <DashboardLayout title="Product Library" description="Browse and add products from our curated library">
+    <DashboardLayout title="Product Library" description="Browse and import products from our curated library">
       <div className="space-y-6">
         <div className="flex items-center space-x-4">
           <div className="relative flex-1 max-w-sm">
@@ -84,6 +113,18 @@ export default function ProductLibrary() {
           </div>
           <Badge variant="secondary">{filteredProducts.length} products</Badge>
         </div>
+
+        {/* Info Banner */}
+        <Card className="bg-blue-50 border-blue-200">
+          <CardContent className="p-4">
+            <div className="flex items-center space-x-2">
+              <div className="w-2 h-2 bg-blue-500 rounded-full" />
+              <p className="text-sm text-blue-800">
+                <strong>How it works:</strong> Import winning products to your store, set your own prices, and we'll handle fulfillment when you make sales.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
 
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -106,78 +147,89 @@ export default function ProductLibrary() {
           </Card>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredProducts.map((product) => (
-              <Card key={product.id} className="group hover:shadow-lg transition-shadow">
-                <CardContent className="p-4">
-                  {product.images && product.images.length > 0 && (
-                    <div className="aspect-square bg-muted rounded-lg mb-4 overflow-hidden">
-                      <img 
-                        src={product.images[0]} 
-                        alt={product.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                      />
-                    </div>
-                  )}
-                  
-                  <div className="space-y-2">
-                    <div className="flex items-start justify-between">
-                      <h3 className="font-semibold line-clamp-2">{product.name}</h3>
-                      {product.is_trending && (
-                        <Badge variant="secondary" className="ml-2">
-                          <TrendingUp className="w-3 h-3 mr-1" />
-                          Trending
-                        </Badge>
-                      )}
-                    </div>
-                    
-                    {product.short_description && (
-                      <p className="text-sm text-muted-foreground line-clamp-2">
-                        {product.short_description}
-                      </p>
-                    )}
-                    
-                    <div className="flex items-center justify-between">
-                      {product.suggested_price && (
-                        <Badge variant="outline">
-                          ${product.suggested_price}
-                        </Badge>
-                      )}
-                      {product.category && (
-                        <Badge variant="secondary">
-                          {product.category}
-                        </Badge>
-                      )}
-                    </div>
-                    
-                    {product.tags && product.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-1">
-                        {product.tags.slice(0, 3).map((tag, index) => (
-                          <Badge key={index} variant="outline" className="text-xs">
-                            {tag}
-                          </Badge>
-                        ))}
-                        {product.tags.length > 3 && (
-                          <Badge variant="outline" className="text-xs">
-                            +{product.tags.length - 3} more
+            {filteredProducts.map((product) => {
+              const profit = calculateProfit(product.suggested_price, product.base_cost, product.shipping_cost);
+              const profitMargin = calculateProfitMargin(product.suggested_price, profit);
+              
+              return (
+                <Card key={product.id} className="group hover:shadow-lg transition-shadow">
+                  <CardContent className="p-4">
+                    {product.images && product.images.length > 0 && (
+                      <div className="aspect-square bg-muted rounded-lg mb-4 overflow-hidden relative">
+                        <img 
+                          src={product.images[0]} 
+                          alt={product.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                        />
+                        {product.is_trending && (
+                          <Badge className="absolute top-2 left-2">
+                            <TrendingUp className="w-3 h-3 mr-1" />
+                            Trending
                           </Badge>
                         )}
                       </div>
                     )}
                     
-                    <Button 
-                      onClick={() => addToStore(product)}
-                      className="w-full mt-4"
-                      size="sm"
-                    >
-                      <Plus className="w-4 h-4 mr-2" />
-                      Add to Store
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                    <div className="space-y-3">
+                      <div className="space-y-1">
+                        <h3 className="font-semibold line-clamp-2">{product.name}</h3>
+                        
+                        {product.short_description && (
+                          <p className="text-sm text-muted-foreground line-clamp-2">
+                            {product.short_description}
+                          </p>
+                        )}
+                      </div>
+                      
+                      {/* Pricing Info */}
+                      <div className="space-y-2 p-3 bg-muted/50 rounded-lg">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Your Cost:</span>
+                          <span className="font-medium">${(product.base_cost + product.shipping_cost).toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Suggested Price:</span>
+                          <span className="font-medium">${product.suggested_price.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between text-sm border-t pt-2">
+                          <span className="text-green-700 font-medium">Your Profit:</span>
+                          <span className="font-bold text-green-800">
+                            ${profit.toFixed(2)} ({profitMargin}%)
+                          </span>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center justify-between">
+                        {product.product_library_categories && (
+                          <Badge variant="outline">
+                            {product.product_library_categories.name}
+                          </Badge>
+                        )}
+                      </div>
+                      
+                      <Button 
+                        onClick={() => handleImportClick(product)}
+                        className="w-full"
+                        size="sm"
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Import to Store
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         )}
+
+        {/* Import Dialog */}
+        <ProductImportDialog
+          isOpen={showImportDialog}
+          onClose={() => setShowImportDialog(false)}
+          product={selectedProduct}
+          onSuccess={handleImportSuccess}
+        />
       </div>
     </DashboardLayout>
   );
