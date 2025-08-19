@@ -2378,7 +2378,45 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      product_reviews_public: {
+        Row: {
+          comment: string | null
+          created_at: string | null
+          id: string | null
+          is_visible: boolean | null
+          product_id: string | null
+          rating: number | null
+          reviewer_name: string | null
+          store_id: string | null
+          title: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string | null
+          id?: string | null
+          is_visible?: boolean | null
+          product_id?: string | null
+          rating?: number | null
+          reviewer_name?: string | null
+          store_id?: string | null
+          title?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string | null
+          id?: string | null
+          is_visible?: boolean | null
+          product_id?: string | null
+          rating?: number | null
+          reviewer_name?: string | null
+          store_id?: string | null
+          title?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       can_create_resource: {
