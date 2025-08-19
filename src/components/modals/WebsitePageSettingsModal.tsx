@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -45,6 +46,7 @@ export const WebsitePageSettingsModal: React.FC<WebsitePageSettingsModalProps> =
   const [title, setTitle] = useState("");
   const [slug, setSlug] = useState("");
   const [websiteMeta, setWebsiteMeta] = useState<{ slug?: string; domain?: string } | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -161,10 +163,12 @@ export const WebsitePageSettingsModal: React.FC<WebsitePageSettingsModalProps> =
   const handleSave = () => updateMutation.mutate();
   const handleSetHomepage = () => setHomepageMutation.mutate();
   const handleDelete = () => {
-    if (!page) return;
-    if (confirm(`Are you sure you want to delete "${page.title}"? This action cannot be undone and will permanently delete all associated data.`)) {
-      deleteMutation.mutate();
-    }
+    setDeleteConfirm(true);
+  };
+
+  const confirmDelete = () => {
+    deleteMutation.mutate();
+    setDeleteConfirm(false);
   };
 
   return (
@@ -233,6 +237,17 @@ export const WebsitePageSettingsModal: React.FC<WebsitePageSettingsModalProps> =
           <Button onClick={handleSave} disabled={updateMutation.isPending}>Save changes</Button>
         </DialogFooter>
       </DialogContent>
+
+      <ConfirmationDialog
+        open={deleteConfirm}
+        onOpenChange={setDeleteConfirm}
+        title="Delete Page"
+        description={`Are you sure you want to delete "${page?.title}"? This action cannot be undone and will permanently delete all associated data.`}
+        confirmText="Delete Page"
+        variant="destructive"
+        onConfirm={confirmDelete}
+        isLoading={deleteMutation.isPending}
+      />
     </Dialog>
   );
 };

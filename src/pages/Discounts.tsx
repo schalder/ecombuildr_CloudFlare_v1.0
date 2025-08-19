@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Switch } from '@/components/ui/switch';
+import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { Percent, Plus, Tag, Calendar, MoreHorizontal, Edit, Trash2, Copy } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
@@ -36,6 +37,7 @@ export default function Discounts() {
   const [loading, setLoading] = useState(true);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingDiscount, setEditingDiscount] = useState<DiscountCode | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; discountId: string; discountCode: string }>({ open: false, discountId: '', discountCode: '' });
   
   const [formData, setFormData] = useState({
     code: '',
@@ -178,8 +180,6 @@ export default function Discounts() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this discount code?')) return;
-
     try {
       const { error } = await (supabase as any)
         .from('discount_codes')
@@ -197,6 +197,17 @@ export default function Discounts() {
         variant: "destructive",
       });
     }
+  };
+
+  const handleDeleteClick = (id: string, code: string) => {
+    setDeleteConfirm({ open: true, discountId: id, discountCode: code });
+  };
+
+  const confirmDelete = () => {
+    if (deleteConfirm.discountId) {
+      handleDelete(deleteConfirm.discountId);
+    }
+    setDeleteConfirm({ open: false, discountId: '', discountCode: '' });
   };
 
   const copyToClipboard = (code: string) => {
@@ -451,7 +462,7 @@ export default function Discounts() {
                             </DropdownMenuItem>
                             <DropdownMenuItem 
                               className="text-destructive"
-                              onClick={() => handleDelete(discount.id)}
+                              onClick={() => handleDeleteClick(discount.id, discount.code)}
                             >
                               <Trash2 className="mr-2 h-4 w-4" />
                               Delete
@@ -466,6 +477,16 @@ export default function Discounts() {
             )}
           </CardContent>
         </Card>
+
+        <ConfirmationDialog
+          open={deleteConfirm.open}
+          onOpenChange={(open) => !open && setDeleteConfirm({ open: false, discountId: '', discountCode: '' })}
+          title="Delete Discount Code"
+          description={`Are you sure you want to delete discount code "${deleteConfirm.discountCode}"? This action cannot be undone.`}
+          confirmText="Delete Discount"
+          variant="destructive"
+          onConfirm={confirmDelete}
+        />
       </div>
     </DashboardLayout>
   );

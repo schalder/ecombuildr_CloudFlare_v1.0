@@ -34,6 +34,7 @@ import {
   Download,
   Upload
 } from "lucide-react";
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { toast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -67,6 +68,10 @@ export default function Products() {
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [showBulkActions, setShowBulkActions] = useState(false);
   const [storeIds, setStoreIds] = useState<string[]>([]);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; type: 'single' | 'bulk'; productId?: string; productName?: string }>({ 
+    open: false, 
+    type: 'single' 
+  });
 
   useEffect(() => {
     if (user) {
@@ -276,8 +281,6 @@ export default function Products() {
   };
 
   const bulkDelete = async () => {
-    if (!confirm(`Are you sure you want to delete ${selectedProducts.length} products?`)) return;
-
     try {
       const { error } = await supabase
         .from('products')
@@ -301,6 +304,23 @@ export default function Products() {
         variant: "destructive",
       });
     }
+  };
+
+  const handleDeleteProduct = (productId: string, productName: string) => {
+    setDeleteConfirm({ open: true, type: 'single', productId, productName });
+  };
+
+  const handleBulkDelete = () => {
+    setDeleteConfirm({ open: true, type: 'bulk' });
+  };
+
+  const confirmDelete = () => {
+    if (deleteConfirm.type === 'single' && deleteConfirm.productId) {
+      deleteProduct(deleteConfirm.productId);
+    } else if (deleteConfirm.type === 'bulk') {
+      bulkDelete();
+    }
+    setDeleteConfirm({ open: false, type: 'single' });
   };
 
   const filteredProducts = products.filter(product =>
@@ -364,7 +384,7 @@ export default function Products() {
                 <Button
                   variant="destructive"
                   size="sm"
-                  onClick={bulkDelete}
+                  onClick={handleBulkDelete}
                   className={isMobile ? "flex-1" : ""}
                 >
                   Delete
@@ -505,11 +525,7 @@ export default function Products() {
                             </DropdownMenuItem>
                             <DropdownMenuItem 
                               className="text-destructive"
-                              onClick={() => {
-                                if (confirm('Are you sure you want to delete this product?')) {
-                                  deleteProduct(product.id);
-                                }
-                              }}
+                              onClick={() => handleDeleteProduct(product.id, product.name)}
                             >
                               <Trash2 className="mr-2 h-3.5 w-3.5" />
                               Delete
@@ -678,11 +694,7 @@ export default function Products() {
                             </DropdownMenuItem>
                             <DropdownMenuItem 
                               className="text-destructive"
-                              onClick={() => {
-                                if (confirm('Are you sure you want to delete this product?')) {
-                                  deleteProduct(product.id);
-                                }
-                              }}
+                              onClick={() => handleDeleteProduct(product.id, product.name)}
                             >
                               <Trash2 className="mr-2 h-4 w-4" />
                               Delete
@@ -697,6 +709,20 @@ export default function Products() {
             )}
           </CardContent>
         </Card>
+
+        <ConfirmationDialog
+          open={deleteConfirm.open}
+          onOpenChange={(open) => !open && setDeleteConfirm({ open: false, type: 'single' })}
+          title={deleteConfirm.type === 'bulk' ? 'Delete Products' : 'Delete Product'}
+          description={
+            deleteConfirm.type === 'bulk' 
+              ? `Are you sure you want to delete ${selectedProducts.length} products? This action cannot be undone.`
+              : `Are you sure you want to delete "${deleteConfirm.productName}"? This action cannot be undone.`
+          }
+          confirmText={deleteConfirm.type === 'bulk' ? 'Delete Products' : 'Delete Product'}
+          variant="destructive"
+          onConfirm={confirmDelete}
+        />
       </div>
     </DashboardLayout>
   );

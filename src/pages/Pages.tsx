@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Plus, MoreVertical, Edit, Eye, Trash2, Home } from 'lucide-react';
@@ -30,6 +31,7 @@ export default function Pages() {
   const [pages, setPages] = useState<Page[]>([]);
   const [stores, setStores] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; pageId: string; pageName: string }>({ open: false, pageId: '', pageName: '' });
 
   useEffect(() => {
     if (user) {
@@ -229,11 +231,7 @@ export default function Pages() {
                             </DropdownMenuItem>
                             <DropdownMenuItem 
                               className="text-destructive"
-                              onClick={() => {
-                                if (confirm('Are you sure you want to delete this page?')) {
-                                  deletePage(page.id);
-                                }
-                              }}
+                              onClick={() => setDeleteConfirm({ open: true, pageId: page.id, pageName: page.title })}
                             >
                               <Trash2 className="mr-2 h-4 w-4" />
                               Delete
@@ -248,6 +246,21 @@ export default function Pages() {
             )}
           </CardContent>
         </Card>
+
+        <ConfirmationDialog
+          open={deleteConfirm.open}
+          onOpenChange={(open) => !open && setDeleteConfirm({ open: false, pageId: '', pageName: '' })}
+          title="Delete Page"
+          description={`Are you sure you want to delete "${deleteConfirm.pageName}"? This action cannot be undone.`}
+          confirmText="Delete Page"
+          variant="destructive"
+          onConfirm={() => {
+            if (deleteConfirm.pageId) {
+              deletePage(deleteConfirm.pageId);
+            }
+            setDeleteConfirm({ open: false, pageId: '', pageName: '' });
+          }}
+        />
       </div>
     </DashboardLayout>
   );

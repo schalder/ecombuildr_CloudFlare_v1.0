@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, TrendingUp, Settings, ExternalLink, Eye, Edit, Trash2 } from 'lucide-react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -28,6 +29,7 @@ export default function Funnels() {
   const { toast } = useToast();
   const { store } = useUserStore();
   const queryClient = useQueryClient();
+  const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; funnelId: string; funnelName: string }>({ open: false, funnelId: '', funnelName: '' });
 
   const { data: funnels, isLoading } = useQuery({
     queryKey: ['funnels', store?.id],
@@ -101,9 +103,14 @@ export default function Funnels() {
   };
 
   const handleDeleteFunnel = (funnelId: string, funnelName: string) => {
-    if (confirm(`Are you sure you want to delete "${funnelName}"? This action cannot be undone and will permanently delete all associated data.`)) {
-      deleteFunnelMutation.mutate(funnelId);
+    setDeleteConfirm({ open: true, funnelId, funnelName });
+  };
+
+  const confirmDelete = () => {
+    if (deleteConfirm.funnelId) {
+      deleteFunnelMutation.mutate(deleteConfirm.funnelId);
     }
+    setDeleteConfirm({ open: false, funnelId: '', funnelName: '' });
   };
 
   return (
@@ -215,6 +222,17 @@ export default function Funnels() {
             </div>
           </div>
         )}
+
+        <ConfirmationDialog
+          open={deleteConfirm.open}
+          onOpenChange={(open) => !open && setDeleteConfirm({ open: false, funnelId: '', funnelName: '' })}
+          title="Delete Funnel"
+          description={`Are you sure you want to delete "${deleteConfirm.funnelName}"? This action cannot be undone and will permanently delete all associated data.`}
+          confirmText="Delete Funnel"
+          variant="destructive"
+          onConfirm={confirmDelete}
+          isLoading={deleteFunnelMutation.isPending}
+        />
       </div>
     </DashboardLayout>
   );

@@ -5,6 +5,7 @@ import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -29,6 +30,7 @@ export default function Websites() {
   const { toast } = useToast();
   const { store } = useUserStore();
   const queryClient = useQueryClient();
+  const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; websiteId: string; websiteName: string }>({ open: false, websiteId: '', websiteName: '' });
 
   const { data: websites, isLoading } = useQuery({
     queryKey: ['websites', store?.id],
@@ -129,9 +131,14 @@ export default function Websites() {
   };
 
   const handleDeleteWebsite = (websiteId: string, websiteName: string) => {
-    if (confirm(`Are you sure you want to delete "${websiteName}"? This action cannot be undone and will permanently delete all associated data.`)) {
-      deleteWebsiteMutation.mutate(websiteId);
+    setDeleteConfirm({ open: true, websiteId, websiteName });
+  };
+
+  const confirmDelete = () => {
+    if (deleteConfirm.websiteId) {
+      deleteWebsiteMutation.mutate(deleteConfirm.websiteId);
     }
+    setDeleteConfirm({ open: false, websiteId: '', websiteName: '' });
   };
 
   return (
@@ -245,6 +252,17 @@ export default function Websites() {
             </div>
           </div>
         )}
+
+        <ConfirmationDialog
+          open={deleteConfirm.open}
+          onOpenChange={(open) => !open && setDeleteConfirm({ open: false, websiteId: '', websiteName: '' })}
+          title="Delete Website"
+          description={`Are you sure you want to delete "${deleteConfirm.websiteName}"? This action cannot be undone and will permanently delete all associated data.`}
+          confirmText="Delete Website"
+          variant="destructive"
+          onConfirm={confirmDelete}
+          isLoading={deleteWebsiteMutation.isPending}
+        />
       </div>
     </DashboardLayout>
   );
