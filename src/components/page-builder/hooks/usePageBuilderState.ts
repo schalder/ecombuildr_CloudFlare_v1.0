@@ -99,7 +99,11 @@ export const usePageBuilderState = (initialData?: PageBuilderData) => {
     const newElement: PageBuilderElement = {
       id: generateId(),
       type: elementType,
-      content: getDefaultContent(elementType)
+      content: getDefaultContent(elementType),
+      // Add default center alignment for text-based elements
+      ...(elementType === 'heading' || elementType === 'text' ? {
+        styles: { textAlign: 'center' }
+      } : {})
     };
 
     console.log('New element created:', newElement);
@@ -369,14 +373,14 @@ function getDefaultContent(elementType: string): Record<string, any> {
   switch (elementType) {
     case 'heading':
     case 'heading-h1':
-      return { text: 'Your heading text', level: 1 };
+      return { text: 'Large Call to Action Headline', level: 1 };
     case 'heading-h2':
-      return { text: 'Your heading text', level: 2 };
+      return { text: 'Large Call to Action Headline', level: 2 };
     case 'heading-h3':
-      return { text: 'Your heading text', level: 3 };
+      return { text: 'Large Call to Action Headline', level: 3 };
     case 'text':
     case 'paragraph':
-      return { text: 'Your text content goes here...' };
+      return { text: 'Your Paragraph text goes Lorem ipsum dolor sit amet, consectetur adipisicing elit. Autem dolore, alias, numquam enim ab voluptate id quam harum ducimus cupiditate similique quisquam et deserunt, recusandae. here' };
     case 'button':
       return { text: 'Click Me', variant: 'default', size: 'default', url: '#' };
     case 'image':

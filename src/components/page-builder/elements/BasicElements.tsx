@@ -796,7 +796,7 @@ export const registerBasicElements = () => {
     category: 'basic',
     icon: Type,
     component: HeadingElement,
-    defaultContent: { text: 'Your heading text', level: 2 },
+    defaultContent: { text: 'Large Call to Action Headline', level: 2 },
     description: 'Add a title or heading'
   });
 
@@ -807,7 +807,7 @@ export const registerBasicElements = () => {
     category: 'basic',
     icon: Type,
     component: ParagraphElement,
-    defaultContent: { text: 'Your text content goes here...' },
+    defaultContent: { text: 'Your Paragraph text goes Lorem ipsum dolor sit amet, consectetur adipisicing elit. Autem dolore, alias, numquam enim ab voluptate id quam harum ducimus cupiditate similique quisquam et deserunt, recusandae. here' },
     description: 'Rich text content'
   });
 
