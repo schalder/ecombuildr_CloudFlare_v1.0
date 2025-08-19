@@ -7,12 +7,13 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { supabase } from '@/integrations/supabase/client';
-import { CheckCircle, Package, MapPin, CreditCard, Clock } from 'lucide-react';
+import { CheckCircle, Package, MapPin, CreditCard, Clock, Download } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useEcomPaths } from '@/lib/pathResolver';
 import { nameWithVariant } from '@/lib/utils';
 import { usePixelTracking } from '@/hooks/usePixelTracking';
 import { usePixelContext } from '@/components/pixel/PixelManager';
+import jsPDF from 'jspdf';
 
 interface Order {
   id: string;
@@ -152,6 +153,70 @@ useEffect(() => {
       default:
         return <Package className="h-4 w-4" />;
     }
+  };
+
+  const downloadPDF = () => {
+    const pdf = new jsPDF();
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    let y = 20;
+
+    // Header
+    pdf.setFontSize(20);
+    pdf.text('Order Confirmation', pageWidth / 2, y, { align: 'center' });
+    y += 15;
+
+    pdf.setFontSize(16);
+    pdf.text(`Order #${order?.order_number}`, pageWidth / 2, y, { align: 'center' });
+    y += 20;
+
+    // Customer Information
+    pdf.setFontSize(14);
+    pdf.text('Customer Information:', 20, y);
+    y += 10;
+    pdf.setFontSize(10);
+    pdf.text(`Name: ${order?.customer_name}`, 20, y);
+    y += 6;
+    pdf.text(`Email: ${order?.customer_email}`, 20, y);
+    y += 6;
+    pdf.text(`Phone: ${order?.customer_phone}`, 20, y);
+    y += 15;
+
+    // Shipping Information
+    pdf.setFontSize(14);
+    pdf.text('Shipping Address:', 20, y);
+    y += 10;
+    pdf.setFontSize(10);
+    pdf.text(`${order?.shipping_address}`, 20, y);
+    y += 6;
+    pdf.text(`${order?.shipping_city}${order?.shipping_area ? `, ${order?.shipping_area}` : ''}`, 20, y);
+    y += 15;
+
+    // Order Items
+    pdf.setFontSize(14);
+    pdf.text('Order Items:', 20, y);
+    y += 10;
+    
+    orderItems.forEach((item) => {
+      pdf.setFontSize(10);
+      const itemName = nameWithVariant(item.product_name, (item as any).variation);
+      pdf.text(`${itemName} x${item.quantity}`, 20, y);
+      pdf.text(`$${item.total.toFixed(2)}`, pageWidth - 40, y);
+      y += 6;
+    });
+
+    y += 10;
+    pdf.text(`Subtotal: $${order?.subtotal.toFixed(2)}`, pageWidth - 80, y);
+    y += 6;
+    pdf.text(`Shipping: $${order?.shipping_cost.toFixed(2)}`, pageWidth - 80, y);
+    if ((order?.discount_amount ?? 0) > 0) {
+      y += 6;
+      pdf.text(`Discount: -$${(order?.discount_amount ?? 0).toFixed(2)}`, pageWidth - 80, y);
+    }
+    y += 6;
+    pdf.setFontSize(12);
+    pdf.text(`Total: $${order?.total.toFixed(2)}`, pageWidth - 80, y);
+
+    pdf.save(`order-${order?.order_number}.pdf`);
   };
 
   if (!store) {
@@ -342,7 +407,7 @@ useEffect(() => {
         </div>
 
         {/* Action Buttons */}
-        <div className="flex space-x-4">
+        <div className="flex space-x-2">
           <Link to={paths.home} className="flex-1">
             <Button variant="outline" className="w-full">
               Continue Shopping
@@ -354,6 +419,14 @@ useEffect(() => {
             className="flex-1"
           >
             Print Order
+          </Button>
+          <Button
+            onClick={downloadPDF}
+            variant="outline"
+            className="flex-1"
+          >
+            <Download className="h-4 w-4 mr-2" />
+            Download PDF
           </Button>
         </div>
       </div>
