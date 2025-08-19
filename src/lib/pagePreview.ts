@@ -135,19 +135,62 @@ const hideBuilderUI = (): (() => void) => {
 };
 
 /**
+ * Finds the first section with actual content for tight preview capture
+ */
+const findFirstSectionWithContent = (): HTMLElement | null => {
+  console.log('Searching for first section with content...');
+  
+  // Look for page builder sections with content
+  const sections = document.querySelectorAll('[data-pb-section-id]');
+  for (const section of sections) {
+    const htmlSection = section as HTMLElement;
+    // Check if section has actual content (elements, text, images)
+    const hasElements = htmlSection.querySelectorAll('[data-pb-element-id]').length > 0;
+    const hasText = htmlSection.textContent?.trim().length || 0 > 10;
+    const hasImages = htmlSection.querySelectorAll('img').length > 0;
+    
+    if (hasElements || hasText || hasImages) {
+      console.log('Found first section with content');
+      return htmlSection;
+    }
+  }
+  
+  // Fallback: Look for any sections that contain meaningful content
+  const allSections = document.querySelectorAll('[class*="section"]');
+  for (const section of allSections) {
+    const htmlSection = section as HTMLElement;
+    const hasContent = htmlSection.children.length > 0 && 
+                      (htmlSection.textContent?.trim().length || 0) > 10;
+    
+    if (hasContent) {
+      console.log('Found first section with content (fallback)');
+      return htmlSection;
+    }
+  }
+  
+  return null;
+};
+
+/**
  * Finds the best element to capture for preview
  */
 const findContentArea = (): HTMLElement | null => {
   console.log('Searching for content area to capture...');
   
-  // Priority 1: Content area (sections only, no builder UI)
+  // Priority 1: First section with actual content (new approach)
+  const firstSection = findFirstSectionWithContent();
+  if (firstSection) {
+    return firstSection;
+  }
+  
+  // Priority 2: Content area (sections only, no builder UI)
   const contentArea = document.querySelector('[data-content-area="true"]') as HTMLElement;
   if (contentArea) {
     console.log('Found content area for preview capture');
     return contentArea;
   }
   
-  // Priority 2: Canvas area (fallback to current method)
+  // Priority 3: Canvas area (fallback to current method)
   const selectors = [
     '[data-canvas-area="true"]',
     '.canvas-area', 
@@ -164,7 +207,7 @@ const findContentArea = (): HTMLElement | null => {
     }
   }
   
-  // Priority 3: Look for page builder sections directly
+  // Priority 4: Look for page builder sections directly
   const sections = document.querySelectorAll('[data-pb-section-id]');
   if (sections.length > 0) {
     // Find the common parent container
@@ -176,7 +219,7 @@ const findContentArea = (): HTMLElement | null => {
     }
   }
   
-  // Priority 4: Look for any sections with class containing "section"
+  // Priority 5: Look for any sections with class containing "section"
   const pageBuilderContainers = document.querySelectorAll('[class*="section"], [id*="pb-"]');
   if (pageBuilderContainers.length > 0) {
     const parent = pageBuilderContainers[0].closest('.flex-1, .canvas, .builder') as HTMLElement || 
