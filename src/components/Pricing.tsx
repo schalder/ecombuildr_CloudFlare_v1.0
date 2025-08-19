@@ -182,7 +182,7 @@ export const Pricing = () => {
             কোন প্ল্যান আপনার জন্য উপযুক্ত তা নিশ্চিত নন?
           </p>
           <Button variant="outline" size="lg">
-            বিক্রয় দলের সাথে কথা বলুন
+            Contact Sales Team
           </Button>
         </div>
 
