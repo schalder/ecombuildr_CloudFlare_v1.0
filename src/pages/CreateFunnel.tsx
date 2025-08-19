@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, TrendingUp } from 'lucide-react';
+import { ArrowLeft, TrendingUp, Check, X, Loader2, AlertCircle } from 'lucide-react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,6 +13,9 @@ import { useMutation } from '@tanstack/react-query';
 import { useAutoStore } from '@/hooks/useAutoStore';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useStoreWebsitesForSelection } from '@/hooks/useWebsiteVisibility';
+import { debounce } from '@/lib/utils';
+
+type SlugStatus = 'idle' | 'checking' | 'available' | 'taken' | 'error';
 
 export default function CreateFunnel() {
   const navigate = useNavigate();
@@ -26,8 +29,90 @@ export default function CreateFunnel() {
     website_id: '',
   });
 
+  // Slug validation state
+  const [slugStatus, setSlugStatus] = useState<SlugStatus>('idle');
+  const [suggestedSlug, setSuggestedSlug] = useState('');
+  const [isSlugModified, setIsSlugModified] = useState(false);
+  const [finalSlug, setFinalSlug] = useState('');
+
   // Get websites for store
   const { websites: storeWebsites } = useStoreWebsitesForSelection(store?.id || '');
+
+  // Generate unique slug by appending random numbers
+  const generateUniqueSlug = async (baseSlug: string): Promise<string> => {
+    let attempts = 0;
+    let uniqueSlug = baseSlug;
+    
+    while (attempts < 10) {
+      if (!store?.id) {
+        return uniqueSlug;
+      }
+      
+      const { data, error } = await supabase
+        .from('funnels')
+        .select('slug')
+        .eq('store_id', store.id)
+        .eq('slug', uniqueSlug)
+        .maybeSingle();
+      
+      if (error || !data) {
+        return uniqueSlug;
+      }
+      
+      const randomNum = Math.floor(1000 + Math.random() * 9000);
+      uniqueSlug = `${baseSlug}-${randomNum}`;
+      attempts++;
+    }
+    
+    return uniqueSlug;
+  };
+
+  // Check slug availability
+  const checkSlugAvailability = async (slug: string) => {
+    if (!slug.trim()) return;
+    
+    setSlugStatus('checking');
+    
+    try {
+      if (store?.id) {
+        const { data, error } = await supabase
+          .from('funnels')
+          .select('slug')
+          .eq('store_id', store.id)
+          .eq('slug', slug)
+          .maybeSingle();
+        
+        if (error) {
+          setSlugStatus('error');
+          return;
+        }
+        
+        if (data) {
+          const uniqueSlug = await generateUniqueSlug(slug);
+          setSuggestedSlug(uniqueSlug);
+          setFinalSlug(uniqueSlug);
+          setSlugStatus('taken');
+        } else {
+          setFinalSlug(slug);
+          setSuggestedSlug('');
+          setSlugStatus('available');
+        }
+      } else {
+        setFinalSlug(slug);
+        setSuggestedSlug('');
+        setSlugStatus('available');
+      }
+    } catch (error) {
+      console.error('Slug check error:', error);
+      setSlugStatus('error');
+    }
+  };
+
+  // Debounced slug validation
+  const debouncedCheckSlug = useCallback(
+    debounce((slug: string) => checkSlugAvailability(slug), 500),
+    [store?.id, getOrCreateStore]
+  );
 
   const createFunnelMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
@@ -69,7 +154,9 @@ export default function CreateFunnel() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.name.trim() || !formData.slug.trim()) {
+    const slugToUse = finalSlug || formData.slug;
+    
+    if (!formData.name.trim() || !slugToUse.trim()) {
       toast({
         title: "Error",
         description: "Please fill in all required fields.",
@@ -78,11 +165,22 @@ export default function CreateFunnel() {
       return;
     }
 
-    createFunnelMutation.mutate(formData);
+    if (slugStatus === 'taken' && !finalSlug) {
+      toast({
+        title: "Error",
+        description: "Please wait for slug validation to complete.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    createFunnelMutation.mutate({
+      ...formData,
+      slug: slugToUse,
+    });
   };
 
   const handleSlugChange = (value: string) => {
-    // Auto-generate slug from name if slug is empty
     const slug = value.toLowerCase()
       .replace(/[^a-z0-9\s-]/g, '')
       .replace(/\s+/g, '-')
@@ -90,14 +188,39 @@ export default function CreateFunnel() {
       .trim();
     
     setFormData(prev => ({ ...prev, slug }));
+    setIsSlugModified(true);
+    
+    // Reset validation state and trigger new validation
+    setSlugStatus('idle');
+    setSuggestedSlug('');
+    setFinalSlug('');
+    
+    if (slug.trim()) {
+      debouncedCheckSlug(slug);
+    }
   };
 
   const handleNameChange = (value: string) => {
     setFormData(prev => ({ ...prev, name: value }));
     
-    // Auto-generate slug if slug is empty
-    if (!formData.slug) {
-      handleSlugChange(value);
+    // Auto-generate slug if slug is empty or hasn't been modified by user
+    if (!formData.slug || !isSlugModified) {
+      const slug = value.toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-')
+        .trim();
+      
+      setFormData(prev => ({ ...prev, slug }));
+      
+      // Reset validation state and trigger new validation
+      setSlugStatus('idle');
+      setSuggestedSlug('');
+      setFinalSlug('');
+      
+      if (slug.trim()) {
+        debouncedCheckSlug(slug);
+      }
     }
   };
 
@@ -141,15 +264,63 @@ export default function CreateFunnel() {
 
               <div>
                 <Label htmlFor="slug">Funnel Slug *</Label>
-                <Input
-                  id="slug"
-                  placeholder="e.g., product-launch"
-                  value={formData.slug}
-                  onChange={(e) => handleSlugChange(e.target.value)}
-                  required
-                />
+                <div className="relative">
+                  <Input
+                    id="slug"
+                    placeholder="e.g., product-launch"
+                    value={formData.slug}
+                    onChange={(e) => handleSlugChange(e.target.value)}
+                    required
+                    className={`pr-10 ${
+                      slugStatus === 'available' ? 'border-green-500' : 
+                      slugStatus === 'taken' ? 'border-yellow-500' :
+                      slugStatus === 'error' ? 'border-red-500' : ''
+                    }`}
+                  />
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    {slugStatus === 'checking' && (
+                      <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                    )}
+                    {slugStatus === 'available' && (
+                      <Check className="h-4 w-4 text-green-600" />
+                    )}
+                    {slugStatus === 'taken' && (
+                      <AlertCircle className="h-4 w-4 text-yellow-600" />
+                    )}
+                    {slugStatus === 'error' && (
+                      <X className="h-4 w-4 text-red-600" />
+                    )}
+                  </div>
+                </div>
+                
+                {/* Status Messages */}
+                {slugStatus === 'checking' && (
+                  <p className="text-sm text-muted-foreground mt-1 flex items-center gap-1">
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    Checking availability...
+                  </p>
+                )}
+                {slugStatus === 'available' && (
+                  <p className="text-sm text-green-600 mt-1 flex items-center gap-1">
+                    <Check className="h-3 w-3" />
+                    Slug is available
+                  </p>
+                )}
+                {slugStatus === 'taken' && suggestedSlug && (
+                  <p className="text-sm text-yellow-600 mt-1 flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" />
+                    Slug already exists. Using "{suggestedSlug}" instead
+                  </p>
+                )}
+                {slugStatus === 'error' && (
+                  <p className="text-sm text-red-600 mt-1 flex items-center gap-1">
+                    <X className="h-3 w-3" />
+                    Error checking slug availability
+                  </p>
+                )}
+                
                 <p className="text-sm text-muted-foreground mt-1">
-                  URL identifier: funnel/{formData.slug || 'your-slug'}
+                  URL identifier: funnel/{finalSlug || formData.slug || 'your-slug'}
                 </p>
               </div>
 
