@@ -971,7 +971,7 @@ const PriceElement: React.FC<{
   const showComparePrice = element.content.showComparePrice !== false;
   const showDiscount = element.content.showDiscount !== false;
   const ctaText = element.content.ctaText || 'Buy Now';
-  const layout = element.content.layout || 'horizontal';
+  const elementLayout = (element.styles as any)?.layout || element.content.layout || 'horizontal';
   
   const { product, loading } = useProductById(productId);
   
@@ -1002,14 +1002,23 @@ const PriceElement: React.FC<{
   const getContainerStyles = () => {
     const styles = element.styles || {};
     const containerAlignment = (styles as any).containerAlignment || 'left';
+    const priceAlignment = (styles as any).priceAlignment || 'left';
     const spacing = parseInt((styles as any).spacing) || 8;
     
-    let alignmentClass = '';
-    if (containerAlignment === 'center') alignmentClass = 'mx-auto';
-    if (containerAlignment === 'right') alignmentClass = 'ml-auto';
+    let containerClass = 'flex';
+    let priceContainerClass = 'flex items-center';
+    
+    // Container alignment
+    if (containerAlignment === 'center') containerClass += ' justify-center';
+    if (containerAlignment === 'right') containerClass += ' justify-end';
+    
+    // Price elements alignment
+    if (priceAlignment === 'center') priceContainerClass += ' justify-center';
+    if (priceAlignment === 'right') priceContainerClass += ' justify-end';
     
     return { 
-      className: alignmentClass,
+      containerClass,
+      priceContainerClass,
       spacing: `${spacing}px`
     };
   };
@@ -1072,7 +1081,7 @@ const PriceElement: React.FC<{
 
   if (loading) {
     return (
-      <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-md'} ${getContainerStyles().className}`}>
+      <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-md'}`}>
         <div className="animate-pulse">
           <div className="h-8 w-24 bg-muted rounded mb-2"></div>
           <div className="h-10 w-32 bg-muted rounded"></div>
@@ -1083,7 +1092,7 @@ const PriceElement: React.FC<{
 
   if (!product) {
     return (
-      <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-md'} ${getContainerStyles().className}`}>
+      <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-md'}`}>
         <div className="text-center py-4 text-muted-foreground">
           Please select a product from the properties panel.
         </div>
@@ -1095,20 +1104,23 @@ const PriceElement: React.FC<{
     ? Math.round(((product.compare_price - product.price) / product.compare_price) * 100)
     : 0;
 
-  const layoutClass = layout === 'vertical' 
-    ? 'flex flex-col' 
-    : 'flex items-center';
-    
   const containerStyles = getContainerStyles();
   const buttonProps = getButtonStyles();
   const priceStyleProps = applyStyles('price');
   const comparePriceStyleProps = applyStyles('comparePrice');
   const discountStyleProps = applyStyles('discount');
 
+  // Layout classes
+  const isVertical = elementLayout === 'vertical';
+  const mainLayoutClass = isVertical 
+    ? `${containerStyles.containerClass} flex-col`
+    : `${containerStyles.containerClass} items-center`;
+
   return (
-    <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-md'} ${containerStyles.className}`}>
-      <div className={layoutClass} style={{ gap: containerStyles.spacing }}>
-        <div className="flex items-center" style={{ gap: containerStyles.spacing }}>
+    <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-md'}`}>
+      <div className={mainLayoutClass} style={{ gap: containerStyles.spacing }}>
+        {/* Price Section */}
+        <div className={`${containerStyles.priceContainerClass} flex-wrap`} style={{ gap: containerStyles.spacing }}>
           <span className="text-2xl font-bold text-primary" style={priceStyleProps.style}>
             {formatCurrency(product.price)}
           </span>
@@ -1123,6 +1135,8 @@ const PriceElement: React.FC<{
             </Badge>
           )}
         </div>
+        
+        {/* Button Section */}
         <Button 
           onClick={handleAddToCart}
           variant={buttonProps.variant}

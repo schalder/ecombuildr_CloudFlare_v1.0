@@ -165,10 +165,43 @@ export const PriceElementStyles: React.FC<PriceElementStylesProps> = ({
         <Label className="text-xs font-medium">Layout</Label>
         
         <div>
+          <Label className="text-xs">Layout Direction</Label>
+          <Select
+            value={(styles as any).layout || 'horizontal'}
+            onValueChange={(value) => onStyleUpdate('layout', value)}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="horizontal">Horizontal (Side by Side)</SelectItem>
+              <SelectItem value="vertical">Vertical (Text Top, Button Bottom)</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        
+        <div>
           <Label className="text-xs">Container Alignment</Label>
           <Select
             value={(styles as any).containerAlignment || 'left'}
             onValueChange={(value) => onStyleUpdate('containerAlignment', value)}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="left">Left</SelectItem>
+              <SelectItem value="center">Center</SelectItem>
+              <SelectItem value="right">Right</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        
+        <div>
+          <Label className="text-xs">Price Elements Alignment</Label>
+          <Select
+            value={(styles as any).priceAlignment || 'left'}
+            onValueChange={(value) => onStyleUpdate('priceAlignment', value)}
           >
             <SelectTrigger>
               <SelectValue />
