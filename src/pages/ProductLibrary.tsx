@@ -45,6 +45,7 @@ export default function ProductLibrary() {
       const { data, error } = await supabase
         .from('product_library')
         .select('*')
+        .eq('status', 'published')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -64,11 +65,10 @@ export default function ProductLibrary() {
     if (!store?.id) return;
     
     try {
-      // Simplified approach: track imports in localStorage for now
-      const stored = localStorage.getItem(`imports_${store.id}`);
-      if (stored) {
-        setImportedProducts(JSON.parse(stored));
-      }
+      const { data: importedIds } = await supabase
+        .rpc('get_imported_products', { store_id_param: store.id });
+      
+      setImportedProducts(importedIds || []);
     } catch (error: any) {
       console.error('Failed to fetch imported products:', error);
       setImportedProducts([]);
@@ -126,10 +126,15 @@ export default function ProductLibrary() {
 
       if (productError) throw productError;
 
-      // Store the import in localStorage for now
-      const currentImports = [...importedProducts, product.id];
-      setImportedProducts(currentImports);
-      localStorage.setItem(`imports_${currentStore.id}`, JSON.stringify(currentImports));
+      // Record import using RPC
+      await supabase.rpc('record_product_import', {
+        library_item_id_param: product.id,
+        store_id_param: currentStore.id,
+        product_id_param: newProduct.id
+      });
+
+      // Update local state
+      setImportedProducts(prev => [...prev, product.id]);
       
       toast({
         title: "Success",

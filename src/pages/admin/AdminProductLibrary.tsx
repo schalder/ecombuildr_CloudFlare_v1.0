@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Search, Plus, Edit, Trash2, Eye, TrendingUp } from 'lucide-react';
+import { Search, Plus, Edit, Trash2, Eye, TrendingUp, BarChart3 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import {
   AlertDialog,
@@ -252,6 +252,14 @@ export default function AdminProductLibrary() {
                     </div>
                     
                     <div className="flex items-center gap-2 pt-2">
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => navigate(`/admin/product-library/orders/${product.id}`)}
+                      >
+                        <BarChart3 className="w-3 h-3" />
+                      </Button>
+                      
                       <Button 
                         size="sm" 
                         variant="outline"

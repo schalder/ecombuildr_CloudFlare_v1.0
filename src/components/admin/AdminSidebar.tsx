@@ -13,7 +13,8 @@ import {
   Star,
   Crown,
   Search,
-  Package
+  Package,
+  Truck
 } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router-dom';
 import {
@@ -71,6 +72,11 @@ const adminMenuItems = [
     title: 'Product Library',
     url: '/admin/product-library',
     icon: Package,
+  },
+  {
+    title: 'Shipping',
+    url: '/admin/shipping',
+    icon: Truck,
   },
 ];
 
