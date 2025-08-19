@@ -1306,14 +1306,19 @@ export type Database = {
       product_library: {
         Row: {
           ad_copy: string | null
+          base_cost: number
           category: string | null
+          category_id: string | null
           created_at: string | null
           description: string | null
           id: string
           images: Json | null
           is_trending: boolean | null
           name: string
+          published_at: string | null
+          shipping_cost: number
           short_description: string | null
+          status: Database["public"]["Enums"]["product_library_status"]
           suggested_price: number | null
           supplier_link: string | null
           tags: string[] | null
@@ -1323,14 +1328,19 @@ export type Database = {
         }
         Insert: {
           ad_copy?: string | null
+          base_cost?: number
           category?: string | null
+          category_id?: string | null
           created_at?: string | null
           description?: string | null
           id?: string
           images?: Json | null
           is_trending?: boolean | null
           name: string
+          published_at?: string | null
+          shipping_cost?: number
           short_description?: string | null
+          status?: Database["public"]["Enums"]["product_library_status"]
           suggested_price?: number | null
           supplier_link?: string | null
           tags?: string[] | null
@@ -1340,14 +1350,19 @@ export type Database = {
         }
         Update: {
           ad_copy?: string | null
+          base_cost?: number
           category?: string | null
+          category_id?: string | null
           created_at?: string | null
           description?: string | null
           id?: string
           images?: Json | null
           is_trending?: boolean | null
           name?: string
+          published_at?: string | null
+          shipping_cost?: number
           short_description?: string | null
+          status?: Database["public"]["Enums"]["product_library_status"]
           suggested_price?: number | null
           supplier_link?: string | null
           tags?: string[] | null
@@ -1355,7 +1370,97 @@ export type Database = {
           variations?: Json | null
           video_url?: string | null
         }
+        Relationships: [
+          {
+            foreignKeyName: "product_library_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "product_library_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_library_categories: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          slug?: string
+          updated_at?: string
+        }
         Relationships: []
+      }
+      product_library_imports: {
+        Row: {
+          created_at: string
+          id: string
+          library_item_id: string
+          product_id: string | null
+          status: string
+          store_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          library_item_id: string
+          product_id?: string | null
+          status?: string
+          store_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          library_item_id?: string
+          product_id?: string | null
+          status?: string
+          store_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_library_imports_library_item_id_fkey"
+            columns: ["library_item_id"]
+            isOneToOne: false
+            referencedRelation: "product_library"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_library_imports_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_library_imports_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       product_reviews: {
         Row: {
@@ -1437,10 +1542,12 @@ export type Database = {
           easy_returns_days: number | null
           easy_returns_enabled: boolean
           free_shipping_min_amount: number | null
+          fulfillment_type: string
           id: string
           images: Json | null
           inventory_quantity: number | null
           is_active: boolean | null
+          library_item_id: string | null
           name: string
           price: number
           seo_description: string | null
@@ -1450,6 +1557,7 @@ export type Database = {
           sku: string | null
           slug: string
           store_id: string
+          supplier_link: string | null
           track_inventory: boolean | null
           updated_at: string | null
           variations: Json | null
@@ -1469,10 +1577,12 @@ export type Database = {
           easy_returns_days?: number | null
           easy_returns_enabled?: boolean
           free_shipping_min_amount?: number | null
+          fulfillment_type?: string
           id?: string
           images?: Json | null
           inventory_quantity?: number | null
           is_active?: boolean | null
+          library_item_id?: string | null
           name: string
           price?: number
           seo_description?: string | null
@@ -1482,6 +1592,7 @@ export type Database = {
           sku?: string | null
           slug: string
           store_id: string
+          supplier_link?: string | null
           track_inventory?: boolean | null
           updated_at?: string | null
           variations?: Json | null
@@ -1501,10 +1612,12 @@ export type Database = {
           easy_returns_days?: number | null
           easy_returns_enabled?: boolean
           free_shipping_min_amount?: number | null
+          fulfillment_type?: string
           id?: string
           images?: Json | null
           inventory_quantity?: number | null
           is_active?: boolean | null
+          library_item_id?: string | null
           name?: string
           price?: number
           seo_description?: string | null
@@ -1514,6 +1627,7 @@ export type Database = {
           sku?: string | null
           slug?: string
           store_id?: string
+          supplier_link?: string | null
           track_inventory?: boolean | null
           updated_at?: string | null
           variations?: Json | null
@@ -1526,6 +1640,13 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "products_library_item_id_fkey"
+            columns: ["library_item_id"]
+            isOneToOne: false
+            referencedRelation: "product_library"
             referencedColumns: ["id"]
           },
           {
@@ -2219,6 +2340,7 @@ export type Database = {
         | "delivered"
         | "cancelled"
       payment_method: "cod" | "bkash" | "nagad" | "sslcommerz"
+      product_library_status: "draft" | "published" | "archived"
       subscription_plan:
         | "free"
         | "pro_monthly"
@@ -2364,6 +2486,7 @@ export const Constants = {
         "cancelled",
       ],
       payment_method: ["cod", "bkash", "nagad", "sslcommerz"],
+      product_library_status: ["draft", "published", "archived"],
       subscription_plan: [
         "free",
         "pro_monthly",

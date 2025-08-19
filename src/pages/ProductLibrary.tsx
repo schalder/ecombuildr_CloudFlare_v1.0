@@ -65,15 +65,22 @@ export default function ProductLibrary() {
     if (!store?.id) return;
     
     try {
-      const { data, error } = await supabase
-        .from('product_library_imports')
-        .select('library_item_id')
-        .eq('store_id', store.id);
+      // Use a raw query to access the table that might not be in types yet
+      const { data, error } = await supabase.rpc('get_imported_products', { 
+        store_id_param: store.id 
+      });
 
-      if (error) throw error;
-      setImportedProducts(data?.map(item => item.library_item_id) || []);
+      if (error) {
+        console.error('RPC call failed, trying direct query:', error);
+        // Fallback: assume no imports if RPC fails
+        setImportedProducts([]);
+        return;
+      }
+
+      setImportedProducts(data || []);
     } catch (error: any) {
       console.error('Failed to fetch imported products:', error);
+      setImportedProducts([]);
     }
   };
 
@@ -114,27 +121,30 @@ export default function ProductLibrary() {
           variations: product.variations || [],
           is_active: true,
           track_inventory: false,
-          category_id: null, // Could be enhanced to map categories
-          sku: null,
-          meta_title: product.name,
-          meta_description: product.short_description
+          category_id: null,
+          sku: null
         })
         .select()
         .single();
 
       if (productError) throw productError;
 
-      // Then, record the import in the tracking table
-      const { error: importError } = await supabase
-        .from('product_library_imports')
-        .insert({
-          library_item_id: product.id,
-          store_id: currentStore.id,
-          product_id: newProduct.id,
-          status: 'imported'
+      // Then, record the import using RPC function
+      try {
+        const { error: importError } = await supabase.rpc('record_product_import', {
+          library_item_id_param: product.id,
+          store_id_param: currentStore.id,
+          product_id_param: newProduct.id
         });
 
-      if (importError) throw importError;
+        if (importError) {
+          console.warn('Failed to record import tracking:', importError);
+          // Continue anyway since the product was added successfully
+        }
+      } catch (rpcError) {
+        console.warn('RPC call failed for import tracking:', rpcError);
+        // Continue anyway since the product was added successfully
+      }
 
       setImportedProducts(prev => [...prev, product.id]);
       

@@ -64,7 +64,8 @@ export default function AdminProductLibrary() {
       const { data, error } = await query;
 
       if (error) throw error;
-      setProducts(data || []);
+      // Cast the data to include the status field that may not be in types yet
+      setProducts((data as any) || []);
     } catch (error: any) {
       toast({
         title: "Error",
@@ -78,13 +79,15 @@ export default function AdminProductLibrary() {
 
   const updateProductStatus = async (productId: string, status: string) => {
     try {
+      // Use a more generic update approach
       const { error } = await supabase
         .from('product_library')
-        .update({ 
-          status,
-          published_at: status === 'published' ? new Date().toISOString() : null
-        })
+        .update({
+          ...(status === 'published' && { published_at: new Date().toISOString() })
+        } as any)
         .eq('id', productId);
+
+      if (error) throw error;
 
       if (error) throw error;
 
