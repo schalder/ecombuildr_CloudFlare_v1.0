@@ -172,9 +172,9 @@ export default function AdminTemplateEditor() {
 
   return (
     <AdminLayout fluid>
-      {/* Fixed Header */}
-      <div className="sticky top-0 z-40 bg-background border-b px-6 py-4">
-        <div className="flex items-center justify-between">
+      <div className="h-screen bg-background flex flex-col">
+        {/* Fixed Header */}
+        <div className="border-b bg-card px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Button variant="ghost" size="sm" onClick={() => navigate('/admin/templates')}>
               <ArrowLeft className="h-4 w-4" />
@@ -207,16 +207,16 @@ export default function AdminTemplateEditor() {
             </Button>
           </div>
         </div>
-      </div>
 
-      {/* Full Width Page Builder */}
-      <div data-preview="true" className="w-full min-h-screen">
-        <ElementorPageBuilder
-          initialData={builderData}
-          onChange={setBuilderData}
-          onSave={handleSave}
-          isSaving={isSaving}
-        />
+        {/* Page Builder - Viewport Bounded */}
+        <div className="flex-1 min-h-0" data-preview="true">
+          <ElementorPageBuilder
+            initialData={builderData}
+            onChange={setBuilderData}
+            onSave={handleSave}
+            isSaving={isSaving}
+          />
+        </div>
       </div>
       {/* Settings Sidebar - Overlay */}
       {showSettings && (
