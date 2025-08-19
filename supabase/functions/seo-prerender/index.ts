@@ -23,9 +23,11 @@ serve(async (req) => {
   let domainParam = url.searchParams.get('domain') 
   let pathParam = url.searchParams.get('path')
   
-  // Handle Netlify's :host placeholder issue
+  // Handle Netlify's :host placeholder issue - log if it happens
   if (domainParam === ':host' || domainParam === '' || !domainParam) {
+    console.log('⚠️ Received empty/placeholder domain param:', domainParam, '- using headers as fallback')
     domainParam = req.headers.get('x-forwarded-host') || req.headers.get('host') || 'ecombuildr.com'
+    console.log('🔧 Resolved domain from headers:', domainParam)
   }
   
   // Normalize path: decode URI, ensure leading slash, remove trailing slash (except for root)
