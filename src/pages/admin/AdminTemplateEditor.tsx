@@ -298,12 +298,25 @@ export default function AdminTemplateEditor() {
 
         {/* Page Builder - Viewport Bounded */}
         <div className="flex-1 min-h-0">
-          <ElementorPageBuilder
-            initialData={builderData}
-            onChange={setBuilderData}
-            onSave={handleSave}
-            isSaving={isSaving}
-          />
+          {showPreview ? (
+            <div className="h-full overflow-auto bg-muted/30 p-6">
+              <div className="max-w-7xl mx-auto">
+                <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
+                  <div className="bg-muted/50 px-4 py-2 text-sm text-muted-foreground border-b">
+                    Template Preview
+                  </div>
+                  <PageBuilderRenderer data={builderData} />
+                </div>
+              </div>
+            </div>
+          ) : (
+            <ElementorPageBuilder
+              initialData={builderData}
+              onChange={setBuilderData}
+              onSave={handleSave}
+              isSaving={isSaving}
+            />
+          )}
         </div>
 
         {/* Hidden Preview for Screenshot Generation */}
