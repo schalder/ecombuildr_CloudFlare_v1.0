@@ -1058,6 +1058,19 @@ export const RelatedProductsContentProperties: React.FC<EcommerceContentProperti
 
 // Weekly Featured (Element) Content Properties
 export const WeeklyFeaturedElementProperties: React.FC<EcommerceContentPropertiesProps> = ({ element, onUpdate }) => {
+  const resolvedWebsiteId = useResolvedWebsiteId(element);
+  const { products } = useStoreProducts({ websiteId: resolvedWebsiteId });
+  
+  const sourceType = element.content.sourceType || 'auto';
+  const selectedProductIds = element.content.selectedProductIds || [];
+
+  const handleProductToggle = (productId: string) => {
+    const updatedIds = selectedProductIds.includes(productId)
+      ? selectedProductIds.filter((id: string) => id !== productId)
+      : [...selectedProductIds, productId];
+    onUpdate('selectedProductIds', updatedIds);
+  };
+
   return (
     <div className="space-y-4">
       <div>
@@ -1077,6 +1090,48 @@ export const WeeklyFeaturedElementProperties: React.FC<EcommerceContentPropertie
           <Label className="text-xs">Show Subtitle</Label>
         </div>
       </div>
+
+      <div>
+        <Label className="text-xs">Product Source</Label>
+        <Select value={sourceType} onValueChange={(v) => onUpdate('sourceType', v)}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="auto">Auto (Last 7 Days Bestsellers)</SelectItem>
+            <SelectItem value="manual">Manual Selection</SelectItem>
+          </SelectContent>
+        </Select>
+        <p className="text-xs text-muted-foreground mt-1">
+          Auto mode shows products that sold most in the last 7 days. Manual lets you pick specific products.
+        </p>
+      </div>
+
+      {sourceType === 'manual' && (
+        <div>
+          <Label className="text-xs">Select Products ({selectedProductIds.length} selected)</Label>
+          <div className="space-y-2 max-h-40 overflow-y-auto border rounded-lg p-2">
+            {products.length === 0 ? (
+              <p className="text-xs text-muted-foreground">No products available</p>
+            ) : (
+              products.map((product) => (
+                <div key={product.id} className="flex items-center space-x-2">
+                  <Checkbox
+                    checked={selectedProductIds.includes(product.id)}
+                    onCheckedChange={() => handleProductToggle(product.id)}
+                  />
+                  <div className="flex items-center gap-2 flex-1">
+                    <img
+                      src={(Array.isArray(product.images) ? product.images[0] : product.images) || '/placeholder.svg'}
+                      alt={product.name}
+                      className="w-6 h-6 rounded object-cover"
+                    />
+                    <Label className="text-xs flex-1">{product.name}</Label>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
 
       <div>
         <Label className="text-xs">Button Label</Label>

@@ -22,12 +22,16 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false } });
 
-    // 1) Get delivered orders for this store (last 1000 for performance)
+    // 1) Get delivered orders for this store from the last 7 days
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    
     const { data: orders, error: ordersErr } = await supabase
       .from('orders')
       .select('id')
       .eq('store_id', storeId)
       .eq('status', 'delivered')
+      .gte('created_at', sevenDaysAgo.toISOString())
       .order('created_at', { ascending: false })
       .limit(1000);
 

@@ -6,5 +6,6 @@ export { ButtonElementStyles } from './ButtonElementStyles';
 export { OrderConfirmationElementStyles } from './OrderConfirmationElementStyles';
 export { EcommerceActionButtonStyles } from './EcommerceActionButtonStyles';
 export { WeeklyFeaturedTypographyStyles } from './WeeklyFeaturedTypographyStyles';
+export { WeeklyFeaturedElementStyles } from './WeeklyFeaturedElementStyles';
 export { ListElementStyles } from './ListElementStyles';
 export { CountdownElementStyles } from './CountdownElementStyles';

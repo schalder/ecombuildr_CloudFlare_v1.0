@@ -60,7 +60,7 @@ import {
   ButtonElementStyles,
   OrderConfirmationElementStyles,
   EcommerceActionButtonStyles,
-  WeeklyFeaturedTypographyStyles,
+  WeeklyFeaturedElementStyles,
   ListElementStyles
 } from './ElementStyles';
 import { CountdownElementStyles } from './ElementStyles/CountdownElementStyles';
@@ -132,14 +132,12 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
 
     if (selectedElement.type === 'weekly-featured') {
       return (
-        <>
-          {/* Card/background/border/spacing via TextElementStyles */}
-          <TextElementStyles key={`text-${selectedElement.id}`} element={selectedElement} onStyleUpdate={handleStyleUpdate} showTypography={false} />
-          {/* Per-part typography */}
-          <WeeklyFeaturedTypographyStyles key={`wfty-${selectedElement.id}`} element={selectedElement} onStyleUpdate={handleStyleUpdate} />
-          {/* Button styles */}
-          <EcommerceActionButtonStyles key={`btn-${selectedElement.id}`} element={selectedElement} onStyleUpdate={handleStyleUpdate} />
-        </>
+        <WeeklyFeaturedElementStyles
+          key={`wf-${selectedElement.id}`}
+          element={selectedElement}
+          onStyleUpdate={handleStyleUpdate}
+          deviceType={deviceType}
+        />
       );
     }
 

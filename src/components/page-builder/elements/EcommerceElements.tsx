@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShoppingCart, Grid, Star, Tag, Package, DollarSign, Eye } from 'lucide-react';
+import { ShoppingCart, Grid, Star, Tag, Package, DollarSign, Eye, TrendingUp } from 'lucide-react';
 import { PageBuilderElement, ElementType } from '../types';
 import { elementRegistry } from './ElementRegistry';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -971,19 +971,22 @@ export const registerEcommerceElements = () => {
     id: 'weekly-featured',
     name: 'Weekly Featured',
     category: 'ecommerce',
-    icon: Package,
+    icon: TrendingUp,
     component: WeeklyFeaturedElement,
     defaultContent: {
-      title: 'Weekly Featured',
+      sourceType: 'auto',
+      selectedProductIds: [],
+      title: 'Weekly Featured Products',
       subtitle: 'Top selling products this week',
-      showSubtitle: true,
       ctaText: 'Add to Cart',
       limit: 6,
       columns: 3,
       tabletColumns: 2,
-      mobileColumns: 1
+      mobileColumns: 1,
+      showTitle: true,
+      showSubtitle: true
     },
-    description: 'Weekly featured products section'
+    description: 'Display bestsellers from last 7 days or manually selected products'
   });
 
   elementRegistry.register({
