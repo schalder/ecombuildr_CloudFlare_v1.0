@@ -4,10 +4,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useUserStore } from '@/hooks/useUserStore';
-import { Search, Plus, TrendingUp, Check } from 'lucide-react';
+import { ProductQuickView } from '@/components/ProductQuickView';
+import { Search, Plus, TrendingUp, Check, Eye, Filter } from 'lucide-react';
 
 interface ProductLibraryItem {
   id: string;
@@ -15,6 +17,8 @@ interface ProductLibraryItem {
   description: string;
   short_description: string;
   suggested_price: number;
+  base_cost: number;
+  shipping_cost: number;
   category: string;
   tags: string[];
   images: any;
@@ -33,6 +37,9 @@ export default function ProductLibrary() {
   const [importedProducts, setImportedProducts] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const [importedFilter, setImportedFilter] = useState<string>('all');
+  const [quickViewProduct, setQuickViewProduct] = useState<ProductLibraryItem | null>(null);
   const [importingIds, setImportingIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
@@ -75,11 +82,22 @@ export default function ProductLibrary() {
     }
   };
 
-  const filteredProducts = products.filter(product =>
-    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.category?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.tags?.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  const filteredProducts = products.filter(product => {
+    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.category?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.tags?.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
+    
+    const matchesCategory = categoryFilter === 'all' || product.category === categoryFilter;
+    
+    const matchesImported = importedFilter === 'all' || 
+      (importedFilter === 'imported' && importedProducts.includes(product.id)) ||
+      (importedFilter === 'not-imported' && !importedProducts.includes(product.id));
+
+    return matchesSearch && matchesCategory && matchesImported;
+  });
+
+  // Get unique categories for filter
+  const categories = [...new Set(products.map(p => p.category).filter(Boolean))];
 
   const addToStore = async (product: ProductLibraryItem) => {
     if (!store) {
@@ -159,8 +177,8 @@ export default function ProductLibrary() {
   return (
     <DashboardLayout title="Product Library" description="Browse and add products from our curated library">
       <div className="space-y-6">
-        <div className="flex items-center space-x-4">
-          <div className="relative flex-1 max-w-sm">
+        <div className="flex flex-wrap items-center gap-4">
+          <div className="relative flex-1 min-w-[300px]">
             <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search products..."
@@ -169,6 +187,32 @@ export default function ProductLibrary() {
               className="pl-10"
             />
           </div>
+          
+          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Category" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Categories</SelectItem>
+              {categories.map((category) => (
+                <SelectItem key={category} value={category}>
+                  {category}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={importedFilter} onValueChange={setImportedFilter}>
+            <SelectTrigger className="w-[150px]">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Products</SelectItem>
+              <SelectItem value="imported">Imported</SelectItem>
+              <SelectItem value="not-imported">Not Imported</SelectItem>
+            </SelectContent>
+          </Select>
+
           <Badge variant="secondary">{filteredProducts.length} products</Badge>
         </div>
 
@@ -192,92 +236,108 @@ export default function ProductLibrary() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {filteredProducts.map((product) => (
-              <Card key={product.id} className="group hover:shadow-lg transition-shadow">
-                <CardContent className="p-4">
+              <Card key={product.id} className="group hover:shadow-md transition-all duration-200 relative">
+                {/* Import Status Badge */}
+                {importedProducts.includes(product.id) && (
+                  <div className="absolute top-2 right-2 z-10">
+                    <Badge variant="outline" className="text-green-600 border-green-600 bg-white">
+                      ✓ Imported
+                    </Badge>
+                  </div>
+                )}
+                
+                <CardContent className="p-3">
                   {product.images && product.images.length > 0 && (
-                    <div className="aspect-square bg-muted rounded-lg mb-4 overflow-hidden">
+                    <div className="aspect-[4/3] bg-muted rounded-md mb-3 overflow-hidden relative">
                       <img 
                         src={product.images[0]} 
                         alt={product.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
                       />
+                      {product.is_trending && (
+                        <div className="absolute top-2 left-2">
+                          <Badge variant="secondary" className="text-xs">
+                            <TrendingUp className="w-2 h-2 mr-1" />
+                            Trending
+                          </Badge>
+                        </div>
+                      )}
                     </div>
                   )}
                   
                   <div className="space-y-2">
                     <div className="flex items-start justify-between">
-                      <h3 className="font-semibold line-clamp-2">{product.name}</h3>
-                      {product.is_trending && (
-                        <Badge variant="secondary" className="ml-2">
-                          <TrendingUp className="w-3 h-3 mr-1" />
-                          Trending
-                        </Badge>
-                      )}
+                      <h3 className="font-medium text-sm line-clamp-2 leading-tight">{product.name}</h3>
                     </div>
-                    
-                    {product.short_description && (
-                      <p className="text-sm text-muted-foreground line-clamp-2">
-                        {product.short_description}
-                      </p>
-                    )}
                     
                     <div className="flex items-center justify-between">
-                      {product.suggested_price && (
-                        <Badge variant="outline">
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="text-xs px-2 py-0.5">
                           ${product.suggested_price}
                         </Badge>
-                      )}
-                      {product.category && (
-                        <Badge variant="secondary">
-                          {product.category}
-                        </Badge>
-                      )}
-                    </div>
-                    
-                    {product.tags && product.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-1">
-                        {product.tags.slice(0, 3).map((tag, index) => (
-                          <Badge key={index} variant="outline" className="text-xs">
-                            {tag}
-                          </Badge>
-                        ))}
-                        {product.tags.length > 3 && (
-                          <Badge variant="outline" className="text-xs">
-                            +{product.tags.length - 3} more
+                        {product.base_cost > 0 && (
+                          <Badge variant="secondary" className="text-xs px-2 py-0.5">
+                            Cost: ${product.base_cost}
                           </Badge>
                         )}
                       </div>
+                    </div>
+                    
+                    {product.category && (
+                      <Badge variant="outline" className="text-xs">
+                        {product.category}
+                      </Badge>
                     )}
                     
-                    {importedProducts.includes(product.id) ? (
+                    <div className="flex items-center gap-1 pt-1">
                       <Button 
-                        disabled
-                        className="w-full mt-4"
-                        size="sm"
-                        variant="secondary"
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => setQuickViewProduct(product)}
+                        className="h-7 text-xs px-2"
                       >
-                        <Check className="w-4 h-4 mr-2" />
-                        Added to Store
+                        <Eye className="w-3 h-3 mr-1" />
+                        Quick View
                       </Button>
-                    ) : (
-                      <Button 
-                        onClick={() => addToStore(product)}
-                        disabled={importingIds.has(product.id)}
-                        className="w-full mt-4"
-                        size="sm"
-                      >
-                        <Plus className="w-4 h-4 mr-2" />
-                        {importingIds.has(product.id) ? 'Adding...' : 'Add to Store'}
-                      </Button>
-                    )}
+                    
+                      {importedProducts.includes(product.id) ? (
+                        <Button 
+                          disabled
+                          size="sm"
+                          variant="secondary"
+                          className="h-7 text-xs px-2 flex-1"
+                        >
+                          <Check className="w-3 h-3 mr-1" />
+                          Added
+                        </Button>
+                      ) : (
+                        <Button 
+                          onClick={() => addToStore(product)}
+                          disabled={importingIds.has(product.id)}
+                          size="sm"
+                          className="h-7 text-xs px-2 flex-1"
+                        >
+                          <Plus className="w-3 h-3 mr-1" />
+                          {importingIds.has(product.id) ? 'Adding...' : 'Add to Store'}
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </CardContent>
               </Card>
             ))}
           </div>
         )}
+
+        <ProductQuickView
+          product={quickViewProduct}
+          isOpen={!!quickViewProduct}
+          onClose={() => setQuickViewProduct(null)}
+          isImported={quickViewProduct ? importedProducts.includes(quickViewProduct.id) : false}
+          showProfitCalculation={true}
+        />
       </div>
     </DashboardLayout>
   );

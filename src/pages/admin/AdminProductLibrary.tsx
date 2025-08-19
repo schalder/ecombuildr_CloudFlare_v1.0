@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Search, Plus, Edit, Trash2, Eye, TrendingUp, BarChart3 } from 'lucide-react';
+import { ProductQuickView } from '@/components/ProductQuickView';
 import { useNavigate } from 'react-router-dom';
 import {
   AlertDialog,
@@ -45,6 +46,7 @@ export default function AdminProductLibrary() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [quickViewProduct, setQuickViewProduct] = useState<ProductLibraryItem | null>(null);
 
   useEffect(() => {
     fetchProducts();
@@ -203,24 +205,24 @@ export default function AdminProductLibrary() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {filteredProducts.map((product) => (
-              <Card key={product.id} className="group hover:shadow-lg transition-shadow">
-                <CardContent className="p-4">
+              <Card key={product.id} className="group hover:shadow-md transition-all duration-200">
+                <CardContent className="p-3">
                   {product.images && product.images.length > 0 && (
-                    <div className="aspect-square bg-muted rounded-lg mb-4 overflow-hidden relative">
+                    <div className="aspect-[4/3] bg-muted rounded-md mb-3 overflow-hidden relative">
                       <img 
                         src={product.images[0]} 
                         alt={product.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
                       />
                       <div className="absolute top-2 right-2 flex gap-2">
-                        <Badge className={`${getStatusColor((product as any).status || 'draft')} text-white`}>
+                        <Badge className={`${getStatusColor((product as any).status || 'draft')} text-white text-xs`}>
                           {(product as any).status || 'draft'}
                         </Badge>
                         {product.is_trending && (
-                          <Badge variant="secondary">
-                            <TrendingUp className="w-3 h-3" />
+                          <Badge variant="secondary" className="text-xs">
+                            <TrendingUp className="w-2 h-2" />
                           </Badge>
                         )}
                       </div>
@@ -228,34 +230,37 @@ export default function AdminProductLibrary() {
                   )}
                   
                   <div className="space-y-2">
-                    <div className="flex items-start justify-between">
-                      <h3 className="font-semibold line-clamp-2">{product.name}</h3>
-                    </div>
-                    
-                    {product.short_description && (
-                      <p className="text-sm text-muted-foreground line-clamp-2">
-                        {product.short_description}
-                      </p>
-                    )}
+                    <h3 className="font-medium text-sm line-clamp-2 leading-tight">{product.name}</h3>
                     
                     <div className="flex items-center justify-between">
-                      {product.suggested_price && (
-                        <Badge variant="outline">
-                          ${product.suggested_price}
-                        </Badge>
-                      )}
-                      {product.category && (
-                        <Badge variant="secondary">
-                          {product.category}
-                        </Badge>
-                      )}
+                      <div className="flex items-center gap-1">
+                        {product.suggested_price && (
+                          <Badge variant="outline" className="text-xs px-2 py-0.5">
+                            ${product.suggested_price}
+                          </Badge>
+                        )}
+                        {product.category && (
+                          <Badge variant="secondary" className="text-xs px-2 py-0.5">
+                            {product.category}
+                          </Badge>
+                        )}
+                      </div>
                     </div>
                     
-                    <div className="flex items-center gap-2 pt-2">
+                    <div className="flex items-center gap-1 pt-1">
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => setQuickViewProduct(product)}
+                        className="h-6 text-xs px-1 flex-1"
+                      >
+                        <Eye className="w-3 h-3" />
+                      </Button>
                       <Button 
                         size="sm" 
                         variant="outline"
                         onClick={() => navigate(`/admin/product-library/orders/${product.id}`)}
+                        className="h-6 text-xs px-1"
                       >
                         <BarChart3 className="w-3 h-3" />
                       </Button>
@@ -264,6 +269,7 @@ export default function AdminProductLibrary() {
                         size="sm" 
                         variant="outline"
                         onClick={() => navigate(`/admin/product-library/edit/${product.id}`)}
+                        className="h-6 text-xs px-1"
                       >
                         <Edit className="w-3 h-3" />
                       </Button>
@@ -273,6 +279,7 @@ export default function AdminProductLibrary() {
                           size="sm" 
                           variant="secondary"
                           onClick={() => updateProductStatus(product.id, 'draft')}
+                          className="h-6 text-xs px-1"
                         >
                           <Eye className="w-3 h-3" />
                         </Button>
@@ -280,6 +287,7 @@ export default function AdminProductLibrary() {
                         <Button 
                           size="sm" 
                           onClick={() => updateProductStatus(product.id, 'published')}
+                          className="h-6 text-xs px-1"
                         >
                           <Eye className="w-3 h-3" />
                         </Button>
@@ -287,7 +295,7 @@ export default function AdminProductLibrary() {
                       
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <Button size="sm" variant="destructive">
+                          <Button size="sm" variant="destructive" className="h-6 text-xs px-1">
                             <Trash2 className="w-3 h-3" />
                           </Button>
                         </AlertDialogTrigger>
@@ -313,6 +321,13 @@ export default function AdminProductLibrary() {
             ))}
           </div>
         )}
+
+        <ProductQuickView
+          product={quickViewProduct}
+          isOpen={!!quickViewProduct}
+          onClose={() => setQuickViewProduct(null)}
+          showProfitCalculation={false}
+        />
       </div>
     </AdminLayout>
   );
