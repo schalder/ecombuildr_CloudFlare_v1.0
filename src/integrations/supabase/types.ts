@@ -2378,45 +2378,7 @@ export type Database = {
       }
     }
     Views: {
-      product_reviews_public: {
-        Row: {
-          comment: string | null
-          created_at: string | null
-          id: string | null
-          is_visible: boolean | null
-          product_id: string | null
-          rating: number | null
-          reviewer_name: string | null
-          store_id: string | null
-          title: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          comment?: string | null
-          created_at?: string | null
-          id?: string | null
-          is_visible?: boolean | null
-          product_id?: string | null
-          rating?: number | null
-          reviewer_name?: string | null
-          store_id?: string | null
-          title?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          comment?: string | null
-          created_at?: string | null
-          id?: string | null
-          is_visible?: boolean | null
-          product_id?: string | null
-          rating?: number | null
-          reviewer_name?: string | null
-          store_id?: string | null
-          title?: string | null
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
       can_create_resource: {
@@ -2462,6 +2424,19 @@ export type Database = {
           total: number
         }[]
       }
+      get_public_reviews: {
+        Args: { product_uuid?: string }
+        Returns: {
+          comment: string
+          created_at: string
+          id: string
+          product_id: string
+          rating: number
+          reviewer_name: string
+          store_id: string
+          title: string
+        }[]
+      }
       increment_usage: {
         Args: { _resource_type: string; _user_id: string }
         Returns: undefined
@@ -2493,6 +2468,18 @@ export type Database = {
       set_website_homepage: {
         Args: { page_uuid: string }
         Returns: undefined
+      }
+      submit_product_review: {
+        Args: {
+          comment_param?: string
+          product_uuid: string
+          rating_param: number
+          reviewer_email_param?: string
+          reviewer_name_param: string
+          reviewer_phone_param?: string
+          title_param?: string
+        }
+        Returns: string
       }
     }
     Enums: {
