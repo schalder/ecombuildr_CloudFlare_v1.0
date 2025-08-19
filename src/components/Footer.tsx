@@ -120,7 +120,7 @@ export const Footer = () => {
               </div>
               <div className="flex items-center gap-3 text-primary-light">
                 <MapPin className="h-4 w-4" />
-                <span>Remote Team</span>
+                <span>Barakota, 311, Dakuarhat, Wazirpur Barisal</span>
               </div>
             </div>
 
