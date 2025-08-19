@@ -1,0 +1,300 @@
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { AdminLayout } from '@/components/admin/AdminLayout';
+import { ElementorPageBuilder } from '@/components/page-builder/ElementorPageBuilder';
+import { PageBuilderData } from '@/components/page-builder/types';
+import { ArrowLeft, Save, Eye } from 'lucide-react';
+import { toast } from 'sonner';
+import html2canvas from 'html2canvas';
+
+interface TemplateFormData {
+  name: string;
+  description: string;
+  category: string;
+  template_type: 'website_page' | 'funnel_step';
+  is_published: boolean;
+  is_premium: boolean;
+}
+
+const defaultBuilderData: PageBuilderData = {
+  sections: [],
+  globalStyles: {},
+  pageStyles: {}
+};
+
+export default function AdminTemplateEditor() {
+  const { templateId } = useParams();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const isEditing = Boolean(templateId);
+
+  const [formData, setFormData] = useState<TemplateFormData>({
+    name: '',
+    description: '',
+    category: 'general',
+    template_type: 'website_page',
+    is_published: false,
+    is_premium: false,
+  });
+
+  const [builderData, setBuilderData] = useState<PageBuilderData>(defaultBuilderData);
+  const [isSaving, setIsSaving] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
+
+  const { data: template, isLoading } = useQuery({
+    queryKey: ['template', templateId],
+    queryFn: async () => {
+      if (!templateId) return null;
+      
+      const { data, error } = await supabase
+        .from('page_templates')
+        .select('*')
+        .eq('id', templateId)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: isEditing,
+  });
+
+  useEffect(() => {
+    if (template) {
+      setFormData({
+        name: template.name,
+        description: template.description || '',
+        category: template.category,
+        template_type: template.template_type as 'website_page' | 'funnel_step',
+        is_published: template.is_published,
+        is_premium: template.is_premium,
+      });
+      setBuilderData((template.content as any) || defaultBuilderData);
+    }
+  }, [template]);
+
+  const saveTemplateMutation = useMutation({
+    mutationFn: async (data: { formData: TemplateFormData; content: PageBuilderData; previewImage?: string }) => {
+      const templateData = {
+        ...data.formData,
+        content: data.content as any,
+        preview_image: data.previewImage || null,
+      };
+
+      if (isEditing) {
+        const { error } = await supabase
+          .from('page_templates')
+          .update(templateData)
+          .eq('id', templateId);
+
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('page_templates')
+          .insert([templateData]);
+
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-templates'] });
+      toast.success(`Template ${isEditing ? 'updated' : 'created'} successfully`);
+      navigate('/admin/templates');
+    },
+    onError: (error: any) => {
+      toast.error(`Failed to ${isEditing ? 'update' : 'create'} template: ${error.message}`);
+    },
+  });
+
+  const generatePreviewImage = async (): Promise<string | null> => {
+    try {
+      // Find the preview element
+      const previewElement = document.querySelector('[data-preview="true"]') as HTMLElement;
+      if (!previewElement) return null;
+
+      const canvas = await html2canvas(previewElement, {
+        width: 1200,
+        height: 675,
+        scale: 0.5,
+      });
+
+      return canvas.toDataURL('image/png');
+    } catch (error) {
+      console.warn('Failed to generate preview image:', error);
+      return null;
+    }
+  };
+
+  const handleSave = async () => {
+    if (!formData.name.trim()) {
+      toast.error('Template name is required');
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const previewImage = await generatePreviewImage();
+      await saveTemplateMutation.mutateAsync({
+        formData,
+        content: builderData,
+        previewImage: previewImage || undefined,
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <AdminLayout>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-muted-foreground">Loading template...</div>
+        </div>
+      </AdminLayout>
+    );
+  }
+
+  return (
+    <AdminLayout>
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" size="sm" onClick={() => navigate('/admin/templates')}>
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <div>
+              <h1 className="text-2xl font-bold">
+                {isEditing ? 'Edit Template' : 'Create Template'}
+              </h1>
+              <p className="text-muted-foreground">
+                Design a reusable template for pages
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setShowPreview(!showPreview)}
+              className="gap-2"
+            >
+              <Eye className="h-4 w-4" />
+              {showPreview ? 'Hide Preview' : 'Show Preview'}
+            </Button>
+            <Button onClick={handleSave} disabled={isSaving} className="gap-2">
+              <Save className="h-4 w-4" />
+              {isSaving ? 'Saving...' : 'Save Template'}
+            </Button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Template Settings */}
+          <Card className="lg:col-span-1">
+            <CardHeader>
+              <CardTitle>Template Settings</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label htmlFor="name">Name</Label>
+                <Input
+                  id="name"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="Template name"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  placeholder="Template description"
+                  rows={3}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="category">Category</Label>
+                <Select
+                  value={formData.category}
+                  onValueChange={(value) => setFormData({ ...formData, category: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="general">General</SelectItem>
+                    <SelectItem value="business">Business</SelectItem>
+                    <SelectItem value="ecommerce">E-commerce</SelectItem>
+                    <SelectItem value="landing">Landing Page</SelectItem>
+                    <SelectItem value="portfolio">Portfolio</SelectItem>
+                    <SelectItem value="blog">Blog</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="type">Type</Label>
+                <Select
+                  value={formData.template_type}
+                  onValueChange={(value: 'website_page' | 'funnel_step') => 
+                    setFormData({ ...formData, template_type: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="website_page">Website Page</SelectItem>
+                    <SelectItem value="funnel_step">Funnel Step</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <Label htmlFor="published">Published</Label>
+                <Switch
+                  id="published"
+                  checked={formData.is_published}
+                  onCheckedChange={(checked) => setFormData({ ...formData, is_published: checked })}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <Label htmlFor="premium">Premium</Label>
+                <Switch
+                  id="premium"
+                  checked={formData.is_premium}
+                  onCheckedChange={(checked) => setFormData({ ...formData, is_premium: checked })}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Page Builder */}
+          <div className="lg:col-span-3">
+            <div data-preview="true">
+            <ElementorPageBuilder
+              initialData={builderData}
+              onChange={setBuilderData}
+              onSave={handleSave}
+              isSaving={isSaving}
+            />
+            </div>
+          </div>
+        </div>
+      </div>
+    </AdminLayout>
+  );
+}

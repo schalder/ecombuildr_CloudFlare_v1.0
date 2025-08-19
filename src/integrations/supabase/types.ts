@@ -1037,6 +1037,51 @@ export type Database = {
           },
         ]
       }
+      page_templates: {
+        Row: {
+          category: string
+          content: Json
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          is_premium: boolean
+          is_published: boolean
+          name: string
+          preview_image: string | null
+          template_type: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          content?: Json
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_premium?: boolean
+          is_published?: boolean
+          name: string
+          preview_image?: string | null
+          template_type: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          content?: Json
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_premium?: boolean
+          is_published?: boolean
+          name?: string
+          preview_image?: string | null
+          template_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       pages: {
         Row: {
           canonical_url: string | null

@@ -60,6 +60,8 @@ import AdminAddLibraryProduct from "./pages/admin/AdminAddLibraryProduct";
 import AdminLibraryOrders from "./pages/admin/AdminLibraryOrders";
 import AdminShipping from "./pages/admin/AdminShipping";
 import AdminLibraryOrdersSummary from "./pages/admin/AdminLibraryOrdersSummary";
+import AdminTemplateManagement from "./pages/admin/AdminTemplateManagement";
+import AdminTemplateEditor from "./pages/admin/AdminTemplateEditor";
 import { StorefrontHome } from "./pages/storefront/StorefrontHome";
 import { StorefrontProducts } from "./pages/storefront/StorefrontProducts";
 import ProductDetail from "./pages/storefront/ProductDetail";
@@ -162,8 +164,11 @@ const App = () => (
                 <Route path="/admin/product-library/add" element={<AdminAddLibraryProduct />} />
                 <Route path="/admin/product-library/edit/:id" element={<AdminAddLibraryProduct />} />
                 <Route path="/admin/product-library/orders/:id" element={<AdminLibraryOrders />} />
-            <Route path="/admin/shipping" element={<AdminShipping />} />
-            <Route path="/admin/library-orders" element={<AdminLibraryOrdersSummary />} />
+                <Route path="/admin/shipping" element={<AdminShipping />} />
+                <Route path="/admin/library-orders" element={<AdminLibraryOrdersSummary />} />
+                <Route path="/admin/templates" element={<AdminTemplateManagement />} />
+                <Route path="/admin/templates/create" element={<AdminTemplateEditor />} />
+                <Route path="/admin/templates/edit/:templateId" element={<AdminTemplateEditor />} />
                 
                 {/* Demo and Preview Routes */}
                 <Route path="/preview/demo" element={<DemoPreview />} />
