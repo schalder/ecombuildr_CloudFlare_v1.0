@@ -117,57 +117,65 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
         style={{ ...getDevicePreviewStyles(deviceType), ...getCanvasStyles() }}
         onClick={() => !isPreviewMode && onSelectElement(undefined)}
       >
-        {pageData.sections.length === 0 ? (
-          <div className="min-h-[400px] flex items-center justify-center">
-            <div className="text-center">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
-                <Plus className="h-8 w-8 text-muted-foreground" />
+        {/* Content area wrapper for clean preview capture */}
+        <div 
+          data-content-area="true" 
+          className="page-content-area"
+          style={{ minHeight: pageData.sections.length === 0 ? '400px' : 'auto' }}
+        >
+          {pageData.sections.length === 0 ? (
+            <div className="min-h-[400px] flex items-center justify-center">
+              <div className="text-center">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
+                  <Plus className="h-8 w-8 text-muted-foreground" />
+                </div>
+                <h3 className="text-lg font-medium mb-2">Start building your page</h3>
+                <p className="text-muted-foreground mb-4 max-w-md">
+                  Drag elements from the left panel or click the button below to add your first section.
+                </p>
+                {!isPreviewMode && (
+                  <Button onClick={handleAddSection} data-builder-ui="true">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Section
+                  </Button>
+                )}
               </div>
-              <h3 className="text-lg font-medium mb-2">Start building your page</h3>
-              <p className="text-muted-foreground mb-4 max-w-md">
-                Drag elements from the left panel or click the button below to add your first section.
-              </p>
-              {!isPreviewMode && (
-                <Button onClick={handleAddSection}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Section
-                </Button>
-              )}
             </div>
-          </div>
-        ) : (
-          <div className="space-y-0">
-             {pageData.sections.map((section, index) => (
-               <SectionRenderer
-                 key={section.id}
-                 section={section}
-                 sectionIndex={index}
-                 isSelected={selectedElement?.id === section.id}
-                 isPreviewMode={isPreviewMode}
-                 deviceType={deviceType}
-                 onSelectElement={onSelectElement}
-                 onUpdateElement={onUpdateElement}
-                 onAddElement={onAddElement}
-                 onMoveElement={onMoveElement}
-                 onRemoveElement={onRemoveElement}
-                 onAddSectionAfter={() => {}}
-                 onAddRowAfter={() => {}}
-               />
-             ))}
-            
-            {!isPreviewMode && (
-              <div className="py-8 text-center">
-                <Button variant="outline" onClick={handleAddSection}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Section
-                </Button>
-              </div>
-            )}
+          ) : (
+            <div className="space-y-0">
+               {pageData.sections.map((section, index) => (
+                 <SectionRenderer
+                   key={section.id}
+                   section={section}
+                   sectionIndex={index}
+                   isSelected={selectedElement?.id === section.id}
+                   isPreviewMode={isPreviewMode}
+                   deviceType={deviceType}
+                   onSelectElement={onSelectElement}
+                   onUpdateElement={onUpdateElement}
+                   onAddElement={onAddElement}
+                   onMoveElement={onMoveElement}
+                   onRemoveElement={onRemoveElement}
+                   onAddSectionAfter={() => {}}
+                   onAddRowAfter={() => {}}
+                 />
+               ))}
+            </div>
+          )}
+        </div>
+        
+        {/* Builder UI elements - separate from content area */}
+        {!isPreviewMode && pageData.sections.length > 0 && (
+          <div className="py-8 text-center" data-builder-ui="true">
+            <Button variant="outline" onClick={handleAddSection}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Section
+            </Button>
           </div>
         )}
         
         {isPreviewMode && (
-          <div className="fixed bottom-4 right-4 bg-primary text-primary-foreground px-3 py-2 rounded-md shadow-lg flex items-center space-x-2">
+          <div className="fixed bottom-4 right-4 bg-primary text-primary-foreground px-3 py-2 rounded-md shadow-lg flex items-center space-x-2" data-builder-ui="true">
             <Eye className="h-4 w-4" />
             <span className="text-sm font-medium">Preview Mode</span>
           </div>

@@ -16,19 +16,49 @@ export const captureAndUploadPreview = async (
   options: PreviewCaptureOptions = {}
 ): Promise<string | null> => {
   try {
-    const { width = 400, height = 300, quality = 0.8 } = options;
+    const { width = 800, height = 600, quality = 0.8 } = options;
+
+    // Get the actual dimensions of the content
+    const rect = element.getBoundingClientRect();
+    const actualWidth = rect.width;
+    const actualHeight = rect.height;
+
+    // Calculate scale to fit within desired dimensions while maintaining aspect ratio
+    const scaleX = width / actualWidth;
+    const scaleY = height / actualHeight;
+    const scale = Math.min(scaleX, scaleY, 1); // Don't upscale
+
+    const captureWidth = Math.round(actualWidth * scale);
+    const captureHeight = Math.round(actualHeight * scale);
 
     // Capture the element as canvas
     const canvas = await html2canvas(element, {
-      width,
-      height,
-      scale: 0.5, // Reduce scale for smaller file size
+      width: captureWidth,
+      height: captureHeight,
+      scale: scale,
       useCORS: true,
       allowTaint: false,
-      backgroundColor: '#ffffff',
+      backgroundColor: 'transparent', // Let page background show through
       ignoreElements: (element) => {
-        // Ignore overlay elements, tooltips, etc.
-        return element.classList?.contains('preview-ignore') || false;
+        // Ignore builder UI elements and overlays
+        return element.hasAttribute('data-builder-ui') || 
+               element.classList?.contains('preview-ignore') || 
+               element.classList?.contains('fixed') ||
+               false;
+      },
+      onclone: (clonedDoc) => {
+        // Remove any remaining builder UI elements from the clone
+        const builderElements = clonedDoc.querySelectorAll('[data-builder-ui="true"]');
+        builderElements.forEach(el => el.remove());
+        
+        // Remove fixed positioned elements that might interfere
+        const fixedElements = clonedDoc.querySelectorAll('.fixed');
+        fixedElements.forEach(el => {
+          const htmlEl = el as HTMLElement;
+          if (!htmlEl.closest('[data-content-area="true"]')) {
+            htmlEl.remove();
+          }
+        });
       }
     });
 
@@ -71,57 +101,182 @@ export const captureAndUploadPreview = async (
 };
 
 /**
- * Captures a preview of the page builder canvas area
+ * Temporarily hides builder UI elements during capture
+ */
+const hideBuilderUI = (): (() => void) => {
+  const builderElements = document.querySelectorAll('[data-builder-ui="true"]');
+  const originalStyles: { element: HTMLElement; display: string }[] = [];
+  
+  builderElements.forEach((element) => {
+    const htmlElement = element as HTMLElement;
+    originalStyles.push({
+      element: htmlElement,
+      display: htmlElement.style.display
+    });
+    htmlElement.style.display = 'none';
+  });
+  
+  // Return cleanup function
+  return () => {
+    originalStyles.forEach(({ element, display }) => {
+      element.style.display = display;
+    });
+  };
+};
+
+/**
+ * Finds the best element to capture for preview
+ */
+const findContentArea = (): HTMLElement | null => {
+  // Priority 1: Content area (sections only, no builder UI)
+  const contentArea = document.querySelector('[data-content-area="true"]') as HTMLElement;
+  if (contentArea) {
+    console.log('Found content area for preview capture');
+    return contentArea;
+  }
+  
+  // Priority 2: Canvas area (fallback to current method)
+  const selectors = [
+    '[data-canvas-area="true"]',
+    '.canvas-area', 
+    '[data-testid="canvas-area"]',
+    '.page-builder-canvas'
+  ];
+  
+  for (const selector of selectors) {
+    const element = document.querySelector(selector) as HTMLElement;
+    if (element) {
+      console.log(`Found canvas element using selector: ${selector}`);
+      return element;
+    }
+  }
+  
+  // Priority 3: Look for page builder sections
+  const pageBuilderContainers = document.querySelectorAll('[class*="section"], [id*="pb-"]');
+  if (pageBuilderContainers.length > 0) {
+    const parent = pageBuilderContainers[0].closest('.flex-1, .canvas, .builder') as HTMLElement || 
+                  pageBuilderContainers[0].parentElement as HTMLElement;
+    if (parent) {
+      console.log('Found canvas element by searching page builder content');
+      return parent;
+    }
+  }
+  
+  return null;
+};
+
+/**
+ * Creates a placeholder preview for empty pages
+ */
+const createEmptyPagePreview = async (pageId: string, type: 'website_page' | 'funnel_step'): Promise<string | null> => {
+  try {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    if (!ctx) return null;
+    
+    canvas.width = 800;
+    canvas.height = 600;
+    
+    // Background
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, 800, 600);
+    
+    // Border
+    ctx.strokeStyle = '#e5e7eb';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(1, 1, 798, 598);
+    
+    // Content
+    ctx.fillStyle = '#6b7280';
+    ctx.font = 'bold 24px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('Empty Page', 400, 280);
+    
+    ctx.font = '16px Arial';
+    ctx.fillText('No content added yet', 400, 320);
+    
+    // Convert to blob
+    const blob = await new Promise<Blob>((resolve) => {
+      canvas.toBlob((blob) => resolve(blob!), 'image/jpeg', 0.8);
+    });
+    
+    // Upload
+    const timestamp = Date.now();
+    const fileName = `previews/empty_${type}_${pageId}_${timestamp}.jpg`;
+    
+    const { data, error } = await supabase.storage
+      .from('images')
+      .upload(fileName, blob, {
+        contentType: 'image/jpeg',
+        upsert: true
+      });
+    
+    if (error) {
+      console.error('Error uploading empty preview:', error);
+      return null;
+    }
+    
+    const { data: publicData } = supabase.storage
+      .from('images')
+      .getPublicUrl(fileName);
+    
+    return publicData.publicUrl;
+  } catch (error) {
+    console.error('Error creating empty page preview:', error);
+    return null;
+  }
+};
+
+/**
+ * Captures a preview of the page builder content area
  */
 export const capturePageBuilderPreview = async (
   pageId: string,
   type: 'website_page' | 'funnel_step' = 'website_page'
 ): Promise<string | null> => {
-  // Wait a bit for DOM to be ready
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  
-  // Try multiple selectors to find the canvas area
-  const selectors = [
-    '[data-canvas-area="true"]',
-    '.canvas-area', 
-    '[data-testid="canvas-area"]',
-    '.elementor-page-builder',
-    '.page-builder-canvas'
-  ];
-  
-  let canvasElement: HTMLElement | null = null;
-  
-  for (const selector of selectors) {
-    canvasElement = document.querySelector(selector) as HTMLElement;
-    if (canvasElement) {
-      console.log(`Found canvas element using selector: ${selector}`);
-      break;
+  try {
+    // Wait for DOM to be ready
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
+    // Find the content area
+    const contentElement = findContentArea();
+    
+    if (!contentElement) {
+      console.warn('No canvas area found for preview capture');
+      return createEmptyPagePreview(pageId, type);
     }
-  }
-  
-  // If still not found, try to find any container with page builder content
-  if (!canvasElement) {
-    // Look for any element containing page builder sections
-    const pageBuilderContainers = document.querySelectorAll('[class*="section"], [id*="pb-"], [class*="page-builder"]');
-    if (pageBuilderContainers.length > 0) {
-      // Find the parent container that wraps all sections
-      canvasElement = pageBuilderContainers[0].closest('.flex-1, .canvas, .builder') as HTMLElement || 
-                    pageBuilderContainers[0].parentElement as HTMLElement;
-      console.log('Found canvas element by searching page builder content');
+    
+    // Check if page is empty (no sections)
+    const sections = contentElement.querySelectorAll('[class*="section"]');
+    if (sections.length === 0) {
+      console.log('Page is empty, creating placeholder preview');
+      return createEmptyPagePreview(pageId, type);
     }
+    
+    // Hide builder UI elements temporarily
+    const restoreBuilderUI = hideBuilderUI();
+    
+    try {
+      // Wait a bit more for UI to update
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      const fileName = `${type}_${pageId}`;
+      const previewUrl = await captureAndUploadPreview(contentElement, fileName, {
+        width: 800,
+        height: 600,
+        quality: 0.8
+      });
+      
+      return previewUrl;
+    } finally {
+      // Always restore builder UI
+      restoreBuilderUI();
+    }
+  } catch (error) {
+    console.error('Error in capturePageBuilderPreview:', error);
+    return createEmptyPagePreview(pageId, type);
   }
-  
-  if (!canvasElement) {
-    console.warn('Canvas area not found for preview capture - tried all selectors');
-    return null;
-  }
-
-  const fileName = `${type}_${pageId}`;
-  return captureAndUploadPreview(canvasElement, fileName, {
-    width: 400,
-    height: 300,
-    quality: 0.7
-  });
 };
 
 /**
