@@ -5,12 +5,25 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Check, X, Loader2, AlertCircle } from 'lucide-react';
+import { Check, X, Loader2, AlertCircle, FileText } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { debounce } from '@/lib/utils';
+import { TemplateSelectionModal } from '@/components/templates/TemplateSelectionModal';
+import type { PageBuilderData } from '@/components/page-builder/types';
 
 type SlugStatus = 'idle' | 'checking' | 'available' | 'taken' | 'error';
+
+interface PageTemplate {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
+  template_type: 'website_page' | 'funnel_step';
+  content: PageBuilderData;
+  preview_image: string | null;
+  is_premium: boolean;
+}
 
 interface CreateStepModalProps {
   isOpen: boolean;
@@ -37,6 +50,10 @@ export const CreateStepModal: React.FC<CreateStepModalProps> = ({
     stepType: 'landing',
     stepOrder: getNextStepOrder()
   });
+
+  // Template selection state
+  const [showTemplateSelection, setShowTemplateSelection] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState<PageTemplate | null>(null);
 
   // Slug validation state
   const [slugStatus, setSlugStatus] = useState<SlugStatus>('idle');
@@ -114,6 +131,14 @@ export const CreateStepModal: React.FC<CreateStepModalProps> = ({
 
   const createStepMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
+      // Use template content if selected, otherwise use default content
+      let content: any;
+      if (selectedTemplate) {
+        content = selectedTemplate.content;
+      } else {
+        content = { sections: [] };
+      }
+
       const { data: result, error } = await supabase
         .from('funnel_steps')
         .insert({
@@ -122,7 +147,7 @@ export const CreateStepModal: React.FC<CreateStepModalProps> = ({
           funnel_id: funnelId,
           step_type: data.stepType,
           step_order: data.stepOrder,
-          content: { sections: [] },
+          content,
           is_published: false
         })
         .select()
@@ -158,7 +183,13 @@ export const CreateStepModal: React.FC<CreateStepModalProps> = ({
     setSuggestedSlug('');
     setFinalSlug('');
     setIsSlugModified(false);
+    setSelectedTemplate(null);
     onClose();
+  };
+
+  const handleTemplateSelect = (template: PageTemplate | null) => {
+    setSelectedTemplate(template);
+    setShowTemplateSelection(false);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -344,6 +375,36 @@ export const CreateStepModal: React.FC<CreateStepModalProps> = ({
             />
           </div>
 
+          <div>
+            <Label>Template</Label>
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowTemplateSelection(true)}
+                className="flex-1"
+              >
+                <FileText className="h-4 w-4 mr-2" />
+                {selectedTemplate ? selectedTemplate.name : 'Choose Template'}
+              </Button>
+              {selectedTemplate && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSelectedTemplate(null)}
+                >
+                  Clear
+                </Button>
+              )}
+            </div>
+            {selectedTemplate && (
+              <p className="text-sm text-muted-foreground mt-1">
+                Using template: {selectedTemplate.name}
+              </p>
+            )}
+          </div>
+
           <div className="flex justify-end space-x-2 pt-4">
             <Button type="button" variant="outline" onClick={handleClose}>
               Cancel
@@ -353,6 +414,13 @@ export const CreateStepModal: React.FC<CreateStepModalProps> = ({
             </Button>
           </div>
         </form>
+
+        <TemplateSelectionModal
+          open={showTemplateSelection}
+          onOpenChange={setShowTemplateSelection}
+          templateType="funnel_step"
+          onSelectTemplate={handleTemplateSelect}
+        />
       </DialogContent>
     </Dialog>
   );
