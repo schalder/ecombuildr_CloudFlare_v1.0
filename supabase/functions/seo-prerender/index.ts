@@ -21,9 +21,14 @@ serve(async (req) => {
   
   // Get domain and path from query parameters first (Netlify prerendering), then fall back to headers/pathname
   const domainParam = url.searchParams.get('domain')
-  const pathParam = url.searchParams.get('path')
+  let pathParam = url.searchParams.get('path')
   
-  const path = pathParam || url.pathname || '/'
+  // Normalize path: decode URI, ensure leading slash, remove trailing slash (except for root)
+  let path = pathParam || url.pathname || '/'
+  if (path !== '/') {
+    path = '/' + decodeURIComponent(path).replace(/^\/+|\/+$/g, '')
+  }
+  
   const domain = domainParam || req.headers.get('x-forwarded-host') || req.headers.get('host') || 'ecombuildr.com'
   
   console.log('🔍 SEO Prerender request:', { 
@@ -94,6 +99,7 @@ async function getHTMLSnapshot(supabase: any, domain: string, path: string): Pro
       console.log('🌐 Custom domain detected:', domain, 'path:', path)
       
       // Look up custom domain mapping to get content_id and content_type
+      // Try both verified and unverified domains to handle DNS propagation delays
       const { data: customDomainData, error: domainError } = await supabase
         .from('custom_domains')
         .select(`
@@ -105,8 +111,6 @@ async function getHTMLSnapshot(supabase: any, domain: string, path: string): Pro
           )
         `)
         .eq('domain', domain)
-        .eq('is_verified', true)
-        .eq('dns_configured', true)
         .maybeSingle()
       
       if (domainError) {

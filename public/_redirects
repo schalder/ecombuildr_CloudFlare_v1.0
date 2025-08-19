@@ -9,4 +9,4 @@
 /robots.txt  200
 
 # SEO prerender for all other routes (custom domains and ecombuildr.com)
-/*  https://fhqwacmokbtbspkxjixf.functions.supabase.co/seo-prerender  200
+/*  https://fhqwacmokbtbspkxjixf.functions.supabase.co/seo-prerender?domain=:host&path=/:splat  200
