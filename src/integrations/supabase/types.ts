@@ -1270,6 +1270,42 @@ export type Database = {
         }
         Relationships: []
       }
+      platform_shipping_accounts: {
+        Row: {
+          api_key: string
+          created_at: string
+          id: string
+          is_active: boolean
+          provider: string
+          secret_key: string
+          settings: Json
+          updated_at: string
+          webhook_token: string | null
+        }
+        Insert: {
+          api_key: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          provider: string
+          secret_key: string
+          settings?: Json
+          updated_at?: string
+          webhook_token?: string | null
+        }
+        Update: {
+          api_key?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          provider?: string
+          secret_key?: string
+          settings?: Json
+          updated_at?: string
+          webhook_token?: string | null
+        }
+        Relationships: []
+      }
       platform_support_settings: {
         Row: {
           availability_message: string | null
@@ -2309,6 +2345,22 @@ export type Database = {
       get_imported_products: {
         Args: { store_id_param: string }
         Returns: string[]
+      }
+      get_library_product_orders: {
+        Args: { library_product_id_param: string }
+        Returns: {
+          created_at: string
+          customer_email: string
+          customer_name: string
+          order_id: string
+          order_number: string
+          price: number
+          product_name: string
+          quantity: number
+          status: string
+          store_name: string
+          total: number
+        }[]
       }
       increment_usage: {
         Args: { _resource_type: string; _user_id: string }
