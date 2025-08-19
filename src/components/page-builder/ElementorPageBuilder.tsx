@@ -102,6 +102,12 @@ type SelectionType = {
   grandParentId?: string;
 };
 
+type HoveredItemType = {
+  type: 'section' | 'row' | 'column' | 'element';
+  id: string;
+  depth: number;
+} | null;
+
 const ELEMENT_CATEGORIES = [
   {
     name: 'Basic',
@@ -171,6 +177,7 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = memo(({
     () => ensureAnchors(initialData || { sections: [] })
   );
   const [selection, setSelection] = useState<SelectionType | null>(null);
+  const [hoveredItem, setHoveredItem] = useState<HoveredItemType>(null);
   const [showColumnModal, setShowColumnModal] = useState<{ sectionId: string; insertIndex?: number } | null>(null);
   const [deviceType, setDeviceType] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -194,6 +201,15 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = memo(({
     setData(ensured);
     onChange(ensured);
   }, [onChange]);
+
+  // Hover tracking handlers
+  const handleMouseEnter = useCallback((type: 'section' | 'row' | 'column' | 'element', id: string, depth: number) => {
+    setHoveredItem({ type, id, depth });
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    setHoveredItem(null);
+  }, []);
 
   const generateId = () => `pb-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
@@ -950,6 +966,10 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = memo(({
                           selection={selection}
                           onSelectionChange={setSelection}
                           onAddSectionAfter={() => addSectionAfter(sectionIndex)}
+                          hoveredItem={hoveredItem}
+                          onMouseEnter={handleMouseEnter}
+                          onMouseLeave={handleMouseLeave}
+                          shouldShowToolbar={shouldShowToolbar}
                         />
                         
                         {/* Section drop zone after each section */}
@@ -1140,6 +1160,10 @@ interface SectionComponentProps {
   selection: SelectionType | null;
   onSelectionChange: (selection: SelectionType | null) => void;
   onAddSectionAfter: () => void;
+  hoveredItem: HoveredItemType;
+  onMouseEnter: (type: 'section' | 'row' | 'column' | 'element', id: string, depth: number) => void;
+  onMouseLeave: () => void;
+  shouldShowToolbar: (type: 'section' | 'row' | 'column' | 'element', id: string) => boolean;
 }
 
 const SectionComponent: React.FC<SectionComponentProps> = ({
@@ -1169,7 +1193,11 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
   onDuplicateElement,
   selection,
   onSelectionChange,
-  onAddSectionAfter
+  onAddSectionAfter,
+  hoveredItem,
+  onMouseEnter,
+  onMouseLeave,
+  shouldShowToolbar
 }) => {
   const [isHovered, setIsHovered] = useState(false);
   const userBackground = hasUserBackground(section.styles);
@@ -1195,30 +1223,41 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
       } ${
         isSelected && !userBackground 
           ? 'border-primary bg-primary/5' 
-          : isHovered && !userBackground
+          : hoveredItem?.type === 'section' && hoveredItem?.id === section.id && !userBackground
             ? 'border-primary/50 bg-primary/2' 
             : !userBackground ? 'border-transparent' : ''
       } ${
         isDragging ? 'opacity-50' : ''
       }`}
       style={renderSectionStyles(section)}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      onMouseEnter={() => onMouseEnter('section', section.id, 0)}
+      onMouseLeave={onMouseLeave}
       onClick={(e) => {
         e.stopPropagation();
         onSelect();
       }}
     >
       {/* Section Toolbar */}
-      {(isHovered || isSelected) && (
-        <div className="absolute -top-12 left-0 z-20 flex items-center gap-1 bg-white text-gray-800 border px-3 py-1 rounded-md text-xs shadow-lg">
+      {shouldShowToolbar('section', section.id) && (
+        <div className="absolute -top-12 left-0 z-20 flex items-center gap-1 bg-blue-100 text-gray-800 border border-blue-200 px-3 py-1 rounded-md text-xs shadow-lg">
           <Grip className="h-3 w-3" />
           <span className="font-medium">Section</span>
           <Separator orientation="vertical" className="mx-1 h-4" />
           <Button 
             variant="ghost" 
             size="sm" 
-            className="h-6 w-6 p-0 hover:bg-gray-100" 
+            className="h-6 w-6 p-0 hover:bg-blue-200" 
+            onClick={(e) => {
+              e.stopPropagation();
+              onDuplicate();
+            }}
+          >
+            <Copy className="h-3 w-3" />
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-6 w-6 p-0 hover:bg-blue-200" 
             onClick={(e) => {
               e.stopPropagation();
               onMoveSectionUp();
@@ -1230,7 +1269,7 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
           <Button 
             variant="ghost" 
             size="sm" 
-            className="h-6 w-6 p-0 hover:bg-gray-100" 
+            className="h-6 w-6 p-0 hover:bg-blue-200" 
             onClick={(e) => {
               e.stopPropagation();
               onMoveSectionDown();
@@ -1239,54 +1278,75 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
           >
             <ArrowDown className="h-3 w-3" />
           </Button>
-           <Button 
-             variant="ghost" 
-             size="sm" 
-             className="h-6 w-6 p-0 hover:bg-gray-100" 
-             onClick={(e) => {
-               e.stopPropagation();
-               onAddRow();
-             }}
-           >
-             <Plus className="h-3 w-3" />
-           </Button>
-           <Button 
-             variant="ghost" 
-             size="sm" 
-             className="h-6 w-6 p-0 hover:bg-gray-100" 
-             onClick={(e) => {
-               e.stopPropagation();
-               onAddSectionAfter();
-             }}
-           >
-             <Plus className="h-3 w-3" />
-           </Button>
-          <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-gray-100" onClick={onDuplicate}>
-            <Copy className="h-3 w-3" />
-          </Button>
-          <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-red-100 hover:text-red-600" onClick={onDelete}>
-            <Trash2 className="h-3 w-3" />
-          </Button>
           <Button 
             variant="ghost" 
             size="sm" 
-            className="h-6 w-6 p-0 hover:bg-gray-100"
+            className="h-6 w-6 p-0 hover:bg-red-200 hover:text-red-600" 
             onClick={(e) => {
               e.stopPropagation();
-              onSelectionChange({ type: 'section', id: section.id });
+              onDelete();
             }}
           >
-            <Settings className="h-3 w-3" />
+            <Trash2 className="h-3 w-3" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-6 w-6 p-0 hover:bg-blue-200"
+            onClick={(e) => {
+              e.stopPropagation();
+              onAddSectionAfter();
+            }}
+          >
+            <Plus className="h-3 w-3" />
           </Button>
         </div>
       )}
 
-      <div 
-        className="w-full mx-auto p-4"
-        style={{ 
-          maxWidth: SECTION_WIDTHS[section.width]
-        }}
-      >
+      {/* Section Content */}
+      <div className="min-h-[60px]">
+        {(section.rows || []).length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">
+            <Plus className="h-8 w-8 mx-auto mb-2 opacity-50" />
+            <p className="text-sm">Click to add a row</p>
+          </div>
+        ) : (
+          (section.rows || []).map((row, rowIndex) => (
+            <RowComponent
+              key={row.id}
+              row={row}
+              rowIndex={rowIndex}
+              totalRows={(section.rows || []).length}
+              sectionId={section.id}
+              deviceType={deviceType}
+              isSelected={selection?.type === 'row' && selection.id === row.id}
+              onSelect={() => onSelectionChange({ type: 'row', id: row.id, parentId: section.id })}
+              onDelete={() => onDeleteRow(row.id)}
+              onDuplicate={() => {}} // Implement if needed
+              onAddRow={() => onAddRow(rowIndex + 1)}
+              onMoveElement={onMoveElement}
+              onMoveElementUp={onMoveElementUp}
+              onMoveElementDown={onMoveElementDown}
+              onMoveRowUp={() => onMoveRowUp(section.id, row.id)}
+              onMoveRowDown={() => onMoveRowDown(section.id, row.id)}
+              onMoveColumn={onMoveColumn}
+              onAddElement={onAddElement}
+              onUpdateElement={onUpdateElement}
+              onDeleteElement={onDeleteElement}
+              onDuplicateElement={onDuplicateElement}
+              selection={selection}
+              onSelectionChange={onSelectionChange}
+              hoveredItem={hoveredItem}
+              onMouseEnter={onMouseEnter}
+              onMouseLeave={onMouseLeave}
+              shouldShowToolbar={shouldShowToolbar}
+            />
+          ))
+        )}
+      </div>
+    </div>
+  );
+};
         {(!section.rows || section.rows.length === 0) ? (
           <div className="p-12 text-center border border-dashed border-border rounded-lg">
             <p className="text-muted-foreground mb-4">This section is empty</p>

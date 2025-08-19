@@ -19,6 +19,10 @@ interface RowRendererProps {
   onMoveElement?: (elementId: string, sectionId: string, rowId: string, columnId: string, insertIndex: number) => void;
   onRemoveElement: (elementId: string) => void;
   onAddRowAfter: () => void;
+  hoveredItem?: { type: string; id: string; depth: number } | null;
+  onMouseEnter?: (type: 'section' | 'row' | 'column' | 'element', id: string, depth: number) => void;
+  onMouseLeave?: () => void;
+  shouldShowToolbar?: (type: 'section' | 'row' | 'column' | 'element', id: string) => boolean;
 }
 
 export const RowRenderer: React.FC<RowRendererProps> = ({
@@ -32,9 +36,13 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
   onAddElement,
   onMoveElement,
   onRemoveElement,
-  onAddRowAfter
+  onAddRowAfter,
+  hoveredItem,
+  onMouseEnter,
+  onMouseLeave,
+  shouldShowToolbar
 }) => {
-  const [isHovered, setIsHovered] = React.useState(false);
+  const showToolbar = shouldShowToolbar && shouldShowToolbar('row', row.id);
   
   const [{ isOver }, drop] = isPreviewMode 
     ? [{ isOver: false }, React.useRef(null)]
@@ -164,20 +172,18 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
         'relative group min-h-[80px] transition-all duration-200',
         // Only apply border/background styles if not in preview mode
         !isPreviewMode && 'border border-dashed',
-        !isPreviewMode && isHovered && 'border-primary/30',
-        !isPreviewMode && isHovered && !userBackground && 'bg-primary/5',
-        !isPreviewMode && !isHovered && 'border-transparent',
+        !isPreviewMode && 'border-transparent',
         !isPreviewMode && isOver && 'border-primary/20 rounded-lg',
         !isPreviewMode && isOver && !userBackground && 'bg-primary/5'
       )}
       style={getRowStyles()}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      onMouseEnter={onMouseEnter ? () => onMouseEnter('row', row.id, 1) : undefined}
+      onMouseLeave={onMouseLeave}
       onClick={handleRowClick}
     >
       {/* Row Controls */}
-      {!isPreviewMode && isHovered && (
-        <div className="absolute -top-8 left-0 flex items-center space-x-1 bg-primary text-primary-foreground px-2 py-1 rounded-md text-xs z-10">
+      {!isPreviewMode && showToolbar && (
+        <div className="absolute -top-8 left-0 flex items-center space-x-1 bg-violet-100 border border-violet-200 text-gray-800 px-2 py-1 rounded-md text-xs z-10">
           <GripVertical className="h-3 w-3" />
           <Columns className="h-3 w-3" />
           <span>Row</span>
@@ -185,7 +191,7 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
             <Button
               size="sm"
               variant="ghost"
-              className="h-6 w-6 p-0 hover:bg-secondary-foreground/20"
+              className="h-6 w-6 p-0 hover:bg-violet-200"
               onClick={handleDuplicateRow}
             >
               <Copy className="h-3 w-3" />
@@ -193,7 +199,7 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
             <Button
               size="sm"
               variant="ghost"
-              className="h-6 w-6 p-0 hover:bg-destructive/20"
+              className="h-6 w-6 p-0 hover:bg-red-200 hover:text-red-600"
               onClick={handleDeleteRow}
             >
               <Trash2 className="h-3 w-3" />
@@ -201,7 +207,7 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
             <Button
               size="sm"
               variant="ghost"
-              className="h-6 w-6 p-0 hover:bg-secondary-foreground/20"
+              className="h-6 w-6 p-0 hover:bg-violet-200"
               onClick={(e) => {
                 e.stopPropagation();
                 onAddRowAfter();
