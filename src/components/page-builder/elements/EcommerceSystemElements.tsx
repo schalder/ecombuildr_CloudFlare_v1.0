@@ -758,13 +758,16 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
       
       console.debug('[CheckoutFullElement] Enhanced shipping calculation:', {
         websiteShipping: !!websiteShipping,
+        websiteShippingEnabled: websiteShipping?.enabled,
         cartItems: cartItemsWithShipping.length,
+        shippingAddress,
         shippingResult: shippingCalculation,
+        formValues: { city: form.shipping_city, area: form.shipping_area },
         cost
       });
     };
 
-    if (productShippingData.size > 0 || items.length === 0) {
+    if (items.length > 0 || !isEditing) {
       computeShipping();
     }
   }, [websiteShipping, form.shipping_city, form.shipping_area, form.shipping_postal_code, form.shipping_address, items, total, productShippingData]);
@@ -939,14 +942,15 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
 
   if (!store) return <div className="text-center">Loading store...</div>;
   
-  // Show preview with mock data in builder mode when cart is empty
-  const displayItems = items.length > 0 ? items : (isEditing ? [
+  // Show mock data only when cart is empty AND in editing mode
+  const shouldShowMockData = items.length === 0 && isEditing;
+  const displayItems = shouldShowMockData ? [
     { id: 'preview-1', productId: 'preview-1', name: 'Sample Product', price: 49.99, quantity: 2, image: '/placeholder.svg' },
     { id: 'preview-2', productId: 'preview-2', name: 'Another Product', price: 29.99, quantity: 1, image: '/placeholder.svg' }
-  ] : []);
+  ] : items;
   
-  const displayTotal = items.length > 0 ? total : (isEditing ? 129.97 : 0);
-  const displayShippingCost = items.length > 0 ? shippingCost : (isEditing ? 10 : 0);
+  const displayTotal = shouldShowMockData ? 129.97 : total;
+  const displayShippingCost = shouldShowMockData ? 10 : shippingCost;
   
   if (!isEditing && items.length === 0) {
     return <div className="text-center text-muted-foreground">Your cart is empty.</div>;
@@ -1070,8 +1074,8 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
                     <div className="flex flex-wrap items-center justify-between gap-2 min-w-0"><span className="truncate">Shipping</span><span className="font-semibold shrink-0 whitespace-nowrap text-right">{formatCurrency(displayShippingCost)}</span></div>
                     <div className="flex flex-wrap items-center justify-between gap-2 min-w-0 font-bold"><span className="truncate">Total</span><span className="shrink-0 whitespace-nowrap text-right">{formatCurrency(displayTotal+displayShippingCost)}</span></div>
 
-                    <Button size={buttonSize as any} className={`w-full mt-2 element-${element.id}`} style={buttonInline as React.CSSProperties} onClick={handleSubmit} disabled={loading || isEditing}>
-                      {isEditing ? 'Preview Mode - Order Disabled' : (loading? 'Placing Order...' : buttonLabel)}
+                    <Button size={buttonSize as any} className={`w-full mt-2 element-${element.id}`} style={buttonInline as React.CSSProperties} onClick={handleSubmit} disabled={loading || (isEditing && items.length === 0)}>
+                      {isEditing && items.length === 0 ? 'Preview Mode - Add items to cart' : (loading? 'Placing Order...' : buttonLabel)}
                     </Button>
 
                     {terms.enabled && (
