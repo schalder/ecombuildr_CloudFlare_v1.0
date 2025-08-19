@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ColorPicker } from '@/components/ui/color-picker';
 import { BoxShadowPicker } from '@/components/ui/box-shadow-picker';
-import { GradientPicker } from '@/components/ui/gradient-picker';
+import GradientPicker from '@/components/ui/gradient-picker';
 import { Switch } from '@/components/ui/switch';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';

@@ -56,7 +56,7 @@ const PRESET_GRADIENTS = [
   }
 ];
 
-export function GradientPicker({ value = '', onChange, label = 'Gradient' }: GradientPickerProps) {
+function GradientPicker({ value = '', onChange, label = 'Gradient' }: GradientPickerProps) {
   const [customGradient, setCustomGradient] = useState(value);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
 
@@ -175,3 +175,5 @@ export function GradientPicker({ value = '', onChange, label = 'Gradient' }: Gra
     </div>
   );
 }
+
+export default GradientPicker;
