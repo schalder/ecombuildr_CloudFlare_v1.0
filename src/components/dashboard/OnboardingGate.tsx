@@ -11,17 +11,6 @@ export function OnboardingGate() {
   const { funnels, loading: funnelsLoading } = useStoreFunnels(store?.id || '');
   const location = useLocation();
 
-  // Debug logging
-  console.log('OnboardingGate Debug:', {
-    authLoading,
-    storeLoading,
-    websitesLoading,
-    funnelsLoading,
-    store: !!store,
-    websitesCount: websites?.length || 0,
-    funnelsCount: funnels?.length || 0,
-    pathname: location.pathname
-  });
 
   // Redirect if not authenticated
   if (!user && !authLoading) {

@@ -31,7 +31,7 @@ const Auth = () => {
 
   // Redirect if already authenticated
   if (user && !loading) {
-    return <Navigate to="/dashboard/websites/create" replace />;
+    return <Navigate to="/dashboard/overview" replace />;
   }
 
   const handleSignIn = async (e: React.FormEvent) => {
