@@ -350,13 +350,13 @@ const FunnelManagement = () => {
                                       {/* Step Preview Thumbnail */}
                                       <div className="flex-shrink-0">
                                         {step.preview_image_url ? (
-                                           <img 
-                                             src={step.preview_image_url} 
-                                             alt={`Preview of ${step.title}`}
-                                             className="w-10 h-7 object-contain bg-white rounded border"
-                                           />
-                                         ) : (
-                                           <div className="w-10 h-7 bg-muted border rounded flex items-center justify-center">
+                                          <img 
+                                            src={step.preview_image_url} 
+                                            alt={`Preview of ${step.title}`}
+                                            className="w-12 h-9 object-contain bg-white rounded border"
+                                          />
+                                        ) : (
+                                          <div className="w-12 h-9 bg-muted border rounded flex items-center justify-center">
                                             <Mail className="h-3 w-3 text-muted-foreground" />
                                           </div>
                                         )}

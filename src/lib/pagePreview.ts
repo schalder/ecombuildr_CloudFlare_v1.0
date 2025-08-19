@@ -34,7 +34,7 @@ export const captureAndUploadPreview = async (
     console.log('Capturing preview with html2canvas...');
 
     // Capture the element as canvas
-    let canvas = await html2canvas(element, {
+    const canvas = await html2canvas(element, {
       width: captureWidth,
       height: captureHeight,
       scale: scale,
@@ -71,15 +71,6 @@ export const captureAndUploadPreview = async (
         clonedDoc.head.appendChild(style);
       }
     });
-
-    // Apply trimming and aspect ratio normalization
-    console.log('Trimming white borders from captured canvas...');
-    const trimmedCanvas = trimWhiteBorders(canvas);
-    
-    console.log('Normalizing to fixed aspect ratio...');
-    const normalizedCanvas = toFixedAspect(trimmedCanvas);
-    
-    canvas = normalizedCanvas;
 
     // Convert canvas to blob
     const blob = await new Promise<Blob>((resolve) => {
@@ -144,75 +135,28 @@ const hideBuilderUI = (): (() => void) => {
 };
 
 /**
- * Finds the first section that has actual content for tighter preview capture
+ * Finds the best element to capture for preview
  */
-const findFirstSectionWithContent = (): HTMLElement | null => {
-  console.log('Looking for first section with content...');
+const findContentArea = (): HTMLElement | null => {
+  console.log('Searching for content area to capture...');
   
-  // Priority 1: Look for page builder sections with content
-  const sections = document.querySelectorAll('[data-pb-section-id]');
-  
-  for (const section of sections) {
-    const htmlSection = section as HTMLElement;
-    
-    // Check if section has visible elements (not just empty containers)
-    const elements = htmlSection.querySelectorAll('[data-pb-element-id], img, h1, h2, h3, h4, h5, h6, p, button, a, video, div:not([class*="empty"]):not([class*="placeholder"])');
-    const hasVisibleContent = Array.from(elements).some(el => {
-      const htmlEl = el as HTMLElement;
-      const styles = window.getComputedStyle(htmlEl);
-      const hasText = htmlEl.innerText?.trim().length > 0;
-      const hasImage = htmlEl.tagName === 'IMG' || htmlEl.querySelector('img');
-      const isVisible = styles.display !== 'none' && styles.visibility !== 'hidden' && styles.opacity !== '0';
-      
-      return isVisible && (hasText || hasImage);
-    });
-    
-    if (hasVisibleContent) {
-      console.log('Found first section with content');
-      return htmlSection;
-    }
-  }
-
-  // Priority 2: Look for any content sections or containers
-  const contentSelectors = [
-    '[data-content-area="true"]',
-    '.page-builder-content',
-    '.canvas-content',
-    '.funnel-content'
-  ];
-  
-  for (const selector of contentSelectors) {
-    const element = document.querySelector(selector) as HTMLElement;
-    if (element && element.children.length > 0) {
-      console.log(`Found content area using selector: ${selector}`);
-      return element;
-    }
+  // Priority 1: Content area (sections only, no builder UI)
+  const contentArea = document.querySelector('[data-content-area="true"]') as HTMLElement;
+  if (contentArea) {
+    console.log('Found content area for preview capture');
+    return contentArea;
   }
   
-  console.log('No sections with content found, falling back to canvas area');
-  return findCanvasArea();
-};
-
-/**
- * Finds the canvas area as fallback - enhanced with more selectors
- */
-const findCanvasArea = (): HTMLElement | null => {
-  console.log('Searching for canvas area to capture...');
-  
-  // Priority 1: Canvas area selectors
-  const canvasSelectors = [
+  // Priority 2: Canvas area (fallback to current method)
+  const selectors = [
     '[data-canvas-area="true"]',
-    '[data-content-area="true"]',
     '.canvas-area', 
     '[data-testid="canvas-area"]',
     '.page-builder-canvas',
-    '.elementor-canvas-area',
-    '.canvas',
-    '.page-content',
-    '.builder-content'
+    '.elementor-canvas-area'
   ];
   
-  for (const selector of canvasSelectors) {
+  for (const selector of selectors) {
     const element = document.querySelector(selector) as HTMLElement;
     if (element) {
       console.log(`Found canvas element using selector: ${selector}`);
@@ -220,156 +164,31 @@ const findCanvasArea = (): HTMLElement | null => {
     }
   }
   
-  // Priority 2: Look for page builder sections and their parent
-  const sections = document.querySelectorAll('[data-pb-section-id], [class*="section"], .funnel-step, .page-builder');
+  // Priority 3: Look for page builder sections directly
+  const sections = document.querySelectorAll('[data-pb-section-id]');
   if (sections.length > 0) {
-    console.log(`Found ${sections.length} sections, using first one's parent container`);
-    
-    // Try to find a suitable parent container
-    for (const section of sections) {
-      const parents = [
-        section.closest('.flex-1'),
-        section.closest('.canvas'),
-        section.closest('.builder'),
-        section.closest('.page-content'),
-        section.closest('.main-content'),
-        section.parentElement
-      ].filter(Boolean) as HTMLElement[];
-      
-      for (const parent of parents) {
-        if (parent && parent.offsetWidth > 300 && parent.offsetHeight > 200) {
-          console.log('Found suitable parent container');
-          return parent;
-        }
-      }
-    }
-    
-    // If no good parent, use the first section itself
-    console.log('Using first section directly');
-    return sections[0] as HTMLElement;
-  }
-  
-  // Priority 3: Try main content areas
-  const mainSelectors = [
-    'main',
-    '#main',
-    '.main',
-    '#content',
-    '.content',
-    '[role="main"]'
-  ];
-  
-  for (const selector of mainSelectors) {
-    const element = document.querySelector(selector) as HTMLElement;
-    if (element && element.children.length > 0) {
-      console.log(`Found main content using selector: ${selector}`);
-      return element;
+    // Find the common parent container
+    const parent = sections[0].closest('.canvas, .builder, .page-content, .flex-1') as HTMLElement || 
+                  sections[0].parentElement as HTMLElement;
+    if (parent) {
+      console.log('Found canvas element by searching page builder sections');
+      return parent;
     }
   }
   
-  console.log('No suitable canvas area found');
+  // Priority 4: Look for any sections with class containing "section"
+  const pageBuilderContainers = document.querySelectorAll('[class*="section"], [id*="pb-"]');
+  if (pageBuilderContainers.length > 0) {
+    const parent = pageBuilderContainers[0].closest('.flex-1, .canvas, .builder') as HTMLElement || 
+                  pageBuilderContainers[0].parentElement as HTMLElement;
+    if (parent) {
+      console.log('Found canvas element by searching generic sections');
+      return parent;
+    }
+  }
+  
+  console.log('No content area found');
   return null;
-};
-
-/**
- * Trims white borders from a canvas to remove excess whitespace
- */
-const trimWhiteBorders = (canvas: HTMLCanvasElement): HTMLCanvasElement => {
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return canvas;
-
-  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-  const data = imageData.data;
-  
-  let top = canvas.height;
-  let bottom = 0;
-  let left = canvas.width;
-  let right = 0;
-
-  // Find content bounds by detecting non-white pixels
-  for (let y = 0; y < canvas.height; y++) {
-    for (let x = 0; x < canvas.width; x++) {
-      const idx = (y * canvas.width + x) * 4;
-      const r = data[idx];
-      const g = data[idx + 1];
-      const b = data[idx + 2];
-      const a = data[idx + 3];
-      
-      // Check if pixel is not white/transparent (with some tolerance)
-      if (!(r > 250 && g > 250 && b > 250) || a < 250) {
-        top = Math.min(top, y);
-        bottom = Math.max(bottom, y);
-        left = Math.min(left, x);
-        right = Math.max(right, x);
-      }
-    }
-  }
-
-  // If no content found, return original
-  if (top >= bottom || left >= right) {
-    return canvas;
-  }
-
-  // Add small padding
-  const padding = 20;
-  top = Math.max(0, top - padding);
-  left = Math.max(0, left - padding);
-  bottom = Math.min(canvas.height - 1, bottom + padding);
-  right = Math.min(canvas.width - 1, right + padding);
-
-  // Create trimmed canvas
-  const trimmedWidth = right - left + 1;
-  const trimmedHeight = bottom - top + 1;
-  
-  const trimmedCanvas = document.createElement('canvas');
-  trimmedCanvas.width = trimmedWidth;
-  trimmedCanvas.height = trimmedHeight;
-  
-  const trimmedCtx = trimmedCanvas.getContext('2d');
-  if (trimmedCtx) {
-    trimmedCtx.drawImage(
-      canvas,
-      left, top, trimmedWidth, trimmedHeight,
-      0, 0, trimmedWidth, trimmedHeight
-    );
-  }
-
-  return trimmedCanvas;
-};
-
-/**
- * Normalizes canvas to fixed 4:3 aspect ratio (800x600) with white background
- */
-const toFixedAspect = (canvas: HTMLCanvasElement): HTMLCanvasElement => {
-  const targetWidth = 800;
-  const targetHeight = 600;
-  
-  const normalizedCanvas = document.createElement('canvas');
-  normalizedCanvas.width = targetWidth;
-  normalizedCanvas.height = targetHeight;
-  
-  const ctx = normalizedCanvas.getContext('2d');
-  if (!ctx) return canvas;
-
-  // Fill with white background
-  ctx.fillStyle = '#ffffff';
-  ctx.fillRect(0, 0, targetWidth, targetHeight);
-
-  // Calculate scaling to fit content while maintaining aspect ratio
-  const scaleX = targetWidth / canvas.width;
-  const scaleY = targetHeight / canvas.height;
-  const scale = Math.min(scaleX, scaleY);
-
-  const scaledWidth = canvas.width * scale;
-  const scaledHeight = canvas.height * scale;
-
-  // Center the content
-  const offsetX = (targetWidth - scaledWidth) / 2;
-  const offsetY = (targetHeight - scaledHeight) / 2;
-
-  ctx.drawImage(canvas, offsetX, offsetY, scaledWidth, scaledHeight);
-
-  return normalizedCanvas;
 };
 
 /**
@@ -448,8 +267,8 @@ export const capturePageBuilderPreview = async (
     // Wait for DOM to be ready
     await new Promise(resolve => setTimeout(resolve, 1500));
     
-    // Find the content area - try first section with content, then fallback to canvas
-    const contentElement = findFirstSectionWithContent();
+    // Find the content area
+    const contentElement = findContentArea();
     
     if (!contentElement) {
       console.warn('No canvas area found for preview capture');
