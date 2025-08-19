@@ -33,7 +33,7 @@ const testimonials = [
     revenue: "৪২,০০০ টাকা+ মাসিক",
     content: "হাতে বানানো গহনা বিক্রি করে এখন মাসে ৪০ হাজারের বেশি আয় হচ্ছে। এই ওয়েবসাইটের মাধ্যমে দেশের যেকোনো প্রান্তে পৌঁছে যাচ্ছি।",
     rating: 5,
-    avatar: "https://images.unsplash.com/photo-1614289371518-722f2615943d?w=100&h=100&fit=crop&crop=face"
+    avatar: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=100&h=100&fit=crop&crop=face"
   },
   {
     name: "আবদুর রহিম",
@@ -49,7 +49,7 @@ const testimonials = [
     revenue: "৬৮,০০০ টাকা+ মাসিক",
     content: "স্বাস্থ্য সম্পর্কিত পণ্য বিক্রি করে খুবই ভালো রেসপন্স পাচ্ছি। গ্রাহকরা নিয়মিত অর্ডার করছেন এবং রেটিং দিচ্ছেন। আয় প্রতি মাসে বাড়ছে।",
     rating: 5,
-    avatar: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=100&h=100&fit=crop&crop=face"
+    avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b789?w=100&h=100&fit=crop&crop=face"
   }
 ];
 
