@@ -20,8 +20,13 @@ serve(async (req) => {
   const url = new URL(req.url)
   
   // Get domain and path from query parameters first (Netlify prerendering), then fall back to headers/pathname
-  const domainParam = url.searchParams.get('domain')
+  let domainParam = url.searchParams.get('domain') 
   let pathParam = url.searchParams.get('path')
+  
+  // Handle Netlify's :host placeholder issue
+  if (domainParam === ':host' || domainParam === '' || !domainParam) {
+    domainParam = req.headers.get('x-forwarded-host') || req.headers.get('host') || 'ecombuildr.com'
+  }
   
   // Normalize path: decode URI, ensure leading slash, remove trailing slash (except for root)
   let path = pathParam || url.pathname || '/'
@@ -29,15 +34,39 @@ serve(async (req) => {
     path = '/' + decodeURIComponent(path).replace(/^\/+|\/+$/g, '')
   }
   
-  const domain = domainParam || req.headers.get('x-forwarded-host') || req.headers.get('host') || 'ecombuildr.com'
+  const domain = domainParam
+  const userAgent = req.headers.get('user-agent') || ''
   
   console.log('🔍 SEO Prerender request:', { 
     path, 
-    domain, 
+    domain,
+    originalDomainParam: url.searchParams.get('domain'), 
     'x-forwarded-host': req.headers.get('x-forwarded-host'),
     'host': req.headers.get('host'),
-    userAgent: req.headers.get('user-agent') 
+    userAgent 
   })
+
+  // Detect if request is from a human browser vs bot
+  const isBot = isLikelyBot(userAgent)
+  console.log('🤖 Bot detection:', { isBot, userAgent: userAgent.substring(0, 100) })
+  
+  // If human browser, redirect to SPA with no_prerender param
+  if (!isBot) {
+    const redirectUrl = new URL(req.url)
+    redirectUrl.pathname = path
+    redirectUrl.searchParams.set('no_prerender', '1')
+    redirectUrl.searchParams.delete('domain')
+    redirectUrl.searchParams.delete('path')
+    
+    console.log('👤 Redirecting human to SPA:', redirectUrl.toString())
+    return new Response(null, {
+      status: 302,
+      headers: {
+        ...corsHeaders,
+        'Location': redirectUrl.toString()
+      }
+    })
+  }
 
   try {
     // First try to get HTML snapshot from database
@@ -120,7 +149,8 @@ async function getHTMLSnapshot(supabase: any, domain: string, path: string): Pro
       
       if (!customDomainData?.domain_connections?.length) {
         console.log('❌ No domain connections found for:', domain)
-        return null
+        // Fallback: Try to find any published website page with this slug
+        return await getWebsitePageFallback(supabase, path, domain)
       }
       
       const connection = customDomainData.domain_connections[0]
@@ -621,4 +651,68 @@ function generateSEOTags(seo: {
   }
   
   return seoTags
+}
+
+// Bot detection function
+function isLikelyBot(userAgent: string): boolean {
+  if (!userAgent) return true // Assume bot if no user agent
+  
+  const botPatterns = [
+    // Search engines
+    'googlebot', 'bingbot', 'slurp', 'duckduckbot', 'baiduspider',
+    // Social media crawlers
+    'facebookexternalhit', 'twitterbot', 'linkedinbot', 'whatsapp',
+    // SEO tools
+    'screaming frog', 'ahrefs', 'semrush', 'moz',
+    // Other bots
+    'bot', 'crawler', 'spider', 'scraper'
+  ]
+  
+  const lowercaseUA = userAgent.toLowerCase()
+  return botPatterns.some(pattern => lowercaseUA.includes(pattern))
+}
+
+// Fallback function to find published website pages by path
+async function getWebsitePageFallback(supabase: any, path: string, domain: string): Promise<string | null> {
+  try {
+    console.log(`🔄 Attempting fallback: looking for published pages with path "${path}"`)
+    
+    // Extract potential slug from path
+    const slug = path === '/' ? '' : path.substring(1)
+    
+    // Try to find any published website page with this slug
+    let query = supabase
+      .from('website_pages')
+      .select(`
+        id,
+        title,
+        slug,
+        website_id,
+        websites(name, slug, store_id)
+      `)
+      .eq('is_published', true)
+    
+    if (slug) {
+      query = query.eq('slug', slug)
+    } else {
+      query = query.eq('is_homepage', true)
+    }
+    
+    const { data: pages, error } = await query
+    
+    if (error || !pages || pages.length === 0) {
+      console.log('❌ No fallback pages found')
+      return null
+    }
+    
+    // Use the first found page
+    const page = pages[0]
+    console.log(`✅ Fallback found page: "${page.title}" from website: "${page.websites?.name}"`)
+    
+    // Get snapshot for this page
+    return await getContentSnapshot(supabase, page.id, 'website_page', null)
+  } catch (error) {
+    console.error('Error in getWebsitePageFallback:', error)
+    return null
+  }
 }
