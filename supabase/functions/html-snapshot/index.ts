@@ -18,200 +18,143 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    const { contentType, contentId, customDomain } = await req.json()
+    const body = await req.json().catch(() => ({}))
+    const { contentType, contentId, customDomain } = body
     
     console.log(`🔍 Generating HTML snapshot for ${contentType}:${contentId}`)
     console.log(`📋 Request body:`, { contentType, contentId, customDomain })
 
+    if (!contentType || !contentId) {
+      throw new Error('Missing contentType or contentId in request body')
+    }
+
     let htmlContent = ''
     
-    if (contentType === 'website') {
-      // Fetch website and page data
-      const { data: website } = await supabase
-        .from('websites')
-        .select('*')
-        .eq('id', contentId)
-        .single()
+    try {
+      if (contentType === 'website_page') {
+        // Fetch specific website page
+        console.log(`📄 Fetching website page: ${contentId}`)
+        const { data: page, error: pageError } = await supabase
+          .from('website_pages')
+          .select('*')
+          .eq('id', contentId)
+          .maybeSingle()
 
-      if (!website) {
-        throw new Error('Website not found')
+        if (pageError) {
+          console.error('❌ Error fetching website page:', pageError)
+          throw new Error(`Error fetching website page: ${pageError.message}`)
+        }
+
+        if (!page) {
+          console.error('❌ Website page not found:', contentId)
+          throw new Error('Website page not found')
+        }
+
+        console.log(`✅ Found website page: ${page.title} (website_id: ${page.website_id})`)
+
+        // Fetch the related website separately
+        console.log(`🌐 Fetching website: ${page.website_id}`)
+        const { data: website, error: websiteError } = await supabase
+          .from('websites')
+          .select('*')
+          .eq('id', page.website_id)
+          .maybeSingle()
+
+        if (websiteError) {
+          console.error('❌ Error fetching website:', websiteError)
+          throw new Error(`Error fetching website: ${websiteError.message}`)
+        }
+
+        if (!website) {
+          console.error('❌ Website not found for page:', page.website_id)
+          throw new Error('Website not found for page')
+        }
+
+        console.log(`✅ Found website: ${website.name}`)
+        console.log(`🎨 Generating HTML for page: ${page.title}`)
+        htmlContent = generateWebsiteHTML(website, page, customDomain)
+        
+      } else {
+        throw new Error(`Unsupported content type: ${contentType}`)
       }
 
-      // Get homepage or first published page
-      const { data: homePage } = await supabase
-        .from('website_pages')
-        .select('*')
-        .eq('website_id', contentId)
-        .eq('is_published', true)
-        .eq('is_homepage', true)
-        .maybeSingle()
-
-      const pageData = homePage || await supabase
-        .from('website_pages')
-        .select('*')
-        .eq('website_id', contentId)
-        .eq('is_published', true)
-        .limit(1)
-        .single()
-
-      if (pageData) {
-        htmlContent = generateWebsiteHTML(website, pageData, customDomain)
-      }
+      console.log(`📝 Generated HTML content length: ${htmlContent.length}`)
       
-    } else if (contentType === 'funnel') {
-      // Fetch funnel data
-      const { data: funnel } = await supabase
-        .from('funnels')
-        .select('*')
-        .eq('id', contentId)
-        .single()
-
-      if (!funnel) {
-        throw new Error('Funnel not found')
-      }
-
-      // Get first funnel step
-      const { data: firstStep } = await supabase
-        .from('funnel_steps')
-        .select('*')
-        .eq('funnel_id', contentId)
-        .eq('is_published', true)
-        .order('step_order')
-        .limit(1)
-        .single()
-
-      htmlContent = generateFunnelHTML(funnel, firstStep, customDomain)
-      
-    } else if (contentType === 'website_page') {
-      // Fetch specific website page
-      console.log(`📄 Fetching website page: ${contentId}`)
-      const { data: page, error: pageError } = await supabase
-        .from('website_pages')
-        .select('*')
-        .eq('id', contentId)
-        .maybeSingle()
-
-      if (pageError) {
-        console.error('❌ Error fetching website page:', pageError)
-        throw new Error(`Error fetching website page: ${pageError.message}`)
-      }
-
-      if (!page) {
-        console.error('❌ Website page not found:', contentId)
-        throw new Error('Website page not found')
-      }
-
-      console.log(`✅ Found website page: ${page.title} (website_id: ${page.website_id})`)
-
-      // Fetch the related website separately
-      console.log(`🌐 Fetching website: ${page.website_id}`)
-      const { data: website, error: websiteError } = await supabase
-        .from('websites')
-        .select('*')
-        .eq('id', page.website_id)
-        .maybeSingle()
-
-      if (websiteError) {
-        console.error('❌ Error fetching website:', websiteError)
-        throw new Error(`Error fetching website: ${websiteError.message}`)
-      }
-
-      if (!website) {
-        console.error('❌ Website not found for page:', page.website_id)
-        throw new Error('Website not found for page')
-      }
-
-      console.log(`✅ Found website: ${website.name}`)
-      console.log(`🎨 Generating HTML for page: ${page.title}`)
-      htmlContent = generateWebsiteHTML(website, page, customDomain)
-      
-    } else if (contentType === 'funnel_step') {
-      // Fetch specific funnel step
-      const { data: step, error: stepError } = await supabase
-        .from('funnel_steps')
-        .select('*')
-        .eq('id', contentId)
-        .maybeSingle()
-
-      if (stepError) {
-        throw new Error(`Error fetching funnel step: ${stepError.message}`)
-      }
-
-      if (!step) {
-        throw new Error('Funnel step not found')
-      }
-
-      // Fetch the related funnel separately
-      const { data: funnel, error: funnelError } = await supabase
-        .from('funnels')
-        .select('*')
-        .eq('id', step.funnel_id)
-        .maybeSingle()
-
-      if (funnelError || !funnel) {
-        throw new Error('Funnel not found for step')
-      }
-
-      htmlContent = generateFunnelHTML(funnel, step, customDomain)
+    } catch (dataError) {
+      console.error('❌ Error fetching data:', dataError)
+      throw dataError
     }
 
     // Store the snapshot using manual update/insert approach to avoid constraint issues
     console.log(`💾 Storing HTML snapshot: ${contentType}:${contentId}`)
     
-    // First, check if a record already exists
-    let query = supabase
-      .from('html_snapshots')
-      .select('id')
-      .eq('content_id', contentId)
-      .eq('content_type', contentType)
-
-    if (customDomain) {
-      query = query.eq('custom_domain', customDomain)
-    } else {
-      query = query.is('custom_domain', null)
-    }
-
-    const { data: existingRecord } = await query.maybeSingle()
-
-    let result
-    if (existingRecord) {
-      // Update existing record
-      console.log(`🔄 Updating existing snapshot: ${existingRecord.id}`)
-      result = await supabase
+    try {
+      // First, check if a record already exists
+      let query = supabase
         .from('html_snapshots')
-        .update({
-          html_content: htmlContent,
-          generated_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', existingRecord.id)
-    } else {
-      // Insert new record
-      console.log(`✨ Creating new snapshot`)
-      result = await supabase
-        .from('html_snapshots')
-        .insert({
-          content_id: contentId,
-          content_type: contentType,
-          custom_domain: customDomain || null,
-          html_content: htmlContent,
-          generated_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        })
-    }
+        .select('id')
+        .eq('content_id', contentId)
+        .eq('content_type', contentType)
 
-    if (result.error) {
-      console.error('❌ Database error:', result.error)
-      throw result.error
-    }
+      if (customDomain) {
+        query = query.eq('custom_domain', customDomain)
+      } else {
+        query = query.is('custom_domain', null)
+      }
 
-    console.log('✅ HTML snapshot stored successfully')
+      const { data: existingRecord, error: selectError } = await query.maybeSingle()
+      
+      if (selectError) {
+        console.error('❌ Error checking existing record:', selectError)
+        throw selectError
+      }
+
+      let result
+      if (existingRecord) {
+        // Update existing record
+        console.log(`🔄 Updating existing snapshot: ${existingRecord.id}`)
+        result = await supabase
+          .from('html_snapshots')
+          .update({
+            html_content: htmlContent,
+            generated_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', existingRecord.id)
+      } else {
+        // Insert new record
+        console.log(`✨ Creating new snapshot`)
+        result = await supabase
+          .from('html_snapshots')
+          .insert({
+            content_id: contentId,
+            content_type: contentType,
+            custom_domain: customDomain || null,
+            html_content: htmlContent,
+            generated_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+      }
+
+      if (result.error) {
+        console.error('❌ Database error:', result.error)
+        throw result.error
+      }
+
+      console.log('✅ HTML snapshot stored successfully')
+      
+    } catch (dbError) {
+      console.error('❌ Database operation failed:', dbError)
+      throw dbError
+    }
 
     return new Response(
       JSON.stringify({ 
         success: true, 
         message: 'HTML snapshot generated successfully',
-        preview: htmlContent.substring(0, 500) + '...'
+        contentType,
+        contentId,
+        htmlLength: htmlContent.length
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -220,9 +163,12 @@ serve(async (req) => {
     )
 
   } catch (error) {
-    console.error('Error generating HTML snapshot:', error)
+    console.error('❌ Error generating HTML snapshot:', error)
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        stack: error.stack
+      }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500 
