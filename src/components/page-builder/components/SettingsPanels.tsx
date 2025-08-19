@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ColorPicker } from '@/components/ui/color-picker';
 import { BoxShadowPicker } from '@/components/ui/box-shadow-picker';
+import { GradientPicker } from '@/components/ui/gradient-picker';
 import { Switch } from '@/components/ui/switch';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -211,6 +212,12 @@ export const SectionSettings: React.FC<SectionSettingsProps> = ({ section, onUpd
             label="Background Color"
           />
           
+          <GradientPicker
+            value={section.styles?.backgroundGradient || ''}
+            onChange={(gradient) => handleStyleUpdate('backgroundGradient', gradient)}
+            label="Background Gradient"
+          />
+          
           <div className="space-y-2">
             <Label htmlFor="bg-image">Background Image URL</Label>
             <Input
@@ -218,6 +225,17 @@ export const SectionSettings: React.FC<SectionSettingsProps> = ({ section, onUpd
               value={section.styles?.backgroundImage || ''}
               onChange={(e) => handleStyleUpdate('backgroundImage', e.target.value)}
               placeholder="https://example.com/image.jpg"
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label>Background Opacity: <span className="text-muted-foreground">{Math.round((section.styles?.backgroundOpacity ?? 1) * 100)}%</span></Label>
+            <Slider
+              min={0}
+              max={1}
+              step={0.01}
+              value={[section.styles?.backgroundOpacity ?? 1]}
+              onValueChange={(value) => handleStyleUpdate('backgroundOpacity', value[0])}
             />
           </div>
           
@@ -533,6 +551,33 @@ export const RowSettings: React.FC<RowSettingsProps> = ({ row, onUpdate }) => {
             label="Background Color"
           />
           
+          <GradientPicker
+            value={row.styles?.backgroundGradient || ''}
+            onChange={(gradient) => handleStyleUpdate('backgroundGradient', gradient)}
+            label="Background Gradient"
+          />
+          
+          <div className="space-y-2">
+            <Label htmlFor="bg-image-row">Background Image URL</Label>
+            <Input
+              id="bg-image-row"
+              value={row.styles?.backgroundImage || ''}
+              onChange={(e) => handleStyleUpdate('backgroundImage', e.target.value)}
+              placeholder="https://example.com/image.jpg"
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label>Background Opacity: <span className="text-muted-foreground">{Math.round((row.styles?.backgroundOpacity ?? 1) * 100)}%</span></Label>
+            <Slider
+              min={0}
+              max={1}
+              step={0.01}
+              value={[row.styles?.backgroundOpacity ?? 1]}
+              onValueChange={(value) => handleStyleUpdate('backgroundOpacity', value[0])}
+            />
+          </div>
+          
           <BoxShadowPicker
             value={row.styles?.boxShadow || 'none'}
             onChange={(shadow) => handleStyleUpdate('boxShadow', shadow)}
@@ -820,6 +865,33 @@ export const ColumnSettings: React.FC<ColumnSettingsProps> = ({ column, onUpdate
             onChange={(color) => handleStyleUpdate('backgroundColor', color)}
             label="Background Color"
           />
+          
+          <GradientPicker
+            value={column.styles?.backgroundGradient || ''}
+            onChange={(gradient) => handleStyleUpdate('backgroundGradient', gradient)}
+            label="Background Gradient"
+          />
+          
+          <div className="space-y-2">
+            <Label htmlFor="bg-image-column">Background Image URL</Label>
+            <Input
+              id="bg-image-column"
+              value={column.styles?.backgroundImage || ''}
+              onChange={(e) => handleStyleUpdate('backgroundImage', e.target.value)}
+              placeholder="https://example.com/image.jpg"
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label>Background Opacity: <span className="text-muted-foreground">{Math.round((column.styles?.backgroundOpacity ?? 1) * 100)}%</span></Label>
+            <Slider
+              min={0}
+              max={1}
+              step={0.01}
+              value={[column.styles?.backgroundOpacity ?? 1]}
+              onValueChange={(value) => handleStyleUpdate('backgroundOpacity', value[0])}
+            />
+          </div>
           
           <BoxShadowPicker
             value={column.styles?.boxShadow || 'none'}

@@ -6,16 +6,21 @@ export const renderSectionStyles = (section: PageBuilderSection, deviceType: 'de
   const styles: React.CSSProperties = {};
   
   if (section.styles) {
-    // Background styles
-    if (section.styles.backgroundColor && section.styles.backgroundColor !== 'transparent') {
-      styles.backgroundColor = section.styles.backgroundColor;
-    }
-    
-    if (section.styles.backgroundImage) {
+    // Background styles - priority: gradient > image > color
+    if (section.styles.backgroundGradient) {
+      styles.background = section.styles.backgroundGradient;
+    } else if (section.styles.backgroundImage) {
       styles.backgroundImage = `url(${section.styles.backgroundImage})`;
       styles.backgroundSize = 'cover';
       styles.backgroundPosition = 'center';
       styles.backgroundRepeat = 'no-repeat';
+    } else if (section.styles.backgroundColor && section.styles.backgroundColor !== 'transparent') {
+      styles.backgroundColor = section.styles.backgroundColor;
+    }
+    
+    // Background opacity
+    if (section.styles.backgroundOpacity !== undefined && section.styles.backgroundOpacity < 1) {
+      styles.opacity = section.styles.backgroundOpacity;
     }
     
     // Box shadow styles
@@ -75,16 +80,21 @@ export const renderRowStyles = (row: PageBuilderRow, deviceType: 'desktop' | 'ta
   const styles: React.CSSProperties = {};
   
   if (row.styles) {
-    // Background styles
-    if (row.styles.backgroundColor && row.styles.backgroundColor !== 'transparent') {
-      styles.backgroundColor = row.styles.backgroundColor;
-    }
-    
-    if (row.styles.backgroundImage) {
+    // Background styles - priority: gradient > image > color
+    if (row.styles.backgroundGradient) {
+      styles.background = row.styles.backgroundGradient;
+    } else if (row.styles.backgroundImage) {
       styles.backgroundImage = `url(${row.styles.backgroundImage})`;
       styles.backgroundSize = 'cover';
       styles.backgroundPosition = 'center';
       styles.backgroundRepeat = 'no-repeat';
+    } else if (row.styles.backgroundColor && row.styles.backgroundColor !== 'transparent') {
+      styles.backgroundColor = row.styles.backgroundColor;
+    }
+    
+    // Background opacity
+    if (row.styles.backgroundOpacity !== undefined && row.styles.backgroundOpacity < 1) {
+      styles.opacity = row.styles.backgroundOpacity;
     }
     
     // Box shadow styles
@@ -144,16 +154,21 @@ export const renderColumnStyles = (column: PageBuilderColumn, deviceType: 'deskt
   const styles: React.CSSProperties = {};
   
   if (column.styles) {
-    // Background styles
-    if (column.styles.backgroundColor && column.styles.backgroundColor !== 'transparent') {
-      styles.backgroundColor = column.styles.backgroundColor;
-    }
-    
-    if (column.styles.backgroundImage) {
+    // Background styles - priority: gradient > image > color
+    if (column.styles.backgroundGradient) {
+      styles.background = column.styles.backgroundGradient;
+    } else if (column.styles.backgroundImage) {
       styles.backgroundImage = `url(${column.styles.backgroundImage})`;
       styles.backgroundSize = 'cover';
       styles.backgroundPosition = 'center';
       styles.backgroundRepeat = 'no-repeat';
+    } else if (column.styles.backgroundColor && column.styles.backgroundColor !== 'transparent') {
+      styles.backgroundColor = column.styles.backgroundColor;
+    }
+    
+    // Background opacity
+    if (column.styles.backgroundOpacity !== undefined && column.styles.backgroundOpacity < 1) {
+      styles.opacity = column.styles.backgroundOpacity;
     }
     
     // Box shadow styles
