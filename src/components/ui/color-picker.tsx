@@ -13,6 +13,7 @@ interface ColorPickerProps {
 }
 
 const presetColors = [
+  '#FFFFFF',
   '#10B981', '#059669', '#047857', '#065F46',
   '#3B82F6', '#2563EB', '#1D4ED8', '#1E40AF',
   '#8B5CF6', '#7C3AED', '#6D28D9', '#5B21B6',
