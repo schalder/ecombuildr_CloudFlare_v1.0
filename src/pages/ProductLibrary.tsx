@@ -275,11 +275,11 @@ export default function ProductLibrary() {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <Badge variant="outline" className="text-xs px-2 py-0.5">
-                          ${product.suggested_price}
+                          ৳{product.suggested_price}
                         </Badge>
                         {product.base_cost > 0 && (
                           <Badge variant="secondary" className="text-xs px-2 py-0.5">
-                            Cost: ${product.base_cost}
+                            Cost: ৳{product.base_cost}
                           </Badge>
                         )}
                       </div>

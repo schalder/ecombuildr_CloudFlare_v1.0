@@ -236,7 +236,7 @@ export default function AdminProductLibrary() {
                       <div className="flex items-center gap-1">
                         {product.suggested_price && (
                           <Badge variant="outline" className="text-xs px-2 py-0.5">
-                            ${product.suggested_price}
+                            ৳{product.suggested_price}
                           </Badge>
                         )}
                         {product.category && (
