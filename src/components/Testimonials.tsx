@@ -3,28 +3,52 @@ import { Star, Quote } from "lucide-react";
 
 const testimonials = [
   {
-    name: "Sarah Johnson",
-    business: "Boutique Fashion Store",
-    revenue: "$50K+ monthly",
-    content: "EcomBuildr transformed my Instagram business into a professional e-commerce store. Sales increased by 400% in the first 3 months!",
+    name: "রাহুল আহমেদ",
+    business: "ফ্যাশন বুটিক শপ",
+    revenue: "৫০,০০০ টাকা+ মাসিক",
+    content: "আমার ছোট কাপড়ের দোকান থেকে এখন অনলাইনে মাসে ৫০ হাজার টাকার বেশি বিক্রি হচ্ছে। এই প্ল্যাটফর্মের কারণে আমার ব্যবসা অনেক বেড়েছে!",
     rating: 5,
-    avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b789?w=100&h=100&fit=crop&crop=face"
+    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face"
   },
   {
-    name: "Mike Chen",
-    business: "Electronics Retailer",
-    revenue: "$75K+ monthly",
-    content: "The conversion optimization tools are incredible. Our cart abandonment dropped by 60% and average order value increased by 35%.",
+    name: "সালমা খাতুন",
+    business: "হোম মেইড ফুড",
+    revenue: "৩৫,০০০ টাকা+ মাসিক",
+    content: "ঘরে বসে রান্না করে এখন অনলাইনে বিক্রি করছি। ৩ মাসেই আমার অর্ডার ৩ গুণ বেড়েছে। খুবই সহজ এবং কার্যকর সিস্টেম!",
+    rating: 5,
+    avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop&crop=face"
+  },
+  {
+    name: "করিম উদ্দিন",
+    business: "ইলেকট্রনিক্স শপ",
+    revenue: "৭৫,০০০ টাকা+ মাসিক",
+    content: "আমার মোবাইল ও ইলেকট্রনিক্সের দোকান এখন অনলাইনেও চলছে। গ্রাহকরা খুবই সন্তুষ্ট এবং প্রতিদিন নতুন অর্ডার আসছে।",
     rating: 5,
     avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face"
   },
   {
-    name: "Amanda Rodriguez",
-    business: "Health & Wellness",
-    revenue: "$30K+ monthly",
-    content: "Finally, a platform that understands conversion. The templates are designed to sell, not just look pretty. ROI was immediate.",
+    name: "নাসরিন জাহান",
+    business: "হ্যান্ডমেইড জুয়েলারি",
+    revenue: "৪২,০০০ টাকা+ মাসিক",
+    content: "হাতে বানানো গহনা বিক্রি করে এখন মাসে ৪০ হাজারের বেশি আয় হচ্ছে। এই ওয়েবসাইটের মাধ্যমে দেশের যেকোনো প্রান্তে পৌঁছে যাচ্ছি।",
     rating: 5,
     avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop&crop=face"
+  },
+  {
+    name: "আবদুর রহিম",
+    business: "বইয়ের দোকান",
+    revenue: "২৮,০০০ টাকা+ মাসিক",
+    content: "আমার বইয়ের দোকান এখন অনলাইনে চালু হয়েছে। স্টুডেন্টরা সহজেই বই অর্ডার করতে পারছে। মাসে প্রায় ৩০ হাজার টাকার বিক্রি হচ্ছে।",
+    rating: 5,
+    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face"
+  },
+  {
+    name: "ফারিয়া আক্তার",
+    business: "হেলথ সাপ্লিমেন্ট",
+    revenue: "৬৮,০০০ টাকা+ মাসিক",
+    content: "স্বাস্থ্য সম্পর্কিত পণ্য বিক্রি করে খুবই ভালো রেসপন্স পাচ্ছি। গ্রাহকরা নিয়মিত অর্ডার করছেন এবং রেটিং দিচ্ছেন। আয় প্রতি মাসে বাড়ছে।",
+    rating: 5,
+    avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b789?w=100&h=100&fit=crop&crop=face"
   }
 ];
 
@@ -44,7 +68,7 @@ export const Testimonials = () => {
         </div>
 
         {/* Testimonials Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid md:grid-cols-2 gap-8">
           {testimonials.map((testimonial, index) => (
             <Card key={index} className="p-8 hover:shadow-medium transition-all duration-300 border-border/50 hover:border-accent/30 bg-gradient-card relative">
               
@@ -86,7 +110,7 @@ export const Testimonials = () => {
           <div className="inline-flex items-center gap-2 bg-accent/10 backdrop-blur-sm border border-accent/20 rounded-full px-6 py-3">
             <Star className="h-5 w-5 text-accent fill-current" />
             <span className="text-foreground font-medium">
-              4.9/5 rating from 2,500+ verified customers
+              ৪.৯/৫ রেটিং - ২,৫০০+ সন্তুষ্ট বাংলাদেশি গ্রাহক
             </span>
           </div>
         </div>
