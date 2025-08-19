@@ -40,7 +40,7 @@ const features = [
   {
     icon: CreditCard,
     title: "Multiple Payment Options",
-    description: "Accept payments via credit cards, digital wallets, and cash on delivery",
+    description: "Accept payments via bKash, Nagad, and cash on delivery",
     color: "text-primary",
     bgColor: "bg-primary-light"
   },
