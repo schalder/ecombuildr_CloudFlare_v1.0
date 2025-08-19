@@ -149,23 +149,43 @@ const hideBuilderUI = (): (() => void) => {
 const findFirstSectionWithContent = (): HTMLElement | null => {
   console.log('Looking for first section with content...');
   
-  // Look for page builder sections with content
+  // Priority 1: Look for page builder sections with content
   const sections = document.querySelectorAll('[data-pb-section-id]');
   
   for (const section of sections) {
     const htmlSection = section as HTMLElement;
     
     // Check if section has visible elements (not just empty containers)
-    const elements = htmlSection.querySelectorAll('[data-pb-element-id], img, h1, h2, h3, h4, h5, h6, p, button, a, video');
+    const elements = htmlSection.querySelectorAll('[data-pb-element-id], img, h1, h2, h3, h4, h5, h6, p, button, a, video, div:not([class*="empty"]):not([class*="placeholder"])');
     const hasVisibleContent = Array.from(elements).some(el => {
       const htmlEl = el as HTMLElement;
       const styles = window.getComputedStyle(htmlEl);
-      return styles.display !== 'none' && styles.visibility !== 'hidden' && styles.opacity !== '0';
+      const hasText = htmlEl.innerText?.trim().length > 0;
+      const hasImage = htmlEl.tagName === 'IMG' || htmlEl.querySelector('img');
+      const isVisible = styles.display !== 'none' && styles.visibility !== 'hidden' && styles.opacity !== '0';
+      
+      return isVisible && (hasText || hasImage);
     });
     
     if (hasVisibleContent) {
       console.log('Found first section with content');
       return htmlSection;
+    }
+  }
+
+  // Priority 2: Look for any content sections or containers
+  const contentSelectors = [
+    '[data-content-area="true"]',
+    '.page-builder-content',
+    '.canvas-content',
+    '.funnel-content'
+  ];
+  
+  for (const selector of contentSelectors) {
+    const element = document.querySelector(selector) as HTMLElement;
+    if (element && element.children.length > 0) {
+      console.log(`Found content area using selector: ${selector}`);
+      return element;
     }
   }
   
@@ -174,28 +194,25 @@ const findFirstSectionWithContent = (): HTMLElement | null => {
 };
 
 /**
- * Finds the canvas area as fallback
+ * Finds the canvas area as fallback - enhanced with more selectors
  */
 const findCanvasArea = (): HTMLElement | null => {
   console.log('Searching for canvas area to capture...');
   
-  // Priority 1: Content area (sections only, no builder UI)
-  const contentArea = document.querySelector('[data-content-area="true"]') as HTMLElement;
-  if (contentArea) {
-    console.log('Found content area for preview capture');
-    return contentArea;
-  }
-  
-  // Priority 2: Canvas area selectors
-  const selectors = [
+  // Priority 1: Canvas area selectors
+  const canvasSelectors = [
     '[data-canvas-area="true"]',
+    '[data-content-area="true"]',
     '.canvas-area', 
     '[data-testid="canvas-area"]',
     '.page-builder-canvas',
-    '.elementor-canvas-area'
+    '.elementor-canvas-area',
+    '.canvas',
+    '.page-content',
+    '.builder-content'
   ];
   
-  for (const selector of selectors) {
+  for (const selector of canvasSelectors) {
     const element = document.querySelector(selector) as HTMLElement;
     if (element) {
       console.log(`Found canvas element using selector: ${selector}`);
@@ -203,18 +220,54 @@ const findCanvasArea = (): HTMLElement | null => {
     }
   }
   
-  // Priority 3: Look for page builder sections directly
-  const sections = document.querySelectorAll('[data-pb-section-id]');
+  // Priority 2: Look for page builder sections and their parent
+  const sections = document.querySelectorAll('[data-pb-section-id], [class*="section"], .funnel-step, .page-builder');
   if (sections.length > 0) {
-    const parent = sections[0].closest('.canvas, .builder, .page-content, .flex-1') as HTMLElement || 
-                  sections[0].parentElement as HTMLElement;
-    if (parent) {
-      console.log('Found canvas element by searching page builder sections');
-      return parent;
+    console.log(`Found ${sections.length} sections, using first one's parent container`);
+    
+    // Try to find a suitable parent container
+    for (const section of sections) {
+      const parents = [
+        section.closest('.flex-1'),
+        section.closest('.canvas'),
+        section.closest('.builder'),
+        section.closest('.page-content'),
+        section.closest('.main-content'),
+        section.parentElement
+      ].filter(Boolean) as HTMLElement[];
+      
+      for (const parent of parents) {
+        if (parent && parent.offsetWidth > 300 && parent.offsetHeight > 200) {
+          console.log('Found suitable parent container');
+          return parent;
+        }
+      }
+    }
+    
+    // If no good parent, use the first section itself
+    console.log('Using first section directly');
+    return sections[0] as HTMLElement;
+  }
+  
+  // Priority 3: Try main content areas
+  const mainSelectors = [
+    'main',
+    '#main',
+    '.main',
+    '#content',
+    '.content',
+    '[role="main"]'
+  ];
+  
+  for (const selector of mainSelectors) {
+    const element = document.querySelector(selector) as HTMLElement;
+    if (element && element.children.length > 0) {
+      console.log(`Found main content using selector: ${selector}`);
+      return element;
     }
   }
   
-  console.log('No canvas area found');
+  console.log('No suitable canvas area found');
   return null;
 };
 
