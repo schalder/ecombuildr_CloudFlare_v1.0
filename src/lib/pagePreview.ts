@@ -31,6 +31,8 @@ export const captureAndUploadPreview = async (
     const captureWidth = Math.round(actualWidth * scale);
     const captureHeight = Math.round(actualHeight * scale);
 
+    console.log('Capturing preview with html2canvas...');
+
     // Capture the element as canvas
     const canvas = await html2canvas(element, {
       width: captureWidth,
@@ -38,27 +40,35 @@ export const captureAndUploadPreview = async (
       scale: scale,
       useCORS: true,
       allowTaint: false,
-      backgroundColor: 'transparent', // Let page background show through
+      backgroundColor: '#ffffff',
+      logging: false,
       ignoreElements: (element) => {
-        // Ignore builder UI elements and overlays
-        return element.hasAttribute('data-builder-ui') || 
-               element.classList?.contains('preview-ignore') || 
-               element.classList?.contains('fixed') ||
-               false;
-      },
-      onclone: (clonedDoc) => {
-        // Remove any remaining builder UI elements from the clone
-        const builderElements = clonedDoc.querySelectorAll('[data-builder-ui="true"]');
-        builderElements.forEach(el => el.remove());
+        // More specific ignoring to avoid issues
+        const shouldIgnore = element.hasAttribute('data-builder-ui') || 
+               element.classList?.contains('preview-ignore') ||
+               element.classList?.contains('builder-overlay') ||
+               element.classList?.contains('builder-toolbar') ||
+               // Only ignore fixed elements that are clearly UI overlays
+               (element.classList?.contains('fixed') && 
+                !element.closest('[data-content-area="true"]'));
         
-        // Remove fixed positioned elements that might interfere
-        const fixedElements = clonedDoc.querySelectorAll('.fixed');
-        fixedElements.forEach(el => {
-          const htmlEl = el as HTMLElement;
-          if (!htmlEl.closest('[data-content-area="true"]')) {
-            htmlEl.remove();
-          }
-        });
+        if (shouldIgnore) {
+          console.log('Ignoring element:', element.className, element.tagName);
+        }
+        return shouldIgnore;
+      },
+      // Don't manipulate DOM in onclone to avoid html2canvas issues
+      onclone: (clonedDoc) => {
+        console.log('Document cloned for capture');
+        // Just mark builder elements as hidden via CSS instead of removing them
+        const style = clonedDoc.createElement('style');
+        style.textContent = `
+          [data-builder-ui="true"] { display: none !important; }
+          .preview-ignore { display: none !important; }
+          .builder-overlay { display: none !important; }
+          .builder-toolbar { display: none !important; }
+        `;
+        clonedDoc.head.appendChild(style);
       }
     });
 
@@ -128,6 +138,8 @@ const hideBuilderUI = (): (() => void) => {
  * Finds the best element to capture for preview
  */
 const findContentArea = (): HTMLElement | null => {
+  console.log('Searching for content area to capture...');
+  
   // Priority 1: Content area (sections only, no builder UI)
   const contentArea = document.querySelector('[data-content-area="true"]') as HTMLElement;
   if (contentArea) {
@@ -140,7 +152,8 @@ const findContentArea = (): HTMLElement | null => {
     '[data-canvas-area="true"]',
     '.canvas-area', 
     '[data-testid="canvas-area"]',
-    '.page-builder-canvas'
+    '.page-builder-canvas',
+    '.elementor-canvas-area'
   ];
   
   for (const selector of selectors) {
@@ -151,17 +164,30 @@ const findContentArea = (): HTMLElement | null => {
     }
   }
   
-  // Priority 3: Look for page builder sections
+  // Priority 3: Look for page builder sections directly
+  const sections = document.querySelectorAll('[data-pb-section-id]');
+  if (sections.length > 0) {
+    // Find the common parent container
+    const parent = sections[0].closest('.canvas, .builder, .page-content, .flex-1') as HTMLElement || 
+                  sections[0].parentElement as HTMLElement;
+    if (parent) {
+      console.log('Found canvas element by searching page builder sections');
+      return parent;
+    }
+  }
+  
+  // Priority 4: Look for any sections with class containing "section"
   const pageBuilderContainers = document.querySelectorAll('[class*="section"], [id*="pb-"]');
   if (pageBuilderContainers.length > 0) {
     const parent = pageBuilderContainers[0].closest('.flex-1, .canvas, .builder') as HTMLElement || 
                   pageBuilderContainers[0].parentElement as HTMLElement;
     if (parent) {
-      console.log('Found canvas element by searching page builder content');
+      console.log('Found canvas element by searching generic sections');
       return parent;
     }
   }
   
+  console.log('No content area found');
   return null;
 };
 
@@ -236,6 +262,8 @@ export const capturePageBuilderPreview = async (
   type: 'website_page' | 'funnel_step' = 'website_page'
 ): Promise<string | null> => {
   try {
+    console.log(`Starting preview capture for ${type} ${pageId}`);
+    
     // Wait for DOM to be ready
     await new Promise(resolve => setTimeout(resolve, 1500));
     
@@ -247,14 +275,19 @@ export const capturePageBuilderPreview = async (
       return createEmptyPagePreview(pageId, type);
     }
     
-    // Check if page has actual content (sections with elements)
+    // Check if page has actual content
     const sections = contentElement.querySelectorAll('[data-pb-section-id]');
     const elements = contentElement.querySelectorAll('[data-pb-element-id]');
+    const allSections = contentElement.querySelectorAll('[class*="section"]');
     
-    console.log(`Found ${sections.length} sections and ${elements.length} elements in content area`);
+    console.log(`Found ${sections.length} data-pb sections, ${elements.length} elements, ${allSections.length} total sections`);
     
-    if (sections.length === 0 || elements.length === 0) {
-      console.log('Page is empty (no sections or elements), creating placeholder preview');
+    // More lenient content detection - check for any sections or meaningful content
+    const hasContent = sections.length > 0 || elements.length > 0 || allSections.length > 0 || 
+                      contentElement.children.length > 0;
+    
+    if (!hasContent) {
+      console.log('Page appears empty, creating placeholder preview');
       return createEmptyPagePreview(pageId, type);
     }
     
@@ -262,15 +295,39 @@ export const capturePageBuilderPreview = async (
     const restoreBuilderUI = hideBuilderUI();
     
     try {
-      // Wait a bit more for UI to update
+      // Wait for UI to update
       await new Promise(resolve => setTimeout(resolve, 300));
       
       const fileName = `${type}_${pageId}`;
-      const previewUrl = await captureAndUploadPreview(contentElement, fileName, {
+      
+      // Try main capture first
+      let previewUrl = await captureAndUploadPreview(contentElement, fileName, {
         width: 800,
         height: 600,
         quality: 0.8
       });
+      
+      // If main capture failed, try fallback approaches
+      if (!previewUrl) {
+        console.log('Main capture failed, trying fallback approaches...');
+        
+        // Fallback 1: Try capturing the first section directly
+        const firstSection = contentElement.querySelector('[data-pb-section-id], [class*="section"]') as HTMLElement;
+        if (firstSection) {
+          console.log('Trying to capture first section...');
+          previewUrl = await captureAndUploadPreview(firstSection, `${fileName}_section`, {
+            width: 800,
+            height: 600,
+            quality: 0.8
+          });
+        }
+        
+        // Fallback 2: If still no success, create empty preview
+        if (!previewUrl) {
+          console.log('All capture attempts failed, creating empty preview');
+          previewUrl = await createEmptyPagePreview(pageId, type);
+        }
+      }
       
       return previewUrl;
     } finally {
