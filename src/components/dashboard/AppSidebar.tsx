@@ -171,11 +171,14 @@ export function AppSidebar() {
   const filteredItems = navigationItems.filter(item => item.title.toLowerCase().includes(searchQuery.toLowerCase()) || item.items && item.items.some(subItem => subItem.title.toLowerCase().includes(searchQuery.toLowerCase())));
   return <Sidebar className="border-sidebar-border bg-sidebar">
       <SidebarContent className="gap-0">
-        {/* Search */}
+        {/* Logo */}
         {!collapsed && <div className="p-4 border-b border-sidebar-border">
-            <div className="relative">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input placeholder="Search..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-8 bg-sidebar-accent border-sidebar-border min-h-[44px] touch-manipulation" />
+            <div className="flex items-center justify-center">
+              <img 
+                src="https://res.cloudinary.com/funnelsninja/image/upload/v1755206321/ecombuildr-logo-big_vifrmg.png" 
+                alt="EcomBuildr Logo" 
+                className="h-10 w-auto"
+              />
             </div>
           </div>}
 
@@ -188,6 +191,14 @@ export function AppSidebar() {
                   Add Product
                 </NavLink>
               </Button>
+            </div>
+          </div>}
+
+        {/* Search */}
+        {!collapsed && <div className="p-4 border-b border-sidebar-border">
+            <div className="relative">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input placeholder="Search..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-8 bg-sidebar-accent border-sidebar-border min-h-[44px] touch-manipulation" />
             </div>
           </div>}
 
