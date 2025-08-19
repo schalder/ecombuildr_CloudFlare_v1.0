@@ -1,9 +1,54 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
+// Tightened CORS headers - restrict to known domains
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': 'https://ecombuildr.com, https://*.lovable.app, https://*.lovableproject.com',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
+
+// Security: Sanitization functions
+function sanitizeText(text: string | null | undefined, maxLength: number = 300): string {
+  if (!text) return ''
+  
+  // Strip HTML tags and decode entities
+  const stripped = text
+    .replace(/<[^>]*>/g, '') // Remove HTML tags
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/&#x27;/g, "'")
+    .replace(/&#x2F;/g, '/')
+    .trim()
+  
+  // Truncate if too long
+  return stripped.length > maxLength ? stripped.substring(0, maxLength).trim() + '...' : stripped
+}
+
+function validateUrl(url: string | null | undefined): string | null {
+  if (!url) return null
+  
+  try {
+    const parsed = new URL(url)
+    // Only allow http and https protocols
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+      return null
+    }
+    return parsed.toString()
+  } catch {
+    return null
+  }
+}
+
+function sanitizeKeywords(keywords: any): string[] {
+  if (!Array.isArray(keywords)) return []
+  
+  return keywords
+    .filter(k => typeof k === 'string')
+    .map(k => sanitizeText(k, 50))
+    .filter(k => k.length > 0)
+    .slice(0, 10) // Limit to 10 keywords
 }
 
 serve(async (req) => {
@@ -43,34 +88,39 @@ serve(async (req) => {
   const domain = domainParam
   const userAgent = req.headers.get('user-agent') || ''
   
-  console.log('🔍 SEO Prerender request:', { 
-    path, 
-    domain,
-    format,
-    isJsonRequest,
-    originalDomainParam: url.searchParams.get('domain'), 
-    'x-forwarded-host': req.headers.get('x-forwarded-host'),
-    'host': req.headers.get('host'),
-    userAgent 
-  })
+  // Reduced logging - don't expose sensitive headers or full user agent
+  console.log('🔍 SEO request:', { path, domain, format, isJsonRequest })
 
   // Handle JSON format requests (for dynamic SEO loading)
   if (isJsonRequest) {
     try {
       const seoData = await getSEODataAsJSON(supabase, domain, path)
-      console.log('📋 Returning SEO JSON data:', seoData)
+      // Sanitize SEO data before returning
+      const sanitizedSEO = {
+        title: sanitizeText(seoData.title, 60),
+        description: sanitizeText(seoData.description, 160),
+        og_image: validateUrl(seoData.og_image),
+        canonical: validateUrl(seoData.canonical),
+        robots: sanitizeText(seoData.robots, 50) || 'index, follow',
+        keywords: sanitizeKeywords(seoData.keywords),
+        author: sanitizeText(seoData.author, 100),
+        language: sanitizeText(seoData.language, 10) || 'en'
+      }
+      
+      console.log('📋 Returning sanitized SEO JSON')
       return new Response(JSON.stringify({
         success: true,
-        seo: seoData
+        seo: sanitizedSEO
       }), {
         headers: {
           ...corsHeaders,
           'Content-Type': 'application/json',
           'Cache-Control': 'public, max-age=300, s-maxage=3600',
+          'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';"
         },
       })
     } catch (error) {
-      console.error('❌ Error generating SEO JSON:', error)
+      console.error('❌ Error generating SEO JSON')
       return new Response(JSON.stringify({
         success: false,
         error: 'Failed to generate SEO data'
@@ -86,7 +136,7 @@ serve(async (req) => {
 
   // Detect if request is from a human browser vs bot
   const isBot = isLikelyBot(userAgent)
-  console.log('🤖 Bot detection:', { isBot, userAgent: userAgent.substring(0, 100) })
+  console.log('🤖 Bot detection result:', isBot)
   
   // If human browser, redirect to SPA with no_prerender param
   if (!isBot) {
@@ -96,7 +146,7 @@ serve(async (req) => {
     redirectUrl.searchParams.delete('domain')
     redirectUrl.searchParams.delete('path')
     
-    console.log('👤 Redirecting human to SPA:', redirectUrl.toString())
+    console.log('👤 Redirecting human to SPA')
     return new Response(null, {
       status: 302,
       headers: {
@@ -116,6 +166,7 @@ serve(async (req) => {
           ...corsHeaders,
           'Content-Type': 'text/html; charset=UTF-8',
           'Cache-Control': 'public, max-age=300, s-maxage=3600',
+          'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; img-src 'self' data: https:; font-src 'self' https:;"
         },
       })
     }
@@ -163,7 +214,7 @@ async function getHTMLSnapshot(supabase: any, domain: string, path: string): Pro
   try {
     // Handle custom domains first
     if (domain !== 'ecombuildr.com' && !domain.includes('lovable.app')) {
-      console.log('🌐 Custom domain detected:', domain, 'path:', path)
+      console.log('🌐 Custom domain detected')
       
       // Look up custom domain mapping to get content_id and content_type
       // Try both verified and unverified domains to handle DNS propagation delays
@@ -186,13 +237,13 @@ async function getHTMLSnapshot(supabase: any, domain: string, path: string): Pro
       }
       
       if (!customDomainData?.domain_connections?.length) {
-        console.log('❌ No domain connections found for:', domain)
+        console.log('❌ No domain connections found')
         // Fallback: Try to find any published website page with this slug
         return await getWebsitePageFallback(supabase, path, domain)
       }
       
       const connection = customDomainData.domain_connections[0]
-      console.log('✅ Found connection:', connection)
+      console.log('✅ Found connection')
       
       if (connection.content_type === 'website') {
         return await getWebsitePageSnapshot(supabase, connection.content_id, path === '/' ? '' : path.substring(1), domain)
@@ -201,7 +252,7 @@ async function getHTMLSnapshot(supabase: any, domain: string, path: string): Pro
       }
     } else {
       // Handle ecombuildr.com domain routes
-      console.log('🏠 EcomBuildr domain detected:', domain, 'path:', path)
+      console.log('🏠 EcomBuildr domain detected')
       
       // Parse website routes: /w/:websiteSlug/:pageSlug?
       const websiteMatch = path.match(/^\/w\/([^\/]+)(?:\/([^\/]+))?$/)
@@ -234,7 +285,7 @@ async function getHTMLSnapshot(supabase: any, domain: string, path: string): Pro
 // Get website page HTML snapshot
 async function getWebsitePageSnapshot(supabase: any, websiteId: string, pageSlug: string, customDomain: string | null): Promise<string | null> {
   try {
-    console.log(`🔍 Looking for website page: websiteId=${websiteId}, pageSlug="${pageSlug}", customDomain=${customDomain}`)
+    console.log('🔍 Looking for website page')
     
     // First get the page ID
     let pageQuery = supabase
@@ -252,7 +303,7 @@ async function getWebsitePageSnapshot(supabase: any, websiteId: string, pageSlug
     }
     
     const { data: page, error: pageError } = await pageQuery.maybeSingle()
-    console.log('📄 Page query result:', { page, pageError })
+    console.log('📄 Page query result:', !!page)
     
     if (pageError) {
       console.error('❌ Page query error:', pageError)
@@ -261,7 +312,7 @@ async function getWebsitePageSnapshot(supabase: any, websiteId: string, pageSlug
     
     if (page) {
       // Look for page-specific snapshot first
-      console.log(`🎯 Found page: ${page.title} (${page.slug}), looking for snapshot...`)
+      console.log('🎯 Found page, looking for snapshot')
       const pageSnapshot = await getContentSnapshot(supabase, page.id, 'website_page', customDomain)
       if (pageSnapshot) {
         console.log('✅ Found page-specific snapshot')
@@ -335,7 +386,7 @@ async function getContentSnapshot(supabase: any, contentId: string, contentType:
       const { data: domainSnapshot } = await query.maybeSingle()
       
       if (domainSnapshot?.html_content) {
-        console.log(`✅ Found domain-specific snapshot for ${contentType}:${contentId}`)
+        console.log('✅ Found domain-specific snapshot')
         return domainSnapshot.html_content
       }
     }
@@ -353,11 +404,11 @@ async function getContentSnapshot(supabase: any, contentId: string, contentType:
     const { data: fallbackSnapshot } = await fallbackQuery.maybeSingle()
     
     if (fallbackSnapshot?.html_content) {
-      console.log(`✅ Found fallback snapshot for ${contentType}:${contentId}`)
+      console.log('✅ Found fallback snapshot')
       return fallbackSnapshot.html_content
     }
     
-    console.log(`❌ No snapshot found for ${contentType}:${contentId}`)
+    console.log('❌ No snapshot found')
     return null
     
   } catch (error) {
@@ -621,20 +672,17 @@ function generateSEOTags(seo: {
   customMetaTags?: any
   customScripts?: string
 }): string {
-  const {
-    title = 'EcomBuildr',
-    description,
-    image,
-    canonicalUrl,
-    robots = 'index, follow',
-    siteName = 'EcomBuildr',
-    ogType = 'website',
-    keywords,
-    author,
-    languageCode = 'en',
-    customMetaTags,
-    customScripts
-  } = seo
+  // Sanitize all inputs
+  const title = sanitizeText(seo.title || 'EcomBuildr', 60)
+  const description = sanitizeText(seo.description, 160)
+  const image = validateUrl(seo.image)
+  const canonicalUrl = validateUrl(seo.canonicalUrl)
+  const robots = sanitizeText(seo.robots || 'index, follow', 50)
+  const siteName = sanitizeText(seo.siteName || 'EcomBuildr', 50)
+  const ogType = sanitizeText(seo.ogType || 'website', 20)
+  const keywords = sanitizeText(seo.keywords, 200)
+  const author = sanitizeText(seo.author, 100)
+  const languageCode = sanitizeText(seo.languageCode || 'en', 10)
 
   let seoTags = `
   <!-- Primary Meta Tags -->
@@ -674,19 +722,8 @@ function generateSEOTags(seo: {
   }
   </script>`
   
-  // Add custom meta tags if provided
-  if (customMetaTags && typeof customMetaTags === 'object') {
-    for (const [name, content] of Object.entries(customMetaTags)) {
-      if (content) {
-        seoTags += `\n  <meta name="${name}" content="${content}" />`
-      }
-    }
-  }
-  
-  // Add custom scripts if provided
-  if (customScripts) {
-    seoTags += `\n  ${customScripts}`
-  }
+  // Security: Skip custom meta tags and scripts to prevent XSS
+  // Custom content is disabled for security reasons
   
   return seoTags
 }
@@ -715,7 +752,7 @@ async function getSEODataAsJSON(supabase: any, domain: string, path: string): Pr
   try {
     // Handle custom domains first
     if (domain !== 'ecombuildr.com' && !domain.includes('lovable.app')) {
-      console.log('🌐 Custom domain SEO JSON request:', domain, 'path:', path)
+      console.log('🌐 Custom domain SEO JSON request')
       
       // Look up custom domain mapping to get content_id and content_type
       const { data: customDomainData, error: domainError } = await supabase
@@ -732,12 +769,12 @@ async function getSEODataAsJSON(supabase: any, domain: string, path: string): Pr
         .maybeSingle()
       
       if (domainError || !customDomainData?.domain_connections?.length) {
-        console.log('❌ No domain connections found for:', domain)
+        console.log('❌ No domain connections found')
         return getDefaultSEOData()
       }
       
       const connection = customDomainData.domain_connections[0]
-      console.log('✅ Found connection:', connection)
+      console.log('✅ Found connection')
       
       if (connection.content_type === 'website') {
         return await getWebsitePageSEOData(supabase, connection.content_id, path === '/' ? '' : path.substring(1), domain)
@@ -746,7 +783,7 @@ async function getSEODataAsJSON(supabase: any, domain: string, path: string): Pr
       }
     } else {
       // Handle ecombuildr.com domain routes
-      console.log('🏠 EcomBuildr domain SEO JSON request:', domain, 'path:', path)
+      console.log('🏠 EcomBuildr domain SEO JSON request')
       
       // Parse website routes: /w/:websiteSlug/:pageSlug?
       const websiteMatch = path.match(/^\/w\/([^\/]+)(?:\/([^\/]+))?$/)
