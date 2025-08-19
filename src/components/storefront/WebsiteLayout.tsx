@@ -8,6 +8,7 @@ import { WebsiteFooter } from '@/components/storefront/WebsiteFooter';
 import { setGlobalCurrency } from '@/lib/currency';
 import { PixelManager } from '@/components/pixel/PixelManager';
 import { WebsiteProvider } from '@/contexts/WebsiteContext';
+import { FloatingCartButton } from '@/components/storefront/FloatingCartButton';
 
 interface WebsiteData {
   id: string;
@@ -125,6 +126,9 @@ export const WebsiteLayout: React.FC = () => {
             <main className="flex-1">
               <Outlet />
             </main>
+            {(website.settings?.floating_cart?.enabled ?? true) && (
+              <FloatingCartButton position={website.settings?.floating_cart?.position ?? 'bottom-right'} />
+            )}
             <WebsiteFooter website={website} />
           </div>
       </PixelManager>

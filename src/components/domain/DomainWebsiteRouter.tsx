@@ -13,6 +13,7 @@ import { StorefrontHome } from '@/pages/storefront/StorefrontHome';
 import { StorefrontProducts } from '@/pages/storefront/StorefrontProducts';
 import { WebsiteHeader } from '@/components/storefront/WebsiteHeader';
 import { WebsiteFooter } from '@/components/storefront/WebsiteFooter';
+import { FloatingCartButton } from '@/components/storefront/FloatingCartButton';
 
 const DynamicWebsiteRoute: React.FC<{ fallback: React.ReactElement; websiteId: string }> = ({ fallback, websiteId }) => {
   const { slug } = useParams<{ slug: string }>();
@@ -106,6 +107,9 @@ export const DomainWebsiteRouter: React.FC<DomainWebsiteRouterProps> = ({
       />
         </Routes>
       </main>
+      {(website.settings?.floating_cart?.enabled ?? true) && (
+        <FloatingCartButton position={website.settings?.floating_cart?.position ?? 'bottom-right'} />
+      )}
       <WebsiteFooter website={website} />
     </>
   );

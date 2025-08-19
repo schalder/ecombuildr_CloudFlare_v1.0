@@ -44,6 +44,9 @@ const websiteSettingsSchema = z.object({
   variant_button_selected_text: z.string().optional(),
   variant_button_hover_bg: z.string().optional(),
   variant_button_hover_text: z.string().optional(),
+  // Floating cart settings
+  floating_cart_enabled: z.boolean().default(true),
+  floating_cart_position: z.enum(['bottom-right', 'bottom-left']).default('bottom-right'),
 });
 
 type WebsiteSettingsForm = z.infer<typeof websiteSettingsSchema>;
@@ -93,11 +96,11 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
 
   // Accordion state management for mobile optimization
   const [openSections, setOpenSections] = React.useState<string[]>(
-    isMobile ? [] : ['basic', 'domain', 'buttons', 'currency', 'tracking']
+    isMobile ? [] : ['basic', 'domain', 'buttons', 'currency', 'tracking', 'storefront']
   );
 
   const toggleAllSections = () => {
-    const allSections = ['basic', 'domain', 'buttons', 'currency', 'tracking'];
+    const allSections = ['basic', 'domain', 'buttons', 'currency', 'tracking', 'storefront'];
     if (openSections.length === allSections.length) {
       setOpenSections([]);
     } else {
@@ -139,6 +142,8 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
       variant_button_selected_text: website.settings?.variant_button_selected_text || '',
       variant_button_hover_bg: website.settings?.variant_button_hover_bg || '',
       variant_button_hover_text: website.settings?.variant_button_hover_text || '',
+      floating_cart_enabled: website.settings?.floating_cart?.enabled ?? true,
+      floating_cart_position: website.settings?.floating_cart?.position ?? 'bottom-right',
     },
   });
 
@@ -217,6 +222,8 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
         variant_button_selected_text,
         variant_button_hover_bg,
         variant_button_hover_text,
+        floating_cart_enabled,
+        floating_cart_position,
         ...basicFields 
       } = data;
       
@@ -241,6 +248,10 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
         variant_button_selected_text: variant_button_selected_text || null,
         variant_button_hover_bg: variant_button_hover_bg || null,
         variant_button_hover_text: variant_button_hover_text || null,
+        floating_cart: {
+          enabled: floating_cart_enabled,
+          position: floating_cart_position,
+        },
       };
 
       // Update the website settings first
@@ -321,7 +332,7 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
           onClick={toggleAllSections}
           className="flex items-center gap-2 self-start sm:self-auto"
         >
-          {openSections.length === 5 ? (
+          {openSections.length === 6 ? (
             <>
               <ChevronUp className="h-4 w-4" />
               Collapse All
@@ -900,6 +911,70 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
                   )}
                 />
               </div>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="storefront" className="border rounded-lg">
+              <AccordionTrigger className="px-6 py-4 hover:no-underline">
+                <div className="flex flex-col items-start text-left">
+                  <h3 className="text-base font-semibold">Storefront UI</h3>
+                  <p className="text-sm text-muted-foreground">Configure user interface elements like floating cart button.</p>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent forceMount className="px-6 pb-6">
+                <div className={openSections.includes('storefront') ? 'block space-y-4' : 'hidden'}>
+                  <div className="space-y-4">
+                    <FormField
+                      control={form.control}
+                      name="floating_cart_enabled"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                          <div className="space-y-0.5">
+                            <FormLabel className="text-base">Floating Cart Button</FormLabel>
+                            <FormDescription>
+                              Show a floating cart button on all pages for easy access to the cart.
+                            </FormDescription>
+                          </div>
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="floating_cart_position"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Floating Cart Position</FormLabel>
+                          <FormControl>
+                            <Select 
+                              value={field.value} 
+                              onValueChange={field.onChange}
+                              disabled={!form.watch('floating_cart_enabled')}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select position" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="bottom-right">Bottom Right</SelectItem>
+                                <SelectItem value="bottom-left">Bottom Left</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </FormControl>
+                          <FormDescription>
+                            Choose where the floating cart button appears on the page.
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                 </div>
               </AccordionContent>
             </AccordionItem>
