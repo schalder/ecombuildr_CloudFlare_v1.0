@@ -109,7 +109,7 @@ export function useHTMLGeneration() {
     }
   };
 
-  const deleteHTMLSnapshot = async (contentId: string, contentType: 'website' | 'funnel', customDomain?: string) => {
+  const deleteHTMLSnapshot = async (contentId: string, contentType: 'website' | 'funnel' | 'website_page' | 'funnel_step', customDomain?: string) => {
     try {
       let query = supabase
         .from('html_snapshots')

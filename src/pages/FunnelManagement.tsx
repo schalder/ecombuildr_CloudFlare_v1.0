@@ -18,6 +18,7 @@ import { FunnelSales } from '@/components/funnel/FunnelSales';
 import { FunnelSettings } from '@/components/funnel/FunnelSettings';
 import { FunnelHeaderBuilder } from '@/components/funnel/FunnelHeaderBuilder';
 import { FunnelFooterBuilder } from '@/components/funnel/FunnelFooterBuilder';
+import { useHTMLGeneration } from '@/hooks/useHTMLGeneration';
 interface Funnel {
   id: string;
   name: string;
@@ -57,6 +58,7 @@ const FunnelManagement = () => {
     toast
   } = useToast();
   const queryClient = useQueryClient();
+  const { deleteHTMLSnapshot } = useHTMLGeneration();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('steps');
   const [activeMainTab, setActiveMainTab] = useState('overview');
@@ -150,7 +152,11 @@ const FunnelManagement = () => {
       } = await supabase.from('funnel_steps').delete().eq('id', stepId);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: async () => {
+      // Clean up HTML snapshots as defense-in-depth
+      if (deleteConfirm.stepId) {
+        await deleteHTMLSnapshot(deleteConfirm.stepId, 'funnel_step');
+      }
       queryClient.invalidateQueries({
         queryKey: ['funnel-steps', id]
       });

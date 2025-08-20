@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
+import { useHTMLGeneration } from "@/hooks/useHTMLGeneration";
 
 export interface WebsitePageSettingsModalProps {
   open: boolean;
@@ -42,6 +43,7 @@ export const WebsitePageSettingsModal: React.FC<WebsitePageSettingsModalProps> =
   const { toast } = useToast();
   const qc = useQueryClient();
   const navigate = useNavigate();
+  const { deleteHTMLSnapshot } = useHTMLGeneration();
 
   const [title, setTitle] = useState("");
   const [slug, setSlug] = useState("");
@@ -128,6 +130,10 @@ export const WebsitePageSettingsModal: React.FC<WebsitePageSettingsModalProps> =
       if (error) throw error;
     },
     onSuccess: async () => {
+      if (page) {
+        // Clean up HTML snapshots as defense-in-depth
+        await deleteHTMLSnapshot(page.id, 'website_page');
+      }
       await qc.invalidateQueries({ queryKey: ["website-pages", websiteId] });
       toast({ 
         title: "Page deleted",
