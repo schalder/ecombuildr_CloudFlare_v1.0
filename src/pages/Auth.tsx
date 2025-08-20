@@ -60,7 +60,7 @@ const Auth = () => {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!signUpData.email || !signUpData.password || !signUpData.fullName) {
+    if (!signUpData.email || !signUpData.password || !signUpData.fullName || !signUpData.phone) {
       toast({
         title: "Error",
         description: "Please fill in all fields.",
@@ -207,7 +207,7 @@ const Auth = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="signup-phone">Phone Number (Optional)</Label>
+                    <Label htmlFor="signup-phone">Phone Number</Label>
                     <Input
                       id="signup-phone"
                       type="tel"
@@ -215,6 +215,7 @@ const Auth = () => {
                       value={signUpData.phone}
                       onChange={(e) => setSignUpData({ ...signUpData, phone: e.target.value })}
                       disabled={isLoading}
+                      required
                     />
                   </div>
                   <div className="space-y-2">
