@@ -498,19 +498,21 @@ const ButtonElement: React.FC<{
   // Use renderElementStyles for consistent styling
   const elementStyles = renderElementStyles(element, deviceType);
 
-  // Smart padding fallback when no padding is set
+  // Smart padding fallback when no padding is set - ratio-based
   const hasExistingPadding = elementStyles.padding || elementStyles.paddingTop || elementStyles.paddingRight || 
                            elementStyles.paddingBottom || elementStyles.paddingLeft;
   
   if (!hasExistingPadding) {
     const fontSize = String(elementStyles.fontSize || '16px');
     const size = parseInt(fontSize.replace(/\D/g, ''));
-    if (size <= 12) elementStyles.padding = '6px 12px';
-    else if (size <= 16) elementStyles.padding = '8px 16px';
-    else if (size <= 20) elementStyles.padding = '10px 20px';
-    else if (size <= 24) elementStyles.padding = '12px 24px';
-    else if (size <= 32) elementStyles.padding = '16px 32px';
-    else elementStyles.padding = '20px 40px';
+    const verticalPadding = Math.max(8, Math.round(size * 0.5)); // 0.5x font size, min 8px
+    const horizontalPadding = Math.max(16, Math.round(size * 1.2)); // 1.2x font size, min 16px
+    elementStyles.padding = `${verticalPadding}px ${horizontalPadding}px`;
+  }
+
+  // Ensure proper line height for large fonts and remove fixed heights
+  if (!elementStyles.lineHeight) {
+    elementStyles.lineHeight = '1.2';
   }
 
   // Handle width for full width behavior
@@ -534,7 +536,7 @@ const ButtonElement: React.FC<{
         <Button 
           variant={variant as any} 
           size={size as any}
-          className={customClassName}
+          className={`${customClassName} h-auto leading-none`}
           onClick={handleClick}
           style={elementStyles}
         >

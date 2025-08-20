@@ -97,7 +97,7 @@ export const ButtonElementStyles: React.FC<ButtonElementStylesProps> = ({
             <Slider
               value={[parseInt(getCurrentValue('fontSize', '16px').replace(/\D/g, ''))]}
               onValueChange={(value) => handleResponsiveUpdate('fontSize', `${value[0]}px`)}
-              max={responsiveTab === 'desktop' ? 48 : 32}
+              max={100}
               min={8}
               step={1}
               className="flex-1"
