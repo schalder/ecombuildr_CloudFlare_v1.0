@@ -29,26 +29,17 @@ interface CreateStepModalProps {
   isOpen: boolean;
   onClose: () => void;
   funnelId: string;
-  existingSteps: Array<{ step_order: number }>;
 }
 
 export const CreateStepModal: React.FC<CreateStepModalProps> = ({
   isOpen,
   onClose,
-  funnelId,
-  existingSteps
+  funnelId
 }) => {
-  // Calculate next available step order
-  const getNextStepOrder = () => {
-    if (existingSteps.length === 0) return 1;
-    const maxOrder = Math.max(...existingSteps.map(step => step.step_order));
-    return maxOrder + 1;
-  };
   const [formData, setFormData] = useState({
     title: '',
     slug: '',
-    stepType: 'landing',
-    stepOrder: getNextStepOrder()
+    stepType: 'landing'
   });
 
   // Template selection state
@@ -131,6 +122,18 @@ export const CreateStepModal: React.FC<CreateStepModalProps> = ({
 
   const createStepMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
+      // Get the next step order by querying existing steps
+      const { data: existingSteps, error: stepsError } = await supabase
+        .from('funnel_steps')
+        .select('step_order')
+        .eq('funnel_id', funnelId)
+        .order('step_order', { ascending: false })
+        .limit(1);
+      
+      if (stepsError) throw stepsError;
+      
+      const nextOrder = (existingSteps?.[0]?.step_order ?? 0) + 1;
+      
       // Use template content if selected, otherwise use default content
       let content: any;
       if (selectedTemplate) {
@@ -146,7 +149,7 @@ export const CreateStepModal: React.FC<CreateStepModalProps> = ({
           slug: finalSlug || data.slug,
           funnel_id: funnelId,
           step_type: data.stepType,
-          step_order: data.stepOrder,
+          step_order: nextOrder,
           content,
           is_published: false
         })
@@ -172,12 +175,10 @@ export const CreateStepModal: React.FC<CreateStepModalProps> = ({
   });
 
   const handleClose = () => {
-    const nextOrder = getNextStepOrder();
     setFormData({ 
       title: '', 
       slug: '', 
-      stepType: 'landing', 
-      stepOrder: nextOrder
+      stepType: 'landing'
     });
     setSlugStatus('idle');
     setSuggestedSlug('');
@@ -364,16 +365,6 @@ export const CreateStepModal: React.FC<CreateStepModalProps> = ({
             </Select>
           </div>
 
-          <div>
-            <Label htmlFor="stepOrder">Step Order</Label>
-            <Input
-              id="stepOrder"
-              type="number"
-              value={formData.stepOrder}
-              onChange={(e) => setFormData(prev => ({ ...prev, stepOrder: parseInt(e.target.value) || 1 }))}
-              min="1"
-            />
-          </div>
 
           <div>
             <Label>Template</Label>

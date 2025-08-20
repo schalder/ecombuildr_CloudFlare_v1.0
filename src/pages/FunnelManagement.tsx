@@ -184,10 +184,21 @@ const FunnelManagement = () => {
   });
   const handleDragEnd = (result: any) => {
     if (!result.destination) return;
+    if (result.source.index === result.destination.index) return; // No change guard
+    
     const reorderedSteps = Array.from(steps);
     const [reorderedItem] = reorderedSteps.splice(result.source.index, 1);
     reorderedSteps.splice(result.destination.index, 0, reorderedItem);
-    reorderStepsMutation.mutate(reorderedSteps);
+    
+    // Optimistic update to React Query cache
+    queryClient.setQueryData(['funnel-steps', id], reorderedSteps);
+    
+    reorderStepsMutation.mutate(reorderedSteps, {
+      onError: () => {
+        // Rollback on error by refetching
+        queryClient.invalidateQueries({ queryKey: ['funnel-steps', id] });
+      }
+    });
   };
   const handleSetAsHomepage = (stepId: string) => {
     const stepToMove = steps.find(s => s.id === stepId);
@@ -525,7 +536,7 @@ const FunnelManagement = () => {
 
       </div>
 
-      <CreateStepModal isOpen={isCreateModalOpen} onClose={() => setIsCreateModalOpen(false)} funnelId={id!} existingSteps={steps} />
+      <CreateStepModal isOpen={isCreateModalOpen} onClose={() => setIsCreateModalOpen(false)} funnelId={id!} />
 
       <ConfirmationDialog open={deleteConfirm.open} onOpenChange={open => !open && setDeleteConfirm({
       open: false,
