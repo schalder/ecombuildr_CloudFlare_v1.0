@@ -1,9 +1,5 @@
 import html2canvas from 'html2canvas';
 import { supabase } from '@/integrations/supabase/client';
-import { PageBuilderData } from '@/components/page-builder/types';
-import { PageBuilderRenderer } from '@/components/storefront/PageBuilderRenderer';
-import React from 'react';
-import { createRoot } from 'react-dom/client';
 
 export interface PreviewGenerationOptions {
   width?: number;
@@ -13,11 +9,11 @@ export interface PreviewGenerationOptions {
 }
 
 /**
- * Creates a hidden off-screen container and renders the PageBuilderRenderer
- * to capture an accurate preview image
+ * Captures a preview from an existing PageBuilderRenderer element in the DOM
+ * This approach works by capturing the visible renderer, similar to admin template builder
  */
-export const generatePagePreviewImage = async (
-  pageData: PageBuilderData,
+export const generatePagePreviewFromDOM = async (
+  containerId: string,
   id: string,
   type: 'website_page' | 'funnel_step',
   options: PreviewGenerationOptions = {}
@@ -29,54 +25,24 @@ export const generatePagePreviewImage = async (
     quality = 1.0
   } = options;
 
-  let previewContainer: HTMLDivElement | null = null;
-  
   try {
-    console.log(`Generating hidden preview for ${type} ${id}`);
+    console.log(`Generating preview from DOM for ${type} ${id}`);
     
-    // Create hidden preview container
-    previewContainer = document.createElement('div');
-    previewContainer.id = `page-preview-hidden-${id}`;
-    previewContainer.style.cssText = `
-      position: absolute;
-      left: -9999px;
-      top: 0;
-      width: ${width}px;
-      min-height: ${height}px;
-      background: white;
-      overflow: hidden;
-      z-index: -1;
-    `;
-    
-    document.body.appendChild(previewContainer);
-    
-    // Create React root and render PageBuilderRenderer
-    const root = createRoot(previewContainer);
-    
-    await new Promise<void>((resolve, reject) => {
-      try {
-        root.render(
-          React.createElement(PageBuilderRenderer, {
-            data: pageData,
-            className: 'preview-render'
-          })
-        );
-        
-        // Wait for rendering to complete
-        setTimeout(resolve, 1000);
-      } catch (error) {
-        reject(error);
-      }
-    });
-    
+    // Find the preview element
+    const previewElement = document.getElementById(containerId);
+    if (!previewElement) {
+      console.warn('Preview element not found:', containerId);
+      return null;
+    }
+
     // Wait for images and fonts to load
-    await waitForAssetsToLoad(previewContainer);
+    await waitForAssetsToLoad(previewElement);
     
     // Additional delay to ensure full rendering
     await new Promise(resolve => setTimeout(resolve, 500));
     
     // Capture with html2canvas
-    const canvas = await html2canvas(previewContainer, {
+    const canvas = await html2canvas(previewElement, {
       width,
       height,
       scale,
@@ -95,19 +61,11 @@ export const generatePagePreviewImage = async (
     // Upload to Supabase storage
     const publicUrl = await uploadPreviewToStorage(blob, id, type);
     
-    // Cleanup
-    root.unmount();
-    
     return publicUrl;
     
   } catch (error) {
-    console.error('Error generating hidden preview:', error);
+    console.error('Error generating preview from DOM:', error);
     return null;
-  } finally {
-    // Always cleanup
-    if (previewContainer && document.body.contains(previewContainer)) {
-      document.body.removeChild(previewContainer);
-    }
   }
 };
 
@@ -186,34 +144,29 @@ export const updatePreviewInDatabase = async (
 };
 
 /**
- * Generates and saves a preview for a page/step using hidden renderer
+ * Generates and saves a preview for a page/step using DOM-based approach
  */
-export const generateAndSavePagePreview = async (
-  pageData: PageBuilderData,
+export const generateAndSavePagePreviewFromDOM = async (
+  containerId: string,
   id: string,
   type: 'website_page' | 'funnel_step'
 ): Promise<void> => {
   try {
-    console.log(`Starting preview generation for ${type} ${id}`);
+    console.log(`Starting DOM preview generation for ${type} ${id}`);
     
-    // Check if pageData has content
-    if (!pageData.sections || pageData.sections.length === 0) {
-      console.log('No content found, creating empty page preview');
-      const emptyPreviewUrl = await createEmptyPagePreview(id, type);
-      if (emptyPreviewUrl) {
-        await updatePreviewInDatabase(id, emptyPreviewUrl, type);
-      }
-      return;
-    }
-    
-    // Generate preview using hidden renderer
-    const previewUrl = await generatePagePreviewImage(pageData, id, type);
+    // Generate preview from existing DOM element
+    const previewUrl = await generatePagePreviewFromDOM(containerId, id, type);
     
     if (previewUrl) {
       await updatePreviewInDatabase(id, previewUrl, type);
       console.log(`Preview generated and saved for ${type} ${id}`);
     } else {
       console.warn(`Failed to generate preview for ${type} ${id}`);
+      // Fallback to empty page preview
+      const emptyPreviewUrl = await createEmptyPagePreview(id, type);
+      if (emptyPreviewUrl) {
+        await updatePreviewInDatabase(id, emptyPreviewUrl, type);
+      }
     }
   } catch (error) {
     console.error('Error generating and saving preview:', error);

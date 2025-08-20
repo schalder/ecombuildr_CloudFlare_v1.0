@@ -18,6 +18,7 @@ import { SEOAdvancedSection } from '@/components/seo/SEOAdvancedSection';
 import { SEOLanguageSection } from '@/components/seo/SEOLanguageSection';
 import { SEOAnalysisSection } from '@/components/seo/SEOAnalysisSection';
 import { PageBuilderData } from '@/components/page-builder/types';
+import { PageBuilderRenderer } from '@/components/storefront/PageBuilderRenderer';
 import { supabase } from '@/integrations/supabase/client';
 import { useUserStore } from '@/hooks/useUserStore';
 import { setGlobalCurrency } from '@/lib/currency';
@@ -222,25 +223,18 @@ export default function PageBuilder() {
         setPageData(prev => ({ ...prev, is_published: publishedState }));
       }
 
-      // Generate preview image after successful save using hidden renderer
+      // Generate preview image after successful save using DOM approach
       if (entityId && (context === 'website' || context === 'funnel')) {
         try {
-          const { generateAndSavePagePreview } = await import('@/lib/pagePreviewRenderer');
+          const { generateAndSavePagePreviewFromDOM } = await import('@/lib/pagePreviewRenderer');
           const previewType = context === 'website' ? 'website_page' : 'funnel_step';
           
-          // Use the new hidden renderer approach for more reliable previews
+          // Use the DOM approach like admin template builder
           setTimeout(() => {
-            generateAndSavePagePreview(builderData, entityId, previewType).catch(error => {
-              console.warn('Hidden renderer preview failed, trying fallback:', error);
-              
-              // Fallback to current method if new approach fails
-              import('@/lib/pagePreview').then(({ generateAndSavePreview }) => {
-                generateAndSavePreview(entityId, previewType).catch(fallbackError => {
-                  console.warn('Fallback preview generation also failed:', fallbackError);
-                });
-              });
+            generateAndSavePagePreviewFromDOM('page-preview-hidden', entityId, previewType).catch(error => {
+              console.warn('DOM preview generation failed:', error);
             });
-          }, 1000); // Reduced delay since we're not relying on DOM state
+          }, 500);
         } catch (previewError) {
           console.warn('Failed to load preview generation module:', previewError);
         }
@@ -762,6 +756,19 @@ export default function PageBuilder() {
              </div>
             </div>
           )}
+        </div>
+
+        {/* Hidden Preview for Screenshot Generation - Same approach as AdminTemplateEditor */}
+        <div 
+          id="page-preview-hidden"
+          className="fixed -top-[10000px] left-0 bg-white"
+          style={{ 
+            width: '1200px', 
+            height: '675px',
+            overflow: 'hidden'
+          }}
+        >
+          <PageBuilderRenderer data={builderData} />
         </div>
       </div>
     </WebsiteProvider>
