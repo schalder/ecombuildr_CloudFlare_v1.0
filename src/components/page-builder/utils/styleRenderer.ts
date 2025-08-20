@@ -16,7 +16,13 @@ export const renderSectionStyles = (section: PageBuilderSection, deviceType: 'de
     if (section.styles.backgroundGradient) {
       backgroundLayers.push(applyGradientOpacity(section.styles.backgroundGradient, opacity));
     } else if (section.styles.backgroundColor && section.styles.backgroundColor !== 'transparent') {
-      backgroundLayers.push(applyColorOpacity(section.styles.backgroundColor, opacity));
+      // For solid colors with background image, create a linear gradient overlay to ensure transparency works
+      if (section.styles.backgroundImage && opacity < 1) {
+        const colorWithOpacity = applyColorOpacity(section.styles.backgroundColor, opacity);
+        backgroundLayers.push(`linear-gradient(${colorWithOpacity}, ${colorWithOpacity})`);
+      } else {
+        backgroundLayers.push(applyColorOpacity(section.styles.backgroundColor, opacity));
+      }
     }
     
     // Add image layer (bottom layer)
@@ -98,7 +104,13 @@ export const renderRowStyles = (row: PageBuilderRow, deviceType: 'desktop' | 'ta
     if (row.styles.backgroundGradient) {
       backgroundLayers.push(applyGradientOpacity(row.styles.backgroundGradient, opacity));
     } else if (row.styles.backgroundColor && row.styles.backgroundColor !== 'transparent') {
-      backgroundLayers.push(applyColorOpacity(row.styles.backgroundColor, opacity));
+      // For solid colors with background image, create a linear gradient overlay to ensure transparency works
+      if (row.styles.backgroundImage && opacity < 1) {
+        const colorWithOpacity = applyColorOpacity(row.styles.backgroundColor, opacity);
+        backgroundLayers.push(`linear-gradient(${colorWithOpacity}, ${colorWithOpacity})`);
+      } else {
+        backgroundLayers.push(applyColorOpacity(row.styles.backgroundColor, opacity));
+      }
     }
     
     // Add image layer (bottom layer)
@@ -180,7 +192,13 @@ export const renderColumnStyles = (column: PageBuilderColumn, deviceType: 'deskt
     if (column.styles.backgroundGradient) {
       backgroundLayers.push(applyGradientOpacity(column.styles.backgroundGradient, opacity));
     } else if (column.styles.backgroundColor && column.styles.backgroundColor !== 'transparent') {
-      backgroundLayers.push(applyColorOpacity(column.styles.backgroundColor, opacity));
+      // For solid colors with background image, create a linear gradient overlay to ensure transparency works
+      if (column.styles.backgroundImage && opacity < 1) {
+        const colorWithOpacity = applyColorOpacity(column.styles.backgroundColor, opacity);
+        backgroundLayers.push(`linear-gradient(${colorWithOpacity}, ${colorWithOpacity})`);
+      } else {
+        backgroundLayers.push(applyColorOpacity(column.styles.backgroundColor, opacity));
+      }
     }
     
     // Add image layer (bottom layer)
