@@ -179,23 +179,7 @@ const ImageElement: React.FC<{
     return cleanStyles;
   };
 
-  // Get alignment class for the image/link wrapper
-  const getAlignmentClass = (alignment: string) => {
-    switch (alignment) {
-      case 'left':
-        return 'block';
-      case 'right':
-        return 'block ml-auto';
-      case 'center':
-        return 'block mx-auto';
-      case 'full':
-        return 'block w-full';
-      default:
-        return 'block mx-auto'; // Default to center
-    }
-  };
-
-  // Calculate image styles with responsive support and border
+  // Calculate image styles with responsive support, alignment, and border
   const getImageStyles = (): React.CSSProperties => {
     const baseStyles = {
       height: element.styles?.height || 'auto',
@@ -209,9 +193,28 @@ const ImageElement: React.FC<{
 
     if (alignment === 'full') {
       baseStyles.width = '100%';
+      baseStyles.marginLeft = '0';
+      baseStyles.marginRight = '0';
     } else {
       if (width) baseStyles.width = width;
       if (maxWidth) baseStyles.maxWidth = maxWidth;
+      
+      // Apply alignment as margin styles directly to the image
+      switch (alignment) {
+        case 'left':
+          baseStyles.marginLeft = '0';
+          baseStyles.marginRight = 'auto';
+          break;
+        case 'right':
+          baseStyles.marginLeft = 'auto';
+          baseStyles.marginRight = '0';
+          break;
+        case 'center':
+        default:
+          baseStyles.marginLeft = 'auto';
+          baseStyles.marginRight = 'auto';
+          break;
+      }
     }
 
     // Apply border styles directly to the image
@@ -276,14 +279,12 @@ const ImageElement: React.FC<{
     <a 
       href={linkUrl} 
       target={linkTarget}
-      className={getAlignmentClass(alignment)}
+      className="inline-block"
     >
       <ImageComponent />
     </a>
   ) : (
-    <div className={getAlignmentClass(alignment)}>
-      <ImageComponent />
-    </div>
+    <ImageComponent />
   );
 
   return (
