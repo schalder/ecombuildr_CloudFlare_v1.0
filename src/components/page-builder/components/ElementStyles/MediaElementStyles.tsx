@@ -79,44 +79,24 @@ export const MediaElementStyles: React.FC<MediaElementStylesProps> = ({
         </div>
 
         {element.type === 'image' && (
-          <>
-            <div>
-              <Label className="text-xs">Alignment</Label>
-              <Select
-                value={element.content?.alignment || 'center'}
-                onValueChange={(value) => onStyleUpdate('content', { ...element.content, alignment: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="left">Left</SelectItem>
-                  <SelectItem value="center">Center</SelectItem>
-                  <SelectItem value="right">Right</SelectItem>
-                  <SelectItem value="full">Full Width</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div>
-              <Label className="text-xs">Object Fit</Label>
-              <Select
-                value={element.styles?.objectFit || 'cover'}
-                onValueChange={(value) => onStyleUpdate('objectFit', value)}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="cover">Cover</SelectItem>
-                  <SelectItem value="contain">Contain</SelectItem>
-                  <SelectItem value="fill">Fill</SelectItem>
-                  <SelectItem value="none">None</SelectItem>
-                  <SelectItem value="scale-down">Scale Down</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </>
+          <div>
+            <Label className="text-xs">Object Fit</Label>
+            <Select
+              value={element.styles?.objectFit || 'cover'}
+              onValueChange={(value) => onStyleUpdate('objectFit', value)}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="cover">Cover</SelectItem>
+                <SelectItem value="contain">Contain</SelectItem>
+                <SelectItem value="fill">Fill</SelectItem>
+                <SelectItem value="none">None</SelectItem>
+                <SelectItem value="scale-down">Scale Down</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         )}
       </div>
 

@@ -142,9 +142,10 @@ const ImageElement: React.FC<{
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
 }> = ({ element, isEditing, deviceType = 'desktop', onUpdate }) => {
   const { src, alt, caption, alignment = 'center', linkUrl, linkTarget = '_self' } = element.content;
-  const containerStyles = renderElementStyles(element, deviceType);
   const [imageError, setImageError] = React.useState(false);
   const [imageLoading, setImageLoading] = React.useState(false);
+  
+  const placeholderImage = 'https://fhqwacmokbtbspkxjixf.supabase.co/storage/v1/object/public/images/ae0dc92e-a218-406a-b0b1-b3beecdfe1df/1755657274426-kqm8mnd72w.png';
 
   // Reset error state when URL changes
   React.useEffect(() => {
@@ -154,42 +155,52 @@ const ImageElement: React.FC<{
     }
   }, [src]);
 
-  if (!src) {
-    return (
-      <div className="w-full h-48 bg-muted flex items-center justify-center border-2 border-dashed border-border rounded-lg">
-        <div className="text-center">
-          <p className="text-muted-foreground mb-2">No image selected</p>
-          <p className="text-xs text-muted-foreground">Use the properties panel to add an image</p>
-        </div>
-      </div>
-    );
-  }
-
   // Get responsive styles for current device
   const responsiveStyles = element.styles?.responsive || { desktop: {}, mobile: {} };
   const currentResponsiveStyles = responsiveStyles[deviceType] || {};
 
-  // Image alignment classes - applied to the image itself
-  const getImageAlignmentClass = (alignment: string) => {
+  // Get container styles without width/height/border properties
+  const getContainerStyles = (): React.CSSProperties => {
+    const styles = renderElementStyles(element, deviceType);
+    const cleanStyles = { ...styles };
+    
+    // Remove properties that should be applied to the image itself
+    delete cleanStyles.width;
+    delete cleanStyles.height;
+    delete cleanStyles.maxWidth;
+    delete cleanStyles.minWidth;
+    delete cleanStyles.maxHeight;
+    delete cleanStyles.minHeight;
+    delete cleanStyles.borderWidth;
+    delete cleanStyles.borderColor;
+    delete cleanStyles.borderStyle;
+    delete cleanStyles.borderRadius;
+    
+    return cleanStyles;
+  };
+
+  // Get wrapper alignment class (applied to the wrapper div)
+  const getWrapperAlignmentClass = (alignment: string) => {
     switch (alignment) {
       case 'left':
-        return '';
+        return 'flex justify-start';
       case 'right':
-        return 'ml-auto';
+        return 'flex justify-end';
       case 'center':
-        return 'mx-auto';
+        return 'flex justify-center';
       case 'full':
         return 'w-full';
       default:
-        return 'mx-auto'; // Default to center
+        return 'flex justify-center'; // Default to center
     }
   };
 
-  // Calculate image styles with responsive support
+  // Calculate image styles with responsive support and border
   const getImageStyles = (): React.CSSProperties => {
     const baseStyles = {
       height: element.styles?.height || 'auto',
-      objectFit: element.styles?.objectFit || 'cover'
+      objectFit: element.styles?.objectFit || 'cover',
+      display: 'block'
     } as React.CSSProperties;
 
     // Apply width from responsive styles if available, otherwise fallback to base styles
@@ -201,6 +212,19 @@ const ImageElement: React.FC<{
     } else {
       if (width) baseStyles.width = width;
       if (maxWidth) baseStyles.maxWidth = maxWidth;
+    }
+
+    // Apply border styles directly to the image
+    if (element.styles?.borderWidth) {
+      baseStyles.borderWidth = element.styles.borderWidth;
+      baseStyles.borderStyle = element.styles.borderStyle || 'solid';
+      baseStyles.borderColor = element.styles.borderColor || '#e5e7eb';
+    }
+    
+    if (element.styles?.borderRadius) {
+      baseStyles.borderRadius = element.styles.borderRadius;
+    } else {
+      baseStyles.borderRadius = '0.5rem'; // Default rounded-lg
     }
 
     return baseStyles;
@@ -216,8 +240,10 @@ const ImageElement: React.FC<{
     setImageError(true);
   };
 
+  const imageUrl = src || placeholderImage;
+
   const ImageComponent = () => {
-    if (imageError) {
+    if (imageError && src) {
       return (
         <div className="w-full h-48 bg-muted flex items-center justify-center border border-destructive rounded-lg">
           <div className="text-center text-destructive">
@@ -230,15 +256,14 @@ const ImageElement: React.FC<{
 
     return (
       <div className="relative">
-        {imageLoading && (
+        {imageLoading && src && (
           <div className="absolute inset-0 bg-muted animate-pulse rounded-lg flex items-center justify-center">
             <p className="text-xs text-muted-foreground">Loading...</p>
           </div>
         )}
         <img
-          src={src}
-          alt={alt || ''}
-          className={`rounded-lg block ${getImageAlignmentClass(alignment)}`}
+          src={imageUrl}
+          alt={alt || (!src ? 'Placeholder image' : '')}
           style={getImageStyles()}
           onLoad={handleImageLoad}
           onError={handleImageError}
@@ -262,9 +287,11 @@ const ImageElement: React.FC<{
   return (
     <figure 
       className="my-4 w-full"
-      style={containerStyles}
+      style={getContainerStyles()}
     >
-      {imageContent}
+      <div className={getWrapperAlignmentClass(alignment)}>
+        {imageContent}
+      </div>
       {caption && (
         <figcaption className="text-sm text-muted-foreground mt-2 text-center">
           {caption}
@@ -854,7 +881,7 @@ export const registerBasicElements = () => {
     category: 'basic',
     icon: Image,
     component: ImageElement,
-    defaultContent: { src: '', alt: 'Image', width: '100%', height: 'auto' },
+    defaultContent: { src: '', alt: 'Image', alignment: 'center' },
     description: 'Single image element'
   });
 
