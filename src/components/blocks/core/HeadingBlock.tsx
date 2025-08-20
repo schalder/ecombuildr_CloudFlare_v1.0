@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Heading } from 'lucide-react';
 import { BlockEditProps, BlockSaveProps, BlockRegistration } from '../types';
-import { InlineEditor } from '@/components/page-builder/components/InlineEditor';
+import { InlineRTE, sanitizeHtml } from '@/components/page-builder/components/InlineRTE';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const HeadingEdit: React.FC<BlockEditProps> = ({ block, onUpdate, isSelected }) => {
@@ -36,11 +36,11 @@ const HeadingEdit: React.FC<BlockEditProps> = ({ block, onUpdate, isSelected }) 
           </SelectContent>
         </Select>
       </div>
-      <InlineEditor
+      <InlineRTE
         value={content}
         onChange={handleTextChange}
         placeholder="Write your heading..."
-        multiline={true}
+        variant="heading"
         className="text-lg font-semibold w-full"
       />
     </div>
@@ -62,9 +62,10 @@ const HeadingSave: React.FC<BlockSaveProps> = ({ block }) => {
   };
 
   return (
-    <HeadingTag className={headingClasses[level as keyof typeof headingClasses]}>
-      {text}
-    </HeadingTag>
+    <HeadingTag 
+      className={`${headingClasses[level as keyof typeof headingClasses]} whitespace-pre-wrap`}
+      dangerouslySetInnerHTML={{ __html: sanitizeHtml(text, 'heading') }}
+    />
   );
 };
 

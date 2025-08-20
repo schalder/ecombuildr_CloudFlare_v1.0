@@ -11,11 +11,17 @@ export interface InlineRTEProps {
   className?: string;
   disabled?: boolean;
   style?: React.CSSProperties;
+  variant?: 'heading' | 'paragraph';
 }
 
 // Minimal sanitizer allowing basic inline formatting
-export function sanitizeHtml(input: string): string {
-  const allowedTags = new Set(['B','STRONG','I','EM','U','S','BR','SPAN','FONT','A','#text']);
+export function sanitizeHtml(input: string, variant?: 'heading' | 'paragraph'): string {
+  const baseAllowedTags = new Set(['B','STRONG','I','EM','U','S','BR','SPAN','FONT','A','#text']);
+  if (variant === 'paragraph') {
+    baseAllowedTags.add('P');
+    baseAllowedTags.add('DIV');
+  }
+  const allowedTags = baseAllowedTags;
   const parser = new DOMParser();
   const doc = parser.parseFromString(`<div>${input}</div>`, 'text/html');
   const container = doc.body.firstElementChild as HTMLElement;
@@ -74,7 +80,7 @@ export function sanitizeHtml(input: string): string {
   return wrap.innerHTML.replace(/^<div>|<\/div>$/g, '');
 }
 
-export const InlineRTE: React.FC<InlineRTEProps> = ({ value, onChange, placeholder, className, disabled, style }) => {
+export const InlineRTE: React.FC<InlineRTEProps> = ({ value, onChange, placeholder, className, disabled, style, variant = 'heading' }) => {
   const editorRef = useRef<HTMLDivElement>(null);
   const lastRangeRef = useRef<Range | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -185,7 +191,7 @@ export const InlineRTE: React.FC<InlineRTEProps> = ({ value, onChange, placehold
       document.execCommand('styleWithCSS', false, 'true');
     } catch {}
     document.execCommand(command, false, valueArg);
-    const html = sanitizeHtml(editorRef.current?.innerHTML || '');
+    const html = sanitizeHtml(editorRef.current?.innerHTML || '', variant);
     onChange(html);
   };
 
@@ -225,13 +231,23 @@ export const InlineRTE: React.FC<InlineRTEProps> = ({ value, onChange, placehold
   };
 
   const onInput = () => {
-    const html = sanitizeHtml(editorRef.current?.innerHTML || '');
+    const html = sanitizeHtml(editorRef.current?.innerHTML || '', variant);
     onChange(html);
   };
 
   const onKeyDown: React.KeyboardEventHandler<HTMLDivElement> = (e) => {
     if (e.key === 'Escape') {
       (e.currentTarget as HTMLDivElement).blur();
+    }
+    
+    // Handle Enter key differently based on variant
+    if (e.key === 'Enter') {
+      if (variant === 'heading') {
+        // For headings, insert line breaks instead of paragraphs
+        e.preventDefault();
+        exec('insertHTML', '<br>');
+      }
+      // For paragraphs, let the default behavior create <p> tags
     }
   };
 
@@ -295,12 +311,20 @@ export const InlineRTE: React.FC<InlineRTEProps> = ({ value, onChange, placehold
 
       <div
         ref={editorRef}
-        className={cn('min-h-[1.5em] outline-none', className)}
+        className={cn('min-h-[1.5em] outline-none', variant === 'heading' ? 'whitespace-pre-wrap' : '', className)}
         style={style}
         contentEditable={!disabled}
         suppressContentEditableWarning
         data-placeholder={placeholder}
-        onFocus={() => setIsEditing(true)}
+        onFocus={() => {
+          setIsEditing(true);
+          // Set the default paragraph separator for paragraph variant
+          if (variant === 'paragraph') {
+            try {
+              document.execCommand('defaultParagraphSeparator', false, 'p');
+            } catch {}
+          }
+        }}
         onBlur={() => {
           if (keepOpenRef.current) {
             setIsEditing(true);

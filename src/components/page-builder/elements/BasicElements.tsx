@@ -63,11 +63,12 @@ const HeadingElement: React.FC<{
             onChange={handleTextChange}
             placeholder="Enter heading text..."
             disabled={false}
+            variant="heading"
             className="font-inherit leading-tight"
             style={{ textAlign: cleanStyles.textAlign as any }}
           />
         ) : (
-          <span dangerouslySetInnerHTML={{ __html: sanitizeHtml(text) }} />
+          <span className="whitespace-pre-wrap" dangerouslySetInnerHTML={{ __html: sanitizeHtml(text, 'heading') }} />
         )}
       </Tag>
     </>
@@ -123,11 +124,12 @@ const ParagraphElement: React.FC<{
             onChange={handleTextChange}
             placeholder="Enter your text content..."
             disabled={false}
+            variant="paragraph"
             className="leading-inherit"
             style={{ textAlign: cleanStyles.textAlign as any }}
           />
         ) : (
-          <div className="whitespace-pre-wrap" dangerouslySetInnerHTML={{ __html: sanitizeHtml(text) }} />
+          <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(text, 'paragraph') }} />
         )}
       </div>
     </>

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Type } from 'lucide-react';
 import { BlockEditProps, BlockSaveProps, BlockRegistration } from '../types';
-import { InlineEditor } from '@/components/page-builder/components/InlineEditor';
+import { InlineRTE, sanitizeHtml } from '@/components/page-builder/components/InlineRTE';
 
 const ParagraphEdit: React.FC<BlockEditProps> = ({ block, onUpdate, isSelected }) => {
   const [content, setContent] = useState(block.content.text || '');
@@ -13,11 +13,11 @@ const ParagraphEdit: React.FC<BlockEditProps> = ({ block, onUpdate, isSelected }
 
   return (
     <div className={`p-4 border rounded-lg ${isSelected ? 'border-primary' : 'border-border'}`}>
-      <InlineEditor
+      <InlineRTE
         value={content}
         onChange={handleChange}
         placeholder="Write your paragraph here..."
-        multiline={true}
+        variant="paragraph"
         className="w-full min-h-[100px]"
       />
     </div>
@@ -26,9 +26,10 @@ const ParagraphEdit: React.FC<BlockEditProps> = ({ block, onUpdate, isSelected }
 
 const ParagraphSave: React.FC<BlockSaveProps> = ({ block }) => {
   return (
-    <p className="text-base leading-relaxed whitespace-pre-wrap">
-      {block.content.text || ''}
-    </p>
+    <div 
+      className="text-base leading-relaxed"
+      dangerouslySetInnerHTML={{ __html: sanitizeHtml(block.content.text || '', 'paragraph') }}
+    />
   );
 };
 
