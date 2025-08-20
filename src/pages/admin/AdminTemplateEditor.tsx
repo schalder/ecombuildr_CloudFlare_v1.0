@@ -9,6 +9,8 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { MediaSelector } from '@/components/page-builder/components/MediaSelector';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { ElementorPageBuilder } from '@/components/page-builder/ElementorPageBuilder';
 import { PageBuilderData } from '@/components/page-builder/types';
@@ -21,7 +23,9 @@ interface TemplateFormData {
   name: string;
   description: string;
   category: string;
-  template_type: 'website_page' | 'funnel_step';
+  template_types: ('website_page' | 'funnel_step')[];
+  auto_generate_preview: boolean;
+  manual_preview_image: string;
   is_published: boolean;
   is_premium: boolean;
 }
@@ -42,7 +46,9 @@ export default function AdminTemplateEditor() {
     name: '',
     description: '',
     category: 'general',
-    template_type: 'website_page',
+    template_types: ['website_page'],
+    auto_generate_preview: true,
+    manual_preview_image: '',
     is_published: false,
     is_premium: false,
   });
@@ -72,11 +78,18 @@ export default function AdminTemplateEditor() {
 
   useEffect(() => {
     if (template) {
+      // Handle legacy template_type or new template_types
+      const templateTypes = (template as any).template_types?.length > 0 
+        ? (template as any).template_types 
+        : [template.template_type];
+      
       setFormData({
         name: template.name,
         description: template.description || '',
         category: template.category,
-        template_type: template.template_type as 'website_page' | 'funnel_step',
+        template_types: templateTypes,
+        auto_generate_preview: (template as any).auto_generate_preview ?? true,
+        manual_preview_image: template.preview_image || '',
         is_published: template.is_published,
         is_premium: template.is_premium,
       });
@@ -86,10 +99,18 @@ export default function AdminTemplateEditor() {
 
   const saveTemplateMutation = useMutation({
     mutationFn: async (data: { formData: TemplateFormData; content: PageBuilderData; previewImage?: string }) => {
+      const { template_types, auto_generate_preview, manual_preview_image, ...otherFormData } = data.formData;
+      
       const templateData = {
-        ...data.formData,
+        ...otherFormData,
+        template_types,
+        auto_generate_preview,
+        // For backward compatibility, set template_type to the first type
+        template_type: template_types[0] || 'website_page',
         content: data.content as any,
-        preview_image: data.previewImage || null,
+        preview_image: auto_generate_preview 
+          ? (data.previewImage || null)
+          : (manual_preview_image || null),
       };
 
       if (isEditing) {
@@ -218,7 +239,7 @@ export default function AdminTemplateEditor() {
     const missingFields = [];
     if (!formData.name.trim()) missingFields.push('name');
     if (!formData.category.trim()) missingFields.push('category');
-    if (!formData.template_type) missingFields.push('type');
+    if (!formData.template_types.length) missingFields.push('types');
 
     if (missingFields.length > 0) {
       toast.error(`Please fill in required fields: ${missingFields.join(', ')}`);
@@ -228,7 +249,10 @@ export default function AdminTemplateEditor() {
 
     setIsSaving(true);
     try {
-      const previewImage = await generatePreviewImage();
+      let previewImage = undefined;
+      if (formData.auto_generate_preview) {
+        previewImage = await generatePreviewImage();
+      }
       await saveTemplateMutation.mutateAsync({
         formData,
         content: builderData,
@@ -391,22 +415,49 @@ export default function AdminTemplateEditor() {
                 </div>
 
                 <div>
-                  <Label htmlFor="type">Type *</Label>
-                  <Select
-                    value={formData.template_type}
-                    onValueChange={(value: 'website_page' | 'funnel_step') => 
-                      setFormData({ ...formData, template_type: value })
-                    }
-                    required
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="website_page">Website Page</SelectItem>
-                      <SelectItem value="funnel_step">Funnel Step</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Label>Template Types *</Label>
+                  <div className="space-y-2 mt-2">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="website_page"
+                        checked={formData.template_types.includes('website_page')}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setFormData({
+                              ...formData,
+                              template_types: [...formData.template_types, 'website_page']
+                            });
+                          } else {
+                            setFormData({
+                              ...formData,
+                              template_types: formData.template_types.filter(t => t !== 'website_page')
+                            });
+                          }
+                        }}
+                      />
+                      <Label htmlFor="website_page">Website Page</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="funnel_step"
+                        checked={formData.template_types.includes('funnel_step')}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setFormData({
+                              ...formData,
+                              template_types: [...formData.template_types, 'funnel_step']
+                            });
+                          } else {
+                            setFormData({
+                              ...formData,
+                              template_types: formData.template_types.filter(t => t !== 'funnel_step')
+                            });
+                          }
+                        }}
+                      />
+                      <Label htmlFor="funnel_step">Funnel Step</Label>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="flex items-center justify-between">
@@ -425,6 +476,28 @@ export default function AdminTemplateEditor() {
                     checked={formData.is_premium}
                     onCheckedChange={(checked) => setFormData({ ...formData, is_premium: checked })}
                   />
+                </div>
+
+                <div className="border-t pt-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <Label htmlFor="auto_generate">Auto-generate thumbnail</Label>
+                    <Switch
+                      id="auto_generate"
+                      checked={formData.auto_generate_preview}
+                      onCheckedChange={(checked) => setFormData({ ...formData, auto_generate_preview: checked })}
+                    />
+                  </div>
+                  
+                  {!formData.auto_generate_preview && (
+                    <div>
+                      <Label>Manual Thumbnail</Label>
+                      <MediaSelector
+                        label="Select thumbnail image"
+                        value={formData.manual_preview_image}
+                        onChange={(url) => setFormData({ ...formData, manual_preview_image: url })}
+                      />
+                    </div>
+                  )}
                 </div>
 
                 <div className="pt-4">

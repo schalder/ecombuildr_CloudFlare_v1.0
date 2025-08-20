@@ -1042,6 +1042,7 @@ export type Database = {
       }
       page_templates: {
         Row: {
+          auto_generate_preview: boolean
           category: string
           content: Json
           created_at: string
@@ -1053,9 +1054,11 @@ export type Database = {
           name: string
           preview_image: string | null
           template_type: string
+          template_types: string[]
           updated_at: string
         }
         Insert: {
+          auto_generate_preview?: boolean
           category?: string
           content?: Json
           created_at?: string
@@ -1067,9 +1070,11 @@ export type Database = {
           name: string
           preview_image?: string | null
           template_type: string
+          template_types?: string[]
           updated_at?: string
         }
         Update: {
+          auto_generate_preview?: boolean
           category?: string
           content?: Json
           created_at?: string
@@ -1081,6 +1086,7 @@ export type Database = {
           name?: string
           preview_image?: string | null
           template_type?: string
+          template_types?: string[]
           updated_at?: string
         }
         Relationships: []

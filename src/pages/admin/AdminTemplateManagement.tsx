@@ -15,7 +15,8 @@ interface PageTemplate {
   name: string;
   description: string;
   category: string;
-  template_type: 'website_page' | 'funnel_step';
+  template_type?: 'website_page' | 'funnel_step'; // Legacy field
+  template_types?: ('website_page' | 'funnel_step')[]; // New field
   preview_image: string | null;
   is_published: boolean;
   is_premium: boolean;
@@ -79,7 +80,13 @@ export default function AdminTemplateManagement() {
 
   const filteredTemplates = templates.filter(template => {
     if (selectedCategory !== 'all' && template.category !== selectedCategory) return false;
-    if (selectedType !== 'all' && template.template_type !== selectedType) return false;
+    if (selectedType !== 'all') {
+      // Check both legacy template_type and new template_types
+      const templateTypes = template.template_types?.length > 0 
+        ? template.template_types 
+        : (template.template_type ? [template.template_type] : []);
+      if (!templateTypes.includes(selectedType as any)) return false;
+    }
     return true;
   });
 
@@ -174,13 +181,16 @@ export default function AdminTemplateManagement() {
                   )}
                 </div>
                 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <Badge variant="secondary" className="text-xs">
                     {template.category}
                   </Badge>
-                  <Badge variant="outline" className="text-xs">
-                    {template.template_type === 'website_page' ? 'Website' : 'Funnel'}
-                  </Badge>
+                  {/* Display template types */}
+                  {(template.template_types?.length > 0 ? template.template_types : [template.template_type]).map((type, index) => (
+                    <Badge key={index} variant="outline" className="text-xs">
+                      {type === 'website_page' ? 'Website' : 'Funnel'}
+                    </Badge>
+                  ))}
                   {template.is_premium && (
                     <Badge className="text-xs bg-gradient-to-r from-primary to-primary/80">
                       Premium

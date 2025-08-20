@@ -15,7 +15,8 @@ interface PageTemplate {
   name: string;
   description: string;
   category: string;
-  template_type: 'website_page' | 'funnel_step';
+  template_type?: 'website_page' | 'funnel_step'; // Legacy field
+  template_types?: ('website_page' | 'funnel_step')[]; // New field
   content: PageBuilderData;
   preview_image: string | null;
   is_premium: boolean;
@@ -44,12 +45,21 @@ export function TemplateSelectionModal({
       const { data, error } = await supabase
         .from('page_templates')
         .select('*')
-        .eq('template_type', templateType)
         .eq('is_published', true)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return (data || []).map(item => ({
+      
+      // Filter templates that support the requested type
+      const filteredData = (data || []).filter(item => {
+        // Check new template_types array first, then fallback to legacy template_type
+        const supportedTypes = item.template_types?.length > 0 
+          ? item.template_types 
+          : (item.template_type ? [item.template_type] : []);
+        return supportedTypes.includes(templateType);
+      });
+      
+      return filteredData.map(item => ({
         ...item,
         content: (item.content as any) || { sections: [], globalStyles: {}, pageStyles: {} }
       })) as PageTemplate[];
