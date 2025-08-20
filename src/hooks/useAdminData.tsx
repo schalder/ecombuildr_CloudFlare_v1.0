@@ -7,6 +7,7 @@ interface AdminUser {
   id: string;
   email: string;
   full_name: string | null;
+  phone: string | null;
   subscription_plan: string;
   account_status: string;
   trial_expires_at: string | null;
@@ -104,6 +105,7 @@ export const useAdminData = () => {
           id,
           email,
           full_name,
+          phone,
           subscription_plan,
           account_status,
           trial_expires_at,

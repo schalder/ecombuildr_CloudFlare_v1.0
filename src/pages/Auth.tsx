@@ -17,7 +17,7 @@ const Auth = () => {
   const [searchParams] = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
   const [signInData, setSignInData] = useState({ email: '', password: '' });
-  const [signUpData, setSignUpData] = useState({ email: '', password: '', fullName: '', confirmPassword: '' });
+  const [signUpData, setSignUpData] = useState({ email: '', password: '', fullName: '', phone: '', confirmPassword: '' });
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [defaultTab, setDefaultTab] = useState("signin");
 
@@ -88,7 +88,7 @@ const Auth = () => {
     }
 
     setIsLoading(true);
-    const { error } = await signUp(signUpData.email, signUpData.password, signUpData.fullName, selectedPlan);
+    const { error } = await signUp(signUpData.email, signUpData.password, signUpData.fullName, signUpData.phone, selectedPlan);
     
     if (error) {
       toast({
@@ -203,6 +203,17 @@ const Auth = () => {
                       placeholder="Enter your email"
                       value={signUpData.email}
                       onChange={(e) => setSignUpData({ ...signUpData, email: e.target.value })}
+                      disabled={isLoading}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-phone">Phone Number (Optional)</Label>
+                    <Input
+                      id="signup-phone"
+                      type="tel"
+                      placeholder="Enter your phone number"
+                      value={signUpData.phone}
+                      onChange={(e) => setSignUpData({ ...signUpData, phone: e.target.value })}
                       disabled={isLoading}
                     />
                   </div>

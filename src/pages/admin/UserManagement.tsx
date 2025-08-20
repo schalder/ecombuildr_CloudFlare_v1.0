@@ -181,6 +181,9 @@ const UserManagement = () => {
                         <div>
                           <div className="font-medium">{user.full_name || 'No Name'}</div>
                           <div className="text-sm text-muted-foreground">{user.email}</div>
+                          {user.phone && (
+                            <div className="text-xs text-muted-foreground">{user.phone}</div>
+                          )}
                         </div>
                       </div>
                       <div className="flex items-center gap-2 mt-2">
@@ -283,6 +286,10 @@ const UserManagement = () => {
                   <div>
                     <label className="text-sm font-medium">Email</label>
                     <p className="text-sm text-muted-foreground">{selectedUser.email}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">Phone</label>
+                    <p className="text-sm text-muted-foreground">{selectedUser.phone || 'Not provided'}</p>
                   </div>
                   <div>
                     <label className="text-sm font-medium">Current Plan</label>
