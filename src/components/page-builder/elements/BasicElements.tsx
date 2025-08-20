@@ -520,6 +520,13 @@ const ButtonElement: React.FC<{
   
   // Generate responsive CSS
   const responsiveCSS = generateResponsiveCSS(element.id, element.styles);
+  
+  // Debug hover styles
+  console.log('Button hover styles debug:', {
+    elementId: element.id,
+    responsiveStyles: element.styles?.responsive,
+    generatedCSS: responsiveCSS
+  });
 
   const customClassName = [
     `element-${element.id}`,

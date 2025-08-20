@@ -19,9 +19,9 @@ export function generateResponsiveCSS(elementId: string, styles: any): string {
     }
     if (hoverColor || hoverBackgroundColor) {
       const hoverPairs: string[] = [];
-      if (hoverColor) hoverPairs.push(`color: ${hoverColor}`);
-      if (hoverBackgroundColor) hoverPairs.push(`background-color: ${hoverBackgroundColor}`);
-      css += `.element-${elementId}:hover { ${hoverPairs.join('; ')}; }`;
+      if (hoverColor) hoverPairs.push(`color: ${hoverColor} !important`);
+      if (hoverBackgroundColor) hoverPairs.push(`background-color: ${hoverBackgroundColor} !important`);
+      css += `.element-${elementId}:hover { ${hoverPairs.join('; ')}; transition: all 0.2s ease; }`;
     }
   }
   
@@ -37,14 +37,15 @@ export function generateResponsiveCSS(elementId: string, styles: any): string {
       if (mobileProps) css += `.element-${elementId} { ${mobileProps}; }`;
       if (mHoverColor || mHoverBg) {
         const hoverPairs: string[] = [];
-        if (mHoverColor) hoverPairs.push(`color: ${mHoverColor}`);
-        if (mHoverBg) hoverPairs.push(`background-color: ${mHoverBg}`);
-        css += `.element-${elementId}:hover { ${hoverPairs.join('; ')}; }`;
+        if (mHoverColor) hoverPairs.push(`color: ${mHoverColor} !important`);
+        if (mHoverBg) hoverPairs.push(`background-color: ${mHoverBg} !important`);
+        css += `.element-${elementId}:hover { ${hoverPairs.join('; ')}; transition: all 0.2s ease; }`;
       }
       css += ` }`;
     }
   }
   
+  console.log('Generated hover CSS:', css);
   return css;
 }
 
