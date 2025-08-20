@@ -222,18 +222,25 @@ export default function PageBuilder() {
         setPageData(prev => ({ ...prev, is_published: publishedState }));
       }
 
-      // Generate preview image after successful save
+      // Generate preview image after successful save using hidden renderer
       if (entityId && (context === 'website' || context === 'funnel')) {
         try {
-          const { generateAndSavePreview } = await import('@/lib/pagePreview');
+          const { generateAndSavePagePreview } = await import('@/lib/pagePreviewRenderer');
           const previewType = context === 'website' ? 'website_page' : 'funnel_step';
           
-          // Add a longer delay to ensure DOM is fully rendered and page builder is loaded
+          // Use the new hidden renderer approach for more reliable previews
           setTimeout(() => {
-            generateAndSavePreview(entityId, previewType).catch(error => {
-              console.warn('Failed to generate preview in background:', error);
+            generateAndSavePagePreview(builderData, entityId, previewType).catch(error => {
+              console.warn('Hidden renderer preview failed, trying fallback:', error);
+              
+              // Fallback to current method if new approach fails
+              import('@/lib/pagePreview').then(({ generateAndSavePreview }) => {
+                generateAndSavePreview(entityId, previewType).catch(fallbackError => {
+                  console.warn('Fallback preview generation also failed:', fallbackError);
+                });
+              });
             });
-          }, 2000); // Increased delay
+          }, 1000); // Reduced delay since we're not relying on DOM state
         } catch (previewError) {
           console.warn('Failed to load preview generation module:', previewError);
         }
