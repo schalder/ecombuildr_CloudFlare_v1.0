@@ -140,9 +140,9 @@ const ImageElement: React.FC<{
   isEditing?: boolean;
   deviceType?: 'desktop' | 'tablet' | 'mobile';
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
-}> = ({ element, isEditing, onUpdate }) => {
+}> = ({ element, isEditing, deviceType = 'desktop', onUpdate }) => {
   const { src, alt, caption, alignment = 'center', linkUrl, linkTarget = '_self' } = element.content;
-  const containerStyles = renderElementStyles(element);
+  const containerStyles = renderElementStyles(element, deviceType);
   const [imageError, setImageError] = React.useState(false);
   const [imageLoading, setImageLoading] = React.useState(false);
 
@@ -165,18 +165,45 @@ const ImageElement: React.FC<{
     );
   }
 
-  const alignmentClasses = {
-    left: 'flex justify-start',
-    center: 'flex justify-center',
-    right: 'flex justify-end',
-    full: 'w-full'
+  // Get responsive styles for current device
+  const responsiveStyles = element.styles?.responsive || { desktop: {}, mobile: {} };
+  const currentResponsiveStyles = responsiveStyles[deviceType] || {};
+
+  // Image alignment classes - applied to the image itself
+  const getImageAlignmentClass = (alignment: string) => {
+    switch (alignment) {
+      case 'left':
+        return '';
+      case 'right':
+        return 'ml-auto';
+      case 'center':
+        return 'mx-auto';
+      case 'full':
+        return 'w-full';
+      default:
+        return 'mx-auto'; // Default to center
+    }
   };
 
-  const imageStyles: React.CSSProperties = {
-    width: element.styles?.width || 'auto',
-    height: element.styles?.height || 'auto',
-    maxWidth: element.styles?.maxWidth || (alignment === 'full' ? '100%' : undefined),
-    objectFit: element.styles?.objectFit || 'cover'
+  // Calculate image styles with responsive support
+  const getImageStyles = (): React.CSSProperties => {
+    const baseStyles = {
+      height: element.styles?.height || 'auto',
+      objectFit: element.styles?.objectFit || 'cover'
+    } as React.CSSProperties;
+
+    // Apply width from responsive styles if available, otherwise fallback to base styles
+    const width = currentResponsiveStyles.width || element.styles?.width;
+    const maxWidth = element.styles?.maxWidth;
+
+    if (alignment === 'full') {
+      baseStyles.width = '100%';
+    } else {
+      if (width) baseStyles.width = width;
+      if (maxWidth) baseStyles.maxWidth = maxWidth;
+    }
+
+    return baseStyles;
   };
 
   const handleImageLoad = () => {
@@ -211,8 +238,8 @@ const ImageElement: React.FC<{
         <img
           src={src}
           alt={alt || ''}
-          className="rounded-lg"
-          style={imageStyles}
+          className={`rounded-lg block ${getImageAlignmentClass(alignment)}`}
+          style={getImageStyles()}
           onLoad={handleImageLoad}
           onError={handleImageError}
         />
@@ -234,17 +261,15 @@ const ImageElement: React.FC<{
 
   return (
     <figure 
-      className={`my-4 ${alignmentClasses[alignment] || alignmentClasses.center}`}
+      className="my-4 w-full"
       style={containerStyles}
     >
-      <div className={alignment === 'full' ? 'w-full' : 'inline-block'}>
-        {imageContent}
-        {caption && (
-          <figcaption className="text-sm text-muted-foreground mt-2 text-center">
-            {caption}
-          </figcaption>
-        )}
-      </div>
+      {imageContent}
+      {caption && (
+        <figcaption className="text-sm text-muted-foreground mt-2 text-center">
+          {caption}
+        </figcaption>
+      )}
     </figure>
   );
 };

@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Slider } from '@/components/ui/slider';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
+import { ColorPicker } from '@/components/ui/color-picker';
 import { Monitor, Smartphone } from 'lucide-react';
 import { PageBuilderElement } from '../../types';
 
@@ -78,24 +79,44 @@ export const MediaElementStyles: React.FC<MediaElementStylesProps> = ({
         </div>
 
         {element.type === 'image' && (
-          <div>
-            <Label className="text-xs">Object Fit</Label>
-            <Select
-              value={element.styles?.objectFit || 'cover'}
-              onValueChange={(value) => onStyleUpdate('objectFit', value)}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="cover">Cover</SelectItem>
-                <SelectItem value="contain">Contain</SelectItem>
-                <SelectItem value="fill">Fill</SelectItem>
-                <SelectItem value="none">None</SelectItem>
-                <SelectItem value="scale-down">Scale Down</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          <>
+            <div>
+              <Label className="text-xs">Alignment</Label>
+              <Select
+                value={element.content?.alignment || 'center'}
+                onValueChange={(value) => onStyleUpdate('content', { ...element.content, alignment: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="left">Left</SelectItem>
+                  <SelectItem value="center">Center</SelectItem>
+                  <SelectItem value="right">Right</SelectItem>
+                  <SelectItem value="full">Full Width</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div>
+              <Label className="text-xs">Object Fit</Label>
+              <Select
+                value={element.styles?.objectFit || 'cover'}
+                onValueChange={(value) => onStyleUpdate('objectFit', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="cover">Cover</SelectItem>
+                  <SelectItem value="contain">Contain</SelectItem>
+                  <SelectItem value="fill">Fill</SelectItem>
+                  <SelectItem value="none">None</SelectItem>
+                  <SelectItem value="scale-down">Scale Down</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </>
         )}
       </div>
 
@@ -105,15 +126,11 @@ export const MediaElementStyles: React.FC<MediaElementStylesProps> = ({
       <div className="space-y-3">
         <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Background</h4>
         
-        <div>
-          <Label className="text-xs">Background Color</Label>
-          <Input
-            type="color"
-            value={element.styles?.backgroundColor || '#ffffff'}
-            onChange={(e) => onStyleUpdate('backgroundColor', e.target.value)}
-            className="w-full h-10"
-          />
-        </div>
+        <ColorPicker
+          label="Background Color"
+          color={element.styles?.backgroundColor || ''}
+          onChange={(color) => onStyleUpdate('backgroundColor', color)}
+        />
       </div>
 
       <Separator />
@@ -131,15 +148,11 @@ export const MediaElementStyles: React.FC<MediaElementStylesProps> = ({
           />
         </div>
 
-        <div>
-          <Label className="text-xs">Border Color</Label>
-          <Input
-            type="color"
-            value={element.styles?.borderColor || '#e5e7eb'}
-            onChange={(e) => onStyleUpdate('borderColor', e.target.value)}
-            className="w-full h-10"
-          />
-        </div>
+        <ColorPicker
+          label="Border Color"
+          color={element.styles?.borderColor || ''}
+          onChange={(color) => onStyleUpdate('borderColor', color)}
+        />
 
         <div>
           <Label className="text-xs">Border Radius</Label>

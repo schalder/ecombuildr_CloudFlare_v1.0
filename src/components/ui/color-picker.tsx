@@ -13,13 +13,21 @@ interface ColorPickerProps {
 }
 
 const presetColors = [
-  '#FFFFFF',
-  '#10B981', '#059669', '#047857', '#065F46',
-  '#3B82F6', '#2563EB', '#1D4ED8', '#1E40AF',
-  '#8B5CF6', '#7C3AED', '#6D28D9', '#5B21B6',
-  '#EF4444', '#DC2626', '#B91C1C', '#991B1B',
-  '#F59E0B', '#D97706', '#B45309', '#92400E',
-  '#6B7280', '#4B5563', '#374151', '#1F2937'
+  '#FFFFFF', '#000000',
+  // Primary - Deep Teal variations
+  'hsl(185, 85%, 25%)', 'hsl(185, 85%, 35%)', 'hsl(185, 75%, 88%)',
+  // Secondary - Rich Blue variations  
+  'hsl(220, 45%, 25%)', 'hsl(220, 65%, 95%)',
+  // Accent - Vibrant Orange variations
+  'hsl(25, 95%, 55%)', 'hsl(25, 95%, 50%)', 'hsl(25, 85%, 90%)',
+  // Success - Bangladesh Green variations
+  'hsl(142, 76%, 36%)', 'hsl(142, 76%, 45%)', 'hsl(142, 60%, 92%)',
+  // Warning - Soft Yellow variations
+  'hsl(48, 97%, 60%)', 'hsl(55, 97%, 88%)', 'hsl(55, 97%, 80%)',
+  // Neutral variations
+  'hsl(220, 30%, 96%)', 'hsl(215, 20%, 50%)', 'hsl(220, 25%, 90%)',
+  // Destructive
+  'hsl(0, 84%, 60%)', 'hsl(0, 62%, 31%)'
 ];
 
 export const ColorPicker: React.FC<ColorPickerProps> = ({ color, onChange, label, compact }) => {
