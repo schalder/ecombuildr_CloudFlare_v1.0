@@ -186,6 +186,24 @@ export const ButtonElementStyles: React.FC<ButtonElementStylesProps> = ({
             label="Background Color"
           />
         </div>
+
+        <div>
+          <Label className="text-xs">Text Hover Color</Label>
+          <ColorPicker
+            color={getCurrentValue('hoverColor', '')}
+            onChange={(color) => handleResponsiveUpdate('hoverColor', color)}
+            label="Text Hover Color"
+          />
+        </div>
+
+        <div>
+          <Label className="text-xs">Background Hover Color</Label>
+          <ColorPicker
+            color={getCurrentValue('hoverBackgroundColor', '')}
+            onChange={(color) => handleResponsiveUpdate('hoverBackgroundColor', color)}
+            label="Background Hover Color"
+          />
+        </div>
       </div>
 
       <Separator />
