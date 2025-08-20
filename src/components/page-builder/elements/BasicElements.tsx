@@ -134,13 +134,14 @@ const ParagraphElement: React.FC<{
   );
 };
 
-// Image Element
+// Image Element - Fixed alignment implementation
 const ImageElement: React.FC<{
   element: PageBuilderElement;
   isEditing?: boolean;
   deviceType?: 'desktop' | 'tablet' | 'mobile';
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
 }> = ({ element, isEditing, deviceType = 'desktop', onUpdate }) => {
+  console.log('ImageElement: Using new alignment implementation');
   const { src, alt, caption, alignment = 'center', linkUrl, linkTarget = '_self' } = element.content;
   const [imageError, setImageError] = React.useState(false);
   const [imageLoading, setImageLoading] = React.useState(false);
