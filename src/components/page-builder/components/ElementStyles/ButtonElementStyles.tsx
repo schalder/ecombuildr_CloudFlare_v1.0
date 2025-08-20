@@ -174,7 +174,6 @@ export const ButtonElementStyles: React.FC<ButtonElementStylesProps> = ({
           <ColorPicker
             color={getCurrentValue('color', '#ffffff')}
             onChange={(color) => handleResponsiveUpdate('color', color)}
-            label="Text Color"
           />
         </div>
 
@@ -183,7 +182,6 @@ export const ButtonElementStyles: React.FC<ButtonElementStylesProps> = ({
           <ColorPicker
             color={getCurrentValue('backgroundColor', '#3b82f6')}
             onChange={(color) => handleResponsiveUpdate('backgroundColor', color)}
-            label="Background Color"
           />
         </div>
 
@@ -192,7 +190,6 @@ export const ButtonElementStyles: React.FC<ButtonElementStylesProps> = ({
           <ColorPicker
             color={getCurrentValue('hoverColor', '')}
             onChange={(color) => handleResponsiveUpdate('hoverColor', color)}
-            label="Text Hover Color"
           />
         </div>
 
@@ -201,7 +198,6 @@ export const ButtonElementStyles: React.FC<ButtonElementStylesProps> = ({
           <ColorPicker
             color={getCurrentValue('hoverBackgroundColor', '')}
             onChange={(color) => handleResponsiveUpdate('hoverBackgroundColor', color)}
-            label="Background Hover Color"
           />
         </div>
       </div>
@@ -226,7 +222,6 @@ export const ButtonElementStyles: React.FC<ButtonElementStylesProps> = ({
           <ColorPicker
             color={getCurrentValue('borderColor', '#e5e7eb')}
             onChange={(color) => handleResponsiveUpdate('borderColor', color)}
-            label="Border Color"
           />
         </div>
 
