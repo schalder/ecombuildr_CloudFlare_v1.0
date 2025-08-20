@@ -11,12 +11,14 @@ interface MediaSelectorProps {
   value?: string;
   onChange: (url: string) => void;
   label?: string;
+  maxSize?: number; // in MB
 }
 
 export const MediaSelector: React.FC<MediaSelectorProps> = ({
   value = '',
   onChange,
-  label = 'Select Image'
+  label = 'Select Image',
+  maxSize = 5
 }) => {
   const [isMediaLibraryOpen, setIsMediaLibraryOpen] = useState(false);
   const [urlInput, setUrlInput] = useState(value);
@@ -109,7 +111,7 @@ export const MediaSelector: React.FC<MediaSelectorProps> = ({
             value={value}
             onChange={onChange}
             accept="image/*"
-            maxSize={5}
+            maxSize={maxSize}
           />
         </TabsContent>
         

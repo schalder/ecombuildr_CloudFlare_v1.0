@@ -14,6 +14,7 @@ import GradientPicker from '@/components/ui/gradient-picker';
 import { Switch } from '@/components/ui/switch';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { CompactMediaSelector } from './CompactMediaSelector';
 
 // Section Settings Panel
 interface SectionSettingsProps {
@@ -219,12 +220,12 @@ export const SectionSettings: React.FC<SectionSettingsProps> = ({ section, onUpd
           />
           
           <div className="space-y-2">
-            <Label htmlFor="bg-image">Background Image URL</Label>
-            <Input
-              id="bg-image"
+            <Label>Background Image</Label>
+            <CompactMediaSelector
               value={section.styles?.backgroundImage || ''}
-              onChange={(e) => handleStyleUpdate('backgroundImage', e.target.value)}
-              placeholder="https://example.com/image.jpg"
+              onChange={(url) => handleStyleUpdate('backgroundImage', url)}
+              label="Select Background Image"
+              maxSize={4}
             />
           </div>
           
@@ -558,12 +559,12 @@ export const RowSettings: React.FC<RowSettingsProps> = ({ row, onUpdate }) => {
           />
           
           <div className="space-y-2">
-            <Label htmlFor="bg-image-row">Background Image URL</Label>
-            <Input
-              id="bg-image-row"
+            <Label>Background Image</Label>
+            <CompactMediaSelector
               value={row.styles?.backgroundImage || ''}
-              onChange={(e) => handleStyleUpdate('backgroundImage', e.target.value)}
-              placeholder="https://example.com/image.jpg"
+              onChange={(url) => handleStyleUpdate('backgroundImage', url)}
+              label="Select Background Image"
+              maxSize={4}
             />
           </div>
           
@@ -873,12 +874,12 @@ export const ColumnSettings: React.FC<ColumnSettingsProps> = ({ column, onUpdate
           />
           
           <div className="space-y-2">
-            <Label htmlFor="bg-image-column">Background Image URL</Label>
-            <Input
-              id="bg-image-column"
+            <Label>Background Image</Label>
+            <CompactMediaSelector
               value={column.styles?.backgroundImage || ''}
-              onChange={(e) => handleStyleUpdate('backgroundImage', e.target.value)}
-              placeholder="https://example.com/image.jpg"
+              onChange={(url) => handleStyleUpdate('backgroundImage', url)}
+              label="Select Background Image"
+              maxSize={4}
             />
           </div>
           

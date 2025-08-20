@@ -11,12 +11,14 @@ interface CompactMediaSelectorProps {
   value?: string;
   onChange: (url: string) => void;
   label?: string;
+  maxSize?: number; // in MB
 }
 
 export const CompactMediaSelector: React.FC<CompactMediaSelectorProps> = ({
   value = '',
   onChange,
-  label = 'Select Image'
+  label = 'Select Image',
+  maxSize = 5
 }) => {
   const [isMediaLibraryOpen, setIsMediaLibraryOpen] = useState(false);
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
@@ -117,7 +119,7 @@ export const CompactMediaSelector: React.FC<CompactMediaSelectorProps> = ({
                 setIsUploadDialogOpen(false);
               }}
               accept="image/*"
-              maxSize={5}
+              maxSize={maxSize}
             />
           </DialogContent>
         </Dialog>
@@ -194,7 +196,7 @@ export const CompactMediaSelector: React.FC<CompactMediaSelectorProps> = ({
               setIsUploadDialogOpen(false);
             }}
             accept="image/*"
-            maxSize={5}
+            maxSize={maxSize}
           />
         </DialogContent>
       </Dialog>
