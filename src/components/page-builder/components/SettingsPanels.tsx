@@ -230,7 +230,7 @@ export const SectionSettings: React.FC<SectionSettingsProps> = ({ section, onUpd
           </div>
           
           <div className="space-y-2">
-            <Label>Background Opacity: <span className="text-muted-foreground">{Math.round((section.styles?.backgroundOpacity ?? 1) * 100)}%</span></Label>
+            <Label>Color/Gradient Opacity: <span className="text-muted-foreground">{Math.round((section.styles?.backgroundOpacity ?? 1) * 100)}%</span></Label>
             <Slider
               min={0}
               max={1}
@@ -569,7 +569,7 @@ export const RowSettings: React.FC<RowSettingsProps> = ({ row, onUpdate }) => {
           </div>
           
           <div className="space-y-2">
-            <Label>Background Opacity: <span className="text-muted-foreground">{Math.round((row.styles?.backgroundOpacity ?? 1) * 100)}%</span></Label>
+            <Label>Color/Gradient Opacity: <span className="text-muted-foreground">{Math.round((row.styles?.backgroundOpacity ?? 1) * 100)}%</span></Label>
             <Slider
               min={0}
               max={1}
@@ -884,7 +884,7 @@ export const ColumnSettings: React.FC<ColumnSettingsProps> = ({ column, onUpdate
           </div>
           
           <div className="space-y-2">
-            <Label>Background Opacity: <span className="text-muted-foreground">{Math.round((column.styles?.backgroundOpacity ?? 1) * 100)}%</span></Label>
+            <Label>Color/Gradient Opacity: <span className="text-muted-foreground">{Math.round((column.styles?.backgroundOpacity ?? 1) * 100)}%</span></Label>
             <Slider
               min={0}
               max={1}

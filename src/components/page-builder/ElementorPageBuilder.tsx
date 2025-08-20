@@ -60,7 +60,6 @@ import {
 } from './types';
 import { elementRegistry } from './elements';
 import { renderSectionStyles, renderRowStyles, renderColumnStyles, hasUserBackground, hasUserShadow } from './utils/styleRenderer';
-import { generateBackgroundOpacityCSS } from './utils/backgroundOpacityCSS';
 import { SectionDropZone } from './components/SectionDropZone';
 import { RowDropZone } from './components/RowDropZone';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -209,27 +208,6 @@ const ElementorPageBuilderContent: React.FC<ElementorPageBuilderProps> = memo(({
     }
   }, [initialData]);
 
-  // Inject CSS for background image opacity using pseudo-elements
-  useEffect(() => {
-    const styleId = 'page-builder-background-opacity-styles';
-    let existingStyle = document.getElementById(styleId);
-    
-    if (!existingStyle) {
-      existingStyle = document.createElement('style');
-      existingStyle.id = styleId;
-      document.head.appendChild(existingStyle);
-    }
-    
-    const css = generateBackgroundOpacityCSS(data.sections);
-    existingStyle.textContent = css;
-    
-    return () => {
-      const style = document.getElementById(styleId);
-      if (style) {
-        style.remove();
-      }
-    };
-  }, [data.sections]);
 
   const updateData = useCallback((newData: PageBuilderData) => {
     const ensured = ensureAnchors(newData);

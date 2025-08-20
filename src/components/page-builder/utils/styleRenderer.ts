@@ -1,6 +1,6 @@
 import { PageBuilderSection, PageBuilderRow, PageBuilderColumn, PageBuilderElement } from '../types';
 import { mergeResponsiveStyles } from './responsiveStyles';
-import { applyColorOpacity, applyGradientOpacity, generateBackgroundImageOpacityCSS } from './backgroundOpacity';
+import { applyColorOpacity, applyGradientOpacity } from './backgroundOpacity';
 
 // Universal style renderer that creates pure inline styles
 export const renderSectionStyles = (section: PageBuilderSection, deviceType: 'desktop' | 'tablet' | 'mobile' = 'desktop'): React.CSSProperties => {
@@ -9,22 +9,27 @@ export const renderSectionStyles = (section: PageBuilderSection, deviceType: 'de
   if (section.styles) {
     const opacity = section.styles.backgroundOpacity ?? 1;
     
-    // Background styles - priority: gradient > image > color
+    // Layered background support: combine color/gradient with image
+    const backgroundLayers: string[] = [];
+    
+    // Add color/gradient layer with opacity (top layer)
     if (section.styles.backgroundGradient) {
-      styles.background = applyGradientOpacity(section.styles.backgroundGradient, opacity);
-    } else if (section.styles.backgroundImage) {
-      // For background images with opacity, we'll handle this via CSS classes
-      if (opacity < 1) {
-        styles.backgroundImage = 'none'; // Remove inline background image
-        // The pseudo-element CSS will be injected separately
-      } else {
-        styles.backgroundImage = `url(${section.styles.backgroundImage})`;
-        styles.backgroundSize = 'cover';
-        styles.backgroundPosition = 'center';
-        styles.backgroundRepeat = 'no-repeat';
-      }
+      backgroundLayers.push(applyGradientOpacity(section.styles.backgroundGradient, opacity));
     } else if (section.styles.backgroundColor && section.styles.backgroundColor !== 'transparent') {
-      styles.backgroundColor = applyColorOpacity(section.styles.backgroundColor, opacity);
+      backgroundLayers.push(applyColorOpacity(section.styles.backgroundColor, opacity));
+    }
+    
+    // Add image layer (bottom layer)
+    if (section.styles.backgroundImage) {
+      backgroundLayers.push(`url(${section.styles.backgroundImage})`);
+      styles.backgroundSize = 'cover';
+      styles.backgroundPosition = 'center';
+      styles.backgroundRepeat = 'no-repeat';
+    }
+    
+    // Apply combined background
+    if (backgroundLayers.length > 0) {
+      styles.background = backgroundLayers.join(', ');
     }
     
     // Box shadow styles
@@ -86,22 +91,27 @@ export const renderRowStyles = (row: PageBuilderRow, deviceType: 'desktop' | 'ta
   if (row.styles) {
     const opacity = row.styles.backgroundOpacity ?? 1;
     
-    // Background styles - priority: gradient > image > color
+    // Layered background support: combine color/gradient with image
+    const backgroundLayers: string[] = [];
+    
+    // Add color/gradient layer with opacity (top layer)
     if (row.styles.backgroundGradient) {
-      styles.background = applyGradientOpacity(row.styles.backgroundGradient, opacity);
-    } else if (row.styles.backgroundImage) {
-      // For background images with opacity, we'll handle this via CSS classes
-      if (opacity < 1) {
-        styles.backgroundImage = 'none'; // Remove inline background image
-        // The pseudo-element CSS will be injected separately
-      } else {
-        styles.backgroundImage = `url(${row.styles.backgroundImage})`;
-        styles.backgroundSize = 'cover';
-        styles.backgroundPosition = 'center';
-        styles.backgroundRepeat = 'no-repeat';
-      }
+      backgroundLayers.push(applyGradientOpacity(row.styles.backgroundGradient, opacity));
     } else if (row.styles.backgroundColor && row.styles.backgroundColor !== 'transparent') {
-      styles.backgroundColor = applyColorOpacity(row.styles.backgroundColor, opacity);
+      backgroundLayers.push(applyColorOpacity(row.styles.backgroundColor, opacity));
+    }
+    
+    // Add image layer (bottom layer)
+    if (row.styles.backgroundImage) {
+      backgroundLayers.push(`url(${row.styles.backgroundImage})`);
+      styles.backgroundSize = 'cover';
+      styles.backgroundPosition = 'center';
+      styles.backgroundRepeat = 'no-repeat';
+    }
+    
+    // Apply combined background
+    if (backgroundLayers.length > 0) {
+      styles.background = backgroundLayers.join(', ');
     }
     
     // Box shadow styles
@@ -163,22 +173,27 @@ export const renderColumnStyles = (column: PageBuilderColumn, deviceType: 'deskt
   if (column.styles) {
     const opacity = column.styles.backgroundOpacity ?? 1;
     
-    // Background styles - priority: gradient > image > color
+    // Layered background support: combine color/gradient with image
+    const backgroundLayers: string[] = [];
+    
+    // Add color/gradient layer with opacity (top layer)
     if (column.styles.backgroundGradient) {
-      styles.background = applyGradientOpacity(column.styles.backgroundGradient, opacity);
-    } else if (column.styles.backgroundImage) {
-      // For background images with opacity, we'll handle this via CSS classes
-      if (opacity < 1) {
-        styles.backgroundImage = 'none'; // Remove inline background image
-        // The pseudo-element CSS will be injected separately
-      } else {
-        styles.backgroundImage = `url(${column.styles.backgroundImage})`;
-        styles.backgroundSize = 'cover';
-        styles.backgroundPosition = 'center';
-        styles.backgroundRepeat = 'no-repeat';
-      }
+      backgroundLayers.push(applyGradientOpacity(column.styles.backgroundGradient, opacity));
     } else if (column.styles.backgroundColor && column.styles.backgroundColor !== 'transparent') {
-      styles.backgroundColor = applyColorOpacity(column.styles.backgroundColor, opacity);
+      backgroundLayers.push(applyColorOpacity(column.styles.backgroundColor, opacity));
+    }
+    
+    // Add image layer (bottom layer)
+    if (column.styles.backgroundImage) {
+      backgroundLayers.push(`url(${column.styles.backgroundImage})`);
+      styles.backgroundSize = 'cover';
+      styles.backgroundPosition = 'center';
+      styles.backgroundRepeat = 'no-repeat';
+    }
+    
+    // Apply combined background
+    if (backgroundLayers.length > 0) {
+      styles.background = backgroundLayers.join(', ');
     }
     
     // Box shadow styles
@@ -323,7 +338,11 @@ export const renderElementStyles = (element: PageBuilderElement, deviceType: 'de
 
 // Check if element has user-defined background or shadow
 export const hasUserBackground = (styles?: any): boolean => {
-  return !!(styles?.backgroundColor && styles.backgroundColor !== 'transparent');
+  return !!(
+    (styles?.backgroundColor && styles.backgroundColor !== 'transparent') ||
+    styles?.backgroundGradient ||
+    styles?.backgroundImage
+  );
 };
 
 export const hasUserShadow = (styles?: any): boolean => {
