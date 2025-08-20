@@ -179,19 +179,19 @@ const ImageElement: React.FC<{
     return cleanStyles;
   };
 
-  // Get wrapper alignment class (applied to the wrapper div)
-  const getWrapperAlignmentClass = (alignment: string) => {
+  // Get alignment class for the image/link wrapper
+  const getAlignmentClass = (alignment: string) => {
     switch (alignment) {
       case 'left':
-        return 'flex justify-start';
+        return 'block';
       case 'right':
-        return 'flex justify-end';
+        return 'block ml-auto';
       case 'center':
-        return 'flex justify-center';
+        return 'block mx-auto';
       case 'full':
-        return 'w-full';
+        return 'block w-full';
       default:
-        return 'flex justify-center'; // Default to center
+        return 'block mx-auto'; // Default to center
     }
   };
 
@@ -276,12 +276,14 @@ const ImageElement: React.FC<{
     <a 
       href={linkUrl} 
       target={linkTarget}
-      className="inline-block"
+      className={getAlignmentClass(alignment)}
     >
       <ImageComponent />
     </a>
   ) : (
-    <ImageComponent />
+    <div className={getAlignmentClass(alignment)}>
+      <ImageComponent />
+    </div>
   );
 
   return (
@@ -289,9 +291,7 @@ const ImageElement: React.FC<{
       className="my-4 w-full"
       style={getContainerStyles()}
     >
-      <div className={getWrapperAlignmentClass(alignment)}>
-        {imageContent}
-      </div>
+      {imageContent}
       {caption && (
         <figcaption className="text-sm text-muted-foreground mt-2 text-center">
           {caption}
