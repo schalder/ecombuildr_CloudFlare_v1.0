@@ -460,7 +460,7 @@ export default function Orders() {
               </div>
             ) : isMobile ? (
               // Mobile Card View
-              <div className="space-y-4">
+              <div className="space-y-4 overflow-x-hidden">
                 {filteredOrders.map((order) => (
                   <Card key={order.id} className="p-4">
                     <div className="space-y-3">
@@ -613,12 +613,12 @@ export default function Orders() {
                         <div className="space-y-1">
                           <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Items</div>
                           <div className="text-sm space-y-1">
-                            {orderItemsMap[order.id].slice(0, 2).map((it: any, i: number) => (
-                              <div key={i} className="flex items-start gap-2">
-                                <span className="flex-1 truncate min-w-0">{nameWithVariant(it.product_name, it.variation)}</span>
-                                <span className="flex-shrink-0 text-muted-foreground">× {it.quantity}</span>
-                              </div>
-                            ))}
+                             {orderItemsMap[order.id].slice(0, 2).map((it: any, i: number) => (
+                               <div key={i} className="flex items-start gap-2 min-w-0">
+                                 <span className="flex-1 whitespace-normal break-words min-w-0">{nameWithVariant(it.product_name, it.variation)}</span>
+                                 <span className="flex-shrink-0 text-muted-foreground">× {it.quantity}</span>
+                               </div>
+                             ))}
                             {orderItemsMap[order.id].length > 2 && (
                               <div className="text-xs text-muted-foreground">+{orderItemsMap[order.id].length - 2} more item(s)</div>
                             )}
