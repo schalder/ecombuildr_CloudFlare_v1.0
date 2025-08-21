@@ -25,28 +25,111 @@ interface SectionSettingsProps {
 export const SectionSettings: React.FC<SectionSettingsProps> = ({ section, onUpdate }) => {
   const [customWidthMode, setCustomWidthMode] = useState(!!section.customWidth);
 
-  const handleStyleUpdate = (key: string, value: any) => {
-    onUpdate({
-      styles: {
-        ...section.styles,
-        [key]: value
+  // Helper functions for height mode management
+  const getHeightMode = (styles: any, device: 'desktop' | 'mobile' = 'desktop'): 'auto' | 'viewport' | 'custom' => {
+    const deviceStyles = device === 'mobile' ? styles?.responsive?.mobile : styles;
+    if (!deviceStyles) return 'auto';
+    
+    if (deviceStyles.minHeight === '100vh') return 'viewport';
+    if (deviceStyles.minHeight && deviceStyles.minHeight !== '' && deviceStyles.minHeight !== '100vh') return 'custom';
+    return 'auto';
+  };
+
+  const applyHeightMode = (mode: 'auto' | 'viewport' | 'custom', device: 'desktop' | 'mobile' = 'desktop') => {
+    const updateFn = device === 'mobile' ? handleResponsiveStyleUpdate : handleStyleUpdate;
+    const deviceParam = device === 'mobile' ? 'mobile' : undefined;
+
+    if (mode === 'auto') {
+      if (device === 'mobile') {
+        // Remove mobile overrides completely
+        const newResponsive = { ...section.styles?.responsive };
+        if (newResponsive.mobile) {
+          delete newResponsive.mobile.height;
+          delete newResponsive.mobile.minHeight;
+          delete newResponsive.mobile.maxHeight;
+          // If mobile object is empty, remove it
+          if (Object.keys(newResponsive.mobile).length === 0) {
+            delete newResponsive.mobile;
+          }
+        }
+        onUpdate({
+          styles: {
+            ...section.styles,
+            responsive: newResponsive
+          }
+        });
+      } else {
+        // Remove desktop styles
+        const newStyles = { ...section.styles };
+        delete newStyles.height;
+        delete newStyles.minHeight;
+        delete newStyles.maxHeight;
+        onUpdate({ styles: newStyles });
       }
-    });
+    } else if (mode === 'viewport') {
+      if (device === 'mobile') {
+        handleResponsiveStyleUpdate('mobile', 'minHeight', '100vh');
+        handleResponsiveStyleUpdate('mobile', 'height', undefined);
+      } else {
+        handleStyleUpdate('minHeight', '100vh');
+        handleStyleUpdate('height', undefined);
+      }
+    } else if (mode === 'custom') {
+      if (device === 'mobile') {
+        handleResponsiveStyleUpdate('mobile', 'minHeight', '50vh');
+        handleResponsiveStyleUpdate('mobile', 'height', undefined);
+      } else {
+        handleStyleUpdate('minHeight', '50vh');
+        handleStyleUpdate('height', undefined);
+      }
+    }
+  };
+
+  const handleStyleUpdate = (key: string, value: any) => {
+    if (value === undefined || value === '') {
+      const newStyles = { ...section.styles };
+      delete newStyles[key];
+      onUpdate({ styles: newStyles });
+    } else {
+      onUpdate({
+        styles: {
+          ...section.styles,
+          [key]: value
+        }
+      });
+    }
   };
 
   const handleResponsiveStyleUpdate = (device: 'desktop' | 'mobile', key: string, value: any) => {
-    onUpdate({
-      styles: {
-        ...section.styles,
-        responsive: {
-          ...section.styles?.responsive,
-          [device]: {
-            ...(section.styles?.responsive?.[device] || {}),
-            [key]: value
-          }
+    if (value === undefined || value === '') {
+      const newResponsive = { ...section.styles?.responsive };
+      if (newResponsive[device]) {
+        delete newResponsive[device][key];
+        // If device object is empty, remove it
+        if (Object.keys(newResponsive[device]).length === 0) {
+          delete newResponsive[device];
         }
       }
-    });
+      onUpdate({
+        styles: {
+          ...section.styles,
+          responsive: newResponsive
+        }
+      });
+    } else {
+      onUpdate({
+        styles: {
+          ...section.styles,
+          responsive: {
+            ...section.styles?.responsive,
+            [device]: {
+              ...(section.styles?.responsive?.[device] || {}),
+              [key]: value
+            }
+          }
+        }
+      });
+    }
   };
 
   return (
@@ -132,22 +215,9 @@ export const SectionSettings: React.FC<SectionSettingsProps> = ({ section, onUpd
                 <div className="space-y-2">
                   <Label htmlFor="height-preset-desktop">Height Mode</Label>
                   <Select
-                    value={
-                      section.styles?.minHeight === '100vh' ? 'viewport' :
-                      section.styles?.minHeight ? 'custom' : 'auto'
-                    }
-                    onValueChange={(value) => {
-                      if (value === 'auto') {
-                        handleStyleUpdate('height', '');
-                        handleStyleUpdate('minHeight', '');
-                        handleStyleUpdate('maxHeight', '');
-                      } else if (value === 'viewport') {
-                        handleStyleUpdate('minHeight', '100vh');
-                        handleStyleUpdate('height', '');
-                      } else if (value === 'custom') {
-                        handleStyleUpdate('minHeight', '50vh');
-                        handleStyleUpdate('height', '');
-                      }
+                    value={getHeightMode(section.styles, 'desktop')}
+                    onValueChange={(value: 'auto' | 'viewport' | 'custom') => {
+                      applyHeightMode(value, 'desktop');
                     }}
                   >
                     <SelectTrigger>
@@ -196,22 +266,9 @@ export const SectionSettings: React.FC<SectionSettingsProps> = ({ section, onUpd
                 <div className="space-y-2">
                   <Label htmlFor="height-preset-mobile">Height Mode</Label>
                   <Select
-                    value={
-                      section.styles?.responsive?.mobile?.minHeight === '100vh' ? 'viewport' :
-                      section.styles?.responsive?.mobile?.minHeight ? 'custom' : 'auto'
-                    }
-                    onValueChange={(value) => {
-                      if (value === 'auto') {
-                        handleResponsiveStyleUpdate('mobile', 'height', '');
-                        handleResponsiveStyleUpdate('mobile', 'minHeight', '');
-                        handleResponsiveStyleUpdate('mobile', 'maxHeight', '');
-                      } else if (value === 'viewport') {
-                        handleResponsiveStyleUpdate('mobile', 'minHeight', '100vh');
-                        handleResponsiveStyleUpdate('mobile', 'height', '');
-                      } else if (value === 'custom') {
-                        handleResponsiveStyleUpdate('mobile', 'minHeight', '50vh');
-                        handleResponsiveStyleUpdate('mobile', 'height', '');
-                      }
+                    value={getHeightMode(section.styles, 'mobile')}
+                    onValueChange={(value: 'auto' | 'viewport' | 'custom') => {
+                      applyHeightMode(value, 'mobile');
                     }}
                   >
                     <SelectTrigger>
