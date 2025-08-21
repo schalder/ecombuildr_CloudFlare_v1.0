@@ -102,8 +102,12 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
 
   if (!product) return null;
 
-  const discountPercentage = product.compare_price && product.compare_price > product.price
-    ? Math.round(((product.compare_price - product.price) / product.compare_price) * 100)
+  // Calculate effective price and compare price based on selected variant
+  const effectivePrice = selectedVariant?.price ?? product.price;
+  const effectiveComparePrice = selectedVariant?.compare_price ?? product.compare_price;
+
+  const discountPercentage = effectiveComparePrice && effectiveComparePrice > effectivePrice
+    ? Math.round(((effectiveComparePrice - effectivePrice) / effectiveComparePrice) * 100)
     : 0;
 
   const inStock = !product.track_inventory || (product.inventory_quantity ?? 0) > 0;
@@ -115,8 +119,7 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
   })();
 
   const handleAddToCart = () => {
-    const unitPrice = selectedVariant?.price ?? product.price;
-    const pWithPrice = { ...product, price: unitPrice } as any;
+    const pWithPrice = { ...product, price: effectivePrice } as any;
     onAddToCart(pWithPrice, quantity, Object.keys(selectedOptions).length ? selectedOptions : undefined);
     onClose();
   };
@@ -200,11 +203,11 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
               {/* Pricing */}
               <div className="flex items-center gap-3 mb-4">
                 <span className="text-3xl font-bold text-foreground">
-                  {formatCurrency((selectedVariant?.price ?? product.price))}
+                  {formatCurrency(effectivePrice)}
                 </span>
-                {product.compare_price && (product.compare_price > (selectedVariant?.price ?? product.price)) && (
+                {effectiveComparePrice && effectiveComparePrice > effectivePrice && (
                   <span className="text-lg text-muted-foreground line-through">
-                    {formatCurrency(product.compare_price)}
+                    {formatCurrency(effectiveComparePrice)}
                   </span>
                 )}
               </div>
@@ -289,7 +292,7 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
                     </Button>
                   </div>
                   <span className="text-sm text-muted-foreground">
-                    Total: {formatCurrency((selectedVariant?.price ?? product.price) * quantity)}
+                    Total: {formatCurrency(effectivePrice * quantity)}
                   </span>
                 </div>
               </div>

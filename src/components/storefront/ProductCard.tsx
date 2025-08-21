@@ -67,22 +67,46 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
   // Calculate display price considering variations
   const getDisplayPrice = () => {
-    if (product.variations && Array.isArray(product.variations) && product.variations.length > 0) {
-      const prices = product.variations
-        .filter((v: any) => v.price)
-        .map((v: any) => parseFloat(v.price));
+    const v: any = product.variations;
+    
+    // Handle new object-style variations with variants array
+    if (v && !Array.isArray(v) && v.variants && Array.isArray(v.variants)) {
+      const variantPrices = v.variants
+        .filter((variant: any) => variant.price != null)
+        .map((variant: any) => parseFloat(variant.price));
+      return variantPrices.length > 0 ? Math.min(...variantPrices) : product.price;
+    }
+    
+    // Handle legacy array-style variations
+    if (Array.isArray(v) && v.length > 0) {
+      const prices = v
+        .filter((variation: any) => variation.price)
+        .map((variation: any) => parseFloat(variation.price));
       return prices.length > 0 ? Math.min(...prices) : product.price;
     }
+    
     return product.price;
   };
 
   const getDisplayComparePrice = () => {
-    if (product.variations && Array.isArray(product.variations) && product.variations.length > 0) {
-      const comparePrices = product.variations
-        .filter((v: any) => v.compare_price)
-        .map((v: any) => parseFloat(v.compare_price));
+    const v: any = product.variations;
+    
+    // Handle new object-style variations with variants array
+    if (v && !Array.isArray(v) && v.variants && Array.isArray(v.variants)) {
+      const variantComparePrices = v.variants
+        .filter((variant: any) => variant.compare_price != null)
+        .map((variant: any) => parseFloat(variant.compare_price));
+      return variantComparePrices.length > 0 ? Math.min(...variantComparePrices) : product.compare_price;
+    }
+    
+    // Handle legacy array-style variations
+    if (Array.isArray(v) && v.length > 0) {
+      const comparePrices = v
+        .filter((variation: any) => variation.compare_price)
+        .map((variation: any) => parseFloat(variation.compare_price));
       return comparePrices.length > 0 ? Math.min(...comparePrices) : product.compare_price;
     }
+    
     return product.compare_price;
   };
 

@@ -166,8 +166,9 @@ export const ProductDetail: React.FC = () => {
     }
   };
 
-  // Calculate effective price based on selected variant
+  // Calculate effective price and compare price based on selected variant
   const effectivePrice = (selectedVariant?.price ?? product?.price) || 0;
+  const effectiveComparePrice = selectedVariant?.compare_price ?? product?.compare_price;
 
   const handleAddToCart = () => {
     if (!product) return;
@@ -242,8 +243,8 @@ export const ProductDetail: React.FC = () => {
     }
 
     const isOutOfStock = product.track_inventory && product.inventory_quantity !== undefined && product.inventory_quantity <= 0;
-    const discountPercentage = product.compare_price && product.compare_price > effectivePrice 
-      ? Math.round(((product.compare_price - effectivePrice) / product.compare_price) * 100)
+    const discountPercentage = effectiveComparePrice && effectiveComparePrice > effectivePrice 
+      ? Math.round(((effectiveComparePrice - effectivePrice) / effectiveComparePrice) * 100)
       : 0;
 
     // Build media list (video first if available)
@@ -327,9 +328,9 @@ export const ProductDetail: React.FC = () => {
               <span className="text-3xl font-bold text-foreground">
                 {formatCurrency(effectivePrice)}
               </span>
-              {product.compare_price && product.compare_price > effectivePrice && (
+              {effectiveComparePrice && effectiveComparePrice > effectivePrice && (
                 <span className="text-xl text-muted-foreground line-through">
-                  {formatCurrency(product.compare_price)}
+                  {formatCurrency(effectiveComparePrice)}
                 </span>
               )}
             </div>

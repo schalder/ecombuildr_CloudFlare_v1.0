@@ -13,6 +13,7 @@ export type VariantEntry = {
   id: string; // stable key
   options: Record<string, string>;
   price?: number | null; // override price
+  compare_price?: number | null; // override compare price
 };
 
 function combinations(options: VariationOption[]): Record<string, string>[] {
@@ -65,6 +66,11 @@ const VariantMatrix: React.FC<VariantMatrixProps> = ({ options, variants, onChan
     onChange(next);
   };
 
+  const updateComparePrice = (id: string, comparePrice: string) => {
+    const next = variants.map((v) => (v.id === id ? { ...v, compare_price: comparePrice === "" ? null : Number(comparePrice) } : v));
+    onChange(next);
+  };
+
   if (combos.length === 0) {
     return null;
   }
@@ -79,7 +85,7 @@ const VariantMatrix: React.FC<VariantMatrixProps> = ({ options, variants, onChan
         <Separator />
         <div className="space-y-3">
           {variants.map((v) => (
-            <div key={v.id} className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+            <div key={v.id} className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
               <div className="text-sm">
                 <Label>Variant</Label>
                 <div className="mt-1 text-foreground">
@@ -98,6 +104,16 @@ const VariantMatrix: React.FC<VariantMatrixProps> = ({ options, variants, onChan
                   value={v.price ?? ""}
                   onChange={(e) => updatePrice(v.id, e.target.value)}
                   placeholder="Leave blank to use base price"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label>Compare at price override</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={v.compare_price ?? ""}
+                  onChange={(e) => updateComparePrice(v.id, e.target.value)}
+                  placeholder="Leave blank to use base compare price"
                 />
               </div>
             </div>
