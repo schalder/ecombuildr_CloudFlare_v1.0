@@ -131,7 +131,7 @@ export default function AdminTemplateEditor() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-templates'] });
       toast.success(`Template ${isEditing ? 'updated' : 'created'} successfully`);
-      navigate('/admin/templates');
+      // Removed automatic navigation - user can continue editing
     },
     onError: (error: any) => {
       toast.error(`Failed to ${isEditing ? 'update' : 'create'} template: ${error.message}`);
@@ -312,6 +312,10 @@ export default function AdminTemplateEditor() {
             <Button onClick={() => setShowSettings(!showSettings)} variant="outline" className="gap-2">
               <Settings className="h-4 w-4" />
               Settings
+            </Button>
+            <Button variant="outline" onClick={() => navigate('/admin/templates')} className="gap-2">
+              <ArrowLeft className="h-4 w-4" />
+              Close
             </Button>
             <Button onClick={handleSave} disabled={isSaving} className="gap-2">
               <Save className="h-4 w-4" />
