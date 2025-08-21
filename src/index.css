@@ -165,44 +165,6 @@ All colors MUST be HSL. Designed for trust, energy, and conversion.
     transition: all 0.2s ease;
   }
 
-  /* Rich text content formatting */
-  .rich-text-content p {
-    margin-bottom: 1em;
-  }
-  
-  .rich-text-content p:last-child {
-    margin-bottom: 0;
-  }
-  
-  .rich-text-content ul,
-  .rich-text-content ol {
-    margin-bottom: 1em;
-    padding-left: 1.5em;
-  }
-  
-  .rich-text-content li {
-    margin-bottom: 0.5em;
-  }
-  
-  .rich-text-content h1,
-  .rich-text-content h2,
-  .rich-text-content h3,
-  .rich-text-content h4,
-  .rich-text-content h5,
-  .rich-text-content h6 {
-    margin-bottom: 0.75em;
-    margin-top: 1.5em;
-  }
-  
-  .rich-text-content h1:first-child,
-  .rich-text-content h2:first-child,
-  .rich-text-content h3:first-child,
-  .rich-text-content h4:first-child,
-  .rich-text-content h5:first-child,
-  .rich-text-content h6:first-child {
-    margin-top: 0;
-  }
-
   /* Mobile optimizations */
   .scrollbar-hide {
     -ms-overflow-style: none;
