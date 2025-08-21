@@ -123,7 +123,23 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({
   };
 
   const getSectionStyles = (): React.CSSProperties => {
-    return renderSectionStyles(section, deviceType);
+    const baseStyles = renderSectionStyles(section, deviceType);
+    
+    // Add flex styles for vertical alignment - device aware
+    const verticalAlignment = section.styles?.responsive?.[deviceType]?.contentVerticalAlignment || 
+                             section.styles?.contentVerticalAlignment;
+    
+    if (verticalAlignment && baseStyles.height && baseStyles.height !== 'auto') {
+      return {
+        ...baseStyles,
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: verticalAlignment === 'center' ? 'center' : 
+                       verticalAlignment === 'bottom' ? 'flex-end' : 'flex-start'
+      };
+    }
+    
+    return baseStyles;
   };
 
   const userBackground = hasUserBackground(section.styles);

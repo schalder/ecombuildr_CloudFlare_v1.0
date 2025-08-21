@@ -1310,9 +1310,18 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
       <div 
         className={cn(
           "w-full mx-auto p-4 flex flex-col",
-          section.styles?.contentVerticalAlignment === 'center' && 'justify-center',
-          section.styles?.contentVerticalAlignment === 'bottom' && 'justify-end',
-          (!section.styles?.contentVerticalAlignment || section.styles?.contentVerticalAlignment === 'top') && 'justify-start'
+          (() => {
+            // Get device-aware vertical alignment
+            const verticalAlignment = section.styles?.responsive?.[deviceType]?.contentVerticalAlignment || 
+                                     section.styles?.contentVerticalAlignment;
+            
+            // Only apply alignment if section has a specific height
+            const sectionHeight = section.styles?.responsive?.[deviceType]?.height || section.styles?.height;
+            if (!sectionHeight || sectionHeight === 'auto') return 'justify-start';
+            
+            return verticalAlignment === 'center' ? 'justify-center' :
+                   verticalAlignment === 'bottom' ? 'justify-end' : 'justify-start';
+          })()
         )}
         style={{ 
           maxWidth: SECTION_WIDTHS[section.width],

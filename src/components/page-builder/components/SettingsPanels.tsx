@@ -63,81 +63,66 @@ export const SectionSettings: React.FC<SectionSettingsProps> = ({ section, onUpd
           <p className="text-xs text-muted-foreground">Use #{section.anchor} for in-page scrolling</p>
         </CardContent>
       </Card>
+
       <Card>
         <CardHeader>
           <CardTitle className="text-sm">Section Layout</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="section-width">Width Mode</Label>
-            <div className="flex items-center space-x-2">
-              <Switch 
-                checked={customWidthMode}
-                onCheckedChange={(checked) => {
-                  setCustomWidthMode(checked);
-                  if (!checked) {
-                    onUpdate({ customWidth: undefined });
-                  }
-                }}
-              />
-              <Label className="text-sm">Custom Width</Label>
-            </div>
-          </div>
-          
-          {!customWidthMode ? (
+        <CardContent className="space-y-6">
+          {/* Width Settings */}
+          <div className="space-y-4">
+            <Label className="text-sm font-medium">Width</Label>
             <div className="space-y-2">
-              <Label htmlFor="section-width">Preset Width</Label>
-              <Select
-                value={section.width}
-                onValueChange={(value) => onUpdate({ width: value as any })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="full">Full Width</SelectItem>
-                  <SelectItem value="wide">Wide (1200px)</SelectItem>
-                  <SelectItem value="medium">Medium (800px)</SelectItem>
-                  <SelectItem value="small">Small (600px)</SelectItem>
-                </SelectContent>
-              </Select>
+              <Label htmlFor="section-width">Width Mode</Label>
+              <div className="flex items-center space-x-2">
+                <Switch 
+                  checked={customWidthMode}
+                  onCheckedChange={(checked) => {
+                    setCustomWidthMode(checked);
+                    if (!checked) {
+                      onUpdate({ customWidth: undefined });
+                    }
+                  }}
+                />
+                <Label className="text-sm">Custom Width</Label>
+              </div>
             </div>
-          ) : (
-            <div className="space-y-2">
-              <Label htmlFor="custom-width">Custom Width</Label>
-              <Input
-                id="custom-width"
-                value={section.customWidth || ''}
-                onChange={(e) => onUpdate({ customWidth: e.target.value })}
-                placeholder="e.g., 1000px, 80%, 100vw"
-              />
-            </div>
-          )}
-          
-          <div className="space-y-2">
-            <Label htmlFor="max-width">Max Width</Label>
-            <Input
-              id="max-width"
-              value={section.styles?.maxWidth || ''}
-              onChange={(e) => handleStyleUpdate('maxWidth', e.target.value)}
-              placeholder="e.g., 1400px, 100%"
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="min-width">Min Width</Label>
-            <Input
-              id="min-width"
-              value={section.styles?.minWidth || ''}
-              onChange={(e) => handleStyleUpdate('minWidth', e.target.value)}
-              placeholder="e.g., 320px, 50%"
-            />
+            
+            {!customWidthMode ? (
+              <div className="space-y-2">
+                <Label htmlFor="section-width">Preset Width</Label>
+                <Select
+                  value={section.width}
+                  onValueChange={(value) => onUpdate({ width: value as any })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="full">Full Width</SelectItem>
+                    <SelectItem value="wide">Wide (1200px)</SelectItem>
+                    <SelectItem value="medium">Medium (800px)</SelectItem>
+                    <SelectItem value="small">Small (600px)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <Label htmlFor="custom-width">Custom Width</Label>
+                <Input
+                  id="custom-width"
+                  value={section.customWidth || ''}
+                  onChange={(e) => onUpdate({ customWidth: e.target.value })}
+                  placeholder="e.g., 1000px, 80%, 100vw"
+                />
+              </div>
+            )}
           </div>
 
+          {/* Height Settings */}
           <Separator className="my-4" />
-          
           <div className="space-y-4">
-            <Label className="text-sm font-medium">Responsive Overrides</Label>
+            <Label className="text-sm font-medium">Height</Label>
             <Tabs defaultValue="desktop" className="w-full">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="desktop">Desktop</TabsTrigger>
@@ -145,158 +130,133 @@ export const SectionSettings: React.FC<SectionSettingsProps> = ({ section, onUpd
               </TabsList>
               <TabsContent value="desktop" className="space-y-4">
                 <div className="space-y-2">
-                  <Label>Width (%): <span className="text-muted-foreground">{Math.min(100, Math.max(30, parseInt(String(section.styles?.responsive?.desktop?.width || '').replace(/[^0-9]/g, '')) || 100))}%</span></Label>
-                  <Slider
-                    min={30}
-                    max={100}
-                    step={1}
-                    value={[Math.min(100, Math.max(30, parseInt(String(section.styles?.responsive?.desktop?.width || '').replace(/[^0-9]/g, '')) || 100))]}
-                    onValueChange={(v) => handleResponsiveStyleUpdate('desktop', 'width', `${v[0]}%`)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Padding (px)</Label>
-                  <Slider
-                    min={0}
-                    max={140}
-                    step={1}
-                    value={[Math.min(140, Math.max(0, parseInt(String(section.styles?.responsive?.desktop?.padding || '').replace(/[^0-9]/g, '')) || 0))]}
-                    onValueChange={(v) => handleResponsiveStyleUpdate('desktop', 'padding', `${v[0]}px`)}
-                  />
-                  <Input
-                    value={section.styles?.responsive?.desktop?.padding || ''}
-                    onChange={(e) => handleResponsiveStyleUpdate('desktop', 'padding', e.target.value)}
-                    placeholder="Custom e.g., 12px 16px"
-                  />
+                  <Label htmlFor="height-preset-desktop">Height Mode</Label>
+                  <Select
+                    value={
+                      section.styles?.minHeight === '100vh' ? 'viewport' :
+                      section.styles?.minHeight ? 'custom' : 'auto'
+                    }
+                    onValueChange={(value) => {
+                      if (value === 'auto') {
+                        handleStyleUpdate('height', '');
+                        handleStyleUpdate('minHeight', '');
+                        handleStyleUpdate('maxHeight', '');
+                      } else if (value === 'viewport') {
+                        handleStyleUpdate('minHeight', '100vh');
+                        handleStyleUpdate('height', '');
+                      } else if (value === 'custom') {
+                        handleStyleUpdate('minHeight', '50vh');
+                        handleStyleUpdate('height', '');
+                      }
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="auto">Auto (Content Height)</SelectItem>
+                      <SelectItem value="viewport">Full Viewport (100vh)</SelectItem>
+                      <SelectItem value="custom">Custom Height</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  
+                  {section.styles?.minHeight && section.styles.minHeight !== '100vh' && (
+                    <div className="space-y-2">
+                      <Label htmlFor="custom-height-desktop">Custom Min Height</Label>
+                      <Input
+                        id="custom-height-desktop"
+                        value={section.styles.minHeight}
+                        onChange={(e) => handleStyleUpdate('minHeight', e.target.value)}
+                        placeholder="e.g., 50vh, 400px"
+                      />
+                    </div>
+                  )}
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="contentVerticalAlignment-desktop">Content Vertical Position</Label>
+                    <Select
+                      value={section.styles?.contentVerticalAlignment || 'top'}
+                      onValueChange={(value: 'top' | 'center' | 'bottom') => {
+                        handleStyleUpdate('contentVerticalAlignment', value);
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="top">Top</SelectItem>
+                        <SelectItem value="center">Center</SelectItem>
+                        <SelectItem value="bottom">Bottom</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
               </TabsContent>
               <TabsContent value="mobile" className="space-y-4">
                 <div className="space-y-2">
-                  <Label>Width (%): <span className="text-muted-foreground">{Math.min(100, Math.max(30, parseInt(String(section.styles?.responsive?.mobile?.width || '').replace(/[^0-9]/g, '')) || 100))}%</span></Label>
-                  <Slider
-                    min={30}
-                    max={100}
-                    step={1}
-                    value={[Math.min(100, Math.max(30, parseInt(String(section.styles?.responsive?.mobile?.width || '').replace(/[^0-9]/g, '')) || 100))]}
-                    onValueChange={(v) => handleResponsiveStyleUpdate('mobile', 'width', `${v[0]}%`)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Padding (px)</Label>
-                  <Slider
-                    min={0}
-                    max={140}
-                    step={1}
-                    value={[Math.min(140, Math.max(0, parseInt(String(section.styles?.responsive?.mobile?.padding || '').replace(/[^0-9]/g, '')) || 0))]}
-                    onValueChange={(v) => handleResponsiveStyleUpdate('mobile', 'padding', `${v[0]}px`)}
-                  />
-                  <Input
-                    value={section.styles?.responsive?.mobile?.padding || ''}
-                    onChange={(e) => handleResponsiveStyleUpdate('mobile', 'padding', e.target.value)}
-                    placeholder="Custom e.g., 12px 16px"
-                  />
+                  <Label htmlFor="height-preset-mobile">Height Mode</Label>
+                  <Select
+                    value={
+                      section.styles?.responsive?.mobile?.minHeight === '100vh' ? 'viewport' :
+                      section.styles?.responsive?.mobile?.minHeight ? 'custom' : 'auto'
+                    }
+                    onValueChange={(value) => {
+                      if (value === 'auto') {
+                        handleResponsiveStyleUpdate('mobile', 'height', '');
+                        handleResponsiveStyleUpdate('mobile', 'minHeight', '');
+                        handleResponsiveStyleUpdate('mobile', 'maxHeight', '');
+                      } else if (value === 'viewport') {
+                        handleResponsiveStyleUpdate('mobile', 'minHeight', '100vh');
+                        handleResponsiveStyleUpdate('mobile', 'height', '');
+                      } else if (value === 'custom') {
+                        handleResponsiveStyleUpdate('mobile', 'minHeight', '50vh');
+                        handleResponsiveStyleUpdate('mobile', 'height', '');
+                      }
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="auto">Auto (Content Height)</SelectItem>
+                      <SelectItem value="viewport">Full Viewport (100vh)</SelectItem>
+                      <SelectItem value="custom">Custom Height</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  
+                  {section.styles?.responsive?.mobile?.minHeight && section.styles.responsive.mobile.minHeight !== '100vh' && (
+                    <div className="space-y-2">
+                      <Label htmlFor="custom-height-mobile">Custom Min Height</Label>
+                      <Input
+                        id="custom-height-mobile"
+                        value={section.styles.responsive.mobile.minHeight}
+                        onChange={(e) => handleResponsiveStyleUpdate('mobile', 'minHeight', e.target.value)}
+                        placeholder="e.g., 50vh, 400px"
+                      />
+                    </div>
+                  )}
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="contentVerticalAlignment-mobile">Content Vertical Position</Label>
+                    <Select
+                      value={section.styles?.responsive?.mobile?.contentVerticalAlignment || 'top'}
+                      onValueChange={(value: 'top' | 'center' | 'bottom') => {
+                        handleResponsiveStyleUpdate('mobile', 'contentVerticalAlignment', value);
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="top">Top</SelectItem>
+                        <SelectItem value="center">Center</SelectItem>
+                        <SelectItem value="bottom">Bottom</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
               </TabsContent>
             </Tabs>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-sm">Height</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="height-preset">Height Mode</Label>
-            <Select
-              value={
-                section.styles?.minHeight === '100vh' ? 'viewport' :
-                section.styles?.minHeight ? 'custom' : 'auto'
-              }
-              onValueChange={(value) => {
-                if (value === 'auto') {
-                  onUpdate({
-                    styles: {
-                      ...section.styles,
-                      height: '',
-                      minHeight: '',
-                      maxHeight: ''
-                    }
-                  });
-                } else if (value === 'viewport') {
-                  onUpdate({
-                    styles: {
-                      ...section.styles,
-                      minHeight: '100vh',
-                      height: ''
-                    }
-                  });
-                } else if (value === 'custom') {
-                  onUpdate({
-                    styles: {
-                      ...section.styles,
-                      minHeight: '50vh',
-                      height: ''
-                    }
-                  });
-                }
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="auto">Auto (Content Height)</SelectItem>
-                <SelectItem value="viewport">Full Viewport (100vh)</SelectItem>
-                <SelectItem value="custom">Custom Height</SelectItem>
-              </SelectContent>
-            </Select>
-
-            {/* Content Vertical Position */}
-            <Label htmlFor="contentVerticalAlignment">Content Vertical Position</Label>
-            <Select
-              value={section.styles?.contentVerticalAlignment || 'top'}
-              onValueChange={(value: 'top' | 'center' | 'bottom') => {
-                onUpdate({
-                  styles: {
-                    ...section.styles,
-                    contentVerticalAlignment: value
-                  }
-                });
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="top">Top</SelectItem>
-                <SelectItem value="center">Center</SelectItem>
-                <SelectItem value="bottom">Bottom</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {section.styles?.minHeight && section.styles.minHeight !== '100vh' && (
-            <div className="space-y-2">
-              <Label htmlFor="custom-height">Custom Min Height</Label>
-              <Input
-                id="custom-height"
-                value={section.styles.minHeight}
-                onChange={(e) => handleStyleUpdate('minHeight', e.target.value)}
-                placeholder="e.g., 50vh, 400px"
-              />
-            </div>
-          )}
-
-          <div className="space-y-2">
-            <Label htmlFor="max-height">Max Height</Label>
-            <Input
-              id="max-height"
-              value={section.styles?.maxHeight || ''}
-              onChange={(e) => handleStyleUpdate('maxHeight', e.target.value)}
-              placeholder="e.g., 800px, 90vh"
-            />
           </div>
         </CardContent>
       </Card>
@@ -437,7 +397,6 @@ export const SectionSettings: React.FC<SectionSettingsProps> = ({ section, onUpd
           </div>
         </CardContent>
       </Card>
-
     </div>
   );
 };
@@ -489,6 +448,7 @@ export const RowSettings: React.FC<RowSettingsProps> = ({ row, onUpdate }) => {
           <p className="text-xs text-muted-foreground">Use #{row.anchor} for in-page scrolling</p>
         </CardContent>
       </Card>
+
       <Card>
         <CardHeader>
           <CardTitle className="text-sm">Row Layout</CardTitle>
@@ -561,16 +521,6 @@ export const RowSettings: React.FC<RowSettingsProps> = ({ row, onUpdate }) => {
               />
             </div>
           )}
-          
-          <div className="space-y-2">
-            <Label htmlFor="row-max-width">Max Width</Label>
-            <Input
-              id="row-max-width"
-              value={row.styles?.maxWidth || ''}
-              onChange={(e) => handleStyleUpdate('maxWidth', e.target.value)}
-              placeholder="e.g., 1200px, 100%"
-            />
-          </div>
 
           <Separator className="my-4" />
           
@@ -776,7 +726,6 @@ export const RowSettings: React.FC<RowSettingsProps> = ({ row, onUpdate }) => {
           </div>
         </CardContent>
       </Card>
-
     </div>
   );
 };
@@ -828,6 +777,7 @@ export const ColumnSettings: React.FC<ColumnSettingsProps> = ({ column, onUpdate
           <p className="text-xs text-muted-foreground">Use #{column.anchor} for in-page scrolling</p>
         </CardContent>
       </Card>
+
       <Card>
         <CardHeader>
           <CardTitle className="text-sm">Column Layout</CardTitle>
@@ -867,26 +817,6 @@ export const ColumnSettings: React.FC<ColumnSettingsProps> = ({ column, onUpdate
             </div>
           )}
           
-          <div className="space-y-2">
-            <Label htmlFor="column-max-width">Max Width</Label>
-            <Input
-              id="column-max-width"
-              value={column.styles?.maxWidth || ''}
-              onChange={(e) => handleStyleUpdate('maxWidth', e.target.value)}
-              placeholder="e.g., 400px, 100%"
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="column-min-width">Min Width</Label>
-            <Input
-              id="column-min-width"
-              value={column.styles?.minWidth || ''}
-              onChange={(e) => handleStyleUpdate('minWidth', e.target.value)}
-              placeholder="e.g., 200px, 30%"
-            />
-          </div>
-
           <Separator className="my-4" />
           
           <div className="space-y-4">
