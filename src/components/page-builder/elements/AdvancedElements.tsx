@@ -2,10 +2,11 @@ import React, { useState } from 'react';
 import { MapPin, Code, Share2, Facebook, Twitter, Linkedin, Link2, MessageCircle, Send, Mail, ExternalLink, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { toast } from 'sonner';
+import { useToast } from '@/hooks/use-toast';
 import { PageBuilderElement } from '../types';
 import { elementRegistry } from './ElementRegistry';
 import { InlineEditor } from '../components/InlineEditor';
+import { generateResponsiveCSS, mergeResponsiveStyles } from '../utils/responsiveStyles';
 
 // Google Maps Element
 const GoogleMapsElement: React.FC<{
@@ -161,7 +162,9 @@ const SocialShareElement: React.FC<{
   isEditing?: boolean;
   deviceType?: 'desktop' | 'tablet' | 'mobile';
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
-}> = ({ element, isEditing, onUpdate }) => {
+}> = ({ element, isEditing, deviceType = 'desktop', onUpdate }) => {
+  const { toast } = useToast();
+  
   const title = element.content.title || 'Share this page';
   const url = element.content.url || window.location.href;
   const text = element.content.text || 'Check out this amazing content!';
@@ -178,6 +181,40 @@ const SocialShareElement: React.FC<{
   const layout = element.content.layout || 'horizontal';
   const buttonStyle = element.content.buttonStyle || 'default';
   const showLabels = element.content.showLabels !== false;
+
+  // Get merged styles (base + responsive)
+  const mergedStyles = mergeResponsiveStyles(element.styles || {}, element.styles, deviceType);
+  
+  // Extract style values with fallbacks
+  const containerStyles = {
+    textAlign: mergedStyles.textAlign || 'center',
+    maxWidth: mergedStyles.maxWidth === 'none' ? 'none' : (mergedStyles.maxWidth || '32rem'),
+    margin: '0 auto',
+    backgroundColor: mergedStyles.backgroundColor || 'transparent',
+    backgroundOpacity: mergedStyles.backgroundOpacity || 100,
+    borderWidth: mergedStyles.borderWidth || '0',
+    borderColor: mergedStyles.borderColor || 'transparent',
+    borderRadius: mergedStyles.borderRadius || '0px',
+    boxShadow: mergedStyles.boxShadow || 'none',
+    paddingTop: mergedStyles.paddingTop || '0',
+    paddingRight: mergedStyles.paddingRight || '0',
+    paddingBottom: mergedStyles.paddingBottom || '0',
+    paddingLeft: mergedStyles.paddingLeft || '0',
+    marginTop: mergedStyles.marginTop || '0',
+    marginRight: mergedStyles.marginRight || '0',
+    marginBottom: mergedStyles.marginBottom || '0',
+    marginLeft: mergedStyles.marginLeft || '0',
+  };
+
+  const titleStyles = {
+    fontSize: mergedStyles.titleFontSize || '18px',
+    fontWeight: mergedStyles.titleFontWeight || 'semibold',
+    color: mergedStyles.titleColor || 'inherit',
+    marginBottom: mergedStyles.titleMarginBottom || '16px',
+  };
+
+  const buttonLayoutFromStyles = mergedStyles.buttonLayout || layout;
+  const buttonSpacing = mergedStyles.buttonSpacing || '12px';
 
   const shareLinks = {
     facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
@@ -214,7 +251,10 @@ const SocialShareElement: React.FC<{
   const handleShare = (platform: string) => {
     if (platform === 'copy') {
       navigator.clipboard.writeText(url);
-      toast.success('Link copied to clipboard!');
+      toast({
+        title: "Success",
+        description: "Link copied to clipboard!",
+      });
       return;
     }
 
@@ -225,54 +265,109 @@ const SocialShareElement: React.FC<{
   };
 
   const getLayoutClass = () => {
-    switch (layout) {
-      case 'vertical': return 'flex-col items-center space-y-3';
-      case 'grid': return 'grid grid-cols-2 gap-3';
-      default: return 'flex justify-center space-x-3 flex-wrap gap-3';
+    switch (buttonLayoutFromStyles) {
+      case 'vertical': 
+        return {
+          display: 'flex',
+          flexDirection: 'column' as const,
+          alignItems: 'center',
+          gap: buttonSpacing
+        };
+      case 'grid': 
+        return {
+          display: 'grid',
+          gridTemplateColumns: 'repeat(2, 1fr)',
+          gap: buttonSpacing,
+          justifyContent: 'center'
+        };
+      default: 
+        return {
+          display: 'flex',
+          justifyContent: 'center',
+          gap: buttonSpacing,
+          flexWrap: 'wrap' as const
+        };
     }
   };
 
   const getButtonVariant = () => {
-    switch (buttonStyle) {
+    const styleVariant = mergedStyles.buttonVariant || buttonStyle;
+    switch (styleVariant) {
       case 'outline': return 'outline';
-      case 'minimal': return 'ghost';
-      case 'filled': return 'default';
+      case 'ghost': return 'ghost';
+      case 'default': return 'default';
       default: return 'outline';
     }
+  };
+
+  const getButtonSize = () => {
+    return mergedStyles.buttonSize || 'sm';
+  };
+
+  const getButtonStyles = () => {
+    const buttonStyles: React.CSSProperties = {};
+    
+    if (mergedStyles.buttonTextColor) buttonStyles.color = mergedStyles.buttonTextColor;
+    if (mergedStyles.buttonBackgroundColor) buttonStyles.backgroundColor = mergedStyles.buttonBackgroundColor;
+    if (mergedStyles.buttonBorderWidth) buttonStyles.borderWidth = mergedStyles.buttonBorderWidth;
+    if (mergedStyles.buttonBorderColor) buttonStyles.borderColor = mergedStyles.buttonBorderColor;
+    if (mergedStyles.buttonBorderRadius) buttonStyles.borderRadius = mergedStyles.buttonBorderRadius;
+    
+    return buttonStyles;
   };
 
   const enabledPlatforms = Object.entries(platforms)
     .filter(([_, enabled]) => enabled)
     .map(([platform]) => platform);
 
+  // Generate responsive CSS if needed
+  const responsiveCSS = generateResponsiveCSS(element.id, element.styles);
+
+  // Apply background opacity if set
+  const finalContainerStyles = {
+    ...containerStyles,
+    backgroundColor: containerStyles.backgroundColor !== 'transparent' 
+      ? `${containerStyles.backgroundColor}${Math.round((containerStyles.backgroundOpacity / 100) * 255).toString(16).padStart(2, '0')}`
+      : containerStyles.backgroundColor
+  };
+
   return (
-    <div className="max-w-2xl mx-auto text-center" style={element.styles}>
-      <InlineEditor
-        value={title}
-        onChange={handleTitleUpdate}
-        className="text-lg font-semibold mb-4"
-        placeholder="Share title..."
-      />
-      <div className={getLayoutClass()}>
-        {enabledPlatforms.map((platform) => {
-          const Icon = platformIcons[platform as keyof typeof platformIcons];
-          const label = platform === 'copy' ? 'Copy Link' : platform.charAt(0).toUpperCase() + platform.slice(1);
-          
-          return (
-            <Button
-              key={platform}
-              size="sm"
-              variant={getButtonVariant() as any}
-              onClick={() => handleShare(platform)}
-              className="flex items-center space-x-2"
-            >
-              <Icon className="h-4 w-4" />
-              {showLabels && <span>{label}</span>}
-            </Button>
-          );
-        })}
+    <>
+      {responsiveCSS && (
+        <style dangerouslySetInnerHTML={{ __html: responsiveCSS }} />
+      )}
+      <div 
+        className={`element-${element.id}`}
+        style={finalContainerStyles}
+      >
+        <InlineEditor
+          value={title}
+          onChange={handleTitleUpdate}
+          style={titleStyles}
+          placeholder="Share title..."
+        />
+        <div style={getLayoutClass()}>
+          {enabledPlatforms.map((platform) => {
+            const Icon = platformIcons[platform as keyof typeof platformIcons];
+            const label = platform === 'copy' ? 'Copy Link' : platform.charAt(0).toUpperCase() + platform.slice(1);
+            
+            return (
+              <Button
+                key={platform}
+                size={getButtonSize() as any}
+                variant={getButtonVariant() as any}
+                onClick={() => handleShare(platform)}
+                style={getButtonStyles()}
+                className="flex items-center space-x-2"
+              >
+                <Icon className="h-4 w-4" />
+                {showLabels && <span>{label}</span>}
+              </Button>
+            );
+          })}
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 
