@@ -207,10 +207,7 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({
         className={cn(
           getSectionWidth(), 
           section.customWidth ? 'mx-auto' : '',
-          'flex flex-col',
-          section.styles?.contentVerticalAlignment === 'center' && 'justify-center',
-          section.styles?.contentVerticalAlignment === 'bottom' && 'justify-end',
-          (!section.styles?.contentVerticalAlignment || section.styles?.contentVerticalAlignment === 'top') && 'justify-start'
+          'flex flex-col h-full'
         )}
         style={{ minHeight: 'inherit' }}
       >
