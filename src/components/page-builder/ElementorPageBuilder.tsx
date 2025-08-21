@@ -1,5 +1,6 @@
 // Page builder with layered background support
 import React, { useState, useCallback, memo, useEffect } from 'react';
+import { cn } from '@/lib/utils';
 import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { 
@@ -1307,7 +1308,12 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
       )}
 
       <div 
-        className="w-full mx-auto p-4"
+        className={cn(
+          "w-full mx-auto p-4 flex flex-col",
+          section.styles?.contentVerticalAlignment === 'center' && 'justify-center',
+          section.styles?.contentVerticalAlignment === 'bottom' && 'justify-end',
+          (!section.styles?.contentVerticalAlignment || section.styles?.contentVerticalAlignment === 'top') && 'justify-start'
+        )}
         style={{ 
           maxWidth: SECTION_WIDTHS[section.width],
           minHeight: 'inherit'
