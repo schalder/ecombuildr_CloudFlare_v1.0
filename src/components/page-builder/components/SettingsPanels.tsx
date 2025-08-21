@@ -249,7 +249,30 @@ export const SectionSettings: React.FC<SectionSettingsProps> = ({ section, onUpd
               <SelectContent>
                 <SelectItem value="auto">Auto (Content Height)</SelectItem>
                 <SelectItem value="viewport">Full Viewport (100vh)</SelectItem>
-                <SelectItem value="custom">Custom (vh)</SelectItem>
+                <SelectItem value="custom">Custom Height</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {/* Content Vertical Position */}
+            <Label htmlFor="contentVerticalAlignment">Content Vertical Position</Label>
+            <Select
+              value={section.styles?.contentVerticalAlignment || 'top'}
+              onValueChange={(value: 'top' | 'center' | 'bottom') => {
+                onUpdate({
+                  styles: {
+                    ...section.styles,
+                    contentVerticalAlignment: value
+                  }
+                });
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="top">Top</SelectItem>
+                <SelectItem value="center">Center</SelectItem>
+                <SelectItem value="bottom">Bottom</SelectItem>
               </SelectContent>
             </Select>
           </div>

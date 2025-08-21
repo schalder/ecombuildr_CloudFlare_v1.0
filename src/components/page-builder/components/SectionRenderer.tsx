@@ -188,7 +188,14 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({
       )}
 
       <div 
-        className={cn(getSectionWidth(), section.customWidth ? 'mx-auto' : '')}
+        className={cn(
+          getSectionWidth(), 
+          section.customWidth ? 'mx-auto' : '',
+          'flex flex-col',
+          section.styles?.contentVerticalAlignment === 'center' && 'justify-center',
+          section.styles?.contentVerticalAlignment === 'bottom' && 'justify-end',
+          (!section.styles?.contentVerticalAlignment || section.styles?.contentVerticalAlignment === 'top') && 'justify-start'
+        )}
         style={{ minHeight: 'inherit' }}
       >
         {section.rows.length === 0 ? (
@@ -201,7 +208,7 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({
             )}
           </div>
         ) : (
-          <div className="space-y-4" style={{ minHeight: 'inherit' }}>
+          <div className="space-y-4">
             {section.rows.map((row, rowIndex) => (
               <RowRenderer
                 key={row.id}

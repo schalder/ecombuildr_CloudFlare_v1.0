@@ -187,6 +187,7 @@ export interface PageBuilderSection {
     height?: string;
     minHeight?: string;
     maxHeight?: string;
+    contentVerticalAlignment?: 'top' | 'center' | 'bottom';
     responsive?: {
       desktop?: Record<string, any>;
       mobile?: Record<string, any>;
