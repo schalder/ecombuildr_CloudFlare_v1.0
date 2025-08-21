@@ -13,7 +13,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Plus, MoreVertical, Edit, Trash2 } from 'lucide-react';
-import { MultiSelect } from '@/components/ui/multi-select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useStoreWebsitesForSelection, useCategoryWebsiteVisibility } from '@/hooks/useWebsiteVisibility';
 
 interface Category {
@@ -47,8 +47,8 @@ export default function Categories() {
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [storeId, setStoreId] = useState<string>('');
-  const [selectedWebsites, setSelectedWebsites] = useState<string[]>([]);
-  const [editSelectedWebsites, setEditSelectedWebsites] = useState<string[]>([]);
+  const [selectedWebsite, setSelectedWebsite] = useState<string>('');
+  const [editSelectedWebsite, setEditSelectedWebsite] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState('');
 
   const [formData, setFormData] = useState({
@@ -176,16 +176,14 @@ export default function Categories() {
 
       if (insertError) throw insertError;
 
-      // Add website visibility records
-      if (selectedWebsites.length > 0 && categoryData?.id) {
-        const visibilityRecords = selectedWebsites.map(websiteId => ({
-          category_id: categoryData.id,
-          website_id: websiteId
-        }));
-
+      // Add website visibility record (each category belongs to exactly one website)
+      if (selectedWebsite && categoryData?.id) {
         const { error: visibilityError } = await supabase
           .from('category_website_visibility')
-          .insert(visibilityRecords);
+          .insert({
+            category_id: categoryData.id,
+            website_id: selectedWebsite
+          });
 
         if (visibilityError) throw visibilityError;
       }
@@ -196,7 +194,7 @@ export default function Categories() {
       });
 
       setFormData({ name: '', description: '', image_url: '' });
-      setSelectedWebsites([]);
+      setSelectedWebsite('');
       setIsAddModalOpen(false);
       fetchCategories();
     } catch (error: any) {
@@ -227,21 +225,19 @@ export default function Categories() {
 
       if (error) throw error;
 
-      // Update website visibility
+      // Update website visibility (each category belongs to exactly one website)
       await supabase
         .from('category_website_visibility')
         .delete()
         .eq('category_id', editingCategory.id);
 
-      if (editSelectedWebsites.length > 0) {
-        const visibilityRecords = editSelectedWebsites.map(websiteId => ({
-          category_id: editingCategory.id,
-          website_id: websiteId
-        }));
-
+      if (editSelectedWebsite) {
         const { error: visibilityError } = await supabase
           .from('category_website_visibility')
-          .insert(visibilityRecords);
+          .insert({
+            category_id: editingCategory.id,
+            website_id: editSelectedWebsite
+          });
 
         if (visibilityError) throw visibilityError;
       }
@@ -253,7 +249,7 @@ export default function Categories() {
 
       setIsEditDialogOpen(false);
       setEditingCategory(null);
-      setEditSelectedWebsites([]);
+      setEditSelectedWebsite('');
       fetchCategories();
     } catch (error: any) {
       toast({
@@ -335,15 +331,19 @@ export default function Categories() {
                    />
                  </div>
                  <div className="space-y-2">
-                   <Label>Website Visibility</Label>
-                   <MultiSelect
-                     options={storeWebsites.map(w => ({ label: w.name, value: w.id }))}
-                     selected={selectedWebsites}
-                     onChange={setSelectedWebsites}
-                     placeholder="Select websites to show this category on..."
-                   />
+                   <Label>Website *</Label>
+                   <Select value={selectedWebsite} onValueChange={setSelectedWebsite} required>
+                     <SelectTrigger>
+                       <SelectValue placeholder="Select a website for this category" />
+                     </SelectTrigger>
+                     <SelectContent>
+                       {storeWebsites.map(w => (
+                         <SelectItem key={w.id} value={w.id}>{w.name}</SelectItem>
+                       ))}
+                     </SelectContent>
+                   </Select>
                    <p className="text-sm text-muted-foreground">
-                     Choose which websites this category will be visible on. Leave empty to show on all websites.
+                     Each category must belong to exactly one website.
                    </p>
                  </div>
                 <div className="flex justify-end space-x-2">
@@ -412,13 +412,14 @@ export default function Categories() {
                                      image_url: category.image_url || '',
                                    });
                                    
-                                   // Load existing visibility
-                                   const { data: visibilityData } = await supabase
-                                     .from('category_website_visibility')
-                                     .select('website_id')
-                                     .eq('category_id', category.id);
-                                   
-                                   setEditSelectedWebsites(visibilityData?.map(v => v.website_id) || []);
+                                    // Load existing visibility
+                                    const { data: visibilityData } = await supabase
+                                      .from('category_website_visibility')
+                                      .select('website_id')
+                                      .eq('category_id', category.id)
+                                      .single();
+                                    
+                                    setEditSelectedWebsite(visibilityData?.website_id || '');
                                    setIsEditDialogOpen(true);
                                  }}
                               >
@@ -486,13 +487,14 @@ export default function Categories() {
                                        image_url: category.image_url || '',
                                      });
                                      
-                                     // Load existing visibility
-                                     const { data: visibilityData } = await supabase
-                                       .from('category_website_visibility')
-                                       .select('website_id')
-                                       .eq('category_id', category.id);
-                                     
-                                     setEditSelectedWebsites(visibilityData?.map(v => v.website_id) || []);
+                                      // Load existing visibility
+                                      const { data: visibilityData } = await supabase
+                                        .from('category_website_visibility')
+                                        .select('website_id')
+                                        .eq('category_id', category.id)
+                                        .single();
+                                      
+                                      setEditSelectedWebsite(visibilityData?.website_id || '');
                                      setIsEditDialogOpen(true);
                                    }}
                                 >
@@ -563,15 +565,19 @@ export default function Categories() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Website Visibility</Label>
-                <MultiSelect
-                  options={storeWebsites.map(w => ({ label: w.name, value: w.id }))}
-                  selected={editSelectedWebsites}
-                  onChange={setEditSelectedWebsites}
-                  placeholder="Select websites to show this category on..."
-                />
+                <Label>Website *</Label>
+                <Select value={editSelectedWebsite} onValueChange={setEditSelectedWebsite} required>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a website for this category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {storeWebsites.map(w => (
+                      <SelectItem key={w.id} value={w.id}>{w.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <p className="text-sm text-muted-foreground">
-                  Choose which websites this category will be visible on. Leave empty to show on all websites.
+                  Each category must belong to exactly one website.
                 </p>
               </div>
               <div className="flex justify-end space-x-2">
