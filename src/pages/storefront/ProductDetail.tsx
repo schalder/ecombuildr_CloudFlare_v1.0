@@ -520,7 +520,7 @@ export const ProductDetail: React.FC = () => {
                 </section>
               ) : product.description ? (
                 <article className="prose prose-sm max-w-none text-muted-foreground">
-                  <div dangerouslySetInnerHTML={{ __html: product.description }} />
+                  <div className="whitespace-pre-wrap">{product.description.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')}</div>
                 </article>
               ) : (
                 <p className="text-muted-foreground">No description available.</p>
