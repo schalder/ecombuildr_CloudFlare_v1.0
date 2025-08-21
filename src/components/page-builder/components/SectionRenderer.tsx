@@ -187,7 +187,10 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({
         </div>
       )}
 
-      <div className={cn(getSectionWidth(), section.customWidth ? 'mx-auto' : '')}>
+      <div 
+        className={cn(getSectionWidth(), section.customWidth ? 'mx-auto' : '')}
+        style={{ minHeight: 'inherit' }}
+      >
         {section.rows.length === 0 ? (
           <div className="min-h-[120px] flex items-center justify-center border-2 border-dashed border-muted-foreground/30 rounded-lg">
             {!isPreviewMode && (
@@ -198,7 +201,7 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({
             )}
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-4" style={{ minHeight: 'inherit' }}>
             {section.rows.map((row, rowIndex) => (
               <RowRenderer
                 key={row.id}

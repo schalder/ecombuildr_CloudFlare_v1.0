@@ -1309,7 +1309,8 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
       <div 
         className="w-full mx-auto p-4"
         style={{ 
-          maxWidth: SECTION_WIDTHS[section.width]
+          maxWidth: SECTION_WIDTHS[section.width],
+          minHeight: 'inherit'
         }}
       >
         {(!section.rows || section.rows.length === 0) ? (
