@@ -29,6 +29,7 @@ import {
 import { cn } from '@/lib/utils';
 import { useAddToCart } from '@/contexts/AddToCartProvider';
 import { useToast } from '@/hooks/use-toast';
+import { useProductReviewStats } from '@/hooks/useProductReviewStats';
 
 interface Product {
   id: string;
@@ -78,6 +79,10 @@ export const StorefrontProducts: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  // Get review stats for all products
+  const productIds = products.map(p => p.id);
+  const { reviewStats } = useProductReviewStats(productIds);
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
   const [sortBy, setSortBy] = useState('name');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -608,21 +613,26 @@ export const StorefrontProducts: React.FC = () => {
                     ? "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
                     : "space-y-4"
                 )}>
-                  {products.map((product, index) => (
-                    <div 
-                      key={product.id} 
-                      className="animate-fade-in" 
-                      style={{ animationDelay: `${index * 0.05}s` }}
-                    >
-                      <ProductCard
-                        product={product}
-                        storeSlug={store.slug}
-                  onAddToCart={addToCart}
-                  onQuickView={openQuickView}
-                        className={viewMode === 'list' ? "flex flex-row" : ""}
-                      />
-                    </div>
-                  ))}
+                  {products.map((product, index) => {
+                    const stats = reviewStats[product.id];
+                    return (
+                      <div 
+                        key={product.id} 
+                        className="animate-fade-in" 
+                        style={{ animationDelay: `${index * 0.05}s` }}
+                      >
+                        <ProductCard
+                          product={product}
+                          storeSlug={store.slug}
+                          onAddToCart={addToCart}
+                          onQuickView={openQuickView}
+                          className={viewMode === 'list' ? "flex flex-row" : ""}
+                          ratingAverage={stats?.rating_average || 0}
+                          ratingCount={stats?.rating_count || 0}
+                        />
+                      </div>
+                    );
+                  })}
                 </div>
 
                 {/* Recently Viewed Products */}

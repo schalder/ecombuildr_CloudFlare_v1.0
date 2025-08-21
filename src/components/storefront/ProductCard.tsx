@@ -46,6 +46,8 @@ interface ProductCardProps {
   onQuickView?: (product: Product) => void;
   className?: string;
   ctaLabel?: string;
+  ratingAverage?: number;
+  ratingCount?: number;
 }
 
 export const ProductCard: React.FC<ProductCardProps> = ({
@@ -55,18 +57,41 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   onQuickView,
   className,
   ctaLabel,
+  ratingAverage = 0,
+  ratingCount = 0,
 }) => {
   const [isHovered, setIsHovered] = useState(false);
   const { toast } = useToast();
   const paths = useEcomPaths();
   const { addToCart } = useAddToCart();
 
-  const discountPercentage = product.compare_price && product.compare_price > product.price
-    ? Math.round(((product.compare_price - product.price) / product.compare_price) * 100)
-    : 0;
+  // Calculate display price considering variations
+  const getDisplayPrice = () => {
+    if (product.variations && Array.isArray(product.variations) && product.variations.length > 0) {
+      const prices = product.variations
+        .filter((v: any) => v.price)
+        .map((v: any) => parseFloat(v.price));
+      return prices.length > 0 ? Math.min(...prices) : product.price;
+    }
+    return product.price;
+  };
 
-  const isNew = true; // This would come from product creation date
-  const isHot = discountPercentage > 20; // Hot if discount > 20%
+  const getDisplayComparePrice = () => {
+    if (product.variations && Array.isArray(product.variations) && product.variations.length > 0) {
+      const comparePrices = product.variations
+        .filter((v: any) => v.compare_price)
+        .map((v: any) => parseFloat(v.compare_price));
+      return comparePrices.length > 0 ? Math.min(...comparePrices) : product.compare_price;
+    }
+    return product.compare_price;
+  };
+
+  const displayPrice = getDisplayPrice();
+  const displayComparePrice = getDisplayComparePrice();
+
+  const discountPercentage = displayComparePrice && displayComparePrice > displayPrice
+    ? Math.round(((displayComparePrice - displayPrice) / displayComparePrice) * 100)
+    : 0;
 
   const handleAddToComparison = () => {
     if ((window as any).addToComparison) {
@@ -101,16 +126,6 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         {discountPercentage > 0 && (
           <Badge variant="destructive" className="text-xs font-bold">
             -{discountPercentage}%
-          </Badge>
-        )}
-        {isNew && (
-          <Badge className="bg-emerald-500 hover:bg-emerald-600 text-xs font-bold">
-            New
-          </Badge>
-        )}
-        {isHot && (
-          <Badge className="bg-orange-500 hover:bg-orange-600 text-xs font-bold">
-            Hot
           </Badge>
         )}
       </div>
@@ -173,18 +188,20 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       {/* Product Info */}
       <CardContent className="p-4 space-y-3">
         {/* Product Rating */}
-        <div className="flex items-center gap-1">
-          {[...Array(5)].map((_, i) => (
-            <Star
-              key={i}
-              className={cn(
-                "h-3 w-3",
-                i < 4 ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground"
-              )}
-            />
-          ))}
-          <span className="text-xs text-muted-foreground ml-1">(4.0)</span>
-        </div>
+        {ratingCount > 0 && (
+          <div className="flex items-center gap-1">
+            {[...Array(5)].map((_, i) => (
+              <Star
+                key={i}
+                className={cn(
+                  "h-3 w-3",
+                  i < Math.floor(ratingAverage) ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground"
+                )}
+              />
+            ))}
+            <span className="text-xs text-muted-foreground ml-1">({ratingAverage})</span>
+          </div>
+        )}
 
         {/* Product Name */}
         <Link to={paths.productDetail(product.slug)}>
@@ -204,11 +221,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         <div className="space-y-1">
           <div className="flex flex-col items-start gap-1 sm:flex-row sm:items-start sm:gap-2 sm:flex-wrap">
             <span className="font-bold text-base md:text-lg text-foreground flex-shrink-0">
-              {formatCurrency(product.price)}
+              {formatCurrency(displayPrice)}
             </span>
-            {product.compare_price && product.compare_price > product.price && (
+            {displayComparePrice && displayComparePrice > displayPrice && (
               <span className="text-xs md:text-sm text-muted-foreground line-through flex-shrink-0">
-                {formatCurrency(product.compare_price)}
+                {formatCurrency(displayComparePrice)}
               </span>
             )}
           </div>

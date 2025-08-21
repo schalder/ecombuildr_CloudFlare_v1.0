@@ -2458,6 +2458,14 @@ export type Database = {
           title: string
         }[]
       }
+      get_review_stats_for_products: {
+        Args: { product_ids: string[] }
+        Returns: {
+          product_id: string
+          rating_average: number
+          rating_count: number
+        }[]
+      }
       increment_usage: {
         Args: { _resource_type: string; _user_id: string }
         Returns: undefined

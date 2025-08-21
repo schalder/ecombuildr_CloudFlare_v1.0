@@ -16,6 +16,7 @@ import { RecentlyViewed } from '@/components/storefront/RecentlyViewed';
 import { WishlistButton } from '@/components/storefront/WishlistButton';
 import { useAddToCart } from '@/contexts/AddToCartProvider';
 import { useStore } from '@/contexts/StoreContext';
+import { useProductReviewStats } from '@/hooks/useProductReviewStats';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import { renderElementStyles } from '@/components/page-builder/utils/styleRenderer';
@@ -73,6 +74,10 @@ export const ProductsPageElement: React.FC<{
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  // Get review stats for all products
+  const productIds = products.map(p => p.id);
+  const { reviewStats } = useProductReviewStats(productIds);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [sortBy, setSortBy] = useState<string>(element.content.defaultSortBy || 'name');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>(element.content.defaultViewMode || 'grid');
@@ -572,14 +577,17 @@ export const ProductsPageElement: React.FC<{
                   viewMode === 'grid' ? `grid ${getGridClasses()} gap-6` : 'space-y-4'
                 )}
               >
-                {products.map((product) => (
-                  viewMode === 'grid' ? (
+                {products.map((product) => {
+                  const stats = reviewStats[product.id];
+                  return viewMode === 'grid' ? (
                     <ProductCard
                       key={product.id}
-                      product={product}
+                      product={product as any}
                       storeSlug={store?.slug || ''}
                       onAddToCart={handleAddToCart}
-                       onQuickView={openQuickView}
+                      onQuickView={openQuickView}
+                      ratingAverage={stats?.rating_average || 0}
+                      ratingCount={stats?.rating_count || 0}
                     />
                   ) : (
                     <Card key={product.id} className="p-4">
@@ -630,8 +638,8 @@ export const ProductsPageElement: React.FC<{
                         </div>
                       </div>
                     </Card>
-                  )
-                ))}
+                  );
+                })}
               </div>
 
               {showRecentlyViewed && (

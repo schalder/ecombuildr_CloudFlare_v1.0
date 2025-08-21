@@ -5,6 +5,7 @@ import { useStore } from "@/contexts/StoreContext";
 import { ProductCard } from "@/components/storefront/ProductCard";
 import { useCart } from "@/contexts/CartContext";
 import { useToast } from "@/hooks/use-toast";
+import { useProductReviewStats } from "@/hooks/useProductReviewStats";
 
 type Product = {
   id: string;
@@ -28,6 +29,10 @@ const { store } = useStore();
 const [items, setItems] = useState<Product[]>([]);
 const { addItem } = useCart();
 const { toast } = useToast();
+
+// Get review stats for all related products
+const productIds = items.map(p => p.id);
+const { reviewStats } = useProductReviewStats(productIds);
 
 const handleAddToCart = (p: Product) => {
   addItem({ id: p.id, productId: p.id, name: p.name, price: p.price, quantity: 1, image: p.images?.[0] });
@@ -68,13 +73,18 @@ const handleAddToCart = (p: Product) => {
     <div className="space-y-4">
       <h3 className="text-lg font-semibold">Related Products</h3>
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        {items.map((p) => (
-          <ProductCard
-            key={p.id}
-            product={p}
-            onAddToCart={handleAddToCart}
-          />
-        ))}
+        {items.map((p) => {
+          const stats = reviewStats[p.id];
+          return (
+            <ProductCard
+              key={p.id}
+              product={p}
+              onAddToCart={handleAddToCart}
+              ratingAverage={stats?.rating_average || 0}
+              ratingCount={stats?.rating_count || 0}
+            />
+          );
+        })}
       </div>
     </div>
   );
