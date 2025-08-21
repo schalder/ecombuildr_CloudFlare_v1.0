@@ -148,7 +148,22 @@ export type Database = {
           id?: string
           website_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "category_website_visibility_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: true
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "category_website_visibility_website_id_fkey"
+            columns: ["website_id"]
+            isOneToOne: false
+            referencedRelation: "websites"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       courier_return_requests: {
         Row: {
