@@ -601,12 +601,12 @@ export default function Products() {
                       </Button>
                     </TableHead>
                     <TableHead>Product</TableHead>
-                    <TableHead>SKU</TableHead>
+                    <TableHead className="hidden md:table-cell">SKU</TableHead>
                     <TableHead>Price</TableHead>
-                    <TableHead>Stock</TableHead>
+                    <TableHead className="hidden lg:table-cell">Stock</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead>Channel</TableHead>
+                    <TableHead className="hidden md:table-cell">Category</TableHead>
+                    <TableHead className="hidden lg:table-cell">Channel</TableHead>
                     <TableHead className="w-16"></TableHead>
                   </TableRow>
                 </TableHeader>
@@ -643,34 +643,34 @@ export default function Products() {
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell>{product.sku || '-'}</TableCell>
-                      <TableCell>
-                        <div>
-                          ৳{product.price.toLocaleString()}
-                          {product.compare_price && (
-                            <div className="text-sm text-muted-foreground line-through">
-                              ৳{product.compare_price.toLocaleString()}
-                            </div>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        {product.inventory_quantity ?? 'Not tracked'}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={product.is_active ? "default" : "secondary"}>
-                          {product.is_active ? 'Active' : 'Inactive'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {product.categories?.name || '-'}
-                      </TableCell>
-                      <TableCell>
-                        {product.product_website_visibility && product.product_website_visibility.length > 0 
-                          ? product.product_website_visibility[0].websites.name 
-                          : '-'
-                        }
-                      </TableCell>
+                       <TableCell className="hidden md:table-cell">{product.sku || '-'}</TableCell>
+                       <TableCell>
+                         <div>
+                           ৳{product.price.toLocaleString()}
+                           {product.compare_price && (
+                             <div className="text-sm text-muted-foreground line-through">
+                               ৳{product.compare_price.toLocaleString()}
+                             </div>
+                           )}
+                         </div>
+                       </TableCell>
+                       <TableCell className="hidden lg:table-cell">
+                         {product.inventory_quantity ?? 'Not tracked'}
+                       </TableCell>
+                       <TableCell>
+                         <Badge variant={product.is_active ? "default" : "secondary"}>
+                           {product.is_active ? 'Active' : 'Inactive'}
+                         </Badge>
+                       </TableCell>
+                       <TableCell className="hidden md:table-cell">
+                         {product.categories?.name || '-'}
+                       </TableCell>
+                       <TableCell className="hidden lg:table-cell">
+                         {product.product_website_visibility && product.product_website_visibility.length > 0 
+                           ? product.product_website_visibility[0].websites.name 
+                           : '-'
+                         }
+                       </TableCell>
                       <TableCell>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>

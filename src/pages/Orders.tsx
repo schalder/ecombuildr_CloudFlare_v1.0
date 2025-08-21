@@ -671,12 +671,12 @@ export default function Orders() {
                   <TableRow>
                     <TableHead>Order</TableHead>
                     <TableHead>Customer</TableHead>
-                    <TableHead>Channel</TableHead>
+                    <TableHead className="hidden md:table-cell">Channel</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Total</TableHead>
-                    <TableHead>Payment</TableHead>
-                    <TableHead>Shipping</TableHead>
-                    <TableHead>Date</TableHead>
+                    <TableHead className="hidden lg:table-cell">Payment</TableHead>
+                    <TableHead className="hidden lg:table-cell">Shipping</TableHead>
+                    <TableHead className="hidden md:table-cell">Date</TableHead>
                     <TableHead className="w-16"></TableHead>
                   </TableRow>
                 </TableHeader>

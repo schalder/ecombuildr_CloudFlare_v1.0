@@ -11,6 +11,7 @@ import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { format } from 'date-fns';
 
 interface Review {
@@ -29,6 +30,7 @@ interface Product { id: string; name: string; }
 export default function Reviews() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const isMobile = useIsMobile();
   const [loading, setLoading] = useState(true);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -138,48 +140,99 @@ export default function Reviews() {
             </div>
           </div>
 
-          <div className="border rounded-md overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Product</TableHead>
-                  <TableHead>Reviewer</TableHead>
-                  <TableHead>Rating</TableHead>
-                  <TableHead>Title</TableHead>
-                  <TableHead>Visible</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {loading ? (
+          {isMobile ? (
+            // Mobile Card View
+            <div className="space-y-4">
+              {loading ? (
+                [...Array(5)].map((_, i) => (
+                  <div key={i} className="h-32 bg-muted animate-pulse rounded" />
+                ))
+              ) : filtered.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">No reviews found.</div>
+              ) : (
+                filtered.map((r) => (
+                  <Card key={r.id} className="p-4">
+                    <div className="space-y-3">
+                      <div className="flex items-start justify-between">
+                        <div className="space-y-1 min-w-0 flex-1 mr-4">
+                          <div className="font-medium text-sm">{productName(r.product_id)}</div>
+                          <div className="text-sm text-muted-foreground">{r.reviewer_name}</div>
+                          <div className="flex items-center gap-2">
+                            <span>{'⭐'.repeat(r.rating)}</span>
+                            <Switch checked={r.is_visible} onCheckedChange={(v) => toggleVisibility(r.id, v)} />
+                          </div>
+                        </div>
+                        <Button variant="destructive" size="sm" onClick={() => deleteReview(r.id)}>
+                          Delete
+                        </Button>
+                      </div>
+                      
+                      {r.title && (
+                        <div className="text-sm break-words">
+                          <span className="font-medium">Title: </span>
+                          {r.title}
+                        </div>
+                      )}
+                      
+                      {r.comment && (
+                        <div className="text-sm text-muted-foreground break-words">
+                          {r.comment}
+                        </div>
+                      )}
+                      
+                      <div className="text-xs text-muted-foreground">
+                        {format(new Date(r.created_at), 'PP p')}
+                      </div>
+                    </div>
+                  </Card>
+                ))
+              )}
+            </div>
+          ) : (
+            // Desktop Table View
+            <div className="border rounded-md overflow-x-auto">
+              <Table>
+                <TableHeader>
                   <TableRow>
-                    <TableCell colSpan={7}>Loading...</TableCell>
+                    <TableHead>Product</TableHead>
+                    <TableHead className="hidden md:table-cell">Reviewer</TableHead>
+                    <TableHead>Rating</TableHead>
+                    <TableHead className="hidden lg:table-cell min-w-0">Title</TableHead>
+                    <TableHead>Visible</TableHead>
+                    <TableHead className="hidden md:table-cell">Date</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
-                ) : filtered.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-muted-foreground">No reviews found.</TableCell>
-                  </TableRow>
-                ) : (
-                  filtered.map((r) => (
-                    <TableRow key={r.id}>
-                      <TableCell className="font-medium">{productName(r.product_id)}</TableCell>
-                      <TableCell>{r.reviewer_name}</TableCell>
-                      <TableCell>{'⭐'.repeat(r.rating)}</TableCell>
-                      <TableCell className="max-w-[280px] truncate">{r.title || '-'}</TableCell>
-                      <TableCell>
-                        <Switch checked={r.is_visible} onCheckedChange={(v) => toggleVisibility(r.id, v)} />
-                      </TableCell>
-                      <TableCell>{format(new Date(r.created_at), 'PP p')}</TableCell>
-                      <TableCell className="text-right">
-                        <Button variant="destructive" size="sm" onClick={() => deleteReview(r.id)}>Delete</Button>
-                      </TableCell>
+                </TableHeader>
+                <TableBody>
+                  {loading ? (
+                    <TableRow>
+                      <TableCell colSpan={7}>Loading...</TableCell>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
+                  ) : filtered.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-muted-foreground">No reviews found.</TableCell>
+                    </TableRow>
+                  ) : (
+                    filtered.map((r) => (
+                      <TableRow key={r.id}>
+                        <TableCell className="font-medium">{productName(r.product_id)}</TableCell>
+                        <TableCell className="hidden md:table-cell">{r.reviewer_name}</TableCell>
+                        <TableCell>{'⭐'.repeat(r.rating)}</TableCell>
+                        <TableCell className="hidden lg:table-cell max-w-48 break-words">{r.title || '-'}</TableCell>
+                        <TableCell>
+                          <Switch checked={r.is_visible} onCheckedChange={(v) => toggleVisibility(r.id, v)} />
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell text-sm">{format(new Date(r.created_at), 'PP p')}</TableCell>
+                        <TableCell className="text-right">
+                          <Button variant="destructive" size="sm" onClick={() => deleteReview(r.id)}>Delete</Button>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          )}
         </CardContent>
       </Card>
     </DashboardLayout>

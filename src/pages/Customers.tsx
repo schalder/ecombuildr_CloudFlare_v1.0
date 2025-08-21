@@ -291,11 +291,11 @@ export default function Customers() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Customer</TableHead>
-                    <TableHead>Contact</TableHead>
-                    <TableHead>Location</TableHead>
+                    <TableHead className="hidden md:table-cell">Contact</TableHead>
+                    <TableHead className="hidden lg:table-cell">Location</TableHead>
                     <TableHead>Orders</TableHead>
                     <TableHead>Total Spent</TableHead>
-                    <TableHead>First Order</TableHead>
+                    <TableHead className="hidden md:table-cell">First Order</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -313,7 +313,7 @@ export default function Customers() {
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="hidden md:table-cell">
                         <div className="space-y-1">
                           {customer.email && (
                             <div className="flex items-center gap-1 text-sm">
@@ -329,7 +329,7 @@ export default function Customers() {
                           )}
                         </div>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="hidden lg:table-cell">
                         {customer.city || customer.area ? (
                           <div className="flex items-center gap-1 text-sm">
                             <MapPin className="h-3 w-3" />
@@ -345,7 +345,7 @@ export default function Customers() {
                       <TableCell className="font-medium">
                         ৳{customer.total_spent.toLocaleString()}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="hidden md:table-cell">
                         {new Date(customer.created_at).toLocaleDateString()}
                       </TableCell>
                     </TableRow>
