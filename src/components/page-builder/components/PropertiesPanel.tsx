@@ -58,6 +58,7 @@ import {
   LayoutElementStyles,
   FormElementStyles,
   ButtonElementStyles,
+  SocialShareElementStyles,
   OrderConfirmationElementStyles,
   EcommerceActionButtonStyles,
   WeeklyFeaturedElementStyles,
@@ -191,6 +192,11 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
           deviceType={deviceType}
         />
       );
+    }
+
+    // Social Share element styles
+    if (selectedElement.type === 'social-share') {
+      return <SocialShareElementStyles element={selectedElement} onStyleUpdate={handleStyleUpdate} />;
     }
     
     // Default fallback for any other element types (ecommerce, content, media, advanced)
