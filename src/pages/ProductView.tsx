@@ -10,6 +10,51 @@ import { Separator } from '@/components/ui/separator';
 import { Edit, ArrowLeft, BarChart3, Package, Tag } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
+// Sanitize HTML utility to clean up descriptions
+const sanitizeHtml = (input: string): string => {
+  if (!input) return '';
+  
+  // Create a temporary DOM element to parse HTML
+  const tempDiv = document.createElement('div');
+  tempDiv.innerHTML = input;
+  
+  // Remove script tags and event handlers
+  const scripts = tempDiv.querySelectorAll('script');
+  scripts.forEach(script => script.remove());
+  
+  // Remove style tags
+  const styles = tempDiv.querySelectorAll('style');
+  styles.forEach(style => style.remove());
+  
+  // Remove all style attributes and event handlers
+  const allElements = tempDiv.querySelectorAll('*');
+  allElements.forEach(element => {
+    // Remove style attributes
+    element.removeAttribute('style');
+    element.removeAttribute('class');
+    
+    // Remove event handlers
+    Array.from(element.attributes).forEach(attr => {
+      if (attr.name.startsWith('on')) {
+        element.removeAttribute(attr.name);
+      }
+    });
+  });
+  
+  // Only allow basic formatting tags
+  const allowedTags = ['p', 'br', 'strong', 'b', 'em', 'i', 'u', 'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'];
+  const allTags = tempDiv.querySelectorAll('*');
+  
+  allTags.forEach(element => {
+    if (!allowedTags.includes(element.tagName.toLowerCase())) {
+      // Replace with its content
+      element.outerHTML = element.innerHTML;
+    }
+  });
+  
+  return tempDiv.innerHTML;
+};
+
 interface Product {
   id: string;
   name: string;
@@ -205,14 +250,20 @@ export default function ProductView() {
                 {product.short_description && (
                   <div>
                     <h4 className="text-sm font-medium text-muted-foreground mb-2">Short Description</h4>
-                    <p className="text-sm">{product.short_description}</p>
+                    <div 
+                      className="text-sm prose prose-sm max-w-none"
+                      dangerouslySetInnerHTML={{ __html: sanitizeHtml(product.short_description) }}
+                    />
                   </div>
                 )}
                 
                 {product.description && (
                   <div>
                     <h4 className="text-sm font-medium text-muted-foreground mb-2">Full Description</h4>
-                    <p className="text-sm whitespace-pre-wrap">{product.description}</p>
+                    <div 
+                      className="text-sm prose prose-sm max-w-none"
+                      dangerouslySetInnerHTML={{ __html: sanitizeHtml(product.description) }}
+                    />
                   </div>
                 )}
 
