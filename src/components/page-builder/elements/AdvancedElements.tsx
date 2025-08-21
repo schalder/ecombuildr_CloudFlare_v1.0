@@ -185,6 +185,14 @@ const SocialShareElement: React.FC<{
   // Get merged styles (base + responsive)
   const mergedStyles = mergeResponsiveStyles(element.styles || {}, element.styles, deviceType);
   
+  // Debug containerAlignment
+  console.log('Social Share Debug:', {
+    elementId: element.id,
+    containerAlignment: mergedStyles.containerAlignment,
+    allStyles: element.styles,
+    mergedStyles
+  });
+  
   // Get container alignment for positioning element within column
   const containerAlignment = mergedStyles.containerAlignment || 'center';
   
@@ -345,8 +353,15 @@ const SocialShareElement: React.FC<{
       {responsiveCSS && (
         <style dangerouslySetInnerHTML={{ __html: responsiveCSS }} />
       )}
-      {/* Outer container for alignment positioning */}
-      <div className={`${getContainerAlignmentClass()}`}>
+      {/* Debug container alignment */}
+      <div 
+        className={`w-full ${getContainerAlignmentClass()}`}
+        style={{ 
+          display: 'flex',
+          justifyContent: containerAlignment === 'left' ? 'flex-start' : 
+                        containerAlignment === 'right' ? 'flex-end' : 'center'
+        }}
+      >
         <div 
           className={`element-${element.id}`}
           style={finalContainerStyles}
