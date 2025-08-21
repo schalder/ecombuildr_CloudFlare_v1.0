@@ -5,7 +5,8 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { ChevronDown, ChevronUp, Image } from "lucide-react";
 import { MediaSelector } from "@/components/page-builder/components/MediaSelector";
 
 export type VariationOption = {
@@ -51,7 +52,16 @@ type VariantMatrixProps = {
 
 const VariantMatrix: React.FC<VariantMatrixProps> = ({ options, variants, onChange }) => {
   const [isOpen, setIsOpen] = useState(true);
+  const [accordionValue, setAccordionValue] = useState<string[]>([]);
   const combos = useMemo(() => combinations(options.filter(o => o.name && (o.values||[]).length > 0)), [options]);
+
+  const expandAll = () => {
+    setAccordionValue(variants.map(v => v.id));
+  };
+
+  const collapseAll = () => {
+    setAccordionValue([]);
+  };
 
   // Keep variants in sync with combos
   useEffect(() => {
@@ -104,54 +114,92 @@ const VariantMatrix: React.FC<VariantMatrixProps> = ({ options, variants, onChan
         </CardHeader>
         <CollapsibleContent>
           <CardContent className="space-y-4">
-            <p className="text-sm text-muted-foreground">Set optional price overrides for each variant. Leave blank to use the base product price.</p>
-            <Separator />
-            <div className="space-y-4">
-              {variants.map((v) => (
-                <div key={v.id} className="grid grid-cols-1 lg:grid-cols-2 gap-4 p-4 border border-border rounded-lg">
-                  <div className="text-sm">
-                    <Label>Variant</Label>
-                    <div className="mt-1 text-foreground">
-                      {Object.entries(v.options).map(([k, val]) => (
-                        <span key={k} className="mr-2">
-                          <span className="text-muted-foreground">{k}:</span> {val}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="space-y-1">
-                      <Label>Price override</Label>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        value={v.price ?? ""}
-                        onChange={(e) => updatePrice(v.id, e.target.value)}
-                        placeholder="Leave blank to use base price"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label>Compare at price override</Label>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        value={v.compare_price ?? ""}
-                        onChange={(e) => updateComparePrice(v.id, e.target.value)}
-                        placeholder="Leave blank to use base compare price"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label>Variant image (optional)</Label>
-                      <MediaSelector
-                        value={v.image ?? ""}
-                        onChange={(image) => updateImage(v.id, image)}
-                        label=""
-                      />
-                    </div>
-                  </div>
-                </div>
-              ))}
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-muted-foreground">Set optional price overrides for each variant. Leave blank to use the base product price.</p>
+              <div className="flex gap-2">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={expandAll}
+                  className="text-xs"
+                >
+                  Expand all
+                </Button>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={collapseAll}
+                  className="text-xs"
+                >
+                  Collapse all
+                </Button>
+              </div>
             </div>
+            <Separator />
+            <Accordion type="multiple" value={accordionValue} onValueChange={setAccordionValue}>
+              {variants.map((v) => (
+                <AccordionItem key={v.id} value={v.id}>
+                  <AccordionTrigger className="hover:no-underline">
+                    <div className="flex items-center justify-between w-full mr-4">
+                      <div className="flex items-center gap-3 text-left">
+                        <div className="text-sm">
+                          {Object.entries(v.options).map(([k, val]) => (
+                            <span key={k} className="mr-2">
+                              <span className="text-muted-foreground">{k}:</span> {val}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                        {v.price && (
+                          <span>Price: ${v.price}</span>
+                        )}
+                        {v.compare_price && (
+                          <span>Compare: ${v.compare_price}</span>
+                        )}
+                        {v.image && (
+                          <Image className="h-3 w-3" />
+                        )}
+                      </div>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4">
+                      <div className="space-y-1">
+                        <Label>Price override</Label>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          value={v.price ?? ""}
+                          onChange={(e) => updatePrice(v.id, e.target.value)}
+                          placeholder="Leave blank to use base price"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label>Compare at price override</Label>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          value={v.compare_price ?? ""}
+                          onChange={(e) => updateComparePrice(v.id, e.target.value)}
+                          placeholder="Leave blank to use base compare price"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label>Variant image (optional)</Label>
+                        <MediaSelector
+                          value={v.image ?? ""}
+                          onChange={(image) => updateImage(v.id, image)}
+                          label=""
+                        />
+                      </div>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
           </CardContent>
         </CollapsibleContent>
       </Card>
