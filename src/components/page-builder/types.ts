@@ -1,5 +1,8 @@
 // Hierarchical page builder types: Section → Row → Column → Element
 
+// Background image modes
+export type BackgroundImageMode = 'full-center' | 'parallax' | 'fill-width' | 'no-repeat' | 'repeat';
+
 export interface PageBuilderElement {
   id: string;
   anchor?: string;
@@ -68,6 +71,7 @@ export interface PageBuilderColumn {
     margin?: string;
     backgroundColor?: string;
     backgroundImage?: string;
+    backgroundImageMode?: BackgroundImageMode;
     backgroundGradient?: string;
     backgroundOpacity?: number;
     boxShadow?: string;
@@ -122,6 +126,7 @@ export interface PageBuilderRow {
     margin?: string;
     backgroundColor?: string;
     backgroundImage?: string;
+    backgroundImageMode?: BackgroundImageMode;
     backgroundGradient?: string;
     backgroundOpacity?: number;
     boxShadow?: string;
@@ -170,6 +175,7 @@ export interface PageBuilderSection {
     margin?: string;
     backgroundColor?: string;
     backgroundImage?: string;
+    backgroundImageMode?: BackgroundImageMode;
     backgroundGradient?: string;
     backgroundOpacity?: number;
     boxShadow?: string;

@@ -1,6 +1,56 @@
-import { PageBuilderSection, PageBuilderRow, PageBuilderColumn, PageBuilderElement } from '../types';
+import { PageBuilderSection, PageBuilderRow, PageBuilderColumn, PageBuilderElement, BackgroundImageMode } from '../types';
 import { mergeResponsiveStyles } from './responsiveStyles';
 import { applyColorOpacity, applyGradientOpacity } from './backgroundOpacity';
+
+// Helper function to get background image properties based on mode
+const getBackgroundImageProperties = (mode: BackgroundImageMode = 'full-center', deviceType: 'desktop' | 'tablet' | 'mobile' = 'desktop') => {
+  const responsiveMode = deviceType === 'mobile' ? mode : mode;
+  
+  switch (responsiveMode) {
+    case 'full-center':
+      return {
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        backgroundAttachment: 'scroll'
+      };
+    case 'parallax':
+      return {
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        backgroundAttachment: deviceType === 'mobile' ? 'scroll' : 'fixed'
+      };
+    case 'fill-width':
+      return {
+        backgroundSize: '100% auto',
+        backgroundPosition: 'center top',
+        backgroundRepeat: 'no-repeat',
+        backgroundAttachment: 'scroll'
+      };
+    case 'no-repeat':
+      return {
+        backgroundSize: 'auto',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        backgroundAttachment: 'scroll'
+      };
+    case 'repeat':
+      return {
+        backgroundSize: 'auto',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'repeat',
+        backgroundAttachment: 'scroll'
+      };
+    default:
+      return {
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        backgroundAttachment: 'scroll'
+      };
+  }
+};
 
 // Universal style renderer that creates pure inline styles
 export const renderSectionStyles = (section: PageBuilderSection, deviceType: 'desktop' | 'tablet' | 'mobile' = 'desktop'): React.CSSProperties => {
@@ -28,9 +78,12 @@ export const renderSectionStyles = (section: PageBuilderSection, deviceType: 'de
     // Add image layer (bottom layer)
     if (section.styles.backgroundImage) {
       backgroundLayers.push(`url(${section.styles.backgroundImage})`);
-      styles.backgroundSize = 'cover';
-      styles.backgroundPosition = 'center';
-      styles.backgroundRepeat = 'no-repeat';
+      
+      // Get responsive background image mode
+      const responsiveImageMode = section.styles?.responsive?.[deviceType]?.backgroundImageMode || section.styles.backgroundImageMode;
+      const imageProps = getBackgroundImageProperties(responsiveImageMode, deviceType);
+      
+      Object.assign(styles, imageProps);
     }
     
     // Apply combined background
@@ -125,9 +178,12 @@ export const renderRowStyles = (row: PageBuilderRow, deviceType: 'desktop' | 'ta
     // Add image layer (bottom layer)
     if (row.styles.backgroundImage) {
       backgroundLayers.push(`url(${row.styles.backgroundImage})`);
-      styles.backgroundSize = 'cover';
-      styles.backgroundPosition = 'center';
-      styles.backgroundRepeat = 'no-repeat';
+      
+      // Get responsive background image mode
+      const responsiveImageMode = row.styles?.responsive?.[deviceType]?.backgroundImageMode || row.styles.backgroundImageMode;
+      const imageProps = getBackgroundImageProperties(responsiveImageMode, deviceType);
+      
+      Object.assign(styles, imageProps);
     }
     
     // Apply combined background
@@ -213,9 +269,12 @@ export const renderColumnStyles = (column: PageBuilderColumn, deviceType: 'deskt
     // Add image layer (bottom layer)
     if (column.styles.backgroundImage) {
       backgroundLayers.push(`url(${column.styles.backgroundImage})`);
-      styles.backgroundSize = 'cover';
-      styles.backgroundPosition = 'center';
-      styles.backgroundRepeat = 'no-repeat';
+      
+      // Get responsive background image mode
+      const responsiveImageMode = column.styles?.responsive?.[deviceType]?.backgroundImageMode || column.styles.backgroundImageMode;
+      const imageProps = getBackgroundImageProperties(responsiveImageMode, deviceType);
+      
+      Object.assign(styles, imageProps);
     }
     
     // Apply combined background

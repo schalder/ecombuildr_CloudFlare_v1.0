@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { PageBuilderSection, PageBuilderRow, PageBuilderColumn, PageBuilderElement, SECTION_WIDTHS, COLUMN_LAYOUTS } from '../types';
+import { PageBuilderSection, PageBuilderRow, PageBuilderColumn, PageBuilderElement, SECTION_WIDTHS, COLUMN_LAYOUTS, BackgroundImageMode } from '../types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -353,6 +353,52 @@ export const SectionSettings: React.FC<SectionSettingsProps> = ({ section, onUpd
               maxSize={4}
             />
           </div>
+
+          {section.styles?.backgroundImage && (
+            <div className="space-y-2">
+              <Label>Background Image Mode</Label>
+              <Tabs defaultValue="desktop" className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="desktop">Desktop</TabsTrigger>
+                  <TabsTrigger value="mobile">Mobile</TabsTrigger>
+                </TabsList>
+                <TabsContent value="desktop" className="space-y-2">
+                  <Select
+                    value={section.styles?.backgroundImageMode || 'full-center'}
+                    onValueChange={(value: BackgroundImageMode) => handleStyleUpdate('backgroundImageMode', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="full-center">Full Center</SelectItem>
+                      <SelectItem value="parallax">Parallax</SelectItem>
+                      <SelectItem value="fill-width">Fill Width</SelectItem>
+                      <SelectItem value="no-repeat">No Repeat</SelectItem>
+                      <SelectItem value="repeat">Repeat</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </TabsContent>
+                <TabsContent value="mobile" className="space-y-2">
+                  <Select
+                    value={section.styles?.responsive?.mobile?.backgroundImageMode || section.styles?.backgroundImageMode || 'full-center'}
+                    onValueChange={(value: BackgroundImageMode) => handleResponsiveStyleUpdate('mobile', 'backgroundImageMode', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="full-center">Full Center</SelectItem>
+                      <SelectItem value="parallax">Parallax</SelectItem>
+                      <SelectItem value="fill-width">Fill Width</SelectItem>
+                      <SelectItem value="no-repeat">No Repeat</SelectItem>
+                      <SelectItem value="repeat">Repeat</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </TabsContent>
+              </Tabs>
+            </div>
+          )}
           
           <div className="space-y-2">
             <Label>Color/Gradient Opacity: <span className="text-muted-foreground">{Math.round((section.styles?.backgroundOpacity ?? 1) * 100)}%</span></Label>
@@ -682,6 +728,52 @@ export const RowSettings: React.FC<RowSettingsProps> = ({ row, onUpdate }) => {
               maxSize={4}
             />
           </div>
+
+          {row.styles?.backgroundImage && (
+            <div className="space-y-2">
+              <Label>Background Image Mode</Label>
+              <Tabs defaultValue="desktop" className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="desktop">Desktop</TabsTrigger>
+                  <TabsTrigger value="mobile">Mobile</TabsTrigger>
+                </TabsList>
+                <TabsContent value="desktop" className="space-y-2">
+                  <Select
+                    value={row.styles?.backgroundImageMode || 'full-center'}
+                    onValueChange={(value: BackgroundImageMode) => handleStyleUpdate('backgroundImageMode', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="full-center">Full Center</SelectItem>
+                      <SelectItem value="parallax">Parallax</SelectItem>
+                      <SelectItem value="fill-width">Fill Width</SelectItem>
+                      <SelectItem value="no-repeat">No Repeat</SelectItem>
+                      <SelectItem value="repeat">Repeat</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </TabsContent>
+                <TabsContent value="mobile" className="space-y-2">
+                  <Select
+                    value={row.styles?.responsive?.mobile?.backgroundImageMode || row.styles?.backgroundImageMode || 'full-center'}
+                    onValueChange={(value: BackgroundImageMode) => handleResponsiveStyleUpdate('mobile', 'backgroundImageMode', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="full-center">Full Center</SelectItem>
+                      <SelectItem value="parallax">Parallax</SelectItem>
+                      <SelectItem value="fill-width">Fill Width</SelectItem>
+                      <SelectItem value="no-repeat">No Repeat</SelectItem>
+                      <SelectItem value="repeat">Repeat</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </TabsContent>
+              </Tabs>
+            </div>
+          )}
           
           <div className="space-y-2">
             <Label>Color/Gradient Opacity: <span className="text-muted-foreground">{Math.round((row.styles?.backgroundOpacity ?? 1) * 100)}%</span></Label>
@@ -977,6 +1069,52 @@ export const ColumnSettings: React.FC<ColumnSettingsProps> = ({ column, onUpdate
               maxSize={4}
             />
           </div>
+
+          {column.styles?.backgroundImage && (
+            <div className="space-y-2">
+              <Label>Background Image Mode</Label>
+              <Tabs defaultValue="desktop" className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="desktop">Desktop</TabsTrigger>
+                  <TabsTrigger value="mobile">Mobile</TabsTrigger>
+                </TabsList>
+                <TabsContent value="desktop" className="space-y-2">
+                  <Select
+                    value={column.styles?.backgroundImageMode || 'full-center'}
+                    onValueChange={(value: BackgroundImageMode) => handleStyleUpdate('backgroundImageMode', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="full-center">Full Center</SelectItem>
+                      <SelectItem value="parallax">Parallax</SelectItem>
+                      <SelectItem value="fill-width">Fill Width</SelectItem>
+                      <SelectItem value="no-repeat">No Repeat</SelectItem>
+                      <SelectItem value="repeat">Repeat</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </TabsContent>
+                <TabsContent value="mobile" className="space-y-2">
+                  <Select
+                    value={column.styles?.responsive?.mobile?.backgroundImageMode || column.styles?.backgroundImageMode || 'full-center'}
+                    onValueChange={(value: BackgroundImageMode) => handleResponsiveStyleUpdate('mobile', 'backgroundImageMode', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="full-center">Full Center</SelectItem>
+                      <SelectItem value="parallax">Parallax</SelectItem>
+                      <SelectItem value="fill-width">Fill Width</SelectItem>
+                      <SelectItem value="no-repeat">No Repeat</SelectItem>
+                      <SelectItem value="repeat">Repeat</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </TabsContent>
+              </Tabs>
+            </div>
+          )}
           
           <div className="space-y-2">
             <Label>Color/Gradient Opacity: <span className="text-muted-foreground">{Math.round((column.styles?.backgroundOpacity ?? 1) * 100)}%</span></Label>
