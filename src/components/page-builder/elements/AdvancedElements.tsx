@@ -185,22 +185,20 @@ const SocialShareElement: React.FC<{
   // Get merged styles (base + responsive)
   const mergedStyles = mergeResponsiveStyles(element.styles || {}, element.styles, deviceType);
   
-  // Extract style values with fallbacks
-  const containerAlignment = mergedStyles.textAlign || 'center';
-  const getContainerAlignmentStyles = () => {
+  // Get container alignment for positioning element within column
+  const containerAlignment = mergedStyles.containerAlignment || 'center';
+  
+  // Get container alignment class (like PriceElement)
+  const getContainerAlignmentClass = () => {
     switch (containerAlignment) {
-      case 'left':
-        return { marginLeft: '0', marginRight: 'auto' };
-      case 'right':
-        return { marginLeft: 'auto', marginRight: '0' };
-      default: // center
-        return { marginLeft: 'auto', marginRight: 'auto' };
+      case 'left': return 'mr-auto';
+      case 'right': return 'ml-auto';
+      default: return 'mx-auto'; // center
     }
   };
 
   const containerStyles = {
     maxWidth: mergedStyles.maxWidth === 'none' ? 'none' : (mergedStyles.maxWidth || '32rem'),
-    ...getContainerAlignmentStyles(),
     backgroundColor: mergedStyles.backgroundColor || 'transparent',
     backgroundOpacity: mergedStyles.backgroundOpacity || 100,
     borderWidth: mergedStyles.borderWidth || '0',
@@ -347,35 +345,38 @@ const SocialShareElement: React.FC<{
       {responsiveCSS && (
         <style dangerouslySetInnerHTML={{ __html: responsiveCSS }} />
       )}
-      <div 
-        className={`element-${element.id}`}
-        style={finalContainerStyles}
-      >
-        <InlineEditor
-          value={title}
-          onChange={handleTitleUpdate}
-          style={titleStyles}
-          placeholder="Share title..."
-        />
-        <div style={getLayoutClass()}>
-          {enabledPlatforms.map((platform) => {
-            const Icon = platformIcons[platform as keyof typeof platformIcons];
-            const label = platform === 'copy' ? 'Copy Link' : platform.charAt(0).toUpperCase() + platform.slice(1);
-            
-            return (
-              <Button
-                key={platform}
-                size={getButtonSize() as any}
-                variant={getButtonVariant() as any}
-                onClick={() => handleShare(platform)}
-                style={getButtonStyles()}
-                className="flex items-center space-x-2"
-              >
-                <Icon className="h-4 w-4" />
-                {showLabels && <span>{label}</span>}
-              </Button>
-            );
-          })}
+      {/* Outer container for alignment positioning */}
+      <div className={`${getContainerAlignmentClass()}`}>
+        <div 
+          className={`element-${element.id}`}
+          style={finalContainerStyles}
+        >
+          <InlineEditor
+            value={title}
+            onChange={handleTitleUpdate}
+            style={titleStyles}
+            placeholder="Share title..."
+          />
+          <div style={getLayoutClass()}>
+            {enabledPlatforms.map((platform) => {
+              const Icon = platformIcons[platform as keyof typeof platformIcons];
+              const label = platform === 'copy' ? 'Copy Link' : platform.charAt(0).toUpperCase() + platform.slice(1);
+              
+              return (
+                <Button
+                  key={platform}
+                  size={getButtonSize() as any}
+                  variant={getButtonVariant() as any}
+                  onClick={() => handleShare(platform)}
+                  style={getButtonStyles()}
+                  className="flex items-center space-x-2"
+                >
+                  <Icon className="h-4 w-4" />
+                  {showLabels && <span>{label}</span>}
+                </Button>
+              );
+            })}
+          </div>
         </div>
       </div>
     </>

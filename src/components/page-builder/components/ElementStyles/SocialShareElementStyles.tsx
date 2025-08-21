@@ -71,22 +71,22 @@ export const SocialShareElementStyles: React.FC<SocialShareElementStylesProps> =
           <div className="flex space-x-1">
             <Button
               size="sm"
-              variant={getCurrentValue('textAlign', 'center') === 'left' ? 'default' : 'outline'}
-              onClick={() => handleResponsiveUpdate('textAlign', 'left')}
+              variant={getCurrentValue('containerAlignment', 'center') === 'left' ? 'default' : 'outline'}
+              onClick={() => handleResponsiveUpdate('containerAlignment', 'left')}
             >
               <AlignLeft className="h-4 w-4" />
             </Button>
             <Button
               size="sm"
-              variant={getCurrentValue('textAlign', 'center') === 'center' ? 'default' : 'outline'}
-              onClick={() => handleResponsiveUpdate('textAlign', 'center')}
+              variant={getCurrentValue('containerAlignment', 'center') === 'center' ? 'default' : 'outline'}
+              onClick={() => handleResponsiveUpdate('containerAlignment', 'center')}
             >
               <AlignCenter className="h-4 w-4" />
             </Button>
             <Button
               size="sm"
-              variant={getCurrentValue('textAlign', 'center') === 'right' ? 'default' : 'outline'}
-              onClick={() => handleResponsiveUpdate('textAlign', 'right')}
+              variant={getCurrentValue('containerAlignment', 'center') === 'right' ? 'default' : 'outline'}
+              onClick={() => handleResponsiveUpdate('containerAlignment', 'right')}
             >
               <AlignRight className="h-4 w-4" />
             </Button>
