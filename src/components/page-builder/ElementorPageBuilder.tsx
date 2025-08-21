@@ -1315,9 +1315,10 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
             const verticalAlignment = section.styles?.responsive?.[deviceType]?.contentVerticalAlignment || 
                                      section.styles?.contentVerticalAlignment;
             
-            // Only apply alignment if section has a specific height
+            // Only apply alignment if section has a specific height or minHeight
             const sectionHeight = section.styles?.responsive?.[deviceType]?.height || section.styles?.height;
-            if (!sectionHeight || sectionHeight === 'auto') return 'justify-start';
+            const sectionMinHeight = section.styles?.responsive?.[deviceType]?.minHeight || section.styles?.minHeight;
+            if ((!sectionHeight || sectionHeight === 'auto') && (!sectionMinHeight || sectionMinHeight === 'auto')) return 'justify-start';
             
             return verticalAlignment === 'center' ? 'justify-center' :
                    verticalAlignment === 'bottom' ? 'justify-end' : 'justify-start';

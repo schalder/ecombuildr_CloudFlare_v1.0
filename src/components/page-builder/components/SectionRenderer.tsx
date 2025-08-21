@@ -129,7 +129,11 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({
     const verticalAlignment = section.styles?.responsive?.[deviceType]?.contentVerticalAlignment || 
                              section.styles?.contentVerticalAlignment;
     
-    if (verticalAlignment && baseStyles.height && baseStyles.height !== 'auto') {
+    // Apply vertical alignment if section has height or minHeight
+    const hasHeight = baseStyles.height && baseStyles.height !== 'auto';
+    const hasMinHeight = baseStyles.minHeight && baseStyles.minHeight !== 'auto';
+    
+    if (verticalAlignment && (hasHeight || hasMinHeight)) {
       return {
         ...baseStyles,
         display: 'flex',
