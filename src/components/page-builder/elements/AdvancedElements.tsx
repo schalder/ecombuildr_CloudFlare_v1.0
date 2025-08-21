@@ -186,10 +186,21 @@ const SocialShareElement: React.FC<{
   const mergedStyles = mergeResponsiveStyles(element.styles || {}, element.styles, deviceType);
   
   // Extract style values with fallbacks
+  const containerAlignment = mergedStyles.textAlign || 'center';
+  const getContainerAlignmentStyles = () => {
+    switch (containerAlignment) {
+      case 'left':
+        return { marginLeft: '0', marginRight: 'auto' };
+      case 'right':
+        return { marginLeft: 'auto', marginRight: '0' };
+      default: // center
+        return { marginLeft: 'auto', marginRight: 'auto' };
+    }
+  };
+
   const containerStyles = {
-    textAlign: mergedStyles.textAlign || 'center',
     maxWidth: mergedStyles.maxWidth === 'none' ? 'none' : (mergedStyles.maxWidth || '32rem'),
-    margin: '0 auto',
+    ...getContainerAlignmentStyles(),
     backgroundColor: mergedStyles.backgroundColor || 'transparent',
     backgroundOpacity: mergedStyles.backgroundOpacity || 100,
     borderWidth: mergedStyles.borderWidth || '0',
