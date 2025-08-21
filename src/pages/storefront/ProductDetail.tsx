@@ -170,14 +170,21 @@ export const ProductDetail: React.FC = () => {
   const effectivePrice = (selectedVariant?.price ?? product?.price) || 0;
   const effectiveComparePrice = selectedVariant?.compare_price ?? product?.compare_price;
 
-  // Calculate effective images based on selected variant
-  const effectiveImages = React.useMemo(() => {
+  // Calculate all available images (product + variant images)
+  const allAvailableImages = React.useMemo(() => {
     const defaultImages = product?.images || [];
+    const variantImages = variantList
+      .filter(variant => variant.image && !defaultImages.includes(variant.image))
+      .map(variant => variant.image);
+    
+    // If a variant is selected and has an image, put it first
     if (selectedVariant && selectedVariant.image) {
-      return [selectedVariant.image, ...defaultImages.filter(img => img !== selectedVariant.image)];
+      const otherImages = [...defaultImages, ...variantImages].filter(img => img !== selectedVariant.image);
+      return [selectedVariant.image, ...otherImages];
     }
-    return defaultImages;
-  }, [selectedVariant, product?.images]);
+    
+    return [...defaultImages, ...variantImages];
+  }, [selectedVariant, product?.images, variantList]);
 
   // Create mapping between images and their corresponding variants
   const imageToVariantMap = React.useMemo(() => {
@@ -286,7 +293,7 @@ export const ProductDetail: React.FC = () => {
       if (videoInfo && videoInfo.type !== 'unknown' && videoInfo.embedUrl) {
         items.push({ kind: 'video', src: videoInfo.embedUrl, thumb: videoInfo.thumbnailUrl });
       }
-      effectiveImages.forEach((img) => items.push({ kind: 'image', src: img }));
+      allAvailableImages.forEach((img) => items.push({ kind: 'image', src: img }));
       return items;
     })();
 
