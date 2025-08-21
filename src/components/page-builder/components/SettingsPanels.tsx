@@ -28,6 +28,8 @@ export const SectionSettings: React.FC<SectionSettingsProps> = ({ section, onUpd
   // Helper functions for height mode management
   const getHeightMode = (styles: any, device: 'desktop' | 'mobile' = 'desktop'): 'auto' | 'viewport' | 'custom' => {
     const deviceStyles = device === 'mobile' ? styles?.responsive?.mobile : styles;
+    console.log('getHeightMode debug:', { device, styles, deviceStyles, minHeight: deviceStyles?.minHeight });
+    
     if (!deviceStyles) return 'auto';
     
     if (deviceStyles.minHeight === '100vh') return 'viewport';
@@ -36,9 +38,8 @@ export const SectionSettings: React.FC<SectionSettingsProps> = ({ section, onUpd
   };
 
   const applyHeightMode = (mode: 'auto' | 'viewport' | 'custom', device: 'desktop' | 'mobile' = 'desktop') => {
-    const updateFn = device === 'mobile' ? handleResponsiveStyleUpdate : handleStyleUpdate;
-    const deviceParam = device === 'mobile' ? 'mobile' : undefined;
-
+    console.log('applyHeightMode called:', { mode, device, currentStyles: section.styles });
+    
     if (mode === 'auto') {
       if (device === 'mobile') {
         // Remove mobile overrides completely
@@ -52,35 +53,66 @@ export const SectionSettings: React.FC<SectionSettingsProps> = ({ section, onUpd
             delete newResponsive.mobile;
           }
         }
-        onUpdate({
-          styles: {
-            ...section.styles,
-            responsive: newResponsive
-          }
-        });
+        const newStyles = {
+          ...section.styles,
+          responsive: newResponsive
+        };
+        console.log('applyHeightMode auto mobile - updating with:', newStyles);
+        onUpdate({ styles: newStyles });
       } else {
         // Remove desktop styles
         const newStyles = { ...section.styles };
         delete newStyles.height;
         delete newStyles.minHeight;
         delete newStyles.maxHeight;
+        console.log('applyHeightMode auto desktop - updating with:', newStyles);
         onUpdate({ styles: newStyles });
       }
     } else if (mode === 'viewport') {
       if (device === 'mobile') {
-        handleResponsiveStyleUpdate('mobile', 'minHeight', '100vh');
-        handleResponsiveStyleUpdate('mobile', 'height', undefined);
+        const newStyles = {
+          ...section.styles,
+          responsive: {
+            ...section.styles?.responsive,
+            mobile: {
+              ...(section.styles?.responsive?.mobile || {}),
+              minHeight: '100vh'
+            }
+          }
+        };
+        console.log('applyHeightMode viewport mobile - updating with:', newStyles);
+        onUpdate({ styles: newStyles });
       } else {
-        handleStyleUpdate('minHeight', '100vh');
-        handleStyleUpdate('height', undefined);
+        const newStyles = {
+          ...section.styles,
+          minHeight: '100vh'
+        };
+        delete newStyles.height;
+        console.log('applyHeightMode viewport desktop - updating with:', newStyles);
+        onUpdate({ styles: newStyles });
       }
     } else if (mode === 'custom') {
       if (device === 'mobile') {
-        handleResponsiveStyleUpdate('mobile', 'minHeight', '50vh');
-        handleResponsiveStyleUpdate('mobile', 'height', undefined);
+        const newStyles = {
+          ...section.styles,
+          responsive: {
+            ...section.styles?.responsive,
+            mobile: {
+              ...(section.styles?.responsive?.mobile || {}),
+              minHeight: '50vh'
+            }
+          }
+        };
+        console.log('applyHeightMode custom mobile - updating with:', newStyles);
+        onUpdate({ styles: newStyles });
       } else {
-        handleStyleUpdate('minHeight', '50vh');
-        handleStyleUpdate('height', undefined);
+        const newStyles = {
+          ...section.styles,
+          minHeight: '50vh'
+        };
+        delete newStyles.height;
+        console.log('applyHeightMode custom desktop - updating with:', newStyles);
+        onUpdate({ styles: newStyles });
       }
     }
   };
