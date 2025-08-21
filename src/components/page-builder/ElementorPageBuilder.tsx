@@ -67,7 +67,6 @@ import { RowDropZone } from './components/RowDropZone';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ensureAnchors, buildAnchor } from './utils/anchor';
 import { HoverProvider, useHover, HoverTarget } from './contexts/HoverContext';
-import { getVerticalAlignmentClass } from './utils/verticalAlignment';
 
 // Helper function to get responsive grid classes for a row
 const getResponsiveGridClasses = (columnLayout: string, deviceType: 'desktop' | 'tablet' | 'mobile'): string => {
@@ -1311,7 +1310,19 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
       <div 
         className={cn(
           "w-full mx-auto p-4 flex flex-col",
-          getVerticalAlignmentClass(section, deviceType)
+          (() => {
+            // Get device-aware vertical alignment
+            const verticalAlignment = section.styles?.responsive?.[deviceType]?.contentVerticalAlignment || 
+                                     section.styles?.contentVerticalAlignment;
+            
+            // Only apply alignment if section has a specific height or minHeight
+            const sectionHeight = section.styles?.responsive?.[deviceType]?.height || section.styles?.height;
+            const sectionMinHeight = section.styles?.responsive?.[deviceType]?.minHeight || section.styles?.minHeight;
+            if ((!sectionHeight || sectionHeight === 'auto') && (!sectionMinHeight || sectionMinHeight === 'auto')) return 'justify-start';
+            
+            return verticalAlignment === 'center' ? 'justify-center' :
+                   verticalAlignment === 'bottom' ? 'justify-end' : 'justify-start';
+          })()
         )}
         style={{ 
           maxWidth: SECTION_WIDTHS[section.width],
