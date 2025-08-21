@@ -250,18 +250,20 @@ export default function ProductView() {
                 {product.short_description && (
                   <div>
                     <h4 className="text-sm font-medium text-muted-foreground mb-2">Short Description</h4>
-                    <article className="prose prose-sm max-w-none text-muted-foreground">
-                      <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(product.short_description) }} />
-                    </article>
+                    <div 
+                      className="text-sm text-muted-foreground rich-text-content whitespace-pre-wrap"
+                      dangerouslySetInnerHTML={{ __html: sanitizeHtml(product.short_description) }}
+                    />
                   </div>
                 )}
                 
                 {product.description && (
                   <div>
                     <h4 className="text-sm font-medium text-muted-foreground mb-2">Full Description</h4>
-                    <article className="prose prose-sm max-w-none text-muted-foreground">
-                      <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(product.description) }} />
-                    </article>
+                    <div 
+                      className="text-sm text-muted-foreground rich-text-content whitespace-pre-wrap"
+                      dangerouslySetInnerHTML={{ __html: sanitizeHtml(product.description) }}
+                    />
                   </div>
                 )}
 
