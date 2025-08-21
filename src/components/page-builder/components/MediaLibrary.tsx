@@ -150,6 +150,7 @@ export const MediaLibrary: React.FC<MediaLibraryProps> = ({
               />
             </div>
             <Button
+              type="button"
               variant="outline"
               onClick={fetchMediaItems}
               disabled={isLoading}
@@ -191,6 +192,7 @@ export const MediaLibrary: React.FC<MediaLibraryProps> = ({
                       <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
                         <div className="space-x-2">
                           <Button
+                            type="button"
                             size="sm"
                             onClick={(e) => {
                               e.stopPropagation();
@@ -200,6 +202,7 @@ export const MediaLibrary: React.FC<MediaLibraryProps> = ({
                             Select
                           </Button>
                           <Button
+                            type="button"
                             size="sm"
                             variant="outline"
                             onClick={(e) => {
@@ -210,6 +213,7 @@ export const MediaLibrary: React.FC<MediaLibraryProps> = ({
                             <ExternalLink className="w-4 h-4" />
                           </Button>
                           <Button
+                            type="button"
                             size="sm"
                             variant="destructive"
                             onClick={(e) => {

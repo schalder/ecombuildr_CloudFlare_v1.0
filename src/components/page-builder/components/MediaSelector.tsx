@@ -64,6 +64,7 @@ export const MediaSelector: React.FC<MediaSelectorProps> = ({
           </div>
           <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
             <Button
+              type="button"
               size="sm"
               variant="secondary"
               onClick={() => {
@@ -100,7 +101,7 @@ export const MediaSelector: React.FC<MediaSelectorProps> = ({
             <p className="text-sm text-muted-foreground mb-4">
               Browse and select from your uploaded images
             </p>
-            <Button onClick={() => setIsMediaLibraryOpen(true)}>
+            <Button type="button" onClick={() => setIsMediaLibraryOpen(true)}>
               Open Library
             </Button>
           </div>
@@ -127,6 +128,7 @@ export const MediaSelector: React.FC<MediaSelectorProps> = ({
             {urlInput && urlInput !== value && (
               <div className="mt-2">
                 <Button
+                  type="button"
                   size="sm"
                   onClick={() => onChange(urlInput)}
                 >

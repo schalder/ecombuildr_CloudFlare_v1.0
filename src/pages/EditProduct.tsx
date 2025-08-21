@@ -734,10 +734,7 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
                         </div>
                         
                         {variations.length > 0 && (
-                          <div>
-                            <h4 className="text-sm font-medium mb-3">Variant Pricing</h4>
-                            <VariantMatrix options={variations} variants={variantEntries} onChange={setVariantEntries} />
-                          </div>
+                          <VariantMatrix options={variations} variants={variantEntries} onChange={setVariantEntries} />
                         )}
                       </div>
                     )}
