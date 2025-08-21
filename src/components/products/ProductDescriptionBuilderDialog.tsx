@@ -2,8 +2,9 @@ import React from 'react';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { ElementorPageBuilder } from '@/components/page-builder/ElementorPageBuilder';
 import { PageBuilderData } from '@/components/page-builder/types';
+import { PageBuilderRenderer } from '@/components/storefront/PageBuilderRenderer';
 import { Button } from '@/components/ui/button';
-import { Save } from 'lucide-react';
+import { Save, Eye } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
 interface ProductDescriptionBuilderDialogProps {
@@ -21,6 +22,7 @@ const ProductDescriptionBuilderDialog: React.FC<ProductDescriptionBuilderDialogP
 }) => {
   const [data, setData] = React.useState<PageBuilderData>(initialData || { sections: [] });
   const [saving, setSaving] = React.useState(false);
+  const [showPreview, setShowPreview] = React.useState(false);
 
   React.useEffect(() => {
     setData(initialData || { sections: [] });
@@ -56,6 +58,10 @@ const ProductDescriptionBuilderDialog: React.FC<ProductDescriptionBuilderDialogP
           <header className="flex items-center justify-between border-b bg-background px-4 pr-14 py-2">
             <h1 className="text-lg font-semibold text-foreground">Product Description Builder</h1>
             <div className="flex items-center gap-2">
+              <Button variant="outline" onClick={() => setShowPreview(!showPreview)}>
+                <Eye className="h-4 w-4 mr-2" />
+                {showPreview ? 'Hide Preview' : 'Show Preview'}
+              </Button>
               <Button variant="outline" onClick={() => onOpenChange(false)}>
                 Close
               </Button>
@@ -65,14 +71,27 @@ const ProductDescriptionBuilderDialog: React.FC<ProductDescriptionBuilderDialogP
             </div>
           </header>
           <div className="flex-1 min-h-0">
-            <ElementorPageBuilder
-              initialData={data}
-              onChange={(d) => setData(d)}
-              onSave={async () => {
-                await handleSave();
-              }}
-              isSaving={saving}
-            />
+            {showPreview ? (
+              <div className="h-full overflow-auto bg-muted/30 p-6">
+                <div className="max-w-7xl mx-auto">
+                  <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
+                    <div className="bg-muted/50 px-4 py-2 text-sm text-muted-foreground border-b">
+                      Product Description Preview
+                    </div>
+                    <PageBuilderRenderer data={data} />
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <ElementorPageBuilder
+                initialData={data}
+                onChange={(d) => setData(d)}
+                onSave={async () => {
+                  await handleSave();
+                }}
+                isSaving={saving}
+              />
+            )}
           </div>
         </div>
       </DialogContent>

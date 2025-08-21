@@ -69,6 +69,7 @@ export default function PageBuilder() {
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(!!pageId);
   const [showSettings, setShowSettings] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
   
   const { generateAndSaveHTML, isGenerating } = useHTMLGeneration();
 
@@ -423,9 +424,13 @@ export default function PageBuilder() {
         </div>
 
         <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={() => setShowPreview(!showPreview)}>
+            <Eye className="h-4 w-4 mr-2" />
+            {showPreview ? 'Hide Preview' : 'Show Preview'}
+          </Button>
           <Button variant="outline" onClick={handlePreview}>
             <Eye className="h-4 w-4 mr-2" />
-            Preview
+            Open in New Tab
           </Button>
           <Button 
             onClick={async () => {
@@ -453,12 +458,25 @@ export default function PageBuilder() {
       <div className="flex-1 min-h-0 flex">
         {/* Page Builder */}
         <div className="flex-1 min-h-0">
-          <ElementorPageBuilder
-            initialData={builderData}
-            onChange={setBuilderData}
-            onSave={handleSave}
-            isSaving={isSaving}
-          />
+          {showPreview ? (
+            <div className="h-full overflow-auto bg-muted/30 p-6">
+              <div className="max-w-7xl mx-auto">
+                <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
+                  <div className="bg-muted/50 px-4 py-2 text-sm text-muted-foreground border-b">
+                    Page Preview
+                  </div>
+                  <PageBuilderRenderer data={builderData} />
+                </div>
+              </div>
+            </div>
+          ) : (
+            <ElementorPageBuilder
+              initialData={builderData}
+              onChange={setBuilderData}
+              onSave={handleSave}
+              isSaving={isSaving}
+            />
+          )}
         </div>
 
         {/* Settings Sidebar */}
