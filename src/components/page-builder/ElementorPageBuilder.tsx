@@ -624,7 +624,7 @@ const ElementorPageBuilderContent: React.FC<ElementorPageBuilderProps> = memo(({
           ? { 
               ...section, 
               ...updates,
-              styles: updates.styles ? { ...section.styles, ...updates.styles } : section.styles
+              styles: updates.styles ? updates.styles : section.styles
             } 
           : section
       )
@@ -644,7 +644,7 @@ const ElementorPageBuilderContent: React.FC<ElementorPageBuilderProps> = memo(({
                   ? { 
                       ...row, 
                       ...updates,
-                      styles: updates.styles ? { ...row.styles, ...updates.styles } : row.styles
+                      styles: updates.styles ? updates.styles : row.styles
                     } 
                   : row
               )
@@ -671,7 +671,7 @@ const ElementorPageBuilderContent: React.FC<ElementorPageBuilderProps> = memo(({
                           ? { 
                               ...col, 
                               ...updates,
-                              styles: updates.styles ? { ...col.styles, ...updates.styles } : col.styles
+                              styles: updates.styles ? updates.styles : col.styles
                             } 
                           : col
                       )
