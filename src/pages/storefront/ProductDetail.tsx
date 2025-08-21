@@ -18,6 +18,7 @@ import ReviewsSection from '@/components/storefront/ReviewsSection';
 import RelatedProducts from '@/components/storefront/RelatedProducts';
 import { useEcomPaths } from '@/lib/pathResolver';
 import { PageBuilderRenderer } from '@/components/storefront/PageBuilderRenderer';
+import { htmlToPlainText } from '@/lib/htmlToPlainText';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { parseVideoUrl, buildEmbedUrl } from '@/components/page-builder/utils/videoUtils';
 
@@ -520,27 +521,7 @@ export const ProductDetail: React.FC = () => {
                 </section>
               ) : product.description ? (
                 <article className="prose prose-sm max-w-none text-muted-foreground">
-                  <div className="whitespace-pre-wrap">{
-                    product.description
-                      // Remove all HTML tags
-                      .replace(/<[^>]*>/g, '')
-                      // Remove CSS style attributes and variables
-                      .replace(/style="[^"]*"/g, '')
-                      .replace(/--tw-[^;]*;?/g, '')
-                      .replace(/--[a-zA-Z-]*:[^;]*;?/g, '')
-                      // Remove CSS properties
-                      .replace(/[a-zA-Z-]+:\s*[^;]*;/g, '')
-                      // Remove HTML entities
-                      .replace(/&nbsp;/g, ' ')
-                      .replace(/&amp;/g, '&')
-                      .replace(/&lt;/g, '<')
-                      .replace(/&gt;/g, '>')
-                      .replace(/&quot;/g, '"')
-                      .replace(/&#39;/g, "'")
-                      // Remove extra whitespace and clean up
-                      .replace(/\s+/g, ' ')
-                      .trim()
-                  }</div>
+                  <div className="whitespace-pre-wrap">{htmlToPlainText(product.description)}</div>
                 </article>
               ) : (
                 <p className="text-muted-foreground">No description available.</p>

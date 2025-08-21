@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Edit, ArrowLeft, BarChart3, Package, Tag } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { htmlToPlainText } from '@/lib/htmlToPlainText';
 
 interface Product {
   id: string;
@@ -205,14 +206,14 @@ export default function ProductView() {
                 {product.short_description && (
                   <div>
                     <h4 className="text-sm font-medium text-muted-foreground mb-2">Short Description</h4>
-                    <p className="text-sm">{product.short_description}</p>
+                    <p className="text-sm">{htmlToPlainText(product.short_description)}</p>
                   </div>
                 )}
                 
                 {product.description && (
                   <div>
                     <h4 className="text-sm font-medium text-muted-foreground mb-2">Full Description</h4>
-                    <p className="text-sm whitespace-pre-wrap">{product.description}</p>
+                    <p className="text-sm whitespace-pre-wrap">{htmlToPlainText(product.description)}</p>
                   </div>
                 )}
 
