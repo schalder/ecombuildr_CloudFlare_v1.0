@@ -6,6 +6,7 @@ import { PageBuilderSection, PageBuilderElement } from '../types';
 import { RowRenderer } from './RowRenderer';
 import { cn } from '@/lib/utils';
 import { renderSectionStyles, hasUserBackground, hasUserShadow } from '../utils/styleRenderer';
+import { shouldApplyVerticalAlignment } from '../utils/verticalAlignment';
 
 interface SectionRendererProps {
   section: PageBuilderSection;
@@ -125,15 +126,11 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({
   const getSectionStyles = (): React.CSSProperties => {
     const baseStyles = renderSectionStyles(section, deviceType);
     
-    // Add flex styles for vertical alignment - device aware
-    const verticalAlignment = section.styles?.responsive?.[deviceType]?.contentVerticalAlignment || 
-                             section.styles?.contentVerticalAlignment;
-    
-    // Apply vertical alignment if section has height or minHeight
-    const hasHeight = baseStyles.height && baseStyles.height !== 'auto';
-    const hasMinHeight = baseStyles.minHeight && baseStyles.minHeight !== 'auto';
-    
-    if (verticalAlignment && (hasHeight || hasMinHeight)) {
+    // Apply vertical alignment for content vertical positioning
+    if (shouldApplyVerticalAlignment(section, deviceType)) {
+      const verticalAlignment = section.styles?.responsive?.[deviceType]?.contentVerticalAlignment || 
+                               section.styles?.contentVerticalAlignment;
+      
       return {
         ...baseStyles,
         display: 'flex',
