@@ -179,6 +179,29 @@ export const ProductDetail: React.FC = () => {
     return defaultImages;
   }, [selectedVariant, product?.images]);
 
+  // Create mapping between images and their corresponding variants
+  const imageToVariantMap = React.useMemo(() => {
+    const map = new Map<string, any>();
+    variantList.forEach(variant => {
+      if (variant.image) {
+        map.set(variant.image, variant);
+      }
+    });
+    return map;
+  }, [variantList]);
+
+  // Handle thumbnail click - auto-select variant if clicking variant image
+  const handleThumbnailClick = (index: number, imageSrc: string) => {
+    setSelectedImage(index);
+    
+    // Check if this image belongs to a specific variant
+    const correspondingVariant = imageToVariantMap.get(imageSrc);
+    if (correspondingVariant) {
+      // Auto-select this variant's options
+      setSelectedOptions(correspondingVariant.options || {});
+    }
+  };
+
   const handleAddToCart = () => {
     if (!product) return;
     addToCart(product as any, quantity, false, selectedOptions);
@@ -278,7 +301,7 @@ export const ProductDetail: React.FC = () => {
                 {mediaItems.map((item, index) => (
                   <button
                     key={index}
-                    onClick={() => setSelectedImage(index)}
+                    onClick={() => handleThumbnailClick(index, item.src || '')}
                     className={`flex-shrink-0 aspect-square w-16 lg:w-full rounded border-2 overflow-hidden transition-all duration-200 ${
                       selectedImage === index ? 'border-primary ring-2 ring-primary/20' : 'border-border hover:border-primary/50'
                     }`}
