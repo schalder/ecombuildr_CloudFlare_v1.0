@@ -66,6 +66,11 @@ export const renderSectionStyles = (section: PageBuilderSection, deviceType: 'de
     if (section.styles.width) styles.width = section.styles.width;
     if (section.styles.maxWidth) styles.maxWidth = section.styles.maxWidth;
     if (section.styles.minWidth) styles.minWidth = section.styles.minWidth;
+    
+    // Height
+    if (section.styles.height) styles.height = section.styles.height;
+    if (section.styles.minHeight) styles.minHeight = section.styles.minHeight;
+    if (section.styles.maxHeight) styles.maxHeight = section.styles.maxHeight;
   }
   
   // Custom width

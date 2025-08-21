@@ -184,6 +184,9 @@ export interface PageBuilderSection {
     width?: string; // Custom width override
     maxWidth?: string;
     minWidth?: string;
+    height?: string;
+    minHeight?: string;
+    maxHeight?: string;
     responsive?: {
       desktop?: Record<string, any>;
       mobile?: Record<string, any>;

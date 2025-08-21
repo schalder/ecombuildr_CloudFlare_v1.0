@@ -204,6 +204,67 @@ export const SectionSettings: React.FC<SectionSettingsProps> = ({ section, onUpd
 
       <Card>
         <CardHeader>
+          <CardTitle className="text-sm">Height</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="height-preset">Height Mode</Label>
+            <Select
+              value={
+                section.styles?.minHeight === '100vh' ? 'viewport' :
+                section.styles?.minHeight ? 'custom' : 'auto'
+              }
+              onValueChange={(value) => {
+                if (value === 'auto') {
+                  handleStyleUpdate('height', '');
+                  handleStyleUpdate('minHeight', '');
+                  handleStyleUpdate('maxHeight', '');
+                } else if (value === 'viewport') {
+                  handleStyleUpdate('minHeight', '100vh');
+                  handleStyleUpdate('height', '');
+                } else if (value === 'custom') {
+                  handleStyleUpdate('minHeight', '50vh');
+                  handleStyleUpdate('height', '');
+                }
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="auto">Auto (Content Height)</SelectItem>
+                <SelectItem value="viewport">Full Viewport (100vh)</SelectItem>
+                <SelectItem value="custom">Custom (vh)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {section.styles?.minHeight && section.styles.minHeight !== '100vh' && (
+            <div className="space-y-2">
+              <Label htmlFor="custom-height">Custom Min Height</Label>
+              <Input
+                id="custom-height"
+                value={section.styles.minHeight}
+                onChange={(e) => handleStyleUpdate('minHeight', e.target.value)}
+                placeholder="e.g., 50vh, 400px"
+              />
+            </div>
+          )}
+
+          <div className="space-y-2">
+            <Label htmlFor="max-height">Max Height</Label>
+            <Input
+              id="max-height"
+              value={section.styles?.maxHeight || ''}
+              onChange={(e) => handleStyleUpdate('maxHeight', e.target.value)}
+              placeholder="e.g., 800px, 90vh"
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
           <CardTitle className="text-sm">Background</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
