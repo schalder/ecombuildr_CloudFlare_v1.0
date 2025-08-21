@@ -106,6 +106,15 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
   const effectivePrice = selectedVariant?.price ?? product.price;
   const effectiveComparePrice = selectedVariant?.compare_price ?? product.compare_price;
 
+  // Calculate effective images based on selected variant
+  const effectiveImages = useMemo(() => {
+    const defaultImages = Array.isArray(product.images) ? product.images : Object.values(product.images || {});
+    if (selectedVariant && selectedVariant.image) {
+      return [selectedVariant.image, ...defaultImages.filter(img => img !== selectedVariant.image)];
+    }
+    return defaultImages;
+  }, [selectedVariant, product.images]);
+
   const discountPercentage = effectiveComparePrice && effectiveComparePrice > effectivePrice
     ? Math.round(((effectiveComparePrice - effectivePrice) / effectiveComparePrice) * 100)
     : 0;
@@ -132,7 +141,7 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
           <div className="relative">
             <div className="aspect-square bg-muted relative overflow-hidden">
               <img
-                src={(Array.isArray(product.images) ? product.images[selectedImage] || product.images[0] : product.images?.[selectedImage] || product.images?.[0]) || '/placeholder.svg'}
+                src={effectiveImages[selectedImage] || effectiveImages[0] || '/placeholder.svg'}
                 alt={product.name}
                 className="w-full h-full object-cover"
               />
@@ -159,9 +168,9 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
             </div>
 
             {/* Thumbnail Images */}
-            {(Array.isArray(product.images) ? product.images : Object.values(product.images || {})).length > 1 && (
+            {effectiveImages.length > 1 && (
               <div className="flex gap-2 p-4 overflow-x-auto">
-                {(Array.isArray(product.images) ? product.images : Object.values(product.images || {})).map((image, index) => (
+                {effectiveImages.map((image, index) => (
                   <button
                     key={index}
                     onClick={() => setSelectedImage(index)}

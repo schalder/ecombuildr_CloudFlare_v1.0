@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { MediaSelector } from "@/components/page-builder/components/MediaSelector";
 
 export type VariationOption = {
   name: string;
@@ -14,6 +15,7 @@ export type VariantEntry = {
   options: Record<string, string>;
   price?: number | null; // override price
   compare_price?: number | null; // override compare price
+  image?: string | null; // variant-specific image
 };
 
 function combinations(options: VariationOption[]): Record<string, string>[] {
@@ -71,6 +73,11 @@ const VariantMatrix: React.FC<VariantMatrixProps> = ({ options, variants, onChan
     onChange(next);
   };
 
+  const updateImage = (id: string, image: string) => {
+    const next = variants.map((v) => (v.id === id ? { ...v, image: image === "" ? null : image } : v));
+    onChange(next);
+  };
+
   if (combos.length === 0) {
     return null;
   }
@@ -83,9 +90,9 @@ const VariantMatrix: React.FC<VariantMatrixProps> = ({ options, variants, onChan
       <CardContent className="space-y-4">
         <p className="text-sm text-muted-foreground">Set optional price overrides for each variant. Leave blank to use the base product price.</p>
         <Separator />
-        <div className="space-y-3">
+        <div className="space-y-4">
           {variants.map((v) => (
-            <div key={v.id} className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+            <div key={v.id} className="grid grid-cols-1 lg:grid-cols-2 gap-4 p-4 border border-border rounded-lg">
               <div className="text-sm">
                 <Label>Variant</Label>
                 <div className="mt-1 text-foreground">
@@ -96,25 +103,35 @@ const VariantMatrix: React.FC<VariantMatrixProps> = ({ options, variants, onChan
                   ))}
                 </div>
               </div>
-              <div className="space-y-1">
-                <Label>Price override</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={v.price ?? ""}
-                  onChange={(e) => updatePrice(v.id, e.target.value)}
-                  placeholder="Leave blank to use base price"
-                />
-              </div>
-              <div className="space-y-1">
-                <Label>Compare at price override</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={v.compare_price ?? ""}
-                  onChange={(e) => updateComparePrice(v.id, e.target.value)}
-                  placeholder="Leave blank to use base compare price"
-                />
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-1">
+                  <Label>Price override</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={v.price ?? ""}
+                    onChange={(e) => updatePrice(v.id, e.target.value)}
+                    placeholder="Leave blank to use base price"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label>Compare at price override</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={v.compare_price ?? ""}
+                    onChange={(e) => updateComparePrice(v.id, e.target.value)}
+                    placeholder="Leave blank to use base compare price"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label>Variant image (optional)</Label>
+                  <MediaSelector
+                    value={v.image ?? ""}
+                    onChange={(image) => updateImage(v.id, image)}
+                    label=""
+                  />
+                </div>
               </div>
             </div>
           ))}

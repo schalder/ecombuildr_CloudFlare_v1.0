@@ -170,6 +170,15 @@ export const ProductDetail: React.FC = () => {
   const effectivePrice = (selectedVariant?.price ?? product?.price) || 0;
   const effectiveComparePrice = selectedVariant?.compare_price ?? product?.compare_price;
 
+  // Calculate effective images based on selected variant
+  const effectiveImages = React.useMemo(() => {
+    const defaultImages = product?.images || [];
+    if (selectedVariant && selectedVariant.image) {
+      return [selectedVariant.image, ...defaultImages.filter(img => img !== selectedVariant.image)];
+    }
+    return defaultImages;
+  }, [selectedVariant, product?.images]);
+
   const handleAddToCart = () => {
     if (!product) return;
     addToCart(product as any, quantity, false, selectedOptions);
@@ -254,7 +263,7 @@ export const ProductDetail: React.FC = () => {
       if (videoInfo && videoInfo.type !== 'unknown' && videoInfo.embedUrl) {
         items.push({ kind: 'video', src: videoInfo.embedUrl, thumb: videoInfo.thumbnailUrl });
       }
-      (product?.images || []).forEach((img) => items.push({ kind: 'image', src: img }));
+      effectiveImages.forEach((img) => items.push({ kind: 'image', src: img }));
       return items;
     })();
 
