@@ -216,15 +216,30 @@ export const SectionSettings: React.FC<SectionSettingsProps> = ({ section, onUpd
               }
               onValueChange={(value) => {
                 if (value === 'auto') {
-                  handleStyleUpdate('height', '');
-                  handleStyleUpdate('minHeight', '');
-                  handleStyleUpdate('maxHeight', '');
+                  onUpdate({
+                    styles: {
+                      ...section.styles,
+                      height: '',
+                      minHeight: '',
+                      maxHeight: ''
+                    }
+                  });
                 } else if (value === 'viewport') {
-                  handleStyleUpdate('minHeight', '100vh');
-                  handleStyleUpdate('height', '');
+                  onUpdate({
+                    styles: {
+                      ...section.styles,
+                      minHeight: '100vh',
+                      height: ''
+                    }
+                  });
                 } else if (value === 'custom') {
-                  handleStyleUpdate('minHeight', '50vh');
-                  handleStyleUpdate('height', '');
+                  onUpdate({
+                    styles: {
+                      ...section.styles,
+                      minHeight: '50vh',
+                      height: ''
+                    }
+                  });
                 }
               }}
             >
