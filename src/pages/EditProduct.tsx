@@ -150,6 +150,11 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
         const filtered = categories.filter(cat => visibleCategoryIds.includes(cat.id));
         
         setFilteredCategories(filtered);
+
+        // Clear category if current selection is not valid for this website
+        if (formData.category_id && formData.category_id !== 'none' && !visibleCategoryIds.includes(formData.category_id)) {
+          handleInputChange('category_id', '');
+        }
       } catch (error) {
         console.error('Error filtering categories:', error);
         setFilteredCategories([]);
@@ -157,7 +162,7 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
     };
 
     filterCategories();
-  }, [selectedWebsiteId, categories]);
+  }, [selectedWebsiteId, categories, formData.category_id]);
 
   const fetchProduct = async () => {
     try {
@@ -337,10 +342,9 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
 
       if (error) throw error;
 
-      // Update website visibility if changed
-      if (selectedWebsiteId && selectedWebsiteId !== visibleWebsites[0]) {
-        await updateVisibility([selectedWebsiteId]);
-      }
+      // Always update website visibility to ensure product is visible on selected website
+      // This handles moving products between websites within the same store
+      await updateVisibility([selectedWebsiteId]);
 
       toast({
         title: "Success",
