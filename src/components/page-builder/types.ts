@@ -89,7 +89,11 @@ export interface PageBuilderColumn {
     borderWidth?: string;
     borderColor?: string;
     borderRadius?: string;
+    borderStyle?: string;
     // Content alignment properties
+    alignItems?: string;
+    justifyContent?: string;
+    flexDirection?: string;
     contentAlignment?: 'flex-start' | 'center' | 'flex-end' | 'stretch';
     contentJustification?: 'flex-start' | 'center' | 'flex-end' | 'space-between' | 'space-around' | 'space-evenly';
     contentDirection?: 'column' | 'row';
@@ -147,6 +151,7 @@ export interface PageBuilderRow {
     borderWidth?: string;
     borderColor?: string;
     borderRadius?: string;
+    borderStyle?: string;
     responsive?: {
       desktop?: Record<string, any>;
       mobile?: Record<string, any>;
@@ -203,6 +208,8 @@ export interface PageBuilderSection {
     borderWidth?: string;
     borderColor?: string;
     borderRadius?: string;
+    borderStyle?: string;
+    alignItems?: string;
     responsive?: {
       desktop?: Record<string, any>;
       mobile?: Record<string, any>;

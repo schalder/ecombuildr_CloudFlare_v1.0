@@ -170,6 +170,12 @@ export const SectionSettings: React.FC<SectionSettingsProps> = ({ section, onUpd
     }
   };
 
+  const getContentVerticalPosition = (styles: any): 'flex-start' | 'center' | 'flex-end' => {
+    if (styles?.alignItems === 'center') return 'center';
+    if (styles?.alignItems === 'flex-end') return 'flex-end';
+    return 'flex-start';
+  };
+
   return (
     <div className="p-4 space-y-2">
       <Card>
@@ -227,6 +233,91 @@ export const SectionSettings: React.FC<SectionSettingsProps> = ({ section, onUpd
                 placeholder="e.g., 1000px, 80%, 100vw"
               />
             )}
+
+            {/* Height Controls */}
+            <div className="space-y-3">
+              <Label className="text-sm font-medium">Height</Label>
+              <Tabs defaultValue="desktop" className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="desktop">Desktop</TabsTrigger>
+                  <TabsTrigger value="mobile">Mobile</TabsTrigger>
+                </TabsList>
+                <TabsContent value="desktop" className="space-y-3">
+                  <div className="space-y-2">
+                    <Label className="text-xs">Height Mode</Label>
+                    <Select
+                      value={getHeightMode(section.styles, 'desktop')}
+                      onValueChange={(value) => applyHeightMode(value as any, 'desktop')}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="auto">Auto</SelectItem>
+                        <SelectItem value="viewport">Full Viewport (100vh)</SelectItem>
+                        <SelectItem value="custom">Custom</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {getHeightMode(section.styles, 'desktop') === 'custom' && (
+                    <div className="space-y-2">
+                      <Label className="text-xs">Min Height</Label>
+                      <Input
+                        value={section.styles?.minHeight || ''}
+                        onChange={(e) => handleStyleUpdate('minHeight', e.target.value)}
+                        placeholder="e.g., 400px, 50vh"
+                      />
+                    </div>
+                  )}
+                </TabsContent>
+                <TabsContent value="mobile" className="space-y-3">
+                  <div className="space-y-2">
+                    <Label className="text-xs">Height Mode</Label>
+                    <Select
+                      value={getHeightMode(section.styles, 'mobile')}
+                      onValueChange={(value) => applyHeightMode(value as any, 'mobile')}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="auto">Auto</SelectItem>
+                        <SelectItem value="viewport">Full Viewport (100vh)</SelectItem>
+                        <SelectItem value="custom">Custom</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {getHeightMode(section.styles, 'mobile') === 'custom' && (
+                    <div className="space-y-2">
+                      <Label className="text-xs">Min Height</Label>
+                      <Input
+                        value={section.styles?.responsive?.mobile?.minHeight || ''}
+                        onChange={(e) => handleResponsiveStyleUpdate('mobile', 'minHeight', e.target.value)}
+                        placeholder="e.g., 300px, 40vh"
+                      />
+                    </div>
+                  )}
+                </TabsContent>
+              </Tabs>
+            </div>
+
+            {/* Content Vertical Position */}
+            <div className="space-y-2">
+              <Label className="text-xs">Content Vertical Position</Label>
+              <Select
+                value={getContentVerticalPosition(section.styles)}
+                onValueChange={(value) => handleStyleUpdate('alignItems', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="flex-start">Top</SelectItem>
+                  <SelectItem value="center">Center</SelectItem>
+                  <SelectItem value="flex-end">Bottom</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </CollapsibleGroup>
 
@@ -257,6 +348,65 @@ export const SectionSettings: React.FC<SectionSettingsProps> = ({ section, onUpd
                 maxSize={4}
               />
             </div>
+
+            {/* Background Image Mode */}
+            {section.styles?.backgroundImage && (
+              <div className="space-y-3">
+                <Label className="text-sm font-medium">Background Image Mode</Label>
+                <Tabs defaultValue="desktop" className="w-full">
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="desktop">Desktop</TabsTrigger>
+                    <TabsTrigger value="mobile">Mobile</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="desktop" className="space-y-2">
+                    <Select
+                      value={section.styles?.backgroundImageMode || 'cover'}
+                      onValueChange={(value) => handleStyleUpdate('backgroundImageMode', value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="cover">Full Center</SelectItem>
+                        <SelectItem value="parallax">Parallax</SelectItem>
+                        <SelectItem value="contain">Fill Width</SelectItem>
+                        <SelectItem value="no-repeat">No Repeat</SelectItem>
+                        <SelectItem value="repeat">Repeat</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </TabsContent>
+                  <TabsContent value="mobile" className="space-y-2">
+                    <Select
+                      value={section.styles?.responsive?.mobile?.backgroundImageMode || section.styles?.backgroundImageMode || 'cover'}
+                      onValueChange={(value) => handleResponsiveStyleUpdate('mobile', 'backgroundImageMode', value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="cover">Full Center</SelectItem>
+                        <SelectItem value="parallax">Parallax</SelectItem>
+                        <SelectItem value="contain">Fill Width</SelectItem>
+                        <SelectItem value="no-repeat">No Repeat</SelectItem>
+                        <SelectItem value="repeat">Repeat</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </TabsContent>
+                </Tabs>
+              </div>
+            )}
+
+            {/* Color/Gradient Opacity */}
+            <div className="space-y-2">
+              <Label className="text-xs">Color/Gradient Opacity: {Math.round(((section.styles?.backgroundOpacity ?? 1) * 100))}%</Label>
+              <Slider
+                min={0}
+                max={100}
+                step={1}
+                value={[Math.round(((section.styles?.backgroundOpacity ?? 1) * 100))]}
+                onValueChange={(v) => handleStyleUpdate('backgroundOpacity', v[0] / 100)}
+              />
+            </div>
           </div>
         </CollapsibleGroup>
 
@@ -269,6 +419,7 @@ export const SectionSettings: React.FC<SectionSettingsProps> = ({ section, onUpd
             borderWidth={section.styles?.borderWidth}
             borderColor={section.styles?.borderColor}
             borderRadius={section.styles?.borderRadius}
+            borderStyle={section.styles?.borderStyle}
             onBorderChange={(property, value) => handleStyleUpdate(property, value)}
           />
         </CollapsibleGroup>
@@ -302,6 +453,79 @@ export const SectionSettings: React.FC<SectionSettingsProps> = ({ section, onUpd
             onChange={(shadow) => handleStyleUpdate('boxShadow', shadow)}
             label="Box Shadow"
           />
+        </CollapsibleGroup>
+
+        <CollapsibleGroup
+          title="Responsive Overrides"
+          isOpen={openGroups.responsive}
+          onToggle={() => toggleGroup('responsive')}
+        >
+          <Tabs defaultValue="desktop" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="desktop">Desktop</TabsTrigger>
+              <TabsTrigger value="mobile">Mobile</TabsTrigger>
+            </TabsList>
+            <TabsContent value="desktop" className="space-y-4">
+              <div className="space-y-2">
+                <Label>Width (%): <span className="text-muted-foreground">{Math.min(100, Math.max(30, parseInt(String(section.styles?.responsive?.desktop?.width || '').replace(/[^0-9]/g, '')) || 100))}%</span></Label>
+                <Slider
+                  min={30}
+                  max={100}
+                  step={1}
+                  value={[Math.min(100, Math.max(30, parseInt(String(section.styles?.responsive?.desktop?.width || '').replace(/[^0-9]/g, '')) || 100))]}
+                  onValueChange={(v) => handleResponsiveStyleUpdate('desktop', 'width', `${v[0]}%`)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Padding (px)</Label>
+                <Slider
+                  min={0}
+                  max={140}
+                  step={1}
+                  value={[Math.min(140, Math.max(0, parseInt(String(section.styles?.responsive?.desktop?.padding || '').replace(/[^0-9]/g, '')) || 0))]}
+                  onValueChange={(v) => handleResponsiveStyleUpdate('desktop', 'padding', v[0] > 0 ? `${v[0]}px` : '')}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Custom Padding</Label>
+                <Input
+                  value={section.styles?.responsive?.desktop?.padding || ''}
+                  onChange={(e) => handleResponsiveStyleUpdate('desktop', 'padding', e.target.value)}
+                  placeholder="e.g., 20px 40px"
+                />
+              </div>
+            </TabsContent>
+            <TabsContent value="mobile" className="space-y-4">
+              <div className="space-y-2">
+                <Label>Width (%): <span className="text-muted-foreground">{Math.min(100, Math.max(30, parseInt(String(section.styles?.responsive?.mobile?.width || '').replace(/[^0-9]/g, '')) || 100))}%</span></Label>
+                <Slider
+                  min={30}
+                  max={100}
+                  step={1}
+                  value={[Math.min(100, Math.max(30, parseInt(String(section.styles?.responsive?.mobile?.width || '').replace(/[^0-9]/g, '')) || 100))]}
+                  onValueChange={(v) => handleResponsiveStyleUpdate('mobile', 'width', `${v[0]}%`)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Padding (px)</Label>
+                <Slider
+                  min={0}
+                  max={140}
+                  step={1}
+                  value={[Math.min(140, Math.max(0, parseInt(String(section.styles?.responsive?.mobile?.padding || '').replace(/[^0-9]/g, '')) || 0))]}
+                  onValueChange={(v) => handleResponsiveStyleUpdate('mobile', 'padding', v[0] > 0 ? `${v[0]}px` : '')}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Custom Padding</Label>
+                <Input
+                  value={section.styles?.responsive?.mobile?.padding || ''}
+                  onChange={(e) => handleResponsiveStyleUpdate('mobile', 'padding', e.target.value)}
+                  placeholder="e.g., 15px 20px"
+                />
+              </div>
+            </TabsContent>
+          </Tabs>
         </CollapsibleGroup>
       </div>
     </div>
@@ -463,73 +687,6 @@ export const RowSettings: React.FC<RowSettingsProps> = ({ row, onUpdate }) => {
         </CollapsibleGroup>
 
         <CollapsibleGroup
-          title="Responsive Overrides"
-          isOpen={openGroups.responsive}
-          onToggle={() => toggleGroup('responsive')}
-        >
-          <Tabs defaultValue="desktop" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="desktop">Desktop</TabsTrigger>
-              <TabsTrigger value="mobile">Mobile</TabsTrigger>
-            </TabsList>
-            <TabsContent value="desktop" className="space-y-4">
-              <div className="space-y-2">
-                <Label>Width (%): <span className="text-muted-foreground">{Math.min(100, Math.max(30, parseInt(String(row.styles?.responsive?.desktop?.width || '').replace(/[^0-9]/g, '')) || 100))}%</span></Label>
-                <Slider
-                  min={30}
-                  max={100}
-                  step={1}
-                  value={[Math.min(100, Math.max(30, parseInt(String(row.styles?.responsive?.desktop?.width || '').replace(/[^0-9]/g, '')) || 100))]}
-                  onValueChange={(v) => handleResponsiveStyleUpdate('desktop', 'width', `${v[0]}%`)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Padding (px)</Label>
-                <Slider
-                  min={0}
-                  max={140}
-                  step={1}
-                  value={[Math.min(140, Math.max(0, parseInt(String(row.styles?.responsive?.desktop?.padding || '').replace(/[^0-9]/g, '')) || 0))]}
-                  onValueChange={(v) => handleResponsiveStyleUpdate('desktop', 'padding', `${v[0]}px`)}
-                />
-                <Input
-                  value={row.styles?.responsive?.desktop?.padding || ''}
-                  onChange={(e) => handleResponsiveStyleUpdate('desktop', 'padding', e.target.value)}
-                  placeholder="Custom e.g., 12px 16px"
-                />
-              </div>
-            </TabsContent>
-            <TabsContent value="mobile" className="space-y-4">
-              <div className="space-y-2">
-                <Label>Width (%): <span className="text-muted-foreground">{Math.min(100, Math.max(30, parseInt(String(row.styles?.responsive?.mobile?.width || '').replace(/[^0-9]/g, '')) || 100))}%</span></Label>
-                <Slider
-                  min={30}
-                  max={100}
-                  step={1}
-                  value={[Math.min(100, Math.max(30, parseInt(String(row.styles?.responsive?.mobile?.width || '').replace(/[^0-9]/g, '')) || 100))]}
-                  onValueChange={(v) => handleResponsiveStyleUpdate('mobile', 'width', `${v[0]}%`)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Padding (px)</Label>
-                <Slider
-                  min={0}
-                  max={140}
-                  step={1}
-                  value={[Math.min(140, Math.max(0, parseInt(String(row.styles?.responsive?.mobile?.padding || '').replace(/[^0-9]/g, '')) || 0))]}
-                  onValueChange={(v) => handleResponsiveStyleUpdate('mobile', 'padding', `${v[0]}px`)}
-                />
-                <Input
-                  value={row.styles?.responsive?.mobile?.padding || ''}
-                  onChange={(e) => handleResponsiveStyleUpdate('mobile', 'padding', e.target.value)}
-                  placeholder="Custom e.g., 12px 16px"
-                />
-              </div>
-            </TabsContent>
-          </Tabs>
-        </CollapsibleGroup>
-
-        <CollapsibleGroup
           title="Background"
           isOpen={openGroups.background}
           onToggle={() => toggleGroup('background')}
@@ -556,6 +713,65 @@ export const RowSettings: React.FC<RowSettingsProps> = ({ row, onUpdate }) => {
                 maxSize={4}
               />
             </div>
+
+            {/* Background Image Mode */}
+            {row.styles?.backgroundImage && (
+              <div className="space-y-3">
+                <Label className="text-sm font-medium">Background Image Mode</Label>
+                <Tabs defaultValue="desktop" className="w-full">
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="desktop">Desktop</TabsTrigger>
+                    <TabsTrigger value="mobile">Mobile</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="desktop" className="space-y-2">
+                    <Select
+                      value={row.styles?.backgroundImageMode || 'cover'}
+                      onValueChange={(value) => handleStyleUpdate('backgroundImageMode', value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="cover">Full Center</SelectItem>
+                        <SelectItem value="parallax">Parallax</SelectItem>
+                        <SelectItem value="contain">Fill Width</SelectItem>
+                        <SelectItem value="no-repeat">No Repeat</SelectItem>
+                        <SelectItem value="repeat">Repeat</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </TabsContent>
+                  <TabsContent value="mobile" className="space-y-2">
+                    <Select
+                      value={row.styles?.responsive?.mobile?.backgroundImageMode || row.styles?.backgroundImageMode || 'cover'}
+                      onValueChange={(value) => handleResponsiveStyleUpdate('mobile', 'backgroundImageMode', value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="cover">Full Center</SelectItem>
+                        <SelectItem value="parallax">Parallax</SelectItem>
+                        <SelectItem value="contain">Fill Width</SelectItem>
+                        <SelectItem value="no-repeat">No Repeat</SelectItem>
+                        <SelectItem value="repeat">Repeat</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </TabsContent>
+                </Tabs>
+              </div>
+            )}
+
+            {/* Color/Gradient Opacity */}
+            <div className="space-y-2">
+              <Label className="text-xs">Color/Gradient Opacity: {Math.round(((row.styles?.backgroundOpacity ?? 1) * 100))}%</Label>
+              <Slider
+                min={0}
+                max={100}
+                step={1}
+                value={[Math.round(((row.styles?.backgroundOpacity ?? 1) * 100))]}
+                onValueChange={(v) => handleStyleUpdate('backgroundOpacity', v[0] / 100)}
+              />
+            </div>
           </div>
         </CollapsibleGroup>
 
@@ -568,6 +784,7 @@ export const RowSettings: React.FC<RowSettingsProps> = ({ row, onUpdate }) => {
             borderWidth={row.styles?.borderWidth}
             borderColor={row.styles?.borderColor}
             borderRadius={row.styles?.borderRadius}
+            borderStyle={row.styles?.borderStyle}
             onBorderChange={(property, value) => handleStyleUpdate(property, value)}
           />
         </CollapsibleGroup>
@@ -602,19 +819,94 @@ export const RowSettings: React.FC<RowSettingsProps> = ({ row, onUpdate }) => {
             label="Box Shadow"
           />
         </CollapsibleGroup>
+
+        <CollapsibleGroup
+          title="Responsive Overrides"
+          isOpen={openGroups.responsive}
+          onToggle={() => toggleGroup('responsive')}
+        >
+          <Tabs defaultValue="desktop" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="desktop">Desktop</TabsTrigger>
+              <TabsTrigger value="mobile">Mobile</TabsTrigger>
+            </TabsList>
+            <TabsContent value="desktop" className="space-y-4">
+              <div className="space-y-2">
+                <Label>Width (%): <span className="text-muted-foreground">{Math.min(100, Math.max(30, parseInt(String(row.styles?.responsive?.desktop?.width || '').replace(/[^0-9]/g, '')) || 100))}%</span></Label>
+                <Slider
+                  min={30}
+                  max={100}
+                  step={1}
+                  value={[Math.min(100, Math.max(30, parseInt(String(row.styles?.responsive?.desktop?.width || '').replace(/[^0-9]/g, '')) || 100))]}
+                  onValueChange={(v) => handleResponsiveStyleUpdate('desktop', 'width', `${v[0]}%`)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Padding (px)</Label>
+                <Slider
+                  min={0}
+                  max={140}
+                  step={1}
+                  value={[Math.min(140, Math.max(0, parseInt(String(row.styles?.responsive?.desktop?.padding || '').replace(/[^0-9]/g, '')) || 0))]}
+                  onValueChange={(v) => handleResponsiveStyleUpdate('desktop', 'padding', v[0] > 0 ? `${v[0]}px` : '')}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Custom Padding</Label>
+                <Input
+                  value={row.styles?.responsive?.desktop?.padding || ''}
+                  onChange={(e) => handleResponsiveStyleUpdate('desktop', 'padding', e.target.value)}
+                  placeholder="e.g., 20px 40px"
+                />
+              </div>
+            </TabsContent>
+            <TabsContent value="mobile" className="space-y-4">
+              <div className="space-y-2">
+                <Label>Width (%): <span className="text-muted-foreground">{Math.min(100, Math.max(30, parseInt(String(row.styles?.responsive?.mobile?.width || '').replace(/[^0-9]/g, '')) || 100))}%</span></Label>
+                <Slider
+                  min={30}
+                  max={100}
+                  step={1}
+                  value={[Math.min(100, Math.max(30, parseInt(String(row.styles?.responsive?.mobile?.width || '').replace(/[^0-9]/g, '')) || 100))]}
+                  onValueChange={(v) => handleResponsiveStyleUpdate('mobile', 'width', `${v[0]}%`)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Padding (px)</Label>
+                <Slider
+                  min={0}
+                  max={140}
+                  step={1}
+                  value={[Math.min(140, Math.max(0, parseInt(String(row.styles?.responsive?.mobile?.padding || '').replace(/[^0-9]/g, '')) || 0))]}
+                  onValueChange={(v) => handleResponsiveStyleUpdate('mobile', 'padding', v[0] > 0 ? `${v[0]}px` : '')}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Custom Padding</Label>
+                <Input
+                  value={row.styles?.responsive?.mobile?.padding || ''}
+                  onChange={(e) => handleResponsiveStyleUpdate('mobile', 'padding', e.target.value)}
+                  placeholder="e.g., 15px 20px"
+                />
+              </div>
+            </TabsContent>
+          </Tabs>
+        </CollapsibleGroup>
       </div>
     </div>
   );
 };
 
-// Column Settings Panel  
+// Column Settings Panel
 interface ColumnSettingsProps {
   column: PageBuilderColumn;
   onUpdate: (updates: Partial<PageBuilderColumn>) => void;
 }
 
 export const ColumnSettings: React.FC<ColumnSettingsProps> = ({ column, onUpdate }) => {
+  const [customWidthMode, setCustomWidthMode] = useState(!!column.customWidth);
   const [openGroups, setOpenGroups] = useState({
+    anchor: false,
     layout: true,
     background: false,
     border: false,
@@ -675,6 +967,19 @@ export const ColumnSettings: React.FC<ColumnSettingsProps> = ({ column, onUpdate
 
   return (
     <div className="p-4 space-y-2">
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm">Anchor</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          <div className="flex items-center gap-2">
+            <Input readOnly value={column.anchor || ''} />
+            <Button size="sm" onClick={() => column.anchor && navigator.clipboard.writeText(column.anchor)}>Copy</Button>
+          </div>
+          <p className="text-xs text-muted-foreground">Use #{column.anchor} for in-page scrolling</p>
+        </CardContent>
+      </Card>
+
       <div className="space-y-1">
         <CollapsibleGroup
           title="Layout"
@@ -683,10 +988,35 @@ export const ColumnSettings: React.FC<ColumnSettingsProps> = ({ column, onUpdate
         >
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>Content Alignment</Label>
+              <Label className="text-xs text-muted-foreground">Current grid width: {column.width} units</Label>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <Switch 
+                checked={customWidthMode}
+                onCheckedChange={(checked) => {
+                  setCustomWidthMode(checked);
+                  if (!checked) {
+                    onUpdate({ customWidth: undefined });
+                  }
+                }}
+              />
+              <Label className="text-sm">Override Grid Width</Label>
+            </div>
+            
+            {customWidthMode && (
+              <Input
+                value={column.customWidth || ''}
+                onChange={(e) => onUpdate({ customWidth: e.target.value })}
+                placeholder="e.g., 300px, 30%, auto"
+              />
+            )}
+
+            <div className="space-y-2">
+              <Label className="text-xs">Content Alignment</Label>
               <Select
-                value={column.styles?.contentAlignment || 'stretch'}
-                onValueChange={(value) => handleStyleUpdate('contentAlignment', value)}
+                value={column.styles?.alignItems || 'stretch'}
+                onValueChange={(value) => handleStyleUpdate('alignItems', value)}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -701,10 +1031,10 @@ export const ColumnSettings: React.FC<ColumnSettingsProps> = ({ column, onUpdate
             </div>
 
             <div className="space-y-2">
-              <Label>Content Justification</Label>
+              <Label className="text-xs">Content Justification</Label>
               <Select
-                value={column.styles?.contentJustification || 'flex-start'}
-                onValueChange={(value) => handleStyleUpdate('contentJustification', value)}
+                value={column.styles?.justifyContent || 'flex-start'}
+                onValueChange={(value) => handleStyleUpdate('justifyContent', value)}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -715,23 +1045,22 @@ export const ColumnSettings: React.FC<ColumnSettingsProps> = ({ column, onUpdate
                   <SelectItem value="flex-end">End</SelectItem>
                   <SelectItem value="space-between">Space Between</SelectItem>
                   <SelectItem value="space-around">Space Around</SelectItem>
-                  <SelectItem value="space-evenly">Space Evenly</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div className="space-y-2">
-              <Label>Content Direction</Label>
+              <Label className="text-xs">Content Direction</Label>
               <Select
-                value={column.styles?.contentDirection || 'column'}
-                onValueChange={(value) => handleStyleUpdate('contentDirection', value)}
+                value={column.styles?.flexDirection || 'column'}
+                onValueChange={(value) => handleStyleUpdate('flexDirection', value)}
               >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="column">Column</SelectItem>
-                  <SelectItem value="row">Row</SelectItem>
+                  <SelectItem value="column">Vertical</SelectItem>
+                  <SelectItem value="row">Horizontal</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -765,6 +1094,65 @@ export const ColumnSettings: React.FC<ColumnSettingsProps> = ({ column, onUpdate
                 maxSize={4}
               />
             </div>
+
+            {/* Background Image Mode */}
+            {column.styles?.backgroundImage && (
+              <div className="space-y-3">
+                <Label className="text-sm font-medium">Background Image Mode</Label>
+                <Tabs defaultValue="desktop" className="w-full">
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="desktop">Desktop</TabsTrigger>
+                    <TabsTrigger value="mobile">Mobile</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="desktop" className="space-y-2">
+                    <Select
+                      value={column.styles?.backgroundImageMode || 'cover'}
+                      onValueChange={(value) => handleStyleUpdate('backgroundImageMode', value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="cover">Full Center</SelectItem>
+                        <SelectItem value="parallax">Parallax</SelectItem>
+                        <SelectItem value="contain">Fill Width</SelectItem>
+                        <SelectItem value="no-repeat">No Repeat</SelectItem>
+                        <SelectItem value="repeat">Repeat</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </TabsContent>
+                  <TabsContent value="mobile" className="space-y-2">
+                    <Select
+                      value={column.styles?.responsive?.mobile?.backgroundImageMode || column.styles?.backgroundImageMode || 'cover'}
+                      onValueChange={(value) => handleResponsiveStyleUpdate('mobile', 'backgroundImageMode', value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="cover">Full Center</SelectItem>
+                        <SelectItem value="parallax">Parallax</SelectItem>
+                        <SelectItem value="contain">Fill Width</SelectItem>
+                        <SelectItem value="no-repeat">No Repeat</SelectItem>
+                        <SelectItem value="repeat">Repeat</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </TabsContent>
+                </Tabs>
+              </div>
+            )}
+
+            {/* Color/Gradient Opacity */}
+            <div className="space-y-2">
+              <Label className="text-xs">Color/Gradient Opacity: {Math.round(((column.styles?.backgroundOpacity ?? 1) * 100))}%</Label>
+              <Slider
+                min={0}
+                max={100}
+                step={1}
+                value={[Math.round(((column.styles?.backgroundOpacity ?? 1) * 100))]}
+                onValueChange={(v) => handleStyleUpdate('backgroundOpacity', v[0] / 100)}
+              />
+            </div>
           </div>
         </CollapsibleGroup>
 
@@ -777,6 +1165,7 @@ export const ColumnSettings: React.FC<ColumnSettingsProps> = ({ column, onUpdate
             borderWidth={column.styles?.borderWidth}
             borderColor={column.styles?.borderColor}
             borderRadius={column.styles?.borderRadius}
+            borderStyle={column.styles?.borderStyle}
             onBorderChange={(property, value) => handleStyleUpdate(property, value)}
           />
         </CollapsibleGroup>
@@ -840,12 +1229,15 @@ export const ColumnSettings: React.FC<ColumnSettingsProps> = ({ column, onUpdate
                   max={140}
                   step={1}
                   value={[Math.min(140, Math.max(0, parseInt(String(column.styles?.responsive?.desktop?.padding || '').replace(/[^0-9]/g, '')) || 0))]}
-                  onValueChange={(v) => handleResponsiveStyleUpdate('desktop', 'padding', `${v[0]}px`)}
+                  onValueChange={(v) => handleResponsiveStyleUpdate('desktop', 'padding', v[0] > 0 ? `${v[0]}px` : '')}
                 />
+              </div>
+              <div className="space-y-2">
+                <Label>Custom Padding</Label>
                 <Input
                   value={column.styles?.responsive?.desktop?.padding || ''}
                   onChange={(e) => handleResponsiveStyleUpdate('desktop', 'padding', e.target.value)}
-                  placeholder="Custom e.g., 12px 16px"
+                  placeholder="e.g., 20px 40px"
                 />
               </div>
             </TabsContent>
@@ -867,12 +1259,15 @@ export const ColumnSettings: React.FC<ColumnSettingsProps> = ({ column, onUpdate
                   max={140}
                   step={1}
                   value={[Math.min(140, Math.max(0, parseInt(String(column.styles?.responsive?.mobile?.padding || '').replace(/[^0-9]/g, '')) || 0))]}
-                  onValueChange={(v) => handleResponsiveStyleUpdate('mobile', 'padding', `${v[0]}px`)}
+                  onValueChange={(v) => handleResponsiveStyleUpdate('mobile', 'padding', v[0] > 0 ? `${v[0]}px` : '')}
                 />
+              </div>
+              <div className="space-y-2">
+                <Label>Custom Padding</Label>
                 <Input
                   value={column.styles?.responsive?.mobile?.padding || ''}
                   onChange={(e) => handleResponsiveStyleUpdate('mobile', 'padding', e.target.value)}
-                  placeholder="Custom e.g., 12px 16px"
+                  placeholder="e.g., 15px 20px"
                 />
               </div>
             </TabsContent>
@@ -883,55 +1278,63 @@ export const ColumnSettings: React.FC<ColumnSettingsProps> = ({ column, onUpdate
   );
 };
 
-// Element Settings Panel (simplified placeholder)
-export const ElementSettings: React.FC<{ element: PageBuilderElement; onUpdate: (updates: Partial<PageBuilderElement>) => void }> = ({ element, onUpdate }) => {
-  return (
-    <div className="p-4 text-center text-muted-foreground">
-      <p>Element settings not implemented yet</p>
-    </div>
-  );
-};
+interface SettingsPanelProps {
+  selectedItem: { type: 'section' | 'row' | 'column' | 'element'; item: PageBuilderSection | PageBuilderRow | PageBuilderColumn | PageBuilderElement } | null;
+  onUpdateSection: (sectionId: string, updates: Partial<PageBuilderSection>) => void;
+  onUpdateRow: (sectionId: string, rowId: string, updates: Partial<PageBuilderRow>) => void;
+  onUpdateColumn: (sectionId: string, rowId: string, columnId: string, updates: Partial<PageBuilderColumn>) => void;
+  onUpdateElement: (elementId: string, updates: Partial<PageBuilderElement>) => void;
+}
 
-// Main Settings Panel Component
-export const SettingsPanel: React.FC<{
-  selectedItem: any;
-  onUpdate: (updates: any) => void;
-}> = ({ selectedItem, onUpdate }) => {
+export const SettingsPanel: React.FC<SettingsPanelProps> = ({
+  selectedItem,
+  onUpdateSection,
+  onUpdateRow,
+  onUpdateColumn,
+  onUpdateElement
+}) => {
   if (!selectedItem) {
     return (
-      <div className="p-4 text-center text-muted-foreground">
-        <p>Select an element to edit its properties</p>
+      <div className="p-4 flex items-center justify-center">
+        <p className="text-muted-foreground text-sm">Select a section, row, or column to edit its properties</p>
       </div>
     );
   }
 
-  switch (selectedItem.type) {
-    case 'section':
-      return (
-        <SectionSettings
-          section={selectedItem.data as PageBuilderSection}
-          onUpdate={onUpdate}
-        />
-      );
-    case 'row':
-      return (
-        <RowSettings
-          row={selectedItem.data as PageBuilderRow}
-          onUpdate={onUpdate}
-        />
-      );
-    case 'column':
-      return (
-        <ColumnSettings
-          column={selectedItem.data as PageBuilderColumn}
-          onUpdate={onUpdate}
-        />
-      );
-    default:
-      return (
-        <div className="p-4 text-center text-muted-foreground">
-          <p>Element settings not implemented yet</p>
-        </div>
-      );
+  const { type, item } = selectedItem;
+
+  if (type === 'section') {
+    return (
+      <SectionSettings
+        section={item as PageBuilderSection}
+        onUpdate={(updates) => onUpdateSection((item as PageBuilderSection).id, updates)}
+      />
+    );
   }
+
+  if (type === 'row') {
+    const row = item as PageBuilderRow;
+    return (
+      <RowSettings
+        row={row}
+        onUpdate={(updates) => onUpdateRow('', row.id, updates)}
+      />
+    );
+  }
+
+  if (type === 'column') {
+    const column = item as PageBuilderColumn;
+    return (
+      <ColumnSettings
+        column={column}
+        onUpdate={(updates) => onUpdateColumn('', '', column.id, updates)}
+      />
+    );
+  }
+
+  return (
+    <div className="p-4 flex items-center justify-center">
+      <p className="text-muted-foreground text-sm">Settings not available for this item type</p>
+    </div>
+  );
 };

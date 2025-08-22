@@ -97,10 +97,11 @@ export const renderSectionStyles = (section: PageBuilderSection, deviceType: 'de
     }
     
     // Border styles
-    if (section.styles.borderWidth) styles.borderWidth = section.styles.borderWidth;
-    if (section.styles.borderColor) styles.borderColor = section.styles.borderColor;
+    if (section.styles.borderWidth) {
+      const borderStyle = section.styles.borderStyle || 'solid';
+      styles.border = `${section.styles.borderWidth} ${borderStyle} ${section.styles.borderColor || '#000000'}`;
+    }
     if (section.styles.borderRadius) styles.borderRadius = section.styles.borderRadius;
-    if (section.styles.borderWidth && !section.styles.borderColor) styles.borderStyle = 'solid';
     
     // Spacing styles - prioritize individual properties over shorthand to prevent conflicts
     if (section.styles.paddingTop || section.styles.paddingRight || section.styles.paddingBottom || section.styles.paddingLeft) {
@@ -203,10 +204,11 @@ export const renderRowStyles = (row: PageBuilderRow, deviceType: 'desktop' | 'ta
     }
     
     // Border styles
-    if (row.styles.borderWidth) styles.borderWidth = row.styles.borderWidth;
-    if (row.styles.borderColor) styles.borderColor = row.styles.borderColor;
+    if (row.styles.borderWidth) {
+      const borderStyle = row.styles.borderStyle || 'solid';
+      styles.border = `${row.styles.borderWidth} ${borderStyle} ${row.styles.borderColor || '#000000'}`;
+    }
     if (row.styles.borderRadius) styles.borderRadius = row.styles.borderRadius;
-    if (row.styles.borderWidth && !row.styles.borderColor) styles.borderStyle = 'solid';
     
     // Spacing styles - prioritize individual properties over shorthand to prevent conflicts
     if (row.styles.paddingTop || row.styles.paddingRight || row.styles.paddingBottom || row.styles.paddingLeft) {
@@ -300,10 +302,11 @@ export const renderColumnStyles = (column: PageBuilderColumn, deviceType: 'deskt
     }
     
     // Border styles
-    if (column.styles.borderWidth) styles.borderWidth = column.styles.borderWidth;
-    if (column.styles.borderColor) styles.borderColor = column.styles.borderColor;
+    if (column.styles.borderWidth) {
+      const borderStyle = column.styles.borderStyle || 'solid';
+      styles.border = `${column.styles.borderWidth} ${borderStyle} ${column.styles.borderColor || '#000000'}`;
+    }
     if (column.styles.borderRadius) styles.borderRadius = column.styles.borderRadius;
-    if (column.styles.borderWidth && !column.styles.borderColor) styles.borderStyle = 'solid';
     
     // Content alignment styles - enable flexbox when alignment is set
     if (column.styles.contentAlignment || column.styles.contentJustification || column.styles.contentDirection) {

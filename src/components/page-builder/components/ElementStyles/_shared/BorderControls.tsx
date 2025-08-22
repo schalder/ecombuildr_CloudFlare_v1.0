@@ -2,12 +2,14 @@ import React from 'react';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { ColorPicker } from '@/components/ui/color-picker';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface BorderControlsProps {
   borderWidth?: string;
   borderColor?: string;
   borderRadius?: string;
-  onBorderChange: (property: 'borderWidth' | 'borderColor' | 'borderRadius', value: string) => void;
+  borderStyle?: string;
+  onBorderChange: (property: 'borderWidth' | 'borderColor' | 'borderRadius' | 'borderStyle', value: string) => void;
 }
 
 const parsePixelValue = (value?: string): number => {
@@ -20,6 +22,7 @@ export const BorderControls: React.FC<BorderControlsProps> = ({
   borderWidth,
   borderColor,
   borderRadius,
+  borderStyle,
   onBorderChange
 }) => {
   const borderWidthValue = parsePixelValue(borderWidth);
@@ -39,13 +42,36 @@ export const BorderControls: React.FC<BorderControlsProps> = ({
       </div>
       
       {borderWidthValue > 0 && (
-        <div className="space-y-2">
-          <Label className="text-xs">Border Color</Label>
-          <ColorPicker
-            color={borderColor || 'transparent'}
-            onChange={(color) => onBorderChange('borderColor', color)}
-          />
-        </div>
+        <>
+          <div className="space-y-2">
+            <Label className="text-xs">Border Style</Label>
+            <Select
+              value={borderStyle || 'solid'}
+              onValueChange={(value) => onBorderChange('borderStyle', value)}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="solid">Solid</SelectItem>
+                <SelectItem value="dashed">Dashed</SelectItem>
+                <SelectItem value="dotted">Dotted</SelectItem>
+                <SelectItem value="double">Double</SelectItem>
+                <SelectItem value="groove">Groove</SelectItem>
+                <SelectItem value="ridge">Ridge</SelectItem>
+                <SelectItem value="none">None</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div className="space-y-2">
+            <Label className="text-xs">Border Color</Label>
+            <ColorPicker
+              color={borderColor || 'transparent'}
+              onChange={(color) => onBorderChange('borderColor', color)}
+            />
+          </div>
+        </>
       )}
       
       <div className="space-y-2">
