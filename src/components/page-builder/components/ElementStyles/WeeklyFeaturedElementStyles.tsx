@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Monitor, Smartphone } from 'lucide-react';
 import { ColorPicker } from '@/components/ui/color-picker';
 import { PageBuilderElement } from '../../types';
 import { WeeklyFeaturedTypographyStyles } from './WeeklyFeaturedTypographyStyles';
@@ -20,6 +22,7 @@ export const WeeklyFeaturedElementStyles: React.FC<WeeklyFeaturedElementStylesPr
   deviceType,
 }) => {
   const styles = element.styles || {};
+  const [responsiveTab, setResponsiveTab] = useState<'desktop' | 'mobile'>('desktop');
   const [openGroups, setOpenGroups] = useState({
     typography: true,
     cardAppearance: false,
@@ -27,16 +30,52 @@ export const WeeklyFeaturedElementStyles: React.FC<WeeklyFeaturedElementStylesPr
     buttons: false,
   });
 
+  // Get responsive styles
+  const responsiveStyles = element.styles?.responsive || { desktop: {}, mobile: {} };
+  const currentStyles = responsiveStyles[responsiveTab] || {};
+
+  const handleResponsiveUpdate = (property: string, value: any) => {
+    const updatedResponsive = {
+      ...responsiveStyles,
+      [responsiveTab]: {
+        ...currentStyles,
+        [property]: value
+      }
+    };
+    onStyleUpdate('responsive', updatedResponsive);
+  };
+
+  // Helper to get current value with fallback
+  const getCurrentValue = (prop: string, fallback: any = '') => {
+    return currentStyles[prop] || element.styles?.[prop] || fallback;
+  };
+
   const toggleGroup = (group: keyof typeof openGroups) => {
     setOpenGroups(prev => ({ ...prev, [group]: !prev[group] }));
   };
 
   const handleSpacingChange = (property: 'marginTop' | 'marginRight' | 'marginBottom' | 'marginLeft' | 'paddingTop' | 'paddingRight' | 'paddingBottom' | 'paddingLeft', value: string) => {
-    onStyleUpdate(property, value);
+    handleResponsiveUpdate(property, value);
   };
 
   return (
     <div className="space-y-4">
+      {/* Device Toggle */}
+      <div className="space-y-3">
+        <Tabs value={responsiveTab} onValueChange={(value) => setResponsiveTab(value as 'desktop' | 'mobile')}>
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="desktop" className="flex items-center gap-2">
+              <Monitor className="h-3 w-3" />
+              Desktop
+            </TabsTrigger>
+            <TabsTrigger value="mobile" className="flex items-center gap-2">
+              <Smartphone className="h-3 w-3" />
+              Mobile
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+      </div>
+
       {/* Typography Styles */}
       <CollapsibleGroup
         title="Typography"
@@ -116,14 +155,14 @@ export const WeeklyFeaturedElementStyles: React.FC<WeeklyFeaturedElementStylesPr
       >
         <div className="space-y-4">
           <SpacingSliders
-            marginTop={styles.marginTop}
-            marginRight={styles.marginRight}
-            marginBottom={styles.marginBottom}
-            marginLeft={styles.marginLeft}
-            paddingTop={styles.paddingTop}
-            paddingRight={styles.paddingRight}
-            paddingBottom={styles.paddingBottom}
-            paddingLeft={styles.paddingLeft}
+            marginTop={getCurrentValue('marginTop')}
+            marginRight={getCurrentValue('marginRight')}
+            marginBottom={getCurrentValue('marginBottom')}
+            marginLeft={getCurrentValue('marginLeft')}
+            paddingTop={getCurrentValue('paddingTop')}
+            paddingRight={getCurrentValue('paddingRight')}
+            paddingBottom={getCurrentValue('paddingBottom')}
+            paddingLeft={getCurrentValue('paddingLeft')}
             onMarginChange={handleSpacingChange}
             onPaddingChange={handleSpacingChange}
           />
