@@ -21,6 +21,8 @@ export const DragDropPageBuilder: React.FC<DragDropPageBuilderProps> = ({
   onSave,
   isSaving = false
 }) => {
+  const [isElementsPanelOpen, setIsElementsPanelOpen] = React.useState(false);
+  
   const {
     pageData,
     selectedElement,
@@ -88,20 +90,40 @@ export const DragDropPageBuilder: React.FC<DragDropPageBuilderProps> = ({
 
   return (
     <DndProvider backend={HTML5Backend}>
-      <div className="flex h-screen bg-background">
-        {/* Element Library Sidebar */}
-        <div className="w-80 border-r bg-card">
-          <ElementLibrary 
-            searchTerm=""
-            onAddElement={() => {}}
-          />
-        </div>
+      <div className="flex h-screen bg-background relative">
+        {/* Floating Elements Panel */}
+        {isElementsPanelOpen && (
+          <div className="fixed top-0 left-0 w-80 h-full bg-card border-r shadow-lg z-50 overflow-hidden">
+            <div className="flex items-center justify-between p-4 border-b">
+              <h3 className="font-semibold">Elements</h3>
+              <button
+                onClick={() => setIsElementsPanelOpen(false)}
+                className="p-1 hover:bg-muted rounded"
+              >
+                ×
+              </button>
+            </div>
+            <div className="h-[calc(100%-60px)] overflow-auto">
+              <ElementLibrary 
+                searchTerm=""
+                onAddElement={() => {}}
+              />
+            </div>
+          </div>
+        )}
 
         {/* Main Content Area */}
         <div className="flex-1 flex flex-col">
           {/* Top Toolbar */}
           <div className="border-b bg-card p-4 flex items-center justify-between">
             <div className="flex items-center gap-4">
+              <button
+                onClick={() => setIsElementsPanelOpen(!isElementsPanelOpen)}
+                className="px-3 py-1 text-sm border rounded hover:bg-muted flex items-center gap-2"
+              >
+                <span className="text-lg">+</span>
+                Elements
+              </button>
               <h2 className="text-lg font-semibold">Page Builder</h2>
               <ResponsiveControls
                 deviceType={deviceType}

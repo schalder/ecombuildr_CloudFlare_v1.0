@@ -194,7 +194,7 @@ const ElementorPageBuilderContent: React.FC<ElementorPageBuilderProps> = memo(({
   const [selection, setSelection] = useState<SelectionType | null>(null);
   const [showColumnModal, setShowColumnModal] = useState<{ sectionId: string; insertIndex?: number } | null>(null);
   const [deviceType, setDeviceType] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [isElementsPanelOpen, setIsElementsPanelOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [propertiesPanelCollapsed, setPropertiesPanelCollapsed] = useState(false);
 
@@ -821,21 +821,21 @@ const ElementorPageBuilderContent: React.FC<ElementorPageBuilderProps> = memo(({
 
   return (
     <DndProvider backend={HTML5Backend}>
-      <div className="flex h-full min-h-0 bg-background">
-        {/* Element Library Sidebar */}
-        <div className={`flex flex-col min-h-0 border-r bg-card transition-all duration-300 ${sidebarCollapsed ? 'w-12' : 'w-80'}`}>
-          <div className="p-4 border-b">
-            <div className="flex items-center justify-between">
-              {!sidebarCollapsed && <h3 className="font-semibold">Elements</h3>}
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-              >
-                {sidebarCollapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
-              </Button>
-            </div>
-            {!sidebarCollapsed && (
+      <div className="flex h-full min-h-0 bg-background relative">
+        {/* Floating Elements Panel */}
+        {isElementsPanelOpen && (
+          <div className="fixed top-0 left-0 w-80 h-full bg-card border-r shadow-lg z-50 overflow-hidden">
+            <div className="p-4 border-b">
+              <div className="flex items-center justify-between">
+                <h3 className="font-semibold">Elements</h3>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsElementsPanelOpen(false)}
+                >
+                  <PanelLeftClose className="h-4 w-4" />
+                </Button>
+              </div>
               <div className="mt-4">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -847,11 +847,9 @@ const ElementorPageBuilderContent: React.FC<ElementorPageBuilderProps> = memo(({
                   />
                 </div>
               </div>
-            )}
-          </div>
-          
-          {!sidebarCollapsed && (
-            <ScrollArea scrollbarType="always" className="flex-1 min-h-0">
+            </div>
+            
+            <ScrollArea scrollbarType="always" className="flex-1 min-h-0 h-[calc(100%-140px)]">
               <div className="p-4 space-y-6">
                 {filteredElements.map((category) => (
                   <div key={category.name}>
@@ -871,14 +869,23 @@ const ElementorPageBuilderContent: React.FC<ElementorPageBuilderProps> = memo(({
                 ))}
               </div>
             </ScrollArea>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Main Content Area */}
         <div className="flex-1 flex flex-col min-h-0">
           {/* Top Toolbar */}
           <div className="border-b bg-card p-4 flex items-center justify-between">
             <div className="flex items-center gap-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsElementsPanelOpen(!isElementsPanelOpen)}
+                className="flex items-center gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                Elements
+              </Button>
               <h2 className="text-lg font-semibold">Page Builder</h2>
               <div className="flex items-center gap-2 bg-muted rounded-lg p-1">
                 <Button
