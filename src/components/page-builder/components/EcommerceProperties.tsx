@@ -28,8 +28,13 @@ export const EcommerceContentProperties: React.FC<EcommerceContentPropertiesProp
   // Resolve websiteId for filtering product/category lists
   const resolvedWebsiteId = useResolvedWebsiteId(element);
   
-  const { categories } = useStoreCategories(resolvedWebsiteId);
-  const { products } = useStoreProducts({ websiteId: resolvedWebsiteId });
+  // Only show website-specific data (prevent store-wide fallback)
+  const shouldShowData = resolvedWebsiteId !== undefined;
+  
+  const { categories } = useStoreCategories(shouldShowData ? resolvedWebsiteId : undefined);
+  const { products } = useStoreProducts({ 
+    websiteId: shouldShowData ? resolvedWebsiteId : undefined
+  });
   
   // Import useStoreWebsites hook
   const [websites, setWebsites] = React.useState<any[]>([]);
@@ -203,7 +208,7 @@ export const EcommerceContentProperties: React.FC<EcommerceContentPropertiesProp
         <div>
           <Label className="text-xs">Select Categories</Label>
           <div className="space-y-2 max-h-40 overflow-y-auto">
-            {categories.map((category) => (
+            {shouldShowData ? categories.map((category) => (
               <div key={category.id} className="flex items-center space-x-2">
                 <Checkbox
                   checked={categoryIds.includes(category.id)}
@@ -211,7 +216,9 @@ export const EcommerceContentProperties: React.FC<EcommerceContentPropertiesProp
                 />
                 <Label className="text-xs">{category.name}</Label>
               </div>
-            ))}
+            )) : (
+              <div className="text-xs text-muted-foreground">Loading categories...</div>
+            )}
           </div>
         </div>
       )}
@@ -220,7 +227,7 @@ export const EcommerceContentProperties: React.FC<EcommerceContentPropertiesProp
         <div>
           <Label className="text-xs">Select Products</Label>
           <div className="space-y-2 max-h-40 overflow-y-auto">
-            {products.map((product) => (
+            {shouldShowData ? products.map((product) => (
               <div key={product.id} className="flex items-center space-x-2">
                 <Checkbox
                   checked={specificProductIds.includes(product.id)}
@@ -235,7 +242,9 @@ export const EcommerceContentProperties: React.FC<EcommerceContentPropertiesProp
                   <Label className="text-xs flex-1">{product.name}</Label>
                 </div>
               </div>
-            ))}
+            )) : (
+              <div className="text-xs text-muted-foreground">Loading products...</div>
+            )}
           </div>
         </div>
       )}
@@ -297,14 +306,19 @@ export const FeaturedProductsContentProperties: React.FC<EcommerceContentPropert
   // Resolve websiteId for filtering
   const resolvedWebsiteId = useResolvedWebsiteId(element);
   
-  const { products } = useStoreProducts({ websiteId: resolvedWebsiteId });
+  // Only show website-specific data (prevent store-wide fallback)
+  const shouldShowData = resolvedWebsiteId !== undefined;
+  
+  const { products } = useStoreProducts({ 
+    websiteId: shouldShowData ? resolvedWebsiteId : undefined 
+  });
 
   return (
     <div className="space-y-4">
       <div>
         <Label className="text-xs">Filter by Categories</Label>
         <div className="space-y-2 max-h-40 overflow-y-auto">
-          {(useStoreCategories(resolvedWebsiteId).categories || []).map((category) => (
+          {(useStoreCategories(shouldShowData ? resolvedWebsiteId : undefined).categories || []).map((category) => (
             <div key={category.id} className="flex items-center space-x-2">
               <Checkbox
                 checked={(element.content.filterCategoryIds || []).includes(category.id)}
@@ -553,7 +567,10 @@ export const PriceContentProperties: React.FC<EcommerceContentPropertiesProps> =
   onUpdate
 }) => {
   const resolvedWebsiteId = useResolvedWebsiteId(element);
-  const { products } = useStoreProducts({ websiteId: resolvedWebsiteId });
+  const shouldShowData = resolvedWebsiteId !== undefined;
+  const { products } = useStoreProducts({ 
+    websiteId: shouldShowData ? resolvedWebsiteId : undefined 
+  });
 
   return (
     <div className="space-y-4">
@@ -634,7 +651,10 @@ export const ContactFormContentProperties: React.FC<EcommerceContentPropertiesPr
   onUpdate
 }) => {
   const resolvedWebsiteId = useResolvedWebsiteId(element);
-  const { products } = useStoreProducts({ websiteId: resolvedWebsiteId });
+  const shouldShowData = resolvedWebsiteId !== undefined;
+  const { products } = useStoreProducts({ 
+    websiteId: shouldShowData ? resolvedWebsiteId : undefined 
+  });
 
   return (
     <div className="space-y-4">
@@ -973,7 +993,8 @@ export const ProductsPageContentProperties: React.FC<EcommerceContentPropertiesP
 // Related Products (Element) Content Properties
 export const RelatedProductsContentProperties: React.FC<EcommerceContentPropertiesProps> = ({ element, onUpdate }) => {
   const resolvedWebsiteId = useResolvedWebsiteId(element);
-  const { categories } = useStoreCategories(resolvedWebsiteId);
+  const shouldShowData = resolvedWebsiteId !== undefined;
+  const { categories } = useStoreCategories(shouldShowData ? resolvedWebsiteId : undefined);
   const selected = element.content.categoryIds || [];
   return (
     <div className="space-y-4">
@@ -1059,7 +1080,10 @@ export const RelatedProductsContentProperties: React.FC<EcommerceContentProperti
 // Weekly Featured (Element) Content Properties
 export const WeeklyFeaturedElementProperties: React.FC<EcommerceContentPropertiesProps> = ({ element, onUpdate }) => {
   const resolvedWebsiteId = useResolvedWebsiteId(element);
-  const { products } = useStoreProducts({ websiteId: resolvedWebsiteId });
+  const shouldShowData = resolvedWebsiteId !== undefined;
+  const { products } = useStoreProducts({ 
+    websiteId: shouldShowData ? resolvedWebsiteId : undefined 
+  });
   
   const sourceType = element.content.sourceType || 'auto';
   const selectedProductIds = element.content.selectedProductIds || [];

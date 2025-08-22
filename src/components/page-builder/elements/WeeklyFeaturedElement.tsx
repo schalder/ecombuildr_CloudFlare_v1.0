@@ -43,13 +43,16 @@ const WeeklyFeaturedElement: React.FC<{
   // Get responsive styles for this element
   const appliedStyles = renderElementStyles(element, deviceType);
 
-  // Use the proper store products hook for data fetching
+  // Only fetch products if we have a resolved websiteId (prevents store-wide fallback)
+  const shouldFetchProducts = websiteId !== undefined;
+  
+  // Use the proper store products hook for data fetching only if websiteId is resolved
   const { 
     products, 
     loading, 
     error 
   } = useStoreProducts({
-    websiteId,
+    websiteId: shouldFetchProducts ? websiteId : undefined,
     specificProductIds: sourceType === 'manual' ? selectedProductIds : undefined,
     limit: limit || 6
   });
@@ -217,7 +220,7 @@ const WeeklyFeaturedElement: React.FC<{
     </div>
   );
 
-  if (loading) {
+  if (loading || !shouldFetchProducts) {
     return (
       <section style={appliedStyles}>
         <div className="container mx-auto">
@@ -231,7 +234,16 @@ const WeeklyFeaturedElement: React.FC<{
     );
   }
 
-  console.log('WeeklyFeaturedElement rendering:', { loading, products: products.length, showTitle, showSubtitle, title, subtitle });
+  console.log('WeeklyFeaturedElement rendering:', {
+    loading,
+    products: products.length,
+    showTitle,
+    showSubtitle,
+    title,
+    subtitle,
+    websiteId,
+    shouldFetchProducts
+  });
   return (
     <section style={appliedStyles}>
       <div className="container mx-auto">
