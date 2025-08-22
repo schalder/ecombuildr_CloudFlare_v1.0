@@ -113,7 +113,15 @@ export default function AddProduct() {
 
   // Preselect first website if available
   useEffect(() => {
+    console.log('🌐 AddProduct - Website preselection:', {
+      storeWebsites: storeWebsites.length,
+      selectedWebsiteId,
+      firstWebsiteId: storeWebsites[0]?.id,
+      firstWebsiteName: storeWebsites[0]?.name
+    });
+    
     if (storeWebsites.length > 0 && !selectedWebsiteId) {
+      console.log('🌐 AddProduct - Auto-selecting first website:', storeWebsites[0]);
       setSelectedWebsiteId(storeWebsites[0].id);
     }
   }, [storeWebsites, selectedWebsiteId]);
@@ -121,7 +129,14 @@ export default function AddProduct() {
   // Filter categories based on selected website (strict filtering)
   useEffect(() => {
     const filterCategories = async () => {
+      console.log('📂 AddProduct - Category filtering started:', {
+        selectedWebsiteId,
+        totalCategories: categories.length,
+        categoryNames: categories.map(c => c.name)
+      });
+
       if (!selectedWebsiteId) {
+        console.log('📂 AddProduct - No website selected, clearing categories');
         setFilteredCategories([]);
         return;
       }
@@ -132,14 +147,27 @@ export default function AddProduct() {
           .select('category_id')
           .eq('website_id', selectedWebsiteId);
 
+        console.log('📂 AddProduct - Visibility data from DB:', visibilityData);
+
         const visibleCategoryIds = visibilityData?.map(v => v.category_id) || [];
         
+        console.log('📂 AddProduct - Visible category IDs for website:', {
+          websiteId: selectedWebsiteId,
+          visibleCategoryIds
+        });
+
         // Only show categories assigned to this specific website
         const filtered = categories.filter(cat => visibleCategoryIds.includes(cat.id));
         
+        console.log('📂 AddProduct - Filtered categories result:', {
+          filteredCount: filtered.length,
+          filteredNames: filtered.map(c => c.name),
+          originalCount: categories.length
+        });
+
         setFilteredCategories(filtered);
       } catch (error) {
-        console.error('Error filtering categories:', error);
+        console.error('📂 AddProduct - Error filtering categories:', error);
         setFilteredCategories([]);
       }
     };
@@ -148,6 +176,8 @@ export default function AddProduct() {
   }, [selectedWebsiteId, categories]);
 
   const fetchCategories = async () => {
+    console.log('📂 AddProduct - Fetching categories...');
+    
     try {
       const { data: stores, error: storesError } = await supabase
         .from('stores')
@@ -156,8 +186,11 @@ export default function AddProduct() {
 
       if (storesError) throw storesError;
 
+      console.log('🏪 AddProduct - User stores:', stores);
+
       if (stores && stores.length > 0) {
         setStoreId(stores[0].id);
+        console.log('🏪 AddProduct - Store ID set to:', stores[0].id);
 
         const { data: categories, error: categoriesError } = await supabase
           .from('categories')
@@ -166,10 +199,16 @@ export default function AddProduct() {
           .order('name');
 
         if (categoriesError) throw categoriesError;
+        
+        console.log('📂 AddProduct - Categories fetched:', {
+          count: categories?.length || 0,
+          categories: categories?.map(c => ({ id: c.id, name: c.name })) || []
+        });
+        
         setCategories(categories || []);
       }
     } catch (error) {
-      console.error('Error fetching categories:', error);
+      console.error('📂 AddProduct - Error fetching categories:', error);
     }
   };
 
@@ -213,7 +252,14 @@ export default function AddProduct() {
       }
 
       // Guard: Ensure website is selected
+      console.log('💾 AddProduct - Form submission validation:', {
+        selectedWebsiteId,
+        formDataCategoryId: formData.category_id,
+        filteredCategoriesCount: filteredCategories.length
+      });
+
       if (!selectedWebsiteId) {
+        console.log('❌ AddProduct - No website selected, blocking submission');
         toast({
           title: "Error",
           description: "Please select a website for this product.",
@@ -268,6 +314,11 @@ export default function AddProduct() {
       if (insertError) throw insertError;
 
       // Add website visibility records
+      console.log('🔗 AddProduct - Creating website visibility:', {
+        selectedWebsiteId,
+        newProductId: newProduct?.id
+      });
+
       if (selectedWebsiteId && newProduct?.id) {
         const { error: visibilityError } = await supabase
           .from('product_website_visibility')
@@ -276,7 +327,12 @@ export default function AddProduct() {
             website_id: selectedWebsiteId
           });
 
-        if (visibilityError) throw visibilityError;
+        if (visibilityError) {
+          console.error('❌ AddProduct - Visibility error:', visibilityError);
+          throw visibilityError;
+        }
+        
+        console.log('✅ AddProduct - Website visibility created successfully');
       }
 
       toast({
@@ -344,7 +400,14 @@ export default function AddProduct() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-3">
                         <Label htmlFor="website_id">Selling Website *</Label>
-                        <Select value={selectedWebsiteId} onValueChange={setSelectedWebsiteId}>
+                        <Select value={selectedWebsiteId} onValueChange={(value) => {
+                          console.log('🌐 AddProduct - Website selection changed:', {
+                            from: selectedWebsiteId,
+                            to: value,
+                            websiteName: storeWebsites.find(w => w.id === value)?.name
+                          });
+                          setSelectedWebsiteId(value);
+                        }}>
                           <SelectTrigger>
                             <SelectValue placeholder="Select a website" />
                           </SelectTrigger>
