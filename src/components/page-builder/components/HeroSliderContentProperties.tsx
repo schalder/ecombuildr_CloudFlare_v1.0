@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -8,7 +8,8 @@ import { Switch } from '@/components/ui/switch';
 import { Slider } from '@/components/ui/slider';
 import { Separator } from '@/components/ui/separator';
 import { Card } from '@/components/ui/card';
-import { Trash2, Plus, Move } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Trash2, Plus, Move, ChevronDown, ChevronRight } from 'lucide-react';
 import { PageBuilderElement } from '../types';
 import { MediaSelector } from './MediaSelector';
 
@@ -35,6 +36,7 @@ export const HeroSliderContentProperties: React.FC<HeroSliderContentPropertiesPr
 }) => {
   const content = element.content as any;
   const slides = content?.slides || [];
+  const [openSlides, setOpenSlides] = useState<Set<string>>(new Set([slides[0]?.id])); // First slide open by default
 
   const addSlide = () => {
     const newSlide: Slide = {
@@ -46,6 +48,8 @@ export const HeroSliderContentProperties: React.FC<HeroSliderContentPropertiesPr
       buttonType: 'url',
     };
     
+    // Auto-open the new slide
+    setOpenSlides(prev => new Set([...prev, newSlide.id]));
     onUpdate('slides', [...slides, newSlide]);
   };
 
@@ -58,7 +62,24 @@ export const HeroSliderContentProperties: React.FC<HeroSliderContentPropertiesPr
 
   const removeSlide = (slideId: string) => {
     const updatedSlides = slides.filter((slide: Slide) => slide.id !== slideId);
+    setOpenSlides(prev => {
+      const newSet = new Set(prev);
+      newSet.delete(slideId);
+      return newSet;
+    });
     onUpdate('slides', updatedSlides);
+  };
+
+  const toggleSlide = (slideId: string) => {
+    setOpenSlides(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(slideId)) {
+        newSet.delete(slideId);
+      } else {
+        newSet.add(slideId);
+      }
+      return newSet;
+    });
   };
 
   const moveSlide = (index: number, direction: 'up' | 'down') => {
@@ -205,121 +226,151 @@ export const HeroSliderContentProperties: React.FC<HeroSliderContentPropertiesPr
           </div>
         )}
 
-        {slides.map((slide: Slide, index: number) => (
-          <Card key={slide.id} className="p-4 space-y-3">
-            <div className="flex items-center justify-between">
-              <h5 className="text-sm font-medium">Slide {index + 1}</h5>
-              <div className="flex items-center space-x-1">
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => moveSlide(index, 'up')}
-                  disabled={index === 0}
-                >
-                  <Move className="h-3 w-3" />
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => removeSlide(slide.id)}
-                  disabled={slides.length === 1}
-                >
-                  <Trash2 className="h-3 w-3" />
-                </Button>
-              </div>
-            </div>
+        {slides.map((slide: Slide, index: number) => {
+          const isOpen = openSlides.has(slide.id);
+          
+          return (
+            <Collapsible key={slide.id} open={isOpen} onOpenChange={() => toggleSlide(slide.id)}>
+              <Card className="overflow-hidden">
+                <CollapsibleTrigger asChild>
+                  <div className="flex items-center justify-between p-4 hover:bg-muted/50 cursor-pointer border-b">
+                    <div className="flex items-center space-x-2">
+                      {isOpen ? (
+                        <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                      ) : (
+                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                      )}
+                      <h5 className="text-sm font-medium">
+                        Slide {index + 1}
+                        {slide.headline && (
+                          <span className="text-muted-foreground font-normal"> - {slide.headline}</span>
+                        )}
+                      </h5>
+                    </div>
+                    <div className="flex items-center space-x-1" onClick={(e) => e.stopPropagation()}>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          moveSlide(index, 'up');
+                        }}
+                        disabled={index === 0}
+                      >
+                        <Move className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeSlide(slide.id);
+                        }}
+                        disabled={slides.length === 1}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </div>
+                </CollapsibleTrigger>
 
-            <div>
-              <Label className="text-xs">Sub Headline (Optional)</Label>
-              <Input
-                value={slide.subHeadline || ''}
-                onChange={(e) => updateSlide(slide.id, 'subHeadline', e.target.value)}
-                placeholder="e.g., NEW ARRIVAL"
-              />
-            </div>
+                <CollapsibleContent>
+                  <div className="p-4 space-y-3">
+                    <div>
+                      <Label className="text-xs">Sub Headline (Optional)</Label>
+                      <Input
+                        value={slide.subHeadline || ''}
+                        onChange={(e) => updateSlide(slide.id, 'subHeadline', e.target.value)}
+                        placeholder="e.g., NEW ARRIVAL"
+                      />
+                    </div>
 
-            <div>
-              <Label className="text-xs">Headline</Label>
-              <Input
-                value={slide.headline}
-                onChange={(e) => updateSlide(slide.id, 'headline', e.target.value)}
-                placeholder="Enter slide title"
-              />
-            </div>
+                    <div>
+                      <Label className="text-xs">Headline</Label>
+                      <Input
+                        value={slide.headline}
+                        onChange={(e) => updateSlide(slide.id, 'headline', e.target.value)}
+                        placeholder="Enter slide title"
+                      />
+                    </div>
 
-            <div>
-              <Label className="text-xs">Paragraph (Optional)</Label>
-              <Textarea
-                value={slide.paragraph || ''}
-                onChange={(e) => updateSlide(slide.id, 'paragraph', e.target.value)}
-                placeholder="Enter slide description"
-                rows={2}
-              />
-            </div>
+                    <div>
+                      <Label className="text-xs">Paragraph (Optional)</Label>
+                      <Textarea
+                        value={slide.paragraph || ''}
+                        onChange={(e) => updateSlide(slide.id, 'paragraph', e.target.value)}
+                        placeholder="Enter slide description"
+                        rows={2}
+                      />
+                    </div>
 
-            {(content?.layout !== 'text-only') && (
-              <div>
-                <MediaSelector
-                  label="Slide Image"
-                  value={slide.image || ''}
-                  onChange={(url) => updateSlide(slide.id, 'image', url)}
-                />
-              </div>
-            )}
+                    {(content?.layout !== 'text-only') && (
+                      <div>
+                        <MediaSelector
+                          label="Slide Image"
+                          value={slide.image || ''}
+                          onChange={(url) => updateSlide(slide.id, 'image', url)}
+                        />
+                      </div>
+                    )}
 
-            {slide.image && (
-              <div>
-                <Label className="text-xs">Image Alt Text</Label>
-                <Input
-                  value={slide.imageAlt || ''}
-                  onChange={(e) => updateSlide(slide.id, 'imageAlt', e.target.value)}
-                  placeholder="Describe the image"
-                />
-              </div>
-            )}
+                    {slide.image && (
+                      <div>
+                        <Label className="text-xs">Image Alt Text</Label>
+                        <Input
+                          value={slide.imageAlt || ''}
+                          onChange={(e) => updateSlide(slide.id, 'imageAlt', e.target.value)}
+                          placeholder="Describe the image"
+                        />
+                      </div>
+                    )}
 
-            <div>
-              <Label className="text-xs">Button Text (Optional)</Label>
-              <Input
-                value={slide.buttonText || ''}
-                onChange={(e) => updateSlide(slide.id, 'buttonText', e.target.value)}
-                placeholder="e.g., Learn More"
-              />
-            </div>
+                    <div>
+                      <Label className="text-xs">Button Text (Optional)</Label>
+                      <Input
+                        value={slide.buttonText || ''}
+                        onChange={(e) => updateSlide(slide.id, 'buttonText', e.target.value)}
+                        placeholder="e.g., Learn More"
+                      />
+                    </div>
 
-            {slide.buttonText && (
-              <>
-                <div>
-                  <Label className="text-xs">Button Action</Label>
-                  <Select
-                    value={slide.buttonType || 'url'}
-                    onValueChange={(value) => updateSlide(slide.id, 'buttonType', value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="url">External URL</SelectItem>
-                      <SelectItem value="page">Internal Page</SelectItem>
-                      <SelectItem value="action">Custom Action</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                    {slide.buttonText && (
+                      <>
+                        <div>
+                          <Label className="text-xs">Button Action</Label>
+                          <Select
+                            value={slide.buttonType || 'url'}
+                            onValueChange={(value) => updateSlide(slide.id, 'buttonType', value)}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="url">External URL</SelectItem>
+                              <SelectItem value="page">Internal Page</SelectItem>
+                              <SelectItem value="action">Custom Action</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
 
-                <div>
-                  <Label className="text-xs">
-                    {slide.buttonType === 'url' ? 'URL' : 'Action/Page'}
-                  </Label>
-                  <Input
-                    value={slide.buttonUrl || ''}
-                    onChange={(e) => updateSlide(slide.id, 'buttonUrl', e.target.value)}
-                    placeholder={slide.buttonType === 'url' ? 'https://example.com' : 'Enter action or page path'}
-                  />
-                </div>
-              </>
-            )}
-          </Card>
-        ))}
+                        <div>
+                          <Label className="text-xs">
+                            {slide.buttonType === 'url' ? 'URL' : 'Action/Page'}
+                          </Label>
+                          <Input
+                            value={slide.buttonUrl || ''}
+                            onChange={(e) => updateSlide(slide.id, 'buttonUrl', e.target.value)}
+                            placeholder={slide.buttonType === 'url' ? 'https://example.com' : 'Enter action or page path'}
+                          />
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </CollapsibleContent>
+              </Card>
+            </Collapsible>
+          );
+        })}
       </div>
     </div>
   );
