@@ -167,7 +167,7 @@ const WeeklyFeaturedElement: React.FC<{
   };
 
   const renderProductGrid = () => (
-    <div className={`grid ${getGridClasses()}`} style={{ gap: getGridGap() }}>
+    <div className={`grid ${getGridClasses()} gap-3 sm:gap-4 md:gap-6`}>
       {products.map((product, index) => (
         <Card key={product.id} className="group/card hover:shadow-lg transition-all duration-300 overflow-hidden" style={getCardStyles()}>
           <div className="relative aspect-square overflow-hidden">
@@ -184,45 +184,48 @@ const WeeklyFeaturedElement: React.FC<{
             )}
             
             {index === 0 && (
-              <Badge className="absolute top-2 left-2 bg-primary text-primary-foreground">
-                <Trophy className="w-3 h-3 mr-1" />
-                #1 Bestseller
+              <Badge className="absolute top-1 left-1 sm:top-2 sm:left-2 bg-primary text-primary-foreground text-xs">
+                <Trophy className="w-2 h-2 sm:w-3 sm:h-3 mr-0.5 sm:mr-1" />
+                <span className="hidden sm:inline">#1 Bestseller</span>
+                <span className="sm:hidden">#1</span>
               </Badge>
             )}
           </div>
 
-          <CardContent style={getCardStyles()}>
+          <CardContent className="p-2 sm:p-3 md:p-4" style={getCardStyles()}>
             <Link to={paths.productDetail(product.slug)}>
-              <h3 className="font-medium text-sm mb-2 line-clamp-2 hover:text-primary transition-colors cursor-pointer" style={getTypographyStyles('productTitleStyles')}>{product.name}</h3>
+              <h3 className="font-medium text-xs sm:text-sm mb-1 sm:mb-2 line-clamp-2 hover:text-primary transition-colors cursor-pointer leading-tight" style={getTypographyStyles('productTitleStyles')}>{product.name}</h3>
             </Link>
             
-            <div className="flex items-center gap-1 mb-2">
+            <div className="flex items-center gap-0.5 sm:gap-1 mb-1 sm:mb-2">
               {Array.from({ length: 5 }).map((_, i) => (
-                <Star key={i} className="w-3 h-3 fill-primary text-primary" />
+                <Star key={i} className="w-2.5 h-2.5 sm:w-3 sm:h-3 fill-primary text-primary" />
               ))}
-              <span className="text-xs text-muted-foreground ml-1">(4.5)</span>
+              <span className="text-xs text-muted-foreground ml-0.5 sm:ml-1">(4.5)</span>
             </div>
 
-            <div className="flex flex-col items-start gap-1 sm:flex-row sm:items-center sm:gap-2 mb-3">
-              <span className="font-bold text-primary text-base md:text-lg" style={getTypographyStyles('priceStyles')}>
+            <div className="flex flex-col items-start gap-0.5 sm:gap-1 mb-2 sm:mb-3">
+              <span className="font-bold text-primary text-sm sm:text-base md:text-lg" style={getTypographyStyles('priceStyles')}>
                 {formatCurrency(product.price)}
               </span>
               {product.compare_price && product.compare_price > product.price && (
-                <span className="text-xs md:text-sm text-muted-foreground line-through" style={getTypographyStyles('priceStyles')}>
+                <span className="text-xs sm:text-sm text-muted-foreground line-through" style={getTypographyStyles('priceStyles')}>
                   {formatCurrency(product.compare_price)}
                 </span>
               )}
             </div>
 
             <Button 
-              size={getButtonSize() as any} 
+              size="sm"
               variant={getButtonVariant() as any}
-              className={getButtonWidthClass()}
+              className="w-full text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 h-auto"
               style={getButtonStyles()}
               onClick={() => handleAddToCart(product)}
             >
-              <ShoppingCart className="w-4 h-4 mr-1" />
-              {ctaBehavior === 'buy_now' ? (ctaText || 'Buy Now') : (ctaText || 'Add to Cart')}
+              <ShoppingCart className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+              <span className="truncate">
+                {ctaBehavior === 'buy_now' ? (ctaText || 'Buy Now') : (ctaText || 'Add to Cart')}
+              </span>
             </Button>
           </CardContent>
         </Card>
@@ -255,15 +258,15 @@ const WeeklyFeaturedElement: React.FC<{
     shouldFetchProducts
   });
   return (
-    <section style={appliedStyles}>
-      <div className="container mx-auto">
+    <section className="py-8 sm:py-12" style={appliedStyles}>
+      <div className="container mx-auto px-4">
         {(showTitle && title) || (showSubtitle && subtitle) ? (
-          <div className="text-center mb-12">
+          <div className="text-center mb-6 sm:mb-8 md:mb-12">
             {showTitle && title && (
-              <h2 className="text-3xl font-bold mb-2" style={getTypographyStyles('headlineStyles')}>{title}</h2>
+              <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-1 sm:mb-2" style={getTypographyStyles('headlineStyles')}>{title}</h2>
             )}
             {showSubtitle && subtitle && (
-              <p className="text-muted-foreground text-lg" style={getTypographyStyles('subheadlineStyles')}>{subtitle}</p>
+              <p className="text-muted-foreground text-sm sm:text-base md:text-lg" style={getTypographyStyles('subheadlineStyles')}>{subtitle}</p>
             )}
           </div>
         ) : null}
@@ -271,8 +274,8 @@ const WeeklyFeaturedElement: React.FC<{
         {renderProductGrid()}
 
         {products.length === 0 && !loading && (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground">
+          <div className="text-center py-8 sm:py-12">
+            <p className="text-muted-foreground text-sm sm:text-base">
               {sourceType === 'manual' && selectedProductIds.length === 0 
                 ? 'Please select products in the content settings'
                 : error 
