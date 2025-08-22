@@ -118,14 +118,6 @@ export const SocialShareElementStyles: React.FC<SocialShareElementStylesProps> =
             </div>
           </div>
 
-          <div className="flex items-center space-x-2">
-            <Switch 
-              checked={getCurrentValue('fullWidthContainer', false)}
-              onCheckedChange={(checked) => handleResponsiveUpdate('fullWidthContainer', checked)}
-            />
-            <Label className="text-xs">Full Width Container</Label>
-          </div>
-
           <div>
             <Label className="text-xs">Max Width</Label>
             <Input
