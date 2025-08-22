@@ -52,6 +52,7 @@ import {
   SocialShareProperties,
   SocialLinksProperties 
 } from './AdvancedProperties';
+import { CustomHTMLProperties as CustomHTMLSpacingProperties } from './CustomHTMLProperties';
 import { HeroSliderContentProperties } from './HeroSliderContentProperties';
 import { CountdownProperties } from './CountdownProperties';
 import {
@@ -210,6 +211,17 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
     // Hero Slider element styles
     if (selectedElement.type === 'hero-slider') {
       return <HeroSliderElementStyles element={selectedElement} onStyleUpdate={handleStyleUpdate} />;
+    }
+    
+    // Custom HTML element - only spacing controls
+    if (selectedElement.type === 'custom-html') {
+      return (
+        <CustomHTMLSpacingProperties
+          element={selectedElement}
+          deviceType={deviceType}
+          onUpdate={(updates) => onUpdateElement(selectedElement.id, updates)}
+        />
+      );
     }
     
     // Default fallback for any other element types (ecommerce, content, media, advanced)
