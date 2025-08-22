@@ -68,6 +68,7 @@ import {
   PriceElementStyles,
   HeroSliderElementStyles
 } from './ElementStyles';
+import { CustomHTMLElementStyles } from './ElementStyles/CustomHTMLElementStyles';
 import { CountdownElementStyles } from './ElementStyles/CountdownElementStyles';
 import { CheckoutElementStyles } from './ElementStyles/CheckoutElementStyles';
 
@@ -210,6 +211,17 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
     // Hero Slider element styles
     if (selectedElement.type === 'hero-slider') {
       return <HeroSliderElementStyles element={selectedElement} onStyleUpdate={handleStyleUpdate} />;
+    }
+
+    // Custom HTML element styles
+    if (selectedElement.type === 'custom-html') {
+      return (
+        <CustomHTMLElementStyles
+          styles={selectedElement.styles || {}}
+          onStyleUpdate={handleStyleUpdate}
+          deviceType={deviceType}
+        />
+      );
     }
     
     // Default fallback for any other element types (ecommerce, content, media, advanced)
