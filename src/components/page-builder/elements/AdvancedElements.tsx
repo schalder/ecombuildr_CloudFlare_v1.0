@@ -195,14 +195,30 @@ const SocialShareElement: React.FC<{
   
   // Get container alignment for positioning element within column
   const containerAlignment = mergedStyles.containerAlignment || 'center';
+  const fullWidthContainer = mergedStyles.fullWidthContainer || false;
   
-  // Get container alignment class (like PriceElement)
+  // Get container alignment class (like PriceElement) - only used when not full width
   const getContainerAlignmentClass = () => {
+    if (fullWidthContainer) return 'w-full'; // Full width, no alignment needed
+    
     switch (containerAlignment) {
       case 'left': return 'mr-auto';
       case 'right': return 'ml-auto';
       default: return 'mx-auto'; // center
     }
+  };
+  
+  // Get container wrapper styles - only use flex positioning when not full width
+  const getContainerWrapperStyles = () => {
+    if (fullWidthContainer) {
+      return { width: '100%' }; // Simple full width
+    }
+    
+    return {
+      display: 'flex',
+      justifyContent: containerAlignment === 'left' ? 'flex-start' : 
+                    containerAlignment === 'right' ? 'flex-end' : 'center'
+    };
   };
 
   const containerStyles = {
@@ -354,14 +370,10 @@ const SocialShareElement: React.FC<{
       {responsiveCSS && (
         <style dangerouslySetInnerHTML={{ __html: responsiveCSS }} />
       )}
-      {/* Debug container alignment */}
+      {/* Container wrapper - conditional based on full width setting */}
       <div 
-        className={`w-full ${getContainerAlignmentClass()}`}
-        style={{ 
-          display: 'flex',
-          justifyContent: containerAlignment === 'left' ? 'flex-start' : 
-                        containerAlignment === 'right' ? 'flex-end' : 'center'
-        }}
+        className={getContainerAlignmentClass()}
+        style={getContainerWrapperStyles()}
       >
         <div 
           className={`element-${element.id}`}
