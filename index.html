@@ -129,6 +129,65 @@
 
   <body>
     <div id="root"></div>
+    
+    <!-- Enhanced console error filtering for Lovable IDE -->
+    <script>
+      (function() {
+        // Store original console methods
+        const originalError = console.error;
+        const originalWarn = console.warn;
+        
+        // Patterns to filter out
+        const filterPatterns = [
+          /Failed to execute 'postMessage' on 'DOMWindow'/,
+          /target origin provided.*does not match.*recipient window's origin/,
+          /gptengineer\.app/,
+          /localhost:3000/,
+          /lovable\.dev/,
+          /lovable\.js/
+        ];
+        
+        // Enhanced error filtering function
+        function shouldFilter(message) {
+          if (typeof message !== 'string') return false;
+          return filterPatterns.some(pattern => pattern.test(message));
+        }
+        
+        // Override console.error
+        console.error = function(...args) {
+          const message = args[0];
+          if (!shouldFilter(message)) {
+            originalError.apply(console, args);
+          }
+        };
+        
+        // Override console.warn  
+        console.warn = function(...args) {
+          const message = args[0];
+          if (!shouldFilter(message)) {
+            originalWarn.apply(console, args);
+          }
+        };
+        
+        // Also handle window error events
+        window.addEventListener('error', function(e) {
+          if (shouldFilter(e.message)) {
+            e.preventDefault();
+            e.stopPropagation();
+            return false;
+          }
+        }, true);
+        
+        // Handle unhandled promise rejections
+        window.addEventListener('unhandledrejection', function(e) {
+          if (e.reason && shouldFilter(String(e.reason))) {
+            e.preventDefault();
+            return false;
+          }
+        });
+      })();
+    </script>
+    
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
