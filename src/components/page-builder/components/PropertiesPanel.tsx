@@ -161,8 +161,8 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
       return <TextElementStyles key={`text-${selectedElement.id}`} element={selectedElement} onStyleUpdate={handleStyleUpdate} />;
     }
     
-    // Media elements (image, video)
-    if (['image', 'video'].includes(selectedElement.type)) {
+    // Media elements (image, video, image-carousel, image-gallery, video-playlist)
+    if (['image', 'video', 'image-carousel', 'image-gallery', 'video-playlist'].includes(selectedElement.type)) {
       return <MediaElementStyles element={selectedElement} onStyleUpdate={handleStyleUpdate} />;
     }
     

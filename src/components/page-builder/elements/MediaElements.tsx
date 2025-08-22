@@ -165,13 +165,10 @@ const ImageCarouselElement: React.FC<{
   };
 
   return (
-    <div className="max-w-4xl mx-auto" style={element.styles}>
-      <InlineEditor
-        value={element.content.title || 'Image Carousel'}
-        onChange={handleTitleUpdate}
-        className="text-xl font-semibold mb-4"
-        placeholder="Carousel title..."
-      />
+    <div 
+      className="max-w-4xl mx-auto" 
+      style={element.styles}
+    >
       <div className="relative">
         <Carousel className="w-full" setApi={setApi} opts={{ loop: true }}>
           <CarouselContent>
@@ -183,7 +180,10 @@ const ImageCarouselElement: React.FC<{
                     <img
                       src={image}
                       alt={`Carousel image ${index + 1}`}
-                      className="w-full h-96 object-cover rounded-lg"
+                      className="w-full h-96 object-cover"
+                      style={{
+                        borderRadius: 'inherit'
+                      }}
                     />
                   </div>
                 </CarouselItem>
@@ -344,7 +344,6 @@ export const registerMediaElements = () => {
     icon: Image,
     component: ImageCarouselElement,
     defaultContent: {
-      title: 'Image Carousel',
       images: [
         'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=400&fit=crop',
         'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&h=400&fit=crop',

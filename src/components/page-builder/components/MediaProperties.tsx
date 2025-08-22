@@ -174,16 +174,6 @@ export const ImageCarouselProperties: React.FC<MediaPropertiesProps> = ({
 
   return (
     <div className="space-y-4">
-      <div>
-        <Label htmlFor="carousel-title">Carousel Title</Label>
-        <Input
-          id="carousel-title"
-          value={element.content.title || ''}
-          onChange={(e) => onUpdate('title', e.target.value)}
-          placeholder="Image Carousel"
-        />
-      </div>
-
       <div className="flex items-center space-x-2">
         <Switch
           id="auto-play"
