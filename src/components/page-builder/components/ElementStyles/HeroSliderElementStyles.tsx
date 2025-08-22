@@ -358,7 +358,7 @@ export const HeroSliderElementStyles: React.FC<HeroSliderElementStylesProps> = (
           {/* Margin */}
           <div className="space-y-2">
             <Label className="text-xs">Margin</Label>
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 gap-2">
               {['Top', 'Right', 'Bottom', 'Left'].map((side) => {
                 const property = `margin${side}`;
                 const value = parseInt((currentStyles[property] || element.styles?.[property] || '0').toString().replace(/[^0-9]/g, '') || '0');
@@ -369,7 +369,7 @@ export const HeroSliderElementStyles: React.FC<HeroSliderElementStylesProps> = (
                       <Slider
                         value={[value]}
                         onValueChange={(values) => handleResponsiveUpdate(property, `${values[0]}px`)}
-                        max={100}
+                        max={200}
                         min={0}
                         step={1}
                         className="w-full"
@@ -385,7 +385,7 @@ export const HeroSliderElementStyles: React.FC<HeroSliderElementStylesProps> = (
           {/* Padding */}
           <div className="space-y-2">
             <Label className="text-xs">Padding</Label>
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 gap-2">
               {['Top', 'Right', 'Bottom', 'Left'].map((side) => {
                 const property = `padding${side}`;
                 const value = parseInt((currentStyles[property] || element.styles?.[property] || '20').toString().replace(/[^0-9]/g, '') || '20');
@@ -396,7 +396,7 @@ export const HeroSliderElementStyles: React.FC<HeroSliderElementStylesProps> = (
                       <Slider
                         value={[value]}
                         onValueChange={(values) => handleResponsiveUpdate(property, `${values[0]}px`)}
-                        max={100}
+                        max={200}
                         min={0}
                         step={1}
                         className="w-full"

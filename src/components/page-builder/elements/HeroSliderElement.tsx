@@ -161,21 +161,9 @@ export const HeroSliderElement: React.FC<HeroSliderElementProps> = ({
           style={{
             minHeight: mergedStyles.minHeight || '500px',
             maxWidth: mergedStyles.maxWidth,
-            backgroundColor: mergedStyles.backgroundColor,
             borderWidth: mergedStyles.borderWidth,
             borderColor: mergedStyles.borderColor,
             borderRadius: mergedStyles.borderRadius,
-            boxShadow: mergedStyles.boxShadow,
-            opacity: mergedStyles.opacity,
-            transform: mergedStyles.transform,
-            marginTop: mergedStyles.marginTop,
-            marginRight: mergedStyles.marginRight,
-            marginBottom: mergedStyles.marginBottom,
-            marginLeft: mergedStyles.marginLeft,
-            paddingTop: mergedStyles.paddingTop,
-            paddingRight: mergedStyles.paddingRight,
-            paddingBottom: mergedStyles.paddingBottom,
-            paddingLeft: mergedStyles.paddingLeft,
           }}
         >
           {/* Background Image for Overlay Layout */}
@@ -306,7 +294,23 @@ export const HeroSliderElement: React.FC<HeroSliderElementProps> = ({
         ` 
       }} />
       
-      <div className="relative overflow-hidden">
+      <div 
+        className="relative overflow-hidden"
+        style={{
+          backgroundColor: mergedStyles.backgroundColor,
+          opacity: mergedStyles.opacity,
+          boxShadow: mergedStyles.boxShadow,
+          transform: mergedStyles.transform,
+          marginTop: mergedStyles.marginTop,
+          marginRight: mergedStyles.marginRight,
+          marginBottom: mergedStyles.marginBottom,
+          marginLeft: mergedStyles.marginLeft,
+          paddingTop: mergedStyles.paddingTop,
+          paddingRight: mergedStyles.paddingRight,
+          paddingBottom: mergedStyles.paddingBottom,
+          paddingLeft: mergedStyles.paddingLeft,
+        }}
+      >
         <Carousel
           setApi={setApi}
           opts={{
