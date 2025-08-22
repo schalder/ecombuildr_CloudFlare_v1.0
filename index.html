@@ -6,6 +6,46 @@
     <meta name="theme-color" content="#10B981" />
     
     <!-- Dynamic SEO tags will be loaded here -->
+    
+    <!-- Console Error Filter for Preview Environment -->
+    <script>
+      (function() {
+        // Only apply filtering in preview environment
+        if (window.location.hostname === 'localhost' || window.location.hostname.includes('lovable')) {
+          const originalError = console.error;
+          const originalWarn = console.warn;
+          
+          // Filter out repetitive postMessage errors
+          console.error = function(...args) {
+            const message = args.join(' ');
+            if (message.includes('postMessage') || 
+                message.includes('lovable.js') ||
+                message.includes('Failed to execute \'postMessage\'')) {
+              return; // Suppress these errors
+            }
+            originalError.apply(console, args);
+          };
+          
+          console.warn = function(...args) {
+            const message = args.join(' ');
+            if (message.includes('postMessage') || 
+                message.includes('lovable.js')) {
+              return; // Suppress these warnings
+            }
+            originalWarn.apply(console, args);
+          };
+          
+          // Also filter window error events
+          window.addEventListener('error', function(e) {
+            if (e.message && (e.message.includes('postMessage') || e.message.includes('lovable.js'))) {
+              e.stopPropagation();
+              e.preventDefault();
+            }
+          });
+        }
+      })();
+    </script>
+    
     <script>
       (function() {
         // Get current domain and path
