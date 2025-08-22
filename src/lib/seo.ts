@@ -61,6 +61,12 @@ export function buildCanonical(currentPath?: string, canonicalDomain?: string) {
 }
 
 export function setSEO(input: SEOConfig) {
+  const callerInfo = new Error().stack?.split('\n')[2]?.trim() || 'unknown caller';
+  console.log('🔍 setSEO called with:', { 
+    favicon: input.favicon, 
+    title: input.title,
+    caller: callerInfo
+  });
   
   const cfg: SEOConfig = {
     ogType: 'website',
@@ -138,6 +144,7 @@ export function setSEO(input: SEOConfig) {
 
   // Favicon with race condition protection
   if (cfg.favicon) {
+    console.log('🔥 Setting favicon to:', cfg.favicon);
     
     // Remove ALL existing favicon-related links to prevent conflicts
     const faviconSelectors = [

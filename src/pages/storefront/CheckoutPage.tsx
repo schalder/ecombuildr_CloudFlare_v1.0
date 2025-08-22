@@ -106,6 +106,14 @@ useEffect(() => {
     );
 
     setShippingCost(result.shippingCost);
+    console.debug('[CheckoutPage] Recomputed shipping', {
+      city: form.shipping_city,
+      area: form.shipping_area,
+      address: form.shipping_address,
+      cost: result.shippingCost,
+      breakdown: result.breakdown,
+      isFreeShipping: result.isFreeShipping,
+    });
   };
 
   computeShipping();
@@ -297,6 +305,13 @@ useEffect(() => {
       if (createErr) throw createErr;
       const createdOrderId: string | undefined = data?.order?.id;
       if (!createdOrderId) throw new Error('Order was not created');
+      
+      console.debug('[CheckoutPage] Order created:', { 
+        orderId: createdOrderId, 
+        websiteId: resolvedWebsiteId, 
+        funnelId: resolvedFunnelId,
+        total: finalTotal 
+      });
 
       // Track purchase event
       if (form.payment_method === 'cod') {

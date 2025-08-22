@@ -31,7 +31,7 @@ export const captureAndUploadPreview = async (
     const captureWidth = Math.round(actualWidth * scale);
     const captureHeight = Math.round(actualHeight * scale);
 
-    
+    console.log('Capturing preview with html2canvas...');
 
     // Capture the element as canvas
     const canvas = await html2canvas(element, {
@@ -52,10 +52,14 @@ export const captureAndUploadPreview = async (
                (element.classList?.contains('fixed') && 
                 !element.closest('[data-content-area="true"]'));
         
+        if (shouldIgnore) {
+          console.log('Ignoring element:', element.className, element.tagName);
+        }
         return shouldIgnore;
       },
       // Don't manipulate DOM in onclone to avoid html2canvas issues
       onclone: (clonedDoc) => {
+        console.log('Document cloned for capture');
         // Just mark builder elements as hidden via CSS instead of removing them
         const style = clonedDoc.createElement('style');
         style.textContent = `
@@ -134,10 +138,12 @@ const hideBuilderUI = (): (() => void) => {
  * Finds the best element to capture for preview
  */
 const findContentArea = (): HTMLElement | null => {
+  console.log('Searching for content area to capture...');
   
   // Priority 1: Content area (sections only, no builder UI)
   const contentArea = document.querySelector('[data-content-area="true"]') as HTMLElement;
   if (contentArea) {
+    console.log('Found content area for preview capture');
     return contentArea;
   }
   
@@ -153,6 +159,7 @@ const findContentArea = (): HTMLElement | null => {
   for (const selector of selectors) {
     const element = document.querySelector(selector) as HTMLElement;
     if (element) {
+      console.log(`Found canvas element using selector: ${selector}`);
       return element;
     }
   }
@@ -164,6 +171,7 @@ const findContentArea = (): HTMLElement | null => {
     const parent = sections[0].closest('.canvas, .builder, .page-content, .flex-1') as HTMLElement || 
                   sections[0].parentElement as HTMLElement;
     if (parent) {
+      console.log('Found canvas element by searching page builder sections');
       return parent;
     }
   }
@@ -174,10 +182,12 @@ const findContentArea = (): HTMLElement | null => {
     const parent = pageBuilderContainers[0].closest('.flex-1, .canvas, .builder') as HTMLElement || 
                   pageBuilderContainers[0].parentElement as HTMLElement;
     if (parent) {
+      console.log('Found canvas element by searching generic sections');
       return parent;
     }
   }
   
+  console.log('No content area found');
   return null;
 };
 
@@ -252,6 +262,7 @@ export const capturePageBuilderPreview = async (
   type: 'website_page' | 'funnel_step' = 'website_page'
 ): Promise<string | null> => {
   try {
+    console.log(`Starting preview capture for ${type} ${pageId}`);
     
     // Wait for DOM to be ready
     await new Promise(resolve => setTimeout(resolve, 1500));
@@ -260,6 +271,7 @@ export const capturePageBuilderPreview = async (
     const contentElement = findContentArea();
     
     if (!contentElement) {
+      console.warn('No canvas area found for preview capture');
       return createEmptyPagePreview(pageId, type);
     }
     
@@ -268,13 +280,14 @@ export const capturePageBuilderPreview = async (
     const elements = contentElement.querySelectorAll('[data-pb-element-id]');
     const allSections = contentElement.querySelectorAll('[class*="section"]');
     
-    
+    console.log(`Found ${sections.length} data-pb sections, ${elements.length} elements, ${allSections.length} total sections`);
     
     // More lenient content detection - check for any sections or meaningful content
     const hasContent = sections.length > 0 || elements.length > 0 || allSections.length > 0 || 
                       contentElement.children.length > 0;
     
     if (!hasContent) {
+      console.log('Page appears empty, creating placeholder preview');
       return createEmptyPagePreview(pageId, type);
     }
     
@@ -296,9 +309,12 @@ export const capturePageBuilderPreview = async (
       
       // If main capture failed, try fallback approaches
       if (!previewUrl) {
+        console.log('Main capture failed, trying fallback approaches...');
+        
         // Fallback 1: Try capturing the first section directly
         const firstSection = contentElement.querySelector('[data-pb-section-id], [class*="section"]') as HTMLElement;
         if (firstSection) {
+          console.log('Trying to capture first section...');
           previewUrl = await captureAndUploadPreview(firstSection, `${fileName}_section`, {
             width: 800,
             height: 600,
@@ -308,6 +324,7 @@ export const capturePageBuilderPreview = async (
         
         // Fallback 2: If still no success, create empty preview
         if (!previewUrl) {
+          console.log('All capture attempts failed, creating empty preview');
           previewUrl = await createEmptyPagePreview(pageId, type);
         }
       }
@@ -356,6 +373,7 @@ export const generateAndSavePreview = async (
     
     if (previewUrl) {
       await updatePreviewInDatabase(id, previewUrl, type);
+      console.log(`Preview generated and saved for ${type} ${id}`);
     }
   } catch (error) {
     console.error('Error generating and saving preview:', error);
@@ -431,6 +449,7 @@ export const regeneratePreviewFromManagement = async (
               if (blob) {
                 // Upload placeholder for now
                 // In production, you'd implement proper page rendering
+                console.log('Preview regeneration initiated for', type, id);
               }
               document.body.removeChild(iframe);
               resolve(true);
