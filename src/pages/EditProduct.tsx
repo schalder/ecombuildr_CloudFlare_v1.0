@@ -121,7 +121,7 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
     }
   }, [user, id]);
 
-  // Set selected website from visibility data or default to first website
+  // Set selected website from visibility data or default to first website (only on initial load)
   useEffect(() => {
     console.log('🌐 EditProduct - Website selection logic:', {
       visibleWebsites: visibleWebsites.length,
@@ -131,14 +131,17 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
       currentSelectedWebsiteId: selectedWebsiteId
     });
 
-    if (visibleWebsites.length > 0) {
-      console.log('🌐 EditProduct - Setting from visible websites:', visibleWebsites[0]);
-      setSelectedWebsiteId(visibleWebsites[0]);
-    } else if (storeWebsites.length > 0 && !selectedWebsiteId) {
-      console.log('🌐 EditProduct - Setting from store websites:', storeWebsites[0]);
-      setSelectedWebsiteId(storeWebsites[0].id);
+    // Only set initial website selection, don't override user changes
+    if (!selectedWebsiteId) {
+      if (visibleWebsites.length > 0) {
+        console.log('🌐 EditProduct - Setting from visible websites:', visibleWebsites[0]);
+        setSelectedWebsiteId(visibleWebsites[0]);
+      } else if (storeWebsites.length > 0) {
+        console.log('🌐 EditProduct - Setting from store websites:', storeWebsites[0]);
+        setSelectedWebsiteId(storeWebsites[0].id);
+      }
     }
-  }, [visibleWebsites, storeWebsites, selectedWebsiteId]);
+  }, [visibleWebsites, storeWebsites]); // Removed selectedWebsiteId from dependencies
 
   // Filter categories based on selected website (strict filtering)
   useEffect(() => {
