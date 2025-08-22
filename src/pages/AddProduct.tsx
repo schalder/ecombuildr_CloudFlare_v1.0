@@ -212,18 +212,36 @@ export default function AddProduct() {
         }
       }
 
-      const { data: newProduct, error: insertError } = await supabase.from('products').insert({
-        ...formData,
+      // Guard: Ensure website is selected
+      if (!selectedWebsiteId) {
+        toast({
+          title: "Error",
+          description: "Please select a website for this product.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Build insert object explicitly (avoid spreading UI-only fields)
+      const productData = {
         store_id: stores[0].id,
         slug,
+        name: formData.name,
+        short_description: formData.short_description,
+        description: formData.description,
         price: parseFloat(formData.price) || 0,
         compare_price: formData.compare_price ? parseFloat(formData.compare_price) : null,
         cost_price: formData.cost_price ? parseFloat(formData.cost_price) : null,
+        sku: formData.sku || null,
+        track_inventory: formData.track_inventory,
         inventory_quantity: parseInt(formData.inventory_quantity) || 0,
-        weight_grams: Math.round((parseFloat(formData.weight_kg) || 0) * 1000),
+        is_active: formData.is_active,
         category_id: formData.category_id || null,
+        seo_title: formData.seo_title || null,
+        seo_description: formData.seo_description || null,
         images: formData.images,
         video_url: formData.video_url || null,
+        weight_grams: Math.round((parseFloat(formData.weight_kg) || 0) * 1000),
         // New fields
         variations: hasVariants ? { options: variations, variants: variantEntries } : [],
         shipping_config: {
@@ -239,7 +257,13 @@ export default function AddProduct() {
         allowed_payment_methods: allowedPayments.length ? allowedPayments : null,
         description_mode: descriptionMode,
         description_builder: descriptionBuilder as any,
-      } as any).select('id').single();
+      };
+
+      const { data: newProduct, error: insertError } = await supabase
+        .from('products')
+        .insert(productData)
+        .select('id')
+        .single();
 
       if (insertError) throw insertError;
 
