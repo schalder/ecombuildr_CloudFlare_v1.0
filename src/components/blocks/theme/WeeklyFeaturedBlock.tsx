@@ -11,6 +11,8 @@ import { BlockEditProps, BlockSaveProps } from '../types';
 import { supabase } from '@/integrations/supabase/client';
 import { useUserStore } from '@/hooks/useUserStore';
 import { formatCurrency } from '@/lib/currency';
+import { renderElementStyles } from '@/components/page-builder/utils/styleRenderer';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface WeeklyFeaturedContent {
   title: string;
@@ -205,6 +207,11 @@ const WeeklyFeaturedSave: React.FC<BlockSaveProps> = ({ block }) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const content = block.content as WeeklyFeaturedContent;
+  const isMobile = useIsMobile();
+  
+  // Get responsive styles for this element
+  const deviceType = isMobile ? 'mobile' : 'desktop';
+  const appliedStyles = renderElementStyles(block as any, deviceType);
 
   useEffect(() => {
     if (store?.id) {
@@ -366,7 +373,7 @@ const WeeklyFeaturedSave: React.FC<BlockSaveProps> = ({ block }) => {
 
   if (loading) {
     return (
-      <section className="py-12 px-4">
+      <section className="py-12 px-4" style={appliedStyles}>
         <div className="container mx-auto">
           <div className="text-center mb-8">
             <div className="h-8 bg-muted rounded w-64 mx-auto mb-2"></div>
@@ -379,7 +386,7 @@ const WeeklyFeaturedSave: React.FC<BlockSaveProps> = ({ block }) => {
   }
 
   return (
-    <section className="py-12 px-4">
+    <section className="py-12 px-4" style={appliedStyles}>
       <div className="container mx-auto">
         {(content.title || content.subtitle) && (
           <div className="text-center mb-12">
