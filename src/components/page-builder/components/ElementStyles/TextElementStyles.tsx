@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AlignLeft, AlignCenter, AlignRight, Monitor, Smartphone } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { AlignLeft, AlignCenter, AlignRight, Monitor, Smartphone, ChevronDown } from 'lucide-react';
 import { PageBuilderElement } from '../../types';
 import { ColorPicker } from '@/components/ui/color-picker';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -31,6 +32,13 @@ export const TextElementStyles: React.FC<TextElementStylesProps> = ({
   const [responsiveTab, setResponsiveTab] = React.useState<'desktop' | 'mobile'>('desktop');
   const responsiveStyles = element.styles?.responsive || { desktop: {}, mobile: {} };
   const currentStyles = (responsiveStyles as any)[responsiveTab] || {};
+  
+  // Collapsible state
+  const [typographyOpen, setTypographyOpen] = React.useState(true);
+  const [backgroundOpen, setBackgroundOpen] = React.useState(false);
+  const [borderOpen, setBorderOpen] = React.useState(false);
+  const [spacingOpen, setSpacingOpen] = React.useState(false);
+  
   const handleResponsiveUpdate = (property: string, value: any) => {
     const updatedResponsive = {
       ...responsiveStyles,
@@ -40,6 +48,15 @@ export const TextElementStyles: React.FC<TextElementStylesProps> = ({
       },
     };
     onStyleUpdate('responsive', updatedResponsive);
+  };
+
+  const parsePixelValue = (value: string | undefined): number => {
+    if (!value) return 0;
+    return parseInt(value.replace('px', '')) || 0;
+  };
+
+  const handleSpacingSliderChange = (property: string, value: number) => {
+    handleResponsiveUpdate(property, `${value}px`);
   };
 
   const fontOptions = React.useMemo(() => {
@@ -64,146 +81,150 @@ export const TextElementStyles: React.FC<TextElementStylesProps> = ({
   const selectedFontValue = (fontOptions.find((f: any) => f.value === currentFontFamily)?.value as string) || 'default';
   return (
     <div className="space-y-4">
+      {/* Device Toggle */}
+      <div className="flex items-center justify-between">
+        <Label className="text-xs">Device</Label>
+        <div className="flex space-x-2">
+          <Button
+            size="sm"
+            variant={responsiveTab === 'desktop' ? 'default' : 'outline'}
+            onClick={() => setResponsiveTab('desktop')}
+          >
+            <Monitor className="h-4 w-4 mr-1" /> Desktop
+          </Button>
+          <Button
+            size="sm"
+            variant={responsiveTab === 'mobile' ? 'default' : 'outline'}
+            onClick={() => setResponsiveTab('mobile')}
+          >
+            <Smartphone className="h-4 w-4 mr-1" /> Mobile
+          </Button>
+        </div>
+      </div>
+
       {/* Typography */}
       {showTypography && (
-        <div className="space-y-3">
-          <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Typography</h4>
-          <div className="flex items-center justify-between">
-            <Label className="text-xs">Device</Label>
-            <div className="flex space-x-2">
-              <Button
-                size="sm"
-                variant={responsiveTab === 'desktop' ? 'default' : 'outline'}
-                onClick={() => setResponsiveTab('desktop')}
-              >
-                <Monitor className="h-4 w-4 mr-1" /> Desktop
-              </Button>
-              <Button
-                size="sm"
-                variant={responsiveTab === 'mobile' ? 'default' : 'outline'}
-                onClick={() => setResponsiveTab('mobile')}
-              >
-                <Smartphone className="h-4 w-4 mr-1" /> Mobile
-              </Button>
+        <Collapsible open={typographyOpen} onOpenChange={setTypographyOpen}>
+          <CollapsibleTrigger className="flex items-center justify-between w-full p-2 hover:bg-muted/50 rounded">
+            <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Typography</h4>
+            <ChevronDown className={`h-4 w-4 transition-transform ${typographyOpen ? 'rotate-180' : ''}`} />
+          </CollapsibleTrigger>
+          <CollapsibleContent className="space-y-3 pt-2">
+            <div>
+              <Label className="text-xs">Font Family</Label>
+              <Select value={selectedFontValue} onValueChange={(v) => {
+                const meta = (fontOptions as any[]).find((f: any) => f.value === v);
+                if (meta && meta.family) ensureGoogleFontLoaded(meta.family, meta.weights);
+                if (v === 'default') {
+                  handleResponsiveUpdate('fontFamily', '');
+                } else {
+                  handleResponsiveUpdate('fontFamily', v);
+                }
+              }}>
+                <SelectTrigger className="h-8 bg-background">
+                  <SelectValue placeholder="Default" />
+                </SelectTrigger>
+                <SelectContent>
+                  {(fontOptions as any[]).map((f: any) => (
+                    <SelectItem key={f.label} value={f.value}>{f.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-          </div>
-          
-          <div>
-            <Label className="text-xs">Font Family</Label>
-            <Select value={selectedFontValue} onValueChange={(v) => {
-              const meta = (fontOptions as any[]).find((f: any) => f.value === v);
-              if (meta && meta.family) ensureGoogleFontLoaded(meta.family, meta.weights);
-              if (v === 'default') {
-                handleResponsiveUpdate('fontFamily', '');
-              } else {
-                handleResponsiveUpdate('fontFamily', v);
-              }
-            }}>
-              <SelectTrigger className="h-8 bg-background">
-                <SelectValue placeholder="Default" />
-              </SelectTrigger>
-              <SelectContent>
-                {(fontOptions as any[]).map((f: any) => (
-                  <SelectItem key={f.label} value={f.value}>{f.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
 
-          <div>
-            <Label className="text-xs">Font Size</Label>
-            <div className="flex items-center space-x-2">
-              <Slider
-                value={[parseInt(((currentStyles.fontSize || element.styles?.fontSize || '16px').toString()).replace(/\D/g, ''))]}
-                onValueChange={(value) => handleResponsiveUpdate('fontSize', `${value[0]}px`)}
-                max={72}
-                min={8}
-                step={1}
-                className="flex-1"
-              />
-              <span className="text-xs text-muted-foreground w-12">
-                {(currentStyles.fontSize || element.styles?.fontSize || '16px') as string}
-              </span>
+            <div>
+              <Label className="text-xs">Font Size</Label>
+              <div className="flex items-center space-x-2">
+                <Slider
+                  value={[parseInt(((currentStyles.fontSize || element.styles?.fontSize || '16px').toString()).replace(/\D/g, ''))]}
+                  onValueChange={(value) => handleResponsiveUpdate('fontSize', `${value[0]}px`)}
+                  max={72}
+                  min={8}
+                  step={1}
+                  className="flex-1"
+                />
+                <span className="text-xs text-muted-foreground w-12">
+                  {(currentStyles.fontSize || element.styles?.fontSize || '16px') as string}
+                </span>
+              </div>
             </div>
-          </div>
 
-          <div>
-            <Label className="text-xs">Text Align</Label>
-            <div className="flex space-x-1">
-              <Button
-                size="sm"
-                variant={(currentStyles.textAlign || element.styles?.textAlign) === 'left' ? 'default' : 'outline'}
-                onClick={() => handleResponsiveUpdate('textAlign', 'left')}
-              >
-                <AlignLeft className="h-4 w-4" />
-              </Button>
-              <Button
-                size="sm"
-                variant={(currentStyles.textAlign || element.styles?.textAlign) === 'center' ? 'default' : 'outline'}
-                onClick={() => handleResponsiveUpdate('textAlign', 'center')}
-              >
-                <AlignCenter className="h-4 w-4" />
-              </Button>
-              <Button
-                size="sm"
-                variant={(currentStyles.textAlign || element.styles?.textAlign) === 'right' ? 'default' : 'outline'}
-                onClick={() => handleResponsiveUpdate('textAlign', 'right')}
-              >
-                <AlignRight className="h-4 w-4" />
-              </Button>
+            <div>
+              <Label className="text-xs">Text Align</Label>
+              <div className="flex space-x-1">
+                <Button
+                  size="sm"
+                  variant={(currentStyles.textAlign || element.styles?.textAlign) === 'left' ? 'default' : 'outline'}
+                  onClick={() => handleResponsiveUpdate('textAlign', 'left')}
+                >
+                  <AlignLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                  size="sm"
+                  variant={(currentStyles.textAlign || element.styles?.textAlign) === 'center' ? 'default' : 'outline'}
+                  onClick={() => handleResponsiveUpdate('textAlign', 'center')}
+                >
+                  <AlignCenter className="h-4 w-4" />
+                </Button>
+                <Button
+                  size="sm"
+                  variant={(currentStyles.textAlign || element.styles?.textAlign) === 'right' ? 'default' : 'outline'}
+                  onClick={() => handleResponsiveUpdate('textAlign', 'right')}
+                >
+                  <AlignRight className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
-          </div>
 
-          <div>
-            <Label className="text-xs">Line Height</Label>
-            <div className="flex items-center space-x-2">
-              <Slider
-                value={[parseFloat(((currentStyles.lineHeight ?? element.styles?.lineHeight ?? '1.6').toString()))]}
-                onValueChange={(value) => handleResponsiveUpdate('lineHeight', value[0].toString())}
-                max={3}
-                min={1}
-                step={0.1}
-                className="flex-1"
-              />
-              <span className="text-xs text-muted-foreground w-12">
-                {(currentStyles.lineHeight || element.styles?.lineHeight || '1.6') as string}
-              </span>
+            <div>
+              <Label className="text-xs">Line Height</Label>
+              <div className="flex items-center space-x-2">
+                <Slider
+                  value={[parseFloat(((currentStyles.lineHeight ?? element.styles?.lineHeight ?? '1.6').toString()))]}
+                  onValueChange={(value) => handleResponsiveUpdate('lineHeight', value[0].toString())}
+                  max={3}
+                  min={1}
+                  step={0.1}
+                  className="flex-1"
+                />
+                <span className="text-xs text-muted-foreground w-12">
+                  {(currentStyles.lineHeight || element.styles?.lineHeight || '1.6') as string}
+                </span>
+              </div>
             </div>
-          </div>
 
             <ColorPicker 
               label="Text Color"
               color={(currentStyles.color || element.styles?.color) || ''}
               onChange={(val) => handleResponsiveUpdate('color', val)}
             />
-        </div>
+          </CollapsibleContent>
+        </Collapsible>
       )}
 
       {showBackground && (
-        <>
-          <Separator />
-
-          {/* Background */}
-          <div className="space-y-3">
+        <Collapsible open={backgroundOpen} onOpenChange={setBackgroundOpen}>
+          <CollapsibleTrigger className="flex items-center justify-between w-full p-2 hover:bg-muted/50 rounded">
             <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Background</h4>
-            
+            <ChevronDown className={`h-4 w-4 transition-transform ${backgroundOpen ? 'rotate-180' : ''}`} />
+          </CollapsibleTrigger>
+          <CollapsibleContent className="space-y-3 pt-2">
             <ColorPicker 
               label="Background Color"
               color={(currentStyles.backgroundColor || element.styles?.backgroundColor) || ''}
               onChange={(val) => handleResponsiveUpdate('backgroundColor', val)}
             />
-          </div>
-        </>
+          </CollapsibleContent>
+        </Collapsible>
       )}
 
       {showBorder && (
-        <>
-          <Separator />
-
-          {/* Border */}
-          <div className="space-y-3">
+        <Collapsible open={borderOpen} onOpenChange={setBorderOpen}>
+          <CollapsibleTrigger className="flex items-center justify-between w-full p-2 hover:bg-muted/50 rounded">
             <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Border</h4>
-            
+            <ChevronDown className={`h-4 w-4 transition-transform ${borderOpen ? 'rotate-180' : ''}`} />
+          </CollapsibleTrigger>
+          <CollapsibleContent className="space-y-3 pt-2">
             <div>
               <Label className="text-xs">Border Width</Label>
               <Input
@@ -227,96 +248,136 @@ export const TextElementStyles: React.FC<TextElementStylesProps> = ({
                 placeholder="e.g., 4px"
               />
             </div>
-          </div>
-        </>
+          </CollapsibleContent>
+        </Collapsible>
       )}
 
       {showSpacing && (
-        <>
-          <Separator />
-
-          {/* Spacing */}
-          <div className="space-y-3">
+        <Collapsible open={spacingOpen} onOpenChange={setSpacingOpen}>
+          <CollapsibleTrigger className="flex items-center justify-between w-full p-2 hover:bg-muted/50 rounded">
             <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Spacing</h4>
-            {/* Margin per-side */}
+            <ChevronDown className={`h-4 w-4 transition-transform ${spacingOpen ? 'rotate-180' : ''}`} />
+          </CollapsibleTrigger>
+          <CollapsibleContent className="space-y-4 pt-2">
+            {/* Margin */}
             <div>
-              <Label className="text-xs">Margin</Label>
-              <div className="grid grid-cols-4 gap-2 mt-1">
-                <div>
-                  <Label className="text-2xs text-muted-foreground">Top</Label>
-                  <Input
-                    value={(currentStyles.marginTop || element.styles?.marginTop || '') as string}
-                    onChange={(e) => handleResponsiveUpdate('marginTop', e.target.value || '0px')}
-                    placeholder="0px"
+              <Label className="text-xs font-medium mb-2 block">Margin</Label>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs">Top</Label>
+                    <span className="text-xs text-muted-foreground">{parsePixelValue(currentStyles.marginTop || element.styles?.marginTop)}px</span>
+                  </div>
+                  <Slider
+                    value={[parsePixelValue(currentStyles.marginTop || element.styles?.marginTop)]}
+                    onValueChange={(value) => handleSpacingSliderChange('marginTop', value[0])}
+                    max={200}
+                    step={1}
+                    className="w-full"
                   />
                 </div>
-                <div>
-                  <Label className="text-2xs text-muted-foreground">Right</Label>
-                  <Input
-                    value={(currentStyles.marginRight || element.styles?.marginRight || '') as string}
-                    onChange={(e) => handleResponsiveUpdate('marginRight', e.target.value || '0px')}
-                    placeholder="0px"
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs">Right</Label>
+                    <span className="text-xs text-muted-foreground">{parsePixelValue(currentStyles.marginRight || element.styles?.marginRight)}px</span>
+                  </div>
+                  <Slider
+                    value={[parsePixelValue(currentStyles.marginRight || element.styles?.marginRight)]}
+                    onValueChange={(value) => handleSpacingSliderChange('marginRight', value[0])}
+                    max={200}
+                    step={1}
+                    className="w-full"
                   />
                 </div>
-                <div>
-                  <Label className="text-2xs text-muted-foreground">Bottom</Label>
-                  <Input
-                    value={(currentStyles.marginBottom || element.styles?.marginBottom || '') as string}
-                    onChange={(e) => handleResponsiveUpdate('marginBottom', e.target.value || '0px')}
-                    placeholder="0px"
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs">Bottom</Label>
+                    <span className="text-xs text-muted-foreground">{parsePixelValue(currentStyles.marginBottom || element.styles?.marginBottom)}px</span>
+                  </div>
+                  <Slider
+                    value={[parsePixelValue(currentStyles.marginBottom || element.styles?.marginBottom)]}
+                    onValueChange={(value) => handleSpacingSliderChange('marginBottom', value[0])}
+                    max={200}
+                    step={1}
+                    className="w-full"
                   />
                 </div>
-                <div>
-                  <Label className="text-2xs text-muted-foreground">Left</Label>
-                  <Input
-                    value={(currentStyles.marginLeft || element.styles?.marginLeft || '') as string}
-                    onChange={(e) => handleResponsiveUpdate('marginLeft', e.target.value || '0px')}
-                    placeholder="0px"
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs">Left</Label>
+                    <span className="text-xs text-muted-foreground">{parsePixelValue(currentStyles.marginLeft || element.styles?.marginLeft)}px</span>
+                  </div>
+                  <Slider
+                    value={[parsePixelValue(currentStyles.marginLeft || element.styles?.marginLeft)]}
+                    onValueChange={(value) => handleSpacingSliderChange('marginLeft', value[0])}
+                    max={200}
+                    step={1}
+                    className="w-full"
                   />
                 </div>
               </div>
             </div>
 
-            {/* Padding per-side */}
+            {/* Padding */}
             <div>
-              <Label className="text-xs">Padding</Label>
-              <div className="grid grid-cols-4 gap-2 mt-1">
-                <div>
-                  <Label className="text-2xs text-muted-foreground">Top</Label>
-                  <Input
-                    value={(currentStyles.paddingTop || element.styles?.paddingTop || '') as string}
-                    onChange={(e) => handleResponsiveUpdate('paddingTop', e.target.value || '0px')}
-                    placeholder="0px"
+              <Label className="text-xs font-medium mb-2 block">Padding</Label>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs">Top</Label>
+                    <span className="text-xs text-muted-foreground">{parsePixelValue(currentStyles.paddingTop || element.styles?.paddingTop)}px</span>
+                  </div>
+                  <Slider
+                    value={[parsePixelValue(currentStyles.paddingTop || element.styles?.paddingTop)]}
+                    onValueChange={(value) => handleSpacingSliderChange('paddingTop', value[0])}
+                    max={200}
+                    step={1}
+                    className="w-full"
                   />
                 </div>
-                <div>
-                  <Label className="text-2xs text-muted-foreground">Right</Label>
-                  <Input
-                    value={(currentStyles.paddingRight || element.styles?.paddingRight || '') as string}
-                    onChange={(e) => handleResponsiveUpdate('paddingRight', e.target.value || '0px')}
-                    placeholder="0px"
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs">Right</Label>
+                    <span className="text-xs text-muted-foreground">{parsePixelValue(currentStyles.paddingRight || element.styles?.paddingRight)}px</span>
+                  </div>
+                  <Slider
+                    value={[parsePixelValue(currentStyles.paddingRight || element.styles?.paddingRight)]}
+                    onValueChange={(value) => handleSpacingSliderChange('paddingRight', value[0])}
+                    max={200}
+                    step={1}
+                    className="w-full"
                   />
                 </div>
-                <div>
-                  <Label className="text-2xs text-muted-foreground">Bottom</Label>
-                  <Input
-                    value={(currentStyles.paddingBottom || element.styles?.paddingBottom || '') as string}
-                    onChange={(e) => handleResponsiveUpdate('paddingBottom', e.target.value || '0px')}
-                    placeholder="0px"
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs">Bottom</Label>
+                    <span className="text-xs text-muted-foreground">{parsePixelValue(currentStyles.paddingBottom || element.styles?.paddingBottom)}px</span>
+                  </div>
+                  <Slider
+                    value={[parsePixelValue(currentStyles.paddingBottom || element.styles?.paddingBottom)]}
+                    onValueChange={(value) => handleSpacingSliderChange('paddingBottom', value[0])}
+                    max={200}
+                    step={1}
+                    className="w-full"
                   />
                 </div>
-                <div>
-                  <Label className="text-2xs text-muted-foreground">Left</Label>
-                  <Input
-                    value={(currentStyles.paddingLeft || element.styles?.paddingLeft || '') as string}
-                    onChange={(e) => handleResponsiveUpdate('paddingLeft', e.target.value || '0px')}
-                    placeholder="0px"
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs">Left</Label>
+                    <span className="text-xs text-muted-foreground">{parsePixelValue(currentStyles.paddingLeft || element.styles?.paddingLeft)}px</span>
+                  </div>
+                  <Slider
+                    value={[parsePixelValue(currentStyles.paddingLeft || element.styles?.paddingLeft)]}
+                    onValueChange={(value) => handleSpacingSliderChange('paddingLeft', value[0])}
+                    max={200}
+                    step={1}
+                    className="w-full"
                   />
                 </div>
               </div>
             </div>
-          </div>
-        </>
+          </CollapsibleContent>
+        </Collapsible>
       )}
 
       {/* Ecommerce-specific: Button Styles */}
