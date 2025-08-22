@@ -99,12 +99,12 @@ export const HeroSliderElement: React.FC<HeroSliderElementProps> = ({
     
     switch (content?.layout) {
       case 'side-by-side':
-        return `${baseClasses} grid grid-cols-1 lg:grid-cols-2 gap-8 items-center`;
+        return `${baseClasses} grid grid-cols-1 lg:grid-cols-2 gap-8 items-center px-8 lg:px-16`;
       case 'text-only':
-        return `${baseClasses} text-center py-20`;
+        return `${baseClasses} py-20 px-8`;
       case 'overlay':
       default:
-        return `${baseClasses} relative`;
+        return `${baseClasses} relative flex items-center justify-center min-h-full`;
     }
   };
 
@@ -151,16 +151,15 @@ export const HeroSliderElement: React.FC<HeroSliderElementProps> = ({
 
           {/* Content Container */}
           <div className={cn(
-            "relative z-10",
-            isOverlay && "flex items-center justify-center min-h-full p-8",
+            "relative z-10 w-full",
+            isOverlay && "max-w-4xl mx-auto text-white p-8",
             isSideBySide && "contents",
-            isTextOnly && "max-w-4xl mx-auto px-8"
+            isTextOnly && "max-w-4xl mx-auto"
           )}>
             
             {/* Text Content */}
             <div className={cn(
-              "space-y-6",
-              isOverlay && "max-w-4xl mx-auto text-white",
+              "space-y-6 w-full",
               isSideBySide && "order-2 lg:order-1",
               getTextAlignment()
             )}>
@@ -175,13 +174,23 @@ export const HeroSliderElement: React.FC<HeroSliderElementProps> = ({
               </h2>
               
               {slide.paragraph && (
-                <p className="text-lg md:text-xl opacity-90 max-w-2xl">
+                <p className={cn(
+                  "text-lg md:text-xl opacity-90",
+                  content?.textAlignment === 'center' && "mx-auto max-w-2xl",
+                  content?.textAlignment === 'right' && "ml-auto max-w-2xl",
+                  content?.textAlignment === 'left' && "mr-auto max-w-2xl"
+                )}>
                   {slide.paragraph}
                 </p>
               )}
               
               {slide.buttonText && (
-                <div className="pt-4">
+                <div className={cn(
+                  "pt-4",
+                  content?.textAlignment === 'center' && "flex justify-center",
+                  content?.textAlignment === 'right' && "flex justify-end",
+                  content?.textAlignment === 'left' && "flex justify-start"
+                )}>
                   <Button 
                     size="lg"
                     className="px-8 py-4 text-lg"
