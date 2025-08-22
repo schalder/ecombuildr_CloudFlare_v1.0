@@ -54,6 +54,7 @@ const WeeklyFeaturedElement: React.FC<{
   const appliedStyles = renderElementStyles(element, deviceType);
 
   useEffect(() => {
+    console.log('WeeklyFeaturedElement mounted with store:', store?.id, 'content:', content);
     if (store?.id) {
       fetchProducts();
     }
@@ -82,7 +83,10 @@ const WeeklyFeaturedElement: React.FC<{
     const { data, error } = await query;
 
     if (!error && data) {
+      console.log('WeeklyFeaturedElement: Products loaded:', data.length);
       setProducts(data as Product[]);
+    } else if (error) {
+      console.error('WeeklyFeaturedElement: Error loading products:', error);
     }
     setLoading(false);
   };
@@ -264,6 +268,7 @@ const WeeklyFeaturedElement: React.FC<{
     );
   }
 
+  console.log('WeeklyFeaturedElement rendering:', { loading, products: products.length, showTitle, showSubtitle, title, subtitle });
   return (
     <section style={appliedStyles}>
       <div className="container mx-auto">
@@ -320,5 +325,7 @@ const weeklyFeaturedElementType: ElementType = {
 
 // Register element
 export const registerWeeklyFeaturedElement = () => {
+  console.log('Registering Weekly Featured Element...');
   elementRegistry.register(weeklyFeaturedElementType);
+  console.log('Weekly Featured Element registered:', weeklyFeaturedElementType.id);
 };

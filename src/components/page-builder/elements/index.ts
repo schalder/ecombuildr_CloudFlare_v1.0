@@ -10,6 +10,7 @@ import { registerEcommerceSystemElements } from './EcommerceSystemElements';
 import { registerInlineCheckoutElements } from './InlineCheckoutElement';
 import { registerMarketingElements } from './MarketingElements';
 import { registerWeeklyFeaturedElement } from './WeeklyFeaturedElement';
+import { elementRegistry } from './ElementRegistry';
  
  // Register all elements when module loads
  registerBasicElements();
@@ -23,6 +24,7 @@ import { registerWeeklyFeaturedElement } from './WeeklyFeaturedElement';
  registerNavigationElements();
  registerMarketingElements();
  registerWeeklyFeaturedElement();
+ console.log('All elements registered, available:', elementRegistry.getAll().map(e => e.id));
  
  // Export the registry
- export { elementRegistry } from './ElementRegistry';
+ export { elementRegistry };
