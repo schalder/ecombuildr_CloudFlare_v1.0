@@ -195,35 +195,18 @@ const SocialShareElement: React.FC<{
   
   // Get container alignment for positioning element within column
   const containerAlignment = mergedStyles.containerAlignment || 'center';
-  const fullWidthContainer = mergedStyles.fullWidthContainer || false;
   
-  // Get container alignment class (like PriceElement) - only used when not full width
+  // Get container alignment class (like PriceElement)
   const getContainerAlignmentClass = () => {
-    if (fullWidthContainer) return 'w-full'; // Full width, no alignment needed
-    
     switch (containerAlignment) {
       case 'left': return 'mr-auto';
       case 'right': return 'ml-auto';
       default: return 'mx-auto'; // center
     }
   };
-  
-  // Get container wrapper styles - only use flex positioning when not full width
-  const getContainerWrapperStyles = () => {
-    if (fullWidthContainer) {
-      return { width: '100%' }; // Simple full width
-    }
-    
-    return {
-      display: 'flex',
-      justifyContent: containerAlignment === 'left' ? 'flex-start' : 
-                    containerAlignment === 'right' ? 'flex-end' : 'center'
-    };
-  };
 
   const containerStyles = {
-    maxWidth: mergedStyles.fullWidthContainer ? '100%' : 
-              (mergedStyles.maxWidth === 'none' ? 'none' : (mergedStyles.maxWidth || '32rem')),
+    maxWidth: mergedStyles.maxWidth === 'none' ? 'none' : (mergedStyles.maxWidth || '32rem'),
     backgroundColor: mergedStyles.backgroundColor || 'transparent',
     backgroundOpacity: mergedStyles.backgroundOpacity || 100,
     borderWidth: mergedStyles.borderWidth || '0',
@@ -370,10 +353,14 @@ const SocialShareElement: React.FC<{
       {responsiveCSS && (
         <style dangerouslySetInnerHTML={{ __html: responsiveCSS }} />
       )}
-      {/* Container wrapper - conditional based on full width setting */}
+      {/* Debug container alignment */}
       <div 
-        className={getContainerAlignmentClass()}
-        style={getContainerWrapperStyles()}
+        className={`w-full ${getContainerAlignmentClass()}`}
+        style={{ 
+          display: 'flex',
+          justifyContent: containerAlignment === 'left' ? 'flex-start' : 
+                        containerAlignment === 'right' ? 'flex-end' : 'center'
+        }}
       >
         <div 
           className={`element-${element.id}`}
