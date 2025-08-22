@@ -135,21 +135,22 @@ export const renderSectionStyles = (section: PageBuilderSection, deviceType: 'de
     styles.width = section.customWidth;
   }
   
+  // Merge responsive overrides first
+  const merged = mergeResponsiveStyles(styles, section.styles, deviceType);
+  
   // Auto-center sections when width is less than 100% and no explicit horizontal margins
-  const hasExplicitHorizontalMargin = styles.marginLeft || styles.marginRight || section.styles?.marginLeft || section.styles?.marginRight;
+  const hasExplicitHorizontalMargin = merged.marginLeft || merged.marginRight;
   const responsiveWidth = section.styles?.responsive?.[deviceType]?.width;
   const hasCustomWidth = section.customWidth || responsiveWidth;
   
   if (hasCustomWidth && !hasExplicitHorizontalMargin) {
     const widthValue = responsiveWidth || section.customWidth;
     if (widthValue && widthValue !== '100%' && !widthValue.includes('100%')) {
-      styles.marginLeft = 'auto';
-      styles.marginRight = 'auto';
+      merged.marginLeft = 'auto';
+      merged.marginRight = 'auto';
     }
   }
 
-  // Merge responsive overrides
-  const merged = mergeResponsiveStyles(styles, section.styles, deviceType);
   return merged;
 };
 
@@ -226,21 +227,22 @@ export const renderRowStyles = (row: PageBuilderRow, deviceType: 'desktop' | 'ta
     styles.width = row.customWidth;
   }
   
-  // Auto-center rows when width is less than 100% and no explicit horizontal margins
-  const hasExplicitHorizontalMargin = styles.marginLeft || styles.marginRight || row.styles?.marginLeft || row.styles?.marginRight;
+  // Merge responsive overrides first
+  const merged = mergeResponsiveStyles(styles, row.styles, deviceType);
+  
+  // Auto-center rows when width is less than 100% and no explicit horizontal margins  
+  const hasExplicitHorizontalMargin = merged.marginLeft || merged.marginRight;
   const responsiveWidth = row.styles?.responsive?.[deviceType]?.width;
   const hasCustomWidth = row.customWidth || responsiveWidth;
   
   if (hasCustomWidth && !hasExplicitHorizontalMargin) {
     const widthValue = responsiveWidth || row.customWidth;
     if (widthValue && widthValue !== '100%' && !widthValue.includes('100%')) {
-      styles.marginLeft = 'auto';
-      styles.marginRight = 'auto';
+      merged.marginLeft = 'auto';
+      merged.marginRight = 'auto';
     }
   }
 
-  // Merge responsive overrides
-  const merged = mergeResponsiveStyles(styles, row.styles, deviceType);
   return merged;
 };
 
