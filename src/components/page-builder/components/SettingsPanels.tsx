@@ -14,6 +14,58 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { CompactMediaSelector } from './CompactMediaSelector';
 import { SpacingSliders } from './ElementStyles/_shared/SpacingSliders';
 
+// Main SettingsPanel component that ElementorPageBuilder expects
+interface SettingsPanelProps {
+  selectedItem: any;
+  onUpdate: (updates: any) => void;
+}
+
+export const SettingsPanel: React.FC<SettingsPanelProps> = ({ 
+  selectedItem, 
+  onUpdate 
+}) => {
+  if (!selectedItem) {
+    return (
+      <div className="p-4 text-center text-muted-foreground">
+        Select a section, row, or column to edit its settings.
+      </div>
+    );
+  }
+
+  if (selectedItem.type === 'section') {
+    return (
+      <SectionSettings
+        section={selectedItem.data}
+        onUpdate={onUpdate}
+      />
+    );
+  }
+
+  if (selectedItem.type === 'row') {
+    return (
+      <RowSettings
+        row={selectedItem.data}
+        onUpdate={onUpdate}
+      />
+    );
+  }
+
+  if (selectedItem.type === 'column') {
+    return (
+      <ColumnSettings
+        column={selectedItem.data}
+        onUpdate={onUpdate}
+      />
+    );
+  }
+
+  return (
+    <div className="p-4 text-center text-muted-foreground">
+      Unsupported selection type.
+    </div>
+  );
+};
+
 // Section Settings Panel
 interface SectionSettingsProps {
   section: PageBuilderSection;
@@ -123,9 +175,9 @@ export const SectionSettings: React.FC<SectionSettingsProps> = ({ section, onUpd
           <div className="space-y-2">
             <Label>Background Image</Label>
             <CompactMediaSelector
-              selectedSrc={section.styles?.backgroundImage || ''}
-              onSelect={(url) => handleStyleUpdate('backgroundImage', url)}
-              buttonText="Select Background Image"
+              value={section.styles?.backgroundImage || ''}
+              onChange={(url) => handleStyleUpdate('backgroundImage', url)}
+              label="Select Background Image"
             />
           </div>
           
