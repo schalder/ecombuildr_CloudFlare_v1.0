@@ -10,39 +10,59 @@
     <!-- Console Error Filter for Preview Environment -->
     <script>
       (function() {
-        // Only apply filtering in preview environment
-        if (window.location.hostname === 'localhost' || window.location.hostname.includes('lovable')) {
-          const originalError = console.error;
-          const originalWarn = console.warn;
-          
-          // Filter out repetitive postMessage errors
-          console.error = function(...args) {
-            const message = args.join(' ');
-            if (message.includes('postMessage') || 
-                message.includes('lovable.js') ||
-                message.includes('Failed to execute \'postMessage\'')) {
-              return; // Suppress these errors
-            }
-            originalError.apply(console, args);
-          };
-          
-          console.warn = function(...args) {
-            const message = args.join(' ');
-            if (message.includes('postMessage') || 
-                message.includes('lovable.js')) {
-              return; // Suppress these warnings
-            }
-            originalWarn.apply(console, args);
-          };
-          
-          // Also filter window error events
-          window.addEventListener('error', function(e) {
-            if (e.message && (e.message.includes('postMessage') || e.message.includes('lovable.js'))) {
-              e.stopPropagation();
-              e.preventDefault();
-            }
-          });
-        }
+        // Aggressive console filtering for Lovable preview
+        const originalError = console.error;
+        const originalWarn = console.warn;
+        const originalLog = console.log;
+        
+        console.error = function(...args) {
+          const message = String(args[0] || '').toLowerCase();
+          if (message.includes('postmessage') || 
+              message.includes('domwindow') ||
+              message.includes('target origin') ||
+              message.includes('recipient window') ||
+              message.includes('lovable') ||
+              message.includes('failed to execute')) {
+            return; // Block these errors completely
+          }
+          return originalError.apply(console, args);
+        };
+        
+        console.warn = function(...args) {
+          const message = String(args[0] || '').toLowerCase();
+          if (message.includes('postmessage') || 
+              message.includes('domwindow') ||
+              message.includes('lovable')) {
+            return; // Block these warnings completely
+          }
+          return originalWarn.apply(console, args);
+        };
+        
+        // Also override window.onerror
+        const originalOnError = window.onerror;
+        window.onerror = function(message, source, lineno, colno, error) {
+          const msg = String(message || '').toLowerCase();
+          if (msg.includes('postmessage') || 
+              msg.includes('domwindow') ||
+              msg.includes('target origin') ||
+              msg.includes('lovable')) {
+            return true; // Prevent default error handling
+          }
+          if (originalOnError) {
+            return originalOnError.call(this, message, source, lineno, colno, error);
+          }
+          return false;
+        };
+        
+        // Block unhandled promise rejections related to postMessage
+        window.addEventListener('unhandledrejection', function(e) {
+          const reason = String(e.reason || '').toLowerCase();
+          if (reason.includes('postmessage') || 
+              reason.includes('domwindow') ||
+              reason.includes('lovable')) {
+            e.preventDefault();
+          }
+        });
       })();
     </script>
     
