@@ -37,14 +37,17 @@ const WeeklyFeaturedElement: React.FC<{
   // Get content from element
   const content = element.content || {};
   const {
-    title = 'Weekly Best Selling',
-    subtitle = '',
-    layout = 'hero',
-    showBadge = true,
-    badgeText = 'WEEKLY PICK',
-    selectedProducts = [],
-    limit = 4,
-    showDescription = false
+    title = 'Weekly Featured Products',
+    subtitle = 'Top selling products this week',
+    showTitle = true,
+    showSubtitle = true,
+    sourceType = 'auto',
+    selectedProductIds = [],
+    ctaText = 'Add to Cart',
+    limit = 6,
+    columns = 3,
+    tabletColumns = 2,
+    mobileColumns = 1
   } = content;
   
   // Get responsive styles for this element
@@ -66,11 +69,15 @@ const WeeklyFeaturedElement: React.FC<{
       .eq('store_id', store.id)
       .eq('is_active', true);
 
-    if (selectedProducts?.length > 0) {
-      query = query.in('id', selectedProducts);
+    if (sourceType === 'manual' && selectedProductIds?.length > 0) {
+      query = query.in('id', selectedProductIds);
+    } else if (sourceType === 'auto') {
+      // For auto mode, you could add bestseller logic here
+      // For now, just get recent products as placeholder
+      query = query.order('created_at', { ascending: false });
     }
 
-    query = query.limit(limit || 4);
+    query = query.limit(limit || 6);
 
     const { data, error } = await query;
 
@@ -86,80 +93,37 @@ const WeeklyFeaturedElement: React.FC<{
     }
   };
 
-  const renderHeroLayout = () => {
-    const featuredProduct = products[0];
-    if (!featuredProduct) return null;
-
-    return (
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-        <div className="relative">
-          <div className="aspect-square rounded-2xl overflow-hidden bg-gradient-to-br from-primary/20 to-secondary/20 p-8">
-            {featuredProduct.images && Array.isArray(featuredProduct.images) && featuredProduct.images[0] ? (
-              <img
-                src={featuredProduct.images[0]}
-                alt={featuredProduct.name}
-                className="w-full h-full object-cover rounded-xl"
-              />
-            ) : (
-              <div className="w-full h-full bg-muted rounded-xl flex items-center justify-center">
-                <span className="text-muted-foreground">No Image</span>
-              </div>
-            )}
-          </div>
-          
-          {showBadge && (
-            <Badge className="absolute -top-4 left-4 bg-primary text-primary-foreground px-4 py-2 text-sm font-bold">
-              <Trophy className="w-4 h-4 mr-1" />
-              {badgeText}
-            </Badge>
-          )}
-        </div>
-
-        <div className="space-y-6">
-          <div>
-            <h3 className="text-3xl font-bold mb-2">{featuredProduct.name}</h3>
-            {showDescription && featuredProduct.description && (
-              <p className="text-muted-foreground leading-relaxed">
-                {featuredProduct.description}
-              </p>
-            )}
-          </div>
-
-          <div className="flex items-center gap-1 mb-4">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <Star key={i} className="w-5 h-5 fill-primary text-primary" />
-            ))}
-            <span className="text-sm text-muted-foreground ml-2">(4.8 - 127 reviews)</span>
-          </div>
-
-          <div className="flex items-center gap-3 mb-6">
-            <span className="text-4xl font-bold text-primary">
-              {formatCurrency(featuredProduct.price)}
-            </span>
-            {featuredProduct.compare_price && featuredProduct.compare_price > featuredProduct.price && (
-              <span className="text-xl text-muted-foreground line-through">
-                {formatCurrency(featuredProduct.compare_price)}
-              </span>
-            )}
-          </div>
-
-          <div className="flex gap-4">
-            <Button size="lg" className="px-8" onClick={() => handleAddToCart(featuredProduct)}>
-              <ShoppingCart className="w-5 h-5 mr-2" />
-              Add to Cart
-            </Button>
-            <Button variant="outline" size="lg">
-              <Heart className="w-5 h-5 mr-2" />
-              Wishlist
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
+  // Get responsive grid classes based on device type and content settings
+  const getGridClasses = () => {
+    if (deviceType === 'mobile') {
+      const cols = Math.max(1, Math.min(2, mobileColumns));
+      return cols === 1 ? 'grid-cols-1' : 'grid-cols-2';
+    }
+    if (deviceType === 'tablet') {
+      const cols = Math.max(1, Math.min(4, tabletColumns));
+      const map: Record<number, string> = { 
+        1: 'grid-cols-1', 
+        2: 'grid-cols-2', 
+        3: 'grid-cols-3', 
+        4: 'grid-cols-4' 
+      };
+      return map[cols] || 'grid-cols-2';
+    }
+    // Desktop
+    const cols = Math.max(1, Math.min(6, columns));
+    const map: Record<number, string> = { 
+      1: 'grid-cols-1', 
+      2: 'grid-cols-2', 
+      3: 'grid-cols-3', 
+      4: 'grid-cols-4',
+      5: 'grid-cols-5',
+      6: 'grid-cols-6'
+    };
+    return map[cols] || 'grid-cols-3';
   };
 
-  const renderGridLayout = () => (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+  const renderProductGrid = () => (
+    <div className={`grid gap-6 ${getGridClasses()}`}>
       {products.map((product, index) => (
         <Card key={product.id} className="group/card hover:shadow-lg transition-all duration-300 overflow-hidden">
           <div className="relative aspect-square overflow-hidden">
@@ -175,10 +139,10 @@ const WeeklyFeaturedElement: React.FC<{
               </div>
             )}
             
-            {showBadge && index === 0 && (
+            {index === 0 && (
               <Badge className="absolute top-2 left-2 bg-primary text-primary-foreground">
                 <Trophy className="w-3 h-3 mr-1" />
-                {badgeText}
+                #1 Bestseller
               </Badge>
             )}
           </div>
@@ -206,7 +170,7 @@ const WeeklyFeaturedElement: React.FC<{
 
             <Button size="sm" className="w-full" onClick={() => handleAddToCart(product)}>
               <ShoppingCart className="w-4 h-4 mr-1" />
-              Add to Cart
+              {ctaText}
             </Button>
           </CardContent>
         </Card>
@@ -231,22 +195,27 @@ const WeeklyFeaturedElement: React.FC<{
   return (
     <section style={appliedStyles}>
       <div className="container mx-auto">
-        {(title || subtitle) && (
+        {(showTitle && title) || (showSubtitle && subtitle) ? (
           <div className="text-center mb-12">
-            {title && (
+            {showTitle && title && (
               <h2 className="text-3xl font-bold mb-2">{title}</h2>
             )}
-            {subtitle && (
+            {showSubtitle && subtitle && (
               <p className="text-muted-foreground text-lg">{subtitle}</p>
             )}
           </div>
-        )}
+        ) : null}
 
-        {layout === 'hero' ? renderHeroLayout() : renderGridLayout()}
+        {renderProductGrid()}
 
-        {products.length === 0 && (
+        {products.length === 0 && !loading && (
           <div className="text-center py-12">
-            <p className="text-muted-foreground">No featured products found</p>
+            <p className="text-muted-foreground">
+              {sourceType === 'manual' && selectedProductIds.length === 0 
+                ? 'Please select products in the content settings'
+                : 'No featured products found'
+              }
+            </p>
           </div>
         )}
       </div>
@@ -262,14 +231,17 @@ const weeklyFeaturedElementType: ElementType = {
   icon: Trophy,
   category: 'ecommerce',
   defaultContent: {
-    title: 'Weekly Best Selling',
+    title: 'Weekly Featured Products',
     subtitle: 'Top selling products this week',
-    layout: 'hero',
-    showBadge: true,
-    badgeText: 'WEEKLY PICK',
-    selectedProducts: [],
-    limit: 4,
-    showDescription: false
+    showTitle: true,
+    showSubtitle: true,
+    sourceType: 'auto',
+    selectedProductIds: [],
+    ctaText: 'Add to Cart',
+    limit: 6,
+    columns: 3,
+    tabletColumns: 2,
+    mobileColumns: 1
   },
   description: 'Showcase your weekly featured products'
 };
