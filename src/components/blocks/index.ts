@@ -16,7 +16,7 @@ import { testimonialsBlock } from './theme/TestimonialsBlock';
 import { productGridBlock } from './theme/ProductGridBlock';
 import { categoryCirclesBlock } from './theme/CategoryCirclesBlock';
 import { flashSaleBlock } from './theme/FlashSaleBlock';
-import { weeklyFeaturedBlock } from './theme/WeeklyFeaturedBlock';
+
 import { modernEcommerceHeroBlock } from './theme/ModernEcommerceHeroBlock';
 import { modernProductGridBlock } from './theme/ModernProductGridBlock';
 import { freshOrganicHeroBlock } from './theme/FreshOrganicHeroBlock';
@@ -38,7 +38,7 @@ blockRegistry.register(testimonialsBlock);
 blockRegistry.register(productGridBlock);
 blockRegistry.register(categoryCirclesBlock);
 blockRegistry.register(flashSaleBlock);
-blockRegistry.register(weeklyFeaturedBlock);
+
 blockRegistry.register(modernEcommerceHeroBlock);
 blockRegistry.register(modernProductGridBlock);
 blockRegistry.register(freshOrganicHeroBlock);

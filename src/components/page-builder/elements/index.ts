@@ -9,6 +9,7 @@ import { registerNavigationElements } from './NavigationElements';
 import { registerEcommerceSystemElements } from './EcommerceSystemElements';
 import { registerInlineCheckoutElements } from './InlineCheckoutElement';
 import { registerMarketingElements } from './MarketingElements';
+import { registerWeeklyFeaturedElement } from './WeeklyFeaturedElement';
  
  // Register all elements when module loads
  registerBasicElements();
@@ -21,6 +22,7 @@ import { registerMarketingElements } from './MarketingElements';
  registerAdvancedElements();
  registerNavigationElements();
  registerMarketingElements();
+ registerWeeklyFeaturedElement();
  
  // Export the registry
  export { elementRegistry } from './ElementRegistry';
