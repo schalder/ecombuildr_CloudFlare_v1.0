@@ -1,6 +1,8 @@
 // Centralized SEO utility for pages, websites, and funnels
 // Provides consistent meta, OG, Twitter, canonical, and robots handling
 
+import { logger } from './logger';
+
 export type SEOConfig = {
   title?: string;
   description?: string;
@@ -62,7 +64,7 @@ export function buildCanonical(currentPath?: string, canonicalDomain?: string) {
 
 export function setSEO(input: SEOConfig) {
   const callerInfo = new Error().stack?.split('\n')[2]?.trim() || 'unknown caller';
-  console.log('🔍 setSEO called with:', { 
+  logger.debug('🔍 setSEO called with:', { 
     favicon: input.favicon, 
     title: input.title,
     caller: callerInfo
@@ -144,7 +146,7 @@ export function setSEO(input: SEOConfig) {
 
   // Favicon with race condition protection
   if (cfg.favicon) {
-    console.log('🔥 Setting favicon to:', cfg.favicon);
+    logger.debug('🔥 Setting favicon to:', cfg.favicon);
     
     // Remove ALL existing favicon-related links to prevent conflicts
     const faviconSelectors = [

@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { usePixelTracking } from '@/hooks/usePixelTracking';
 import { useWebsiteContext } from '@/contexts/WebsiteContext';
+import { logger, shouldDisableTracking } from '@/lib/logger';
 
 interface PixelManagerProps {
   websitePixels?: {
@@ -41,12 +42,12 @@ export const PixelManager: React.FC<PixelManagerProps> = ({ websitePixels: initi
   const { trackPageView } = usePixelTracking(currentPixels, storeId, websiteId, funnelId);
 
   const updatePixels = React.useCallback((newPixels: any) => {
-    console.debug('[PixelManager] Updating pixels:', newPixels);
+    logger.debug('[PixelManager] Updating pixels:', newPixels);
     setCurrentPixels(newPixels);
   }, []);
 
   useEffect(() => {
-    if (!currentPixels) return;
+    if (!currentPixels || shouldDisableTracking()) return;
 
     // Load Facebook Pixel
     if (currentPixels.facebook_pixel_id && !window.fbq) {
@@ -73,7 +74,7 @@ export const PixelManager: React.FC<PixelManagerProps> = ({ websitePixels: initi
       noscript.appendChild(img);
       document.head.appendChild(noscript);
       
-      console.debug('[PixelManager] Facebook Pixel loaded:', currentPixels.facebook_pixel_id);
+      logger.debug('[PixelManager] Facebook Pixel loaded:', currentPixels.facebook_pixel_id);
     }
 
     // Load Google Analytics/Ads
@@ -95,7 +96,7 @@ export const PixelManager: React.FC<PixelManagerProps> = ({ websitePixels: initi
       `;
       document.head.appendChild(script2);
       
-      console.debug('[PixelManager] Google Analytics/Ads loaded:', gtagId);
+      logger.debug('[PixelManager] Google Analytics/Ads loaded:', gtagId);
     }
 
     // Track initial page view
@@ -108,7 +109,7 @@ export const PixelManager: React.FC<PixelManagerProps> = ({ websitePixels: initi
 
   // Track navigation changes using browser's History API (works everywhere)
   useEffect(() => {
-    if (!currentPixels) return;
+    if (!currentPixels || shouldDisableTracking()) return;
 
     let lastUrl = window.location.href;
     

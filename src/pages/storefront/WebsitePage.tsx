@@ -6,6 +6,7 @@ import { PageBuilderRenderer } from '@/components/storefront/PageBuilderRenderer
 import { useStore } from '@/contexts/StoreContext';
 import { setGlobalCurrency } from '@/lib/currency';
 import { setSEO, buildCanonical } from '@/lib/seo';
+import { logger } from '@/lib/logger';
 interface WebsitePageData {
   id: string;
   title: string;
@@ -95,7 +96,7 @@ export const WebsitePage: React.FC = () => {
         setLoading(true);
         setError(null);
 
-        console.log('WebsitePage: Fetching website and page:', { resolvedWebsiteId, pageSlug });
+        logger.debug('WebsitePage: Fetching website and page:', { resolvedWebsiteId, pageSlug });
 
         // First fetch the website to check if it's active
         const { data: websiteData, error: websiteError } = await supabase
@@ -106,13 +107,13 @@ export const WebsitePage: React.FC = () => {
           .maybeSingle();
 
         if (websiteError) {
-          console.error('WebsitePage: Error fetching website:', websiteError);
+          logger.error('WebsitePage: Error fetching website:', websiteError);
           setError('Failed to load website');
           return;
         }
 
         if (!websiteData) {
-          console.log('WebsitePage: Website not found or not published:', resolvedWebsiteId);
+          logger.debug('WebsitePage: Website not found or not published:', resolvedWebsiteId);
           setError('Website not found or not available');
           return;
         }
@@ -123,7 +124,7 @@ export const WebsitePage: React.FC = () => {
         try {
           await loadStoreById(websiteData.store_id);
         } catch (e) {
-          console.warn('WebsitePage: loadStoreById failed', e);
+          logger.warn('WebsitePage: loadStoreById failed', e);
         }
 
         // Then fetch the website page
@@ -147,21 +148,21 @@ export const WebsitePage: React.FC = () => {
         const { data: pageData, error: pageError } = await pageQuery.maybeSingle();
 
         if (pageError) {
-          console.error('WebsitePage: Error fetching page:', pageError);
+          logger.error('WebsitePage: Error fetching page:', pageError);
           setError('Failed to load page');
           return;
         }
 
         if (!pageData) {
-          console.log('WebsitePage: Page not found:', pageSlug || 'homepage');
+          logger.debug('WebsitePage: Page not found:', pageSlug || 'homepage');
           setError(pageSlug ? `Page "${pageSlug}" not found` : 'Homepage not found');
           return;
         }
 
-        console.log('WebsitePage: Website and page loaded successfully:', { websiteData, pageData });
+        logger.debug('WebsitePage: Website and page loaded successfully:', { websiteData, pageData });
         setPage(pageData);
       } catch (err) {
-        console.error('WebsitePage: Error fetching data:', err);
+        logger.error('WebsitePage: Error fetching data:', err);
         setError('Failed to load page');
       } finally {
         setLoading(false);

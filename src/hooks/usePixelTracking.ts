@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { logger, shouldDisableTracking } from '@/lib/logger';
 
 declare global {
   interface Window {
@@ -68,13 +69,18 @@ export const usePixelTracking = (pixelConfig?: PixelConfig, storeId?: string, we
       }
 
       await supabase.from('pixel_events').insert(eventRecord);
-      console.debug('[PixelTracking] Stored event in database:', eventType, eventData, { websiteId, funnelId });
+      logger.debug('[PixelTracking] Stored event in database:', eventType, eventData, { websiteId, funnelId });
     } catch (error) {
-      console.warn('[PixelTracking] Failed to store event:', error);
+      logger.warn('[PixelTracking] Failed to store event:', error);
     }
   }, [storeId, websiteId, funnelId]);
 
   const trackEvent = useCallback((eventName: string, eventData: any = {}) => {
+    // Skip tracking entirely in dashboard/builder routes
+    if (shouldDisableTracking()) {
+      return;
+    }
+
     // Store event in database
     storePixelEvent(eventName, eventData);
 
@@ -82,9 +88,9 @@ export const usePixelTracking = (pixelConfig?: PixelConfig, storeId?: string, we
     if (pixelConfig?.facebook_pixel_id && window.fbq) {
       try {
         window.fbq('track', eventName, eventData);
-        console.debug('[PixelTracking] Facebook event:', eventName, eventData);
+        logger.debug('[PixelTracking] Facebook event:', eventName, eventData);
       } catch (error) {
-        console.warn('[PixelTracking] Facebook tracking error:', error);
+        logger.warn('[PixelTracking] Facebook tracking error:', error);
       }
     }
 
@@ -95,9 +101,9 @@ export const usePixelTracking = (pixelConfig?: PixelConfig, storeId?: string, we
           ...eventData,
           send_to: pixelConfig?.google_analytics_id,
         });
-        console.debug('[PixelTracking] Google event:', eventName, eventData);
+        logger.debug('[PixelTracking] Google event:', eventName, eventData);
       } catch (error) {
-        console.warn('[PixelTracking] Google tracking error:', error);
+        logger.warn('[PixelTracking] Google tracking error:', error);
       }
     }
   }, [pixelConfig, storePixelEvent]);
@@ -237,6 +243,11 @@ export const usePixelTracking = (pixelConfig?: PixelConfig, storeId?: string, we
     page_title?: string;
     page_location?: string;
   }) => {
+    // Skip tracking entirely in dashboard/builder routes
+    if (shouldDisableTracking()) {
+      return;
+    }
+
     // Store PageView event in database
     const eventData = {
       page_title: data?.page_title || document.title,
