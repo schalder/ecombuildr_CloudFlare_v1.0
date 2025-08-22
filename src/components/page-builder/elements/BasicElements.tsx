@@ -143,7 +143,7 @@ const ImageElement: React.FC<{
   deviceType?: 'desktop' | 'tablet' | 'mobile';
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
 }> = ({ element, isEditing, deviceType = 'desktop', onUpdate }) => {
-  console.log('ImageElement: Using new alignment implementation');
+  
   const { src, alt, caption, alignment = 'center', linkUrl, linkTarget = '_self' } = element.content;
   const [imageError, setImageError] = React.useState(false);
   const [imageLoading, setImageLoading] = React.useState(false);

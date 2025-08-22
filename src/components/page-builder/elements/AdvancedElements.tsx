@@ -215,7 +215,7 @@ Example:
 </style>
 
 <script>
-  console.log('Custom script executed!');
+  
 </script>`}
               rows={15}
               className="font-mono text-sm"
