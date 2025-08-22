@@ -690,6 +690,10 @@ const CategoryNavigationElement: React.FC<{
     
     const { products: allProducts } = useStoreProducts({ websiteId: resolvedWebsiteId });
     
+    // Fetch review stats for all products
+    const productIds = topProducts.map(p => p.id);
+    const { reviewStats } = useProductReviewStats(productIds);
+    
     // Fetch top selling products for auto mode or selected products for manual mode
     React.useEffect(() => {
       const fetchProducts = async () => {
@@ -939,6 +943,22 @@ const CategoryNavigationElement: React.FC<{
                 <h3 className={titleProps.className} style={titleProps.style}>
                   {product.name}
                 </h3>
+                
+                {reviewStats[product.id] && reviewStats[product.id].rating_count > 0 && (
+                  <div className="flex items-center gap-1 mb-2">
+                    <div className="flex text-yellow-400">
+                      {[...Array(5)].map((_, i) => (
+                        <Star
+                          key={i}
+                          className={`h-3 w-3 ${i < Math.floor(reviewStats[product.id].rating_average) ? 'fill-current' : ''}`}
+                        />
+                      ))}
+                    </div>
+                    <span className="text-xs text-muted-foreground">
+                      ({reviewStats[product.id].rating_average.toFixed(1)})
+                    </span>
+                  </div>
+                )}
                 
                 <p className={priceProps.className} style={priceProps.style}>
                   ${product.price}
