@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { PageBuilderElement } from '../types';
 import { elementRegistry } from '../elements';
 import { cn } from '@/lib/utils';
+import { mergeResponsiveStyles } from '../utils/responsiveStyles';
 
 interface ElementRendererProps {
   element: PageBuilderElement;
@@ -140,6 +141,9 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
 
   const ElementComponent = elementType.component;
 
+  // Merge responsive styles for spacing
+  const mergedStyles = mergeResponsiveStyles({}, element.styles, deviceType);
+
   return (
     <div
       ref={drag}
@@ -148,10 +152,18 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
       className={cn(
         'relative group transition-all duration-200 w-full',
         isDragging && 'opacity-50',
-        isSelected && !isPreviewMode && 'ring-2 ring-primary ring-opacity-50 rounded',
-        element.styles?.margin,
-        element.styles?.padding
+        isSelected && !isPreviewMode && 'ring-2 ring-primary ring-opacity-50 rounded'
       )}
+      style={{
+        marginTop: mergedStyles.marginTop,
+        marginRight: mergedStyles.marginRight,
+        marginBottom: mergedStyles.marginBottom,
+        marginLeft: mergedStyles.marginLeft,
+        paddingTop: mergedStyles.paddingTop,
+        paddingRight: mergedStyles.paddingRight,
+        paddingBottom: mergedStyles.paddingBottom,
+        paddingLeft: mergedStyles.paddingLeft,
+      }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={handleElementClick}

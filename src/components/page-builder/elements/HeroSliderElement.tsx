@@ -50,10 +50,8 @@ export const HeroSliderElement: React.FC<HeroSliderElementProps> = ({
   const content = element.content as HeroSliderContent;
   const slides = content?.slides || [];
   
-  // Merge responsive styles
-  const responsiveStyles = element.styles?.responsive || { desktop: {}, mobile: {} };
-  const currentResponsiveStyles = responsiveStyles[deviceType] || {};
-  const mergedStyles = mergeResponsiveStyles(element.styles || {}, currentResponsiveStyles, deviceType);
+  // Merge responsive styles with base styles
+  const mergedStyles = mergeResponsiveStyles({}, element.styles, deviceType);
 
   // Generate responsive CSS
   const responsiveCSS = generateResponsiveCSS(element.id, element.styles);
@@ -127,7 +125,7 @@ export const HeroSliderElement: React.FC<HeroSliderElementProps> = ({
 
     // Get style values from merged styles (responsive + base styles)
     const getStyleValue = (property: string, fallback?: string) => {
-      return currentResponsiveStyles[property] || (element.styles as any)?.[property] || fallback;
+      return mergedStyles[property] || fallback;
     };
 
     // Typography styles
@@ -295,20 +293,12 @@ export const HeroSliderElement: React.FC<HeroSliderElementProps> = ({
       }} />
       
       <div 
-        className="relative overflow-hidden"
+        className={`element-${element.id} relative overflow-hidden`}
         style={{
           backgroundColor: mergedStyles.backgroundColor,
           opacity: mergedStyles.opacity,
           boxShadow: mergedStyles.boxShadow,
           transform: mergedStyles.transform,
-          marginTop: mergedStyles.marginTop,
-          marginRight: mergedStyles.marginRight,
-          marginBottom: mergedStyles.marginBottom,
-          marginLeft: mergedStyles.marginLeft,
-          paddingTop: mergedStyles.paddingTop,
-          paddingRight: mergedStyles.paddingRight,
-          paddingBottom: mergedStyles.paddingBottom,
-          paddingLeft: mergedStyles.paddingLeft,
         }}
       >
         <Carousel
