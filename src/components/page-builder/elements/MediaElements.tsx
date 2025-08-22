@@ -6,6 +6,7 @@ import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious
 import { PageBuilderElement } from '../types';
 import { elementRegistry } from './ElementRegistry';
 import { InlineEditor } from '../components/InlineEditor';
+import { renderElementStyles } from '../utils/styleRenderer';
 
 // Image Gallery Element
 const ImageGalleryElement: React.FC<{
@@ -120,7 +121,7 @@ const ImageCarouselElement: React.FC<{
   isEditing?: boolean;
   deviceType?: 'desktop' | 'tablet' | 'mobile';
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
-}> = ({ element, isEditing, onUpdate }) => {
+}> = ({ element, isEditing, deviceType = 'desktop', onUpdate }) => {
   const images = element.content.images || [
     'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=400&fit=crop',
     'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&h=400&fit=crop',
@@ -167,7 +168,21 @@ const ImageCarouselElement: React.FC<{
   return (
     <div 
       className="max-w-4xl mx-auto" 
-      style={element.styles}
+      style={{
+        // Apply all styles except spacing (which is handled by ElementRenderer)
+        ...renderElementStyles(element, deviceType),
+        // Remove spacing to avoid conflicts with ElementRenderer
+        margin: undefined,
+        marginTop: undefined,
+        marginRight: undefined,
+        marginBottom: undefined,
+        marginLeft: undefined,
+        padding: undefined,
+        paddingTop: undefined,
+        paddingRight: undefined,
+        paddingBottom: undefined,
+        paddingLeft: undefined,
+      }}
     >
       <div className="relative">
         <Carousel className="w-full" setApi={setApi} opts={{ loop: true }}>

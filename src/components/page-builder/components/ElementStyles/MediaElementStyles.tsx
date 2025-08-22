@@ -173,16 +173,16 @@ export const MediaElementStyles: React.FC<MediaElementStylesProps> = ({
       {/* Spacing */}
       <CollapsibleGroup title="Spacing" isOpen={spacingOpen} onToggle={setSpacingOpen}>
         <SpacingSliders
-          marginTop={(currentStyles.marginTop || element.styles?.marginTop) as string}
-          marginRight={(currentStyles.marginRight || element.styles?.marginRight) as string}
-          marginBottom={(currentStyles.marginBottom || element.styles?.marginBottom) as string}
-          marginLeft={(currentStyles.marginLeft || element.styles?.marginLeft) as string}
-          paddingTop={(currentStyles.paddingTop || element.styles?.paddingTop) as string}
-          paddingRight={(currentStyles.paddingRight || element.styles?.paddingRight) as string}
-          paddingBottom={(currentStyles.paddingBottom || element.styles?.paddingBottom) as string}
-          paddingLeft={(currentStyles.paddingLeft || element.styles?.paddingLeft) as string}
-          onMarginChange={(property, value) => handleResponsiveUpdate(property, value)}
-          onPaddingChange={(property, value) => handleResponsiveUpdate(property, value)}
+          marginTop={element.styles?.marginTop as string}
+          marginRight={element.styles?.marginRight as string}
+          marginBottom={element.styles?.marginBottom as string}
+          marginLeft={element.styles?.marginLeft as string}
+          paddingTop={element.styles?.paddingTop as string}
+          paddingRight={element.styles?.paddingRight as string}
+          paddingBottom={element.styles?.paddingBottom as string}
+          paddingLeft={element.styles?.paddingLeft as string}
+          onMarginChange={(property, value) => onStyleUpdate(property, value)}
+          onPaddingChange={(property, value) => onStyleUpdate(property, value)}
         />
       </CollapsibleGroup>
     </div>
