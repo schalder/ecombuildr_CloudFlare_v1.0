@@ -1,27 +1,18 @@
-import React, { useState, useEffect } from 'react';
-import { Trophy, Star, ShoppingCart, Heart } from 'lucide-react';
+import React from 'react';
+import { Trophy, Star, ShoppingCart } from 'lucide-react';
 import { PageBuilderElement, ElementType } from '../types';
 import { elementRegistry } from './ElementRegistry';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { supabase } from '@/integrations/supabase/client';
-import { useUserStore } from '@/hooks/useUserStore';
 import { formatCurrency } from '@/lib/currency';
 import { renderElementStyles } from '@/components/page-builder/utils/styleRenderer';
 import { useAddToCart } from '@/contexts/AddToCartProvider';
+import { useStoreProducts } from '@/hooks/useStoreData';
+import { useResolvedWebsiteId } from '@/hooks/useResolvedWebsiteId';
+import { useStore } from '@/contexts/StoreContext';
 
-interface Product {
-  id: string;
-  name: string;
-  price: number;
-  compare_price?: number;
-  images: any[];
-  slug: string;
-  short_description?: string;
-  description?: string;
-  is_active: boolean;
-}
+// Product interface is now imported from useStoreData hook
 
 const WeeklyFeaturedElement: React.FC<{
   element: PageBuilderElement;
@@ -29,10 +20,9 @@ const WeeklyFeaturedElement: React.FC<{
   deviceType?: 'desktop' | 'tablet' | 'mobile';
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
 }> = ({ element, isEditing = false, deviceType = 'desktop', onUpdate }) => {
-  const { store } = useUserStore();
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { store } = useStore();
   const { addToCart } = useAddToCart();
+  const websiteId = useResolvedWebsiteId(element);
   
   // Get content from element
   const content = element.content || {};
@@ -53,45 +43,18 @@ const WeeklyFeaturedElement: React.FC<{
   // Get responsive styles for this element
   const appliedStyles = renderElementStyles(element, deviceType);
 
-  useEffect(() => {
-    console.log('WeeklyFeaturedElement mounted with store:', store?.id, 'content:', content);
-    if (store?.id) {
-      fetchProducts();
-    }
-  }, [store?.id, content]);
+  // Use the proper store products hook for data fetching
+  const { 
+    products, 
+    loading, 
+    error 
+  } = useStoreProducts({
+    websiteId,
+    specificProductIds: sourceType === 'manual' ? selectedProductIds : undefined,
+    limit: limit || 6
+  });
 
-  const fetchProducts = async () => {
-    if (!store?.id) return;
-    
-    setLoading(true);
-    let query = supabase
-      .from('products')
-      .select('*')
-      .eq('store_id', store.id)
-      .eq('is_active', true);
-
-    if (sourceType === 'manual' && selectedProductIds?.length > 0) {
-      query = query.in('id', selectedProductIds);
-    } else if (sourceType === 'auto') {
-      // For auto mode, you could add bestseller logic here
-      // For now, just get recent products as placeholder
-      query = query.order('created_at', { ascending: false });
-    }
-
-    query = query.limit(limit || 6);
-
-    const { data, error } = await query;
-
-    if (!error && data) {
-      console.log('WeeklyFeaturedElement: Products loaded:', data.length);
-      setProducts(data as Product[]);
-    } else if (error) {
-      console.error('WeeklyFeaturedElement: Error loading products:', error);
-    }
-    setLoading(false);
-  };
-
-  const handleAddToCart = (product: Product) => {
+  const handleAddToCart = (product: any) => {
     if (!isEditing) {
       addToCart(product);
     }
@@ -290,7 +253,9 @@ const WeeklyFeaturedElement: React.FC<{
             <p className="text-muted-foreground">
               {sourceType === 'manual' && selectedProductIds.length === 0 
                 ? 'Please select products in the content settings'
-                : 'No featured products found'
+                : error 
+                  ? 'Error loading products'
+                  : 'No featured products found'
               }
             </p>
           </div>
