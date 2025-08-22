@@ -165,7 +165,7 @@ const SocialShareElement: React.FC<{
 }> = ({ element, isEditing, deviceType = 'desktop', onUpdate }) => {
   const { toast } = useToast();
   
-  const title = element.content.title || 'Share this page';
+  const title = element.content.title || '';
   const url = element.content.url || window.location.href;
   const text = element.content.text || 'Check out this amazing content!';
   const platforms = element.content.platforms || {
@@ -366,12 +366,22 @@ const SocialShareElement: React.FC<{
           className={`element-${element.id}`}
           style={finalContainerStyles}
         >
-          <InlineEditor
-            value={title}
-            onChange={handleTitleUpdate}
-            style={titleStyles}
-            placeholder="Share title..."
-          />
+          {title && (
+            <InlineEditor
+              value={title}
+              onChange={handleTitleUpdate}
+              style={titleStyles}
+              placeholder="Share title..."
+            />
+          )}
+          {isEditing && !title && (
+            <InlineEditor
+              value=""
+              onChange={handleTitleUpdate}
+              style={titleStyles}
+              placeholder="Add share title (optional)..."
+            />
+          )}
           <div style={getLayoutClass()}>
             {enabledPlatforms.map((platform) => {
               const Icon = platformIcons[platform as keyof typeof platformIcons];
