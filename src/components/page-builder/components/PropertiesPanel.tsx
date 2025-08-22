@@ -48,10 +48,10 @@ import {
 } from './MediaProperties';
 import { 
   GoogleMapsProperties, 
+  CustomHTMLProperties, 
   SocialShareProperties,
   SocialLinksProperties 
 } from './AdvancedProperties';
-import { CustomHTMLProperties } from './CustomHTMLProperties';
 import { HeroSliderContentProperties } from './HeroSliderContentProperties';
 import { CountdownProperties } from './CountdownProperties';
 import {
@@ -210,11 +210,6 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
     // Hero Slider element styles
     if (selectedElement.type === 'hero-slider') {
       return <HeroSliderElementStyles element={selectedElement} onStyleUpdate={handleStyleUpdate} />;
-    }
-    
-    // Custom HTML element - no styles needed
-    if (selectedElement.type === 'custom-html') {
-      return null;
     }
     
     // Default fallback for any other element types (ecommerce, content, media, advanced)
@@ -398,8 +393,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                 {selectedElement.type === 'custom-html' && (
                   <CustomHTMLProperties 
                     element={selectedElement} 
-                    onUpdate={(updates) => onUpdateElement(selectedElement.id, updates)}
-                    deviceType={deviceType}
+                    onUpdate={handleContentUpdate} 
                   />
                 )}
 
