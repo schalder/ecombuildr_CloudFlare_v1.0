@@ -24,6 +24,15 @@ interface SectionSettingsProps {
 }
 
 export const SectionSettings: React.FC<SectionSettingsProps> = ({ section, onUpdate }) => {
+  // Safety check - if section is undefined, return null or error state
+  if (!section) {
+    return (
+      <div className="p-4 flex items-center justify-center">
+        <p className="text-muted-foreground text-sm">No section data available</p>
+      </div>
+    );
+  }
+
   const [customWidthMode, setCustomWidthMode] = useState(!!section.customWidth);
   const [openGroups, setOpenGroups] = useState({
     layout: true,
@@ -539,6 +548,15 @@ interface RowSettingsProps {
 }
 
 export const RowSettings: React.FC<RowSettingsProps> = ({ row, onUpdate }) => {
+  // Safety check - if row is undefined, return null or error state
+  if (!row) {
+    return (
+      <div className="p-4 flex items-center justify-center">
+        <p className="text-muted-foreground text-sm">No row data available</p>
+      </div>
+    );
+  }
+
   const [customWidthMode, setCustomWidthMode] = useState(!!row.customWidth);
   const [openGroups, setOpenGroups] = useState({
     layout: true,
@@ -904,6 +922,15 @@ interface ColumnSettingsProps {
 }
 
 export const ColumnSettings: React.FC<ColumnSettingsProps> = ({ column, onUpdate }) => {
+  // Safety check - if column is undefined, return null or error state
+  if (!column) {
+    return (
+      <div className="p-4 flex items-center justify-center">
+        <p className="text-muted-foreground text-sm">No column data available</p>
+      </div>
+    );
+  }
+
   const [customWidthMode, setCustomWidthMode] = useState(!!column.customWidth);
   const [openGroups, setOpenGroups] = useState({
     anchor: false,
