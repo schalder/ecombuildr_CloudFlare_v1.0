@@ -13,6 +13,7 @@ import { useStoreProducts } from '@/hooks/useStoreData';
 import { useResolvedWebsiteId } from '@/hooks/useResolvedWebsiteId';
 import { useStore } from '@/contexts/StoreContext';
 import { useEcomPaths } from '@/lib/pathResolver';
+import { useProductReviewStats } from '@/hooks/useProductReviewStats';
 
 // Product interface is now imported from useStoreData hook
 
@@ -60,6 +61,10 @@ const WeeklyFeaturedElement: React.FC<{
     specificProductIds: sourceType === 'manual' ? selectedProductIds : undefined,
     limit: limit || 6
   });
+
+  // Fetch review stats for all products
+  const productIds = products.map(p => p.id);
+  const { reviewStats } = useProductReviewStats(productIds);
 
   const handleAddToCart = (product: any) => {
     if (!isEditing) {
@@ -197,12 +202,23 @@ const WeeklyFeaturedElement: React.FC<{
               <h3 className="font-medium text-xs sm:text-sm mb-1 sm:mb-2 line-clamp-2 hover:text-primary transition-colors cursor-pointer leading-tight" style={getTypographyStyles('productTitleStyles')}>{product.name}</h3>
             </Link>
             
-            <div className="flex items-center gap-0.5 sm:gap-1 mb-1 sm:mb-2">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <Star key={i} className="w-2.5 h-2.5 sm:w-3 sm:h-3 fill-primary text-primary" />
-              ))}
-              <span className="text-xs text-muted-foreground ml-0.5 sm:ml-1">(4.5)</span>
-            </div>
+            {reviewStats[product.id] && reviewStats[product.id].rating_count > 0 && (
+              <div className="flex items-center gap-0.5 sm:gap-1 mb-1 sm:mb-2">
+                <div className="flex text-yellow-400">
+                  {[...Array(5)].map((_, i) => (
+                    <Star
+                      key={i}
+                      className={`w-2.5 h-2.5 sm:w-3 sm:h-3 ${
+                        i < Math.floor(reviewStats[product.id].rating_average) ? 'fill-current' : ''
+                      }`}
+                    />
+                  ))}
+                </div>
+                <span className="text-xs text-muted-foreground ml-0.5 sm:ml-1">
+                  ({reviewStats[product.id].rating_average.toFixed(1)})
+                </span>
+              </div>
+            )}
 
             <div className="flex flex-col items-start gap-0.5 sm:gap-1 mb-2 sm:mb-3">
               <span className="font-bold text-primary text-sm sm:text-base md:text-lg" style={getTypographyStyles('priceStyles')}>
