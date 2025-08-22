@@ -96,6 +96,24 @@ export const renderSectionStyles = (section: PageBuilderSection, deviceType: 'de
       styles.boxShadow = section.styles.boxShadow;
     }
     
+    // Border styles
+    if (section.styles.borderWidth || section.styles.borderColor || section.styles.borderRadius) {
+      if (section.styles.borderWidth) {
+        styles.borderWidth = section.styles.borderWidth;
+      }
+      if (section.styles.borderColor) {
+        styles.borderColor = section.styles.borderColor;
+      }
+      if (section.styles.borderRadius) {
+        styles.borderRadius = section.styles.borderRadius;
+      }
+      if (section.styles.borderStyle) {
+        styles.borderStyle = section.styles.borderStyle;
+      } else if (section.styles.borderWidth) {
+        styles.borderStyle = 'solid';
+      }
+    }
+    
     // Spacing styles - prioritize individual properties over shorthand to prevent conflicts
     if (section.styles.paddingTop || section.styles.paddingRight || section.styles.paddingBottom || section.styles.paddingLeft) {
       if (section.styles.paddingTop) styles.paddingTop = section.styles.paddingTop;
@@ -196,6 +214,24 @@ export const renderRowStyles = (row: PageBuilderRow, deviceType: 'desktop' | 'ta
       styles.boxShadow = row.styles.boxShadow;
     }
     
+    // Border styles
+    if (row.styles.borderWidth || row.styles.borderColor || row.styles.borderRadius) {
+      if (row.styles.borderWidth) {
+        styles.borderWidth = row.styles.borderWidth;
+      }
+      if (row.styles.borderColor) {
+        styles.borderColor = row.styles.borderColor;
+      }
+      if (row.styles.borderRadius) {
+        styles.borderRadius = row.styles.borderRadius;
+      }
+      if (row.styles.borderStyle) {
+        styles.borderStyle = row.styles.borderStyle;
+      } else if (row.styles.borderWidth) {
+        styles.borderStyle = 'solid';
+      }
+    }
+    
     // Spacing styles - prioritize individual properties over shorthand to prevent conflicts
     if (row.styles.paddingTop || row.styles.paddingRight || row.styles.paddingBottom || row.styles.paddingLeft) {
       if (row.styles.paddingTop) styles.paddingTop = row.styles.paddingTop;
@@ -285,6 +321,24 @@ export const renderColumnStyles = (column: PageBuilderColumn, deviceType: 'deskt
     // Box shadow styles
     if (column.styles.boxShadow && column.styles.boxShadow !== 'none') {
       styles.boxShadow = column.styles.boxShadow;
+    }
+    
+    // Border styles
+    if (column.styles.borderWidth || column.styles.borderColor || column.styles.borderRadius) {
+      if (column.styles.borderWidth) {
+        styles.borderWidth = column.styles.borderWidth;
+      }
+      if (column.styles.borderColor) {
+        styles.borderColor = column.styles.borderColor;
+      }
+      if (column.styles.borderRadius) {
+        styles.borderRadius = column.styles.borderRadius;
+      }
+      if (column.styles.borderStyle) {
+        styles.borderStyle = column.styles.borderStyle;
+      } else if (column.styles.borderWidth) {
+        styles.borderStyle = 'solid';
+      }
     }
     
     // Content alignment styles - enable flexbox when alignment is set
