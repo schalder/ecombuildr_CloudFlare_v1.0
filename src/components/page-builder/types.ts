@@ -91,6 +91,10 @@ export interface PageBuilderColumn {
     contentJustification?: 'flex-start' | 'center' | 'flex-end' | 'space-between' | 'space-around' | 'space-evenly';
     contentDirection?: 'column' | 'row';
     contentGap?: string;
+    borderWidth?: string;
+    borderColor?: string;
+    borderRadius?: string;
+    borderStyle?: string;
     responsive?: {
       desktop?: Record<string, any>;
       mobile?: Record<string, any>;
@@ -141,6 +145,10 @@ export interface PageBuilderRow {
     width?: string; // Custom width override
     maxWidth?: string;
     minWidth?: string;
+    borderWidth?: string;
+    borderColor?: string;
+    borderRadius?: string;
+    borderStyle?: string;
     responsive?: {
       desktop?: Record<string, any>;
       mobile?: Record<string, any>;
@@ -194,6 +202,10 @@ export interface PageBuilderSection {
     minHeight?: string;
     maxHeight?: string;
     contentVerticalAlignment?: 'top' | 'center' | 'bottom';
+    borderWidth?: string;
+    borderColor?: string;
+    borderRadius?: string;
+    borderStyle?: string;
     responsive?: {
       desktop?: Record<string, any>;
       mobile?: Record<string, any>;
