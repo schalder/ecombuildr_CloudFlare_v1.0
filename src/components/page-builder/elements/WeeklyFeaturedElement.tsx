@@ -218,11 +218,11 @@ const WeeklyFeaturedElement: React.FC<{
             <Button 
               size="sm"
               variant={getButtonVariant() as any}
-              className="w-full text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 h-auto"
+              className="w-full text-sm font-medium px-4 py-2.5 h-auto"
               style={getButtonStyles()}
               onClick={() => handleAddToCart(product)}
             >
-              <ShoppingCart className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+              <ShoppingCart className="w-4 h-4 mr-2" />
               <span className="truncate">
                 {ctaBehavior === 'buy_now' ? (ctaText || 'Buy Now') : (ctaText || 'Add to Cart')}
               </span>
