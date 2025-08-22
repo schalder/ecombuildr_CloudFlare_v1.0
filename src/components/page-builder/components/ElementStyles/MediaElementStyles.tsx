@@ -53,57 +53,59 @@ export const MediaElementStyles: React.FC<MediaElementStylesProps> = ({
         </div>
       </div>
 
-      {/* Dimensions */}
-      <CollapsibleGroup title="Dimensions" isOpen={dimensionsOpen} onToggle={setDimensionsOpen}>
-        <div className="grid grid-cols-2 gap-2">
+      {/* Dimensions - Hide for video elements */}
+      {element.type !== 'video' && (
+        <CollapsibleGroup title="Dimensions" isOpen={dimensionsOpen} onToggle={setDimensionsOpen}>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <Label className="text-xs">Width</Label>
+              <Input
+                value={(currentStyles.width || element.styles?.width || '') as string}
+                onChange={(e) => handleResponsiveUpdate('width', e.target.value)}
+                placeholder="e.g., 100%, 75%, 50%, auto"
+              />
+            </div>
+            <div>
+              <Label className="text-xs">Height</Label>
+              <Input
+                value={element.styles?.height || ''}
+                onChange={(e) => onStyleUpdate('height', e.target.value)}
+                placeholder="auto"
+              />
+            </div>
+          </div>
+
           <div>
-            <Label className="text-xs">Width</Label>
+            <Label className="text-xs">Max Width</Label>
             <Input
-              value={(currentStyles.width || element.styles?.width || '') as string}
-              onChange={(e) => handleResponsiveUpdate('width', e.target.value)}
-              placeholder="e.g., 100%, 75%, 50%, auto"
+              value={element.styles?.maxWidth || ''}
+              onChange={(e) => onStyleUpdate('maxWidth', e.target.value)}
+              placeholder="100%"
             />
           </div>
-          <div>
-            <Label className="text-xs">Height</Label>
-            <Input
-              value={element.styles?.height || ''}
-              onChange={(e) => onStyleUpdate('height', e.target.value)}
-              placeholder="auto"
-            />
-          </div>
-        </div>
 
-        <div>
-          <Label className="text-xs">Max Width</Label>
-          <Input
-            value={element.styles?.maxWidth || ''}
-            onChange={(e) => onStyleUpdate('maxWidth', e.target.value)}
-            placeholder="100%"
-          />
-        </div>
-
-        {element.type === 'image' && (
-          <div>
-            <Label className="text-xs">Object Fit</Label>
-            <Select
-              value={element.styles?.objectFit || 'cover'}
-              onValueChange={(value) => onStyleUpdate('objectFit', value)}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="cover">Cover</SelectItem>
-                <SelectItem value="contain">Contain</SelectItem>
-                <SelectItem value="fill">Fill</SelectItem>
-                <SelectItem value="none">None</SelectItem>
-                <SelectItem value="scale-down">Scale Down</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        )}
-      </CollapsibleGroup>
+          {element.type === 'image' && (
+            <div>
+              <Label className="text-xs">Object Fit</Label>
+              <Select
+                value={element.styles?.objectFit || 'cover'}
+                onValueChange={(value) => onStyleUpdate('objectFit', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="cover">Cover</SelectItem>
+                  <SelectItem value="contain">Contain</SelectItem>
+                  <SelectItem value="fill">Fill</SelectItem>
+                  <SelectItem value="none">None</SelectItem>
+                  <SelectItem value="scale-down">Scale Down</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+        </CollapsibleGroup>
+      )}
 
       {/* Background */}
       <CollapsibleGroup title="Background" isOpen={backgroundOpen} onToggle={setBackgroundOpen}>
