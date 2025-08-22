@@ -327,5 +327,6 @@ const weeklyFeaturedElementType: ElementType = {
 export const registerWeeklyFeaturedElement = () => {
   console.log('Registering Weekly Featured Element...');
   elementRegistry.register(weeklyFeaturedElementType);
-  console.log('Weekly Featured Element registered:', weeklyFeaturedElementType.id);
+  console.log('Weekly Featured Element registered successfully with ID:', weeklyFeaturedElementType.id);
+  console.log('Total elements in registry:', elementRegistry.getAll().length);
 };

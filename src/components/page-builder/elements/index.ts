@@ -24,7 +24,6 @@ import { elementRegistry } from './ElementRegistry';
  registerNavigationElements();
  registerMarketingElements();
  registerWeeklyFeaturedElement();
- console.log('All elements registered, available:', elementRegistry.getAll().map(e => e.id));
  
  // Export the registry
  export { elementRegistry };
