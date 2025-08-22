@@ -44,7 +44,7 @@ export const ColumnRenderer: React.FC<ColumnRendererProps> = ({
         accept: ['element-type', 'element'],
         drop: (item: { elementType?: string; elementId?: string }, monitor) => {
           if (!monitor.didDrop()) {
-            
+            console.log('ColumnRenderer drop:', { elementType: item.elementType, sectionId, rowId, columnId: column.id });
             if (item.elementType) {
               // Adding new element
               onAddElement(sectionId, rowId, column.id, item.elementType);
@@ -140,7 +140,7 @@ export const ColumnRenderer: React.FC<ColumnRendererProps> = ({
                   columnId={column.id}
                   insertIndex={index}
                   onAddElement={(elementType, insertIndex) => {
-                    
+                    console.log('ElementDropZone callback:', { sectionId, rowId, columnId: column.id, elementType, insertIndex });
                     onAddElement(sectionId, rowId, column.id, elementType, insertIndex);
                   }}
                   onMoveElement={onMoveElement ? (elementId, insertIndex) => {
@@ -174,7 +174,7 @@ export const ColumnRenderer: React.FC<ColumnRendererProps> = ({
               columnId={column.id}
               insertIndex={column.elements.length}
               onAddElement={(elementType, insertIndex) => {
-                
+                console.log('ElementDropZone callback (end):', { sectionId, rowId, columnId: column.id, elementType, insertIndex });
                 onAddElement(sectionId, rowId, column.id, elementType, insertIndex);
               }}
               onMoveElement={onMoveElement ? (elementId, insertIndex) => {

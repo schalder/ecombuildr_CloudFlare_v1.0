@@ -45,7 +45,7 @@ export function generateResponsiveCSS(elementId: string, styles: any): string {
     }
   }
   
-  
+  console.log('Generated hover CSS:', css);
   return css;
 }
 

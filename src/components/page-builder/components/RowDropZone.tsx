@@ -19,6 +19,11 @@ export const RowDropZone: React.FC<RowDropZoneProps> = ({
     accept: ['row'],
     drop: (item: { rowId?: string }, monitor) => {
       if (!monitor.didDrop() && item.rowId && onMoveRow) {
+        console.log('RowDropZone drop:', { 
+          rowId: item.rowId,
+          sectionId,
+          insertIndex 
+        });
         onMoveRow(item.rowId, sectionId, insertIndex);
       }
     },

@@ -38,7 +38,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
     accept: 'element',
     drop: (item: { elementType: string }) => {
       // For canvas area drops, we need to add to first available section/row/column
-      
+      console.log('Canvas drop - not implemented for direct element drops');
     },
     collect: (monitor) => ({
       isOver: monitor.isOver(),
@@ -98,7 +98,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
     if (onAddSection) {
       onAddSection();
     } else {
-      
+      console.log('Add section via onAddSection callback needed');
     }
   };
 

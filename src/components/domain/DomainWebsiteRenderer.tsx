@@ -78,7 +78,7 @@ export const DomainWebsiteRenderer: React.FC<DomainWebsiteRendererProps> = ({
 
         // Update pixels with website-specific settings
         if (updatePixels && combinedWebsiteData.settings) {
-          
+          console.debug('[DomainWebsiteRenderer] Updating pixels with website settings:', combinedWebsiteData.settings);
           const settings = combinedWebsiteData.settings as any;
           updatePixels({
             facebook_pixel_id: settings?.facebook_pixel_id,

@@ -38,7 +38,7 @@ export const DomainWebsiteRouter: React.FC<DomainWebsiteRouterProps> = ({
 
   // Track page views on route changes
   useEffect(() => {
-    
+    console.debug('[DomainWebsiteRouter] Route changed:', location.pathname);
     const timer = setTimeout(() => {
       trackPageView({
         page_title: document.title,

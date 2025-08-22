@@ -25,6 +25,14 @@ export const ElementDropZone: React.FC<ElementDropZoneProps> = ({
     accept: ['element-type', 'element'],
     drop: (item: { elementType?: string; elementId?: string }, monitor) => {
       if (!monitor.didDrop()) {
+        console.log('ElementDropZone drop:', { 
+          elementType: item.elementType, 
+          elementId: item.elementId,
+          sectionId,
+          rowId,
+          columnId,
+          insertIndex 
+        });
         
         if (item.elementType) {
           // Adding new element at specific index

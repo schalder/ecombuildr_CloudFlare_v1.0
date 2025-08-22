@@ -93,7 +93,7 @@ export function useHTMLGeneration() {
         return false;
       }
 
-      
+      console.log('✅ HTML snapshot generated and saved successfully');
       return true;
 
     } catch (error) {

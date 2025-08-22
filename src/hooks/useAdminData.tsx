@@ -337,7 +337,7 @@ export const useAdminData = () => {
       // For now, we'll just redirect to their dashboard
       // In a real implementation, you'd generate a temporary auth token
       
-      
+      console.log('Login as user:', userId);
       // Implementation would depend on your auth strategy
       
       return true;

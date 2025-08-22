@@ -43,7 +43,7 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({
         accept: 'element',
         drop: (item: { elementType: string }) => {
           // For now, sections don't directly accept elements - they get rows
-          
+          console.log('Section drop - not implemented for direct elements');
         },
         collect: (monitor) => ({
           isOver: monitor.isOver(),

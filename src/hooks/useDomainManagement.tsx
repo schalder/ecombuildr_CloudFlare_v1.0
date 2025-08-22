@@ -166,7 +166,7 @@ export const useDomainManagement = () => {
       }
 
       // Fallback to manual setup if automatic fails
-      
+      console.log('Automatic Netlify setup failed, falling back to manual:', netlifyError);
       
       toast({
         title: "Auto setup failed",

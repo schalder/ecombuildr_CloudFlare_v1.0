@@ -28,7 +28,7 @@ export const SectionSettings: React.FC<SectionSettingsProps> = ({ section, onUpd
   // Helper functions for height mode management
   const getHeightMode = (styles: any, device: 'desktop' | 'mobile' = 'desktop'): 'auto' | 'viewport' | 'custom' => {
     const deviceStyles = device === 'mobile' ? styles?.responsive?.mobile : styles;
-    
+    console.log('getHeightMode debug:', { device, styles, deviceStyles, minHeight: deviceStyles?.minHeight });
     
     if (!deviceStyles) return 'auto';
     
@@ -38,7 +38,7 @@ export const SectionSettings: React.FC<SectionSettingsProps> = ({ section, onUpd
   };
 
   const applyHeightMode = (mode: 'auto' | 'viewport' | 'custom', device: 'desktop' | 'mobile' = 'desktop') => {
-    
+    console.log('applyHeightMode called:', { mode, device, currentStyles: section.styles });
     
     if (mode === 'auto') {
       if (device === 'mobile') {
@@ -57,7 +57,7 @@ export const SectionSettings: React.FC<SectionSettingsProps> = ({ section, onUpd
           ...section.styles,
           responsive: newResponsive
         };
-        
+        console.log('applyHeightMode auto mobile - updating with:', newStyles);
         onUpdate({ styles: newStyles });
       } else {
         // Remove desktop styles
@@ -65,7 +65,7 @@ export const SectionSettings: React.FC<SectionSettingsProps> = ({ section, onUpd
         delete newStyles.height;
         delete newStyles.minHeight;
         delete newStyles.maxHeight;
-        
+        console.log('applyHeightMode auto desktop - updating with:', newStyles);
         onUpdate({ styles: newStyles });
       }
     } else if (mode === 'viewport') {
@@ -80,7 +80,7 @@ export const SectionSettings: React.FC<SectionSettingsProps> = ({ section, onUpd
             }
           }
         };
-        
+        console.log('applyHeightMode viewport mobile - updating with:', newStyles);
         onUpdate({ styles: newStyles });
       } else {
         const newStyles = {
@@ -88,7 +88,7 @@ export const SectionSettings: React.FC<SectionSettingsProps> = ({ section, onUpd
           minHeight: '100vh'
         };
         delete newStyles.height;
-        
+        console.log('applyHeightMode viewport desktop - updating with:', newStyles);
         onUpdate({ styles: newStyles });
       }
     } else if (mode === 'custom') {
@@ -103,7 +103,7 @@ export const SectionSettings: React.FC<SectionSettingsProps> = ({ section, onUpd
             }
           }
         };
-        
+        console.log('applyHeightMode custom mobile - updating with:', newStyles);
         onUpdate({ styles: newStyles });
       } else {
         const newStyles = {
@@ -111,7 +111,7 @@ export const SectionSettings: React.FC<SectionSettingsProps> = ({ section, onUpd
           minHeight: '50vh'
         };
         delete newStyles.height;
-        
+        console.log('applyHeightMode custom desktop - updating with:', newStyles);
         onUpdate({ styles: newStyles });
       }
     }

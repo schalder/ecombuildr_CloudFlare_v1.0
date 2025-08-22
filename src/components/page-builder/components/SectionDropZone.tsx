@@ -17,6 +17,10 @@ export const SectionDropZone: React.FC<SectionDropZoneProps> = ({
     accept: ['section'],
     drop: (item: { sectionId?: string }, monitor) => {
       if (!monitor.didDrop() && item.sectionId && onMoveSection) {
+        console.log('SectionDropZone drop:', { 
+          sectionId: item.sectionId,
+          insertIndex 
+        });
         onMoveSection(item.sectionId, insertIndex);
       }
     },

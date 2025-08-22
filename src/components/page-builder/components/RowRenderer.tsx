@@ -43,7 +43,7 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
         drop: (item: { elementType: string }) => {
           // Add element to first column by default
           if (row.columns.length > 0) {
-            
+            console.log('RowRenderer drop to first column:', { sectionId, rowId: row.id, columnId: row.columns[0].id, elementType: item.elementType });
             onAddElement(sectionId, row.id, row.columns[0].id, item.elementType);
           }
         },
