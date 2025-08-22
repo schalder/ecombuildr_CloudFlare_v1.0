@@ -206,7 +206,8 @@ const SocialShareElement: React.FC<{
   };
 
   const containerStyles = {
-    maxWidth: mergedStyles.maxWidth === 'none' ? 'none' : (mergedStyles.maxWidth || '32rem'),
+    maxWidth: mergedStyles.fullWidthContainer ? '100%' : 
+              (mergedStyles.maxWidth === 'none' ? 'none' : (mergedStyles.maxWidth || '32rem')),
     backgroundColor: mergedStyles.backgroundColor || 'transparent',
     backgroundOpacity: mergedStyles.backgroundOpacity || 100,
     borderWidth: mergedStyles.borderWidth || '0',
