@@ -243,40 +243,6 @@ export const SocialShareElementStyles: React.FC<SocialShareElementStylesProps> =
         </CollapsibleTrigger>
         <CollapsibleContent className="space-y-3 pt-2">
           <div>
-            <Label className="text-xs">Button Variant</Label>
-            <Select
-              value={getCurrentValue('buttonVariant', 'outline')}
-              onValueChange={(value) => handleResponsiveUpdate('buttonVariant', value)}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="default">Default</SelectItem>
-                <SelectItem value="outline">Outline</SelectItem>
-                <SelectItem value="ghost">Ghost</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
-            <Label className="text-xs">Button Size</Label>
-            <Select
-              value={getCurrentValue('buttonSize', 'sm')}
-              onValueChange={(value) => handleResponsiveUpdate('buttonSize', value)}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="sm">Small</SelectItem>
-                <SelectItem value="default">Default</SelectItem>
-                <SelectItem value="lg">Large</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
             <Label className="text-xs">Button Text Color</Label>
             <ColorPicker
               color={getCurrentValue('buttonTextColor', 'auto')}

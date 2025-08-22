@@ -61,23 +61,26 @@ export const SocialLinksElement: React.FC<SocialLinksElementProps> = ({
     }
   };
 
-  // Get responsive styles
-  const currentStyles = element.styles || {};
+  // Get responsive styles - properly access the responsive styles structure
+  const baseStyles = element.styles || {};
+  const responsiveStyles = baseStyles.responsive || {};
+  const currentDeviceStyles = responsiveStyles[deviceType] || {};
+  const currentStyles = { ...baseStyles, ...currentDeviceStyles };
 
   // Container styles
   const containerStyles: React.CSSProperties = {
-    textAlign: (currentStyles as any).containerAlignment || 'center',
-    maxWidth: (currentStyles as any).containerMaxWidth || 'none',
+    textAlign: currentStyles.containerAlignment || 'center',
+    maxWidth: currentStyles.maxWidth || 'none',
     margin: '0 auto',
-    backgroundColor: (currentStyles as any).containerBackground && (currentStyles as any).containerBackground !== 'transparent' 
-      ? (currentStyles as any).containerBackground 
+    backgroundColor: currentStyles.backgroundColor && currentStyles.backgroundColor !== 'transparent' && currentStyles.backgroundColor !== 'auto'
+      ? currentStyles.backgroundColor 
       : undefined,
-    padding: (currentStyles as any).containerPadding || undefined,
-    borderRadius: (currentStyles as any).containerBorderRadius || undefined,
-    border: (currentStyles as any).containerBorderWidth 
-      ? `${(currentStyles as any).containerBorderWidth}px solid ${(currentStyles as any).containerBorderColor || '#e2e8f0'}` 
+    padding: currentStyles.padding || undefined,
+    borderRadius: currentStyles.borderRadius || undefined,
+    border: currentStyles.borderWidth 
+      ? `${currentStyles.borderWidth} solid ${currentStyles.borderColor || 'hsl(var(--border))'}` 
       : undefined,
-    boxShadow: (currentStyles as any).containerBoxShadow || undefined,
+    boxShadow: currentStyles.boxShadow && currentStyles.boxShadow !== 'none' ? currentStyles.boxShadow : undefined,
     marginTop: currentStyles.marginTop || undefined,
     marginRight: currentStyles.marginRight || undefined,
     marginBottom: currentStyles.marginBottom || undefined,
@@ -90,24 +93,30 @@ export const SocialLinksElement: React.FC<SocialLinksElementProps> = ({
 
   // Title styles
   const titleStyles: React.CSSProperties = {
-    fontSize: (currentStyles as any).titleFontSize || '18px',
-    fontWeight: (currentStyles as any).titleFontWeight || '600',
-    color: (currentStyles as any).titleColor || 'currentColor',
-    marginBottom: (currentStyles as any).titleMarginBottom || '16px',
+    fontSize: currentStyles.titleFontSize || '18px',
+    fontWeight: currentStyles.titleFontWeight || '600',
+    color: currentStyles.titleColor && currentStyles.titleColor !== 'auto' ? currentStyles.titleColor : 'currentColor',
+    marginBottom: currentStyles.titleMarginBottom || '16px',
   };
 
   // Button container styles
   const getLayoutClass = (): React.CSSProperties => {
+    const layoutType = currentStyles.buttonLayout || layout;
+    const spacing = currentStyles.buttonSpacing || '12px';
+    const alignment = currentStyles.containerAlignment || 'center';
+    
     const baseStyles: React.CSSProperties = {
       display: 'flex',
-      gap: (currentStyles as any).buttonSpacing || '12px',
-      justifyContent: (currentStyles as any).containerAlignment === 'left' ? 'flex-start' 
-        : (currentStyles as any).containerAlignment === 'right' ? 'flex-end' 
+      gap: spacing,
+      justifyContent: alignment === 'left' ? 'flex-start' 
+        : alignment === 'right' ? 'flex-end' 
         : 'center',
     };
 
-    if (layout === 'vertical') {
+    if (layoutType === 'vertical') {
       return { ...baseStyles, flexDirection: 'column', alignItems: 'center' };
+    } else if (layoutType === 'grid') {
+      return { ...baseStyles, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))' };
     }
     
     return { ...baseStyles, flexWrap: 'wrap' };
@@ -120,15 +129,21 @@ export const SocialLinksElement: React.FC<SocialLinksElementProps> = ({
       alignItems: 'center',
       gap: showIcons && showLabels ? (iconSpacing === 'tight' ? '4px' : iconSpacing === 'wide' ? '12px' : '8px') : '0',
       padding: buttonSize === 'sm' ? '6px 12px' : buttonSize === 'lg' ? '12px 24px' : '8px 16px',
-      borderRadius: '6px',
+      borderRadius: currentStyles.buttonBorderRadius || '6px',
       fontSize: buttonSize === 'sm' ? '14px' : buttonSize === 'lg' ? '16px' : '14px',
       fontWeight: '500',
       textDecoration: 'none',
       transition: 'all 0.2s ease-in-out',
       cursor: 'pointer',
-      backgroundColor: (currentStyles as any).buttonBackground || (buttonVariant === 'solid' ? 'hsl(var(--primary))' : 'transparent'),
-      color: (currentStyles as any).buttonTextColor || (buttonVariant === 'solid' ? 'hsl(var(--primary-foreground))' : 'hsl(var(--foreground))'),
-      border: buttonVariant === 'outline' ? `1px solid ${(currentStyles as any).buttonBorderColor || 'hsl(var(--border))'}` : 'none',
+      backgroundColor: currentStyles.buttonBackgroundColor && currentStyles.buttonBackgroundColor !== 'auto' 
+        ? currentStyles.buttonBackgroundColor 
+        : (buttonVariant === 'solid' ? 'hsl(var(--primary))' : 'transparent'),
+      color: currentStyles.buttonTextColor && currentStyles.buttonTextColor !== 'auto'
+        ? currentStyles.buttonTextColor
+        : (buttonVariant === 'solid' ? 'hsl(var(--primary-foreground))' : 'hsl(var(--foreground))'),
+      border: buttonVariant === 'outline' 
+        ? `${currentStyles.buttonBorderWidth || '1px'} solid ${currentStyles.buttonBorderColor && currentStyles.buttonBorderColor !== 'auto' ? currentStyles.buttonBorderColor : 'hsl(var(--border))'}` 
+        : 'none',
     };
 
     return baseStyles;
