@@ -5,6 +5,46 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#10B981" />
     
+    <!-- Console Error Filter - Block repetitive postMessage errors -->
+    <script>
+      (function() {
+        // Store original console methods
+        const originalError = console.error;
+        const originalWarn = console.warn;
+        
+        // Filter function
+        function shouldBlock(args) {
+          const message = args.join(' ');
+          return message.includes('postMessage') && 
+                 message.includes('target origin') && 
+                 message.includes('lovable.dev');
+        }
+        
+        // Override console.error
+        console.error = function(...args) {
+          if (!shouldBlock(args)) {
+            originalError.apply(console, args);
+          }
+        };
+        
+        // Override console.warn
+        console.warn = function(...args) {
+          if (!shouldBlock(args)) {
+            originalWarn.apply(console, args);
+          }
+        };
+        
+        // Block window errors
+        window.addEventListener('error', function(e) {
+          if (e.message && e.message.includes('postMessage') && e.message.includes('lovable.dev')) {
+            e.preventDefault();
+            e.stopPropagation();
+            return false;
+          }
+        }, true);
+      })();
+    </script>
+    
     <!-- Dynamic SEO tags will be loaded here -->
     <script>
       (function() {
