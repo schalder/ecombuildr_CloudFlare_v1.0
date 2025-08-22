@@ -3,12 +3,13 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
-import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AlignLeft, AlignCenter, AlignRight, Monitor, Smartphone } from 'lucide-react';
 import { ColorPicker } from '@/components/ui/color-picker';
 import { PageBuilderElement } from '../../types';
+import { CollapsibleGroup } from './_shared/CollapsibleGroup';
+import { SpacingSliders } from './_shared/SpacingSliders';
 
 interface ButtonElementStylesProps {
   element: PageBuilderElement;
@@ -20,6 +21,10 @@ export const ButtonElementStyles: React.FC<ButtonElementStylesProps> = ({
   onStyleUpdate,
 }) => {
   const [responsiveTab, setResponsiveTab] = useState<'desktop' | 'mobile'>('desktop');
+  const [typographyOpen, setTypographyOpen] = useState(true);
+  const [colorsOpen, setColorsOpen] = useState(false);
+  const [bordersOpen, setBordersOpen] = useState(false);
+  const [spacingOpen, setSpacingOpen] = useState(false);
 
   // Get responsive styles
   const responsiveStyles = element.styles?.responsive || { desktop: {}, mobile: {} };
@@ -59,12 +64,8 @@ export const ButtonElementStyles: React.FC<ButtonElementStylesProps> = ({
         </Tabs>
       </div>
 
-      <Separator />
-
       {/* Width Controls */}
-      <div className="space-y-3">
-        <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Width</h4>
-        
+      <CollapsibleGroup title="Dimensions" isOpen={true} onToggle={() => {}}>
         <div className="flex items-center justify-between">
           <Label className="text-xs">Full Width</Label>
           <Switch
@@ -83,14 +84,10 @@ export const ButtonElementStyles: React.FC<ButtonElementStylesProps> = ({
             />
           </div>
         )}
-      </div>
-
-      <Separator />
+      </CollapsibleGroup>
 
       {/* Typography */}
-      <div className="space-y-3">
-        <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Typography</h4>
-        
+      <CollapsibleGroup title="Typography" isOpen={typographyOpen} onToggle={setTypographyOpen}>
         <div>
           <Label className="text-xs">Font Size</Label>
           <div className="flex items-center space-x-2">
@@ -127,14 +124,7 @@ export const ButtonElementStyles: React.FC<ButtonElementStylesProps> = ({
             </Button>
           </div>
         </div>
-      </div>
 
-      <Separator />
-
-      {/* Alignment */}
-      <div className="space-y-3">
-        <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Alignment</h4>
-        
         <div>
           <Label className="text-xs">Text Align</Label>
           <div className="flex space-x-1">
@@ -161,14 +151,10 @@ export const ButtonElementStyles: React.FC<ButtonElementStylesProps> = ({
             </Button>
           </div>
         </div>
-      </div>
-
-      <Separator />
+      </CollapsibleGroup>
 
       {/* Colors */}
-      <div className="space-y-3">
-        <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Colors</h4>
-        
+      <CollapsibleGroup title="Colors" isOpen={colorsOpen} onToggle={setColorsOpen}>
         <div>
           <Label className="text-xs">Text Color</Label>
           <ColorPicker
@@ -200,14 +186,10 @@ export const ButtonElementStyles: React.FC<ButtonElementStylesProps> = ({
             onChange={(color) => handleResponsiveUpdate('hoverBackgroundColor', color)}
           />
         </div>
-      </div>
-
-      <Separator />
+      </CollapsibleGroup>
 
       {/* Borders & Effects */}
-      <div className="space-y-3">
-        <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Borders & Effects</h4>
-        
+      <CollapsibleGroup title="Borders & Effects" isOpen={bordersOpen} onToggle={setBordersOpen}>
         <div>
           <Label className="text-xs">Border Width</Label>
           <Input
@@ -250,74 +232,23 @@ export const ButtonElementStyles: React.FC<ButtonElementStylesProps> = ({
             placeholder="e.g., 0 2px 4px rgba(0,0,0,0.1)"
           />
         </div>
-      </div>
-
-      <Separator />
+      </CollapsibleGroup>
 
       {/* Spacing */}
-      <div className="space-y-3">
-        <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Spacing</h4>
-        
-        <div>
-          <Label className="text-xs">Margin</Label>
-          <div className="grid grid-cols-4 gap-1">
-            <Input
-              value={getCurrentValue('marginTop')}
-              onChange={(e) => handleResponsiveUpdate('marginTop', e.target.value)}
-              placeholder="Top"
-              className="text-xs"
-            />
-            <Input
-              value={getCurrentValue('marginRight')}
-              onChange={(e) => handleResponsiveUpdate('marginRight', e.target.value)}
-              placeholder="Right"
-              className="text-xs"
-            />
-            <Input
-              value={getCurrentValue('marginBottom')}
-              onChange={(e) => handleResponsiveUpdate('marginBottom', e.target.value)}
-              placeholder="Bottom"
-              className="text-xs"
-            />
-            <Input
-              value={getCurrentValue('marginLeft')}
-              onChange={(e) => handleResponsiveUpdate('marginLeft', e.target.value)}
-              placeholder="Left"
-              className="text-xs"
-            />
-          </div>
-        </div>
-
-        <div>
-          <Label className="text-xs">Padding</Label>
-          <div className="grid grid-cols-4 gap-1">
-            <Input
-              value={getCurrentValue('paddingTop')}
-              onChange={(e) => handleResponsiveUpdate('paddingTop', e.target.value)}
-              placeholder="Top"
-              className="text-xs"
-            />
-            <Input
-              value={getCurrentValue('paddingRight')}
-              onChange={(e) => handleResponsiveUpdate('paddingRight', e.target.value)}
-              placeholder="Right"
-              className="text-xs"
-            />
-            <Input
-              value={getCurrentValue('paddingBottom')}
-              onChange={(e) => handleResponsiveUpdate('paddingBottom', e.target.value)}
-              placeholder="Bottom"
-              className="text-xs"
-            />
-            <Input
-              value={getCurrentValue('paddingLeft')}
-              onChange={(e) => handleResponsiveUpdate('paddingLeft', e.target.value)}
-              placeholder="Left"
-              className="text-xs"
-            />
-          </div>
-        </div>
-      </div>
+      <CollapsibleGroup title="Spacing" isOpen={spacingOpen} onToggle={setSpacingOpen}>
+        <SpacingSliders
+          marginTop={getCurrentValue('marginTop')}
+          marginRight={getCurrentValue('marginRight')}
+          marginBottom={getCurrentValue('marginBottom')}
+          marginLeft={getCurrentValue('marginLeft')}
+          paddingTop={getCurrentValue('paddingTop')}
+          paddingRight={getCurrentValue('paddingRight')}
+          paddingBottom={getCurrentValue('paddingBottom')}
+          paddingLeft={getCurrentValue('paddingLeft')}
+          onMarginChange={(property, value) => handleResponsiveUpdate(property, value)}
+          onPaddingChange={(property, value) => handleResponsiveUpdate(property, value)}
+        />
+      </CollapsibleGroup>
     </div>
   );
 };

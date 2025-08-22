@@ -3,9 +3,10 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
-import { Separator } from '@/components/ui/separator';
 import { AlignLeft, AlignCenter, AlignRight } from 'lucide-react';
 import { PageBuilderElement } from '../../types';
+import { CollapsibleGroup } from './_shared/CollapsibleGroup';
+import { SpacingSliders } from './_shared/SpacingSliders';
 
 interface FormElementStylesProps {
   element: PageBuilderElement;
@@ -16,12 +17,32 @@ export const FormElementStyles: React.FC<FormElementStylesProps> = ({
   element,
   onStyleUpdate,
 }) => {
+  const [typographyOpen, setTypographyOpen] = React.useState(true);
+  const [backgroundOpen, setBackgroundOpen] = React.useState(false);
+  const [borderOpen, setBorderOpen] = React.useState(false);
+  const [spacingOpen, setSpacingOpen] = React.useState(false);
+
+  const parseMarginPadding = (value: string) => {
+    const parts = (value || '0px').split(' ');
+    return {
+      top: parts[0] || '0px',
+      right: parts[1] || parts[0] || '0px',
+      bottom: parts[2] || parts[0] || '0px',
+      left: parts[3] || parts[1] || parts[0] || '0px'
+    };
+  };
+
+  const formatMarginPadding = (top: string, right: string, bottom: string, left: string) => {
+    return `${top} ${right} ${bottom} ${left}`;
+  };
+
+  const margin = parseMarginPadding(element.styles?.margin as string);
+  const padding = parseMarginPadding(element.styles?.padding as string);
+
   return (
     <div className="space-y-4">
       {/* Typography */}
-      <div className="space-y-3">
-        <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Typography</h4>
-        
+      <CollapsibleGroup title="Typography" isOpen={typographyOpen} onToggle={setTypographyOpen}>
         <div>
           <Label className="text-xs">Font Size</Label>
           <div className="flex items-center space-x-2">
@@ -48,14 +69,10 @@ export const FormElementStyles: React.FC<FormElementStylesProps> = ({
             className="w-full h-10"
           />
         </div>
-      </div>
-
-      <Separator />
+      </CollapsibleGroup>
 
       {/* Background */}
-      <div className="space-y-3">
-        <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Background</h4>
-        
+      <CollapsibleGroup title="Background" isOpen={backgroundOpen} onToggle={setBackgroundOpen}>
         <div>
           <Label className="text-xs">Background Color</Label>
           <Input
@@ -65,14 +82,10 @@ export const FormElementStyles: React.FC<FormElementStylesProps> = ({
             className="w-full h-10"
           />
         </div>
-      </div>
-
-      <Separator />
+      </CollapsibleGroup>
 
       {/* Border */}
-      <div className="space-y-3">
-        <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Border</h4>
-        
+      <CollapsibleGroup title="Border" isOpen={borderOpen} onToggle={setBorderOpen}>
         <div>
           <Label className="text-xs">Border Width</Label>
           <Input
@@ -100,32 +113,33 @@ export const FormElementStyles: React.FC<FormElementStylesProps> = ({
             placeholder="e.g., 4px"
           />
         </div>
-      </div>
-
-      <Separator />
+      </CollapsibleGroup>
 
       {/* Spacing */}
-      <div className="space-y-3">
-        <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Spacing</h4>
-        
-        <div>
-          <Label className="text-xs">Margin</Label>
-          <Input
-            value={element.styles?.margin || ''}
-            onChange={(e) => onStyleUpdate('margin', e.target.value)}
-            placeholder="e.g., 10px 20px"
-          />
-        </div>
-
-        <div>
-          <Label className="text-xs">Padding</Label>
-          <Input
-            value={element.styles?.padding || ''}
-            onChange={(e) => onStyleUpdate('padding', e.target.value)}
-            placeholder="e.g., 10px 20px"
-          />
-        </div>
-      </div>
+      <CollapsibleGroup title="Spacing" isOpen={spacingOpen} onToggle={setSpacingOpen}>
+        <SpacingSliders
+          marginTop={margin.top}
+          marginRight={margin.right}
+          marginBottom={margin.bottom}
+          marginLeft={margin.left}
+          paddingTop={padding.top}
+          paddingRight={padding.right}
+          paddingBottom={padding.bottom}
+          paddingLeft={padding.left}
+          onMarginChange={(property, value) => {
+            const current = parseMarginPadding(element.styles?.margin as string);
+            const key = property.replace('margin', '').toLowerCase();
+            const updated = { ...current, [key]: value };
+            onStyleUpdate('margin', formatMarginPadding(updated.top, updated.right, updated.bottom, updated.left));
+          }}
+          onPaddingChange={(property, value) => {
+            const current = parseMarginPadding(element.styles?.padding as string);
+            const key = property.replace('padding', '').toLowerCase();
+            const updated = { ...current, [key]: value };
+            onStyleUpdate('padding', formatMarginPadding(updated.top, updated.right, updated.bottom, updated.left));
+          }}
+        />
+      </CollapsibleGroup>
     </div>
   );
 };

@@ -3,11 +3,12 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
-import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import { ColorPicker } from '@/components/ui/color-picker';
 import { Monitor, Smartphone } from 'lucide-react';
 import { PageBuilderElement } from '../../types';
+import { CollapsibleGroup } from './_shared/CollapsibleGroup';
+import { SpacingSliders } from './_shared/SpacingSliders';
 
 interface MediaElementStylesProps {
   element: PageBuilderElement;
@@ -20,6 +21,11 @@ export const MediaElementStyles: React.FC<MediaElementStylesProps> = ({
 }) => {
   // Responsive controls (desktop/mobile)
   const [responsiveTab, setResponsiveTab] = React.useState<'desktop' | 'mobile'>('desktop');
+  const [dimensionsOpen, setDimensionsOpen] = React.useState(true);
+  const [backgroundOpen, setBackgroundOpen] = React.useState(false);
+  const [borderOpen, setBorderOpen] = React.useState(false);
+  const [effectsOpen, setEffectsOpen] = React.useState(false);
+  const [spacingOpen, setSpacingOpen] = React.useState(false);
   const responsiveStyles = element.styles?.responsive || { desktop: {}, mobile: {} };
   const currentStyles = (responsiveStyles as any)[responsiveTab] || {};
   const handleResponsiveUpdate = (property: string, value: any) => {
@@ -34,22 +40,21 @@ export const MediaElementStyles: React.FC<MediaElementStylesProps> = ({
   };
   return (
     <div className="space-y-4">
-      <div className="space-y-3">
-        <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Dimensions</h4>
-
-        {/* Device toggle for responsive width */}
-        <div className="flex items-center justify-between">
-          <Label className="text-xs">Device</Label>
-          <div className="flex space-x-2">
-            <Button size="sm" variant={responsiveTab === 'desktop' ? 'default' : 'outline'} onClick={() => setResponsiveTab('desktop')}>
-              <Monitor className="h-4 w-4 mr-1" /> Desktop
-            </Button>
-            <Button size="sm" variant={responsiveTab === 'mobile' ? 'default' : 'outline'} onClick={() => setResponsiveTab('mobile')}>
-              <Smartphone className="h-4 w-4 mr-1" /> Mobile
-            </Button>
-          </div>
+      {/* Device Toggle */}
+      <div className="flex items-center justify-between">
+        <Label className="text-xs">Device</Label>
+        <div className="flex space-x-2">
+          <Button size="sm" variant={responsiveTab === 'desktop' ? 'default' : 'outline'} onClick={() => setResponsiveTab('desktop')}>
+            <Monitor className="h-4 w-4 mr-1" /> Desktop
+          </Button>
+          <Button size="sm" variant={responsiveTab === 'mobile' ? 'default' : 'outline'} onClick={() => setResponsiveTab('mobile')}>
+            <Smartphone className="h-4 w-4 mr-1" /> Mobile
+          </Button>
         </div>
+      </div>
 
+      {/* Dimensions */}
+      <CollapsibleGroup title="Dimensions" isOpen={dimensionsOpen} onToggle={setDimensionsOpen}>
         <div className="grid grid-cols-2 gap-2">
           <div>
             <Label className="text-xs">Width</Label>
@@ -98,27 +103,19 @@ export const MediaElementStyles: React.FC<MediaElementStylesProps> = ({
             </Select>
           </div>
         )}
-      </div>
-
-      <Separator />
+      </CollapsibleGroup>
 
       {/* Background */}
-      <div className="space-y-3">
-        <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Background</h4>
-        
+      <CollapsibleGroup title="Background" isOpen={backgroundOpen} onToggle={setBackgroundOpen}>
         <ColorPicker
           label="Background Color"
           color={element.styles?.backgroundColor || ''}
           onChange={(color) => onStyleUpdate('backgroundColor', color)}
         />
-      </div>
-
-      <Separator />
+      </CollapsibleGroup>
 
       {/* Border */}
-      <div className="space-y-3">
-        <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Border</h4>
-        
+      <CollapsibleGroup title="Border" isOpen={borderOpen} onToggle={setBorderOpen}>
         <div>
           <Label className="text-xs">Border Width</Label>
           <Input
@@ -142,14 +139,10 @@ export const MediaElementStyles: React.FC<MediaElementStylesProps> = ({
             placeholder="e.g., 4px"
           />
         </div>
-      </div>
-
-      <Separator />
+      </CollapsibleGroup>
 
       {/* Effects */}
-      <div className="space-y-3">
-        <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Effects</h4>
-        
+      <CollapsibleGroup title="Effects" isOpen={effectsOpen} onToggle={setEffectsOpen}>
         <div>
           <Label className="text-xs">Opacity</Label>
           <div className="flex items-center space-x-2">
@@ -175,92 +168,23 @@ export const MediaElementStyles: React.FC<MediaElementStylesProps> = ({
             placeholder="e.g., 0 4px 8px rgba(0,0,0,0.1)"
           />
         </div>
-      </div>
-
-      <Separator />
+      </CollapsibleGroup>
 
       {/* Spacing */}
-      <div className="space-y-3">
-        <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Spacing</h4>
-
-        {/* Margin per-side (responsive) */}
-        <div>
-          <Label className="text-xs">Margin</Label>
-          <div className="grid grid-cols-4 gap-2 mt-1">
-            <div>
-              <Label className="text-2xs text-muted-foreground">Top</Label>
-              <Input
-                value={(currentStyles.marginTop || element.styles?.marginTop || '') as string}
-                onChange={(e) => handleResponsiveUpdate('marginTop', e.target.value || '0px')}
-                placeholder="0px"
-              />
-            </div>
-            <div>
-              <Label className="text-2xs text-muted-foreground">Right</Label>
-              <Input
-                value={(currentStyles.marginRight || element.styles?.marginRight || '') as string}
-                onChange={(e) => handleResponsiveUpdate('marginRight', e.target.value || '0px')}
-                placeholder="0px"
-              />
-            </div>
-            <div>
-              <Label className="text-2xs text-muted-foreground">Bottom</Label>
-              <Input
-                value={(currentStyles.marginBottom || element.styles?.marginBottom || '') as string}
-                onChange={(e) => handleResponsiveUpdate('marginBottom', e.target.value || '0px')}
-                placeholder="0px"
-              />
-            </div>
-            <div>
-              <Label className="text-2xs text-muted-foreground">Left</Label>
-              <Input
-                value={(currentStyles.marginLeft || element.styles?.marginLeft || '') as string}
-                onChange={(e) => handleResponsiveUpdate('marginLeft', e.target.value || '0px')}
-                placeholder="0px"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Padding per-side (responsive) */}
-        <div>
-          <Label className="text-xs">Padding</Label>
-          <div className="grid grid-cols-4 gap-2 mt-1">
-            <div>
-              <Label className="text-2xs text-muted-foreground">Top</Label>
-              <Input
-                value={(currentStyles.paddingTop || element.styles?.paddingTop || '') as string}
-                onChange={(e) => handleResponsiveUpdate('paddingTop', e.target.value || '10px')}
-                placeholder="10px"
-              />
-            </div>
-            <div>
-              <Label className="text-2xs text-muted-foreground">Right</Label>
-              <Input
-                value={(currentStyles.paddingRight || element.styles?.paddingRight || '') as string}
-                onChange={(e) => handleResponsiveUpdate('paddingRight', e.target.value || '10px')}
-                placeholder="10px"
-              />
-            </div>
-            <div>
-              <Label className="text-2xs text-muted-foreground">Bottom</Label>
-              <Input
-                value={(currentStyles.paddingBottom || element.styles?.paddingBottom || '') as string}
-                onChange={(e) => handleResponsiveUpdate('paddingBottom', e.target.value || '10px')}
-                placeholder="10px"
-              />
-            </div>
-            <div>
-              <Label className="text-2xs text-muted-foreground">Left</Label>
-              <Input
-                value={(currentStyles.paddingLeft || element.styles?.paddingLeft || '') as string}
-                onChange={(e) => handleResponsiveUpdate('paddingLeft', e.target.value || '10px')}
-                placeholder="10px"
-              />
-            </div>
-          </div>
-        </div>
-      </div>
+      <CollapsibleGroup title="Spacing" isOpen={spacingOpen} onToggle={setSpacingOpen}>
+        <SpacingSliders
+          marginTop={(currentStyles.marginTop || element.styles?.marginTop) as string}
+          marginRight={(currentStyles.marginRight || element.styles?.marginRight) as string}
+          marginBottom={(currentStyles.marginBottom || element.styles?.marginBottom) as string}
+          marginLeft={(currentStyles.marginLeft || element.styles?.marginLeft) as string}
+          paddingTop={(currentStyles.paddingTop || element.styles?.paddingTop) as string}
+          paddingRight={(currentStyles.paddingRight || element.styles?.paddingRight) as string}
+          paddingBottom={(currentStyles.paddingBottom || element.styles?.paddingBottom) as string}
+          paddingLeft={(currentStyles.paddingLeft || element.styles?.paddingLeft) as string}
+          onMarginChange={(property, value) => handleResponsiveUpdate(property, value)}
+          onPaddingChange={(property, value) => handleResponsiveUpdate(property, value)}
+        />
+      </CollapsibleGroup>
     </div>
   );
 };

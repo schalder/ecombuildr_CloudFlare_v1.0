@@ -1,6 +1,8 @@
 import React from 'react';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
+import { CollapsibleGroup } from './_shared/CollapsibleGroup';
+import { SpacingSliders } from './_shared/SpacingSliders';
 
 interface CustomHTMLElementStylesProps {
   styles: any;
@@ -14,6 +16,7 @@ export const CustomHTMLElementStyles: React.FC<CustomHTMLElementStylesProps> = (
   deviceType
 }) => {
   const currentStyles = styles?.[deviceType] || {};
+  const [spacingOpen, setSpacingOpen] = React.useState(true);
 
   const handleSpacingChange = (property: string, value: number) => {
     onStyleUpdate(deviceType, {
@@ -29,66 +32,20 @@ export const CustomHTMLElementStyles: React.FC<CustomHTMLElementStylesProps> = (
 
   return (
     <div className="space-y-4">
-      <div>
-        <Label className="text-sm font-medium">Spacing</Label>
-        <div className="space-y-4 mt-3">
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label className="text-xs">Margin Top</Label>
-              <span className="text-xs text-muted-foreground">{parsePixelValue(currentStyles.marginTop)}px</span>
-            </div>
-            <Slider
-              value={[parsePixelValue(currentStyles.marginTop)]}
-              onValueChange={(value) => handleSpacingChange('marginTop', value[0])}
-              max={100}
-              step={1}
-              className="w-full"
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label className="text-xs">Margin Bottom</Label>
-              <span className="text-xs text-muted-foreground">{parsePixelValue(currentStyles.marginBottom)}px</span>
-            </div>
-            <Slider
-              value={[parsePixelValue(currentStyles.marginBottom)]}
-              onValueChange={(value) => handleSpacingChange('marginBottom', value[0])}
-              max={100}
-              step={1}
-              className="w-full"
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label className="text-xs">Padding Top</Label>
-              <span className="text-xs text-muted-foreground">{parsePixelValue(currentStyles.paddingTop)}px</span>
-            </div>
-            <Slider
-              value={[parsePixelValue(currentStyles.paddingTop)]}
-              onValueChange={(value) => handleSpacingChange('paddingTop', value[0])}
-              max={100}
-              step={1}
-              className="w-full"
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label className="text-xs">Padding Bottom</Label>
-              <span className="text-xs text-muted-foreground">{parsePixelValue(currentStyles.paddingBottom)}px</span>
-            </div>
-            <Slider
-              value={[parsePixelValue(currentStyles.paddingBottom)]}
-              onValueChange={(value) => handleSpacingChange('paddingBottom', value[0])}
-              max={100}
-              step={1}
-              className="w-full"
-            />
-          </div>
-        </div>
-      </div>
+      <CollapsibleGroup title="Spacing" isOpen={spacingOpen} onToggle={setSpacingOpen}>
+        <SpacingSliders
+          marginTop={currentStyles.marginTop}
+          marginRight={currentStyles.marginRight}
+          marginBottom={currentStyles.marginBottom}
+          marginLeft={currentStyles.marginLeft}
+          paddingTop={currentStyles.paddingTop}
+          paddingRight={currentStyles.paddingRight}
+          paddingBottom={currentStyles.paddingBottom}
+          paddingLeft={currentStyles.paddingLeft}
+          onMarginChange={(property, value) => handleSpacingChange(property, parsePixelValue(value))}
+          onPaddingChange={(property, value) => handleSpacingChange(property, parsePixelValue(value))}
+        />
+      </CollapsibleGroup>
     </div>
   );
 };
