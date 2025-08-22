@@ -125,13 +125,57 @@ export const HeroSliderElement: React.FC<HeroSliderElementProps> = ({
     const isSideBySide = content?.layout === 'side-by-side';
     const isTextOnly = content?.layout === 'text-only';
 
+    // Get style values from merged styles (responsive + base styles)
+    const getStyleValue = (property: string, fallback?: string) => {
+      return currentResponsiveStyles[property] || (element.styles as any)?.[property] || fallback;
+    };
+
+    // Typography styles
+    const subHeadlineStyles = {
+      fontSize: getStyleValue('subHeadlineFontSize', '14px'),
+      color: getStyleValue('subHeadlineColor'),
+    };
+
+    const headlineStyles = {
+      fontSize: getStyleValue('headlineFontSize', '48px'),
+      color: getStyleValue('headlineColor'),
+    };
+
+    const paragraphStyles = {
+      fontSize: getStyleValue('paragraphFontSize', '18px'),
+      color: getStyleValue('paragraphColor'),
+    };
+
+    // Button styles
+    const buttonSize = getStyleValue('buttonSize', 'lg') as any;
+    const buttonStyles = {
+      fontSize: getStyleValue('buttonFontSize', '16px'),
+      backgroundColor: getStyleValue('buttonBackgroundColor'),
+      color: getStyleValue('buttonTextColor'),
+    };
+
     return (
       <CarouselItem key={slide.id} className="p-0 shadow-none border-none" style={{ boxShadow: 'none' }}>
         <div 
           className={getSlideClasses()}
           style={{
             minHeight: mergedStyles.minHeight || '500px',
-            ...mergedStyles,
+            maxWidth: mergedStyles.maxWidth,
+            backgroundColor: mergedStyles.backgroundColor,
+            borderWidth: mergedStyles.borderWidth,
+            borderColor: mergedStyles.borderColor,
+            borderRadius: mergedStyles.borderRadius,
+            boxShadow: mergedStyles.boxShadow,
+            opacity: mergedStyles.opacity,
+            transform: mergedStyles.transform,
+            marginTop: mergedStyles.marginTop,
+            marginRight: mergedStyles.marginRight,
+            marginBottom: mergedStyles.marginBottom,
+            marginLeft: mergedStyles.marginLeft,
+            paddingTop: mergedStyles.paddingTop,
+            paddingRight: mergedStyles.paddingRight,
+            paddingBottom: mergedStyles.paddingBottom,
+            paddingLeft: mergedStyles.paddingLeft,
           }}
         >
           {/* Background Image for Overlay Layout */}
@@ -164,22 +208,40 @@ export const HeroSliderElement: React.FC<HeroSliderElementProps> = ({
               getTextAlignment()
             )}>
               {slide.subHeadline && (
-                <p className="text-sm font-medium uppercase tracking-wide opacity-80">
+                <p 
+                  className="font-medium uppercase tracking-wide opacity-80"
+                  style={{
+                    fontSize: subHeadlineStyles.fontSize,
+                    color: subHeadlineStyles.color || (isOverlay ? 'inherit' : 'currentColor'),
+                  }}
+                >
                   {slide.subHeadline}
                 </p>
               )}
               
-              <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
+              <h2 
+                className="font-bold leading-tight"
+                style={{
+                  fontSize: headlineStyles.fontSize,
+                  color: headlineStyles.color || (isOverlay ? 'inherit' : 'currentColor'),
+                }}
+              >
                 {slide.headline}
               </h2>
               
               {slide.paragraph && (
-                <p className={cn(
-                  "text-lg md:text-xl opacity-90",
-                  content?.textAlignment === 'center' && "mx-auto max-w-2xl",
-                  content?.textAlignment === 'right' && "ml-auto max-w-2xl",
-                  content?.textAlignment === 'left' && "mr-auto max-w-2xl"
-                )}>
+                <p 
+                  className={cn(
+                    "opacity-90",
+                    content?.textAlignment === 'center' && "mx-auto max-w-2xl",
+                    content?.textAlignment === 'right' && "ml-auto max-w-2xl",
+                    content?.textAlignment === 'left' && "mr-auto max-w-2xl"
+                  )}
+                  style={{
+                    fontSize: paragraphStyles.fontSize,
+                    color: paragraphStyles.color || (isOverlay ? 'inherit' : 'currentColor'),
+                  }}
+                >
                   {slide.paragraph}
                 </p>
               )}
@@ -192,8 +254,13 @@ export const HeroSliderElement: React.FC<HeroSliderElementProps> = ({
                   content?.textAlignment === 'left' && "flex justify-start"
                 )}>
                   <Button 
-                    size="lg"
-                    className="px-8 py-4 text-lg"
+                    size={buttonSize}
+                    className="px-8 py-4"
+                    style={{
+                      fontSize: buttonStyles.fontSize,
+                      backgroundColor: buttonStyles.backgroundColor || undefined,
+                      color: buttonStyles.color || undefined,
+                    }}
                     onClick={() => {
                       if (slide.buttonUrl && !isPreview) {
                         if (slide.buttonType === 'url') {
