@@ -126,7 +126,7 @@ export const HeroSliderElement: React.FC<HeroSliderElementProps> = ({
     const isTextOnly = content?.layout === 'text-only';
 
     return (
-      <CarouselItem key={slide.id} className="p-0">
+      <CarouselItem key={slide.id} className="p-0 shadow-none border-none" style={{ boxShadow: 'none' }}>
         <div 
           className={getSlideClasses()}
           style={{
@@ -218,17 +218,30 @@ export const HeroSliderElement: React.FC<HeroSliderElementProps> = ({
   return (
     <>
       {responsiveCSS && <style dangerouslySetInnerHTML={{ __html: responsiveCSS }} />}
+      <style dangerouslySetInnerHTML={{ 
+        __html: `
+          .embla__slide { 
+            box-shadow: none !important; 
+            border: none !important; 
+          }
+          .embla__container { 
+            box-shadow: none !important; 
+          }
+        ` 
+      }} />
       
-      <div className="relative">
+      <div className="relative overflow-hidden">
         <Carousel
           setApi={setApi}
           opts={{
             align: "start",
             loop: content?.loop || true,
           }}
-          className="w-full"
+          className="w-full overflow-hidden"
         >
-          <CarouselContent className="-ml-0">
+          <CarouselContent className="-ml-0 shadow-none"
+            style={{ boxShadow: 'none' }}
+          >
             {slides.map((slide, index) => renderSlide(slide, index))}
           </CarouselContent>
 
