@@ -1,6 +1,7 @@
 import { elementRegistry } from './ElementRegistry';
 import { CountdownTimerElement } from './CountdownTimerElement';
-import { Clock } from 'lucide-react';
+import { SocialLinksElement } from './SocialLinksElement';
+import { Clock, Users } from 'lucide-react';
 
 // Register Marketing Elements
 export const registerMarketingElements = () => {
@@ -27,5 +28,39 @@ export const registerMarketingElements = () => {
       target: '_self'
     },
     description: 'Customizable countdown timer with redirect options'
+  });
+
+  elementRegistry.register({
+    id: 'social-links',
+    name: 'Social Links',
+    category: 'marketing',
+    icon: Users,
+    component: SocialLinksElement,
+    defaultContent: {
+      title: '',
+      platforms: {
+        facebook: true,
+        twitter: true,
+        instagram: true,
+        linkedin: true,
+        youtube: false,
+        github: false,
+      },
+      links: {
+        facebook: '',
+        twitter: '',
+        instagram: '',
+        linkedin: '',
+        youtube: '',
+        github: '',
+      },
+      layout: 'horizontal',
+      buttonVariant: 'outline',
+      buttonSize: 'default',
+      showIcons: true,
+      showLabels: false,
+      iconSpacing: 'normal'
+    },
+    description: 'Add custom social media profile links with icons'
   });
 };

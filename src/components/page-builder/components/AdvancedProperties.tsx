@@ -239,6 +239,205 @@ export const CustomHTMLProperties: React.FC<AdvancedPropertiesProps> = ({
   );
 };
 
+// Social Links Properties
+export const SocialLinksProperties: React.FC<AdvancedPropertiesProps> = ({
+  element,
+  onUpdate
+}) => {
+  const [sectionsOpen, setSectionsOpen] = useState({
+    platforms: true,
+    links: true,
+    display: true,
+  });
+
+  const toggleSection = (section: keyof typeof sectionsOpen) => {
+    setSectionsOpen(prev => ({ ...prev, [section]: !prev[section] }));
+  };
+
+  const platforms = element.content.platforms || {
+    facebook: true,
+    twitter: true,
+    instagram: true,
+    linkedin: true,
+    youtube: false,
+    github: false,
+  };
+
+  const links = element.content.links || {
+    facebook: '',
+    twitter: '',
+    instagram: '',
+    linkedin: '',
+    youtube: '',
+    github: '',
+  };
+
+  const handlePlatformToggle = (platform: string, enabled: boolean) => {
+    onUpdate('platforms', { ...platforms, [platform]: enabled });
+  };
+
+  const handleLinkUpdate = (platform: string, url: string) => {
+    onUpdate('links', { ...links, [platform]: url });
+  };
+
+  const platformLabels: Record<string, string> = {
+    facebook: 'Facebook',
+    twitter: 'Twitter',
+    instagram: 'Instagram',
+    linkedin: 'LinkedIn',
+    youtube: 'YouTube',
+    github: 'GitHub',
+  };
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <Label htmlFor="title">Title (Optional)</Label>
+        <Input
+          id="title"
+          value={element.content.title || ''}
+          onChange={(e) => onUpdate('title', e.target.value)}
+          placeholder="Follow us on social media"
+        />
+      </div>
+
+      <div className="border-t pt-4">
+        <div className="flex items-center justify-between mb-3">
+          <Label className="font-medium">Platform Selection</Label>
+        </div>
+        {Object.entries(platformLabels).map(([platform, label]) => (
+          <div key={platform} className="flex items-center justify-between mb-2">
+            <Label htmlFor={`platform-${platform}`}>{label}</Label>
+            <Switch
+              id={`platform-${platform}`}
+              checked={platforms[platform as keyof typeof platforms] || false}
+              onCheckedChange={(checked) => handlePlatformToggle(platform, checked)}
+            />
+          </div>
+        ))}
+      </div>
+
+      <div className="border-t pt-4">
+        <Label className="font-medium mb-3 block">Social Links</Label>
+        {Object.entries(platformLabels).map(([platform, label]) => {
+          const isEnabled = platforms[platform as keyof typeof platforms];
+          if (!isEnabled) return null;
+
+          return (
+            <div key={platform} className="mb-3">
+              <Label htmlFor={`link-${platform}`}>{label} URL</Label>
+              <Input
+                id={`link-${platform}`}
+                value={links[platform as keyof typeof links] || ''}
+                onChange={(e) => handleLinkUpdate(platform, e.target.value)}
+                placeholder={`https://${platform}.com/yourprofile`}
+              />
+            </div>
+          );
+        })}
+        {Object.values(platforms).every(enabled => !enabled) && (
+          <p className="text-sm text-muted-foreground">
+            Enable platforms above to add links
+          </p>
+        )}
+      </div>
+
+      <div className="border-t pt-4">
+        <Label className="font-medium mb-3 block">Display Options</Label>
+        
+        <div className="space-y-3">
+          <div>
+            <Label htmlFor="layout">Layout</Label>
+            <Select
+              value={element.content.layout || 'horizontal'}
+              onValueChange={(value) => onUpdate('layout', value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select layout" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="horizontal">Horizontal</SelectItem>
+                <SelectItem value="vertical">Vertical</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label htmlFor="buttonVariant">Button Style</Label>
+            <Select
+              value={element.content.buttonVariant || 'outline'}
+              onValueChange={(value) => onUpdate('buttonVariant', value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select button style" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="outline">Outline</SelectItem>
+                <SelectItem value="solid">Solid</SelectItem>
+                <SelectItem value="ghost">Ghost</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label htmlFor="buttonSize">Button Size</Label>
+            <Select
+              value={element.content.buttonSize || 'default'}
+              onValueChange={(value) => onUpdate('buttonSize', value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select button size" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="sm">Small</SelectItem>
+                <SelectItem value="default">Default</SelectItem>
+                <SelectItem value="lg">Large</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <Label htmlFor="showIcons">Show Icons</Label>
+            <Switch
+              id="showIcons"
+              checked={element.content.showIcons !== false}
+              onCheckedChange={(checked) => onUpdate('showIcons', checked)}
+            />
+          </div>
+
+          <div className="flex items-center justify-between">
+            <Label htmlFor="showLabels">Show Labels</Label>
+            <Switch
+              id="showLabels"
+              checked={element.content.showLabels || false}
+              onCheckedChange={(checked) => onUpdate('showLabels', checked)}
+            />
+          </div>
+
+          {element.content.showIcons !== false && element.content.showLabels && (
+            <div>
+              <Label htmlFor="iconSpacing">Icon Spacing</Label>
+              <Select
+                value={element.content.iconSpacing || 'normal'}
+                onValueChange={(value) => onUpdate('iconSpacing', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select spacing" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="tight">Tight</SelectItem>
+                  <SelectItem value="normal">Normal</SelectItem>
+                  <SelectItem value="wide">Wide</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // Social Share Properties
 export const SocialShareProperties: React.FC<AdvancedPropertiesProps> = ({
   element,

@@ -49,7 +49,8 @@ import {
 import { 
   GoogleMapsProperties, 
   CustomHTMLProperties, 
-  SocialShareProperties 
+  SocialShareProperties,
+  SocialLinksProperties 
 } from './AdvancedProperties';
 import { CountdownProperties } from './CountdownProperties';
 import {
@@ -196,6 +197,11 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
 
     // Social Share element styles
     if (selectedElement.type === 'social-share') {
+      return <SocialShareElementStyles element={selectedElement} onStyleUpdate={handleStyleUpdate} />;
+    }
+
+    // Social Links element styles (reuse Social Share styles)
+    if (selectedElement.type === 'social-links') {
       return <SocialShareElementStyles element={selectedElement} onStyleUpdate={handleStyleUpdate} />;
     }
     
@@ -386,6 +392,13 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
 
                 {selectedElement.type === 'social-share' && (
                   <SocialShareProperties 
+                    element={selectedElement} 
+                    onUpdate={handleContentUpdate} 
+                  />
+                )}
+
+                {selectedElement.type === 'social-links' && (
+                  <SocialLinksProperties 
                     element={selectedElement} 
                     onUpdate={handleContentUpdate} 
                   />
