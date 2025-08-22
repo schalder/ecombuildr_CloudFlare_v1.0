@@ -81,12 +81,12 @@ export const FunnelHeader: React.FC<{ funnel: FunnelData; }> = ({ funnel }) => {
 
   const handleSearch = () => {
     // For funnels, search functionality might be disabled or redirect to store
-    console.log('Search clicked in funnel');
+    
   };
 
   const handleCart = () => {
     // For funnels, cart functionality might be disabled or redirect to store
-    console.log('Cart clicked in funnel');
+    
   };
 
   return (

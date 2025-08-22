@@ -247,16 +247,6 @@ const WeeklyFeaturedElement: React.FC<{
     );
   }
 
-  console.log('WeeklyFeaturedElement rendering:', {
-    loading,
-    products: products.length,
-    showTitle,
-    showSubtitle,
-    title,
-    subtitle,
-    websiteId,
-    shouldFetchProducts
-  });
   return (
     <section className="py-8 sm:py-12" style={appliedStyles}>
       <div className="container mx-auto px-4">
@@ -316,8 +306,5 @@ const weeklyFeaturedElementType: ElementType = {
 
 // Register element
 export const registerWeeklyFeaturedElement = () => {
-  console.log('Registering Weekly Featured Element...');
   elementRegistry.register(weeklyFeaturedElementType);
-  console.log('Weekly Featured Element registered successfully with ID:', weeklyFeaturedElementType.id);
-  console.log('Total elements in registry:', elementRegistry.getAll().length);
 };

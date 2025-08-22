@@ -18,11 +18,11 @@ export const usePageBuilderPerformance = (componentName: string) => {
   // Track component lifecycle
   useEffect(() => {
     metricsRef.current.componentMounts += 1;
-    console.log(`🔧 ${componentName} mounted (${metricsRef.current.componentMounts} times)`);
+    
 
     return () => {
       metricsRef.current.componentUnmounts += 1;
-      console.log(`🔧 ${componentName} unmounted (${metricsRef.current.componentUnmounts} times)`);
+      
     };
   }, [componentName]);
 
@@ -47,7 +47,7 @@ export const usePageBuilderPerformance = (componentName: string) => {
   // Track state changes that might cause re-renders
   const trackStateChange = useCallback((stateName: string, oldValue: any, newValue: any) => {
     if (oldValue !== newValue) {
-      console.log(`🔧 ${componentName} state change: ${stateName}`, { oldValue, newValue });
+      
     }
   }, [componentName]);
 

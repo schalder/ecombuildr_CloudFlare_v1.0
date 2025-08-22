@@ -8,7 +8,7 @@ export const usePageBuilderStyleUpdates = (
   
   // Update section styles
   const updateSection = useCallback((sectionId: string, updates: Partial<PageBuilderSection>) => {
-    console.log('Updating section:', sectionId, 'with:', updates);
+    
     
     const newData: PageBuilderData = {
       ...pageData,
@@ -27,13 +27,13 @@ export const usePageBuilderStyleUpdates = (
       })
     };
     
-    console.log('Section updated. New data:', newData);
+    
     updatePageData(newData);
   }, [pageData, updatePageData]);
 
   // Update row styles
   const updateRow = useCallback((sectionId: string, rowId: string, updates: Partial<PageBuilderRow>) => {
-    console.log('Updating row:', rowId, 'in section:', sectionId, 'with:', updates);
+    
     
     const newData: PageBuilderData = {
       ...pageData,
@@ -60,13 +60,13 @@ export const usePageBuilderStyleUpdates = (
       })
     };
     
-    console.log('Row updated. New data:', newData);
+    
     updatePageData(newData);
   }, [pageData, updatePageData]);
 
   // Update column styles
   const updateColumn = useCallback((sectionId: string, rowId: string, columnId: string, updates: Partial<PageBuilderColumn>) => {
-    console.log('Updating column:', columnId, 'in row:', rowId, 'section:', sectionId, 'with:', updates);
+    
     
     const newData: PageBuilderData = {
       ...pageData,
@@ -101,13 +101,13 @@ export const usePageBuilderStyleUpdates = (
       })
     };
     
-    console.log('Column updated. New data:', newData);
+    
     updatePageData(newData);
   }, [pageData, updatePageData]);
 
   // Update element styles
   const updateElement = useCallback((elementId: string, updates: Partial<PageBuilderElement>) => {
-    console.log('Updating element:', elementId, 'with:', updates);
+    
     
     const newData: PageBuilderData = {
       ...pageData,
@@ -134,7 +134,7 @@ export const usePageBuilderStyleUpdates = (
       }))
     };
     
-    console.log('Element updated. New data:', newData);
+    
     updatePageData(newData);
   }, [pageData, updatePageData]);
 

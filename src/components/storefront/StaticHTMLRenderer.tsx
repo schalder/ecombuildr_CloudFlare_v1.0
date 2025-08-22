@@ -52,10 +52,10 @@ export const StaticHTMLRenderer: React.FC<StaticHTMLRendererProps> = ({
         }
 
         if (data?.html_content) {
-          console.log('✅ Serving static HTML for:', contentType, contentId);
+          
           setHtmlContent(data.html_content);
         } else {
-          console.log('⚠️ No static HTML found for:', contentType, contentId, 'custom domain:', customDomain);
+          
           setHtmlContent(null);
         }
 

@@ -391,7 +391,7 @@ const ElementorPageBuilderContent: React.FC<ElementorPageBuilderProps> = memo(({
   }, [data, updateData, selection]);
 
   const moveRow = useCallback((rowId: string, targetSectionId: string, insertIndex: number) => {
-    console.log('Moving row:', { rowId, targetSectionId, insertIndex });
+    
     
     const newData = { ...data };
     let rowToMove: PageBuilderRow | null = null;
@@ -420,7 +420,7 @@ const ElementorPageBuilderContent: React.FC<ElementorPageBuilderProps> = memo(({
   }, [data, updateData]);
 
   const moveSection = useCallback((sectionId: string, insertIndex: number) => {
-    console.log('Moving section:', { sectionId, insertIndex });
+    
     
     const newData = { ...data };
     let sectionToMove: PageBuilderSection | null = null;
@@ -529,8 +529,6 @@ const ElementorPageBuilderContent: React.FC<ElementorPageBuilderProps> = memo(({
 
   // Element operations
   const addElement = useCallback((sectionId: string, rowId: string, columnId: string, elementType: string, insertIndex?: number) => {
-    console.log('Adding element:', { sectionId, rowId, columnId, elementType, insertIndex });
-    console.log('Available elements in registry:', elementRegistry.getAll().map(e => e.id));
     
     const elementDef = elementRegistry.get(elementType);
     if (!elementDef) {
@@ -588,7 +586,7 @@ const ElementorPageBuilderContent: React.FC<ElementorPageBuilderProps> = memo(({
       )
     };
 
-    console.log('Updated data structure:', newData);
+    
     
     updateData(newData);
 
@@ -616,7 +614,7 @@ const ElementorPageBuilderContent: React.FC<ElementorPageBuilderProps> = memo(({
 
   // Update section, row, or column
   const updateSection = useCallback((sectionId: string, updates: Partial<PageBuilderSection>) => {
-    console.log('updateSection called:', { sectionId, updates });
+    
     updateData({
       ...data,
       sections: data.sections.map(section =>
@@ -632,7 +630,7 @@ const ElementorPageBuilderContent: React.FC<ElementorPageBuilderProps> = memo(({
   }, [data, updateData]);
 
   const updateRow = useCallback((sectionId: string, rowId: string, updates: Partial<PageBuilderRow>) => {
-    console.log('updateRow called:', { sectionId, rowId, updates });
+    
     updateData({
       ...data,
       sections: data.sections.map(section =>
@@ -655,7 +653,7 @@ const ElementorPageBuilderContent: React.FC<ElementorPageBuilderProps> = memo(({
   }, [data, updateData]);
 
   const updateColumn = useCallback((sectionId: string, rowId: string, columnId: string, updates: Partial<PageBuilderColumn>) => {
-    console.log('updateColumn called:', { sectionId, rowId, columnId, updates });
+    
     updateData({
       ...data,
       sections: data.sections.map(section =>
@@ -702,7 +700,7 @@ const ElementorPageBuilderContent: React.FC<ElementorPageBuilderProps> = memo(({
   }, [data, updateData, selection]);
 
   const moveElement = useCallback((elementId: string, targetSectionId: string, targetRowId: string, targetColumnId: string, insertIndex: number) => {
-    console.log('Moving element:', { elementId, targetSectionId, targetRowId, targetColumnId, insertIndex });
+    
     
     // Find and remove the element from its current location
     let elementToMove: PageBuilderElement | null = null;
@@ -1028,7 +1026,7 @@ const ElementorPageBuilderContent: React.FC<ElementorPageBuilderProps> = memo(({
                     if (element) {
                       selectedItem = { type: 'element', data: element };
                       updateHandler = (elementId: string, updates: any) => {
-                        console.log('PropertiesPanel updating element:', elementId, updates);
+                        
                         updateElement(elementId, updates);
                       };
                     }
@@ -1630,7 +1628,7 @@ const ColumnComponent: React.FC<ColumnComponentProps> = ({
   const shouldShowToolbar = isSelected || isHoveredTarget;
 
   const handleAddElement = (elementType: string, insertIndex: number) => {
-    console.log('ColumnComponent handleAddElement:', { elementType, sectionId, rowId, columnId: column.id, insertIndex });
+    
     onAddElement(sectionId, rowId, column.id, elementType, insertIndex);
   };
 

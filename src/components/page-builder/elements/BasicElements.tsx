@@ -143,7 +143,7 @@ const ImageElement: React.FC<{
   deviceType?: 'desktop' | 'tablet' | 'mobile';
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
 }> = ({ element, isEditing, deviceType = 'desktop', onUpdate }) => {
-  console.log('ImageElement: Using new alignment implementation');
+  
   const { src, alt, caption, alignment = 'center', linkUrl, linkTarget = '_self' } = element.content;
   const [imageError, setImageError] = React.useState(false);
   const [imageLoading, setImageLoading] = React.useState(false);
@@ -520,12 +520,6 @@ const ButtonElement: React.FC<{
   // Generate responsive CSS
   const responsiveCSS = generateResponsiveCSS(element.id, element.styles);
   
-  // Debug hover styles
-  console.log('Button hover styles debug:', {
-    elementId: element.id,
-    responsiveStyles: element.styles?.responsive,
-    generatedCSS: responsiveCSS
-  });
 
   const customClassName = [
     `element-${element.id}`,

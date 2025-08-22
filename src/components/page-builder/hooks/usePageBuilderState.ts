@@ -94,7 +94,7 @@ export const usePageBuilderState = (initialData?: PageBuilderData) => {
   const addElement = useCallback((elementType: string, targetPath: string, insertIndex?: number) => {
     const [sectionId, rowId, columnId] = targetPath.split('.');
     
-    console.log('Adding element:', { sectionId, rowId, columnId, elementType, insertIndex });
+    
     
     const newElement: PageBuilderElement = {
       id: generateId(),
@@ -106,7 +106,7 @@ export const usePageBuilderState = (initialData?: PageBuilderData) => {
       } : {})
     };
 
-    console.log('New element created:', newElement);
+    
 
     // Create a deep clone to avoid circular references
     const newSections = pageData.sections.map(section => {
@@ -127,7 +127,7 @@ export const usePageBuilderState = (initialData?: PageBuilderData) => {
                       ...column,
                       elements
                     };
-                    console.log(`Added element to column ${columnId} at index ${index}. New element count:`, updatedColumn.elements.length);
+                    
                     return updatedColumn;
                   }
                   return column;
@@ -155,14 +155,14 @@ export const usePageBuilderState = (initialData?: PageBuilderData) => {
       }, 0);
     }, 0);
 
-    console.log(`Total elements in page: ${elementCount}`);
+    
     recordHistory(newData);
   }, [pageData, recordHistory]);
 
   const moveElement = useCallback((elementId: string, targetPath: string, insertIndex: number) => {
     const [targetSectionId, targetRowId, targetColumnId] = targetPath.split('.');
     
-    console.log('Moving element:', { elementId, targetPath, insertIndex });
+    
     
     // Find and remove the element from its current location
     let elementToMove: PageBuilderElement | null = null;
@@ -203,7 +203,7 @@ export const usePageBuilderState = (initialData?: PageBuilderData) => {
                     const elements = [...column.elements];
                     elements.splice(insertIndex, 0, elementToMove!);
                     
-                    console.log(`Moved element to column ${targetColumnId} at index ${insertIndex}`);
+                    
                     return {
                       ...column,
                       elements
@@ -254,7 +254,7 @@ export const usePageBuilderState = (initialData?: PageBuilderData) => {
   }, [pageData, selectedElement, recordHistory]);
 
   const moveRow = useCallback((rowId: string, targetSectionId: string, insertIndex: number) => {
-    console.log('Moving row:', { rowId, targetSectionId, insertIndex });
+    
     
     // Find and remove the row from its current location
     let rowToMove: PageBuilderRow | null = null;
@@ -287,7 +287,7 @@ export const usePageBuilderState = (initialData?: PageBuilderData) => {
         const rows = [...section.rows];
         rows.splice(insertIndex, 0, rowToMove!);
         
-        console.log(`Moved row to section ${targetSectionId} at index ${insertIndex}`);
+        
         return {
           ...section,
           rows
@@ -305,7 +305,7 @@ export const usePageBuilderState = (initialData?: PageBuilderData) => {
   }, [pageData, recordHistory]);
 
   const moveSection = useCallback((sectionId: string, insertIndex: number) => {
-    console.log('Moving section:', { sectionId, insertIndex });
+    
     
     // Find and remove the section from its current location
     let sectionToMove: PageBuilderSection | null = null;
@@ -326,7 +326,7 @@ export const usePageBuilderState = (initialData?: PageBuilderData) => {
     const finalSections = [...sectionsWithoutMoved];
     finalSections.splice(finalInsertIndex, 0, sectionToMove);
     
-    console.log(`Moved section ${sectionId} from index ${currentIndex} to ${finalInsertIndex}`);
+    
 
     const newData: PageBuilderData = {
       ...pageData,

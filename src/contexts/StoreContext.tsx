@@ -33,7 +33,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const loadStore = useCallback(async (slug: string) => {
     // Prevent loading the same store multiple times
     if (store?.slug === slug && !error && !loading) {
-      console.log('Store already loaded:', slug);
+      
       return;
     }
 
@@ -41,7 +41,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setError(null);
     
     try {
-      console.log('Loading store with slug:', slug);
+      
       
       const { data, error } = await supabase
         .from('stores')
@@ -50,7 +50,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         .eq('is_active', true)
         .maybeSingle();
 
-      console.log('Store query result:', { data, error });
+      
 
       if (error) {
         console.error('Store query error:', error);
@@ -74,7 +74,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const loadStoreById = useCallback(async (id: string) => {
     // Prevent loading the same store multiple times
     if (store?.id === id && !error && !loading) {
-      console.log('Store already loaded by id:', id);
+      
       return;
     }
 
@@ -82,7 +82,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setError(null);
 
     try {
-      console.log('Loading store with id:', id);
+      
 
       const { data, error } = await supabase
         .from('stores')
@@ -91,7 +91,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         .eq('is_active', true)
         .maybeSingle();
 
-      console.log('Store query by id result:', { data, error });
+      
 
       if (error) {
         console.error('Store query by id error:', error);

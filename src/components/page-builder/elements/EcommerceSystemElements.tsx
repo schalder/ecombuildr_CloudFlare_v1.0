@@ -699,7 +699,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
       }
       
       const productIds = [...new Set(items.map(item => item.productId))];
-      console.debug('[CheckoutFullElement] Fetching shipping data for products:', productIds);
+      
       
       const { data, error } = await supabase
         .from('products')
@@ -817,7 +817,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
       const isNagadManual = Boolean(store?.settings?.nagad?.enabled && (store?.settings?.nagad?.mode === 'number' || !hasNagadApi) && store?.settings?.nagad?.number);
       const isManual = (form.payment_method === 'bkash' && isBkashManual) || (form.payment_method === 'nagad' && isNagadManual);
 
-      console.debug('[CheckoutFullElement] Channel context:', { websiteId, funnelId });
+      
       
       const orderData: any = {
         store_id: store.id,
@@ -860,11 +860,6 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
         variation: (i as any).variation ?? null,
       }));
 
-      console.debug('[CheckoutFullElement] Creating order with payload:', { 
-        orderData, 
-        items: itemsPayload.length,
-        channel: { websiteId, funnelId }
-      });
 
       const { data, error } = await supabase.functions.invoke('create-order', {
         body: {
@@ -877,7 +872,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
       const orderId: string | undefined = data?.order?.id;
       if (!orderId) throw new Error('Order was not created');
       
-      console.debug('[CheckoutFullElement] Order created successfully:', { orderId, websiteId, funnelId });
+      
 
       if (form.payment_method === 'cod' || isManual) {
         // Track Purchase event for COD orders

@@ -114,10 +114,8 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
 
   // Determine which style component to render based on element type
   const renderElementStyles = () => {
-    console.log('🔧 PropertiesPanel renderElementStyles for type:', selectedElement.type);
     // Button elements get their own specialized component
     if (selectedElement.type === 'button') {
-      console.log('🔧 Rendering ButtonElementStyles component');
       return <ButtonElementStyles key={`button-${selectedElement.id}`} element={selectedElement} onStyleUpdate={handleStyleUpdate} />;
     }
     

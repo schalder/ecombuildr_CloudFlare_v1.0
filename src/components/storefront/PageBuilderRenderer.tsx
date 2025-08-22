@@ -39,13 +39,13 @@ export const PageBuilderRenderer: React.FC<PageBuilderRendererProps> = ({
 
   React.useEffect(() => {
     const ids = elementRegistry.getAll().map(e => e.id);
-    console.log('PageBuilderRenderer: Registered elements:', ids);
+    
   }, []);
 
-  console.log('PageBuilderRenderer: Received data:', data);
+  
   
   if (!data) {
-    console.log('PageBuilderRenderer: No data provided');
+    
     return (
       <div className={`text-center py-12 ${className}`}>
         <p className="text-muted-foreground">No page data available.</p>
@@ -54,7 +54,7 @@ export const PageBuilderRenderer: React.FC<PageBuilderRendererProps> = ({
   }
 
   if (!data.sections || !Array.isArray(data.sections) || data.sections.length === 0) {
-    console.log('PageBuilderRenderer: No sections found or sections is not an array:', data.sections);
+    
     return (
       <div className={`text-center py-12 ${className}`}>
         <p className="text-muted-foreground">This page is still being set up.</p>

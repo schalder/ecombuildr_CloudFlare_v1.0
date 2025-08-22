@@ -122,7 +122,7 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
           id: `pb-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
         };
         // This is a workaround - ideally we'd have an onDuplicateElement callback
-        console.log('Duplication not fully implemented yet');
+        
       }
     }
   };

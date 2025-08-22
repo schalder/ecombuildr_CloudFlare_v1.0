@@ -215,7 +215,7 @@ Example:
 </style>
 
 <script>
-  console.log('Custom script executed!');
+  
 </script>`}
               rows={15}
               className="font-mono text-sm"
@@ -275,13 +275,6 @@ const SocialShareElement: React.FC<{
   // Get merged styles (base + responsive)
   const mergedStyles = mergeResponsiveStyles(element.styles || {}, element.styles, deviceType);
   
-  // Debug containerAlignment
-  console.log('Social Share Debug:', {
-    elementId: element.id,
-    containerAlignment: mergedStyles.containerAlignment,
-    allStyles: element.styles,
-    mergedStyles
-  });
   
   // Get container alignment for positioning element within column
   const containerAlignment = mergedStyles.containerAlignment || 'center';
