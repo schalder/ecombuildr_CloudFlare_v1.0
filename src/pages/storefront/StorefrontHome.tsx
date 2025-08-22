@@ -52,7 +52,6 @@ export const StorefrontHome: React.FC = () => {
     if (!store) return;
     
     try {
-      console.log('StorefrontHome: Fetching homepage for store:', store.id);
       const { data, error } = await supabase
         .from('pages')
         .select('*')
@@ -62,14 +61,12 @@ export const StorefrontHome: React.FC = () => {
         .maybeSingle();
 
       if (error) {
-        console.error('StorefrontHome: Error fetching homepage:', error);
         return;
       }
 
-      console.log('StorefrontHome: Homepage data:', data);
       setHomepage(data);
     } catch (error) {
-      console.error('StorefrontHome: Error fetching homepage:', error);
+      // Silent error handling
     }
   };
 
@@ -79,7 +76,6 @@ export const StorefrontHome: React.FC = () => {
     
     try {
       setLoading(true);
-      console.log('Fetching products for store:', store.id);
       
       const { data, error } = await supabase
         .from('products')
@@ -88,10 +84,7 @@ export const StorefrontHome: React.FC = () => {
         .eq('is_active', true)
         .limit(8);
 
-      console.log('Products query result:', { data, error });
-
       if (error) {
-        console.error('Products query error:', error);
         setFeaturedProducts([]);
         return;
       }
@@ -101,10 +94,8 @@ export const StorefrontHome: React.FC = () => {
         images: Array.isArray(product.images) ? product.images.filter(img => typeof img === 'string') as string[] : [],
       })) || [];
       
-      console.log('Processed products:', products);
       setFeaturedProducts(products);
     } catch (error) {
-      console.error('Error fetching products:', error);
       setFeaturedProducts([]);
     } finally {
       setLoading(false);
@@ -135,8 +126,6 @@ export const StorefrontHome: React.FC = () => {
 
   // Check if there's a custom homepage
   if (homepage) {
-    console.log('StorefrontHome: Rendering custom homepage:', homepage.title);
-    console.log('StorefrontHome: Homepage content:', homepage.content);
     
     // Set up SEO metadata for custom homepage
     if (homepage.seo_title) {

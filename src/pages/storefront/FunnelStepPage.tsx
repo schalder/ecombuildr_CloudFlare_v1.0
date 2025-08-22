@@ -52,7 +52,7 @@ export const FunnelStepPage: React.FC = () => {
         setLoading(true);
         setError(null);
 
-        console.log('FunnelStepPage: Fetching funnel and step:', { funnelId, stepSlug });
+        
 
         // First fetch the funnel to check if it's published and active
         const { data: funnelData, error: funnelError } = await supabase
@@ -64,13 +64,11 @@ export const FunnelStepPage: React.FC = () => {
           .maybeSingle();
 
         if (funnelError) {
-          console.error('FunnelStepPage: Error fetching funnel:', funnelError);
           setError('Failed to load funnel');
           return;
         }
 
         if (!funnelData) {
-          console.log('FunnelStepPage: Funnel not found or not published:', funnelId);
           setError('Funnel not found or not available');
           return;
         }
@@ -81,7 +79,7 @@ export const FunnelStepPage: React.FC = () => {
         try {
           await loadStoreById(funnelData.store_id);
         } catch (e) {
-          console.warn('FunnelStepPage: loadStoreById failed', e);
+          // Silent error handling
         }
 
         // If no stepSlug provided, redirect to first published step
@@ -115,21 +113,17 @@ export const FunnelStepPage: React.FC = () => {
           .maybeSingle();
 
         if (stepError) {
-          console.error('FunnelStepPage: Error fetching step:', stepError);
           setError('Failed to load step');
           return;
         }
 
         if (!stepData) {
-          console.log('FunnelStepPage: Step not found:', stepSlug);
           setError(`Step "${stepSlug}" not found`);
           return;
         }
 
-        console.log('FunnelStepPage: Funnel and step loaded successfully:', { funnelData, stepData });
         setStep(stepData);
       } catch (err) {
-        console.error('FunnelStepPage: Error fetching data:', err);
         setError('Failed to load page');
       } finally {
         setLoading(false);

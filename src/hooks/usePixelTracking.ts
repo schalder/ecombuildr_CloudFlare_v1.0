@@ -68,9 +68,8 @@ export const usePixelTracking = (pixelConfig?: PixelConfig, storeId?: string, we
       }
 
       await supabase.from('pixel_events').insert(eventRecord);
-      console.debug('[PixelTracking] Stored event in database:', eventType, eventData, { websiteId, funnelId });
     } catch (error) {
-      console.warn('[PixelTracking] Failed to store event:', error);
+      // Silent error handling
     }
   }, [storeId, websiteId, funnelId]);
 
@@ -82,9 +81,8 @@ export const usePixelTracking = (pixelConfig?: PixelConfig, storeId?: string, we
     if (pixelConfig?.facebook_pixel_id && window.fbq) {
       try {
         window.fbq('track', eventName, eventData);
-        console.debug('[PixelTracking] Facebook event:', eventName, eventData);
       } catch (error) {
-        console.warn('[PixelTracking] Facebook tracking error:', error);
+        // Silent error handling
       }
     }
 
@@ -95,9 +93,8 @@ export const usePixelTracking = (pixelConfig?: PixelConfig, storeId?: string, we
           ...eventData,
           send_to: pixelConfig?.google_analytics_id,
         });
-        console.debug('[PixelTracking] Google event:', eventName, eventData);
       } catch (error) {
-        console.warn('[PixelTracking] Google tracking error:', error);
+        // Silent error handling
       }
     }
   }, [pixelConfig, storePixelEvent]);
