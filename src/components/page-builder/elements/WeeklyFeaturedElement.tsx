@@ -122,10 +122,76 @@ const WeeklyFeaturedElement: React.FC<{
     return map[cols] || 'grid-cols-3';
   };
 
+  // Get responsive typography styles
+  const getTypographyStyles = (styleKey: 'headlineStyles' | 'subheadlineStyles' | 'productTitleStyles' | 'priceStyles') => {
+    const styles = (element as any).styles?.[styleKey];
+    if (!styles?.responsive) return {};
+    
+    const deviceStyles = deviceType === 'mobile' ? styles.responsive.mobile : styles.responsive.desktop;
+    return deviceStyles || {};
+  };
+
+  // Get button styles
+  const getButtonStyles = () => {
+    const styles = (element as any).styles || {};
+    const buttonStyles: React.CSSProperties = {};
+    
+    // Custom button styles
+    if (styles.buttonVariant === 'custom') {
+      if (styles.buttonBackground) buttonStyles.backgroundColor = styles.buttonBackground;
+      if (styles.buttonTextColor) buttonStyles.color = styles.buttonTextColor;
+      if (styles.borderRadius) buttonStyles.borderRadius = styles.borderRadius;
+    }
+    
+    return buttonStyles;
+  };
+
+  // Get card styles
+  const getCardStyles = () => {
+    const styles = (element as any).styles || {};
+    const cardStyles: React.CSSProperties = {};
+    
+    if (styles.cardBackground) cardStyles.backgroundColor = styles.cardBackground;
+    if (styles.borderRadius) cardStyles.borderRadius = styles.borderRadius;
+    if (styles.borderWidth) {
+      cardStyles.borderWidth = styles.borderWidth;
+      cardStyles.borderStyle = 'solid';
+      if (styles.borderColor) cardStyles.borderColor = styles.borderColor;
+    }
+    if (styles.cardPadding) cardStyles.padding = styles.cardPadding;
+    
+    return cardStyles;
+  };
+
+  // Get grid gap
+  const getGridGap = () => {
+    const styles = (element as any).styles || {};
+    return styles.gap ? `${parseInt(styles.gap)}px` : '24px';
+  };
+
+  // Get button variant
+  const getButtonVariant = () => {
+    const styles = (element as any).styles || {};
+    if (styles.buttonVariant === 'custom') return 'default'; // Will be styled with inline styles
+    return styles.buttonVariant || 'default';
+  };
+
+  // Get button size
+  const getButtonSize = () => {
+    const styles = (element as any).styles || {};
+    return styles.buttonSize || 'sm';
+  };
+
+  // Get button width class
+  const getButtonWidthClass = () => {
+    const styles = (element as any).styles || {};
+    return styles.buttonWidth === 'full' ? 'w-full' : '';
+  };
+
   const renderProductGrid = () => (
-    <div className={`grid gap-6 ${getGridClasses()}`}>
+    <div className={`grid ${getGridClasses()}`} style={{ gap: getGridGap() }}>
       {products.map((product, index) => (
-        <Card key={product.id} className="group/card hover:shadow-lg transition-all duration-300 overflow-hidden">
+        <Card key={product.id} className="group/card hover:shadow-lg transition-all duration-300 overflow-hidden" style={getCardStyles()}>
           <div className="relative aspect-square overflow-hidden">
             {product.images && Array.isArray(product.images) && product.images[0] ? (
               <img
@@ -147,8 +213,8 @@ const WeeklyFeaturedElement: React.FC<{
             )}
           </div>
 
-          <CardContent className="p-4">
-            <h3 className="font-medium text-sm mb-2 line-clamp-2">{product.name}</h3>
+          <CardContent style={getCardStyles()}>
+            <h3 className="font-medium text-sm mb-2 line-clamp-2" style={getTypographyStyles('productTitleStyles')}>{product.name}</h3>
             
             <div className="flex items-center gap-1 mb-2">
               {Array.from({ length: 5 }).map((_, i) => (
@@ -158,17 +224,23 @@ const WeeklyFeaturedElement: React.FC<{
             </div>
 
             <div className="flex flex-col items-start gap-1 sm:flex-row sm:items-center sm:gap-2 mb-3">
-              <span className="font-bold text-primary text-base md:text-lg">
+              <span className="font-bold text-primary text-base md:text-lg" style={getTypographyStyles('priceStyles')}>
                 {formatCurrency(product.price)}
               </span>
               {product.compare_price && product.compare_price > product.price && (
-                <span className="text-xs md:text-sm text-muted-foreground line-through">
+                <span className="text-xs md:text-sm text-muted-foreground line-through" style={getTypographyStyles('priceStyles')}>
                   {formatCurrency(product.compare_price)}
                 </span>
               )}
             </div>
 
-            <Button size="sm" className="w-full" onClick={() => handleAddToCart(product)}>
+            <Button 
+              size={getButtonSize() as any} 
+              variant={getButtonVariant() as any}
+              className={getButtonWidthClass()}
+              style={getButtonStyles()}
+              onClick={() => handleAddToCart(product)}
+            >
               <ShoppingCart className="w-4 h-4 mr-1" />
               {ctaText}
             </Button>
@@ -198,10 +270,10 @@ const WeeklyFeaturedElement: React.FC<{
         {(showTitle && title) || (showSubtitle && subtitle) ? (
           <div className="text-center mb-12">
             {showTitle && title && (
-              <h2 className="text-3xl font-bold mb-2">{title}</h2>
+              <h2 className="text-3xl font-bold mb-2" style={getTypographyStyles('headlineStyles')}>{title}</h2>
             )}
             {showSubtitle && subtitle && (
-              <p className="text-muted-foreground text-lg">{subtitle}</p>
+              <p className="text-muted-foreground text-lg" style={getTypographyStyles('subheadlineStyles')}>{subtitle}</p>
             )}
           </div>
         ) : null}
