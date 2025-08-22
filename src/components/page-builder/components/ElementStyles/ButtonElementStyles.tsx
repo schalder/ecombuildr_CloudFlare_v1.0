@@ -147,6 +147,7 @@ export const ButtonElementStyles: React.FC<ButtonElementStylesProps> = ({
 }) => {
   const [responsiveTab, setResponsiveTab] = useState<'desktop' | 'mobile'>('desktop');
   const [presetsOpen, setPresetsOpen] = useState(true);
+  const [dimensionsOpen, setDimensionsOpen] = useState(false);
   const [typographyOpen, setTypographyOpen] = useState(false);
   const [colorsOpen, setColorsOpen] = useState(false);
   const [bordersOpen, setBordersOpen] = useState(false);
@@ -235,26 +236,48 @@ export const ButtonElementStyles: React.FC<ButtonElementStylesProps> = ({
         </div>
       </CollapsibleGroup>
 
-      {/* Width Controls */}
-      <CollapsibleGroup title="Dimensions" isOpen={false} onToggle={() => {}}>
-        <div className="flex items-center justify-between">
-          <Label className="text-xs">Full Width</Label>
-          <Switch
-            checked={getCurrentValue('width') === '100%'}
-            onCheckedChange={(checked) => handleResponsiveUpdate('width', checked ? '100%' : 'auto')}
-          />
-        </div>
-
-        {getCurrentValue('width') !== '100%' && (
-          <div>
-            <Label className="text-xs">Custom Width</Label>
-            <Input
-              value={getCurrentValue('width')}
-              onChange={(e) => handleResponsiveUpdate('width', e.target.value)}
-              placeholder="e.g., 200px, 50%"
+      {/* Dimensions */}
+      <CollapsibleGroup title="Dimensions" isOpen={dimensionsOpen} onToggle={setDimensionsOpen}>
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <Label className="text-xs">Full Width</Label>
+            <Switch
+              checked={getCurrentValue('width') === '100%'}
+              onCheckedChange={(checked) => handleResponsiveUpdate('width', checked ? '100%' : 'auto')}
             />
           </div>
-        )}
+
+          {getCurrentValue('width') !== '100%' && (
+            <div className="space-y-3">
+              <div>
+                <Label className="text-xs">Width</Label>
+                <Input
+                  value={getCurrentValue('width', 'auto')}
+                  onChange={(e) => handleResponsiveUpdate('width', e.target.value)}
+                  placeholder="e.g., 200px, 50%, auto"
+                />
+              </div>
+
+              <div>
+                <Label className="text-xs">Min Width</Label>
+                <Input
+                  value={getCurrentValue('minWidth')}
+                  onChange={(e) => handleResponsiveUpdate('minWidth', e.target.value)}
+                  placeholder="e.g., 120px, 20%"
+                />
+              </div>
+
+              <div>
+                <Label className="text-xs">Max Width</Label>
+                <Input
+                  value={getCurrentValue('maxWidth')}
+                  onChange={(e) => handleResponsiveUpdate('maxWidth', e.target.value)}
+                  placeholder="e.g., 300px, 80%"
+                />
+              </div>
+            </div>
+          )}
+        </div>
       </CollapsibleGroup>
 
       {/* Typography */}
