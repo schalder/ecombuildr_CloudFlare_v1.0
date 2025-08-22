@@ -322,6 +322,7 @@ export const RowSettings: React.FC<RowSettingsProps> = ({ row, onUpdate }) => {
     border: false,
     spacing: false,
     effects: false,
+    responsive: false,
   });
 
   const toggleGroup = (groupKey: string) => {
@@ -338,6 +339,37 @@ export const RowSettings: React.FC<RowSettingsProps> = ({ row, onUpdate }) => {
         styles: {
           ...row.styles,
           [key]: value
+        }
+      });
+    }
+  };
+
+  const handleResponsiveStyleUpdate = (device: 'desktop' | 'mobile', key: string, value: any) => {
+    if (value === undefined || value === '') {
+      const newResponsive = { ...row.styles?.responsive };
+      if (newResponsive[device]) {
+        delete newResponsive[device][key];
+        if (Object.keys(newResponsive[device]).length === 0) {
+          delete newResponsive[device];
+        }
+      }
+      onUpdate({
+        styles: {
+          ...row.styles,
+          responsive: newResponsive
+        }
+      });
+    } else {
+      onUpdate({
+        styles: {
+          ...row.styles,
+          responsive: {
+            ...row.styles?.responsive,
+            [device]: {
+              ...(row.styles?.responsive?.[device] || {}),
+              [key]: value
+            }
+          }
         }
       });
     }
@@ -431,6 +463,73 @@ export const RowSettings: React.FC<RowSettingsProps> = ({ row, onUpdate }) => {
         </CollapsibleGroup>
 
         <CollapsibleGroup
+          title="Responsive Overrides"
+          isOpen={openGroups.responsive}
+          onToggle={() => toggleGroup('responsive')}
+        >
+          <Tabs defaultValue="desktop" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="desktop">Desktop</TabsTrigger>
+              <TabsTrigger value="mobile">Mobile</TabsTrigger>
+            </TabsList>
+            <TabsContent value="desktop" className="space-y-4">
+              <div className="space-y-2">
+                <Label>Width (%): <span className="text-muted-foreground">{Math.min(100, Math.max(30, parseInt(String(row.styles?.responsive?.desktop?.width || '').replace(/[^0-9]/g, '')) || 100))}%</span></Label>
+                <Slider
+                  min={30}
+                  max={100}
+                  step={1}
+                  value={[Math.min(100, Math.max(30, parseInt(String(row.styles?.responsive?.desktop?.width || '').replace(/[^0-9]/g, '')) || 100))]}
+                  onValueChange={(v) => handleResponsiveStyleUpdate('desktop', 'width', `${v[0]}%`)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Padding (px)</Label>
+                <Slider
+                  min={0}
+                  max={140}
+                  step={1}
+                  value={[Math.min(140, Math.max(0, parseInt(String(row.styles?.responsive?.desktop?.padding || '').replace(/[^0-9]/g, '')) || 0))]}
+                  onValueChange={(v) => handleResponsiveStyleUpdate('desktop', 'padding', `${v[0]}px`)}
+                />
+                <Input
+                  value={row.styles?.responsive?.desktop?.padding || ''}
+                  onChange={(e) => handleResponsiveStyleUpdate('desktop', 'padding', e.target.value)}
+                  placeholder="Custom e.g., 12px 16px"
+                />
+              </div>
+            </TabsContent>
+            <TabsContent value="mobile" className="space-y-4">
+              <div className="space-y-2">
+                <Label>Width (%): <span className="text-muted-foreground">{Math.min(100, Math.max(30, parseInt(String(row.styles?.responsive?.mobile?.width || '').replace(/[^0-9]/g, '')) || 100))}%</span></Label>
+                <Slider
+                  min={30}
+                  max={100}
+                  step={1}
+                  value={[Math.min(100, Math.max(30, parseInt(String(row.styles?.responsive?.mobile?.width || '').replace(/[^0-9]/g, '')) || 100))]}
+                  onValueChange={(v) => handleResponsiveStyleUpdate('mobile', 'width', `${v[0]}%`)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Padding (px)</Label>
+                <Slider
+                  min={0}
+                  max={140}
+                  step={1}
+                  value={[Math.min(140, Math.max(0, parseInt(String(row.styles?.responsive?.mobile?.padding || '').replace(/[^0-9]/g, '')) || 0))]}
+                  onValueChange={(v) => handleResponsiveStyleUpdate('mobile', 'padding', `${v[0]}px`)}
+                />
+                <Input
+                  value={row.styles?.responsive?.mobile?.padding || ''}
+                  onChange={(e) => handleResponsiveStyleUpdate('mobile', 'padding', e.target.value)}
+                  placeholder="Custom e.g., 12px 16px"
+                />
+              </div>
+            </TabsContent>
+          </Tabs>
+        </CollapsibleGroup>
+
+        <CollapsibleGroup
           title="Background"
           isOpen={openGroups.background}
           onToggle={() => toggleGroup('background')}
@@ -521,6 +620,7 @@ export const ColumnSettings: React.FC<ColumnSettingsProps> = ({ column, onUpdate
     border: false,
     spacing: false,
     effects: false,
+    responsive: false,
   });
 
   const toggleGroup = (groupKey: string) => {
@@ -537,6 +637,37 @@ export const ColumnSettings: React.FC<ColumnSettingsProps> = ({ column, onUpdate
         styles: {
           ...column.styles,
           [key]: value
+        }
+      });
+    }
+  };
+
+  const handleResponsiveStyleUpdate = (device: 'desktop' | 'mobile', key: string, value: any) => {
+    if (value === undefined || value === '') {
+      const newResponsive = { ...column.styles?.responsive };
+      if (newResponsive[device]) {
+        delete newResponsive[device][key];
+        if (Object.keys(newResponsive[device]).length === 0) {
+          delete newResponsive[device];
+        }
+      }
+      onUpdate({
+        styles: {
+          ...column.styles,
+          responsive: newResponsive
+        }
+      });
+    } else {
+      onUpdate({
+        styles: {
+          ...column.styles,
+          responsive: {
+            ...column.styles?.responsive,
+            [device]: {
+              ...(column.styles?.responsive?.[device] || {}),
+              [key]: value
+            }
+          }
         }
       });
     }
@@ -679,6 +810,73 @@ export const ColumnSettings: React.FC<ColumnSettingsProps> = ({ column, onUpdate
             onChange={(shadow) => handleStyleUpdate('boxShadow', shadow)}
             label="Box Shadow"
           />
+        </CollapsibleGroup>
+
+        <CollapsibleGroup
+          title="Responsive Overrides"
+          isOpen={openGroups.responsive}
+          onToggle={() => toggleGroup('responsive')}
+        >
+          <Tabs defaultValue="desktop" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="desktop">Desktop</TabsTrigger>
+              <TabsTrigger value="mobile">Mobile</TabsTrigger>
+            </TabsList>
+            <TabsContent value="desktop" className="space-y-4">
+              <div className="space-y-2">
+                <Label>Width (%): <span className="text-muted-foreground">{Math.min(100, Math.max(30, parseInt(String(column.styles?.responsive?.desktop?.width || '').replace(/[^0-9]/g, '')) || 100))}%</span></Label>
+                <Slider
+                  min={30}
+                  max={100}
+                  step={1}
+                  value={[Math.min(100, Math.max(30, parseInt(String(column.styles?.responsive?.desktop?.width || '').replace(/[^0-9]/g, '')) || 100))]}
+                  onValueChange={(v) => handleResponsiveStyleUpdate('desktop', 'width', `${v[0]}%`)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Padding (px)</Label>
+                <Slider
+                  min={0}
+                  max={140}
+                  step={1}
+                  value={[Math.min(140, Math.max(0, parseInt(String(column.styles?.responsive?.desktop?.padding || '').replace(/[^0-9]/g, '')) || 0))]}
+                  onValueChange={(v) => handleResponsiveStyleUpdate('desktop', 'padding', `${v[0]}px`)}
+                />
+                <Input
+                  value={column.styles?.responsive?.desktop?.padding || ''}
+                  onChange={(e) => handleResponsiveStyleUpdate('desktop', 'padding', e.target.value)}
+                  placeholder="Custom e.g., 12px 16px"
+                />
+              </div>
+            </TabsContent>
+            <TabsContent value="mobile" className="space-y-4">
+              <div className="space-y-2">
+                <Label>Width (%): <span className="text-muted-foreground">{Math.min(100, Math.max(30, parseInt(String(column.styles?.responsive?.mobile?.width || '').replace(/[^0-9]/g, '')) || 100))}%</span></Label>
+                <Slider
+                  min={30}
+                  max={100}
+                  step={1}
+                  value={[Math.min(100, Math.max(30, parseInt(String(column.styles?.responsive?.mobile?.width || '').replace(/[^0-9]/g, '')) || 100))]}
+                  onValueChange={(v) => handleResponsiveStyleUpdate('mobile', 'width', `${v[0]}%`)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Padding (px)</Label>
+                <Slider
+                  min={0}
+                  max={140}
+                  step={1}
+                  value={[Math.min(140, Math.max(0, parseInt(String(column.styles?.responsive?.mobile?.padding || '').replace(/[^0-9]/g, '')) || 0))]}
+                  onValueChange={(v) => handleResponsiveStyleUpdate('mobile', 'padding', `${v[0]}px`)}
+                />
+                <Input
+                  value={column.styles?.responsive?.mobile?.padding || ''}
+                  onChange={(e) => handleResponsiveStyleUpdate('mobile', 'padding', e.target.value)}
+                  placeholder="Custom e.g., 12px 16px"
+                />
+              </div>
+            </TabsContent>
+          </Tabs>
         </CollapsibleGroup>
       </div>
     </div>
