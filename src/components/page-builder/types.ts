@@ -86,11 +86,6 @@ export interface PageBuilderColumn {
     width?: string; // Custom width override
     maxWidth?: string;
     minWidth?: string;
-    // Border properties
-    borderWidth?: string;
-    borderColor?: string;
-    borderRadius?: string;
-    borderStyle?: string;
     // Content alignment properties
     contentAlignment?: 'flex-start' | 'center' | 'flex-end' | 'stretch';
     contentJustification?: 'flex-start' | 'center' | 'flex-end' | 'space-between' | 'space-around' | 'space-evenly';
@@ -146,11 +141,6 @@ export interface PageBuilderRow {
     width?: string; // Custom width override
     maxWidth?: string;
     minWidth?: string;
-    // Border properties
-    borderWidth?: string;
-    borderColor?: string;
-    borderRadius?: string;
-    borderStyle?: string;
     responsive?: {
       desktop?: Record<string, any>;
       mobile?: Record<string, any>;
@@ -203,11 +193,6 @@ export interface PageBuilderSection {
     height?: string;
     minHeight?: string;
     maxHeight?: string;
-    // Border properties
-    borderWidth?: string;
-    borderColor?: string;
-    borderRadius?: string;
-    borderStyle?: string;
     contentVerticalAlignment?: 'top' | 'center' | 'bottom';
     responsive?: {
       desktop?: Record<string, any>;

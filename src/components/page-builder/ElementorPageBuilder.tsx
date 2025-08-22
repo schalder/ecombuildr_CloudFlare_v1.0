@@ -1069,32 +1069,10 @@ const ElementorPageBuilderContent: React.FC<ElementorPageBuilderProps> = memo(({
                       />
                     );
                   } else {
-                    // Create specific update handlers based on selected item type
-                    const getUpdateHandlers = () => {
-                      if (!selectedItem || !selection) return {};
-                      
-                      switch (selectedItem.type) {
-                        case 'section':
-                          return {
-                            onUpdateSection: (updates: any) => updateSection(selection.id, updates)
-                          };
-                        case 'row':
-                          return {
-                            onUpdateRow: (updates: any) => updateRow(selection.parentId!, selection.id, updates)
-                          };
-                        case 'column':
-                          return {
-                            onUpdateColumn: (updates: any) => updateColumn(selection.grandParentId!, selection.parentId!, selection.id, updates)
-                          };
-                        default:
-                          return {};
-                      }
-                    };
-
                     return (
                       <SettingsPanel
                         selectedItem={selectedItem}
-                        {...getUpdateHandlers()}
+                        onUpdate={updateHandler}
                       />
                     );
                   }
