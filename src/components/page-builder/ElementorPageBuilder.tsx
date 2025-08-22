@@ -1,4 +1,4 @@
-// Page builder with layered background support
+// Page builder with floating elements panel
 import React, { useState, useCallback, memo, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { DndProvider, useDrag, useDrop } from 'react-dnd';
