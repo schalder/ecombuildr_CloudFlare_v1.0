@@ -29,11 +29,6 @@ export function useWebsiteShipping() {
   useEffect(() => {
     (async () => {
       try {
-        console.debug('[useWebsiteShipping] Resolution attempt:', { 
-          websiteId, 
-          websiteSlug, 
-          source: contextWebsiteId ? 'Context' : urlWebsiteId ? 'URL' : 'None' 
-        });
         
         // 1) Explicit websiteId (context or param)
         if (websiteId) {
@@ -45,7 +40,7 @@ export function useWebsiteShipping() {
           if (data?.store_id) await loadStoreById(data.store_id);
           const ship = (data as any)?.settings?.shipping;
           if (ship) {
-            console.debug('[useWebsiteShipping] Found shipping via websiteId:', ship);
+            
             setWebsiteShipping(ship as ShippingSettings);
           }
           return;
@@ -62,7 +57,7 @@ export function useWebsiteShipping() {
           if (data?.store_id) await loadStoreById(data.store_id);
           const ship = (data as any)?.settings?.shipping;
           if (ship) {
-            console.debug('[useWebsiteShipping] Found shipping via websiteSlug:', ship);
+            
             setWebsiteShipping(ship as ShippingSettings);
           }
           return;
@@ -86,7 +81,7 @@ export function useWebsiteShipping() {
               .maybeSingle();
             const ship = (websiteData as any)?.settings?.shipping;
             if (ship) {
-              console.debug('[useWebsiteShipping] Found shipping via funnel:', ship);
+              
               setWebsiteShipping(ship as ShippingSettings);
             }
           }
@@ -111,7 +106,7 @@ export function useWebsiteShipping() {
           if (data?.store_id) await loadStoreById(data.store_id);
           const ship = (data as any)?.settings?.shipping;
           if (ship) {
-            console.debug('[useWebsiteShipping] Found shipping via hostname:', ship);
+            
             setWebsiteShipping(ship as ShippingSettings);
           }
         }
@@ -126,7 +121,7 @@ export function useWebsiteShipping() {
   useEffect(() => {
     if (!websiteShipping && (store as any)?.settings?.shipping) {
       setWebsiteShipping(((store as any).settings.shipping) as ShippingSettings);
-      try { console.debug('[useWebsiteShipping] Using store-level shipping settings as fallback'); } catch {}
+      
     }
   }, [store, websiteShipping]);
 

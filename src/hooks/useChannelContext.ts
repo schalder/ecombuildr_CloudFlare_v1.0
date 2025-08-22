@@ -14,11 +14,6 @@ export const useChannelContext = () => {
     const resolvedWebsiteId = urlWebsiteId || contextWebsiteId || null;
     const resolvedFunnelId = funnelId || null;
     
-    console.debug('[useChannelContext] Resolved:', { 
-      websiteId: resolvedWebsiteId, 
-      funnelId: resolvedFunnelId,
-      source: urlWebsiteId ? 'URL' : contextWebsiteId ? 'Context' : 'None'
-    });
     
     return {
       websiteId: resolvedWebsiteId,
