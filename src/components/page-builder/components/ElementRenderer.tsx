@@ -141,9 +141,12 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
 
   const ElementComponent = elementType.component;
 
-  // Merge responsive styles for spacing
+  // Don't apply spacing for media elements as they handle it internally
+  const isMediaElement = ['image-carousel', 'image-gallery', 'video-playlist'].includes(element.type);
+  
+  // Merge responsive styles for spacing (only for non-media elements)
   const mergedStyles = mergeResponsiveStyles({}, element.styles, deviceType);
-
+  
   return (
     <div
       ref={drag}
@@ -154,7 +157,7 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
         isDragging && 'opacity-50',
         isSelected && !isPreviewMode && 'ring-2 ring-primary ring-opacity-50 rounded'
       )}
-      style={{
+      style={isMediaElement ? {} : {
         marginTop: mergedStyles.marginTop,
         marginRight: mergedStyles.marginRight,
         marginBottom: mergedStyles.marginBottom,

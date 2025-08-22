@@ -168,21 +168,7 @@ const ImageCarouselElement: React.FC<{
   return (
     <div 
       className="max-w-4xl mx-auto" 
-      style={{
-        // Apply all styles except spacing (which is handled by ElementRenderer)
-        ...renderElementStyles(element, deviceType),
-        // Remove spacing to avoid conflicts with ElementRenderer
-        margin: undefined,
-        marginTop: undefined,
-        marginRight: undefined,
-        marginBottom: undefined,
-        marginLeft: undefined,
-        padding: undefined,
-        paddingTop: undefined,
-        paddingRight: undefined,
-        paddingBottom: undefined,
-        paddingLeft: undefined,
-      }}
+      style={renderElementStyles(element, deviceType)}
     >
       <div className="relative">
         <Carousel className="w-full" setApi={setApi} opts={{ loop: true }}>
