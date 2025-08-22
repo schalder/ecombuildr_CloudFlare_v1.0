@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { MapPin, Code, Share2, Facebook, Twitter, Linkedin, Link2, MessageCircle, Send, Mail, ExternalLink, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -78,16 +78,17 @@ const GoogleMapsElement: React.FC<{
   );
 };
 
-// Custom HTML Element
+// Custom HTML/JS Element
 const CustomHTMLElement: React.FC<{
   element: PageBuilderElement;
   isEditing?: boolean;
   deviceType?: 'desktop' | 'tablet' | 'mobile';
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
 }> = ({ element, isEditing, onUpdate }) => {
-  const html = element.content.html || '<div><h3>Custom HTML</h3><p>Add your custom HTML here</p></div>';
+  const html = element.content.html || '<div><h3>Custom HTML/JS</h3><p>Add your custom HTML, CSS, and JavaScript here</p></div>';
   const allowDangerousHTML = element.content.allowDangerousHTML || false;
   const [showPreview, setShowPreview] = useState(!isEditing);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const handleTitleUpdate = (newTitle: string) => {
     if (onUpdate) {
@@ -100,17 +101,93 @@ const CustomHTMLElement: React.FC<{
     }
   };
 
+  const toggleDangerousHTML = () => {
+    if (onUpdate) {
+      onUpdate({
+        content: {
+          ...element.content,
+          allowDangerousHTML: !allowDangerousHTML
+        }
+      });
+    }
+  };
+
+  // Execute scripts when content changes and dangerous HTML is allowed
+  useEffect(() => {
+    if (!containerRef.current || !html || !allowDangerousHTML) {
+      // If dangerous HTML is disabled, just set innerHTML safely
+      if (containerRef.current && !allowDangerousHTML) {
+        containerRef.current.innerHTML = html;
+      }
+      return;
+    }
+
+    const container = containerRef.current;
+    
+    // Clear existing content
+    container.innerHTML = '';
+    
+    // Create a temporary div to parse the HTML
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = html;
+    
+    // Extract and handle style tags
+    const styleTags = tempDiv.querySelectorAll('style');
+    styleTags.forEach(styleTag => {
+      const newStyle = document.createElement('style');
+      newStyle.textContent = styleTag.textContent;
+      container.appendChild(newStyle);
+      styleTag.remove();
+    });
+    
+    // Extract and handle script tags
+    const scriptTags = tempDiv.querySelectorAll('script');
+    const scripts: { content: string; src?: string }[] = [];
+    
+    scriptTags.forEach(scriptTag => {
+      if (scriptTag.src) {
+        scripts.push({ content: '', src: scriptTag.src });
+      } else {
+        scripts.push({ content: scriptTag.textContent || '' });
+      }
+      scriptTag.remove();
+    });
+    
+    // Add remaining HTML content
+    container.appendChild(tempDiv);
+    
+    // Execute scripts after DOM is updated
+    scripts.forEach(script => {
+      const newScript = document.createElement('script');
+      if (script.src) {
+        newScript.src = script.src;
+      } else {
+        newScript.textContent = script.content;
+      }
+      container.appendChild(newScript);
+    });
+  }, [html, allowDangerousHTML]);
+
   if (isEditing) {
     return (
       <div className="max-w-4xl mx-auto p-4 border rounded-lg" style={element.styles}>
         <div className="flex items-center justify-between mb-4">
           <InlineEditor
-            value={element.content.title || 'Custom HTML'}
+            value={element.content.title || 'Custom HTML/JS'}
             onChange={handleTitleUpdate}
             className="font-semibold"
-            placeholder="HTML block title..."
+            placeholder="HTML/JS block title..."
           />
           <div className="flex items-center space-x-2">
+            <label className="flex items-center space-x-2 text-sm">
+              <input
+                type="checkbox"
+                checked={allowDangerousHTML}
+                onChange={toggleDangerousHTML}
+                className="rounded"
+              />
+              <span>Enable JS</span>
+            </label>
             <Button 
               onClick={() => setShowPreview(!showPreview)} 
               size="sm" 
@@ -123,23 +200,42 @@ const CustomHTMLElement: React.FC<{
         
         {showPreview ? (
           <div 
-            className="p-4 border rounded-lg bg-background min-h-[200px]"
-            dangerouslySetInnerHTML={{ __html: html }}
+            ref={containerRef}
+            className="p-4 border rounded-lg bg-background min-h-[200px] overflow-auto"
           />
         ) : (
           <div>
             <Textarea
               value={html}
               onChange={(e) => onUpdate && onUpdate({ content: { ...element.content, html: e.target.value } })}
-              placeholder="Enter your HTML code here..."
-              rows={12}
+              placeholder={`Enter your HTML/CSS/JS code here...
+
+Example:
+<div style="padding: 20px; background: #f0f0f0; border-radius: 8px;">
+  <h2>Hello World</h2>
+  <button onclick="alert('Hello!')">Click me</button>
+</div>
+
+<style>
+  .my-class { color: blue; }
+</style>
+
+<script>
+  console.log('Custom script executed!');
+</script>`}
+              rows={15}
               className="font-mono text-sm"
             />
-            {!allowDangerousHTML && (
-              <p className="text-xs text-muted-foreground mt-2">
-                Scripts and external content are disabled for security. Enable in properties panel if needed.
+            <div className="flex items-center justify-between mt-2">
+              <p className="text-xs text-muted-foreground">
+                Supports HTML elements, CSS within &lt;style&gt; tags, and JavaScript within &lt;script&gt; tags
               </p>
-            )}
+              {!allowDangerousHTML && (
+                <p className="text-xs text-amber-600">
+                  JavaScript execution is disabled
+                </p>
+              )}
+            </div>
           </div>
         )}
       </div>
@@ -151,7 +247,10 @@ const CustomHTMLElement: React.FC<{
       {element.content.title && (
         <h3 className="text-xl font-semibold mb-4">{element.content.title}</h3>
       )}
-      <div dangerouslySetInnerHTML={{ __html: html }} />
+      <div 
+        ref={containerRef}
+        className="min-h-[100px] overflow-auto"
+      />
     </div>
   );
 };
@@ -425,14 +524,16 @@ export const registerAdvancedElements = () => {
 
   elementRegistry.register({
     id: 'custom-html',
-    name: 'Custom HTML',
+    name: 'Custom HTML/JS',
     category: 'custom',
     icon: Code,
     component: CustomHTMLElement,
     defaultContent: {
-      html: '<div><h3>Custom HTML</h3><p>Add your custom HTML here</p></div>'
+      title: 'Custom HTML/JS Block',
+      html: '<div style="padding: 20px; text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">\n  <h3 style="margin-bottom: 10px; font-size: 24px;">🚀 Welcome!</h3>\n  <p style="margin-bottom: 15px; opacity: 0.9;">This is a custom HTML/JS block with interactive features.</p>\n  <button onclick="handleCustomClick()" style="padding: 12px 24px; background: rgba(255,255,255,0.2); color: white; border: 2px solid rgba(255,255,255,0.3); border-radius: 6px; cursor: pointer; font-weight: bold; transition: all 0.3s ease;" onmouseover="this.style.background=\'rgba(255,255,255,0.3)\'" onmouseout="this.style.background=\'rgba(255,255,255,0.2)\'">✨ Click Me!</button>\n</div>\n\n<style>\n  .custom-pulse {\n    animation: pulse 2s infinite;\n  }\n  @keyframes pulse {\n    0% { transform: scale(1); }\n    50% { transform: scale(1.05); }\n    100% { transform: scale(1); }\n  }\n</style>\n\n<script>\n  function handleCustomClick() {\n    alert("🎉 Hello from your custom HTML/JS block!\\n\\nYou can add any HTML, CSS, and JavaScript here.");\n    console.log("Custom HTML/JS block interaction logged!");\n  }\n  console.log("✅ Custom HTML/JS block loaded successfully!");\n</script>',
+      allowDangerousHTML: false
     },
-    description: 'Custom HTML code block'
+    description: 'Custom HTML/CSS/JS code block with script execution'
   });
 
   elementRegistry.register({
