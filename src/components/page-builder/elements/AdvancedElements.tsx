@@ -85,10 +85,21 @@ const CustomHTMLElement: React.FC<{
   deviceType?: 'desktop' | 'tablet' | 'mobile';
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
 }> = ({ element, isEditing, onUpdate }) => {
-  const html = element.content.html || '';
+  const html = element.content.html || '<div><h3>Custom HTML/JS</h3><p>Add your custom HTML, CSS, and JavaScript here</p></div>';
   const allowDangerousHTML = element.content.allowDangerousHTML || false;
   const [showPreview, setShowPreview] = useState(!isEditing);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  const handleTitleUpdate = (newTitle: string) => {
+    if (onUpdate) {
+      onUpdate({
+        content: {
+          ...element.content,
+          title: newTitle
+        }
+      });
+    }
+  };
 
   const toggleDangerousHTML = () => {
     if (onUpdate) {
@@ -160,7 +171,13 @@ const CustomHTMLElement: React.FC<{
   if (isEditing) {
     return (
       <div className="max-w-4xl mx-auto p-4 border rounded-lg" style={element.styles}>
-        <div className="flex items-center justify-end mb-4">
+        <div className="flex items-center justify-between mb-4">
+          <InlineEditor
+            value={element.content.title || 'Custom HTML/JS'}
+            onChange={handleTitleUpdate}
+            className="font-semibold"
+            placeholder="HTML/JS block title..."
+          />
           <div className="flex items-center space-x-2">
             <label className="flex items-center space-x-2 text-sm">
               <input
@@ -169,14 +186,14 @@ const CustomHTMLElement: React.FC<{
                 onChange={toggleDangerousHTML}
                 className="rounded"
               />
-              <span>Allow Scripts & External Content</span>
+              <span>Enable JS</span>
             </label>
             <Button 
               onClick={() => setShowPreview(!showPreview)} 
               size="sm" 
               variant="outline"
             >
-              {showPreview ? 'Edit Code' : 'Show Preview'}
+              {showPreview ? 'Edit Code' : 'Preview'}
             </Button>
           </div>
         </div>
@@ -191,7 +208,21 @@ const CustomHTMLElement: React.FC<{
             <Textarea
               value={html}
               onChange={(e) => onUpdate && onUpdate({ content: { ...element.content, html: e.target.value } })}
-              placeholder="Enter your HTML code here..."
+              placeholder={`Enter your HTML/CSS/JS code here...
+
+Example:
+<div style="padding: 20px; background: #f0f0f0; border-radius: 8px;">
+  <h2>Hello World</h2>
+  <button onclick="alert('Hello!')">Click me</button>
+</div>
+
+<style>
+  .my-class { color: blue; }
+</style>
+
+<script>
+  console.log('Custom script executed!');
+</script>`}
               rows={15}
               className="font-mono text-sm"
             />
@@ -213,9 +244,12 @@ const CustomHTMLElement: React.FC<{
 
   return (
     <div className="max-w-4xl mx-auto" style={element.styles}>
+      {element.content.title && (
+        <h3 className="text-xl font-semibold mb-4">{element.content.title}</h3>
+      )}
       <div 
         ref={containerRef}
-        className="min-h-[20px] overflow-auto"
+        className="min-h-[100px] overflow-auto"
       />
     </div>
   );
@@ -495,7 +529,8 @@ export const registerAdvancedElements = () => {
     icon: Code,
     component: CustomHTMLElement,
     defaultContent: {
-      html: '',
+      title: 'Custom HTML/JS Block',
+      html: '<div style="padding: 20px; text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">\n  <h3 style="margin-bottom: 10px; font-size: 24px;">🚀 Welcome!</h3>\n  <p style="margin-bottom: 15px; opacity: 0.9;">This is a custom HTML/JS block with interactive features.</p>\n  <button onclick="handleCustomClick()" style="padding: 12px 24px; background: rgba(255,255,255,0.2); color: white; border: 2px solid rgba(255,255,255,0.3); border-radius: 6px; cursor: pointer; font-weight: bold; transition: all 0.3s ease;" onmouseover="this.style.background=\'rgba(255,255,255,0.3)\'" onmouseout="this.style.background=\'rgba(255,255,255,0.2)\'">✨ Click Me!</button>\n</div>\n\n<style>\n  .custom-pulse {\n    animation: pulse 2s infinite;\n  }\n  @keyframes pulse {\n    0% { transform: scale(1); }\n    50% { transform: scale(1.05); }\n    100% { transform: scale(1); }\n  }\n</style>\n\n<script>\n  function handleCustomClick() {\n    alert("🎉 Hello from your custom HTML/JS block!\\n\\nYou can add any HTML, CSS, and JavaScript here.");\n    console.log("Custom HTML/JS block interaction logged!");\n  }\n  console.log("✅ Custom HTML/JS block loaded successfully!");\n</script>',
       allowDangerousHTML: false
     },
     description: 'Custom HTML/CSS/JS code block with script execution'
