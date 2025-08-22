@@ -220,42 +220,6 @@ export const ContentProperties: React.FC<ContentPropertiesProps> = ({
         )}
 
         <div>
-          <Label htmlFor="button-variant">Button Style</Label>
-          <Select
-            value={element.content.variant || 'default'}
-            onValueChange={(value) => onUpdate('variant', value)}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="default">Default</SelectItem>
-              <SelectItem value="destructive">Destructive</SelectItem>
-              <SelectItem value="outline">Outline</SelectItem>
-              <SelectItem value="secondary">Secondary</SelectItem>
-              <SelectItem value="ghost">Ghost</SelectItem>
-              <SelectItem value="link">Link</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <Label htmlFor="button-size">Button Size</Label>
-          <Select
-            value={element.content.size || 'default'}
-            onValueChange={(value) => onUpdate('size', value)}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="default">Default</SelectItem>
-              <SelectItem value="sm">Small</SelectItem>
-              <SelectItem value="lg">Large</SelectItem>
-              <SelectItem value="xl">Extra Large</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
           <Label htmlFor="button-target">Link Target</Label>
           <Select
             value={element.content.target || '_blank'}

@@ -391,9 +391,6 @@ const ButtonElement: React.FC<{
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
 }> = ({ element, isEditing, deviceType = 'desktop', onUpdate }) => {
   const text = element.content.text || 'Button';
-  const variant = element.content.variant || 'default';
-  const rawSize = element.content.size;
-  const size = (rawSize === 'icon' ? 'default' : rawSize) || 'default';
   const url = element.content.url || '#';
   const target = element.content.target || '_blank';
 
@@ -542,10 +539,8 @@ const ButtonElement: React.FC<{
       {responsiveCSS && <style>{responsiveCSS}</style>}
       
       <div className={containerClass}>
-        <Button 
-          variant={variant as any} 
-          size={size as any}
-          className={`${customClassName} h-auto leading-none`}
+        <button 
+          className={`${customClassName} h-auto leading-none inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50`}
           onClick={handleClick}
           style={elementStyles}
         >
@@ -560,7 +555,7 @@ const ButtonElement: React.FC<{
           ) : (
             text
           )}
-        </Button>
+        </button>
       </div>
     </>
   );
