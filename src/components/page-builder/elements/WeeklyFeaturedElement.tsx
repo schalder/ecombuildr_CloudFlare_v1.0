@@ -34,6 +34,7 @@ const WeeklyFeaturedElement: React.FC<{
     sourceType = 'auto',
     selectedProductIds = [],
     ctaText = 'Add to Cart',
+    ctaBehavior = 'add_to_cart',
     limit = 6,
     columns = 3,
     tabletColumns = 2,
@@ -59,7 +60,11 @@ const WeeklyFeaturedElement: React.FC<{
 
   const handleAddToCart = (product: any) => {
     if (!isEditing) {
-      addToCart(product);
+      if (ctaBehavior === 'buy_now') {
+        addToCart(product, 1, true); // Third parameter triggers checkout redirect
+      } else {
+        addToCart(product);
+      }
     }
   };
 
@@ -212,7 +217,7 @@ const WeeklyFeaturedElement: React.FC<{
               onClick={() => handleAddToCart(product)}
             >
               <ShoppingCart className="w-4 h-4 mr-1" />
-              {ctaText}
+              {ctaBehavior === 'buy_now' ? (ctaText || 'Buy Now') : (ctaText || 'Add to Cart')}
             </Button>
           </CardContent>
         </Card>
@@ -292,6 +297,7 @@ const weeklyFeaturedElementType: ElementType = {
     sourceType: 'auto',
     selectedProductIds: [],
     ctaText: 'Add to Cart',
+    ctaBehavior: 'add_to_cart',
     limit: 6,
     columns: 3,
     tabletColumns: 2,

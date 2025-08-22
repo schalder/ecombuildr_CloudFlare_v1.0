@@ -1158,8 +1158,28 @@ export const WeeklyFeaturedElementProperties: React.FC<EcommerceContentPropertie
       )}
 
       <div>
+        <Label className="text-xs">CTA Behavior</Label>
+        <Select 
+          value={element.content.ctaBehavior || 'add_to_cart'} 
+          onValueChange={(value) => onUpdate('ctaBehavior', value)}
+        >
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="add_to_cart">Add to Cart</SelectItem>
+            <SelectItem value="buy_now">Buy Now</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div>
         <Label className="text-xs">Button Label</Label>
-        <Input value={element.content.ctaText || 'Add to Cart'} onChange={(e) => onUpdate('ctaText', e.target.value)} placeholder="Add to Cart" />
+        <Input 
+          value={element.content.ctaText || (element.content.ctaBehavior === 'buy_now' ? 'Buy Now' : 'Add to Cart')} 
+          onChange={(e) => onUpdate('ctaText', e.target.value)} 
+          placeholder={element.content.ctaBehavior === 'buy_now' ? 'Buy Now' : 'Add to Cart'} 
+        />
       </div>
 
       <div>
