@@ -15,6 +15,7 @@ import { Switch } from '@/components/ui/switch';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { CompactMediaSelector } from './CompactMediaSelector';
+import { CollapsibleGroup } from './ElementStyles/_shared/CollapsibleGroup';
 
 // Section Settings Panel
 interface SectionSettingsProps {
@@ -24,6 +25,12 @@ interface SectionSettingsProps {
 
 export const SectionSettings: React.FC<SectionSettingsProps> = ({ section, onUpdate }) => {
   const [customWidthMode, setCustomWidthMode] = useState(!!section.customWidth);
+  const [openCards, setOpenCards] = useState({
+    anchor: true,
+    layout: true,
+    background: true,
+    spacing: true
+  });
 
   // Helper functions for height mode management
   const getHeightMode = (styles: any, device: 'desktop' | 'mobile' = 'desktop'): 'auto' | 'viewport' | 'custom' => {
@@ -166,24 +173,26 @@ export const SectionSettings: React.FC<SectionSettingsProps> = ({ section, onUpd
 
   return (
     <div className="p-4 space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-sm">Anchor</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2">
+      <CollapsibleGroup
+        title="Anchor"
+        isOpen={openCards.anchor}
+        onToggle={(isOpen) => setOpenCards(prev => ({ ...prev, anchor: isOpen }))}
+      >
+        <div className="space-y-2">
           <div className="flex items-center gap-2">
             <Input readOnly value={section.anchor || ''} />
             <Button size="sm" onClick={() => section.anchor && navigator.clipboard.writeText(section.anchor)}>Copy</Button>
           </div>
           <p className="text-xs text-muted-foreground">Use #{section.anchor} for in-page scrolling</p>
-        </CardContent>
-      </Card>
+        </div>
+      </CollapsibleGroup>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-sm">Section Layout</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
+      <CollapsibleGroup
+        title="Section Layout"
+        isOpen={openCards.layout}
+        onToggle={(isOpen) => setOpenCards(prev => ({ ...prev, layout: isOpen }))}
+      >
+        <div className="space-y-6">
           {/* Width Settings */}
           <div className="space-y-4">
             <Label className="text-sm font-medium">Width</Label>
@@ -413,14 +422,15 @@ export const SectionSettings: React.FC<SectionSettingsProps> = ({ section, onUpd
               </TabsContent>
             </Tabs>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </CollapsibleGroup>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-sm">Background</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
+      <CollapsibleGroup
+        title="Background"
+        isOpen={openCards.background}
+        onToggle={(isOpen) => setOpenCards(prev => ({ ...prev, background: isOpen }))}
+      >
+        <div className="space-y-4">
           <ColorPicker
             color={section.styles?.backgroundColor || 'transparent'}
             onChange={(color) => handleStyleUpdate('backgroundColor', color)}
@@ -490,29 +500,30 @@ export const SectionSettings: React.FC<SectionSettingsProps> = ({ section, onUpd
           )}
           
           <div className="space-y-2">
-            <Label>Color/Gradient Opacity: <span className="text-muted-foreground">{Math.round((section.styles?.backgroundOpacity ?? 1) * 100)}%</span></Label>
+            <Label>Color/Gradient Opacity: <span className="text-muted-foreground">{Math.round((section.styles?.backgroundOpacity || 1) * 100)}%</span></Label>
             <Slider
               min={0}
-              max={1}
-              step={0.01}
-              value={[section.styles?.backgroundOpacity ?? 1]}
-              onValueChange={(value) => handleStyleUpdate('backgroundOpacity', value[0])}
+              max={100}
+              step={1}
+              value={[Math.round((section.styles?.backgroundOpacity || 1) * 100)]}
+              onValueChange={(v) => handleStyleUpdate('backgroundOpacity', v[0] / 100)}
             />
           </div>
-          
+
           <BoxShadowPicker
             value={section.styles?.boxShadow || 'none'}
             onChange={(shadow) => handleStyleUpdate('boxShadow', shadow)}
             label="Box Shadow"
           />
-        </CardContent>
-      </Card>
+        </div>
+      </CollapsibleGroup>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-sm">Spacing</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
+      <CollapsibleGroup
+        title="Spacing"
+        isOpen={openCards.spacing}
+        onToggle={(isOpen) => setOpenCards(prev => ({ ...prev, spacing: isOpen }))}
+      >
+        <div className="space-y-4">
           <div className="space-y-3">
             <Label className="text-sm font-medium">Padding</Label>
             <div className="grid grid-cols-2 gap-2">
@@ -596,8 +607,8 @@ export const SectionSettings: React.FC<SectionSettingsProps> = ({ section, onUpd
               </div>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </CollapsibleGroup>
     </div>
   );
 };
@@ -610,6 +621,12 @@ interface RowSettingsProps {
 
 export const RowSettings: React.FC<RowSettingsProps> = ({ row, onUpdate }) => {
   const [customWidthMode, setCustomWidthMode] = useState(!!row.customWidth);
+  const [openCards, setOpenCards] = useState({
+    anchor: true,
+    layout: true,
+    background: true,
+    spacing: true
+  });
 
   const handleStyleUpdate = (key: string, value: any) => {
     onUpdate({
@@ -637,24 +654,26 @@ export const RowSettings: React.FC<RowSettingsProps> = ({ row, onUpdate }) => {
 
   return (
     <div className="p-4 space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-sm">Anchor</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2">
+      <CollapsibleGroup
+        title="Anchor"
+        isOpen={openCards.anchor}
+        onToggle={(isOpen) => setOpenCards(prev => ({ ...prev, anchor: isOpen }))}
+      >
+        <div className="space-y-2">
           <div className="flex items-center gap-2">
             <Input readOnly value={row.anchor || ''} />
             <Button size="sm" onClick={() => row.anchor && navigator.clipboard.writeText(row.anchor)}>Copy</Button>
           </div>
           <p className="text-xs text-muted-foreground">Use #{row.anchor} for in-page scrolling</p>
-        </CardContent>
-      </Card>
+        </div>
+      </CollapsibleGroup>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-sm">Row Layout</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
+      <CollapsibleGroup
+        title="Row Layout"
+        isOpen={openCards.layout}
+        onToggle={(isOpen) => setOpenCards(prev => ({ ...prev, layout: isOpen }))}
+      >
+        <div className="space-y-4">
           <div className="space-y-2">
             <Label>Column Layout</Label>
             <Select
@@ -788,14 +807,15 @@ export const RowSettings: React.FC<RowSettingsProps> = ({ row, onUpdate }) => {
               </TabsContent>
             </Tabs>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </CollapsibleGroup>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-sm">Background</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
+      <CollapsibleGroup
+        title="Background"
+        isOpen={openCards.background}
+        onToggle={(isOpen) => setOpenCards(prev => ({ ...prev, background: isOpen }))}
+      >
+        <div className="space-y-4">
           <ColorPicker
             color={row.styles?.backgroundColor || 'transparent'}
             onChange={(color) => handleStyleUpdate('backgroundColor', color)}
@@ -880,14 +900,15 @@ export const RowSettings: React.FC<RowSettingsProps> = ({ row, onUpdate }) => {
             onChange={(shadow) => handleStyleUpdate('boxShadow', shadow)}
             label="Box Shadow"
           />
-        </CardContent>
-      </Card>
+        </div>
+      </CollapsibleGroup>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-sm">Spacing</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
+      <CollapsibleGroup
+        title="Spacing"
+        isOpen={openCards.spacing}
+        onToggle={(isOpen) => setOpenCards(prev => ({ ...prev, spacing: isOpen }))}
+      >
+        <div className="space-y-4">
           <div className="space-y-3">
             <Label className="text-sm font-medium">Padding</Label>
             <div className="grid grid-cols-2 gap-2">
@@ -971,8 +992,8 @@ export const RowSettings: React.FC<RowSettingsProps> = ({ row, onUpdate }) => {
               </div>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </CollapsibleGroup>
     </div>
   );
 };
@@ -985,6 +1006,13 @@ interface ColumnSettingsProps {
 
 export const ColumnSettings: React.FC<ColumnSettingsProps> = ({ column, onUpdate }) => {
   const [customWidthMode, setCustomWidthMode] = useState(!!column.customWidth);
+  const [openCards, setOpenCards] = useState({
+    anchor: true,
+    layout: true,
+    background: true,
+    spacing: true,
+    content: true
+  });
 
   const handleStyleUpdate = (key: string, value: any) => {
     onUpdate({
@@ -1012,24 +1040,26 @@ export const ColumnSettings: React.FC<ColumnSettingsProps> = ({ column, onUpdate
 
   return (
     <div className="p-4 space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-sm">Anchor</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2">
+      <CollapsibleGroup
+        title="Anchor"
+        isOpen={openCards.anchor}
+        onToggle={(isOpen) => setOpenCards(prev => ({ ...prev, anchor: isOpen }))}
+      >
+        <div className="space-y-2">
           <div className="flex items-center gap-2">
             <Input readOnly value={column.anchor || ''} />
             <Button size="sm" onClick={() => column.anchor && navigator.clipboard.writeText(column.anchor)}>Copy</Button>
           </div>
           <p className="text-xs text-muted-foreground">Use #{column.anchor} for in-page scrolling</p>
-        </CardContent>
-      </Card>
+        </div>
+      </CollapsibleGroup>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-sm">Column Layout</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
+      <CollapsibleGroup
+        title="Column Layout"
+        isOpen={openCards.layout}
+        onToggle={(isOpen) => setOpenCards(prev => ({ ...prev, layout: isOpen }))}
+      >
+        <div className="space-y-4">
           <div className="p-3 bg-muted/50 rounded text-sm">
             <p className="text-muted-foreground">
               Current grid width: {column.width} units
@@ -1129,14 +1159,15 @@ export const ColumnSettings: React.FC<ColumnSettingsProps> = ({ column, onUpdate
               </TabsContent>
             </Tabs>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </CollapsibleGroup>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-sm">Background</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
+      <CollapsibleGroup
+        title="Background"
+        isOpen={openCards.background}
+        onToggle={(isOpen) => setOpenCards(prev => ({ ...prev, background: isOpen }))}
+      >
+        <div className="space-y-4">
           <ColorPicker
             color={column.styles?.backgroundColor || 'transparent'}
             onChange={(color) => handleStyleUpdate('backgroundColor', color)}
@@ -1221,14 +1252,15 @@ export const ColumnSettings: React.FC<ColumnSettingsProps> = ({ column, onUpdate
             onChange={(shadow) => handleStyleUpdate('boxShadow', shadow)}
             label="Box Shadow"
           />
-        </CardContent>
-      </Card>
+        </div>
+      </CollapsibleGroup>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-sm">Spacing</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
+      <CollapsibleGroup
+        title="Spacing"
+        isOpen={openCards.spacing}
+        onToggle={(isOpen) => setOpenCards(prev => ({ ...prev, spacing: isOpen }))}
+      >
+        <div className="space-y-4">
           <div className="space-y-3">
             <Label className="text-sm font-medium">Padding</Label>
             <div className="grid grid-cols-2 gap-2">
@@ -1312,15 +1344,15 @@ export const ColumnSettings: React.FC<ColumnSettingsProps> = ({ column, onUpdate
               </div>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </CollapsibleGroup>
 
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-sm">Content Layout</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
+      <CollapsibleGroup
+        title="Content Layout"
+        isOpen={openCards.content}
+        onToggle={(isOpen) => setOpenCards(prev => ({ ...prev, content: isOpen }))}
+      >
+        <div className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="content-direction">Content Direction</Label>
             <Select
@@ -1386,8 +1418,8 @@ export const ColumnSettings: React.FC<ColumnSettingsProps> = ({ column, onUpdate
               placeholder="e.g., 16px, 1rem, 2%"
             />
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </CollapsibleGroup>
     </div>
   );
 };
