@@ -1072,10 +1072,7 @@ const ElementorPageBuilderContent: React.FC<ElementorPageBuilderProps> = memo(({
                     return (
                       <SettingsPanel
                         selectedItem={selectedItem}
-                        onUpdateSection={updateSection}
-                        onUpdateRow={updateRow}
-                        onUpdateColumn={updateColumn}
-                        onUpdateElement={updateElement}
+                        onUpdate={updateHandler}
                       />
                     );
                   }

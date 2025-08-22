@@ -96,13 +96,6 @@ export const renderSectionStyles = (section: PageBuilderSection, deviceType: 'de
       styles.boxShadow = section.styles.boxShadow;
     }
     
-    // Border styles
-    if (section.styles.borderWidth) {
-      const borderStyle = section.styles.borderStyle || 'solid';
-      styles.border = `${section.styles.borderWidth} ${borderStyle} ${section.styles.borderColor || '#000000'}`;
-    }
-    if (section.styles.borderRadius) styles.borderRadius = section.styles.borderRadius;
-    
     // Spacing styles - prioritize individual properties over shorthand to prevent conflicts
     if (section.styles.paddingTop || section.styles.paddingRight || section.styles.paddingBottom || section.styles.paddingLeft) {
       if (section.styles.paddingTop) styles.paddingTop = section.styles.paddingTop;
@@ -203,13 +196,6 @@ export const renderRowStyles = (row: PageBuilderRow, deviceType: 'desktop' | 'ta
       styles.boxShadow = row.styles.boxShadow;
     }
     
-    // Border styles
-    if (row.styles.borderWidth) {
-      const borderStyle = row.styles.borderStyle || 'solid';
-      styles.border = `${row.styles.borderWidth} ${borderStyle} ${row.styles.borderColor || '#000000'}`;
-    }
-    if (row.styles.borderRadius) styles.borderRadius = row.styles.borderRadius;
-    
     // Spacing styles - prioritize individual properties over shorthand to prevent conflicts
     if (row.styles.paddingTop || row.styles.paddingRight || row.styles.paddingBottom || row.styles.paddingLeft) {
       if (row.styles.paddingTop) styles.paddingTop = row.styles.paddingTop;
@@ -300,13 +286,6 @@ export const renderColumnStyles = (column: PageBuilderColumn, deviceType: 'deskt
     if (column.styles.boxShadow && column.styles.boxShadow !== 'none') {
       styles.boxShadow = column.styles.boxShadow;
     }
-    
-    // Border styles
-    if (column.styles.borderWidth) {
-      const borderStyle = column.styles.borderStyle || 'solid';
-      styles.border = `${column.styles.borderWidth} ${borderStyle} ${column.styles.borderColor || '#000000'}`;
-    }
-    if (column.styles.borderRadius) styles.borderRadius = column.styles.borderRadius;
     
     // Content alignment styles - enable flexbox when alignment is set
     if (column.styles.contentAlignment || column.styles.contentJustification || column.styles.contentDirection) {
