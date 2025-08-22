@@ -11,3 +11,4 @@ export { ListElementStyles } from './ListElementStyles';
 export { CountdownElementStyles } from './CountdownElementStyles';
 export { PriceElementStyles } from './PriceElementStyles';
 export { SocialShareElementStyles } from './SocialShareElementStyles';
+export { HeroSliderElementStyles } from './HeroSliderElementStyles';

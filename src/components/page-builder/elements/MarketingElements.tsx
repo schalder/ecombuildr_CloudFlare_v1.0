@@ -1,7 +1,8 @@
 import { elementRegistry } from './ElementRegistry';
 import { CountdownTimerElement } from './CountdownTimerElement';
 import { SocialLinksElement } from './SocialLinksElement';
-import { Clock, Users } from 'lucide-react';
+import { HeroSliderElement } from './HeroSliderElement';
+import { Clock, Users, Images } from 'lucide-react';
 
 // Register Marketing Elements
 export const registerMarketingElements = () => {
@@ -62,5 +63,38 @@ export const registerMarketingElements = () => {
       iconSpacing: 'normal'
     },
     description: 'Add custom social media profile links with icons'
+  });
+
+  elementRegistry.register({
+    id: 'hero-slider',
+    name: 'Hero Slider',
+    category: 'marketing',
+    icon: Images,
+    component: HeroSliderElement,
+    defaultContent: {
+      slides: [
+        {
+          id: 'slide-1',
+          subHeadline: 'Welcome to Our Site',
+          headline: 'Amazing Hero Slider',
+          paragraph: 'Create stunning hero sections with smooth animations and professional layouts.',
+          buttonText: 'Get Started',
+          buttonUrl: '#',
+          buttonType: 'url',
+          image: '',
+          imageAlt: 'Hero image'
+        }
+      ],
+      autoplay: true,
+      autoplayDelay: 5,
+      showDots: true,
+      showArrows: true,
+      loop: true,
+      layout: 'overlay',
+      textAlignment: 'center',
+      overlayOpacity: 50,
+      animationType: 'slide'
+    },
+    description: 'Professional hero slider with multiple slides and smooth animations'
   });
 };

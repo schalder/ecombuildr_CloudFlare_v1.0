@@ -52,6 +52,7 @@ import {
   SocialShareProperties,
   SocialLinksProperties 
 } from './AdvancedProperties';
+import { HeroSliderContentProperties } from './HeroSliderContentProperties';
 import { CountdownProperties } from './CountdownProperties';
 import {
   TextElementStyles,
@@ -64,7 +65,8 @@ import {
   EcommerceActionButtonStyles,
   WeeklyFeaturedElementStyles,
   ListElementStyles,
-  PriceElementStyles
+  PriceElementStyles,
+  HeroSliderElementStyles
 } from './ElementStyles';
 import { CountdownElementStyles } from './ElementStyles/CountdownElementStyles';
 import { CheckoutElementStyles } from './ElementStyles/CheckoutElementStyles';
@@ -203,6 +205,11 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
     // Social Links element styles (reuse Social Share styles)
     if (selectedElement.type === 'social-links') {
       return <SocialShareElementStyles element={selectedElement} onStyleUpdate={handleStyleUpdate} />;
+    }
+    
+    // Hero Slider element styles
+    if (selectedElement.type === 'hero-slider') {
+      return <HeroSliderElementStyles element={selectedElement} onStyleUpdate={handleStyleUpdate} />;
     }
     
     // Default fallback for any other element types (ecommerce, content, media, advanced)
@@ -406,6 +413,13 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
 
                 {selectedElement.type === 'countdown-timer' && (
                   <CountdownProperties 
+                    element={selectedElement} 
+                    onUpdate={handleContentUpdate} 
+                  />
+                )}
+
+                {selectedElement.type === 'hero-slider' && (
+                  <HeroSliderContentProperties 
                     element={selectedElement} 
                     onUpdate={handleContentUpdate} 
                   />
