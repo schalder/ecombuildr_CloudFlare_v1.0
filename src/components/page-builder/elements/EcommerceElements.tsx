@@ -18,6 +18,7 @@ import { ProductsPageElement } from './ProductsPageElement';
 import { formatCurrency } from '@/lib/currency';
 import { supabase } from '@/integrations/supabase/client';
 import { useResolvedWebsiteId } from '@/hooks/useResolvedWebsiteId';
+import { useProductReviewStats } from '@/hooks/useProductReviewStats';
 // Product Grid Element
 const ProductGridElement: React.FC<{
   element: PageBuilderElement;
@@ -78,6 +79,10 @@ const ProductGridElement: React.FC<{
     limit: limit,
     websiteId: resolvedWebsiteId
   });
+
+  // Fetch review stats for all products
+  const productIds = products.map(p => p.id);
+  const { reviewStats } = useProductReviewStats(productIds);
 
   const handleAddToCart = (product: any) => {
     if (ctaBehavior === 'buy_now' && store?.slug && !isEditing) {
@@ -156,17 +161,19 @@ const ProductGridElement: React.FC<{
                 <a href={paths.productDetail(product.slug)} className="hover:underline">{product.name}</a>
               </h4>
               
-              {showRating && (
+              {showRating && reviewStats[product.id] && reviewStats[product.id].rating_count > 0 && (
                 <div className="flex items-center gap-1 mb-2">
                   <div className="flex text-yellow-400">
                     {[...Array(5)].map((_, i) => (
                       <Star
                         key={i}
-                        className={`h-3 w-3 ${i < 4 ? 'fill-current' : ''}`}
+                        className={`h-3 w-3 ${i < Math.floor(reviewStats[product.id].rating_average) ? 'fill-current' : ''}`}
                       />
                     ))}
                   </div>
-                  <span style={{ color: elementStyles.color, fontSize: elementStyles.fontSize }} className="text-xs text-muted-foreground">(4.0)</span>
+                  <span style={{ color: elementStyles.color, fontSize: elementStyles.fontSize }} className="text-xs text-muted-foreground">
+                    ({reviewStats[product.id].rating_average.toFixed(1)})
+                  </span>
                 </div>
               )}
               
