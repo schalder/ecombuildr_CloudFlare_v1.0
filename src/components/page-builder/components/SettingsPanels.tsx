@@ -29,6 +29,7 @@ export const SectionSettings: React.FC<SectionSettingsProps> = ({ section, onUpd
     anchor: true,
     layout: true,
     background: true,
+    border: true,
     spacing: true
   });
 
@@ -609,6 +610,66 @@ export const SectionSettings: React.FC<SectionSettingsProps> = ({ section, onUpd
           </div>
         </div>
       </CollapsibleGroup>
+
+      {/* Border */}
+      <CollapsibleGroup
+        title="Border"
+        isOpen={openCards.border}
+        onToggle={() => setOpenCards(prev => ({ ...prev, border: !prev.border }))}
+      >
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label className="text-sm">Width</Label>
+              <Input
+                value={section.styles?.borderWidth || ''}
+                onChange={(e) => handleStyleUpdate('borderWidth', e.target.value)}
+                placeholder="0px"
+                className="h-8"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-sm">Style</Label>
+              <Select
+                value={section.styles?.borderStyle || 'solid'}
+                onValueChange={(value) => handleStyleUpdate('borderStyle', value)}
+              >
+                <SelectTrigger className="h-8">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="solid">Solid</SelectItem>
+                  <SelectItem value="dashed">Dashed</SelectItem>
+                  <SelectItem value="dotted">Dotted</SelectItem>
+                  <SelectItem value="double">Double</SelectItem>
+                  <SelectItem value="groove">Groove</SelectItem>
+                  <SelectItem value="ridge">Ridge</SelectItem>
+                  <SelectItem value="inset">Inset</SelectItem>
+                  <SelectItem value="outset">Outset</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          
+          <div className="space-y-2">
+            <Label className="text-sm">Color</Label>
+            <ColorPicker
+              color={section.styles?.borderColor || '#000000'}
+              onChange={(color) => handleStyleUpdate('borderColor', color)}
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label className="text-sm">Radius</Label>
+            <Input
+              value={section.styles?.borderRadius || ''}
+              onChange={(e) => handleStyleUpdate('borderRadius', e.target.value)}
+              placeholder="0px"
+              className="h-8"
+            />
+          </div>
+        </div>
+      </CollapsibleGroup>
     </div>
   );
 };
@@ -625,6 +686,7 @@ export const RowSettings: React.FC<RowSettingsProps> = ({ row, onUpdate }) => {
     anchor: true,
     layout: true,
     background: true,
+    border: true,
     spacing: true
   });
 
@@ -994,6 +1056,66 @@ export const RowSettings: React.FC<RowSettingsProps> = ({ row, onUpdate }) => {
           </div>
         </div>
       </CollapsibleGroup>
+
+      {/* Border */}
+      <CollapsibleGroup
+        title="Border"
+        isOpen={openCards.border}
+        onToggle={() => setOpenCards(prev => ({ ...prev, border: !prev.border }))}
+      >
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label className="text-sm">Width</Label>
+              <Input
+                value={row.styles?.borderWidth || ''}
+                onChange={(e) => handleStyleUpdate('borderWidth', e.target.value)}
+                placeholder="0px"
+                className="h-8"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-sm">Style</Label>
+              <Select
+                value={row.styles?.borderStyle || 'solid'}
+                onValueChange={(value) => handleStyleUpdate('borderStyle', value)}
+              >
+                <SelectTrigger className="h-8">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="solid">Solid</SelectItem>
+                  <SelectItem value="dashed">Dashed</SelectItem>
+                  <SelectItem value="dotted">Dotted</SelectItem>
+                  <SelectItem value="double">Double</SelectItem>
+                  <SelectItem value="groove">Groove</SelectItem>
+                  <SelectItem value="ridge">Ridge</SelectItem>
+                  <SelectItem value="inset">Inset</SelectItem>
+                  <SelectItem value="outset">Outset</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          
+          <div className="space-y-2">
+            <Label className="text-sm">Color</Label>
+            <ColorPicker
+              color={row.styles?.borderColor || '#000000'}
+              onChange={(color) => handleStyleUpdate('borderColor', color)}
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label className="text-sm">Radius</Label>
+            <Input
+              value={row.styles?.borderRadius || ''}
+              onChange={(e) => handleStyleUpdate('borderRadius', e.target.value)}
+              placeholder="0px"
+              className="h-8"
+            />
+          </div>
+        </div>
+      </CollapsibleGroup>
     </div>
   );
 };
@@ -1010,6 +1132,7 @@ export const ColumnSettings: React.FC<ColumnSettingsProps> = ({ column, onUpdate
     anchor: true,
     layout: true,
     background: true,
+    border: true,
     spacing: true,
     content: true
   });
@@ -1343,6 +1466,66 @@ export const ColumnSettings: React.FC<ColumnSettingsProps> = ({ column, onUpdate
                 />
               </div>
             </div>
+          </div>
+        </div>
+      </CollapsibleGroup>
+
+      {/* Border */}
+      <CollapsibleGroup
+        title="Border"
+        isOpen={openCards.border}
+        onToggle={() => setOpenCards(prev => ({ ...prev, border: !prev.border }))}
+      >
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label className="text-sm">Width</Label>
+              <Input
+                value={column.styles?.borderWidth || ''}
+                onChange={(e) => handleStyleUpdate('borderWidth', e.target.value)}
+                placeholder="0px"
+                className="h-8"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-sm">Style</Label>
+              <Select
+                value={column.styles?.borderStyle || 'solid'}
+                onValueChange={(value) => handleStyleUpdate('borderStyle', value)}
+              >
+                <SelectTrigger className="h-8">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="solid">Solid</SelectItem>
+                  <SelectItem value="dashed">Dashed</SelectItem>
+                  <SelectItem value="dotted">Dotted</SelectItem>
+                  <SelectItem value="double">Double</SelectItem>
+                  <SelectItem value="groove">Groove</SelectItem>
+                  <SelectItem value="ridge">Ridge</SelectItem>
+                  <SelectItem value="inset">Inset</SelectItem>
+                  <SelectItem value="outset">Outset</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          
+          <div className="space-y-2">
+            <Label className="text-sm">Color</Label>
+            <ColorPicker
+              color={column.styles?.borderColor || '#000000'}
+              onChange={(color) => handleStyleUpdate('borderColor', color)}
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label className="text-sm">Radius</Label>
+            <Input
+              value={column.styles?.borderRadius || ''}
+              onChange={(e) => handleStyleUpdate('borderRadius', e.target.value)}
+              placeholder="0px"
+              className="h-8"
+            />
           </div>
         </div>
       </CollapsibleGroup>

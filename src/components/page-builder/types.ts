@@ -75,6 +75,10 @@ export interface PageBuilderColumn {
     backgroundGradient?: string;
     backgroundOpacity?: number;
     boxShadow?: string;
+    borderWidth?: string;
+    borderColor?: string;
+    borderRadius?: string;
+    borderStyle?: string;
     paddingTop?: string;
     paddingRight?: string;
     paddingBottom?: string;
@@ -130,6 +134,10 @@ export interface PageBuilderRow {
     backgroundGradient?: string;
     backgroundOpacity?: number;
     boxShadow?: string;
+    borderWidth?: string;
+    borderColor?: string;
+    borderRadius?: string;
+    borderStyle?: string;
     paddingTop?: string;
     paddingRight?: string;
     paddingBottom?: string;
@@ -179,6 +187,10 @@ export interface PageBuilderSection {
     backgroundGradient?: string;
     backgroundOpacity?: number;
     boxShadow?: string;
+    borderWidth?: string;
+    borderColor?: string;
+    borderRadius?: string;
+    borderStyle?: string;
     paddingTop?: string;
     paddingRight?: string;
     paddingBottom?: string;
