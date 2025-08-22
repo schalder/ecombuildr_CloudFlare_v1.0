@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { Trophy, Star, ShoppingCart } from 'lucide-react';
 import { PageBuilderElement, ElementType } from '../types';
 import { elementRegistry } from './ElementRegistry';
@@ -11,6 +12,7 @@ import { useAddToCart } from '@/contexts/AddToCartProvider';
 import { useStoreProducts } from '@/hooks/useStoreData';
 import { useResolvedWebsiteId } from '@/hooks/useResolvedWebsiteId';
 import { useStore } from '@/contexts/StoreContext';
+import { useEcomPaths } from '@/lib/pathResolver';
 
 // Product interface is now imported from useStoreData hook
 
@@ -22,6 +24,7 @@ const WeeklyFeaturedElement: React.FC<{
 }> = ({ element, isEditing = false, deviceType = 'desktop', onUpdate }) => {
   const { store } = useStore();
   const { addToCart } = useAddToCart();
+  const paths = useEcomPaths();
   const websiteId = useResolvedWebsiteId(element);
   
   // Get content from element
@@ -189,7 +192,9 @@ const WeeklyFeaturedElement: React.FC<{
           </div>
 
           <CardContent style={getCardStyles()}>
-            <h3 className="font-medium text-sm mb-2 line-clamp-2" style={getTypographyStyles('productTitleStyles')}>{product.name}</h3>
+            <Link to={paths.productDetail(product.slug)}>
+              <h3 className="font-medium text-sm mb-2 line-clamp-2 hover:text-primary transition-colors cursor-pointer" style={getTypographyStyles('productTitleStyles')}>{product.name}</h3>
+            </Link>
             
             <div className="flex items-center gap-1 mb-2">
               {Array.from({ length: 5 }).map((_, i) => (
