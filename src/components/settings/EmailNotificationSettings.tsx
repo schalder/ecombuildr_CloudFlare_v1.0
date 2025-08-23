@@ -5,6 +5,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useEmailNotifications } from '@/hooks/useEmailNotifications';
 import { useToast } from '@/hooks/use-toast';
 import { Mail, Bell, DollarSign, AlertTriangle, X } from 'lucide-react';
@@ -18,6 +19,8 @@ export function EmailNotificationSettings({ storeId }: EmailNotificationSettings
   const { toast } = useToast();
   const [testEmail, setTestEmail] = useState('');
   const [sendingTest, setSendingTest] = useState(false);
+  const [useDebugMode, setUseDebugMode] = useState(false);
+  const [lastError, setLastError] = useState<string | null>(null);
 
   const handleSettingChange = async (key: keyof typeof settings, value: boolean) => {
     const result = await updateSettings({ [key]: value });
@@ -47,23 +50,22 @@ export function EmailNotificationSettings({ storeId }: EmailNotificationSettings
     }
 
     setSendingTest(true);
+    setLastError(null);
     try {
-      const result = await sendTestEmailFn(testEmail);
+      await sendTestEmailFn(testEmail, useDebugMode);
       
-      if (result?.success) {
-        toast({
-          title: "Test Email Sent",
-          description: `Test notification sent to ${testEmail}`,
-        });
-        setTestEmail(''); // Clear the input after successful send
-      } else {
-        throw new Error(result?.error?.message || 'Failed to send test email');
-      }
+      toast({
+        title: "Test Email Sent",
+        description: `Test notification sent to ${testEmail}`,
+      });
+      setTestEmail(''); // Clear the input after successful send
     } catch (error: any) {
       console.error('Test email error:', error);
+      const errorMessage = error?.message || "Failed to send test email";
+      setLastError(errorMessage);
       toast({
         title: "Error",
-        description: error.message || "Failed to send test email. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -148,22 +150,55 @@ export function EmailNotificationSettings({ storeId }: EmailNotificationSettings
                   Send a test notification to verify your email settings are working correctly.
                 </p>
               </div>
-              <div className="flex gap-2">
-                <Input
-                  id="test-email"
-                  type="email"
-                  placeholder="Enter email address..."
-                  value={testEmail}
-                  onChange={(e) => setTestEmail(e.target.value)}
-                  className="flex-1"
-                />
-                <Button 
-                  onClick={sendTestEmail} 
-                  disabled={sendingTest || !testEmail}
-                  variant="outline"
-                >
-                  {sendingTest ? "Sending..." : "Send Test"}
-                </Button>
+              <div className="space-y-3">
+                <div className="flex gap-2">
+                  <Input
+                    id="test-email"
+                    type="email"
+                    placeholder="Enter email address..."
+                    value={testEmail}
+                    onChange={(e) => setTestEmail(e.target.value)}
+                    className="flex-1"
+                  />
+                  <Button 
+                    onClick={sendTestEmail} 
+                    disabled={sendingTest || !testEmail}
+                    variant="outline"
+                  >
+                    {sendingTest ? "Sending..." : "Send Test"}
+                  </Button>
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="debug-mode"
+                    checked={useDebugMode}
+                    onCheckedChange={(checked) => setUseDebugMode(checked as boolean)}
+                  />
+                  <Label htmlFor="debug-mode" className="text-sm text-muted-foreground">
+                    Use debug mode (sends from verified Resend domain)
+                  </Label>
+                </div>
+                
+                {lastError && (
+                  <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-md">
+                    <p className="text-sm text-destructive font-medium">Error Details:</p>
+                    <p className="text-xs text-destructive/80 mt-1">{lastError}</p>
+                    {!useDebugMode && (
+                      <p className="text-xs text-muted-foreground mt-2">
+                        💡 Try enabling debug mode or verify your domain at{" "}
+                        <a 
+                          href="https://resend.com/domains" 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="underline hover:no-underline"
+                        >
+                          resend.com/domains
+                        </a>
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           </div>

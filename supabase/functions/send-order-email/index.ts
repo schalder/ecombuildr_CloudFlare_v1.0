@@ -14,6 +14,7 @@ interface EmailRequest {
   website_id?: string;
   event_type: 'new_order' | 'payment_received' | 'order_cancelled' | 'test';
   test_email?: string;
+  use_debug?: boolean;
 }
 
 serve(async (req) => {
@@ -38,7 +39,7 @@ serve(async (req) => {
 
     const resend = new Resend(resendApiKey)
 
-    const { order_id, store_id, website_id, event_type, test_email }: EmailRequest = await req.json()
+    const { order_id, store_id, website_id, event_type, test_email, use_debug }: EmailRequest = await req.json()
 
     // Validate required fields
     if (!store_id || !event_type) {
@@ -130,46 +131,85 @@ serve(async (req) => {
     // Handle test email
     if (event_type === 'test') {
       const testRecipient = test_email || ownerEmail
-      const emailSubject = `Test Email from ${websiteName}`
-      const emailHtml = `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #333;">Email Test Successful!</h2>
-          
-          <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
-            <p>This is a test email from your <strong>${websiteName}</strong> notification system.</p>
-            <p>Your email notifications are working correctly!</p>
+      console.log('Sending test email to:', testRecipient)
+      console.log('Use debug mode:', use_debug)
+      console.log('RESEND_FROM_EMAIL:', Deno.env.get('RESEND_FROM_EMAIL'))
+      console.log('RESEND_FROM_NAME:', Deno.env.get('RESEND_FROM_NAME'))
+      
+      try {
+        const debugFromEmail = use_debug ? 'onboarding@resend.dev' : fromEmail
+        const testFromName = fromName || 'Your Store'
+        
+        console.log('Attempting to send with from:', `${testFromName} <${debugFromEmail}>`)
+        
+        const emailSubject = `Test Email from ${websiteName}`
+        const emailHtml = `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #333;">Email Test Successful!</h2>
+            
+            <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+              <p>This is a test email from your <strong>${websiteName}</strong> notification system.</p>
+              <p>Your email notifications are working correctly!</p>
+            </div>
+            
+            <div style="background-color: #e3f2fd; padding: 15px; border-radius: 8px; margin: 20px 0;">
+              <p><strong>Test Details:</strong></p>
+              <p>From: ${testFromName} &lt;${debugFromEmail}&gt;</p>
+              <p>Debug mode: ${use_debug ? 'Yes' : 'No'}</p>
+              <p>Sent at: ${new Date().toISOString()}</p>
+            </div>
+            
+            <hr style="margin: 30px 0; border: none; border-top: 1px solid #ddd;">
+            <p style="color: #666; font-size: 14px; text-align: center;">
+              This is a test email from your ${websiteName} notification system.
+            </p>
           </div>
-          
-          <hr style="margin: 30px 0; border: none; border-top: 1px solid #ddd;">
-          <p style="color: #666; font-size: 14px; text-align: center;">
-            This is a test email from your ${websiteName} notification system.
-          </p>
-        </div>
-      `
+        `
 
-      const { error: emailError } = await resend.emails.send({
-        from: `${fromName} <${fromEmail}>`,
-        to: [testRecipient],
-        subject: emailSubject,
-        html: emailHtml
-      })
+        const emailResponse = await resend.emails.send({
+          from: `${testFromName} <${debugFromEmail}>`,
+          to: [testRecipient],
+          subject: emailSubject,
+          html: emailHtml
+        })
 
-      if (emailError) {
-        throw new Error(`Failed to send test email: ${emailError.message}`)
+        console.log('Test email sent successfully:', emailResponse)
+        
+        return new Response(
+          JSON.stringify({ 
+            success: true, 
+            message: 'Test email sent successfully',
+            recipient: testRecipient,
+            from: `${testFromName} <${debugFromEmail}>`,
+            debug_mode: use_debug,
+            data: emailResponse
+          }),
+          { 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 200 
+          }
+        )
+      } catch (emailError: any) {
+        console.error('Detailed email error:', emailError)
+        console.error('Error name:', emailError.name)
+        console.error('Error message:', emailError.message)
+        console.error('Error stack:', emailError.stack)
+        
+        return new Response(
+          JSON.stringify({ 
+            error: 'Failed to send test email', 
+            details: emailError.message,
+            name: emailError.name,
+            suggestion: use_debug ? 
+              'Try checking your Resend API key in Supabase settings' : 
+              'Try enabling debug mode or verify your domain at https://resend.com/domains'
+          }),
+          { 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 500 
+          }
+        )
       }
-
-      console.log(`Test email sent successfully to ${testRecipient}`)
-      return new Response(
-        JSON.stringify({ 
-          success: true, 
-          message: 'Test email sent successfully',
-          recipient: testRecipient
-        }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 200 
-        }
-      )
     }
 
     // Calculate order totals

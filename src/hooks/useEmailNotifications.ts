@@ -108,7 +108,7 @@ export function useEmailNotifications(storeId?: string) {
     }
   };
 
-  const sendTestEmail = async (testEmail?: string) => {
+  const sendTestEmail = async (testEmail?: string, useDebugMode = false) => {
     if (!user || !storeId) return;
 
     try {
@@ -116,15 +116,25 @@ export function useEmailNotifications(storeId?: string) {
         body: {
           store_id: storeId,
           event_type: 'test',
-          test_email: testEmail
+          test_email: testEmail,
+          use_debug: useDebugMode
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Function invoke error:', error);
+        throw new Error(error.message || 'Failed to send test email');
+      }
+
+      if (data?.error) {
+        console.error('Function returned error:', data);
+        throw new Error(data.details || data.error);
+      }
+
       return { success: true, data };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error sending test email:', error);
-      return { success: false, error };
+      throw error;
     }
   };
 
