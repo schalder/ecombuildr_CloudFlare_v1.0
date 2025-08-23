@@ -157,13 +157,13 @@ async function sendWebPushNotification(
     // Encrypt payload
     const { ciphertext, salt, publicKey } = await encryptPayload(payloadString, userPublicKey, userAuth);
     
-    // Import VAPID private key as JWK for ECDSA signing
+    // Import VAPID private key for ECDSA signing
     console.log(`🔑 Importing VAPID private key for ${endpointHost}`);
     
     // Decode the base64url private key
     const privateKeyBytes = base64UrlDecode(vapidPrivateKey);
     
-    // Import as JWK format for proper ECDSA usage
+    // Import as PKCS8 format for proper ECDSA usage
     const vapidKey = await crypto.subtle.importKey(
       'pkcs8',
       privateKeyBytes,
@@ -195,14 +195,12 @@ async function sendWebPushNotification(
     const signatureB64 = base64UrlEncode(new Uint8Array(signature));
     const jwt = `${unsignedToken}.${signatureB64}`;
     
-    // Send request
+    // Send request with aes128gcm encoding
     const response = await fetch(subscription.endpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/octet-stream',
-        'Content-Encoding': 'aesgcm',
-        'Encryption': `salt=${base64UrlEncode(salt)}`,
-        'Crypto-Key': `dh=${base64UrlEncode(publicKey)};p256ecdsa=${vapidPublicKey}`,
+        'Content-Encoding': 'aes128gcm',
         'Authorization': `vapid t=${jwt}, k=${vapidPublicKey}`,
         'TTL': '86400'
       },

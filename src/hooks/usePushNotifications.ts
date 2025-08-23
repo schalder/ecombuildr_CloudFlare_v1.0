@@ -84,10 +84,22 @@ export function usePushNotifications() {
       }
 
       // Get VAPID public key
+      console.log('🔑 Getting VAPID public key...');
       const { data: vapidResponse, error: vapidError } = await supabase.functions.invoke('get-vapid-public-key');
-      if (vapidError || !vapidResponse?.publicKey) {
-        throw new Error('Failed to get VAPID public key');
+      
+      if (vapidError) {
+        console.error('❌ VAPID key fetch error:', vapidError);
+        toast.error('Failed to get notification keys. Please try again.');
+        throw new Error('Failed to get VAPID public key: ' + vapidError.message);
       }
+      
+      if (!vapidResponse?.publicKey) {
+        console.error('❌ No public key in response:', vapidResponse);
+        toast.error('Invalid notification configuration. Please contact support.');
+        throw new Error('No public key returned from server');
+      }
+      
+      console.log('✅ VAPID public key received');
 
       // Convert VAPID key if needed (handle both base64 and Uint8Array formats)
       let applicationServerKey: BufferSource;

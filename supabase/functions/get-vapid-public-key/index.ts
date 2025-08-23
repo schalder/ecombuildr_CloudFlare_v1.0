@@ -12,10 +12,39 @@ serve(async (req) => {
   }
 
   try {
-    const vapidPublicKey = Deno.env.get('VAPID_PUBLIC_KEY');
+    let vapidPublicKey = Deno.env.get('VAPID_PUBLIC_KEY');
     
+    // If public key not found, derive it from private key
     if (!vapidPublicKey) {
-      throw new Error('VAPID_PUBLIC_KEY not configured');
+      console.log('🔄 VAPID_PUBLIC_KEY not found, deriving from private key');
+      const vapidPrivateKey = Deno.env.get('VAPID_PRIVATE_KEY');
+      
+      if (!vapidPrivateKey) {
+        throw new Error('Neither VAPID_PUBLIC_KEY nor VAPID_PRIVATE_KEY configured');
+      }
+      
+      // Decode private key and derive public key
+      const privateKeyBytes = Uint8Array.from(atob(vapidPrivateKey.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0));
+      
+      // Import private key
+      const privateKey = await crypto.subtle.importKey(
+        'pkcs8',
+        privateKeyBytes,
+        { name: 'ECDSA', namedCurve: 'P-256' },
+        true,
+        ['sign']
+      );
+      
+      // Export public key
+      const publicKey = await crypto.subtle.exportKey('spki', privateKey);
+      vapidPublicKey = btoa(String.fromCharCode(...new Uint8Array(publicKey)))
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=/g, '');
+      
+      console.log('✅ Public key derived successfully');
+    } else {
+      console.log('✅ Using configured VAPID_PUBLIC_KEY');
     }
 
     return new Response(
