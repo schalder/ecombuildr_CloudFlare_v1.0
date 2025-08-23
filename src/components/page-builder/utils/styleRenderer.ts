@@ -75,7 +75,12 @@ export const renderSectionStyles = (section: PageBuilderSection, deviceType: 'de
       }
     }
     
-    // Add image layer (bottom layer)
+    // Apply combined background first
+    if (backgroundLayers.length > 0) {
+      styles.background = backgroundLayers.join(', ');
+    }
+    
+    // Add image layer (bottom layer) and apply mode-specific properties AFTER background shorthand
     if (section.styles.backgroundImage) {
       backgroundLayers.push(`url(${section.styles.backgroundImage})`);
       
@@ -83,12 +88,13 @@ export const renderSectionStyles = (section: PageBuilderSection, deviceType: 'de
       const responsiveImageMode = section.styles?.responsive?.[deviceType]?.backgroundImageMode || section.styles.backgroundImageMode;
       const imageProps = getBackgroundImageProperties(responsiveImageMode, deviceType);
       
+      // Apply mode-specific properties after background shorthand to ensure they take effect
       Object.assign(styles, imageProps);
-    }
-    
-    // Apply combined background
-    if (backgroundLayers.length > 0) {
-      styles.background = backgroundLayers.join(', ');
+      
+      // Re-apply combined background with image
+      if (backgroundLayers.length > 0) {
+        styles.background = backgroundLayers.join(', ');
+      }
     }
     
     // Box shadow styles
@@ -182,7 +188,12 @@ export const renderRowStyles = (row: PageBuilderRow, deviceType: 'desktop' | 'ta
       }
     }
     
-    // Add image layer (bottom layer)
+    // Apply combined background first
+    if (backgroundLayers.length > 0) {
+      styles.background = backgroundLayers.join(', ');
+    }
+    
+    // Add image layer (bottom layer) and apply mode-specific properties AFTER background shorthand
     if (row.styles.backgroundImage) {
       backgroundLayers.push(`url(${row.styles.backgroundImage})`);
       
@@ -190,12 +201,13 @@ export const renderRowStyles = (row: PageBuilderRow, deviceType: 'desktop' | 'ta
       const responsiveImageMode = row.styles?.responsive?.[deviceType]?.backgroundImageMode || row.styles.backgroundImageMode;
       const imageProps = getBackgroundImageProperties(responsiveImageMode, deviceType);
       
+      // Apply mode-specific properties after background shorthand to ensure they take effect
       Object.assign(styles, imageProps);
-    }
-    
-    // Apply combined background
-    if (backgroundLayers.length > 0) {
-      styles.background = backgroundLayers.join(', ');
+      
+      // Re-apply combined background with image
+      if (backgroundLayers.length > 0) {
+        styles.background = backgroundLayers.join(', ');
+      }
     }
     
     // Box shadow styles
@@ -280,7 +292,12 @@ export const renderColumnStyles = (column: PageBuilderColumn, deviceType: 'deskt
       }
     }
     
-    // Add image layer (bottom layer)
+    // Apply combined background first
+    if (backgroundLayers.length > 0) {
+      styles.background = backgroundLayers.join(', ');
+    }
+    
+    // Add image layer (bottom layer) and apply mode-specific properties AFTER background shorthand
     if (column.styles.backgroundImage) {
       backgroundLayers.push(`url(${column.styles.backgroundImage})`);
       
@@ -288,12 +305,13 @@ export const renderColumnStyles = (column: PageBuilderColumn, deviceType: 'deskt
       const responsiveImageMode = column.styles?.responsive?.[deviceType]?.backgroundImageMode || column.styles.backgroundImageMode;
       const imageProps = getBackgroundImageProperties(responsiveImageMode, deviceType);
       
+      // Apply mode-specific properties after background shorthand to ensure they take effect
       Object.assign(styles, imageProps);
-    }
-    
-    // Apply combined background
-    if (backgroundLayers.length > 0) {
-      styles.background = backgroundLayers.join(', ');
+      
+      // Re-apply combined background with image
+      if (backgroundLayers.length > 0) {
+        styles.background = backgroundLayers.join(', ');
+      }
     }
     
     // Box shadow styles
