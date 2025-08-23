@@ -14,8 +14,8 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
-import { useStore } from "@/contexts/StoreContext";
-import { DashboardLayout } from "@/components/layouts/DashboardLayout";
+import { useUserStore } from "@/hooks/useUserStore";
+import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import {
   Tabs,
   TabsContent,
@@ -33,19 +33,15 @@ const formSchema = z.object({
   }),
   description: z.string().optional(),
   domain: z.string().optional(),
-  logo: z.string().optional(),
-  email: z.string().email().optional(),
-  phone: z.string().optional(),
-  address: z.string().optional(),
-  city: z.string().optional(),
-  country: z.string().optional(),
-  currency: z.string().optional(),
-  timezone: z.string().optional(),
+  logo_url: z.string().optional(),
+  favicon_url: z.string().optional(),
+  primary_color: z.string().optional(),
+  secondary_color: z.string().optional(),
   is_active: z.boolean().default(true).optional(),
 });
 
 export default function StoreSettings() {
-  const { store, updateStore } = useStore();
+  const { store, updateStore } = useUserStore();
   const [isUpdating, setIsUpdating] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -54,14 +50,10 @@ export default function StoreSettings() {
       name: store?.name || "",
       description: store?.description || "",
       domain: store?.domain || "",
-      logo: store?.logo || "",
-      email: store?.email || "",
-      phone: store?.phone || "",
-      address: store?.address || "",
-      city: store?.city || "",
-      country: store?.country || "",
-      currency: store?.currency || "",
-      timezone: store?.timezone || "",
+      logo_url: store?.logo_url || "",
+      favicon_url: store?.favicon_url || "",
+      primary_color: store?.primary_color || "",
+      secondary_color: store?.secondary_color || "",
       is_active: store?.is_active || true,
     },
   });
@@ -71,14 +63,10 @@ export default function StoreSettings() {
       name: store?.name || "",
       description: store?.description || "",
       domain: store?.domain || "",
-      logo: store?.logo || "",
-      email: store?.email || "",
-      phone: store?.phone || "",
-      address: store?.address || "",
-      city: store?.city || "",
-      country: store?.country || "",
-      currency: store?.currency || "",
-      timezone: store?.timezone || "",
+      logo_url: store?.logo_url || "",
+      favicon_url: store?.favicon_url || "",
+      primary_color: store?.primary_color || "",
+      secondary_color: store?.secondary_color || "",
       is_active: store?.is_active || true,
     });
   }, [store]);
@@ -94,10 +82,7 @@ export default function StoreSettings() {
         });
         return;
       }
-      await updateStore({
-        id: store.id,
-        ...values,
-      });
+      await updateStore(values);
       toast({
         title: "Success",
         description: "Store updated successfully.",
@@ -180,7 +165,7 @@ export default function StoreSettings() {
                 />
                 <FormField
                   control={form.control}
-                  name="logo"
+                  name="logo_url"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Logo URL</FormLabel>
@@ -193,12 +178,12 @@ export default function StoreSettings() {
                 />
                 <FormField
                   control={form.control}
-                  name="email"
+                  name="favicon_url"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Email</FormLabel>
+                      <FormLabel>Favicon URL</FormLabel>
                       <FormControl>
-                        <Input placeholder="info@mystore.com" {...field} />
+                        <Input placeholder="https://example.com/favicon.ico" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -206,12 +191,12 @@ export default function StoreSettings() {
                 />
                 <FormField
                   control={form.control}
-                  name="phone"
+                  name="primary_color"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Phone</FormLabel>
+                      <FormLabel>Primary Color</FormLabel>
                       <FormControl>
-                        <Input placeholder="+15551234567" {...field} />
+                        <Input placeholder="#3b82f6" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -219,64 +204,12 @@ export default function StoreSettings() {
                 />
                 <FormField
                   control={form.control}
-                  name="address"
+                  name="secondary_color"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Address</FormLabel>
+                      <FormLabel>Secondary Color</FormLabel>
                       <FormControl>
-                        <Input placeholder="123 Main St" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="city"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>City</FormLabel>
-                      <FormControl>
-                        <Input placeholder="New York" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="country"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Country</FormLabel>
-                      <FormControl>
-                        <Input placeholder="USA" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="currency"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Currency</FormLabel>
-                      <FormControl>
-                        <Input placeholder="USD" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="timezone"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Timezone</FormLabel>
-                      <FormControl>
-                        <Input placeholder="America/New_York" {...field} />
+                        <Input placeholder="#ef4444" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
