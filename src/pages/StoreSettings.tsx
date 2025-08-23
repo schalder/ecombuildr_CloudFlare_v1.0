@@ -3,16 +3,16 @@ import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useUserStore } from "@/hooks/useUserStore";
 import { EmailNotificationSettings } from "@/components/settings/EmailNotificationSettings";
 import ShippingIntegrations from "@/components/settings/ShippingIntegrations";
 import PaymentSettings from "@/components/settings/PaymentSettings";
-import { Settings, Mail, CreditCard, Truck, Globe } from "lucide-react";
+import { GeneralSettings } from "@/components/settings/GeneralSettings";
+import { Settings, Mail, CreditCard, Truck } from "lucide-react";
 
 export default function StoreSettings() {
   const { storeId } = useParams();
-  const { store, loading } = useUserStore();
+  const { store, loading, updateStore } = useUserStore();
   const [activeTab, setActiveTab] = useState("general");
 
   if (loading) {
@@ -48,7 +48,7 @@ export default function StoreSettings() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="general" className="flex items-center gap-2">
               <Settings className="h-4 w-4" />
               General
@@ -65,24 +65,10 @@ export default function StoreSettings() {
               <Truck className="h-4 w-4" />
               Shipping
             </TabsTrigger>
-            <TabsTrigger value="domains" className="flex items-center gap-2">
-              <Globe className="h-4 w-4" />
-              Domains
-            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="general">
-            <Card>
-              <CardHeader>
-                <CardTitle>General Settings</CardTitle>
-                <CardDescription>
-                  Basic store information and preferences
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">General settings coming soon...</p>
-              </CardContent>
-            </Card>
+            <GeneralSettings store={store} onUpdate={updateStore} />
           </TabsContent>
 
           <TabsContent value="notifications">
@@ -97,19 +83,6 @@ export default function StoreSettings() {
             <ShippingIntegrations storeId={store.id} />
           </TabsContent>
 
-          <TabsContent value="domains">
-            <Card>
-              <CardHeader>
-                <CardTitle>Domain Settings</CardTitle>
-                <CardDescription>
-                  Manage custom domains for your store
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">Domain settings coming soon...</p>
-              </CardContent>
-            </Card>
-          </TabsContent>
         </Tabs>
       </div>
     </DashboardLayout>
