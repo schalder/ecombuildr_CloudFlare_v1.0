@@ -1,6 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.52.1";
-import webpush from "https://esm.sh/web-push@3.6.6";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -33,6 +32,74 @@ interface NotificationResult {
   endpointHost?: string;
 }
 
+// VAPID key utilities using Web Crypto API (Deno native)
+function urlBase64ToUint8Array(base64String: string): Uint8Array {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding)
+    .replace(/-/g, '+')
+    .replace(/_/g, '/');
+  
+  const rawData = atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+}
+
+function uint8ArrayToUrlBase64(array: Uint8Array): string {
+  const base64 = btoa(String.fromCharCode.apply(null, Array.from(array)));
+  return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+}
+
+async function generateVAPIDHeaders(
+  audience: string,
+  subject: string,
+  vapidPublicKey: string,
+  vapidPrivateKey: string
+): Promise<{ Authorization: string; 'Crypto-Key': string }> {
+  const vapidPrivateKeyUint8Array = urlBase64ToUint8Array(vapidPrivateKey);
+  
+  // Import the private key
+  const privateKey = await crypto.subtle.importKey(
+    'raw',
+    vapidPrivateKeyUint8Array,
+    { name: 'ECDSA', namedCurve: 'P-256' },
+    false,
+    ['sign']
+  );
+
+  const header = { typ: 'JWT', alg: 'ES256' };
+  const payload = {
+    aud: audience,
+    exp: Math.floor(Date.now() / 1000) + 43200, // 12 hours
+    sub: subject
+  };
+
+  const encodedHeader = uint8ArrayToUrlBase64(
+    new TextEncoder().encode(JSON.stringify(header))
+  );
+  const encodedPayload = uint8ArrayToUrlBase64(
+    new TextEncoder().encode(JSON.stringify(payload))
+  );
+
+  const unsignedToken = `${encodedHeader}.${encodedPayload}`;
+  const signature = await crypto.subtle.sign(
+    { name: 'ECDSA', hash: 'SHA-256' },
+    privateKey,
+    new TextEncoder().encode(unsignedToken)
+  );
+
+  const encodedSignature = uint8ArrayToUrlBase64(new Uint8Array(signature));
+  const jwt = `${unsignedToken}.${encodedSignature}`;
+
+  return {
+    'Authorization': `vapid t=${jwt}, k=${vapidPublicKey}`,
+    'Crypto-Key': `p256ecdsa=${vapidPublicKey}`
+  };
+}
+
 async function sendWebPushNotification(
   subscription: PushSubscription,
   payload: PushPayload,
@@ -40,40 +107,38 @@ async function sendWebPushNotification(
   vapidPrivateKey: string
 ): Promise<NotificationResult> {
   try {
-    const endpointHost = new URL(subscription.endpoint).hostname;
+    const endpointUrl = new URL(subscription.endpoint);
+    const endpointHost = endpointUrl.hostname;
+    const audience = `${endpointUrl.protocol}//${endpointUrl.hostname}`;
+    
     console.log(`📨 Sending notification to ${endpointHost} (subscription: ${subscription.id})`);
     
-    // Configure web-push with VAPID details
-    webpush.setVapidDetails(
+    // Generate VAPID headers
+    const vapidHeaders = await generateVAPIDHeaders(
+      audience,
       'mailto:admin@example.com',
       vapidPublicKey,
       vapidPrivateKey
     );
 
-    // Convert our subscription format to web-push format
-    const webPushSubscription = {
-      endpoint: subscription.endpoint,
-      keys: {
-        p256dh: subscription.keys.p256dh,
-        auth: subscription.keys.auth,
+    // Send the notification
+    const response = await fetch(subscription.endpoint, {
+      method: 'POST',
+      headers: {
+        ...vapidHeaders,
+        'Content-Type': 'application/octet-stream',
+        'TTL': '86400',
+        'Urgency': 'normal'
       },
-    };
+      body: JSON.stringify(payload)
+    });
 
-    // Send the notification using web-push library
-    const response = await webpush.sendNotification(
-      webPushSubscription,
-      JSON.stringify(payload),
-      {
-        TTL: 86400, // 24 hours
-        urgency: 'normal',
-      }
-    );
-
-    console.log(`✅ Successfully sent to ${endpointHost}`);
+    console.log(`✅ Push sent to ${endpointHost}, status: ${response.status}`);
+    
     return { 
       subscriptionId: subscription.id, 
-      success: true, 
-      status: response.statusCode,
+      success: response.ok, 
+      status: response.status,
       endpointHost 
     };
 
@@ -84,7 +149,7 @@ async function sendWebPushNotification(
     return { 
       subscriptionId: subscription.id, 
       success: false, 
-      status: error.statusCode || 0,
+      status: 0,
       error: error.message || 'Unknown error',
       endpointHost
     };

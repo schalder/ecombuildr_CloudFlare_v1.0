@@ -12,34 +12,30 @@ serve(async (req) => {
   }
 
   try {
-    // Get the authorization header and extract JWT token
-    const authHeader = req.headers.get('authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      console.error('❌ No valid authorization header found');
-      return new Response(
-        JSON.stringify({ error: 'No valid authorization header' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
     console.log('🔑 Authenticating user with JWT token');
     
+    // Extract JWT token
+    const authHeader = req.headers.get('authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      throw new Error('No valid authorization header');
+    }
+
+    const token = authHeader.replace('Bearer ', '');
+
+    // Initialize Supabase clients
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    
-    // Create a client to validate the user token
-    const userSupabase = createClient(supabaseUrl, Deno.env.get('SUPABASE_ANON_KEY')!, {
+
+    // Verify user with anon client
+    const userSupabase = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: authHeader } }
     });
 
-    // Verify the user is authenticated
     const { data: { user }, error: userError } = await userSupabase.auth.getUser();
     if (userError || !user) {
       console.error('❌ User authentication failed:', userError);
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized', details: userError?.message }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      throw new Error('Unauthorized');
     }
 
     console.log(`✅ User authenticated: ${user.email}`);
@@ -47,121 +43,109 @@ serve(async (req) => {
     // Use service role client for database operations
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Get user's stores (we'll use the first one for the test)
-    const { data: stores, error: storesError } = await supabase
+    // Get user's first store
+    const { data: stores, error: storeError } = await supabase
       .from('stores')
       .select('id, name')
       .eq('owner_id', user.id)
       .limit(1);
 
-    if (storesError || !stores || stores.length === 0) {
-      console.error('❌ No stores found for user:', user.id);
-      return new Response(
-        JSON.stringify({ error: 'No stores found' }),
-        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    if (storeError || !stores || stores.length === 0) {
+      console.error('❌ No stores found for user');
+      throw new Error('No stores found for user');
     }
 
     const store = stores[0];
     console.log(`📍 Using store: ${store.name} (${store.id})`);
 
-    // Get user's push subscriptions for diagnostics
+    // Get user's push subscriptions
     const { data: subscriptions, error: subsError } = await supabase
       .from('push_subscriptions')
-      .select('*')
+      .select('id, endpoint, is_active, created_at')
       .eq('user_id', user.id)
       .eq('is_active', true);
 
+    if (subsError) {
+      console.error('❌ Failed to get subscriptions:', subsError);
+      throw new Error('Failed to get subscriptions');
+    }
+
     console.log(`Found ${subscriptions?.length || 0} push subscriptions for user`);
     
-    if (subscriptions) {
+    if (subscriptions && subscriptions.length > 0) {
       subscriptions.forEach((sub, index) => {
-        console.log(`Subscription ${index + 1}:`, {
-          id: sub.id,
-          endpoint: sub.endpoint?.substring(0, 50) + '...',
-          is_active: sub.is_active,
-          created_at: sub.created_at
-        });
+        console.log(`Subscription ${index + 1}: {
+  id: "${sub.id}",
+  endpoint: "${sub.endpoint.substring(0, 50)}...",
+  is_active: ${sub.is_active},
+  created_at: "${sub.created_at}"
+}`);
       });
     }
 
-    // Call the send-push function with proper authorization
+    if (!subscriptions || subscriptions.length === 0) {
+      return new Response(
+        JSON.stringify({ 
+          error: 'No active push subscriptions found',
+          message: 'Please enable push notifications first'
+        }),
+        { 
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+
+    // Send test notification via send-push function
+    const testPayload = {
+      title: '🔔 Test Notification',
+      body: 'Your push notifications are working perfectly!',
+      icon: '/favicon.ico',
+      tag: 'test-notification',
+      data: {
+        type: 'test',
+        timestamp: new Date().toISOString(),
+        store_id: store.id
+      }
+    };
+
+    console.log('📤 Calling send-push function...');
+
     const { data: pushResult, error: pushError } = await supabase.functions.invoke('send-push', {
-      headers: {
-        Authorization: authHeader, // Pass the original auth header
-      },
       body: {
         storeId: store.id,
-        payload: {
-          title: '🔔 Test Notification',
-          body: `This is a test notification for ${store.name}. Push notifications are working!`,
-          icon: '/favicon.ico',
-          badge: '/favicon.ico',
-          tag: 'test',
-          data: {
-            type: 'test',
-            storeId: store.id,
-            timestamp: new Date().toISOString(),
-          },
-        },
+        payload: testPayload
       },
+      headers: {
+        Authorization: authHeader
+      }
     });
 
     if (pushError) {
       console.error('❌ Error sending test push:', pushError);
-      return new Response(
-        JSON.stringify({ 
-          error: 'Failed to send test notification', 
-          details: pushError.message,
-          successful: 0,
-          failed: subscriptions?.length || 0,
-          subscriptions: subscriptions?.map(sub => ({
-            id: sub.id,
-            endpoint: sub.endpoint?.substring(0, 50) + '...',
-            is_active: sub.is_active
-          })) || []
-        }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      throw new Error(`Failed to send test notification: ${pushError.message}`);
     }
 
-    // Extract detailed results from push response
-    const successful = pushResult?.delivered || pushResult?.successful || 0;
-    const failed = pushResult?.failed || 0;
-    const results = pushResult?.results || pushResult?.details || [];
-
-    console.log(`📊 Test notification results: ${successful} successful, ${failed} failed`);
+    console.log('✅ Test notification sent successfully');
 
     return new Response(
-      JSON.stringify({
-        message: successful > 0 ? 'Test notification sent successfully' : 'Test notification failed to deliver',
-        store: store.name,
-        delivered: successful,
-        failed,
-        total: successful + failed,
-        subscriptions: subscriptions?.map(sub => ({
-          id: sub.id,
-          endpoint: sub.endpoint?.substring(0, 50) + '...',
-          is_active: sub.is_active,
-          created_at: sub.created_at
-        })) || [],
-        results: Array.isArray(results) ? results.map((result: any) => ({
-          success: result.success,
-          endpointHost: result.endpointHost,
-          status: result.status,
-          error: result.error
-        })) : []
+      JSON.stringify({ 
+        message: 'Test notification sent successfully',
+        result: pushResult
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
-    console.error('❌ Error in send-test-push function:', error);
+    console.error('❌ Error in send-test-push:', error);
     return new Response(
-      JSON.stringify({ error: 'Failed to send test notification', details: error.message }),
-      {
+      JSON.stringify({ 
+        error: 'Failed to send test notification', 
+        details: error.message 
+      }),
+      { 
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       }
     );
   }

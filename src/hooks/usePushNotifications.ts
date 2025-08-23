@@ -208,12 +208,16 @@ export function usePushNotifications() {
     
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('send-test-push');
+      const { data, error } = await supabase.functions.invoke('send-test-push', {
+        headers: {
+          Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+        }
+      });
       
       if (error) {
         console.error('Error sending test notification:', error);
         toast.error('Failed to send test notification');
-        return;
+        throw new Error(error.message || 'Failed to send test notification');
       }
 
       // Check if notifications were actually delivered
@@ -232,9 +236,12 @@ export function usePushNotifications() {
           setSubscription(null);
         }
       }
+
+      return data;
     } catch (error) {
       console.error('Error sending test notification:', error);
       toast.error('Failed to send test notification');
+      throw error;
     } finally {
       setLoading(false);
     }

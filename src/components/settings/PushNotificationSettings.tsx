@@ -22,17 +22,28 @@ export const PushNotificationSettings: React.FC = () => {
   } = usePushNotifications();
 
   const [testLoading, setTestLoading] = useState(false);
-  const [lastTestResult, setLastTestResult] = useState<string | null>(null);
+  const [lastTestResult, setLastTestResult] = useState<{success: boolean; message: string} | null>(null);
 
   const handleSendTest = async () => {
+    if (!isSubscribed) return;
+    
     setTestLoading(true);
     setLastTestResult(null);
+    
     try {
-      await sendTestNotification();
-      setLastTestResult('success');
-    } catch (error) {
+      const result = await sendTestNotification();
+      console.log('Test notification result:', result);
+      setLastTestResult({
+        success: true,
+        message: result.message || 'Test sent successfully!'
+      });
+    } catch (error: any) {
       console.error('Test notification failed:', error);
-      setLastTestResult('error');
+      const errorMessage = error.message || 'Failed to send test notification';
+      setLastTestResult({
+        success: false,
+        message: errorMessage
+      });
     } finally {
       setTestLoading(false);
     }
@@ -167,14 +178,17 @@ export const PushNotificationSettings: React.FC = () => {
                 <Send className="h-4 w-4 mr-2" />
                 {testLoading ? 'Sending...' : 'Send Test'}
               </Button>
-              {lastTestResult === 'success' && (
-                <span className="text-sm text-green-600 dark:text-green-400">✓ Test sent successfully</span>
-              )}
-              {lastTestResult === 'error' && (
-                <span className="text-sm text-red-600 dark:text-red-400">✗ Test failed to send</span>
-              )}
             </div>
-            <p className="text-xs text-muted-foreground">
+            {lastTestResult && (
+              <div className={`text-xs mt-2 p-2 rounded ${
+                lastTestResult.success 
+                  ? 'bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800' 
+                  : 'bg-red-50 dark:bg-red-950 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800'
+              }`}>
+                {lastTestResult.success ? '✓' : '✗'} {lastTestResult.message}
+              </div>
+            )}
+            <p className="text-xs text-muted-foreground mt-2">
               You'll receive notifications on this device when new orders come in
             </p>
           </div>
