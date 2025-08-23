@@ -22,7 +22,7 @@ interface WhatsAppMessage {
   store_id: string;
   recipient_phone: string;
   message_text: string;
-  status: 'pending' | 'sent' | 'delivered' | 'failed' | 'read';
+  status: string;
   whatsapp_message_id?: string;
   error_message?: string;
   retry_count: number;
