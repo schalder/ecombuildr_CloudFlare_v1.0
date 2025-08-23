@@ -178,6 +178,52 @@ async function sendWebPushNotification(
       
       console.log(`📏 Private key bytes length: ${privateKeyBytes.length}`);
       
+      // If we have a 32-byte key (raw format), wrap it in PKCS#8 format
+      if (privateKeyBytes.length === 32) {
+        console.log('🔧 Converting 32-byte raw key to PKCS#8 format');
+        
+        // PKCS#8 wrapper for P-256 private key
+        const pkcs8Header = new Uint8Array([
+          0x30, 0x87, // SEQUENCE (135 bytes)
+          0x02, 0x01, 0x00, // INTEGER (version = 0)
+          0x30, 0x13, // SEQUENCE (19 bytes)
+          0x06, 0x07, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x02, 0x01, // OID for EC public key
+          0x06, 0x08, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x03, 0x01, 0x07, // OID for P-256
+          0x04, 0x6d, // OCTET STRING (109 bytes)
+          0x30, 0x6b, // SEQUENCE (107 bytes)
+          0x02, 0x01, 0x01, // INTEGER (version = 1)
+          0x04, 0x20 // OCTET STRING (32 bytes for private key)
+        ]);
+        
+        const pkcs8Footer = new Uint8Array([
+          0xa1, 0x44, // CONTEXT SPECIFIC TAG [1] (68 bytes)
+          0x03, 0x42, 0x00, // BIT STRING (66 bytes)
+          0x04 // Start of uncompressed public key (will be derived)
+        ]);
+        
+        // Generate the public key from private key to complete PKCS#8
+        const rawKeyPair = await crypto.subtle.generateKey(
+          { name: 'ECDH', namedCurve: 'P-256' },
+          true,
+          ['deriveBits']
+        );
+        
+        // Import raw private key temporarily
+        const tempKey = await crypto.subtle.importKey(
+          'raw',
+          privateKeyBytes,
+          { name: 'ECDH', namedCurve: 'P-256' },
+          true,
+          ['deriveBits']
+        );
+        
+        // Export in PKCS#8 format which will auto-generate the proper structure
+        const exportedPkcs8 = await crypto.subtle.exportKey('pkcs8', tempKey);
+        privateKeyBytes = new Uint8Array(exportedPkcs8);
+        
+        console.log(`🔧 Converted to PKCS#8, new length: ${privateKeyBytes.length}`);
+      }
+      
       // Import as PKCS8 format for proper ECDSA usage
       vapidKey = await crypto.subtle.importKey(
         'pkcs8',
@@ -190,7 +236,40 @@ async function sendWebPushNotification(
       console.log('✅ VAPID private key imported successfully');
     } catch (keyError) {
       console.error('❌ Failed to import VAPID private key:', keyError);
-      throw new Error(`Invalid VAPID private key format: ${keyError.message}`);
+      
+      // If PKCS#8 import fails, try importing as raw key and re-exporting
+      try {
+        console.log('🔄 Attempting raw key import as fallback...');
+        let rawKeyBytes = base64UrlDecode(vapidPrivateKey);
+        
+        if (rawKeyBytes.length === 32) {
+          // Import as raw ECDH key and re-export as PKCS#8
+          const rawKey = await crypto.subtle.importKey(
+            'raw',
+            rawKeyBytes,
+            { name: 'ECDH', namedCurve: 'P-256' },
+            true,
+            ['deriveBits']
+          );
+          
+          const pkcs8Bytes = await crypto.subtle.exportKey('pkcs8', rawKey);
+          
+          vapidKey = await crypto.subtle.importKey(
+            'pkcs8',
+            pkcs8Bytes,
+            { name: 'ECDSA', namedCurve: 'P-256' },
+            false,
+            ['sign']
+          );
+          
+          console.log('✅ Successfully converted raw key to PKCS#8 and imported');
+        } else {
+          throw new Error('Unsupported private key length: ' + rawKeyBytes.length);
+        }
+      } catch (fallbackError) {
+        console.error('❌ Fallback key import also failed:', fallbackError);
+        throw new Error(`Invalid VAPID private key format: ${keyError.message}`);
+      }
     }
     
     const header = { typ: 'JWT', alg: 'ES256' };

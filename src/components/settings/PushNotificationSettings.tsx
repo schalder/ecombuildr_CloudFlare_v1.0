@@ -50,10 +50,19 @@ export const PushNotificationSettings: React.FC = () => {
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
               {isIOSDevice && !isIOSPWA ? (
-                <>
-                  Push notifications require this app to be installed. On iPhone/iPad: 
-                  tap the Share button <span className="font-mono">⬆️</span> and select "Add to Home Screen" to enable notifications.
-                </>
+                <div>
+                  <p className="mb-3">To enable push notifications on iPhone/iPad, you need to add this app to your home screen first:</p>
+                  <ol className="list-decimal list-inside space-y-2 text-sm bg-background p-3 rounded-md border">
+                    <li>Tap the <strong>Share</strong> button <span className="font-mono">⬆️</span> in Safari</li>
+                    <li>Scroll down and tap <strong>"Add to Home Screen"</strong></li>
+                    <li>Tap <strong>"Add"</strong> to confirm</li>
+                    <li>Open the app from your home screen (not Safari)</li>
+                    <li>Return to this settings page to enable notifications</li>
+                  </ol>
+                  <p className="mt-3 text-xs text-muted-foreground">
+                    This is required by Apple - push notifications only work in installed web apps on iOS devices.
+                  </p>
+                </div>
               ) : (
                 'Push notifications are not supported in this browser. Please use a modern browser like Chrome, Firefox, or Safari.'
               )}
