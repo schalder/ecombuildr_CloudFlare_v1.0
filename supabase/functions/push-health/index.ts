@@ -76,7 +76,8 @@ serve(async (req) => {
             // Convert keys to proper format
             const privateKeyBytes = urlBase64ToUint8Array(vapidPrivateKey);
             
-            // Test private key import (use 'raw' format for VAPID keys, not PKCS8)
+            // Test private key import (use 'raw' format for VAPID keys)
+            // VAPID private keys are 32-byte raw keys, not DER/PEM encoded
             const privateKey = await crypto.subtle.importKey(
               'raw',
               privateKeyBytes,
