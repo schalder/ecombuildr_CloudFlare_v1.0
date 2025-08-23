@@ -1,5 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.52.1";
+// Use JSR web push library for proper encryption and VAPID handling
+import { WebPush } from "jsr:@negrel/webpush";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -18,87 +20,19 @@ interface PushPayload {
 interface PushSubscription {
   id: string;
   endpoint: string;
-  keys: {
-    p256dh: string;
-    auth: string;
-  };
+  p256dh: string;
+  auth: string;
 }
 
 interface NotificationResult {
-  subscriptionId: string;
+  subscription_id: string;
   success: boolean;
   status?: number;
   error?: string;
-  endpointHost?: string;
+  endpoint_host?: string;
 }
 
-// VAPID key utilities using Web Crypto API (Deno native)
-function urlBase64ToUint8Array(base64String: string): Uint8Array {
-  const padding = '='.repeat((4 - base64String.length % 4) % 4);
-  const base64 = (base64String + padding)
-    .replace(/-/g, '+')
-    .replace(/_/g, '/');
-  
-  const rawData = atob(base64);
-  const outputArray = new Uint8Array(rawData.length);
-  
-  for (let i = 0; i < rawData.length; ++i) {
-    outputArray[i] = rawData.charCodeAt(i);
-  }
-  return outputArray;
-}
-
-function uint8ArrayToUrlBase64(array: Uint8Array): string {
-  const base64 = btoa(String.fromCharCode.apply(null, Array.from(array)));
-  return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-}
-
-async function generateVAPIDHeaders(
-  audience: string,
-  subject: string,
-  vapidPublicKey: string,
-  vapidPrivateKey: string
-): Promise<{ Authorization: string; 'Crypto-Key': string }> {
-  const vapidPrivateKeyUint8Array = urlBase64ToUint8Array(vapidPrivateKey);
-  
-  // Import the private key
-  const privateKey = await crypto.subtle.importKey(
-    'raw',
-    vapidPrivateKeyUint8Array,
-    { name: 'ECDSA', namedCurve: 'P-256' },
-    false,
-    ['sign']
-  );
-
-  const header = { typ: 'JWT', alg: 'ES256' };
-  const payload = {
-    aud: audience,
-    exp: Math.floor(Date.now() / 1000) + 43200, // 12 hours
-    sub: subject
-  };
-
-  const encodedHeader = uint8ArrayToUrlBase64(
-    new TextEncoder().encode(JSON.stringify(header))
-  );
-  const encodedPayload = uint8ArrayToUrlBase64(
-    new TextEncoder().encode(JSON.stringify(payload))
-  );
-
-  const unsignedToken = `${encodedHeader}.${encodedPayload}`;
-  const signature = await crypto.subtle.sign(
-    { name: 'ECDSA', hash: 'SHA-256' },
-    privateKey,
-    new TextEncoder().encode(unsignedToken)
-  );
-
-  const encodedSignature = uint8ArrayToUrlBase64(new Uint8Array(signature));
-  const jwt = `${unsignedToken}.${encodedSignature}`;
-
-  return {
-    'Authorization': `vapid t=${jwt}, k=${vapidPublicKey}`,
-    'Crypto-Key': `p256ecdsa=${vapidPublicKey}`
-  };
-}
+// Deno-native web push implementation using JSR library
 
 async function sendWebPushNotification(
   subscription: PushSubscription,
@@ -109,49 +43,58 @@ async function sendWebPushNotification(
   try {
     const endpointUrl = new URL(subscription.endpoint);
     const endpointHost = endpointUrl.hostname;
-    const audience = `${endpointUrl.protocol}//${endpointUrl.hostname}`;
     
     console.log(`📨 Sending notification to ${endpointHost} (subscription: ${subscription.id})`);
     
-    // Generate VAPID headers
-    const vapidHeaders = await generateVAPIDHeaders(
-      audience,
-      'mailto:admin@example.com',
-      vapidPublicKey,
-      vapidPrivateKey
-    );
-
-    // Send the notification
-    const response = await fetch(subscription.endpoint, {
-      method: 'POST',
-      headers: {
-        ...vapidHeaders,
-        'Content-Type': 'application/octet-stream',
-        'TTL': '86400',
-        'Urgency': 'normal'
+    // Initialize WebPush with VAPID keys
+    const webPush = new WebPush({
+      vapid: {
+        subject: "mailto:support@example.com",
+        publicKey: vapidPublicKey,
+        privateKey: vapidPrivateKey,
       },
-      body: JSON.stringify(payload)
     });
 
-    console.log(`✅ Push sent to ${endpointHost}, status: ${response.status}`);
+    // Create subscription object in the format expected by the library
+    const pushSubscription = {
+      endpoint: subscription.endpoint,
+      keys: {
+        p256dh: subscription.p256dh,
+        auth: subscription.auth,
+      },
+    };
+
+    // Send the notification with proper encryption
+    const response = await webPush.sendNotification(
+      pushSubscription,
+      JSON.stringify(payload),
+      {
+        TTL: 86400, // 24 hours
+      }
+    );
+
+    const success = response.status >= 200 && response.status < 300;
+    console.log(`${success ? '✅' : '❌'} Push result for ${subscription.id}: HTTP ${response.status}`);
     
     return { 
-      subscriptionId: subscription.id, 
-      success: response.ok, 
+      subscription_id: subscription.id, 
+      success, 
       status: response.status,
-      endpointHost 
+      error: success ? undefined : `HTTP ${response.status}: ${response.statusText}`,
+      endpoint_host: endpointHost
     };
 
   } catch (error: any) {
-    const endpointHost = new URL(subscription.endpoint).hostname;
+    const endpointUrl = new URL(subscription.endpoint);
+    const endpointHost = endpointUrl.hostname;
     console.error(`❌ Failed to send to ${endpointHost}:`, error);
     
     return { 
-      subscriptionId: subscription.id, 
+      subscription_id: subscription.id, 
       success: false, 
       status: 0,
       error: error.message || 'Unknown error',
-      endpointHost
+      endpoint_host: endpointHost
     };
   }
 }
@@ -237,10 +180,8 @@ serve(async (req) => {
         {
           id: sub.id,
           endpoint: sub.endpoint,
-          keys: {
-            p256dh: sub.p256dh,
-            auth: sub.auth
-          }
+          p256dh: sub.p256dh,
+          auth: sub.auth
         },
         payload,
         vapidPublicKey,
@@ -248,31 +189,62 @@ serve(async (req) => {
       ))
     );
 
-    const successful = results.filter(r => r.status === 'fulfilled' && r.value.success).length;
-    const failed = results.length - successful;
+    // Process results and deactivate expired subscriptions
+    const notificationResults: NotificationResult[] = [];
+    const expiredSubscriptionIds: string[] = [];
+    
+    for (const result of results) {
+      if (result.status === 'fulfilled') {
+        const notifResult = result.value;
+        notificationResults.push(notifResult);
+        
+        // Mark subscription as inactive if expired/invalid
+        if (!notifResult.success && notifResult.status && [404, 410, 413].includes(notifResult.status)) {
+          expiredSubscriptionIds.push(notifResult.subscription_id);
+          console.log(`🗑️ Marking subscription ${notifResult.subscription_id} as inactive (HTTP ${notifResult.status})`);
+        }
+      } else {
+        console.error('❌ Promise rejection in push sending:', result.reason);
+      }
+    }
 
-    // Deactivate subscriptions that returned 404/410/413 (subscription expired/invalid)
-    const failedSubscriptionIds = results
-      .filter(r => r.status === 'fulfilled' && !r.value.success && 
-               (r.value.status === 404 || r.value.status === 410 || r.value.status === 413))
-      .map(r => (r as any).value.subscriptionId);
-
-    if (failedSubscriptionIds.length > 0) {
-      console.log(`🗑️ Deactivating ${failedSubscriptionIds.length} expired subscriptions`);
+    // Deactivate expired subscriptions
+    if (expiredSubscriptionIds.length > 0) {
       await supabase
         .from('push_subscriptions')
         .update({ is_active: false })
-        .in('id', failedSubscriptionIds);
+        .in('id', expiredSubscriptionIds);
+      
+      console.log(`🗑️ Deactivated ${expiredSubscriptionIds.length} expired subscriptions`);
     }
 
-    console.log(`📊 Push notification results: ${successful} successful, ${failed} failed`);
+    const successCount = notificationResults.filter(r => r.success).length;
+    const failureCount = notificationResults.length - successCount;
+    
+    // Group results by endpoint host for debugging
+    const resultsByHost = notificationResults.reduce((acc, result) => {
+      const host = result.endpoint_host || 'unknown';
+      if (!acc[host]) acc[host] = { success: 0, failed: 0 };
+      if (result.success) acc[host].success++;
+      else acc[host].failed++;
+      return acc;
+    }, {} as Record<string, { success: number; failed: number }>);
+
+    console.log(`📊 Push summary: ${successCount} sent, ${failureCount} failed out of ${notificationResults.length} total`);
+    console.log(`📊 Results by host:`, resultsByHost);
 
     return new Response(
       JSON.stringify({ 
-        message: 'Push notifications sent', 
-        delivered: successful, 
-        failed,
-        results: results.map(r => r.status === 'fulfilled' ? r.value : { error: 'Promise rejected' })
+        success: true,
+        message: `Sent ${successCount} notifications, ${failureCount} failed`,
+        summary: {
+          total: notificationResults.length,
+          successful: successCount,
+          failed: failureCount,
+          expired: expiredSubscriptionIds.length,
+          resultsByHost
+        },
+        results: notificationResults
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

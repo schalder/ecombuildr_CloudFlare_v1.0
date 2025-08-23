@@ -1,55 +1,123 @@
-
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/useAuth';
-import { toast } from 'sonner';
+import { useAuth } from './useAuth';
+import { useToast } from './use-toast';
+
+interface HealthStatus {
+  status: 'healthy' | 'unhealthy' | 'error';
+  checks: {
+    vapidKeysConfigured: boolean;
+    vapidKeysValid: boolean;
+    vapidCryptoValid: boolean;
+    supabaseConfigured: boolean;
+    webCryptoAvailable: boolean;
+  };
+  recommendations: string[];
+}
+
+interface DiagnosticsInfo {
+  isSupported: boolean;
+  permission: NotificationPermission;
+  serviceWorkerRegistered: boolean;
+  hasSubscription: boolean;
+  vapidKeysFetched: boolean;
+  serverHealth: HealthStatus | null;
+  lastTestResult: string | null;
+  isIOSPWA: boolean;
+  isIOSWithoutPWA: boolean;
+}
 
 export function usePushNotifications() {
   const { user } = useAuth();
+  const { toast } = useToast();
+  
   const [isSupported, setIsSupported] = useState(false);
   const [permission, setPermission] = useState<NotificationPermission>('default');
   const [subscription, setSubscription] = useState<PushSubscription | null>(null);
   const [loading, setLoading] = useState(false);
+  const [serverHealth, setServerHealth] = useState<HealthStatus | null>(null);
+  const [lastTestResult, setLastTestResult] = useState<string | null>(null);
+  const [vapidKeysFetched, setVapidKeysFetched] = useState(false);
+  
+  // iOS detection
+  const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  const isIOSPWA = isIOSDevice && (window.navigator as any).standalone === true;
+  const isIOSWithoutPWA = isIOSDevice && (window.navigator as any).standalone !== true;
 
-  useEffect(() => {
-    // Check if push notifications are supported
-    const isBasicSupported = 'serviceWorker' in navigator && 'PushManager' in window;
+  const checkSupport = useCallback(() => {
+    // Enhanced support detection
+    const hasServiceWorker = 'serviceWorker' in navigator;
+    const hasPushManager = 'PushManager' in window;
+    const hasNotifications = 'Notification' in window;
     
-    // Enhanced detection for iOS PWA vs Safari browser
-    const isIOSPWA = (window.navigator as any).standalone === true;
-    const isIOSBrowser = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+    // iOS 16.4+ PWA support
+    const iosSupported = isIOSPWA;
     
-    // For iOS, only support in PWA mode (added to home screen)
-    if (isIOSBrowser && !isIOSPWA) {
-      setIsSupported(false);
-    } else {
-      setIsSupported(isBasicSupported);
-    }
+    const supported = hasServiceWorker && hasPushManager && hasNotifications && (!isIOSDevice || iosSupported);
     
-    if ('Notification' in window) {
-      setPermission(Notification.permission);
-    }
+    console.log('🔍 Push support check:', {
+      hasServiceWorker,
+      hasPushManager, 
+      hasNotifications,
+      isIOSDevice,
+      isIOSPWA,
+      iosSupported,
+      finalSupported: supported
+    });
+    
+    setIsSupported(supported);
+  }, [isIOSDevice, isIOSPWA]);
 
-    // Check for existing subscription
-    if (isSupported && user) {
-      checkExistingSubscription();
+  const checkServerHealth = useCallback(async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('push-health');
+      
+      if (error) {
+        console.error('❌ Health check failed:', error);
+        setServerHealth({
+          status: 'error',
+          checks: { vapidKeysConfigured: false, vapidKeysValid: false, vapidCryptoValid: false, supabaseConfigured: false, webCryptoAvailable: false },
+          recommendations: ['Unable to connect to health check service']
+        });
+        return;
+      }
+      
+      setServerHealth(data);
+      console.log('🏥 Server health:', data);
+    } catch (error) {
+      console.error('❌ Health check error:', error);
     }
-  }, [isSupported, user]);
+  }, []);
 
-  const checkExistingSubscription = async () => {
+  const checkExistingSubscription = useCallback(async () => {
+    if (!isSupported) return;
+
     try {
       const registration = await navigator.serviceWorker.ready;
       const existingSubscription = await registration.pushManager.getSubscription();
       setSubscription(existingSubscription);
+      
+      if (existingSubscription) {
+        console.log('✅ Found existing push subscription');
+      }
     } catch (error) {
-      console.error('Error checking existing subscription:', error);
+      console.error('❌ Error checking existing subscription:', error);
     }
-  };
+  }, [isSupported]);
 
-  const requestPermission = async (): Promise<boolean> => {
+  useEffect(() => {
+    checkSupport();
+    setPermission(Notification.permission);
+    checkServerHealth();
+    
+    if (user) {
+      checkExistingSubscription();
+    }
+  }, [user, checkSupport, checkExistingSubscription, checkServerHealth]);
+
+  const requestPermission = useCallback(async (): Promise<boolean> => {
     if (!isSupported) {
-      toast.error('Push notifications are not supported in this browser');
-      return false;
+      throw new Error('Push notifications are not supported');
     }
 
     if (permission === 'granted') {
@@ -59,117 +127,143 @@ export function usePushNotifications() {
     const result = await Notification.requestPermission();
     setPermission(result);
 
-    if (result === 'granted') {
-      toast.success('Push notifications enabled!');
-      return true;
-    } else if (result === 'denied') {
-      toast.error('Push notifications were blocked. Please enable them in your browser settings.');
-      return false;
-    }
+    return result === 'granted';
+  }, [isSupported, permission]);
 
-    return false;
+  // Helper functions
+  const urlBase64ToUint8Array = (base64String: string): Uint8Array => {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding)
+      .replace(/-/g, '+')
+      .replace(/_/g, '/');
+
+    const rawData = atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+
+    for (let i = 0; i < rawData.length; ++i) {
+      outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
   };
 
-  const subscribe = async (storeId?: string) => {
+  const arrayBufferToBase64 = (buffer: ArrayBuffer | null): string => {
+    if (!buffer) return '';
+    const bytes = new Uint8Array(buffer);
+    const binary = String.fromCharCode(...bytes);
+    return btoa(binary);
+  };
+
+  const getDeviceInfo = () => {
+    const userAgent = navigator.userAgent;
+    return {
+      device: userAgent.includes('Mobile') ? 'mobile' : 'desktop',
+      browser: userAgent.includes('Chrome') ? 'chrome' : 
+               userAgent.includes('Firefox') ? 'firefox' : 
+               userAgent.includes('Safari') ? 'safari' : 'other',
+      platform: navigator.platform || 'unknown'
+    };
+  };
+
+  const subscribe = useCallback(async (storeId?: string) => {
+    if (!isSupported) {
+      throw new Error('Push notifications are not supported on this device/browser');
+    }
+
     if (!user) {
-      toast.error('Please sign in to enable notifications');
-      return false;
+      throw new Error('User must be logged in');
+    }
+
+    // iOS specific blocking
+    if (isIOSWithoutPWA) {
+      throw new Error('On iOS, you must install this app to your Home Screen first to enable notifications');
     }
 
     setLoading(true);
     try {
-      const hasPermission = await requestPermission();
-      if (!hasPermission) {
-        return false;
+      // Check server health first
+      if (!serverHealth || serverHealth.status !== 'healthy') {
+        throw new Error('Push notification service is not available. Please try again later.');
+      }
+
+      // Request permission first
+      if (permission !== 'granted') {
+        const newPermission = await Notification.requestPermission();
+        setPermission(newPermission);
+        
+        if (newPermission !== 'granted') {
+          throw new Error('Notification permission denied. Please enable notifications in your browser settings.');
+        }
       }
 
       // Get VAPID public key
-      console.log('🔑 Getting VAPID public key...');
-      const { data: vapidResponse, error: vapidError } = await supabase.functions.invoke('get-vapid-public-key');
+      const { data: vapidData, error: vapidError } = await supabase.functions.invoke('get-vapid-public-key');
       
-      if (vapidError) {
-        console.error('❌ VAPID key fetch error:', vapidError);
-        toast.error('Failed to get notification keys. Please try again.');
-        throw new Error('Failed to get VAPID public key: ' + vapidError.message);
-      }
-      
-      if (!vapidResponse?.publicKey) {
-        console.error('❌ No public key in response:', vapidResponse);
-        toast.error('Invalid notification configuration. Please contact support.');
-        throw new Error('No public key returned from server');
-      }
-      
-      console.log('✅ VAPID public key received');
-
-      // Convert VAPID key if needed (handle both base64 and Uint8Array formats)
-      let applicationServerKey: BufferSource;
-      if (typeof vapidResponse.publicKey === 'string') {
-        applicationServerKey = new Uint8Array(
-          atob(vapidResponse.publicKey.replace(/-/g, '+').replace(/_/g, '/'))
-            .split('')
-            .map(char => char.charCodeAt(0))
-        );
-      } else {
-        applicationServerKey = vapidResponse.publicKey;
+      if (vapidError || !vapidData?.publicKey) {
+        console.error('❌ Failed to get VAPID key:', vapidError);
+        throw new Error('Failed to get server configuration for push notifications');
       }
 
-      // Register service worker
-      const registration = await navigator.serviceWorker.register('/sw.js');
-      await navigator.serviceWorker.ready;
+      setVapidKeysFetched(true);
 
-      // Subscribe to push notifications
+      // Register service worker and subscribe
+      const registration = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+      await registration.update();
+      
+      const vapidPublicKey = vapidData.publicKey;
+      const applicationServerKey = urlBase64ToUint8Array(vapidPublicKey);
+      
       const pushSubscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: applicationServerKey,
+        applicationServerKey
       });
 
-      // Save subscription to database - use correct column names based on actual schema
-      const subscriptionObject = pushSubscription.toJSON();
-      const { error: saveError } = await supabase
+      // Extract subscription details
+      const p256dh = arrayBufferToBase64(pushSubscription.getKey('p256dh'));
+      const auth = arrayBufferToBase64(pushSubscription.getKey('auth'));
+
+      // Detect device/browser info
+      const deviceInfo = getDeviceInfo();
+
+      // Save subscription to database
+      const { error: dbError } = await supabase
         .from('push_subscriptions')
         .upsert({
           user_id: user.id,
           store_id: storeId || null,
-          endpoint: subscriptionObject.endpoint!,
-          p256dh: subscriptionObject.keys!.p256dh!,
-          auth: subscriptionObject.keys!.auth!,
-          device: navigator.userAgent.includes('Mobile') ? 'mobile' : 'desktop',
-          browser: navigator.userAgent.includes('Chrome') ? 'chrome' : 
-                  navigator.userAgent.includes('Firefox') ? 'firefox' : 
-                  navigator.userAgent.includes('Safari') ? 'safari' : 'other',
-          platform: navigator.platform,
+          endpoint: pushSubscription.endpoint,
+          p256dh,
+          auth,
+          device: deviceInfo.device,
+          browser: deviceInfo.browser,
+          platform: deviceInfo.platform,
           is_active: true,
-          last_seen_at: new Date().toISOString(),
+          last_seen_at: new Date().toISOString()
         }, {
-          onConflict: 'user_id,endpoint',
-          ignoreDuplicates: false
+          onConflict: 'endpoint'
         });
 
-      // Also ensure any inactive subscriptions with same endpoint are reactivated
-      await supabase
-        .from('push_subscriptions')
-        .update({ is_active: true, last_seen_at: new Date().toISOString() })
-        .eq('user_id', user.id)
-        .eq('endpoint', subscriptionObject.endpoint!);
-
-      if (saveError) {
-        throw saveError;
+      if (dbError) {
+        console.error('❌ Failed to save subscription:', dbError);
+        throw new Error('Failed to save subscription to database');
       }
 
       setSubscription(pushSubscription);
-      toast.success('Push notifications enabled successfully!');
-      return true;
+      toast({
+        title: "Notifications enabled",
+        description: "You'll now receive push notifications."
+      });
+
+      console.log('✅ Push subscription created and saved');
 
     } catch (error) {
-      console.error('Error subscribing to push notifications:', error);
-      toast.error('Failed to enable push notifications');
-      return false;
+      console.error('❌ Subscription failed:', error);
+      throw error;
     } finally {
       setLoading(false);
     }
-  };
+  }, [isSupported, user, permission, toast, serverHealth, isIOSWithoutPWA]);
 
-  const unsubscribe = async () => {
+  const unsubscribe = useCallback(async () => {
     if (!user || !subscription) return false;
 
     setLoading(true);
@@ -178,73 +272,92 @@ export function usePushNotifications() {
       await subscription.unsubscribe();
 
       // Remove from database
-      const subscriptionObject = subscription.toJSON();
-      const { error } = await supabase
+      const { error: dbError } = await supabase
         .from('push_subscriptions')
-        .delete()
+        .update({ is_active: false })
         .eq('user_id', user.id)
-        .eq('endpoint', subscriptionObject.endpoint!);
+        .eq('endpoint', subscription.endpoint);
 
-      if (error) {
-        throw error;
+      if (dbError) {
+        console.error('❌ Failed to deactivate subscription:', dbError);
+        throw new Error('Failed to remove subscription from database');
       }
 
       setSubscription(null);
-      toast.success('Push notifications disabled');
+      toast({
+        title: "Notifications disabled",
+        description: "You will no longer receive push notifications."
+      });
+
+      console.log('✅ Push subscription removed');
       return true;
 
     } catch (error) {
-      console.error('Error unsubscribing from push notifications:', error);
-      toast.error('Failed to disable push notifications');
-      return false;
+      console.error('❌ Unsubscription failed:', error);
+      throw error;
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, subscription, toast]);
 
-  // Test notification function
-  const sendTestNotification = async () => {
-    if (!subscription || loading) return;
-    
-    setLoading(true);
+  const sendTestNotification = useCallback(async () => {
+    if (!user) {
+      throw new Error('User must be logged in');
+    }
+
+    if (!subscription) {
+      throw new Error('No active push subscription found');
+    }
+
     try {
+      setLastTestResult('Sending...');
+      
       const { data, error } = await supabase.functions.invoke('send-test-push', {
         headers: {
           Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
         }
       });
-      
+
       if (error) {
-        console.error('Error sending test notification:', error);
-        toast.error('Failed to send test notification');
-        throw new Error(error.message || 'Failed to send test notification');
+        console.error('❌ Test notification failed:', error);
+        const errorMsg = `Failed: ${error.message || 'Unknown error'}`;
+        setLastTestResult(errorMsg);
+        throw new Error(errorMsg);
       }
 
-      // Check if notifications were actually delivered
-      if (data?.delivered > 0) {
-        toast.success(`Test notification sent successfully! Delivered to ${data.delivered} device(s).`);
-      } else {
-        const firstError = data?.results?.[0]?.error || 'Unknown delivery error';
-        console.error('Test notification delivery failed:', data);
-        
-        toast.error(`Test notification failed to deliver: ${firstError}`);
-        
-        // If delivery failed, might need to re-subscribe
-        const firstResult = data?.results?.[0];
-        if (firstResult?.status === 404 || firstResult?.status === 410 || firstResult?.status === 413) {
-          toast.error('Push subscription expired. Please re-enable notifications.');
-          setSubscription(null);
-        }
+      console.log('✅ Test notification sent:', data);
+      const successMsg = `Sent to ${data.summary?.successful || 0} device(s)`;
+      setLastTestResult(successMsg);
+      
+      // Handle potential subscription expiration
+      if (data.summary?.expired > 0) {
+        toast({
+          title: "Subscription updated",
+          description: "Some expired subscriptions were cleaned up. You may need to re-enable notifications.",
+          variant: "destructive"
+        });
+        // Refresh subscription status
+        checkExistingSubscription();
       }
-
+      
       return data;
     } catch (error) {
-      console.error('Error sending test notification:', error);
-      toast.error('Failed to send test notification');
+      console.error('❌ Test notification error:', error);
       throw error;
-    } finally {
-      setLoading(false);
     }
+  }, [user, subscription, toast, checkExistingSubscription]);
+
+  // Diagnostics information
+  const diagnostics: DiagnosticsInfo = {
+    isSupported,
+    permission,
+    serviceWorkerRegistered: !!('serviceWorker' in navigator),
+    hasSubscription: !!subscription,
+    vapidKeysFetched,
+    serverHealth,
+    lastTestResult,
+    isIOSPWA,
+    isIOSWithoutPWA
   };
 
   return {
@@ -252,9 +365,11 @@ export function usePushNotifications() {
     permission,
     subscription,
     loading,
+    isSubscribed: !!subscription,
+    diagnostics,
     subscribe,
     unsubscribe,
-    isSubscribed: !!subscription,
     sendTestNotification,
+    checkServerHealth
   };
 }

@@ -42,8 +42,10 @@ serve(async (req) => {
     }
     console.log(`🔐 Web Crypto API available: ${webCryptoAvailable}`);
 
-    // Test VAPID key format if available
+    // Test VAPID key format and cryptographic validity
     let vapidKeysValid = false;
+    let vapidCryptoValid = false;
+    
     if (vapidKeysConfigured) {
       try {
         // Basic format validation
@@ -51,9 +53,67 @@ serve(async (req) => {
         const privateKeyValid = vapidPrivateKey.length === 43 && /^[A-Za-z0-9_-]+$/.test(vapidPrivateKey);
         vapidKeysValid = publicKeyValid && privateKeyValid;
         console.log(`🔍 VAPID key format validation: ${vapidKeysValid}`);
+        
+        // Test cryptographic import and signing
+        if (vapidKeysValid && webCryptoAvailable) {
+          try {
+            // Convert keys to proper format
+            const publicKeyBytes = urlBase64ToUint8Array(vapidPublicKey);
+            const privateKeyBytes = urlBase64ToUint8Array(vapidPrivateKey);
+            
+            // Test private key import
+            const privateKey = await crypto.subtle.importKey(
+              'pkcs8',
+              privateKeyBytes,
+              { name: 'ECDSA', namedCurve: 'P-256' },
+              false,
+              ['sign']
+            );
+            
+            // Test public key import  
+            const publicKey = await crypto.subtle.importKey(
+              'spki',
+              publicKeyBytes,
+              { name: 'ECDSA', namedCurve: 'P-256' },
+              false,
+              ['verify']
+            );
+            
+            // Test signing operation
+            const testData = new TextEncoder().encode('health-check');
+            const signature = await crypto.subtle.sign(
+              { name: 'ECDSA', hash: 'SHA-256' },
+              privateKey,
+              testData
+            );
+            
+            vapidCryptoValid = signature.byteLength > 0;
+            console.log(`🔐 VAPID cryptographic test: ${vapidCryptoValid}`);
+            
+          } catch (cryptoError) {
+            console.error('❌ VAPID cryptographic test failed:', cryptoError);
+            vapidCryptoValid = false;
+          }
+        }
       } catch (error) {
         console.error('❌ VAPID key validation failed:', error);
       }
+    }
+
+    // Helper function for key conversion
+    function urlBase64ToUint8Array(base64String: string): Uint8Array {
+      const padding = '='.repeat((4 - base64String.length % 4) % 4);
+      const base64 = (base64String + padding)
+        .replace(/-/g, '+')
+        .replace(/_/g, '/');
+
+      const rawData = atob(base64);
+      const outputArray = new Uint8Array(rawData.length);
+
+      for (let i = 0; i < rawData.length; ++i) {
+        outputArray[i] = rawData.charCodeAt(i);
+      }
+      return outputArray;
     }
 
     const healthStatus = {
@@ -62,14 +122,33 @@ serve(async (req) => {
       checks: {
         vapidKeysConfigured,
         vapidKeysValid,
+        vapidCryptoValid,
         supabaseConfigured,
         webCryptoAvailable
       },
       environment: {
         deno: Deno.version.deno,
         runtime: 'supabase-edge'
-      }
+      },
+      recommendations: [] as string[]
     };
+
+    // Add recommendations based on check results
+    if (!vapidKeysConfigured) {
+      healthStatus.recommendations.push('Configure VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY in Supabase secrets');
+    } else if (!vapidKeysValid) {
+      healthStatus.recommendations.push('VAPID keys appear to be in wrong format - should be base64url encoded');
+    } else if (!vapidCryptoValid) {
+      healthStatus.recommendations.push('VAPID keys failed cryptographic validation - may be corrupted or wrong format');
+    }
+    
+    if (!supabaseConfigured) {
+      healthStatus.recommendations.push('Ensure all Supabase environment variables are configured');
+    }
+    
+    if (!webCryptoAvailable) {
+      healthStatus.recommendations.push('Web Crypto API unavailable - check Deno environment');
+    }
 
     const allChecksPass = Object.values(healthStatus.checks).every(check => check);
     if (!allChecksPass) {

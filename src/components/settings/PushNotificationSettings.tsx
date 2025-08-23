@@ -1,121 +1,156 @@
-
 import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { Bell, BellOff, Smartphone, AlertCircle, Send } from 'lucide-react';
-import { usePushNotifications } from '@/hooks/usePushNotifications';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertTriangle, Bell, BellOff, Smartphone, Check, X, Heart, Zap, Settings, ExternalLink } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
+import { useToast } from "@/hooks/use-toast";
 
-export const PushNotificationSettings: React.FC = () => {
-  const {
-    isSupported,
-    permission,
-    subscription,
-    loading,
-    subscribe,
-    unsubscribe,
-    isSubscribed,
+export const PushNotificationSettings = () => {
+  const { 
+    isSupported, 
+    permission, 
+    isSubscribed, 
+    loading, 
+    diagnostics,
+    subscribe, 
+    unsubscribe, 
     sendTestNotification,
+    checkServerHealth
   } = usePushNotifications();
-
+  
+  const { toast } = useToast();
   const [testLoading, setTestLoading] = useState(false);
-  const [lastTestResult, setLastTestResult] = useState<{success: boolean; message: string} | null>(null);
+  const [showDiagnostics, setShowDiagnostics] = useState(false);
+
+  const handleSubscribe = async () => {
+    try {
+      await subscribe();
+    } catch (error: any) {
+      toast({
+        title: "Failed to enable notifications",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleUnsubscribe = async () => {
+    try {
+      await unsubscribe();
+    } catch (error: any) {
+      toast({
+        title: "Failed to disable notifications", 
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  };
 
   const handleSendTest = async () => {
-    if (!isSubscribed) return;
-    
     setTestLoading(true);
-    setLastTestResult(null);
-    
     try {
-      const result = await sendTestNotification();
-      console.log('Test notification result:', result);
-      setLastTestResult({
-        success: true,
-        message: result.message || 'Test sent successfully!'
+      await sendTestNotification();
+      toast({
+        title: "Test notification sent",
+        description: "Check your device for the notification"
       });
     } catch (error: any) {
-      console.error('Test notification failed:', error);
-      const errorMessage = error.message || 'Failed to send test notification';
-      setLastTestResult({
-        success: false,
-        message: errorMessage
+      toast({
+        title: "Test failed",
+        description: error.message,
+        variant: "destructive"
       });
     } finally {
       setTestLoading(false);
     }
   };
 
-  const handleToggle = async (enabled: boolean) => {
-    if (enabled) {
-      await subscribe();
-    } else {
-      await unsubscribe();
-    }
+  // Enhanced iOS handling
+  const renderIOSGuidance = () => {
+    if (!diagnostics?.isIOSWithoutPWA) return null;
+    
+    return (
+      <Alert className="border-orange-200 bg-orange-50">
+        <Smartphone className="h-4 w-4" />
+        <AlertDescription>
+          <strong>iOS Setup Required:</strong> To receive push notifications on iOS, you must install this app to your Home Screen first.
+          <div className="mt-2 space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="w-6 h-6 bg-orange-100 rounded-full flex items-center justify-center text-sm font-semibold">1</span>
+              <span>Tap the Share button <ExternalLink className="inline h-3 w-3" /> in Safari</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="w-6 h-6 bg-orange-100 rounded-full flex items-center justify-center text-sm font-semibold">2</span>
+              <span>Select "Add to Home Screen"</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="w-6 h-6 bg-orange-100 rounded-full flex items-center justify-center text-sm font-semibold">3</span>
+              <span>Open the app from your Home Screen and return here</span>
+            </div>
+          </div>
+        </AlertDescription>
+      </Alert>
+    );
   };
 
-  // Handle unsupported browsers, especially iOS Safari
+  // If notifications are not supported
   if (!isSupported) {
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-    const isInStandaloneMode = window.matchMedia('(display-mode: standalone)').matches;
-    
     return (
       <Card>
         <CardHeader>
-          <div className="flex items-center gap-2">
-            <BellOff className="h-5 w-5 text-muted-foreground" />
-            <CardTitle>Push Notifications</CardTitle>
-            <Badge variant="outline">Not Available</Badge>
-          </div>
+          <CardTitle className="flex items-center gap-2">
+            <BellOff className="h-5 w-5" />
+            Push Notifications
+          </CardTitle>
           <CardDescription>
-            Get instant notifications for new orders and updates
+            Receive instant notifications about orders and important updates
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <Alert className="border-orange-200 bg-orange-50 dark:border-orange-800 dark:bg-orange-950">
-            <AlertCircle className="h-4 w-4 text-orange-600" />
-            <AlertDescription className="text-orange-800 dark:text-orange-200">
-              {isIOS && !isInStandaloneMode ? (
-                <div className="space-y-3">
-                  <p className="font-semibold">Install this app to enable push notifications:</p>
-                  <div className="bg-white dark:bg-gray-900 p-3 rounded border border-orange-200 dark:border-orange-700">
-                    <ol className="space-y-2 text-sm">
-                      <li className="flex items-start gap-2">
-                        <span className="flex-shrink-0 w-5 h-5 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center text-xs font-bold text-blue-600 dark:text-blue-300">1</span>
-                        Tap the Share button <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 dark:bg-blue-900 rounded text-xs font-mono ml-1">□↑</span> at the bottom of Safari
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <span className="flex-shrink-0 w-5 h-5 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center text-xs font-bold text-blue-600 dark:text-blue-300">2</span>
-                        Scroll down and select <span className="font-semibold">"Add to Home Screen"</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <span className="flex-shrink-0 w-5 h-5 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center text-xs font-bold text-blue-600 dark:text-blue-300">3</span>
-                        Tap <span className="font-semibold">"Add"</span> to install the app
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <span className="flex-shrink-0 w-5 h-5 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center text-xs font-bold text-green-600 dark:text-green-300">4</span>
-                        Open the app from your Home Screen (not Safari)
-                      </li>
-                    </ol>
-                  </div>
-                  <p className="text-xs text-orange-600 dark:text-orange-400">
-                    ⚠️ Notifications only work when using the installed app, not in Safari browser.
-                  </p>
-                </div>
-              ) : (
-                <div>
-                  <p className="font-semibold mb-2">Push notifications are not supported in this browser.</p>
-                  <p>Please use a modern browser like:</p>
-                  <ul className="list-disc list-inside mt-2 space-y-1">
-                    <li>Google Chrome</li>
-                    <li>Mozilla Firefox</li>
-                    <li>Microsoft Edge</li>
-                  </ul>
-                </div>
-              )}
+          {renderIOSGuidance()}
+          
+          {!diagnostics?.isIOSWithoutPWA && (
+            <Alert>
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>
+                Push notifications are not supported on this browser or device.
+                Try using a modern browser like Chrome, Firefox, or Safari.
+              </AlertDescription>
+            </Alert>
+          )}
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Permission denied - show help
+  if (permission === 'denied') {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <BellOff className="h-5 w-5" />
+            Push Notifications
+            <Badge variant="destructive">Blocked</Badge>
+          </CardTitle>
+          <CardDescription>
+            Receive instant notifications about orders and important updates
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Alert>
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>
+              <strong>Notifications are blocked.</strong> To enable them:
+              <ol className="list-decimal list-inside mt-2 space-y-1">
+                <li>Click the lock icon in your browser's address bar</li>
+                <li>Set "Notifications" to "Allow"</li>
+                <li>Refresh this page</li>
+              </ol>
             </AlertDescription>
           </Alert>
         </CardContent>
@@ -129,90 +164,185 @@ export const PushNotificationSettings: React.FC = () => {
         <CardTitle className="flex items-center gap-2">
           <Bell className="h-5 w-5" />
           Push Notifications
-          {isSubscribed && <Badge variant="secondary">Active</Badge>}
+          {isSubscribed && <Badge variant="default">Enabled</Badge>}
         </CardTitle>
         <CardDescription>
-          Get instant mobile notifications when you receive new orders on any of your stores
+          Receive instant notifications about orders and important updates
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="space-y-0.5">
-            <Label htmlFor="push-notifications" className="text-base">
-              Enable Push Notifications
-            </Label>
-            <p className="text-sm text-muted-foreground">
-              Receive notifications for new orders, payments, and important updates
-            </p>
-          </div>
-          <Switch
-            id="push-notifications"
-            checked={isSubscribed}
-            onCheckedChange={handleToggle}
-            disabled={loading}
-          />
-        </div>
-
-        {permission === 'denied' && (
-          <Alert>
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
-              Push notifications are blocked. Please enable them in your browser settings and refresh the page.
-            </AlertDescription>
-          </Alert>
-        )}
-
-        {isSubscribed && (
-          <div className="bg-muted p-3 rounded-lg">
-            <div className="flex items-center justify-between mb-2">
+      <CardContent>
+        <div className="space-y-6">
+          {renderIOSGuidance()}
+          
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
               <div className="flex items-center gap-2">
-                <Smartphone className="h-4 w-4 text-green-600" />
-                <span className="text-sm font-medium text-green-600">Connected</span>
+                <Bell className="h-4 w-4" />
+                <span className="font-medium">Notifications Status</span>
+                <Badge variant={isSubscribed ? "default" : "secondary"}>
+                  {isSubscribed ? "Enabled" : "Disabled"}
+                </Badge>
+                {diagnostics?.isIOSPWA && (
+                  <Badge variant="outline" className="text-xs">
+                    iOS PWA
+                  </Badge>
+                )}
               </div>
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={handleSendTest}
-                disabled={loading || testLoading}
-              >
-                <Send className="h-4 w-4 mr-2" />
-                {testLoading ? 'Sending...' : 'Send Test'}
-              </Button>
+              <p className="text-sm text-muted-foreground">
+                {isSubscribed 
+                  ? "You'll receive notifications about orders and updates"
+                  : permission === 'denied'
+                  ? "Notifications are blocked. Please enable them in your browser settings."
+                  : diagnostics?.isIOSWithoutPWA
+                  ? "Install the app to your Home Screen first to enable notifications"
+                  : "Enable to receive important notifications"
+                }
+              </p>
             </div>
-            {lastTestResult && (
-              <div className={`text-xs mt-2 p-2 rounded ${
-                lastTestResult.success 
-                  ? 'bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800' 
-                  : 'bg-red-50 dark:bg-red-950 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800'
-              }`}>
-                {lastTestResult.success ? '✓' : '✗'} {lastTestResult.message}
-              </div>
-            )}
-            <p className="text-xs text-muted-foreground mt-2">
-              You'll receive notifications on this device when new orders come in
-            </p>
+            
+            <div className="flex gap-2">
+              {isSubscribed ? (
+                <>
+                  <Button
+                    variant="outline"
+                    onClick={handleSendTest}
+                    disabled={testLoading}
+                    size="sm"
+                  >
+                    {testLoading ? "Sending..." : "Send Test"}
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={handleUnsubscribe}
+                    disabled={loading}
+                    size="sm"
+                  >
+                    <BellOff className="h-4 w-4 mr-1" />
+                    Disable
+                  </Button>
+                </>
+              ) : (
+                <Button
+                  onClick={handleSubscribe}
+                  disabled={loading || permission === 'denied' || diagnostics?.isIOSWithoutPWA}
+                  size="sm"
+                >
+                  <Bell className="h-4 w-4 mr-1" />
+                  {loading ? "Enabling..." : "Enable Notifications"}
+                </Button>
+              )}
+            </div>
           </div>
-        )}
 
-        <div className="space-y-2">
-          <h4 className="text-sm font-medium">What you'll be notified about:</h4>
-          <ul className="text-sm text-muted-foreground space-y-1">
-            <li>• New orders from customers</li>
-            <li>• Successful payment confirmations</li>
-            <li>• Low stock alerts</li>
-            <li>• Important account updates</li>
-          </ul>
+          {/* Diagnostics Section */}
+          <Separator />
+          
+          <Collapsible open={showDiagnostics} onOpenChange={setShowDiagnostics}>
+            <CollapsibleTrigger asChild>
+              <Button variant="ghost" className="w-full justify-between p-0">
+                <div className="flex items-center gap-2">
+                  <Settings className="h-4 w-4" />
+                  <span>Diagnostics & Troubleshooting</span>
+                </div>
+                <Zap className="h-4 w-4" />
+              </Button>
+            </CollapsibleTrigger>
+            
+            <CollapsibleContent className="space-y-4 pt-4">
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div className="space-y-2">
+                  <h4 className="font-medium">Browser Support</h4>
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span>Service Worker</span>
+                      {diagnostics?.serviceWorkerRegistered ? (
+                        <Check className="h-4 w-4 text-green-500" />
+                      ) : (
+                        <X className="h-4 w-4 text-red-500" />
+                      )}
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>Push API</span>
+                      {diagnostics?.isSupported ? (
+                        <Check className="h-4 w-4 text-green-500" />
+                      ) : (
+                        <X className="h-4 w-4 text-red-500" />
+                      )}
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>Permission</span>
+                      <Badge variant={permission === 'granted' ? 'default' : permission === 'denied' ? 'destructive' : 'secondary'}>
+                        {permission}
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <h4 className="font-medium">Server Status</h4>
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span>VAPID Keys</span>
+                      {diagnostics?.serverHealth?.checks.vapidKeysConfigured ? (
+                        <Check className="h-4 w-4 text-green-500" />
+                      ) : (
+                        <X className="h-4 w-4 text-red-500" />
+                      )}
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>Crypto Valid</span>
+                      {diagnostics?.serverHealth?.checks.vapidCryptoValid ? (
+                        <Check className="h-4 w-4 text-green-500" />
+                      ) : (
+                        <X className="h-4 w-4 text-red-500" />
+                      )}
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>Service Health</span>
+                      <Badge variant={diagnostics?.serverHealth?.status === 'healthy' ? 'default' : 'destructive'}>
+                        {diagnostics?.serverHealth?.status || 'unknown'}
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              {diagnostics?.lastTestResult && (
+                <div>
+                  <h4 className="font-medium text-sm mb-1">Last Test Result</h4>
+                  <p className="text-sm text-muted-foreground bg-muted p-2 rounded">
+                    {diagnostics.lastTestResult}
+                  </p>
+                </div>
+              )}
+              
+              {diagnostics?.serverHealth?.recommendations && diagnostics.serverHealth.recommendations.length > 0 && (
+                <div>
+                  <h4 className="font-medium text-sm mb-1">Recommendations</h4>
+                  <ul className="text-sm text-muted-foreground space-y-1">
+                    {diagnostics.serverHealth.recommendations.map((rec, idx) => (
+                      <li key={idx} className="flex items-start gap-2">
+                        <AlertTriangle className="h-3 w-3 mt-0.5 text-orange-500" />
+                        {rec}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              
+              <div className="flex justify-center">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={checkServerHealth}
+                >
+                  <Heart className="h-4 w-4 mr-1" />
+                  Refresh Health Check
+                </Button>
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
         </div>
-
-        {!isSubscribed && permission === 'default' && (
-          <Button 
-            onClick={() => handleToggle(true)} 
-            disabled={loading}
-            className="w-full"
-          >
-            {loading ? 'Setting up...' : 'Enable Push Notifications'}
-          </Button>
-        )}
       </CardContent>
     </Card>
   );
