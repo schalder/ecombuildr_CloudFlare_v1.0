@@ -63,7 +63,7 @@ export default function StoreSettings() {
           </TabsList>
 
           <TabsContent value="notifications">
-            <EmailNotificationSettings storeId={storeId!} />
+            <EmailNotificationSettings storeId={store.id} />
           </TabsContent>
 
           <TabsContent value="payment">
