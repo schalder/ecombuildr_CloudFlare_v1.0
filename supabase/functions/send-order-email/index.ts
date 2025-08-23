@@ -8,6 +8,10 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+// Force redeployment with comprehensive environment debugging
+console.log('=== SEND ORDER EMAIL FUNCTION STARTING ===')
+console.log('Deployment timestamp:', new Date().toISOString())
+
 interface EmailRequest {
   order_id?: string;
   store_id: string;
@@ -18,6 +22,26 @@ interface EmailRequest {
 }
 
 serve(async (req) => {
+  // Comprehensive environment debugging - log immediately on function start
+  console.log('=== ENVIRONMENT VARIABLES DIAGNOSTIC ===')
+  const allEnvVars = Deno.env.toObject()
+  console.log('Total environment variables available:', Object.keys(allEnvVars).length)
+  
+  // Log all Resend-related variables specifically
+  const resendVars = Object.keys(allEnvVars).filter(k => k.includes('RESEND'))
+  console.log('Resend-related environment variables found:', resendVars)
+  resendVars.forEach(key => {
+    const value = allEnvVars[key]
+    console.log(`${key}: ${value ? `[SET - length: ${value.length}]` : '[NOT SET]'}`)
+  })
+  
+  // Log Supabase vars for context
+  const supabaseVars = ['SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY', 'SUPABASE_ANON_KEY']
+  supabaseVars.forEach(key => {
+    const value = allEnvVars[key]
+    console.log(`${key}: ${value ? `[SET - length: ${value.length}]` : '[NOT SET]'}`)
+  })
+  
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
