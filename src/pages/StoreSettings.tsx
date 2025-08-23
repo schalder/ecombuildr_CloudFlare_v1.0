@@ -6,6 +6,8 @@ import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useUserStore } from "@/hooks/useUserStore";
 import { EmailNotificationSettings } from "@/components/settings/EmailNotificationSettings";
+import ShippingIntegrations from "@/components/settings/ShippingIntegrations";
+import PaymentSettings from "@/components/settings/PaymentSettings";
 import { Settings, Mail, CreditCard, Truck, Globe } from "lucide-react";
 
 export default function StoreSettings() {
@@ -88,31 +90,11 @@ export default function StoreSettings() {
           </TabsContent>
 
           <TabsContent value="payment">
-            <Card>
-              <CardHeader>
-                <CardTitle>Payment Settings</CardTitle>
-                <CardDescription>
-                  Configure payment methods and processing
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">Payment settings coming soon...</p>
-              </CardContent>
-            </Card>
+            <PaymentSettings storeId={store.id} />
           </TabsContent>
 
           <TabsContent value="shipping">
-            <Card>
-              <CardHeader>
-                <CardTitle>Shipping Settings</CardTitle>
-                <CardDescription>
-                  Configure shipping methods and rates
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">Shipping settings coming soon...</p>
-              </CardContent>
-            </Card>
+            <ShippingIntegrations storeId={store.id} />
           </TabsContent>
 
           <TabsContent value="domains">
