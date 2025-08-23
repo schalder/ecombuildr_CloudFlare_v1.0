@@ -28,14 +28,18 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // Initialize Resend
+    // Initialize Resend with updated secrets
     const resendApiKey = Deno.env.get('RESEND_API_KEY')
     const fromEmail = Deno.env.get('RESEND_FROM_EMAIL') || 'noreply@yourdomain.com'
     const fromName = Deno.env.get('RESEND_FROM_NAME') || 'Your Store'
 
-    console.log('Checking Resend configuration...')
+    console.log('Checking Resend configuration... API Key exists:', !!resendApiKey)
+    console.log('From email:', fromEmail)
+    console.log('From name:', fromName)
+    
     if (!resendApiKey) {
       console.error('RESEND_API_KEY environment variable is not set')
+      console.log('Available env vars:', Object.keys(Deno.env.toObject()).filter(k => k.includes('RESEND')))
       throw new Error('RESEND_API_KEY not configured')
     }
 
