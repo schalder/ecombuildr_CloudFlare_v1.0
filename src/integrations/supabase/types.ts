@@ -842,6 +842,9 @@ export type Database = {
       notifications: {
         Row: {
           created_at: string
+          delivered_at: string | null
+          delivery_method: string | null
+          delivery_status: string | null
           id: string
           is_read: boolean
           message: string
@@ -853,6 +856,9 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          delivered_at?: string | null
+          delivery_method?: string | null
+          delivery_status?: string | null
           id?: string
           is_read?: boolean
           message: string
@@ -864,6 +870,9 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          delivered_at?: string | null
+          delivery_method?: string | null
+          delivery_status?: string | null
           id?: string
           is_read?: boolean
           message?: string
