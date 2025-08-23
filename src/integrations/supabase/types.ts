@@ -842,6 +842,9 @@ export type Database = {
       notifications: {
         Row: {
           created_at: string
+          delivered_at: string | null
+          delivery_method: string | null
+          delivery_status: string | null
           id: string
           is_read: boolean
           message: string
@@ -853,6 +856,9 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          delivered_at?: string | null
+          delivery_method?: string | null
+          delivery_status?: string | null
           id?: string
           is_read?: boolean
           message: string
@@ -864,6 +870,9 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          delivered_at?: string | null
+          delivery_method?: string | null
+          delivery_status?: string | null
           id?: string
           is_read?: boolean
           message?: string
@@ -1814,66 +1823,6 @@ export type Database = {
         }
         Relationships: []
       }
-      push_subscriptions: {
-        Row: {
-          auth: string
-          browser: string | null
-          created_at: string
-          device: string | null
-          endpoint: string
-          id: string
-          is_active: boolean
-          last_seen_at: string | null
-          p256dh: string
-          platform: string | null
-          store_id: string | null
-          user_id: string
-        }
-        Insert: {
-          auth: string
-          browser?: string | null
-          created_at?: string
-          device?: string | null
-          endpoint: string
-          id?: string
-          is_active?: boolean
-          last_seen_at?: string | null
-          p256dh: string
-          platform?: string | null
-          store_id?: string | null
-          user_id: string
-        }
-        Update: {
-          auth?: string
-          browser?: string | null
-          created_at?: string
-          device?: string | null
-          endpoint?: string
-          id?: string
-          is_active?: boolean
-          last_seen_at?: string | null
-          p256dh?: string
-          platform?: string | null
-          store_id?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "push_subscriptions_store_id_fkey"
-            columns: ["store_id"]
-            isOneToOne: false
-            referencedRelation: "stores"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "push_subscriptions_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       saas_subscriptions: {
         Row: {
           created_at: string
@@ -2456,6 +2405,122 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      whatsapp_business_accounts: {
+        Row: {
+          access_token: string | null
+          business_account_id: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          is_verified: boolean
+          phone_number: string
+          phone_number_id: string | null
+          store_id: string
+          updated_at: string
+          webhook_verify_token: string | null
+        }
+        Insert: {
+          access_token?: string | null
+          business_account_id?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          is_verified?: boolean
+          phone_number: string
+          phone_number_id?: string | null
+          store_id: string
+          updated_at?: string
+          webhook_verify_token?: string | null
+        }
+        Update: {
+          access_token?: string | null
+          business_account_id?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          is_verified?: boolean
+          phone_number?: string
+          phone_number_id?: string | null
+          store_id?: string
+          updated_at?: string
+          webhook_verify_token?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_business_accounts_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: true
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_message_queue: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          id: string
+          max_retries: number
+          message_text: string
+          notification_id: string
+          recipient_phone: string
+          retry_count: number
+          send_at: string
+          sent_at: string | null
+          status: string
+          store_id: string
+          updated_at: string
+          whatsapp_message_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          max_retries?: number
+          message_text: string
+          notification_id: string
+          recipient_phone: string
+          retry_count?: number
+          send_at?: string
+          sent_at?: string | null
+          status?: string
+          store_id: string
+          updated_at?: string
+          whatsapp_message_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          max_retries?: number
+          message_text?: string
+          notification_id?: string
+          recipient_phone?: string
+          retry_count?: number
+          send_at?: string
+          sent_at?: string | null
+          status?: string
+          store_id?: string
+          updated_at?: string
+          whatsapp_message_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_message_queue_notification_id_fkey"
+            columns: ["notification_id"]
+            isOneToOne: false
+            referencedRelation: "notifications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_message_queue_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
