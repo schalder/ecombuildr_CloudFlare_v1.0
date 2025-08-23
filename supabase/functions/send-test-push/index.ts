@@ -98,16 +98,45 @@ serve(async (req) => {
     if (pushError) {
       console.error('Error sending test push:', pushError);
       return new Response(
-        JSON.stringify({ error: 'Failed to send test notification', details: pushError.message }),
+        JSON.stringify({ 
+          error: 'Failed to send test notification', 
+          details: pushError.message,
+          successful: 0,
+          failed: subscriptions?.length || 0,
+          subscriptions: subscriptions?.map(sub => ({
+            id: sub.id,
+            endpoint: sub.endpoint?.substring(0, 50) + '...',
+            is_active: sub.is_active
+          })) || []
+        }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
+    // Extract detailed results from push response
+    const successful = pushResult?.successful || 0;
+    const failed = pushResult?.failed || 0;
+    const results = pushResult?.results || [];
+
     return new Response(
       JSON.stringify({
-        message: 'Test notification sent successfully',
+        message: successful > 0 ? 'Test notification sent successfully' : 'Test notification failed to deliver',
         store: store.name,
-        result: pushResult,
+        successful,
+        failed,
+        total: successful + failed,
+        subscriptions: subscriptions?.map(sub => ({
+          id: sub.id,
+          endpoint: sub.endpoint?.substring(0, 50) + '...',
+          is_active: sub.is_active,
+          created_at: sub.created_at
+        })) || [],
+        results: results.map((result: any) => ({
+          success: result.success,
+          endpointHost: result.endpointHost,
+          status: result.status,
+          error: result.error
+        }))
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

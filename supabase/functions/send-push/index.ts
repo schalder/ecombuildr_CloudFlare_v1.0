@@ -1,7 +1,7 @@
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-import { encode as base64Encode } from "https://deno.land/std@0.190.0/encoding/base64.ts";
+import webpush from "https://esm.sh/web-push@3.6.6";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -17,194 +17,7 @@ interface PushPayload {
   data?: any;
 }
 
-// Helper function to convert VAPID key from base64url to Uint8Array
-function base64UrlToUint8Array(base64UrlString: string): Uint8Array {
-  const padding = '='.repeat((4 - base64UrlString.length % 4) % 4);
-  const base64 = (base64UrlString + padding).replace(/-/g, '+').replace(/_/g, '/');
-  const rawData = atob(base64);
-  return new Uint8Array([...rawData].map(char => char.charCodeAt(0)));
-}
-
-// Convert Uint8Array to base64url
-function uint8ArrayToBase64Url(array: Uint8Array): string {
-  const base64 = base64Encode(array);
-  return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-}
-
-// Generate ECDH key pair for encryption
-async function generateECDHKeyPair(): Promise<CryptoKeyPair> {
-  return await crypto.subtle.generateKey(
-    {
-      name: 'ECDH',
-      namedCurve: 'P-256',
-    },
-    true,
-    ['deriveKey']
-  );
-}
-
-// HKDF key derivation
-async function hkdf(
-  ikm: Uint8Array,
-  salt: Uint8Array,
-  info: Uint8Array,
-  length: number
-): Promise<Uint8Array> {
-  const key = await crypto.subtle.importKey(
-    'raw',
-    ikm,
-    'HKDF',
-    false,
-    ['deriveKey']
-  );
-
-  const derivedKey = await crypto.subtle.deriveKey(
-    {
-      name: 'HKDF',
-      hash: 'SHA-256',
-      salt,
-      info,
-    },
-    key,
-    { name: 'AES-GCM', length: length * 8 },
-    true,
-    ['encrypt']
-  );
-
-  return new Uint8Array(await crypto.subtle.exportKey('raw', derivedKey));
-}
-
-// Encrypt payload using Web Push protocol
-async function encryptPayload(
-  payload: string,
-  userPublicKey: string,
-  userAuth: string
-): Promise<{ ciphertext: Uint8Array; salt: Uint8Array; publicKey: Uint8Array }> {
-  const userPublicKeyBytes = base64UrlToUint8Array(userPublicKey);
-  const userAuthBytes = base64UrlToUint8Array(userAuth);
-
-  // Generate server key pair
-  const serverKeyPair = await generateECDHKeyPair();
-  const serverPublicKeyBytes = new Uint8Array(
-    await crypto.subtle.exportKey('raw', serverKeyPair.publicKey)
-  );
-
-  // Import user's public key
-  const importedUserPublicKey = await crypto.subtle.importKey(
-    'raw',
-    userPublicKeyBytes,
-    {
-      name: 'ECDH',
-      namedCurve: 'P-256',
-    },
-    false,
-    []
-  );
-
-  // Derive shared secret
-  const sharedSecret = await crypto.subtle.deriveKey(
-    {
-      name: 'ECDH',
-      public: importedUserPublicKey,
-    },
-    serverKeyPair.privateKey,
-    {
-      name: 'HKDF',
-      hash: 'SHA-256',
-    },
-    false,
-    ['deriveKey']
-  );
-
-  const sharedSecretBytes = new Uint8Array(
-    await crypto.subtle.exportKey('raw', sharedSecret)
-  );
-
-  // Generate salt
-  const salt = crypto.getRandomValues(new Uint8Array(16));
-
-  // Derive encryption key
-  const authInfo = new TextEncoder().encode('WebPush: info\x00');
-  const keyInfo = new Uint8Array([
-    ...authInfo,
-    ...userPublicKeyBytes,
-    ...serverPublicKeyBytes,
-  ]);
-
-  const prk = await hkdf(sharedSecretBytes, userAuthBytes, new Uint8Array(0), 32);
-  const ikm = await hkdf(prk, salt, keyInfo, 32);
-
-  // Encrypt payload
-  const iv = crypto.getRandomValues(new Uint8Array(12));
-  const key = await crypto.subtle.importKey('raw', ikm, 'AES-GCM', false, ['encrypt']);
-  
-  const payloadBytes = new TextEncoder().encode(payload);
-  const encrypted = await crypto.subtle.encrypt(
-    { name: 'AES-GCM', iv },
-    key,
-    payloadBytes
-  );
-
-  return {
-    ciphertext: new Uint8Array([...iv, ...new Uint8Array(encrypted)]),
-    salt,
-    publicKey: serverPublicKeyBytes,
-  };
-}
-
-// Create VAPID JWT
-async function createVapidJWT(
-  audience: string,
-  vapidPublicKey: string,
-  vapidPrivateKey: string
-): Promise<string> {
-  const header = {
-    typ: 'JWT',
-    alg: 'ES256',
-  };
-
-  const payload = {
-    aud: audience,
-    exp: Math.floor(Date.now() / 1000) + 12 * 60 * 60, // 12 hours
-    sub: `mailto:support@example.com`,
-  };
-
-  const encodedHeader = uint8ArrayToBase64Url(
-    new TextEncoder().encode(JSON.stringify(header))
-  );
-  const encodedPayload = uint8ArrayToBase64Url(
-    new TextEncoder().encode(JSON.stringify(payload))
-  );
-
-  const unsignedToken = `${encodedHeader}.${encodedPayload}`;
-  
-  // Import private key for signing
-  const privateKeyBytes = base64UrlToUint8Array(vapidPrivateKey);
-  const key = await crypto.subtle.importKey(
-    'raw',
-    privateKeyBytes,
-    {
-      name: 'ECDSA',
-      namedCurve: 'P-256',
-    },
-    false,
-    ['sign']
-  );
-
-  const signature = await crypto.subtle.sign(
-    {
-      name: 'ECDSA',
-      hash: 'SHA-256',
-    },
-    key,
-    new TextEncoder().encode(unsignedToken)
-  );
-
-  const encodedSignature = uint8ArrayToBase64Url(new Uint8Array(signature));
-  return `${unsignedToken}.${encodedSignature}`;
-}
-
-// Web Push helper function with proper encryption
+// Web Push helper function using the web-push library
 async function sendWebPushNotification(
   endpoint: string,
   p256dh: string,
@@ -212,7 +25,7 @@ async function sendWebPushNotification(
   payload: PushPayload,
   vapidPublicKey: string,
   vapidPrivateKey: string
-): Promise<Response> {
+): Promise<{ success: boolean; status?: number; statusText?: string; error?: string }> {
   try {
     // Create the notification payload
     const notificationPayload = JSON.stringify({
@@ -224,39 +37,39 @@ async function sendWebPushNotification(
       data: payload.data,
     });
 
-    // Encrypt the payload
-    const { ciphertext, salt, publicKey } = await encryptPayload(
-      notificationPayload,
-      p256dh,
-      auth
+    // Configure web-push with VAPID details
+    webpush.setVapidDetails(
+      'mailto:support@yourdomain.com',
+      vapidPublicKey,
+      vapidPrivateKey
     );
 
-    // Extract audience from endpoint
-    const url = new URL(endpoint);
-    const audience = `${url.protocol}//${url.host}`;
-
-    // Create VAPID JWT
-    const jwt = await createVapidJWT(audience, vapidPublicKey, vapidPrivateKey);
+    // Create subscription object
+    const pushSubscription = {
+      endpoint,
+      keys: {
+        p256dh,
+        auth
+      }
+    };
 
     // Send the push notification
-    const response = await fetch(endpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/octet-stream',
-        'Content-Encoding': 'aes128gcm',
-        'Content-Length': ciphertext.length.toString(),
-        'TTL': '86400',
-        'Crypto-Key': `dh=${uint8ArrayToBase64Url(publicKey)};p256ecdsa=${vapidPublicKey}`,
-        'Encryption': `salt=${uint8ArrayToBase64Url(salt)}`,
-        'Authorization': `WebPush ${jwt}`,
-      },
-      body: ciphertext,
-    });
-
-    return response;
-  } catch (error) {
+    const response = await webpush.sendNotification(pushSubscription, notificationPayload);
+    
+    return { 
+      success: true, 
+      status: response.statusCode,
+      statusText: response.headers?.['status'] || 'OK'
+    };
+  } catch (error: any) {
     console.error('Error in sendWebPushNotification:', error);
-    throw error;
+    
+    return {
+      success: false,
+      status: error.statusCode || 500,
+      statusText: error.body || error.message || 'Unknown error',
+      error: error.body || error.message || 'Failed to send notification'
+    };
   }
 }
 
@@ -328,13 +141,13 @@ serve(async (req) => {
 
     console.log(`Sending push notifications to ${subscriptions.length} subscriptions`);
 
-    // Send push notifications to all subscriptions using Web Push
+    // Send push notifications to all subscriptions
     const results = await Promise.allSettled(
       subscriptions.map(async (subscription) => {
         try {
           console.log(`Attempting to send push to subscription ${subscription.id}`);
           
-          const response = await sendWebPushNotification(
+          const result = await sendWebPushNotification(
             subscription.endpoint,
             subscription.p256dh,
             subscription.auth,
@@ -343,30 +156,54 @@ serve(async (req) => {
             vapidPrivateKey
           );
 
-          if (!response.ok) {
-            const errorText = await response.text();
+          if (!result.success) {
+            const url = new URL(subscription.endpoint);
+            const endpointHost = url.hostname;
+            
             console.error(`Push failed for subscription ${subscription.id}:`, {
-              status: response.status,
-              statusText: response.statusText,
-              error: errorText
+              status: result.status,
+              statusText: result.statusText,
+              error: result.error,
+              endpointHost
             });
             
-            // Only mark as inactive if it's a client error (4xx)
-            if (response.status >= 400 && response.status < 500) {
+            // Only mark as inactive on 404/410 (subscription expired/invalid)
+            // Don't deactivate on auth errors (401/403) which might be temporary
+            if (result.status === 404 || result.status === 410) {
               await supabase
                 .from('push_subscriptions')
                 .update({ is_active: false })
                 .eq('id', subscription.id);
             }
             
-            return { success: false, subscriptionId: subscription.id, error: `${response.status}: ${errorText}` };
+            return { 
+              success: false, 
+              subscriptionId: subscription.id, 
+              endpointHost,
+              status: result.status,
+              statusText: result.statusText,
+              error: result.error 
+            };
           }
 
           console.log(`Push sent successfully to subscription ${subscription.id}`);
-          return { success: true, subscriptionId: subscription.id };
+          const url = new URL(subscription.endpoint);
+          return { 
+            success: true, 
+            subscriptionId: subscription.id,
+            endpointHost: url.hostname,
+            status: result.status,
+            statusText: result.statusText
+          };
         } catch (error) {
           console.error(`Error sending push to ${subscription.id}:`, error);
-          return { success: false, subscriptionId: subscription.id, error: error.message };
+          const url = new URL(subscription.endpoint);
+          return { 
+            success: false, 
+            subscriptionId: subscription.id, 
+            endpointHost: url.hostname,
+            error: error.message 
+          };
         }
       })
     );

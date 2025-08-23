@@ -13,19 +13,13 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('push', (event) => {
   console.log('Push notification received', event);
 
-  if (!event.data) {
-    return;
-  }
-
-  const data = event.data.json();
-  const { title, body, icon, badge, tag, data: customData } = data;
-
-  const options = {
-    body,
-    icon: icon || '/favicon.ico',
-    badge: badge || '/favicon.ico',
-    tag: tag || 'default',
-    data: customData,
+  let title = 'Notification';
+  let options = {
+    body: 'You have a new notification',
+    icon: '/favicon.ico',
+    badge: '/favicon.ico',
+    tag: 'default',
+    data: {},
     actions: [
       {
         action: 'view',
@@ -40,6 +34,29 @@ self.addEventListener('push', (event) => {
     ],
     requireInteraction: true,
   };
+
+  // Handle case where push has data payload
+  if (event.data) {
+    try {
+      const data = event.data.json();
+      title = data.title || title;
+      options = {
+        ...options,
+        body: data.body || options.body,
+        icon: data.icon || options.icon,
+        badge: data.badge || options.badge,
+        tag: data.tag || options.tag,
+        data: data.data || options.data,
+      };
+    } catch (error) {
+      console.error('Error parsing push data:', error);
+      // Use default values if parsing fails
+    }
+  } else {
+    // Handle empty push (some services send empty pings to test connectivity)
+    title = 'Test Notification';
+    options.body = 'Push notification channel is working!';
+  }
 
   event.waitUntil(
     self.registration.showNotification(title, options)

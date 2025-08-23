@@ -133,6 +133,13 @@ export function usePushNotifications() {
           ignoreDuplicates: false
         });
 
+      // Also ensure any inactive subscriptions with same endpoint are reactivated
+      await supabase
+        .from('push_subscriptions')
+        .update({ is_active: true, last_seen_at: new Date().toISOString() })
+        .eq('user_id', user.id)
+        .eq('endpoint', subscriptionObject.endpoint!);
+
       if (saveError) {
         throw saveError;
       }
@@ -189,13 +196,28 @@ export function usePushNotifications() {
     
     setLoading(true);
     try {
-      const { error } = await supabase.functions.invoke('send-test-push');
+      const { data, error } = await supabase.functions.invoke('send-test-push');
       
       if (error) {
         console.error('Error sending test notification:', error);
         toast.error('Failed to send test notification');
+        return;
+      }
+
+      // Check if notifications were actually delivered
+      if (data?.successful > 0) {
+        toast.success(`Test notification sent successfully! Delivered to ${data.successful} device(s).`);
       } else {
-        toast.success('Test notification sent! Check your device.');
+        const firstError = data?.results?.[0]?.error || 'Unknown delivery error';
+        console.error('Test notification delivery failed:', data);
+        
+        toast.error(`Test notification failed to deliver: ${firstError}`);
+        
+        // If delivery failed, might need to re-subscribe
+        if (data?.results?.[0]?.status === 404 || data?.results?.[0]?.status === 410) {
+          toast.error('Push subscription expired. Please re-enable notifications.');
+          setSubscription(null);
+        }
       }
     } catch (error) {
       console.error('Error sending test notification:', error);
