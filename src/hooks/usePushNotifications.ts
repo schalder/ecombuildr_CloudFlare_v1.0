@@ -129,7 +129,7 @@ export function usePushNotifications() {
           is_active: true,
           last_seen_at: new Date().toISOString(),
         }, {
-          onConflict: 'endpoint',
+          onConflict: 'user_id,endpoint',
           ignoreDuplicates: false
         });
 
