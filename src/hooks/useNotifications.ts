@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -112,6 +113,8 @@ export function useNotifications() {
   useEffect(() => {
     if (!user) return;
 
+    let channel: any = null;
+
     const setupSubscription = async () => {
       const { data: store } = await supabase
         .from('stores')
@@ -121,7 +124,9 @@ export function useNotifications() {
       
       if (!store) return;
 
-      const channel = supabase
+      console.log('Setting up notifications real-time subscription for store:', store.id);
+
+      channel = supabase
         .channel('notifications-changes')
         .on(
           'postgres_changes',
@@ -132,6 +137,7 @@ export function useNotifications() {
             filter: `store_id=eq.${store.id}`,
           },
           (payload) => {
+            console.log('New notification received:', payload);
             const newNotification = payload.new as Notification;
             setNotifications(prev => [newNotification, ...prev.slice(0, 19)]);
             if (!newNotification.is_read) {
@@ -139,14 +145,43 @@ export function useNotifications() {
             }
           }
         )
-        .subscribe();
-
-      return () => {
-        supabase.removeChannel(channel);
-      };
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'notifications',
+            filter: `store_id=eq.${store.id}`,
+          },
+          (payload) => {
+            console.log('Notification updated:', payload);
+            const updatedNotification = payload.new as Notification;
+            setNotifications(prev => 
+              prev.map(n => 
+                n.id === updatedNotification.id ? updatedNotification : n
+              )
+            );
+            // Recalculate unread count
+            setNotifications(prev => {
+              const newUnreadCount = prev.filter(n => !n.is_read).length;
+              setUnreadCount(newUnreadCount);
+              return prev;
+            });
+          }
+        )
+        .subscribe((status) => {
+          console.log('Notifications subscription status:', status);
+        });
     };
 
     setupSubscription();
+
+    return () => {
+      if (channel) {
+        console.log('Cleaning up notifications subscription');
+        supabase.removeChannel(channel);
+      }
+    };
   }, [user]);
 
   useEffect(() => {
