@@ -65,7 +65,7 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.send-push]
-verify_jwt = false
+verify_jwt = true
 
 [functions.send-test-push]
 verify_jwt = true
