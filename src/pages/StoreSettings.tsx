@@ -26,17 +26,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { PushNotificationSettings } from '@/components/settings/PushNotificationSettings';
+import { PaymentGatewaySettings } from '@/components/settings/PaymentGatewaySettings';
+import ShippingIntegrations from '@/components/settings/ShippingIntegrations';
 
 const formSchema = z.object({
   name: z.string().min(2, {
     message: "Store name must be at least 2 characters.",
   }),
   description: z.string().optional(),
-  domain: z.string().optional(),
-  logo_url: z.string().optional(),
-  favicon_url: z.string().optional(),
-  primary_color: z.string().optional(),
-  secondary_color: z.string().optional(),
   is_active: z.boolean().default(true).optional(),
 });
 
@@ -49,11 +46,6 @@ export default function StoreSettings() {
     defaultValues: {
       name: store?.name || "",
       description: store?.description || "",
-      domain: store?.domain || "",
-      logo_url: store?.logo_url || "",
-      favicon_url: store?.favicon_url || "",
-      primary_color: store?.primary_color || "",
-      secondary_color: store?.secondary_color || "",
       is_active: store?.is_active || true,
     },
   });
@@ -62,11 +54,6 @@ export default function StoreSettings() {
     form.reset({
       name: store?.name || "",
       description: store?.description || "",
-      domain: store?.domain || "",
-      logo_url: store?.logo_url || "",
-      favicon_url: store?.favicon_url || "",
-      primary_color: store?.primary_color || "",
-      secondary_color: store?.secondary_color || "",
       is_active: store?.is_active || true,
     });
   }, [store]);
@@ -152,71 +139,6 @@ export default function StoreSettings() {
                 />
                 <FormField
                   control={form.control}
-                  name="domain"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Domain</FormLabel>
-                      <FormControl>
-                        <Input placeholder="mystore.com" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="logo_url"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Logo URL</FormLabel>
-                      <FormControl>
-                        <Input placeholder="https://example.com/logo.png" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="favicon_url"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Favicon URL</FormLabel>
-                      <FormControl>
-                        <Input placeholder="https://example.com/favicon.ico" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="primary_color"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Primary Color</FormLabel>
-                      <FormControl>
-                        <Input placeholder="#3b82f6" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="secondary_color"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Secondary Color</FormLabel>
-                      <FormControl>
-                        <Input placeholder="#ef4444" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
                   name="is_active"
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
@@ -243,12 +165,12 @@ export default function StoreSettings() {
             <PushNotificationSettings />
           </TabsContent>
 
-          <TabsContent value="payment">
-            <div>Payment settings</div>
+          <TabsContent value="payment" className="space-y-4">
+            {store && <PaymentGatewaySettings storeId={store.id} />}
           </TabsContent>
 
-          <TabsContent value="shipping">
-            <div>Shipping settings</div>
+          <TabsContent value="shipping" className="space-y-4">
+            {store && <ShippingIntegrations storeId={store.id} />}
           </TabsContent>
 
           <TabsContent value="integrations">
