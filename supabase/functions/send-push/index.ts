@@ -180,10 +180,10 @@ serve(async (req) => {
       global: { headers: { Authorization: authHeader } }
     });
 
-    const { data: { user }, error: userError } = await tempSupabase.auth.getUser();
+    const { data: { user }, error: userError } = await tempSupabase.auth.getUser(token);
     if (userError || !user) {
       console.error('❌ User authentication failed:', userError);
-      throw new Error('Unauthorized');
+      throw new Error(`Unauthorized: ${userError?.message || 'Invalid token'}`);
     }
 
     const { storeId, payload } = await req.json();

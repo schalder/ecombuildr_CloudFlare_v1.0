@@ -32,10 +32,10 @@ serve(async (req) => {
       global: { headers: { Authorization: authHeader } }
     });
 
-    const { data: { user }, error: userError } = await userSupabase.auth.getUser();
+    const { data: { user }, error: userError } = await userSupabase.auth.getUser(token);
     if (userError || !user) {
       console.error('❌ User authentication failed:', userError);
-      throw new Error('Unauthorized');
+      throw new Error(`Unauthorized: ${userError?.message || 'Invalid token'}`);
     }
 
     console.log(`✅ User authenticated: ${user.email}`);
