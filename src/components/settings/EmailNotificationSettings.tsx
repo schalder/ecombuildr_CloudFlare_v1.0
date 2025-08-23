@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useEmailNotifications } from '@/hooks/useEmailNotifications';
 import { useToast } from '@/hooks/use-toast';
-import { Mail, Bell, DollarSign, AlertTriangle, X } from 'lucide-react';
+import { Mail, Bell, AlertTriangle, X } from 'lucide-react';
 
 interface EmailNotificationSettingsProps {
   storeId: string;
@@ -81,12 +81,6 @@ export function EmailNotificationSettings({ storeId }: EmailNotificationSettings
       title: 'New Orders',
       description: 'Get notified when a new order is placed on your website',
       icon: Mail,
-    },
-    {
-      key: 'payment_received' as const,
-      title: 'Payment Received',
-      description: 'Get notified when payment is confirmed for an order',
-      icon: DollarSign,
     },
     {
       key: 'low_stock' as const,

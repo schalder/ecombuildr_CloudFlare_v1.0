@@ -53,7 +53,7 @@ Deno.serve(async (req: Request) => {
     {
       const { data: s1, error: e1 } = await supabase
         .from('courier_shipments')
-        .select('id, store_id, order_id')
+        .select('id, store_id, order_id, website_id')
         .eq('provider', 'steadfast')
         .eq('consignment_id', consignment_id)
         .order('created_at', { ascending: false })
@@ -65,7 +65,7 @@ Deno.serve(async (req: Request) => {
     if (!shipment && invoice) {
       const { data: s2, error: e2 } = await supabase
         .from('courier_shipments')
-        .select('id, store_id, order_id')
+        .select('id, store_id, order_id, website_id')
         .eq('provider', 'steadfast')
         .eq('invoice', invoice)
         .order('created_at', { ascending: false })
@@ -83,6 +83,7 @@ Deno.serve(async (req: Request) => {
 
     const store_id = shipment.store_id;
     const order_id = shipment.order_id;
+    const website_id = shipment.website_id;
 
     // Fetch expected token from store settings (webhook_token) or fallback to api_key
     const { data: account, error: accountErr } = await supabase
@@ -154,7 +155,69 @@ Deno.serve(async (req: Request) => {
           .update({ status: next })
           .eq('id', order_id)
           .eq('store_id', store_id);
-        if (updOrderErr) console.error('Failed to update order from webhook:', updOrderErr);
+        if (updOrderErr) {
+          console.error('Failed to update order from webhook:', updOrderErr);
+        } else {
+          console.log(`Order ${order_id} status updated to: ${next}`);
+          
+          // Send cancellation email if order is cancelled
+          if (next === 'cancelled') {
+            try {
+              await supabase.functions.invoke('send-order-email', {
+                body: {
+                  order_id: order_id,
+                  store_id: store_id,
+                  website_id: website_id,
+                  event_type: 'order_cancelled'
+                }
+              });
+              console.log('Order cancellation email sent successfully');
+            } catch (emailError) {
+              console.error('Failed to send cancellation email:', emailError);
+            }
+          }
+
+          // Check for low stock after order delivery
+          if (next === 'delivered') {
+            try {
+              // Fetch order items with product details to check for low stock
+              const { data: orderItems, error: itemsError } = await supabase
+                .from('order_items')
+                .select(`
+                  product_id,
+                  products!inner(
+                    id,
+                    name,
+                    inventory_quantity,
+                    track_inventory,
+                    store_id
+                  )
+                `)
+                .eq('order_id', order_id);
+
+              if (!itemsError && orderItems) {
+                for (const item of orderItems) {
+                  const product = item.products;
+                  if (product.track_inventory && product.inventory_quantity <= 5) {
+                    try {
+                      await supabase.functions.invoke('send-low-stock-email', {
+                        body: {
+                          store_id: product.store_id,
+                          product_id: product.id
+                        }
+                      });
+                      console.log(`Low stock email sent for product: ${product.name}`);
+                    } catch (lowStockError) {
+                      console.error('Failed to send low stock email:', lowStockError);
+                    }
+                  }
+                }
+              }
+            } catch (stockCheckError) {
+              console.error('Error checking stock levels:', stockCheckError);
+            }
+          }
+        }
       }
     }
 

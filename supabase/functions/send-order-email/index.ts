@@ -269,10 +269,6 @@ serve(async (req) => {
         emailSubject = `New Order #${order.order_number} - ${websiteName}`
         eventTitle = 'New Order Received!'
         break
-      case 'payment_received':
-        emailSubject = `Payment Received for Order #${order.order_number} - ${websiteName}`
-        eventTitle = 'Payment Received!'
-        break
       case 'order_cancelled':
         emailSubject = `Order Cancelled #${order.order_number} - ${websiteName}`
         eventTitle = 'Order Cancelled'

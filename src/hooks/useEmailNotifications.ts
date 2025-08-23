@@ -6,7 +6,6 @@ import { useAuth } from '@/hooks/useAuth';
 interface EmailNotificationSettings {
   new_orders: boolean;
   low_stock: boolean;
-  payment_received: boolean;
   order_cancelled: boolean;
 }
 
@@ -15,7 +14,6 @@ export function useEmailNotifications(storeId?: string) {
   const [settings, setSettings] = useState<EmailNotificationSettings>({
     new_orders: true,
     low_stock: true,
-    payment_received: true,
     order_cancelled: true,
   });
   const [loading, setLoading] = useState(false);

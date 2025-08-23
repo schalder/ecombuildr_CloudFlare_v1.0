@@ -67,23 +67,6 @@ serve(async (req) => {
       throw new Error(`Failed to update order: ${error.message}`);
     }
 
-    // Send payment received email notification if payment was successful
-    if (paymentStatus === 'success') {
-      try {
-        await supabase.functions.invoke('send-order-email', {
-          body: {
-            order_id: orderId,
-            store_id: order.store_id,
-            website_id: order.website_id,
-            event_type: 'payment_received'
-          }
-        });
-        console.log('Payment received email notification sent successfully');
-      } catch (emailError) {
-        console.error('Failed to send payment received email notification:', emailError);
-        // Don't fail the payment verification if email fails
-      }
-    }
 
     return new Response(
       JSON.stringify({

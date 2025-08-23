@@ -66,3 +66,6 @@ verify_jwt = false
 
 [functions.send-order-email]
 verify_jwt = false
+
+[functions.send-low-stock-email]
+verify_jwt = false

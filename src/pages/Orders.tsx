@@ -242,6 +242,9 @@ export default function Orders() {
 
   const updateOrderStatus = async (orderId: string, newStatus: 'pending' | 'processing' | 'delivered' | 'confirmed' | 'shipped' | 'cancelled') => {
     try {
+      const order = orders.find(o => o.id === orderId);
+      if (!order) throw new Error('Order not found');
+
       const { error } = await supabase
         .from('orders')
         .update({ status: newStatus })
@@ -249,11 +252,69 @@ export default function Orders() {
 
       if (error) throw error;
 
-      setOrders(orders.map(order => 
-        order.id === orderId 
-          ? { ...order, status: newStatus }
-          : order
+      setOrders(orders.map(o => 
+        o.id === orderId 
+          ? { ...o, status: newStatus }
+          : o
       ));
+
+      // Send cancellation email if order is cancelled
+      if (newStatus === 'cancelled') {
+        try {
+          await supabase.functions.invoke('send-order-email', {
+            body: {
+              order_id: orderId,
+              store_id: order.store_id,
+              website_id: order.website_id,
+              event_type: 'order_cancelled'
+            }
+          });
+          console.log('Order cancellation email sent successfully');
+        } catch (emailError) {
+          console.error('Failed to send cancellation email:', emailError);
+        }
+      }
+
+      // Check for low stock after order delivery
+      if (newStatus === 'delivered') {
+        try {
+          // Fetch order items with product details to check for low stock
+          const { data: orderItems, error: itemsError } = await supabase
+            .from('order_items')
+            .select(`
+              product_id,
+              products!inner(
+                id,
+                name,
+                inventory_quantity,
+                track_inventory,
+                store_id
+              )
+            `)
+            .eq('order_id', orderId);
+
+          if (!itemsError && orderItems) {
+            for (const item of orderItems) {
+              const product = item.products;
+              if (product.track_inventory && product.inventory_quantity <= 5) {
+                try {
+                  await supabase.functions.invoke('send-low-stock-email', {
+                    body: {
+                      store_id: product.store_id,
+                      product_id: product.id
+                    }
+                  });
+                  console.log(`Low stock email sent for product: ${product.name}`);
+                } catch (lowStockError) {
+                  console.error('Failed to send low stock email:', lowStockError);
+                }
+              }
+            }
+          }
+        } catch (stockCheckError) {
+          console.error('Error checking stock levels:', stockCheckError);
+        }
+      }
 
       toast({
         title: "Success",
