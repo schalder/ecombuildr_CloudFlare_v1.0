@@ -52,11 +52,13 @@ export function EmailNotificationSettings({ storeId }: EmailNotificationSettings
     setSendingTest(true);
     setLastError(null);
     try {
-      await sendTestEmailFn(testEmail, useDebugMode);
+      const result = await sendTestEmailFn(testEmail, useDebugMode);
       
       toast({
         title: "Test Email Sent",
-        description: `Test notification sent to ${testEmail}`,
+        description: result?.data?.message_id 
+          ? `Test notification sent to ${testEmail} (ID: ${result.data.message_id})`
+          : `Test notification sent to ${testEmail}`,
       });
       setTestEmail(''); // Clear the input after successful send
     } catch (error: any) {

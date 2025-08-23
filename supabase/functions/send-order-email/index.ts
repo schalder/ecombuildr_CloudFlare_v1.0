@@ -69,7 +69,9 @@ serve(async (req) => {
 
     // Check email notification settings
     const emailSettings = store.settings?.email_notifications || {}
-    const isEnabled = emailSettings[event_type] !== false // Default to true if not explicitly disabled
+    // Map event_type to settings keys (new_order -> new_orders)
+    const settingsKey = event_type === 'new_order' ? 'new_orders' : event_type
+    const isEnabled = emailSettings[settingsKey] !== false // Default to true if not explicitly disabled
 
     if (!isEnabled && event_type !== 'test') {
       console.log(`Email notifications disabled for ${event_type}`)
@@ -173,16 +175,28 @@ serve(async (req) => {
           html: emailHtml
         })
 
-        console.log('Test email sent successfully:', emailResponse)
+        console.log('Resend response:', emailResponse)
+        
+        // Check if Resend returned an error or data.id
+        if (emailResponse.error) {
+          throw new Error(`Resend error: ${emailResponse.error.message}`)
+        }
+        
+        if (!emailResponse.data?.id) {
+          throw new Error('No email ID returned from Resend - send may have failed')
+        }
+        
+        console.log('Test email sent successfully with ID:', emailResponse.data.id)
         
         return new Response(
           JSON.stringify({ 
             success: true, 
             message: 'Test email sent successfully',
+            message_id: emailResponse.data.id,
             recipient: testRecipient,
             from: `${testFromName} <${debugFromEmail}>`,
             debug_mode: use_debug,
-            data: emailResponse
+            data: emailResponse.data
           }),
           { 
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -298,26 +312,34 @@ serve(async (req) => {
     `
 
     // Send email using Resend
-    const { error: emailError } = await resend.emails.send({
+    const emailResponse = await resend.emails.send({
       from: `${fromName} <${fromEmail}>`,
       to: [ownerEmail],
       subject: emailSubject,
       html: emailHtml
     })
 
-    if (emailError) {
-      throw new Error(`Failed to send email: ${emailError.message}`)
+    console.log('Resend response for order email:', emailResponse)
+
+    if (emailResponse.error) {
+      throw new Error(`Resend error: ${emailResponse.error.message}`)
+    }
+    
+    if (!emailResponse.data?.id) {
+      throw new Error('No email ID returned from Resend - send may have failed')
     }
 
     // Log the email notification
-    console.log(`${event_type} email notification sent to ${ownerEmail} for order ${order.order_number}`)
+    console.log(`${event_type} email notification sent to ${ownerEmail} for order ${order.order_number}, message ID: ${emailResponse.data.id}`)
 
     return new Response(
       JSON.stringify({ 
         success: true, 
         message: `${event_type} email notification sent successfully`,
+        message_id: emailResponse.data.id,
         order_number: order.order_number,
-        event_type
+        event_type,
+        recipient: ownerEmail
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
