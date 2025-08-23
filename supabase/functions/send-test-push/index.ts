@@ -1,12 +1,13 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.52.1";
+import webpush from "https://esm.sh/web-push@3.6.7";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Web Push implementation for Deno
+// Real Web Push notification sending
 async function sendWebPushNotification(
   endpoint: string,
   p256dh: string,
@@ -16,20 +17,52 @@ async function sendWebPushNotification(
   vapidPrivateKey: string
 ) {
   try {
-    // For now, just simulate sending by making a basic POST to the endpoint
-    // This is a simplified version - real web push requires ECDH encryption
-    const response = await fetch(endpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/octet-stream',
-        'TTL': '2419200' // 4 weeks
+    // Set VAPID details
+    webpush.setVapidDetails(
+      'mailto:support@yourdomain.com',
+      vapidPublicKey,
+      vapidPrivateKey
+    );
+
+    // Prepare subscription object for web-push
+    const subscription = {
+      endpoint: endpoint,
+      keys: {
+        p256dh: p256dh,
+        auth: auth
       }
-    });
+    };
+
+    console.log(`📤 Sending real push notification to: ${endpoint.substring(0, 50)}...`);
     
-    return { success: response.ok, status: response.status };
+    // Send the notification
+    const result = await webpush.sendNotification(subscription, payload);
+    
+    console.log(`✅ Push notification sent successfully`);
+    return { 
+      success: true, 
+      status: result.statusCode || 200,
+      headers: result.headers 
+    };
+    
   } catch (error) {
-    console.error('Push send error:', error);
-    return { success: false, error: error.message };
+    console.error('❌ Push send error:', error);
+    
+    // Handle specific web push errors
+    if (error.statusCode === 410 || error.statusCode === 404) {
+      return { 
+        success: false, 
+        error: 'Subscription expired or invalid',
+        shouldDeactivate: true,
+        statusCode: error.statusCode
+      };
+    }
+    
+    return { 
+      success: false, 
+      error: error.message || 'Unknown push error',
+      statusCode: error.statusCode || 500
+    };
   }
 }
 
@@ -151,16 +184,28 @@ serve(async (req) => {
           results.push({ 
             subscriptionId: subscription.id,
             status: 'success',
-            device: subscription.device || 'unknown'
+            device: subscription.device || 'unknown',
+            statusCode: result.status
           });
         } else {
           errorCount++;
           console.log(`❌ Failed to send to subscription ${subscription.id}: ${result.error}`);
+          
+          // Deactivate expired subscriptions
+          if (result.shouldDeactivate) {
+            console.log(`🗑️ Deactivating expired subscription ${subscription.id}`);
+            await supabase
+              .from('push_subscriptions')
+              .update({ is_active: false })
+              .eq('id', subscription.id);
+          }
+          
           results.push({ 
             subscriptionId: subscription.id,
             status: 'failed',
             error: result.error,
-            device: subscription.device || 'unknown'
+            device: subscription.device || 'unknown',
+            statusCode: result.statusCode
           });
         }
 

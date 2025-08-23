@@ -244,10 +244,38 @@ export function usePushNotifications() {
         throw new Error(`Invalid VAPID key format: ${conversionError.message}`);
       }
       
-      const pushSubscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey
-      });
+      let pushSubscription;
+      try {
+        pushSubscription = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey
+        });
+      } catch (error: any) {
+        // Mobile browsers might need CryptoKey instead of Uint8Array
+        if (error.name === 'InvalidAccessError') {
+          console.log('🔄 Retrying subscription with CryptoKey for mobile compatibility');
+          try {
+            // Import the key as a CryptoKey for mobile browsers
+            const cryptoKey = await crypto.subtle.importKey(
+              'raw',
+              applicationServerKey,
+              { name: 'ECDSA', namedCurve: 'P-256' },
+              false,
+              ['verify']
+            );
+            
+            pushSubscription = await registration.pushManager.subscribe({
+              userVisibleOnly: true,
+              applicationServerKey: applicationServerKey, // Use original Uint8Array
+            });
+          } catch (retryError) {
+            console.error('❌ Retry with CryptoKey failed:', retryError);
+            throw error; // Throw original error
+          }
+        } else {
+          throw error;
+        }
+      }
 
       console.log('✅ Push subscription created');
 
