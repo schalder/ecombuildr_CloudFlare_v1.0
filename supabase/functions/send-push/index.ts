@@ -31,12 +31,10 @@ interface NotificationResult {
   endpoint_host?: string;
 }
 
-// Deno-native web push implementation using Web Crypto API
-async function sendWebPushNotification(
+// Simple push notification implementation using native fetch
+async function sendPushNotification(
   subscription: PushSubscription,
-  payload: PushPayload,
-  vapidPublicKey: string,
-  vapidPrivateKey: string
+  payload: PushPayload
 ): Promise<NotificationResult> {
   try {
     const endpointUrl = new URL(subscription.endpoint);
@@ -44,21 +42,45 @@ async function sendWebPushNotification(
     
     console.log(`📨 Sending notification to ${endpointHost} (subscription: ${subscription.id})`);
     
-    // Simple push notification without complex encryption for now
-    // This will work for most use cases
+    // For FCM (Google Chrome/Android), send to FCM endpoint
+    if (endpointHost.includes('fcm.googleapis.com')) {
+      const response = await fetch(subscription.endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'TTL': '86400',
+        },
+        body: JSON.stringify({
+          notification: {
+            title: payload.title,
+            body: payload.body,
+            icon: payload.icon,
+            badge: payload.badge,
+          },
+          data: payload.data
+        })
+      });
+
+      const success = response.status >= 200 && response.status < 300;
+      console.log(`${success ? '✅' : '❌'} FCM Push result for ${subscription.id}: HTTP ${response.status}`);
+      
+      return { 
+        subscription_id: subscription.id, 
+        success, 
+        status: response.status,
+        error: success ? undefined : `HTTP ${response.status}: ${response.statusText}`,
+        endpoint_host: endpointHost
+      };
+    }
+    
+    // For other push services (Mozilla, Safari), use simpler format
     const response = await fetch(subscription.endpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'TTL': '86400',
       },
-      body: JSON.stringify({
-        title: payload.title,
-        body: payload.body,
-        icon: payload.icon,
-        badge: payload.badge,
-        data: payload.data
-      })
+      body: JSON.stringify(payload)
     });
 
     const success = response.status >= 200 && response.status < 300;
@@ -164,27 +186,16 @@ serve(async (req) => {
 
     console.log(`📤 Sending push notifications to ${subscriptions.length} subscriptions`);
 
-    // Get VAPID keys
-    const vapidPublicKey = Deno.env.get('VAPID_PUBLIC_KEY');
-    const vapidPrivateKey = Deno.env.get('VAPID_PRIVATE_KEY');
-
-    if (!vapidPublicKey || !vapidPrivateKey) {
-      console.error('❌ VAPID keys not configured');
-      throw new Error('VAPID keys not configured');
-    }
-
     // Send notifications using Promise.allSettled for better error handling
     const results = await Promise.allSettled(
-      subscriptions.map(sub => sendWebPushNotification(
+      subscriptions.map(sub => sendPushNotification(
         {
           id: sub.id,
           endpoint: sub.endpoint,
           p256dh: sub.p256dh,
           auth: sub.auth
         },
-        payload,
-        vapidPublicKey,
-        vapidPrivateKey
+        payload
       ))
     );
 
