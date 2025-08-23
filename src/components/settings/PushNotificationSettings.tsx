@@ -1,11 +1,11 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Bell, BellOff, Smartphone, AlertCircle } from 'lucide-react';
+import { Bell, BellOff, Smartphone, AlertCircle, Send } from 'lucide-react';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
@@ -21,6 +21,23 @@ export const PushNotificationSettings: React.FC = () => {
     sendTestNotification,
   } = usePushNotifications();
 
+  const [testLoading, setTestLoading] = useState(false);
+  const [lastTestResult, setLastTestResult] = useState<string | null>(null);
+
+  const handleSendTest = async () => {
+    setTestLoading(true);
+    setLastTestResult(null);
+    try {
+      await sendTestNotification();
+      setLastTestResult('success');
+    } catch (error) {
+      console.error('Test notification failed:', error);
+      setLastTestResult('error');
+    } finally {
+      setTestLoading(false);
+    }
+  };
+
   const handleToggle = async (enabled: boolean) => {
     if (enabled) {
       await subscribe();
@@ -29,42 +46,47 @@ export const PushNotificationSettings: React.FC = () => {
     }
   };
 
-  // Detect if user is on iOS
-  const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
-  const isIOSPWA = (window.navigator as any).standalone === true;
-
+  // Handle unsupported browsers, especially iOS Safari
   if (!isSupported) {
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const isInStandaloneMode = window.matchMedia('(display-mode: standalone)').matches;
+    
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <BellOff className="h-5 w-5" />
-            Push Notifications
-          </CardTitle>
-          <CardDescription>
-            Get instant mobile notifications when you receive new orders
-          </CardDescription>
+          <div className="flex items-center gap-2">
+            <Bell className="h-5 w-5" />
+            <h3 className="text-lg font-semibold">Push Notifications</h3>
+          </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
           <Alert>
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
-              {isIOSDevice && !isIOSPWA ? (
-                <div>
-                  <p className="mb-3">To enable push notifications on iPhone/iPad, you need to add this app to your home screen first:</p>
-                  <ol className="list-decimal list-inside space-y-2 text-sm bg-background p-3 rounded-md border">
-                    <li>Tap the <strong>Share</strong> button <span className="font-mono">⬆️</span> in Safari</li>
-                    <li>Scroll down and tap <strong>"Add to Home Screen"</strong></li>
-                    <li>Tap <strong>"Add"</strong> to confirm</li>
-                    <li>Open the app from your home screen (not Safari)</li>
-                    <li>Return to this settings page to enable notifications</li>
-                  </ol>
-                  <p className="mt-3 text-xs text-muted-foreground">
-                    This is required by Apple - push notifications only work in installed web apps on iOS devices.
-                  </p>
-                </div>
+              {isIOS && !isInStandaloneMode ? (
+                <>
+                  <strong>Install this app to enable notifications:</strong>
+                  <br />
+                  <br />
+                  1. Tap the Share button <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 dark:bg-blue-900 rounded text-sm font-mono">□↑</span> in Safari
+                  <br />
+                  2. Select <span className="font-semibold">"Add to Home Screen"</span>
+                  <br />
+                  3. Tap <span className="font-semibold">"Add"</span> to install
+                  <br />
+                  4. Open the app from your Home Screen
+                  <br />
+                  <br />
+                  <span className="text-sm text-muted-foreground">
+                    Notifications only work in the installed app, not in Safari.
+                  </span>
+                </>
               ) : (
-                'Push notifications are not supported in this browser. Please use a modern browser like Chrome, Firefox, or Safari.'
+                <>
+                  Push notifications are not supported in this browser.
+                  <br />
+                  Please use a modern browser like Chrome, Firefox, or Edge.
+                </>
               )}
             </AlertDescription>
           </Alert>
@@ -120,13 +142,20 @@ export const PushNotificationSettings: React.FC = () => {
                 <span className="text-sm font-medium text-green-600">Connected</span>
               </div>
               <Button 
-                onClick={sendTestNotification}
-                disabled={loading}
+                variant="outline" 
                 size="sm"
-                variant="outline"
+                onClick={handleSendTest}
+                disabled={loading || testLoading}
               >
-                {loading ? 'Sending...' : 'Send Test'}
+                <Send className="h-4 w-4 mr-2" />
+                {testLoading ? 'Sending...' : 'Send Test'}
               </Button>
+              {lastTestResult === 'success' && (
+                <span className="text-sm text-green-600 dark:text-green-400">✓ Test sent successfully</span>
+              )}
+              {lastTestResult === 'error' && (
+                <span className="text-sm text-red-600 dark:text-red-400">✗ Test failed to send</span>
+              )}
             </div>
             <p className="text-xs text-muted-foreground">
               You'll receive notifications on this device when new orders come in
