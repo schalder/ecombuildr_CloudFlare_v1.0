@@ -12,8 +12,6 @@ import { toast } from "@/hooks/use-toast";
 import { Store, Settings } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import ShippingIntegrations from "@/components/settings/ShippingIntegrations";
-import { WhatsAppSettings } from "@/components/settings/WhatsAppSettings";
-import { NotificationSettings } from "@/components/settings/NotificationSettings";
 
 interface Store {
   id: string;
@@ -144,12 +142,6 @@ export default function StoreSettings() {
       description="Manage your store configuration and branding"
     >
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* WhatsApp Integration */}
-        <WhatsAppSettings />
-        
-        {/* Notification Settings */}
-        <NotificationSettings />
-        
         {/* Shipping Integrations */}
         <ShippingIntegrations storeId={store.id} />
 
