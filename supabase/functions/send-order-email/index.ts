@@ -1,6 +1,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { Resend } from 'npm:resend@2.0.0'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -8,9 +9,11 @@ const corsHeaders = {
 }
 
 interface EmailRequest {
-  order_id: string;
+  order_id?: string;
   store_id: string;
   website_id?: string;
+  event_type: 'new_order' | 'payment_received' | 'order_cancelled' | 'test';
+  test_email?: string;
 }
 
 serve(async (req) => {
@@ -24,29 +27,29 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    const { order_id, store_id, website_id }: EmailRequest = await req.json()
+    // Initialize Resend
+    const resendApiKey = Deno.env.get('RESEND_API_KEY')
+    const fromEmail = Deno.env.get('RESEND_FROM_EMAIL') || 'noreply@yourdomain.com'
+    const fromName = Deno.env.get('RESEND_FROM_NAME') || 'Your Store'
 
-    // Get order details
-    const { data: order, error: orderError } = await supabaseClient
-      .from('orders')
-      .select(`
-        *,
-        order_items (
-          id,
-          product_name,
-          quantity,
-          price,
-          total
-        )
-      `)
-      .eq('id', order_id)
-      .single()
-
-    if (orderError) {
-      throw new Error(`Failed to fetch order: ${orderError.message}`)
+    if (!resendApiKey) {
+      throw new Error('RESEND_API_KEY not configured')
     }
 
-    // Get store details and owner email
+    const resend = new Resend(resendApiKey)
+
+    const { order_id, store_id, website_id, event_type, test_email }: EmailRequest = await req.json()
+
+    // Validate required fields
+    if (!store_id || !event_type) {
+      throw new Error('store_id and event_type are required')
+    }
+
+    if (event_type !== 'test' && !order_id) {
+      throw new Error('order_id is required for non-test events')
+    }
+
+    // Get store details and owner email first
     const { data: store, error: storeError } = await supabaseClient
       .from('stores')
       .select(`
@@ -63,6 +66,53 @@ serve(async (req) => {
       throw new Error(`Failed to fetch store: ${storeError.message}`)
     }
 
+    // Check email notification settings
+    const emailSettings = store.settings?.email_notifications || {}
+    const isEnabled = emailSettings[event_type] !== false // Default to true if not explicitly disabled
+
+    if (!isEnabled && event_type !== 'test') {
+      console.log(`Email notifications disabled for ${event_type}`)
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          message: `Email notifications disabled for ${event_type}`,
+          skipped: true
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200 
+        }
+      )
+    }
+
+    const ownerEmail = store.profiles.email
+    const ownerName = store.profiles.full_name || 'Store Owner'
+
+    let order = null
+    if (event_type !== 'test') {
+      // Get order details
+      const { data: orderData, error: orderError } = await supabaseClient
+        .from('orders')
+        .select(`
+          *,
+          order_items (
+            id,
+            product_name,
+            quantity,
+            price,
+            total
+          )
+        `)
+        .eq('id', order_id)
+        .single()
+
+      if (orderError) {
+        throw new Error(`Failed to fetch order: ${orderError.message}`)
+      }
+      order = orderData
+    }
+
+
     // Get website details if website_id is provided
     let websiteName = store.name
     if (website_id) {
@@ -77,19 +127,80 @@ serve(async (req) => {
       }
     }
 
-    const ownerEmail = store.profiles.email
-    const ownerName = store.profiles.full_name || 'Store Owner'
+    // Handle test email
+    if (event_type === 'test') {
+      const testRecipient = test_email || ownerEmail
+      const emailSubject = `Test Email from ${websiteName}`
+      const emailHtml = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #333;">Email Test Successful!</h2>
+          
+          <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <p>This is a test email from your <strong>${websiteName}</strong> notification system.</p>
+            <p>Your email notifications are working correctly!</p>
+          </div>
+          
+          <hr style="margin: 30px 0; border: none; border-top: 1px solid #ddd;">
+          <p style="color: #666; font-size: 14px; text-align: center;">
+            This is a test email from your ${websiteName} notification system.
+          </p>
+        </div>
+      `
+
+      const { error: emailError } = await resend.emails.send({
+        from: `${fromName} <${fromEmail}>`,
+        to: [testRecipient],
+        subject: emailSubject,
+        html: emailHtml
+      })
+
+      if (emailError) {
+        throw new Error(`Failed to send test email: ${emailError.message}`)
+      }
+
+      console.log(`Test email sent successfully to ${testRecipient}`)
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          message: 'Test email sent successfully',
+          recipient: testRecipient
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200 
+        }
+      )
+    }
 
     // Calculate order totals
     const itemsTotal = order.order_items.reduce((sum: number, item: any) => sum + Number(item.total), 0)
     const orderTotal = Number(order.total)
 
-    // Create email content
-    const emailSubject = `New Order #${order.order_number} - ${websiteName}`
+    // Create email content based on event type
+    let emailSubject = ''
+    let eventTitle = ''
+    
+    switch (event_type) {
+      case 'new_order':
+        emailSubject = `New Order #${order.order_number} - ${websiteName}`
+        eventTitle = 'New Order Received!'
+        break
+      case 'payment_received':
+        emailSubject = `Payment Received for Order #${order.order_number} - ${websiteName}`
+        eventTitle = 'Payment Received!'
+        break
+      case 'order_cancelled':
+        emailSubject = `Order Cancelled #${order.order_number} - ${websiteName}`
+        eventTitle = 'Order Cancelled'
+        break
+      default:
+        emailSubject = `Order Update #${order.order_number} - ${websiteName}`
+        eventTitle = 'Order Update'
+    }
     
     const emailHtml = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #333;">New Order Received!</h2>
+        <h2 style="color: #333;">${eventTitle}</h2>
         
         <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
           <h3 style="margin-top: 0;">Order Details</h3>
@@ -133,7 +244,7 @@ serve(async (req) => {
         </div>
 
         <div style="text-align: center; margin: 30px 0;">
-          <a href="https://fhqwacmokbtbspkxjixf.supabase.co/dashboard/orders" 
+          <a href="https://app.lovable.dev/dashboard/orders" 
              style="background-color: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
             View Order in Dashboard
           </a>
@@ -146,39 +257,27 @@ serve(async (req) => {
       </div>
     `
 
-    // Send email using a simple SMTP service (you'll need to configure SMTP settings)
-    // For now, we'll use a webhook to an external email service
-    const emailServiceUrl = Deno.env.get('EMAIL_SERVICE_URL')
-    const emailApiKey = Deno.env.get('EMAIL_API_KEY')
+    // Send email using Resend
+    const { error: emailError } = await resend.emails.send({
+      from: `${fromName} <${fromEmail}>`,
+      to: [ownerEmail],
+      subject: emailSubject,
+      html: emailHtml
+    })
 
-    if (emailServiceUrl && emailApiKey) {
-      const emailResponse = await fetch(emailServiceUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${emailApiKey}`
-        },
-        body: JSON.stringify({
-          to: ownerEmail,
-          subject: emailSubject,
-          html: emailHtml,
-          from: 'noreply@yourdomain.com'
-        })
-      })
-
-      if (!emailResponse.ok) {
-        throw new Error(`Failed to send email: ${emailResponse.statusText}`)
-      }
+    if (emailError) {
+      throw new Error(`Failed to send email: ${emailError.message}`)
     }
 
-    // Log the email notification (you can also store this in a notifications table)
-    console.log(`Email notification sent to ${ownerEmail} for order ${order.order_number}`)
+    // Log the email notification
+    console.log(`${event_type} email notification sent to ${ownerEmail} for order ${order.order_number}`)
 
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: 'Email notification sent successfully',
-        order_number: order.order_number
+        message: `${event_type} email notification sent successfully`,
+        order_number: order.order_number,
+        event_type
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

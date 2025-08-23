@@ -29,10 +29,10 @@ serve(async (req) => {
     let paymentStatus = 'failed';
     let paymentDetails = {};
 
-    // Get order details to find store ID
+    // Get order details to find store ID and website ID
     const { data: order, error: orderError } = await supabase
       .from('orders')
-      .select('store_id')
+      .select('store_id, website_id')
       .eq('id', orderId)
       .single();
 
@@ -65,6 +65,24 @@ serve(async (req) => {
 
     if (error) {
       throw new Error(`Failed to update order: ${error.message}`);
+    }
+
+    // Send payment received email notification if payment was successful
+    if (paymentStatus === 'success') {
+      try {
+        await supabase.functions.invoke('send-order-email', {
+          body: {
+            order_id: orderId,
+            store_id: order.store_id,
+            website_id: order.website_id,
+            event_type: 'payment_received'
+          }
+        });
+        console.log('Payment received email notification sent successfully');
+      } catch (emailError) {
+        console.error('Failed to send payment received email notification:', emailError);
+        // Don't fail the payment verification if email fails
+      }
     }
 
     return new Response(

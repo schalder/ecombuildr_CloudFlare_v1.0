@@ -48,21 +48,35 @@ export function useEmailNotifications(storeId?: string) {
 
     setLoading(true);
     try {
-      const updatedSettings = { ...settings, ...newSettings };
+      // First fetch current store settings to avoid overwriting other settings
+      const { data: currentStore, error: fetchError } = await supabase
+        .from('stores')
+        .select('settings')
+        .eq('id', storeId)
+        .eq('owner_id', user.id)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      const currentSettings = (currentStore?.settings as any) || {};
+      const currentEmailSettings = currentSettings.email_notifications || {};
+      const updatedEmailSettings = { ...currentEmailSettings, ...newSettings };
+
+      // Deep merge the settings
+      const updatedSettings = {
+        ...(typeof currentSettings === 'object' ? currentSettings : {}),
+        email_notifications: updatedEmailSettings
+      };
 
       const { error } = await supabase
         .from('stores')
-        .update({
-          settings: {
-            email_notifications: updatedSettings
-          }
-        })
+        .update({ settings: updatedSettings })
         .eq('id', storeId)
         .eq('owner_id', user.id);
 
       if (error) throw error;
 
-      setSettings(updatedSettings);
+      setSettings(updatedEmailSettings);
       return { success: true };
     } catch (error) {
       console.error('Error updating email notification settings:', error);
@@ -81,6 +95,7 @@ export function useEmailNotifications(storeId?: string) {
           order_id: orderId,
           store_id: storeId,
           website_id: websiteId,
+          event_type: 'new_order'
         },
       });
 
@@ -89,6 +104,26 @@ export function useEmailNotifications(storeId?: string) {
       return { success: true };
     } catch (error) {
       console.error('Error sending order notification:', error);
+      return { success: false, error };
+    }
+  };
+
+  const sendTestEmail = async (testEmail?: string) => {
+    if (!user || !storeId) return;
+
+    try {
+      const { data, error } = await supabase.functions.invoke('send-order-email', {
+        body: {
+          store_id: storeId,
+          event_type: 'test',
+          test_email: testEmail
+        }
+      });
+
+      if (error) throw error;
+      return { success: true, data };
+    } catch (error) {
+      console.error('Error sending test email:', error);
       return { success: false, error };
     }
   };
@@ -102,6 +137,7 @@ export function useEmailNotifications(storeId?: string) {
     loading,
     updateSettings,
     triggerOrderNotification,
+    sendTestEmail,
     refetch: fetchSettings,
   };
 }

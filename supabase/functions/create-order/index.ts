@@ -116,6 +116,22 @@ serve(async (req) => {
       return new Response(JSON.stringify({ success: false, error: itemsError.message || 'Failed to create order items' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
+    // Send email notification (don't block order creation if email fails)
+    try {
+      await supabase.functions.invoke('send-order-email', {
+        body: {
+          order_id: createdOrder.id,
+          store_id: storeId,
+          website_id: order.website_id,
+          event_type: 'new_order'
+        }
+      });
+      console.log('New order email notification sent successfully');
+    } catch (emailError) {
+      console.error('Failed to send new order email notification:', emailError);
+      // Don't fail the order creation if email fails
+    }
+
     return new Response(
       JSON.stringify({ success: true, order: createdOrder }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

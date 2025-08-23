@@ -14,7 +14,7 @@ interface EmailNotificationSettingsProps {
 }
 
 export function EmailNotificationSettings({ storeId }: EmailNotificationSettingsProps) {
-  const { settings, loading, updateSettings } = useEmailNotifications(storeId);
+  const { settings, loading, updateSettings, sendTestEmail: sendTestEmailFn } = useEmailNotifications(storeId);
   const { toast } = useToast();
   const [testEmail, setTestEmail] = useState('');
   const [sendingTest, setSendingTest] = useState(false);
@@ -48,15 +48,22 @@ export function EmailNotificationSettings({ storeId }: EmailNotificationSettings
 
     setSendingTest(true);
     try {
-      // You would implement a test email function here
-      toast({
-        title: "Test Email Sent",
-        description: `Test notification sent to ${testEmail}`,
-      });
-    } catch (error) {
+      const result = await sendTestEmailFn(testEmail);
+      
+      if (result?.success) {
+        toast({
+          title: "Test Email Sent",
+          description: `Test notification sent to ${testEmail}`,
+        });
+        setTestEmail(''); // Clear the input after successful send
+      } else {
+        throw new Error(result?.error?.message || 'Failed to send test email');
+      }
+    } catch (error: any) {
+      console.error('Test email error:', error);
       toast({
         title: "Error",
-        description: "Failed to send test email. Please try again.",
+        description: error.message || "Failed to send test email. Please try again.",
         variant: "destructive",
       });
     } finally {
