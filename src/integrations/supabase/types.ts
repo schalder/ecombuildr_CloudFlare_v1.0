@@ -1814,6 +1814,66 @@ export type Database = {
         }
         Relationships: []
       }
+      push_subscriptions: {
+        Row: {
+          auth: string
+          browser: string | null
+          created_at: string
+          device: string | null
+          endpoint: string
+          id: string
+          is_active: boolean
+          last_seen_at: string | null
+          p256dh: string
+          platform: string | null
+          store_id: string | null
+          user_id: string
+        }
+        Insert: {
+          auth: string
+          browser?: string | null
+          created_at?: string
+          device?: string | null
+          endpoint: string
+          id?: string
+          is_active?: boolean
+          last_seen_at?: string | null
+          p256dh: string
+          platform?: string | null
+          store_id?: string | null
+          user_id: string
+        }
+        Update: {
+          auth?: string
+          browser?: string | null
+          created_at?: string
+          device?: string | null
+          endpoint?: string
+          id?: string
+          is_active?: boolean
+          last_seen_at?: string | null
+          p256dh?: string
+          platform?: string | null
+          store_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "push_subscriptions_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "push_subscriptions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       saas_subscriptions: {
         Row: {
           created_at: string
