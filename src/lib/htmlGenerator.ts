@@ -476,10 +476,27 @@ function generateElementStyles(styles: any): string {
   if (styles.width) cssProps.push(`width: ${styles.width}`);
   if (styles.height) cssProps.push(`height: ${styles.height}`);
   
+  // Handle background color
+  if (styles.backgroundColor) {
+    cssProps.push(`background-color: ${styles.backgroundColor}`);
+  }
+  
+  // Handle background gradient  
+  if (styles.backgroundGradient) {
+    cssProps.push(`background-image: ${styles.backgroundGradient}`);
+  }
+  
   // Handle background image with proper positioning based on mode
   if (styles.backgroundImage) {
     const mode = styles.backgroundImageMode || 'full-center';
-    cssProps.push(`background-image: url(${styles.backgroundImage})`);
+    
+    // If we have a gradient, layer the image on top
+    const imageLayer = `url(${styles.backgroundImage})`;
+    if (styles.backgroundGradient) {
+      cssProps.push(`background-image: ${styles.backgroundGradient}, ${imageLayer}`);
+    } else {
+      cssProps.push(`background-image: ${imageLayer}`);
+    }
     
     switch (mode) {
       case 'full-center':
