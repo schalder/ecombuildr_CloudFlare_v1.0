@@ -160,17 +160,38 @@ async function sendWebPushNotification(
     // Import VAPID private key for ECDSA signing
     console.log(`🔑 Importing VAPID private key for ${endpointHost}`);
     
-    // Decode the base64url private key
-    const privateKeyBytes = base64UrlDecode(vapidPrivateKey);
-    
-    // Import as PKCS8 format for proper ECDSA usage
-    const vapidKey = await crypto.subtle.importKey(
-      'pkcs8',
-      privateKeyBytes,
-      { name: 'ECDSA', namedCurve: 'P-256' },
-      false,
-      ['sign']
-    );
+    let vapidKey: CryptoKey;
+    try {
+      // Try different decoding approaches for the private key
+      let privateKeyBytes: Uint8Array;
+      
+      // First try direct base64url decode
+      try {
+        privateKeyBytes = base64UrlDecode(vapidPrivateKey);
+      } catch (e) {
+        console.log('📝 Trying alternative base64 decode...');
+        // Try regular base64 decode as fallback
+        const base64 = vapidPrivateKey.replace(/-/g, '+').replace(/_/g, '/');
+        const padding = '='.repeat((4 - base64.length % 4) % 4);
+        privateKeyBytes = new Uint8Array(Array.from(atob(base64 + padding), c => c.charCodeAt(0)));
+      }
+      
+      console.log(`📏 Private key bytes length: ${privateKeyBytes.length}`);
+      
+      // Import as PKCS8 format for proper ECDSA usage
+      vapidKey = await crypto.subtle.importKey(
+        'pkcs8',
+        privateKeyBytes,
+        { name: 'ECDSA', namedCurve: 'P-256' },
+        false,
+        ['sign']
+      );
+      
+      console.log('✅ VAPID private key imported successfully');
+    } catch (keyError) {
+      console.error('❌ Failed to import VAPID private key:', keyError);
+      throw new Error(`Invalid VAPID private key format: ${keyError.message}`);
+    }
     
     const header = { typ: 'JWT', alg: 'ES256' };
     const aud = new URL(subscription.endpoint).origin;
