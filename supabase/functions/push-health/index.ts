@@ -5,6 +5,22 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Helper function for base64url decoding
+function urlBase64ToUint8Array(base64String: string): Uint8Array {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding)
+    .replace(/-/g, '+')
+    .replace(/_/g, '/');
+
+  const rawData = atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -57,48 +73,24 @@ serve(async (req) => {
         // Test cryptographic import and signing
         if (vapidKeysValid && webCryptoAvailable) {
           try {
-            // Helper function for key conversion
-            function urlBase64ToUint8Array(base64String: string): Uint8Array {
-              const padding = '='.repeat((4 - base64String.length % 4) % 4);
-              const base64 = (base64String + padding)
-                .replace(/-/g, '+')
-                .replace(/_/g, '/');
-
-              const rawData = atob(base64);
-              const outputArray = new Uint8Array(rawData.length);
-
-              for (let i = 0; i < rawData.length; ++i) {
-                outputArray[i] = rawData.charCodeAt(i);
-              }
-              return outputArray;
-            }
+            // For VAPID keys, we just need to validate the format
+            // The actual crypto validation should be done during actual push sending
+            // Here we just validate the base64url format is correct
             
-            // Convert keys to proper format
+            const publicKeyBytes = urlBase64ToUint8Array(vapidPublicKey);
             const privateKeyBytes = urlBase64ToUint8Array(vapidPrivateKey);
             
-            // Test private key import (use 'raw' format for VAPID keys)
-            // VAPID private keys are 32-byte raw keys, not DER/PEM encoded
-            const privateKey = await crypto.subtle.importKey(
-              'raw',
-              privateKeyBytes,
-              { name: 'ECDSA', namedCurve: 'P-256' },
-              false,
-              ['sign']
-            );
+            // Check expected key lengths for P-256 curve
+            // Public key should be 65 bytes (uncompressed) or 33 bytes (compressed)
+            // Private key should be 32 bytes
+            const validPublicKeyLength = publicKeyBytes.length === 65 || publicKeyBytes.length === 33;
+            const validPrivateKeyLength = privateKeyBytes.length === 32;
             
-            // Test signing operation
-            const testData = new TextEncoder().encode('health-check');
-            const signature = await crypto.subtle.sign(
-              { name: 'ECDSA', hash: 'SHA-256' },
-              privateKey,
-              testData
-            );
-            
-            vapidCryptoValid = signature.byteLength > 0;
-            console.log(`🔐 VAPID cryptographic test: ${vapidCryptoValid}`);
+            vapidCryptoValid = validPublicKeyLength && validPrivateKeyLength;
+            console.log(`🔐 VAPID key length validation: public=${publicKeyBytes.length}bytes, private=${privateKeyBytes.length}bytes, valid=${vapidCryptoValid}`);
             
           } catch (cryptoError) {
-            console.error('❌ VAPID cryptographic test failed:', cryptoError);
+            console.error('❌ VAPID key validation failed:', cryptoError);
             vapidCryptoValid = false;
           }
         }

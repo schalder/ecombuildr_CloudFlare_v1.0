@@ -27,10 +27,16 @@ serve(async (req) => {
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
-    // Verify user with anon client using the JWT token properly
-    const userSupabase = createClient(supabaseUrl, supabaseAnonKey);
+    // Verify user with anon client - set the JWT token in the global auth context
+    const userSupabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: {
+        headers: {
+          Authorization: authHeader
+        }
+      }
+    });
 
-    const { data: { user }, error: userError } = await userSupabase.auth.getUser(token);
+    const { data: { user }, error: userError } = await userSupabase.auth.getUser();
     if (userError || !user) {
       console.error('❌ User authentication failed:', userError);
       throw new Error(`Unauthorized: ${userError?.message || 'Invalid token'}`);
