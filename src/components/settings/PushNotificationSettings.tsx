@@ -18,6 +18,7 @@ export const PushNotificationSettings: React.FC = () => {
     subscribe,
     unsubscribe,
     isSubscribed,
+    sendTestNotification,
   } = usePushNotifications();
 
   const handleToggle = async (enabled: boolean) => {
@@ -104,9 +105,19 @@ export const PushNotificationSettings: React.FC = () => {
 
         {isSubscribed && (
           <div className="bg-muted p-3 rounded-lg">
-            <div className="flex items-center gap-2 mb-2">
-              <Smartphone className="h-4 w-4 text-green-600" />
-              <span className="text-sm font-medium text-green-600">Connected</span>
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <Smartphone className="h-4 w-4 text-green-600" />
+                <span className="text-sm font-medium text-green-600">Connected</span>
+              </div>
+              <Button 
+                onClick={sendTestNotification}
+                disabled={loading}
+                size="sm"
+                variant="outline"
+              >
+                {loading ? 'Sending...' : 'Send Test'}
+              </Button>
             </div>
             <p className="text-xs text-muted-foreground">
               You'll receive notifications on this device when new orders come in

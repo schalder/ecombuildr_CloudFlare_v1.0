@@ -63,3 +63,12 @@ verify_jwt = false
 
 [functions.verify-payment]
 verify_jwt = false
+
+[functions.send-push]
+verify_jwt = false
+
+[functions.send-test-push]
+verify_jwt = true
+
+[functions.get-vapid-public-key]
+verify_jwt = false

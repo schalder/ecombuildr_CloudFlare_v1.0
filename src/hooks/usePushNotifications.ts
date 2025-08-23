@@ -111,20 +111,26 @@ export function usePushNotifications() {
         applicationServerKey: applicationServerKey,
       });
 
-      // Save subscription to database
+      // Save subscription to database with upsert to reactivate if exists
       const subscriptionObject = pushSubscription.toJSON();
       const { error: saveError } = await supabase
         .from('push_subscriptions')
-        .insert({
+        .upsert({
           user_id: user.id,
           store_id: storeId || null,
           endpoint: subscriptionObject.endpoint!,
           p256dh: subscriptionObject.keys!.p256dh!,
           auth: subscriptionObject.keys!.auth!,
-          device: navigator.userAgent,
-          browser: navigator.userAgent.split(' ').slice(-1)[0],
+          device: navigator.userAgent.includes('Mobile') ? 'mobile' : 'desktop',
+          browser: navigator.userAgent.includes('Chrome') ? 'chrome' : 
+                  navigator.userAgent.includes('Firefox') ? 'firefox' : 
+                  navigator.userAgent.includes('Safari') ? 'safari' : 'other',
           platform: navigator.platform,
           is_active: true,
+          last_seen_at: new Date().toISOString(),
+        }, {
+          onConflict: 'endpoint',
+          ignoreDuplicates: false
         });
 
       if (saveError) {
@@ -177,6 +183,28 @@ export function usePushNotifications() {
     }
   };
 
+  // Test notification function
+  const sendTestNotification = async () => {
+    if (!subscription || loading) return;
+    
+    setLoading(true);
+    try {
+      const { error } = await supabase.functions.invoke('send-test-push');
+      
+      if (error) {
+        console.error('Error sending test notification:', error);
+        toast.error('Failed to send test notification');
+      } else {
+        toast.success('Test notification sent! Check your device.');
+      }
+    } catch (error) {
+      console.error('Error sending test notification:', error);
+      toast.error('Failed to send test notification');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
     isSupported,
     permission,
@@ -185,5 +213,6 @@ export function usePushNotifications() {
     subscribe,
     unsubscribe,
     isSubscribed: !!subscription,
+    sendTestNotification,
   };
 }
