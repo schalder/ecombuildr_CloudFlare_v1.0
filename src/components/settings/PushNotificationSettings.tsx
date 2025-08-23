@@ -55,38 +55,55 @@ export const PushNotificationSettings: React.FC = () => {
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <Bell className="h-5 w-5" />
-            <h3 className="text-lg font-semibold">Push Notifications</h3>
+            <BellOff className="h-5 w-5 text-muted-foreground" />
+            <CardTitle>Push Notifications</CardTitle>
+            <Badge variant="outline">Not Available</Badge>
           </div>
+          <CardDescription>
+            Get instant notifications for new orders and updates
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <Alert>
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
+          <Alert className="border-orange-200 bg-orange-50 dark:border-orange-800 dark:bg-orange-950">
+            <AlertCircle className="h-4 w-4 text-orange-600" />
+            <AlertDescription className="text-orange-800 dark:text-orange-200">
               {isIOS && !isInStandaloneMode ? (
-                <>
-                  <strong>Install this app to enable notifications:</strong>
-                  <br />
-                  <br />
-                  1. Tap the Share button <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 dark:bg-blue-900 rounded text-sm font-mono">□↑</span> in Safari
-                  <br />
-                  2. Select <span className="font-semibold">"Add to Home Screen"</span>
-                  <br />
-                  3. Tap <span className="font-semibold">"Add"</span> to install
-                  <br />
-                  4. Open the app from your Home Screen
-                  <br />
-                  <br />
-                  <span className="text-sm text-muted-foreground">
-                    Notifications only work in the installed app, not in Safari.
-                  </span>
-                </>
+                <div className="space-y-3">
+                  <p className="font-semibold">Install this app to enable push notifications:</p>
+                  <div className="bg-white dark:bg-gray-900 p-3 rounded border border-orange-200 dark:border-orange-700">
+                    <ol className="space-y-2 text-sm">
+                      <li className="flex items-start gap-2">
+                        <span className="flex-shrink-0 w-5 h-5 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center text-xs font-bold text-blue-600 dark:text-blue-300">1</span>
+                        Tap the Share button <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 dark:bg-blue-900 rounded text-xs font-mono ml-1">□↑</span> at the bottom of Safari
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="flex-shrink-0 w-5 h-5 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center text-xs font-bold text-blue-600 dark:text-blue-300">2</span>
+                        Scroll down and select <span className="font-semibold">"Add to Home Screen"</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="flex-shrink-0 w-5 h-5 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center text-xs font-bold text-blue-600 dark:text-blue-300">3</span>
+                        Tap <span className="font-semibold">"Add"</span> to install the app
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="flex-shrink-0 w-5 h-5 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center text-xs font-bold text-green-600 dark:text-green-300">4</span>
+                        Open the app from your Home Screen (not Safari)
+                      </li>
+                    </ol>
+                  </div>
+                  <p className="text-xs text-orange-600 dark:text-orange-400">
+                    ⚠️ Notifications only work when using the installed app, not in Safari browser.
+                  </p>
+                </div>
               ) : (
-                <>
-                  Push notifications are not supported in this browser.
-                  <br />
-                  Please use a modern browser like Chrome, Firefox, or Edge.
-                </>
+                <div>
+                  <p className="font-semibold mb-2">Push notifications are not supported in this browser.</p>
+                  <p>Please use a modern browser like:</p>
+                  <ul className="list-disc list-inside mt-2 space-y-1">
+                    <li>Google Chrome</li>
+                    <li>Mozilla Firefox</li>
+                    <li>Microsoft Edge</li>
+                  </ul>
+                </div>
               )}
             </AlertDescription>
           </Alert>

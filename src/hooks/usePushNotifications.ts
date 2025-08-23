@@ -123,7 +123,7 @@ export function usePushNotifications() {
         applicationServerKey: applicationServerKey,
       });
 
-      // Save subscription to database with upsert to reactivate if exists
+      // Save subscription to database - use correct column names based on actual schema
       const subscriptionObject = pushSubscription.toJSON();
       const { error: saveError } = await supabase
         .from('push_subscriptions')
@@ -217,8 +217,8 @@ export function usePushNotifications() {
       }
 
       // Check if notifications were actually delivered
-      if (data?.successful > 0) {
-        toast.success(`Test notification sent successfully! Delivered to ${data.successful} device(s).`);
+      if (data?.delivered > 0) {
+        toast.success(`Test notification sent successfully! Delivered to ${data.delivered} device(s).`);
       } else {
         const firstError = data?.results?.[0]?.error || 'Unknown delivery error';
         console.error('Test notification delivery failed:', data);
@@ -226,7 +226,8 @@ export function usePushNotifications() {
         toast.error(`Test notification failed to deliver: ${firstError}`);
         
         // If delivery failed, might need to re-subscribe
-        if (data?.results?.[0]?.status === 404 || data?.results?.[0]?.status === 410) {
+        const firstResult = data?.results?.[0];
+        if (firstResult?.status === 404 || firstResult?.status === 410 || firstResult?.status === 413) {
           toast.error('Push subscription expired. Please re-enable notifications.');
           setSubscription(null);
         }

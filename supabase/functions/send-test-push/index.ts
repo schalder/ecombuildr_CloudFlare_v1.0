@@ -12,23 +12,22 @@ serve(async (req) => {
   }
 
   try {
-    // Get the authorization header
+    // Get the authorization header and extract JWT token
     const authHeader = req.headers.get('authorization');
-    if (!authHeader) {
-      console.error('❌ No authorization header found');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.error('❌ No valid authorization header found');
       return new Response(
-        JSON.stringify({ error: 'No authorization header' }),
+        JSON.stringify({ error: 'No valid authorization header' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log('🔑 Creating Supabase client with auth header');
+    console.log('🔑 Authenticating user with JWT token');
     
-    // Create Supabase client with service role to bypass auth issues
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     
-    // First, create a client to validate the user token
+    // Create a client to validate the user token
     const userSupabase = createClient(supabaseUrl, Deno.env.get('SUPABASE_ANON_KEY')!, {
       global: { headers: { Authorization: authHeader } }
     });
@@ -45,7 +44,7 @@ serve(async (req) => {
 
     console.log(`✅ User authenticated: ${user.email}`);
 
-    // Now use service role client for database operations
+    // Use service role client for database operations
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Get user's stores (we'll use the first one for the test)
@@ -86,8 +85,11 @@ serve(async (req) => {
       });
     }
 
-    // Call the send-push function using service role
+    // Call the send-push function with proper authorization
     const { data: pushResult, error: pushError } = await supabase.functions.invoke('send-push', {
+      headers: {
+        Authorization: authHeader, // Pass the original auth header
+      },
       body: {
         storeId: store.id,
         payload: {
