@@ -101,18 +101,25 @@ async function sendWebPushNotification(
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
+  // Handle CORS preflight requests FIRST before any processing
   if (req.method === 'OPTIONS') {
+    console.log('🔄 Handling CORS preflight request');
     return new Response(null, { 
-      headers: corsHeaders,
+      headers: {
+        ...corsHeaders,
+        'Access-Control-Max-Age': '86400',
+      },
       status: 200 
     });
   }
+
+  console.log(`🔔 ${req.method} request to send-push`);
 
   try {
     // Extract JWT token for user validation
     const authHeader = req.headers.get('authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.error('❌ No valid authorization header');
       throw new Error('No valid authorization header');
     }
 

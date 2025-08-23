@@ -141,19 +141,25 @@ export function usePushNotifications() {
   // Helper functions
   const urlBase64ToUint8Array = (base64String: string): Uint8Array => {
     try {
+      console.log('🔑 Converting VAPID key for iOS compatibility');
+      
       // Clean the input
-      const cleanKey = base64String.trim();
+      let cleanKey = base64String.trim();
       
       // Validate length for P-256 public key (should be 87 chars for base64url)
       if (cleanKey.length !== 87) {
         throw new Error(`Invalid VAPID key length: ${cleanKey.length}, expected 87`);
       }
       
+      // For iOS compatibility, ensure we handle the key properly
+      // Convert base64url to base64
+      cleanKey = cleanKey.replace(/-/g, '+').replace(/_/g, '/');
+      
+      // Add padding if needed
       const padding = '='.repeat((4 - cleanKey.length % 4) % 4);
-      const base64 = (cleanKey + padding)
-        .replace(/-/g, '+')
-        .replace(/_/g, '/');
+      const base64 = cleanKey + padding;
 
+      // Decode to binary
       const rawData = atob(base64);
       const outputArray = new Uint8Array(rawData.length);
 
@@ -166,17 +172,19 @@ export function usePushNotifications() {
         throw new Error(`Invalid converted key length: ${outputArray.length}, expected 65`);
       }
       
-      // Validate P-256 public key format (first byte should be 0x04 for uncompressed, but be more lenient)
+      // For iOS, ensure this is a valid P-256 uncompressed public key
+      // First byte must be 0x04 for uncompressed format
       if (outputArray[0] !== 0x04) {
-        console.warn(`⚠️ Warning: P-256 public key first byte is 0x${outputArray[0].toString(16)}, expected 0x04, but continuing...`);
-        // Don't throw error, just warn - some valid keys might have different formats
+        console.warn(`⚠️ iOS Warning: P-256 public key first byte is 0x${outputArray[0].toString(16)}, expected 0x04`);
+        // For iOS, this might be critical - let's be more strict
+        throw new Error(`Invalid P-256 public key format for iOS: first byte must be 0x04, got 0x${outputArray[0].toString(16)}`);
       }
       
-      console.log(`✅ VAPID key converted successfully: ${cleanKey.length} chars -> ${outputArray.length} bytes`);
+      console.log(`✅ VAPID key converted successfully for iOS: ${cleanKey.length} chars -> ${outputArray.length} bytes`);
       return outputArray;
     } catch (error) {
-      console.error('❌ Error converting VAPID key:', error);
-      throw new Error(`Failed to convert VAPID key: ${error.message}`);
+      console.error('❌ Error converting VAPID key for iOS:', error);
+      throw new Error(`Failed to convert VAPID key for iOS: ${error.message}`);
     }
   };
 
