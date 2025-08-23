@@ -33,7 +33,9 @@ serve(async (req) => {
     const fromEmail = Deno.env.get('RESEND_FROM_EMAIL') || 'noreply@yourdomain.com'
     const fromName = Deno.env.get('RESEND_FROM_NAME') || 'Your Store'
 
+    console.log('Checking Resend configuration...')
     if (!resendApiKey) {
+      console.error('RESEND_API_KEY environment variable is not set')
       throw new Error('RESEND_API_KEY not configured')
     }
 
