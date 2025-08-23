@@ -1,6 +1,7 @@
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { encode as base64Encode } from "https://deno.land/std@0.190.0/encoding/base64.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -24,7 +25,186 @@ function base64UrlToUint8Array(base64UrlString: string): Uint8Array {
   return new Uint8Array([...rawData].map(char => char.charCodeAt(0)));
 }
 
-// Web Push helper function
+// Convert Uint8Array to base64url
+function uint8ArrayToBase64Url(array: Uint8Array): string {
+  const base64 = base64Encode(array);
+  return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+}
+
+// Generate ECDH key pair for encryption
+async function generateECDHKeyPair(): Promise<CryptoKeyPair> {
+  return await crypto.subtle.generateKey(
+    {
+      name: 'ECDH',
+      namedCurve: 'P-256',
+    },
+    true,
+    ['deriveKey']
+  );
+}
+
+// HKDF key derivation
+async function hkdf(
+  ikm: Uint8Array,
+  salt: Uint8Array,
+  info: Uint8Array,
+  length: number
+): Promise<Uint8Array> {
+  const key = await crypto.subtle.importKey(
+    'raw',
+    ikm,
+    'HKDF',
+    false,
+    ['deriveKey']
+  );
+
+  const derivedKey = await crypto.subtle.deriveKey(
+    {
+      name: 'HKDF',
+      hash: 'SHA-256',
+      salt,
+      info,
+    },
+    key,
+    { name: 'AES-GCM', length: length * 8 },
+    true,
+    ['encrypt']
+  );
+
+  return new Uint8Array(await crypto.subtle.exportKey('raw', derivedKey));
+}
+
+// Encrypt payload using Web Push protocol
+async function encryptPayload(
+  payload: string,
+  userPublicKey: string,
+  userAuth: string
+): Promise<{ ciphertext: Uint8Array; salt: Uint8Array; publicKey: Uint8Array }> {
+  const userPublicKeyBytes = base64UrlToUint8Array(userPublicKey);
+  const userAuthBytes = base64UrlToUint8Array(userAuth);
+
+  // Generate server key pair
+  const serverKeyPair = await generateECDHKeyPair();
+  const serverPublicKeyBytes = new Uint8Array(
+    await crypto.subtle.exportKey('raw', serverKeyPair.publicKey)
+  );
+
+  // Import user's public key
+  const importedUserPublicKey = await crypto.subtle.importKey(
+    'raw',
+    userPublicKeyBytes,
+    {
+      name: 'ECDH',
+      namedCurve: 'P-256',
+    },
+    false,
+    []
+  );
+
+  // Derive shared secret
+  const sharedSecret = await crypto.subtle.deriveKey(
+    {
+      name: 'ECDH',
+      public: importedUserPublicKey,
+    },
+    serverKeyPair.privateKey,
+    {
+      name: 'HKDF',
+      hash: 'SHA-256',
+    },
+    false,
+    ['deriveKey']
+  );
+
+  const sharedSecretBytes = new Uint8Array(
+    await crypto.subtle.exportKey('raw', sharedSecret)
+  );
+
+  // Generate salt
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+
+  // Derive encryption key
+  const authInfo = new TextEncoder().encode('WebPush: info\x00');
+  const keyInfo = new Uint8Array([
+    ...authInfo,
+    ...userPublicKeyBytes,
+    ...serverPublicKeyBytes,
+  ]);
+
+  const prk = await hkdf(sharedSecretBytes, userAuthBytes, new Uint8Array(0), 32);
+  const ikm = await hkdf(prk, salt, keyInfo, 32);
+
+  // Encrypt payload
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const key = await crypto.subtle.importKey('raw', ikm, 'AES-GCM', false, ['encrypt']);
+  
+  const payloadBytes = new TextEncoder().encode(payload);
+  const encrypted = await crypto.subtle.encrypt(
+    { name: 'AES-GCM', iv },
+    key,
+    payloadBytes
+  );
+
+  return {
+    ciphertext: new Uint8Array([...iv, ...new Uint8Array(encrypted)]),
+    salt,
+    publicKey: serverPublicKeyBytes,
+  };
+}
+
+// Create VAPID JWT
+async function createVapidJWT(
+  audience: string,
+  vapidPublicKey: string,
+  vapidPrivateKey: string
+): Promise<string> {
+  const header = {
+    typ: 'JWT',
+    alg: 'ES256',
+  };
+
+  const payload = {
+    aud: audience,
+    exp: Math.floor(Date.now() / 1000) + 12 * 60 * 60, // 12 hours
+    sub: `mailto:support@example.com`,
+  };
+
+  const encodedHeader = uint8ArrayToBase64Url(
+    new TextEncoder().encode(JSON.stringify(header))
+  );
+  const encodedPayload = uint8ArrayToBase64Url(
+    new TextEncoder().encode(JSON.stringify(payload))
+  );
+
+  const unsignedToken = `${encodedHeader}.${encodedPayload}`;
+  
+  // Import private key for signing
+  const privateKeyBytes = base64UrlToUint8Array(vapidPrivateKey);
+  const key = await crypto.subtle.importKey(
+    'raw',
+    privateKeyBytes,
+    {
+      name: 'ECDSA',
+      namedCurve: 'P-256',
+    },
+    false,
+    ['sign']
+  );
+
+  const signature = await crypto.subtle.sign(
+    {
+      name: 'ECDSA',
+      hash: 'SHA-256',
+    },
+    key,
+    new TextEncoder().encode(unsignedToken)
+  );
+
+  const encodedSignature = uint8ArrayToBase64Url(new Uint8Array(signature));
+  return `${unsignedToken}.${encodedSignature}`;
+}
+
+// Web Push helper function with proper encryption
 async function sendWebPushNotification(
   endpoint: string,
   p256dh: string,
@@ -33,28 +213,51 @@ async function sendWebPushNotification(
   vapidPublicKey: string,
   vapidPrivateKey: string
 ): Promise<Response> {
-  // Create the payload
-  const notificationPayload = JSON.stringify({
-    title: payload.title,
-    body: payload.body,
-    icon: payload.icon || '/favicon.ico',
-    badge: payload.badge || '/favicon.ico',
-    tag: payload.tag || 'default',
-    data: payload.data,
-  });
+  try {
+    // Create the notification payload
+    const notificationPayload = JSON.stringify({
+      title: payload.title,
+      body: payload.body,
+      icon: payload.icon || '/favicon.ico',
+      badge: payload.badge || '/favicon.ico',
+      tag: payload.tag || 'default',
+      data: payload.data,
+    });
 
-  // For now, send a simple request to the push service endpoint
-  // This is a simplified version - in production you'd want full Web Push encryption
-  const response = await fetch(endpoint, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'TTL': '86400', // 24 hours
-    },
-    body: notificationPayload,
-  });
+    // Encrypt the payload
+    const { ciphertext, salt, publicKey } = await encryptPayload(
+      notificationPayload,
+      p256dh,
+      auth
+    );
 
-  return response;
+    // Extract audience from endpoint
+    const url = new URL(endpoint);
+    const audience = `${url.protocol}//${url.host}`;
+
+    // Create VAPID JWT
+    const jwt = await createVapidJWT(audience, vapidPublicKey, vapidPrivateKey);
+
+    // Send the push notification
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/octet-stream',
+        'Content-Encoding': 'aes128gcm',
+        'Content-Length': ciphertext.length.toString(),
+        'TTL': '86400',
+        'Crypto-Key': `dh=${uint8ArrayToBase64Url(publicKey)};p256ecdsa=${vapidPublicKey}`,
+        'Encryption': `salt=${uint8ArrayToBase64Url(salt)}`,
+        'Authorization': `WebPush ${jwt}`,
+      },
+      body: ciphertext,
+    });
+
+    return response;
+  } catch (error) {
+    console.error('Error in sendWebPushNotification:', error);
+    throw error;
+  }
 }
 
 serve(async (req) => {

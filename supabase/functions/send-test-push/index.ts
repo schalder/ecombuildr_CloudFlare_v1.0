@@ -57,6 +57,25 @@ serve(async (req) => {
 
     const store = stores[0];
 
+    // Get user's push subscriptions for diagnostics
+    const { data: subscriptions, error: subsError } = await supabase
+      .from('push_subscriptions')
+      .select('*')
+      .eq('user_id', user.id);
+
+    console.log(`Found ${subscriptions?.length || 0} push subscriptions for user`);
+    
+    if (subscriptions) {
+      subscriptions.forEach((sub, index) => {
+        console.log(`Subscription ${index + 1}:`, {
+          id: sub.id,
+          endpoint: sub.endpoint?.substring(0, 50) + '...',
+          is_active: sub.is_active,
+          created_at: sub.created_at
+        });
+      });
+    }
+
     // Call the send-push function
     const { data: pushResult, error: pushError } = await supabase.functions.invoke('send-push', {
       body: {
