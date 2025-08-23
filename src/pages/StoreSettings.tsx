@@ -162,7 +162,7 @@ export default function StoreSettings() {
           </TabsContent>
 
           <TabsContent value="notifications" className="space-y-4">
-            <PushNotificationSettings />
+            {store && <PushNotificationSettings storeId={store.id} />}
           </TabsContent>
 
           <TabsContent value="payment" className="space-y-4">

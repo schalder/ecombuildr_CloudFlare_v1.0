@@ -144,7 +144,7 @@ export function usePushNotifications() {
       // Clean the input
       const cleanKey = base64String.trim();
       
-      // Validate length for P-256 public key (should be 87 chars)
+      // Validate length for P-256 public key (should be 87 chars for base64url)
       if (cleanKey.length !== 87) {
         throw new Error(`Invalid VAPID key length: ${cleanKey.length}, expected 87`);
       }
@@ -164,6 +164,11 @@ export function usePushNotifications() {
       // Validate the converted key length (should be 65 bytes for uncompressed P-256)
       if (outputArray.length !== 65) {
         throw new Error(`Invalid converted key length: ${outputArray.length}, expected 65`);
+      }
+      
+      // Validate P-256 public key format (first byte should be 0x04 for uncompressed)
+      if (outputArray[0] !== 0x04) {
+        throw new Error(`Invalid P-256 public key format: first byte is 0x${outputArray[0].toString(16)}, expected 0x04`);
       }
       
       console.log(`✅ VAPID key converted successfully: ${cleanKey.length} chars -> ${outputArray.length} bytes`);
@@ -251,30 +256,11 @@ export function usePushNotifications() {
           applicationServerKey
         });
       } catch (error: any) {
-        // Mobile browsers might need CryptoKey instead of Uint8Array
+        console.error('❌ Push subscription failed:', error);
         if (error.name === 'InvalidAccessError') {
-          console.log('🔄 Retrying subscription with CryptoKey for mobile compatibility');
-          try {
-            // Import the key as a CryptoKey for mobile browsers
-            const cryptoKey = await crypto.subtle.importKey(
-              'raw',
-              applicationServerKey,
-              { name: 'ECDSA', namedCurve: 'P-256' },
-              false,
-              ['verify']
-            );
-            
-            pushSubscription = await registration.pushManager.subscribe({
-              userVisibleOnly: true,
-              applicationServerKey: applicationServerKey, // Use original Uint8Array
-            });
-          } catch (retryError) {
-            console.error('❌ Retry with CryptoKey failed:', retryError);
-            throw error; // Throw original error
-          }
-        } else {
-          throw error;
+          throw new Error('Invalid VAPID key format. The applicationServerKey must contain a valid P-256 public key.');
         }
+        throw error;
       }
 
       console.log('✅ Push subscription created');
@@ -362,7 +348,7 @@ export function usePushNotifications() {
     }
   }, [user, subscription, toast]);
 
-  const sendTestNotification = useCallback(async () => {
+  const sendTestNotification = useCallback(async (storeId?: string) => {
     if (!user) {
       throw new Error('User must be logged in');
     }
@@ -371,10 +357,27 @@ export function usePushNotifications() {
       throw new Error('No active push subscription found');
     }
 
+    if (!storeId) {
+      throw new Error('Store ID is required for sending notifications');
+    }
+
     try {
       setLastTestResult('Sending...');
       
-      const { data, error } = await supabase.functions.invoke('send-test-push', {
+      const { data, error } = await supabase.functions.invoke('send-push', {
+        body: {
+          storeId,
+          payload: {
+            title: '🔔 Test Notification',
+            body: 'This is a test push notification from your store!',
+            icon: '/favicon.ico',
+            badge: '/favicon.ico',
+            data: {
+              type: 'test',
+              timestamp: new Date().toISOString()
+            }
+          }
+        },
         headers: {
           Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
         }

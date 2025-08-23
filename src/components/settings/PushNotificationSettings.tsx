@@ -9,7 +9,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { useToast } from "@/hooks/use-toast";
 
-export const PushNotificationSettings = () => {
+export const PushNotificationSettings = ({ storeId }: { storeId?: string }) => {
   const { 
     isSupported, 
     permission, 
@@ -28,7 +28,7 @@ export const PushNotificationSettings = () => {
 
   const handleSubscribe = async () => {
     try {
-      await subscribe();
+      await subscribe(storeId);
     } catch (error: any) {
       toast({
         title: "Failed to enable notifications",
@@ -53,7 +53,7 @@ export const PushNotificationSettings = () => {
   const handleSendTest = async () => {
     setTestLoading(true);
     try {
-      await sendTestNotification();
+      await sendTestNotification(storeId);
       toast({
         title: "Test notification sent",
         description: "Check your device for the notification"
