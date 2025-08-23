@@ -140,18 +140,38 @@ export function usePushNotifications() {
 
   // Helper functions
   const urlBase64ToUint8Array = (base64String: string): Uint8Array => {
-    const padding = '='.repeat((4 - base64String.length % 4) % 4);
-    const base64 = (base64String + padding)
-      .replace(/-/g, '+')
-      .replace(/_/g, '/');
+    try {
+      // Clean the input
+      const cleanKey = base64String.trim();
+      
+      // Validate length for P-256 public key (should be 87 chars)
+      if (cleanKey.length !== 87) {
+        throw new Error(`Invalid VAPID key length: ${cleanKey.length}, expected 87`);
+      }
+      
+      const padding = '='.repeat((4 - cleanKey.length % 4) % 4);
+      const base64 = (cleanKey + padding)
+        .replace(/-/g, '+')
+        .replace(/_/g, '/');
 
-    const rawData = atob(base64);
-    const outputArray = new Uint8Array(rawData.length);
+      const rawData = atob(base64);
+      const outputArray = new Uint8Array(rawData.length);
 
-    for (let i = 0; i < rawData.length; ++i) {
-      outputArray[i] = rawData.charCodeAt(i);
+      for (let i = 0; i < rawData.length; ++i) {
+        outputArray[i] = rawData.charCodeAt(i);
+      }
+      
+      // Validate the converted key length (should be 65 bytes for uncompressed P-256)
+      if (outputArray.length !== 65) {
+        throw new Error(`Invalid converted key length: ${outputArray.length}, expected 65`);
+      }
+      
+      console.log(`✅ VAPID key converted successfully: ${cleanKey.length} chars -> ${outputArray.length} bytes`);
+      return outputArray;
+    } catch (error) {
+      console.error('❌ Error converting VAPID key:', error);
+      throw new Error(`Failed to convert VAPID key: ${error.message}`);
     }
-    return outputArray;
   };
 
   const arrayBufferToBase64 = (buffer: ArrayBuffer | null): string => {
