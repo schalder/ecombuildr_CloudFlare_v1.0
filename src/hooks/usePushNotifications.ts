@@ -82,8 +82,14 @@ export function usePushNotifications() {
         return;
       }
       
-      setServerHealth(data);
-      console.log('🏥 Server health:', data);
+      // Handle 503 status by parsing response data even if there's an error
+      if (data && data.status) {
+        setServerHealth(data);
+        console.log('🏥 Server health (from error response):', data);
+      } else {
+        setServerHealth(data);
+        console.log('🏥 Server health:', data);
+      }
     } catch (error) {
       console.error('❌ Health check error:', error);
     }
@@ -182,9 +188,13 @@ export function usePushNotifications() {
 
     setLoading(true);
     try {
-      // For now, skip server health check and proceed with subscription
-      // This allows testing even if health check has issues
-      console.log('⚠️ Proceeding without health check for testing');
+      // Check server health first and proceed only if healthy
+      if (!serverHealth || serverHealth.status !== 'healthy') {
+        // Try to refresh health status
+        await checkServerHealth();
+        // Wait a bit for the health check to complete
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
 
       // Request permission first
       if (permission !== 'granted') {

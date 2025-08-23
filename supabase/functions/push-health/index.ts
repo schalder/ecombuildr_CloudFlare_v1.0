@@ -76,9 +76,9 @@ serve(async (req) => {
             // Convert keys to proper format
             const privateKeyBytes = urlBase64ToUint8Array(vapidPrivateKey);
             
-            // Test private key import (use PKCS8 format for private key)
+            // Test private key import (use 'raw' format for VAPID keys, not PKCS8)
             const privateKey = await crypto.subtle.importKey(
-              'pkcs8',
+              'raw',
               privateKeyBytes,
               { name: 'ECDSA', namedCurve: 'P-256' },
               false,
