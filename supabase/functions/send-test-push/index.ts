@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    console.log('🔑 Authenticating user with JWT token');
+    console.log('🔑 Authenticating user');
     
     // Extract JWT token
     const authHeader = req.headers.get('authorization');
@@ -20,38 +20,30 @@ serve(async (req) => {
       throw new Error('No valid authorization header');
     }
 
-    const token = authHeader.replace('Bearer ', '');
-
     // Initialize Supabase clients
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
-    // Verify user with anon client - set the JWT token in the global auth context
-    const userSupabase = createClient(supabaseUrl, supabaseAnonKey, {
-      global: {
-        headers: {
-          Authorization: authHeader
-        }
-      }
-    });
+    // Create service role client for all operations
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { data: { user }, error: userError } = await userSupabase.auth.getUser();
-    if (userError || !user) {
-      console.error('❌ User authentication failed:', userError);
-      throw new Error(`Unauthorized: ${userError?.message || 'Invalid token'}`);
+    // Extract user ID from JWT token manually
+    const token = authHeader.replace('Bearer ', '');
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    const userId = payload.sub;
+
+    if (!userId) {
+      throw new Error('Invalid token - no user ID found');
     }
 
-    console.log(`✅ User authenticated: ${user.email}`);
-
-    // Use service role client for database operations
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    console.log(`✅ User ID extracted: ${userId}`);
 
     // Get user's first store
     const { data: stores, error: storeError } = await supabase
       .from('stores')
       .select('id, name')
-      .eq('owner_id', user.id)
+      .eq('owner_id', userId)
       .limit(1);
 
     if (storeError || !stores || stores.length === 0) {
@@ -65,8 +57,8 @@ serve(async (req) => {
     // Get user's push subscriptions
     const { data: subscriptions, error: subsError } = await supabase
       .from('push_subscriptions')
-      .select('id, endpoint, is_active, created_at')
-      .eq('user_id', user.id)
+      .select('*')
+      .eq('user_id', userId)
       .eq('is_active', true);
 
     if (subsError) {
@@ -75,17 +67,6 @@ serve(async (req) => {
     }
 
     console.log(`Found ${subscriptions?.length || 0} push subscriptions for user`);
-    
-    if (subscriptions && subscriptions.length > 0) {
-      subscriptions.forEach((sub, index) => {
-        console.log(`Subscription ${index + 1}: {
-  id: "${sub.id}",
-  endpoint: "${sub.endpoint.substring(0, 50)}...",
-  is_active: ${sub.is_active},
-  created_at: "${sub.created_at}"
-}`);
-      });
-    }
 
     if (!subscriptions || subscriptions.length === 0) {
       return new Response(
@@ -100,42 +81,70 @@ serve(async (req) => {
       );
     }
 
-    // Send test notification via send-push function
-    const testPayload = {
-      title: '🔔 Test Notification',
-      body: 'Your push notifications are working perfectly!',
-      icon: '/favicon.ico',
-      tag: 'test-notification',
-      data: {
-        type: 'test',
-        timestamp: new Date().toISOString(),
-        store_id: store.id
-      }
-    };
+    // Send test notification directly
+    const vapidPublicKey = Deno.env.get('VAPID_PUBLIC_KEY');
+    const vapidPrivateKey = Deno.env.get('VAPID_PRIVATE_KEY');
 
-    console.log('📤 Calling send-push function...');
-
-    const { data: pushResult, error: pushError } = await supabase.functions.invoke('send-push', {
-      body: {
-        storeId: store.id,
-        payload: testPayload
-      },
-      headers: {
-        Authorization: authHeader
-      }
-    });
-
-    if (pushError) {
-      console.error('❌ Error sending test push:', pushError);
-      throw new Error(`Failed to send test notification: ${pushError.message}`);
+    if (!vapidPublicKey || !vapidPrivateKey) {
+      throw new Error('VAPID keys not configured');
     }
 
-    console.log('✅ Test notification sent successfully');
+    let successCount = 0;
+    let errorCount = 0;
+
+    for (const subscription of subscriptions) {
+      try {
+        const notificationPayload = {
+          title: '🔔 Test Notification',
+          body: 'Your push notifications are working perfectly!',
+          icon: '/favicon.ico',
+          badge: '/favicon.ico',
+          tag: 'test-notification',
+          data: {
+            type: 'test',
+            timestamp: new Date().toISOString(),
+            store_id: store.id
+          }
+        };
+
+        const pushRequest = {
+          endpoint: subscription.endpoint,
+          keys: {
+            p256dh: subscription.p256dh,
+            auth: subscription.auth
+          }
+        };
+
+        // Use web-push library equivalent for Deno
+        const webPushUrl = 'https://deno.land/x/web_push@0.0.6/mod.ts';
+        const { sendNotification } = await import(webPushUrl);
+
+        const options = {
+          vapidDetails: {
+            subject: 'mailto:test@example.com',
+            publicKey: vapidPublicKey,
+            privateKey: vapidPrivateKey
+          }
+        };
+
+        await sendNotification(pushRequest, JSON.stringify(notificationPayload), options);
+        successCount++;
+        console.log(`✅ Notification sent to subscription ${subscription.id}`);
+
+      } catch (error) {
+        console.error(`❌ Failed to send to subscription ${subscription.id}:`, error);
+        errorCount++;
+      }
+    }
 
     return new Response(
       JSON.stringify({ 
-        message: 'Test notification sent successfully',
-        result: pushResult
+        message: 'Test notification completed',
+        summary: {
+          successful: successCount,
+          failed: errorCount,
+          total: subscriptions.length
+        }
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
