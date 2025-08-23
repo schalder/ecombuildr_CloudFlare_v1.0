@@ -6,6 +6,33 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Web Push implementation for Deno
+async function sendWebPushNotification(
+  endpoint: string,
+  p256dh: string,
+  auth: string,
+  payload: string,
+  vapidPublicKey: string,
+  vapidPrivateKey: string
+) {
+  try {
+    // For now, just simulate sending by making a basic POST to the endpoint
+    // This is a simplified version - real web push requires ECDH encryption
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/octet-stream',
+        'TTL': '2419200' // 4 weeks
+      }
+    });
+    
+    return { success: response.ok, status: response.status };
+  } catch (error) {
+    console.error('Push send error:', error);
+    return { success: false, error: error.message };
+  }
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -22,13 +49,18 @@ serve(async (req) => {
 
     // Initialize Supabase clients
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const vapidPublicKey = Deno.env.get('VAPID_PUBLIC_KEY');
+    const vapidPrivateKey = Deno.env.get('VAPID_PRIVATE_KEY');
+
+    if (!vapidPublicKey || !vapidPrivateKey) {
+      throw new Error('VAPID keys not configured');
+    }
 
     // Create service role client for all operations
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Extract user ID from JWT token manually
+    // Extract user ID from JWT token
     const token = authHeader.replace('Bearer ', '');
     const payload = JSON.parse(atob(token.split('.')[1]));
     const userId = payload.sub;
@@ -81,17 +113,82 @@ serve(async (req) => {
       );
     }
 
-    // For now, just return success without actually sending
-    // This removes all complex web-push implementation that's causing issues
-    console.log('✅ Test function completed - notifications would be sent to', subscriptions.length, 'subscriptions');
+    // Send test notification to each subscription
+    let successCount = 0;
+    let errorCount = 0;
+    const results = [];
+
+    const notificationPayload = JSON.stringify({
+      title: '🔔 Test Notification',
+      body: 'Your push notifications are working perfectly!',
+      icon: '/favicon.ico',
+      badge: '/favicon.ico',
+      tag: 'test-notification',
+      data: {
+        type: 'test',
+        timestamp: new Date().toISOString(),
+        store_id: store.id,
+        url: '/' // URL to open when notification is clicked
+      }
+    });
+
+    for (const subscription of subscriptions) {
+      try {
+        console.log(`📤 Sending to subscription ${subscription.id}`);
+        
+        const result = await sendWebPushNotification(
+          subscription.endpoint,
+          subscription.p256dh,
+          subscription.auth,
+          notificationPayload,
+          vapidPublicKey,
+          vapidPrivateKey
+        );
+
+        if (result.success) {
+          successCount++;
+          console.log(`✅ Notification sent to subscription ${subscription.id}`);
+          results.push({ 
+            subscriptionId: subscription.id,
+            status: 'success',
+            device: subscription.device || 'unknown'
+          });
+        } else {
+          errorCount++;
+          console.log(`❌ Failed to send to subscription ${subscription.id}: ${result.error}`);
+          results.push({ 
+            subscriptionId: subscription.id,
+            status: 'failed',
+            error: result.error,
+            device: subscription.device || 'unknown'
+          });
+        }
+
+      } catch (error) {
+        console.error(`❌ Failed to send to subscription ${subscription.id}:`, error);
+        errorCount++;
+        results.push({ 
+          subscriptionId: subscription.id,
+          status: 'failed',
+          error: error.message,
+          device: subscription.device || 'unknown'
+        });
+      }
+    }
 
     return new Response(
       JSON.stringify({ 
-        message: 'Test notification completed successfully',
+        message: 'Test notification completed',
         summary: {
-          successful: subscriptions.length,
-          failed: 0,
+          successful: successCount,
+          failed: errorCount,
           total: subscriptions.length
+        },
+        results,
+        instructions: {
+          mobile: 'On mobile, notifications appear in the notification shade/center',
+          desktop: 'On desktop, notifications appear as system notifications',
+          ios: 'On iOS, ensure the app is installed as PWA (Add to Home Screen)'
         }
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

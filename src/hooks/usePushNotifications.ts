@@ -201,21 +201,13 @@ export function usePushNotifications() {
       throw new Error('User must be logged in');
     }
 
-    // iOS specific blocking
+    // iOS specific blocking - must be PWA
     if (isIOSWithoutPWA) {
       throw new Error('On iOS, you must install this app to your Home Screen first to enable notifications');
     }
 
     setLoading(true);
     try {
-      // Check server health first and proceed only if healthy
-      if (!serverHealth || serverHealth.status !== 'healthy') {
-        // Try to refresh health status
-        await checkServerHealth();
-        // Wait a bit for the health check to complete
-        await new Promise(resolve => setTimeout(resolve, 1000));
-      }
-
       // Request permission first
       if (permission !== 'granted') {
         const newPermission = await Notification.requestPermission() as 'default' | 'granted' | 'denied';
@@ -226,7 +218,7 @@ export function usePushNotifications() {
         }
       }
 
-      // Get VAPID public key
+      // Get VAPID public key with validation
       const { data: vapidData, error: vapidError } = await supabase.functions.invoke('get-vapid-public-key');
       
       if (vapidError || !vapidData?.publicKey) {
@@ -234,6 +226,7 @@ export function usePushNotifications() {
         throw new Error('Failed to get server configuration for push notifications');
       }
 
+      console.log('✅ VAPID key received, length:', vapidData.publicKey.length);
       setVapidKeysFetched(true);
 
       // Register service worker and subscribe
@@ -241,12 +234,22 @@ export function usePushNotifications() {
       await registration.update();
       
       const vapidPublicKey = vapidData.publicKey;
-      const applicationServerKey = urlBase64ToUint8Array(vapidPublicKey);
+      
+      let applicationServerKey: Uint8Array;
+      try {
+        applicationServerKey = urlBase64ToUint8Array(vapidPublicKey);
+        console.log('✅ VAPID key converted successfully');
+      } catch (conversionError) {
+        console.error('❌ VAPID key conversion failed:', conversionError);
+        throw new Error(`Invalid VAPID key format: ${conversionError.message}`);
+      }
       
       const pushSubscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey
       });
+
+      console.log('✅ Push subscription created');
 
       // Extract subscription details
       const p256dh = arrayBufferToBase64(pushSubscription.getKey('p256dh'));
@@ -292,7 +295,7 @@ export function usePushNotifications() {
     } finally {
       setLoading(false);
     }
-  }, [isSupported, user, permission, toast, serverHealth, isIOSWithoutPWA]);
+  }, [isSupported, user, permission, toast, isIOSWithoutPWA]);
 
   const unsubscribe = useCallback(async () => {
     if (!user || !subscription) return false;
