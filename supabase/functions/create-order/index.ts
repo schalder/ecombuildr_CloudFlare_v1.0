@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
@@ -42,6 +43,38 @@ type OrderInput = {
 function generateOrderNumber() {
   const rand = Math.random().toString(36).slice(2, 6).toUpperCase();
   return `ORD-${Date.now()}-${rand}`;
+}
+
+async function sendPushNotification(storeId: string, order: any) {
+  try {
+    await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/send-push`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        storeId,
+        payload: {
+          title: '🎉 New Order Received!',
+          body: `Order #${order.order_number} from ${order.customer_name} - $${order.total}`,
+          icon: '/favicon.ico',
+          badge: '/favicon.ico',
+          tag: `order-${order.id}`,
+          data: {
+            orderId: order.id,
+            orderNumber: order.order_number,
+            customerName: order.customer_name,
+            total: order.total,
+            type: 'new_order',
+          },
+        },
+      }),
+    });
+  } catch (error) {
+    console.error('Failed to send push notification:', error);
+    // Don't fail the order creation if push notification fails
+  }
 }
 
 serve(async (req) => {
@@ -115,6 +148,9 @@ serve(async (req) => {
       console.error('create-order: insert items error', itemsError);
       return new Response(JSON.stringify({ success: false, error: itemsError.message || 'Failed to create order items' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
+
+    // 3) Send push notification (non-blocking)
+    sendPushNotification(storeId, createdOrder);
 
     return new Response(
       JSON.stringify({ success: true, order: createdOrder }),
