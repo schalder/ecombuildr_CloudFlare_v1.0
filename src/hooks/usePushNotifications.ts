@@ -13,7 +13,18 @@ export function usePushNotifications() {
 
   useEffect(() => {
     // Check if push notifications are supported
-    setIsSupported('serviceWorker' in navigator && 'PushManager' in window);
+    const isBasicSupported = 'serviceWorker' in navigator && 'PushManager' in window;
+    
+    // Enhanced detection for iOS PWA vs Safari browser
+    const isIOSPWA = (window.navigator as any).standalone === true;
+    const isIOSBrowser = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+    
+    // For iOS, only support in PWA mode (added to home screen)
+    if (isIOSBrowser && !isIOSPWA) {
+      setIsSupported(false);
+    } else {
+      setIsSupported(isBasicSupported);
+    }
     
     if ('Notification' in window) {
       setPermission(Notification.permission);
@@ -78,6 +89,18 @@ export function usePushNotifications() {
         throw new Error('Failed to get VAPID public key');
       }
 
+      // Convert VAPID key if needed (handle both base64 and Uint8Array formats)
+      let applicationServerKey: BufferSource;
+      if (typeof vapidResponse.publicKey === 'string') {
+        applicationServerKey = new Uint8Array(
+          atob(vapidResponse.publicKey.replace(/-/g, '+').replace(/_/g, '/'))
+            .split('')
+            .map(char => char.charCodeAt(0))
+        );
+      } else {
+        applicationServerKey = vapidResponse.publicKey;
+      }
+
       // Register service worker
       const registration = await navigator.serviceWorker.register('/sw.js');
       await navigator.serviceWorker.ready;
@@ -85,7 +108,7 @@ export function usePushNotifications() {
       // Subscribe to push notifications
       const pushSubscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: vapidResponse.publicKey,
+        applicationServerKey: applicationServerKey,
       });
 
       // Save subscription to database

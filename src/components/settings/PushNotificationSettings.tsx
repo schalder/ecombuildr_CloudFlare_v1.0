@@ -28,6 +28,10 @@ export const PushNotificationSettings: React.FC = () => {
     }
   };
 
+  // Detect if user is on iOS
+  const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+  const isIOSPWA = (window.navigator as any).standalone === true;
+
   if (!isSupported) {
     return (
       <Card>
@@ -44,7 +48,14 @@ export const PushNotificationSettings: React.FC = () => {
           <Alert>
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
-              Push notifications are not supported in this browser. Please use a modern browser like Chrome, Firefox, or Safari.
+              {isIOSDevice && !isIOSPWA ? (
+                <>
+                  Push notifications require this app to be installed. On iPhone/iPad: 
+                  tap the Share button <span className="font-mono">⬆️</span> and select "Add to Home Screen" to enable notifications.
+                </>
+              ) : (
+                'Push notifications are not supported in this browser. Please use a modern browser like Chrome, Firefox, or Safari.'
+              )}
             </AlertDescription>
           </Alert>
         </CardContent>
