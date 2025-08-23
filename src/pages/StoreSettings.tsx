@@ -7,13 +7,12 @@ import { useUserStore } from "@/hooks/useUserStore";
 import { EmailNotificationSettings } from "@/components/settings/EmailNotificationSettings";
 import ShippingIntegrations from "@/components/settings/ShippingIntegrations";
 import PaymentSettings from "@/components/settings/PaymentSettings";
-import { GeneralSettings } from "@/components/settings/GeneralSettings";
-import { Settings, Mail, CreditCard, Truck } from "lucide-react";
+import { Mail, CreditCard, Truck } from "lucide-react";
 
 export default function StoreSettings() {
   const { storeId } = useParams();
   const { store, loading, updateStore } = useUserStore();
-  const [activeTab, setActiveTab] = useState("general");
+  const [activeTab, setActiveTab] = useState("payment");
 
   if (loading) {
     return (
@@ -43,16 +42,12 @@ export default function StoreSettings() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Store Settings</h1>
           <p className="text-muted-foreground">
-            Configure your store settings and preferences for {store.name}
+            Configure store-level integrations and operational settings for {store.name}
           </p>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="general" className="flex items-center gap-2">
-              <Settings className="h-4 w-4" />
-              General
-            </TabsTrigger>
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="notifications" className="flex items-center gap-2">
               <Mail className="h-4 w-4" />
               Notifications
@@ -66,10 +61,6 @@ export default function StoreSettings() {
               Shipping
             </TabsTrigger>
           </TabsList>
-
-          <TabsContent value="general">
-            <GeneralSettings store={store} onUpdate={updateStore} />
-          </TabsContent>
 
           <TabsContent value="notifications">
             <EmailNotificationSettings storeId={storeId!} />
