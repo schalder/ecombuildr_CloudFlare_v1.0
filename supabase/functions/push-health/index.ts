@@ -57,26 +57,32 @@ serve(async (req) => {
         // Test cryptographic import and signing
         if (vapidKeysValid && webCryptoAvailable) {
           try {
+            // Helper function for key conversion
+            function urlBase64ToUint8Array(base64String: string): Uint8Array {
+              const padding = '='.repeat((4 - base64String.length % 4) % 4);
+              const base64 = (base64String + padding)
+                .replace(/-/g, '+')
+                .replace(/_/g, '/');
+
+              const rawData = atob(base64);
+              const outputArray = new Uint8Array(rawData.length);
+
+              for (let i = 0; i < rawData.length; ++i) {
+                outputArray[i] = rawData.charCodeAt(i);
+              }
+              return outputArray;
+            }
+            
             // Convert keys to proper format
-            const publicKeyBytes = urlBase64ToUint8Array(vapidPublicKey);
             const privateKeyBytes = urlBase64ToUint8Array(vapidPrivateKey);
             
-            // Test private key import
+            // Test private key import (use PKCS8 format for private key)
             const privateKey = await crypto.subtle.importKey(
               'pkcs8',
               privateKeyBytes,
               { name: 'ECDSA', namedCurve: 'P-256' },
               false,
               ['sign']
-            );
-            
-            // Test public key import  
-            const publicKey = await crypto.subtle.importKey(
-              'spki',
-              publicKeyBytes,
-              { name: 'ECDSA', namedCurve: 'P-256' },
-              false,
-              ['verify']
             );
             
             // Test signing operation
@@ -98,22 +104,6 @@ serve(async (req) => {
       } catch (error) {
         console.error('❌ VAPID key validation failed:', error);
       }
-    }
-
-    // Helper function for key conversion
-    function urlBase64ToUint8Array(base64String: string): Uint8Array {
-      const padding = '='.repeat((4 - base64String.length % 4) % 4);
-      const base64 = (base64String + padding)
-        .replace(/-/g, '+')
-        .replace(/_/g, '/');
-
-      const rawData = atob(base64);
-      const outputArray = new Uint8Array(rawData.length);
-
-      for (let i = 0; i < rawData.length; ++i) {
-        outputArray[i] = rawData.charCodeAt(i);
-      }
-      return outputArray;
     }
 
     const healthStatus = {

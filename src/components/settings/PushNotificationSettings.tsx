@@ -127,8 +127,11 @@ export const PushNotificationSettings = () => {
     );
   }
 
+  // Check if permission is denied for better type safety
+  const isPermissionDenied = permission === 'denied';
+
   // Permission denied - show help
-  if (permission === 'denied') {
+  if (isPermissionDenied) {
     return (
       <Card>
         <CardHeader>
@@ -191,7 +194,7 @@ export const PushNotificationSettings = () => {
               <p className="text-sm text-muted-foreground">
                 {isSubscribed 
                   ? "You'll receive notifications about orders and updates"
-                  : permission === 'denied'
+                  : isPermissionDenied
                   ? "Notifications are blocked. Please enable them in your browser settings."
                   : diagnostics?.isIOSWithoutPWA
                   ? "Install the app to your Home Screen first to enable notifications"
@@ -224,7 +227,7 @@ export const PushNotificationSettings = () => {
               ) : (
                 <Button
                   onClick={handleSubscribe}
-                  disabled={loading || permission === 'denied' || diagnostics?.isIOSWithoutPWA}
+                  disabled={loading || isPermissionDenied || diagnostics?.isIOSWithoutPWA}
                   size="sm"
                 >
                   <Bell className="h-4 w-4 mr-1" />
@@ -271,7 +274,7 @@ export const PushNotificationSettings = () => {
                     </div>
                     <div className="flex items-center justify-between">
                       <span>Permission</span>
-                      <Badge variant={permission === 'granted' ? 'default' : permission === 'denied' ? 'destructive' : 'secondary'}>
+                      <Badge variant={permission === 'granted' ? 'default' : isPermissionDenied ? 'destructive' : 'secondary'}>
                         {permission}
                       </Badge>
                     </div>
