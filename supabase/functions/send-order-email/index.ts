@@ -328,7 +328,7 @@ serve(async (req) => {
         </div>
 
         <div style="text-align: center; margin: 30px 0;">
-          <a href="https://app.lovable.dev/dashboard/orders" 
+          <a href="https://ecombuildr.com/dashboard/orders" 
              style="background-color: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
             View Order in Dashboard
           </a>
