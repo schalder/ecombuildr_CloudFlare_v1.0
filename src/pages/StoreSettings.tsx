@@ -4,13 +4,13 @@ import { useParams } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { useStoreData } from "@/hooks/useStoreData";
+import { useUserStore } from "@/hooks/useUserStore";
 import { EmailNotificationSettings } from "@/components/settings/EmailNotificationSettings";
 import { Settings, Mail, CreditCard, Truck, Globe } from "lucide-react";
 
 export default function StoreSettings() {
   const { storeId } = useParams();
-  const { store, loading } = useStoreData(storeId);
+  const { store, loading } = useUserStore();
   const [activeTab, setActiveTab] = useState("general");
 
   if (loading) {

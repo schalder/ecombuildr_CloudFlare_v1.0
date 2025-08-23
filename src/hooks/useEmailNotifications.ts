@@ -34,9 +34,9 @@ export function useEmailNotifications(storeId?: string) {
 
       if (error) throw error;
 
-      const emailSettings = store?.settings?.email_notifications;
-      if (emailSettings) {
-        setSettings(emailSettings);
+      const emailSettings = store?.settings as any;
+      if (emailSettings?.email_notifications) {
+        setSettings(emailSettings.email_notifications);
       }
     } catch (error) {
       console.error('Error fetching email notification settings:', error);
