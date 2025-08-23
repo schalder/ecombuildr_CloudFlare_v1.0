@@ -475,7 +475,32 @@ function generateElementStyles(styles: any): string {
   if (styles.borderRadius) cssProps.push(`border-radius: ${styles.borderRadius}`);
   if (styles.width) cssProps.push(`width: ${styles.width}`);
   if (styles.height) cssProps.push(`height: ${styles.height}`);
-  if (styles.backgroundImage) cssProps.push(`background-image: url(${styles.backgroundImage})`);
+  
+  // Handle background image with proper positioning based on mode
+  if (styles.backgroundImage) {
+    const mode = styles.backgroundImageMode || 'full-center';
+    cssProps.push(`background-image: url(${styles.backgroundImage})`);
+    
+    switch (mode) {
+      case 'full-center':
+        cssProps.push('background-size: cover', 'background-position: center', 'background-repeat: no-repeat');
+        break;
+      case 'parallax':
+        cssProps.push('background-size: cover', 'background-position: center', 'background-repeat: no-repeat', 'background-attachment: fixed');
+        break;
+      case 'fill-width':
+        cssProps.push('background-size: 100% auto', 'background-position: center top', 'background-repeat: no-repeat');
+        break;
+      case 'no-repeat':
+        cssProps.push('background-size: auto', 'background-position: center', 'background-repeat: no-repeat');
+        break;
+      case 'repeat':
+        cssProps.push('background-size: auto', 'background-position: center', 'background-repeat: repeat');
+        break;
+      default:
+        cssProps.push('background-size: cover', 'background-position: center', 'background-repeat: no-repeat');
+    }
+  }
   
   return cssProps.join('; ');
 }

@@ -86,9 +86,9 @@ export const renderSectionStyles = (section: PageBuilderSection, deviceType: 'de
       Object.assign(styles, imageProps);
     }
     
-    // Apply combined background
+    // Apply combined background using individual properties to avoid conflicts
     if (backgroundLayers.length > 0) {
-      styles.background = backgroundLayers.join(', ');
+      styles.backgroundImage = backgroundLayers.join(', ');
     }
     
     // Box shadow styles
@@ -193,9 +193,9 @@ export const renderRowStyles = (row: PageBuilderRow, deviceType: 'desktop' | 'ta
       Object.assign(styles, imageProps);
     }
     
-    // Apply combined background
+    // Apply combined background using individual properties to avoid conflicts
     if (backgroundLayers.length > 0) {
-      styles.background = backgroundLayers.join(', ');
+      styles.backgroundImage = backgroundLayers.join(', ');
     }
     
     // Box shadow styles
@@ -291,9 +291,9 @@ export const renderColumnStyles = (column: PageBuilderColumn, deviceType: 'deskt
       Object.assign(styles, imageProps);
     }
     
-    // Apply combined background
+    // Apply combined background using individual properties to avoid conflicts
     if (backgroundLayers.length > 0) {
-      styles.background = backgroundLayers.join(', ');
+      styles.backgroundImage = backgroundLayers.join(', ');
     }
     
     // Box shadow styles
