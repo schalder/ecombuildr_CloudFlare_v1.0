@@ -147,7 +147,7 @@ async function sendWebPushNotification(
   const endpointHost = new URL(subscription.endpoint).hostname;
   
   try {
-    console.log(`Sending notification to ${endpointHost} (subscription: ${subscription.id})`);
+    console.log(`📨 Sending notification to ${endpointHost} (subscription: ${subscription.id})`);
     
     // Prepare payload
     const payloadString = JSON.stringify(payload);
@@ -157,11 +157,16 @@ async function sendWebPushNotification(
     // Encrypt payload
     const { ciphertext, salt, publicKey } = await encryptPayload(payloadString, userPublicKey, userAuth);
     
-    // Generate VAPID JWT
-    const vapidPrivateKeyBytes = base64UrlDecode(vapidPrivateKey);
+    // Import VAPID private key as JWK for ECDSA signing
+    console.log(`🔑 Importing VAPID private key for ${endpointHost}`);
+    
+    // Decode the base64url private key
+    const privateKeyBytes = base64UrlDecode(vapidPrivateKey);
+    
+    // Import as JWK format for proper ECDSA usage
     const vapidKey = await crypto.subtle.importKey(
-      'raw',
-      vapidPrivateKeyBytes,
+      'pkcs8',
+      privateKeyBytes,
       { name: 'ECDSA', namedCurve: 'P-256' },
       false,
       ['sign']
