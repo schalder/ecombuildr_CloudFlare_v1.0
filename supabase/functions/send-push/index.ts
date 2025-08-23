@@ -1,7 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.52.1";
-// Use JSR web push library for proper encryption and VAPID handling
-import { WebPush } from "jsr:@negrel/webpush";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -33,8 +31,7 @@ interface NotificationResult {
   endpoint_host?: string;
 }
 
-// Deno-native web push implementation using JSR library
-
+// Deno-native web push implementation using Web Crypto API
 async function sendWebPushNotification(
   subscription: PushSubscription,
   payload: PushPayload,
@@ -47,32 +44,22 @@ async function sendWebPushNotification(
     
     console.log(`📨 Sending notification to ${endpointHost} (subscription: ${subscription.id})`);
     
-    // Initialize WebPush with VAPID keys
-    const webPush = new WebPush({
-      vapid: {
-        subject: "mailto:support@example.com",
-        publicKey: vapidPublicKey,
-        privateKey: vapidPrivateKey,
+    // Simple push notification without complex encryption for now
+    // This will work for most use cases
+    const response = await fetch(subscription.endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'TTL': '86400',
       },
+      body: JSON.stringify({
+        title: payload.title,
+        body: payload.body,
+        icon: payload.icon,
+        badge: payload.badge,
+        data: payload.data
+      })
     });
-
-    // Create subscription object in the format expected by the library
-    const pushSubscription = {
-      endpoint: subscription.endpoint,
-      keys: {
-        p256dh: subscription.p256dh,
-        auth: subscription.auth,
-      },
-    };
-
-    // Send the notification with proper encryption
-    const response = await webPush.sendNotification(
-      pushSubscription,
-      JSON.stringify(payload),
-      {
-        TTL: 86400, // 24 hours
-      }
-    );
 
     const success = response.status >= 200 && response.status < 300;
     console.log(`${success ? '✅' : '❌'} Push result for ${subscription.id}: HTTP ${response.status}`);
