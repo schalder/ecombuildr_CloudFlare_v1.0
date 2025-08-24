@@ -155,6 +155,9 @@ export const AccordionElementStyles: React.FC<AccordionElementStylesProps> = ({
   const [device, setDevice] = React.useState<'desktop' | 'mobile'>('desktop');
   const [isTitleTypographyOpen, setIsTitleTypographyOpen] = React.useState(true);
   const [isDescriptionTypographyOpen, setIsDescriptionTypographyOpen] = React.useState(true);
+  const [isBackgroundOpen, setIsBackgroundOpen] = React.useState(false);
+  const [isBorderOpen, setIsBorderOpen] = React.useState(false);
+  const [isSpacingOpen, setIsSpacingOpen] = React.useState(false);
   
   const styles = element.styles || {};
 
@@ -169,6 +172,30 @@ export const AccordionElementStyles: React.FC<AccordionElementStylesProps> = ({
     base.responsive[device] = { ...(base.responsive[device] || {}), ...patch };
     onStyleUpdate('titleStyles', base);
   };
+
+  const handleResponsiveUpdate = (property: string, value: any) => {
+    const responsiveStyles = element.styles?.responsive || { desktop: {}, mobile: {} };
+    const updatedResponsive = {
+      ...responsiveStyles,
+      [device]: {
+        ...responsiveStyles[device],
+        [property]: value,
+      },
+    };
+    onStyleUpdate('responsive', updatedResponsive);
+  };
+
+  const parsePixelValue = (value: string | undefined): number => {
+    if (!value) return 0;
+    return parseInt(value.replace('px', '')) || 0;
+  };
+
+  const handleSpacingSliderChange = (property: string, value: number) => {
+    handleResponsiveUpdate(property, `${value}px`);
+  };
+
+  const responsiveStyles = element.styles?.responsive || { desktop: {}, mobile: {} };
+  const currentStyles = (responsiveStyles as any)[device] || {};
 
   const updateDescriptionStyles = (patch: Record<string, any>) => {
     const base = ensureResponsive((styles as any).descriptionStyles);
@@ -223,6 +250,183 @@ export const AccordionElementStyles: React.FC<AccordionElementStylesProps> = ({
           styles={getDescriptionStyles()} 
           onChange={updateDescriptionStyles} 
         />
+      </CollapsibleGroup>
+
+      {/* Background Section */}
+      <CollapsibleGroup
+        title="Background"
+        isOpen={isBackgroundOpen}
+        onToggle={setIsBackgroundOpen}
+      >
+        <ColorPicker 
+          label="Background Color"
+          color={(currentStyles.backgroundColor || element.styles?.backgroundColor) || ''}
+          onChange={(val) => handleResponsiveUpdate('backgroundColor', val)}
+        />
+      </CollapsibleGroup>
+
+      {/* Border Section */}
+      <CollapsibleGroup
+        title="Border"
+        isOpen={isBorderOpen}
+        onToggle={setIsBorderOpen}
+      >
+        <div className="space-y-3">
+          <div>
+            <Label className="text-xs">Border Width</Label>
+            <input
+              type="text"
+              className="w-full h-8 px-3 border rounded bg-background text-sm"
+              value={(currentStyles.borderWidth || element.styles?.borderWidth) || ''}
+              onChange={(e) => handleResponsiveUpdate('borderWidth', e.target.value)}
+              placeholder="e.g., 1px"
+            />
+          </div>
+
+          <ColorPicker 
+            label="Border Color"
+            color={(currentStyles.borderColor || element.styles?.borderColor) || ''}
+            onChange={(val) => handleResponsiveUpdate('borderColor', val)}
+          />
+
+          <div>
+            <Label className="text-xs">Border Radius</Label>
+            <input
+              type="text"
+              className="w-full h-8 px-3 border rounded bg-background text-sm"
+              value={(currentStyles.borderRadius || element.styles?.borderRadius) || ''}
+              onChange={(e) => handleResponsiveUpdate('borderRadius', e.target.value)}
+              placeholder="e.g., 4px"
+            />
+          </div>
+        </div>
+      </CollapsibleGroup>
+
+      {/* Spacing Section */}
+      <CollapsibleGroup
+        title="Spacing"
+        isOpen={isSpacingOpen}
+        onToggle={setIsSpacingOpen}
+      >
+        <div className="space-y-4">
+          {/* Margin */}
+          <div>
+            <Label className="text-xs font-medium mb-2 block">Margin</Label>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs">Top</Label>
+                  <span className="text-xs text-muted-foreground">{parsePixelValue(currentStyles.marginTop || element.styles?.marginTop)}px</span>
+                </div>
+                <Slider
+                  value={[parsePixelValue(currentStyles.marginTop || element.styles?.marginTop)]}
+                  onValueChange={(value) => handleSpacingSliderChange('marginTop', value[0])}
+                  max={200}
+                  step={1}
+                  className="w-full"
+                />
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs">Right</Label>
+                  <span className="text-xs text-muted-foreground">{parsePixelValue(currentStyles.marginRight || element.styles?.marginRight)}px</span>
+                </div>
+                <Slider
+                  value={[parsePixelValue(currentStyles.marginRight || element.styles?.marginRight)]}
+                  onValueChange={(value) => handleSpacingSliderChange('marginRight', value[0])}
+                  max={200}
+                  step={1}
+                  className="w-full"
+                />
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs">Bottom</Label>
+                  <span className="text-xs text-muted-foreground">{parsePixelValue(currentStyles.marginBottom || element.styles?.marginBottom)}px</span>
+                </div>
+                <Slider
+                  value={[parsePixelValue(currentStyles.marginBottom || element.styles?.marginBottom)]}
+                  onValueChange={(value) => handleSpacingSliderChange('marginBottom', value[0])}
+                  max={200}
+                  step={1}
+                  className="w-full"
+                />
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs">Left</Label>
+                  <span className="text-xs text-muted-foreground">{parsePixelValue(currentStyles.marginLeft || element.styles?.marginLeft)}px</span>
+                </div>
+                <Slider
+                  value={[parsePixelValue(currentStyles.marginLeft || element.styles?.marginLeft)]}
+                  onValueChange={(value) => handleSpacingSliderChange('marginLeft', value[0])}
+                  max={200}
+                  step={1}
+                  className="w-full"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Padding */}
+          <div>
+            <Label className="text-xs font-medium mb-2 block">Padding</Label>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs">Top</Label>
+                  <span className="text-xs text-muted-foreground">{parsePixelValue(currentStyles.paddingTop || element.styles?.paddingTop)}px</span>
+                </div>
+                <Slider
+                  value={[parsePixelValue(currentStyles.paddingTop || element.styles?.paddingTop)]}
+                  onValueChange={(value) => handleSpacingSliderChange('paddingTop', value[0])}
+                  max={200}
+                  step={1}
+                  className="w-full"
+                />
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs">Right</Label>
+                  <span className="text-xs text-muted-foreground">{parsePixelValue(currentStyles.paddingRight || element.styles?.paddingRight)}px</span>
+                </div>
+                <Slider
+                  value={[parsePixelValue(currentStyles.paddingRight || element.styles?.paddingRight)]}
+                  onValueChange={(value) => handleSpacingSliderChange('paddingRight', value[0])}
+                  max={200}
+                  step={1}
+                  className="w-full"
+                />
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs">Bottom</Label>
+                  <span className="text-xs text-muted-foreground">{parsePixelValue(currentStyles.paddingBottom || element.styles?.paddingBottom)}px</span>
+                </div>
+                <Slider
+                  value={[parsePixelValue(currentStyles.paddingBottom || element.styles?.paddingBottom)]}
+                  onValueChange={(value) => handleSpacingSliderChange('paddingBottom', value[0])}
+                  max={200}
+                  step={1}
+                  className="w-full"
+                />
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs">Left</Label>
+                  <span className="text-xs text-muted-foreground">{parsePixelValue(currentStyles.paddingLeft || element.styles?.paddingLeft)}px</span>
+                </div>
+                <Slider
+                  value={[parsePixelValue(currentStyles.paddingLeft || element.styles?.paddingLeft)]}
+                  onValueChange={(value) => handleSpacingSliderChange('paddingLeft', value[0])}
+                  max={200}
+                  step={1}
+                  className="w-full"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
       </CollapsibleGroup>
     </div>
   );
