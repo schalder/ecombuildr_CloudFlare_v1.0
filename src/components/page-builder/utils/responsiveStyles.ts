@@ -65,26 +65,29 @@ function kebabCase(str: string): string {
 }
 
 export function mergeResponsiveStyles(baseStyles: any, elementStyles: any, deviceType: 'desktop' | 'tablet' | 'mobile' = 'desktop'): any {
-  // If elementStyles has responsive overrides, merge them
-  if (elementStyles?.responsive) {
-    const key = deviceType === 'mobile' ? 'mobile' : 'desktop';
-    const deviceStyles = elementStyles.responsive[key] || {};
+  // Start with base styles
+  let mergedStyles = { ...baseStyles };
+  
+  // Merge element styles (non-responsive defaults)
+  if (elementStyles) {
+    const { responsive, ...nonResponsiveStyles } = elementStyles;
+    mergedStyles = { ...mergedStyles, ...nonResponsiveStyles };
     
-    // Filter out undefined values from deviceStyles to prevent overwriting base values
-    const cleanDeviceStyles = Object.fromEntries(
-      Object.entries(deviceStyles).filter(([_, value]) => value !== undefined)
-    );
-    
-    return {
-      ...elementStyles,
-      ...baseStyles,
-      ...cleanDeviceStyles
-    };
+    // If elementStyles has responsive overrides, merge them
+    if (responsive) {
+      const key = deviceType === 'mobile' ? 'mobile' : 'desktop';
+      const deviceStyles = responsive[key] || {};
+      
+      // Deep merge: only override with explicitly defined values
+      const cleanDeviceStyles = Object.fromEntries(
+        Object.entries(deviceStyles).filter(([_, value]) => 
+          value !== undefined && value !== null && value !== ''
+        )
+      );
+      
+      mergedStyles = { ...mergedStyles, ...cleanDeviceStyles };
+    }
   }
   
-  // Fallback: merge elementStyles directly with baseStyles
-  return {
-    ...baseStyles,
-    ...elementStyles
-  };
+  return mergedStyles;
 }
