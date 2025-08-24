@@ -617,11 +617,27 @@ export const PriceContentProperties: React.FC<EcommerceContentPropertiesProps> =
       </div>
 
       <div>
+        <Label className="text-xs">Button Mode</Label>
+        <Select
+          value={element.content.ctaBehavior || 'add_to_cart'}
+          onValueChange={(value) => onUpdate('ctaBehavior', value)}
+        >
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="add_to_cart">Add to Cart</SelectItem>
+            <SelectItem value="buy_now">Buy Now</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div>
         <Label className="text-xs">Call to Action Text</Label>
         <Input
           value={element.content.ctaText || ''}
           onChange={(e) => onUpdate('ctaText', e.target.value)}
-          placeholder="Buy Now"
+          placeholder={element.content.ctaBehavior === 'buy_now' ? 'Buy Now' : 'Add to Cart'}
         />
       </div>
 

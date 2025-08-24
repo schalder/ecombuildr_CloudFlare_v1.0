@@ -6,8 +6,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useStoreProducts, useStoreCategories, useProductById } from '@/hooks/useStoreData';
-import { useCart } from '@/contexts/CartContext';
-import { useToast } from '@/hooks/use-toast';
 import { useStore } from '@/contexts/StoreContext';
 import { useUserStore } from '@/hooks/useUserStore';
 import { useEcomPaths } from '@/lib/pathResolver';
@@ -27,10 +25,10 @@ const ProductGridElement: React.FC<{
   columnCount?: number;
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
 }> = ({ element, isEditing = false, deviceType = 'desktop', columnCount = 1 }) => {
-  const { addItem, clearCart } = useCart();
+  const { addToCart: addToCartProvider } = useAddToCart();
   const { store } = useStore();
   const paths = useEcomPaths();
-  const { addToCart: addToCartCentral, openQuickView } = useAddToCart();
+  const { openQuickView } = useAddToCart();
   const ctaBehavior: 'add_to_cart' | 'buy_now' = element.content.ctaBehavior || 'add_to_cart';
   
   // Resolve websiteId for filtering
@@ -85,14 +83,8 @@ const ProductGridElement: React.FC<{
   const { reviewStats } = useProductReviewStats(productIds);
 
   const handleAddToCart = (product: any) => {
-    if (ctaBehavior === 'buy_now' && store?.slug && !isEditing) {
-      // For buy now, use centralized system but navigate to checkout
-      addToCartCentral(product, 1, true);
-      return;
-    }
-
-    // Use centralized add to cart system
-    addToCartCentral(product);
+    const isBuyNow = ctaBehavior === 'buy_now';
+    addToCartProvider(product, 1, isBuyNow);
   };
 
 
@@ -221,10 +213,10 @@ const FeaturedProductsElement: React.FC<{
   columnCount?: number;
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
 }> = ({ element, isEditing = false, deviceType = 'desktop', columnCount = 1 }) => {
-  const { addItem, clearCart } = useCart();
+  const { addToCart: addToCartProvider } = useAddToCart();
   const { store } = useStore();
   const paths = useEcomPaths();
-  const { addToCart: addToCartCentral } = useAddToCart();
+  
   const ctaBehavior: 'add_to_cart' | 'buy_now' = element.content.ctaBehavior || 'add_to_cart';
   
   // Resolve websiteId for filtering
@@ -244,11 +236,8 @@ const FeaturedProductsElement: React.FC<{
   const { product, loading } = useProductById(productId);
 
   const handleAddToCartGeneric = (p: any) => {
-    if (ctaBehavior === 'buy_now' && store?.slug && !isEditing) {
-      addToCartCentral(p, 1, true);
-      return;
-    }
-    addToCartCentral(p);
+    const isBuyNow = ctaBehavior === 'buy_now';
+    addToCartProvider(p, 1, isBuyNow);
   };
 
   const buttonStyles = React.useMemo(() => {
@@ -991,13 +980,13 @@ const PriceElement: React.FC<{
   columnCount?: number;
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
 }> = ({ element, deviceType = 'desktop', columnCount = 1 }) => {
-  const { addItem } = useCart();
-  const { toast } = useToast();
+  const { addToCart } = useAddToCart();
   
   const productId = element.content.productId;
   const showComparePrice = element.content.showComparePrice !== false;
   const showDiscount = element.content.showDiscount !== false;
-  const ctaText = element.content.ctaText || 'Buy Now';
+  const ctaBehavior = element.content.ctaBehavior || 'add_to_cart';
+  const ctaText = element.content.ctaText || (ctaBehavior === 'buy_now' ? 'Buy Now' : 'Add to Cart');
   const elementLayout = (element.styles as any)?.layout || element.content.layout || 'horizontal';
   
   const { product, loading } = useProductById(productId);
@@ -1091,22 +1080,11 @@ const PriceElement: React.FC<{
     return { variant, size, className };
   };
 
-  const handleAddToCart = () => {
+  const handleButtonClick = () => {
     if (!product) return;
     
-    addItem({
-      id: `cart-${product.id}`,
-      productId: product.id,
-      name: product.name,
-      price: product.price,
-      image: Array.isArray(product.images) ? product.images[0] : product.images,
-      sku: product.sku
-    });
-    
-    toast({
-      title: "Added to cart",
-      description: `${product.name} has been added to your cart.`,
-    });
+    const isBuyNow = ctaBehavior === 'buy_now';
+    addToCart(product, 1, isBuyNow);
   };
 
   if (loading) {
@@ -1168,7 +1146,7 @@ const PriceElement: React.FC<{
         
         {/* Button Section */}
         <Button 
-          onClick={handleAddToCart}
+          onClick={handleButtonClick}
           variant={buttonProps.variant}
           size={buttonProps.size}
           className={buttonProps.className}
@@ -1299,7 +1277,8 @@ export const registerEcommerceElements = () => {
       productId: '',
       showComparePrice: true,
       showDiscount: true,
-      ctaText: 'Buy Now',
+      ctaText: 'Add to Cart',
+      ctaBehavior: 'add_to_cart',
       layout: 'horizontal'
     },
     description: 'Display product price with buy button'
