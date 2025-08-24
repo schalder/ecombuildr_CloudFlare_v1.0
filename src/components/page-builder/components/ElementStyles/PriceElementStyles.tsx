@@ -263,6 +263,13 @@ export const PriceElementStyles: React.FC<PriceElementStylesProps> = ({
                   onChange={(color) => onStyleUpdate('buttonHoverBackground', color)}
                 />
               </div>
+              <div>
+                <Label className="text-xs">Button Hover Text Color</Label>
+                <ColorPicker
+                  color={(styles as any).buttonHoverTextColor || '#ffffff'}
+                  onChange={(color) => onStyleUpdate('buttonHoverTextColor', color)}
+                />
+              </div>
             </>
           )}
 
