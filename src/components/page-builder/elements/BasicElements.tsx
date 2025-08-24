@@ -646,10 +646,15 @@ const DividerElement: React.FC<{
     marginRight,
   };
 
+  // Remove background styles for the wrapper - dividers should be transparent
+  const { backgroundColor, background, ...wrapperStylesWithoutBg } = elementStyles;
+  
   const wrapperStyle = {
-    ...elementStyles,
+    ...wrapperStylesWithoutBg,
     marginTop: verticalMargin,
     marginBottom: verticalMargin,
+    backgroundColor: 'transparent',
+    background: 'transparent',
   };
 
   if (isEditing) {
