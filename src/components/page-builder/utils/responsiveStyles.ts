@@ -86,8 +86,8 @@ export function mergeResponsiveStyles(baseStyles: any, elementStyles: any, devic
     
     // If elementStyles has responsive overrides, merge them
     if (responsive) {
-      const key = deviceType === 'mobile' ? 'mobile' : 'desktop';
-      const deviceStyles = responsive[key] || {};
+      // Use the exact deviceType as the key - this allows tablet, mobile, and desktop overrides
+      const deviceStyles = responsive[deviceType] || {};
       
       // Deep merge: only override with explicitly defined values
       const cleanDeviceStyles = Object.fromEntries(
