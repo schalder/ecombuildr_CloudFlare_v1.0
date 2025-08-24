@@ -28,10 +28,31 @@ export function buildBackgroundStyles(config: BackgroundConfig): React.CSSProper
   const deviceKey = deviceType === 'mobile' ? 'mobile' : 'desktop';
   const deviceOverrides = responsive?.[deviceKey] || {};
   
-  // Merge with device-specific overrides
+  // Helper function to extract actual color value (handles both string and object formats)
+  const extractColorValue = (colorData: any): string | undefined => {
+    if (typeof colorData === 'string') return colorData;
+    if (colorData && typeof colorData === 'object') {
+      // Handle {_type: "undefined", value: "undefined"} or {value: "#000000"} formats
+      if (colorData.value && colorData.value !== 'undefined') return colorData.value;
+      if (colorData.color) return colorData.color;
+    }
+    return undefined;
+  };
+  
+  // Helper function to extract gradient value (handles both string and object formats)
+  const extractGradientValue = (gradientData: any): string | undefined => {
+    if (typeof gradientData === 'string') return gradientData;
+    if (gradientData && typeof gradientData === 'object') {
+      if (gradientData.value && gradientData.value !== 'undefined') return gradientData.value;
+      if (gradientData.gradient) return gradientData.gradient;
+    }
+    return undefined;
+  };
+  
+  // Merge with device-specific overrides, handling object formats
   const finalImage = deviceOverrides.backgroundImage ?? backgroundImage;
-  const finalColor = deviceOverrides.backgroundColor ?? backgroundColor;
-  const finalGradient = deviceOverrides.backgroundGradient ?? backgroundGradient;
+  const finalColor = extractColorValue(deviceOverrides.backgroundColor) ?? extractColorValue(backgroundColor);
+  const finalGradient = extractGradientValue(deviceOverrides.backgroundGradient) ?? extractGradientValue(backgroundGradient);
   const finalOpacity = deviceOverrides.backgroundOpacity ?? backgroundOpacity;
   const finalMode = deviceOverrides.backgroundImageMode ?? backgroundImageMode;
 
