@@ -1107,7 +1107,7 @@ const ElementorPageBuilderContent: React.FC<ElementorPageBuilderProps> = memo(({
           {/* Canvas Area */}
           <ScrollArea scrollbarType="always" className="flex-1 min-h-0 bg-muted/30">
             <div className="p-8">
-              <div style={{ ...getDevicePreviewStyles(), ...getPageStyles() }} className="min-h-full bg-background rounded-lg shadow-sm">
+              <div style={{ ...getDevicePreviewStyles(), ...getPageStyles() }} className={`min-h-full bg-background rounded-lg shadow-sm pb-${deviceType}`}>
                 {data.sections.length === 0 ? (
                   <div className="p-16 text-center">
                     <h3 className="text-lg font-medium mb-2">Start Building Your Page</h3>
