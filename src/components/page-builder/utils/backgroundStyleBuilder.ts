@@ -24,14 +24,6 @@ export function buildBackgroundStyles(config: BackgroundConfig): React.CSSProper
     deviceType = 'desktop'
   } = config;
 
-  console.log('🎨 DEBUGGING Background Input:', {
-    backgroundImage,
-    backgroundColor,
-    backgroundGradient,
-    backgroundOpacity,
-    backgroundImageMode,
-    deviceType
-  });
   const deviceKey = deviceType === 'mobile' ? 'mobile' : 'desktop';
   const deviceOverrides = responsive?.[deviceKey] || {};
   
@@ -63,14 +55,6 @@ export function buildBackgroundStyles(config: BackgroundConfig): React.CSSProper
   const finalOpacity = deviceOverrides.backgroundOpacity ?? backgroundOpacity;
   const finalMode = deviceOverrides.backgroundImageMode ?? backgroundImageMode;
 
-  console.log('🔍 DEBUGGING Extracted Values:', {
-    finalColor,
-    finalGradient,
-    finalOpacity,
-    'typeof finalColor': typeof finalColor,
-    'typeof finalGradient': typeof finalGradient
-  });
-
   const styles: React.CSSProperties = {};
 
   // Check if we have a valid overlay (color or gradient)
@@ -80,14 +64,13 @@ export function buildBackgroundStyles(config: BackgroundConfig): React.CSSProper
   // Check if we have a valid image
   const hasValidImage = finalImage && finalImage.trim() !== '';
 
-  console.log('🎯 DEBUGGING Validation:', {
-    hasValidOverlay,
-    hasValidImage,
-    'finalGradient exists': !!(finalGradient && finalGradient.trim() !== ''),
-    'finalColor exists': !!(finalColor && finalColor !== 'transparent' && finalColor.trim() !== '')
-  });
+  // If we only have a color overlay and no image/gradient, use backgroundColor directly
+  if (!hasValidImage && !finalGradient && finalColor && finalColor !== 'transparent' && finalColor.trim() !== '') {
+    styles.backgroundColor = applyColorOpacity(finalColor, finalOpacity);
+    return styles;
+  }
 
-  // Build layered backgrounds
+  // Build layered backgrounds for complex scenarios
   const backgroundLayers: string[] = [];
   const backgroundSizes: string[] = [];
   const backgroundPositions: string[] = [];
@@ -96,20 +79,12 @@ export function buildBackgroundStyles(config: BackgroundConfig): React.CSSProper
 
   // Layer 1: Overlay (if exists)
   if (hasValidOverlay) {
-    console.log('🎨 DEBUGGING Overlay Processing:', {
-      'finalGradient exists': !!(finalGradient && finalGradient.trim() !== ''),
-      'finalColor exists': !!(finalColor && finalColor !== 'transparent' && finalColor.trim() !== ''),
-      finalGradient,
-      finalColor,
-      finalOpacity
-    });
-    
     if (finalGradient && finalGradient.trim() !== '') {
-      console.log('✅ Using gradient for overlay');
       backgroundLayers.push(applyGradientOpacity(finalGradient, finalOpacity));
     } else if (finalColor && finalColor !== 'transparent' && finalColor.trim() !== '') {
-      console.log('✅ Using color for overlay');
-      backgroundLayers.push(applyColorOpacity(finalColor, finalOpacity));
+      // Convert solid color to gradient for proper layering
+      const colorWithOpacity = applyColorOpacity(finalColor, finalOpacity);
+      backgroundLayers.push(`linear-gradient(${colorWithOpacity}, ${colorWithOpacity})`);
     }
     backgroundSizes.push('100% 100%');
     backgroundPositions.push('0 0');
@@ -170,8 +145,6 @@ export function buildBackgroundStyles(config: BackgroundConfig): React.CSSProper
     styles.backgroundRepeat = backgroundRepeats.join(', ');
     styles.backgroundAttachment = backgroundAttachments.join(', ');
   }
-
-  console.log('🎯 DEBUGGING Final Styles:', styles);
 
   return styles;
 }
