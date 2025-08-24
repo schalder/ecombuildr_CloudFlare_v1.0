@@ -56,15 +56,6 @@ export default function AdminTemplatePreview() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Optional header showing template name */}
-      <div className="bg-card border-b px-4 py-2">
-        <div className="max-w-7xl mx-auto">
-          <h1 className="text-sm font-medium text-muted-foreground">
-            Template Preview: {template.name}
-          </h1>
-        </div>
-      </div>
-      
       {/* Template content */}
       <PageBuilderRenderer data={builderData} />
     </div>
