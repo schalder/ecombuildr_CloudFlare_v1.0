@@ -1453,7 +1453,7 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
       } ${
         isDragging ? 'opacity-50' : ''
       }`}
-      style={renderSectionStyles(section)}
+      style={renderSectionStyles(section, deviceType)}
       onMouseEnter={() => setHoveredTarget({ type: 'section', id: section.id })}
       onMouseLeave={() => setHoveredTarget(null)}
       onClick={(e) => {
@@ -1715,7 +1715,7 @@ const RowComponent: React.FC<RowComponentProps> = ({
       } ${
         isDragging ? 'opacity-50' : ''
       }`}
-      style={renderRowStyles(row)}
+      style={renderRowStyles(row, deviceType)}
       onMouseEnter={() => setHoveredTarget({ type: 'row', id: row.id, parentId: sectionId })}
       onMouseLeave={() => setHoveredTarget(null)}
       onClick={(e) => {
@@ -1903,7 +1903,7 @@ const ColumnComponent: React.FC<ColumnComponentProps> = ({
             ? 'border-accent/50 bg-accent/2' 
             : !userBackground ? 'border-border' : ''
       }`}
-      style={renderColumnStyles(column)}
+      style={renderColumnStyles(column, deviceType)}
       onMouseEnter={() => setHoveredTarget({ type: 'column', id: column.id, parentId: rowId, grandParentId: sectionId })}
       onMouseLeave={() => setHoveredTarget(null)}
       onClick={(e) => {
