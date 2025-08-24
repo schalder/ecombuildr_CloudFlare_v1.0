@@ -175,35 +175,3 @@ All colors MUST be HSL. Designed for trust, energy, and conversion.
     display: none;
   }
 }
-
-/* ISOLATED BACKGROUND OVERLAY SYSTEM
-   Provides complete separation between background images and color/gradient overlays */
-@layer components {
-  /* Section overlays */
-  [style*="--overlay-background"]:before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: var(--overlay-background);
-    pointer-events: none;
-    z-index: 1;
-  }
-  
-  /* Ensure content stays above overlay */
-  [style*="--overlay-background"] > * {
-    position: relative;
-    z-index: 2;
-  }
-  
-  /* Handle nested overlay elements properly */
-  [style*="--overlay-background"] [style*="--overlay-background"]:before {
-    z-index: 3;
-  }
-  
-  [style*="--overlay-background"] [style*="--overlay-background"] > * {
-    z-index: 4;
-  }
-}
