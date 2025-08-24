@@ -214,8 +214,31 @@ const AccordionElement: React.FC<{
   // Get base styles using the utility function
   const containerStyles = renderElementStyles(element, deviceType);
   
-  // Get text alignment from styles, with fallback for dynamic alignment
-  const textAlign = element.styles?.textAlign || 'left';
+  // Determine device key for responsive styles
+  const deviceKey = deviceType === 'tablet' ? 'desktop' : deviceType;
+  
+  // Get title and description specific styles  
+  const titleStyles = (element.styles as any)?.titleStyles?.responsive?.[deviceKey] || {};
+  const descriptionStyles = (element.styles as any)?.descriptionStyles?.responsive?.[deviceKey] || {};
+  
+  // Create inline styles for title and description
+  const titleInlineStyles = {
+    fontSize: titleStyles.fontSize,
+    lineHeight: titleStyles.lineHeight,
+    color: titleStyles.color,
+    fontFamily: titleStyles.fontFamily,
+    fontWeight: titleStyles.fontWeight,
+    textAlign: titleStyles.textAlign || 'left'
+  };
+
+  const descriptionInlineStyles = {
+    fontSize: descriptionStyles.fontSize,
+    lineHeight: descriptionStyles.lineHeight,
+    color: descriptionStyles.color,
+    fontFamily: descriptionStyles.fontFamily,
+    fontWeight: descriptionStyles.fontWeight,
+    textAlign: descriptionStyles.textAlign || 'left'
+  };
   
   return (
     <>
@@ -227,20 +250,19 @@ const AccordionElement: React.FC<{
         <Accordion type={allowMultiple ? "multiple" : "single"} collapsible className="w-full">
           {items.map((item: any, index: number) => (
             <AccordionItem key={index} value={`item-${index}`}>
-              <AccordionTrigger 
-                className={`hover:no-underline`}
-                style={{ textAlign: textAlign }}
-              >
-                <InlineEditor
-                  value={item.title}
-                  onChange={(value) => updateItem(index, 'title', value)}
-                  placeholder="Section title..."
-                  disabled={!isEditing}
-                  className="font-medium"
-                />
+              <AccordionTrigger className="hover:no-underline">
+                <div className="flex-1" style={titleInlineStyles}>
+                  <InlineEditor
+                    value={item.title}
+                    onChange={(value) => updateItem(index, 'title', value)}
+                    placeholder="Section title..."
+                    disabled={!isEditing}
+                    className="font-medium"
+                  />
+                </div>
               </AccordionTrigger>
               <AccordionContent className="pb-4">
-                <div className="pt-2" style={{ textAlign: textAlign }}>
+                <div className="pt-2" style={descriptionInlineStyles}>
                   <InlineEditor
                     value={item.content}
                     onChange={(value) => updateItem(index, 'content', value)}
