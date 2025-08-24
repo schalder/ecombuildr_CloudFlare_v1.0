@@ -356,8 +356,14 @@ const ListElement: React.FC<{
           const IconComponent = getIconByName(iconName) || getIconByName('check');
           return (
             <li key={index} className="mb-1 flex items-start" style={{ marginBottom: `${itemGap}px` }}>
-              <span className="mr-2 mt-0.5" style={{ fontSize: `${iconSize}px`, lineHeight: 1, color: iconColor }}>
-                {IconComponent ? <IconComponent className="h-4 w-4" /> : null}
+              <span className="mr-2 mt-0.5" style={{ lineHeight: 1 }}>
+                {IconComponent ? <IconComponent 
+                  style={{ 
+                    width: `${iconSize}px`, 
+                    height: `${iconSize}px`, 
+                    color: iconColor 
+                  }} 
+                /> : null}
               </span>
               <span>{item.text}</span>
             </li>
