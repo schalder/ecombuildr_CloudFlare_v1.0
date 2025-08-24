@@ -950,10 +950,10 @@ export const RowSettings: React.FC<RowSettingsProps> = ({ row, onUpdate }) => {
             <Label>Color/Gradient Opacity: <span className="text-muted-foreground">{Math.round((row.styles?.backgroundOpacity ?? 1) * 100)}%</span></Label>
             <Slider
               min={0}
-              max={100}
-              step={1}
-              value={[Math.round((row.styles?.backgroundOpacity ?? 1) * 100)]}
-              onValueChange={(value) => handleStyleUpdate('backgroundOpacity', value[0] / 100)}
+              max={1}
+              step={0.01}
+              value={[row.styles?.backgroundOpacity ?? 1]}
+              onValueChange={(value) => handleStyleUpdate('backgroundOpacity', value[0])}
             />
           </div>
           
@@ -1363,10 +1363,10 @@ export const ColumnSettings: React.FC<ColumnSettingsProps> = ({ column, onUpdate
             <Label>Color/Gradient Opacity: <span className="text-muted-foreground">{Math.round((column.styles?.backgroundOpacity ?? 1) * 100)}%</span></Label>
             <Slider
               min={0}
-              max={100}
-              step={1}
-              value={[Math.round((column.styles?.backgroundOpacity ?? 1) * 100)]}
-              onValueChange={(value) => handleStyleUpdate('backgroundOpacity', value[0] / 100)}
+              max={1}
+              step={0.01}
+              value={[column.styles?.backgroundOpacity ?? 1]}
+              onValueChange={(value) => handleStyleUpdate('backgroundOpacity', value[0])}
             />
           </div>
           

@@ -78,19 +78,36 @@ export const renderSectionStyles = (section: PageBuilderSection, deviceType: 'de
       imageProps = getBackgroundImageProperties(responsiveImageMode, deviceType);
     }
     
-    // Apply combined background using explicit properties to prevent position resets
+    // Apply combined background - always use multi-layer approach to prevent position resets
     if (backgroundLayers.length > 0) {
-      if (backgroundLayers.length === 1 && section.styles.backgroundImage && !section.styles.backgroundColor && !section.styles.backgroundGradient) {
-        // Single image only - use background shorthand for better compatibility
-        styles.background = `url(${section.styles.backgroundImage})`;
-        Object.assign(styles, imageProps);
+      if (backgroundLayers.length === 1 && !section.styles.backgroundImage) {
+        // Single layer without image (color/gradient only)
+        styles.background = backgroundLayers[0];
       } else {
-        // Multiple layers or color/gradient with image - use explicit properties
-        styles.backgroundImage = backgroundLayers.join(', ');
+        // Multiple layers OR single image layer - use consistent multi-layer approach
+        styles.background = backgroundLayers.join(', ');
         
-        // Apply image-specific properties only if there's an image
+        // For layered backgrounds or image-only, specify properties for each layer
         if (section.styles.backgroundImage) {
-          Object.assign(styles, imageProps);
+          const numLayers = backgroundLayers.length;
+          const lastLayerIndex = numLayers - 1; // image is always last layer
+          
+          // Create arrays for each background property
+          const sizes = new Array(numLayers).fill('auto');
+          const positions = new Array(numLayers).fill('0% 0%');
+          const repeats = new Array(numLayers).fill('repeat');
+          const attachments = new Array(numLayers).fill('scroll');
+          
+          // Set image layer properties (last layer)
+          sizes[lastLayerIndex] = imageProps.backgroundSize || 'cover';
+          positions[lastLayerIndex] = imageProps.backgroundPosition || 'center';
+          repeats[lastLayerIndex] = imageProps.backgroundRepeat || 'no-repeat';
+          attachments[lastLayerIndex] = imageProps.backgroundAttachment || 'scroll';
+          
+          styles.backgroundSize = sizes.join(', ');
+          styles.backgroundPosition = positions.join(', ');
+          styles.backgroundRepeat = repeats.join(', ');
+          styles.backgroundAttachment = attachments.join(', ');
         }
       }
     }
@@ -189,19 +206,36 @@ export const renderRowStyles = (row: PageBuilderRow, deviceType: 'desktop' | 'ta
       imageProps = getBackgroundImageProperties(responsiveImageMode, deviceType);
     }
     
-    // Apply combined background using explicit properties to prevent position resets
+    // Apply combined background - always use multi-layer approach to prevent position resets
     if (backgroundLayers.length > 0) {
-      if (backgroundLayers.length === 1 && row.styles.backgroundImage && !row.styles.backgroundColor && !row.styles.backgroundGradient) {
-        // Single image only - use background shorthand for better compatibility
-        styles.background = `url(${row.styles.backgroundImage})`;
-        Object.assign(styles, imageProps);
+      if (backgroundLayers.length === 1 && !row.styles.backgroundImage) {
+        // Single layer without image (color/gradient only)
+        styles.background = backgroundLayers[0];
       } else {
-        // Multiple layers or color/gradient with image - use explicit properties
-        styles.backgroundImage = backgroundLayers.join(', ');
+        // Multiple layers OR single image layer - use consistent multi-layer approach
+        styles.background = backgroundLayers.join(', ');
         
-        // Apply image-specific properties only if there's an image
+        // For layered backgrounds or image-only, specify properties for each layer
         if (row.styles.backgroundImage) {
-          Object.assign(styles, imageProps);
+          const numLayers = backgroundLayers.length;
+          const lastLayerIndex = numLayers - 1; // image is always last layer
+          
+          // Create arrays for each background property
+          const sizes = new Array(numLayers).fill('auto');
+          const positions = new Array(numLayers).fill('0% 0%');
+          const repeats = new Array(numLayers).fill('repeat');
+          const attachments = new Array(numLayers).fill('scroll');
+          
+          // Set image layer properties (last layer)
+          sizes[lastLayerIndex] = imageProps.backgroundSize || 'cover';
+          positions[lastLayerIndex] = imageProps.backgroundPosition || 'center';
+          repeats[lastLayerIndex] = imageProps.backgroundRepeat || 'no-repeat';
+          attachments[lastLayerIndex] = imageProps.backgroundAttachment || 'scroll';
+          
+          styles.backgroundSize = sizes.join(', ');
+          styles.backgroundPosition = positions.join(', ');
+          styles.backgroundRepeat = repeats.join(', ');
+          styles.backgroundAttachment = attachments.join(', ');
         }
       }
     }
@@ -291,19 +325,36 @@ export const renderColumnStyles = (column: PageBuilderColumn, deviceType: 'deskt
       imageProps = getBackgroundImageProperties(responsiveImageMode, deviceType);
     }
     
-    // Apply combined background using explicit properties to prevent position resets
+    // Apply combined background - always use multi-layer approach to prevent position resets
     if (backgroundLayers.length > 0) {
-      if (backgroundLayers.length === 1 && column.styles.backgroundImage && !column.styles.backgroundColor && !column.styles.backgroundGradient) {
-        // Single image only - use background shorthand for better compatibility
-        styles.background = `url(${column.styles.backgroundImage})`;
-        Object.assign(styles, imageProps);
+      if (backgroundLayers.length === 1 && !column.styles.backgroundImage) {
+        // Single layer without image (color/gradient only)
+        styles.background = backgroundLayers[0];
       } else {
-        // Multiple layers or color/gradient with image - use explicit properties
-        styles.backgroundImage = backgroundLayers.join(', ');
+        // Multiple layers OR single image layer - use consistent multi-layer approach
+        styles.background = backgroundLayers.join(', ');
         
-        // Apply image-specific properties only if there's an image
+        // For layered backgrounds or image-only, specify properties for each layer
         if (column.styles.backgroundImage) {
-          Object.assign(styles, imageProps);
+          const numLayers = backgroundLayers.length;
+          const lastLayerIndex = numLayers - 1; // image is always last layer
+          
+          // Create arrays for each background property
+          const sizes = new Array(numLayers).fill('auto');
+          const positions = new Array(numLayers).fill('0% 0%');
+          const repeats = new Array(numLayers).fill('repeat');
+          const attachments = new Array(numLayers).fill('scroll');
+          
+          // Set image layer properties (last layer)
+          sizes[lastLayerIndex] = imageProps.backgroundSize || 'cover';
+          positions[lastLayerIndex] = imageProps.backgroundPosition || 'center';
+          repeats[lastLayerIndex] = imageProps.backgroundRepeat || 'no-repeat';
+          attachments[lastLayerIndex] = imageProps.backgroundAttachment || 'scroll';
+          
+          styles.backgroundSize = sizes.join(', ');
+          styles.backgroundPosition = positions.join(', ');
+          styles.backgroundRepeat = repeats.join(', ');
+          styles.backgroundAttachment = attachments.join(', ');
         }
       }
     }
