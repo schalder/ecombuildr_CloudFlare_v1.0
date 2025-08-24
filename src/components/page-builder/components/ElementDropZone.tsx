@@ -47,9 +47,9 @@ export const ElementDropZone: React.FC<ElementDropZoneProps> = ({
     <div
       ref={drop}
       className={cn(
-        'relative h-1 mx-2 transition-all duration-200',
+        'relative mx-2 transition-all duration-200',
         className,
-        showDropZone ? 'h-4' : 'h-1'
+        showDropZone ? 'h-4' : 'h-0'
       )}
     >
       {/* Blue line indicator like Elementor */}

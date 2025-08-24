@@ -72,12 +72,17 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
   const getDeviceSpecificGridStyle = () => {
     const stackOnMobile = row.responsive?.mobile?.stackColumns !== false; // Default to true
     
+    // Get user-defined column gap for current device
+    const userColumnGap = row.responsive?.[deviceType]?.columnGap || 
+                          row.responsive?.desktop?.columnGap || 
+                          '0px';
+    
     // Force grid layout based on selected device type
     if (deviceType === 'mobile' && stackOnMobile) {
       return {
         display: 'grid',
         gridTemplateColumns: '1fr',
-        gap: '16px'
+        gap: userColumnGap
       };
     }
     
@@ -87,7 +92,7 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
         return {
           display: 'grid',
           gridTemplateColumns: '1fr',
-          gap: '16px',
+          gap: userColumnGap,
           justifyItems: 'center'
         };
       } else {
@@ -95,7 +100,7 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
         return {
           display: 'grid',
           gridTemplateColumns: '1fr',
-          gap: '16px'
+          gap: userColumnGap
         };
       }
     }
@@ -106,7 +111,7 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
       return {
         display: 'grid',
         gridTemplateColumns: fractions.map(f => `${f}fr`).join(' '),
-        gap: '16px'
+        gap: userColumnGap
       };
     }
     
@@ -114,7 +119,7 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
     return {
       display: 'grid',
       gridTemplateColumns: '1fr',
-      gap: '16px'
+      gap: userColumnGap
     };
   };
 

@@ -129,7 +129,7 @@ export const ColumnRenderer: React.FC<ColumnRendererProps> = ({
           )}
         </div>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-0">
           {column.elements.map((element, index) => (
             <div key={element.id} className="relative">
               {/* Drop zone above element */}
