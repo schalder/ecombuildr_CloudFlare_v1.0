@@ -108,7 +108,7 @@ export const renderSectionStyles = (section: PageBuilderSection, deviceType: 'de
   }
   
   // Merge responsive overrides FIRST, but preserve background styles
-  const mergedStyles = mergeResponsiveStyles(styles, section.styles, deviceType);
+  const mergedStyles = mergeResponsiveStyles(styles, section.styles || {}, deviceType);
   
   // Apply background styles AFTER responsive merge to ensure they're not overwritten
   const backgroundStyles = buildBackgroundStyles({
@@ -193,7 +193,7 @@ export const renderRowStyles = (row: PageBuilderRow, deviceType: 'desktop' | 'ta
   }
   
   // Merge responsive overrides FIRST
-  const merged = mergeResponsiveStyles(styles, row.styles, deviceType);
+  const merged = mergeResponsiveStyles(styles, row.styles || {}, deviceType);
   
   // Apply background styles AFTER responsive merge
   const backgroundStyles = buildBackgroundStyles({
@@ -302,7 +302,7 @@ export const renderColumnStyles = (column: PageBuilderColumn, deviceType: 'deskt
   }
 
   // Merge responsive overrides FIRST
-  const merged = mergeResponsiveStyles(styles, column.styles, deviceType);
+  const merged = mergeResponsiveStyles(styles, column.styles || {}, deviceType);
   
   // Apply background styles AFTER responsive merge
   const backgroundStyles = buildBackgroundStyles({
