@@ -164,8 +164,8 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
       return <MediaElementStyles element={selectedElement} onStyleUpdate={handleStyleUpdate} />;
     }
     
-    // Layout elements (spacer, divider)
-    if (['spacer', 'divider'].includes(selectedElement.type)) {
+    // Layout elements (spacer, divider, inner-layout)
+    if (['spacer', 'divider', 'inner-layout'].includes(selectedElement.type)) {
       return <LayoutElementStyles element={selectedElement} onStyleUpdate={handleStyleUpdate} />;
     }
     
@@ -248,7 +248,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
           </TabsList>
 
           <TabsContent value="content" className="space-y-4 mt-4">
-            {['heading', 'text', 'image', 'button', 'video', 'spacer', 'divider', 'list', 'navigation-menu'].includes(selectedElement.type) ? (
+            {['heading', 'text', 'image', 'button', 'video', 'spacer', 'divider', 'list', 'navigation-menu', 'inner-layout'].includes(selectedElement.type) ? (
               <ContentProperties 
                 element={selectedElement}
                 onUpdate={handleContentUpdate}
