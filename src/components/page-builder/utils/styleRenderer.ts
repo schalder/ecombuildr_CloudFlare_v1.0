@@ -73,6 +73,9 @@ export const renderSectionStyles = (section: PageBuilderSection, deviceType: 'de
       } else {
         backgroundLayers.push(applyColorOpacity(section.styles.backgroundColor, opacity));
       }
+    } else if (section.styles.backgroundImage && opacity < 1) {
+      // Image only with opacity - create transparent overlay
+      backgroundLayers.push(`linear-gradient(rgba(0,0,0,${1-opacity}), rgba(0,0,0,${1-opacity}))`);
     }
     
     // Handle background image and get mode-specific properties
@@ -211,6 +214,9 @@ export const renderRowStyles = (row: PageBuilderRow, deviceType: 'desktop' | 'ta
       } else {
         backgroundLayers.push(applyColorOpacity(row.styles.backgroundColor, opacity));
       }
+    } else if (row.styles.backgroundImage && opacity < 1) {
+      // Image only with opacity - create transparent overlay
+      backgroundLayers.push(`linear-gradient(rgba(0,0,0,${1-opacity}), rgba(0,0,0,${1-opacity}))`);
     }
     
     // Handle background image and get mode-specific properties
@@ -340,6 +346,9 @@ export const renderColumnStyles = (column: PageBuilderColumn, deviceType: 'deskt
       } else {
         backgroundLayers.push(applyColorOpacity(column.styles.backgroundColor, opacity));
       }
+    } else if (column.styles.backgroundImage && opacity < 1) {
+      // Image only with opacity - create transparent overlay
+      backgroundLayers.push(`linear-gradient(rgba(0,0,0,${1-opacity}), rgba(0,0,0,${1-opacity}))`);
     }
     
     // Handle background image and get mode-specific properties
