@@ -66,16 +66,15 @@ export const renderSectionStyles = (section: PageBuilderSection, deviceType: 'de
     if (section.styles.backgroundGradient) {
       backgroundLayers.push(applyGradientOpacity(section.styles.backgroundGradient, opacity));
     } else if (section.styles.backgroundColor && section.styles.backgroundColor !== 'transparent') {
-      // For solid colors with background image, create a linear gradient overlay to ensure transparency works
-      if (section.styles.backgroundImage && opacity < 1) {
-        const colorWithOpacity = applyColorOpacity(section.styles.backgroundColor, opacity);
-        backgroundLayers.push(`linear-gradient(${colorWithOpacity}, ${colorWithOpacity})`);
-      } else {
-        backgroundLayers.push(applyColorOpacity(section.styles.backgroundColor, opacity));
-      }
-    } else if (section.styles.backgroundImage && opacity > 0 && opacity < 1) {
-      // Image only with opacity - create overlay (opacity 0-100% means overlay transparency)
-      backgroundLayers.push(`linear-gradient(rgba(0,0,0,${opacity}), rgba(0,0,0,${opacity}))`);
+      backgroundLayers.push(applyColorOpacity(section.styles.backgroundColor, opacity));
+    }
+    
+    // For image-only backgrounds with overlay: opacity < 1 means add dark overlay
+    // opacity = 1 means no overlay (100% image visibility)
+    if (section.styles.backgroundImage && !section.styles.backgroundColor && !section.styles.backgroundGradient && opacity < 1) {
+      // Create overlay: opacity 0 = full overlay (black), opacity approaching 1 = less overlay
+      const overlayOpacity = 1 - opacity;
+      backgroundLayers.push(`linear-gradient(rgba(0,0,0,${overlayOpacity}), rgba(0,0,0,${overlayOpacity}))`);
     }
     
     // Handle background image and get mode-specific properties
@@ -203,16 +202,15 @@ export const renderRowStyles = (row: PageBuilderRow, deviceType: 'desktop' | 'ta
     if (row.styles.backgroundGradient) {
       backgroundLayers.push(applyGradientOpacity(row.styles.backgroundGradient, opacity));
     } else if (row.styles.backgroundColor && row.styles.backgroundColor !== 'transparent') {
-      // For solid colors with background image, create a linear gradient overlay to ensure transparency works
-      if (row.styles.backgroundImage && opacity < 1) {
-        const colorWithOpacity = applyColorOpacity(row.styles.backgroundColor, opacity);
-        backgroundLayers.push(`linear-gradient(${colorWithOpacity}, ${colorWithOpacity})`);
-      } else {
-        backgroundLayers.push(applyColorOpacity(row.styles.backgroundColor, opacity));
-      }
-    } else if (row.styles.backgroundImage && opacity > 0 && opacity < 1) {
-      // Image only with opacity - create overlay (opacity 0-100% means overlay transparency)
-      backgroundLayers.push(`linear-gradient(rgba(0,0,0,${opacity}), rgba(0,0,0,${opacity}))`);
+      backgroundLayers.push(applyColorOpacity(row.styles.backgroundColor, opacity));
+    }
+    
+    // For image-only backgrounds with overlay: opacity < 1 means add dark overlay
+    // opacity = 1 means no overlay (100% image visibility)
+    if (row.styles.backgroundImage && !row.styles.backgroundColor && !row.styles.backgroundGradient && opacity < 1) {
+      // Create overlay: opacity 0 = full overlay (black), opacity approaching 1 = less overlay
+      const overlayOpacity = 1 - opacity;
+      backgroundLayers.push(`linear-gradient(rgba(0,0,0,${overlayOpacity}), rgba(0,0,0,${overlayOpacity}))`);
     }
     
     // Handle background image and get mode-specific properties
@@ -331,16 +329,15 @@ export const renderColumnStyles = (column: PageBuilderColumn, deviceType: 'deskt
     if (column.styles.backgroundGradient) {
       backgroundLayers.push(applyGradientOpacity(column.styles.backgroundGradient, opacity));
     } else if (column.styles.backgroundColor && column.styles.backgroundColor !== 'transparent') {
-      // For solid colors with background image, create a linear gradient overlay to ensure transparency works
-      if (column.styles.backgroundImage && opacity < 1) {
-        const colorWithOpacity = applyColorOpacity(column.styles.backgroundColor, opacity);
-        backgroundLayers.push(`linear-gradient(${colorWithOpacity}, ${colorWithOpacity})`);
-      } else {
-        backgroundLayers.push(applyColorOpacity(column.styles.backgroundColor, opacity));
-      }
-    } else if (column.styles.backgroundImage && opacity > 0 && opacity < 1) {
-      // Image only with opacity - create overlay (opacity 0-100% means overlay transparency)
-      backgroundLayers.push(`linear-gradient(rgba(0,0,0,${opacity}), rgba(0,0,0,${opacity}))`);
+      backgroundLayers.push(applyColorOpacity(column.styles.backgroundColor, opacity));
+    }
+    
+    // For image-only backgrounds with overlay: opacity < 1 means add dark overlay
+    // opacity = 1 means no overlay (100% image visibility)
+    if (column.styles.backgroundImage && !column.styles.backgroundColor && !column.styles.backgroundGradient && opacity < 1) {
+      // Create overlay: opacity 0 = full overlay (black), opacity approaching 1 = less overlay
+      const overlayOpacity = 1 - opacity;
+      backgroundLayers.push(`linear-gradient(rgba(0,0,0,${overlayOpacity}), rgba(0,0,0,${overlayOpacity}))`);
     }
     
     // Handle background image and get mode-specific properties
