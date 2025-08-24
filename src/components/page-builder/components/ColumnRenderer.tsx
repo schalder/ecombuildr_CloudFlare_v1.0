@@ -98,9 +98,11 @@ export const ColumnRenderer: React.FC<ColumnRendererProps> = ({
       id={column.anchor}
       data-pb-column-id={column.id}
       className={cn(
-        'relative min-h-[60px] transition-colors',
-        // Only apply border/background styles if not in preview mode
-        !isPreviewMode && 'rounded border-2 border-dashed border-transparent',
+        'relative transition-colors',
+        // Apply min-height only when empty and not in preview mode
+        !isPreviewMode && column.elements.length === 0 && 'min-h-[60px]',
+        // Only apply border/background styles if not in preview mode - no rounded corners
+        !isPreviewMode && 'border-2 border-dashed border-transparent',
         !isPreviewMode && isOver && 'border-primary/40',
         !isPreviewMode && isOver && !userBackground && 'bg-primary/5',
         !isPreviewMode && isHovered && 'border-primary/30',

@@ -219,7 +219,7 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({
         style={{ minHeight: 'inherit' }}
       >
         {section.rows.length === 0 ? (
-          <div className="min-h-[120px] flex items-center justify-center border-2 border-dashed border-muted-foreground/30 rounded-lg">
+          <div className="min-h-[120px] flex items-center justify-center border-2 border-dashed border-muted-foreground/30">
             {!isPreviewMode && (
               <Button variant="outline" onClick={handleAddRow}>
                 <Plus className="h-4 w-4 mr-2" />
