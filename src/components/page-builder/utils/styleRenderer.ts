@@ -88,7 +88,7 @@ export const renderSectionStyles = (section: PageBuilderSection, deviceType: 'de
     if (backgroundLayers.length > 0) {
       if (backgroundLayers.length === 1 && section.styles.backgroundImage) {
         // Single layer with background image - use backgroundImage property and apply image properties
-        styles.backgroundImage = backgroundLayers[0];
+        styles.backgroundImage = section.styles.backgroundImage;
         Object.assign(styles, imageProps);
       } else if (backgroundLayers.length === 1) {
         // Single layer without image (color/gradient only)
@@ -224,10 +224,13 @@ export const renderRowStyles = (row: PageBuilderRow, deviceType: 'desktop' | 'ta
     
     // Apply combined background
     if (backgroundLayers.length > 0) {
-      if (backgroundLayers.length === 1) {
-        // Single layer - can use individual properties
-        styles.backgroundImage = backgroundLayers[0];
+      if (backgroundLayers.length === 1 && row.styles.backgroundImage) {
+        // Single layer with background image - use backgroundImage property and apply image properties
+        styles.backgroundImage = row.styles.backgroundImage;
         Object.assign(styles, imageProps);
+      } else if (backgroundLayers.length === 1) {
+        // Single layer without image (color/gradient only)
+        styles.background = backgroundLayers[0];
       } else {
         // Multiple layers - need to specify properties for each layer
         styles.background = backgroundLayers.join(', ');
@@ -350,10 +353,13 @@ export const renderColumnStyles = (column: PageBuilderColumn, deviceType: 'deskt
     
     // Apply combined background
     if (backgroundLayers.length > 0) {
-      if (backgroundLayers.length === 1) {
-        // Single layer - can use individual properties
-        styles.backgroundImage = backgroundLayers[0];
+      if (backgroundLayers.length === 1 && column.styles.backgroundImage) {
+        // Single layer with background image - use backgroundImage property and apply image properties
+        styles.backgroundImage = column.styles.backgroundImage;
         Object.assign(styles, imageProps);
+      } else if (backgroundLayers.length === 1) {
+        // Single layer without image (color/gradient only)
+        styles.background = backgroundLayers[0];
       } else {
         // Multiple layers - need to specify properties for each layer
         styles.background = backgroundLayers.join(', ');
