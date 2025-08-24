@@ -55,7 +55,6 @@ import {
   PageBuilderRow, 
   PageBuilderColumn, 
   PageBuilderElement,
-  RowSlice,
   ElementType,
   DragItem,
   COLUMN_LAYOUTS,
@@ -195,7 +194,6 @@ const ElementorPageBuilderContent: React.FC<ElementorPageBuilderProps> = memo(({
   );
   const [selection, setSelection] = useState<SelectionType | null>(null);
   const [showColumnModal, setShowColumnModal] = useState<{ sectionId: string; insertIndex?: number } | null>(null);
-  const [showSliceModal, setShowSliceModal] = useState<{ sectionId: string; rowId: string; insertIndex?: number } | null>(null);
   const [deviceType, setDeviceType] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
   const [isElementsPanelOpen, setIsElementsPanelOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -208,39 +206,15 @@ const ElementorPageBuilderContent: React.FC<ElementorPageBuilderProps> = memo(({
 
   // Ensure legacy long anchors are converted after hot reloads too
   React.useEffect(() => {
-    setData(prev => normalizeRowSlices(ensureAnchors(prev)));
+    setData(prev => ensureAnchors(prev));
   }, []);
 
-  // When initialData loads/changes asynchronously, normalize anchors and slices
+  // When initialData loads/changes asynchronously, normalize anchors
   React.useEffect(() => {
     if (initialData) {
-      setData(normalizeRowSlices(ensureAnchors(initialData)));
+      setData(ensureAnchors(initialData));
     }
   }, [initialData]);
-
-  // Normalize legacy rows to use slices
-  const normalizeRowSlices = (data: PageBuilderData): PageBuilderData => {
-    return {
-      ...data,
-      sections: data.sections.map(section => ({
-        ...section,
-        rows: (section.rows || []).map(row => {
-          // If row doesn't have slices, convert to single slice
-          if (!row.slices && row.columns.length > 0) {
-            return {
-              ...row,
-              slices: [{
-                id: generateId(),
-                columnLayout: row.columnLayout,
-                columns: row.columns
-              }]
-            };
-          }
-          return row;
-        })
-      }))
-    };
-  };
 
 
   const updateData = useCallback((newData: PageBuilderData) => {
@@ -304,18 +278,6 @@ const ElementorPageBuilderContent: React.FC<ElementorPageBuilderProps> = memo(({
       rows: (section.rows || []).map(row => ({
         ...row,
         id: generateId(),
-        slices: row.slices ? row.slices.map(slice => ({
-          ...slice,
-          id: generateId(),
-          columns: slice.columns.map(col => ({
-            ...col,
-            id: generateId(),
-            elements: col.elements.map(el => ({
-              ...el,
-              id: generateId()
-            }))
-          }))
-        })) : undefined,
         columns: row.columns.map(col => ({
           ...col,
           id: generateId(),
@@ -352,15 +314,6 @@ const ElementorPageBuilderContent: React.FC<ElementorPageBuilderProps> = memo(({
         ...section,
         rows: (section.rows || []).map(row => ({
           ...row,
-          slices: row.slices ? row.slices.map(slice => ({
-            ...slice,
-            columns: slice.columns.map(col => ({
-              ...col,
-              elements: col.elements.flatMap(el =>
-                el.id === elementId ? [el, newElement] : [el]
-              )
-            }))
-          })) : undefined,
           columns: row.columns.map(col => ({
             ...col,
             elements: col.elements.flatMap(el =>
@@ -375,37 +328,9 @@ const ElementorPageBuilderContent: React.FC<ElementorPageBuilderProps> = memo(({
   const findElement = (elementId: string): PageBuilderElement | null => {
     for (const section of data.sections) {
       for (const row of section.rows || []) {
-        // Check both slices and legacy columns
-        if (row.slices) {
-          for (const slice of row.slices) {
-            for (const column of slice.columns) {
-              const element = column.elements.find(el => el.id === elementId);
-              if (element) return element;
-            }
-          }
-        } else {
-          for (const column of row.columns) {
-            const element = column.elements.find(el => el.id === elementId);
-            if (element) return element;
-          }
-        }
-      }
-    }
-    return null;
-  };
-
-  // Helper function to find a column anywhere in the data structure
-  const findColumn = (columnId: string): { section: PageBuilderSection; row: PageBuilderRow; slice?: RowSlice; column: PageBuilderColumn } | null => {
-    for (const section of data.sections) {
-      for (const row of section.rows || []) {
-        if (row.slices) {
-          for (const slice of row.slices) {
-            const column = slice.columns.find(col => col.id === columnId);
-            if (column) return { section, row, slice, column };
-          }
-        } else {
-          const column = row.columns.find(col => col.id === columnId);
-          if (column) return { section, row, column };
+        for (const column of row.columns) {
+          const element = column.elements.find(el => el.id === elementId);
+          if (element) return element;
         }
       }
     }
@@ -680,18 +605,12 @@ const ElementorPageBuilderContent: React.FC<ElementorPageBuilderProps> = memo(({
     const section = data.sections.find(s => s.id === sectionId);
     const row = section?.rows?.find(r => r.id === rowId);
     
-    if (!row) return;
+    if (!row || row.columns.length <= 1) return;
     
     const columnIndex = row.columns.findIndex(c => c.id === columnId);
     const columnToDelete = row.columns[columnIndex];
     
     if (!columnToDelete) return;
-
-    // If this is the last column, delete the entire row
-    if (row.columns.length === 1) {
-      deleteRow(sectionId, rowId);
-      return;
-    }
 
     // Find target column to merge elements into (prefer previous, otherwise next)
     const targetColumnIndex = columnIndex > 0 ? columnIndex - 1 : columnIndex + 1;
@@ -746,88 +665,8 @@ const ElementorPageBuilderContent: React.FC<ElementorPageBuilderProps> = memo(({
       setSelection(null);
     }
 
-  setDeleteColumnDialog(null);
-  }, [data, updateData, selection, deleteRow]);
-
-  // Row slice operations
-  const addRowSlice = useCallback((sectionId: string, rowId: string, columnLayout: PageBuilderRow['columnLayout'], insertIndex?: number) => {
-    const columnWidths = COLUMN_LAYOUTS[columnLayout];
-    const newSlice: RowSlice = {
-      id: generateId(),
-      columnLayout,
-      columns: columnWidths.map(width => ({
-        id: generateId(),
-        anchor: buildAnchor('col'),
-        width,
-        elements: [],
-        styles: {
-          paddingTop: '10px',
-          paddingRight: '10px',
-          paddingLeft: '5px',
-          paddingBottom: '5px'
-        }
-      }))
-    };
-
-    updateData({
-      ...data,
-      sections: data.sections.map(section =>
-        section.id === sectionId
-          ? {
-              ...section,
-              rows: (section.rows || []).map(row =>
-                row.id === rowId
-                  ? {
-                      ...row,
-                      slices: row.slices 
-                        ? typeof insertIndex === 'number'
-                          ? [
-                              ...row.slices.slice(0, insertIndex),
-                              newSlice,
-                              ...row.slices.slice(insertIndex)
-                            ]
-                          : [...row.slices, newSlice]
-                        : [newSlice]
-                    }
-                  : row
-              )
-            }
-          : section
-      )
-    });
-  }, [data, updateData]);
-
-  const deleteRowSlice = useCallback((sectionId: string, rowId: string, sliceId: string) => {
-    const section = data.sections.find(s => s.id === sectionId);
-    const row = section?.rows?.find(r => r.id === rowId);
-    
-    if (!row?.slices) return;
-    
-    // If deleting the last slice, delete the entire row
-    if (row.slices.length === 1) {
-      deleteRow(sectionId, rowId);
-      return;
-    }
-
-    updateData({
-      ...data,
-      sections: data.sections.map(section =>
-        section.id === sectionId
-          ? {
-              ...section,
-              rows: (section.rows || []).map(row =>
-                row.id === rowId
-                  ? {
-                      ...row,
-                      slices: row.slices?.filter(slice => slice.id !== sliceId)
-                    }
-                  : row
-              )
-            }
-          : section
-      )
-    });
-  }, [data, updateData, deleteRow]);
+    setDeleteColumnDialog(null);
+  }, [data, updateData, selection]);
 
   // Element operations
   const addElement = useCallback((sectionId: string, rowId: string, columnId: string, elementType: string, insertIndex?: number) => {
@@ -856,13 +695,6 @@ const ElementorPageBuilderContent: React.FC<ElementorPageBuilderProps> = memo(({
       };
     }
 
-    // Find the column using helper function to support slices
-    const columnLocation = findColumn(columnId);
-    if (!columnLocation) {
-      console.error('Column not found:', columnId);
-      return;
-    }
-
     const newData = {
       ...data,
       sections: data.sections.map(section =>
@@ -873,23 +705,6 @@ const ElementorPageBuilderContent: React.FC<ElementorPageBuilderProps> = memo(({
                 row.id === rowId
                   ? {
                       ...row,
-                      slices: row.slices ? row.slices.map(slice => ({
-                        ...slice,
-                        columns: slice.columns.map(col =>
-                          col.id === columnId
-                            ? { 
-                                ...col, 
-                                elements: typeof insertIndex === 'number' 
-                                  ? [
-                                      ...col.elements.slice(0, insertIndex),
-                                      newElement,
-                                      ...col.elements.slice(insertIndex)
-                                    ]
-                                  : [...col.elements, newElement]
-                              }
-                            : col
-                        )
-                      })) : undefined,
                       columns: row.columns.map(col =>
                         col.id === columnId
                           ? { 
@@ -927,15 +742,6 @@ const ElementorPageBuilderContent: React.FC<ElementorPageBuilderProps> = memo(({
         ...section,
         rows: (section.rows || []).map(row => ({
           ...row,
-          slices: row.slices ? row.slices.map(slice => ({
-            ...slice,
-            columns: slice.columns.map(col => ({
-              ...col,
-              elements: col.elements.map(el =>
-                el.id === elementId ? { ...el, ...updates } : el
-              )
-            }))
-          })) : undefined,
           columns: row.columns.map(col => ({
             ...col,
             elements: col.elements.map(el =>
@@ -1326,8 +1132,6 @@ const ElementorPageBuilderContent: React.FC<ElementorPageBuilderProps> = memo(({
                           selection={selection}
                           onSelectionChange={setSelection}
                           onAddSectionAfter={() => addSectionAfter(sectionIndex)}
-                          onAddRowSlice={(sectionId: string, rowId: string) => setShowSliceModal({ sectionId, rowId })}
-                          onDeleteRowSlice={deleteRowSlice}
                         />
                         
                         {/* Section drop zone after each section */}
@@ -1449,43 +1253,6 @@ const ElementorPageBuilderContent: React.FC<ElementorPageBuilderProps> = memo(({
           }
         }}
       />
-
-      {/* Slice Layout Modal */}
-      <ColumnLayoutModal
-        isOpen={!!showSliceModal}
-        onClose={() => setShowSliceModal(null)}
-        onSelectLayout={(layout) => {
-          if (showSliceModal) {
-            addRowSlice(showSliceModal.sectionId, showSliceModal.rowId, layout, showSliceModal.insertIndex);
-            setShowSliceModal(null);
-          }
-        }}
-      />
-
-      {/* Delete Column Confirmation Dialog */}
-      <ConfirmationDialog
-        open={deleteColumnDialog !== null}
-        onOpenChange={(open) => !open && setDeleteColumnDialog(null)}
-        title="Delete Column"
-        description={(() => {
-          if (!deleteColumnDialog) return "";
-          const section = data.sections.find(s => s.id === deleteColumnDialog.sectionId);
-          const row = section?.rows?.find(r => r.id === deleteColumnDialog.rowId);
-          const isLastColumn = row?.columns.length === 1;
-          
-          return isLastColumn 
-            ? "Deleting the last column will remove the entire row. This action cannot be undone."
-            : "Deleting this column will move its content to the previous column. This action cannot be undone.";
-        })()}
-        confirmText="Delete Column"
-        cancelText="Cancel"
-        variant="destructive"
-        onConfirm={() => {
-          if (deleteColumnDialog) {
-            deleteColumn(deleteColumnDialog.sectionId, deleteColumnDialog.rowId, deleteColumnDialog.columnId);
-          }
-        }}
-      />
     </DndProvider>
   );
 });
@@ -1557,8 +1324,6 @@ interface SectionComponentProps {
   selection: SelectionType | null;
   onSelectionChange: (selection: SelectionType | null) => void;
   onAddSectionAfter: () => void;
-  onAddRowSlice: (sectionId: string, rowId: string) => void;
-  onDeleteRowSlice: (sectionId: string, rowId: string, sliceId: string) => void;
 }
 
 const SectionComponent: React.FC<SectionComponentProps> = ({
@@ -1590,9 +1355,7 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
   onDuplicateElement,
   selection,
   onSelectionChange,
-  onAddSectionAfter,
-  onAddRowSlice,
-  onDeleteRowSlice
+  onAddSectionAfter
 }) => {
   const { hoveredTarget, setHoveredTarget } = useHover();
   const userBackground = hasUserBackground(section.styles);
@@ -1779,8 +1542,6 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
                        onDuplicateElement={onDuplicateElement}
                        selection={selection}
                        onSelectionChange={onSelectionChange}
-                        onAddRowSlice={onAddRowSlice}
-                        onDeleteRowSlice={onDeleteRowSlice}
                     />
                     
                     {/* Drop zone after each row */}
@@ -1831,8 +1592,6 @@ interface RowComponentProps {
   onDuplicateElement: (elementId: string) => void;
   selection: SelectionType | null;
   onSelectionChange: (selection: SelectionType | null) => void;
-  onAddRowSlice: (sectionId: string, rowId: string) => void;
-  onDeleteRowSlice: (sectionId: string, rowId: string, sliceId: string) => void;
 }
 
 const RowComponent: React.FC<RowComponentProps> = ({
@@ -1858,9 +1617,7 @@ const RowComponent: React.FC<RowComponentProps> = ({
   onDeleteElement,
   onDuplicateElement,
   selection,
-  onSelectionChange,
-  onAddRowSlice,
-  onDeleteRowSlice
+  onSelectionChange
 }) => {
   const { hoveredTarget, setHoveredTarget } = useHover();
   const userBackground = hasUserBackground(row.styles);
@@ -1949,16 +1706,7 @@ const RowComponent: React.FC<RowComponentProps> = ({
           >
             <Plus className="h-3 w-3" />
           </Button>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="h-6 w-6 p-0 hover:bg-gray-100"
-            onClick={(e) => {
-              e.stopPropagation();
-              onAddRowSlice(sectionId, row.id);
-            }}
-            title="Add Layout Inside Row"
-          >
+          <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-gray-100">
             <Columns className="h-3 w-3" />
           </Button>
           <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-red-100 hover:text-red-600" onClick={onDelete}>
@@ -1978,107 +1726,39 @@ const RowComponent: React.FC<RowComponentProps> = ({
         </div>
       )}
 
-      {/* Render slices if they exist, otherwise render legacy columns */}
-      {row.slices ? (
-        <div className="p-4 space-y-4">
-          {row.slices.map((slice, sliceIndex) => (
-            <div key={slice.id} className="relative">
-              {/* Slice controls for non-preview mode */}
-              {isSelected && (
-                <div className="absolute -top-6 right-0 z-10 flex items-center gap-1 bg-amber-100 text-gray-800 border border-amber-200 px-2 py-1 rounded-md text-xs">
-                  <span className="font-medium text-xs">Layout {sliceIndex + 1} ({slice.columnLayout})</span>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="h-5 w-5 p-0 hover:bg-red-100 hover:text-red-600"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onDeleteRowSlice(sectionId, row.id, slice.id);
-                    }}
-                    title="Delete Layout"
-                  >
-                    <Trash2 className="h-3 w-3" />
-                  </Button>
-                </div>
-              )}
-              
-              {/* Slice columns */}
-              <div className={`grid gap-4 ${getResponsiveGridClasses(slice.columnLayout, deviceType)}`}>
-                {slice.columns.map((column, columnIndex) => (
-                  <ColumnComponent
-                    key={column.id}
-                    column={column}
-                    columnIndex={columnIndex}
-                    totalColumns={slice.columns.length}
-                    rowId={row.id}
-                    sectionId={sectionId}
-                    deviceType={deviceType}
-                    isSelected={selection?.type === 'column' && selection.id === column.id}
-                    onSelect={() => onSelectionChange({ 
-                      type: 'column', 
-                      id: column.id, 
-                      parentId: row.id, 
-                      grandParentId: sectionId 
-                    })}
-                    onMoveColumnUp={() => onMoveColumn(sectionId, row.id, column.id, 'up')}
-                    onMoveColumnDown={() => onMoveColumn(sectionId, row.id, column.id, 'down')}
-                    onDeleteColumn={() => onDeleteColumn(column.id)}
-                    canDeleteColumn={true}
-                    onMoveElementUp={onMoveElementUp}
-                    onMoveElementDown={onMoveElementDown}
-                    onAddElement={onAddElement}
-                    onMoveElement={onMoveElement}
-                    onUpdateElement={onUpdateElement}
-                    onDeleteElement={onDeleteElement}
-                    onDuplicateElement={onDuplicateElement}
-                    selection={selection}
-                    onSelectionChange={onSelectionChange}
-                  />
-                ))}
-              </div>
-              
-              {/* Slice separator */}
-              {sliceIndex < row.slices.length - 1 && (
-                <div className="border-b border-border/30 my-2" />
-              )}
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className={`grid gap-4 p-4 ${getResponsiveGridClasses(row.columnLayout, deviceType)}`}>
-          {row.columns.map((column, columnIndex) => (
-            <ColumnComponent
-              key={column.id}
-              column={column}
-              columnIndex={columnIndex}
-              totalColumns={row.columns.length}
-              rowId={row.id}
-              sectionId={sectionId}
-              deviceType={deviceType}
-              isSelected={selection?.type === 'column' && selection.id === column.id}
-              onSelect={() => onSelectionChange({ 
-                type: 'column', 
-                id: column.id, 
-                parentId: row.id, 
-                grandParentId: sectionId 
-              })}
-              onMoveColumnUp={() => onMoveColumn(sectionId, row.id, column.id, 'up')}
-              onMoveColumnDown={() => onMoveColumn(sectionId, row.id, column.id, 'down')}
-              onDeleteColumn={() => onDeleteColumn(column.id)}
-              canDeleteColumn={true}
-              onMoveElementUp={onMoveElementUp}
-              onMoveElementDown={onMoveElementDown}
-              onAddElement={onAddElement}
-              onMoveElement={onMoveElement}
-              onUpdateElement={onUpdateElement}
-              onDeleteElement={onDeleteElement}
-              onDuplicateElement={onDuplicateElement}
-              selection={selection}
-              onSelectionChange={onSelectionChange}
-            />
-          ))}
-        </div>
-      )}
+      <div className={`grid gap-4 p-4 ${getResponsiveGridClasses(row.columnLayout, deviceType)}`}>
+        {row.columns.map((column, columnIndex) => (
+          <ColumnComponent
+            key={column.id}
+            column={column}
+            columnIndex={columnIndex}
+            totalColumns={row.columns.length}
+            rowId={row.id}
+            sectionId={sectionId}
+            deviceType={deviceType}
+            isSelected={selection?.type === 'column' && selection.id === column.id}
+            onSelect={() => onSelectionChange({ 
+              type: 'column', 
+              id: column.id, 
+              parentId: row.id, 
+              grandParentId: sectionId 
+            })}
+            onMoveColumnUp={() => onMoveColumn(sectionId, row.id, column.id, 'up')}
+            onMoveColumnDown={() => onMoveColumn(sectionId, row.id, column.id, 'down')}
+            onDeleteColumn={() => onDeleteColumn(column.id)}
+            canDeleteColumn={row.columns.length > 1}
+            onMoveElementUp={onMoveElementUp}
+            onMoveElementDown={onMoveElementDown}
+            onAddElement={onAddElement}
+            onMoveElement={onMoveElement}
+            onUpdateElement={onUpdateElement}
+            onDeleteElement={onDeleteElement}
+            onDuplicateElement={onDuplicateElement}
+            selection={selection}
+            onSelectionChange={onSelectionChange}
+          />
+        ))}
+      </div>
     </div>
   );
 };
@@ -2204,7 +1884,8 @@ const ColumnComponent: React.FC<ColumnComponentProps> = ({
               e.stopPropagation();
               onDeleteColumn();
             }}
-            title="Delete column"
+            disabled={!canDeleteColumn}
+            title={!canDeleteColumn ? "Cannot delete the only column" : "Delete column"}
           >
             <Trash2 className="h-2 w-2" />
           </Button>
