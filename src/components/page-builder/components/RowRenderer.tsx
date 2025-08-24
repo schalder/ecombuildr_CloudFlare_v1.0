@@ -2,7 +2,7 @@ import React from 'react';
 import { useDrop } from 'react-dnd';
 import { Plus, Trash2, Copy, GripVertical, Columns } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { PageBuilderRow, PageBuilderElement, COLUMN_LAYOUTS, RESPONSIVE_LAYOUTS } from '../types';
+import { PageBuilderRow, PageBuilderElement, RowSlice, COLUMN_LAYOUTS, RESPONSIVE_LAYOUTS } from '../types';
 import { ColumnRenderer } from './ColumnRenderer';
 import { cn } from '@/lib/utils';
 import { renderRowStyles, hasUserBackground, hasUserShadow } from '../utils/styleRenderer';
@@ -69,7 +69,7 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
     // TODO: Implement row duplication
   };
 
-  const getDeviceSpecificGridStyle = () => {
+  const getDeviceSpecificGridStyle = (slice: RowSlice) => {
     const stackOnMobile = row.responsive?.mobile?.stackColumns !== false; // Default to true
     
     // Force grid layout based on selected device type
@@ -82,7 +82,7 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
     }
     
     if (deviceType === 'tablet') {
-      if (row.columnLayout === '1') {
+      if (slice.columnLayout === '1') {
         // True single column - center content
         return {
           display: 'grid',
@@ -101,7 +101,7 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
     }
     
     // Desktop - always use the columnLayout configuration, not actual column count
-    const fractions = COLUMN_LAYOUTS[row.columnLayout];
+    const fractions = COLUMN_LAYOUTS[slice.columnLayout];
     if (fractions) {
       return {
         display: 'grid',
@@ -118,34 +118,34 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
     };
   };
 
-  const getColumnsToRender = () => {
+  const getColumnsToRender = (slice: RowSlice) => {
     // For mobile, always stack all columns
     if (deviceType === 'mobile') {
-      return row.columns;
+      return slice.columns;
     }
     
     // For tablet, respect the columnLayout setting
     if (deviceType === 'tablet') {
-      if (row.columnLayout === '1') {
+      if (slice.columnLayout === '1') {
         // Only render the first column for true single-column layout
-        return row.columns.slice(0, 1);
+        return slice.columns.slice(0, 1);
       } else {
         // For multi-column layouts on tablet, stack all columns
-        return row.columns;
+        return slice.columns;
       }
     }
     
     // For desktop, render all columns according to the layout
-    return row.columns;
+    return slice.columns;
   };
 
-  const getEffectiveColumnCount = () => {
+  const getEffectiveColumnCount = (slice: RowSlice) => {
     // For tablet with single column layout, return 1
-    if (deviceType === 'tablet' && row.columnLayout === '1') {
+    if (deviceType === 'tablet' && slice.columnLayout === '1') {
       return 1;
     }
-    // Otherwise return the total number of columns in the row
-    return row.columns.length;
+    // Otherwise return the total number of columns in the slice
+    return slice.columns.length;
   };
 
   const getRowStyles = (): React.CSSProperties => {
@@ -213,14 +213,45 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
         </div>
       )}
 
-      <div style={getDeviceSpecificGridStyle()}>
-        {getColumnsToRender().map((column) => (
+      {/* Render slices if they exist, otherwise render legacy columns */}
+      {row.slices ? (
+        <div className="space-y-4">
+          {row.slices.map((slice, sliceIndex) => (
+            <div key={slice.id}>
+              <div style={getDeviceSpecificGridStyle(slice)}>
+                {getColumnsToRender(slice).map((column) => (
+                  <ColumnRenderer
+                    key={column.id}
+                    column={column}
+                    sectionId={sectionId}
+                    rowId={row.id}
+                    columnCount={getEffectiveColumnCount(slice)}
+                    isPreviewMode={isPreviewMode}
+                    deviceType={deviceType}
+                    onSelectElement={onSelectElement}
+                    onUpdateElement={onUpdateElement}
+                    onAddElement={onAddElement}
+                    onMoveElement={onMoveElement}
+                    onRemoveElement={onRemoveElement}
+                  />
+                ))}
+              </div>
+              {/* Slice separator - subtle line between slices */}
+              {sliceIndex < row.slices.length - 1 && !isPreviewMode && (
+                <div className="border-b border-border/30 my-2" />
+              )}
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div style={getDeviceSpecificGridStyle({ id: 'legacy', columnLayout: row.columnLayout, columns: row.columns })}>
+          {getColumnsToRender({ id: 'legacy', columnLayout: row.columnLayout, columns: row.columns }).map((column) => (
             <ColumnRenderer
               key={column.id}
               column={column}
               sectionId={sectionId}
               rowId={row.id}
-              columnCount={getEffectiveColumnCount()}
+              columnCount={getEffectiveColumnCount({ id: 'legacy', columnLayout: row.columnLayout, columns: row.columns })}
               isPreviewMode={isPreviewMode}
               deviceType={deviceType}
               onSelectElement={onSelectElement}
@@ -229,8 +260,9 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
               onMoveElement={onMoveElement}
               onRemoveElement={onRemoveElement}
             />
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
