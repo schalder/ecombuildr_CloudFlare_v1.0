@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Type, Heading1, Heading2, Heading3, Image, List, Quote, Minus, Play, Layout } from 'lucide-react';
+import { Type, Heading1, Heading2, Heading3, Image, List, Quote, Minus, Play } from 'lucide-react';
 import { PageBuilderElement, ElementType } from '../types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,7 +11,6 @@ import { renderElementStyles } from '../utils/styleRenderer';
 import { generateResponsiveCSS } from '../utils/responsiveStyles';
 import { ICONS_MAP } from '@/components/icons/lucide-icon-list';
 import { useEcomPaths } from '@/lib/pathResolver';
-import { InnerSectionElement } from './InnerSectionElement';
 
 // Heading Element
 const HeadingElement: React.FC<{
@@ -935,18 +934,5 @@ export const registerBasicElements = () => {
       defaultIcon: 'check'
     },
     description: 'Bullet, numbered, or icon lists'
-  });
-
-  // Inner Layout
-  elementRegistry.register({
-    id: 'inner-layout',
-    name: 'Inner Layout',
-    category: 'basic',
-    icon: Layout,
-    component: InnerSectionElement,
-    defaultContent: { 
-      rows: []
-    },
-    description: 'Nested columns layout'
   });
 };
