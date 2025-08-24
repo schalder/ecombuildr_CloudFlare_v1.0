@@ -8,6 +8,8 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { PageBuilderElement } from '../types';
 import { elementRegistry } from './ElementRegistry';
 import { InlineEditor } from '../components/InlineEditor';
+import { renderElementStyles } from '../utils/styleRenderer';
+import { generateResponsiveCSS } from '../utils/responsiveStyles';
 
 // Testimonial Element
 const TestimonialElement: React.FC<{
@@ -206,92 +208,54 @@ const AccordionElement: React.FC<{
     handleUpdate('items', newItems);
   };
 
-  // Apply styles from element.styles
-  const getContainerStyles = () => {
-    const styles = element.styles || {};
-    const containerStyles: React.CSSProperties = {};
-
-    // Typography styles
-    if (styles.fontFamily) containerStyles.fontFamily = styles.fontFamily;
-    if (styles.fontSize) containerStyles.fontSize = styles.fontSize;
-    if (styles.textAlign) containerStyles.textAlign = styles.textAlign as any;
-    if (styles.lineHeight) containerStyles.lineHeight = styles.lineHeight;
-    if (styles.color) containerStyles.color = styles.color;
-
-    // Background styles
-    if (styles.backgroundColor) containerStyles.backgroundColor = styles.backgroundColor;
-
-    // Border styles
-    if (styles.borderWidth) containerStyles.borderWidth = styles.borderWidth;
-    if (styles.borderColor) containerStyles.borderColor = styles.borderColor;
-    if (styles.borderRadius) containerStyles.borderRadius = styles.borderRadius;
-    if (styles.borderStyle) containerStyles.borderStyle = styles.borderStyle;
-
-    // Spacing styles - margin
-    if (styles.marginTop) containerStyles.marginTop = styles.marginTop;
-    if (styles.marginRight) containerStyles.marginRight = styles.marginRight;
-    if (styles.marginBottom) containerStyles.marginBottom = styles.marginBottom;
-    if (styles.marginLeft) containerStyles.marginLeft = styles.marginLeft;
-
-    // Spacing styles - padding
-    if (styles.paddingTop) containerStyles.paddingTop = styles.paddingTop;
-    if (styles.paddingRight) containerStyles.paddingRight = styles.paddingRight;
-    if (styles.paddingBottom) containerStyles.paddingBottom = styles.paddingBottom;
-    if (styles.paddingLeft) containerStyles.paddingLeft = styles.paddingLeft;
-
-    return containerStyles;
-  };
-
-  const getTriggerStyles = () => {
-    const styles = element.styles || {};
-    const triggerStyles: React.CSSProperties = {};
-
-    // Typography styles for accordion triggers
-    if (styles.fontFamily) triggerStyles.fontFamily = styles.fontFamily;
-    if (styles.fontSize) triggerStyles.fontSize = styles.fontSize;
-    if (styles.textAlign) triggerStyles.textAlign = styles.textAlign as any;
-    if (styles.lineHeight) triggerStyles.lineHeight = styles.lineHeight;
-    if (styles.color) triggerStyles.color = styles.color;
-
-    return triggerStyles;
-  };
-
+  // Generate responsive CSS for this element
+  const responsiveCSS = generateResponsiveCSS(element.id, element.styles);
+  
+  // Get base styles using the utility function
+  const containerStyles = renderElementStyles(element, deviceType);
+  
+  // Get text alignment from styles, with fallback for dynamic alignment
+  const textAlign = element.styles?.textAlign || 'left';
+  
   return (
-    <div 
-      className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-2xl mx-auto'}`} 
-      style={getContainerStyles()}
-    >
-      <Accordion type={allowMultiple ? "multiple" : "single"} collapsible className="w-full">
-        {items.map((item: any, index: number) => (
-          <AccordionItem key={index} value={`item-${index}`}>
-            <AccordionTrigger 
-              className="text-left hover:no-underline"
-              style={getTriggerStyles()}
-            >
-              <InlineEditor
-                value={item.title}
-                onChange={(value) => updateItem(index, 'title', value)}
-                placeholder="Section title..."
-                disabled={!isEditing}
-                className="font-medium text-left"
-              />
-            </AccordionTrigger>
-            <AccordionContent className="pb-4">
-              <div className="pt-2">
+    <>
+      {responsiveCSS && <style dangerouslySetInnerHTML={{ __html: responsiveCSS }} />}
+      <div 
+        className={`element-${element.id} ${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-2xl mx-auto'}`} 
+        style={containerStyles}
+      >
+        <Accordion type={allowMultiple ? "multiple" : "single"} collapsible className="w-full">
+          {items.map((item: any, index: number) => (
+            <AccordionItem key={index} value={`item-${index}`}>
+              <AccordionTrigger 
+                className={`hover:no-underline`}
+                style={{ textAlign: textAlign }}
+              >
                 <InlineEditor
-                  value={item.content}
-                  onChange={(value) => updateItem(index, 'content', value)}
-                  placeholder="Section content..."
-                  multiline
+                  value={item.title}
+                  onChange={(value) => updateItem(index, 'title', value)}
+                  placeholder="Section title..."
                   disabled={!isEditing}
-                  className="text-muted-foreground"
+                  className="font-medium"
                 />
-              </div>
-            </AccordionContent>
-          </AccordionItem>
-        ))}
-      </Accordion>
-    </div>
+              </AccordionTrigger>
+              <AccordionContent className="pb-4">
+                <div className="pt-2" style={{ textAlign: textAlign }}>
+                  <InlineEditor
+                    value={item.content}
+                    onChange={(value) => updateItem(index, 'content', value)}
+                    placeholder="Section content..."
+                    multiline
+                    disabled={!isEditing}
+                    className="text-muted-foreground"
+                  />
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          ))}
+        </Accordion>
+      </div>
+    </>
   );
 };
 
