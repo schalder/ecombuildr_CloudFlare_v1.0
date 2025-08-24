@@ -112,12 +112,12 @@ export const renderSectionStyles = (section: PageBuilderSection, deviceType: 'de
   
   // Apply background styles AFTER responsive merge to ensure they're not overwritten
   const backgroundStyles = buildBackgroundStyles({
-    backgroundImage: section.styles.backgroundImage,
-    backgroundColor: section.styles.backgroundColor,
-    backgroundGradient: section.styles.backgroundGradient,
-    backgroundOpacity: section.styles.backgroundOpacity,
-    backgroundImageMode: section.styles.backgroundImageMode,
-    responsive: section.styles.responsive,
+    backgroundImage: section.styles?.backgroundImage,
+    backgroundColor: section.styles?.backgroundColor,
+    backgroundGradient: section.styles?.backgroundGradient,
+    backgroundOpacity: section.styles?.backgroundOpacity,
+    backgroundImageMode: section.styles?.backgroundImageMode,
+    responsive: section.styles?.responsive,
     deviceType
   });
   
@@ -197,12 +197,12 @@ export const renderRowStyles = (row: PageBuilderRow, deviceType: 'desktop' | 'ta
   
   // Apply background styles AFTER responsive merge
   const backgroundStyles = buildBackgroundStyles({
-    backgroundImage: row.styles.backgroundImage,
-    backgroundColor: row.styles.backgroundColor,
-    backgroundGradient: row.styles.backgroundGradient,
-    backgroundOpacity: row.styles.backgroundOpacity,
-    backgroundImageMode: row.styles.backgroundImageMode,
-    responsive: row.styles.responsive,
+    backgroundImage: row.styles?.backgroundImage,
+    backgroundColor: row.styles?.backgroundColor,
+    backgroundGradient: row.styles?.backgroundGradient,
+    backgroundOpacity: row.styles?.backgroundOpacity,
+    backgroundImageMode: row.styles?.backgroundImageMode,
+    responsive: row.styles?.responsive,
     deviceType
   });
   
@@ -306,12 +306,12 @@ export const renderColumnStyles = (column: PageBuilderColumn, deviceType: 'deskt
   
   // Apply background styles AFTER responsive merge
   const backgroundStyles = buildBackgroundStyles({
-    backgroundImage: column.styles.backgroundImage,
-    backgroundColor: column.styles.backgroundColor,
-    backgroundGradient: column.styles.backgroundGradient,
-    backgroundOpacity: column.styles.backgroundOpacity,
-    backgroundImageMode: column.styles.backgroundImageMode,
-    responsive: column.styles.responsive,
+    backgroundImage: column.styles?.backgroundImage,
+    backgroundColor: column.styles?.backgroundColor,
+    backgroundGradient: column.styles?.backgroundGradient,
+    backgroundOpacity: column.styles?.backgroundOpacity,
+    backgroundImageMode: column.styles?.backgroundImageMode,
+    responsive: column.styles?.responsive,
     deviceType
   });
   
