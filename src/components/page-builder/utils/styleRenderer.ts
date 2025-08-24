@@ -57,14 +57,13 @@ export const renderSectionStyles = (section: PageBuilderSection, deviceType: 'de
   const styles: React.CSSProperties = {};
   
   if (section.styles) {
-    // COMPLETELY ISOLATED BACKGROUND SYSTEM - FIXED VERSION
+    // FIXED: No mixing of shorthand and individual properties
     
-    // Step 1: Always handle background image first (if exists)
+    // Handle background image
     if (section.styles.backgroundImage) {
       const responsiveImageMode = section.styles?.responsive?.[deviceType]?.backgroundImageMode || section.styles.backgroundImageMode;
       const imageProps = getBackgroundImageProperties(responsiveImageMode, deviceType);
       
-      // Set image as primary background
       styles.backgroundImage = `url(${section.styles.backgroundImage})`;
       styles.backgroundSize = imageProps.backgroundSize || 'cover';
       styles.backgroundPosition = imageProps.backgroundPosition || 'center';
@@ -72,7 +71,7 @@ export const renderSectionStyles = (section: PageBuilderSection, deviceType: 'de
       styles.backgroundAttachment = imageProps.backgroundAttachment || 'scroll';
     }
     
-    // Step 2: Handle color/gradient overlay (completely separate from image)
+    // Handle color/gradient overlay - USE PSEUDO-ELEMENT to avoid conflicts
     const hasColorOverlay = (section.styles.backgroundGradient || 
                             (section.styles.backgroundColor && section.styles.backgroundColor !== 'transparent'));
     
@@ -80,14 +79,16 @@ export const renderSectionStyles = (section: PageBuilderSection, deviceType: 'de
       const opacity = section.styles.backgroundOpacity ?? 1;
       
       if (!section.styles.backgroundImage) {
-        // No image - just apply color/gradient directly
+        // No image - apply color/gradient directly using individual properties
         if (section.styles.backgroundGradient) {
-          styles.background = applyGradientOpacity(section.styles.backgroundGradient, opacity);
+          styles.backgroundImage = applyGradientOpacity(section.styles.backgroundGradient, opacity);
         } else if (section.styles.backgroundColor) {
-          styles.background = applyColorOpacity(section.styles.backgroundColor, opacity);
+          styles.backgroundColor = applyColorOpacity(section.styles.backgroundColor, opacity);
         }
       } else {
-        // Image exists - create overlay using multi-layer CSS
+        // Image exists - add color overlay using CSS custom properties for pseudo-element
+        styles.position = styles.position || 'relative';
+        
         let overlayBackground = '';
         if (section.styles.backgroundGradient) {
           overlayBackground = applyGradientOpacity(section.styles.backgroundGradient, opacity);
@@ -95,23 +96,8 @@ export const renderSectionStyles = (section: PageBuilderSection, deviceType: 'de
           overlayBackground = applyColorOpacity(section.styles.backgroundColor, opacity);
         }
         
-        if (overlayBackground) {
-          // Use multi-layer background: overlay first, then image
-          const imageUrl = `url(${section.styles.backgroundImage})`;
-          styles.background = `${overlayBackground}, ${imageUrl}`;
-          
-          // Apply per-layer properties (overlay defaults, image specific)
-          const responsiveImageMode = section.styles?.responsive?.[deviceType]?.backgroundImageMode || section.styles.backgroundImageMode;
-          const imageProps = getBackgroundImageProperties(responsiveImageMode, deviceType);
-          
-          styles.backgroundSize = `auto, ${imageProps.backgroundSize || 'cover'}`;
-          styles.backgroundPosition = `0 0, ${imageProps.backgroundPosition || 'center'}`;
-          styles.backgroundRepeat = `repeat, ${imageProps.backgroundRepeat || 'no-repeat'}`;
-          styles.backgroundAttachment = `scroll, ${imageProps.backgroundAttachment || 'scroll'}`;
-          
-          // Remove individual properties to avoid conflicts
-          delete styles.backgroundImage;
-        }
+        // Store overlay data in CSS custom properties
+        (styles as any)['--pb-overlay'] = overlayBackground;
       }
     }
     
@@ -188,14 +174,13 @@ export const renderRowStyles = (row: PageBuilderRow, deviceType: 'desktop' | 'ta
   const styles: React.CSSProperties = {};
   
   if (row.styles) {
-    // COMPLETELY ISOLATED BACKGROUND SYSTEM - FIXED VERSION
+    // FIXED: No mixing of shorthand and individual properties
     
-    // Step 1: Always handle background image first (if exists)
+    // Handle background image
     if (row.styles.backgroundImage) {
       const responsiveImageMode = row.styles?.responsive?.[deviceType]?.backgroundImageMode || row.styles.backgroundImageMode;
       const imageProps = getBackgroundImageProperties(responsiveImageMode, deviceType);
       
-      // Set image as primary background
       styles.backgroundImage = `url(${row.styles.backgroundImage})`;
       styles.backgroundSize = imageProps.backgroundSize || 'cover';
       styles.backgroundPosition = imageProps.backgroundPosition || 'center';
@@ -203,7 +188,7 @@ export const renderRowStyles = (row: PageBuilderRow, deviceType: 'desktop' | 'ta
       styles.backgroundAttachment = imageProps.backgroundAttachment || 'scroll';
     }
     
-    // Step 2: Handle color/gradient overlay (completely separate from image)
+    // Handle color/gradient overlay
     const hasColorOverlay = (row.styles.backgroundGradient || 
                             (row.styles.backgroundColor && row.styles.backgroundColor !== 'transparent'));
     
@@ -211,14 +196,16 @@ export const renderRowStyles = (row: PageBuilderRow, deviceType: 'desktop' | 'ta
       const opacity = row.styles.backgroundOpacity ?? 1;
       
       if (!row.styles.backgroundImage) {
-        // No image - just apply color/gradient directly
+        // No image - apply color/gradient directly using individual properties
         if (row.styles.backgroundGradient) {
-          styles.background = applyGradientOpacity(row.styles.backgroundGradient, opacity);
+          styles.backgroundImage = applyGradientOpacity(row.styles.backgroundGradient, opacity);
         } else if (row.styles.backgroundColor) {
-          styles.background = applyColorOpacity(row.styles.backgroundColor, opacity);
+          styles.backgroundColor = applyColorOpacity(row.styles.backgroundColor, opacity);
         }
       } else {
-        // Image exists - create overlay using multi-layer CSS
+        // Image exists - add color overlay using CSS custom properties for pseudo-element
+        styles.position = styles.position || 'relative';
+        
         let overlayBackground = '';
         if (row.styles.backgroundGradient) {
           overlayBackground = applyGradientOpacity(row.styles.backgroundGradient, opacity);
@@ -226,23 +213,8 @@ export const renderRowStyles = (row: PageBuilderRow, deviceType: 'desktop' | 'ta
           overlayBackground = applyColorOpacity(row.styles.backgroundColor, opacity);
         }
         
-        if (overlayBackground) {
-          // Use multi-layer background: overlay first, then image
-          const imageUrl = `url(${row.styles.backgroundImage})`;
-          styles.background = `${overlayBackground}, ${imageUrl}`;
-          
-          // Apply per-layer properties (overlay defaults, image specific)
-          const responsiveImageMode = row.styles?.responsive?.[deviceType]?.backgroundImageMode || row.styles.backgroundImageMode;
-          const imageProps = getBackgroundImageProperties(responsiveImageMode, deviceType);
-          
-          styles.backgroundSize = `auto, ${imageProps.backgroundSize || 'cover'}`;
-          styles.backgroundPosition = `0 0, ${imageProps.backgroundPosition || 'center'}`;
-          styles.backgroundRepeat = `repeat, ${imageProps.backgroundRepeat || 'no-repeat'}`;
-          styles.backgroundAttachment = `scroll, ${imageProps.backgroundAttachment || 'scroll'}`;
-          
-          // Remove individual properties to avoid conflicts
-          delete styles.backgroundImage;
-        }
+        // Store overlay data in CSS custom properties
+        (styles as any)['--pb-overlay'] = overlayBackground;
       }
     }
     
@@ -310,14 +282,13 @@ export const renderColumnStyles = (column: PageBuilderColumn, deviceType: 'deskt
   const styles: React.CSSProperties = {};
   
   if (column.styles) {
-    // COMPLETELY ISOLATED BACKGROUND SYSTEM - FIXED VERSION
+    // FIXED: No mixing of shorthand and individual properties
     
-    // Step 1: Always handle background image first (if exists)
+    // Handle background image
     if (column.styles.backgroundImage) {
       const responsiveImageMode = column.styles?.responsive?.[deviceType]?.backgroundImageMode || column.styles.backgroundImageMode;
       const imageProps = getBackgroundImageProperties(responsiveImageMode, deviceType);
       
-      // Set image as primary background
       styles.backgroundImage = `url(${column.styles.backgroundImage})`;
       styles.backgroundSize = imageProps.backgroundSize || 'cover';
       styles.backgroundPosition = imageProps.backgroundPosition || 'center';
@@ -325,7 +296,7 @@ export const renderColumnStyles = (column: PageBuilderColumn, deviceType: 'deskt
       styles.backgroundAttachment = imageProps.backgroundAttachment || 'scroll';
     }
     
-    // Step 2: Handle color/gradient overlay (completely separate from image)
+    // Handle color/gradient overlay
     const hasColorOverlay = (column.styles.backgroundGradient || 
                             (column.styles.backgroundColor && column.styles.backgroundColor !== 'transparent'));
     
@@ -333,14 +304,16 @@ export const renderColumnStyles = (column: PageBuilderColumn, deviceType: 'deskt
       const opacity = column.styles.backgroundOpacity ?? 1;
       
       if (!column.styles.backgroundImage) {
-        // No image - just apply color/gradient directly
+        // No image - apply color/gradient directly using individual properties
         if (column.styles.backgroundGradient) {
-          styles.background = applyGradientOpacity(column.styles.backgroundGradient, opacity);
+          styles.backgroundImage = applyGradientOpacity(column.styles.backgroundGradient, opacity);
         } else if (column.styles.backgroundColor) {
-          styles.background = applyColorOpacity(column.styles.backgroundColor, opacity);
+          styles.backgroundColor = applyColorOpacity(column.styles.backgroundColor, opacity);
         }
       } else {
-        // Image exists - create overlay using multi-layer CSS
+        // Image exists - add color overlay using CSS custom properties for pseudo-element
+        styles.position = styles.position || 'relative';
+        
         let overlayBackground = '';
         if (column.styles.backgroundGradient) {
           overlayBackground = applyGradientOpacity(column.styles.backgroundGradient, opacity);
@@ -348,23 +321,8 @@ export const renderColumnStyles = (column: PageBuilderColumn, deviceType: 'deskt
           overlayBackground = applyColorOpacity(column.styles.backgroundColor, opacity);
         }
         
-        if (overlayBackground) {
-          // Use multi-layer background: overlay first, then image
-          const imageUrl = `url(${column.styles.backgroundImage})`;
-          styles.background = `${overlayBackground}, ${imageUrl}`;
-          
-          // Apply per-layer properties (overlay defaults, image specific)
-          const responsiveImageMode = column.styles?.responsive?.[deviceType]?.backgroundImageMode || column.styles.backgroundImageMode;
-          const imageProps = getBackgroundImageProperties(responsiveImageMode, deviceType);
-          
-          styles.backgroundSize = `auto, ${imageProps.backgroundSize || 'cover'}`;
-          styles.backgroundPosition = `0 0, ${imageProps.backgroundPosition || 'center'}`;
-          styles.backgroundRepeat = `repeat, ${imageProps.backgroundRepeat || 'no-repeat'}`;
-          styles.backgroundAttachment = `scroll, ${imageProps.backgroundAttachment || 'scroll'}`;
-          
-          // Remove individual properties to avoid conflicts
-          delete styles.backgroundImage;
-        }
+        // Store overlay data in CSS custom properties
+        (styles as any)['--pb-overlay'] = overlayBackground;
       }
     }
     

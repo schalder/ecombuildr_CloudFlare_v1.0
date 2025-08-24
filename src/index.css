@@ -175,3 +175,23 @@ All colors MUST be HSL. Designed for trust, energy, and conversion.
     display: none;
   }
 }
+
+/* PSEUDO-ELEMENT OVERLAY SYSTEM - For background image + color/gradient combinations */
+@layer components {
+  [style*="--pb-overlay"]:before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--pb-overlay);
+    pointer-events: none;
+    z-index: 1;
+  }
+  
+  [style*="--pb-overlay"] > * {
+    position: relative;
+    z-index: 2;
+  }
+}
