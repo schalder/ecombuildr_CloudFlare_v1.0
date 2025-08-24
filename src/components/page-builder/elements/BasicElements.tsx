@@ -575,25 +575,26 @@ const SpacerElement: React.FC<{
   };
 
   const elementStyles = renderElementStyles(element);
-
+  const spacerHeight = String(height);
+  
   if (isEditing) {
     return (
-      <div className="border border-dashed border-muted-foreground/30 rounded p-4 text-center bg-muted/10">
-        <div className="flex items-center justify-center space-x-2 text-sm text-muted-foreground">
-          <span>Spacer:</span>
-          <InlineEditor
-            value={String(height)}
-            onChange={handleHeightChange}
-            placeholder="50px"
-            disabled={false}
-            className="w-16 text-center"
-          />
+      <div 
+        style={{ 
+          ...elementStyles, 
+          height: elementStyles.height || spacerHeight,
+          position: 'relative'
+        }} 
+        className="w-full"
+      >
+        <div className="absolute inset-0 border border-dashed border-muted-foreground/30 rounded flex items-center justify-center bg-muted/10">
+          <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+            <span>Spacer: {spacerHeight}</span>
+          </div>
         </div>
       </div>
     );
   }
-
-  const spacerHeight = String(height);
   
   return (
     <div style={{ ...elementStyles, height: elementStyles.height || spacerHeight }} className="w-full" />
