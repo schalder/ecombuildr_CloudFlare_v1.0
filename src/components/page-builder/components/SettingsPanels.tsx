@@ -501,7 +501,8 @@ export const SectionSettings: React.FC<SectionSettingsProps> = ({ section, onUpd
           )}
           
           <div className="space-y-2">
-            <Label>Color/Gradient Opacity: <span className="text-muted-foreground">{Math.round((section.styles?.backgroundOpacity || 1) * 100)}%</span></Label>
+            <Label>Overlay Opacity: <span className="text-muted-foreground">{Math.round((section.styles?.backgroundOpacity || 1) * 100)}%</span></Label>
+            <p className="text-xs text-muted-foreground">Controls color/gradient opacity only. Background image is unaffected.</p>
             <Slider
               min={0}
               max={100}
@@ -947,13 +948,14 @@ export const RowSettings: React.FC<RowSettingsProps> = ({ row, onUpdate }) => {
           )}
           
           <div className="space-y-2">
-            <Label>Color/Gradient Opacity: <span className="text-muted-foreground">{Math.round((row.styles?.backgroundOpacity ?? 1) * 100)}%</span></Label>
+            <Label>Overlay Opacity: <span className="text-muted-foreground">{Math.round((row.styles?.backgroundOpacity ?? 1) * 100)}%</span></Label>
+            <p className="text-xs text-muted-foreground">Controls color/gradient opacity only. Background image is unaffected.</p>
             <Slider
               min={0}
-              max={1}
-              step={0.01}
-              value={[row.styles?.backgroundOpacity ?? 1]}
-              onValueChange={(value) => handleStyleUpdate('backgroundOpacity', value[0])}
+              max={100}
+              step={1}
+              value={[Math.round((row.styles?.backgroundOpacity ?? 1) * 100)]}
+              onValueChange={(v) => handleStyleUpdate('backgroundOpacity', v[0] / 100)}
             />
           </div>
           
@@ -1360,13 +1362,14 @@ export const ColumnSettings: React.FC<ColumnSettingsProps> = ({ column, onUpdate
           )}
           
           <div className="space-y-2">
-            <Label>Color/Gradient Opacity: <span className="text-muted-foreground">{Math.round((column.styles?.backgroundOpacity ?? 1) * 100)}%</span></Label>
+            <Label>Overlay Opacity: <span className="text-muted-foreground">{Math.round((column.styles?.backgroundOpacity ?? 1) * 100)}%</span></Label>
+            <p className="text-xs text-muted-foreground">Controls color/gradient opacity only. Background image is unaffected.</p>
             <Slider
               min={0}
-              max={1}
-              step={0.01}
-              value={[column.styles?.backgroundOpacity ?? 1]}
-              onValueChange={(value) => handleStyleUpdate('backgroundOpacity', value[0])}
+              max={100}
+              step={1}
+              value={[Math.round((column.styles?.backgroundOpacity ?? 1) * 100)]}
+              onValueChange={(v) => handleStyleUpdate('backgroundOpacity', v[0] / 100)}
             />
           </div>
           

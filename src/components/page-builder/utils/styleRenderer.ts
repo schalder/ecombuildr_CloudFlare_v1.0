@@ -57,59 +57,41 @@ export const renderSectionStyles = (section: PageBuilderSection, deviceType: 'de
   const styles: React.CSSProperties = {};
   
   if (section.styles) {
-    const opacity = section.styles.backgroundOpacity ?? 1;
-    
-    // Layered background support: combine color/gradient with image
-    const backgroundLayers: string[] = [];
-    
-    // Add color/gradient layer with its own opacity (completely independent of image)
-    if (section.styles.backgroundGradient) {
-      backgroundLayers.push(applyGradientOpacity(section.styles.backgroundGradient, opacity));
-    } else if (section.styles.backgroundColor && section.styles.backgroundColor !== 'transparent') {
-      backgroundLayers.push(applyColorOpacity(section.styles.backgroundColor, opacity));
-    }
-    
-    // Handle background image and get mode-specific properties
-    let imageProps: any = {};
+    // COMPLETELY ISOLATED BACKGROUND SYSTEM
+    // Layer 1: Background Image (completely independent)
     if (section.styles.backgroundImage) {
-      backgroundLayers.push(`url(${section.styles.backgroundImage})`);
-      
       const responsiveImageMode = section.styles?.responsive?.[deviceType]?.backgroundImageMode || section.styles.backgroundImageMode;
-      imageProps = getBackgroundImageProperties(responsiveImageMode, deviceType);
+      const imageProps = getBackgroundImageProperties(responsiveImageMode, deviceType);
+      
+      // Apply image with all its properties - these NEVER change regardless of overlay opacity
+      styles.backgroundImage = `url(${section.styles.backgroundImage})`;
+      styles.backgroundSize = imageProps.backgroundSize || 'cover';
+      styles.backgroundPosition = imageProps.backgroundPosition || 'center';
+      styles.backgroundRepeat = imageProps.backgroundRepeat || 'no-repeat';
+      styles.backgroundAttachment = imageProps.backgroundAttachment || 'scroll';
     }
     
-    // Apply combined background - always use multi-layer approach to prevent position resets
-    if (backgroundLayers.length > 0) {
-      if (backgroundLayers.length === 1 && !section.styles.backgroundImage) {
-        // Single layer without image (color/gradient only)
-        styles.background = backgroundLayers[0];
-      } else {
-        // Multiple layers OR single image layer - use consistent multi-layer approach
-        styles.background = backgroundLayers.join(', ');
-        
-        // For layered backgrounds or image-only, specify properties for each layer
-        if (section.styles.backgroundImage) {
-          const numLayers = backgroundLayers.length;
-          const lastLayerIndex = numLayers - 1; // image is always last layer
-          
-          // Create arrays for each background property
-          const sizes = new Array(numLayers).fill('auto');
-          const positions = new Array(numLayers).fill('0% 0%');
-          const repeats = new Array(numLayers).fill('repeat');
-          const attachments = new Array(numLayers).fill('scroll');
-          
-          // Set image layer properties (last layer)
-          sizes[lastLayerIndex] = imageProps.backgroundSize || 'cover';
-          positions[lastLayerIndex] = imageProps.backgroundPosition || 'center';
-          repeats[lastLayerIndex] = imageProps.backgroundRepeat || 'no-repeat';
-          attachments[lastLayerIndex] = imageProps.backgroundAttachment || 'scroll';
-          
-          styles.backgroundSize = sizes.join(', ');
-          styles.backgroundPosition = positions.join(', ');
-          styles.backgroundRepeat = repeats.join(', ');
-          styles.backgroundAttachment = attachments.join(', ');
-        }
+    // Layer 2: Color/Gradient Overlay (completely independent with pseudo-element)
+    const hasColorOverlay = (section.styles.backgroundGradient || 
+                            (section.styles.backgroundColor && section.styles.backgroundColor !== 'transparent'));
+    
+    if (hasColorOverlay) {
+      // Enable pseudo-element positioning
+      styles.position = styles.position || 'relative';
+      
+      // Store overlay data for pseudo-element (will be handled by CSS class)
+      const opacity = section.styles.backgroundOpacity ?? 1;
+      let overlayBackground = '';
+      
+      if (section.styles.backgroundGradient) {
+        overlayBackground = applyGradientOpacity(section.styles.backgroundGradient, opacity);
+      } else if (section.styles.backgroundColor) {
+        overlayBackground = applyColorOpacity(section.styles.backgroundColor, opacity);
       }
+      
+      // Use CSS custom properties to pass overlay data to pseudo-element
+      (styles as any)['--overlay-background'] = overlayBackground;
+      (styles as any)['--overlay-opacity'] = opacity;
     }
     
     // Box shadow styles
@@ -185,59 +167,41 @@ export const renderRowStyles = (row: PageBuilderRow, deviceType: 'desktop' | 'ta
   const styles: React.CSSProperties = {};
   
   if (row.styles) {
-    const opacity = row.styles.backgroundOpacity ?? 1;
-    
-    // Layered background support: combine color/gradient with image
-    const backgroundLayers: string[] = [];
-    
-    // Add color/gradient layer with its own opacity (completely independent of image)
-    if (row.styles.backgroundGradient) {
-      backgroundLayers.push(applyGradientOpacity(row.styles.backgroundGradient, opacity));
-    } else if (row.styles.backgroundColor && row.styles.backgroundColor !== 'transparent') {
-      backgroundLayers.push(applyColorOpacity(row.styles.backgroundColor, opacity));
-    }
-    
-    // Handle background image and get mode-specific properties
-    let imageProps: any = {};
+    // COMPLETELY ISOLATED BACKGROUND SYSTEM
+    // Layer 1: Background Image (completely independent)
     if (row.styles.backgroundImage) {
-      backgroundLayers.push(`url(${row.styles.backgroundImage})`);
-      
       const responsiveImageMode = row.styles?.responsive?.[deviceType]?.backgroundImageMode || row.styles.backgroundImageMode;
-      imageProps = getBackgroundImageProperties(responsiveImageMode, deviceType);
+      const imageProps = getBackgroundImageProperties(responsiveImageMode, deviceType);
+      
+      // Apply image with all its properties - these NEVER change regardless of overlay opacity
+      styles.backgroundImage = `url(${row.styles.backgroundImage})`;
+      styles.backgroundSize = imageProps.backgroundSize || 'cover';
+      styles.backgroundPosition = imageProps.backgroundPosition || 'center';
+      styles.backgroundRepeat = imageProps.backgroundRepeat || 'no-repeat';
+      styles.backgroundAttachment = imageProps.backgroundAttachment || 'scroll';
     }
     
-    // Apply combined background - always use multi-layer approach to prevent position resets
-    if (backgroundLayers.length > 0) {
-      if (backgroundLayers.length === 1 && !row.styles.backgroundImage) {
-        // Single layer without image (color/gradient only)
-        styles.background = backgroundLayers[0];
-      } else {
-        // Multiple layers OR single image layer - use consistent multi-layer approach
-        styles.background = backgroundLayers.join(', ');
-        
-        // For layered backgrounds or image-only, specify properties for each layer
-        if (row.styles.backgroundImage) {
-          const numLayers = backgroundLayers.length;
-          const lastLayerIndex = numLayers - 1; // image is always last layer
-          
-          // Create arrays for each background property
-          const sizes = new Array(numLayers).fill('auto');
-          const positions = new Array(numLayers).fill('0% 0%');
-          const repeats = new Array(numLayers).fill('repeat');
-          const attachments = new Array(numLayers).fill('scroll');
-          
-          // Set image layer properties (last layer)
-          sizes[lastLayerIndex] = imageProps.backgroundSize || 'cover';
-          positions[lastLayerIndex] = imageProps.backgroundPosition || 'center';
-          repeats[lastLayerIndex] = imageProps.backgroundRepeat || 'no-repeat';
-          attachments[lastLayerIndex] = imageProps.backgroundAttachment || 'scroll';
-          
-          styles.backgroundSize = sizes.join(', ');
-          styles.backgroundPosition = positions.join(', ');
-          styles.backgroundRepeat = repeats.join(', ');
-          styles.backgroundAttachment = attachments.join(', ');
-        }
+    // Layer 2: Color/Gradient Overlay (completely independent with pseudo-element)
+    const hasColorOverlay = (row.styles.backgroundGradient || 
+                            (row.styles.backgroundColor && row.styles.backgroundColor !== 'transparent'));
+    
+    if (hasColorOverlay) {
+      // Enable pseudo-element positioning
+      styles.position = styles.position || 'relative';
+      
+      // Store overlay data for pseudo-element (will be handled by CSS class)
+      const opacity = row.styles.backgroundOpacity ?? 1;
+      let overlayBackground = '';
+      
+      if (row.styles.backgroundGradient) {
+        overlayBackground = applyGradientOpacity(row.styles.backgroundGradient, opacity);
+      } else if (row.styles.backgroundColor) {
+        overlayBackground = applyColorOpacity(row.styles.backgroundColor, opacity);
       }
+      
+      // Use CSS custom properties to pass overlay data to pseudo-element
+      (styles as any)['--overlay-background'] = overlayBackground;
+      (styles as any)['--overlay-opacity'] = opacity;
     }
     
     // Box shadow styles
@@ -304,59 +268,41 @@ export const renderColumnStyles = (column: PageBuilderColumn, deviceType: 'deskt
   const styles: React.CSSProperties = {};
   
   if (column.styles) {
-    const opacity = column.styles.backgroundOpacity ?? 1;
-    
-    // Layered background support: combine color/gradient with image
-    const backgroundLayers: string[] = [];
-    
-    // Add color/gradient layer with its own opacity (completely independent of image)
-    if (column.styles.backgroundGradient) {
-      backgroundLayers.push(applyGradientOpacity(column.styles.backgroundGradient, opacity));
-    } else if (column.styles.backgroundColor && column.styles.backgroundColor !== 'transparent') {
-      backgroundLayers.push(applyColorOpacity(column.styles.backgroundColor, opacity));
-    }
-    
-    // Handle background image and get mode-specific properties
-    let imageProps: any = {};
+    // COMPLETELY ISOLATED BACKGROUND SYSTEM
+    // Layer 1: Background Image (completely independent)
     if (column.styles.backgroundImage) {
-      backgroundLayers.push(`url(${column.styles.backgroundImage})`);
-      
       const responsiveImageMode = column.styles?.responsive?.[deviceType]?.backgroundImageMode || column.styles.backgroundImageMode;
-      imageProps = getBackgroundImageProperties(responsiveImageMode, deviceType);
+      const imageProps = getBackgroundImageProperties(responsiveImageMode, deviceType);
+      
+      // Apply image with all its properties - these NEVER change regardless of overlay opacity
+      styles.backgroundImage = `url(${column.styles.backgroundImage})`;
+      styles.backgroundSize = imageProps.backgroundSize || 'cover';
+      styles.backgroundPosition = imageProps.backgroundPosition || 'center';
+      styles.backgroundRepeat = imageProps.backgroundRepeat || 'no-repeat';
+      styles.backgroundAttachment = imageProps.backgroundAttachment || 'scroll';
     }
     
-    // Apply combined background - always use multi-layer approach to prevent position resets
-    if (backgroundLayers.length > 0) {
-      if (backgroundLayers.length === 1 && !column.styles.backgroundImage) {
-        // Single layer without image (color/gradient only)
-        styles.background = backgroundLayers[0];
-      } else {
-        // Multiple layers OR single image layer - use consistent multi-layer approach
-        styles.background = backgroundLayers.join(', ');
-        
-        // For layered backgrounds or image-only, specify properties for each layer
-        if (column.styles.backgroundImage) {
-          const numLayers = backgroundLayers.length;
-          const lastLayerIndex = numLayers - 1; // image is always last layer
-          
-          // Create arrays for each background property
-          const sizes = new Array(numLayers).fill('auto');
-          const positions = new Array(numLayers).fill('0% 0%');
-          const repeats = new Array(numLayers).fill('repeat');
-          const attachments = new Array(numLayers).fill('scroll');
-          
-          // Set image layer properties (last layer)
-          sizes[lastLayerIndex] = imageProps.backgroundSize || 'cover';
-          positions[lastLayerIndex] = imageProps.backgroundPosition || 'center';
-          repeats[lastLayerIndex] = imageProps.backgroundRepeat || 'no-repeat';
-          attachments[lastLayerIndex] = imageProps.backgroundAttachment || 'scroll';
-          
-          styles.backgroundSize = sizes.join(', ');
-          styles.backgroundPosition = positions.join(', ');
-          styles.backgroundRepeat = repeats.join(', ');
-          styles.backgroundAttachment = attachments.join(', ');
-        }
+    // Layer 2: Color/Gradient Overlay (completely independent with pseudo-element)
+    const hasColorOverlay = (column.styles.backgroundGradient || 
+                            (column.styles.backgroundColor && column.styles.backgroundColor !== 'transparent'));
+    
+    if (hasColorOverlay) {
+      // Enable pseudo-element positioning
+      styles.position = styles.position || 'relative';
+      
+      // Store overlay data for pseudo-element (will be handled by CSS class)
+      const opacity = column.styles.backgroundOpacity ?? 1;
+      let overlayBackground = '';
+      
+      if (column.styles.backgroundGradient) {
+        overlayBackground = applyGradientOpacity(column.styles.backgroundGradient, opacity);
+      } else if (column.styles.backgroundColor) {
+        overlayBackground = applyColorOpacity(column.styles.backgroundColor, opacity);
       }
+      
+      // Use CSS custom properties to pass overlay data to pseudo-element
+      (styles as any)['--overlay-background'] = overlayBackground;
+      (styles as any)['--overlay-opacity'] = opacity;
     }
     
     // Box shadow styles
