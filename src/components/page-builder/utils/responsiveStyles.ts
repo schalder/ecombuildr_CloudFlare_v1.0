@@ -70,10 +70,15 @@ export function mergeResponsiveStyles(baseStyles: any, elementStyles: any, devic
     const key = deviceType === 'mobile' ? 'mobile' : 'desktop';
     const deviceStyles = elementStyles.responsive[key] || {};
     
+    // Filter out undefined values from deviceStyles to prevent overwriting base values
+    const cleanDeviceStyles = Object.fromEntries(
+      Object.entries(deviceStyles).filter(([_, value]) => value !== undefined)
+    );
+    
     return {
       ...baseStyles,
       ...elementStyles,
-      ...deviceStyles
+      ...cleanDeviceStyles
     };
   }
   
