@@ -88,7 +88,7 @@ export const renderSectionStyles = (section: PageBuilderSection, deviceType: 'de
     if (backgroundLayers.length > 0) {
       if (backgroundLayers.length === 1 && section.styles.backgroundImage) {
         // Single layer with background image - use backgroundImage property and apply image properties
-        styles.backgroundImage = section.styles.backgroundImage;
+        styles.backgroundImage = `url(${section.styles.backgroundImage})`;
         Object.assign(styles, imageProps);
       } else if (backgroundLayers.length === 1) {
         // Single layer without image (color/gradient only)
@@ -226,7 +226,7 @@ export const renderRowStyles = (row: PageBuilderRow, deviceType: 'desktop' | 'ta
     if (backgroundLayers.length > 0) {
       if (backgroundLayers.length === 1 && row.styles.backgroundImage) {
         // Single layer with background image - use backgroundImage property and apply image properties
-        styles.backgroundImage = row.styles.backgroundImage;
+        styles.backgroundImage = `url(${row.styles.backgroundImage})`;
         Object.assign(styles, imageProps);
       } else if (backgroundLayers.length === 1) {
         // Single layer without image (color/gradient only)
@@ -355,7 +355,7 @@ export const renderColumnStyles = (column: PageBuilderColumn, deviceType: 'deskt
     if (backgroundLayers.length > 0) {
       if (backgroundLayers.length === 1 && column.styles.backgroundImage) {
         // Single layer with background image - use backgroundImage property and apply image properties
-        styles.backgroundImage = column.styles.backgroundImage;
+        styles.backgroundImage = `url(${column.styles.backgroundImage})`;
         Object.assign(styles, imageProps);
       } else if (backgroundLayers.length === 1) {
         // Single layer without image (color/gradient only)
