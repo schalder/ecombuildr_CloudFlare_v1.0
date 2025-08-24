@@ -1703,7 +1703,10 @@ const RowComponent: React.FC<RowComponentProps> = ({
       id={`row-${row.id}`}
       data-anchor={row.anchor}
       data-pb-row-id={row.id}
-      className={`relative group transition-all duration-200 border-2 border-dashed border-blue-400 ${
+      className={`relative group transition-all duration-200 ${
+        // Only apply border/background styles if no user-defined styles - solid blue dashed borders
+        !userBackground && !userShadow ? 'border-2 border-dashed border-blue-400' : ''
+      } ${
         isSelected && !userBackground
           ? 'border-blue-600 bg-blue-50/50' 
           : isHoveredTarget && !userBackground
@@ -1894,7 +1897,10 @@ const ColumnComponent: React.FC<ColumnComponentProps> = ({
       id={`column-${column.id}`}
       data-anchor={column.anchor}
       data-pb-column-id={column.id}
-      className={`relative min-h-24 transition-all duration-200 border-2 border-dashed border-gray-300 ${
+      className={`relative min-h-24 transition-all duration-200 ${
+        // Only apply border/background styles if no user-defined styles - solid gray dashed borders
+        !userBackground && !userShadow ? 'border-2 border-dashed border-gray-300' : ''
+      } ${
         isSelected && !userBackground
           ? 'border-primary/60 bg-primary/5' 
           : isHoveredTarget && !userBackground
