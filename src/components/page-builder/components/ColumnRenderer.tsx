@@ -101,14 +101,18 @@ export const ColumnRenderer: React.FC<ColumnRendererProps> = ({
         'relative transition-colors',
         // Apply min-height only when empty and not in preview mode
         !isPreviewMode && column.elements.length === 0 && 'min-h-[60px]',
-        // Only apply border/background styles if not in preview mode - no rounded corners
-        !isPreviewMode && 'border-2 border-dashed border-transparent rounded-none',
-        !isPreviewMode && isOver && 'border-primary/40 rounded-none',
+        // Only apply border/background styles if not in preview mode - solid borders
+        !isPreviewMode && 'border-2 border-dashed border-gray-300',
+        !isPreviewMode && isOver && 'border-primary/60',
         !isPreviewMode && isOver && !userBackground && 'bg-primary/5',
-        !isPreviewMode && isHovered && 'border-primary/30 rounded-none',
+        !isPreviewMode && isHovered && 'border-primary/50',
         getColumnResponsiveClasses(column, deviceType)
       )}
-      style={getColumnStyles()}
+      style={{
+        ...getColumnStyles(),
+        // Force border-radius to 0 for page builder interface only
+        ...(!isPreviewMode && { borderRadius: '0' })
+      }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={handleColumnClick}
