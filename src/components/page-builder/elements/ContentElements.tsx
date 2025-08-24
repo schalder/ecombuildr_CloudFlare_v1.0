@@ -131,48 +131,86 @@ const FAQElement: React.FC<{
     handleUpdate('faqs', newFAQs);
   };
 
+  // Generate responsive CSS for this element
+  const responsiveCSS = generateResponsiveCSS(element.id, element.styles);
+  
+  // Get base styles using the utility function
+  const containerStyles = renderElementStyles(element, deviceType);
+  
+  // Determine device key for responsive styles
+  const deviceKey = deviceType === 'tablet' ? 'desktop' : deviceType;
+  
+  // Get question and answer specific styles
+  const questionStyles = (element.styles as any)?.questionStyles?.responsive?.[deviceKey] || {};
+  const answerStyles = (element.styles as any)?.answerStyles?.responsive?.[deviceKey] || {};
+  
+  // Create inline styles for questions and answers
+  const questionInlineStyles = {
+    fontSize: questionStyles.fontSize,
+    lineHeight: questionStyles.lineHeight,
+    color: questionStyles.color,
+    fontFamily: questionStyles.fontFamily,
+    fontWeight: questionStyles.fontWeight,
+    textAlign: questionStyles.textAlign || 'left'
+  };
+
+  const answerInlineStyles = {
+    fontSize: answerStyles.fontSize,
+    lineHeight: answerStyles.lineHeight,
+    color: answerStyles.color,
+    fontFamily: answerStyles.fontFamily,
+    fontWeight: answerStyles.fontWeight,
+    textAlign: answerStyles.textAlign || 'left'
+  };
+
   return (
-    <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-2xl mx-auto'} space-y-4`} style={element.styles}>
-      <h3 className="text-xl font-semibold mb-4">
-        <InlineEditor
-          value={title}
-          onChange={(value) => handleUpdate('title', value)}
-          placeholder="Frequently Asked Questions"
-          disabled={!isEditing}
-          className="text-xl font-semibold"
-        />
-      </h3>
-      {faqs.map((faq: any, index: number) => (
-        <Collapsible key={index}>
-          <CollapsibleTrigger asChild>
-            <Button variant="ghost" className="w-full justify-between p-4 border rounded-lg hover:bg-accent">
-              <span className="font-medium text-left flex-1">
+    <>
+      {responsiveCSS && <style dangerouslySetInnerHTML={{ __html: responsiveCSS }} />}
+      <div 
+        className={`element-${element.id} ${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-2xl mx-auto'} space-y-4`} 
+        style={containerStyles}
+      >
+        <h3 className="text-xl font-semibold mb-4">
+          <InlineEditor
+            value={title}
+            onChange={(value) => handleUpdate('title', value)}
+            placeholder="Frequently Asked Questions"
+            disabled={!isEditing}
+            className="text-xl font-semibold"
+          />
+        </h3>
+        {faqs.map((faq: any, index: number) => (
+          <Collapsible key={index}>
+            <CollapsibleTrigger asChild>
+              <Button variant="ghost" className="w-full justify-between p-4 border rounded-lg hover:bg-accent">
+                <div className="flex-1" style={questionInlineStyles}>
+                  <InlineEditor
+                    value={faq.question}
+                    onChange={(value) => updateFAQ(index, 'question', value)}
+                    placeholder="Enter question..."
+                    disabled={!isEditing}
+                    className="font-medium text-left"
+                  />
+                </div>
+                <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200 [&[data-state=open]>svg]:rotate-180" />
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="p-4 border-x border-b rounded-b-lg bg-muted/20">
+              <div style={answerInlineStyles}>
                 <InlineEditor
-                  value={faq.question}
-                  onChange={(value) => updateFAQ(index, 'question', value)}
-                  placeholder="Enter question..."
+                  value={faq.answer}
+                  onChange={(value) => updateFAQ(index, 'answer', value)}
+                  placeholder="Enter answer..."
+                  multiline
                   disabled={!isEditing}
-                  className="font-medium text-left"
+                  className="text-muted-foreground"
                 />
-              </span>
-              <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200 [&[data-state=open]>svg]:rotate-180" />
-            </Button>
-          </CollapsibleTrigger>
-          <CollapsibleContent className="p-4 border-x border-b rounded-b-lg bg-muted/20">
-            <div className="text-muted-foreground">
-              <InlineEditor
-                value={faq.answer}
-                onChange={(value) => updateFAQ(index, 'answer', value)}
-                placeholder="Enter answer..."
-                multiline
-                disabled={!isEditing}
-                className="text-muted-foreground"
-              />
-            </div>
-          </CollapsibleContent>
-        </Collapsible>
-      ))}
-    </div>
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
+        ))}
+      </div>
+    </>
   );
 };
 

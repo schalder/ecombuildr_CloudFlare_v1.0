@@ -72,6 +72,7 @@ import { CustomHTMLElementStyles } from './ElementStyles/CustomHTMLElementStyles
 import { CountdownElementStyles } from './ElementStyles/CountdownElementStyles';
 import { CheckoutElementStyles } from './ElementStyles/CheckoutElementStyles';
 import { AccordionElementStyles } from './ElementStyles/AccordionElementStyles';
+import { FAQElementStyles } from './ElementStyles/FAQElementStyles';
 
 import { PageBuilderElement } from '../types';
 
@@ -226,6 +227,15 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
     if (selectedElement.type === 'accordion') {
       return (
         <AccordionElementStyles
+          element={selectedElement}
+          onStyleUpdate={handleStyleUpdate}
+        />
+      );
+    }
+    
+    if (selectedElement.type === 'faq') {
+      return (
+        <FAQElementStyles
           element={selectedElement}
           onStyleUpdate={handleStyleUpdate}
         />
