@@ -73,9 +73,9 @@ export const renderSectionStyles = (section: PageBuilderSection, deviceType: 'de
       } else {
         backgroundLayers.push(applyColorOpacity(section.styles.backgroundColor, opacity));
       }
-    } else if (section.styles.backgroundImage && opacity < 1) {
-      // Image only with opacity - create transparent overlay
-      backgroundLayers.push(`linear-gradient(rgba(0,0,0,${1-opacity}), rgba(0,0,0,${1-opacity}))`);
+    } else if (section.styles.backgroundImage && opacity > 0 && opacity < 1) {
+      // Image only with opacity - create overlay (opacity 0-100% means overlay transparency)
+      backgroundLayers.push(`linear-gradient(rgba(0,0,0,${opacity}), rgba(0,0,0,${opacity}))`);
     }
     
     // Handle background image and get mode-specific properties
@@ -87,20 +87,16 @@ export const renderSectionStyles = (section: PageBuilderSection, deviceType: 'de
       imageProps = getBackgroundImageProperties(responsiveImageMode, deviceType);
     }
     
-    // Apply combined background
+    // Apply combined background - always use multi-layer approach to prevent position resets
     if (backgroundLayers.length > 0) {
-      if (backgroundLayers.length === 1 && section.styles.backgroundImage) {
-        // Single layer with background image - use backgroundImage property and apply image properties
-        styles.backgroundImage = `url(${section.styles.backgroundImage})`;
-        Object.assign(styles, imageProps);
-      } else if (backgroundLayers.length === 1) {
+      if (backgroundLayers.length === 1 && !section.styles.backgroundImage) {
         // Single layer without image (color/gradient only)
         styles.background = backgroundLayers[0];
       } else {
-        // Multiple layers - need to specify properties for each layer
+        // Multiple layers OR single image layer - use consistent multi-layer approach
         styles.background = backgroundLayers.join(', ');
         
-        // For layered backgrounds, we need to specify each property for each layer
+        // For layered backgrounds or image-only, specify properties for each layer
         if (section.styles.backgroundImage) {
           const numLayers = backgroundLayers.length;
           const lastLayerIndex = numLayers - 1; // image is always last layer
@@ -214,9 +210,9 @@ export const renderRowStyles = (row: PageBuilderRow, deviceType: 'desktop' | 'ta
       } else {
         backgroundLayers.push(applyColorOpacity(row.styles.backgroundColor, opacity));
       }
-    } else if (row.styles.backgroundImage && opacity < 1) {
-      // Image only with opacity - create transparent overlay
-      backgroundLayers.push(`linear-gradient(rgba(0,0,0,${1-opacity}), rgba(0,0,0,${1-opacity}))`);
+    } else if (row.styles.backgroundImage && opacity > 0 && opacity < 1) {
+      // Image only with opacity - create overlay (opacity 0-100% means overlay transparency)
+      backgroundLayers.push(`linear-gradient(rgba(0,0,0,${opacity}), rgba(0,0,0,${opacity}))`);
     }
     
     // Handle background image and get mode-specific properties
@@ -228,20 +224,16 @@ export const renderRowStyles = (row: PageBuilderRow, deviceType: 'desktop' | 'ta
       imageProps = getBackgroundImageProperties(responsiveImageMode, deviceType);
     }
     
-    // Apply combined background
+    // Apply combined background - always use multi-layer approach to prevent position resets
     if (backgroundLayers.length > 0) {
-      if (backgroundLayers.length === 1 && row.styles.backgroundImage) {
-        // Single layer with background image - use backgroundImage property and apply image properties
-        styles.backgroundImage = `url(${row.styles.backgroundImage})`;
-        Object.assign(styles, imageProps);
-      } else if (backgroundLayers.length === 1) {
+      if (backgroundLayers.length === 1 && !row.styles.backgroundImage) {
         // Single layer without image (color/gradient only)
         styles.background = backgroundLayers[0];
       } else {
-        // Multiple layers - need to specify properties for each layer
+        // Multiple layers OR single image layer - use consistent multi-layer approach
         styles.background = backgroundLayers.join(', ');
         
-        // For layered backgrounds, we need to specify each property for each layer
+        // For layered backgrounds or image-only, specify properties for each layer
         if (row.styles.backgroundImage) {
           const numLayers = backgroundLayers.length;
           const lastLayerIndex = numLayers - 1; // image is always last layer
@@ -346,9 +338,9 @@ export const renderColumnStyles = (column: PageBuilderColumn, deviceType: 'deskt
       } else {
         backgroundLayers.push(applyColorOpacity(column.styles.backgroundColor, opacity));
       }
-    } else if (column.styles.backgroundImage && opacity < 1) {
-      // Image only with opacity - create transparent overlay
-      backgroundLayers.push(`linear-gradient(rgba(0,0,0,${1-opacity}), rgba(0,0,0,${1-opacity}))`);
+    } else if (column.styles.backgroundImage && opacity > 0 && opacity < 1) {
+      // Image only with opacity - create overlay (opacity 0-100% means overlay transparency)
+      backgroundLayers.push(`linear-gradient(rgba(0,0,0,${opacity}), rgba(0,0,0,${opacity}))`);
     }
     
     // Handle background image and get mode-specific properties
@@ -360,20 +352,16 @@ export const renderColumnStyles = (column: PageBuilderColumn, deviceType: 'deskt
       imageProps = getBackgroundImageProperties(responsiveImageMode, deviceType);
     }
     
-    // Apply combined background
+    // Apply combined background - always use multi-layer approach to prevent position resets
     if (backgroundLayers.length > 0) {
-      if (backgroundLayers.length === 1 && column.styles.backgroundImage) {
-        // Single layer with background image - use backgroundImage property and apply image properties
-        styles.backgroundImage = `url(${column.styles.backgroundImage})`;
-        Object.assign(styles, imageProps);
-      } else if (backgroundLayers.length === 1) {
+      if (backgroundLayers.length === 1 && !column.styles.backgroundImage) {
         // Single layer without image (color/gradient only)
         styles.background = backgroundLayers[0];
       } else {
-        // Multiple layers - need to specify properties for each layer
+        // Multiple layers OR single image layer - use consistent multi-layer approach
         styles.background = backgroundLayers.join(', ');
         
-        // For layered backgrounds, we need to specify each property for each layer
+        // For layered backgrounds or image-only, specify properties for each layer
         if (column.styles.backgroundImage) {
           const numLayers = backgroundLayers.length;
           const lastLayerIndex = numLayers - 1; // image is always last layer
