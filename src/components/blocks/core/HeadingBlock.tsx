@@ -63,7 +63,7 @@ const HeadingSave: React.FC<BlockSaveProps> = ({ block }) => {
 
   return (
     <HeadingTag 
-      className={`${headingClasses[level as keyof typeof headingClasses]} whitespace-pre-wrap`}
+      className={`${headingClasses[level as keyof typeof headingClasses]} text-center whitespace-pre-wrap`}
       dangerouslySetInnerHTML={{ __html: sanitizeHtml(text, 'heading') }}
     />
   );
