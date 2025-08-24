@@ -76,8 +76,8 @@ export function mergeResponsiveStyles(baseStyles: any, elementStyles: any, devic
     );
     
     return {
-      ...baseStyles,
       ...elementStyles,
+      ...baseStyles,
       ...cleanDeviceStyles
     };
   }
