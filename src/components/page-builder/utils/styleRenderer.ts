@@ -75,21 +75,23 @@ export const renderSectionStyles = (section: PageBuilderSection, deviceType: 'de
       }
     }
     
-    // Add image layer (bottom layer) and get mode-specific properties
+    // Add image layer (bottom layer) 
     if (section.styles.backgroundImage) {
       backgroundLayers.push(`url(${section.styles.backgroundImage})`);
-      
-      // Get responsive background image mode and apply mode-specific properties FIRST
+    }
+    
+    // Apply combined background first (this resets all background properties)
+    if (backgroundLayers.length > 0) {
+      styles.background = backgroundLayers.join(', ');
+    }
+    
+    // Now apply mode-specific properties AFTER background shorthand to override the defaults
+    if (section.styles.backgroundImage) {
       const responsiveImageMode = section.styles?.responsive?.[deviceType]?.backgroundImageMode || section.styles.backgroundImageMode;
       const imageProps = getBackgroundImageProperties(responsiveImageMode, deviceType);
       
-      // Apply mode-specific properties before setting background shorthand
+      // Apply mode-specific properties after background shorthand
       Object.assign(styles, imageProps);
-    }
-    
-    // Apply combined background LAST so it doesn't override mode-specific properties
-    if (backgroundLayers.length > 0) {
-      styles.backgroundImage = backgroundLayers.join(', ');
     }
     
     // Box shadow styles
@@ -183,21 +185,23 @@ export const renderRowStyles = (row: PageBuilderRow, deviceType: 'desktop' | 'ta
       }
     }
     
-    // Add image layer (bottom layer) and get mode-specific properties
+    // Add image layer (bottom layer)
     if (row.styles.backgroundImage) {
       backgroundLayers.push(`url(${row.styles.backgroundImage})`);
-      
-      // Get responsive background image mode and apply mode-specific properties FIRST
+    }
+    
+    // Apply combined background first (this resets all background properties)
+    if (backgroundLayers.length > 0) {
+      styles.background = backgroundLayers.join(', ');
+    }
+    
+    // Now apply mode-specific properties AFTER background shorthand to override the defaults
+    if (row.styles.backgroundImage) {
       const responsiveImageMode = row.styles?.responsive?.[deviceType]?.backgroundImageMode || row.styles.backgroundImageMode;
       const imageProps = getBackgroundImageProperties(responsiveImageMode, deviceType);
       
-      // Apply mode-specific properties before setting background shorthand
+      // Apply mode-specific properties after background shorthand
       Object.assign(styles, imageProps);
-    }
-    
-    // Apply combined background LAST so it doesn't override mode-specific properties
-    if (backgroundLayers.length > 0) {
-      styles.backgroundImage = backgroundLayers.join(', ');
     }
     
     // Box shadow styles
@@ -282,21 +286,23 @@ export const renderColumnStyles = (column: PageBuilderColumn, deviceType: 'deskt
       }
     }
     
-    // Add image layer (bottom layer) and get mode-specific properties
+    // Add image layer (bottom layer)
     if (column.styles.backgroundImage) {
       backgroundLayers.push(`url(${column.styles.backgroundImage})`);
-      
-      // Get responsive background image mode and apply mode-specific properties FIRST
+    }
+    
+    // Apply combined background first (this resets all background properties)
+    if (backgroundLayers.length > 0) {
+      styles.background = backgroundLayers.join(', ');
+    }
+    
+    // Now apply mode-specific properties AFTER background shorthand to override the defaults
+    if (column.styles.backgroundImage) {
       const responsiveImageMode = column.styles?.responsive?.[deviceType]?.backgroundImageMode || column.styles.backgroundImageMode;
       const imageProps = getBackgroundImageProperties(responsiveImageMode, deviceType);
       
-      // Apply mode-specific properties before setting background shorthand
+      // Apply mode-specific properties after background shorthand
       Object.assign(styles, imageProps);
-    }
-    
-    // Apply combined background LAST so it doesn't override mode-specific properties
-    if (backgroundLayers.length > 0) {
-      styles.backgroundImage = backgroundLayers.join(', ');
     }
     
     // Box shadow styles
