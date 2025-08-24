@@ -34,7 +34,7 @@ const HeadingElement: React.FC<{
   const elementStyles = renderElementStyles(element);
   const baseStyles = {
     ...elementStyles,
-    textAlign: element.styles?.textAlign || (deviceType === 'tablet' ? 'center' : 'left'),
+    textAlign: element.styles?.textAlign || 'center',
     color: element.styles?.color || 'inherit',
     fontSize: element.styles?.fontSize || `${3.5 - level * 0.5}rem`,
     lineHeight: element.styles?.lineHeight || '1.2',
