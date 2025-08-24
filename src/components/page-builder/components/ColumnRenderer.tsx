@@ -102,10 +102,10 @@ export const ColumnRenderer: React.FC<ColumnRendererProps> = ({
         // Apply min-height only when empty and not in preview mode
         !isPreviewMode && column.elements.length === 0 && 'min-h-[60px]',
         // Only apply border/background styles if not in preview mode - no rounded corners
-        !isPreviewMode && 'border-2 border-dashed border-transparent',
-        !isPreviewMode && isOver && 'border-primary/40',
+        !isPreviewMode && 'border-2 border-dashed border-transparent rounded-none',
+        !isPreviewMode && isOver && 'border-primary/40 rounded-none',
         !isPreviewMode && isOver && !userBackground && 'bg-primary/5',
-        !isPreviewMode && isHovered && 'border-primary/30',
+        !isPreviewMode && isHovered && 'border-primary/30 rounded-none',
         getColumnResponsiveClasses(column, deviceType)
       )}
       style={getColumnStyles()}

@@ -169,10 +169,10 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
         'relative group transition-all duration-200',
         deviceType === 'mobile' ? 'min-h-[40px]' : 'min-h-[80px]',
         // Only apply border/background styles if not in preview mode - blue dashed borders
-        !isPreviewMode && 'border border-dashed border-blue-400',
-        !isPreviewMode && isHovered && 'border-blue-500',
+        !isPreviewMode && 'border border-dashed border-blue-400 rounded-none',
+        !isPreviewMode && isHovered && 'border-blue-500 rounded-none',
         !isPreviewMode && isHovered && !userBackground && 'bg-blue-50/50',
-        !isPreviewMode && isOver && 'border-blue-600',
+        !isPreviewMode && isOver && 'border-blue-600 rounded-none',
         !isPreviewMode && isOver && !userBackground && 'bg-blue-50/70'
       )}
       style={getRowStyles()}
