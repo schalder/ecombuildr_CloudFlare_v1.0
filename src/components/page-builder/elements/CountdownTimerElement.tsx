@@ -194,16 +194,7 @@ export const CountdownTimerElement: React.FC<CountdownTimerElementProps> = ({
 
   if (isEditing) {
     return (
-      <div className="max-w-2xl mx-auto p-4 border-2 border-dashed border-primary/20 rounded-lg" style={element.styles}>
-        <div className="text-center mb-4">
-          <Clock className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-          <h3 className="font-semibold">Countdown Timer ({mode})</h3>
-          <p className="text-sm text-muted-foreground">
-            {mode === 'evergreen' && `${duration.days}d ${duration.hours}h ${duration.minutes}m ${duration.seconds}s - Auto reset`}
-            {mode === 'fixed' && `${duration.days}d ${duration.hours}h ${duration.minutes}m ${duration.seconds}s - Fixed duration`}
-            {mode === 'date' && targetDate && `Until ${new Date(targetDate).toLocaleDateString()}`}
-          </p>
-        </div>
+      <div className="max-w-2xl mx-auto" style={element.styles}>
         <div className={getLayoutClasses()} style={getContainerStyles()}>
           {renderTimeSegment(1, labels.days, false)}
           {renderTimeSegment(23, labels.hours, false)}
