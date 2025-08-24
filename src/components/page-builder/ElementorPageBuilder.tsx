@@ -1788,7 +1788,10 @@ const RowComponent: React.FC<RowComponentProps> = ({
         </div>
       )}
 
-      <div className={`grid gap-4 p-4 ${getResponsiveGridClasses(row.columnLayout, deviceType)}`}>
+      <div 
+        className={`grid ${getResponsiveGridClasses(row.columnLayout, deviceType)}`}
+        style={{ gap: '16px' }}
+      >
         {row.columns.map((column, columnIndex) => (
           <ColumnComponent
             key={column.id}
