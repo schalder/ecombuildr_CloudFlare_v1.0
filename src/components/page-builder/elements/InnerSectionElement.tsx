@@ -14,6 +14,8 @@ interface InnerSectionElementProps {
   isEditing?: boolean;
   deviceType?: 'desktop' | 'tablet' | 'mobile';
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
+  onSelect?: (elementId: string) => void;
+  selectedElementId?: string;
 }
 
 interface ColumnLayoutOption {
@@ -23,10 +25,8 @@ interface ColumnLayoutOption {
 }
 
 const COLUMN_LAYOUTS: ColumnLayoutOption[] = [
-  { id: '1', name: 'Single Column', layout: [12] },
   { id: '1-1', name: 'Two Columns', layout: [6, 6] },
   { id: '1-1-1', name: 'Three Columns', layout: [4, 4, 4] },
-  { id: '1-1-1-1', name: 'Four Columns', layout: [3, 3, 3, 3] },
   { id: '1-2', name: '1/3 - 2/3', layout: [4, 8] },
   { id: '2-1', name: '2/3 - 1/3', layout: [8, 4] },
 ];
@@ -35,25 +35,15 @@ export const InnerSectionElement: React.FC<InnerSectionElementProps> = ({
   element,
   isEditing = false,
   deviceType = 'desktop',
-  onUpdate
+  onUpdate,
+  onSelect,
+  selectedElementId
 }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [showLayoutModal, setShowLayoutModal] = useState(false);
 
-  // Initialize default content if empty
-  const innerRows: PageBuilderRow[] = element.content.rows || [
-    {
-      id: `inner-row-${Date.now()}`,
-      columnLayout: '1',
-      columns: [
-        {
-          id: `inner-col-${Date.now()}`,
-          width: 12,
-          elements: []
-        }
-      ]
-    }
-  ];
+  // Get inner rows from element content
+  const innerRows: PageBuilderRow[] = element.content?.rows || [];
 
   const updateInnerContent = useCallback((newRows: PageBuilderRow[]) => {
     onUpdate?.({
@@ -246,6 +236,8 @@ export const InnerSectionElement: React.FC<InnerSectionElementProps> = ({
                 onDeleteRow={() => deleteRow(row.id)}
                 onDuplicateRow={() => duplicateRow(row.id)}
                 onAddRowAfter={() => setShowLayoutModal(true)}
+                onSelectElement={onSelect}
+                selectedElementId={selectedElementId}
               />
             </div>
           ))}

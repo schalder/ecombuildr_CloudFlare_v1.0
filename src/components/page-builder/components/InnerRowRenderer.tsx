@@ -15,6 +15,8 @@ interface InnerRowRendererProps {
   onDeleteRow: () => void;
   onDuplicateRow: () => void;
   onAddRowAfter: () => void;
+  onSelectElement?: (elementId: string) => void;
+  selectedElementId?: string;
 }
 
 export const InnerRowRenderer: React.FC<InnerRowRendererProps> = ({
@@ -26,7 +28,9 @@ export const InnerRowRenderer: React.FC<InnerRowRendererProps> = ({
   onUpdateElement,
   onDeleteRow,
   onDuplicateRow,
-  onAddRowAfter
+  onAddRowAfter,
+  onSelectElement,
+  selectedElementId
 }) => {
   const [isHovered, setIsHovered] = useState(false);
 
@@ -95,6 +99,8 @@ export const InnerRowRenderer: React.FC<InnerRowRendererProps> = ({
             onAddElement={onAddElement}
             onRemoveElement={onRemoveElement}
             onUpdateElement={onUpdateElement}
+            onSelectElement={onSelectElement}
+            selectedElementId={selectedElementId}
           />
         ))}
       </div>

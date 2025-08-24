@@ -15,6 +15,8 @@ interface InnerColumnRendererProps {
   onAddElement: (rowId: string, columnId: string, elementType: string, insertIndex?: number) => void;
   onRemoveElement: (elementId: string) => void;
   onUpdateElement: (elementId: string, updates: Partial<PageBuilderElement>) => void;
+  onSelectElement?: (elementId: string) => void;
+  selectedElementId?: string;
 }
 
 export const InnerColumnRenderer: React.FC<InnerColumnRendererProps> = ({
@@ -24,10 +26,11 @@ export const InnerColumnRenderer: React.FC<InnerColumnRendererProps> = ({
   deviceType = 'desktop',
   onAddElement,
   onRemoveElement,
-  onUpdateElement
+  onUpdateElement,
+  onSelectElement,
+  selectedElementId
 }) => {
   const [isHovered, setIsHovered] = useState(false);
-  const [selectedElementId, setSelectedElementId] = useState<string | null>(null);
 
   const [{ isOver }, drop] = isPreviewMode 
     ? [{ isOver: false }, React.useRef(null)]
@@ -47,19 +50,12 @@ export const InnerColumnRenderer: React.FC<InnerColumnRendererProps> = ({
     onAddElement(rowId, column.id, 'text');
   };
 
-  const handleElementSelect = (element: PageBuilderElement | undefined) => {
-    setSelectedElementId(element?.id || null);
-  };
-
-  const handleElementUpdate = (elementId: string, updates: Partial<PageBuilderElement>) => {
-    onUpdateElement(elementId, updates);
+  const handleElementSelect = (elementId: string) => {
+    onSelectElement?.(elementId);
   };
 
   const handleElementDelete = (elementId: string) => {
     onRemoveElement(elementId);
-    if (selectedElementId === elementId) {
-      setSelectedElementId(null);
-    }
   };
 
   return (
@@ -107,15 +103,28 @@ export const InnerColumnRenderer: React.FC<InnerColumnRendererProps> = ({
                 />
               )}
               
-              <OptimizedElementRenderer
-                element={element}
-                isEditing={!isPreviewMode}
-                deviceType={deviceType}
-                onUpdate={(elementId, updates) => handleElementUpdate(elementId, updates)}
-                onSelect={() => handleElementSelect(element)}
-                onDelete={() => handleElementDelete(element.id)}
-                isSelected={selectedElementId === element.id}
-              />
+              <div 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (!isPreviewMode) {
+                    handleElementSelect(element.id);
+                  }
+                }}
+                className={cn(
+                  "cursor-pointer rounded",
+                  !isPreviewMode && selectedElementId === element.id && "ring-2 ring-primary ring-offset-2"
+                )}
+              >
+                <OptimizedElementRenderer
+                  element={element}
+                  isEditing={!isPreviewMode}
+                  deviceType={deviceType}
+                  onUpdate={(elementId, updates) => onUpdateElement(elementId, updates)}
+                  onSelect={() => handleElementSelect(element.id)}
+                  onDelete={() => handleElementDelete(element.id)}
+                  isSelected={selectedElementId === element.id}
+                />
+              </div>
             </div>
           ))}
           
