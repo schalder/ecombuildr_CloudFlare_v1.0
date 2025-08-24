@@ -155,6 +155,7 @@ export const FAQElementStyles: React.FC<FAQElementStylesProps> = ({
   const [device, setDevice] = React.useState<'desktop' | 'mobile'>('desktop');
   const [isQuestionTypographyOpen, setIsQuestionTypographyOpen] = React.useState(true);
   const [isAnswerTypographyOpen, setIsAnswerTypographyOpen] = React.useState(true);
+  const [isHoverEffectsOpen, setIsHoverEffectsOpen] = React.useState(false);
   const [isBackgroundOpen, setIsBackgroundOpen] = React.useState(false);
   const [isBorderOpen, setIsBorderOpen] = React.useState(false);
   const [isSpacingOpen, setIsSpacingOpen] = React.useState(false);
@@ -255,8 +256,8 @@ export const FAQElementStyles: React.FC<FAQElementStylesProps> = ({
       {/* Hover Effects Section */}
       <CollapsibleGroup
         title="Hover Effects"
-        isOpen={false}
-        onToggle={() => {}}
+        isOpen={isHoverEffectsOpen}
+        onToggle={setIsHoverEffectsOpen}
       >
         <div className="space-y-3">
           <ColorPicker 
