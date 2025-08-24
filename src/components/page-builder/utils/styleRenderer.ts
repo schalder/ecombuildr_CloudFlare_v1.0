@@ -80,12 +80,18 @@ export const renderSectionStyles = (section: PageBuilderSection, deviceType: 'de
     
     // Apply combined background using explicit properties to prevent position resets
     if (backgroundLayers.length > 0) {
-      // Always use explicit properties to maintain background position consistency
-      styles.backgroundImage = backgroundLayers.join(', ');
-      
-      // Apply image-specific properties only if there's an image
-      if (section.styles.backgroundImage) {
+      if (backgroundLayers.length === 1 && section.styles.backgroundImage && !section.styles.backgroundColor && !section.styles.backgroundGradient) {
+        // Single image only - use background shorthand for better compatibility
+        styles.background = `url(${section.styles.backgroundImage})`;
         Object.assign(styles, imageProps);
+      } else {
+        // Multiple layers or color/gradient with image - use explicit properties
+        styles.backgroundImage = backgroundLayers.join(', ');
+        
+        // Apply image-specific properties only if there's an image
+        if (section.styles.backgroundImage) {
+          Object.assign(styles, imageProps);
+        }
       }
     }
     
@@ -185,12 +191,18 @@ export const renderRowStyles = (row: PageBuilderRow, deviceType: 'desktop' | 'ta
     
     // Apply combined background using explicit properties to prevent position resets
     if (backgroundLayers.length > 0) {
-      // Always use explicit properties to maintain background position consistency
-      styles.backgroundImage = backgroundLayers.join(', ');
-      
-      // Apply image-specific properties only if there's an image
-      if (row.styles.backgroundImage) {
+      if (backgroundLayers.length === 1 && row.styles.backgroundImage && !row.styles.backgroundColor && !row.styles.backgroundGradient) {
+        // Single image only - use background shorthand for better compatibility
+        styles.background = `url(${row.styles.backgroundImage})`;
         Object.assign(styles, imageProps);
+      } else {
+        // Multiple layers or color/gradient with image - use explicit properties
+        styles.backgroundImage = backgroundLayers.join(', ');
+        
+        // Apply image-specific properties only if there's an image
+        if (row.styles.backgroundImage) {
+          Object.assign(styles, imageProps);
+        }
       }
     }
     
@@ -281,12 +293,18 @@ export const renderColumnStyles = (column: PageBuilderColumn, deviceType: 'deskt
     
     // Apply combined background using explicit properties to prevent position resets
     if (backgroundLayers.length > 0) {
-      // Always use explicit properties to maintain background position consistency
-      styles.backgroundImage = backgroundLayers.join(', ');
-      
-      // Apply image-specific properties only if there's an image
-      if (column.styles.backgroundImage) {
+      if (backgroundLayers.length === 1 && column.styles.backgroundImage && !column.styles.backgroundColor && !column.styles.backgroundGradient) {
+        // Single image only - use background shorthand for better compatibility
+        styles.background = `url(${column.styles.backgroundImage})`;
         Object.assign(styles, imageProps);
+      } else {
+        // Multiple layers or color/gradient with image - use explicit properties
+        styles.backgroundImage = backgroundLayers.join(', ');
+        
+        // Apply image-specific properties only if there's an image
+        if (column.styles.backgroundImage) {
+          Object.assign(styles, imageProps);
+        }
       }
     }
     
