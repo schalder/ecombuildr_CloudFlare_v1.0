@@ -5,6 +5,7 @@ import { Slider } from '@/components/ui/slider';
 import { ColorPicker } from '@/components/ui/color-picker';
 import { ResponsiveControls } from '../ResponsiveControls';
 import { PageBuilderElement } from '../../types';
+import { CollapsibleGroup } from './_shared/CollapsibleGroup';
 
 interface PriceElementStylesProps {
   element: PageBuilderElement;
@@ -25,9 +26,6 @@ const ensureResponsive = (base: any) => {
   return base;
 };
 
-// Convert device type for ResponsiveControls
-const mapDeviceType = (device: 'desktop' | 'mobile'): 'desktop' | 'tablet' | 'mobile' => 
-  device === 'mobile' ? 'mobile' : 'desktop';
 
 // Typography group component
 const TypographyGroup: React.FC<{
@@ -84,6 +82,9 @@ export const PriceElementStyles: React.FC<PriceElementStylesProps> = ({
   deviceType,
 }) => {
   const [device, setDevice] = React.useState<'desktop' | 'mobile'>('desktop');
+  const [isTypographyOpen, setIsTypographyOpen] = React.useState(true);
+  const [isLayoutOpen, setIsLayoutOpen] = React.useState(true);
+  const [isButtonOpen, setIsButtonOpen] = React.useState(true);
   const styles = element.styles || {};
 
   const getGroup = (key: 'priceStyles' | 'comparePriceStyles' | 'discountStyles') =>
@@ -95,197 +96,210 @@ export const PriceElementStyles: React.FC<PriceElementStylesProps> = ({
     onStyleUpdate(key, base);
   };
 
-  const handleDeviceChange = (newDevice: 'desktop' | 'tablet' | 'mobile') => {
-    setDevice(newDevice === 'tablet' ? 'desktop' : newDevice);
+  const handleDeviceChange = (newDevice: 'desktop' | 'mobile') => {
+    setDevice(newDevice);
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Typography Section */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <Label className="text-sm font-medium">Typography</Label>
-          <ResponsiveControls
-            deviceType={mapDeviceType(device)}
-            onDeviceChange={handleDeviceChange}
-            className="scale-90"
-          />
-        </div>
-        
-        <div className="space-y-3">
-          <TypographyGroup 
-            label="Main Price" 
-            styles={getGroup('priceStyles')} 
-            onChange={(p) => updateGroup('priceStyles', p)} 
-          />
-          
-          <TypographyGroup 
-            label="Compare Price" 
-            styles={getGroup('comparePriceStyles')} 
-            onChange={(p) => updateGroup('comparePriceStyles', p)} 
-          />
-          
-          <TypographyGroup 
-            label="Discount Badge" 
-            styles={getGroup('discountStyles')} 
-            onChange={(p) => updateGroup('discountStyles', p)} 
-          />
-        </div>
-      </div>
-
-      {/* Layout Section */}
-      <div className="space-y-4">
-        <Label className="text-sm font-medium">Layout</Label>
-        
-        <div>
-          <Label className="text-xs">Layout Direction</Label>
-          <Select
-            value={(styles as any).layout || 'horizontal'}
-            onValueChange={(value) => onStyleUpdate('layout', value)}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="horizontal">Horizontal (Side by Side)</SelectItem>
-              <SelectItem value="vertical">Vertical (Text Top, Button Bottom)</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        
-        <div>
-          <Label className="text-xs">Container Alignment</Label>
-          <Select
-            value={(styles as any).containerAlignment || 'left'}
-            onValueChange={(value) => onStyleUpdate('containerAlignment', value)}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="left">Left</SelectItem>
-              <SelectItem value="center">Center</SelectItem>
-              <SelectItem value="right">Right</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        
-        <div>
-          <Label className="text-xs">Price Elements Alignment</Label>
-          <Select
-            value={(styles as any).priceAlignment || 'left'}
-            onValueChange={(value) => onStyleUpdate('priceAlignment', value)}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="left">Left</SelectItem>
-              <SelectItem value="center">Center</SelectItem>
-              <SelectItem value="right">Right</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        
-        <div>
-          <Label className="text-xs">Elements Spacing</Label>
-          <div className="space-y-2">
-            <Slider
-              value={[parseInt((styles as any).spacing) || 8]}
-              onValueChange={(value) => onStyleUpdate('spacing', `${value[0]}px`)}
-              max={32}
-              min={0}
-              step={2}
+      <CollapsibleGroup
+        title="Typography"
+        isOpen={isTypographyOpen}
+        onToggle={setIsTypographyOpen}
+      >
+        <div className="space-y-4">
+          <div className="flex justify-end">
+            <ResponsiveControls
+              deviceType={device}
+              onDeviceChange={handleDeviceChange}
+              className="scale-90"
             />
-            <span className="text-xs text-muted-foreground">
-              {parseInt((styles as any).spacing) || 8}px
-            </span>
+          </div>
+          
+          <div className="space-y-3">
+            <TypographyGroup 
+              label="Main Price" 
+              styles={getGroup('priceStyles')} 
+              onChange={(p) => updateGroup('priceStyles', p)} 
+            />
+            
+            <TypographyGroup 
+              label="Compare Price" 
+              styles={getGroup('comparePriceStyles')} 
+              onChange={(p) => updateGroup('comparePriceStyles', p)} 
+            />
+            
+            <TypographyGroup 
+              label="Discount Badge" 
+              styles={getGroup('discountStyles')} 
+              onChange={(p) => updateGroup('discountStyles', p)} 
+            />
           </div>
         </div>
-      </div>
+      </CollapsibleGroup>
+
+      {/* Layout Section */}
+      <CollapsibleGroup
+        title="Layout"
+        isOpen={isLayoutOpen}
+        onToggle={setIsLayoutOpen}
+      >
+        <div className="space-y-4">
+          <div>
+            <Label className="text-xs">Layout Direction</Label>
+            <Select
+              value={(styles as any).layout || 'horizontal'}
+              onValueChange={(value) => onStyleUpdate('layout', value)}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="horizontal">Horizontal (Side by Side)</SelectItem>
+                <SelectItem value="vertical">Vertical (Text Top, Button Bottom)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div>
+            <Label className="text-xs">Container Alignment</Label>
+            <Select
+              value={(styles as any).containerAlignment || 'left'}
+              onValueChange={(value) => onStyleUpdate('containerAlignment', value)}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="left">Left</SelectItem>
+                <SelectItem value="center">Center</SelectItem>
+                <SelectItem value="right">Right</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div>
+            <Label className="text-xs">Price Elements Alignment</Label>
+            <Select
+              value={(styles as any).priceAlignment || 'left'}
+              onValueChange={(value) => onStyleUpdate('priceAlignment', value)}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="left">Left</SelectItem>
+                <SelectItem value="center">Center</SelectItem>
+                <SelectItem value="right">Right</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div>
+            <Label className="text-xs">Elements Spacing</Label>
+            <div className="space-y-2">
+              <Slider
+                value={[parseInt((styles as any).spacing) || 8]}
+                onValueChange={(value) => onStyleUpdate('spacing', `${value[0]}px`)}
+                max={32}
+                min={0}
+                step={2}
+              />
+              <span className="text-xs text-muted-foreground">
+                {parseInt((styles as any).spacing) || 8}px
+              </span>
+            </div>
+          </div>
+        </div>
+      </CollapsibleGroup>
 
       {/* Button Section */}
-      <div className="space-y-4">
-        <Label className="text-sm font-medium">Button</Label>
-        
-        <div>
-          <Label className="text-xs">Button Style</Label>
-          <Select
-            value={(styles as any).buttonVariant || 'default'}
-            onValueChange={(value) => onStyleUpdate('buttonVariant', value)}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="default">Default</SelectItem>
-              <SelectItem value="secondary">Secondary</SelectItem>
-              <SelectItem value="outline">Outline</SelectItem>
-              <SelectItem value="ghost">Ghost</SelectItem>
-              <SelectItem value="custom">Custom</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+      <CollapsibleGroup
+        title="Button"
+        isOpen={isButtonOpen}
+        onToggle={setIsButtonOpen}
+      >
+        <div className="space-y-4">
+          <div>
+            <Label className="text-xs">Button Style</Label>
+            <Select
+              value={(styles as any).buttonVariant || 'default'}
+              onValueChange={(value) => onStyleUpdate('buttonVariant', value)}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="default">Default</SelectItem>
+                <SelectItem value="secondary">Secondary</SelectItem>
+                <SelectItem value="outline">Outline</SelectItem>
+                <SelectItem value="ghost">Ghost</SelectItem>
+                <SelectItem value="custom">Custom</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-        {(styles as any).buttonVariant === 'custom' && (
-          <>
-            <div>
-              <Label className="text-xs">Button Background</Label>
-              <ColorPicker
-                color={(styles as any).buttonBackground || '#000000'}
-                onChange={(color) => onStyleUpdate('buttonBackground', color)}
-              />
-            </div>
-            <div>
-              <Label className="text-xs">Button Text Color</Label>
-              <ColorPicker
-                color={(styles as any).buttonTextColor || '#ffffff'}
-                onChange={(color) => onStyleUpdate('buttonTextColor', color)}
-              />
-            </div>
-            <div>
-              <Label className="text-xs">Button Hover Background</Label>
-              <ColorPicker
-                color={(styles as any).buttonHoverBackground || '#333333'}
-                onChange={(color) => onStyleUpdate('buttonHoverBackground', color)}
-              />
-            </div>
-          </>
-        )}
+          {(styles as any).buttonVariant === 'custom' && (
+            <>
+              <div>
+                <Label className="text-xs">Button Background</Label>
+                <ColorPicker
+                  color={(styles as any).buttonBackground || '#000000'}
+                  onChange={(color) => onStyleUpdate('buttonBackground', color)}
+                />
+              </div>
+              <div>
+                <Label className="text-xs">Button Text Color</Label>
+                <ColorPicker
+                  color={(styles as any).buttonTextColor || '#ffffff'}
+                  onChange={(color) => onStyleUpdate('buttonTextColor', color)}
+                />
+              </div>
+              <div>
+                <Label className="text-xs">Button Hover Background</Label>
+                <ColorPicker
+                  color={(styles as any).buttonHoverBackground || '#333333'}
+                  onChange={(color) => onStyleUpdate('buttonHoverBackground', color)}
+                />
+              </div>
+            </>
+          )}
 
-        <div>
-          <Label className="text-xs">Button Size</Label>
-          <Select
-            value={(styles as any).buttonSize || 'default'}
-            onValueChange={(value) => onStyleUpdate('buttonSize', value)}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="sm">Small</SelectItem>
-              <SelectItem value="default">Default</SelectItem>
-              <SelectItem value="lg">Large</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+          <div>
+            <Label className="text-xs">Button Size</Label>
+            <Select
+              value={(styles as any).buttonSize || 'default'}
+              onValueChange={(value) => onStyleUpdate('buttonSize', value)}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="sm">Small</SelectItem>
+                <SelectItem value="default">Default</SelectItem>
+                <SelectItem value="lg">Large</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-        <div>
-          <Label className="text-xs">Button Width</Label>
-          <Select
-            value={(styles as any).buttonWidth || 'auto'}
-            onValueChange={(value) => onStyleUpdate('buttonWidth', value)}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="auto">Auto</SelectItem>
-              <SelectItem value="full">Full Width</SelectItem>
-            </SelectContent>
-          </Select>
+          <div>
+            <Label className="text-xs">Button Width</Label>
+            <Select
+              value={(styles as any).buttonWidth || 'auto'}
+              onValueChange={(value) => onStyleUpdate('buttonWidth', value)}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="auto">Auto</SelectItem>
+                <SelectItem value="full">Full Width</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
-      </div>
+      </CollapsibleGroup>
     </div>
   );
 };
