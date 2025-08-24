@@ -206,12 +206,68 @@ const AccordionElement: React.FC<{
     handleUpdate('items', newItems);
   };
 
+  // Apply styles from element.styles
+  const getContainerStyles = () => {
+    const styles = element.styles || {};
+    const containerStyles: React.CSSProperties = {};
+
+    // Typography styles
+    if (styles.fontFamily) containerStyles.fontFamily = styles.fontFamily;
+    if (styles.fontSize) containerStyles.fontSize = styles.fontSize;
+    if (styles.textAlign) containerStyles.textAlign = styles.textAlign as any;
+    if (styles.lineHeight) containerStyles.lineHeight = styles.lineHeight;
+    if (styles.color) containerStyles.color = styles.color;
+
+    // Background styles
+    if (styles.backgroundColor) containerStyles.backgroundColor = styles.backgroundColor;
+
+    // Border styles
+    if (styles.borderWidth) containerStyles.borderWidth = styles.borderWidth;
+    if (styles.borderColor) containerStyles.borderColor = styles.borderColor;
+    if (styles.borderRadius) containerStyles.borderRadius = styles.borderRadius;
+    if (styles.borderStyle) containerStyles.borderStyle = styles.borderStyle;
+
+    // Spacing styles - margin
+    if (styles.marginTop) containerStyles.marginTop = styles.marginTop;
+    if (styles.marginRight) containerStyles.marginRight = styles.marginRight;
+    if (styles.marginBottom) containerStyles.marginBottom = styles.marginBottom;
+    if (styles.marginLeft) containerStyles.marginLeft = styles.marginLeft;
+
+    // Spacing styles - padding
+    if (styles.paddingTop) containerStyles.paddingTop = styles.paddingTop;
+    if (styles.paddingRight) containerStyles.paddingRight = styles.paddingRight;
+    if (styles.paddingBottom) containerStyles.paddingBottom = styles.paddingBottom;
+    if (styles.paddingLeft) containerStyles.paddingLeft = styles.paddingLeft;
+
+    return containerStyles;
+  };
+
+  const getTriggerStyles = () => {
+    const styles = element.styles || {};
+    const triggerStyles: React.CSSProperties = {};
+
+    // Typography styles for accordion triggers
+    if (styles.fontFamily) triggerStyles.fontFamily = styles.fontFamily;
+    if (styles.fontSize) triggerStyles.fontSize = styles.fontSize;
+    if (styles.textAlign) triggerStyles.textAlign = styles.textAlign as any;
+    if (styles.lineHeight) triggerStyles.lineHeight = styles.lineHeight;
+    if (styles.color) triggerStyles.color = styles.color;
+
+    return triggerStyles;
+  };
+
   return (
-    <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-2xl mx-auto'}`} style={element.styles}>
+    <div 
+      className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-2xl mx-auto'}`} 
+      style={getContainerStyles()}
+    >
       <Accordion type={allowMultiple ? "multiple" : "single"} collapsible className="w-full">
         {items.map((item: any, index: number) => (
           <AccordionItem key={index} value={`item-${index}`}>
-            <AccordionTrigger className="text-left hover:no-underline">
+            <AccordionTrigger 
+              className="text-left hover:no-underline"
+              style={getTriggerStyles()}
+            >
               <InlineEditor
                 value={item.title}
                 onChange={(value) => updateItem(index, 'title', value)}
