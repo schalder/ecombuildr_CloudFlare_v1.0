@@ -2,6 +2,7 @@ import React from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
+import { ColorPicker } from '@/components/ui/color-picker';
 import { PageBuilderElement } from '../../types';
 import { SpacingSliders } from './_shared/SpacingSliders';
 
@@ -65,6 +66,47 @@ export const LayoutElementStyles: React.FC<LayoutElementStylesProps> = ({
           onMarginChange={(direction, value) => updateSpacingProperty('margin', direction, value)}
           onPaddingChange={(direction, value) => updateSpacingProperty('padding', direction, value)}
         />
+      </div>
+    );
+  }
+
+  // For spacer elements, show background and spacing controls (no dimensions)
+  if (element.type === 'spacer') {
+    const marginSpacing = parseSpacingProperty(element.styles?.margin, 'margin');
+    const paddingSpacing = parseSpacingProperty(element.styles?.padding, 'padding');
+
+    return (
+      <div className="space-y-4">
+        {/* Background */}
+        <div className="space-y-3">
+          <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Background</h4>
+          
+          <ColorPicker
+            color={element.styles?.backgroundColor || ''}
+            onChange={(color) => onStyleUpdate('backgroundColor', color)}
+            label="Background Color"
+          />
+        </div>
+
+        <Separator />
+
+        {/* Spacing */}
+        <div className="space-y-3">
+          <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Spacing</h4>
+          
+          <SpacingSliders
+            marginTop={marginSpacing.top}
+            marginRight={marginSpacing.right}
+            marginBottom={marginSpacing.bottom}
+            marginLeft={marginSpacing.left}
+            paddingTop={paddingSpacing.top}
+            paddingRight={paddingSpacing.right}
+            paddingBottom={paddingSpacing.bottom}
+            paddingLeft={paddingSpacing.left}
+            onMarginChange={(direction, value) => updateSpacingProperty('margin', direction, value)}
+            onPaddingChange={(direction, value) => updateSpacingProperty('padding', direction, value)}
+          />
+        </div>
       </div>
     );
   }

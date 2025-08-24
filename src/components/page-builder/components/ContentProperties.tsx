@@ -247,16 +247,27 @@ export const ContentProperties: React.FC<ContentPropertiesProps> = ({
 
   // Spacer element content
   if (element.type === 'spacer') {
+    // Handle both numeric and string height values
+    const currentHeight = element.content.height;
+    const heightValue = typeof currentHeight === 'number' ? currentHeight : parseInt(String(currentHeight || '50px').replace('px', '')) || 50;
+    
     return (
       <div className="space-y-4">
         <div>
           <Label htmlFor="spacer-height">Height</Label>
-          <Input
-            id="spacer-height"
-            value={element.content.height || '50px'}
-            onChange={(e) => onUpdate('height', e.target.value)}
-            placeholder="50px"
-          />
+          <div className="space-y-2">
+            <Slider
+              value={[heightValue]}
+              onValueChange={([value]) => onUpdate('height', value)}
+              min={0}
+              max={500}
+              step={1}
+              className="w-full"
+            />
+            <div className="text-xs text-muted-foreground text-center">
+              {heightValue}px
+            </div>
+          </div>
         </div>
       </div>
     );

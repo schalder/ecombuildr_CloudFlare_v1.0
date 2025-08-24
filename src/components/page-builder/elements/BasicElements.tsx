@@ -562,10 +562,12 @@ const SpacerElement: React.FC<{
   deviceType?: 'desktop' | 'tablet' | 'mobile';
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
 }> = ({ element, isEditing, onUpdate }) => {
-  const height = element.content.height || '50px';
+  // Handle both numeric and string height values for backwards compatibility
+  const heightValue = typeof element.content.height === 'number' ? element.content.height : parseInt(String(element.content.height || '50px').replace('px', '')) || 50;
+  const height = `${heightValue}px`;
 
   const handleHeightChange = (newHeight: string) => {
-    // Convert string height to number (remove 'px' and parse)
+    // Store height as number to match type definition
     const numericHeight = parseInt(newHeight.replace('px', '')) || 50;
     onUpdate?.({
       content: { ...element.content, height: numericHeight }
