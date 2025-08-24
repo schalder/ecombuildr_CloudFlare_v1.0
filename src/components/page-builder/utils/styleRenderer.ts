@@ -86,10 +86,13 @@ export const renderSectionStyles = (section: PageBuilderSection, deviceType: 'de
     
     // Apply combined background
     if (backgroundLayers.length > 0) {
-      if (backgroundLayers.length === 1) {
-        // Single layer - can use individual properties
+      if (backgroundLayers.length === 1 && section.styles.backgroundImage) {
+        // Single layer with background image - use backgroundImage property and apply image properties
         styles.backgroundImage = backgroundLayers[0];
         Object.assign(styles, imageProps);
+      } else if (backgroundLayers.length === 1) {
+        // Single layer without image (color/gradient only)
+        styles.background = backgroundLayers[0];
       } else {
         // Multiple layers - need to specify properties for each layer
         styles.background = backgroundLayers.join(', ');
