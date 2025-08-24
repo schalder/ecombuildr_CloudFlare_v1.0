@@ -75,23 +75,48 @@ export const renderSectionStyles = (section: PageBuilderSection, deviceType: 'de
       }
     }
     
-    // Add image layer (bottom layer) 
+    // Handle background image and get mode-specific properties
+    let imageProps: any = {};
     if (section.styles.backgroundImage) {
       backgroundLayers.push(`url(${section.styles.backgroundImage})`);
-    }
-    
-    // Apply combined background first (this resets all background properties)
-    if (backgroundLayers.length > 0) {
-      styles.background = backgroundLayers.join(', ');
-    }
-    
-    // Now apply mode-specific properties AFTER background shorthand to override the defaults
-    if (section.styles.backgroundImage) {
-      const responsiveImageMode = section.styles?.responsive?.[deviceType]?.backgroundImageMode || section.styles.backgroundImageMode;
-      const imageProps = getBackgroundImageProperties(responsiveImageMode, deviceType);
       
-      // Apply mode-specific properties after background shorthand
-      Object.assign(styles, imageProps);
+      const responsiveImageMode = section.styles?.responsive?.[deviceType]?.backgroundImageMode || section.styles.backgroundImageMode;
+      imageProps = getBackgroundImageProperties(responsiveImageMode, deviceType);
+    }
+    
+    // Apply combined background
+    if (backgroundLayers.length > 0) {
+      if (backgroundLayers.length === 1) {
+        // Single layer - can use individual properties
+        styles.backgroundImage = backgroundLayers[0];
+        Object.assign(styles, imageProps);
+      } else {
+        // Multiple layers - need to specify properties for each layer
+        styles.background = backgroundLayers.join(', ');
+        
+        // For layered backgrounds, we need to specify each property for each layer
+        if (section.styles.backgroundImage) {
+          const numLayers = backgroundLayers.length;
+          const lastLayerIndex = numLayers - 1; // image is always last layer
+          
+          // Create arrays for each background property
+          const sizes = new Array(numLayers).fill('auto');
+          const positions = new Array(numLayers).fill('0% 0%');
+          const repeats = new Array(numLayers).fill('repeat');
+          const attachments = new Array(numLayers).fill('scroll');
+          
+          // Set image layer properties (last layer)
+          sizes[lastLayerIndex] = imageProps.backgroundSize || 'cover';
+          positions[lastLayerIndex] = imageProps.backgroundPosition || 'center';
+          repeats[lastLayerIndex] = imageProps.backgroundRepeat || 'no-repeat';
+          attachments[lastLayerIndex] = imageProps.backgroundAttachment || 'scroll';
+          
+          styles.backgroundSize = sizes.join(', ');
+          styles.backgroundPosition = positions.join(', ');
+          styles.backgroundRepeat = repeats.join(', ');
+          styles.backgroundAttachment = attachments.join(', ');
+        }
+      }
     }
     
     // Box shadow styles
@@ -185,23 +210,48 @@ export const renderRowStyles = (row: PageBuilderRow, deviceType: 'desktop' | 'ta
       }
     }
     
-    // Add image layer (bottom layer)
+    // Handle background image and get mode-specific properties
+    let imageProps: any = {};
     if (row.styles.backgroundImage) {
       backgroundLayers.push(`url(${row.styles.backgroundImage})`);
-    }
-    
-    // Apply combined background first (this resets all background properties)
-    if (backgroundLayers.length > 0) {
-      styles.background = backgroundLayers.join(', ');
-    }
-    
-    // Now apply mode-specific properties AFTER background shorthand to override the defaults
-    if (row.styles.backgroundImage) {
-      const responsiveImageMode = row.styles?.responsive?.[deviceType]?.backgroundImageMode || row.styles.backgroundImageMode;
-      const imageProps = getBackgroundImageProperties(responsiveImageMode, deviceType);
       
-      // Apply mode-specific properties after background shorthand
-      Object.assign(styles, imageProps);
+      const responsiveImageMode = row.styles?.responsive?.[deviceType]?.backgroundImageMode || row.styles.backgroundImageMode;
+      imageProps = getBackgroundImageProperties(responsiveImageMode, deviceType);
+    }
+    
+    // Apply combined background
+    if (backgroundLayers.length > 0) {
+      if (backgroundLayers.length === 1) {
+        // Single layer - can use individual properties
+        styles.backgroundImage = backgroundLayers[0];
+        Object.assign(styles, imageProps);
+      } else {
+        // Multiple layers - need to specify properties for each layer
+        styles.background = backgroundLayers.join(', ');
+        
+        // For layered backgrounds, we need to specify each property for each layer
+        if (row.styles.backgroundImage) {
+          const numLayers = backgroundLayers.length;
+          const lastLayerIndex = numLayers - 1; // image is always last layer
+          
+          // Create arrays for each background property
+          const sizes = new Array(numLayers).fill('auto');
+          const positions = new Array(numLayers).fill('0% 0%');
+          const repeats = new Array(numLayers).fill('repeat');
+          const attachments = new Array(numLayers).fill('scroll');
+          
+          // Set image layer properties (last layer)
+          sizes[lastLayerIndex] = imageProps.backgroundSize || 'cover';
+          positions[lastLayerIndex] = imageProps.backgroundPosition || 'center';
+          repeats[lastLayerIndex] = imageProps.backgroundRepeat || 'no-repeat';
+          attachments[lastLayerIndex] = imageProps.backgroundAttachment || 'scroll';
+          
+          styles.backgroundSize = sizes.join(', ');
+          styles.backgroundPosition = positions.join(', ');
+          styles.backgroundRepeat = repeats.join(', ');
+          styles.backgroundAttachment = attachments.join(', ');
+        }
+      }
     }
     
     // Box shadow styles
@@ -286,23 +336,48 @@ export const renderColumnStyles = (column: PageBuilderColumn, deviceType: 'deskt
       }
     }
     
-    // Add image layer (bottom layer)
+    // Handle background image and get mode-specific properties
+    let imageProps: any = {};
     if (column.styles.backgroundImage) {
       backgroundLayers.push(`url(${column.styles.backgroundImage})`);
-    }
-    
-    // Apply combined background first (this resets all background properties)
-    if (backgroundLayers.length > 0) {
-      styles.background = backgroundLayers.join(', ');
-    }
-    
-    // Now apply mode-specific properties AFTER background shorthand to override the defaults
-    if (column.styles.backgroundImage) {
-      const responsiveImageMode = column.styles?.responsive?.[deviceType]?.backgroundImageMode || column.styles.backgroundImageMode;
-      const imageProps = getBackgroundImageProperties(responsiveImageMode, deviceType);
       
-      // Apply mode-specific properties after background shorthand
-      Object.assign(styles, imageProps);
+      const responsiveImageMode = column.styles?.responsive?.[deviceType]?.backgroundImageMode || column.styles.backgroundImageMode;
+      imageProps = getBackgroundImageProperties(responsiveImageMode, deviceType);
+    }
+    
+    // Apply combined background
+    if (backgroundLayers.length > 0) {
+      if (backgroundLayers.length === 1) {
+        // Single layer - can use individual properties
+        styles.backgroundImage = backgroundLayers[0];
+        Object.assign(styles, imageProps);
+      } else {
+        // Multiple layers - need to specify properties for each layer
+        styles.background = backgroundLayers.join(', ');
+        
+        // For layered backgrounds, we need to specify each property for each layer
+        if (column.styles.backgroundImage) {
+          const numLayers = backgroundLayers.length;
+          const lastLayerIndex = numLayers - 1; // image is always last layer
+          
+          // Create arrays for each background property
+          const sizes = new Array(numLayers).fill('auto');
+          const positions = new Array(numLayers).fill('0% 0%');
+          const repeats = new Array(numLayers).fill('repeat');
+          const attachments = new Array(numLayers).fill('scroll');
+          
+          // Set image layer properties (last layer)
+          sizes[lastLayerIndex] = imageProps.backgroundSize || 'cover';
+          positions[lastLayerIndex] = imageProps.backgroundPosition || 'center';
+          repeats[lastLayerIndex] = imageProps.backgroundRepeat || 'no-repeat';
+          attachments[lastLayerIndex] = imageProps.backgroundAttachment || 'scroll';
+          
+          styles.backgroundSize = sizes.join(', ');
+          styles.backgroundPosition = positions.join(', ');
+          styles.backgroundRepeat = repeats.join(', ');
+          styles.backgroundAttachment = attachments.join(', ');
+        }
+      }
     }
     
     // Box shadow styles
