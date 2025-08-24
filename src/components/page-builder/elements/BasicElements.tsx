@@ -608,6 +608,7 @@ const DividerElement: React.FC<{
   const style = element.content.style || 'solid';
   const color = element.content.color || '#e5e7eb';
   const width = element.content.width || '100%';
+  const thickness = element.content.thickness || 1;
   
   // Get device-specific alignment (fallback: center)
   const currentDevice = deviceType === 'tablet' ? 'desktop' : deviceType;
@@ -637,7 +638,7 @@ const DividerElement: React.FC<{
 
   const dividerStyle = {
     border: 'none',
-    borderTop: `1px ${style} ${color}`,
+    borderTop: `${thickness}px ${style} ${color}`,
     width,
     marginTop: '0',
     marginBottom: '0',
