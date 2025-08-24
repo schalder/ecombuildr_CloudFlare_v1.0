@@ -47,6 +47,7 @@ import { Label } from '@/components/ui/label';
 import { PropertiesPanel } from './components/PropertiesPanel';
 import { SettingsPanel } from './components/SettingsPanels';
 import { ElementDropZone } from './components/ElementDropZone';
+import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { SectionRenderer } from './components/SectionRenderer';
 import { 
   PageBuilderData, 
@@ -197,6 +198,11 @@ const ElementorPageBuilderContent: React.FC<ElementorPageBuilderProps> = memo(({
   const [isElementsPanelOpen, setIsElementsPanelOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [propertiesPanelCollapsed, setPropertiesPanelCollapsed] = useState(false);
+  const [deleteColumnDialog, setDeleteColumnDialog] = useState<{
+    sectionId: string;
+    rowId: string;
+    columnId: string;
+  } | null>(null);
 
   // Ensure legacy long anchors are converted after hot reloads too
   React.useEffect(() => {
@@ -526,6 +532,141 @@ const ElementorPageBuilderContent: React.FC<ElementorPageBuilderProps> = memo(({
       updateData(newData);
     }
   }, [data, updateData]);
+
+  // Helper function to get balanced layout for column count
+  const getBalancedLayout = (columnCount: number): PageBuilderRow['columnLayout'] => {
+    switch (columnCount) {
+      case 1: return '1';
+      case 2: return '1-1';
+      case 3: return '1-1-1';
+      case 4: return '1-1-1-1';
+      case 5: return '1-1-1-1-1';
+      case 6: return '1-1-1-1-1-1';
+      default: return '1';
+    }
+  };
+
+  // Add Column functionality
+  const addColumn = useCallback((sectionId: string, rowId: string) => {
+    const section = data.sections.find(s => s.id === sectionId);
+    const row = section?.rows?.find(r => r.id === rowId);
+    
+    if (!row) return;
+    
+    // Prevent adding more than 6 columns
+    if (row.columns.length >= 6) return;
+    
+    const newColumn: PageBuilderColumn = {
+      id: generateId(),
+      anchor: buildAnchor('col'),
+      width: 1, // Will be adjusted by layout
+      elements: [],
+      styles: {
+        paddingTop: '10px',
+        paddingRight: '10px',
+        paddingLeft: '5px',
+        paddingBottom: '5px'
+      }
+    };
+
+    const newColumnCount = row.columns.length + 1;
+    const newLayout = getBalancedLayout(newColumnCount);
+    const columnWidths = COLUMN_LAYOUTS[newLayout];
+
+    updateData({
+      ...data,
+      sections: data.sections.map(section =>
+        section.id === sectionId
+          ? {
+              ...section,
+              rows: (section.rows || []).map(r =>
+                r.id === rowId
+                  ? {
+                      ...r,
+                      columnLayout: newLayout,
+                      columns: [
+                        ...r.columns.map((col, index) => ({
+                          ...col,
+                          width: columnWidths[index] || 1
+                        })),
+                        { ...newColumn, width: columnWidths[newColumnCount - 1] || 1 }
+                      ]
+                    }
+                  : r
+              )
+            }
+          : section
+      )
+    });
+  }, [data, updateData]);
+
+  // Delete Column functionality
+  const deleteColumn = useCallback((sectionId: string, rowId: string, columnId: string) => {
+    const section = data.sections.find(s => s.id === sectionId);
+    const row = section?.rows?.find(r => r.id === rowId);
+    
+    if (!row || row.columns.length <= 1) return;
+    
+    const columnIndex = row.columns.findIndex(c => c.id === columnId);
+    const columnToDelete = row.columns[columnIndex];
+    
+    if (!columnToDelete) return;
+
+    // Find target column to merge elements into (prefer previous, otherwise next)
+    const targetColumnIndex = columnIndex > 0 ? columnIndex - 1 : columnIndex + 1;
+    const targetColumn = row.columns[targetColumnIndex];
+    
+    if (!targetColumn) return;
+
+    // Merge elements from deleted column to target column
+    const mergedElements = [...targetColumn.elements, ...columnToDelete.elements];
+    
+    // Remove the column and update layout
+    const newColumns = row.columns.filter(c => c.id !== columnId);
+    const newColumnCount = newColumns.length;
+    const newLayout = getBalancedLayout(newColumnCount);
+    const columnWidths = COLUMN_LAYOUTS[newLayout];
+
+    updateData({
+      ...data,
+      sections: data.sections.map(section =>
+        section.id === sectionId
+          ? {
+              ...section,
+              rows: (section.rows || []).map(r =>
+                r.id === rowId
+                  ? {
+                      ...r,
+                      columnLayout: newLayout,
+                      columns: newColumns.map((col, index) => {
+                        if (col.id === targetColumn.id) {
+                          return {
+                            ...col,
+                            width: columnWidths[index] || 1,
+                            elements: mergedElements
+                          };
+                        }
+                        return {
+                          ...col,
+                          width: columnWidths[index] || 1
+                        };
+                      })
+                    }
+                  : r
+              )
+            }
+          : section
+      )
+    });
+
+    // Clear selection if it pointed to deleted column or its elements
+    if (selection?.id === columnId || 
+        (selection?.type === 'element' && columnToDelete.elements.some(el => el.id === selection.id))) {
+      setSelection(null);
+    }
+
+    setDeleteColumnDialog(null);
+  }, [data, updateData, selection]);
 
   // Element operations
   const addElement = useCallback((sectionId: string, rowId: string, columnId: string, elementType: string, insertIndex?: number) => {
@@ -970,6 +1111,20 @@ const ElementorPageBuilderContent: React.FC<ElementorPageBuilderProps> = memo(({
                           onMoveSectionUp={() => moveSectionUp(section.id)}
                           onMoveSectionDown={() => moveSectionDown(section.id)}
                           onMoveColumn={moveColumn}
+                          onAddColumn={addColumn}
+                          onDeleteColumn={(columnId) => {
+                            // Find the row that contains this column
+                            const foundRow = section.rows?.find(row => 
+                              row.columns.some(col => col.id === columnId)
+                            );
+                            if (foundRow) {
+                              setDeleteColumnDialog({
+                                sectionId: section.id,
+                                rowId: foundRow.id,
+                                columnId
+                              });
+                            }
+                          }}
                           onAddElement={addElement}
                           onUpdateElement={updateElement}
                           onDeleteElement={deleteElement}
@@ -1160,6 +1315,8 @@ interface SectionComponentProps {
   onMoveSectionUp: () => void;
   onMoveSectionDown: () => void;
   onMoveColumn: (sectionId: string, rowId: string, columnId: string, direction: 'up' | 'down') => void;
+  onAddColumn: (sectionId: string, rowId: string) => void;
+  onDeleteColumn: (columnId: string) => void;
   onAddElement: (sectionId: string, rowId: string, columnId: string, elementType: string, insertIndex?: number) => void;
   onUpdateElement: (elementId: string, updates: Partial<PageBuilderElement>) => void;
   onDeleteElement: (elementId: string) => void;
@@ -1190,6 +1347,8 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
   onMoveSectionUp,
   onMoveSectionDown,
   onMoveColumn,
+  onAddColumn,
+  onDeleteColumn,
   onAddElement,
   onUpdateElement,
   onDeleteElement,
@@ -1373,14 +1532,16 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
                       onMoveRowDown={() => onMoveRowDown(section.id, row.id)}
                       onMoveElementUp={onMoveElementUp}
                       onMoveElementDown={onMoveElementDown}
-                      onMoveElement={onMoveElement}
-                      onMoveColumn={onMoveColumn}
-                      onAddElement={onAddElement}
-                      onUpdateElement={onUpdateElement}
-                      onDeleteElement={onDeleteElement}
-                      onDuplicateElement={onDuplicateElement}
-                      selection={selection}
-                      onSelectionChange={onSelectionChange}
+                       onMoveElement={onMoveElement}
+                       onMoveColumn={onMoveColumn}
+                       onAddColumn={onAddColumn}
+                       onDeleteColumn={onDeleteColumn}
+                       onAddElement={onAddElement}
+                       onUpdateElement={onUpdateElement}
+                       onDeleteElement={onDeleteElement}
+                       onDuplicateElement={onDuplicateElement}
+                       selection={selection}
+                       onSelectionChange={onSelectionChange}
                     />
                     
                     {/* Drop zone after each row */}
@@ -1423,6 +1584,8 @@ interface RowComponentProps {
   onMoveElementUp: (sectionId: string, rowId: string, columnId: string, elementId: string) => void;
   onMoveElementDown: (sectionId: string, rowId: string, columnId: string, elementId: string) => void;
   onMoveColumn: (sectionId: string, rowId: string, columnId: string, direction: 'up' | 'down') => void;
+  onAddColumn: (sectionId: string, rowId: string) => void;
+  onDeleteColumn: (columnId: string) => void;
   onAddElement: (sectionId: string, rowId: string, columnId: string, elementType: string, insertIndex?: number) => void;
   onUpdateElement: (elementId: string, updates: Partial<PageBuilderElement>) => void;
   onDeleteElement: (elementId: string) => void;
@@ -1447,6 +1610,8 @@ const RowComponent: React.FC<RowComponentProps> = ({
   onMoveElementUp,
   onMoveElementDown,
   onMoveColumn,
+  onAddColumn,
+  onDeleteColumn,
   onAddElement,
   onUpdateElement,
   onDeleteElement,
@@ -1528,6 +1693,19 @@ const RowComponent: React.FC<RowComponentProps> = ({
           >
             <ArrowDown className="h-3 w-3" />
           </Button>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-6 w-6 p-0 hover:bg-gray-100"
+            onClick={(e) => {
+              e.stopPropagation();
+              onAddColumn(sectionId, row.id);
+            }}
+            disabled={row.columns.length >= 6}
+            title={row.columns.length >= 6 ? "Maximum 6 columns allowed" : "Add Column"}
+          >
+            <Plus className="h-3 w-3" />
+          </Button>
           <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-gray-100">
             <Columns className="h-3 w-3" />
           </Button>
@@ -1567,6 +1745,8 @@ const RowComponent: React.FC<RowComponentProps> = ({
             })}
             onMoveColumnUp={() => onMoveColumn(sectionId, row.id, column.id, 'up')}
             onMoveColumnDown={() => onMoveColumn(sectionId, row.id, column.id, 'down')}
+            onDeleteColumn={() => onDeleteColumn(column.id)}
+            canDeleteColumn={row.columns.length > 1}
             onMoveElementUp={onMoveElementUp}
             onMoveElementDown={onMoveElementDown}
             onAddElement={onAddElement}
@@ -1595,6 +1775,8 @@ interface ColumnComponentProps {
   onSelect: () => void;
   onMoveColumnUp: () => void;
   onMoveColumnDown: () => void;
+  onDeleteColumn: () => void;
+  canDeleteColumn: boolean;
   onMoveElementUp: (sectionId: string, rowId: string, columnId: string, elementId: string) => void;
   onMoveElementDown: (sectionId: string, rowId: string, columnId: string, elementId: string) => void;
   onAddElement: (sectionId: string, rowId: string, columnId: string, elementType: string, insertIndex?: number) => void;
@@ -1617,6 +1799,8 @@ const ColumnComponent: React.FC<ColumnComponentProps> = ({
   onSelect,
   onMoveColumnUp,
   onMoveColumnDown,
+  onDeleteColumn,
+  canDeleteColumn,
   onMoveElementUp,
   onMoveElementDown,
   onAddElement,
@@ -1691,6 +1875,19 @@ const ColumnComponent: React.FC<ColumnComponentProps> = ({
             disabled={columnIndex === totalColumns - 1}
           >
             <ArrowDown className="h-2 w-2" />
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-5 w-5 p-0 hover:bg-red-100 hover:text-red-600"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDeleteColumn();
+            }}
+            disabled={!canDeleteColumn}
+            title={!canDeleteColumn ? "Cannot delete the only column" : "Delete column"}
+          >
+            <Trash2 className="h-2 w-2" />
           </Button>
           <Button 
             variant="ghost" 
