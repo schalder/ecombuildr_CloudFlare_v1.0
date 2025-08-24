@@ -43,6 +43,17 @@ export function generateResponsiveCSS(elementId: string, styles: any): string {
       }
       css += ` }`;
     }
+    
+    // Add forced mobile styles for builder preview
+    if (mobileProps) {
+      css += `.pb-mobile .element-${elementId} { ${mobileProps}; }`;
+    }
+    if (mHoverColor || mHoverBg) {
+      const hoverPairs: string[] = [];
+      if (mHoverColor) hoverPairs.push(`color: ${mHoverColor} !important`);
+      if (mHoverBg) hoverPairs.push(`background-color: ${mHoverBg} !important`);
+      css += `.pb-mobile .element-${elementId}:hover { ${hoverPairs.join('; ')}; transition: all 0.2s ease; }`;
+    }
   }
   
   
