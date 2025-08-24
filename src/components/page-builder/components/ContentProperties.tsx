@@ -16,6 +16,7 @@ import { IconPicker } from '@/components/ui/icon-picker';
 import { ICONS_MAP } from '@/components/icons/lucide-icon-list';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { ColorPicker } from '@/components/ui/color-picker';
 
 interface ContentPropertiesProps {
   element: PageBuilderElement;
@@ -262,6 +263,8 @@ export const ContentProperties: React.FC<ContentPropertiesProps> = ({
 
   // Divider element content
   if (element.type === 'divider') {
+    const [device, setDevice] = React.useState<'desktop' | 'mobile'>('desktop');
+    
     return (
       <div className="space-y-4">
         <div>
@@ -281,15 +284,13 @@ export const ContentProperties: React.FC<ContentPropertiesProps> = ({
             </SelectContent>
           </Select>
         </div>
-        <div>
-          <Label htmlFor="divider-color">Color</Label>
-          <Input
-            id="divider-color"
-            type="color"
-            value={element.content.color || '#e5e7eb'}
-            onChange={(e) => onUpdate('color', e.target.value)}
-          />
-        </div>
+        
+        <ColorPicker
+          color={element.content.color || '#e5e7eb'}
+          onChange={(color) => onUpdate('color', color)}
+          label="Color"
+        />
+        
         <div>
           <Label htmlFor="divider-width">Width</Label>
           <Input
@@ -298,6 +299,57 @@ export const ContentProperties: React.FC<ContentPropertiesProps> = ({
             onChange={(e) => onUpdate('width', e.target.value)}
             placeholder="100%"
           />
+        </div>
+
+        {/* Device Selector */}
+        <div className="space-y-2">
+          <Label>Device</Label>
+          <div className="flex gap-1 border rounded-md p-1">
+            <Button
+              variant={device === 'desktop' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setDevice('desktop')}
+              className="flex-1"
+            >
+              Desktop
+            </Button>
+            <Button
+              variant={device === 'mobile' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setDevice('mobile')}
+              className="flex-1"
+            >
+              Mobile
+            </Button>
+          </div>
+        </div>
+
+        {/* Alignment Options */}
+        <div>
+          <Label>Alignment</Label>
+          <Select
+            value={element.content.responsive?.[device]?.alignment || 'center'}
+            onValueChange={(value) => {
+              const currentResponsive = element.content.responsive || {};
+              const currentDevice = currentResponsive[device] || {};
+              onUpdate('responsive', {
+                ...currentResponsive,
+                [device]: {
+                  ...currentDevice,
+                  alignment: value
+                }
+              });
+            }}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="left">Left</SelectItem>
+              <SelectItem value="center">Center</SelectItem>
+              <SelectItem value="right">Right</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
     );

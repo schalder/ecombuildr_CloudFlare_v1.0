@@ -13,6 +13,37 @@ export const LayoutElementStyles: React.FC<LayoutElementStylesProps> = ({
   element,
   onStyleUpdate,
 }) => {
+  // For divider elements, only show spacing controls
+  if (element.type === 'divider') {
+    return (
+      <div className="space-y-4">
+        {/* Spacing */}
+        <div className="space-y-3">
+          <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Spacing</h4>
+          
+          <div>
+            <Label className="text-xs">Margin</Label>
+            <Input
+              value={element.styles?.margin || ''}
+              onChange={(e) => onStyleUpdate('margin', e.target.value)}
+              placeholder="e.g., 20px 0"
+            />
+          </div>
+
+          <div>
+            <Label className="text-xs">Padding</Label>
+            <Input
+              value={element.styles?.padding || ''}
+              onChange={(e) => onStyleUpdate('padding', e.target.value)}
+              placeholder="e.g., 10px 20px"
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // For all other elements, show full layout controls
   return (
     <div className="space-y-4">
       {/* Dimensions */}
@@ -58,45 +89,6 @@ export const LayoutElementStyles: React.FC<LayoutElementStylesProps> = ({
 
       <Separator />
 
-      {/* Border (for divider) */}
-      {element.type === 'divider' && (
-        <>
-          <div className="space-y-3">
-            <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Border</h4>
-            
-            <div>
-              <Label className="text-xs">Border Width</Label>
-              <Input
-                value={element.styles?.borderWidth || ''}
-                onChange={(e) => onStyleUpdate('borderWidth', e.target.value)}
-                placeholder="e.g., 1px"
-              />
-            </div>
-
-            <div>
-              <Label className="text-xs">Border Color</Label>
-              <Input
-                type="color"
-                value={element.styles?.borderColor || '#e5e7eb'}
-                onChange={(e) => onStyleUpdate('borderColor', e.target.value)}
-                className="w-full h-10"
-              />
-            </div>
-
-            <div>
-              <Label className="text-xs">Border Style</Label>
-              <Input
-                value={element.styles?.borderStyle || ''}
-                onChange={(e) => onStyleUpdate('borderStyle', e.target.value)}
-                placeholder="solid, dashed, dotted"
-              />
-            </div>
-          </div>
-
-          <Separator />
-        </>
-      )}
-
       {/* Spacing */}
       <div className="space-y-3">
         <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Spacing</h4>
@@ -106,6 +98,15 @@ export const LayoutElementStyles: React.FC<LayoutElementStylesProps> = ({
           <Input
             value={element.styles?.margin || ''}
             onChange={(e) => onStyleUpdate('margin', e.target.value)}
+            placeholder="e.g., 10px 20px"
+          />
+        </div>
+
+        <div>
+          <Label className="text-xs">Padding</Label>
+          <Input
+            value={element.styles?.padding || ''}
+            onChange={(e) => onStyleUpdate('padding', e.target.value)}
             placeholder="e.g., 10px 20px"
           />
         </div>

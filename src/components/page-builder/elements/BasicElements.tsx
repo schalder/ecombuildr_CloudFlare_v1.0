@@ -604,31 +604,69 @@ const DividerElement: React.FC<{
   isEditing?: boolean;
   deviceType?: 'desktop' | 'tablet' | 'mobile';
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
-}> = ({ element, isEditing, onUpdate }) => {
+}> = ({ element, isEditing, deviceType = 'desktop', onUpdate }) => {
   const style = element.content.style || 'solid';
   const color = element.content.color || '#e5e7eb';
   const width = element.content.width || '100%';
-
+  
+  // Get device-specific alignment (fallback: center)
+  const currentDevice = deviceType === 'tablet' ? 'desktop' : deviceType;
+  const alignment = element.content.responsive?.[currentDevice]?.alignment || 'center';
+  
+  // Parse margin from styles for backward compatibility
+  const existingMargin = element.styles?.margin || '20px 0';
+  const marginParts = existingMargin.split(' ');
+  const verticalMargin = marginParts[0] || '20px';
+  
   const elementStyles = renderElementStyles(element);
+  
+  // Calculate alignment margins
+  let marginLeft = '0';
+  let marginRight = '0';
+  
+  if (alignment === 'center') {
+    marginLeft = 'auto';
+    marginRight = 'auto';
+  } else if (alignment === 'right') {
+    marginLeft = 'auto';
+    marginRight = '0';
+  } else {
+    marginLeft = '0';
+    marginRight = 'auto';
+  }
+
   const dividerStyle = {
-    ...elementStyles,
+    border: 'none',
     borderTop: `1px ${style} ${color}`,
     width,
-    margin: element.styles?.margin || '20px 0',
+    marginTop: '0',
+    marginBottom: '0',
+    marginLeft,
+    marginRight,
+  };
+
+  const wrapperStyle = {
+    ...elementStyles,
+    marginTop: verticalMargin,
+    marginBottom: verticalMargin,
   };
 
   if (isEditing) {
     return (
-      <div className="border border-dashed border-muted-foreground/30 rounded p-2 bg-muted/10">
+      <div className="border border-dashed border-muted-foreground/30 rounded p-2 bg-muted/10" style={wrapperStyle}>
         <hr style={dividerStyle} />
         <div className="text-xs text-muted-foreground text-center mt-2">
-          Divider
+          Divider ({alignment})
         </div>
       </div>
     );
   }
 
-  return <hr style={dividerStyle} className="border-none" />;
+  return (
+    <div style={wrapperStyle}>
+      <hr style={dividerStyle} className="border-none" />
+    </div>
+  );
 };
 
 // Video Element
