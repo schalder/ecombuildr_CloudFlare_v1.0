@@ -1703,19 +1703,23 @@ const RowComponent: React.FC<RowComponentProps> = ({
       id={`row-${row.id}`}
       data-anchor={row.anchor}
       data-pb-row-id={row.id}
-      className={`relative group transition-all duration-200 rounded-lg ${
-        // Only apply border/background styles if no user-defined styles
-        !userBackground && !userShadow ? 'border border-dashed' : ''
+      className={`relative group transition-all duration-200 ${
+        // Only apply border/background styles if no user-defined styles - solid blue dashed borders
+        !userBackground && !userShadow ? 'border-2 border-dashed border-blue-400' : ''
       } ${
         isSelected && !userBackground
-          ? 'border-secondary bg-secondary/10' 
+          ? 'border-blue-600 bg-blue-50/50' 
           : isHoveredTarget && !userBackground
-            ? 'border-secondary/50 bg-secondary/5' 
-            : !userBackground ? 'border-transparent' : ''
+            ? 'border-blue-500 bg-blue-50/30' 
+            : ''
       } ${
         isDragging ? 'opacity-50' : ''
       }`}
-      style={renderRowStyles(row, deviceType)}
+      style={{
+        ...renderRowStyles(row, deviceType),
+        // Force border-radius to 0 for page builder interface only
+        borderRadius: '0px'
+      }}
       onMouseEnter={() => setHoveredTarget({ type: 'row', id: row.id, parentId: sectionId })}
       onMouseLeave={() => setHoveredTarget(null)}
       onClick={(e) => {
@@ -1893,17 +1897,21 @@ const ColumnComponent: React.FC<ColumnComponentProps> = ({
       id={`column-${column.id}`}
       data-anchor={column.anchor}
       data-pb-column-id={column.id}
-      className={`relative min-h-24 rounded-lg transition-all duration-200 ${
-        // Only apply border/background styles if no user-defined styles
-        !userBackground && !userShadow ? 'border border-dashed' : ''
+      className={`relative min-h-24 transition-all duration-200 ${
+        // Only apply border/background styles if no user-defined styles - solid gray dashed borders
+        !userBackground && !userShadow ? 'border-2 border-dashed border-gray-300' : ''
       } ${
         isSelected && !userBackground
-          ? 'border-accent bg-accent/5' 
+          ? 'border-primary/60 bg-primary/5' 
           : isHoveredTarget && !userBackground
-            ? 'border-accent/50 bg-accent/2' 
-            : !userBackground ? 'border-border' : ''
+            ? 'border-primary/50 bg-primary/3' 
+            : ''
       }`}
-      style={renderColumnStyles(column, deviceType)}
+      style={{
+        ...renderColumnStyles(column, deviceType),
+        // Force border-radius to 0 for page builder interface only
+        borderRadius: '0px'
+      }}
       onMouseEnter={() => setHoveredTarget({ type: 'column', id: column.id, parentId: rowId, grandParentId: sectionId })}
       onMouseLeave={() => setHoveredTarget(null)}
       onClick={(e) => {

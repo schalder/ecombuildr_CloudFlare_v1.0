@@ -52,7 +52,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
       return `${baseClasses} w-full`;
     }
     
-    return `${baseClasses} border border-border shadow-lg rounded-lg mx-auto`;
+    return `${baseClasses} border border-border shadow-lg mx-auto`;
   };
 
   const getCanvasStyles = () => {
