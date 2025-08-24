@@ -971,60 +971,52 @@ const ElementorPageBuilderContent: React.FC<ElementorPageBuilderProps> = memo(({
       <div className="flex h-full min-h-0 bg-background relative">
         {/* Floating Elements Panel */}
         {isElementsPanelOpen && (
-          <>
-            {/* Backdrop overlay for click-outside functionality */}
-            <div 
-              className="fixed inset-0 bg-black/20 z-40"
-              onClick={() => setIsElementsPanelOpen(false)}
-            />
-            
-            <div className="fixed top-0 left-0 w-80 h-full bg-card border-r shadow-lg z-50 overflow-hidden">
-              <div className="p-4 border-b">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-semibold">Elements</h3>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setIsElementsPanelOpen(false)}
-                  >
-                    <PanelLeftClose className="h-4 w-4" />
-                  </Button>
-                </div>
-                <div className="mt-4">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      placeholder="Search elements..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-9"
-                    />
-                  </div>
+          <div className="fixed top-0 left-0 w-80 h-full bg-card border-r shadow-lg z-50 overflow-hidden">
+            <div className="p-4 border-b">
+              <div className="flex items-center justify-between">
+                <h3 className="font-semibold">Elements</h3>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsElementsPanelOpen(false)}
+                >
+                  <PanelLeftClose className="h-4 w-4" />
+                </Button>
+              </div>
+              <div className="mt-4">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search elements..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-9"
+                  />
                 </div>
               </div>
-              
-              <ScrollArea scrollbarType="always" className="flex-1 min-h-0 h-[calc(100%-140px)]">
-                <div className="p-4 space-y-6">
-                  {filteredElements.map((category) => (
-                    <div key={category.name}>
-                      <h4 className="font-medium text-sm text-muted-foreground mb-3 uppercase tracking-wide">
-                        {category.name}
-                      </h4>
-                      <div className="grid grid-cols-2 gap-2">
-                        {category.elements.map((element) => (
-                          <DraggableElement
-                            key={element.id}
-                            element={element}
-                          />
-                        ))}
-                      </div>
-                      <Separator className="mt-6" />
-                    </div>
-                  ))}
-                </div>
-              </ScrollArea>
             </div>
-          </>
+            
+            <ScrollArea scrollbarType="always" className="flex-1 min-h-0 h-[calc(100%-140px)]">
+              <div className="p-4 space-y-6">
+                {filteredElements.map((category) => (
+                  <div key={category.name}>
+                    <h4 className="font-medium text-sm text-muted-foreground mb-3 uppercase tracking-wide">
+                      {category.name}
+                    </h4>
+                    <div className="grid grid-cols-2 gap-2">
+                      {category.elements.map((element) => (
+                        <DraggableElement
+                          key={element.id}
+                          element={element}
+                        />
+                      ))}
+                    </div>
+                    <Separator className="mt-6" />
+                  </div>
+                ))}
+              </div>
+            </ScrollArea>
+          </div>
         )}
 
         {/* Main Content Area */}
