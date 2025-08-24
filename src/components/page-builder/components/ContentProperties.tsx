@@ -14,7 +14,7 @@ import { ImageContentProperties } from './ImageContentProperties';
 import { VideoContentProperties } from './VideoContentProperties';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { IconPicker } from '@/components/ui/icon-picker';
-import { ICONS_MAP } from '@/components/icons/lucide-icon-list';
+import { getIconByName } from '@/components/icons/icon-sources';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { ColorPicker } from '@/components/ui/color-picker';
@@ -463,7 +463,7 @@ export const ContentProperties: React.FC<ContentPropertiesProps> = ({
           <div className="space-y-2 mt-2">
             {rawItems.map((item: any, index: number) => {
               const iconName = typeof item === 'object' ? (item.icon || defaultIconName) : defaultIconName;
-              const faIcon = ICONS_MAP[iconName];
+              const IconComponent = getIconByName(iconName);
               return (
                 <div key={index} className="flex items-center gap-2">
                   <Input
@@ -477,7 +477,7 @@ export const ContentProperties: React.FC<ContentPropertiesProps> = ({
                         <PopoverTrigger asChild>
                           <Button variant="outline" size="sm" className="h-8">
                             <span className="mr-2">Icon</span>
-                            {faIcon ? React.createElement(faIcon, { className: "h-4 w-4" }) : null}
+                            {IconComponent ? <IconComponent className="h-4 w-4" /> : null}
                           </Button>
                         </PopoverTrigger>
                         <PopoverContent align="start" className="w-[360px]">
