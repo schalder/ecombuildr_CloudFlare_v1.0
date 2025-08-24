@@ -593,10 +593,15 @@ const SpacerElement: React.FC<{
     );
   }
 
-  const spacerHeight = String(height);
+  // Combine content height with element styles
+  const finalStyles = {
+    ...elementStyles,
+    height: height, // Always use content height, not styles height for spacers
+    width: '100%'
+  };
   
   return (
-    <div style={{ ...elementStyles, height: elementStyles.height || spacerHeight }} className="w-full" />
+    <div style={finalStyles} />
   );
 };
 
