@@ -227,3 +227,5 @@ export const AccordionElementStyles: React.FC<AccordionElementStylesProps> = ({
     </div>
   );
 };
+
+export default AccordionElementStyles;
