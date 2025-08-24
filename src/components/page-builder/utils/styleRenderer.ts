@@ -60,18 +60,7 @@ export const renderSectionStyles = (section: PageBuilderSection, deviceType: 'de
   if (section.styles) {
     // FIXED: No mixing of shorthand and individual properties
     
-    // Build layered background styles (image + overlay)
-    const backgroundStyles = buildBackgroundStyles({
-      backgroundImage: section.styles.backgroundImage,
-      backgroundColor: section.styles.backgroundColor,
-      backgroundGradient: section.styles.backgroundGradient,
-      backgroundOpacity: section.styles.backgroundOpacity,
-      backgroundImageMode: section.styles.backgroundImageMode,
-      responsive: section.styles.responsive,
-      deviceType
-    });
-    
-    Object.assign(styles, backgroundStyles);
+    // Background styles will be applied after responsive merge
     
     // Box shadow styles
     if (section.styles.boxShadow && section.styles.boxShadow !== 'none') {
@@ -118,48 +107,49 @@ export const renderSectionStyles = (section: PageBuilderSection, deviceType: 'de
     }
   }
   
+  // Merge responsive overrides FIRST, but preserve background styles
+  const mergedStyles = mergeResponsiveStyles(styles, section.styles, deviceType);
+  
+  // Apply background styles AFTER responsive merge to ensure they're not overwritten
+  const backgroundStyles = buildBackgroundStyles({
+    backgroundImage: section.styles.backgroundImage,
+    backgroundColor: section.styles.backgroundColor,
+    backgroundGradient: section.styles.backgroundGradient,
+    backgroundOpacity: section.styles.backgroundOpacity,
+    backgroundImageMode: section.styles.backgroundImageMode,
+    responsive: section.styles.responsive,
+    deviceType
+  });
+  
+  // Merge background styles on top of responsive styles
+  Object.assign(mergedStyles, backgroundStyles);
+  
   // Custom width
   if (section.customWidth) {
-    styles.width = section.customWidth;
+    mergedStyles.width = section.customWidth;
   }
   
-  // Merge responsive overrides first
-  const merged = mergeResponsiveStyles(styles, section.styles, deviceType);
-  
   // Auto-center sections when width is less than 100% and no explicit horizontal margins
-  const hasExplicitHorizontalMargin = merged.marginLeft || merged.marginRight;
+  const hasExplicitHorizontalMargin = mergedStyles.marginLeft || mergedStyles.marginRight;
   const responsiveWidth = section.styles?.responsive?.[deviceType]?.width;
   const hasCustomWidth = section.customWidth || responsiveWidth;
   
   if (hasCustomWidth && !hasExplicitHorizontalMargin) {
     const widthValue = responsiveWidth || section.customWidth;
     if (widthValue && widthValue !== '100%' && !widthValue.includes('100%')) {
-      merged.marginLeft = 'auto';
-      merged.marginRight = 'auto';
+      mergedStyles.marginLeft = 'auto';
+      mergedStyles.marginRight = 'auto';
     }
   }
 
-  return merged;
+  return mergedStyles;
 };
 
 export const renderRowStyles = (row: PageBuilderRow, deviceType: 'desktop' | 'tablet' | 'mobile' = 'desktop'): React.CSSProperties => {
   const styles: React.CSSProperties = {};
   
   if (row.styles) {
-    // FIXED: No mixing of shorthand and individual properties
-    
-    // Build layered background styles (image + overlay)
-    const backgroundStyles = buildBackgroundStyles({
-      backgroundImage: row.styles.backgroundImage,
-      backgroundColor: row.styles.backgroundColor,
-      backgroundGradient: row.styles.backgroundGradient,
-      backgroundOpacity: row.styles.backgroundOpacity,
-      backgroundImageMode: row.styles.backgroundImageMode,
-      responsive: row.styles.responsive,
-      deviceType
-    });
-    
-    Object.assign(styles, backgroundStyles);
+    // Background styles will be applied after responsive merge
     
     // Box shadow styles
     if (row.styles.boxShadow && row.styles.boxShadow !== 'none') {
@@ -202,8 +192,22 @@ export const renderRowStyles = (row: PageBuilderRow, deviceType: 'desktop' | 'ta
     styles.width = row.customWidth;
   }
   
-  // Merge responsive overrides first
+  // Merge responsive overrides FIRST
   const merged = mergeResponsiveStyles(styles, row.styles, deviceType);
+  
+  // Apply background styles AFTER responsive merge
+  const backgroundStyles = buildBackgroundStyles({
+    backgroundImage: row.styles.backgroundImage,
+    backgroundColor: row.styles.backgroundColor,
+    backgroundGradient: row.styles.backgroundGradient,
+    backgroundOpacity: row.styles.backgroundOpacity,
+    backgroundImageMode: row.styles.backgroundImageMode,
+    responsive: row.styles.responsive,
+    deviceType
+  });
+  
+  // Merge background styles on top
+  Object.assign(merged, backgroundStyles);
   
   // Auto-center rows when width is less than 100% and no explicit horizontal margins  
   const hasExplicitHorizontalMargin = merged.marginLeft || merged.marginRight;
@@ -225,20 +229,7 @@ export const renderColumnStyles = (column: PageBuilderColumn, deviceType: 'deskt
   const styles: React.CSSProperties = {};
   
   if (column.styles) {
-    // FIXED: No mixing of shorthand and individual properties
-    
-    // Build layered background styles (image + overlay)
-    const backgroundStyles = buildBackgroundStyles({
-      backgroundImage: column.styles.backgroundImage,
-      backgroundColor: column.styles.backgroundColor,
-      backgroundGradient: column.styles.backgroundGradient,
-      backgroundOpacity: column.styles.backgroundOpacity,
-      backgroundImageMode: column.styles.backgroundImageMode,
-      responsive: column.styles.responsive,
-      deviceType
-    });
-    
-    Object.assign(styles, backgroundStyles);
+    // Background styles will be applied after responsive merge
     
     // Box shadow styles
     if (column.styles.boxShadow && column.styles.boxShadow !== 'none') {
@@ -310,8 +301,23 @@ export const renderColumnStyles = (column: PageBuilderColumn, deviceType: 'deskt
     }
   }
 
-  // Merge responsive overrides
+  // Merge responsive overrides FIRST
   const merged = mergeResponsiveStyles(styles, column.styles, deviceType);
+  
+  // Apply background styles AFTER responsive merge
+  const backgroundStyles = buildBackgroundStyles({
+    backgroundImage: column.styles.backgroundImage,
+    backgroundColor: column.styles.backgroundColor,
+    backgroundGradient: column.styles.backgroundGradient,
+    backgroundOpacity: column.styles.backgroundOpacity,
+    backgroundImageMode: column.styles.backgroundImageMode,
+    responsive: column.styles.responsive,
+    deviceType
+  });
+  
+  // Merge background styles on top
+  Object.assign(merged, backgroundStyles);
+  
   return merged;
 };
 

@@ -24,15 +24,6 @@ export function buildBackgroundStyles(config: BackgroundConfig): React.CSSProper
     deviceType = 'desktop'
   } = config;
 
-  console.log('🎨 Background Builder Input:', {
-    backgroundImage,
-    backgroundColor,
-    backgroundGradient,
-    backgroundImageMode,
-    deviceType,
-    responsive
-  });
-
   // Get responsive overrides for current device (tablet uses desktop)
   const deviceKey = deviceType === 'mobile' ? 'mobile' : 'desktop';
   const deviceOverrides = responsive?.[deviceKey] || {};
@@ -52,14 +43,6 @@ export function buildBackgroundStyles(config: BackgroundConfig): React.CSSProper
   
   // Check if we have a valid image
   const hasValidImage = finalImage && finalImage.trim() !== '';
-
-  console.log('🖼️ Background Processing:', {
-    finalImage,
-    hasValidImage,
-    finalColor,
-    hasValidOverlay,
-    finalMode
-  });
 
   // Build layered backgrounds
   const backgroundLayers: string[] = [];
@@ -134,8 +117,6 @@ export function buildBackgroundStyles(config: BackgroundConfig): React.CSSProper
     styles.backgroundRepeat = backgroundRepeats.join(', ');
     styles.backgroundAttachment = backgroundAttachments.join(', ');
   }
-
-  console.log('🎯 Final Background Styles:', styles);
 
   return styles;
 }
