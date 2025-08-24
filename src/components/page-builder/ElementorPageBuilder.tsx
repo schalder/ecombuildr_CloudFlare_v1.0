@@ -1,5 +1,5 @@
 // Page builder with floating elements panel
-import React, { useState, useCallback, memo, useEffect } from 'react';
+import React, { useState, useCallback, memo, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
@@ -203,6 +203,8 @@ const ElementorPageBuilderContent: React.FC<ElementorPageBuilderProps> = memo(({
     rowId: string;
     columnId: string;
   } | null>(null);
+  
+  const elementsPanelRef = useRef<HTMLDivElement>(null);
 
   // Ensure legacy long anchors are converted after hot reloads too
   React.useEffect(() => {
@@ -215,6 +217,31 @@ const ElementorPageBuilderContent: React.FC<ElementorPageBuilderProps> = memo(({
       setData(ensureAnchors(initialData));
     }
   }, [initialData]);
+
+  // Handle click outside elements panel to auto-close
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        isElementsPanelOpen &&
+        elementsPanelRef.current &&
+        !elementsPanelRef.current.contains(event.target as Node)
+      ) {
+        const target = event.target as Element;
+        // Don't close if clicking on elements panel toggle button
+        if (!target.closest('[data-elements-panel-toggle]')) {
+          setIsElementsPanelOpen(false);
+        }
+      }
+    };
+
+    if (isElementsPanelOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isElementsPanelOpen]);
 
 
   const updateData = useCallback((newData: PageBuilderData) => {
@@ -970,9 +997,13 @@ const ElementorPageBuilderContent: React.FC<ElementorPageBuilderProps> = memo(({
     <DndProvider backend={HTML5Backend}>
       <div className="flex h-full min-h-0 bg-background relative">
         {/* Floating Elements Panel */}
-        {isElementsPanelOpen && (
-          <div className="fixed top-0 left-0 w-80 h-full bg-card border-r shadow-lg z-50 overflow-hidden">
-            <div className="p-4 border-b">
+        <div 
+          className={`fixed top-0 left-0 w-80 h-full bg-card border-r shadow-lg z-50 overflow-hidden transition-transform duration-300 ease-out ${
+            isElementsPanelOpen ? 'translate-x-0' : '-translate-x-full'
+          }`}
+          ref={elementsPanelRef}
+        >
+          <div className="p-4 border-b">
               <div className="flex items-center justify-between">
                 <h3 className="font-semibold">Elements</h3>
                 <Button
@@ -1016,8 +1047,7 @@ const ElementorPageBuilderContent: React.FC<ElementorPageBuilderProps> = memo(({
                 ))}
               </div>
             </ScrollArea>
-          </div>
-        )}
+        </div>
 
         {/* Main Content Area */}
         <div className="flex-1 flex flex-col min-h-0">
@@ -1029,6 +1059,7 @@ const ElementorPageBuilderContent: React.FC<ElementorPageBuilderProps> = memo(({
                 size="sm"
                 onClick={() => setIsElementsPanelOpen(!isElementsPanelOpen)}
                 className="flex items-center gap-2"
+                data-elements-panel-toggle
               >
                 <Plus className="h-4 w-4" />
                 Elements
