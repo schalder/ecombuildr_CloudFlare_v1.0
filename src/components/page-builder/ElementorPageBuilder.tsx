@@ -605,12 +605,18 @@ const ElementorPageBuilderContent: React.FC<ElementorPageBuilderProps> = memo(({
     const section = data.sections.find(s => s.id === sectionId);
     const row = section?.rows?.find(r => r.id === rowId);
     
-    if (!row || row.columns.length <= 1) return;
+    if (!row) return;
     
     const columnIndex = row.columns.findIndex(c => c.id === columnId);
     const columnToDelete = row.columns[columnIndex];
     
     if (!columnToDelete) return;
+
+    // If this is the last column, delete the entire row
+    if (row.columns.length === 1) {
+      deleteRow(sectionId, rowId);
+      return;
+    }
 
     // Find target column to merge elements into (prefer previous, otherwise next)
     const targetColumnIndex = columnIndex > 0 ? columnIndex - 1 : columnIndex + 1;
@@ -666,7 +672,7 @@ const ElementorPageBuilderContent: React.FC<ElementorPageBuilderProps> = memo(({
     }
 
     setDeleteColumnDialog(null);
-  }, [data, updateData, selection]);
+  }, [data, updateData, selection, deleteRow]);
 
   // Element operations
   const addElement = useCallback((sectionId: string, rowId: string, columnId: string, elementType: string, insertIndex?: number) => {
@@ -1253,6 +1259,31 @@ const ElementorPageBuilderContent: React.FC<ElementorPageBuilderProps> = memo(({
           }
         }}
       />
+
+      {/* Delete Column Confirmation Dialog */}
+      <ConfirmationDialog
+        open={deleteColumnDialog !== null}
+        onOpenChange={(open) => !open && setDeleteColumnDialog(null)}
+        title="Delete Column"
+        description={(() => {
+          if (!deleteColumnDialog) return "";
+          const section = data.sections.find(s => s.id === deleteColumnDialog.sectionId);
+          const row = section?.rows?.find(r => r.id === deleteColumnDialog.rowId);
+          const isLastColumn = row?.columns.length === 1;
+          
+          return isLastColumn 
+            ? "Deleting the last column will remove the entire row. This action cannot be undone."
+            : "Deleting this column will move its content to the previous column. This action cannot be undone.";
+        })()}
+        confirmText="Delete Column"
+        cancelText="Cancel"
+        variant="destructive"
+        onConfirm={() => {
+          if (deleteColumnDialog) {
+            deleteColumn(deleteColumnDialog.sectionId, deleteColumnDialog.rowId, deleteColumnDialog.columnId);
+          }
+        }}
+      />
     </DndProvider>
   );
 });
@@ -1746,7 +1777,7 @@ const RowComponent: React.FC<RowComponentProps> = ({
             onMoveColumnUp={() => onMoveColumn(sectionId, row.id, column.id, 'up')}
             onMoveColumnDown={() => onMoveColumn(sectionId, row.id, column.id, 'down')}
             onDeleteColumn={() => onDeleteColumn(column.id)}
-            canDeleteColumn={row.columns.length > 1}
+            canDeleteColumn={true}
             onMoveElementUp={onMoveElementUp}
             onMoveElementDown={onMoveElementDown}
             onAddElement={onAddElement}
@@ -1884,8 +1915,7 @@ const ColumnComponent: React.FC<ColumnComponentProps> = ({
               e.stopPropagation();
               onDeleteColumn();
             }}
-            disabled={!canDeleteColumn}
-            title={!canDeleteColumn ? "Cannot delete the only column" : "Delete column"}
+            title="Delete column"
           >
             <Trash2 className="h-2 w-2" />
           </Button>
