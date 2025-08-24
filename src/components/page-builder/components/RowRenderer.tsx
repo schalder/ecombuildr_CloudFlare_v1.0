@@ -161,7 +161,8 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
       id={row.anchor}
       data-pb-row-id={row.id}
       className={cn(
-        'relative group min-h-[80px] transition-all duration-200',
+        'relative group transition-all duration-200',
+        deviceType === 'mobile' ? 'min-h-[40px]' : 'min-h-[80px]',
         // Only apply border/background styles if not in preview mode
         !isPreviewMode && 'border border-dashed',
         !isPreviewMode && isHovered && 'border-primary/30',

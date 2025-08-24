@@ -228,7 +228,7 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({
             )}
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className={deviceType === 'mobile' ? 'space-y-0' : 'space-y-4'}>
             {section.rows.map((row, rowIndex) => (
               <RowRenderer
                 key={row.id}
