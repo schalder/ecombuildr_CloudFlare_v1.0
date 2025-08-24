@@ -41,10 +41,10 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
     : useDrop({
         accept: 'element',
         drop: (item: { elementType: string }) => {
-          // Add element to first column by default
-          if (row.columns.length > 0) {
-            
-            onAddElement(sectionId, row.id, row.columns[0].id, item.elementType);
+          // Add element to first column of first slice by default
+          const firstColumn = row.slices ? row.slices[0]?.columns[0] : row.columns[0];
+          if (firstColumn) {
+            onAddElement(sectionId, row.id, firstColumn.id, item.elementType);
           }
         },
         collect: (monitor) => ({
@@ -118,34 +118,144 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
     };
   };
 
+  const renderSlice = (slice: any, sliceIndex: number) => {
+    const getDeviceSpecificGridStyleForSlice = () => {
+      const stackOnMobile = row.responsive?.mobile?.stackColumns !== false; // Default to true
+      
+      // Force grid layout based on selected device type
+      if (deviceType === 'mobile' && stackOnMobile) {
+        return {
+          display: 'grid',
+          gridTemplateColumns: '1fr',
+          gap: '16px'
+        };
+      }
+      
+      if (deviceType === 'tablet') {
+        if (slice.columnLayout === '1') {
+          // True single column - center content
+          return {
+            display: 'grid',
+            gridTemplateColumns: '1fr',
+            gap: '16px',
+            justifyItems: 'center'
+          };
+        } else {
+          // Multi-column that should stack - keep left align
+          return {
+            display: 'grid',
+            gridTemplateColumns: '1fr',
+            gap: '16px'
+          };
+        }
+      }
+      
+      // Desktop - always use the columnLayout configuration
+      const fractions = COLUMN_LAYOUTS[slice.columnLayout];
+      if (fractions) {
+        return {
+          display: 'grid',
+          gridTemplateColumns: fractions.map(f => `${f}fr`).join(' '),
+          gap: '16px'
+        };
+      }
+      
+      return {
+        display: 'grid',
+        gridTemplateColumns: '1fr',
+        gap: '16px'
+      };
+    };
+
+    const getColumnsToRenderForSlice = () => {
+      // For mobile, always stack all columns
+      if (deviceType === 'mobile') {
+        return slice.columns;
+      }
+      
+      // For tablet, respect the columnLayout setting
+      if (deviceType === 'tablet') {
+        if (slice.columnLayout === '1') {
+          // Only render the first column for true single-column layout
+          return slice.columns.slice(0, 1);
+        } else {
+          // For multi-column layouts on tablet, stack all columns
+          return slice.columns;
+        }
+      }
+      
+      // For desktop, render all columns according to the layout
+      return slice.columns;
+    };
+
+    const getEffectiveColumnCountForSlice = () => {
+      // For tablet with single column layout, return 1
+      if (deviceType === 'tablet' && slice.columnLayout === '1') {
+        return 1;
+      }
+      // Otherwise return the total number of columns in the slice
+      return slice.columns.length;
+    };
+
+    return (
+      <div key={slice.id} className={sliceIndex > 0 ? "mt-4 pt-4 border-t border-dashed border-gray-200" : ""}>
+        <div style={getDeviceSpecificGridStyleForSlice()}>
+          {getColumnsToRenderForSlice().map((column) => (
+            <ColumnRenderer
+              key={column.id}
+              column={column}
+              sectionId={sectionId}
+              rowId={row.id}
+              columnCount={getEffectiveColumnCountForSlice()}
+              isPreviewMode={isPreviewMode}
+              deviceType={deviceType}
+              onSelectElement={onSelectElement}
+              onUpdateElement={onUpdateElement}
+              onAddElement={onAddElement}
+              onMoveElement={onMoveElement}
+              onRemoveElement={onRemoveElement}
+            />
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   const getColumnsToRender = () => {
-    // For mobile, always stack all columns
-    if (deviceType === 'mobile') {
-      return row.columns;
-    }
-    
-    // For tablet, respect the columnLayout setting
-    if (deviceType === 'tablet') {
-      if (row.columnLayout === '1') {
-        // Only render the first column for true single-column layout
-        return row.columns.slice(0, 1);
-      } else {
-        // For multi-column layouts on tablet, stack all columns
+    // Legacy fallback
+    if (!row.slices) {
+      // For mobile, always stack all columns
+      if (deviceType === 'mobile') {
         return row.columns;
       }
+      
+      // For tablet, respect the columnLayout setting
+      if (deviceType === 'tablet') {
+        if (row.columnLayout === '1') {
+          // Only render the first column for true single-column layout
+          return row.columns.slice(0, 1);
+        } else {
+          // For multi-column layouts on tablet, stack all columns
+          return row.columns;
+        }
+      }
+      
+      // For desktop, render all columns according to the layout
+      return row.columns;
     }
-    
-    // For desktop, render all columns according to the layout
-    return row.columns;
+    return [];
   };
 
   const getEffectiveColumnCount = () => {
-    // For tablet with single column layout, return 1
-    if (deviceType === 'tablet' && row.columnLayout === '1') {
-      return 1;
+    if (!row.slices) {
+      // For tablet with single column layout, return 1
+      if (deviceType === 'tablet' && row.columnLayout === '1') {
+        return 1;
+      }
+      // Otherwise return the total number of columns in the row
+      return row.columns.length;
     }
-    // Otherwise return the total number of columns in the row
-    return row.columns.length;
+    return 0;
   };
 
   const getRowStyles = (): React.CSSProperties => {
@@ -213,8 +323,14 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
         </div>
       )}
 
-      <div style={getDeviceSpecificGridStyle()}>
-        {getColumnsToRender().map((column) => (
+      {/* Render slices or legacy columns */}
+      {row.slices ? (
+        <div>
+          {row.slices.map((slice, sliceIndex) => renderSlice(slice, sliceIndex))}
+        </div>
+      ) : (
+        <div style={getDeviceSpecificGridStyle()}>
+          {getColumnsToRender().map((column) => (
             <ColumnRenderer
               key={column.id}
               column={column}
@@ -229,8 +345,9 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
               onMoveElement={onMoveElement}
               onRemoveElement={onRemoveElement}
             />
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
