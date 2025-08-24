@@ -193,11 +193,7 @@ const ElementorPageBuilderContent: React.FC<ElementorPageBuilderProps> = memo(({
     () => ensureAnchors(initialData || { sections: [] })
   );
   const [selection, setSelection] = useState<SelectionType | null>(null);
-  const [showColumnModal, setShowColumnModal] = useState<{ 
-    sectionId: string; 
-    insertIndex?: number;
-    forRowSlice?: { rowId: string };
-  } | null>(null);
+  const [showColumnModal, setShowColumnModal] = useState<{ sectionId: string; insertIndex?: number } | null>(null);
   const [deviceType, setDeviceType] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
   const [isElementsPanelOpen, setIsElementsPanelOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -679,81 +675,6 @@ const ElementorPageBuilderContent: React.FC<ElementorPageBuilderProps> = memo(({
   }, [data, updateData, selection, deleteRow]);
 
   // Element operations
-  // Add row slice functionality
-  const addRowSlice = useCallback((sectionId: string, rowId: string, columnLayout: string, insertIndex?: number) => {
-    const section = data.sections.find(s => s.id === sectionId);
-    const row = section?.rows?.find(r => r.id === rowId);
-    
-    if (!row) return;
-    
-    const widths = COLUMN_LAYOUTS[columnLayout as keyof typeof COLUMN_LAYOUTS];
-    if (!widths) return;
-    
-    const newSlice = {
-      id: generateId(),
-      columnLayout: columnLayout as any,
-      columns: widths.map(width => ({
-        id: generateId(),
-        width,
-        elements: []
-      }))
-    };
-    
-    const newData = {
-      ...data,
-      sections: data.sections.map(s => s.id === sectionId ? {
-        ...s,
-        rows: s.rows.map(r => r.id === rowId ? {
-          ...r,
-          slices: r.slices ? 
-            [...r.slices, newSlice] : 
-            [
-              // Convert existing columns to first slice if needed
-              {
-                id: generateId(),
-                columnLayout: r.columnLayout,
-                columns: r.columns
-              },
-              newSlice
-            ]
-        } : r)
-      } : s)
-    };
-    
-    updateData(newData);
-  }, [data, updateData]);
-
-  const deleteRowSlice = useCallback((sectionId: string, rowId: string, sliceId: string) => {
-    const section = data.sections.find(s => s.id === sectionId);
-    const row = section?.rows?.find(r => r.id === rowId);
-    
-    if (!row || !row.slices) return;
-    
-    const newSlices = row.slices.filter(slice => slice.id !== sliceId);
-    
-    // If no slices left, delete the row
-    if (newSlices.length === 0) {
-      deleteRow(sectionId, rowId);
-      return;
-    }
-    
-    const newData = {
-      ...data,
-      sections: data.sections.map(s => s.id === sectionId ? {
-        ...s,
-        rows: s.rows.map(r => r.id === rowId ? {
-          ...r,
-          slices: newSlices,
-          // Update legacy columns to match first slice
-          columns: newSlices[0]?.columns || [],
-          columnLayout: newSlices[0]?.columnLayout || '1'
-        } : r)
-      } : s)
-    };
-    
-    updateData(newData);
-  }, [data, updateData, deleteRow]);
-
   const addElement = useCallback((sectionId: string, rowId: string, columnId: string, elementType: string, insertIndex?: number) => {
     
     const elementDef = elementRegistry.get(elementType);
@@ -1334,11 +1255,7 @@ const ElementorPageBuilderContent: React.FC<ElementorPageBuilderProps> = memo(({
         onClose={() => setShowColumnModal(null)}
         onSelectLayout={(layout) => {
           if (showColumnModal) {
-            if (showColumnModal.forRowSlice) {
-              addRowSlice(showColumnModal.sectionId, showColumnModal.forRowSlice.rowId, layout);
-            } else {
-              addRow(showColumnModal.sectionId, layout, showColumnModal.insertIndex);
-            }
+            addRow(showColumnModal.sectionId, layout, showColumnModal.insertIndex);
           }
         }}
       />
@@ -1870,12 +1787,12 @@ const RowComponent: React.FC<RowComponentProps> = ({
             onDuplicateElement={onDuplicateElement}
             selection={selection}
             onSelectionChange={onSelectionChange}
-            />
-          ))}
-        </div>
+          />
+        ))}
       </div>
-    );
-  };
+    </div>
+  );
+};
 
 // Column Component
 interface ColumnComponentProps {

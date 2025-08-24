@@ -119,19 +119,11 @@ export interface PageBuilderColumn {
   };
 }
 
-// Row slice interface for multiple inner column layouts within a row
-export interface RowSlice {
-  id: string;
-  columnLayout: '1' | '1-1' | '1-2' | '2-1' | '1-1-1' | '1-2-1' | '2-1-1' | '1-1-1-1' | '1-1-1-1-1' | '1-1-1-1-1-1';
-  columns: PageBuilderColumn[];
-}
-
 export interface PageBuilderRow {
   id: string;
   anchor?: string;
-  columns: PageBuilderColumn[]; // Backward compatibility - converted to/from first slice
+  columns: PageBuilderColumn[];
   columnLayout: '1' | '1-1' | '1-2' | '2-1' | '1-1-1' | '1-2-1' | '2-1-1' | '1-1-1-1' | '1-1-1-1-1' | '1-1-1-1-1-1';
-  slices?: RowSlice[]; // New optional slices for multiple inner layouts
   customWidth?: string; // Custom width override (px, %, vw, etc.)
   styles?: {
     padding?: string;
