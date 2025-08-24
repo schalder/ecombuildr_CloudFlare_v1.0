@@ -171,13 +171,28 @@ export const InnerSectionElement: React.FC<InnerSectionElementProps> = ({
       <style>{generateResponsiveCSS(element.id, element.styles)}</style>
       <div
         className={cn(
-          'inner-section-element min-h-[100px] p-4 border-2 border-dashed border-muted-foreground/20 rounded-lg',
+          'inner-section-element relative min-h-[100px] p-4 border-2 border-dashed border-muted-foreground/20 rounded-lg',
           isEditing && 'hover:border-primary/40',
           isHovered && isEditing && 'border-primary/40 bg-primary/5'
         )}
         style={elementStyles}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
+        onMouseEnter={(e) => {
+          e.stopPropagation();
+          setIsHovered(true);
+        }}
+        onMouseLeave={(e) => {
+          // Only hide if we're actually leaving the main container
+          const rect = e.currentTarget.getBoundingClientRect();
+          const { clientX, clientY } = e;
+          if (
+            clientX < rect.left ||
+            clientX > rect.right ||
+            clientY < rect.top ||
+            clientY > rect.bottom
+          ) {
+            setIsHovered(false);
+          }
+        }}
       >
         {/* Inner Section Header */}
         {isEditing && isHovered && (
