@@ -1056,6 +1056,7 @@ const PriceElement: React.FC<{
       const buttonBg = (styles as any).buttonBackground || '#000000';
       const buttonText = (styles as any).buttonTextColor || '#ffffff';
       const buttonHover = (styles as any).buttonHoverBackground || '#333333';
+      const buttonHoverText = (styles as any).buttonHoverTextColor || '#ffffff';
       
       customStyle = {
         backgroundColor: buttonBg,
@@ -1070,9 +1071,11 @@ const PriceElement: React.FC<{
         style: customStyle,
         onMouseEnter: (e: React.MouseEvent<HTMLButtonElement>) => {
           e.currentTarget.style.backgroundColor = buttonHover;
+          e.currentTarget.style.color = buttonHoverText;
         },
         onMouseLeave: (e: React.MouseEvent<HTMLButtonElement>) => {
           e.currentTarget.style.backgroundColor = buttonBg;
+          e.currentTarget.style.color = buttonText;
         }
       };
     }
