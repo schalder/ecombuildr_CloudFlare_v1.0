@@ -71,9 +71,11 @@ export const renderSectionStyles = (section: PageBuilderSection, deviceType: 'de
       styles.backgroundAttachment = imageProps.backgroundAttachment || 'scroll';
     }
     
-    // Handle color/gradient overlay - USE PSEUDO-ELEMENT to avoid conflicts
-    const hasColorOverlay = (section.styles.backgroundGradient || 
-                            (section.styles.backgroundColor && section.styles.backgroundColor !== 'transparent'));
+    // Handle color/gradient overlay - ONLY if there's actually a visible color/gradient
+    const hasColorOverlay = (section.styles.backgroundGradient && section.styles.backgroundGradient.trim() !== '') || 
+                            (section.styles.backgroundColor && 
+                             section.styles.backgroundColor !== 'transparent' && 
+                             section.styles.backgroundColor.trim() !== '');
     
     if (hasColorOverlay) {
       const opacity = section.styles.backgroundOpacity ?? 1;
@@ -188,9 +190,11 @@ export const renderRowStyles = (row: PageBuilderRow, deviceType: 'desktop' | 'ta
       styles.backgroundAttachment = imageProps.backgroundAttachment || 'scroll';
     }
     
-    // Handle color/gradient overlay
-    const hasColorOverlay = (row.styles.backgroundGradient || 
-                            (row.styles.backgroundColor && row.styles.backgroundColor !== 'transparent'));
+    // Handle color/gradient overlay - ONLY if there's actually a visible color/gradient
+    const hasColorOverlay = (row.styles.backgroundGradient && row.styles.backgroundGradient.trim() !== '') || 
+                            (row.styles.backgroundColor && 
+                             row.styles.backgroundColor !== 'transparent' && 
+                             row.styles.backgroundColor.trim() !== '');
     
     if (hasColorOverlay) {
       const opacity = row.styles.backgroundOpacity ?? 1;
@@ -296,9 +300,11 @@ export const renderColumnStyles = (column: PageBuilderColumn, deviceType: 'deskt
       styles.backgroundAttachment = imageProps.backgroundAttachment || 'scroll';
     }
     
-    // Handle color/gradient overlay
-    const hasColorOverlay = (column.styles.backgroundGradient || 
-                            (column.styles.backgroundColor && column.styles.backgroundColor !== 'transparent'));
+    // Handle color/gradient overlay - ONLY if there's actually a visible color/gradient
+    const hasColorOverlay = (column.styles.backgroundGradient && column.styles.backgroundGradient.trim() !== '') || 
+                            (column.styles.backgroundColor && 
+                             column.styles.backgroundColor !== 'transparent' && 
+                             column.styles.backgroundColor.trim() !== '');
     
     if (hasColorOverlay) {
       const opacity = column.styles.backgroundOpacity ?? 1;
