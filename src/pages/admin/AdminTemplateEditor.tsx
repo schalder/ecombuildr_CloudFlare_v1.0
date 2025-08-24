@@ -15,7 +15,7 @@ import { AdminLayout } from '@/components/admin/AdminLayout';
 import { ElementorPageBuilder } from '@/components/page-builder/ElementorPageBuilder';
 import { PageBuilderData } from '@/components/page-builder/types';
 import { PageBuilderRenderer } from '@/components/storefront/PageBuilderRenderer';
-import { ArrowLeft, Save, Eye, Settings, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Save, Eye, Settings, RefreshCw, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
 import html2canvas from 'html2canvas';
 
@@ -300,6 +300,16 @@ export default function AdminTemplateEditor() {
               <Eye className="h-4 w-4" />
               {showPreview ? 'Hide Preview' : 'Show Preview'}
             </Button>
+            {isEditing && templateId && (
+              <Button
+                variant="outline"
+                onClick={() => window.open(`/admin/templates/preview/${templateId}`, '_blank')}
+                className="gap-2"
+              >
+                <ExternalLink className="h-4 w-4" />
+                Open in New Tab
+              </Button>
+            )}
             <Button 
               onClick={handleRegenerateThumbnail} 
               disabled={isGeneratingThumbnail}

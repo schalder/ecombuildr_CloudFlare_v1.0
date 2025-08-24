@@ -62,6 +62,7 @@ import AdminShipping from "./pages/admin/AdminShipping";
 import AdminLibraryOrdersSummary from "./pages/admin/AdminLibraryOrdersSummary";
 import AdminTemplateManagement from "./pages/admin/AdminTemplateManagement";
 import AdminTemplateEditor from "./pages/admin/AdminTemplateEditor";
+import AdminTemplatePreview from "./pages/admin/AdminTemplatePreview";
 import { StorefrontHome } from "./pages/storefront/StorefrontHome";
 import { StorefrontProducts } from "./pages/storefront/StorefrontProducts";
 import ProductDetail from "./pages/storefront/ProductDetail";
@@ -169,6 +170,7 @@ const App = () => (
                 <Route path="/admin/templates" element={<AdminTemplateManagement />} />
                 <Route path="/admin/templates/create" element={<AdminTemplateEditor />} />
                 <Route path="/admin/templates/edit/:templateId" element={<AdminTemplateEditor />} />
+                <Route path="/admin/templates/preview/:templateId" element={<AdminTemplatePreview />} />
                 
                 {/* Demo and Preview Routes */}
                 <Route path="/preview/demo" element={<DemoPreview />} />
