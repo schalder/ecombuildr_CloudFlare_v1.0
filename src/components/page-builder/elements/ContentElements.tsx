@@ -229,58 +229,25 @@ const AccordionElement: React.FC<{
             <AccordionItem key={index} value={`item-${index}`}>
               <AccordionTrigger 
                 className={`hover:no-underline`}
-                style={{ 
-                  textAlign: textAlign as any,
-                  fontSize: element.styles?.fontSize,
-                  lineHeight: element.styles?.lineHeight,
-                  color: element.styles?.color,
-                  fontWeight: element.styles?.fontWeight,
-                  fontFamily: element.styles?.fontFamily
-                }}
+                style={{ textAlign: textAlign }}
               >
                 <InlineEditor
                   value={item.title}
                   onChange={(value) => updateItem(index, 'title', value)}
                   placeholder="Section title..."
                   disabled={!isEditing}
-                  className=""
-                  style={{ 
-                    fontSize: 'inherit',
-                    lineHeight: 'inherit',
-                    color: 'inherit',
-                    fontWeight: 'inherit',
-                    fontFamily: 'inherit',
-                    textAlign: 'inherit'
-                  }}
+                  className="font-medium"
                 />
               </AccordionTrigger>
               <AccordionContent className="pb-4">
-                <div 
-                  className="pt-2" 
-                  style={{ 
-                    textAlign: textAlign as any,
-                    fontSize: element.styles?.fontSize ? `calc(${element.styles.fontSize} * 0.9)` : '0.9em',
-                    lineHeight: element.styles?.lineHeight || '1.5',
-                    color: element.styles?.color ? `${element.styles.color}CC` : 'inherit',
-                    fontWeight: element.styles?.fontWeight || 'normal',
-                    fontFamily: element.styles?.fontFamily
-                  }}
-                >
+                <div className="pt-2" style={{ textAlign: textAlign }}>
                   <InlineEditor
                     value={item.content}
                     onChange={(value) => updateItem(index, 'content', value)}
                     placeholder="Section content..."
                     multiline
                     disabled={!isEditing}
-                    className=""
-                    style={{ 
-                      fontSize: 'inherit',
-                      lineHeight: 'inherit',
-                      color: 'inherit',
-                      fontWeight: 'inherit',
-                      fontFamily: 'inherit',
-                      textAlign: 'inherit'
-                    }}
+                    className="text-muted-foreground"
                   />
                 </div>
               </AccordionContent>
