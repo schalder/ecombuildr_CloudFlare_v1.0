@@ -252,6 +252,21 @@ export const FAQElementStyles: React.FC<FAQElementStylesProps> = ({
         />
       </CollapsibleGroup>
 
+      {/* Hover Effects Section */}
+      <CollapsibleGroup
+        title="Hover Effects"
+        isOpen={false}
+        onToggle={() => {}}
+      >
+        <div className="space-y-3">
+          <ColorPicker 
+            label="Question Hover Background"
+            color={currentStyles.questionHoverBackground || ''}
+            onChange={(val) => handleResponsiveUpdate('questionHoverBackground', val)}
+          />
+        </div>
+      </CollapsibleGroup>
+
       {/* Background Section */}
       <CollapsibleGroup
         title="Background"

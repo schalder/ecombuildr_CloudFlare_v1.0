@@ -144,6 +144,9 @@ const FAQElement: React.FC<{
   const questionStyles = (element.styles as any)?.questionStyles?.responsive?.[deviceKey] || {};
   const answerStyles = (element.styles as any)?.answerStyles?.responsive?.[deviceKey] || {};
   
+  // Get current responsive styles for hover effects
+  const currentResponsiveStyles = element.styles?.responsive?.[deviceKey] || {};
+  
   // Create inline styles for questions and answers
   const questionInlineStyles = {
     fontSize: questionStyles.fontSize,
@@ -182,7 +185,20 @@ const FAQElement: React.FC<{
         {faqs.map((faq: any, index: number) => (
           <Collapsible key={index}>
             <CollapsibleTrigger asChild>
-              <Button variant="ghost" className="w-full justify-between p-4 border rounded-lg hover:bg-accent">
+              <Button 
+                variant="ghost" 
+                className="w-full justify-between p-4 border rounded-lg transition-colors duration-200"
+                onMouseEnter={(e) => {
+                  if (currentResponsiveStyles.questionHoverBackground) {
+                    e.currentTarget.style.backgroundColor = currentResponsiveStyles.questionHoverBackground;
+                  } else {
+                    e.currentTarget.style.backgroundColor = 'hsl(var(--accent))';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = '';
+                }}
+              >
                 <div className="flex-1" style={questionInlineStyles}>
                   <InlineEditor
                     value={faq.question}
