@@ -65,14 +65,19 @@ export function isColumnHidden(
 
 // Get column classes with responsive behavior
 export function getColumnResponsiveClasses(
-  column: { responsive?: any },
+  column: { responsive?: any, styles?: any },
   deviceType: DeviceType
 ): string {
-  const baseClasses = 'w-full transition-all duration-200';
+  const baseClasses = 'transition-all duration-200';
   
   if (isColumnHidden(column, deviceType)) {
-    return `${baseClasses} hidden`;
+    return `${baseClasses} w-full hidden`;
   }
   
-  return baseClasses;
+  // Check if column has horizontal margins that would be overridden by w-full
+  const hasHorizontalMargins = column.styles?.marginLeft || column.styles?.marginRight || 
+    column.styles?.responsive?.[deviceType]?.marginLeft || column.styles?.responsive?.[deviceType]?.marginRight;
+  
+  // Only apply w-full if there are no horizontal margins
+  return hasHorizontalMargins ? baseClasses : `${baseClasses} w-full`;
 }

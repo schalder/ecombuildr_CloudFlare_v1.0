@@ -283,10 +283,18 @@ export const renderColumnStyles = (column: PageBuilderColumn, deviceType: 'deskt
       styles.margin = column.styles.margin;
     }
     
-    // Width
+    // Width - handle horizontal margins by adjusting width
     if (column.styles.maxWidth) styles.maxWidth = column.styles.maxWidth;
     if (column.styles.minWidth) styles.minWidth = column.styles.minWidth;
     if (column.styles.width) styles.width = column.styles.width;
+    
+    // If column has horizontal margins, calculate width to accommodate them
+    const hasHorizontalMargins = column.styles.marginLeft || column.styles.marginRight;
+    if (hasHorizontalMargins && !column.styles.width) {
+      const leftMargin = column.styles.marginLeft || '0px';
+      const rightMargin = column.styles.marginRight || '0px';
+      styles.width = `calc(100% - (${leftMargin} + ${rightMargin}))`;
+    }
   }
   
   // Auto-center columns when width is set and no explicit horizontal margins
