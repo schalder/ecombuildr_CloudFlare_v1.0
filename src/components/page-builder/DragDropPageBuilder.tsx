@@ -38,6 +38,7 @@ export const DragDropPageBuilder: React.FC<DragDropPageBuilderProps> = ({
     moveSection,
     removeElement,
     duplicateColumn,
+    duplicateRow,
     setDeviceType,
     setPreviewMode,
     undo,
@@ -185,6 +186,7 @@ export const DragDropPageBuilder: React.FC<DragDropPageBuilderProps> = ({
               } : undefined}
               onRemoveElement={removeElement}
               onDuplicateColumn={duplicateColumn}
+              onDuplicateRow={duplicateRow}
               onAddSection={handleAddSection}
               onAddRow={handleAddRow}
             />
