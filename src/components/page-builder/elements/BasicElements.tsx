@@ -491,84 +491,42 @@ const ButtonElement: React.FC<{
   };
 
   // Get responsive alignment
-  const responsiveStylesData = element.styles?.responsive || {};
-  const currentDeviceStylesData = responsiveStylesData[deviceType === 'tablet' ? 'desktop' : deviceType] || {};
-  const alignment = currentDeviceStylesData.textAlign || element.styles?.textAlign || 'left';
+  const responsiveStyles = element.styles?.responsive || {};
+  const currentDeviceStyles = responsiveStyles[deviceType === 'tablet' ? 'desktop' : deviceType] || {};
+  const alignment = currentDeviceStyles.textAlign || element.styles?.textAlign || 'left';
   
   const containerClass = 
     alignment === 'center' ? 'flex justify-center' :
     alignment === 'right' ? 'flex justify-end' : 
     'flex justify-start';
 
-  // Simple button style getter
-  const getButtonStyle = (prop: string, fallback?: any) => {
-    return currentDeviceStylesData[prop] || element.styles?.[prop] || fallback;
-  };
+  // Use renderElementStyles for consistent styling
+  const elementStyles = renderElementStyles(element, deviceType);
 
-  // Build button styles
-  const buttonStyles: React.CSSProperties = {
-    // Text
-    color: getButtonStyle('color', '#ffffff'),
-    fontSize: getButtonStyle('fontSize', '16px'),
-    fontWeight: getButtonStyle('fontWeight', 'normal'),
-    
-    // Layout
-    width: getButtonStyle('width'),
-    padding: getButtonStyle('padding', '12px 24px'),
-    
-    // Border
-    borderRadius: getButtonStyle('borderRadius', '6px'),
-    borderWidth: getButtonStyle('borderWidth'),
-    borderColor: getButtonStyle('borderColor'),
-    borderStyle: getButtonStyle('borderWidth') ? 'solid' : undefined,
-    
-    // Effects
-    boxShadow: getButtonStyle('boxShadow'),
-    opacity: getButtonStyle('opacity'),
-  };
-
-  // Handle background - gradient takes priority over solid
-  const backgroundImage = getButtonStyle('backgroundImage');
-  const backgroundColor = getButtonStyle('backgroundColor');
+  // Smart padding fallback when no padding is set - ratio-based
+  const hasExistingPadding = elementStyles.padding || elementStyles.paddingTop || elementStyles.paddingRight || 
+                           elementStyles.paddingBottom || elementStyles.paddingLeft;
   
-  if (backgroundImage?.includes('linear-gradient')) {
-    buttonStyles.backgroundImage = backgroundImage;
-    console.log('🌈 ButtonElement: Applied gradient:', backgroundImage);
-  } else if (backgroundColor) {
-    buttonStyles.backgroundColor = backgroundColor;
-    console.log('🎨 ButtonElement: Applied solid color:', backgroundColor);
-  } else {
-    buttonStyles.backgroundColor = 'hsl(142 76% 36%)'; // Default green
-    console.log('🎨 ButtonElement: Applied default color');
+  if (!hasExistingPadding) {
+    const fontSize = String(elementStyles.fontSize || '16px');
+    const size = parseInt(fontSize.replace(/\D/g, ''));
+    const verticalPadding = Math.max(8, Math.round(size * 0.5)); // 0.5x font size, min 8px
+    const horizontalPadding = Math.max(16, Math.round(size * 1.2)); // 1.2x font size, min 16px
+    elementStyles.padding = `${verticalPadding}px ${horizontalPadding}px`;
   }
 
-  // Generate hover CSS
-  const generateHoverCSS = () => {
-    const hoverBgImage = getButtonStyle('hoverBackgroundImage');
-    const hoverBgColor = getButtonStyle('hoverBackgroundColor');
-    const hoverColor = getButtonStyle('hoverColor');
-    
-    let hoverCSS = '';
-    
-    // Handle hover background
-    if (hoverBgImage?.includes('linear-gradient')) {
-      hoverCSS += `background-image: ${hoverBgImage} !important; `;
-      hoverCSS += `background-color: transparent !important; `;
-    } else if (hoverBgColor) {
-      hoverCSS += `background-color: ${hoverBgColor} !important; `;
-      hoverCSS += `background-image: none !important; `;
-    }
-    
-    // Handle hover text color
-    if (hoverColor) {
-      hoverCSS += `color: ${hoverColor} !important; `;
-    }
-    
-    console.log('🎯 ButtonElement: Generated hover CSS:', hoverCSS);
-    return hoverCSS ? `.element-${element.id}:hover { ${hoverCSS} }` : '';
-  };
+  // Ensure proper line height for large fonts and remove fixed heights
+  if (!elementStyles.lineHeight) {
+    elementStyles.lineHeight = '1.2';
+  }
 
-  const isFullWidth = buttonStyles.width === '100%';
+  // Handle width for full width behavior
+  const isFullWidth = elementStyles.width === '100%';
+  
+  // Generate responsive CSS
+  const responsiveCSS = generateResponsiveCSS(element.id, element.styles);
+  
+
   const customClassName = [
     `element-${element.id}`,
     'outline-none cursor-pointer transition-all duration-200',
@@ -577,14 +535,14 @@ const ButtonElement: React.FC<{
 
   return (
     <>
-      {/* Inject hover CSS */}
-      <style>{generateHoverCSS()}</style>
+      {/* Inject responsive CSS */}
+      {responsiveCSS && <style>{responsiveCSS}</style>}
       
       <div className={containerClass}>
         <button 
           className={`${customClassName} h-auto leading-none inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50`}
           onClick={handleClick}
-          style={buttonStyles}
+          style={elementStyles}
         >
           {isEditing ? (
             <InlineEditor

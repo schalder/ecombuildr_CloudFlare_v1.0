@@ -902,26 +902,9 @@ const ElementorPageBuilderContent: React.FC<ElementorPageBuilderProps> = memo(({
           ...row,
           columns: row.columns.map(col => ({
             ...col,
-            elements: col.elements.map(el => {
-              if (el.id === elementId) {
-                // Deep merge styles to preserve existing style properties
-                const mergedStyles = updates.styles ? {
-                  ...el.styles,
-                  ...updates.styles,
-                  responsive: {
-                    ...el.styles?.responsive,
-                    ...updates.styles.responsive
-                  }
-                } : el.styles;
-                
-                return { 
-                  ...el, 
-                  ...updates,
-                  styles: mergedStyles
-                };
-              }
-              return el;
-            })
+            elements: col.elements.map(el =>
+              el.id === elementId ? { ...el, ...updates } : el
+            )
           }))
         }))
       }))
