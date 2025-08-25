@@ -346,17 +346,10 @@ export const renderElementStyles = (element: PageBuilderElement, deviceType: 'de
       styles.backgroundColor = element.styles.backgroundColor;
     }
     if (element.styles.backgroundImage) {
-      // Check if it's a gradient or a URL
-      if (element.styles.backgroundImage.startsWith('linear-gradient') || 
-          element.styles.backgroundImage.startsWith('radial-gradient') ||
-          element.styles.backgroundImage.startsWith('conic-gradient')) {
-        styles.backgroundImage = element.styles.backgroundImage;
-      } else {
-        styles.backgroundImage = `url(${element.styles.backgroundImage})`;
-        styles.backgroundSize = 'cover';
-        styles.backgroundPosition = 'center';
-        styles.backgroundRepeat = 'no-repeat';
-      }
+      styles.backgroundImage = `url(${element.styles.backgroundImage})`;
+      styles.backgroundSize = 'cover';
+      styles.backgroundPosition = 'center';
+      styles.backgroundRepeat = 'no-repeat';
     }
     
     // Border styles

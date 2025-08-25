@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AlignLeft, AlignCenter, AlignRight, Monitor, Smartphone } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { AlignLeft, AlignCenter, AlignRight, Monitor, Smartphone, Palette } from 'lucide-react';
 import { ColorPicker } from '@/components/ui/color-picker';
 import { PageBuilderElement } from '../../types';
 import { CollapsibleGroup } from './_shared/CollapsibleGroup';
@@ -16,26 +17,141 @@ interface ButtonElementStylesProps {
   onStyleUpdate: (property: string, value: any) => void;
 }
 
+// Button presets with complete styling
+const buttonPresets = {
+  primary: {
+    name: 'Primary',
+    description: 'Main call-to-action button',
+    styles: {
+      backgroundColor: 'hsl(var(--primary))',
+      color: 'hsl(var(--primary-foreground))',
+      borderRadius: '6px',
+      fontWeight: '500',
+      fontSize: '14px',
+      padding: '10px 16px',
+      borderWidth: '0px',
+      hoverBackgroundColor: 'hsl(var(--primary)/0.9)',
+      boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+    }
+  },
+  secondary: {
+    name: 'Secondary',
+    description: 'Secondary action button',
+    styles: {
+      backgroundColor: 'hsl(var(--secondary))',
+      color: 'hsl(var(--secondary-foreground))',
+      borderRadius: '6px',
+      fontWeight: '500',
+      fontSize: '14px',
+      padding: '10px 16px',
+      borderWidth: '0px',
+      hoverBackgroundColor: 'hsl(var(--secondary)/0.8)',
+      boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+    }
+  },
+  outline: {
+    name: 'Outline',
+    description: 'Outlined button style',
+    styles: {
+      backgroundColor: 'transparent',
+      color: 'hsl(var(--foreground))',
+      borderRadius: '6px',
+      fontWeight: '500',
+      fontSize: '14px',
+      padding: '10px 16px',
+      borderWidth: '1px',
+      borderColor: 'hsl(var(--border))',
+      hoverBackgroundColor: 'hsl(var(--accent))',
+      hoverColor: 'hsl(var(--accent-foreground))'
+    }
+  },
+  ghost: {
+    name: 'Ghost',
+    description: 'Minimal button without background',
+    styles: {
+      backgroundColor: 'transparent',
+      color: 'hsl(var(--foreground))',
+      borderRadius: '6px',
+      fontWeight: '500',
+      fontSize: '14px',
+      padding: '10px 16px',
+      borderWidth: '0px',
+      hoverBackgroundColor: 'hsl(var(--muted)/0.6)'
+    }
+  },
+  accent: {
+    name: 'Accent',
+    description: 'Eye-catching gradient button',
+    styles: {
+      backgroundColor: 'hsl(var(--accent))',
+      color: 'hsl(var(--accent-foreground))',
+      borderRadius: '8px',
+      fontWeight: '600',
+      fontSize: '14px',
+      padding: '12px 20px',
+      borderWidth: '0px',
+      hoverBackgroundColor: 'hsl(var(--accent)/0.9)',
+      boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+    }
+  },
+  success: {
+    name: 'Success',
+    description: 'Success state button',
+    styles: {
+      backgroundColor: 'hsl(142 76% 36%)',
+      color: 'hsl(355.7 100% 97.3%)',
+      borderRadius: '6px',
+      fontWeight: '500',
+      fontSize: '14px',
+      padding: '10px 16px',
+      borderWidth: '0px',
+      hoverBackgroundColor: 'hsl(142 76% 32%)',
+      boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+    }
+  },
+  destructive: {
+    name: 'Destructive',
+    description: 'Warning or delete action',
+    styles: {
+      backgroundColor: 'hsl(var(--destructive))',
+      color: 'hsl(var(--destructive-foreground))',
+      borderRadius: '6px',
+      fontWeight: '500',
+      fontSize: '14px',
+      padding: '10px 16px',
+      borderWidth: '0px',
+      hoverBackgroundColor: 'hsl(var(--destructive)/0.9)',
+      boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+    }
+  },
+  cta: {
+    name: 'Call to Action',
+    description: 'Large prominent CTA button',
+    styles: {
+      backgroundColor: 'hsl(var(--primary))',
+      color: 'hsl(var(--primary-foreground))',
+      borderRadius: '8px',
+      fontWeight: '600',
+      fontSize: '16px',
+      padding: '14px 28px',
+      borderWidth: '0px',
+      hoverBackgroundColor: 'hsl(var(--primary)/0.9)',
+      boxShadow: '0 4px 12px hsl(var(--primary)/0.3)'
+    }
+  }
+};
+
 export const ButtonElementStyles: React.FC<ButtonElementStylesProps> = ({
   element,
   onStyleUpdate,
 }) => {
   const [responsiveTab, setResponsiveTab] = useState<'desktop' | 'mobile'>('desktop');
+  const [presetsOpen, setPresetsOpen] = useState(true);
   const [dimensionsOpen, setDimensionsOpen] = useState(false);
   const [typographyOpen, setTypographyOpen] = useState(false);
-  const [colorsOpen, setColorsOpen] = useState(true);
+  const [colorsOpen, setColorsOpen] = useState(false);
   const [bordersOpen, setBordersOpen] = useState(false);
   const [spacingOpen, setSpacingOpen] = useState(false);
-  const [backgroundMode, setBackgroundMode] = useState<'solid' | 'gradient'>('solid');
-  
-  // Custom gradient state
-  const [gradientStart, setGradientStart] = useState('#3b82f6');
-  const [gradientEnd, setGradientEnd] = useState('#8b5cf6');
-  const [gradientAngle, setGradientAngle] = useState(135);
-  const [enableHoverGradient, setEnableHoverGradient] = useState(false);
-  const [hoverGradientStart, setHoverGradientStart] = useState('#2563eb');
-  const [hoverGradientEnd, setHoverGradientEnd] = useState('#7c3aed');
-  const [hoverGradientAngle, setHoverGradientAngle] = useState(135);
 
   // Get responsive styles
   const responsiveStyles = element.styles?.responsive || { desktop: {}, mobile: {} };
@@ -57,105 +173,21 @@ export const ButtonElementStyles: React.FC<ButtonElementStylesProps> = ({
     return currentStyles[prop] || element.styles?.[prop] || fallback;
   };
 
-  // Helper function to parse linear-gradient strings correctly
-  const parseLinearGradient = (gradientString: string) => {
-    if (!gradientString || !gradientString.includes('linear-gradient')) {
-      return null;
-    }
+  // Apply preset styles
+  const applyPreset = (presetKey: string) => {
+    const preset = buttonPresets[presetKey as keyof typeof buttonPresets];
+    if (!preset) return;
 
-    // Extract the content inside linear-gradient()
-    const match = gradientString.match(/linear-gradient\(([^)]+)\)/);
-    if (!match) return null;
-
-    const content = match[1];
-    
-    // Split by commas, but be careful about commas inside color functions
-    const parts = [];
-    let current = '';
-    let depth = 0;
-    
-    for (let i = 0; i < content.length; i++) {
-      const char = content[i];
-      if (char === '(') depth++;
-      if (char === ')') depth--;
-      
-      if (char === ',' && depth === 0) {
-        parts.push(current.trim());
-        current = '';
-      } else {
-        current += char;
+    // Apply all preset styles to the current responsive view
+    const updatedResponsive = {
+      ...responsiveStyles,
+      [responsiveTab]: {
+        ...currentStyles,
+        ...preset.styles
       }
-    }
-    if (current.trim()) parts.push(current.trim());
-
-    if (parts.length < 3) return null;
-
-    // First part should be the angle
-    const angleMatch = parts[0].match(/(\d+)deg/);
-    const angle = angleMatch ? parseInt(angleMatch[1]) : 135;
-
-    // Remaining parts are colors
-    const startColor = parts[1].trim();
-    const endColor = parts[2].trim();
-
-    return { angle, startColor, endColor };
+    };
+    onStyleUpdate('responsive', updatedResponsive);
   };
-
-  // Auto-detect background mode based on existing styles
-  useEffect(() => {
-    const hasGradient = getCurrentValue('backgroundImage', '').includes('linear-gradient');
-    setBackgroundMode(hasGradient ? 'gradient' : 'solid');
-    
-    // Parse existing gradient if present
-    if (hasGradient) {
-      const backgroundImage = getCurrentValue('backgroundImage', '');
-      const parsed = parseLinearGradient(backgroundImage);
-      if (parsed) {
-        setGradientAngle(parsed.angle);
-        setGradientStart(parsed.startColor);
-        setGradientEnd(parsed.endColor);
-      }
-      
-      // Parse hover gradient if present
-      const hoverBackgroundImage = getCurrentValue('hoverBackgroundImage', '');
-      if (hoverBackgroundImage.includes('linear-gradient')) {
-        setEnableHoverGradient(true);
-        const hoverParsed = parseLinearGradient(hoverBackgroundImage);
-        if (hoverParsed) {
-          setHoverGradientAngle(hoverParsed.angle);
-          setHoverGradientStart(hoverParsed.startColor);
-          setHoverGradientEnd(hoverParsed.endColor);
-        }
-      }
-    }
-  }, [responsiveTab, element.styles]);
-
-  // Generate gradient CSS
-  const generateGradient = (start: string, end: string, angle: number) => {
-    return `linear-gradient(${angle}deg, ${start}, ${end})`;
-  };
-
-  // Update gradient when values change
-  const updateGradient = () => {
-    if (backgroundMode === 'gradient') {
-      const gradient = generateGradient(gradientStart, gradientEnd, gradientAngle);
-      handleResponsiveUpdate('backgroundImage', gradient);
-      
-      if (enableHoverGradient) {
-        const hoverGradient = generateGradient(hoverGradientStart, hoverGradientEnd, hoverGradientAngle);
-        handleResponsiveUpdate('hoverBackgroundImage', hoverGradient);
-      } else {
-        handleResponsiveUpdate('hoverBackgroundImage', '');
-      }
-    }
-  };
-
-  // Update gradient when any gradient value changes
-  useEffect(() => {
-    if (backgroundMode === 'gradient') {
-      updateGradient();
-    }
-  }, [gradientStart, gradientEnd, gradientAngle, enableHoverGradient, hoverGradientStart, hoverGradientEnd, hoverGradientAngle, backgroundMode]);
 
   return (
     <div className="space-y-4">
@@ -174,6 +206,35 @@ export const ButtonElementStyles: React.FC<ButtonElementStylesProps> = ({
           </TabsList>
         </Tabs>
       </div>
+
+      {/* Button Presets */}
+      <CollapsibleGroup title="Button Presets" isOpen={presetsOpen} onToggle={setPresetsOpen}>
+        <div className="space-y-3">
+          <Label className="text-xs">Choose a preset style</Label>
+          <div className="grid grid-cols-1 gap-2">
+            {Object.entries(buttonPresets).map(([key, preset]) => (
+              <Button
+                key={key}
+                variant="outline"
+                size="sm"
+                className="justify-start h-auto p-3 text-left"
+                onClick={() => applyPreset(key)}
+              >
+                <div className="flex items-center gap-2">
+                  <Palette className="h-3 w-3" />
+                  <div>
+                    <div className="font-medium text-xs">{preset.name}</div>
+                    <div className="text-xs text-muted-foreground">{preset.description}</div>
+                  </div>
+                </div>
+              </Button>
+            ))}
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Presets apply styles to the current device view. All styles remain fully editable below.
+          </p>
+        </div>
+      </CollapsibleGroup>
 
       {/* Dimensions */}
       <CollapsibleGroup title="Dimensions" isOpen={dimensionsOpen} onToggle={setDimensionsOpen}>
@@ -297,6 +358,14 @@ export const ButtonElementStyles: React.FC<ButtonElementStylesProps> = ({
         </div>
 
         <div>
+          <Label className="text-xs">Background Color</Label>
+          <ColorPicker
+            color={getCurrentValue('backgroundColor', '#3b82f6')}
+            onChange={(color) => handleResponsiveUpdate('backgroundColor', color)}
+          />
+        </div>
+
+        <div>
           <Label className="text-xs">Text Hover Color</Label>
           <ColorPicker
             color={getCurrentValue('hoverColor', '')}
@@ -304,128 +373,13 @@ export const ButtonElementStyles: React.FC<ButtonElementStylesProps> = ({
           />
         </div>
 
-        {/* Background Mode Toggle */}
-        <div className="space-y-3">
-          <Label className="text-xs">Background Mode</Label>
-          <Tabs value={backgroundMode} onValueChange={(value) => {
-            setBackgroundMode(value as 'solid' | 'gradient');
-            if (value === 'solid') {
-              handleResponsiveUpdate('backgroundImage', '');
-              handleResponsiveUpdate('hoverBackgroundImage', '');
-            } else {
-              // Initialize gradient when switching to gradient mode
-              const gradient = generateGradient(gradientStart, gradientEnd, gradientAngle);
-              handleResponsiveUpdate('backgroundImage', gradient);
-            }
-          }}>
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="solid">Solid</TabsTrigger>
-              <TabsTrigger value="gradient">Gradient</TabsTrigger>
-            </TabsList>
-          </Tabs>
+        <div>
+          <Label className="text-xs">Background Hover Color</Label>
+          <ColorPicker
+            color={getCurrentValue('hoverBackgroundColor', '')}
+            onChange={(color) => handleResponsiveUpdate('hoverBackgroundColor', color)}
+          />
         </div>
-
-        {/* Solid Mode Controls */}
-        {backgroundMode === 'solid' && (
-          <>
-            <div>
-              <Label className="text-xs">Background Color</Label>
-              <ColorPicker
-                color={getCurrentValue('backgroundColor', 'hsl(142 76% 36%)')}
-                onChange={(color) => handleResponsiveUpdate('backgroundColor', color)}
-              />
-            </div>
-
-            <div>
-              <Label className="text-xs">Background Hover Color</Label>
-              <ColorPicker
-                color={getCurrentValue('hoverBackgroundColor', '')}
-                onChange={(color) => handleResponsiveUpdate('hoverBackgroundColor', color)}
-              />
-            </div>
-          </>
-        )}
-
-        {/* Gradient Mode Controls */}
-        {backgroundMode === 'gradient' && (
-          <div className="space-y-3">
-            {/* Custom Gradient Controls */}
-            <div className="space-y-2">
-              <Label className="text-xs">Gradient Colors</Label>
-              
-              <div>
-                <Label className="text-xs">Start Color</Label>
-                <ColorPicker
-                  color={gradientStart}
-                  onChange={setGradientStart}
-                />
-              </div>
-
-              <div>
-                <Label className="text-xs">End Color</Label>
-                <ColorPicker
-                  color={gradientEnd}
-                  onChange={setGradientEnd}
-                />
-              </div>
-
-              <div>
-                <Label className="text-xs">Angle ({gradientAngle}°)</Label>
-                <Slider
-                  value={[gradientAngle]}
-                  onValueChange={(value) => setGradientAngle(value[0])}
-                  max={360}
-                  min={0}
-                  step={1}
-                  className="flex-1"
-                />
-              </div>
-            </div>
-
-            {/* Hover Gradient Controls */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label className="text-xs">Hover Gradient</Label>
-                <Switch
-                  checked={enableHoverGradient}
-                  onCheckedChange={setEnableHoverGradient}
-                />
-              </div>
-
-              {enableHoverGradient && (
-                <>
-                  <div>
-                    <Label className="text-xs">Hover Start Color</Label>
-                    <ColorPicker
-                      color={hoverGradientStart}
-                      onChange={setHoverGradientStart}
-                    />
-                  </div>
-
-                  <div>
-                    <Label className="text-xs">Hover End Color</Label>
-                    <ColorPicker
-                      color={hoverGradientEnd}
-                      onChange={setHoverGradientEnd}
-                    />
-                  </div>
-
-                  <div>
-                    <Label className="text-xs">Hover Angle ({hoverGradientAngle}°)</Label>
-                    <Slider
-                      value={[hoverGradientAngle]}
-                      onValueChange={(value) => setHoverGradientAngle(value[0])}
-                      max={360}
-                      min={0}
-                      step={1}
-                      className="flex-1"
-                    />
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-        )}
       </CollapsibleGroup>
 
       {/* Borders & Effects */}

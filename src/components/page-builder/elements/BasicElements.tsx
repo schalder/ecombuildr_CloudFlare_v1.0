@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Type, Heading1, Heading2, Heading3, Image, List, RectangleHorizontal, Minus, Play } from 'lucide-react';
+import { Type, Heading1, Heading2, Heading3, Image, List, Quote, Minus, Play } from 'lucide-react';
 import { PageBuilderElement, ElementType } from '../types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -918,16 +918,15 @@ export const registerBasicElements = () => {
     description: 'Rich text content'
   });
 
-  console.log('Registering button element with RectangleHorizontal icon');
-  // Button - Updated to use RectangleHorizontal instead of Quote
+  // Button
   elementRegistry.register({
     id: 'button',
     name: 'Button',
     category: 'basic',
-    icon: RectangleHorizontal,
+    icon: Quote,
     component: ButtonElement,
-    defaultContent: { text: 'Get Started', url: '#', target: '_blank' },
-    description: 'Interactive button'
+    defaultContent: { text: 'Click Me', variant: 'default', size: 'default', url: '#' },
+    description: 'Call to action button'
   });
 
   // Image

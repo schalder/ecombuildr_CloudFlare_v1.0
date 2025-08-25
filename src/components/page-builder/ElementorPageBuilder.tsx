@@ -820,39 +820,6 @@ const ElementorPageBuilderContent: React.FC<ElementorPageBuilderProps> = memo(({
       };
     }
 
-    // Professional button defaults with center alignment
-    if (elementType === 'button') {
-      newElement.styles = {
-        textAlign: 'center',
-        backgroundColor: 'hsl(142 76% 36%)',
-        color: 'hsl(355.7 100% 97.3%)',
-        borderRadius: '8px',
-        fontWeight: '600',
-        fontSize: '16px',
-        padding: '12px 24px',
-        borderWidth: '0px',
-        boxShadow: '0 2px 8px rgba(34, 197, 94, 0.2)',
-        responsive: {
-          desktop: {
-            textAlign: 'center',
-            backgroundColor: 'hsl(142 76% 36%)',
-            color: 'hsl(355.7 100% 97.3%)',
-            borderRadius: '8px',
-            fontWeight: '600',
-            fontSize: '16px',
-            padding: '12px 24px',
-            borderWidth: '0px',
-            boxShadow: '0 2px 8px rgba(34, 197, 94, 0.2)'
-          },
-          mobile: {
-            textAlign: 'center',
-            fontSize: '14px',
-            padding: '10px 20px'
-          }
-        }
-      };
-    }
-
     const newData = {
       ...data,
       sections: data.sections.map(section =>
