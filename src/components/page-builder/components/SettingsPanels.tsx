@@ -378,21 +378,6 @@ export const SectionSettings: React.FC<SectionSettingsProps> = ({ section, onUpd
                     onValueChange={(v) => handleResponsiveStyleUpdate('desktop', 'width', `${v[0]}%`)}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label>Padding (px)</Label>
-                  <Slider
-                    min={0}
-                    max={140}
-                    step={1}
-                    value={[Math.min(140, Math.max(0, parseInt(String(section.styles?.responsive?.desktop?.padding || '').replace(/[^0-9]/g, '')) || 0))]}
-                    onValueChange={(v) => handleResponsiveStyleUpdate('desktop', 'padding', `${v[0]}px`)}
-                  />
-                  <Input
-                    value={section.styles?.responsive?.desktop?.padding || ''}
-                    onChange={(e) => handleResponsiveStyleUpdate('desktop', 'padding', e.target.value)}
-                    placeholder="Custom e.g., 12px 16px"
-                  />
-                </div>
               </TabsContent>
               <TabsContent value="mobile" className="space-y-4">
                 <div className="space-y-2">
@@ -403,21 +388,6 @@ export const SectionSettings: React.FC<SectionSettingsProps> = ({ section, onUpd
                     step={1}
                     value={[Math.min(100, Math.max(30, parseInt(String(section.styles?.responsive?.mobile?.width || '').replace(/[^0-9]/g, '')) || 100))]}
                     onValueChange={(v) => handleResponsiveStyleUpdate('mobile', 'width', `${v[0]}%`)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Padding (px)</Label>
-                  <Slider
-                    min={0}
-                    max={140}
-                    step={1}
-                    value={[Math.min(140, Math.max(0, parseInt(String(section.styles?.responsive?.mobile?.padding || '').replace(/[^0-9]/g, '')) || 0))]}
-                    onValueChange={(v) => handleResponsiveStyleUpdate('mobile', 'padding', `${v[0]}px`)}
-                  />
-                  <Input
-                    value={section.styles?.responsive?.mobile?.padding || ''}
-                    onChange={(e) => handleResponsiveStyleUpdate('mobile', 'padding', e.target.value)}
-                    placeholder="Custom e.g., 12px 16px"
                   />
                 </div>
               </TabsContent>
@@ -825,21 +795,6 @@ export const RowSettings: React.FC<RowSettingsProps> = ({ row, onUpdate }) => {
                     onValueChange={(v) => handleResponsiveStyleUpdate('desktop', 'width', `${v[0]}%`)}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label>Padding (px)</Label>
-                  <Slider
-                    min={0}
-                    max={140}
-                    step={1}
-                    value={[Math.min(140, Math.max(0, parseInt(String(row.styles?.responsive?.desktop?.padding || '').replace(/[^0-9]/g, '')) || 0))]}
-                    onValueChange={(v) => handleResponsiveStyleUpdate('desktop', 'padding', `${v[0]}px`)}
-                  />
-                  <Input
-                    value={row.styles?.responsive?.desktop?.padding || ''}
-                    onChange={(e) => handleResponsiveStyleUpdate('desktop', 'padding', e.target.value)}
-                    placeholder="Custom e.g., 12px 16px"
-                  />
-                </div>
               </TabsContent>
               <TabsContent value="mobile" className="space-y-4">
                 <div className="space-y-2">
@@ -850,21 +805,6 @@ export const RowSettings: React.FC<RowSettingsProps> = ({ row, onUpdate }) => {
                     step={1}
                     value={[Math.min(100, Math.max(30, parseInt(String(row.styles?.responsive?.mobile?.width || '').replace(/[^0-9]/g, '')) || 100))]}
                     onValueChange={(v) => handleResponsiveStyleUpdate('mobile', 'width', `${v[0]}%`)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Padding (px)</Label>
-                  <Slider
-                    min={0}
-                    max={140}
-                    step={1}
-                    value={[Math.min(140, Math.max(0, parseInt(String(row.styles?.responsive?.mobile?.padding || '').replace(/[^0-9]/g, '')) || 0))]}
-                    onValueChange={(v) => handleResponsiveStyleUpdate('mobile', 'padding', `${v[0]}px`)}
-                  />
-                  <Input
-                    value={row.styles?.responsive?.mobile?.padding || ''}
-                    onChange={(e) => handleResponsiveStyleUpdate('mobile', 'padding', e.target.value)}
-                    placeholder="Custom e.g., 12px 16px"
                   />
                 </div>
               </TabsContent>
@@ -1239,21 +1179,6 @@ export const ColumnSettings: React.FC<ColumnSettingsProps> = ({ column, onUpdate
                     onValueChange={(v) => handleResponsiveStyleUpdate('desktop', 'width', `${v[0]}%`)}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label>Padding (px)</Label>
-                  <Slider
-                    min={0}
-                    max={140}
-                    step={1}
-                    value={[Math.min(140, Math.max(0, parseInt(String(column.styles?.responsive?.desktop?.padding || '').replace(/[^0-9]/g, '')) || 0))]}
-                    onValueChange={(v) => handleResponsiveStyleUpdate('desktop', 'padding', `${v[0]}px`)}
-                  />
-                  <Input
-                    value={column.styles?.responsive?.desktop?.padding || ''}
-                    onChange={(e) => handleResponsiveStyleUpdate('desktop', 'padding', e.target.value)}
-                    placeholder="Custom e.g., 12px 16px"
-                  />
-                </div>
               </TabsContent>
               <TabsContent value="mobile" className="space-y-4">
                 <div className="space-y-2">
@@ -1264,21 +1189,6 @@ export const ColumnSettings: React.FC<ColumnSettingsProps> = ({ column, onUpdate
                     step={1}
                     value={[Math.min(100, Math.max(30, parseInt(String(column.styles?.responsive?.mobile?.width || '').replace(/[^0-9]/g, '')) || 100))]}
                     onValueChange={(v) => handleResponsiveStyleUpdate('mobile', 'width', `${v[0]}%`)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Padding (px)</Label>
-                  <Slider
-                    min={0}
-                    max={140}
-                    step={1}
-                    value={[Math.min(140, Math.max(0, parseInt(String(column.styles?.responsive?.mobile?.padding || '').replace(/[^0-9]/g, '')) || 0))]}
-                    onValueChange={(v) => handleResponsiveStyleUpdate('mobile', 'padding', `${v[0]}px`)}
-                  />
-                  <Input
-                    value={column.styles?.responsive?.mobile?.padding || ''}
-                    onChange={(e) => handleResponsiveStyleUpdate('mobile', 'padding', e.target.value)}
-                    placeholder="Custom e.g., 12px 16px"
                   />
                 </div>
               </TabsContent>

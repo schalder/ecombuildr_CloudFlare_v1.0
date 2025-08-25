@@ -89,11 +89,17 @@ export function mergeResponsiveStyles(baseStyles: any, elementStyles: any, devic
       // Use the exact deviceType as the key - this allows tablet, mobile, and desktop overrides
       const deviceStyles = responsive[deviceType] || {};
       
+      // Handle padding conflict: if individual side paddings exist, remove shorthand padding
+      const hasIndividualPadding = mergedStyles.paddingTop || mergedStyles.paddingBottom || 
+                                  mergedStyles.paddingLeft || mergedStyles.paddingRight;
+      
       // Deep merge: only override with explicitly defined values
       const cleanDeviceStyles = Object.fromEntries(
-        Object.entries(deviceStyles).filter(([_, value]) => 
-          value !== undefined && value !== null && value !== ''
-        )
+        Object.entries(deviceStyles).filter(([key, value]) => {
+          // Skip shorthand padding if individual paddings exist
+          if (key === 'padding' && hasIndividualPadding) return false;
+          return value !== undefined && value !== null && value !== '';
+        })
       );
       
       mergedStyles = { ...mergedStyles, ...cleanDeviceStyles };
