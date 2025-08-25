@@ -68,11 +68,26 @@ export const usePageBuilderState = (initialData?: PageBuilderData) => {
           ...row,
           columns: row.columns.map(column => ({
             ...column,
-            elements: column.elements.map(element => 
-              element.id === elementId 
-                ? { ...element, ...updates }
-                : element
-            )
+            elements: column.elements.map(element => {
+              if (element.id === elementId) {
+                // Deep merge styles to preserve existing style properties
+                const mergedStyles = updates.styles ? {
+                  ...element.styles,
+                  ...updates.styles,
+                  responsive: {
+                    ...element.styles?.responsive,
+                    ...updates.styles.responsive
+                  }
+                } : element.styles;
+                
+                return { 
+                  ...element, 
+                  ...updates,
+                  styles: mergedStyles
+                };
+              }
+              return element;
+            })
           }))
         }))
       }));

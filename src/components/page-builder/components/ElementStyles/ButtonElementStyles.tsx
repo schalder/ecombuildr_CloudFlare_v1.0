@@ -33,21 +33,17 @@ export const ButtonElementStyles: React.FC<ButtonElementStylesProps> = ({
     return currentDeviceStyles[prop] || element.styles?.[prop] || fallback;
   };
 
-  // Simple style setter - updates both base and responsive
+  // Simple style setter - uses deep merge
   const setStyle = (prop: string, value: any) => {
-    // Update base style
-    onStyleUpdate(prop, value);
-    
-    // Update responsive style
-    const responsiveStyles = element.styles?.responsive || { desktop: {}, mobile: {} };
-    const updatedResponsive = {
-      ...responsiveStyles,
-      [responsiveTab]: {
-        ...responsiveStyles[responsiveTab],
-        [prop]: value
-      }
-    };
-    onStyleUpdate('responsive', updatedResponsive);
+    if (responsiveTab === 'desktop') {
+      onStyleUpdate('styles', { [prop]: value });
+    } else {
+      onStyleUpdate('styles', {
+        responsive: {
+          [responsiveTab]: { [prop]: value }
+        }
+      });
+    }
   };
 
   // Detect background mode on mount
