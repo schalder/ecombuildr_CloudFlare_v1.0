@@ -127,26 +127,29 @@ export const ColumnRenderer: React.FC<ColumnRendererProps> = ({
       onClick={handleColumnClick}
     >
       {/* Column Controls */}
-      {!isPreviewMode && isHovered && (
-        <div 
-          className="absolute top-2 left-2 flex items-center space-x-1 bg-primary text-primary-foreground px-2 py-1 rounded-md text-xs z-50"
-          data-builder-ui="true"
-        >
-          <GripVertical className="h-3 w-3" />
-          <span>Column</span>
-          {onDuplicateColumn && columnCount < 6 && (
-            <Button
-              size="sm"
-              variant="ghost"
-              className="h-5 w-5 p-0 hover:bg-primary-foreground/20 ml-1"
-              onClick={handleDuplicateColumn}
-              title="Duplicate Column"
-            >
-              <Copy className="h-3 w-3" />
-            </Button>
-          )}
-        </div>
-      )}
+      {!isPreviewMode && isHovered && (() => {
+        console.log('Debug - onDuplicateColumn:', !!onDuplicateColumn, 'columnCount:', columnCount);
+        return (
+          <div 
+            className="absolute top-2 left-2 flex items-center space-x-1 bg-primary text-primary-foreground px-2 py-1 rounded-md text-xs z-50"
+            data-builder-ui="true"
+          >
+            <GripVertical className="h-3 w-3" />
+            <span>Column</span>
+            {onDuplicateColumn && columnCount < 6 && (
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-5 w-5 p-0 hover:bg-primary-foreground/20 ml-1"
+                onClick={handleDuplicateColumn}
+                title="Duplicate Column"
+              >
+                <Copy className="h-3 w-3" />
+              </Button>
+            )}
+          </div>
+        );
+      })()}
 
       {column.elements.length === 0 ? (
         <div className="min-h-[60px] flex items-center justify-center">
