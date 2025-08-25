@@ -1516,6 +1516,7 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
   onMoveColumn,
   onAddColumn,
   onDeleteColumn,
+  onDuplicateColumn,
   onAddElement,
   onUpdateElement,
   onDeleteElement,
