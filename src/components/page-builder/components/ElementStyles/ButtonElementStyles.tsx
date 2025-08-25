@@ -6,7 +6,7 @@ import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AlignLeft, AlignCenter, AlignRight, Monitor, Smartphone, Palette } from 'lucide-react';
+import { AlignLeft, AlignCenter, AlignRight, Monitor, Smartphone, Palette, ChevronDown } from 'lucide-react';
 import { ColorPicker } from '@/components/ui/color-picker';
 import { PageBuilderElement } from '../../types';
 import { CollapsibleGroup } from './_shared/CollapsibleGroup';
@@ -17,126 +17,135 @@ interface ButtonElementStylesProps {
   onStyleUpdate: (property: string, value: any) => void;
 }
 
-// Button presets with complete styling
+// Professional button presets with modern designs
 const buttonPresets = {
-  primary: {
-    name: 'Primary',
-    description: 'Main call-to-action button',
+  modern_primary: {
+    name: 'Modern Primary',
+    description: 'Clean, modern primary button',
     styles: {
-      backgroundColor: 'hsl(var(--primary))',
-      color: 'hsl(var(--primary-foreground))',
-      borderRadius: '6px',
-      fontWeight: '500',
-      fontSize: '14px',
-      padding: '10px 16px',
-      borderWidth: '0px',
-      hoverBackgroundColor: 'hsl(var(--primary)/0.9)',
-      boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-    }
-  },
-  secondary: {
-    name: 'Secondary',
-    description: 'Secondary action button',
-    styles: {
-      backgroundColor: 'hsl(var(--secondary))',
-      color: 'hsl(var(--secondary-foreground))',
-      borderRadius: '6px',
-      fontWeight: '500',
-      fontSize: '14px',
-      padding: '10px 16px',
-      borderWidth: '0px',
-      hoverBackgroundColor: 'hsl(var(--secondary)/0.8)',
-      boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-    }
-  },
-  outline: {
-    name: 'Outline',
-    description: 'Outlined button style',
-    styles: {
-      backgroundColor: 'transparent',
-      color: 'hsl(var(--foreground))',
-      borderRadius: '6px',
-      fontWeight: '500',
-      fontSize: '14px',
-      padding: '10px 16px',
-      borderWidth: '1px',
-      borderColor: 'hsl(var(--border))',
-      hoverBackgroundColor: 'hsl(var(--accent))',
-      hoverColor: 'hsl(var(--accent-foreground))'
-    }
-  },
-  ghost: {
-    name: 'Ghost',
-    description: 'Minimal button without background',
-    styles: {
-      backgroundColor: 'transparent',
-      color: 'hsl(var(--foreground))',
-      borderRadius: '6px',
-      fontWeight: '500',
-      fontSize: '14px',
-      padding: '10px 16px',
-      borderWidth: '0px',
-      hoverBackgroundColor: 'hsl(var(--muted)/0.6)'
-    }
-  },
-  accent: {
-    name: 'Accent',
-    description: 'Eye-catching gradient button',
-    styles: {
-      backgroundColor: 'hsl(var(--accent))',
-      color: 'hsl(var(--accent-foreground))',
+      backgroundColor: 'hsl(217 91% 60%)',
+      color: 'hsl(0 0% 100%)',
       borderRadius: '8px',
       fontWeight: '600',
-      fontSize: '14px',
-      padding: '12px 20px',
+      fontSize: '15px',
+      padding: '12px 24px',
       borderWidth: '0px',
-      hoverBackgroundColor: 'hsl(var(--accent)/0.9)',
-      boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+      hoverBackgroundColor: 'hsl(217 91% 55%)',
+      boxShadow: '0 4px 14px hsl(217 91% 60% / 0.3)',
+      transition: 'all 0.3s ease'
     }
   },
-  success: {
-    name: 'Success',
-    description: 'Success state button',
+  gradient_success: {
+    name: 'Gradient Success',
+    description: 'Success button with gradient',
     styles: {
-      backgroundColor: 'hsl(142 76% 36%)',
-      color: 'hsl(355.7 100% 97.3%)',
+      background: 'linear-gradient(135deg, hsl(142 76% 36%), hsl(142 76% 46%))',
+      color: 'hsl(0 0% 100%)',
+      borderRadius: '10px',
+      fontWeight: '600',
+      fontSize: '15px',
+      padding: '14px 28px',
+      borderWidth: '0px',
+      hoverBackgroundColor: 'hsl(142 76% 32%)',
+      boxShadow: '0 6px 20px hsl(142 76% 36% / 0.4)',
+      transition: 'all 0.3s ease'
+    }
+  },
+  elegant_outline: {
+    name: 'Elegant Outline',
+    description: 'Sophisticated outlined button',
+    styles: {
+      backgroundColor: 'transparent',
+      color: 'hsl(217 91% 60%)',
+      borderRadius: '8px',
+      fontWeight: '600',
+      fontSize: '15px',
+      padding: '12px 24px',
+      borderWidth: '2px',
+      borderColor: 'hsl(217 91% 60%)',
+      hoverBackgroundColor: 'hsl(217 91% 60%)',
+      hoverColor: 'hsl(0 0% 100%)',
+      transition: 'all 0.3s ease'
+    }
+  },
+  premium_dark: {
+    name: 'Premium Dark',
+    description: 'Dark luxury button',
+    styles: {
+      backgroundColor: 'hsl(222 84% 5%)',
+      color: 'hsl(0 0% 100%)',
+      borderRadius: '10px',
+      fontWeight: '600',
+      fontSize: '15px',
+      padding: '14px 28px',
+      borderWidth: '1px',
+      borderColor: 'hsl(215 28% 17%)',
+      hoverBackgroundColor: 'hsl(222 84% 10%)',
+      boxShadow: '0 8px 25px hsl(222 84% 5% / 0.5)',
+      transition: 'all 0.3s ease'
+    }
+  },
+  vibrant_accent: {
+    name: 'Vibrant Accent',
+    description: 'Eye-catching accent button',
+    styles: {
+      background: 'linear-gradient(135deg, hsl(271 91% 65%), hsl(312 73% 57%))',
+      color: 'hsl(0 0% 100%)',
+      borderRadius: '12px',
+      fontWeight: '700',
+      fontSize: '16px',
+      padding: '16px 32px',
+      borderWidth: '0px',
+      boxShadow: '0 8px 32px hsl(271 91% 65% / 0.4)',
+      transition: 'all 0.3s ease'
+    }
+  },
+  minimal_ghost: {
+    name: 'Minimal Ghost',
+    description: 'Clean minimal button',
+    styles: {
+      backgroundColor: 'transparent',
+      color: 'hsl(215 16% 47%)',
       borderRadius: '6px',
       fontWeight: '500',
       fontSize: '14px',
-      padding: '10px 16px',
+      padding: '10px 20px',
       borderWidth: '0px',
-      hoverBackgroundColor: 'hsl(142 76% 32%)',
-      boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+      hoverBackgroundColor: 'hsl(210 40% 96%)',
+      hoverColor: 'hsl(222 84% 5%)',
+      transition: 'all 0.2s ease'
+    }
+  },
+  warning: {
+    name: 'Warning',
+    description: 'Warning action button',
+    styles: {
+      backgroundColor: 'hsl(38 92% 50%)',
+      color: 'hsl(0 0% 100%)',
+      borderRadius: '8px',
+      fontWeight: '600',
+      fontSize: '15px',
+      padding: '12px 24px',
+      borderWidth: '0px',
+      hoverBackgroundColor: 'hsl(38 92% 45%)',
+      boxShadow: '0 4px 14px hsl(38 92% 50% / 0.3)',
+      transition: 'all 0.3s ease'
     }
   },
   destructive: {
     name: 'Destructive',
-    description: 'Warning or delete action',
+    description: 'Destructive action button',
     styles: {
-      backgroundColor: 'hsl(var(--destructive))',
-      color: 'hsl(var(--destructive-foreground))',
-      borderRadius: '6px',
-      fontWeight: '500',
-      fontSize: '14px',
-      padding: '10px 16px',
-      borderWidth: '0px',
-      hoverBackgroundColor: 'hsl(var(--destructive)/0.9)',
-      boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-    }
-  },
-  cta: {
-    name: 'Call to Action',
-    description: 'Large prominent CTA button',
-    styles: {
-      backgroundColor: 'hsl(var(--primary))',
-      color: 'hsl(var(--primary-foreground))',
+      backgroundColor: 'hsl(0 84% 60%)',
+      color: 'hsl(0 0% 100%)',
       borderRadius: '8px',
       fontWeight: '600',
-      fontSize: '16px',
-      padding: '14px 28px',
+      fontSize: '15px',
+      padding: '12px 24px',
       borderWidth: '0px',
-      hoverBackgroundColor: 'hsl(var(--primary)/0.9)',
-      boxShadow: '0 4px 12px hsl(var(--primary)/0.3)'
+      hoverBackgroundColor: 'hsl(0 84% 55%)',
+      boxShadow: '0 4px 14px hsl(0 84% 60% / 0.3)',
+      transition: 'all 0.3s ease'
     }
   }
 };
@@ -211,25 +220,24 @@ export const ButtonElementStyles: React.FC<ButtonElementStylesProps> = ({
       <CollapsibleGroup title="Button Presets" isOpen={presetsOpen} onToggle={setPresetsOpen}>
         <div className="space-y-3">
           <Label className="text-xs">Choose a preset style</Label>
-          <div className="grid grid-cols-1 gap-2">
-            {Object.entries(buttonPresets).map(([key, preset]) => (
-              <Button
-                key={key}
-                variant="outline"
-                size="sm"
-                className="justify-start h-auto p-3 text-left"
-                onClick={() => applyPreset(key)}
-              >
-                <div className="flex items-center gap-2">
-                  <Palette className="h-3 w-3" />
-                  <div>
-                    <div className="font-medium text-xs">{preset.name}</div>
-                    <div className="text-xs text-muted-foreground">{preset.description}</div>
+          <Select onValueChange={applyPreset}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select a preset..." />
+            </SelectTrigger>
+            <SelectContent className="bg-background border border-border shadow-lg z-50">
+              {Object.entries(buttonPresets).map(([key, preset]) => (
+                <SelectItem key={key} value={key} className="cursor-pointer">
+                  <div className="flex items-center gap-2">
+                    <Palette className="h-3 w-3" />
+                    <div>
+                      <div className="font-medium text-xs">{preset.name}</div>
+                      <div className="text-xs text-muted-foreground">{preset.description}</div>
+                    </div>
                   </div>
-                </div>
-              </Button>
-            ))}
-          </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <p className="text-xs text-muted-foreground">
             Presets apply styles to the current device view. All styles remain fully editable below.
           </p>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Type, Heading1, Heading2, Heading3, Image, List, Quote, Minus, Play } from 'lucide-react';
+import { Type, Heading1, Heading2, Heading3, Image, List, RectangleHorizontal, Minus, Play } from 'lucide-react';
 import { PageBuilderElement, ElementType } from '../types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -923,10 +923,10 @@ export const registerBasicElements = () => {
     id: 'button',
     name: 'Button',
     category: 'basic',
-    icon: Quote,
+    icon: RectangleHorizontal,
     component: ButtonElement,
-    defaultContent: { text: 'Click Me', variant: 'default', size: 'default', url: '#' },
-    description: 'Call to action button'
+    defaultContent: { text: 'Get Started', url: '#', target: '_blank' },
+    description: 'Interactive button'
   });
 
   // Image
