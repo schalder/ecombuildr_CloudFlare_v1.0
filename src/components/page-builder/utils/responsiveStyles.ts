@@ -9,7 +9,7 @@ export function generateResponsiveCSS(elementId: string, styles: any): string {
   
   // Desktop styles (default)
   if (Object.keys(desktop).length > 0) {
-    const { hoverColor, hoverBackgroundColor, ...restDesktop } = desktop as any;
+    const { hoverColor, hoverBackgroundColor, hoverBackgroundImage, ...restDesktop } = desktop as any;
     const desktopProps = Object.entries(restDesktop)
       .map(([prop, value]) => `${kebabCase(prop)}: ${value}`)
       .join('; ');
@@ -17,28 +17,44 @@ export function generateResponsiveCSS(elementId: string, styles: any): string {
     if (desktopProps) {
       css += `.element-${elementId} { ${desktopProps}; }`;
     }
-    if (hoverColor || hoverBackgroundColor) {
+    if (hoverColor || hoverBackgroundColor || hoverBackgroundImage) {
       const hoverPairs: string[] = [];
       if (hoverColor) hoverPairs.push(`color: ${hoverColor} !important`);
-      if (hoverBackgroundColor) hoverPairs.push(`background-color: ${hoverBackgroundColor} !important`);
+      if (hoverBackgroundImage) {
+        hoverPairs.push(`background-image: ${hoverBackgroundImage} !important`);
+      } else if (hoverBackgroundColor) {
+        hoverPairs.push(`background-color: ${hoverBackgroundColor} !important`);
+        // If base has backgroundImage but no hover gradient, remove it on hover so color shows
+        if (restDesktop.backgroundImage) {
+          hoverPairs.push(`background-image: none !important`);
+        }
+      }
       css += `.element-${elementId}:hover { ${hoverPairs.join('; ')}; transition: all 0.2s ease; }`;
     }
   }
   
   // Mobile styles (max-width: 767px)
   if (Object.keys(mobile).length > 0) {
-    const { hoverColor: mHoverColor, hoverBackgroundColor: mHoverBg, ...restMobile } = mobile as any;
+    const { hoverColor: mHoverColor, hoverBackgroundColor: mHoverBg, hoverBackgroundImage: mHoverBgImg, ...restMobile } = mobile as any;
     const mobileProps = Object.entries(restMobile)
       .map(([prop, value]) => `${kebabCase(prop)}: ${value}`)
       .join('; ');
     
-    if (mobileProps || mHoverColor || mHoverBg) {
+    if (mobileProps || mHoverColor || mHoverBg || mHoverBgImg) {
       css += `@media (max-width: 767px) { `;
       if (mobileProps) css += `.element-${elementId} { ${mobileProps}; }`;
-      if (mHoverColor || mHoverBg) {
+      if (mHoverColor || mHoverBg || mHoverBgImg) {
         const hoverPairs: string[] = [];
         if (mHoverColor) hoverPairs.push(`color: ${mHoverColor} !important`);
-        if (mHoverBg) hoverPairs.push(`background-color: ${mHoverBg} !important`);
+        if (mHoverBgImg) {
+          hoverPairs.push(`background-image: ${mHoverBgImg} !important`);
+        } else if (mHoverBg) {
+          hoverPairs.push(`background-color: ${mHoverBg} !important`);
+          // If base has backgroundImage but no hover gradient, remove it on hover so color shows
+          if (restMobile.backgroundImage) {
+            hoverPairs.push(`background-image: none !important`);
+          }
+        }
         css += `.element-${elementId}:hover { ${hoverPairs.join('; ')}; transition: all 0.2s ease; }`;
       }
       css += ` }`;
@@ -48,10 +64,18 @@ export function generateResponsiveCSS(elementId: string, styles: any): string {
     if (mobileProps) {
       css += `.pb-mobile .element-${elementId} { ${mobileProps}; }`;
     }
-    if (mHoverColor || mHoverBg) {
+    if (mHoverColor || mHoverBg || mHoverBgImg) {
       const hoverPairs: string[] = [];
       if (mHoverColor) hoverPairs.push(`color: ${mHoverColor} !important`);
-      if (mHoverBg) hoverPairs.push(`background-color: ${mHoverBg} !important`);
+      if (mHoverBgImg) {
+        hoverPairs.push(`background-image: ${mHoverBgImg} !important`);
+      } else if (mHoverBg) {
+        hoverPairs.push(`background-color: ${mHoverBg} !important`);
+        // If base has backgroundImage but no hover gradient, remove it on hover so color shows
+        if (restMobile.backgroundImage) {
+          hoverPairs.push(`background-image: none !important`);
+        }
+      }
       css += `.pb-mobile .element-${elementId}:hover { ${hoverPairs.join('; ')}; transition: all 0.2s ease; }`;
     }
   }

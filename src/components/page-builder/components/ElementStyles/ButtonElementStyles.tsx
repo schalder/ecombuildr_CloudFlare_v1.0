@@ -47,6 +47,7 @@ const buttonPresets = {
       fontSize: '15px',
       padding: '14px 28px',
       borderWidth: '0px',
+      hoverBackgroundImage: 'linear-gradient(135deg, hsl(142 76% 32%), hsl(142 76% 42%))',
       boxShadow: '0 6px 20px hsl(142 76% 36% / 0.4)',
       transition: 'all 0.3s ease'
     }
@@ -57,15 +58,16 @@ const buttonPresets = {
     styles: {
       backgroundColor: 'transparent',
       color: 'hsl(217 91% 60%)',
-      borderRadius: '8px',
+      borderRadius: '10px',
       fontWeight: '600',
       fontSize: '15px',
       padding: '12px 24px',
-      borderWidth: '2px',
+      borderWidth: '1.5px',
       borderColor: 'hsl(217 91% 60%)',
-      hoverBackgroundColor: 'hsl(217 91% 60%)',
-      hoverColor: 'hsl(0 0% 100%)',
-      transition: 'all 0.3s ease'
+      hoverBackgroundColor: 'hsl(217 91% 98%)',
+      hoverColor: 'hsl(217 91% 55%)',
+      boxShadow: '0 1px 2px hsl(0 0% 0% / 0.05)',
+      transition: 'all 0.25s ease'
     }
   },
   premium_dark: {
@@ -97,6 +99,7 @@ const buttonPresets = {
       fontSize: '16px',
       padding: '16px 32px',
       borderWidth: '0px',
+      hoverBackgroundImage: 'linear-gradient(135deg, hsl(271 91% 60%), hsl(312 73% 52%))',
       boxShadow: '0 8px 32px hsl(271 91% 65% / 0.4)',
       transition: 'all 0.3s ease'
     }
@@ -387,6 +390,24 @@ export const ButtonElementStyles: React.FC<ButtonElementStylesProps> = ({
           <ColorPicker
             color={getCurrentValue('hoverBackgroundColor', '')}
             onChange={(color) => handleResponsiveUpdate('hoverBackgroundColor', color)}
+          />
+        </div>
+
+        <div>
+          <Label className="text-xs">Background Gradient</Label>
+          <Input
+            value={getCurrentValue('backgroundImage')}
+            onChange={(e) => handleResponsiveUpdate('backgroundImage', e.target.value)}
+            placeholder="e.g., linear-gradient(135deg, #3b82f6, #6366f1)"
+          />
+        </div>
+
+        <div>
+          <Label className="text-xs">Hover Background Gradient</Label>
+          <Input
+            value={getCurrentValue('hoverBackgroundImage')}
+            onChange={(e) => handleResponsiveUpdate('hoverBackgroundImage', e.target.value)}
+            placeholder="e.g., linear-gradient(135deg, #2563eb, #4f46e5)"
           />
         </div>
       </CollapsibleGroup>
