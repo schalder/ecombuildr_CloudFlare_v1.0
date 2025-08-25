@@ -169,9 +169,8 @@ export const usePageBuilderState = (initialData?: PageBuilderData) => {
       sections: newSections
     };
 
-    updatePageData(newData);
     recordHistory(newData);
-  }, []);
+  }, [pageData, recordHistory]);
 
   const updateElement = useCallback((elementId: string, updates: Partial<PageBuilderElement>) => {
     const updateElementRecursive = (sections: PageBuilderSection[]): PageBuilderSection[] => {
