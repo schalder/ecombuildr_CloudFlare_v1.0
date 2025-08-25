@@ -108,11 +108,7 @@ export const ColumnRenderer: React.FC<ColumnRendererProps> = ({
         !isPreviewMode && isHovered && 'border-primary/50',
         getColumnResponsiveClasses(column, deviceType)
       )}
-      style={{
-        ...getColumnStyles(),
-        // Force border-radius to 0 for page builder interface only
-        ...(!isPreviewMode && { borderRadius: '0' })
-      }}
+      style={getColumnStyles()}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={handleColumnClick}

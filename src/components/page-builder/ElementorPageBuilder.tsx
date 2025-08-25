@@ -1827,11 +1827,7 @@ const RowComponent: React.FC<RowComponentProps> = ({
       } ${
         isDragging ? 'opacity-50' : ''
       }`}
-      style={{
-        ...renderRowStyles(row, deviceType),
-        // Force border-radius to 0 for page builder interface only
-        borderRadius: '0px'
-      }}
+      style={renderRowStyles(row, deviceType)}
       onMouseEnter={() => setHoveredTarget({ type: 'row', id: row.id, parentId: sectionId })}
       onMouseLeave={() => setHoveredTarget(null)}
       onClick={(e) => {
@@ -2031,11 +2027,7 @@ const ColumnComponent: React.FC<ColumnComponentProps> = ({
             ? 'border-primary/50 bg-primary/3' 
             : ''
       }`}
-      style={{
-        ...renderColumnStyles(column, deviceType),
-        // Force border-radius to 0 for page builder interface only
-        borderRadius: '0px'
-      }}
+      style={renderColumnStyles(column, deviceType)}
       onMouseEnter={() => setHoveredTarget({ type: 'column', id: column.id, parentId: rowId, grandParentId: sectionId })}
       onMouseLeave={() => setHoveredTarget(null)}
       onClick={(e) => {

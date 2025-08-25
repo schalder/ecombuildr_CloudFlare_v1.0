@@ -175,11 +175,7 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
         !isPreviewMode && isOver && 'border-blue-600',
         !isPreviewMode && isOver && !userBackground && 'bg-blue-50/70'
       )}
-      style={{
-        ...getRowStyles(),
-        // Force border-radius to 0 for page builder interface only
-        ...(!isPreviewMode && { borderRadius: '0' })
-      }}
+      style={getRowStyles()}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={handleRowClick}
