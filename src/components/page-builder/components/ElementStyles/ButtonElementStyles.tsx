@@ -270,7 +270,8 @@ export const ButtonElementStyles: React.FC<ButtonElementStylesProps> = ({
               handleResponsiveUpdate('hoverBackgroundImage', '');
             } else {
               // Initialize gradient when switching to gradient mode
-              updateGradient();
+              const gradient = generateGradient(gradientStart, gradientEnd, gradientAngle);
+              handleResponsiveUpdate('backgroundImage', gradient);
             }
           }}>
             <TabsList className="grid w-full grid-cols-2">
