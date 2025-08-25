@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Type, Heading1, Heading2, Heading3, Image, List, Quote, Minus, Play } from 'lucide-react';
+import { Type, Heading1, Heading2, Heading3, Image, List, RectangleHorizontal, Minus, Play } from 'lucide-react';
 import { PageBuilderElement, ElementType } from '../types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -399,6 +399,8 @@ const ButtonElement: React.FC<{
   const text = element.content.text || 'Button';
   const url = element.content.url || '#';
   const target = element.content.target || '_blank';
+  const iconName = element.content.icon;
+  const IconComponent = iconName ? getIconByName(iconName) : null;
 
   const linkType: 'page' | 'url' | 'scroll' | undefined = element.content.linkType || (element.content.url ? 'url' : undefined);
   const pageSlug: string | undefined = element.content.pageSlug;
@@ -544,6 +546,15 @@ const ButtonElement: React.FC<{
           onClick={handleClick}
           style={elementStyles}
         >
+          {IconComponent && (
+            <IconComponent 
+              style={{ 
+                width: elementStyles.fontSize || '16px',
+                height: elementStyles.fontSize || '16px',
+                color: 'currentColor'
+              }} 
+            />
+          )}
           {isEditing ? (
             <InlineEditor
               value={text}
@@ -923,7 +934,7 @@ export const registerBasicElements = () => {
     id: 'button',
     name: 'Button',
     category: 'basic',
-    icon: Quote,
+    icon: RectangleHorizontal,
     component: ButtonElement,
     defaultContent: { text: 'Click Me', variant: 'default', size: 'default', url: '#' },
     description: 'Call to action button'

@@ -100,9 +100,21 @@ export const usePageBuilderState = (initialData?: PageBuilderData) => {
       id: generateId(),
       type: elementType,
       content: getDefaultContent(elementType),
-      // Add default center alignment for text-based elements
+      // Add default center alignment for text-based elements and default green button styling
       ...(elementType === 'heading' || elementType === 'text' ? {
         styles: { textAlign: 'center' }
+      } : elementType === 'button' ? {
+        styles: { 
+          textAlign: 'center',
+          backgroundColor: 'hsl(142 76% 36%)',
+          color: 'hsl(0 0% 98%)',
+          borderRadius: '8px',
+          fontWeight: '600',
+          fontSize: '16px',
+          padding: '14px 28px',
+          borderWidth: '0px',
+          boxShadow: '0 4px 12px hsl(142 76% 36% / 0.3)'
+        }
       } : {})
     };
 
@@ -382,7 +394,12 @@ function getDefaultContent(elementType: string): Record<string, any> {
     case 'paragraph':
       return { text: 'Your Paragraph text goes Lorem ipsum dolor sit amet, consectetur adipisicing elit. Autem dolore, alias, numquam enim ab voluptate id quam harum ducimus cupiditate similique quisquam et deserunt, recusandae. here' };
     case 'button':
-      return { text: 'Click Me', variant: 'default', size: 'default', url: '#' };
+      return { 
+        text: 'Get Started Now', 
+        variant: 'default', 
+        size: 'default', 
+        url: '#' 
+      };
     case 'image':
       return { src: '', alt: 'Image', width: '100%', height: 'auto' };
     case 'video':

@@ -6,152 +6,30 @@ import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AlignLeft, AlignCenter, AlignRight, Monitor, Smartphone, Palette } from 'lucide-react';
+import { AlignLeft, AlignCenter, AlignRight, Monitor, Smartphone, Search, X } from 'lucide-react';
 import { ColorPicker } from '@/components/ui/color-picker';
 import { PageBuilderElement } from '../../types';
 import { CollapsibleGroup } from './_shared/CollapsibleGroup';
 import { SpacingSliders } from './_shared/SpacingSliders';
+import { IconPicker } from '@/components/ui/icon-picker';
 
 interface ButtonElementStylesProps {
   element: PageBuilderElement;
   onStyleUpdate: (property: string, value: any) => void;
 }
 
-// Button presets with complete styling
-const buttonPresets = {
-  primary: {
-    name: 'Primary',
-    description: 'Main call-to-action button',
-    styles: {
-      backgroundColor: 'hsl(var(--primary))',
-      color: 'hsl(var(--primary-foreground))',
-      borderRadius: '6px',
-      fontWeight: '500',
-      fontSize: '14px',
-      padding: '10px 16px',
-      borderWidth: '0px',
-      hoverBackgroundColor: 'hsl(var(--primary)/0.9)',
-      boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-    }
-  },
-  secondary: {
-    name: 'Secondary',
-    description: 'Secondary action button',
-    styles: {
-      backgroundColor: 'hsl(var(--secondary))',
-      color: 'hsl(var(--secondary-foreground))',
-      borderRadius: '6px',
-      fontWeight: '500',
-      fontSize: '14px',
-      padding: '10px 16px',
-      borderWidth: '0px',
-      hoverBackgroundColor: 'hsl(var(--secondary)/0.8)',
-      boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-    }
-  },
-  outline: {
-    name: 'Outline',
-    description: 'Outlined button style',
-    styles: {
-      backgroundColor: 'transparent',
-      color: 'hsl(var(--foreground))',
-      borderRadius: '6px',
-      fontWeight: '500',
-      fontSize: '14px',
-      padding: '10px 16px',
-      borderWidth: '1px',
-      borderColor: 'hsl(var(--border))',
-      hoverBackgroundColor: 'hsl(var(--accent))',
-      hoverColor: 'hsl(var(--accent-foreground))'
-    }
-  },
-  ghost: {
-    name: 'Ghost',
-    description: 'Minimal button without background',
-    styles: {
-      backgroundColor: 'transparent',
-      color: 'hsl(var(--foreground))',
-      borderRadius: '6px',
-      fontWeight: '500',
-      fontSize: '14px',
-      padding: '10px 16px',
-      borderWidth: '0px',
-      hoverBackgroundColor: 'hsl(var(--muted)/0.6)'
-    }
-  },
-  accent: {
-    name: 'Accent',
-    description: 'Eye-catching gradient button',
-    styles: {
-      backgroundColor: 'hsl(var(--accent))',
-      color: 'hsl(var(--accent-foreground))',
-      borderRadius: '8px',
-      fontWeight: '600',
-      fontSize: '14px',
-      padding: '12px 20px',
-      borderWidth: '0px',
-      hoverBackgroundColor: 'hsl(var(--accent)/0.9)',
-      boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
-    }
-  },
-  success: {
-    name: 'Success',
-    description: 'Success state button',
-    styles: {
-      backgroundColor: 'hsl(142 76% 36%)',
-      color: 'hsl(355.7 100% 97.3%)',
-      borderRadius: '6px',
-      fontWeight: '500',
-      fontSize: '14px',
-      padding: '10px 16px',
-      borderWidth: '0px',
-      hoverBackgroundColor: 'hsl(142 76% 32%)',
-      boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-    }
-  },
-  destructive: {
-    name: 'Destructive',
-    description: 'Warning or delete action',
-    styles: {
-      backgroundColor: 'hsl(var(--destructive))',
-      color: 'hsl(var(--destructive-foreground))',
-      borderRadius: '6px',
-      fontWeight: '500',
-      fontSize: '14px',
-      padding: '10px 16px',
-      borderWidth: '0px',
-      hoverBackgroundColor: 'hsl(var(--destructive)/0.9)',
-      boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-    }
-  },
-  cta: {
-    name: 'Call to Action',
-    description: 'Large prominent CTA button',
-    styles: {
-      backgroundColor: 'hsl(var(--primary))',
-      color: 'hsl(var(--primary-foreground))',
-      borderRadius: '8px',
-      fontWeight: '600',
-      fontSize: '16px',
-      padding: '14px 28px',
-      borderWidth: '0px',
-      hoverBackgroundColor: 'hsl(var(--primary)/0.9)',
-      boxShadow: '0 4px 12px hsl(var(--primary)/0.3)'
-    }
-  }
-};
 
 export const ButtonElementStyles: React.FC<ButtonElementStylesProps> = ({
   element,
   onStyleUpdate,
 }) => {
   const [responsiveTab, setResponsiveTab] = useState<'desktop' | 'mobile'>('desktop');
-  const [presetsOpen, setPresetsOpen] = useState(true);
   const [dimensionsOpen, setDimensionsOpen] = useState(false);
   const [typographyOpen, setTypographyOpen] = useState(false);
   const [colorsOpen, setColorsOpen] = useState(false);
   const [bordersOpen, setBordersOpen] = useState(false);
   const [spacingOpen, setSpacingOpen] = useState(false);
+  const [iconOpen, setIconOpen] = useState(false);
 
   // Get responsive styles
   const responsiveStyles = element.styles?.responsive || { desktop: {}, mobile: {} };
@@ -173,20 +51,12 @@ export const ButtonElementStyles: React.FC<ButtonElementStylesProps> = ({
     return currentStyles[prop] || element.styles?.[prop] || fallback;
   };
 
-  // Apply preset styles
-  const applyPreset = (presetKey: string) => {
-    const preset = buttonPresets[presetKey as keyof typeof buttonPresets];
-    if (!preset) return;
-
-    // Apply all preset styles to the current responsive view
-    const updatedResponsive = {
-      ...responsiveStyles,
-      [responsiveTab]: {
-        ...currentStyles,
-        ...preset.styles
-      }
-    };
-    onStyleUpdate('responsive', updatedResponsive);
+  // Handle icon changes
+  const handleIconChange = (iconName: string | null) => {
+    onStyleUpdate('content', {
+      ...element.content,
+      icon: iconName
+    });
   };
 
   return (
@@ -207,31 +77,30 @@ export const ButtonElementStyles: React.FC<ButtonElementStylesProps> = ({
         </Tabs>
       </div>
 
-      {/* Button Presets */}
-      <CollapsibleGroup title="Button Presets" isOpen={presetsOpen} onToggle={setPresetsOpen}>
+      {/* Button Icon */}
+      <CollapsibleGroup title="Button Icon" isOpen={iconOpen} onToggle={setIconOpen}>
         <div className="space-y-3">
-          <Label className="text-xs">Choose a preset style</Label>
-          <div className="grid grid-cols-1 gap-2">
-            {Object.entries(buttonPresets).map(([key, preset]) => (
+          <div className="flex items-center justify-between">
+            <Label className="text-xs">Icon</Label>
+            {element.content.icon && (
               <Button
-                key={key}
-                variant="outline"
                 size="sm"
-                className="justify-start h-auto p-3 text-left"
-                onClick={() => applyPreset(key)}
+                variant="outline"
+                onClick={() => handleIconChange(null)}
+                className="h-6 px-2"
               >
-                <div className="flex items-center gap-2">
-                  <Palette className="h-3 w-3" />
-                  <div>
-                    <div className="font-medium text-xs">{preset.name}</div>
-                    <div className="text-xs text-muted-foreground">{preset.description}</div>
-                  </div>
-                </div>
+                <X className="h-3 w-3" />
               </Button>
-            ))}
+            )}
           </div>
+          
+          <IconPicker
+            value={element.content.icon || ''}
+            onChange={handleIconChange}
+          />
+          
           <p className="text-xs text-muted-foreground">
-            Presets apply styles to the current device view. All styles remain fully editable below.
+            Icon will automatically scale with font size and match text color.
           </p>
         </div>
       </CollapsibleGroup>
