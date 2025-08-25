@@ -500,27 +500,63 @@ const ButtonElement: React.FC<{
     alignment === 'right' ? 'flex justify-end' : 
     'flex justify-start';
 
-  // Get base and responsive styles with proper priority
-  const baseStyles = renderElementStyles(element, deviceType);
-  
-  // Build final element styles with responsive overrides
-  const elementStyles = { ...baseStyles };
-  
-  // Apply responsive overrides with proper priority
-  Object.keys(currentDeviceStylesData).forEach(key => {
-    if (currentDeviceStylesData[key] !== undefined && currentDeviceStylesData[key] !== '') {
-      elementStyles[key as keyof React.CSSProperties] = currentDeviceStylesData[key];
+  // Build button styles with simple priority: responsive > base
+  const getButtonStyle = (prop: string, fallback?: any) => {
+    return currentDeviceStylesData[prop] || element.styles?.[prop] || fallback;
+  };
+
+  // Build clean button styles
+  const elementStyles: React.CSSProperties = {
+    // Dimensions
+    width: getButtonStyle('width'),
+    height: getButtonStyle('height'),
+    minWidth: getButtonStyle('minWidth'),
+    maxWidth: getButtonStyle('maxWidth'),
+    
+    // Typography
+    fontSize: getButtonStyle('fontSize', '16px'),
+    fontWeight: getButtonStyle('fontWeight'),
+    color: getButtonStyle('color', '#ffffff'),
+    lineHeight: getButtonStyle('lineHeight', '1.2'),
+    textAlign: getButtonStyle('textAlign') as any,
+    
+    // Background - simple priority system
+    ...(getButtonStyle('backgroundImage')?.includes('linear-gradient') 
+      ? { backgroundImage: getButtonStyle('backgroundImage') }
+      : { backgroundColor: getButtonStyle('backgroundColor', 'hsl(142 76% 36%)') }
+    ),
+    
+    // Border
+    borderWidth: getButtonStyle('borderWidth'),
+    borderColor: getButtonStyle('borderColor'),
+    borderStyle: getButtonStyle('borderStyle'),
+    borderRadius: getButtonStyle('borderRadius', '6px'),
+    
+    // Effects
+    boxShadow: getButtonStyle('boxShadow'),
+    opacity: getButtonStyle('opacity'),
+    
+    // Spacing
+    padding: getButtonStyle('padding'),
+    paddingTop: getButtonStyle('paddingTop'),
+    paddingRight: getButtonStyle('paddingRight'),
+    paddingBottom: getButtonStyle('paddingBottom'),
+    paddingLeft: getButtonStyle('paddingLeft'),
+    margin: getButtonStyle('margin'),
+    marginTop: getButtonStyle('marginTop'),
+    marginRight: getButtonStyle('marginRight'),
+    marginBottom: getButtonStyle('marginBottom'),
+    marginLeft: getButtonStyle('marginLeft'),
+  };
+
+  // Clean up undefined values
+  Object.keys(elementStyles).forEach(key => {
+    if (elementStyles[key as keyof React.CSSProperties] === undefined) {
+      delete elementStyles[key as keyof React.CSSProperties];
     }
   });
 
-  // Handle background modes properly - gradient takes priority over color
-  if (elementStyles.backgroundImage && elementStyles.backgroundImage.includes('linear-gradient')) {
-    // If we have a gradient, remove solid background color
-    delete elementStyles.backgroundColor;
-  } else if (elementStyles.backgroundColor) {
-    // If we have solid color, remove any gradient
-    delete elementStyles.backgroundImage;
-  }
+  console.log('🎨 ButtonElement: Final button styles:', elementStyles);
 
   // Smart padding fallback when no padding is set - ratio-based
   const hasExistingPadding = elementStyles.padding || elementStyles.paddingTop || elementStyles.paddingRight || 
@@ -547,28 +583,27 @@ const ButtonElement: React.FC<{
   
   // Generate hover styles for the button
   const generateHoverCSS = () => {
+    const hoverBgColor = getButtonStyle('hoverBackgroundColor');
+    const hoverBgImage = getButtonStyle('hoverBackgroundImage');
+    const hoverColor = getButtonStyle('hoverColor');
     
     let hoverCSS = '';
     
-    // Priority for hover background: responsive > base
-    const hoverBgColor = (currentDeviceStylesData as any).hoverBackgroundColor || (element.styles as any)?.hoverBackgroundColor;
-    const hoverBgImage = (currentDeviceStylesData as any).hoverBackgroundImage || (element.styles as any)?.hoverBackgroundImage;
-    const hoverColor = (currentDeviceStylesData as any).hoverColor || (element.styles as any)?.hoverColor;
-    
     // Handle hover background modes properly - gradient takes priority over color
-    if (hoverBgImage && hoverBgImage.includes('linear-gradient')) {
+    if (hoverBgImage?.includes('linear-gradient')) {
       hoverCSS += `background-image: ${hoverBgImage} !important; `;
       hoverCSS += `background-color: transparent !important; `;
-    } else if (hoverBgColor && hoverBgColor !== '') {
+    } else if (hoverBgColor) {
       hoverCSS += `background-color: ${hoverBgColor} !important; `;
       hoverCSS += `background-image: none !important; `;
     }
     
     // Apply hover text color
-    if (hoverColor && hoverColor !== '') {
+    if (hoverColor) {
       hoverCSS += `color: ${hoverColor} !important; `;
     }
     
+    console.log('🎯 ButtonElement: Generated hover CSS:', hoverCSS);
     return hoverCSS ? `.element-${element.id}:hover { ${hoverCSS} }` : '';
   };
 

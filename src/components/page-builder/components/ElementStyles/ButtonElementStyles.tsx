@@ -355,12 +355,14 @@ export const ButtonElementStyles: React.FC<ButtonElementStylesProps> = ({
               <ColorPicker
                 color={getCurrentValue('backgroundColor', 'hsl(142 76% 36%)')}
                 onChange={(color) => {
+                  console.log('🎨 ButtonElementStyles: Setting solid background color:', color);
                   // Update both base and responsive styles for immediate application
                   onStyleUpdate('backgroundColor', color);
                   handleResponsiveUpdate('backgroundColor', color);
                   // Clear gradient properties when using solid color
                   onStyleUpdate('backgroundImage', '');
                   handleResponsiveUpdate('backgroundImage', '');
+                  console.log('🎨 ButtonElementStyles: After solid color update, element styles:', element.styles);
                 }}
               />
             </div>
