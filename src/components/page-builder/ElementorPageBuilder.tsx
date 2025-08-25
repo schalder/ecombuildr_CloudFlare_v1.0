@@ -423,6 +423,41 @@ const ElementorPageBuilderContent: React.FC<ElementorPageBuilderProps> = memo(({
     if (selection?.id === rowId) setSelection(null);
   }, [data, updateData, selection]);
 
+  const duplicateRow = useCallback((sectionId: string, rowId: string) => {
+    const section = data.sections.find(s => s.id === sectionId);
+    const row = section?.rows?.find(r => r.id === rowId);
+    if (!section || !row) return;
+
+    const duplicatedRow: PageBuilderRow = {
+      ...row,
+      id: generateId(),
+      anchor: buildAnchor('row'),
+      columns: row.columns.map(col => ({
+        ...col,
+        id: generateId(),
+        anchor: buildAnchor('col'),
+        elements: col.elements.map(el => ({
+          ...el,
+          id: generateId(),
+          anchor: buildAnchor('element', el.type)
+        }))
+      }))
+    };
+
+    const rowIndex = section.rows!.findIndex(r => r.id === rowId);
+    const newRows = [...section.rows!];
+    newRows.splice(rowIndex + 1, 0, duplicatedRow);
+
+    updateData({
+      ...data,
+      sections: data.sections.map(s =>
+        s.id === sectionId
+          ? { ...s, rows: newRows }
+          : s
+      )
+    });
+  }, [data, updateData]);
+
   const moveRow = useCallback((rowId: string, targetSectionId: string, insertIndex: number) => {
     
     
@@ -623,6 +658,63 @@ const ElementorPageBuilderContent: React.FC<ElementorPageBuilderProps> = memo(({
               )
             }
           : section
+      )
+    });
+  }, [data, updateData]);
+
+  // Duplicate Column functionality
+  const duplicateColumn = useCallback((sectionId: string, rowId: string, columnId: string) => {
+    const section = data.sections.find(s => s.id === sectionId);
+    const row = section?.rows?.find(r => r.id === rowId);
+    const column = row?.columns.find(c => c.id === columnId);
+    if (!section || !row || !column) return;
+
+    // Check if adding another column would exceed 6 columns
+    if (row.columns.length >= 6) {
+      console.warn('Cannot duplicate column: Maximum 6 columns per row');
+      return;
+    }
+
+    const duplicatedColumn: PageBuilderColumn = {
+      ...column,
+      id: generateId(),
+      anchor: buildAnchor('col'),
+      elements: column.elements.map(el => ({
+        ...el,
+        id: generateId(),
+        anchor: buildAnchor('element', el.type)
+      }))
+    };
+
+    const columnIndex = row.columns.findIndex(c => c.id === columnId);
+    const newColumns = [...row.columns];
+    newColumns.splice(columnIndex + 1, 0, duplicatedColumn);
+
+    // Rebalance column widths to fit all columns
+    const newColumnCount = newColumns.length;
+    const newLayout = getBalancedLayout(newColumnCount);
+    const columnWidths = COLUMN_LAYOUTS[newLayout];
+
+    updateData({
+      ...data,
+      sections: data.sections.map(s =>
+        s.id === sectionId
+          ? {
+              ...s,
+              rows: s.rows?.map(r =>
+                r.id === rowId
+                  ? { 
+                      ...r, 
+                      columnLayout: newLayout,
+                      columns: newColumns.map((col, index) => ({
+                        ...col,
+                        width: columnWidths[index] || 1
+                      }))
+                    }
+                  : r
+              ) || []
+            }
+          : s
       )
     });
   }, [data, updateData]);
@@ -1138,6 +1230,7 @@ const ElementorPageBuilderContent: React.FC<ElementorPageBuilderProps> = memo(({
                           onDuplicate={() => duplicateSection(section.id)}
                           onAddRow={(insertIndex?: number) => setShowColumnModal({ sectionId: section.id, insertIndex })}
                           onDeleteRow={(rowId) => deleteRow(section.id, rowId)}
+                          onDuplicateRow={(rowId) => duplicateRow(section.id, rowId)}
                           onMoveRow={moveRow}
                           onMoveRowUp={moveRowUp}
                           onMoveRowDown={moveRowDown}
@@ -1149,6 +1242,15 @@ const ElementorPageBuilderContent: React.FC<ElementorPageBuilderProps> = memo(({
                           onMoveSectionDown={() => moveSectionDown(section.id)}
                           onMoveColumn={moveColumn}
                           onAddColumn={addColumn}
+                          onDuplicateColumn={(columnId) => {
+                            // Find the row that contains this column
+                            const foundRow = section.rows?.find(row => 
+                              row.columns.some(col => col.id === columnId)
+                            );
+                            if (foundRow) {
+                              duplicateColumn(section.id, foundRow.id, columnId);
+                            }
+                          }}
                           onDeleteColumn={(columnId) => {
                             // Find the row that contains this column
                             const foundRow = section.rows?.find(row => 
@@ -1367,6 +1469,7 @@ interface SectionComponentProps {
   onDuplicate: () => void;
   onAddRow: (insertIndex?: number) => void;
   onDeleteRow: (rowId: string) => void;
+  onDuplicateRow: (rowId: string) => void;
   onMoveRow: (rowId: string, targetSectionId: string, insertIndex: number) => void;
   onMoveRowUp: (sectionId: string, rowId: string) => void;
   onMoveRowDown: (sectionId: string, rowId: string) => void;
@@ -1379,6 +1482,7 @@ interface SectionComponentProps {
   onMoveColumn: (sectionId: string, rowId: string, columnId: string, direction: 'up' | 'down') => void;
   onAddColumn: (sectionId: string, rowId: string) => void;
   onDeleteColumn: (columnId: string) => void;
+  onDuplicateColumn: (columnId: string) => void;
   onAddElement: (sectionId: string, rowId: string, columnId: string, elementType: string, insertIndex?: number) => void;
   onUpdateElement: (elementId: string, updates: Partial<PageBuilderElement>) => void;
   onDeleteElement: (elementId: string) => void;
@@ -1399,6 +1503,7 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
   onDuplicate,
   onAddRow,
   onDeleteRow,
+  onDuplicateRow,
   onMoveRow,
   onMoveRowUp,
   onMoveRowDown,
@@ -1589,6 +1694,7 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
                       isSelected={selection?.type === 'row' && selection.id === row.id}
                       onSelect={() => onSelectionChange({ type: 'row', id: row.id, parentId: section.id })}
                       onDelete={() => onDeleteRow(row.id)}
+                      onDuplicate={() => onDuplicateRow(row.id)}
                       onAddRow={() => onAddRow(index + 1)}
                       onMoveRowUp={() => onMoveRowUp(section.id, row.id)}
                       onMoveRowDown={() => onMoveRowDown(section.id, row.id)}
@@ -1596,9 +1702,10 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
                       onMoveElementDown={onMoveElementDown}
                        onMoveElement={onMoveElement}
                        onMoveColumn={onMoveColumn}
-                       onAddColumn={onAddColumn}
-                       onDeleteColumn={onDeleteColumn}
-                       onAddElement={onAddElement}
+                        onAddColumn={onAddColumn}
+                        onDeleteColumn={onDeleteColumn}
+                        onDuplicateColumn={onDuplicateColumn}
+                        onAddElement={onAddElement}
                        onUpdateElement={onUpdateElement}
                        onDeleteElement={onDeleteElement}
                        onDuplicateElement={onDuplicateElement}
@@ -1639,6 +1746,7 @@ interface RowComponentProps {
   isSelected: boolean;
   onSelect: () => void;
   onDelete: () => void;
+  onDuplicate: () => void;
   onAddRow: () => void;
   onMoveRowUp: () => void;
   onMoveRowDown: () => void;
@@ -1648,6 +1756,7 @@ interface RowComponentProps {
   onMoveColumn: (sectionId: string, rowId: string, columnId: string, direction: 'up' | 'down') => void;
   onAddColumn: (sectionId: string, rowId: string) => void;
   onDeleteColumn: (columnId: string) => void;
+  onDuplicateColumn: (columnId: string) => void;
   onAddElement: (sectionId: string, rowId: string, columnId: string, elementType: string, insertIndex?: number) => void;
   onUpdateElement: (elementId: string, updates: Partial<PageBuilderElement>) => void;
   onDeleteElement: (elementId: string) => void;
@@ -1665,6 +1774,7 @@ const RowComponent: React.FC<RowComponentProps> = ({
   isSelected,
   onSelect,
   onDelete,
+  onDuplicate,
   onAddRow,
   onMoveRowUp,
   onMoveRowDown,
@@ -1674,6 +1784,7 @@ const RowComponent: React.FC<RowComponentProps> = ({
   onMoveColumn,
   onAddColumn,
   onDeleteColumn,
+  onDuplicateColumn,
   onAddElement,
   onUpdateElement,
   onDeleteElement,
@@ -1772,8 +1883,17 @@ const RowComponent: React.FC<RowComponentProps> = ({
           >
             <Plus className="h-3 w-3" />
           </Button>
-          <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-gray-100">
-            <Columns className="h-3 w-3" />
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-6 w-6 p-0 hover:bg-gray-100"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDuplicate();
+            }}
+            title="Duplicate Row"
+          >
+            <Copy className="h-3 w-3" />
           </Button>
           <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-red-100 hover:text-red-600" onClick={onDelete}>
             <Trash2 className="h-3 w-3" />
@@ -1815,6 +1935,7 @@ const RowComponent: React.FC<RowComponentProps> = ({
             onMoveColumnUp={() => onMoveColumn(sectionId, row.id, column.id, 'up')}
             onMoveColumnDown={() => onMoveColumn(sectionId, row.id, column.id, 'down')}
             onDeleteColumn={() => onDeleteColumn(column.id)}
+            onDuplicateColumn={() => onDuplicateColumn(column.id)}
             canDeleteColumn={true}
             onMoveElementUp={onMoveElementUp}
             onMoveElementDown={onMoveElementDown}
@@ -1845,6 +1966,7 @@ interface ColumnComponentProps {
   onMoveColumnUp: () => void;
   onMoveColumnDown: () => void;
   onDeleteColumn: () => void;
+  onDuplicateColumn: () => void;
   canDeleteColumn: boolean;
   onMoveElementUp: (sectionId: string, rowId: string, columnId: string, elementId: string) => void;
   onMoveElementDown: (sectionId: string, rowId: string, columnId: string, elementId: string) => void;
@@ -1869,6 +1991,7 @@ const ColumnComponent: React.FC<ColumnComponentProps> = ({
   onMoveColumnUp,
   onMoveColumnDown,
   onDeleteColumn,
+  onDuplicateColumn,
   canDeleteColumn,
   onMoveElementUp,
   onMoveElementDown,
@@ -1948,6 +2071,19 @@ const ColumnComponent: React.FC<ColumnComponentProps> = ({
             disabled={columnIndex === totalColumns - 1}
           >
             <ArrowDown className="h-2 w-2" />
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-5 w-5 p-0 hover:bg-gray-100"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDuplicateColumn();
+            }}
+            title="Duplicate Column"
+            disabled={totalColumns >= 6}
+          >
+            <Copy className="h-2 w-2" />
           </Button>
           <Button 
             variant="ghost" 
