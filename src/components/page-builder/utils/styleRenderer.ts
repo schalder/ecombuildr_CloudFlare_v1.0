@@ -341,22 +341,23 @@ export const renderElementStyles = (element: PageBuilderElement, deviceType: 'de
     if (element.styles.maxHeight) styles.maxHeight = element.styles.maxHeight;
     if (element.styles.minHeight) styles.minHeight = element.styles.minHeight;
     
-    // Background styles
-    if (element.styles.backgroundColor && element.styles.backgroundColor !== 'transparent') {
-      styles.backgroundColor = element.styles.backgroundColor;
-    }
+    // Background styles - prioritize gradients over solid colors
     if (element.styles.backgroundImage) {
       // Check if it's a gradient or a URL
       if (element.styles.backgroundImage.startsWith('linear-gradient') || 
           element.styles.backgroundImage.startsWith('radial-gradient') ||
           element.styles.backgroundImage.startsWith('conic-gradient')) {
         styles.backgroundImage = element.styles.backgroundImage;
+        // Don't set backgroundColor when gradient is present
       } else {
         styles.backgroundImage = `url(${element.styles.backgroundImage})`;
         styles.backgroundSize = 'cover';
         styles.backgroundPosition = 'center';
         styles.backgroundRepeat = 'no-repeat';
       }
+    } else if (element.styles.backgroundColor && element.styles.backgroundColor !== 'transparent') {
+      // Only apply background color if no gradient is present
+      styles.backgroundColor = element.styles.backgroundColor;
     }
     
     // Border styles

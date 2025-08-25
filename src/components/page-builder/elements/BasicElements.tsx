@@ -491,17 +491,36 @@ const ButtonElement: React.FC<{
   };
 
   // Get responsive alignment
-  const responsiveStyles = element.styles?.responsive || {};
-  const currentDeviceStyles = responsiveStyles[deviceType === 'tablet' ? 'desktop' : deviceType] || {};
-  const alignment = currentDeviceStyles.textAlign || element.styles?.textAlign || 'left';
+  const responsiveStylesData = element.styles?.responsive || {};
+  const currentDeviceStylesData = responsiveStylesData[deviceType === 'tablet' ? 'desktop' : deviceType] || {};
+  const alignment = currentDeviceStylesData.textAlign || element.styles?.textAlign || 'left';
   
   const containerClass = 
     alignment === 'center' ? 'flex justify-center' :
     alignment === 'right' ? 'flex justify-end' : 
     'flex justify-start';
 
-  // Use renderElementStyles for consistent styling
-  const elementStyles = renderElementStyles(element, deviceType);
+  // Get base and responsive styles with proper priority
+  const baseStyles = renderElementStyles(element, deviceType);
+  
+  // Build final element styles with responsive overrides
+  const elementStyles = { ...baseStyles };
+  
+  // Apply responsive overrides with proper priority
+  Object.keys(currentDeviceStylesData).forEach(key => {
+    if (currentDeviceStylesData[key] !== undefined && currentDeviceStylesData[key] !== '') {
+      elementStyles[key as keyof React.CSSProperties] = currentDeviceStylesData[key];
+    }
+  });
+
+  // Handle background modes properly - gradient takes priority over color
+  if (elementStyles.backgroundImage && elementStyles.backgroundImage.includes('linear-gradient')) {
+    // If we have a gradient, remove solid background color
+    delete elementStyles.backgroundColor;
+  } else if (elementStyles.backgroundColor) {
+    // If we have solid color, remove any gradient
+    delete elementStyles.backgroundImage;
+  }
 
   // Smart padding fallback when no padding is set - ratio-based
   const hasExistingPadding = elementStyles.padding || elementStyles.paddingTop || elementStyles.paddingRight || 
@@ -528,26 +547,25 @@ const ButtonElement: React.FC<{
   
   // Generate hover styles for the button
   const generateHoverCSS = () => {
-    const responsiveStyles = element.styles?.responsive || {};
-    const currentDeviceStyles = responsiveStyles[deviceType === 'tablet' ? 'desktop' : deviceType] || {};
     
     let hoverCSS = '';
     
-    // Apply hover background color
-    if ((currentDeviceStyles as any).hoverBackgroundColor || (element.styles as any)?.hoverBackgroundColor) {
-      const hoverBgColor = (currentDeviceStyles as any).hoverBackgroundColor || (element.styles as any)?.hoverBackgroundColor;
-      hoverCSS += `background-color: ${hoverBgColor} !important; `;
-    }
+    // Priority for hover background: responsive > base
+    const hoverBgColor = (currentDeviceStylesData as any).hoverBackgroundColor || (element.styles as any)?.hoverBackgroundColor;
+    const hoverBgImage = (currentDeviceStylesData as any).hoverBackgroundImage || (element.styles as any)?.hoverBackgroundImage;
+    const hoverColor = (currentDeviceStylesData as any).hoverColor || (element.styles as any)?.hoverColor;
     
-    // Apply hover background image (gradient)
-    if ((currentDeviceStyles as any).hoverBackgroundImage || (element.styles as any)?.hoverBackgroundImage) {
-      const hoverBgImage = (currentDeviceStyles as any).hoverBackgroundImage || (element.styles as any)?.hoverBackgroundImage;
+    // Handle hover background modes properly - gradient takes priority over color
+    if (hoverBgImage && hoverBgImage.includes('linear-gradient')) {
       hoverCSS += `background-image: ${hoverBgImage} !important; `;
+      hoverCSS += `background-color: transparent !important; `;
+    } else if (hoverBgColor && hoverBgColor !== '') {
+      hoverCSS += `background-color: ${hoverBgColor} !important; `;
+      hoverCSS += `background-image: none !important; `;
     }
     
     // Apply hover text color
-    if ((currentDeviceStyles as any).hoverColor || (element.styles as any)?.hoverColor) {
-      const hoverColor = (currentDeviceStyles as any).hoverColor || (element.styles as any)?.hoverColor;
+    if (hoverColor && hoverColor !== '') {
       hoverCSS += `color: ${hoverColor} !important; `;
     }
     
