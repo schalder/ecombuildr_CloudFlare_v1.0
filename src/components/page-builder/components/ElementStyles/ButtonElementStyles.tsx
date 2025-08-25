@@ -101,19 +101,20 @@ export const ButtonElementStyles: React.FC<ButtonElementStylesProps> = ({
     return { angle, startColor, endColor };
   };
 
-  // Auto-detect background mode based on existing styles
+  // Auto-detect background mode based on existing styles - only on mount and tab change
   useEffect(() => {
     const hasGradient = getCurrentValue('backgroundImage', '').includes('linear-gradient');
     setBackgroundMode(hasGradient ? 'gradient' : 'solid');
     
-    // Parse existing gradient if present
+    // Parse existing gradient if present - only set initial values, don't override user changes
     if (hasGradient) {
       const backgroundImage = getCurrentValue('backgroundImage', '');
       const parsed = parseLinearGradient(backgroundImage);
       if (parsed) {
-        setGradientAngle(parsed.angle);
-        setGradientStart(parsed.startColor);
-        setGradientEnd(parsed.endColor);
+        // Only update state if it hasn't been set by user interaction
+        setGradientAngle(prev => prev === 135 ? parsed.angle : prev);
+        setGradientStart(prev => prev === '#3b82f6' ? parsed.startColor : prev);
+        setGradientEnd(prev => prev === '#8b5cf6' ? parsed.endColor : prev);
       }
       
       // Parse hover gradient if present
@@ -122,13 +123,13 @@ export const ButtonElementStyles: React.FC<ButtonElementStylesProps> = ({
         setEnableHoverGradient(true);
         const hoverParsed = parseLinearGradient(hoverBackgroundImage);
         if (hoverParsed) {
-          setHoverGradientAngle(hoverParsed.angle);
-          setHoverGradientStart(hoverParsed.startColor);
-          setHoverGradientEnd(hoverParsed.endColor);
+          setHoverGradientAngle(prev => prev === 135 ? hoverParsed.angle : prev);
+          setHoverGradientStart(prev => prev === '#2563eb' ? hoverParsed.startColor : prev);
+          setHoverGradientEnd(prev => prev === '#7c3aed' ? hoverParsed.endColor : prev);
         }
       }
     }
-  }, [responsiveTab, element.styles]);
+  }, [responsiveTab]); // Removed element.styles dependency to prevent resets
 
   // Generate gradient CSS
   const generateGradient = (start: string, end: string, angle: number) => {
