@@ -246,7 +246,6 @@ export interface ElementType {
   icon: React.ComponentType<{ className?: string }>;
   component: React.ComponentType<{ element: PageBuilderElement; isEditing?: boolean; deviceType?: 'desktop' | 'tablet' | 'mobile'; columnCount?: number; onUpdate?: (updates: Partial<PageBuilderElement>) => void; }>;
   defaultContent: Record<string, any>;
-  defaultStyles?: Record<string, any>;
   description?: string;
 }
 

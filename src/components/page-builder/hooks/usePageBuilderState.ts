@@ -1,6 +1,5 @@
 import { useState, useCallback } from 'react';
 import { PageBuilderData, PageBuilderElement, PageBuilderSection, PageBuilderRow } from '../types';
-import { elementRegistry } from '../elements/ElementRegistry';
 
 interface HistoryState {
   past: PageBuilderData[];
@@ -95,21 +94,17 @@ export const usePageBuilderState = (initialData?: PageBuilderData) => {
   const addElement = useCallback((elementType: string, targetPath: string, insertIndex?: number) => {
     const [sectionId, rowId, columnId] = targetPath.split('.');
     
-    // Try to use registry createElement first, fallback to manual creation
-    let newElement = elementRegistry.createElement(elementType, generateId());
     
-    if (!newElement) {
-      // Fallback for legacy elements
-      newElement = {
-        id: generateId(),
-        type: elementType,
-        content: getDefaultContent(elementType),
-        // Add default center alignment for text-based elements
-        ...(elementType === 'heading' || elementType === 'text' ? {
-          styles: { textAlign: 'center' }
-        } : {})
-      };
-    }
+    
+    const newElement: PageBuilderElement = {
+      id: generateId(),
+      type: elementType,
+      content: getDefaultContent(elementType),
+      // Add default center alignment for text-based elements
+      ...(elementType === 'heading' || elementType === 'text' ? {
+        styles: { textAlign: 'center' }
+      } : {})
+    };
 
     
 
