@@ -57,6 +57,50 @@ export const ButtonElementStyles: React.FC<ButtonElementStylesProps> = ({
     return currentStyles[prop] || element.styles?.[prop] || fallback;
   };
 
+  // Helper function to parse linear-gradient strings correctly
+  const parseLinearGradient = (gradientString: string) => {
+    if (!gradientString || !gradientString.includes('linear-gradient')) {
+      return null;
+    }
+
+    // Extract the content inside linear-gradient()
+    const match = gradientString.match(/linear-gradient\(([^)]+)\)/);
+    if (!match) return null;
+
+    const content = match[1];
+    
+    // Split by commas, but be careful about commas inside color functions
+    const parts = [];
+    let current = '';
+    let depth = 0;
+    
+    for (let i = 0; i < content.length; i++) {
+      const char = content[i];
+      if (char === '(') depth++;
+      if (char === ')') depth--;
+      
+      if (char === ',' && depth === 0) {
+        parts.push(current.trim());
+        current = '';
+      } else {
+        current += char;
+      }
+    }
+    if (current.trim()) parts.push(current.trim());
+
+    if (parts.length < 3) return null;
+
+    // First part should be the angle
+    const angleMatch = parts[0].match(/(\d+)deg/);
+    const angle = angleMatch ? parseInt(angleMatch[1]) : 135;
+
+    // Remaining parts are colors
+    const startColor = parts[1].trim();
+    const endColor = parts[2].trim();
+
+    return { angle, startColor, endColor };
+  };
+
   // Auto-detect background mode based on existing styles
   useEffect(() => {
     const hasGradient = getCurrentValue('backgroundImage', '').includes('linear-gradient');
@@ -65,22 +109,22 @@ export const ButtonElementStyles: React.FC<ButtonElementStylesProps> = ({
     // Parse existing gradient if present
     if (hasGradient) {
       const backgroundImage = getCurrentValue('backgroundImage', '');
-      const gradientMatch = backgroundImage.match(/linear-gradient\((\d+)deg,\s*([^,]+),\s*([^)]+)\)/);
-      if (gradientMatch) {
-        setGradientAngle(parseInt(gradientMatch[1]));
-        setGradientStart(gradientMatch[2].trim());
-        setGradientEnd(gradientMatch[3].trim());
+      const parsed = parseLinearGradient(backgroundImage);
+      if (parsed) {
+        setGradientAngle(parsed.angle);
+        setGradientStart(parsed.startColor);
+        setGradientEnd(parsed.endColor);
       }
       
       // Parse hover gradient if present
       const hoverBackgroundImage = getCurrentValue('hoverBackgroundImage', '');
       if (hoverBackgroundImage.includes('linear-gradient')) {
         setEnableHoverGradient(true);
-        const hoverGradientMatch = hoverBackgroundImage.match(/linear-gradient\((\d+)deg,\s*([^,]+),\s*([^)]+)\)/);
-        if (hoverGradientMatch) {
-          setHoverGradientAngle(parseInt(hoverGradientMatch[1]));
-          setHoverGradientStart(hoverGradientMatch[2].trim());
-          setHoverGradientEnd(hoverGradientMatch[3].trim());
+        const hoverParsed = parseLinearGradient(hoverBackgroundImage);
+        if (hoverParsed) {
+          setHoverGradientAngle(hoverParsed.angle);
+          setHoverGradientStart(hoverParsed.startColor);
+          setHoverGradientEnd(hoverParsed.endColor);
         }
       }
     }
