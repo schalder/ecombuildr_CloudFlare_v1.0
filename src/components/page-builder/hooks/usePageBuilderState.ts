@@ -127,6 +127,52 @@ export const usePageBuilderState = (initialData?: PageBuilderData) => {
     setSelectedElement(element);
   }, []);
 
+  const duplicateRow = useCallback((sectionId: string, rowId: string) => {
+    const newSections = pageData.sections.map(section => {
+      if (section.id === sectionId) {
+        const rowIndex = section.rows.findIndex(row => row.id === rowId);
+        if (rowIndex === -1) return section;
+        
+        const originalRow = section.rows[rowIndex];
+        
+        // Deep clone the row with new IDs
+        const clonedRow = {
+          ...originalRow,
+          id: generateId(),
+          anchor: `row-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          columns: originalRow.columns.map(column => ({
+            ...column,
+            id: generateId(),
+            anchor: `col-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            elements: column.elements.map(element => ({
+              ...element,
+              id: generateId(),
+              anchor: `${element.type}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+            }))
+          }))
+        };
+
+        // Insert cloned row right after the original
+        const newRows = [...section.rows];
+        newRows.splice(rowIndex + 1, 0, clonedRow);
+
+        return {
+          ...section,
+          rows: newRows
+        };
+      }
+      return section;
+    });
+
+    const newData: PageBuilderData = {
+      ...pageData,
+      sections: newSections
+    };
+
+    updatePageData(newData);
+    recordHistory(newData);
+  }, []);
+
   const updateElement = useCallback((elementId: string, updates: Partial<PageBuilderElement>) => {
     const updateElementRecursive = (sections: PageBuilderSection[]): PageBuilderSection[] => {
       return sections.map(section => ({
@@ -429,6 +475,7 @@ export const usePageBuilderState = (initialData?: PageBuilderData) => {
     moveSection,
     removeElement,
     duplicateColumn,
+    duplicateRow,
     setDeviceType,
     setPreviewMode,
     undo,

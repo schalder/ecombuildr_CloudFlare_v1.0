@@ -19,6 +19,7 @@ interface RowRendererProps {
   onMoveElement?: (elementId: string, sectionId: string, rowId: string, columnId: string, insertIndex: number) => void;
   onRemoveElement: (elementId: string) => void;
   onDuplicateColumn?: (sectionId: string, rowId: string, columnId: string) => void;
+  onDuplicateRow?: (sectionId: string, rowId: string) => void;
   onAddRowAfter: () => void;
 }
 
@@ -34,6 +35,7 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
   onMoveElement,
   onRemoveElement,
   onDuplicateColumn,
+  onDuplicateRow,
   onAddRowAfter
 }) => {
   const [isHovered, setIsHovered] = React.useState(false);
@@ -68,7 +70,9 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
 
   const handleDuplicateRow = (e: React.MouseEvent) => {
     e.stopPropagation();
-    // TODO: Implement row duplication
+    if (onDuplicateRow) {
+      onDuplicateRow(sectionId, row.id);
+    }
   };
 
   const getDeviceSpecificGridStyle = () => {

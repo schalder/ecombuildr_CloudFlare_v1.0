@@ -18,6 +18,7 @@ interface CanvasAreaProps {
   onMoveElement?: (elementId: string, sectionId: string, rowId: string, columnId: string, insertIndex: number) => void;
   onRemoveElement: (elementId: string) => void;
   onDuplicateColumn?: (sectionId: string, rowId: string, columnId: string) => void;
+  onDuplicateRow?: (sectionId: string, rowId: string) => void;
   onAddSection?: () => void;
   onAddRow?: (sectionId: string) => void;
 }
@@ -33,6 +34,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
   onMoveElement,
   onRemoveElement,
   onDuplicateColumn,
+  onDuplicateRow,
   onAddSection,
   onAddRow
 }) => {
@@ -156,9 +158,10 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
                     onSelectElement={onSelectElement}
                     onUpdateElement={onUpdateElement}
                     onAddElement={onAddElement}
-                    onMoveElement={onMoveElement}
-                    onRemoveElement={onRemoveElement}
-                    onDuplicateColumn={onDuplicateColumn}
+          onMoveElement={onMoveElement}
+          onRemoveElement={onRemoveElement}
+          onDuplicateColumn={onDuplicateColumn}
+          onDuplicateRow={onDuplicateRow}
                     onAddSectionAfter={() => {}}
                     onAddRowAfter={() => {}}
                   />
