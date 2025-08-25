@@ -140,12 +140,24 @@ export const ButtonElementStyles: React.FC<ButtonElementStylesProps> = ({
   const updateGradient = () => {
     if (backgroundMode === 'gradient') {
       const gradient = generateGradient(gradientStart, gradientEnd, gradientAngle);
+      
+      // Update both base and responsive styles for immediate application
+      onStyleUpdate('backgroundImage', gradient);
       handleResponsiveUpdate('backgroundImage', gradient);
+      
+      // Clear solid background properties when using gradient
+      onStyleUpdate('backgroundColor', '');
+      handleResponsiveUpdate('backgroundColor', '');
       
       if (enableHoverGradient) {
         const hoverGradient = generateGradient(hoverGradientStart, hoverGradientEnd, hoverGradientAngle);
+        onStyleUpdate('hoverBackgroundImage', hoverGradient);
         handleResponsiveUpdate('hoverBackgroundImage', hoverGradient);
+        // Clear hover solid color when using hover gradient
+        onStyleUpdate('hoverBackgroundColor', '');
+        handleResponsiveUpdate('hoverBackgroundColor', '');
       } else {
+        onStyleUpdate('hoverBackgroundImage', '');
         handleResponsiveUpdate('hoverBackgroundImage', '');
       }
     }
@@ -311,11 +323,20 @@ export const ButtonElementStyles: React.FC<ButtonElementStylesProps> = ({
           <Tabs value={backgroundMode} onValueChange={(value) => {
             setBackgroundMode(value as 'solid' | 'gradient');
             if (value === 'solid') {
+              // Clear gradient properties when switching to solid
+              onStyleUpdate('backgroundImage', '');
               handleResponsiveUpdate('backgroundImage', '');
+              onStyleUpdate('hoverBackgroundImage', '');
               handleResponsiveUpdate('hoverBackgroundImage', '');
             } else {
-              // Initialize gradient when switching to gradient mode
+              // Clear solid properties and initialize gradient when switching to gradient mode
+              onStyleUpdate('backgroundColor', '');
+              handleResponsiveUpdate('backgroundColor', '');
+              onStyleUpdate('hoverBackgroundColor', '');
+              handleResponsiveUpdate('hoverBackgroundColor', '');
+              
               const gradient = generateGradient(gradientStart, gradientEnd, gradientAngle);
+              onStyleUpdate('backgroundImage', gradient);
               handleResponsiveUpdate('backgroundImage', gradient);
             }
           }}>
@@ -333,7 +354,14 @@ export const ButtonElementStyles: React.FC<ButtonElementStylesProps> = ({
               <Label className="text-xs">Background Color</Label>
               <ColorPicker
                 color={getCurrentValue('backgroundColor', 'hsl(142 76% 36%)')}
-                onChange={(color) => handleResponsiveUpdate('backgroundColor', color)}
+                onChange={(color) => {
+                  // Update both base and responsive styles for immediate application
+                  onStyleUpdate('backgroundColor', color);
+                  handleResponsiveUpdate('backgroundColor', color);
+                  // Clear gradient properties when using solid color
+                  onStyleUpdate('backgroundImage', '');
+                  handleResponsiveUpdate('backgroundImage', '');
+                }}
               />
             </div>
 
@@ -341,7 +369,14 @@ export const ButtonElementStyles: React.FC<ButtonElementStylesProps> = ({
               <Label className="text-xs">Background Hover Color</Label>
               <ColorPicker
                 color={getCurrentValue('hoverBackgroundColor', '')}
-                onChange={(color) => handleResponsiveUpdate('hoverBackgroundColor', color)}
+                onChange={(color) => {
+                  // Update both base and responsive styles for immediate application
+                  onStyleUpdate('hoverBackgroundColor', color);
+                  handleResponsiveUpdate('hoverBackgroundColor', color);
+                  // Clear hover gradient when using solid hover color
+                  onStyleUpdate('hoverBackgroundImage', '');
+                  handleResponsiveUpdate('hoverBackgroundImage', '');
+                }}
               />
             </div>
           </>

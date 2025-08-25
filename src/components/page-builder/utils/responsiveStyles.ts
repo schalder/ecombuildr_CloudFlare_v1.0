@@ -17,6 +17,11 @@ export function generateResponsiveCSS(elementId: string, styles: any): string {
     if (desktopProps) {
       css += `.element-${elementId} { ${desktopProps}; }`;
     }
+    
+    // Add background-image with !important for gradients to override button defaults
+    if (desktop.backgroundImage) {
+      css += `.element-${elementId} { background-image: ${desktop.backgroundImage} !important; }`;
+    }
     if (hoverColor || hoverBackgroundColor || hoverBackgroundImage) {
       const hoverPairs: string[] = [];
       if (hoverColor) hoverPairs.push(`color: ${hoverColor} !important`);
@@ -40,9 +45,15 @@ export function generateResponsiveCSS(elementId: string, styles: any): string {
       .map(([prop, value]) => `${kebabCase(prop)}: ${value}`)
       .join('; ');
     
-    if (mobileProps || mHoverColor || mHoverBg || mHoverBgImg) {
+    if (mobileProps || mHoverColor || mHoverBg || mHoverBgImg || mobile.backgroundImage) {
       css += `@media (max-width: 767px) { `;
       if (mobileProps) css += `.element-${elementId} { ${mobileProps}; }`;
+      
+      // Add mobile background-image with !important for gradients
+      if (mobile.backgroundImage) {
+        css += `.element-${elementId} { background-image: ${mobile.backgroundImage} !important; }`;
+      }
+      
       if (mHoverColor || mHoverBg || mHoverBgImg) {
         const hoverPairs: string[] = [];
         if (mHoverColor) hoverPairs.push(`color: ${mHoverColor} !important`);
@@ -63,6 +74,11 @@ export function generateResponsiveCSS(elementId: string, styles: any): string {
     // Add forced mobile styles for builder preview
     if (mobileProps) {
       css += `.pb-mobile .element-${elementId} { ${mobileProps}; }`;
+    }
+    
+    // Add forced mobile background-image for builder preview
+    if (mobile.backgroundImage) {
+      css += `.pb-mobile .element-${elementId} { background-image: ${mobile.backgroundImage} !important; }`;
     }
     if (mHoverColor || mHoverBg || mHoverBgImg) {
       const hoverPairs: string[] = [];
