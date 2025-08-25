@@ -16,12 +16,14 @@ import { IconPicker } from '@/components/ui/icon-picker';
 interface ButtonElementStylesProps {
   element: PageBuilderElement;
   onStyleUpdate: (property: string, value: any) => void;
+  onContentUpdate: (property: string, value: any) => void;
 }
 
 
 export const ButtonElementStyles: React.FC<ButtonElementStylesProps> = ({
   element,
   onStyleUpdate,
+  onContentUpdate
 }) => {
   const [responsiveTab, setResponsiveTab] = useState<'desktop' | 'mobile'>('desktop');
   const [dimensionsOpen, setDimensionsOpen] = useState(false);
@@ -96,7 +98,7 @@ export const ButtonElementStyles: React.FC<ButtonElementStylesProps> = ({
           
           <IconPicker
             value={element.content.icon || ''}
-            onChange={handleIconChange}
+            onChange={(value) => onContentUpdate('icon', value)}
           />
           
           <p className="text-xs text-muted-foreground">

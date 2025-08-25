@@ -118,7 +118,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
   const renderElementStyles = () => {
     // Button elements get their own specialized component
     if (selectedElement.type === 'button') {
-      return <ButtonElementStyles key={`button-${selectedElement.id}`} element={selectedElement} onStyleUpdate={handleStyleUpdate} />;
+      return <ButtonElementStyles key={`button-${selectedElement.id}`} element={selectedElement} onStyleUpdate={handleStyleUpdate} onContentUpdate={handleContentUpdate} />;
     }
     
     // Order Confirmation specialized styles

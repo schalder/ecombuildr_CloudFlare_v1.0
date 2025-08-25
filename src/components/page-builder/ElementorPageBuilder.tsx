@@ -820,6 +820,23 @@ const ElementorPageBuilderContent: React.FC<ElementorPageBuilderProps> = memo(({
       };
     }
 
+    // Default CTA styles for buttons
+    if (elementType === 'button') {
+      newElement.styles = {
+        backgroundColor: 'hsl(142.1 76.2% 36.3%)', // --success
+        color: 'hsl(0 0% 100%)', // white text
+        paddingTop: '12px',
+        paddingRight: '24px',
+        paddingBottom: '12px',
+        paddingLeft: '24px',
+        borderRadius: '6px',
+        fontWeight: '600',
+        fontSize: '14px',
+        textAlign: 'center',
+        boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)'
+      };
+    }
+
     const newData = {
       ...data,
       sections: data.sections.map(section =>
