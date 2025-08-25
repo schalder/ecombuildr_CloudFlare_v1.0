@@ -18,6 +18,7 @@ interface SectionRendererProps {
   onAddElement: (sectionId: string, rowId: string, columnId: string, elementType: string, insertIndex?: number) => void;
   onMoveElement?: (elementId: string, sectionId: string, rowId: string, columnId: string, insertIndex: number) => void;
   onRemoveElement: (elementId: string) => void;
+  onDuplicateColumn?: (sectionId: string, rowId: string, columnId: string) => void;
   onAddSectionAfter: () => void;
   onAddRowAfter: (rowIndex: number) => void;
 }
@@ -33,6 +34,7 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({
   onAddElement,
   onMoveElement,
   onRemoveElement,
+  onDuplicateColumn,
   onAddSectionAfter,
   onAddRowAfter
 }) => {
@@ -242,6 +244,7 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({
                 onAddElement={onAddElement}
                 onMoveElement={onMoveElement}
                 onRemoveElement={onRemoveElement}
+                onDuplicateColumn={onDuplicateColumn}
                 onAddRowAfter={() => onAddRowAfter(rowIndex)}
               />
             ))}

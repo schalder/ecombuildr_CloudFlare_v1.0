@@ -18,6 +18,7 @@ interface RowRendererProps {
   onAddElement: (sectionId: string, rowId: string, columnId: string, elementType: string, insertIndex?: number) => void;
   onMoveElement?: (elementId: string, sectionId: string, rowId: string, columnId: string, insertIndex: number) => void;
   onRemoveElement: (elementId: string) => void;
+  onDuplicateColumn?: (sectionId: string, rowId: string, columnId: string) => void;
   onAddRowAfter: () => void;
 }
 
@@ -32,6 +33,7 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
   onAddElement,
   onMoveElement,
   onRemoveElement,
+  onDuplicateColumn,
   onAddRowAfter
 }) => {
   const [isHovered, setIsHovered] = React.useState(false);
@@ -237,6 +239,7 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
               onAddElement={onAddElement}
               onMoveElement={onMoveElement}
               onRemoveElement={onRemoveElement}
+              onDuplicateColumn={onDuplicateColumn}
             />
         ))}
       </div>

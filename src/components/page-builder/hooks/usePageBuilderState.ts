@@ -36,6 +36,73 @@ export const usePageBuilderState = (initialData?: PageBuilderData) => {
     }));
   }, []);
 
+  const duplicateColumn = useCallback((sectionId: string, rowId: string, columnId: string) => {
+    const newSections = pageData.sections.map(section => {
+      if (section.id === sectionId) {
+        return {
+          ...section,
+          rows: section.rows.map(row => {
+            if (row.id === rowId) {
+              const columnIndex = row.columns.findIndex(col => col.id === columnId);
+              if (columnIndex === -1) return row;
+
+              const originalColumn = row.columns[columnIndex];
+              
+              // Deep clone the column with new IDs
+              const clonedColumn = {
+                ...originalColumn,
+                id: generateId(),
+                anchor: `col-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                elements: originalColumn.elements.map(element => ({
+                  ...element,
+                  id: generateId(),
+                  anchor: `${element.type}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+                }))
+              };
+
+              // Insert cloned column right after the original
+              const newColumns = [...row.columns];
+              newColumns.splice(columnIndex + 1, 0, clonedColumn);
+
+              // Limit to 6 columns maximum
+              if (newColumns.length > 6) {
+                return row;
+              }
+
+              // Update column layout to equal distribution
+              const columnCount = newColumns.length;
+              let newColumnLayout: string;
+              
+              switch (columnCount) {
+                case 2: newColumnLayout = '1-1'; break;
+                case 3: newColumnLayout = '1-1-1'; break;
+                case 4: newColumnLayout = '1-1-1-1'; break;
+                case 5: newColumnLayout = '1-1-1-1-1'; break;
+                case 6: newColumnLayout = '1-1-1-1-1-1'; break;
+                default: newColumnLayout = row.columnLayout;
+              }
+
+              return {
+                ...row,
+                columns: newColumns,
+                columnLayout: newColumnLayout as any
+              };
+            }
+            return row;
+          })
+        };
+      }
+      return section;
+    });
+
+    const newData: PageBuilderData = {
+      ...pageData,
+      sections: newSections
+    };
+
+    recordHistory(newData);
+  }, [pageData, recordHistory]);
+
   const undo = useCallback(() => {
     if (canUndo) {
       setHistory(prev => ({
@@ -361,6 +428,7 @@ export const usePageBuilderState = (initialData?: PageBuilderData) => {
     moveRow,
     moveSection,
     removeElement,
+    duplicateColumn,
     setDeviceType,
     setPreviewMode,
     undo,
