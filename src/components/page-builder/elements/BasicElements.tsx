@@ -918,7 +918,8 @@ export const registerBasicElements = () => {
     description: 'Rich text content'
   });
 
-  // Button
+  console.log('Registering button element with RectangleHorizontal icon');
+  // Button - Updated to use RectangleHorizontal instead of Quote
   elementRegistry.register({
     id: 'button',
     name: 'Button',

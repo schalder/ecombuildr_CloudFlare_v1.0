@@ -39,14 +39,14 @@ const buttonPresets = {
     name: 'Gradient Success',
     description: 'Success button with gradient',
     styles: {
-      background: 'linear-gradient(135deg, hsl(142 76% 36%), hsl(142 76% 46%))',
+      backgroundColor: 'hsl(142 76% 36%)',
+      backgroundImage: 'linear-gradient(135deg, hsl(142 76% 36%), hsl(142 76% 46%))',
       color: 'hsl(0 0% 100%)',
       borderRadius: '10px',
       fontWeight: '600',
       fontSize: '15px',
       padding: '14px 28px',
       borderWidth: '0px',
-      hoverBackgroundColor: 'hsl(142 76% 32%)',
       boxShadow: '0 6px 20px hsl(142 76% 36% / 0.4)',
       transition: 'all 0.3s ease'
     }
@@ -89,7 +89,8 @@ const buttonPresets = {
     name: 'Vibrant Accent',
     description: 'Eye-catching accent button',
     styles: {
-      background: 'linear-gradient(135deg, hsl(271 91% 65%), hsl(312 73% 57%))',
+      backgroundColor: 'hsl(271 91% 65%)',
+      backgroundImage: 'linear-gradient(135deg, hsl(271 91% 65%), hsl(312 73% 57%))',
       color: 'hsl(0 0% 100%)',
       borderRadius: '12px',
       fontWeight: '700',
