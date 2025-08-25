@@ -523,9 +523,36 @@ const ButtonElement: React.FC<{
   // Handle width for full width behavior
   const isFullWidth = elementStyles.width === '100%';
   
-  // Generate responsive CSS
+  // Generate responsive CSS including hover effects
   const responsiveCSS = generateResponsiveCSS(element.id, element.styles);
   
+  // Generate hover styles for the button
+  const generateHoverCSS = () => {
+    const responsiveStyles = element.styles?.responsive || {};
+    const currentDeviceStyles = responsiveStyles[deviceType === 'tablet' ? 'desktop' : deviceType] || {};
+    
+    let hoverCSS = '';
+    
+    // Apply hover background color
+    if ((currentDeviceStyles as any).hoverBackgroundColor || (element.styles as any)?.hoverBackgroundColor) {
+      const hoverBgColor = (currentDeviceStyles as any).hoverBackgroundColor || (element.styles as any)?.hoverBackgroundColor;
+      hoverCSS += `background-color: ${hoverBgColor} !important; `;
+    }
+    
+    // Apply hover background image (gradient)
+    if ((currentDeviceStyles as any).hoverBackgroundImage || (element.styles as any)?.hoverBackgroundImage) {
+      const hoverBgImage = (currentDeviceStyles as any).hoverBackgroundImage || (element.styles as any)?.hoverBackgroundImage;
+      hoverCSS += `background-image: ${hoverBgImage} !important; `;
+    }
+    
+    // Apply hover text color
+    if ((currentDeviceStyles as any).hoverColor || (element.styles as any)?.hoverColor) {
+      const hoverColor = (currentDeviceStyles as any).hoverColor || (element.styles as any)?.hoverColor;
+      hoverCSS += `color: ${hoverColor} !important; `;
+    }
+    
+    return hoverCSS ? `.element-${element.id}:hover { ${hoverCSS} }` : '';
+  };
 
   const customClassName = [
     `element-${element.id}`,
@@ -537,6 +564,8 @@ const ButtonElement: React.FC<{
     <>
       {/* Inject responsive CSS */}
       {responsiveCSS && <style>{responsiveCSS}</style>}
+      {/* Inject hover CSS */}
+      <style>{generateHoverCSS()}</style>
       
       <div className={containerClass}>
         <button 
