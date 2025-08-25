@@ -128,7 +128,10 @@ export const ColumnRenderer: React.FC<ColumnRendererProps> = ({
     >
       {/* Column Controls */}
       {!isPreviewMode && isHovered && (
-        <div className="absolute -top-6 left-0 flex items-center space-x-1 bg-primary text-primary-foreground px-2 py-1 rounded-md text-xs z-10">
+        <div 
+          className="absolute top-2 left-2 flex items-center space-x-1 bg-primary text-primary-foreground px-2 py-1 rounded-md text-xs z-50"
+          data-builder-ui="true"
+        >
           <GripVertical className="h-3 w-3" />
           <span>Column</span>
           {onDuplicateColumn && columnCount < 6 && (
