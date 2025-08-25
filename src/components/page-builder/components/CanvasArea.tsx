@@ -17,8 +17,6 @@ interface CanvasAreaProps {
   onAddElement: (sectionId: string, rowId: string, columnId: string, elementType: string, insertIndex?: number) => void;
   onMoveElement?: (elementId: string, sectionId: string, rowId: string, columnId: string, insertIndex: number) => void;
   onRemoveElement: (elementId: string) => void;
-  onDuplicateColumn?: (sectionId: string, rowId: string, columnId: string) => void;
-  onDuplicateRow?: (sectionId: string, rowId: string) => void;
   onAddSection?: () => void;
   onAddRow?: (sectionId: string) => void;
 }
@@ -33,8 +31,6 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
   onAddElement,
   onMoveElement,
   onRemoveElement,
-  onDuplicateColumn,
-  onDuplicateRow,
   onAddSection,
   onAddRow
 }) => {
@@ -148,23 +144,21 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
           ) : (
             <div className="space-y-0">
                {pageData.sections.map((section, index) => (
-                  <SectionRenderer
-                    key={section.id}
-                    section={section}
-                    sectionIndex={index}
-                    isSelected={selectedElement?.id === section.id}
-                    isPreviewMode={isPreviewMode}
-                    deviceType={deviceType}
-                    onSelectElement={onSelectElement}
-                    onUpdateElement={onUpdateElement}
-                    onAddElement={onAddElement}
-          onMoveElement={onMoveElement}
-          onRemoveElement={onRemoveElement}
-          onDuplicateColumn={onDuplicateColumn}
-          onDuplicateRow={onDuplicateRow}
-                    onAddSectionAfter={() => {}}
-                    onAddRowAfter={() => {}}
-                  />
+                 <SectionRenderer
+                   key={section.id}
+                   section={section}
+                   sectionIndex={index}
+                   isSelected={selectedElement?.id === section.id}
+                   isPreviewMode={isPreviewMode}
+                   deviceType={deviceType}
+                   onSelectElement={onSelectElement}
+                   onUpdateElement={onUpdateElement}
+                   onAddElement={onAddElement}
+                   onMoveElement={onMoveElement}
+                   onRemoveElement={onRemoveElement}
+                   onAddSectionAfter={() => {}}
+                   onAddRowAfter={() => {}}
+                 />
                ))}
             </div>
           )}

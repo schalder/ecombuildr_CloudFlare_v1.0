@@ -18,8 +18,6 @@ interface RowRendererProps {
   onAddElement: (sectionId: string, rowId: string, columnId: string, elementType: string, insertIndex?: number) => void;
   onMoveElement?: (elementId: string, sectionId: string, rowId: string, columnId: string, insertIndex: number) => void;
   onRemoveElement: (elementId: string) => void;
-  onDuplicateColumn?: (sectionId: string, rowId: string, columnId: string) => void;
-  onDuplicateRow?: (sectionId: string, rowId: string) => void;
   onAddRowAfter: () => void;
 }
 
@@ -34,8 +32,6 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
   onAddElement,
   onMoveElement,
   onRemoveElement,
-  onDuplicateColumn,
-  onDuplicateRow,
   onAddRowAfter
 }) => {
   const [isHovered, setIsHovered] = React.useState(false);
@@ -70,9 +66,7 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
 
   const handleDuplicateRow = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (onDuplicateRow) {
-      onDuplicateRow(sectionId, row.id);
-    }
+    // TODO: Implement row duplication
   };
 
   const getDeviceSpecificGridStyle = () => {
@@ -192,10 +186,7 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
     >
       {/* Row Controls */}
       {!isPreviewMode && isHovered && (
-        <div 
-          className="absolute top-2 left-2 flex items-center space-x-1 bg-primary text-primary-foreground px-2 py-1 rounded-md text-xs z-50"
-          data-builder-ui="true"
-        >
+        <div className="absolute -top-8 left-0 flex items-center space-x-1 bg-primary text-primary-foreground px-2 py-1 rounded-md text-xs z-10">
           <GripVertical className="h-3 w-3" />
           <Columns className="h-3 w-3" />
           <span>Row</span>
@@ -205,7 +196,6 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
               variant="ghost"
               className="h-6 w-6 p-0 hover:bg-secondary-foreground/20"
               onClick={handleDuplicateRow}
-              title="Duplicate Row"
             >
               <Copy className="h-3 w-3" />
             </Button>
@@ -214,7 +204,6 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
               variant="ghost"
               className="h-6 w-6 p-0 hover:bg-destructive/20"
               onClick={handleDeleteRow}
-              title="Delete Row"
             >
               <Trash2 className="h-3 w-3" />
             </Button>
@@ -226,7 +215,6 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
                 e.stopPropagation();
                 onAddRowAfter();
               }}
-              title="Add Row Below"
             >
               <Plus className="h-3 w-3" />
             </Button>
@@ -249,7 +237,6 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
               onAddElement={onAddElement}
               onMoveElement={onMoveElement}
               onRemoveElement={onRemoveElement}
-              onDuplicateColumn={onDuplicateColumn}
             />
         ))}
       </div>

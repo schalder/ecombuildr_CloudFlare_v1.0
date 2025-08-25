@@ -1,6 +1,6 @@
 import React from 'react';
 import { useDrop } from 'react-dnd';
-import { Plus, GripVertical, Copy } from 'lucide-react';
+import { Plus, GripVertical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { PageBuilderColumn, PageBuilderElement } from '../types';
 import { ElementRenderer } from './ElementRenderer';
@@ -21,7 +21,6 @@ interface ColumnRendererProps {
   onAddElement: (sectionId: string, rowId: string, columnId: string, elementType: string, insertIndex?: number) => void;
   onRemoveElement: (elementId: string) => void;
   onMoveElement?: (elementId: string, sectionId: string, rowId: string, columnId: string, insertIndex: number) => void;
-  onDuplicateColumn?: (sectionId: string, rowId: string, columnId: string) => void;
 }
 
 export const ColumnRenderer: React.FC<ColumnRendererProps> = ({
@@ -35,8 +34,7 @@ export const ColumnRenderer: React.FC<ColumnRendererProps> = ({
   onUpdateElement,
   onAddElement,
   onRemoveElement,
-  onMoveElement,
-  onDuplicateColumn
+  onMoveElement
 }) => {
   const [isHovered, setIsHovered] = React.useState(false);
   
@@ -70,13 +68,6 @@ export const ColumnRenderer: React.FC<ColumnRendererProps> = ({
 
   const handleAddElement = () => {
     onAddElement(sectionId, rowId, column.id, 'text');
-  };
-
-  const handleDuplicateColumn = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (onDuplicateColumn) {
-      onDuplicateColumn(sectionId, rowId, column.id);
-    }
   };
 
   const getColumnStyles = (): React.CSSProperties => {
@@ -127,29 +118,12 @@ export const ColumnRenderer: React.FC<ColumnRendererProps> = ({
       onClick={handleColumnClick}
     >
       {/* Column Controls */}
-      {!isPreviewMode && isHovered && (() => {
-        console.log('Debug - onDuplicateColumn:', !!onDuplicateColumn, 'columnCount:', columnCount);
-        return (
-          <div 
-            className="absolute top-2 left-2 flex items-center space-x-1 bg-primary text-primary-foreground px-2 py-1 rounded-md text-xs z-50"
-            data-builder-ui="true"
-          >
-            <GripVertical className="h-3 w-3" />
-            <span>Column</span>
-            {onDuplicateColumn && columnCount < 6 && (
-              <Button
-                size="sm"
-                variant="ghost"
-                className="h-5 w-5 p-0 hover:bg-primary-foreground/20 ml-1"
-                onClick={handleDuplicateColumn}
-                title="Duplicate Column"
-              >
-                <Copy className="h-3 w-3" />
-              </Button>
-            )}
-          </div>
-        );
-      })()}
+      {!isPreviewMode && isHovered && column.elements.length === 0 && (
+        <div className="absolute -top-6 left-0 flex items-center space-x-1 bg-primary text-primary-foreground px-2 py-1 rounded-md text-xs z-10">
+          <GripVertical className="h-3 w-3" />
+          <span>Column</span>
+        </div>
+      )}
 
       {column.elements.length === 0 ? (
         <div className="min-h-[60px] flex items-center justify-center">

@@ -36,73 +36,6 @@ export const usePageBuilderState = (initialData?: PageBuilderData) => {
     }));
   }, []);
 
-  const duplicateColumn = useCallback((sectionId: string, rowId: string, columnId: string) => {
-    const newSections = pageData.sections.map(section => {
-      if (section.id === sectionId) {
-        return {
-          ...section,
-          rows: section.rows.map(row => {
-            if (row.id === rowId) {
-              const columnIndex = row.columns.findIndex(col => col.id === columnId);
-              if (columnIndex === -1) return row;
-
-              const originalColumn = row.columns[columnIndex];
-              
-              // Deep clone the column with new IDs
-              const clonedColumn = {
-                ...originalColumn,
-                id: generateId(),
-                anchor: `col-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-                elements: originalColumn.elements.map(element => ({
-                  ...element,
-                  id: generateId(),
-                  anchor: `${element.type}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-                }))
-              };
-
-              // Insert cloned column right after the original
-              const newColumns = [...row.columns];
-              newColumns.splice(columnIndex + 1, 0, clonedColumn);
-
-              // Limit to 6 columns maximum
-              if (newColumns.length > 6) {
-                return row;
-              }
-
-              // Update column layout to equal distribution
-              const columnCount = newColumns.length;
-              let newColumnLayout: string;
-              
-              switch (columnCount) {
-                case 2: newColumnLayout = '1-1'; break;
-                case 3: newColumnLayout = '1-1-1'; break;
-                case 4: newColumnLayout = '1-1-1-1'; break;
-                case 5: newColumnLayout = '1-1-1-1-1'; break;
-                case 6: newColumnLayout = '1-1-1-1-1-1'; break;
-                default: newColumnLayout = row.columnLayout;
-              }
-
-              return {
-                ...row,
-                columns: newColumns,
-                columnLayout: newColumnLayout as any
-              };
-            }
-            return row;
-          })
-        };
-      }
-      return section;
-    });
-
-    const newData: PageBuilderData = {
-      ...pageData,
-      sections: newSections
-    };
-
-    recordHistory(newData);
-  }, [pageData, recordHistory]);
-
   const undo = useCallback(() => {
     if (canUndo) {
       setHistory(prev => ({
@@ -126,51 +59,6 @@ export const usePageBuilderState = (initialData?: PageBuilderData) => {
   const selectElement = useCallback((element: PageBuilderElement | undefined) => {
     setSelectedElement(element);
   }, []);
-
-  const duplicateRow = useCallback((sectionId: string, rowId: string) => {
-    const newSections = pageData.sections.map(section => {
-      if (section.id === sectionId) {
-        const rowIndex = section.rows.findIndex(row => row.id === rowId);
-        if (rowIndex === -1) return section;
-        
-        const originalRow = section.rows[rowIndex];
-        
-        // Deep clone the row with new IDs
-        const clonedRow = {
-          ...originalRow,
-          id: generateId(),
-          anchor: `row-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-          columns: originalRow.columns.map(column => ({
-            ...column,
-            id: generateId(),
-            anchor: `col-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-            elements: column.elements.map(element => ({
-              ...element,
-              id: generateId(),
-              anchor: `${element.type}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-            }))
-          }))
-        };
-
-        // Insert cloned row right after the original
-        const newRows = [...section.rows];
-        newRows.splice(rowIndex + 1, 0, clonedRow);
-
-        return {
-          ...section,
-          rows: newRows
-        };
-      }
-      return section;
-    });
-
-    const newData: PageBuilderData = {
-      ...pageData,
-      sections: newSections
-    };
-
-    recordHistory(newData);
-  }, [pageData, recordHistory]);
 
   const updateElement = useCallback((elementId: string, updates: Partial<PageBuilderElement>) => {
     const updateElementRecursive = (sections: PageBuilderSection[]): PageBuilderSection[] => {
@@ -473,8 +361,6 @@ export const usePageBuilderState = (initialData?: PageBuilderData) => {
     moveRow,
     moveSection,
     removeElement,
-    duplicateColumn,
-    duplicateRow,
     setDeviceType,
     setPreviewMode,
     undo,
