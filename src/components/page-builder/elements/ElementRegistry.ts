@@ -1,4 +1,4 @@
-import { ElementType } from '../types';
+import { ElementType, PageBuilderElement } from '../types';
 
 class ElementRegistryClass {
   private elements: Map<string, ElementType> = new Map();
@@ -17,6 +17,19 @@ class ElementRegistryClass {
 
   getByCategory(category: ElementType['category']): ElementType[] {
     return this.getAll().filter(element => element.category === category);
+  }
+
+  // Create element with default styles applied
+  createElement(elementType: string, id: string): PageBuilderElement | null {
+    const type = this.get(elementType);
+    if (!type) return null;
+
+    return {
+      id,
+      type: elementType,
+      content: { ...type.defaultContent },
+      styles: type.defaultStyles ? { ...type.defaultStyles } : undefined
+    };
   }
 }
 

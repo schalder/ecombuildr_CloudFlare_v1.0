@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Type, Heading1, Heading2, Heading3, Image, List, Quote, Minus, Play } from 'lucide-react';
+import { Type, Heading1, Heading2, Heading3, Image, List, Square, Minus, Play } from 'lucide-react';
 import { PageBuilderElement, ElementType } from '../types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -399,6 +399,11 @@ const ButtonElement: React.FC<{
   const text = element.content.text || 'Button';
   const url = element.content.url || '#';
   const target = element.content.target || '_blank';
+  
+  // Get icon from responsive styles
+  const buttonResponsiveStyles = element.styles?.responsive || {};
+  const buttonCurrentDeviceStyles = buttonResponsiveStyles[deviceType === 'tablet' ? 'desktop' : deviceType] || {};
+  const iconName = (buttonCurrentDeviceStyles as any).icon || (element.styles as any)?.icon;
 
   const linkType: 'page' | 'url' | 'scroll' | undefined = element.content.linkType || (element.content.url ? 'url' : undefined);
   const pageSlug: string | undefined = element.content.pageSlug;
@@ -491,9 +496,9 @@ const ButtonElement: React.FC<{
   };
 
   // Get responsive alignment
-  const responsiveStyles = element.styles?.responsive || {};
-  const currentDeviceStyles = responsiveStyles[deviceType === 'tablet' ? 'desktop' : deviceType] || {};
-  const alignment = currentDeviceStyles.textAlign || element.styles?.textAlign || 'left';
+  const alignmentResponsiveStyles = element.styles?.responsive || {};
+  const alignmentCurrentDeviceStyles = alignmentResponsiveStyles[deviceType === 'tablet' ? 'desktop' : deviceType] || {};
+  const alignment = alignmentCurrentDeviceStyles.textAlign || element.styles?.textAlign || 'left';
   
   const containerClass = 
     alignment === 'center' ? 'flex justify-center' :
@@ -526,6 +531,20 @@ const ButtonElement: React.FC<{
   // Generate responsive CSS
   const responsiveCSS = generateResponsiveCSS(element.id, element.styles);
   
+  // Generate hover styles CSS
+  const hoverBackgroundColor = (buttonCurrentDeviceStyles as any).hoverBackgroundColor || (element.styles as any)?.hoverBackgroundColor;
+  const hoverBackgroundImage = (buttonCurrentDeviceStyles as any).hoverBackgroundImage || (element.styles as any)?.hoverBackgroundImage;
+  const hoverColor = (buttonCurrentDeviceStyles as any).hoverColor || (element.styles as any)?.hoverColor;
+  
+  const hoverCSS = (hoverBackgroundColor || hoverBackgroundImage || hoverColor) ? `
+    .element-${element.id}:hover {
+      ${hoverBackgroundColor ? `background-color: ${hoverBackgroundColor} !important;` : ''}
+      ${hoverBackgroundImage ? `background-image: ${hoverBackgroundImage} !important;` : ''}
+      ${hoverColor ? `color: ${hoverColor} !important;` : ''}
+      transform: translateY(-1px);
+    }
+  ` : '';
+  
 
   const customClassName = [
     `element-${element.id}`,
@@ -537,6 +556,8 @@ const ButtonElement: React.FC<{
     <>
       {/* Inject responsive CSS */}
       {responsiveCSS && <style>{responsiveCSS}</style>}
+      {/* Inject hover CSS */}
+      {hoverCSS && <style>{hoverCSS}</style>}
       
       <div className={containerClass}>
         <button 
@@ -544,6 +565,14 @@ const ButtonElement: React.FC<{
           onClick={handleClick}
           style={elementStyles}
         >
+          {iconName && (
+            <span className="flex-shrink-0" style={{ fontSize: 'inherit' }}>
+              {(() => {
+                const IconComponent = getIconByName(iconName);
+                return IconComponent ? <IconComponent width="1em" height="1em" /> : null;
+              })()}
+            </span>
+          )}
           {isEditing ? (
             <InlineEditor
               value={text}
@@ -923,9 +952,25 @@ export const registerBasicElements = () => {
     id: 'button',
     name: 'Button',
     category: 'basic',
-    icon: Quote,
+    icon: Square,
     component: ButtonElement,
-    defaultContent: { text: 'Click Me', variant: 'default', size: 'default', url: '#' },
+    defaultContent: { 
+      text: 'Get Started', 
+      variant: 'default', 
+      size: 'default', 
+      url: '#' 
+    },
+    defaultStyles: {
+      textAlign: 'center',
+      backgroundColor: 'hsl(142 76% 36%)',
+      color: 'white',
+      borderRadius: '8px',
+      fontWeight: '600',
+      fontSize: '16px',
+      padding: '14px 28px',
+      borderWidth: '0px',
+      boxShadow: '0 4px 12px hsl(142 76% 36% / 0.3)'
+    },
     description: 'Call to action button'
   });
 

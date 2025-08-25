@@ -6,137 +6,156 @@ import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AlignLeft, AlignCenter, AlignRight, Monitor, Smartphone, Palette } from 'lucide-react';
+import { AlignLeft, AlignCenter, AlignRight, Monitor, Smartphone, Palette, ChevronDown } from 'lucide-react';
 import { ColorPicker } from '@/components/ui/color-picker';
 import { PageBuilderElement } from '../../types';
 import { CollapsibleGroup } from './_shared/CollapsibleGroup';
 import { SpacingSliders } from './_shared/SpacingSliders';
+import { getIconByName } from '@/components/icons/icon-sources';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 interface ButtonElementStylesProps {
   element: PageBuilderElement;
   onStyleUpdate: (property: string, value: any) => void;
 }
 
-// Button presets with complete styling
+// Professional button presets aligned with design system
 const buttonPresets = {
   primary: {
     name: 'Primary',
     description: 'Main call-to-action button',
+    gradient: 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary)/0.8))',
     styles: {
-      backgroundColor: 'hsl(var(--primary))',
+      backgroundImage: 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary)/0.8))',
       color: 'hsl(var(--primary-foreground))',
-      borderRadius: '6px',
-      fontWeight: '500',
-      fontSize: '14px',
-      padding: '10px 16px',
-      borderWidth: '0px',
-      hoverBackgroundColor: 'hsl(var(--primary)/0.9)',
-      boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-    }
-  },
-  secondary: {
-    name: 'Secondary',
-    description: 'Secondary action button',
-    styles: {
-      backgroundColor: 'hsl(var(--secondary))',
-      color: 'hsl(var(--secondary-foreground))',
-      borderRadius: '6px',
-      fontWeight: '500',
-      fontSize: '14px',
-      padding: '10px 16px',
-      borderWidth: '0px',
-      hoverBackgroundColor: 'hsl(var(--secondary)/0.8)',
-      boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-    }
-  },
-  outline: {
-    name: 'Outline',
-    description: 'Outlined button style',
-    styles: {
-      backgroundColor: 'transparent',
-      color: 'hsl(var(--foreground))',
-      borderRadius: '6px',
-      fontWeight: '500',
-      fontSize: '14px',
-      padding: '10px 16px',
-      borderWidth: '1px',
-      borderColor: 'hsl(var(--border))',
-      hoverBackgroundColor: 'hsl(var(--accent))',
-      hoverColor: 'hsl(var(--accent-foreground))'
-    }
-  },
-  ghost: {
-    name: 'Ghost',
-    description: 'Minimal button without background',
-    styles: {
-      backgroundColor: 'transparent',
-      color: 'hsl(var(--foreground))',
-      borderRadius: '6px',
-      fontWeight: '500',
-      fontSize: '14px',
-      padding: '10px 16px',
-      borderWidth: '0px',
-      hoverBackgroundColor: 'hsl(var(--muted)/0.6)'
-    }
-  },
-  accent: {
-    name: 'Accent',
-    description: 'Eye-catching gradient button',
-    styles: {
-      backgroundColor: 'hsl(var(--accent))',
-      color: 'hsl(var(--accent-foreground))',
       borderRadius: '8px',
       fontWeight: '600',
-      fontSize: '14px',
-      padding: '12px 20px',
+      fontSize: '16px',
+      padding: '12px 24px',
       borderWidth: '0px',
-      hoverBackgroundColor: 'hsl(var(--accent)/0.9)',
-      boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+      hoverBackgroundImage: 'linear-gradient(135deg, hsl(var(--primary)/0.9), hsl(var(--primary)/0.7))',
+      boxShadow: '0 4px 14px hsl(var(--primary)/0.4)',
+      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+    }
+  },
+  modern: {
+    name: 'Modern',
+    description: 'Sleek gradient button',
+    gradient: 'linear-gradient(135deg, hsl(220 100% 60%), hsl(260 100% 65%))',
+    styles: {
+      backgroundImage: 'linear-gradient(135deg, hsl(220 100% 60%), hsl(260 100% 65%))',
+      color: 'white',
+      borderRadius: '12px',
+      fontWeight: '600',
+      fontSize: '16px',
+      padding: '14px 28px',
+      borderWidth: '0px',
+      hoverBackgroundImage: 'linear-gradient(135deg, hsl(220 100% 55%), hsl(260 100% 60%))',
+      boxShadow: '0 8px 25px hsl(220 100% 60% / 0.4)',
+      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
     }
   },
   success: {
     name: 'Success',
     description: 'Success state button',
+    gradient: 'linear-gradient(135deg, hsl(142 76% 36%), hsl(142 76% 45%))',
     styles: {
-      backgroundColor: 'hsl(142 76% 36%)',
-      color: 'hsl(355.7 100% 97.3%)',
-      borderRadius: '6px',
-      fontWeight: '500',
-      fontSize: '14px',
-      padding: '10px 16px',
+      backgroundImage: 'linear-gradient(135deg, hsl(142 76% 36%), hsl(142 76% 45%))',
+      color: 'white',
+      borderRadius: '8px',
+      fontWeight: '600',
+      fontSize: '16px',
+      padding: '12px 24px',
       borderWidth: '0px',
-      hoverBackgroundColor: 'hsl(142 76% 32%)',
-      boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+      hoverBackgroundImage: 'linear-gradient(135deg, hsl(142 76% 32%), hsl(142 76% 40%))',
+      boxShadow: '0 4px 14px hsl(142 76% 36% / 0.4)',
+      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+    }
+  },
+  premium: {
+    name: 'Premium',
+    description: 'Luxury gold gradient',
+    gradient: 'linear-gradient(135deg, hsl(45 100% 51%), hsl(35 100% 60%))',
+    styles: {
+      backgroundImage: 'linear-gradient(135deg, hsl(45 100% 51%), hsl(35 100% 60%))',
+      color: 'hsl(25 25% 15%)',
+      borderRadius: '10px',
+      fontWeight: '700',
+      fontSize: '16px',
+      padding: '14px 32px',
+      borderWidth: '0px',
+      hoverBackgroundImage: 'linear-gradient(135deg, hsl(45 100% 55%), hsl(35 100% 65%))',
+      boxShadow: '0 8px 25px hsl(45 100% 51% / 0.5)',
+      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+    }
+  },
+  outline: {
+    name: 'Outline',
+    description: 'Clean outlined button',
+    gradient: 'transparent',
+    styles: {
+      backgroundColor: 'transparent',
+      color: 'hsl(var(--foreground))',
+      borderRadius: '8px',
+      fontWeight: '500',
+      fontSize: '16px',
+      padding: '12px 24px',
+      borderWidth: '2px',
+      borderColor: 'hsl(var(--border))',
+      hoverBackgroundColor: 'hsl(var(--accent))',
+      hoverColor: 'hsl(var(--accent-foreground))',
+      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+    }
+  },
+  ghost: {
+    name: 'Ghost',
+    description: 'Minimal hover effect',
+    gradient: 'transparent',
+    styles: {
+      backgroundColor: 'transparent',
+      color: 'hsl(var(--foreground))',
+      borderRadius: '8px',
+      fontWeight: '500',
+      fontSize: '16px',
+      padding: '12px 24px',
+      borderWidth: '0px',
+      hoverBackgroundColor: 'hsl(var(--accent)/0.8)',
+      hoverColor: 'hsl(var(--accent-foreground))',
+      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
     }
   },
   destructive: {
     name: 'Destructive',
     description: 'Warning or delete action',
+    gradient: 'linear-gradient(135deg, hsl(var(--destructive)), hsl(var(--destructive)/0.8))',
     styles: {
-      backgroundColor: 'hsl(var(--destructive))',
+      backgroundImage: 'linear-gradient(135deg, hsl(var(--destructive)), hsl(var(--destructive)/0.8))',
       color: 'hsl(var(--destructive-foreground))',
-      borderRadius: '6px',
-      fontWeight: '500',
-      fontSize: '14px',
-      padding: '10px 16px',
-      borderWidth: '0px',
-      hoverBackgroundColor: 'hsl(var(--destructive)/0.9)',
-      boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-    }
-  },
-  cta: {
-    name: 'Call to Action',
-    description: 'Large prominent CTA button',
-    styles: {
-      backgroundColor: 'hsl(var(--primary))',
-      color: 'hsl(var(--primary-foreground))',
       borderRadius: '8px',
       fontWeight: '600',
       fontSize: '16px',
+      padding: '12px 24px',
+      borderWidth: '0px',
+      hoverBackgroundImage: 'linear-gradient(135deg, hsl(var(--destructive)/0.9), hsl(var(--destructive)/0.7))',
+      boxShadow: '0 4px 14px hsl(var(--destructive)/0.4)',
+      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+    }
+  },
+  neon: {
+    name: 'Neon',
+    description: 'Vibrant neon glow effect',
+    gradient: 'linear-gradient(135deg, hsl(300 100% 60%), hsl(200 100% 60%))',
+    styles: {
+      backgroundImage: 'linear-gradient(135deg, hsl(300 100% 60%), hsl(200 100% 60%))',
+      color: 'white',
+      borderRadius: '12px',
+      fontWeight: '700',
+      fontSize: '16px',
       padding: '14px 28px',
       borderWidth: '0px',
-      hoverBackgroundColor: 'hsl(var(--primary)/0.9)',
-      boxShadow: '0 4px 12px hsl(var(--primary)/0.3)'
+      hoverBackgroundImage: 'linear-gradient(135deg, hsl(300 100% 65%), hsl(200 100% 65%))',
+      boxShadow: '0 0 30px hsl(300 100% 60% / 0.6), 0 8px 25px hsl(200 100% 60% / 0.4)',
+      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
     }
   }
 };
@@ -211,27 +230,38 @@ export const ButtonElementStyles: React.FC<ButtonElementStylesProps> = ({
       <CollapsibleGroup title="Button Presets" isOpen={presetsOpen} onToggle={setPresetsOpen}>
         <div className="space-y-3">
           <Label className="text-xs">Choose a preset style</Label>
-          <div className="grid grid-cols-1 gap-2">
-            {Object.entries(buttonPresets).map(([key, preset]) => (
-              <Button
-                key={key}
-                variant="outline"
-                size="sm"
-                className="justify-start h-auto p-3 text-left"
-                onClick={() => applyPreset(key)}
-              >
-                <div className="flex items-center gap-2">
-                  <Palette className="h-3 w-3" />
-                  <div>
-                    <div className="font-medium text-xs">{preset.name}</div>
-                    <div className="text-xs text-muted-foreground">{preset.description}</div>
-                  </div>
-                </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="w-full justify-between">
+                <span className="flex items-center gap-2">
+                  <Palette className="h-4 w-4" />
+                  Select Preset
+                </span>
+                <ChevronDown className="h-4 w-4" />
               </Button>
-            ))}
-          </div>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-full z-50 bg-background border border-border shadow-lg">
+              {Object.entries(buttonPresets).map(([key, preset]) => (
+                <DropdownMenuItem
+                  key={key}
+                  onClick={() => applyPreset(key)}
+                  className="flex flex-col items-start py-3 px-4 cursor-pointer hover:bg-accent"
+                >
+                  <div className="font-medium text-sm">{preset.name}</div>
+                  <div className="text-xs text-muted-foreground">{preset.description}</div>
+                  <div 
+                    className="w-full h-6 rounded mt-2" 
+                    style={{
+                      background: preset.gradient,
+                      border: preset.gradient === 'transparent' ? '1px solid hsl(var(--border))' : 'none'
+                    }}
+                  />
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
           <p className="text-xs text-muted-foreground">
-            Presets apply styles to the current device view. All styles remain fully editable below.
+            Presets apply professional styles to the current device view. All styles remain fully editable below.
           </p>
         </div>
       </CollapsibleGroup>
@@ -280,8 +310,40 @@ export const ButtonElementStyles: React.FC<ButtonElementStylesProps> = ({
         </div>
       </CollapsibleGroup>
 
-      {/* Typography */}
-      <CollapsibleGroup title="Typography" isOpen={typographyOpen} onToggle={setTypographyOpen}>
+      {/* Typography & Icon */}
+      <CollapsibleGroup title="Typography & Icon" isOpen={typographyOpen} onToggle={setTypographyOpen}>
+        <div>
+          <Label className="text-xs">Button Icon (Optional)</Label>
+          <div className="space-y-2">
+            <Select
+              value={getCurrentValue('icon', '')}
+              onValueChange={(value) => handleResponsiveUpdate('icon', value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select an icon" />
+              </SelectTrigger>
+              <SelectContent className="z-50 bg-background">
+                <SelectItem value="">No Icon</SelectItem>
+                <SelectItem value="arrow-right">Arrow Right</SelectItem>
+                <SelectItem value="check">Check</SelectItem>
+                <SelectItem value="star">Star</SelectItem>
+                <SelectItem value="heart">Heart</SelectItem>
+                <SelectItem value="download">Download</SelectItem>
+                <SelectItem value="play">Play</SelectItem>
+                <SelectItem value="shopping-cart">Shopping Cart</SelectItem>
+                <SelectItem value="mail">Mail</SelectItem>
+                <SelectItem value="phone">Phone</SelectItem>
+                <SelectItem value="external-link">External Link</SelectItem>
+              </SelectContent>
+            </Select>
+            {getCurrentValue('icon') && (
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <span>Icon scales with font size automatically</span>
+              </div>
+            )}
+          </div>
+        </div>
+
         <div>
           <Label className="text-xs">Font Size</Label>
           <div className="flex items-center space-x-2">
