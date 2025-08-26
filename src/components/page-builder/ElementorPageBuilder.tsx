@@ -384,9 +384,9 @@ const ElementorPageBuilderContent: React.FC<ElementorPageBuilderProps> = memo(({
         elements: [],
         styles: {
           paddingTop: '10px',
-          paddingRight: '10px',
+          paddingRight: '5px',
           paddingLeft: '5px',
-          paddingBottom: '5px'
+          paddingBottom: '10px'
         }
       }))
     };
