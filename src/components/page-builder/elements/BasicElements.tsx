@@ -936,7 +936,7 @@ export const registerBasicElements = () => {
     category: 'basic',
     icon: RectangleHorizontal,
     component: ButtonElement,
-    defaultContent: { text: 'Click Me', variant: 'default', size: 'default', url: '#' },
+    defaultContent: { text: 'Get Started', variant: 'default', size: 'default', url: '#' },
     description: 'Call to action button'
   });
 
