@@ -48,15 +48,25 @@ useEffect(() => {
     if (!orderId || !store) return;
 
     try {
-      const { data, error } = await supabase
-        .from('orders')
-        .select('*')
-        .eq('id', orderId)
-        .eq('store_id', store.id)
-        .single();
+      // Get order token from URL params for secure access
+      const orderToken = searchParams.get('ot') || '';
+      if (!orderToken) {
+        console.error('Order access token missing');
+        toast.error('Invalid order access');
+        setLoading(false);
+        return;
+      }
+
+      const { data, error } = await supabase.functions.invoke('get-order-public', {
+        body: { 
+          orderId: orderId, 
+          storeId: store.id,
+          token: orderToken 
+        }
+      });
 
       if (error) throw error;
-      setOrder(data);
+      setOrder(data?.order || null);
     } catch (error) {
       console.error('Error fetching order:', error);
       toast.error('Failed to load order details');
@@ -82,7 +92,8 @@ useEffect(() => {
 
       if (data.paymentStatus === 'success') {
         toast.success('Payment verified successfully!');
-        navigate(paths.orderConfirmation(order.id));
+        const orderToken = searchParams.get('ot') || '';
+        navigate(paths.orderConfirmation(order.id, orderToken));
       } else {
         toast.error('Payment verification failed. Please contact support.');
         setOrder(prev => ({ ...prev, status: 'payment_failed' }));
@@ -225,7 +236,10 @@ useEffect(() => {
               
               {order.status === 'paid' && (
                 <Button 
-                  onClick={() => navigate(paths.orderConfirmation(order.id))}
+                  onClick={() => {
+                    const orderToken = searchParams.get('ot') || '';
+                    navigate(paths.orderConfirmation(order.id, orderToken));
+                  }}
                   className="w-full"
                 >
                   View Order Details

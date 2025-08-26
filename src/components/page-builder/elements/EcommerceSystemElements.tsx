@@ -892,7 +892,9 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
         
         clearCart();
         toast.success(isManual ? 'Order placed! Please complete payment to the provided number.' : 'Order placed!');
-        navigate(paths.orderConfirmation(orderId));
+        // Get order access token from the response
+        const orderToken = data?.order?.custom_fields?.order_access_token;
+        navigate(paths.orderConfirmation(orderId, orderToken));
       } else {
         await initiatePayment(orderId, orderData.total, form.payment_method);
       }
@@ -925,7 +927,11 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
       if (paymentURL) {
         window.open(paymentURL, '_blank');
         clearCart();
-        navigate(paths.paymentProcessing(orderId));
+        // We need to get the order access token from somewhere - let's fetch it from the order
+        const { data: orderData } = await supabase.functions.invoke('get-order-admin', { body: { orderId } });
+        const orderToken = orderData?.order?.custom_fields?.order_access_token;
+        const processingUrl = `${paths.paymentProcessing(orderId)}${orderToken ? `&ot=${orderToken}` : ''}`;
+        navigate(processingUrl);
       } else {
         throw new Error('Payment URL not received');
       }
