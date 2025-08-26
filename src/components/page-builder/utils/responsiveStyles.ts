@@ -75,6 +75,30 @@ function kebabCase(str: string): string {
   return str.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
 }
 
+// Helper function to parse shorthand margin/padding values
+function parseShorthandSpacing(value: string): { top?: string; right?: string; bottom?: string; left?: string; } {
+  if (!value || typeof value !== 'string') return {};
+  
+  const parts = value.trim().split(/\s+/);
+  
+  switch (parts.length) {
+    case 1:
+      // "10px" -> all sides
+      return { top: parts[0], right: parts[0], bottom: parts[0], left: parts[0] };
+    case 2:
+      // "10px 20px" -> top/bottom, left/right
+      return { top: parts[0], right: parts[1], bottom: parts[0], left: parts[1] };
+    case 3:
+      // "10px 20px 30px" -> top, left/right, bottom
+      return { top: parts[0], right: parts[1], bottom: parts[2], left: parts[1] };
+    case 4:
+      // "10px 20px 30px 40px" -> top, right, bottom, left
+      return { top: parts[0], right: parts[1], bottom: parts[2], left: parts[3] };
+    default:
+      return {};
+  }
+}
+
 export function mergeResponsiveStyles(baseStyles: any, elementStyles: any, deviceType: 'desktop' | 'tablet' | 'mobile' = 'desktop'): any {
   // Start with base styles
   let mergedStyles = { ...baseStyles };
@@ -84,25 +108,57 @@ export function mergeResponsiveStyles(baseStyles: any, elementStyles: any, devic
     const { responsive, ...nonResponsiveStyles } = elementStyles;
     mergedStyles = { ...mergedStyles, ...nonResponsiveStyles };
     
+    // Parse shorthand margin/padding in non-responsive styles
+    if (mergedStyles.margin && typeof mergedStyles.margin === 'string') {
+      const parsed = parseShorthandSpacing(mergedStyles.margin);
+      if (parsed.top) mergedStyles.marginTop = parsed.top;
+      if (parsed.right) mergedStyles.marginRight = parsed.right;
+      if (parsed.bottom) mergedStyles.marginBottom = parsed.bottom;
+      if (parsed.left) mergedStyles.marginLeft = parsed.left;
+      delete mergedStyles.margin; // Remove shorthand to avoid conflicts
+    }
+    
+    if (mergedStyles.padding && typeof mergedStyles.padding === 'string') {
+      const parsed = parseShorthandSpacing(mergedStyles.padding);
+      if (parsed.top) mergedStyles.paddingTop = parsed.top;
+      if (parsed.right) mergedStyles.paddingRight = parsed.right;
+      if (parsed.bottom) mergedStyles.paddingBottom = parsed.bottom;
+      if (parsed.left) mergedStyles.paddingLeft = parsed.left;
+      delete mergedStyles.padding; // Remove shorthand to avoid conflicts
+    }
+    
     // If elementStyles has responsive overrides, merge them
     if (responsive) {
       // Use the exact deviceType as the key - this allows tablet, mobile, and desktop overrides
       const deviceStyles = responsive[deviceType] || {};
       
-      // Handle padding conflict: if individual side paddings exist, remove shorthand padding
-      const hasIndividualPadding = mergedStyles.paddingTop || mergedStyles.paddingBottom || 
-                                  mergedStyles.paddingLeft || mergedStyles.paddingRight;
-      
       // Deep merge: only override with explicitly defined values
       const cleanDeviceStyles = Object.fromEntries(
         Object.entries(deviceStyles).filter(([key, value]) => {
-          // Skip shorthand padding if individual paddings exist
-          if (key === 'padding' && hasIndividualPadding) return false;
           return value !== undefined && value !== null && value !== '';
         })
       );
       
       mergedStyles = { ...mergedStyles, ...cleanDeviceStyles };
+      
+      // Parse shorthand margin/padding in responsive styles
+      if (mergedStyles.margin && typeof mergedStyles.margin === 'string') {
+        const parsed = parseShorthandSpacing(mergedStyles.margin);
+        if (parsed.top) mergedStyles.marginTop = parsed.top;
+        if (parsed.right) mergedStyles.marginRight = parsed.right;
+        if (parsed.bottom) mergedStyles.marginBottom = parsed.bottom;
+        if (parsed.left) mergedStyles.marginLeft = parsed.left;
+        delete mergedStyles.margin; // Remove shorthand to avoid conflicts
+      }
+      
+      if (mergedStyles.padding && typeof mergedStyles.padding === 'string') {
+        const parsed = parseShorthandSpacing(mergedStyles.padding);
+        if (parsed.top) mergedStyles.paddingTop = parsed.top;
+        if (parsed.right) mergedStyles.paddingRight = parsed.right;
+        if (parsed.bottom) mergedStyles.paddingBottom = parsed.bottom;
+        if (parsed.left) mergedStyles.paddingLeft = parsed.left;
+        delete mergedStyles.padding; // Remove shorthand to avoid conflicts
+      }
     }
   }
   

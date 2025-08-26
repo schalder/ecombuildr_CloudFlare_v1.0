@@ -159,10 +159,6 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
       )}
       style={{
         ...(!isMediaElement ? {
-          // Apply shorthand properties first
-          ...(mergedStyles.margin && { margin: mergedStyles.margin }),
-          ...(mergedStyles.padding && { padding: mergedStyles.padding }),
-          // Then apply individual properties to allow overrides
           marginTop: mergedStyles.marginTop,
           marginRight: mergedStyles.marginRight,
           marginBottom: mergedStyles.marginBottom,
