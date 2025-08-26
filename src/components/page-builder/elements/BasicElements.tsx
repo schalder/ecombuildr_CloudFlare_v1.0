@@ -321,7 +321,7 @@ const ListElement: React.FC<{
     typeof it === 'string' ? { text: it, icon: defaultIcon } : { text: it.text, icon: it.icon || defaultIcon }
   );
 
-  const baseStyles = renderElementStyles(element);
+  const baseStyles = renderElementStyles(element, deviceType);
 
   // Responsive overrides for list-specific styles
   const responsive = element.styles?.responsive || {};
@@ -333,6 +333,9 @@ const ListElement: React.FC<{
   const indent: number = currentDeviceStyles.indent ?? (element.styles as any)?.indent ?? 0;
   const iconColor: string | undefined = currentDeviceStyles.iconColor ?? (element.styles as any)?.iconColor ?? undefined;
 
+  // Get text alignment for proper styling
+  const textAlign = currentDeviceStyles.textAlign || baseStyles.textAlign || 'left';
+  
   const containerStyles: React.CSSProperties = {
     ...baseStyles,
     paddingLeft: indent ? `${indent}px` : baseStyles.paddingLeft,
@@ -349,14 +352,45 @@ const ListElement: React.FC<{
       </ol>
     );
   } else if (style === 'icons') {
+    // For icon lists, we need to handle alignment differently since items are flex containers
+    const getFlexAlignment = (align: string) => {
+      switch (align) {
+        case 'center': return 'center';
+        case 'right': return 'flex-end';
+        default: return 'flex-start';
+      }
+    };
+
+    const getIconMargin = (align: string) => {
+      switch (align) {
+        case 'center': return '0 auto';
+        case 'right': return '0 0 0 auto';
+        default: return '0 8px 0 0';
+      }
+    };
+
     listNode = (
       <ul style={containerStyles} className={`element-${element.id} list-none pl-0`}>
         {items.map((item, index) => {
           const iconName = item.icon || defaultIcon;
           const IconComponent = getIconByName(iconName) || getIconByName('check');
           return (
-            <li key={index} className="mb-1 flex items-start" style={{ marginBottom: `${itemGap}px` }}>
-              <span className="mr-2 mt-0.5" style={{ lineHeight: 1 }}>
+            <li 
+              key={index} 
+              className="mb-1 flex items-start" 
+              style={{ 
+                marginBottom: `${itemGap}px`,
+                justifyContent: getFlexAlignment(textAlign),
+                textAlign: textAlign as any
+              }}
+            >
+              <span 
+                className="mt-0.5" 
+                style={{ 
+                  lineHeight: 1,
+                  margin: getIconMargin(textAlign)
+                }}
+              >
                 {IconComponent ? <IconComponent 
                   style={{ 
                     width: `${iconSize}px`, 
@@ -365,7 +399,7 @@ const ListElement: React.FC<{
                   }} 
                 /> : null}
               </span>
-              <span>{item.text}</span>
+              <span style={{ textAlign: textAlign as any }}>{item.text}</span>
             </li>
           );
         })}
