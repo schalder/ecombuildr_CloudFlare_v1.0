@@ -361,14 +361,6 @@ const ListElement: React.FC<{
       }
     };
 
-    const getIconMargin = (align: string) => {
-      switch (align) {
-        case 'center': return '0 auto';
-        case 'right': return '0 0 0 auto';
-        default: return '0 8px 0 0';
-      }
-    };
-
     listNode = (
       <ul style={containerStyles} className={`element-${element.id} list-none pl-0`}>
         {items.map((item, index) => {
@@ -380,15 +372,15 @@ const ListElement: React.FC<{
               className="mb-1 flex items-start" 
               style={{ 
                 marginBottom: `${itemGap}px`,
-                justifyContent: getFlexAlignment(textAlign),
-                textAlign: textAlign as any
+                justifyContent: getFlexAlignment(textAlign)
               }}
             >
               <span 
                 className="mt-0.5" 
                 style={{ 
                   lineHeight: 1,
-                  margin: getIconMargin(textAlign)
+                  marginRight: textAlign === 'right' ? '0' : '8px',
+                  marginLeft: textAlign === 'right' ? '8px' : '0'
                 }}
               >
                 {IconComponent ? <IconComponent 
@@ -399,7 +391,7 @@ const ListElement: React.FC<{
                   }} 
                 /> : null}
               </span>
-              <span style={{ textAlign: textAlign as any }}>{item.text}</span>
+              <span>{item.text}</span>
             </li>
           );
         })}
