@@ -288,6 +288,7 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
       });
       if (error) throw error;
       const orderId: string | undefined = data?.order?.id;
+      const accessToken = data?.order?.access_token;
       if (!orderId) throw new Error('Order was not created');
 
       if (form.payment_method === 'cod' || isManual) {
@@ -307,9 +308,9 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
         });
         
         toast.success(isManual ? 'Order placed! Please complete payment to the provided number.' : 'Order placed!');
-        navigate(paths.orderConfirmation(orderId));
+        navigate(paths.orderConfirmation(orderId, accessToken));
       } else {
-        await initiatePayment(orderId, orderData.total, form.payment_method);
+        await initiatePayment(orderId, orderData.total, form.payment_method, accessToken);
       }
     } catch (e) {
       console.error(e);
@@ -317,7 +318,7 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
     }
   };
 
-  const initiatePayment = async (orderId: string, amount: number, method: string) => {
+  const initiatePayment = async (orderId: string, amount: number, method: string, accessToken?: string) => {
     try {
       let response;
       switch (method) {
@@ -337,7 +338,7 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
       const { paymentURL } = response.data;
       if (paymentURL) {
         window.open(paymentURL, '_blank');
-        navigate(paths.paymentProcessing(orderId));
+        navigate(paths.paymentProcessing(orderId) + (accessToken ? `&ot=${accessToken}` : ''));
       } else throw new Error('Payment URL not received');
     } catch (error) {
       console.error('Payment initiation error:', error);

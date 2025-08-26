@@ -44,6 +44,11 @@ function generateOrderNumber() {
   return `ORD-${Date.now()}-${rand}`;
 }
 
+// Generate access token for order
+function generateAccessToken() {
+  return crypto.randomUUID().replace(/-/g, '');
+}
+
 serve(async (req) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
@@ -73,6 +78,9 @@ serve(async (req) => {
     const incomingStatus = (order.status || '').toLowerCase();
     const safeStatus = allowedStatuses.has(incomingStatus) ? incomingStatus : defaultStatus;
 
+    // Generate access token for public order access
+    const accessToken = generateAccessToken();
+    
     const toInsert: any = {
       ...order,
       order_number: order && (order as any).order_number ? (order as any).order_number : generateOrderNumber(),
@@ -81,6 +89,10 @@ serve(async (req) => {
       shipping_cost: order.shipping_cost ?? 0,
       subtotal: order.subtotal ?? 0,
       total: order.total ?? ((order.subtotal ?? 0) + (order.shipping_cost ?? 0) - (order.discount_amount ?? 0)),
+      custom_fields: {
+        ...(order.custom_fields || {}),
+        order_access_token: accessToken,
+      },
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
@@ -133,7 +145,7 @@ serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ success: true, order: createdOrder }),
+      JSON.stringify({ success: true, order: { ...createdOrder, access_token: accessToken } }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (err: any) {

@@ -56,6 +56,7 @@ export const OrderConfirmation: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const paths = useEcomPaths();
   const orderId = orderIdParam || searchParams.get('orderId') || '';
+  const orderToken = searchParams.get('ot') || '';
   const isWebsiteContext = Boolean(websiteId || websiteSlug);
   const { pixels } = usePixelContext();
   const { trackPurchase } = usePixelTracking(pixels);
@@ -81,14 +82,19 @@ useEffect(() => {
     if (store && orderId) {
       fetchOrder();
     }
-  }, [store, orderId]);
+  }, [store, orderId, orderToken]);
 
   const fetchOrder = async () => {
     if (!store || !orderId) return;
 
     try {
-      const { data, error } = await supabase.functions.invoke('get-order', {
-        body: { orderId },
+      // Use public order access with token
+      const { data, error } = await supabase.functions.invoke('get-order-public', {
+        body: { 
+          orderId,
+          storeId: store.id,
+          token: orderToken 
+        },
       });
       if (error) throw error;
       if (!data || !data.order) {

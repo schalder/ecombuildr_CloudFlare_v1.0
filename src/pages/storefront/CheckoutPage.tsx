@@ -331,13 +331,16 @@ useEffect(() => {
         }
       }
 
+      // Get access token from response
+      const accessToken = data?.order?.access_token;
+
       // Handle payment processing
       if (form.payment_method === 'cod' || isManual) {
         clearCart();
         toast.success(isManual ? 'Order placed! Please complete payment to the provided number.' : 'Order placed successfully!');
-        navigate(paths.orderConfirmation(createdOrderId));
+        navigate(paths.orderConfirmation(createdOrderId, accessToken));
       } else {
-        await initiatePayment(createdOrderId, finalTotal, form.payment_method);
+        await initiatePayment(createdOrderId, finalTotal, form.payment_method, accessToken);
       }
     } catch (error) {
       console.error('Error creating order:', error);
@@ -347,7 +350,7 @@ useEffect(() => {
     }
   };
 
-  const initiatePayment = async (orderId: string, amount: number, method: string) => {
+  const initiatePayment = async (orderId: string, amount: number, method: string, accessToken?: string) => {
     try {
       let response;
       
@@ -395,8 +398,8 @@ useEffect(() => {
         // Clear cart after initiating payment
         clearCart();
         
-        // Redirect to a payment processing page
-        navigate(paths.paymentProcessing(orderId));
+        // Redirect to a payment processing page with token
+        navigate(paths.paymentProcessing(orderId) + (accessToken ? `&ot=${accessToken}` : ''));
       } else {
         throw new Error('Payment URL not received');
       }

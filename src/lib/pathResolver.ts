@@ -42,7 +42,8 @@ export const useEcomPaths = () => {
       checkout: '/checkout',
       cart: '/cart',
       paymentProcessing: (orderId: string) => `/payment-processing?orderId=${orderId}`,
-      orderConfirmation: (orderId: string) => `/order-confirmation?orderId=${orderId}`,
+      orderConfirmation: (orderId: string, token?: string) => 
+        `/order-confirmation?orderId=${orderId}${token ? `&ot=${token}` : ''}`,
     };
   }
 
@@ -62,6 +63,11 @@ export const useEcomPaths = () => {
     checkout: `${base}/checkout`,
     cart: `${base}/cart`,
     paymentProcessing: (orderId: string) => websiteId || websiteSlug ? `${base}/payment-processing?orderId=${orderId}` : `${base}/payment-processing/${orderId}`,
-    orderConfirmation: (orderId: string) => websiteId || websiteSlug ? `${base}/order-confirmation?orderId=${orderId}` : `${base}/order-confirmation/${orderId}`,
+    orderConfirmation: (orderId: string, token?: string) => {
+      const tokenParam = token ? `&ot=${token}` : '';
+      return websiteId || websiteSlug 
+        ? `${base}/order-confirmation?orderId=${orderId}${tokenParam}` 
+        : `${base}/order-confirmation/${orderId}${tokenParam ? `?${tokenParam.slice(1)}` : ''}`;
+    },
   };
 };

@@ -114,7 +114,7 @@ export default function Orders() {
         // Open the order details dialog
         const openOrderDetails = async () => {
           try {
-            const { data, error } = await supabase.functions.invoke('get-order', { body: { orderId: order.id } });
+            const { data, error } = await supabase.functions.invoke('get-order-admin', { body: { orderId: order.id } });
             if (error) throw error;
             if (data) {
               setSelectedOrder({ ...order, ...data.order });
