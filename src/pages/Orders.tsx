@@ -107,7 +107,7 @@ export default function Orders() {
     if (user) {
       fetchOrders();
     }
-  }, [user, currentPage]);
+  }, [user, currentPage, searchTerm, statusFilter]);
 
   useEffect(() => {
     const status = searchParams.get("status");
@@ -169,12 +169,56 @@ export default function Orders() {
       if (stores && stores.length > 0) {
         const storeIds = stores.map(store => store.id);
         
-        // Get total count for pagination
-        const { count, error: countError } = await supabase
+        // Build search query
+        let ordersQuery = supabase
+          .from('orders')
+          .select(`
+            id,
+            store_id,
+            order_number,
+            customer_name,
+            customer_email,
+            customer_phone,
+            status,
+            total,
+            created_at,
+            payment_method,
+            shipping_city,
+            shipping_area,
+            shipping_address,
+            courier_name,
+            tracking_number,
+            notes,
+            website_id,
+            funnel_id
+          `)
+          .in('store_id', storeIds);
+
+        // Apply search filter if searchTerm exists
+        if (searchTerm.trim()) {
+          ordersQuery = ordersQuery.or(`order_number.ilike.%${searchTerm}%,customer_name.ilike.%${searchTerm}%,customer_email.ilike.%${searchTerm}%,customer_phone.ilike.%${searchTerm}%`);
+        }
+
+        // Apply status filter if statusFilter exists
+        if (statusFilter) {
+          ordersQuery = ordersQuery.eq('status', statusFilter as 'pending' | 'processing' | 'delivered' | 'confirmed' | 'shipped' | 'cancelled');
+        }
+
+        // Get total count for pagination with same filters
+        let countQuery = supabase
           .from('orders')
           .select('*', { count: 'exact', head: true })
           .in('store_id', storeIds);
 
+        if (searchTerm.trim()) {
+          countQuery = countQuery.or(`order_number.ilike.%${searchTerm}%,customer_name.ilike.%${searchTerm}%,customer_email.ilike.%${searchTerm}%,customer_phone.ilike.%${searchTerm}%`);
+        }
+
+        if (statusFilter) {
+          countQuery = countQuery.eq('status', statusFilter as 'pending' | 'processing' | 'delivered' | 'confirmed' | 'shipped' | 'cancelled');
+        }
+
+        const { count, error: countError } = await countQuery;
         if (countError) throw countError;
         setTotalCount(count || 0);
         
@@ -187,29 +231,7 @@ export default function Orders() {
           { data: websites, error: websitesError },
           { data: funnels, error: funnelsError }
         ] = await Promise.all([
-          supabase
-            .from('orders')
-            .select(`
-              id,
-              store_id,
-              order_number,
-              customer_name,
-              customer_email,
-              customer_phone,
-              status,
-              total,
-              created_at,
-              payment_method,
-              shipping_city,
-              shipping_area,
-              shipping_address,
-              courier_name,
-              tracking_number,
-              notes,
-              website_id,
-              funnel_id
-            `)
-            .in('store_id', storeIds)
+          ordersQuery
             .order('created_at', { ascending: false })
             .range(offset, offset + ordersPerPage - 1),
           supabase
@@ -417,16 +439,8 @@ export default function Orders() {
     }
   };
 
-  const filteredOrders = orders.filter(order => {
-    const matchesSearch = 
-      order.order_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.customer_email.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesStatus = !statusFilter || order.status === statusFilter;
-    
-    return matchesSearch && matchesStatus;
-  });
+  // Orders are already filtered by the database query, no need for client-side filtering
+  const filteredOrders = orders;
 
   // Calculate pagination values
   const totalPages = Math.ceil(totalCount / ordersPerPage);
