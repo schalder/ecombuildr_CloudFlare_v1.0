@@ -21,6 +21,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import { 
   Plus, 
   Search, 
@@ -72,12 +80,15 @@ export default function Products() {
     open: false, 
     type: 'single' 
   });
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const productsPerPage = 10;
 
   useEffect(() => {
     if (user) {
       fetchProducts();
     }
-  }, [user]);
+  }, [user, currentPage, searchTerm]);
 
   // Realtime subscription to product inventory updates for the owner's stores
   useEffect(() => {
@@ -117,7 +128,9 @@ export default function Products() {
       if (stores && stores.length > 0) {
         const ids = stores.map((store: any) => store.id as string);
         setStoreIds(ids);
-        const { data: products, error: productsError } = await supabase
+
+        // Build search query
+        let productsQuery = supabase
           .from('products')
           .select(`
             id,
@@ -131,8 +144,33 @@ export default function Products() {
             created_at,
             categories:category_id(name)
           `)
-          .in('store_id', stores.map(store => store.id))
-          .order('created_at', { ascending: false });
+          .in('store_id', stores.map(store => store.id));
+
+        // Apply search filter if searchTerm exists
+        if (searchTerm.trim()) {
+          productsQuery = productsQuery.or(`name.ilike.%${searchTerm}%,sku.ilike.%${searchTerm}%`);
+        }
+
+        // Get total count for pagination with same filters
+        let countQuery = supabase
+          .from('products')
+          .select('*', { count: 'exact', head: true })
+          .in('store_id', stores.map(store => store.id));
+
+        if (searchTerm.trim()) {
+          countQuery = countQuery.or(`name.ilike.%${searchTerm}%,sku.ilike.%${searchTerm}%`);
+        }
+
+        const { count, error: countError } = await countQuery;
+        if (countError) throw countError;
+        setTotalCount(count || 0);
+
+        // Calculate offset for pagination
+        const offset = (currentPage - 1) * productsPerPage;
+
+        const { data: products, error: productsError } = await productsQuery
+          .order('created_at', { ascending: false })
+          .range(offset, offset + productsPerPage - 1);
 
         if (productsError) throw productsError;
 
@@ -323,10 +361,16 @@ export default function Products() {
     setDeleteConfirm({ open: false, type: 'single' });
   };
 
-  const filteredProducts = products.filter(product =>
-    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.sku?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Products are already filtered by the database query, no need for client-side filtering
+  const filteredProducts = products;
+
+  // Calculate pagination values
+  const totalPages = Math.ceil(totalCount / productsPerPage);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    setSelectedProducts([]); // Clear selections when changing pages
+  };
 
   return (
     <DashboardLayout 
@@ -342,7 +386,10 @@ export default function Products() {
               <Input
                 placeholder="Search products..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1); // Reset to first page when searching
+                }}
                 className={`pl-10 ${isMobile ? 'w-full' : 'w-80'}`}
               />
             </div>
@@ -400,7 +447,7 @@ export default function Products() {
             <CardTitle className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Package className="h-5 w-5" />
-                Products ({filteredProducts.length})
+                Products ({totalCount})
               </div>
               {!isMobile && selectedProducts.length === 0 && (
                 <Button
@@ -709,6 +756,77 @@ export default function Products() {
             )}
           </CardContent>
         </Card>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between">
+            <div className="text-sm text-muted-foreground">
+              Showing {((currentPage - 1) * productsPerPage) + 1} to {Math.min(currentPage * productsPerPage, totalCount)} of {totalCount} products
+            </div>
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious 
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (currentPage > 1) handlePageChange(currentPage - 1);
+                    }}
+                    className={currentPage <= 1 ? "pointer-events-none opacity-50" : ""}
+                  />
+                </PaginationItem>
+                
+                {[...Array(totalPages)].map((_, index) => {
+                  const page = index + 1;
+                  const isCurrentPage = page === currentPage;
+                  
+                  // Show first page, last page, current page, and pages around current
+                  const showPage = page === 1 || 
+                                   page === totalPages || 
+                                   Math.abs(page - currentPage) <= 1;
+                  
+                  if (!showPage) {
+                    // Show ellipsis for gaps
+                    if (page === currentPage - 2 || page === currentPage + 2) {
+                      return (
+                        <PaginationItem key={page}>
+                          <span className="px-3 py-2">...</span>
+                        </PaginationItem>
+                      );
+                    }
+                    return null;
+                  }
+                  
+                  return (
+                    <PaginationItem key={page}>
+                      <PaginationLink
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handlePageChange(page);
+                        }}
+                        isActive={isCurrentPage}
+                      >
+                        {page}
+                      </PaginationLink>
+                    </PaginationItem>
+                  );
+                })}
+                
+                <PaginationItem>
+                  <PaginationNext 
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (currentPage < totalPages) handlePageChange(currentPage + 1);
+                    }}
+                    className={currentPage >= totalPages ? "pointer-events-none opacity-50" : ""}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </div>
+        )}
 
         <ConfirmationDialog
           open={deleteConfirm.open}
