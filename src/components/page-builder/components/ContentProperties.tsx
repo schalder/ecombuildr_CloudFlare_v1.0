@@ -32,6 +32,7 @@ export const ContentProperties: React.FC<ContentPropertiesProps> = ({
   const [pages, setPages] = React.useState<Array<{ id: string; title: string; slug: string; is_homepage?: boolean }>>([]);
   const [sectionOptions, setSectionOptions] = React.useState<Array<{ id: string; label: string }>>([]);
   const [scrollSearch, setScrollSearch] = React.useState('');
+  const [dividerDevice, setDividerDevice] = React.useState<'desktop' | 'mobile'>('desktop');
 
   React.useEffect(() => {
     if (element.type === 'button' && websiteId) {
@@ -275,7 +276,6 @@ export const ContentProperties: React.FC<ContentPropertiesProps> = ({
 
   // Divider element content
   if (element.type === 'divider') {
-    const [device, setDevice] = React.useState<'desktop' | 'mobile'>('desktop');
     
     return (
       <div className="space-y-4">
@@ -330,17 +330,17 @@ export const ContentProperties: React.FC<ContentPropertiesProps> = ({
           <Label>Device</Label>
           <div className="flex gap-1 border rounded-md p-1">
             <Button
-              variant={device === 'desktop' ? 'default' : 'ghost'}
+              variant={dividerDevice === 'desktop' ? 'default' : 'ghost'}
               size="sm"
-              onClick={() => setDevice('desktop')}
+              onClick={() => setDividerDevice('desktop')}
               className="flex-1"
             >
               Desktop
             </Button>
             <Button
-              variant={device === 'mobile' ? 'default' : 'ghost'}
+              variant={dividerDevice === 'mobile' ? 'default' : 'ghost'}
               size="sm"
-              onClick={() => setDevice('mobile')}
+              onClick={() => setDividerDevice('mobile')}
               className="flex-1"
             >
               Mobile
@@ -352,13 +352,13 @@ export const ContentProperties: React.FC<ContentPropertiesProps> = ({
         <div>
           <Label>Alignment</Label>
           <Select
-            value={element.content.responsive?.[device]?.alignment || 'center'}
+            value={element.content.responsive?.[dividerDevice]?.alignment || 'center'}
             onValueChange={(value) => {
               const currentResponsive = element.content.responsive || {};
-              const currentDevice = currentResponsive[device] || {};
+              const currentDevice = currentResponsive[dividerDevice] || {};
               onUpdate('responsive', {
                 ...currentResponsive,
-                [device]: {
+                [dividerDevice]: {
                   ...currentDevice,
                   alignment: value
                 }
