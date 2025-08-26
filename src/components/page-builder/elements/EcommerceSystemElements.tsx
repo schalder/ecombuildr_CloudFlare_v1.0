@@ -1109,6 +1109,7 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
   const [loading, setLoading] = useState(true);
   const query = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
   const id = orderId || query.get('orderId') || '';
+  const orderToken = query.get('ot') || '';
 
   const cfg: any = element.content || {};
   const texts = cfg.texts || {
@@ -1158,8 +1159,18 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
           setLoading(false);
           return;
         }
-        // Fetch via public edge function to bypass RLS
-        const { data, error } = await supabase.functions.invoke('get-order', { body: { orderId: id } });
+        // Use secure public order access with token
+        if (!store) {
+          console.error('Store not loaded yet');
+          return;
+        }
+        const { data, error } = await supabase.functions.invoke('get-order-public', {
+          body: { 
+            orderId: id, 
+            storeId: store.id,
+            token: orderToken 
+          }
+        });
         if (error) throw error;
         setOrder(data?.order || null);
         setItems(data?.items || []);
@@ -1169,7 +1180,7 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
         setLoading(false);
       }
     })();
-  }, [id]);
+  }, [id, store, orderToken]);
 
   if (loading) return <div className="text-center">Loading...</div>;
   if (!order) return <div className="text-center">Order not found</div>;
