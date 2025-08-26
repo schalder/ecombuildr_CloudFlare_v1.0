@@ -43,60 +43,106 @@ const TestimonialElement: React.FC<{
     }
   };
 
+  // Generate responsive CSS and get inline styles
+  const responsiveCSS = generateResponsiveCSS(element.id, element.styles);
+  const inlineStyles = renderElementStyles(element, deviceType || 'desktop');
+  
+  // Get responsive styles for current device
+  const responsiveStyles = element.styles?.responsive || { desktop: {}, mobile: {} };
+  const currentDevice = deviceType || 'desktop';
+  const currentResponsiveStyles = (responsiveStyles as any)[currentDevice] || {};
+  
+  // Style helpers for different parts
+  const getTestimonialStyles = () => {
+    return {
+      fontFamily: (currentResponsiveStyles as any).testimonialFontFamily || (element.styles as any)?.testimonialFontFamily,
+      fontSize: (currentResponsiveStyles as any).testimonialFontSize || (element.styles as any)?.testimonialFontSize || '18px',
+      textAlign: (currentResponsiveStyles as any).testimonialTextAlign || (element.styles as any)?.testimonialTextAlign,
+      lineHeight: (currentResponsiveStyles as any).testimonialLineHeight || (element.styles as any)?.testimonialLineHeight || '1.6',
+      color: (currentResponsiveStyles as any).testimonialColor || (element.styles as any)?.testimonialColor,
+    };
+  };
+
+  const getAuthorStyles = () => {
+    return {
+      fontFamily: (currentResponsiveStyles as any).authorFontFamily || (element.styles as any)?.authorFontFamily,
+      fontSize: (currentResponsiveStyles as any).authorFontSize || (element.styles as any)?.authorFontSize || '16px',
+      textAlign: (currentResponsiveStyles as any).authorTextAlign || (element.styles as any)?.authorTextAlign,
+      lineHeight: (currentResponsiveStyles as any).authorLineHeight || (element.styles as any)?.authorLineHeight || '1.5',
+      color: (currentResponsiveStyles as any).authorColor || (element.styles as any)?.authorColor,
+    };
+  };
+
+  const getPositionStyles = () => {
+    return {
+      fontFamily: (currentResponsiveStyles as any).positionFontFamily || (element.styles as any)?.positionFontFamily,
+      fontSize: (currentResponsiveStyles as any).positionFontSize || (element.styles as any)?.positionFontSize || '14px',
+      textAlign: (currentResponsiveStyles as any).positionTextAlign || (element.styles as any)?.positionTextAlign,
+      lineHeight: (currentResponsiveStyles as any).positionLineHeight || (element.styles as any)?.positionLineHeight || '1.4',
+      color: (currentResponsiveStyles as any).positionColor || (element.styles as any)?.positionColor,
+    };
+  };
+
   return (
-    <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-md mx-auto'} p-6 border rounded-lg bg-background`} style={element.styles}>
-      <div className="flex items-center space-x-1 mb-4">
-        {[...Array(5)].map((_, i) => (
-          <Star
-            key={i}
-            className={`h-4 w-4 transition-colors ${
-              i < rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'
-            } ${isEditing ? 'cursor-pointer hover:text-yellow-300' : ''}`}
-            onClick={() => handleRatingClick(i + 1)}
+    <>
+      {responsiveCSS && <style dangerouslySetInnerHTML={{ __html: responsiveCSS }} />}
+      <div 
+        className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-md mx-auto'} p-6 border rounded-lg bg-background`} 
+        style={inlineStyles}
+      >
+        <div className="flex items-center space-x-1 mb-4">
+          {[...Array(5)].map((_, i) => (
+            <Star
+              key={i}
+              className={`h-4 w-4 transition-colors ${
+                i < rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'
+              } ${isEditing ? 'cursor-pointer hover:text-yellow-300' : ''}`}
+              onClick={() => handleRatingClick(i + 1)}
+            />
+          ))}
+        </div>
+        
+        {showQuote && <Quote className="h-8 w-8 text-primary mb-4" />}
+        
+        <blockquote className="mb-4" style={getTestimonialStyles()}>
+          <InlineEditor
+            value={testimonial}
+            onChange={(value) => handleUpdate('testimonial', value)}
+            placeholder="Enter testimonial text..."
+            multiline
+            disabled={!isEditing}
+            className="italic"
           />
-        ))}
-      </div>
-      
-      {showQuote && <Quote className="h-8 w-8 text-primary mb-4" />}
-      
-      <blockquote className="text-lg italic mb-4">
-        <InlineEditor
-          value={testimonial}
-          onChange={(value) => handleUpdate('testimonial', value)}
-          placeholder="Enter testimonial text..."
-          multiline
-          disabled={!isEditing}
-          className="text-lg italic"
-        />
-      </blockquote>
-      
-      <div className="flex items-center space-x-3">
-        <Avatar>
-          <AvatarImage src={avatar} />
-          <AvatarFallback>{author.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-        </Avatar>
-        <div className="flex-1">
-          <div className="font-semibold">
-            <InlineEditor
-              value={author}
-              onChange={(value) => handleUpdate('author', value)}
-              placeholder="Author name"
-              disabled={!isEditing}
-              className="font-semibold"
-            />
-          </div>
-          <div className="text-sm text-muted-foreground">
-            <InlineEditor
-              value={position}
-              onChange={(value) => handleUpdate('position', value)}
-              placeholder="Position, Company"
-              disabled={!isEditing}
-              className="text-sm text-muted-foreground"
-            />
+        </blockquote>
+        
+        <div className="flex items-center space-x-3">
+          <Avatar>
+            <AvatarImage src={avatar} />
+            <AvatarFallback>{author.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+          </Avatar>
+          <div className="flex-1">
+            <div style={getAuthorStyles()}>
+              <InlineEditor
+                value={author}
+                onChange={(value) => handleUpdate('author', value)}
+                placeholder="Author name"
+                disabled={!isEditing}
+                className="font-semibold"
+              />
+            </div>
+            <div style={getPositionStyles()}>
+              <InlineEditor
+                value={position}
+                onChange={(value) => handleUpdate('position', value)}
+                placeholder="Position, Company"
+                disabled={!isEditing}
+                className="text-muted-foreground"
+              />
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

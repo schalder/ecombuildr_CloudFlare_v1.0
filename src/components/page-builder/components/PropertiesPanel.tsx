@@ -66,7 +66,8 @@ import {
   WeeklyFeaturedElementStyles,
   ListElementStyles,
   PriceElementStyles,
-  HeroSliderElementStyles
+  HeroSliderElementStyles,
+  TestimonialElementStyles
 } from './ElementStyles';
 import { CustomHTMLElementStyles } from './ElementStyles/CustomHTMLElementStyles';
 import { CountdownElementStyles } from './ElementStyles/CountdownElementStyles';
@@ -236,6 +237,15 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
     if (selectedElement.type === 'faq') {
       return (
         <FAQElementStyles
+          element={selectedElement}
+          onStyleUpdate={handleStyleUpdate}
+        />
+      );
+    }
+    
+    if (selectedElement.type === 'testimonial') {
+      return (
+        <TestimonialElementStyles
           element={selectedElement}
           onStyleUpdate={handleStyleUpdate}
         />
