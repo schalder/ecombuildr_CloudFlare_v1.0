@@ -740,6 +740,10 @@ const VideoElement: React.FC<{
   } = element.content as any;
   
   const containerStyles = renderElementStyles(element, (deviceType ?? 'desktop'));
+  
+  // Strip width-related properties to prevent conflicts with widthByDevice
+  const { width: _, maxWidth: __, minWidth: ___, ...cleanContainerStyles } = containerStyles;
+  
   const activeDevice: 'desktop' | 'mobile' = (deviceType === 'mobile' ? 'mobile' : 'desktop');
   const effectiveWidth = (widthByDevice?.[activeDevice] as string) || (width as string);
   // Import video utilities
@@ -842,7 +846,7 @@ const VideoElement: React.FC<{
     return (
       <div 
         className="w-full h-48 bg-muted flex items-center justify-center border-2 border-dashed border-border rounded-lg"
-        style={containerStyles}
+        style={cleanContainerStyles}
       >
         <p className="text-sm text-muted-foreground">Add a video URL in the properties panel</p>
       </div>
@@ -853,7 +857,7 @@ const VideoElement: React.FC<{
     return (
       <div 
         className="w-full h-48 bg-muted flex items-center justify-center border-2 border-dashed border-border rounded-lg"
-        style={containerStyles}
+        style={cleanContainerStyles}
       >
         <p className="text-sm text-muted-foreground">Add custom embed code in the properties panel</p>
       </div>
@@ -866,7 +870,7 @@ const VideoElement: React.FC<{
   if (videoType === 'embed' && embedCode) {
     const sanitizedCode = sanitizeEmbedCode(embedCode);
     return (
-      <div className={`${widthClasses} aspect-video`} style={containerStyles}>
+      <div className={`${widthClasses} aspect-video`} style={cleanContainerStyles}>
         <div 
           className="w-full h-full"
           dangerouslySetInnerHTML={{ __html: sanitizedCode }}
@@ -882,7 +886,7 @@ const VideoElement: React.FC<{
     if (videoInfo.type === 'hosted') {
       // Direct video file
       return (
-        <div className={`${widthClasses} aspect-video`} style={containerStyles}>
+        <div className={`${widthClasses} aspect-video`} style={cleanContainerStyles}>
           <video
             src={url}
             controls={controls}
@@ -905,7 +909,7 @@ const VideoElement: React.FC<{
       });
 
       return (
-        <div className={`${widthClasses} aspect-video`} style={containerStyles}>
+        <div className={`${widthClasses} aspect-video`} style={cleanContainerStyles}>
           <iframe
             src={finalEmbedUrl}
             className="w-full h-full rounded-lg"
@@ -922,7 +926,7 @@ const VideoElement: React.FC<{
   return (
     <div 
       className={`${widthClasses} aspect-video bg-muted flex items-center justify-center border-2 border-dashed border-border rounded-lg`}
-      style={containerStyles}
+      style={cleanContainerStyles}
     >
       <p className="text-sm text-muted-foreground">
         {videoType === 'url' ? 'Invalid video URL' : 'No video content'}
