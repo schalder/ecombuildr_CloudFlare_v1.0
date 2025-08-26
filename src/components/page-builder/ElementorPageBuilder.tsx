@@ -831,7 +831,7 @@ const ElementorPageBuilderContent: React.FC<ElementorPageBuilderProps> = memo(({
         paddingLeft: '24px',
         borderRadius: '6px',
         fontWeight: '600',
-        fontSize: '14px',
+        fontSize: '32px',
         textAlign: 'center',
         boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)'
       };

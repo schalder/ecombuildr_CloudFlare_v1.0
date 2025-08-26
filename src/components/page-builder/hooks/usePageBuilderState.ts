@@ -395,7 +395,7 @@ function getDefaultContent(elementType: string): Record<string, any> {
       return { text: 'Your Paragraph text goes Lorem ipsum dolor sit amet, consectetur adipisicing elit. Autem dolore, alias, numquam enim ab voluptate id quam harum ducimus cupiditate similique quisquam et deserunt, recusandae. here' };
     case 'button':
       return { 
-        text: 'Get Started Now', 
+        text: 'Get Started', 
         variant: 'default', 
         size: 'default', 
         url: '#' 
