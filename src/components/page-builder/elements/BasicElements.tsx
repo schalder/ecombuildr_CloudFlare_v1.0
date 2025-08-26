@@ -660,26 +660,34 @@ const DividerElement: React.FC<{
   const currentDevice = deviceType === 'tablet' ? 'desktop' : deviceType;
   const alignment = element.content.responsive?.[currentDevice]?.alignment || 'center';
   
-  // Parse margin from styles for backward compatibility
-  const existingMargin = element.styles?.margin || '20px 0';
-  const marginParts = existingMargin.split(' ');
-  const verticalMargin = marginParts[0] || '20px';
   
   const elementStyles = renderElementStyles(element);
   
-  // Calculate alignment margins
-  let marginLeft = '0';
-  let marginRight = '0';
+  // Parse individual margin values from the new spacing system
+  const parseMarginValue = (value: string | number | undefined): string => {
+    if (!value) return '0px';
+    return typeof value === 'number' ? `${value}px` : String(value);
+  };
+  
+  // Get individual margin values
+  const marginTop = parseMarginValue(elementStyles.marginTop);
+  const marginRight = parseMarginValue(elementStyles.marginRight);
+  const marginBottom = parseMarginValue(elementStyles.marginBottom);
+  const marginLeft = parseMarginValue(elementStyles.marginLeft);
+  
+  // Calculate alignment margins (only affect left/right for the divider line itself)
+  let dividerMarginLeft = marginLeft;
+  let dividerMarginRight = marginRight;
   
   if (alignment === 'center') {
-    marginLeft = 'auto';
-    marginRight = 'auto';
+    dividerMarginLeft = 'auto';
+    dividerMarginRight = 'auto';
   } else if (alignment === 'right') {
-    marginLeft = 'auto';
-    marginRight = '0';
+    dividerMarginLeft = 'auto';
+    dividerMarginRight = '0';
   } else {
-    marginLeft = '0';
-    marginRight = 'auto';
+    dividerMarginLeft = '0';
+    dividerMarginRight = 'auto';
   }
 
   const dividerStyle = {
@@ -688,17 +696,19 @@ const DividerElement: React.FC<{
     width,
     marginTop: '0',
     marginBottom: '0',
-    marginLeft,
-    marginRight,
+    marginLeft: dividerMarginLeft,
+    marginRight: dividerMarginRight,
   };
 
   // Remove background styles for the wrapper - dividers should be transparent
-  const { backgroundColor, background, ...wrapperStylesWithoutBg } = elementStyles;
+  const { backgroundColor, background, marginTop: _, marginRight: __, marginBottom: ___, marginLeft: ____, ...wrapperStylesWithoutBg } = elementStyles;
   
   const wrapperStyle = {
     ...wrapperStylesWithoutBg,
-    marginTop: verticalMargin,
-    marginBottom: verticalMargin,
+    marginTop,
+    marginRight,
+    marginBottom,
+    marginLeft,
     backgroundColor: 'transparent',
     background: 'transparent',
   };
