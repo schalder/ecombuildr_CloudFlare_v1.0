@@ -675,33 +675,37 @@ const DividerElement: React.FC<{
   const marginBottom = parseMarginValue(elementStyles.marginBottom);
   const marginLeft = parseMarginValue(elementStyles.marginLeft);
   
-  // Calculate alignment margins (only affect left/right for the divider line itself)
-  let dividerMarginLeft = marginLeft;
-  let dividerMarginRight = marginRight;
+  // Calculate alignment margins (only when user hasn't set specific left/right margins)
+  let dividerMarginLeft = '0';
+  let dividerMarginRight = '0';
   
-  if (alignment === 'center') {
-    dividerMarginLeft = 'auto';
-    dividerMarginRight = 'auto';
-  } else if (alignment === 'right') {
-    dividerMarginLeft = 'auto';
-    dividerMarginRight = '0';
-  } else {
-    dividerMarginLeft = '0';
-    dividerMarginRight = 'auto';
+  // Only apply alignment if no explicit left/right margins are set
+  const hasExplicitHorizontalMargins = elementStyles.marginLeft !== undefined || elementStyles.marginRight !== undefined;
+  
+  if (!hasExplicitHorizontalMargins) {
+    if (alignment === 'center') {
+      dividerMarginLeft = 'auto';
+      dividerMarginRight = 'auto';
+    } else if (alignment === 'right') {
+      dividerMarginLeft = 'auto';
+      dividerMarginRight = '0';
+    } else {
+      dividerMarginLeft = '0';
+      dividerMarginRight = 'auto';
+    }
   }
 
   const dividerStyle = {
     border: 'none',
     borderTop: `${thickness}px ${style} ${color}`,
     width,
-    marginTop: '0',
-    marginBottom: '0',
+    margin: 0,
     marginLeft: dividerMarginLeft,
     marginRight: dividerMarginRight,
   };
 
   // Remove background styles for the wrapper - dividers should be transparent
-  const { backgroundColor, background, marginTop: _, marginRight: __, marginBottom: ___, marginLeft: ____, ...wrapperStylesWithoutBg } = elementStyles;
+  const { backgroundColor, background, ...wrapperStylesWithoutBg } = elementStyles;
   
   const wrapperStyle = {
     ...wrapperStylesWithoutBg,
