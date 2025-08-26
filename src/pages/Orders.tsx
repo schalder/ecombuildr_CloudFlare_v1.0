@@ -23,6 +23,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import { 
   Search, 
   MoreHorizontal, 
@@ -88,12 +96,18 @@ export default function Orders() {
   const [pushing, setPushing] = useState(false);
   const [websiteMap, setWebsiteMap] = useState<Record<string, string>>({});
   const [funnelMap, setFunnelMap] = useState<Record<string, string>>({});
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const ordersPerPage = 10;
+  
   const isMobile = useIsMobile();
   useEffect(() => {
     if (user) {
       fetchOrders();
     }
-  }, [user]);
+  }, [user, currentPage]);
 
   useEffect(() => {
     const status = searchParams.get("status");
@@ -105,6 +119,11 @@ export default function Orders() {
       setSearchTerm(search);
     }
   }, [searchParams]);
+
+  // Reset to first page when search or filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter]);
 
   // Handle orderId parameter from notifications
   useEffect(() => {
@@ -150,6 +169,18 @@ export default function Orders() {
       if (stores && stores.length > 0) {
         const storeIds = stores.map(store => store.id);
         
+        // Get total count for pagination
+        const { count, error: countError } = await supabase
+          .from('orders')
+          .select('*', { count: 'exact', head: true })
+          .in('store_id', storeIds);
+
+        if (countError) throw countError;
+        setTotalCount(count || 0);
+        
+        // Calculate offset for pagination
+        const offset = (currentPage - 1) * ordersPerPage;
+        
         // Fetch orders, websites, and funnels in parallel
         const [
           { data: orders, error: ordersError },
@@ -179,7 +210,8 @@ export default function Orders() {
               funnel_id
             `)
             .in('store_id', storeIds)
-            .order('created_at', { ascending: false }),
+            .order('created_at', { ascending: false })
+            .range(offset, offset + ordersPerPage - 1),
           supabase
             .from('websites')
             .select('id, name')
@@ -396,8 +428,11 @@ export default function Orders() {
     return matchesSearch && matchesStatus;
   });
 
+  // Calculate pagination values
+  const totalPages = Math.ceil(totalCount / ordersPerPage);
+  
   const orderStats = {
-    total: orders.length,
+    total: totalCount,
     pending: orders.filter(o => o.status === 'pending').length,
     processing: orders.filter(o => o.status === 'processing').length,
     delivered: orders.filter(o => o.status === 'delivered').length,
@@ -501,7 +536,7 @@ export default function Orders() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <ShoppingCart className="h-5 w-5" />
-              Orders ({filteredOrders.length})
+              Orders ({totalCount})
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -511,18 +546,18 @@ export default function Orders() {
                   <div key={i} className="h-16 bg-muted animate-pulse rounded" />
                 ))}
               </div>
-            ) : filteredOrders.length === 0 ? (
+            ) : orders.length === 0 ? (
               <div className="text-center py-8">
                 <ShoppingCart className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                 <h3 className="text-lg font-medium">No orders found</h3>
                 <p className="text-muted-foreground">
-                  {searchTerm || statusFilter ? 'Try adjusting your filters' : 'Orders will appear here when customers place them'}
+                  Orders will appear here when customers place them
                 </p>
               </div>
             ) : isMobile ? (
               // Mobile Card View
               <div className="space-y-4 overflow-x-hidden">
-                {filteredOrders.map((order) => (
+                {orders.map((order) => (
                   <Card key={order.id} className="p-4">
                     <div className="space-y-3">
                       {/* Header Row */}
@@ -742,7 +777,7 @@ export default function Orders() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredOrders.map((order) => (
+                  {orders.map((order) => (
                     <TableRow key={order.id}>
                       <TableCell className="font-medium">
                         <div>
@@ -926,6 +961,75 @@ export default function Orders() {
             )}
           </CardContent>
         </Card>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center space-x-2">
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious 
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (currentPage > 1) {
+                        setCurrentPage(currentPage - 1);
+                      }
+                    }}
+                    className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  />
+                </PaginationItem>
+                
+                {/* Page numbers */}
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  let pageNum;
+                  if (totalPages <= 5) {
+                    pageNum = i + 1;
+                  } else if (currentPage <= 3) {
+                    pageNum = i + 1;
+                  } else if (currentPage >= totalPages - 2) {
+                    pageNum = totalPages - 4 + i;
+                  } else {
+                    pageNum = currentPage - 2 + i;
+                  }
+                  
+                  return (
+                    <PaginationItem key={pageNum}>
+                      <PaginationLink
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setCurrentPage(pageNum);
+                        }}
+                        isActive={currentPage === pageNum}
+                        className="cursor-pointer"
+                      >
+                        {pageNum}
+                      </PaginationLink>
+                    </PaginationItem>
+                  );
+                })}
+                
+                <PaginationItem>
+                  <PaginationNext 
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (currentPage < totalPages) {
+                        setCurrentPage(currentPage + 1);
+                      }
+                    }}
+                    className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </div>
+        )}
+
+        <div className="text-center text-sm text-muted-foreground">
+          Showing page {currentPage} of {totalPages} ({totalCount} total orders)
+        </div>
 
         {/* Order Details Dialog */}
         <Dialog 
