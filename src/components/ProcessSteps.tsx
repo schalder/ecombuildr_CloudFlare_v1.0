@@ -83,7 +83,17 @@ export const ProcessSteps = () => {
 
         {/* CTA */}
         <div className="text-center">
-          <Button variant="accent" size="lg" className="group">
+          <Button 
+            variant="accent" 
+            size="lg" 
+            className="group"
+            onClick={() => {
+              const pricingSection = document.getElementById('pricing');
+              if (pricingSection) {
+                pricingSection.scrollIntoView({ behavior: 'smooth' });
+              }
+            }}
+          >
             Start Your Website Today
             <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
           </Button>

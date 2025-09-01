@@ -123,7 +123,17 @@ export const ToolsShowcase = () => {
             <p className="text-xl text-primary-light mb-8">
               Join thousands of entrepreneurs who've already built their online empire with our platform
             </p>
-            <Button variant="accent" size="lg" className="group">
+            <Button 
+              variant="accent" 
+              size="lg" 
+              className="group"
+              onClick={() => {
+                const pricingSection = document.getElementById('pricing');
+                if (pricingSection) {
+                  pricingSection.scrollIntoView({ behavior: 'smooth' });
+                }
+              }}
+            >
               Start Your Success Story
               <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
             </Button>
