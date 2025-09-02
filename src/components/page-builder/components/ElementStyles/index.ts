@@ -14,3 +14,4 @@ export { SocialShareElementStyles } from './SocialShareElementStyles';
 export { HeroSliderElementStyles } from './HeroSliderElementStyles';
 export { CustomHTMLElementStyles } from './CustomHTMLElementStyles';
 export { TestimonialElementStyles } from './TestimonialElementStyles';
+export { FunnelOfferElementStyles } from './FunnelOfferElementStyles';

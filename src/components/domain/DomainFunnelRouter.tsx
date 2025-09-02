@@ -6,6 +6,7 @@ import { PageBuilderRenderer } from '@/components/storefront/PageBuilderRenderer
 import { FunnelHeader } from '@/components/storefront/FunnelHeader';
 import { FunnelFooter } from '@/components/storefront/FunnelFooter';
 import { setSEO } from '@/lib/seo';
+import { FunnelStepProvider } from '@/contexts/FunnelStepContext';
 import { useStore } from '@/contexts/StoreContext';
 
 interface FunnelData {
@@ -168,19 +169,21 @@ export const DomainFunnelRouter: React.FC<DomainFunnelRouterProps> = ({ funnel }
   }
 
   return (
-    <div className="w-full min-h-screen flex flex-col">
-      <FunnelHeader funnel={funnel} />
-      <main className="flex-1">
-        {step.content?.sections ? (
-          <PageBuilderRenderer data={step.content} />
-        ) : (
-          <div className="container mx-auto px-4 py-8">
-            <h1 className="text-3xl font-bold mb-6">{step.title}</h1>
-            <p className="text-muted-foreground">This funnel step is still being set up.</p>
-          </div>
-        )}
-      </main>
-      <FunnelFooter funnel={funnel} />
-    </div>
+    <FunnelStepProvider stepId={step.id} funnelId={funnel.id}>
+      <div className="w-full min-h-screen flex flex-col">
+        <FunnelHeader funnel={funnel} />
+        <main className="flex-1">
+          {step.content?.sections ? (
+            <PageBuilderRenderer data={step.content} />
+          ) : (
+            <div className="container mx-auto px-4 py-8">
+              <h1 className="text-3xl font-bold mb-6">{step.title}</h1>
+              <p className="text-muted-foreground">This funnel step is still being set up.</p>
+            </div>
+          )}
+        </main>
+        <FunnelFooter funnel={funnel} />
+      </div>
+    </FunnelStepProvider>
   );
 };

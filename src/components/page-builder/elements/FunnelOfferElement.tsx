@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -6,34 +6,71 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useFunnelStepContext } from '@/contexts/FunnelStepContext';
+import { renderElementStyles } from '@/components/page-builder/utils/styleRenderer';
+import { formatCurrency } from '@/lib/currency';
 import type { PageBuilderElement } from '../types';
 
 interface FunnelOfferElementProps {
   element: PageBuilderElement;
   isBuilder?: boolean;
+  deviceType?: 'desktop' | 'tablet' | 'mobile';
 }
 
 export const FunnelOfferElement: React.FC<FunnelOfferElementProps> = ({ 
   element, 
-  isBuilder = false 
+  isBuilder = false,
+  deviceType = 'desktop'
 }) => {
   const [searchParams] = useSearchParams();
   const [isProcessing, setIsProcessing] = useState(false);
+  const [stepData, setStepData] = useState<any>(null);
+  const [productData, setProductData] = useState<any>(null);
   const { toast } = useToast();
   const { stepId } = useFunnelStepContext();
 
   const orderId = searchParams.get('orderId');
-  const token = searchParams.get('ot'); // Standardize to 'ot' parameter
+  const token = searchParams.get('ot');
 
+  // Load dynamic step and product data
+  useEffect(() => {
+    if (!stepId || isBuilder) return;
+
+    const loadStepData = async () => {
+      try {
+        const { data: step, error } = await supabase
+          .from('funnel_steps')
+          .select(`
+            *,
+            offer_product:products(*)
+          `)
+          .eq('id', stepId)
+          .single();
+
+        if (error) throw error;
+
+        setStepData(step);
+        if (step?.offer_product) {
+          setProductData(step.offer_product);
+        }
+      } catch (error) {
+        console.error('Error loading step data:', error);
+      }
+    };
+
+    loadStepData();
+  }, [stepId, isBuilder]);
+
+  // Use dynamic data or fallback to element content
   const {
     title = "Special Offer",
     description = "Don't miss this exclusive offer!",
-    productName = "Bonus Product",
-    originalPrice = "99",
-    offerPrice = "49",
     acceptText = "Yes, I Want This!",
     declineText = "No Thanks"
   } = element.content || {};
+
+  const productName = productData?.name || "Bonus Product";
+  const originalPrice = productData?.compare_price || productData?.price || "99";
+  const offerPrice = stepData?.offer_price || productData?.price || "49";
 
   const handleOffer = async (action: 'accept' | 'decline') => {
     if (isBuilder) {
@@ -89,61 +126,114 @@ export const FunnelOfferElement: React.FC<FunnelOfferElementProps> = ({
     }
   };
 
+  // Render element styles
+  const elementStyles = renderElementStyles(element, deviceType);
+  const responsiveStyles = element.styles?.responsive || { desktop: {}, mobile: {} };
+  const currentStyles = responsiveStyles[deviceType] || {};
+
+  // Helper to get styled value
+  const getStyleValue = (prop: string, fallback: any) => {
+    return currentStyles[prop] || element.styles?.[prop] || fallback;
+  };
+
+  const containerStyles = {
+    backgroundColor: getStyleValue('backgroundColor', '#ffffff'),
+    borderColor: getStyleValue('borderColor', '#e5e7eb'),
+    borderWidth: getStyleValue('borderWidth', '1px'),
+    borderRadius: getStyleValue('borderRadius', '8px'),
+    boxShadow: getStyleValue('boxShadow', '0 4px 6px -1px rgba(0, 0, 0, 0.1)'),
+    maxWidth: getStyleValue('maxWidth', '600px'),
+  };
+
+  const titleStyles = {
+    fontSize: getStyleValue('titleFontSize', '24px'),
+    fontWeight: getStyleValue('titleFontWeight', 'bold'),
+    color: getStyleValue('titleColor', '#1f2937'),
+    textAlign: getStyleValue('titleTextAlign', 'center'),
+  };
+
+  const buttonStyles = {
+    backgroundColor: getStyleValue('buttonBackgroundColor', '#10b981'),
+    color: getStyleValue('buttonTextColor', '#ffffff'),
+    fontSize: getStyleValue('buttonFontSize', '16px'),
+    fontWeight: getStyleValue('buttonFontWeight', 'semibold'),
+    borderRadius: getStyleValue('buttonBorderRadius', '6px'),
+    height: getStyleValue('buttonHeight', '56px'),
+    '&:hover': {
+      backgroundColor: getStyleValue('buttonHoverBackgroundColor', '#059669'),
+    }
+  };
+
+  const linkStyles = {
+    color: getStyleValue('linkTextColor', '#6b7280'),
+    fontSize: getStyleValue('linkFontSize', '14px'),
+    textDecoration: getStyleValue('linkTextDecoration', 'underline'),
+    '&:hover': {
+      color: getStyleValue('linkHoverColor', '#374151'),
+    }
+  };
+
   return (
-    <div className="max-w-2xl mx-auto p-6">
-      <Card className="border-2 border-primary/20 shadow-lg">
-        <CardHeader className="text-center">
-          <CardTitle className="text-3xl font-bold text-primary">
+    <div className="max-w-2xl mx-auto p-6" style={elementStyles}>
+      <div 
+        className="border rounded-lg shadow-lg overflow-hidden"
+        style={containerStyles}
+      >
+        <div className="p-6 text-center">
+          <h2 style={titleStyles} className="mb-3">
             {title}
-          </CardTitle>
-          <CardDescription className="text-lg text-muted-foreground">
+          </h2>
+          <p className="text-lg text-muted-foreground mb-6">
             {description}
-          </CardDescription>
-        </CardHeader>
+          </p>
+        </div>
         
-        <CardContent className="space-y-6">
+        <div className="px-6 pb-6 space-y-6">
           <div className="text-center">
             <h3 className="text-2xl font-semibold mb-2">{productName}</h3>
             <div className="flex items-center justify-center gap-3">
               <span className="text-2xl text-muted-foreground line-through">
-                ${originalPrice}
+                {formatCurrency(parseFloat(originalPrice.toString()))}
               </span>
               <span className="text-4xl font-bold text-primary">
-                ${offerPrice}
+                {formatCurrency(parseFloat(offerPrice.toString()))}
               </span>
             </div>
             <p className="text-sm text-muted-foreground mt-2">
-              Save ${(parseFloat(originalPrice) - parseFloat(offerPrice)).toFixed(2)}!
+              Save {formatCurrency(parseFloat(originalPrice.toString()) - parseFloat(offerPrice.toString()))}!
             </p>
           </div>
 
           <div className="space-y-4">
-            <Button 
+            <button
               onClick={() => handleOffer('accept')}
               disabled={isProcessing}
-              className="w-full h-14 text-lg font-semibold bg-primary hover:bg-primary/90"
-              size="lg"
+              className="w-full transition-colors font-semibold"
+              style={buttonStyles}
             >
               {isProcessing ? (
                 <>
-                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin inline" />
                   Processing...
                 </>
               ) : (
                 acceptText
               )}
-            </Button>
-
-            <button
-              onClick={() => handleOffer('decline')}
-              disabled={isProcessing}
-              className="w-full text-muted-foreground hover:text-foreground underline text-sm py-2 transition-colors"
-            >
-              {declineText}
             </button>
+
+            <div className="text-center">
+              <button
+                onClick={() => handleOffer('decline')}
+                disabled={isProcessing}
+                className="transition-colors py-2"
+                style={linkStyles}
+              >
+                {declineText}
+              </button>
+            </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 };

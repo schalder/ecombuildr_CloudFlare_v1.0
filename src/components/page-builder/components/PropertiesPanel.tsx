@@ -52,6 +52,7 @@ import {
   SocialShareProperties,
   SocialLinksProperties 
 } from './AdvancedProperties';
+import { FunnelOfferContentProperties } from './FunnelOfferContentProperties';
 import { HeroSliderContentProperties } from './HeroSliderContentProperties';
 import { CountdownProperties } from './CountdownProperties';
 import {
@@ -67,7 +68,8 @@ import {
   ListElementStyles,
   PriceElementStyles,
   HeroSliderElementStyles,
-  TestimonialElementStyles
+  TestimonialElementStyles,
+  FunnelOfferElementStyles
 } from './ElementStyles';
 import { CustomHTMLElementStyles } from './ElementStyles/CustomHTMLElementStyles';
 import { CountdownElementStyles } from './ElementStyles/CountdownElementStyles';
@@ -246,6 +248,15 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
     if (selectedElement.type === 'testimonial') {
       return (
         <TestimonialElementStyles
+          element={selectedElement}
+          onStyleUpdate={handleStyleUpdate}
+        />
+      );
+    }
+    
+    if (selectedElement.type === 'funnel-offer') {
+      return (
+        <FunnelOfferElementStyles
           element={selectedElement}
           onStyleUpdate={handleStyleUpdate}
         />
@@ -460,6 +471,13 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
 
                 {selectedElement.type === 'hero-slider' && (
                   <HeroSliderContentProperties 
+                    element={selectedElement} 
+                    onUpdate={handleContentUpdate} 
+                  />
+                )}
+
+                {selectedElement.type === 'funnel-offer' && (
+                  <FunnelOfferContentProperties 
                     element={selectedElement} 
                     onUpdate={handleContentUpdate} 
                   />
