@@ -255,8 +255,8 @@ export const FunnelHeaderBuilder: React.FC<Props> = ({ funnel }) => {
                         }}>
                           <SelectTrigger className="w-full"><SelectValue placeholder="Select step" /></SelectTrigger>
                           <SelectContent>
-                            {steps.map(s => (
-                              <SelectItem key={s.id} value={s.slug || ''}>{s.title} (Step {s.step_order})</SelectItem>
+                            {steps.filter(s => s.slug && s.slug.trim() !== '').map(s => (
+                              <SelectItem key={s.id} value={s.slug}>{s.title} (Step {s.step_order})</SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
