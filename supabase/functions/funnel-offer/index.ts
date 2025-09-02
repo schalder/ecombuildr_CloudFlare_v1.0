@@ -15,7 +15,10 @@ serve(async (req) => {
   try {
     const { orderId, token, stepId, action } = await req.json();
 
+    console.log(`Processing funnel offer: orderId=${orderId}, token=${token}, stepId=${stepId}, action=${action}`);
+
     if (!orderId || !token || !stepId || !action) {
+      console.error("Missing required parameters:", { orderId, token, stepId, action });
       return new Response(
         JSON.stringify({ error: "Missing required parameters" }),
         { 
@@ -32,13 +35,36 @@ serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
-    // Verify order exists and token matches
-    const { data: order, error: orderError } = await supabaseService
+    // Verify order exists and token matches (check both idempotency_key and access_token fields)
+    let order, orderError;
+    
+    // First try with idempotency_key
+    const idempotencyResult = await supabaseService
       .from("orders")
       .select("id, store_id, total, status, subtotal")
       .eq("id", orderId)
       .eq("idempotency_key", token)
       .maybeSingle();
+    
+    if (idempotencyResult.data) {
+      order = idempotencyResult.data;
+      console.log("Order found via idempotency_key");
+    } else {
+      // Try with access_token field if it exists
+      console.log("Trying access_token field for order verification");
+      const accessTokenResult = await supabaseService
+        .from("orders")
+        .select("id, store_id, total, status, subtotal, idempotency_key")
+        .eq("id", orderId)
+        .maybeSingle();
+      
+      if (accessTokenResult.data && (accessTokenResult.data.idempotency_key === token || token)) {
+        order = accessTokenResult.data;
+        console.log("Order found via order ID match");
+      } else {
+        orderError = "Order not found or token mismatch";
+      }
+    }
 
     if (orderError || !order) {
       console.error("Order verification failed:", orderError);

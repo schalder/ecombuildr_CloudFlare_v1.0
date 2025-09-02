@@ -474,22 +474,23 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
               
             if (!error && nextStep?.slug) {
               // Environment-aware redirect to next step
-              const isCustomDomain = !(
+              const isAppEnvironment = (
                 window.location.hostname === 'localhost' || 
+                window.location.hostname.includes('lovable.dev') ||
                 window.location.hostname.includes('lovable.app') ||
                 window.location.hostname.includes('lovableproject.com')
               );
               
-              if (isCustomDomain) {
-                // Custom domain: use clean paths
-                const nextUrl = `/${nextStep.slug}?orderId=${orderId}&ot=${accessToken}`;
-                console.log(`Redirecting to success step (custom domain): ${nextUrl}`);
-                window.location.href = nextUrl;
-                return;
-              } else {
+              if (isAppEnvironment) {
                 // App/sandbox: use funnel-aware paths
                 const nextUrl = `/funnel/${funnelStepData.funnel_id}/${nextStep.slug}?orderId=${orderId}&ot=${accessToken}`;
                 console.log(`Redirecting to success step (app): ${nextUrl}`);
+                window.location.href = nextUrl;
+                return;
+              } else {
+                // Custom domain: use clean paths
+                const nextUrl = `/${nextStep.slug}?orderId=${orderId}&ot=${accessToken}`;
+                console.log(`Redirecting to success step (custom domain): ${nextUrl}`);
                 window.location.href = nextUrl;
                 return;
               }

@@ -106,23 +106,26 @@ export const FunnelOfferElement: React.FC<FunnelOfferElementProps> = ({
 
       if (error) throw error;
 
+      console.log('Offer response data:', data);
+
       if (data?.nextStepSlug && data?.funnelSlug) {
         // Environment-aware redirect to next step
-        const isCustomDomain = !(
+        const isAppEnvironment = (
           window.location.hostname === 'localhost' || 
+          window.location.hostname.includes('lovable.dev') ||
           window.location.hostname.includes('lovable.app') ||
           window.location.hostname.includes('lovableproject.com')
         );
         
-        if (isCustomDomain) {
-          // Custom domain: use clean paths
-          const nextUrl = `/${data.nextStepSlug}?orderId=${orderId}&ot=${token}`;
-          console.log(`Redirecting to next step (custom domain): ${nextUrl}`);
-          window.location.href = nextUrl;
-        } else {
+        if (isAppEnvironment) {
           // App/sandbox: use funnel-aware paths
           const nextUrl = `/funnel/${funnelId}/${data.nextStepSlug}?orderId=${orderId}&ot=${token}`;
           console.log(`Redirecting to next step (app): ${nextUrl}`);
+          window.location.href = nextUrl;
+        } else {
+          // Custom domain: use clean paths
+          const nextUrl = `/${data.nextStepSlug}?orderId=${orderId}&ot=${token}`;
+          console.log(`Redirecting to next step (custom domain): ${nextUrl}`);
           window.location.href = nextUrl;
         }
       } else {
