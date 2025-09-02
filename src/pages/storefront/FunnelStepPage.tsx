@@ -8,6 +8,7 @@ import { setSEO, buildCanonical } from '@/lib/seo';
 import { PixelManager } from '@/components/pixel/PixelManager';
 import { FunnelHeader } from '@/components/storefront/FunnelHeader';
 import { FunnelFooter } from '@/components/storefront/FunnelFooter';
+import { FunnelStepProvider } from '@/contexts/FunnelStepContext';
 interface FunnelStepData {
   id: string;
   title: string;
@@ -209,20 +210,22 @@ export const FunnelStepPage: React.FC = () => {
   }
 
   return (
-    <PixelManager storeId={funnel.store_id}>
-      <div className="w-full min-h-screen">
-        <FunnelHeader funnel={funnel} />
-        {/* Render funnel step content using PageBuilderRenderer */}
-        {step.content?.sections ? (
-          <PageBuilderRenderer data={step.content} />
-        ) : (
-          <div className="container mx-auto px-4 py-8">
-            <h1 className="text-3xl font-bold mb-6">{step.title}</h1>
-            <p className="text-muted-foreground">This step is still being set up.</p>
-          </div>
-        )}
-        <FunnelFooter funnel={funnel} />
-      </div>
-    </PixelManager>
+    <FunnelStepProvider stepId={step.id} funnelId={funnel.id}>
+      <PixelManager storeId={funnel.store_id}>
+        <div className="w-full min-h-screen">
+          <FunnelHeader funnel={funnel} />
+          {/* Render funnel step content using PageBuilderRenderer */}
+          {step.content?.sections ? (
+            <PageBuilderRenderer data={step.content} />
+          ) : (
+            <div className="container mx-auto px-4 py-8">
+              <h1 className="text-3xl font-bold mb-6">{step.title}</h1>
+              <p className="text-muted-foreground">This step is still being set up.</p>
+            </div>
+          )}
+          <FunnelFooter funnel={funnel} />
+        </div>
+      </PixelManager>
+    </FunnelStepProvider>
   );
 };

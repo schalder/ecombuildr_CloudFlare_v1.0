@@ -440,7 +440,7 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
         if (successRedirectUrl && successRedirectUrl.trim()) {
           const redirectUrl = new URL(successRedirectUrl, window.location.origin);
           redirectUrl.searchParams.set('orderId', orderId);
-          redirectUrl.searchParams.set('token', accessToken || '');
+          redirectUrl.searchParams.set('ot', accessToken || '');
           window.location.href = redirectUrl.toString();
         } else {
           navigate(paths.orderConfirmation(orderId, accessToken));

@@ -35,7 +35,7 @@ serve(async (req) => {
     // Verify order exists and token matches
     const { data: order, error: orderError } = await supabaseService
       .from("orders")
-      .select("id, store_id, total, status")
+      .select("id, store_id, total, status, subtotal")
       .eq("id", orderId)
       .eq("idempotency_key", token)
       .maybeSingle();
@@ -130,11 +130,14 @@ serve(async (req) => {
       }
 
       // Update order total
+      const newTotal = order.total + totalItemPrice;
+      const newSubtotal = (order.subtotal || order.total) + totalItemPrice;
+      
       const { error: updateError } = await supabaseService
         .from("orders")
         .update({ 
-          total: order.total + totalItemPrice,
-          subtotal: order.total + totalItemPrice
+          total: newTotal,
+          subtotal: newSubtotal
         })
         .eq("id", orderId);
 

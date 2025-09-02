@@ -26,6 +26,7 @@ import { useStore } from '@/contexts/StoreContext';
 import { WebsiteProvider } from '@/contexts/WebsiteContext';
 import { useHTMLGeneration } from '@/hooks/useHTMLGeneration';
 import { SEOConfig } from '@/lib/seo';
+import { FunnelStepToolbar } from '@/components/page-builder/components/FunnelStepToolbar';
 
 export default function PageBuilder() {
   const navigate = useNavigate();
@@ -424,6 +425,9 @@ export default function PageBuilder() {
         </div>
 
         <div className="flex items-center gap-2">
+          {context === 'funnel' && stepId && funnelId && (
+            <FunnelStepToolbar stepId={stepId} funnelId={funnelId} />
+          )}
           <Button variant="outline" onClick={() => setShowPreview(!showPreview)}>
             <Eye className="h-4 w-4 mr-2" />
             {showPreview ? 'Hide Preview' : 'Show Preview'}

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useFunnelStepContext } from '@/contexts/FunnelStepContext';
 import type { PageBuilderElement } from '../types';
 
 interface FunnelOfferElementProps {
@@ -19,9 +20,10 @@ export const FunnelOfferElement: React.FC<FunnelOfferElementProps> = ({
   const [searchParams] = useSearchParams();
   const [isProcessing, setIsProcessing] = useState(false);
   const { toast } = useToast();
+  const { stepId } = useFunnelStepContext();
 
   const orderId = searchParams.get('orderId');
-  const token = searchParams.get('token');
+  const token = searchParams.get('ot'); // Standardize to 'ot' parameter
 
   const {
     title = "Special Offer",
@@ -30,8 +32,7 @@ export const FunnelOfferElement: React.FC<FunnelOfferElementProps> = ({
     originalPrice = "99",
     offerPrice = "49",
     acceptText = "Yes, I Want This!",
-    declineText = "No Thanks",
-    stepId
+    declineText = "No Thanks"
   } = element.content || {};
 
   const handleOffer = async (action: 'accept' | 'decline') => {
@@ -68,11 +69,11 @@ export const FunnelOfferElement: React.FC<FunnelOfferElementProps> = ({
 
       if (data?.nextStepSlug && data?.funnelSlug) {
         // Redirect to next step with order params
-        const nextUrl = `/${data.funnelSlug}/${data.nextStepSlug}?orderId=${orderId}&token=${token}`;
+        const nextUrl = `/${data.funnelSlug}/${data.nextStepSlug}?orderId=${orderId}&ot=${token}`;
         window.location.href = nextUrl;
       } else {
         // No next step, go to order confirmation
-        const confirmUrl = `/order-confirmation?orderId=${orderId}&token=${token}`;
+        const confirmUrl = `/order-confirmation?orderId=${orderId}&ot=${token}`;
         window.location.href = confirmUrl;
       }
 
@@ -146,6 +147,3 @@ export const FunnelOfferElement: React.FC<FunnelOfferElementProps> = ({
     </div>
   );
 };
-
-// Verify export
-console.log('FunnelOfferElement defined:', typeof FunnelOfferElement);

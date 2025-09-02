@@ -75,3 +75,6 @@ verify_jwt = false
 
 [functions.get-order-admin]
 verify_jwt = true
+
+[functions.funnel-offer]
+verify_jwt = false
