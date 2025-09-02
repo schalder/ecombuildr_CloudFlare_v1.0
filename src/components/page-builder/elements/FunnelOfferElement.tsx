@@ -174,59 +174,59 @@ export const FunnelOfferElement: React.FC<FunnelOfferElementProps> = ({
   };
 
   return (
-    <div className="max-w-2xl mx-auto p-6" style={elementStyles}>
+    <div className="max-w-lg mx-auto" style={elementStyles}>
       <div 
-        className="overflow-hidden"
+        className="p-6 text-center"
         style={containerStyles}
       >
-        <div className="p-6 text-center">
-          <h2 style={titleStyles} className="mb-3">
-            {title}
-          </h2>
-          <p className="text-lg text-muted-foreground mb-6">
-            {description}
-          </p>
-          
-          {/* Simplified display without product card */}
-          <div className="text-center mb-6">
-            <h3 className="text-xl font-semibold mb-2">{productName}</h3>
+        {/* Product Name - Optional */}
+        {productData && element.content.showProductName !== false && (
+          <h3 className="text-xl font-semibold mb-3">{productName}</h3>
+        )}
+        
+        {/* Price Display - Optional */}
+        {productData && element.content.showPrice !== false && (
+          <div className="mb-6">
             <div className="flex items-center justify-center gap-3">
-              <span className="text-lg text-muted-foreground line-through">
-                {formatCurrency(parseFloat(originalPrice.toString()))}
-              </span>
-              <span className="text-2xl font-bold text-primary">
+              {originalPrice && parseFloat(originalPrice.toString()) > parseFloat(offerPrice.toString()) && (
+                <span className="text-lg text-muted-foreground line-through">
+                  {formatCurrency(parseFloat(originalPrice.toString()))}
+                </span>
+              )}
+              <span className="text-3xl font-bold text-primary">
                 {formatCurrency(parseFloat(offerPrice.toString()))}
               </span>
             </div>
           </div>
-          
-          <div className="space-y-4">
-            <button
-              onClick={() => handleOffer('accept')}
-              disabled={isProcessing}
-              className="w-full transition-colors font-semibold"
-              style={buttonStyles}
-            >
-              {isProcessing ? (
-                <>
-                  <Loader2 className="mr-2 h-5 w-5 animate-spin inline" />
-                  Processing...
-                </>
-              ) : (
-                acceptText
-              )}
-            </button>
+        )}
+        
+        {/* Action Buttons */}
+        <div className="space-y-4">
+          <button
+            onClick={() => handleOffer('accept')}
+            disabled={isProcessing}
+            className="w-full transition-colors font-semibold"
+            style={buttonStyles}
+          >
+            {isProcessing ? (
+              <>
+                <Loader2 className="mr-2 h-5 w-5 animate-spin inline" />
+                Processing...
+              </>
+            ) : (
+              acceptText
+            )}
+          </button>
 
-            <div className="text-center">
-              <button
-                onClick={() => handleOffer('decline')}
-                disabled={isProcessing}
-                className="transition-colors py-2"
-                style={linkStyles}
-              >
-                {declineText}
-              </button>
-            </div>
+          <div className="text-center">
+            <button
+              onClick={() => handleOffer('decline')}
+              disabled={isProcessing}
+              className="transition-colors py-2"
+              style={linkStyles}
+            >
+              {declineText}
+            </button>
           </div>
         </div>
       </div>

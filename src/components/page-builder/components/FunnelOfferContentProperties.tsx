@@ -25,27 +25,7 @@ export const FunnelOfferContentProperties: React.FC<FunnelOfferContentProperties
       {/* Basic Content */}
       <div className="space-y-4">
         <h3 className="text-sm font-medium">Offer Content</h3>
-        <div>
-          <Label htmlFor="offer-title">Offer Title</Label>
-          <Input
-            id="offer-title"
-            value={element.content.title || 'Special Offer'}
-            onChange={(e) => onUpdate('title', e.target.value)}
-            placeholder="Special Offer"
-          />
-        </div>
-
-        <div>
-          <Label htmlFor="offer-description">Description</Label>
-          <Textarea
-            id="offer-description"
-            value={element.content.description || "Don't miss this exclusive offer!"}
-            onChange={(e) => onUpdate('description', e.target.value)}
-            placeholder="Don't miss this exclusive offer!"
-            className="min-h-[60px]"
-          />
-        </div>
-
+        
         <div>
           <Label htmlFor="accept-text">Accept Button Text</Label>
           <Input
@@ -64,6 +44,28 @@ export const FunnelOfferContentProperties: React.FC<FunnelOfferContentProperties
             onChange={(e) => onUpdate('declineText', e.target.value)}
             placeholder="No Thanks"
           />
+        </div>
+
+        <div className="flex items-center space-x-2">
+          <input
+            type="checkbox"
+            id="show-product-name"
+            checked={element.content.showProductName !== false}
+            onChange={(e) => onUpdate('showProductName', e.target.checked)}
+            className="rounded"
+          />
+          <Label htmlFor="show-product-name" className="text-xs">Show Product Name</Label>
+        </div>
+
+        <div className="flex items-center space-x-2">
+          <input
+            type="checkbox"
+            id="show-price"
+            checked={element.content.showPrice !== false}
+            onChange={(e) => onUpdate('showPrice', e.target.checked)}
+            className="rounded"
+          />
+          <Label htmlFor="show-price" className="text-xs">Show Price</Label>
         </div>
       </div>
 
