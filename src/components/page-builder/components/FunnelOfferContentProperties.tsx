@@ -41,6 +41,7 @@ export const FunnelOfferContentProperties: React.FC<FunnelOfferContentProperties
 
         if (error) throw error;
         setFunnelSteps(data || []);
+        console.log('Loaded funnel steps:', data);
       } catch (error) {
         console.error('Error loading funnel steps:', error);
       } finally {
@@ -65,6 +66,7 @@ export const FunnelOfferContentProperties: React.FC<FunnelOfferContentProperties
 
         if (error) throw error;
         setStepData(data);
+        console.log('Loaded step data:', data);
       } catch (error) {
         console.error('Error loading step data:', error);
       }
@@ -153,14 +155,15 @@ export const FunnelOfferContentProperties: React.FC<FunnelOfferContentProperties
         <div>
           <Label htmlFor="offer-product">Offer Product</Label>
           <Select
-            value={stepData?.offer_product_id || ''}
-            onValueChange={(value) => handleStepSettingUpdate('offer_product_id', value)}
+            value={stepData?.offer_product_id || 'none'}
+            onValueChange={(value) => handleStepSettingUpdate('offer_product_id', value === 'none' ? null : value)}
             disabled={productsLoading}
           >
             <SelectTrigger>
               <SelectValue placeholder="Select a product for this offer" />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="none">No product selected</SelectItem>
               {products.map((product) => (
                 <SelectItem key={product.id} value={product.id}>
                   {product.name} - ${product.price}
@@ -170,16 +173,9 @@ export const FunnelOfferContentProperties: React.FC<FunnelOfferContentProperties
           </Select>
         </div>
 
-        <div>
-          <Label htmlFor="offer-price">Offer Price</Label>
-          <Input
-            id="offer-price"
-            type="number"
-            step="0.01"
-            value={stepData?.offer_price || ''}
-            onChange={(e) => handleStepSettingUpdate('offer_price', parseFloat(e.target.value) || 0)}
-            placeholder="Enter special offer price"
-          />
+        <div className="text-xs text-muted-foreground p-3 bg-muted rounded-lg">
+          <p className="font-medium mb-1">Offer Price</p>
+          <p>The offer price will automatically use the selected product's regular price. No discount override is needed.</p>
         </div>
       </div>
 
@@ -199,7 +195,7 @@ export const FunnelOfferContentProperties: React.FC<FunnelOfferContentProperties
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="order-confirmation">Order Confirmation</SelectItem>
-              {funnelSteps.map((step) => (
+              {funnelSteps.filter(step => step.id !== stepId).map((step) => (
                 <SelectItem key={step.id} value={step.id}>
                   {step.title} ({step.step_type})
                 </SelectItem>
@@ -220,7 +216,7 @@ export const FunnelOfferContentProperties: React.FC<FunnelOfferContentProperties
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="order-confirmation">Order Confirmation</SelectItem>
-              {funnelSteps.map((step) => (
+              {funnelSteps.filter(step => step.id !== stepId).map((step) => (
                 <SelectItem key={step.id} value={step.id}>
                   {step.title} ({step.step_type})
                 </SelectItem>
@@ -228,6 +224,13 @@ export const FunnelOfferContentProperties: React.FC<FunnelOfferContentProperties
             </SelectContent>
           </Select>
         </div>
+
+        {funnelSteps.length === 0 && !loadingSteps && (
+          <div className="text-xs text-muted-foreground p-3 bg-muted rounded-lg">
+            <p className="font-medium mb-1">No Funnel Steps Found</p>
+            <p>Create additional steps in this funnel to enable redirects to other steps.</p>
+          </div>
+        )}
       </div>
     </div>
   );
