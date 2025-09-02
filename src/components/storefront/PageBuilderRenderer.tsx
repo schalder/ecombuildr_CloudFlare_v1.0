@@ -11,15 +11,23 @@ import { elementRegistry } from '@/components/page-builder/elements';
 interface PageBuilderRendererProps {
   data: PageBuilderData;
   className?: string;
+  deviceType?: DeviceType;
 }
 
 export const PageBuilderRenderer: React.FC<PageBuilderRendererProps> = ({ 
   data, 
-  className = '' 
+  className = '',
+  deviceType: propDeviceType
 }) => {
   const [deviceType, setDeviceType] = React.useState<DeviceType>('desktop');
 
   React.useEffect(() => {
+    if (propDeviceType) {
+      // Use prop device type for preview mode
+      setDeviceType(propDeviceType);
+      return;
+    }
+
     const calculateDeviceType = (): DeviceType => {
       const width = window.innerWidth;
       if (width < BREAKPOINTS.md) return 'mobile';
@@ -35,7 +43,7 @@ export const PageBuilderRenderer: React.FC<PageBuilderRendererProps> = ({
     handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  }, [propDeviceType]);
 
   React.useEffect(() => {
     const ids = elementRegistry.getAll().map(e => e.id);
