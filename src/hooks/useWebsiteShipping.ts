@@ -97,16 +97,31 @@ export function useWebsiteShipping() {
         // 5) Domain-based resolution (custom domains)
         const host = typeof window !== 'undefined' ? window.location.hostname : '';
         if (host) {
-          const { data } = await supabase
+          // First try domain match  
+          const domainQuery = await (supabase as any)
             .from('websites')
             .select('id, store_id, settings')
-            .or(`domain.eq.${host},canonical_domain.eq.${host}`)
+            .eq('domain', host)
             .eq('is_active', true)
             .maybeSingle();
+          
+          let data = domainQuery.data;
+          
+          // If no domain match, try canonical_domain
+          if (!data) {
+            const canonicalQuery = await (supabase as any)
+              .from('websites')
+              .select('id, store_id, settings')
+              .eq('canonical_domain', host)
+              .eq('is_active', true)
+              .maybeSingle();
+            data = canonicalQuery.data;
+          }
+          
           if (data?.store_id) await loadStoreById(data.store_id);
-          const ship = (data as any)?.settings?.shipping;
+          const ship = data?.settings?.shipping;
           if (ship) {
-            
+            console.log('[useWebsiteShipping] Found domain-based shipping for', host, ship);
             setWebsiteShipping(ship as ShippingSettings);
           }
         }
