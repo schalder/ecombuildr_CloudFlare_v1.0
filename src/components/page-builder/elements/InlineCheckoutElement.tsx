@@ -582,7 +582,7 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
               </section>
             )}
 
-            {sections.info && (sections.shipping || sections.payment) && <Separator className="my-4" />}
+            
 
             {/* Shipping */}
             {sections.shipping && (
