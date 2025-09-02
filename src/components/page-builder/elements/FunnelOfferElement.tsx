@@ -176,7 +176,7 @@ export const FunnelOfferElement: React.FC<FunnelOfferElementProps> = ({
   return (
     <div className="max-w-2xl mx-auto p-6" style={elementStyles}>
       <div 
-        className="border rounded-lg shadow-lg overflow-hidden"
+        className="overflow-hidden"
         style={containerStyles}
       >
         <div className="p-6 text-center">

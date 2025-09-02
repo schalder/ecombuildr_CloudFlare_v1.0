@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AlignLeft, AlignCenter, AlignRight, Monitor, Smartphone } from 'lucide-react';
 import { ColorPicker } from '@/components/ui/color-picker';
+import { BoxShadowPicker } from '@/components/ui/box-shadow-picker';
 import { PageBuilderElement } from '../../types';
 import { CollapsibleGroup } from './_shared/CollapsibleGroup';
 import { SpacingSliders } from './_shared/SpacingSliders';
@@ -117,11 +118,10 @@ export const FunnelOfferElementStyles: React.FC<FunnelOfferElementStylesProps> =
           </div>
 
           <div>
-            <Label className="text-xs">Box Shadow</Label>
-            <Input
+            <BoxShadowPicker
               value={getCurrentValue('boxShadow', '0 4px 6px -1px rgba(0, 0, 0, 0.1)')}
-              onChange={(e) => handleResponsiveUpdate('boxShadow', e.target.value)}
-              placeholder="0 4px 6px -1px rgba(0, 0, 0, 0.1)"
+              onChange={(value) => handleResponsiveUpdate('boxShadow', value)}
+              label="Box Shadow"
             />
           </div>
 
