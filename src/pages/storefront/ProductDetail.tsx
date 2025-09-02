@@ -475,10 +475,7 @@ export const ProductDetail: React.FC = () => {
                   }}>
                     {(product as any).action_buttons?.whatsapp?.label || 'WhatsApp'}
                   </Button>
-                )}
-                <Button variant="outline" size="lg" onClick={handleShare} className="w-full">
-                  <Share2 className="h-4 w-4" />
-                </Button>
+                 )}
               </div>
 
               {(product.free_shipping_min_amount || product.easy_returns_enabled) && (
