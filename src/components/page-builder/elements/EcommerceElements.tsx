@@ -17,6 +17,7 @@ import { formatCurrency } from '@/lib/currency';
 import { supabase } from '@/integrations/supabase/client';
 import { useResolvedWebsiteId } from '@/hooks/useResolvedWebsiteId';
 import { useProductReviewStats } from '@/hooks/useProductReviewStats';
+import { FunnelOfferElement } from './FunnelOfferElement';
 // Product Grid Element
 const ProductGridElement: React.FC<{
   element: PageBuilderElement;
@@ -1285,5 +1286,23 @@ export const registerEcommerceElements = () => {
       layout: 'horizontal'
     },
     description: 'Display product price with buy button'
+  });
+
+  elementRegistry.register({
+    id: 'funnel-offer',
+    name: 'Funnel Offer',
+    category: 'ecommerce',
+    icon: Package,
+    component: FunnelOfferElement,
+    defaultContent: {
+      title: 'Special Offer',
+      description: 'Don\'t miss this exclusive offer!',
+      productName: 'Bonus Product',
+      originalPrice: '99',
+      offerPrice: '49',
+      acceptText: 'Yes, I Want This!',
+      declineText: 'No Thanks'
+    },
+    description: 'Upsell/downsell offer for funnel steps'
   });
 };

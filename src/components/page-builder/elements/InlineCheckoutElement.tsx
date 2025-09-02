@@ -40,6 +40,7 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
   const cfg: any = element.content || {};
   const productIds: string[] = Array.isArray(cfg.productIds) ? cfg.productIds : [];
   const allowSwitching: boolean = cfg.allowSwitching !== false; // default true
+  const successRedirectUrl: string = cfg.successRedirectUrl || '';
   const showQuantity: boolean = cfg.showQuantity !== false; // default true
   const headings = cfg.headings || { info: 'Customer Information', shipping: 'Shipping', payment: 'Payment', summary: 'Order Summary' };
   const sections = cfg.sections || { info: true, shipping: true, payment: true, summary: true };
@@ -434,7 +435,16 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
         });
         
         toast.success(isManual ? 'Order placed! Please complete payment to the provided number.' : 'Order placed!');
-        navigate(paths.orderConfirmation(orderId, accessToken));
+        
+        // Check for funnel redirect
+        if (successRedirectUrl && successRedirectUrl.trim()) {
+          const redirectUrl = new URL(successRedirectUrl, window.location.origin);
+          redirectUrl.searchParams.set('orderId', orderId);
+          redirectUrl.searchParams.set('token', accessToken || '');
+          window.location.href = redirectUrl.toString();
+        } else {
+          navigate(paths.orderConfirmation(orderId, accessToken));
+        }
       } else {
         await initiatePayment(orderId, orderData.total, form.payment_method, accessToken);
       }

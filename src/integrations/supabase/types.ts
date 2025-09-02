@@ -621,7 +621,13 @@ export type Database = {
           language_code: string | null
           meta_author: string | null
           meta_robots: string | null
+          offer_price: number | null
+          offer_product_id: string | null
+          offer_quantity: number | null
           og_image: string | null
+          on_accept_step_id: string | null
+          on_decline_step_id: string | null
+          on_success_step_id: string | null
           preview_image_url: string | null
           seo_description: string | null
           seo_keywords: string[] | null
@@ -645,7 +651,13 @@ export type Database = {
           language_code?: string | null
           meta_author?: string | null
           meta_robots?: string | null
+          offer_price?: number | null
+          offer_product_id?: string | null
+          offer_quantity?: number | null
           og_image?: string | null
+          on_accept_step_id?: string | null
+          on_decline_step_id?: string | null
+          on_success_step_id?: string | null
           preview_image_url?: string | null
           seo_description?: string | null
           seo_keywords?: string[] | null
@@ -669,7 +681,13 @@ export type Database = {
           language_code?: string | null
           meta_author?: string | null
           meta_robots?: string | null
+          offer_price?: number | null
+          offer_product_id?: string | null
+          offer_quantity?: number | null
           og_image?: string | null
+          on_accept_step_id?: string | null
+          on_decline_step_id?: string | null
+          on_success_step_id?: string | null
           preview_image_url?: string | null
           seo_description?: string | null
           seo_keywords?: string[] | null
@@ -681,7 +699,36 @@ export type Database = {
           title?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "funnel_steps_offer_product_id_fkey"
+            columns: ["offer_product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "funnel_steps_on_accept_step_id_fkey"
+            columns: ["on_accept_step_id"]
+            isOneToOne: false
+            referencedRelation: "funnel_steps"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "funnel_steps_on_decline_step_id_fkey"
+            columns: ["on_decline_step_id"]
+            isOneToOne: false
+            referencedRelation: "funnel_steps"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "funnel_steps_on_success_step_id_fkey"
+            columns: ["on_success_step_id"]
+            isOneToOne: false
+            referencedRelation: "funnel_steps"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       funnels: {
         Row: {
