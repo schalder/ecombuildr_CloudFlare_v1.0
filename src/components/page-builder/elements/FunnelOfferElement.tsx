@@ -186,24 +186,20 @@ export const FunnelOfferElement: React.FC<FunnelOfferElementProps> = ({
           <p className="text-lg text-muted-foreground mb-6">
             {description}
           </p>
-        </div>
-        
-        <div className="px-6 pb-6 space-y-6">
-          <div className="text-center">
-            <h3 className="text-2xl font-semibold mb-2">{productName}</h3>
+          
+          {/* Simplified display without product card */}
+          <div className="text-center mb-6">
+            <h3 className="text-xl font-semibold mb-2">{productName}</h3>
             <div className="flex items-center justify-center gap-3">
-              <span className="text-2xl text-muted-foreground line-through">
+              <span className="text-lg text-muted-foreground line-through">
                 {formatCurrency(parseFloat(originalPrice.toString()))}
               </span>
-              <span className="text-4xl font-bold text-primary">
+              <span className="text-2xl font-bold text-primary">
                 {formatCurrency(parseFloat(offerPrice.toString()))}
               </span>
             </div>
-            <p className="text-sm text-muted-foreground mt-2">
-              Save {formatCurrency(parseFloat(originalPrice.toString()) - parseFloat(offerPrice.toString()))}!
-            </p>
           </div>
-
+          
           <div className="space-y-4">
             <button
               onClick={() => handleOffer('accept')}
