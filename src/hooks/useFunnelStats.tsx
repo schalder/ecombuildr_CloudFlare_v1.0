@@ -6,7 +6,6 @@ interface FunnelAnalytics {
   totalPageViews: number;
   totalUniqueVisitors: number;
   averageConversionRate: number;
-  averageSessionDuration: number;
   stepAnalytics: Array<{ 
     step_id: string;
     step_title: string;
@@ -16,7 +15,6 @@ interface FunnelAnalytics {
     conversion_rate: number;
   }>;
   trafficSources: Array<{ source: string; visitors: number; }>;
-  deviceBreakdown: Array<{ device: string; visitors: number; }>;
   conversionFunnel: Array<{
     step: string;
     visitors: number;
@@ -84,7 +82,7 @@ export function useFunnelStats(funnelId: string): FunnelStatsHookReturn {
       // Get pixel events for analytics
       const { data: pixelEvents } = await supabase
         .from('pixel_events')
-        .select('*')
+        .select('event_type, page_url, session_id, referrer, created_at')
         .like('page_url', `%/funnel/${funnel.slug}%`)
         .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()); // Last 30 days
 
@@ -92,17 +90,29 @@ export function useFunnelStats(funnelId: string): FunnelStatsHookReturn {
       const totalPageViews = pixelEvents?.filter(e => e.event_type === 'PageView').length || 0;
       const totalUniqueVisitors = new Set(pixelEvents?.filter(e => e.event_type === 'PageView').map(e => e.session_id)).size;
       
-      // Step analytics
-      const stepAnalytics = (steps || []).map(step => {
+      // Step analytics with accurate conversion tracking
+      const stepAnalytics = (steps || []).map((step, index) => {
         const stepEvents = pixelEvents?.filter(e => 
-          e.page_url?.includes(`/step/${step.id}`) || e.page_url?.includes(step.title.toLowerCase())
+          e.event_type === 'PageView' && e.page_url?.includes(`/step/${step.id}`)
         ) || [];
         
-        const stepViews = stepEvents.filter(e => e.event_type === 'PageView').length;
-        const stepUniqueVisitors = new Set(stepEvents.filter(e => e.event_type === 'PageView').map(e => e.session_id)).size;
+        const stepViews = stepEvents.length;
+        const stepUniqueVisitors = new Set(stepEvents.map(e => e.session_id)).size;
         
-        // Calculate conversion rate based on orders
-        const stepConversions = orders?.length || 0;
+        // Calculate conversions: next step views for progression, total orders for final step
+        let stepConversions = 0;
+        if (index === steps.length - 1) {
+          // Final step: conversions are actual orders
+          stepConversions = orders?.length || 0;
+        } else {
+          // Other steps: conversions are views of the next step
+          const nextStep = steps[index + 1];
+          const nextStepEvents = pixelEvents?.filter(e => 
+            e.event_type === 'PageView' && e.page_url?.includes(`/step/${nextStep.id}`)
+          ) || [];
+          stepConversions = new Set(nextStepEvents.map(e => e.session_id)).size;
+        }
+        
         const conversionRate = stepUniqueVisitors > 0 ? (stepConversions / stepUniqueVisitors) * 100 : 0;
 
         return {
@@ -115,9 +125,17 @@ export function useFunnelStats(funnelId: string): FunnelStatsHookReturn {
         };
       });
 
-      // Traffic sources analysis
+      // Traffic sources analysis - normalize referrer domains
       const sourceStats = pixelEvents?.reduce((acc, event) => {
-        const source = event.referrer || 'direct';
+        let source = 'direct';
+        if (event.referrer && event.referrer !== '') {
+          try {
+            const url = new URL(event.referrer);
+            source = url.hostname.replace('www.', '');
+          } catch {
+            source = event.referrer;
+          }
+        }
         acc[source] = (acc[source] || 0) + 1;
         return acc;
       }, {} as Record<string, number>) || {};
@@ -126,21 +144,12 @@ export function useFunnelStats(funnelId: string): FunnelStatsHookReturn {
         .map(([source, visitors]) => ({ source, visitors }))
         .sort((a, b) => b.visitors - a.visitors);
 
-      // Device breakdown - simplified since device_type is not available in pixel events
-      const deviceStats = pixelEvents?.reduce((acc, event) => {
-        // Use user_agent or default to desktop
-        const device = 'desktop'; // Simplified for now
-        acc[device] = (acc[device] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>) || {};
-      
-      const deviceBreakdown = Object.entries(deviceStats)
-        .map(([device, visitors]) => ({ device, visitors }));
 
       // Conversion funnel analysis
       const conversionFunnel = (steps || []).map((step, index) => {
-        const stepViews = stepAnalytics[index]?.page_views || 0;
-        const stepConversions = index === steps.length - 1 ? (orders?.length || 0) : (stepAnalytics[index + 1]?.page_views || 0);
+        const stepData = stepAnalytics[index];
+        const stepViews = stepData?.unique_visitors || 0;
+        const stepConversions = Math.round((stepData?.conversion_rate || 0) * stepViews / 100);
         const dropoffRate = stepViews > 0 ? ((stepViews - stepConversions) / stepViews) * 100 : 0;
 
         return {
@@ -160,9 +169,6 @@ export function useFunnelStats(funnelId: string): FunnelStatsHookReturn {
       // Overall conversion rate
       const averageConversionRate = totalUniqueVisitors > 0 ? (totalOrders / totalUniqueVisitors) * 100 : 0;
 
-      // Average session duration (simplified calculation)
-      const averageSessionDuration = 180; // Default 3 minutes
-
       setStats({
         totalSteps,
         publishedSteps,
@@ -172,10 +178,8 @@ export function useFunnelStats(funnelId: string): FunnelStatsHookReturn {
           totalPageViews,
           totalUniqueVisitors,
           averageConversionRate: Math.round(averageConversionRate * 100) / 100,
-          averageSessionDuration,
           stepAnalytics,
           trafficSources,
-          deviceBreakdown,
           conversionFunnel,
         },
         isActive: funnel.is_active,

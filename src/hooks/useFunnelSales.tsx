@@ -159,14 +159,14 @@ export function useFunnelSales(funnelId: string, initialDateRange?: DateRange): 
       // Get pixel events for visitor count and step performance
       const { data: pixelEvents } = await supabase
         .from('pixel_events')
-        .select('event_type, page_url, created_at')
+        .select('event_type, page_url, session_id, created_at')
         .like('page_url', `%/funnel/${funnel.slug}%`)
         .gte('created_at', dateRange.from.toISOString())
         .lte('created_at', dateRange.to.toISOString());
 
       const { data: comparisonPixelEvents } = await supabase
         .from('pixel_events')
-        .select('event_type')
+        .select('event_type, session_id')
         .like('page_url', `%/funnel/${funnel.slug}%`)
         .gte('created_at', comparisonPeriod.from.toISOString())
         .lte('created_at', comparisonPeriod.to.toISOString());
@@ -174,13 +174,13 @@ export function useFunnelSales(funnelId: string, initialDateRange?: DateRange): 
       // Calculate current period metrics
       const totalOrders = currentOrders.length;
       const totalRevenue = currentOrders.reduce((sum, order) => sum + (order.total || 0), 0);
-      const totalVisitors = pixelEvents?.filter(e => e.event_type === 'PageView').length || 0;
+      const totalVisitors = new Set(pixelEvents?.filter(e => e.event_type === 'PageView').map(e => e.session_id)).size;
       const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
 
       // Calculate comparison period metrics
       const comparisonRevenue = comparisonOrders.reduce((sum, order) => sum + (order.total || 0), 0);
       const comparisonOrdersCount = comparisonOrders.length;
-      const comparisonVisitors = comparisonPixelEvents?.filter(e => e.event_type === 'PageView').length || 0;
+      const comparisonVisitors = new Set(comparisonPixelEvents?.filter(e => e.event_type === 'PageView').map(e => e.session_id)).size;
 
       // Calculate today and yesterday revenue
       const todayRevenue = todayOrders.reduce((sum, order) => sum + (order.total || 0), 0);
@@ -206,7 +206,7 @@ export function useFunnelSales(funnelId: string, initialDateRange?: DateRange): 
 
       // Revenue timeline for the current period
       const revenueTimeline = [];
-      const diffDays = Math.ceil((dateRange.to.getTime() - dateRange.from.getTime()) / (1000 * 60 * 60 * 1000));
+      const diffDays = Math.ceil((dateRange.to.getTime() - dateRange.from.getTime()) / (1000 * 60 * 60 * 24));
       
       for (let i = 0; i <= diffDays; i++) {
         const date = new Date(dateRange.from.getTime() + i * 24 * 60 * 60 * 1000);
@@ -220,20 +220,36 @@ export function useFunnelSales(funnelId: string, initialDateRange?: DateRange): 
       }
 
       // Step performance analysis
-      const stepPerformance = (funnelSteps || []).map(step => {
-        const stepViews = pixelEvents?.filter(e => 
+      const stepPerformance = (funnelSteps || []).map((step, index) => {
+        const stepEvents = pixelEvents?.filter(e => 
           e.event_type === 'PageView' && e.page_url?.includes(`/step/${step.id}`)
-        ).length || 0;
+        ) || [];
+        
+        const stepViews = stepEvents.length;
+        const stepUniqueVisitors = new Set(stepEvents.map(e => e.session_id)).size;
 
-        const stepConversions = currentOrders.length; // All orders count as conversions for funnel
-        const conversionRate = stepViews > 0 ? (stepConversions / stepViews) * 100 : 0;
+        // Calculate conversions: next step views for progression, total orders for final step
+        let stepConversions = 0;
+        if (index === funnelSteps.length - 1) {
+          // Final step: conversions are actual orders
+          stepConversions = currentOrders.length;
+        } else {
+          // Other steps: conversions are unique visitors to the next step
+          const nextStep = funnelSteps[index + 1];
+          const nextStepEvents = pixelEvents?.filter(e => 
+            e.event_type === 'PageView' && e.page_url?.includes(`/step/${nextStep.id}`)
+          ) || [];
+          stepConversions = new Set(nextStepEvents.map(e => e.session_id)).size;
+        }
+        
+        const conversionRate = stepUniqueVisitors > 0 ? (stepConversions / stepUniqueVisitors) * 100 : 0;
 
         return {
           step_title: step.title,
           step_type: step.step_type,
           views: stepViews,
           conversions: stepConversions,
-          conversion_rate: conversionRate
+          conversion_rate: Math.round(conversionRate * 100) / 100
         };
       });
 

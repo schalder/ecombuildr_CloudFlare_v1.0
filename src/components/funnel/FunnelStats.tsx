@@ -190,8 +190,7 @@ export const FunnelStats: React.FC<FunnelStatsProps> = ({ funnelId }) => {
         </CardContent>
       </Card>
 
-      {/* Traffic Sources and Device Breakdown */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Traffic Sources */}
         <Card>
           <CardHeader>
             <CardTitle>Traffic Sources</CardTitle>
@@ -227,42 +226,6 @@ export const FunnelStats: React.FC<FunnelStatsProps> = ({ funnelId }) => {
             )}
           </CardContent>
         </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Device Breakdown</CardTitle>
-            <CardDescription>Visitor devices</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {stats.analytics.deviceBreakdown.length > 0 ? (
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={stats.analytics.deviceBreakdown}
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={80}
-                      fill="#8884d8"
-                      dataKey="visitors"
-                      label={({ device, visitors }) => `${device}: ${visitors}`}
-                    >
-                      {stats.analytics.deviceBreakdown.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <p className="text-muted-foreground">No device data available</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
     </div>
   );
 };
