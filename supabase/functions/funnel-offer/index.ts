@@ -85,7 +85,7 @@ serve(async (req) => {
       // Add product to order
       const { data: product, error: productError } = await supabaseService
         .from("products")
-        .select("id, name, sku, store_id")
+        .select("id, name, sku, store_id, price")
         .eq("id", step.offer_product_id)
         .eq("store_id", order.store_id)
         .maybeSingle();
@@ -101,7 +101,8 @@ serve(async (req) => {
         );
       }
 
-      const offerPrice = step.offer_price || 0;
+      // Use step offer price if set, otherwise use product price
+      const offerPrice = step.offer_price || product.price;
       const offerQuantity = step.offer_quantity || 1;
       const totalItemPrice = offerPrice * offerQuantity;
 

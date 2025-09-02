@@ -1293,29 +1293,7 @@ export const registerEcommerceElements = () => {
     name: 'Funnel Offer',
     category: 'ecommerce',
     icon: Tag,
-    component: ({ element, isEditing = false, deviceType = 'desktop' }) => 
-      isEditing ? (
-        <div className="border border-dashed border-primary/50 rounded-lg p-6 bg-primary/5">
-          <div className="text-center">
-            <h3 className="font-semibold text-primary mb-2">
-              {element.content?.title || "Special Offer"}
-            </h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              {element.content?.description || "One-click upsell element"}
-            </p>
-            <div className="space-y-3">
-              <Button className="w-full">
-                {element.content?.acceptText || "Yes, I Want This!"}
-              </Button>
-              <div className="text-sm text-muted-foreground underline">
-                {element.content?.declineText || "No Thanks"}
-              </div>
-            </div>
-          </div>
-        </div>
-      ) : (
-        <FunnelOfferElement element={element} isBuilder={isEditing} deviceType={deviceType} />
-      ),
+    component: FunnelOfferElement,
     defaultContent: {
       title: "Special Offer",
       description: "Don't miss this exclusive offer!",

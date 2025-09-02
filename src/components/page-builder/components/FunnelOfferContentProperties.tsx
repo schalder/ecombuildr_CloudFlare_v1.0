@@ -1,14 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
+import { Settings } from 'lucide-react';
 import { PageBuilderElement } from '../types';
-import { useStoreProducts } from '@/hooks/useStoreData';
 import { useFunnelStepContext } from '@/contexts/FunnelStepContext';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+import { FunnelStepSettingsModal } from '@/components/modals/FunnelStepSettingsModal';
 
 interface FunnelOfferContentPropertiesProps {
   element: PageBuilderElement;
@@ -19,87 +17,8 @@ export const FunnelOfferContentProperties: React.FC<FunnelOfferContentProperties
   element,
   onUpdate
 }) => {
-  const { products, loading: productsLoading } = useStoreProducts();
   const { stepId, funnelId } = useFunnelStepContext();
-  const { toast } = useToast();
-  const [funnelSteps, setFunnelSteps] = useState<any[]>([]);
-  const [loadingSteps, setLoadingSteps] = useState(false);
-  const [stepData, setStepData] = useState<any>(null);
-
-  // Load funnel steps for redirect options
-  useEffect(() => {
-    if (!funnelId) return;
-
-    const loadFunnelSteps = async () => {
-      setLoadingSteps(true);
-      try {
-        const { data, error } = await supabase
-          .from('funnel_steps')
-          .select('id, title, slug, step_type')
-          .eq('funnel_id', funnelId)
-          .order('step_order');
-
-        if (error) throw error;
-        setFunnelSteps(data || []);
-        console.log('Loaded funnel steps:', data);
-      } catch (error) {
-        console.error('Error loading funnel steps:', error);
-      } finally {
-        setLoadingSteps(false);
-      }
-    };
-
-    loadFunnelSteps();
-  }, [funnelId]);
-
-  // Load current step data
-  useEffect(() => {
-    if (!stepId) return;
-
-    const loadStepData = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('funnel_steps')
-          .select('offer_product_id, offer_price, on_accept_step_id, on_decline_step_id')
-          .eq('id', stepId)
-          .single();
-
-        if (error) throw error;
-        setStepData(data);
-        console.log('Loaded step data:', data);
-      } catch (error) {
-        console.error('Error loading step data:', error);
-      }
-    };
-
-    loadStepData();
-  }, [stepId]);
-
-  const handleStepSettingUpdate = async (field: string, value: any) => {
-    if (!stepId) return;
-
-    try {
-      const { error } = await supabase
-        .from('funnel_steps')
-        .update({ [field]: value })
-        .eq('id', stepId);
-
-      if (error) throw error;
-      
-      setStepData(prev => ({ ...prev, [field]: value }));
-      toast({
-        title: "Updated",
-        description: "Step settings updated successfully",
-      });
-    } catch (error) {
-      console.error('Error updating step:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update step settings",
-        variant: "destructive"
-      });
-    }
-  };
+  const [showStepSettings, setShowStepSettings] = React.useState(false);
 
   return (
     <div className="space-y-6">
@@ -148,90 +67,38 @@ export const FunnelOfferContentProperties: React.FC<FunnelOfferContentProperties
         </div>
       </div>
 
-      {/* Offer Configuration */}
+      {/* Product & Redirect Configuration */}
       <div className="space-y-4 border-t pt-4">
-        <h3 className="text-sm font-medium">Offer Configuration</h3>
-        
-        <div>
-          <Label htmlFor="offer-product">Offer Product</Label>
-          <Select
-            value={stepData?.offer_product_id || 'none'}
-            onValueChange={(value) => handleStepSettingUpdate('offer_product_id', value === 'none' ? null : value)}
-            disabled={productsLoading}
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-medium">Product & Redirect Settings</h3>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowStepSettings(true)}
+            disabled={!stepId || !funnelId}
           >
-            <SelectTrigger>
-              <SelectValue placeholder="Select a product for this offer" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="none">No product selected</SelectItem>
-              {products.filter(product => product.id && product.id.trim() !== '').map((product) => (
-                <SelectItem key={product.id} value={product.id}>
-                  {product.name} - ${product.price}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            <Settings className="h-4 w-4 mr-1" />
+            Configure
+          </Button>
         </div>
-
+        
         <div className="text-xs text-muted-foreground p-3 bg-muted rounded-lg">
-          <p className="font-medium mb-1">Offer Price</p>
-          <p>The offer price will automatically use the selected product's regular price. No discount override is needed.</p>
+          <p className="font-medium mb-1">Offer Configuration</p>
+          <p>
+            Configure which product to offer and where to redirect users after they accept or decline.
+            These settings are managed at the funnel step level.
+          </p>
         </div>
       </div>
 
-      {/* Redirect Settings */}
-      <div className="space-y-4 border-t pt-4">
-        <h3 className="text-sm font-medium">Redirect Settings</h3>
-        
-        <div>
-          <Label htmlFor="accept-redirect">Accept Button → Redirect To</Label>
-          <Select
-            value={stepData?.on_accept_step_id || 'order-confirmation'}
-            onValueChange={(value) => handleStepSettingUpdate('on_accept_step_id', value === 'order-confirmation' ? null : value)}
-            disabled={loadingSteps}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select step after accept" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="order-confirmation">Order Confirmation</SelectItem>
-              {funnelSteps.filter(step => step.id !== stepId && step.id && step.id.trim() !== '').map((step) => (
-                <SelectItem key={step.id} value={step.id}>
-                  {step.title} ({step.step_type})
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div>
-          <Label htmlFor="decline-redirect">Decline Link → Redirect To</Label>
-          <Select
-            value={stepData?.on_decline_step_id || 'order-confirmation'}
-            onValueChange={(value) => handleStepSettingUpdate('on_decline_step_id', value === 'order-confirmation' ? null : value)}
-            disabled={loadingSteps}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select step after decline" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="order-confirmation">Order Confirmation</SelectItem>
-              {funnelSteps.filter(step => step.id !== stepId && step.id && step.id.trim() !== '').map((step) => (
-                <SelectItem key={step.id} value={step.id}>
-                  {step.title} ({step.step_type})
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {funnelSteps.length === 0 && !loadingSteps && (
-          <div className="text-xs text-muted-foreground p-3 bg-muted rounded-lg">
-            <p className="font-medium mb-1">No Funnel Steps Found</p>
-            <p>Create additional steps in this funnel to enable redirects to other steps.</p>
-          </div>
-        )}
-      </div>
+      {showStepSettings && stepId && funnelId && (
+        <FunnelStepSettingsModal
+          isOpen={showStepSettings}
+          onClose={() => setShowStepSettings(false)}
+          stepId={stepId}
+          funnelId={funnelId}
+        />
+      )}
     </div>
   );
 };

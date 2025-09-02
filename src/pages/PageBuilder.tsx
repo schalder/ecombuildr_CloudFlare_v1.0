@@ -27,6 +27,7 @@ import { WebsiteProvider } from '@/contexts/WebsiteContext';
 import { useHTMLGeneration } from '@/hooks/useHTMLGeneration';
 import { SEOConfig } from '@/lib/seo';
 import { FunnelStepToolbar } from '@/components/page-builder/components/FunnelStepToolbar';
+import { FunnelStepProvider } from '@/contexts/FunnelStepContext';
 
 export default function PageBuilder() {
   const navigate = useNavigate();
@@ -391,7 +392,8 @@ export default function PageBuilder() {
 
   return (
     <WebsiteProvider websiteId={resolvedWebsiteId}>
-      <div className="h-screen bg-background flex flex-col">
+      <FunnelStepProvider stepId={stepId || null} funnelId={funnelId || null}>
+        <div className="h-screen bg-background flex flex-col">
       {/* Top Navigation */}
       <div className="border-b bg-card px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-4">
@@ -793,6 +795,7 @@ export default function PageBuilder() {
           <PageBuilderRenderer data={builderData} />
         </div>
       </div>
+      </FunnelStepProvider>
     </WebsiteProvider>
   );
 }
