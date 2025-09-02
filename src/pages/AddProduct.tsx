@@ -65,9 +65,10 @@ export default function AddProduct() {
   const [variantEntries, setVariantEntries] = useState<VariantEntry[]>([]);
   
   // Shipping configuration
-  const [shippingType, setShippingType] = useState<'default' | 'fixed' | 'weight_surcharge' | 'free'>('default');
+  const [shippingType, setShippingType] = useState<'default' | 'fixed' | 'weight_surcharge' | 'free' | 'custom_options'>('default');
   const [fixedShippingFee, setFixedShippingFee] = useState<string>('');
   const [weightSurcharge, setWeightSurcharge] = useState<string>('');
+  const [customShippingOptions, setCustomShippingOptions] = useState<any[]>([]);
   
   // Legacy shipping options (for backward compatibility)
   const [enableFreeShipping, setEnableFreeShipping] = useState(false);

@@ -29,11 +29,20 @@ export type ShippingSettings = {
   freeShippingMinWeight?: number; // minimum weight for free shipping (in grams)
 };
 
+export type CustomShippingOption = {
+  id: string;
+  label: string;
+  fee: number;
+  description?: string;
+  isDefault?: boolean;
+};
+
 export type ProductShippingConfig = {
-  type: 'default' | 'fixed' | 'weight_surcharge' | 'free';
+  type: 'default' | 'fixed' | 'weight_surcharge' | 'free' | 'custom_options';
   fixedFee?: number;
   weightSurcharge?: number; // per gram
   freeShippingEnabled?: boolean;
+  customOptions?: CustomShippingOption[];
 };
 
 export type CartItem = {

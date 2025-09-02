@@ -22,6 +22,8 @@ export const InlineCheckoutContentProperties: React.FC<InlineCheckoutContentProp
   const allowSwitching: boolean = cfg.allowSwitching !== false; // default true
   const showQuantity: boolean = cfg.showQuantity !== false; // default true
   const orderBump = cfg.orderBump || { enabled: false, productId: '', label: 'Add this to my order', description: '', prechecked: false };
+  const chargeShippingForBump: boolean = cfg.chargeShippingForBump !== false; // default true
+  const bumpShippingFee: number = cfg.bumpShippingFee || 0;
 
   // Resolve websiteId for filtering
   const resolvedWebsiteId = useResolvedWebsiteId(element);
@@ -132,6 +134,33 @@ export const InlineCheckoutContentProperties: React.FC<InlineCheckoutContentProp
             <div className="flex items-center gap-2">
               <input type="checkbox" checked={!!orderBump.prechecked} onChange={(e) => onUpdate('orderBump', { ...orderBump, prechecked: e.target.checked })} />
               <Label className="text-sm">Pre-check by default</Label>
+            </div>
+            
+            <Separator />
+            
+            <div className="space-y-3">
+              <h5 className="text-sm font-medium">Order Bump Shipping</h5>
+              <div className="flex items-center gap-2">
+                <input 
+                  type="checkbox" 
+                  checked={!!chargeShippingForBump} 
+                  onChange={(e) => onUpdate('chargeShippingForBump', e.target.checked)} 
+                />
+                <Label className="text-sm">Charge shipping for order bump</Label>
+              </div>
+              {chargeShippingForBump && (
+                <div>
+                  <Label className="text-sm">Bump Shipping Fee</Label>
+                  <Input 
+                    type="number" 
+                    step="0.01" 
+                    min="0" 
+                    value={bumpShippingFee} 
+                    onChange={(e) => onUpdate('bumpShippingFee', parseFloat(e.target.value) || 0)} 
+                    placeholder="0.00" 
+                  />
+                </div>
+              )}
             </div>
           </div>
         )}
