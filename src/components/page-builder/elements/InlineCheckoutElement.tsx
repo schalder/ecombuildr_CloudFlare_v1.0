@@ -106,6 +106,7 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
     custom_fields: {} as Record<string, any>,
     selectedShippingOption: '', // For custom shipping options
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Set default custom shipping option when product changes
   useEffect(() => {
@@ -303,6 +304,11 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
       return;
     }
 
+    setIsSubmitting(true);
+    
+    // Generate idempotency key for this submission
+    const idempotencyKey = crypto.randomUUID();
+
     // Validate required fields
     const missing: string[] = [];
     const isEmpty = (v?: string) => !v || v.trim() === '';
@@ -368,6 +374,7 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
         total: total,
         status: form.payment_method === 'cod' ? 'pending' : ( isManual ? 'pending' : 'processing' ),
         custom_fields: (customFields || []).filter((cf:any)=>cf.enabled).map((cf:any)=>{ const value=(form.custom_fields as any)[cf.id]; if (value===undefined||value===null||value==='') return null; return { id: cf.id, label: cf.label || cf.id, value }; }).filter(Boolean),
+        idempotency_key: idempotencyKey,
         // Save shipping method for custom options
         shipping_method: (() => {
           const productShippingConfig = (selectedProduct as any)?.shipping_config;
@@ -434,6 +441,8 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
     } catch (e) {
       console.error(e);
       toast.error('Failed to place order');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -744,8 +753,8 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
                   <div className="flex flex-wrap items-center justify-between gap-2 min-w-0"><span className="truncate">Shipping</span><span className="font-semibold shrink-0 whitespace-nowrap text-right">{formatCurrency(shippingCost)}</span></div>
                   <div className="flex flex-wrap items-center justify-between gap-2 min-w-0 font-bold"><span className="truncate">Total</span><span className="shrink-0 whitespace-nowrap text-right">{formatCurrency(subtotal + shippingCost)}</span></div>
 
-                  <Button size={buttonSize as any} className={`w-full mt-2 element-${element.id}`} style={buttonInline as React.CSSProperties} onClick={handleSubmit} disabled={!selectedProduct || isSelectedOut}>
-                    {isSelectedOut ? 'Out of Stock' : buttonLabel}
+                  <Button size={buttonSize as any} className={`w-full mt-2 element-${element.id}`} style={buttonInline as React.CSSProperties} onClick={handleSubmit} disabled={!selectedProduct || isSelectedOut || isSubmitting}>
+                    {isSubmitting ? 'Processing...' : (isSelectedOut ? 'Out of Stock' : buttonLabel)}
                   </Button>
 
                   {terms.enabled && (

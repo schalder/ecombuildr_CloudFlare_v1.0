@@ -953,6 +953,7 @@ export type Database = {
           funnel_id: string | null
           google_ads_data: Json | null
           id: string
+          idempotency_key: string | null
           notes: string | null
           order_number: string
           payment_method: Database["public"]["Enums"]["payment_method"] | null
@@ -989,6 +990,7 @@ export type Database = {
           funnel_id?: string | null
           google_ads_data?: Json | null
           id?: string
+          idempotency_key?: string | null
           notes?: string | null
           order_number: string
           payment_method?: Database["public"]["Enums"]["payment_method"] | null
@@ -1025,6 +1027,7 @@ export type Database = {
           funnel_id?: string | null
           google_ads_data?: Json | null
           id?: string
+          idempotency_key?: string | null
           notes?: string | null
           order_number?: string
           payment_method?: Database["public"]["Enums"]["payment_method"] | null

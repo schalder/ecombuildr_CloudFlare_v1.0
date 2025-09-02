@@ -37,6 +37,7 @@ type OrderInput = {
   total: number;
   status?: string;
   custom_fields?: Record<string, any>;
+  idempotency_key?: string | null;
 };
 
 function generateOrderNumber() {
@@ -72,6 +73,25 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
+    // Check for existing order if idempotency key is provided
+    if (order.idempotency_key) {
+      const { data: existingOrder, error: existingError } = await supabase
+        .from('orders')
+        .select('*, order_items(*)')
+        .eq('store_id', storeId)
+        .eq('idempotency_key', order.idempotency_key)
+        .single();
+
+      if (!existingError && existingOrder) {
+        console.log('create-order: returning existing order for idempotency key', order.idempotency_key);
+        const accessToken = existingOrder.custom_fields?.order_access_token || generateAccessToken();
+        return new Response(
+          JSON.stringify({ success: true, order: { ...existingOrder, access_token: accessToken } }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
     // Prepare order insert with safe defaults and status normalization
     const allowedStatuses = new Set(['pending','confirmed','processing','shipped','delivered','cancelled']);
     const defaultStatus = (order.payment_method === 'cod') ? 'pending' : 'processing';
@@ -89,6 +109,7 @@ serve(async (req) => {
       shipping_cost: order.shipping_cost ?? 0,
       subtotal: order.subtotal ?? 0,
       total: order.total ?? ((order.subtotal ?? 0) + (order.shipping_cost ?? 0) - (order.discount_amount ?? 0)),
+      idempotency_key: order.idempotency_key ?? null,
       custom_fields: {
         ...(order.custom_fields || {}),
         order_access_token: accessToken,

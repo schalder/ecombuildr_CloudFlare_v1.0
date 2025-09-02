@@ -285,6 +285,9 @@ useEffect(() => {
     }
 
     setLoading(true);
+    
+    // Generate idempotency key for this submission
+    const idempotencyKey = crypto.randomUUID();
     try {
       // Determine manual number-only mode
       const hasBkashApi = !!(store?.settings?.bkash?.app_key && store?.settings?.bkash?.app_secret && store?.settings?.bkash?.username && store?.settings?.bkash?.password);
@@ -313,6 +316,7 @@ useEffect(() => {
         total: total + shippingCost - discountAmount,
         status: form.payment_method === 'cod' ? 'pending' as const : (isManual ? 'pending' as const : 'processing' as const),
         order_number: `ORD-${Date.now()}`,
+        idempotency_key: idempotencyKey,
       };
 
       const itemsPayload = items.map(item => ({
