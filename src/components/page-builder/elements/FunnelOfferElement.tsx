@@ -146,3 +146,6 @@ export const FunnelOfferElement: React.FC<FunnelOfferElementProps> = ({
     </div>
   );
 };
+
+// Verify export
+console.log('FunnelOfferElement defined:', typeof FunnelOfferElement);
