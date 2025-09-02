@@ -190,15 +190,15 @@ export const FunnelOfferContentProperties: React.FC<FunnelOfferContentProperties
         <div>
           <Label htmlFor="accept-redirect">Accept Button → Redirect To</Label>
           <Select
-            value={stepData?.on_accept_step_id || ''}
-            onValueChange={(value) => handleStepSettingUpdate('on_accept_step_id', value)}
+            value={stepData?.on_accept_step_id || 'order-confirmation'}
+            onValueChange={(value) => handleStepSettingUpdate('on_accept_step_id', value === 'order-confirmation' ? null : value)}
             disabled={loadingSteps}
           >
             <SelectTrigger>
               <SelectValue placeholder="Select step after accept" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Order Confirmation</SelectItem>
+              <SelectItem value="order-confirmation">Order Confirmation</SelectItem>
               {funnelSteps.map((step) => (
                 <SelectItem key={step.id} value={step.id}>
                   {step.title} ({step.step_type})
@@ -211,15 +211,15 @@ export const FunnelOfferContentProperties: React.FC<FunnelOfferContentProperties
         <div>
           <Label htmlFor="decline-redirect">Decline Link → Redirect To</Label>
           <Select
-            value={stepData?.on_decline_step_id || ''}
-            onValueChange={(value) => handleStepSettingUpdate('on_decline_step_id', value)}
+            value={stepData?.on_decline_step_id || 'order-confirmation'}
+            onValueChange={(value) => handleStepSettingUpdate('on_decline_step_id', value === 'order-confirmation' ? null : value)}
             disabled={loadingSteps}
           >
             <SelectTrigger>
               <SelectValue placeholder="Select step after decline" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Order Confirmation</SelectItem>
+              <SelectItem value="order-confirmation">Order Confirmation</SelectItem>
               {funnelSteps.map((step) => (
                 <SelectItem key={step.id} value={step.id}>
                   {step.title} ({step.step_type})
