@@ -61,7 +61,7 @@ const FunnelManagement = () => {
   const { deleteHTMLSnapshot } = useHTMLGeneration();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('steps');
-  const [activeMainTab, setActiveMainTab] = useState('overview');
+  
   const [selectedStepId, setSelectedStepId] = useState<string | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<{
     open: boolean;
@@ -217,7 +217,6 @@ const FunnelManagement = () => {
   };
   const handleSelectStep = (stepId: string) => {
     setSelectedStepId(stepId);
-    setActiveMainTab('overview');
   };
   const handlePreviewStep = (stepId: string, stepSlug: string) => {
     // Use custom domain if connected, otherwise use system route
@@ -391,26 +390,8 @@ const FunnelManagement = () => {
             {/* Main Content */}
             <div className="flex-1 p-4 sm:p-6">
               <div className="max-w-4xl">
-                {/* Secondary Tab Navigation */}
-                <div className="overflow-x-auto scrollbar-hide -mx-1 p-1 mb-6">
-                  <div className="flex space-x-1 bg-muted rounded-lg p-1 whitespace-nowrap">
-                    {[{
-                  id: 'overview',
-                  label: 'Overview'
-                }, {
-                  id: 'products',
-                  label: 'Products'
-                }, {
-                  id: 'publishing',
-                  label: 'Publishing'
-                }].map(tab => <button key={tab.id} onClick={() => setActiveMainTab(tab.id)} className={`py-2 px-3 sm:px-4 rounded-md text-sm font-medium transition-colors shrink-0 ${activeMainTab === tab.id ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}>
-                        {tab.label}
-                      </button>)}
-                  </div>
-                </div>
-
-                {/* Content based on active main tab */}
-                {activeMainTab === 'overview' && <>
+                {/* Content */}
+                <>
                     {/* Selected Step Content */}
                     {steps.length > 0 ? (() => {
                 const selectedStep = selectedStepId ? steps.find(s => s.id === selectedStepId) : steps[0];
@@ -494,17 +475,7 @@ const FunnelManagement = () => {
                           Create First Step
                         </Button>
                       </div>}
-                  </>}
-
-                {activeMainTab === 'products' && <div className="bg-background border rounded-lg p-12 text-center">
-                    <h3 className="text-lg font-semibold mb-2">Products</h3>
-                    <p className="text-muted-foreground">Manage products for this funnel</p>
-                  </div>}
-
-                {activeMainTab === 'publishing' && <div className="bg-background border rounded-lg p-12 text-center">
-                    <h3 className="text-lg font-semibold mb-2">Publishing</h3>
-                    <p className="text-muted-foreground">Configure domain and publishing settings</p>
-                  </div>}
+                   </>
               </div>
             </div>
           </div>}
