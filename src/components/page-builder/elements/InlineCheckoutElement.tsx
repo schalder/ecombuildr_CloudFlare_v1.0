@@ -268,6 +268,30 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
     return main + bump;
   }, [selectedProduct, quantity, orderBump.enabled, bumpChecked, bumpProduct]);
 
+  // Helper function to normalize Bangladesh phone numbers
+  const normalizeBdPhone = (phone: string): string => {
+    if (!phone) return '';
+    // Remove all non-digits except +
+    let cleaned = phone.replace(/[^\d+]/g, '');
+    // If starts with +88, keep it
+    if (cleaned.startsWith('+88')) {
+      return cleaned;
+    }
+    // If starts with 88, add +
+    if (cleaned.startsWith('88')) {
+      return '+' + cleaned;
+    }
+    // If starts with 01 (local format), add +88
+    if (cleaned.startsWith('01')) {
+      return '+88' + cleaned;
+    }
+    // If it's 11 digits starting with 1, assume it's missing the 0
+    if (cleaned.length === 11 && cleaned.startsWith('1')) {
+      return '+880' + cleaned;
+    }
+    return cleaned;
+  };
+
   const handleSubmit = async () => {
     if (!store || !selectedProduct) return;
     if (isSelectedOut) { toast.error('Selected product is out of stock'); return; }
@@ -280,7 +304,22 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
     const missing: string[] = [];
     const isEmpty = (v?: string) => !v || v.trim() === '';
     if (fields.fullName?.enabled && (fields.fullName?.required ?? true) && isEmpty(form.customer_name)) missing.push('Full Name');
-    if (fields.phone?.enabled && (fields.phone?.required ?? true) && isEmpty(form.customer_phone)) missing.push('Phone');
+    
+    // Phone validation with normalization
+    if (fields.phone?.enabled && (fields.phone?.required ?? true)) {
+      if (isEmpty(form.customer_phone)) {
+        missing.push('Phone');
+      } else {
+        const normalizedPhone = normalizeBdPhone(form.customer_phone);
+        if (!normalizedPhone || normalizedPhone.length < 11) {
+          missing.push('Valid Phone Number');
+        } else {
+          // Update form with normalized phone
+          setForm(prev => ({ ...prev, customer_phone: normalizedPhone }));
+        }
+      }
+    }
+    
     if (fields.email?.enabled && (fields.email?.required ?? false)) {
       const email = form.customer_email || '';
       const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);

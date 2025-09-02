@@ -25,6 +25,29 @@ function buildRecipientAddress(order: any) {
   return parts.join(', ');
 }
 
+function normalizeBdPhone(phone: string): string {
+  if (!phone) return '';
+  // Remove all non-digits except +
+  let cleaned = phone.replace(/[^\d+]/g, '');
+  // If starts with +88, keep it
+  if (cleaned.startsWith('+88')) {
+    return cleaned;
+  }
+  // If starts with 88, add +
+  if (cleaned.startsWith('88')) {
+    return '+' + cleaned;
+  }
+  // If starts with 01 (local format), add +88
+  if (cleaned.startsWith('01')) {
+    return '+88' + cleaned;
+  }
+  // If it's 11 digits starting with 1, assume it's missing the 0
+  if (cleaned.length === 11 && cleaned.startsWith('1')) {
+    return '+880' + cleaned;
+  }
+  return cleaned;
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -94,12 +117,24 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    // 3) Map order to Steadfast fields
+    // 3) Map order to Steadfast fields and validate phone
     const invoice = order.order_number || order.id;
     const recipient_name = order.customer_name || 'N/A';
-    const recipient_phone = order.customer_phone || '';
+    const rawPhone = order.customer_phone || '';
+    const recipient_phone = normalizeBdPhone(rawPhone);
     const recipient_address = buildRecipientAddress(order);
     const note = order.notes || null;
+
+    // Validate phone number
+    if (!recipient_phone || recipient_phone.length < 11) {
+      return new Response(JSON.stringify({ 
+        error: 'Invalid phone number format',
+        details: 'Phone number must be a valid Bangladesh number (11 digits starting with +88)'
+      }), {
+        status: 400,
+        headers: corsHeaders,
+      });
+    }
 
     // Load order items to build item_description and total_lot
     const { data: items, error: itemsErr } = await supabase

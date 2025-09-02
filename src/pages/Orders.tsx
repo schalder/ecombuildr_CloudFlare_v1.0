@@ -433,6 +433,32 @@ export default function Orders() {
       }
     } catch (e: any) {
       console.error(e);
+      
+      // Check if we have error details from courier_shipments table
+      try {
+        const { data: errorShipment } = await supabase
+          .from('courier_shipments')
+          .select('error, response_payload')
+          .eq('order_id', order.id)
+          .eq('provider', 'steadfast')
+          .eq('status', 'error')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        
+        if (errorShipment?.error || (errorShipment?.response_payload && typeof errorShipment.response_payload === 'object' && 'message' in errorShipment.response_payload)) {
+          const specificError = errorShipment.error || (typeof errorShipment.response_payload === 'object' && errorShipment.response_payload && 'message' in errorShipment.response_payload ? (errorShipment.response_payload as any).message : null);
+          toast({ 
+            title: "Steadfast Error", 
+            description: specificError, 
+            variant: "destructive" 
+          });
+          return;
+        }
+      } catch (shipmentQueryError) {
+        console.error('Failed to query shipment error details:', shipmentQueryError);
+      }
+      
       toast({ title: "Steadfast error", description: e?.message || "Failed to create consignment", variant: "destructive" });
     } finally {
       setPushing(false);

@@ -159,10 +159,37 @@ useEffect(() => {
     setForm(prev => ({ ...prev, [field]: value }));
   };
 
+  // Helper function to normalize Bangladesh phone numbers
+  const normalizeBdPhone = (phone: string): string => {
+    if (!phone) return '';
+    // Remove all non-digits except +
+    let cleaned = phone.replace(/[^\d+]/g, '');
+    // If starts with +88, keep it
+    if (cleaned.startsWith('+88')) {
+      return cleaned;
+    }
+    // If starts with 88, add +
+    if (cleaned.startsWith('88')) {
+      return '+' + cleaned;
+    }
+    // If starts with 01 (local format), add +88
+    if (cleaned.startsWith('01')) {
+      return '+88' + cleaned;
+    }
+    // If it's 11 digits starting with 1, assume it's missing the 0
+    if (cleaned.length === 11 && cleaned.startsWith('1')) {
+      return '+880' + cleaned;
+    }
+    return cleaned;
+  };
+
   const validateStep = (step: number): boolean => {
     switch (step) {
       case 1:
-        return !!(form.customer_name && form.customer_email && form.customer_phone);
+        if (!form.customer_name || !form.customer_email || !form.customer_phone) return false;
+        // Validate phone format
+        const normalizedPhone = normalizeBdPhone(form.customer_phone);
+        return normalizedPhone.length >= 11;
       case 2:
         return !!(form.shipping_address && form.shipping_city);
       case 3:
@@ -246,6 +273,13 @@ useEffect(() => {
   const handleSubmitOrder = async () => {
     if (!store || items.length === 0) return;
 
+    // Normalize phone before submitting
+    const normalizedPhone = normalizeBdPhone(form.customer_phone);
+    if (!normalizedPhone || normalizedPhone.length < 11) {
+      toast.error('Please enter a valid phone number');
+      return;
+    }
+
     setLoading(true);
     try {
       // Determine manual number-only mode
@@ -262,7 +296,7 @@ useEffect(() => {
         funnel_id: resolvedFunnelId,
         customer_name: form.customer_name,
         customer_email: form.customer_email,
-        customer_phone: form.customer_phone,
+        customer_phone: normalizedPhone,
         shipping_address: form.shipping_address,
         shipping_city: form.shipping_city,
         shipping_area: form.shipping_area,
