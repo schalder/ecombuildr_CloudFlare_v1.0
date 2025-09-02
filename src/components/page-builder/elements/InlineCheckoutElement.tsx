@@ -22,6 +22,7 @@ import type { CartItem } from '@/lib/shipping-enhanced';
 import { usePixelTracking } from '@/hooks/usePixelTracking';
 import { usePixelContext } from '@/components/pixel/PixelManager';
 import { useResolvedWebsiteId } from '@/hooks/useResolvedWebsiteId';
+import { useFunnelStepContext } from '@/contexts/FunnelStepContext';
 
 const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?: 'desktop' | 'tablet' | 'mobile' }> = ({ element, deviceType = 'desktop' }) => {
   const navigate = useNavigate();
@@ -30,9 +31,34 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
   const { store, loadStoreById } = useStore();
   const { pixels } = usePixelContext();
   const { trackPurchase } = usePixelTracking(pixels);
+  const { stepId } = useFunnelStepContext();
   
   // Error states
   const [phoneError, setPhoneError] = useState<string>('');
+  
+  // Load funnel step data for success redirect
+  const [funnelStepData, setFunnelStepData] = useState<any>(null);
+  
+  useEffect(() => {
+    if (!stepId) return;
+    
+    const loadFunnelStepData = async () => {
+      try {
+        const { data: step, error } = await supabase
+          .from('funnel_steps')
+          .select('on_success_step_id, funnel_id')
+          .eq('id', stepId)
+          .single();
+        
+        if (error) throw error;
+        setFunnelStepData(step);
+      } catch (error) {
+        console.error('Error loading funnel step data:', error);
+      }
+    };
+    
+    loadFunnelStepData();
+  }, [stepId]);
   
   // Resolve websiteId for filtering
   const resolvedWebsiteId = useResolvedWebsiteId(element);
@@ -436,14 +462,57 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
         
         toast.success(isManual ? 'Order placed! Please complete payment to the provided number.' : 'Order placed!');
         
-        // Check for funnel redirect
+        // Handle funnel step success redirect
+        if (funnelStepData?.on_success_step_id) {
+          try {
+            // Fetch the next step details
+            const { data: nextStep, error } = await supabase
+              .from('funnel_steps')
+              .select('slug, funnel_id')
+              .eq('id', funnelStepData.on_success_step_id)
+              .single();
+              
+            if (!error && nextStep?.slug) {
+              // Environment-aware redirect to next step
+              const isCustomDomain = !(
+                window.location.hostname === 'localhost' || 
+                window.location.hostname.includes('lovable.app') ||
+                window.location.hostname.includes('lovableproject.com')
+              );
+              
+              if (isCustomDomain) {
+                // Custom domain: use clean paths
+                const nextUrl = `/${nextStep.slug}?orderId=${orderId}&ot=${accessToken}`;
+                console.log(`Redirecting to success step (custom domain): ${nextUrl}`);
+                window.location.href = nextUrl;
+                return;
+              } else {
+                // App/sandbox: use funnel-aware paths
+                const nextUrl = `/funnel/${funnelStepData.funnel_id}/${nextStep.slug}?orderId=${orderId}&ot=${accessToken}`;
+                console.log(`Redirecting to success step (app): ${nextUrl}`);
+                window.location.href = nextUrl;
+                return;
+              }
+            } else {
+              console.log('Next step not found, falling back to order confirmation');
+            }
+          } catch (error) {
+            console.error('Error fetching next step:', error);
+          }
+        }
+        
+        // Fallback: Check element-level redirect URL
         if (successRedirectUrl && successRedirectUrl.trim()) {
           const redirectUrl = new URL(successRedirectUrl, window.location.origin);
           redirectUrl.searchParams.set('orderId', orderId);
           redirectUrl.searchParams.set('ot', accessToken || '');
+          console.log(`Redirecting to element success URL: ${redirectUrl.toString()}`);
           window.location.href = redirectUrl.toString();
         } else {
-          navigate(paths.orderConfirmation(orderId, accessToken));
+          // Final fallback: order confirmation
+          const confirmUrl = paths.orderConfirmation(orderId, accessToken);
+          console.log(`Redirecting to order confirmation: ${confirmUrl}`);
+          navigate(confirmUrl);
         }
       } else {
         await initiatePayment(orderId, orderData.total, form.payment_method, accessToken);

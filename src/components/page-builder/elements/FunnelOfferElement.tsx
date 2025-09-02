@@ -8,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useFunnelStepContext } from '@/contexts/FunnelStepContext';
 import { renderElementStyles } from '@/components/page-builder/utils/styleRenderer';
 import { formatCurrency } from '@/lib/currency';
+import { useEcomPaths } from '@/lib/pathResolver';
 import type { PageBuilderElement } from '../types';
 
 interface FunnelOfferElementProps {
@@ -26,7 +27,8 @@ export const FunnelOfferElement: React.FC<FunnelOfferElementProps> = ({
   const [stepData, setStepData] = useState<any>(null);
   const [productData, setProductData] = useState<any>(null);
   const { toast } = useToast();
-  const { stepId } = useFunnelStepContext();
+  const { stepId, funnelId } = useFunnelStepContext();
+  const paths = useEcomPaths();
 
   const orderId = searchParams.get('orderId');
   const token = searchParams.get('ot');
@@ -105,12 +107,28 @@ export const FunnelOfferElement: React.FC<FunnelOfferElementProps> = ({
       if (error) throw error;
 
       if (data?.nextStepSlug && data?.funnelSlug) {
-        // Redirect to next step with order params
-        const nextUrl = `/${data.funnelSlug}/${data.nextStepSlug}?orderId=${orderId}&ot=${token}`;
-        window.location.href = nextUrl;
+        // Environment-aware redirect to next step
+        const isCustomDomain = !(
+          window.location.hostname === 'localhost' || 
+          window.location.hostname.includes('lovable.app') ||
+          window.location.hostname.includes('lovableproject.com')
+        );
+        
+        if (isCustomDomain) {
+          // Custom domain: use clean paths
+          const nextUrl = `/${data.nextStepSlug}?orderId=${orderId}&ot=${token}`;
+          console.log(`Redirecting to next step (custom domain): ${nextUrl}`);
+          window.location.href = nextUrl;
+        } else {
+          // App/sandbox: use funnel-aware paths
+          const nextUrl = `/funnel/${funnelId}/${data.nextStepSlug}?orderId=${orderId}&ot=${token}`;
+          console.log(`Redirecting to next step (app): ${nextUrl}`);
+          window.location.href = nextUrl;
+        }
       } else {
-        // No next step, go to order confirmation
-        const confirmUrl = `/order-confirmation?orderId=${orderId}&ot=${token}`;
+        // No next step, go to order confirmation using path resolver
+        const confirmUrl = paths.orderConfirmation(orderId, token);
+        console.log(`Redirecting to order confirmation: ${confirmUrl}`);
         window.location.href = confirmUrl;
       }
 
