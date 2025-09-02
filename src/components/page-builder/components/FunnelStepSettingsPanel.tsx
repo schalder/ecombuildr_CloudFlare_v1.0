@@ -22,6 +22,7 @@ interface FunnelStep {
   slug: string;
   step_type: string;
   step_order: number;
+  on_success_step_id?: string;
   on_accept_step_id?: string;
   on_decline_step_id?: string;
   offer_product_id?: string;
@@ -114,6 +115,7 @@ export const FunnelStepSettingsPanel: React.FC<FunnelStepSettingsPanelProps> = (
         .from('funnel_steps')
         .update({
           step_type: step.step_type,
+          on_success_step_id: step.on_success_step_id || null,
           on_accept_step_id: step.on_accept_step_id || null,
           on_decline_step_id: step.on_decline_step_id || null,
           offer_product_id: step.offer_product_id || null,
@@ -258,53 +260,81 @@ export const FunnelStepSettingsPanel: React.FC<FunnelStepSettingsPanelProps> = (
         <CardHeader>
           <CardTitle>Step Navigation</CardTitle>
           <CardDescription>
-            Configure where users go after accepting or declining offers
+            Configure where users go after completing actions on this step
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="accept-step">On Accept (Go To Step)</Label>
-            <Select
-              value={step.on_accept_step_id || 'end-funnel'}
-              onValueChange={(value) => setStep({ ...step, on_accept_step_id: value === 'end-funnel' ? null : value })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select next step" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="end-funnel">End Funnel</SelectItem>
-                {funnelSteps
-                  .filter(s => s.id !== stepId)
-                  .map((funnelStep) => (
-                    <SelectItem key={funnelStep.id} value={funnelStep.id}>
-                      {funnelStep.title} ({funnelStep.step_type})
-                    </SelectItem>
-                  ))}
-              </SelectContent>
-            </Select>
-          </div>
+          {step.step_type === 'landing' && (
+            <div className="space-y-2">
+              <Label htmlFor="success-step">On Success (After Checkout)</Label>
+              <Select
+                value={step.on_success_step_id || 'order-confirmation'}
+                onValueChange={(value) => setStep({ ...step, on_success_step_id: value === 'order-confirmation' ? null : value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select next step" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="order-confirmation">Order Confirmation</SelectItem>
+                  {funnelSteps
+                    .filter(s => s.id !== stepId)
+                    .map((funnelStep) => (
+                      <SelectItem key={funnelStep.id} value={funnelStep.id}>
+                        {funnelStep.title} ({funnelStep.step_type})
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
-          <div className="space-y-2">
-            <Label htmlFor="decline-step">On Decline (Go To Step)</Label>
-            <Select
-              value={step.on_decline_step_id || 'end-funnel'}
-              onValueChange={(value) => setStep({ ...step, on_decline_step_id: value === 'end-funnel' ? null : value })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select next step" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="end-funnel">End Funnel</SelectItem>
-                {funnelSteps
-                  .filter(s => s.id !== stepId)
-                  .map((funnelStep) => (
-                    <SelectItem key={funnelStep.id} value={funnelStep.id}>
-                      {funnelStep.title} ({funnelStep.step_type})
-                    </SelectItem>
-                  ))}
-              </SelectContent>
-            </Select>
-          </div>
+          {(step.step_type === 'upsell' || step.step_type === 'downsell') && (
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="accept-step">On Accept (Go To Step)</Label>
+                <Select
+                  value={step.on_accept_step_id || 'order-confirmation'}
+                  onValueChange={(value) => setStep({ ...step, on_accept_step_id: value === 'order-confirmation' ? null : value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select next step" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="order-confirmation">Order Confirmation</SelectItem>
+                    {funnelSteps
+                      .filter(s => s.id !== stepId)
+                      .map((funnelStep) => (
+                        <SelectItem key={funnelStep.id} value={funnelStep.id}>
+                          {funnelStep.title} ({funnelStep.step_type})
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="decline-step">On Decline (Go To Step)</Label>
+                <Select
+                  value={step.on_decline_step_id || 'order-confirmation'}
+                  onValueChange={(value) => setStep({ ...step, on_decline_step_id: value === 'order-confirmation' ? null : value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select next step" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="order-confirmation">Order Confirmation</SelectItem>
+                    {funnelSteps
+                      .filter(s => s.id !== stepId)
+                      .map((funnelStep) => (
+                        <SelectItem key={funnelStep.id} value={funnelStep.id}>
+                          {funnelStep.title} ({funnelStep.step_type})
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </>
+          )}
         </CardContent>
       </Card>
 
