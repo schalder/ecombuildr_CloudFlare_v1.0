@@ -160,35 +160,8 @@ export const FunnelSales: React.FC<FunnelSalesProps> = ({ funnelId }) => {
         </CardContent>
       </Card>
 
-      {/* Step Performance and Payment Methods */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Step Performance</CardTitle>
-            <CardDescription>Performance of each funnel step</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {sales.analytics.stepPerformance.map((step, index) => (
-                <div key={step.step_title} className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium">{step.step_title}</p>
-                      <p className="text-sm text-muted-foreground">{step.step_type}</p>
-                    </div>
-                    <Badge variant="secondary">{step.conversion_rate.toFixed(1)}%</Badge>
-                  </div>
-                  <div className="flex items-center justify-between text-sm text-muted-foreground">
-                    <span>{step.views} views</span>
-                    <span>{step.conversions} conversions</span>
-                  </div>
-                  <Progress value={step.conversion_rate} className="h-2" />
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
+      {/* Payment Methods */}
+      <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
         <Card>
           <CardHeader>
             <CardTitle>Payment Methods</CardTitle>

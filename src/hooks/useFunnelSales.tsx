@@ -103,7 +103,7 @@ export function useFunnelSales(funnelId: string, initialDateRange?: DateRange): 
       // Get funnel steps for step performance analysis
       const { data: funnelSteps } = await supabase
         .from('funnel_steps')
-        .select('id, title, step_type')
+        .select('id, title, step_type, slug')
         .eq('funnel_id', funnelId)
         .order('step_order');
 
@@ -156,18 +156,18 @@ export function useFunnelSales(funnelId: string, initialDateRange?: DateRange): 
         return orderDate >= yesterday && orderDate < today;
       }) || [];
 
-      // Get pixel events for visitor count and step performance
+      // Get pixel events for visitor count and step performance using funnel_id in event_data
       const { data: pixelEvents } = await supabase
         .from('pixel_events')
-        .select('event_type, page_url, session_id, created_at')
-        .like('page_url', `%/funnel/${funnel.slug}%`)
+        .select('event_type, page_url, session_id, event_data, created_at')
+        .contains('event_data', { funnel_id: funnelId })
         .gte('created_at', dateRange.from.toISOString())
         .lte('created_at', dateRange.to.toISOString());
 
       const { data: comparisonPixelEvents } = await supabase
         .from('pixel_events')
         .select('event_type, session_id')
-        .like('page_url', `%/funnel/${funnel.slug}%`)
+        .contains('event_data', { funnel_id: funnelId })
         .gte('created_at', comparisonPeriod.from.toISOString())
         .lte('created_at', comparisonPeriod.to.toISOString());
 
@@ -219,10 +219,11 @@ export function useFunnelSales(funnelId: string, initialDateRange?: DateRange): 
         });
       }
 
-      // Step performance analysis
+      // Step performance analysis using step slug for better matching
       const stepPerformance = (funnelSteps || []).map((step, index) => {
         const stepEvents = pixelEvents?.filter(e => 
-          e.event_type === 'PageView' && e.page_url?.includes(`/step/${step.id}`)
+          e.event_type === 'PageView' && 
+          ((e.event_data as any)?.step_slug === step.slug || e.page_url?.includes(`/${step.slug}`))
         ) || [];
         
         const stepViews = stepEvents.length;
@@ -237,7 +238,8 @@ export function useFunnelSales(funnelId: string, initialDateRange?: DateRange): 
           // Other steps: conversions are unique visitors to the next step
           const nextStep = funnelSteps[index + 1];
           const nextStepEvents = pixelEvents?.filter(e => 
-            e.event_type === 'PageView' && e.page_url?.includes(`/step/${nextStep.id}`)
+            e.event_type === 'PageView' && 
+            ((e.event_data as any)?.step_slug === nextStep.slug || e.page_url?.includes(`/${nextStep.slug}`))
           ) || [];
           stepConversions = new Set(nextStepEvents.map(e => e.session_id)).size;
         }

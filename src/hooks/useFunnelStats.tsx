@@ -66,7 +66,7 @@ export function useFunnelStats(funnelId: string): FunnelStatsHookReturn {
       // Get funnel steps count
       const { data: steps, error: stepsError } = await supabase
         .from('funnel_steps')
-        .select('id, title, step_type, is_published')
+        .select('id, title, step_type, is_published, slug')
         .eq('funnel_id', funnelId);
 
       if (stepsError) throw stepsError;
@@ -79,21 +79,27 @@ export function useFunnelStats(funnelId: string): FunnelStatsHookReturn {
 
       if (ordersError && ordersError.code !== 'PGRST116') throw ordersError;
 
-      // Get pixel events for analytics
+      // Get pixel events for analytics using funnel_id in event_data
       const { data: pixelEvents } = await supabase
         .from('pixel_events')
-        .select('event_type, page_url, session_id, referrer, created_at')
-        .like('page_url', `%/funnel/${funnel.slug}%`)
+        .select('event_type, page_url, session_id, referrer, event_data, created_at')
+        .contains('event_data', { funnel_id: funnelId })
         .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()); // Last 30 days
+
+      console.log('Fetched pixel events for funnel:', pixelEvents?.length, 'funnel_id:', funnelId);
 
       // Process pixel events for analytics
       const totalPageViews = pixelEvents?.filter(e => e.event_type === 'PageView').length || 0;
       const totalUniqueVisitors = new Set(pixelEvents?.filter(e => e.event_type === 'PageView').map(e => e.session_id)).size;
       
-      // Step analytics with accurate conversion tracking
+      console.log('Total page views:', totalPageViews, 'Total unique visitors:', totalUniqueVisitors);
+      
+      // Step analytics with accurate conversion tracking using step slug
       const stepAnalytics = (steps || []).map((step, index) => {
+        // Match events by step slug for more reliable tracking
         const stepEvents = pixelEvents?.filter(e => 
-          e.event_type === 'PageView' && e.page_url?.includes(`/step/${step.id}`)
+          e.event_type === 'PageView' && 
+          ((e.event_data as any)?.step_slug === step.slug || e.page_url?.includes(`/${step.slug}`))
         ) || [];
         
         const stepViews = stepEvents.length;
@@ -105,15 +111,18 @@ export function useFunnelStats(funnelId: string): FunnelStatsHookReturn {
           // Final step: conversions are actual orders
           stepConversions = orders?.length || 0;
         } else {
-          // Other steps: conversions are views of the next step
+          // Other steps: conversions are unique visitors to the next step
           const nextStep = steps[index + 1];
           const nextStepEvents = pixelEvents?.filter(e => 
-            e.event_type === 'PageView' && e.page_url?.includes(`/step/${nextStep.id}`)
+            e.event_type === 'PageView' && 
+            ((e.event_data as any)?.step_slug === nextStep.slug || e.page_url?.includes(`/${nextStep.slug}`))
           ) || [];
           stepConversions = new Set(nextStepEvents.map(e => e.session_id)).size;
         }
         
         const conversionRate = stepUniqueVisitors > 0 ? (stepConversions / stepUniqueVisitors) * 100 : 0;
+
+        console.log(`Step ${step.title}: ${stepViews} views, ${stepUniqueVisitors} visitors, ${conversionRate.toFixed(1)}% conversion`);
 
         return {
           step_id: step.id,

@@ -380,10 +380,13 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
       const isNagadManual = !!(store?.settings?.nagad?.enabled && (store?.settings?.nagad?.mode === 'number' || !hasNagadApi) && store?.settings?.nagad?.number);
       const isManual = (form.payment_method === 'bkash' && isBkashManual) || (form.payment_method === 'nagad' && isNagadManual);
 
+      // Determine funnel_id for the order - crucial for funnel analytics
+      const orderFunnelId = funnelId || funnelStepData?.funnel_id || null;
+
       const orderData: any = {
         store_id: store.id,
         website_id: resolvedWebsiteId || null,
-        funnel_id: funnelId || null,
+        funnel_id: orderFunnelId, // Ensure funnel_id is set for all orders from funnels
         customer_name: form.customer_name,
         customer_email: form.customer_email,
         customer_phone: form.customer_phone,
