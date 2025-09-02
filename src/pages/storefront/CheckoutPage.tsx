@@ -48,6 +48,9 @@ export const CheckoutPage: React.FC = () => {
   const { websiteId: contextWebsiteId } = useWebsiteContext();
   const { websiteId: resolvedWebsiteId, funnelId: resolvedFunnelId } = useChannelContext();
   const isWebsiteContext = Boolean(websiteId || websiteSlug || contextWebsiteId);
+  
+  // Error states
+  const [phoneError, setPhoneError] = useState<string>('');
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [hasTrackedCheckout, setHasTrackedCheckout] = useState(false);
@@ -276,7 +279,8 @@ useEffect(() => {
     // Normalize phone before submitting
     const normalizedPhone = normalizeBdPhone(form.customer_phone);
     if (!normalizedPhone || normalizedPhone.length < 11) {
-      toast.error('Please enter a valid phone number');
+      setPhoneError('Please enter a valid phone number');
+      setCurrentStep(1); // Go back to step 1 to show error
       return;
     }
 
@@ -538,12 +542,33 @@ useEffect(() => {
                   </div>
                   <div>
                     <Label htmlFor="customer_phone">Phone Number *</Label>
-                    <Input
-                      id="customer_phone"
-                      value={form.customer_phone}
-                      onChange={(e) => handleInputChange('customer_phone', e.target.value)}
-                      placeholder="Enter your phone number"
-                    />
+                    <div className="space-y-1">
+                      <Input
+                        id="customer_phone"
+                        value={form.customer_phone}
+                        onChange={(e) => {
+                          handleInputChange('customer_phone', e.target.value);
+                          setPhoneError(''); // Clear error on input
+                        }}
+                        onBlur={(e) => {
+                          if (e.target.value.trim()) {
+                            const normalized = normalizeBdPhone(e.target.value);
+                            if (!normalized || normalized.length < 11) {
+                              setPhoneError('Please enter a valid phone number');
+                            }
+                          }
+                        }}
+                        placeholder="Enter your phone number"
+                        aria-invalid={!!phoneError}
+                        aria-describedby={phoneError ? 'phone-error-checkout' : undefined}
+                        className={phoneError ? 'border-destructive focus-visible:ring-destructive' : undefined}
+                      />
+                      {phoneError && (
+                        <p id="phone-error-checkout" className="text-sm text-destructive" role="alert">
+                          {phoneError}
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </div>
                 <div>

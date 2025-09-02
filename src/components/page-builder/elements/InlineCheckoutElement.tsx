@@ -31,6 +31,9 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
   const { pixels } = usePixelContext();
   const { trackPurchase } = usePixelTracking(pixels);
   
+  // Error states
+  const [phoneError, setPhoneError] = useState<string>('');
+  
   // Resolve websiteId for filtering
   const resolvedWebsiteId = useResolvedWebsiteId(element);
 
@@ -312,10 +315,12 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
       } else {
         const normalizedPhone = normalizeBdPhone(form.customer_phone);
         if (!normalizedPhone || normalizedPhone.length < 11) {
-          missing.push('Valid Phone Number');
+          setPhoneError('Please enter a valid phone number');
+          return; // Stop form submission
         } else {
-          // Update form with normalized phone
+          // Update form with normalized phone and clear error
           setForm(prev => ({ ...prev, customer_phone: normalizedPhone }));
+          setPhoneError('');
         }
       }
     }
@@ -541,7 +546,34 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
                     <Input placeholder={fields.fullName.placeholder} value={form.customer_name} onChange={e=>setForm(f=>({...f,customer_name:e.target.value}))} required={!!(fields.fullName?.enabled && (fields.fullName?.required ?? true))} aria-required={!!(fields.fullName?.enabled && (fields.fullName?.required ?? true))} />
                   )}
                   {fields.phone?.enabled && (
-                    <Input placeholder={fields.phone.placeholder} value={form.customer_phone} onChange={e=>setForm(f=>({...f,customer_phone:e.target.value}))} required={!!(fields.phone?.enabled && (fields.phone?.required ?? true))} aria-required={!!(fields.phone?.enabled && (fields.phone?.required ?? true))} />
+                    <div className="space-y-1">
+                      <Input 
+                        placeholder={fields.phone.placeholder} 
+                        value={form.customer_phone} 
+                        onChange={(e) => {
+                          setForm(f => ({ ...f, customer_phone: e.target.value }));
+                          setPhoneError(''); // Clear error on input
+                        }}
+                        onBlur={(e) => {
+                          if (fields.phone?.required && e.target.value.trim()) {
+                            const normalized = normalizeBdPhone(e.target.value);
+                            if (!normalized || normalized.length < 11) {
+                              setPhoneError('Please enter a valid phone number');
+                            }
+                          }
+                        }}
+                        required={!!(fields.phone?.enabled && (fields.phone?.required ?? true))} 
+                        aria-required={!!(fields.phone?.enabled && (fields.phone?.required ?? true))}
+                        aria-invalid={!!phoneError}
+                        aria-describedby={phoneError ? `phone-error-${element.id}` : undefined}
+                        className={phoneError ? 'border-destructive focus-visible:ring-destructive' : undefined}
+                      />
+                      {phoneError && (
+                        <p id={`phone-error-${element.id}`} className="text-sm text-destructive" role="alert">
+                          {phoneError}
+                        </p>
+                      )}
+                    </div>
                   )}
                 </div>
                 {fields.email?.enabled && (
