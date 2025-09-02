@@ -265,14 +265,14 @@ export const FunnelStepSettingsPanel: React.FC<FunnelStepSettingsPanelProps> = (
           <div className="space-y-2">
             <Label htmlFor="accept-step">On Accept (Go To Step)</Label>
             <Select
-              value={step.on_accept_step_id || ''}
-              onValueChange={(value) => setStep({ ...step, on_accept_step_id: value || undefined })}
+              value={step.on_accept_step_id || 'end-funnel'}
+              onValueChange={(value) => setStep({ ...step, on_accept_step_id: value === 'end-funnel' ? null : value })}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select next step" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">End Funnel</SelectItem>
+                <SelectItem value="end-funnel">End Funnel</SelectItem>
                 {funnelSteps
                   .filter(s => s.id !== stepId)
                   .map((funnelStep) => (
@@ -287,14 +287,14 @@ export const FunnelStepSettingsPanel: React.FC<FunnelStepSettingsPanelProps> = (
           <div className="space-y-2">
             <Label htmlFor="decline-step">On Decline (Go To Step)</Label>
             <Select
-              value={step.on_decline_step_id || ''}
-              onValueChange={(value) => setStep({ ...step, on_decline_step_id: value || undefined })}
+              value={step.on_decline_step_id || 'end-funnel'}
+              onValueChange={(value) => setStep({ ...step, on_decline_step_id: value === 'end-funnel' ? null : value })}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select next step" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">End Funnel</SelectItem>
+                <SelectItem value="end-funnel">End Funnel</SelectItem>
                 {funnelSteps
                   .filter(s => s.id !== stepId)
                   .map((funnelStep) => (

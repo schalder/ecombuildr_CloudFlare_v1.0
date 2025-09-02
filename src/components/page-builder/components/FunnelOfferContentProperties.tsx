@@ -164,7 +164,7 @@ export const FunnelOfferContentProperties: React.FC<FunnelOfferContentProperties
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="none">No product selected</SelectItem>
-              {products.map((product) => (
+              {products.filter(product => product.id && product.id.trim() !== '').map((product) => (
                 <SelectItem key={product.id} value={product.id}>
                   {product.name} - ${product.price}
                 </SelectItem>
@@ -195,7 +195,7 @@ export const FunnelOfferContentProperties: React.FC<FunnelOfferContentProperties
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="order-confirmation">Order Confirmation</SelectItem>
-              {funnelSteps.filter(step => step.id !== stepId).map((step) => (
+              {funnelSteps.filter(step => step.id !== stepId && step.id && step.id.trim() !== '').map((step) => (
                 <SelectItem key={step.id} value={step.id}>
                   {step.title} ({step.step_type})
                 </SelectItem>
@@ -216,7 +216,7 @@ export const FunnelOfferContentProperties: React.FC<FunnelOfferContentProperties
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="order-confirmation">Order Confirmation</SelectItem>
-              {funnelSteps.filter(step => step.id !== stepId).map((step) => (
+              {funnelSteps.filter(step => step.id !== stepId && step.id && step.id.trim() !== '').map((step) => (
                 <SelectItem key={step.id} value={step.id}>
                   {step.title} ({step.step_type})
                 </SelectItem>
