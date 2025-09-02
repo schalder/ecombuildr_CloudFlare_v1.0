@@ -261,6 +261,7 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
           setShippingType(shippingConfig.type || 'default');
           setFixedShippingFee(shippingConfig.fixedFee?.toString() || '');
           setWeightSurcharge(shippingConfig.weightSurcharge?.toString() || '');
+          setCustomShippingOptions(shippingConfig.customOptions || []);
         }
 
         // Legacy shipping & returns
@@ -371,6 +372,7 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
           fixedFee: shippingType === 'fixed' && fixedShippingFee ? parseFloat(fixedShippingFee) : undefined,
           weightSurcharge: shippingType === 'weight_surcharge' && weightSurcharge ? parseFloat(weightSurcharge) : undefined,
           freeShippingEnabled: shippingType === 'free',
+          customOptions: shippingType === 'custom_options' ? customShippingOptions : undefined,
         },
         free_shipping_min_amount: enableFreeShipping && freeShippingMin ? parseFloat(freeShippingMin) : null,
         easy_returns_enabled: easyReturnsEnabled,
@@ -1063,7 +1065,7 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
                     <div className="space-y-4">
                       <div className="space-y-3">
                         <Label htmlFor="shipping_type" className="text-sm font-medium">Shipping Configuration</Label>
-                        <Select value={shippingType} onValueChange={(value: 'default' | 'fixed' | 'weight_surcharge' | 'free') => setShippingType(value)}>
+                        <Select value={shippingType} onValueChange={(value: 'default' | 'fixed' | 'weight_surcharge' | 'free' | 'custom_options') => setShippingType(value)}>
                           <SelectTrigger className="max-w-xs">
                             <SelectValue placeholder="Select shipping type" />
                           </SelectTrigger>
@@ -1072,6 +1074,7 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
                             <SelectItem value="fixed">Fixed Shipping Fee</SelectItem>
                             <SelectItem value="weight_surcharge">Weight Surcharge</SelectItem>
                             <SelectItem value="free">Free Shipping</SelectItem>
+                            <SelectItem value="custom_options">Custom Shipping Options</SelectItem>
                           </SelectContent>
                         </Select>
                         <p className="text-sm text-muted-foreground">
@@ -1126,6 +1129,114 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
                           <p className="text-sm text-muted-foreground">
                             This product will have free shipping regardless of location or order amount
                           </p>
+                        </div>
+                      )}
+
+                      {shippingType === 'custom_options' && (
+                        <div className="space-y-4 pl-4 border-l-2 border-muted">
+                          <div className="flex items-center justify-between">
+                            <h4 className="text-sm font-medium">Custom Shipping Options</h4>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                const newOption = {
+                                  id: Date.now().toString(),
+                                  label: 'New Option',
+                                  fee: 0,
+                                  description: '',
+                                  isDefault: customShippingOptions.length === 0
+                                };
+                                setCustomShippingOptions([...customShippingOptions, newOption]);
+                              }}
+                            >
+                              Add Option
+                            </Button>
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            Create specific shipping choices for customers (e.g., "Inside Dhaka City", "Outside Dhaka")
+                          </p>
+                          
+                          {customShippingOptions.length === 0 && (
+                            <div className="text-center py-4 text-muted-foreground">
+                              No custom shipping options yet. Click "Add Option" to create one.
+                            </div>
+                          )}
+                          
+                          {customShippingOptions.map((option, index) => (
+                            <div key={option.id} className="border rounded-lg p-4 space-y-3">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  <input
+                                    type="radio"
+                                    name="defaultShippingOption"
+                                    checked={option.isDefault}
+                                    onChange={() => {
+                                      setCustomShippingOptions(opts => 
+                                        opts.map(opt => ({ ...opt, isDefault: opt.id === option.id }))
+                                      );
+                                    }}
+                                  />
+                                  <span className="text-sm font-medium">Default Option</span>
+                                </div>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    setCustomShippingOptions(opts => opts.filter(opt => opt.id !== option.id));
+                                  }}
+                                  className="text-destructive hover:text-destructive"
+                                >
+                                  Remove
+                                </Button>
+                              </div>
+                              
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div>
+                                  <Label className="text-sm">Option Label</Label>
+                                  <Input
+                                    value={option.label}
+                                    onChange={(e) => {
+                                      setCustomShippingOptions(opts =>
+                                        opts.map(opt => opt.id === option.id ? { ...opt, label: e.target.value } : opt)
+                                      );
+                                    }}
+                                    placeholder="e.g., Inside Dhaka City"
+                                  />
+                                </div>
+                                <div>
+                                  <Label className="text-sm">Shipping Fee</Label>
+                                  <Input
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    value={option.fee}
+                                    onChange={(e) => {
+                                      setCustomShippingOptions(opts =>
+                                        opts.map(opt => opt.id === option.id ? { ...opt, fee: parseFloat(e.target.value) || 0 } : opt)
+                                      );
+                                    }}
+                                    placeholder="0.00"
+                                  />
+                                </div>
+                              </div>
+                              
+                              <div>
+                                <Label className="text-sm">Description (Optional)</Label>
+                                <Input
+                                  value={option.description || ''}
+                                  onChange={(e) => {
+                                    setCustomShippingOptions(opts =>
+                                      opts.map(opt => opt.id === option.id ? { ...opt, description: e.target.value } : opt)
+                                    );
+                                  }}
+                                  placeholder="e.g., Delivery within 24 hours"
+                                />
+                              </div>
+                            </div>
+                          ))}
                         </div>
                       )}
                     </div>
