@@ -390,7 +390,7 @@ const FunnelManagement = () => {
             {/* Main Content */}
             <div className="flex-1 p-4 sm:p-6">
               <div className="max-w-4xl">
-                {/* Content */}
+                {/* Main Content - Steps Overview */}
                 <>
                     {/* Selected Step Content */}
                     {steps.length > 0 ? (() => {
