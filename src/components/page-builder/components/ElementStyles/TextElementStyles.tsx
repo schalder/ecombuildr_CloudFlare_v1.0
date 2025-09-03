@@ -6,7 +6,7 @@ import { Slider } from '@/components/ui/slider';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { AlignLeft, AlignCenter, AlignRight, Monitor, Smartphone, ChevronDown } from 'lucide-react';
+import { AlignLeft, AlignCenter, AlignRight, Monitor, Tablet, Smartphone, ChevronDown } from 'lucide-react';
 import { PageBuilderElement } from '../../types';
 import { ColorPicker } from '@/components/ui/color-picker';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -30,8 +30,8 @@ export const TextElementStyles: React.FC<TextElementStylesProps> = ({
   showSpacing = true,
 }) => {
   // Responsive controls state and helpers
-  const [responsiveTab, setResponsiveTab] = React.useState<'desktop' | 'mobile'>('desktop');
-  const responsiveStyles = element.styles?.responsive || { desktop: {}, mobile: {} };
+  const [responsiveTab, setResponsiveTab] = React.useState<'desktop' | 'tablet' | 'mobile'>('desktop');
+  const responsiveStyles = element.styles?.responsive || { desktop: {}, tablet: {}, mobile: {} };
   const currentStyles = (responsiveStyles as any)[responsiveTab] || {};
   
   // Collapsible state
@@ -85,20 +85,27 @@ export const TextElementStyles: React.FC<TextElementStylesProps> = ({
       {/* Device Toggle */}
       <div className="flex items-center justify-between">
         <Label className="text-xs">Device</Label>
-        <div className="flex space-x-2">
+        <div className="flex space-x-1">
           <Button
             size="sm"
             variant={responsiveTab === 'desktop' ? 'default' : 'outline'}
             onClick={() => setResponsiveTab('desktop')}
           >
-            <Monitor className="h-4 w-4 mr-1" /> Desktop
+            <Monitor className="h-3 w-3" /> 
+          </Button>
+          <Button
+            size="sm"
+            variant={responsiveTab === 'tablet' ? 'default' : 'outline'}
+            onClick={() => setResponsiveTab('tablet')}
+          >
+            <Tablet className="h-3 w-3" />
           </Button>
           <Button
             size="sm"
             variant={responsiveTab === 'mobile' ? 'default' : 'outline'}
             onClick={() => setResponsiveTab('mobile')}
           >
-            <Smartphone className="h-4 w-4 mr-1" /> Mobile
+            <Smartphone className="h-3 w-3" />
           </Button>
         </div>
       </div>

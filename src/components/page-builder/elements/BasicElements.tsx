@@ -41,10 +41,9 @@ const HeadingElement: React.FC<{
     backgroundColor: element.styles?.backgroundColor || 'transparent',
   } as React.CSSProperties;
 
-  // Responsive overrides
+  // Responsive overrides - now includes explicit tablet support
   const responsive = element.styles?.responsive || {};
-  const deviceKey = deviceType === 'tablet' ? 'desktop' : deviceType;
-  const currentDeviceStyles = (responsive as any)[deviceKey] || {};
+  const currentDeviceStyles = (responsive as any)[deviceType] || {};
 
   const finalStyles = { ...baseStyles, ...currentDeviceStyles } as React.CSSProperties;
   const cleanStyles = Object.fromEntries(
@@ -102,10 +101,9 @@ const ParagraphElement: React.FC<{
     backgroundColor: element.styles?.backgroundColor || 'transparent',
   } as React.CSSProperties;
 
-  // Responsive overrides
+  // Responsive overrides - now includes explicit tablet support
   const responsive = element.styles?.responsive || {};
-  const deviceKey = deviceType === 'tablet' ? 'desktop' : deviceType;
-  const currentDeviceStyles = (responsive as any)[deviceKey] || {};
+  const currentDeviceStyles = (responsive as any)[deviceType] || {};
 
   const finalStyles = { ...baseStyles, ...currentDeviceStyles } as React.CSSProperties;
   const cleanStyles = Object.fromEntries(
@@ -323,10 +321,9 @@ const ListElement: React.FC<{
 
   const baseStyles = renderElementStyles(element, deviceType);
 
-  // Responsive overrides for list-specific styles
+  // Responsive overrides for list-specific styles - now includes explicit tablet support
   const responsive = element.styles?.responsive || {};
-  const deviceKey = deviceType === 'tablet' ? 'desktop' : deviceType;
-  const currentDeviceStyles: any = (responsive as any)[deviceKey] || {};
+  const currentDeviceStyles: any = (responsive as any)[deviceType] || {};
 
   const iconSize: number = currentDeviceStyles.iconSize ?? (element.styles as any)?.iconSize ?? 16;
   const itemGap: number = currentDeviceStyles.itemGap ?? (element.styles as any)?.itemGap ?? 4;
@@ -518,9 +515,9 @@ const ButtonElement: React.FC<{
     }
   };
 
-  // Get responsive alignment
+  // Get responsive alignment - now includes explicit tablet support
   const responsiveStyles = element.styles?.responsive || {};
-  const currentDeviceStyles = responsiveStyles[deviceType === 'tablet' ? 'desktop' : deviceType] || {};
+  const currentDeviceStyles = responsiveStyles[deviceType] || {};
   const alignment = currentDeviceStyles.textAlign || element.styles?.textAlign || 'left';
   
   const containerClass = 
@@ -656,9 +653,8 @@ const DividerElement: React.FC<{
   const width = element.content.width || '100%';
   const thickness = element.content.thickness || 1;
   
-  // Get device-specific alignment (fallback: center)
-  const currentDevice = deviceType === 'tablet' ? 'desktop' : deviceType;
-  const alignment = element.content.responsive?.[currentDevice]?.alignment || 'center';
+  // Get device-specific alignment (fallback: center) - now includes explicit tablet support
+  const alignment = element.content.responsive?.[deviceType]?.alignment || 'center';
   
   
   const elementStyles = renderElementStyles(element);

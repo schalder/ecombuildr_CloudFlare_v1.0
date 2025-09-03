@@ -3,7 +3,7 @@
 export function generateResponsiveCSS(elementId: string, styles: any): string {
   if (!styles?.responsive) return '';
   
-  const { desktop = {}, mobile = {} } = styles.responsive;
+  const { desktop = {}, tablet = {}, mobile = {} } = styles.responsive;
   
   let css = '';
   
@@ -22,6 +22,37 @@ export function generateResponsiveCSS(elementId: string, styles: any): string {
       if (hoverColor) hoverPairs.push(`color: ${hoverColor} !important`);
       if (hoverBackgroundColor) hoverPairs.push(`background-color: ${hoverBackgroundColor} !important`);
       css += `.element-${elementId}:hover { ${hoverPairs.join('; ')}; transition: all 0.2s ease; }`;
+    }
+  }
+  
+  // Tablet styles (768px to 1023px)
+  if (Object.keys(tablet).length > 0) {
+    const { hoverColor: tHoverColor, hoverBackgroundColor: tHoverBg, ...restTablet } = tablet as any;
+    const tabletProps = Object.entries(restTablet)
+      .map(([prop, value]) => `${kebabCase(prop)}: ${value}`)
+      .join('; ');
+    
+    if (tabletProps || tHoverColor || tHoverBg) {
+      css += `@media (min-width: 768px) and (max-width: 1023px) { `;
+      if (tabletProps) css += `.element-${elementId} { ${tabletProps}; }`;
+      if (tHoverColor || tHoverBg) {
+        const hoverPairs: string[] = [];
+        if (tHoverColor) hoverPairs.push(`color: ${tHoverColor} !important`);
+        if (tHoverBg) hoverPairs.push(`background-color: ${tHoverBg} !important`);
+        css += `.element-${elementId}:hover { ${hoverPairs.join('; ')}; transition: all 0.2s ease; }`;
+      }
+      css += ` }`;
+    }
+    
+    // Add forced tablet styles for builder preview
+    if (tabletProps) {
+      css += `.pb-tablet .element-${elementId} { ${tabletProps}; }`;
+    }
+    if (tHoverColor || tHoverBg) {
+      const hoverPairs: string[] = [];
+      if (tHoverColor) hoverPairs.push(`color: ${tHoverColor} !important`);
+      if (tHoverBg) hoverPairs.push(`background-color: ${tHoverBg} !important`);
+      css += `.pb-tablet .element-${elementId}:hover { ${hoverPairs.join('; ')}; transition: all 0.2s ease; }`;
     }
   }
   
