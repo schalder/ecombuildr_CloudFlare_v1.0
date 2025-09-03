@@ -124,9 +124,14 @@ export const renderSectionStyles = (section: PageBuilderSection, deviceType: 'de
   // Merge background styles on top of responsive styles
   Object.assign(mergedStyles, backgroundStyles);
   
-  // Custom width
+  // Custom width - handle tablet/mobile responsively
   if (section.customWidth) {
-    mergedStyles.width = section.customWidth;
+    if (deviceType === 'tablet' || deviceType === 'mobile') {
+      mergedStyles.maxWidth = section.customWidth;
+      mergedStyles.width = '100%';
+    } else {
+      mergedStyles.width = section.customWidth;
+    }
   }
   
   // Auto-center sections when width is less than 100% and no explicit horizontal margins
@@ -187,9 +192,14 @@ export const renderRowStyles = (row: PageBuilderRow, deviceType: 'desktop' | 'ta
     if (row.styles.width) styles.width = row.styles.width;
   }
   
-  // Custom width
+  // Custom width - handle tablet/mobile responsively
   if (row.customWidth) {
-    styles.width = row.customWidth;
+    if (deviceType === 'tablet' || deviceType === 'mobile') {
+      styles.maxWidth = row.customWidth;
+      styles.width = '100%';
+    } else {
+      styles.width = row.customWidth;
+    }
   }
   
   // Merge responsive overrides FIRST

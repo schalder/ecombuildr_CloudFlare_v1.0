@@ -75,10 +75,18 @@ export const ColumnRenderer: React.FC<ColumnRendererProps> = ({
     
     // Add any column-specific overrides
     if (column.customWidth) {
-      baseStyles.width = column.customWidth;
-      baseStyles.flexBasis = column.customWidth;
-      baseStyles.flexGrow = 0;
-      baseStyles.flexShrink = 0;
+      if (deviceType === 'tablet' || deviceType === 'mobile') {
+        baseStyles.maxWidth = column.customWidth;
+        baseStyles.width = '100%';
+        baseStyles.flexBasis = '100%';
+        baseStyles.flexGrow = 0;
+        baseStyles.flexShrink = 1;
+      } else {
+        baseStyles.width = column.customWidth;
+        baseStyles.flexBasis = column.customWidth;
+        baseStyles.flexGrow = 0;
+        baseStyles.flexShrink = 0;
+      }
     }
     
     return baseStyles;
