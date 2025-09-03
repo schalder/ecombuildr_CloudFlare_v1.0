@@ -53,8 +53,22 @@ export interface PageBuilderElement {
     objectFit?: 'cover' | 'contain' | 'fill' | 'none' | 'scale-down';
     fontWeight?: string;
     fontFamily?: string;
+    // Social Links Element specific properties
+    containerAlignment?: 'left' | 'center' | 'right';
+    titleFontSize?: string;
+    titleFontWeight?: string;
+    titleColor?: string;
+    titleMarginBottom?: string;
+    buttonLayout?: 'horizontal' | 'vertical';
+    buttonSpacing?: string;
+    buttonBorderRadius?: string;
+    buttonBackgroundColor?: string;
+    buttonTextColor?: string;
+    buttonBorderWidth?: string;
+    buttonBorderColor?: string;
     responsive?: {
       desktop?: Record<string, any>;
+      tablet?: Record<string, any>;
       mobile?: Record<string, any>;
     };
   };
@@ -97,6 +111,7 @@ export interface PageBuilderColumn {
     contentGap?: string;
     responsive?: {
       desktop?: Record<string, any>;
+      tablet?: Record<string, any>;
       mobile?: Record<string, any>;
     };
   };
@@ -151,6 +166,7 @@ export interface PageBuilderRow {
     minWidth?: string;
     responsive?: {
       desktop?: Record<string, any>;
+      tablet?: Record<string, any>;
       mobile?: Record<string, any>;
     };
   };
@@ -208,6 +224,7 @@ export interface PageBuilderSection {
     contentVerticalAlignment?: 'top' | 'center' | 'bottom';
     responsive?: {
       desktop?: Record<string, any>;
+      tablet?: Record<string, any>;
       mobile?: Record<string, any>;
     };
   };

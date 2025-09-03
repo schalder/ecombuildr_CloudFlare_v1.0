@@ -515,10 +515,21 @@ const ButtonElement: React.FC<{
     }
   };
 
-  // Get responsive alignment - now includes explicit tablet support
+  // Get responsive alignment with proper cascading fallbacks
   const responsiveStyles = element.styles?.responsive || {};
   const currentDeviceStyles = responsiveStyles[deviceType] || {};
-  const alignment = currentDeviceStyles.textAlign || element.styles?.textAlign || 'left';
+  
+  // Proper alignment fallback: current device -> desktop -> base -> default
+  let alignment = currentDeviceStyles.textAlign;
+  if (!alignment && deviceType === 'tablet') {
+    alignment = responsiveStyles.desktop?.textAlign;
+  }
+  if (!alignment && deviceType === 'mobile') {
+    alignment = responsiveStyles.tablet?.textAlign || responsiveStyles.desktop?.textAlign;
+  }
+  if (!alignment) {
+    alignment = element.styles?.textAlign || 'left';
+  }
   
   const containerClass = 
     alignment === 'center' ? 'flex justify-center' :
