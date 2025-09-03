@@ -3,10 +3,11 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Separator } from '@/components/ui/separator';
-import { Monitor, Smartphone, Palette } from 'lucide-react';
+import { Palette } from 'lucide-react';
 import { PageBuilderElement } from '../../types';
 import { ColorPicker } from '@/components/ui/color-picker';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ResponsiveTabs, ResponsiveStyleControl } from './_shared/ResponsiveStyleControl';
 
 interface CountdownElementStylesProps {
   element: PageBuilderElement;
@@ -18,20 +19,7 @@ export const CountdownElementStyles: React.FC<CountdownElementStylesProps> = ({
   onStyleUpdate,
 }) => {
   // Responsive controls state and helpers
-  const [responsiveTab, setResponsiveTab] = React.useState<'desktop' | 'mobile'>('desktop');
-  const responsiveStyles = element.styles?.responsive || { desktop: {}, mobile: {} };
-  const currentStyles = (responsiveStyles as any)[responsiveTab] || {};
-
-  const handleResponsiveUpdate = (property: string, value: any) => {
-    const updatedResponsive = {
-      ...responsiveStyles,
-      [responsiveTab]: {
-        ...currentStyles,
-        [property]: value,
-      },
-    };
-    onStyleUpdate('responsive', updatedResponsive);
-  };
+  const [deviceType, setDeviceType] = React.useState<'desktop' | 'tablet' | 'mobile'>('desktop');
 
   const applyPreset = (presetName: string) => {
     const presets = {
@@ -118,25 +106,7 @@ export const CountdownElementStyles: React.FC<CountdownElementStylesProps> = ({
   return (
     <div className="space-y-4">
       {/* Responsive Controls */}
-      <div className="flex items-center justify-between">
-        <Label className="text-xs">Device</Label>
-        <div className="flex space-x-2">
-          <Button
-            size="sm"
-            variant={responsiveTab === 'desktop' ? 'default' : 'outline'}
-            onClick={() => setResponsiveTab('desktop')}
-          >
-            <Monitor className="h-4 w-4 mr-1" /> Desktop
-          </Button>
-          <Button
-            size="sm"
-            variant={responsiveTab === 'mobile' ? 'default' : 'outline'}
-            onClick={() => setResponsiveTab('mobile')}
-          >
-            <Smartphone className="h-4 w-4 mr-1" /> Mobile
-          </Button>
-        </div>
-      </div>
+      <ResponsiveTabs activeTab={deviceType} onTabChange={setDeviceType} />
 
       {/* Style Presets */}
       <div className="space-y-2">
@@ -183,34 +153,62 @@ export const CountdownElementStyles: React.FC<CountdownElementStylesProps> = ({
       <div className="space-y-3">
         <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Number Styles</h4>
         
-        <div>
-          <Label className="text-xs">Font Size</Label>
-          <div className="flex items-center space-x-2">
-            <Slider
-              value={[parseInt(((currentStyles.numberFontSize || '24px').toString()).replace(/\D/g, ''))]}
-              onValueChange={(value) => handleResponsiveUpdate('numberFontSize', `${value[0]}px`)}
-              max={72}
-              min={12}
-              step={2}
-              className="flex-1"
-            />
-            <span className="text-xs text-muted-foreground w-12">
-              {(currentStyles.numberFontSize || '24px') as string}
-            </span>
-          </div>
-        </div>
+        <ResponsiveStyleControl
+          element={element}
+          property="numberFontSize"
+          label="Font Size"
+          deviceType={deviceType}
+          fallback="24px"
+          onStyleUpdate={onStyleUpdate}
+        >
+          {(value, onChange) => (
+            <div className="flex items-center space-x-2">
+              <Slider
+                value={[parseInt((value || '24px').replace(/\D/g, ''))]}
+                onValueChange={(val) => onChange(`${val[0]}px`)}
+                max={72}
+                min={12}
+                step={2}
+                className="flex-1"
+              />
+              <span className="text-xs text-muted-foreground w-12">
+                {value || '24px'}
+              </span>
+            </div>
+          )}
+        </ResponsiveStyleControl>
 
-        <ColorPicker 
+        <ResponsiveStyleControl
+          element={element}
+          property="numberColor"
           label="Number Color"
-          color={(currentStyles.numberColor || '') as string}
-          onChange={(val) => handleResponsiveUpdate('numberColor', val)}
-        />
+          deviceType={deviceType}
+          fallback=""
+          onStyleUpdate={onStyleUpdate}
+        >
+          {(value, onChange) => (
+            <ColorPicker 
+              color={value || ''}
+              onChange={onChange}
+            />
+          )}
+        </ResponsiveStyleControl>
 
-        <ColorPicker 
+        <ResponsiveStyleControl
+          element={element}
+          property="numberBackgroundColor"
           label="Number Background"
-          color={(currentStyles.numberBackgroundColor || '') as string}
-          onChange={(val) => handleResponsiveUpdate('numberBackgroundColor', val)}
-        />
+          deviceType={deviceType}
+          fallback=""
+          onStyleUpdate={onStyleUpdate}
+        >
+          {(value, onChange) => (
+            <ColorPicker 
+              color={value || ''}
+              onChange={onChange}
+            />
+          )}
+        </ResponsiveStyleControl>
       </div>
 
       <Separator />
@@ -219,28 +217,46 @@ export const CountdownElementStyles: React.FC<CountdownElementStylesProps> = ({
       <div className="space-y-3">
         <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Label Styles</h4>
         
-        <div>
-          <Label className="text-xs">Font Size</Label>
-          <div className="flex items-center space-x-2">
-            <Slider
-              value={[parseInt(((currentStyles.labelFontSize || '12px').toString()).replace(/\D/g, ''))]}
-              onValueChange={(value) => handleResponsiveUpdate('labelFontSize', `${value[0]}px`)}
-              max={24}
-              min={8}
-              step={1}
-              className="flex-1"
-            />
-            <span className="text-xs text-muted-foreground w-12">
-              {(currentStyles.labelFontSize || '12px') as string}
-            </span>
-          </div>
-        </div>
+        <ResponsiveStyleControl
+          element={element}
+          property="labelFontSize"
+          label="Font Size"
+          deviceType={deviceType}
+          fallback="12px"
+          onStyleUpdate={onStyleUpdate}
+        >
+          {(value, onChange) => (
+            <div className="flex items-center space-x-2">
+              <Slider
+                value={[parseInt((value || '12px').replace(/\D/g, ''))]}
+                onValueChange={(val) => onChange(`${val[0]}px`)}
+                max={24}
+                min={8}
+                step={1}
+                className="flex-1"
+              />
+              <span className="text-xs text-muted-foreground w-12">
+                {value || '12px'}
+              </span>
+            </div>
+          )}
+        </ResponsiveStyleControl>
 
-        <ColorPicker 
+        <ResponsiveStyleControl
+          element={element}
+          property="labelColor"
           label="Label Color"
-          color={(currentStyles.labelColor || '') as string}
-          onChange={(val) => handleResponsiveUpdate('labelColor', val)}
-        />
+          deviceType={deviceType}
+          fallback=""
+          onStyleUpdate={onStyleUpdate}
+        >
+          {(value, onChange) => (
+            <ColorPicker 
+              color={value || ''}
+              onChange={onChange}
+            />
+          )}
+        </ResponsiveStyleControl>
       </div>
 
       <Separator />
@@ -249,82 +265,124 @@ export const CountdownElementStyles: React.FC<CountdownElementStylesProps> = ({
       <div className="space-y-3">
         <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Segment Styles</h4>
         
-        <div>
-          <Label className="text-xs">Padding</Label>
-          <Select
-            value={(currentStyles.segmentPadding || '12px') as string}
-            onValueChange={(value) => handleResponsiveUpdate('segmentPadding', value)}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="4px 8px">Small (4px 8px)</SelectItem>
-              <SelectItem value="8px 12px">Medium (8px 12px)</SelectItem>
-              <SelectItem value="12px">Default (12px)</SelectItem>
-              <SelectItem value="16px">Large (16px)</SelectItem>
-              <SelectItem value="8px 20px">Pill (8px 20px)</SelectItem>
-              <SelectItem value="12px 20px">Wide Pill (12px 20px)</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        <ResponsiveStyleControl
+          element={element}
+          property="segmentPadding"
+          label="Padding"
+          deviceType={deviceType}
+          fallback="12px"
+          onStyleUpdate={onStyleUpdate}
+        >
+          {(value, onChange) => (
+            <Select
+              value={value || '12px'}
+              onValueChange={onChange}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="4px 8px">Small (4px 8px)</SelectItem>
+                <SelectItem value="8px 12px">Medium (8px 12px)</SelectItem>
+                <SelectItem value="12px">Default (12px)</SelectItem>
+                <SelectItem value="16px">Large (16px)</SelectItem>
+                <SelectItem value="8px 20px">Pill (8px 20px)</SelectItem>
+                <SelectItem value="12px 20px">Wide Pill (12px 20px)</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
+        </ResponsiveStyleControl>
 
-        <div>
-          <Label className="text-xs">Border Radius</Label>
-          <div className="flex items-center space-x-2">
-            <Slider
-              value={[parseInt(((currentStyles.segmentBorderRadius || '8px').toString()).replace(/\D/g, ''))]}
-              onValueChange={(value) => handleResponsiveUpdate('segmentBorderRadius', `${value[0]}px`)}
-              max={50}
-              min={0}
-              step={2}
-              className="flex-1"
-            />
-            <span className="text-xs text-muted-foreground w-12">
-              {(currentStyles.segmentBorderRadius || '8px') as string}
-            </span>
-          </div>
-        </div>
+        <ResponsiveStyleControl
+          element={element}
+          property="segmentBorderRadius"
+          label="Border Radius"
+          deviceType={deviceType}
+          fallback="8px"
+          onStyleUpdate={onStyleUpdate}
+        >
+          {(value, onChange) => (
+            <div className="flex items-center space-x-2">
+              <Slider
+                value={[parseInt((value || '8px').replace(/\D/g, ''))]}
+                onValueChange={(val) => onChange(`${val[0]}px`)}
+                max={50}
+                min={0}
+                step={2}
+                className="flex-1"
+              />
+              <span className="text-xs text-muted-foreground w-12">
+                {value || '8px'}
+              </span>
+            </div>
+          )}
+        </ResponsiveStyleControl>
 
-        <div>
-          <Label className="text-xs">Border Width</Label>
-          <div className="flex items-center space-x-2">
-            <Slider
-              value={[parseInt(((currentStyles.segmentBorderWidth || '0px').toString()).replace(/\D/g, ''))]}
-              onValueChange={(value) => handleResponsiveUpdate('segmentBorderWidth', `${value[0]}px`)}
-              max={5}
-              min={0}
-              step={1}
-              className="flex-1"
-            />
-            <span className="text-xs text-muted-foreground w-12">
-              {(currentStyles.segmentBorderWidth || '0px') as string}
-            </span>
-          </div>
-        </div>
+        <ResponsiveStyleControl
+          element={element}
+          property="segmentBorderWidth"
+          label="Border Width"
+          deviceType={deviceType}
+          fallback="0px"
+          onStyleUpdate={onStyleUpdate}
+        >
+          {(value, onChange) => (
+            <div className="flex items-center space-x-2">
+              <Slider
+                value={[parseInt((value || '0px').replace(/\D/g, ''))]}
+                onValueChange={(val) => onChange(`${val[0]}px`)}
+                max={5}
+                min={0}
+                step={1}
+                className="flex-1"
+              />
+              <span className="text-xs text-muted-foreground w-12">
+                {value || '0px'}
+              </span>
+            </div>
+          )}
+        </ResponsiveStyleControl>
 
-        <ColorPicker 
+        <ResponsiveStyleControl
+          element={element}
+          property="segmentBorderColor"
           label="Border Color"
-          color={(currentStyles.segmentBorderColor || '') as string}
-          onChange={(val) => handleResponsiveUpdate('segmentBorderColor', val)}
-        />
-
-        <div>
-          <Label className="text-xs">Gap Between Segments</Label>
-          <div className="flex items-center space-x-2">
-            <Slider
-              value={[parseInt(((currentStyles.segmentGap || '16px').toString()).replace(/\D/g, ''))]}
-              onValueChange={(value) => handleResponsiveUpdate('segmentGap', `${value[0]}px`)}
-              max={40}
-              min={4}
-              step={2}
-              className="flex-1"
+          deviceType={deviceType}
+          fallback=""
+          onStyleUpdate={onStyleUpdate}
+        >
+          {(value, onChange) => (
+            <ColorPicker 
+              color={value || ''}
+              onChange={onChange}
             />
-            <span className="text-xs text-muted-foreground w-12">
-              {(currentStyles.segmentGap || '16px') as string}
-            </span>
-          </div>
-        </div>
+          )}
+        </ResponsiveStyleControl>
+
+        <ResponsiveStyleControl
+          element={element}
+          property="segmentGap"
+          label="Gap Between Segments"
+          deviceType={deviceType}
+          fallback="16px"
+          onStyleUpdate={onStyleUpdate}
+        >
+          {(value, onChange) => (
+            <div className="flex items-center space-x-2">
+              <Slider
+                value={[parseInt((value || '16px').replace(/\D/g, ''))]}
+                onValueChange={(val) => onChange(`${val[0]}px`)}
+                max={40}
+                min={4}
+                step={2}
+                className="flex-1"
+              />
+              <span className="text-xs text-muted-foreground w-12">
+                {value || '16px'}
+              </span>
+            </div>
+          )}
+        </ResponsiveStyleControl>
       </div>
     </div>
   );

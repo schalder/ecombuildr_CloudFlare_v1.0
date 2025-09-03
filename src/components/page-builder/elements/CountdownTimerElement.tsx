@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Clock } from 'lucide-react';
 import { PageBuilderElement } from '../types';
-import { mergeResponsiveStyles } from '../utils/responsiveStyles';
+import { getEffectiveResponsiveValue } from '../utils/responsiveHelpers';
+import { renderElementStyles } from '../utils/styleRenderer';
 
 interface CountdownTimerElementProps {
   element: PageBuilderElement;
@@ -135,17 +136,22 @@ export const CountdownTimerElement: React.FC<CountdownTimerElementProps> = ({
   };
 
   const getSegmentStyles = () => {
-    const responsiveStyles = element.styles?.responsive || { desktop: {}, mobile: {} };
-    const currentStyles = (responsiveStyles as any)[deviceType] || {};
+    const fontSize = getEffectiveResponsiveValue(element, 'numberFontSize', deviceType, '24px');
+    const color = getEffectiveResponsiveValue(element, 'numberColor', deviceType, 'hsl(var(--primary-foreground))');
+    const backgroundColor = getEffectiveResponsiveValue(element, 'numberBackgroundColor', deviceType, 'hsl(var(--primary))');
+    const padding = getEffectiveResponsiveValue(element, 'segmentPadding', deviceType, '12px');
+    const borderRadius = getEffectiveResponsiveValue(element, 'segmentBorderRadius', deviceType, '8px');
+    const borderWidth = getEffectiveResponsiveValue(element, 'segmentBorderWidth', deviceType, '0px');
+    const borderColor = getEffectiveResponsiveValue(element, 'segmentBorderColor', deviceType, 'hsl(var(--border))');
     
     return {
-      fontSize: currentStyles.numberFontSize || '24px',
-      color: currentStyles.numberColor || 'hsl(var(--primary-foreground))',
-      backgroundColor: currentStyles.numberBackgroundColor || 'hsl(var(--primary))',
-      padding: currentStyles.segmentPadding || '12px',
-      borderRadius: currentStyles.segmentBorderRadius || '8px',
-      border: currentStyles.segmentBorderWidth && currentStyles.segmentBorderWidth !== '0px' 
-        ? `${currentStyles.segmentBorderWidth} solid ${currentStyles.segmentBorderColor || 'hsl(var(--border))'}`
+      fontSize,
+      color,
+      backgroundColor,
+      padding,
+      borderRadius,
+      border: borderWidth && borderWidth !== '0px' 
+        ? `${borderWidth} solid ${borderColor}`
         : 'none',
       minWidth: '60px',
       display: 'flex',
@@ -156,23 +162,22 @@ export const CountdownTimerElement: React.FC<CountdownTimerElementProps> = ({
   };
 
   const getLabelStyles = () => {
-    const responsiveStyles = element.styles?.responsive || { desktop: {}, mobile: {} };
-    const currentStyles = (responsiveStyles as any)[deviceType] || {};
+    const fontSize = getEffectiveResponsiveValue(element, 'labelFontSize', deviceType, '12px');
+    const color = getEffectiveResponsiveValue(element, 'labelColor', deviceType, 'hsl(var(--muted-foreground))');
     
     return {
-      fontSize: currentStyles.labelFontSize || '12px',
-      color: currentStyles.labelColor || 'hsl(var(--muted-foreground))',
+      fontSize,
+      color,
       marginTop: '4px',
       opacity: '0.8'
     };
   };
 
   const getContainerStyles = () => {
-    const responsiveStyles = element.styles?.responsive || { desktop: {}, mobile: {} };
-    const currentStyles = (responsiveStyles as any)[deviceType] || {};
+    const gap = getEffectiveResponsiveValue(element, 'segmentGap', deviceType, '16px');
     
     return {
-      gap: currentStyles.segmentGap || '16px'
+      gap
     };
   };
 
@@ -192,9 +197,12 @@ export const CountdownTimerElement: React.FC<CountdownTimerElementProps> = ({
     </div>
   );
 
+  // Use renderElementStyles for proper responsive inheritance
+  const elementStyles = renderElementStyles(element, deviceType);
+
   if (isEditing) {
     return (
-      <div className="max-w-2xl mx-auto" style={element.styles}>
+      <div className={`element-${element.id} max-w-2xl mx-auto`} style={elementStyles}>
         <div className={getLayoutClasses()} style={getContainerStyles()}>
           {renderTimeSegment(1, labels.days, false)}
           {renderTimeSegment(23, labels.hours, false)}
@@ -207,7 +215,7 @@ export const CountdownTimerElement: React.FC<CountdownTimerElementProps> = ({
 
   if (expired) {
     return (
-      <div className="max-w-2xl mx-auto text-center p-4" style={element.styles}>
+      <div className={`element-${element.id} max-w-2xl mx-auto text-center p-4`} style={elementStyles}>
         <h3 className="text-xl font-bold mb-2">Time's Up!</h3>
         <p className="text-muted-foreground">The countdown has ended.</p>
       </div>
@@ -215,7 +223,7 @@ export const CountdownTimerElement: React.FC<CountdownTimerElementProps> = ({
   }
 
   return (
-      <div className="max-w-2xl mx-auto" style={element.styles}>
+      <div className={`element-${element.id} max-w-2xl mx-auto`} style={elementStyles}>
         <div className={getLayoutClasses()} style={getContainerStyles()}>
           {renderTimeSegment(timeLeft.days, labels.days, true)}
           {renderTimeSegment(timeLeft.hours, labels.hours, true)}
