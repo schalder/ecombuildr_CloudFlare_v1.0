@@ -30,25 +30,18 @@ const HeadingElement: React.FC<{
     });
   };
 
-  // Base styles and defaults
-  const elementStyles = renderElementStyles(element);
-  const baseStyles = {
-    ...elementStyles,
-    textAlign: element.styles?.textAlign || 'center',
-    color: element.styles?.color || 'inherit',
-    fontSize: element.styles?.fontSize || `${3.5 - level * 0.5}rem`,
-    lineHeight: element.styles?.lineHeight || '1.2',
-    backgroundColor: element.styles?.backgroundColor || 'transparent',
+  // Use renderElementStyles with proper responsive inheritance
+  const elementStyles = renderElementStyles(element, deviceType);
+  
+  // Apply defaults only if not already set by responsive styles
+  const cleanStyles = {
+    textAlign: elementStyles.textAlign || 'center',
+    color: elementStyles.color || 'inherit',
+    fontSize: elementStyles.fontSize || `${3.5 - level * 0.5}rem`,
+    lineHeight: elementStyles.lineHeight || '1.2',
+    backgroundColor: elementStyles.backgroundColor || 'transparent',
+    ...elementStyles, // Apply all styles from renderElementStyles
   } as React.CSSProperties;
-
-  // Responsive overrides - now includes explicit tablet support
-  const responsive = element.styles?.responsive || {};
-  const currentDeviceStyles = (responsive as any)[deviceType] || {};
-
-  const finalStyles = { ...baseStyles, ...currentDeviceStyles } as React.CSSProperties;
-  const cleanStyles = Object.fromEntries(
-    Object.entries(finalStyles).filter(([_, v]) => v !== undefined && v !== '')
-  ) as React.CSSProperties;
 
   const className = [`element-${element.id}`, 'outline-none font-bold block rounded'].join(' ');
 
@@ -90,25 +83,18 @@ const ParagraphElement: React.FC<{
     });
   };
 
-  // Base styles and defaults
-  const elementStyles = renderElementStyles(element);
-  const baseStyles = {
-    ...elementStyles,
-    textAlign: element.styles?.textAlign || (deviceType === 'tablet' ? 'center' : 'left'),
-    color: element.styles?.color || 'inherit',
-    fontSize: element.styles?.fontSize || '1rem',
-    lineHeight: element.styles?.lineHeight || '1.6',
-    backgroundColor: element.styles?.backgroundColor || 'transparent',
+  // Use renderElementStyles with proper responsive inheritance
+  const elementStyles = renderElementStyles(element, deviceType);
+  
+  // Apply defaults only if not already set by responsive styles
+  const cleanStyles = {
+    textAlign: elementStyles.textAlign || (deviceType === 'tablet' ? 'center' : 'left'),
+    color: elementStyles.color || 'inherit',
+    fontSize: elementStyles.fontSize || '1rem',
+    lineHeight: elementStyles.lineHeight || '1.6',
+    backgroundColor: elementStyles.backgroundColor || 'transparent',
+    ...elementStyles, // Apply all styles from renderElementStyles
   } as React.CSSProperties;
-
-  // Responsive overrides - now includes explicit tablet support
-  const responsive = element.styles?.responsive || {};
-  const currentDeviceStyles = (responsive as any)[deviceType] || {};
-
-  const finalStyles = { ...baseStyles, ...currentDeviceStyles } as React.CSSProperties;
-  const cleanStyles = Object.fromEntries(
-    Object.entries(finalStyles).filter(([_, v]) => v !== undefined && v !== '')
-  ) as React.CSSProperties;
 
   const className = [`element-${element.id}`, 'outline-none rounded'].join(' ');
 

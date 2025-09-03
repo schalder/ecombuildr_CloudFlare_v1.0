@@ -51,11 +51,7 @@ export const ResponsiveStyleControl: React.FC<ResponsiveStyleControlProps> = ({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Label className="text-xs">{label}</Label>
-          {isInherited && (
-            <Badge variant="outline" className="text-xs px-1 py-0 h-4">
-              {inheritanceLabel}
-            </Badge>
-          )}
+          {/* Inheritance indicator removed - was confusing to users */}
         </div>
         {hasOverride && (
           <Button
