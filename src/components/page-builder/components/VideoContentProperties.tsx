@@ -88,13 +88,13 @@ export const VideoContentProperties: React.FC<VideoContentPropertiesProps> = ({
           <Label htmlFor="video-width">Width</Label>
           <div className="flex space-x-1">
             <Button size="sm" variant={responsiveTab === 'desktop' ? 'default' : 'outline'} onClick={() => setResponsiveTab('desktop')}>
-              <Monitor className="h-4 w-4 mr-1" /> Desktop
+              <Monitor className="h-4 w-4" />
             </Button>
             <Button size="sm" variant={responsiveTab === 'tablet' ? 'default' : 'outline'} onClick={() => setResponsiveTab('tablet')}>
-              <Tablet className="h-4 w-4 mr-1" /> Tablet
+              <Tablet className="h-4 w-4" />
             </Button>
             <Button size="sm" variant={responsiveTab === 'mobile' ? 'default' : 'outline'} onClick={() => setResponsiveTab('mobile')}>
-              <Smartphone className="h-4 w-4 mr-1" /> Mobile
+              <Smartphone className="h-4 w-4" />
             </Button>
           </div>
         </div>
