@@ -81,6 +81,9 @@ export const ColumnRenderer: React.FC<ColumnRendererProps> = ({
         baseStyles.flexBasis = '100%';
         baseStyles.flexGrow = 0;
         baseStyles.flexShrink = 1;
+        // Apply auto margins for centering on tablet/mobile
+        baseStyles.marginLeft = 'auto';
+        baseStyles.marginRight = 'auto';
       } else {
         baseStyles.width = column.customWidth;
         baseStyles.flexBasis = column.customWidth;
