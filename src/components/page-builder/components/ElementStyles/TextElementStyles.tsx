@@ -299,41 +299,18 @@ export const TextElementStyles: React.FC<TextElementStylesProps> = ({
             <ChevronDown className={`h-4 w-4 transition-transform ${spacingOpen ? 'rotate-180' : ''}`} />
           </CollapsibleTrigger>
           <CollapsibleContent className="space-y-4 pt-2">
-            <div className="space-y-3">
-              <ResponsiveStyleControl
-                element={element}
-                property="marginTop"
-                label="Margin Top"
-                deviceType={responsiveTab}
-                fallback=""
-                onStyleUpdate={onStyleUpdate}
-              >
-                {(value, onChange) => (
-                  <Input
-                    value={value}
-                    onChange={(e) => onChange(e.target.value)}
-                    placeholder="e.g., 10px"
-                  />
-                )}
-              </ResponsiveStyleControl>
-              
-              <ResponsiveStyleControl
-                element={element}
-                property="paddingTop"
-                label="Padding Top"
-                deviceType={responsiveTab}
-                fallback=""
-                onStyleUpdate={onStyleUpdate}
-              >
-                {(value, onChange) => (
-                  <Input
-                    value={value}
-                    onChange={(e) => onChange(e.target.value)}
-                    placeholder="e.g., 10px"
-                  />
-                )}
-              </ResponsiveStyleControl>
-            </div>
+            <SpacingSliders
+              marginTop={element.styles?.marginTop}
+              marginRight={element.styles?.marginRight}
+              marginBottom={element.styles?.marginBottom}
+              marginLeft={element.styles?.marginLeft}
+              paddingTop={element.styles?.paddingTop}
+              paddingRight={element.styles?.paddingRight}
+              paddingBottom={element.styles?.paddingBottom}
+              paddingLeft={element.styles?.paddingLeft}
+              onMarginChange={(property, value) => onStyleUpdate(property, value)}
+              onPaddingChange={(property, value) => onStyleUpdate(property, value)}
+            />
           </CollapsibleContent>
         </Collapsible>
       )}

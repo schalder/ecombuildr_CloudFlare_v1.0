@@ -16,6 +16,7 @@ import { ChevronDown, ChevronRight } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { CompactMediaSelector } from './CompactMediaSelector';
 import { CollapsibleGroup } from './ElementStyles/_shared/CollapsibleGroup';
+import { SpacingSliders } from './ElementStyles/_shared/SpacingSliders';
 
 // Section Settings Panel
 interface SectionSettingsProps {
@@ -508,91 +509,18 @@ export const SectionSettings: React.FC<SectionSettingsProps> = ({ section, onUpd
         isOpen={openCards.spacing}
         onToggle={(isOpen) => setOpenCards(prev => ({ ...prev, spacing: isOpen }))}
       >
-        <div className="space-y-4">
-          <div className="space-y-3">
-            <Label className="text-sm font-medium">Padding</Label>
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <Label className="text-xs text-muted-foreground">Top</Label>
-                <Input
-                  value={section.styles?.paddingTop || ''}
-                  onChange={(e) => handleStyleUpdate('paddingTop', e.target.value)}
-                  placeholder="0px"
-                  className="h-8"
-                />
-              </div>
-              <div>
-                <Label className="text-xs text-muted-foreground">Right</Label>
-                <Input
-                  value={section.styles?.paddingRight || ''}
-                  onChange={(e) => handleStyleUpdate('paddingRight', e.target.value)}
-                  placeholder="0px"
-                  className="h-8"
-                />
-              </div>
-              <div>
-                <Label className="text-xs text-muted-foreground">Bottom</Label>
-                <Input
-                  value={section.styles?.paddingBottom || ''}
-                  onChange={(e) => handleStyleUpdate('paddingBottom', e.target.value)}
-                  placeholder="0px"
-                  className="h-8"
-                />
-              </div>
-              <div>
-                <Label className="text-xs text-muted-foreground">Left</Label>
-                <Input
-                  value={section.styles?.paddingLeft || ''}
-                  onChange={(e) => handleStyleUpdate('paddingLeft', e.target.value)}
-                  placeholder="0px"
-                  className="h-8"
-                />
-              </div>
-            </div>
-          </div>
-          
-          <div className="space-y-3">
-            <Label className="text-sm font-medium">Margin</Label>
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <Label className="text-xs text-muted-foreground">Top</Label>
-                <Input
-                  value={section.styles?.marginTop || ''}
-                  onChange={(e) => handleStyleUpdate('marginTop', e.target.value)}
-                  placeholder="0px"
-                  className="h-8"
-                />
-              </div>
-              <div>
-                <Label className="text-xs text-muted-foreground">Right</Label>
-                <Input
-                  value={section.styles?.marginRight || ''}
-                  onChange={(e) => handleStyleUpdate('marginRight', e.target.value)}
-                  placeholder="0px"
-                  className="h-8"
-                />
-              </div>
-              <div>
-                <Label className="text-xs text-muted-foreground">Bottom</Label>
-                <Input
-                  value={section.styles?.marginBottom || ''}
-                  onChange={(e) => handleStyleUpdate('marginBottom', e.target.value)}
-                  placeholder="0px"
-                  className="h-8"
-                />
-              </div>
-              <div>
-                <Label className="text-xs text-muted-foreground">Left</Label>
-                <Input
-                  value={section.styles?.marginLeft || ''}
-                  onChange={(e) => handleStyleUpdate('marginLeft', e.target.value)}
-                  placeholder="0px"
-                  className="h-8"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
+        <SpacingSliders
+          marginTop={section.styles?.marginTop}
+          marginRight={section.styles?.marginRight}
+          marginBottom={section.styles?.marginBottom}
+          marginLeft={section.styles?.marginLeft}
+          paddingTop={section.styles?.paddingTop}
+          paddingRight={section.styles?.paddingRight}
+          paddingBottom={section.styles?.paddingBottom}
+          paddingLeft={section.styles?.paddingLeft}
+          onMarginChange={(property, value) => handleStyleUpdate(property, value)}
+          onPaddingChange={(property, value) => handleStyleUpdate(property, value)}
+        />
       </CollapsibleGroup>
 
       {/* Border */}
@@ -938,91 +866,18 @@ export const RowSettings: React.FC<RowSettingsProps> = ({ row, onUpdate }) => {
         isOpen={openCards.spacing}
         onToggle={(isOpen) => setOpenCards(prev => ({ ...prev, spacing: isOpen }))}
       >
-        <div className="space-y-4">
-          <div className="space-y-3">
-            <Label className="text-sm font-medium">Padding</Label>
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <Label className="text-xs text-muted-foreground">Top</Label>
-                <Input
-                  value={row.styles?.paddingTop || ''}
-                  onChange={(e) => handleStyleUpdate('paddingTop', e.target.value)}
-                  placeholder="0px"
-                  className="h-8"
-                />
-              </div>
-              <div>
-                <Label className="text-xs text-muted-foreground">Right</Label>
-                <Input
-                  value={row.styles?.paddingRight || ''}
-                  onChange={(e) => handleStyleUpdate('paddingRight', e.target.value)}
-                  placeholder="0px"
-                  className="h-8"
-                />
-              </div>
-              <div>
-                <Label className="text-xs text-muted-foreground">Bottom</Label>
-                <Input
-                  value={row.styles?.paddingBottom || ''}
-                  onChange={(e) => handleStyleUpdate('paddingBottom', e.target.value)}
-                  placeholder="0px"
-                  className="h-8"
-                />
-              </div>
-              <div>
-                <Label className="text-xs text-muted-foreground">Left</Label>
-                <Input
-                  value={row.styles?.paddingLeft || ''}
-                  onChange={(e) => handleStyleUpdate('paddingLeft', e.target.value)}
-                  placeholder="0px"
-                  className="h-8"
-                />
-              </div>
-            </div>
-          </div>
-          
-          <div className="space-y-3">
-            <Label className="text-sm font-medium">Margin</Label>
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <Label className="text-xs text-muted-foreground">Top</Label>
-                <Input
-                  value={row.styles?.marginTop || ''}
-                  onChange={(e) => handleStyleUpdate('marginTop', e.target.value)}
-                  placeholder="0px"
-                  className="h-8"
-                />
-              </div>
-              <div>
-                <Label className="text-xs text-muted-foreground">Right</Label>
-                <Input
-                  value={row.styles?.marginRight || ''}
-                  onChange={(e) => handleStyleUpdate('marginRight', e.target.value)}
-                  placeholder="0px"
-                  className="h-8"
-                />
-              </div>
-              <div>
-                <Label className="text-xs text-muted-foreground">Bottom</Label>
-                <Input
-                  value={row.styles?.marginBottom || ''}
-                  onChange={(e) => handleStyleUpdate('marginBottom', e.target.value)}
-                  placeholder="0px"
-                  className="h-8"
-                />
-              </div>
-              <div>
-                <Label className="text-xs text-muted-foreground">Left</Label>
-                <Input
-                  value={row.styles?.marginLeft || ''}
-                  onChange={(e) => handleStyleUpdate('marginLeft', e.target.value)}
-                  placeholder="0px"
-                  className="h-8"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
+        <SpacingSliders
+          marginTop={row.styles?.marginTop}
+          marginRight={row.styles?.marginRight}
+          marginBottom={row.styles?.marginBottom}
+          marginLeft={row.styles?.marginLeft}
+          paddingTop={row.styles?.paddingTop}
+          paddingRight={row.styles?.paddingRight}
+          paddingBottom={row.styles?.paddingBottom}
+          paddingLeft={row.styles?.paddingLeft}
+          onMarginChange={(property, value) => handleStyleUpdate(property, value)}
+          onPaddingChange={(property, value) => handleStyleUpdate(property, value)}
+        />
       </CollapsibleGroup>
 
       {/* Border */}
@@ -1335,91 +1190,18 @@ export const ColumnSettings: React.FC<ColumnSettingsProps> = ({ column, onUpdate
         isOpen={openCards.spacing}
         onToggle={(isOpen) => setOpenCards(prev => ({ ...prev, spacing: isOpen }))}
       >
-        <div className="space-y-4">
-          <div className="space-y-3">
-            <Label className="text-sm font-medium">Padding</Label>
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <Label className="text-xs text-muted-foreground">Top</Label>
-                <Input
-                  value={column.styles?.paddingTop || ''}
-                  onChange={(e) => handleStyleUpdate('paddingTop', e.target.value)}
-                  placeholder="0px"
-                  className="h-8"
-                />
-              </div>
-              <div>
-                <Label className="text-xs text-muted-foreground">Right</Label>
-                <Input
-                  value={column.styles?.paddingRight || ''}
-                  onChange={(e) => handleStyleUpdate('paddingRight', e.target.value)}
-                  placeholder="0px"
-                  className="h-8"
-                />
-              </div>
-              <div>
-                <Label className="text-xs text-muted-foreground">Bottom</Label>
-                <Input
-                  value={column.styles?.paddingBottom || ''}
-                  onChange={(e) => handleStyleUpdate('paddingBottom', e.target.value)}
-                  placeholder="0px"
-                  className="h-8"
-                />
-              </div>
-              <div>
-                <Label className="text-xs text-muted-foreground">Left</Label>
-                <Input
-                  value={column.styles?.paddingLeft || ''}
-                  onChange={(e) => handleStyleUpdate('paddingLeft', e.target.value)}
-                  placeholder="0px"
-                  className="h-8"
-                />
-              </div>
-            </div>
-          </div>
-          
-          <div className="space-y-3">
-            <Label className="text-sm font-medium">Margin</Label>
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <Label className="text-xs text-muted-foreground">Top</Label>
-                <Input
-                  value={column.styles?.marginTop || ''}
-                  onChange={(e) => handleStyleUpdate('marginTop', e.target.value)}
-                  placeholder="0px"
-                  className="h-8"
-                />
-              </div>
-              <div>
-                <Label className="text-xs text-muted-foreground">Right</Label>
-                <Input
-                  value={column.styles?.marginRight || ''}
-                  onChange={(e) => handleStyleUpdate('marginRight', e.target.value)}
-                  placeholder="0px"
-                  className="h-8"
-                />
-              </div>
-              <div>
-                <Label className="text-xs text-muted-foreground">Bottom</Label>
-                <Input
-                  value={column.styles?.marginBottom || ''}
-                  onChange={(e) => handleStyleUpdate('marginBottom', e.target.value)}
-                  placeholder="0px"
-                  className="h-8"
-                />
-              </div>
-              <div>
-                <Label className="text-xs text-muted-foreground">Left</Label>
-                <Input
-                  value={column.styles?.marginLeft || ''}
-                  onChange={(e) => handleStyleUpdate('marginLeft', e.target.value)}
-                  placeholder="0px"
-                  className="h-8"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
+        <SpacingSliders
+          marginTop={column.styles?.marginTop}
+          marginRight={column.styles?.marginRight}
+          marginBottom={column.styles?.marginBottom}
+          marginLeft={column.styles?.marginLeft}
+          paddingTop={column.styles?.paddingTop}
+          paddingRight={column.styles?.paddingRight}
+          paddingBottom={column.styles?.paddingBottom}
+          paddingLeft={column.styles?.paddingLeft}
+          onMarginChange={(property, value) => handleStyleUpdate(property, value)}
+          onPaddingChange={(property, value) => handleStyleUpdate(property, value)}
+        />
       </CollapsibleGroup>
 
       {/* Border */}
