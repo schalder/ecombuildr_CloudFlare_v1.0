@@ -140,7 +140,7 @@ export const SectionSettings: React.FC<SectionSettingsProps> = ({ section, onUpd
     }
   };
 
-  const handleResponsiveStyleUpdate = (device: 'desktop' | 'mobile', key: string, value: any) => {
+  const handleResponsiveStyleUpdate = (device: 'desktop' | 'tablet' | 'mobile', key: string, value: any) => {
     if (value === undefined || value === '') {
       const newResponsive = { ...section.styles?.responsive };
       if (newResponsive[device]) {
@@ -363,8 +363,9 @@ export const SectionSettings: React.FC<SectionSettingsProps> = ({ section, onUpd
           <div className="space-y-4">
             <Label className="text-sm font-medium">Responsive Overrides</Label>
             <Tabs defaultValue="desktop" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
+              <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="desktop">Desktop</TabsTrigger>
+                <TabsTrigger value="tablet">Tablet</TabsTrigger>
                 <TabsTrigger value="mobile">Mobile</TabsTrigger>
               </TabsList>
               <TabsContent value="desktop" className="space-y-4">
@@ -376,6 +377,18 @@ export const SectionSettings: React.FC<SectionSettingsProps> = ({ section, onUpd
                     step={1}
                     value={[Math.min(100, Math.max(30, parseInt(String(section.styles?.responsive?.desktop?.width || '').replace(/[^0-9]/g, '')) || 100))]}
                     onValueChange={(v) => handleResponsiveStyleUpdate('desktop', 'width', `${v[0]}%`)}
+                  />
+                </div>
+              </TabsContent>
+              <TabsContent value="tablet" className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Width (%): <span className="text-muted-foreground">{Math.min(100, Math.max(30, parseInt(String(section.styles?.responsive?.tablet?.width || '').replace(/[^0-9]/g, '')) || 100))}%</span></Label>
+                  <Slider
+                    min={30}
+                    max={100}
+                    step={1}
+                    value={[Math.min(100, Math.max(30, parseInt(String(section.styles?.responsive?.tablet?.width || '').replace(/[^0-9]/g, '')) || 100))]}
+                    onValueChange={(v) => handleResponsiveStyleUpdate('tablet', 'width', `${v[0]}%`)}
                   />
                 </div>
               </TabsContent>
@@ -670,7 +683,7 @@ export const RowSettings: React.FC<RowSettingsProps> = ({ row, onUpdate }) => {
     });
   };
 
-  const handleResponsiveStyleUpdate = (device: 'desktop' | 'mobile', key: string, value: any) => {
+  const handleResponsiveStyleUpdate = (device: 'desktop' | 'tablet' | 'mobile', key: string, value: any) => {
     onUpdate({
       styles: {
         ...row.styles,
@@ -780,8 +793,9 @@ export const RowSettings: React.FC<RowSettingsProps> = ({ row, onUpdate }) => {
           <div className="space-y-4">
             <Label className="text-sm font-medium">Responsive Overrides</Label>
             <Tabs defaultValue="desktop" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
+              <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="desktop">Desktop</TabsTrigger>
+                <TabsTrigger value="tablet">Tablet</TabsTrigger>
                 <TabsTrigger value="mobile">Mobile</TabsTrigger>
               </TabsList>
               <TabsContent value="desktop" className="space-y-4">
@@ -793,6 +807,18 @@ export const RowSettings: React.FC<RowSettingsProps> = ({ row, onUpdate }) => {
                     step={1}
                     value={[Math.min(100, Math.max(30, parseInt(String(row.styles?.responsive?.desktop?.width || '').replace(/[^0-9]/g, '')) || 100))]}
                     onValueChange={(v) => handleResponsiveStyleUpdate('desktop', 'width', `${v[0]}%`)}
+                  />
+                </div>
+              </TabsContent>
+              <TabsContent value="tablet" className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Width (%): <span className="text-muted-foreground">{Math.min(100, Math.max(30, parseInt(String(row.styles?.responsive?.tablet?.width || '').replace(/[^0-9]/g, '')) || 100))}%</span></Label>
+                  <Slider
+                    min={30}
+                    max={100}
+                    step={1}
+                    value={[Math.min(100, Math.max(30, parseInt(String(row.styles?.responsive?.tablet?.width || '').replace(/[^0-9]/g, '')) || 100))]}
+                    onValueChange={(v) => handleResponsiveStyleUpdate('tablet', 'width', `${v[0]}%`)}
                   />
                 </div>
               </TabsContent>
@@ -1088,7 +1114,7 @@ export const ColumnSettings: React.FC<ColumnSettingsProps> = ({ column, onUpdate
     });
   };
 
-  const handleResponsiveStyleUpdate = (device: 'desktop' | 'mobile', key: string, value: any) => {
+  const handleResponsiveStyleUpdate = (device: 'desktop' | 'tablet' | 'mobile', key: string, value: any) => {
     onUpdate({
       styles: {
         ...column.styles,
@@ -1164,8 +1190,9 @@ export const ColumnSettings: React.FC<ColumnSettingsProps> = ({ column, onUpdate
           <div className="space-y-4">
             <Label className="text-sm font-medium">Responsive Overrides</Label>
             <Tabs defaultValue="desktop" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
+              <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="desktop">Desktop</TabsTrigger>
+                <TabsTrigger value="tablet">Tablet</TabsTrigger>
                 <TabsTrigger value="mobile">Mobile</TabsTrigger>
               </TabsList>
               <TabsContent value="desktop" className="space-y-4">
@@ -1177,6 +1204,18 @@ export const ColumnSettings: React.FC<ColumnSettingsProps> = ({ column, onUpdate
                     step={1}
                     value={[Math.min(100, Math.max(30, parseInt(String(column.styles?.responsive?.desktop?.width || '').replace(/[^0-9]/g, '')) || 100))]}
                     onValueChange={(v) => handleResponsiveStyleUpdate('desktop', 'width', `${v[0]}%`)}
+                  />
+                </div>
+              </TabsContent>
+              <TabsContent value="tablet" className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Width (%): <span className="text-muted-foreground">{Math.min(100, Math.max(30, parseInt(String(column.styles?.responsive?.tablet?.width || '').replace(/[^0-9]/g, '')) || 100))}%</span></Label>
+                  <Slider
+                    min={30}
+                    max={100}
+                    step={1}
+                    value={[Math.min(100, Math.max(30, parseInt(String(column.styles?.responsive?.tablet?.width || '').replace(/[^0-9]/g, '')) || 100))]}
+                    onValueChange={(v) => handleResponsiveStyleUpdate('tablet', 'width', `${v[0]}%`)}
                   />
                 </div>
               </TabsContent>
