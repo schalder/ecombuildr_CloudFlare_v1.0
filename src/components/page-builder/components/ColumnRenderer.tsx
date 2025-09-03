@@ -100,8 +100,8 @@ export const ColumnRenderer: React.FC<ColumnRendererProps> = ({
     return null;
   }
 
-  // Hide empty columns on mobile in preview/live mode
-  if (deviceType === 'mobile' && isPreviewMode && column.elements.length === 0) {
+  // Hide empty columns on tablet and mobile in preview/live mode
+  if ((deviceType === 'tablet' || deviceType === 'mobile') && isPreviewMode && column.elements.length === 0) {
     return null;
   }
 

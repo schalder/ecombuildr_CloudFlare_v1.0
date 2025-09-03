@@ -136,10 +136,13 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
     if (deviceType === 'tablet') {
       if (row.columnLayout === '1') {
         // Only render the first column for true single-column layout
-        return row.columns.slice(0, 1);
+        const firstColumn = row.columns.slice(0, 1);
+        // In preview mode, filter out empty columns
+        return isPreviewMode ? firstColumn.filter(column => column.elements.length > 0) : firstColumn;
       } else {
         // For multi-column layouts on tablet, stack all columns
-        return row.columns;
+        // In preview mode, filter out empty columns
+        return isPreviewMode ? row.columns.filter(column => column.elements.length > 0) : row.columns;
       }
     }
     
@@ -152,8 +155,8 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
     if (deviceType === 'tablet' && row.columnLayout === '1') {
       return 1;
     }
-    // For mobile in preview mode, use the filtered column count
-    if (deviceType === 'mobile' && isPreviewMode) {
+    // For tablet and mobile in preview mode, use the filtered column count
+    if ((deviceType === 'tablet' || deviceType === 'mobile') && isPreviewMode) {
       return getColumnsToRender().length;
     }
     // Otherwise return the total number of columns in the row
@@ -167,9 +170,9 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
   const userBackground = hasUserBackground(row.styles);
   const userShadow = hasUserShadow(row.styles);
 
-  // Hide row if all columns are empty on mobile preview
+  // Hide row if all columns are empty on tablet and mobile preview
   const displayedColumns = getColumnsToRender();
-  if (deviceType === 'mobile' && isPreviewMode && displayedColumns.length === 0) {
+  if ((deviceType === 'tablet' || deviceType === 'mobile') && isPreviewMode && displayedColumns.length === 0) {
     return null;
   }
 
