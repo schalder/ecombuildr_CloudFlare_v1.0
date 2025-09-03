@@ -100,6 +100,11 @@ export const ColumnRenderer: React.FC<ColumnRendererProps> = ({
     return null;
   }
 
+  // Hide empty columns on mobile in preview/live mode
+  if (deviceType === 'mobile' && isPreviewMode && column.elements.length === 0) {
+    return null;
+  }
+
   const userBackground = hasUserBackground(column.styles);
   const userShadow = hasUserShadow(column.styles);
 

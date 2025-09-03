@@ -124,8 +124,11 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
   };
 
   const getColumnsToRender = () => {
-    // For mobile, always stack all columns
+    // For mobile, filter out empty columns in preview mode
     if (deviceType === 'mobile') {
+      if (isPreviewMode) {
+        return row.columns.filter(column => column.elements.length > 0);
+      }
       return row.columns;
     }
     
@@ -149,6 +152,10 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
     if (deviceType === 'tablet' && row.columnLayout === '1') {
       return 1;
     }
+    // For mobile in preview mode, use the filtered column count
+    if (deviceType === 'mobile' && isPreviewMode) {
+      return getColumnsToRender().length;
+    }
     // Otherwise return the total number of columns in the row
     return row.columns.length;
   };
@@ -159,6 +166,12 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
 
   const userBackground = hasUserBackground(row.styles);
   const userShadow = hasUserShadow(row.styles);
+
+  // Hide row if all columns are empty on mobile preview
+  const displayedColumns = getColumnsToRender();
+  if (deviceType === 'mobile' && isPreviewMode && displayedColumns.length === 0) {
+    return null;
+  }
 
   return (
     <div
@@ -219,7 +232,7 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
       )}
 
       <div style={getDeviceSpecificGridStyle()}>
-        {getColumnsToRender().map((column) => (
+        {displayedColumns.map((column) => (
             <ColumnRenderer
               key={column.id}
               column={column}
