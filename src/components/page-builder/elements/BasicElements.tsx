@@ -11,6 +11,7 @@ import { renderElementStyles } from '../utils/styleRenderer';
 import { generateResponsiveCSS } from '../utils/responsiveStyles';
 import { getIconByName } from '@/components/icons/icon-sources';
 import { useEcomPaths } from '@/lib/pathResolver';
+import { getEffectiveResponsiveValue } from '../utils/responsiveHelpers';
 
 // Heading Element
 const HeadingElement: React.FC<{
@@ -307,17 +308,14 @@ const ListElement: React.FC<{
 
   const baseStyles = renderElementStyles(element, deviceType);
 
-  // Responsive overrides for list-specific styles - now includes explicit tablet support
-  const responsive = element.styles?.responsive || {};
-  const currentDeviceStyles: any = (responsive as any)[deviceType] || {};
-
-  const iconSize: number = currentDeviceStyles.iconSize ?? (element.styles as any)?.iconSize ?? 16;
-  const itemGap: number = currentDeviceStyles.itemGap ?? (element.styles as any)?.itemGap ?? 4;
-  const indent: number = currentDeviceStyles.indent ?? (element.styles as any)?.indent ?? 0;
-  const iconColor: string | undefined = currentDeviceStyles.iconColor ?? (element.styles as any)?.iconColor ?? undefined;
+  // Use responsive helpers for proper inheritance
+  const iconSize: number = getEffectiveResponsiveValue(element, 'iconSize', deviceType, 16);
+  const itemGap: number = getEffectiveResponsiveValue(element, 'itemGap', deviceType, 4);
+  const indent: number = getEffectiveResponsiveValue(element, 'indent', deviceType, 0);
+  const iconColor: string | undefined = getEffectiveResponsiveValue(element, 'iconColor', deviceType, undefined);
 
   // Get text alignment for proper styling
-  const textAlign = currentDeviceStyles.textAlign || baseStyles.textAlign || 'left';
+  const textAlign = baseStyles.textAlign || 'left';
   
   const containerStyles: React.CSSProperties = {
     ...baseStyles,
