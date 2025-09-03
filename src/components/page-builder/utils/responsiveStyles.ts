@@ -158,23 +158,48 @@ export function mergeResponsiveStyles(baseStyles: any, elementStyles: any, devic
       delete mergedStyles.padding; // Remove shorthand to avoid conflicts
     }
     
-    // If elementStyles has responsive overrides, merge them
+    // Enhanced responsive handling with proper inheritance
     if (responsive) {
-      let deviceStyles = responsive[deviceType] || {};
+      // Get all properties across all devices
+      const allProperties = new Set([
+        ...Object.keys(responsive.desktop || {}),
+        ...Object.keys(responsive.tablet || {}),
+        ...Object.keys(responsive.mobile || {})
+      ]);
       
-      // For tablet, fall back to desktop styles if no tablet-specific styles exist
-      if (deviceType === 'tablet' && (!deviceStyles || Object.keys(deviceStyles).length === 0)) {
-        deviceStyles = responsive.desktop || {};
-      }
-      
-      // Deep merge: only override with explicitly defined values
-      const cleanDeviceStyles = Object.fromEntries(
-        Object.entries(deviceStyles).filter(([key, value]) => {
-          return value !== undefined && value !== null && value !== '';
-        })
-      );
-      
-      mergedStyles = { ...mergedStyles, ...cleanDeviceStyles };
+      // Apply inheritance logic for each property
+      allProperties.forEach(property => {
+        let effectiveValue;
+        
+        // Current device value
+        const currentValue = responsive[deviceType]?.[property];
+        if (currentValue !== undefined && currentValue !== null && currentValue !== '') {
+          effectiveValue = currentValue;
+        }
+        // Inheritance for mobile: tablet -> desktop
+        else if (deviceType === 'mobile') {
+          const tabletValue = responsive.tablet?.[property];
+          if (tabletValue !== undefined && tabletValue !== null && tabletValue !== '') {
+            effectiveValue = tabletValue;
+          } else {
+            const desktopValue = responsive.desktop?.[property];
+            if (desktopValue !== undefined && desktopValue !== null && desktopValue !== '') {
+              effectiveValue = desktopValue;
+            }
+          }
+        }
+        // Inheritance for tablet: desktop
+        else if (deviceType === 'tablet') {
+          const desktopValue = responsive.desktop?.[property];
+          if (desktopValue !== undefined && desktopValue !== null && desktopValue !== '') {
+            effectiveValue = desktopValue;
+          }
+        }
+        
+        if (effectiveValue !== undefined) {
+          mergedStyles[property] = effectiveValue;
+        }
+      });
       
       // Parse shorthand margin/padding in responsive styles
       if (mergedStyles.margin && typeof mergedStyles.margin === 'string') {

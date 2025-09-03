@@ -12,6 +12,7 @@ import { ColorPicker } from '@/components/ui/color-picker';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { SpacingSliders } from './_shared/SpacingSliders';
 import { ensureGoogleFontLoaded } from '@/hooks/useGoogleFontLoader';
+import { ResponsiveStyleControl, ResponsiveTabs } from './_shared/ResponsiveStyleControl';
 interface TextElementStylesProps {
   element: PageBuilderElement;
   onStyleUpdate: (property: string, value: any) => void;
@@ -31,34 +32,18 @@ export const TextElementStyles: React.FC<TextElementStylesProps> = ({
 }) => {
   // Responsive controls state and helpers
   const [responsiveTab, setResponsiveTab] = React.useState<'desktop' | 'tablet' | 'mobile'>('desktop');
-  const responsiveStyles = element.styles?.responsive || { desktop: {}, tablet: {}, mobile: {} };
-  const currentStyles = (responsiveStyles as any)[responsiveTab] || {};
   
   // Collapsible state
   const [typographyOpen, setTypographyOpen] = React.useState(true);
   const [backgroundOpen, setBackgroundOpen] = React.useState(false);
   const [borderOpen, setBorderOpen] = React.useState(false);
   const [spacingOpen, setSpacingOpen] = React.useState(false);
-  
-  const handleResponsiveUpdate = (property: string, value: any) => {
-    const updatedResponsive = {
-      ...responsiveStyles,
-      [responsiveTab]: {
-        ...currentStyles,
-        [property]: value,
-      },
-    };
-    onStyleUpdate('responsive', updatedResponsive);
-  };
 
   const parsePixelValue = (value: string | undefined): number => {
     if (!value) return 0;
     return parseInt(value.replace('px', '')) || 0;
   };
 
-  const handleSpacingChange = (property: string, value: string) => {
-    handleResponsiveUpdate(property, value);
-  };
 
   const fontOptions = React.useMemo(() => {
     const base = [
@@ -78,37 +63,10 @@ export const TextElementStyles: React.FC<TextElementStylesProps> = ({
     return [...base, ...google];
   }, []);
 
-  const currentFontFamily = (currentStyles.fontFamily || element.styles?.fontFamily || '').trim();
-  const selectedFontValue = (fontOptions.find((f: any) => f.value === currentFontFamily)?.value as string) || 'default';
   return (
     <div className="space-y-4">
       {/* Device Toggle */}
-      <div className="flex items-center justify-between">
-        <Label className="text-xs">Device</Label>
-        <div className="flex space-x-1">
-          <Button
-            size="sm"
-            variant={responsiveTab === 'desktop' ? 'default' : 'outline'}
-            onClick={() => setResponsiveTab('desktop')}
-          >
-            <Monitor className="h-3 w-3" /> 
-          </Button>
-          <Button
-            size="sm"
-            variant={responsiveTab === 'tablet' ? 'default' : 'outline'}
-            onClick={() => setResponsiveTab('tablet')}
-          >
-            <Tablet className="h-3 w-3" />
-          </Button>
-          <Button
-            size="sm"
-            variant={responsiveTab === 'mobile' ? 'default' : 'outline'}
-            onClick={() => setResponsiveTab('mobile')}
-          >
-            <Smartphone className="h-3 w-3" />
-          </Button>
-        </div>
-      </div>
+      <ResponsiveTabs activeTab={responsiveTab} onTabChange={setResponsiveTab} />
 
       {/* Typography */}
       {showTypography && (
@@ -118,94 +76,132 @@ export const TextElementStyles: React.FC<TextElementStylesProps> = ({
             <ChevronDown className={`h-4 w-4 transition-transform ${typographyOpen ? 'rotate-180' : ''}`} />
           </CollapsibleTrigger>
           <CollapsibleContent className="space-y-3 pt-2">
-            <div>
-              <Label className="text-xs">Font Family</Label>
-              <Select value={selectedFontValue} onValueChange={(v) => {
-                const meta = (fontOptions as any[]).find((f: any) => f.value === v);
-                if (meta && meta.family) ensureGoogleFontLoaded(meta.family, meta.weights);
-                if (v === 'default') {
-                  handleResponsiveUpdate('fontFamily', '');
-                } else {
-                  handleResponsiveUpdate('fontFamily', v);
-                }
-              }}>
-                <SelectTrigger className="h-8 bg-background">
-                  <SelectValue placeholder="Default" />
-                </SelectTrigger>
-                <SelectContent>
-                  {(fontOptions as any[]).map((f: any) => (
-                    <SelectItem key={f.label} value={f.value}>{f.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <ResponsiveStyleControl
+              element={element}
+              property="fontFamily"
+              label="Font Family"
+              deviceType={responsiveTab}
+              fallback=""
+              onStyleUpdate={onStyleUpdate}
+            >
+              {(value, onChange) => (
+                <Select value={fontOptions.find(f => f.value === value)?.value || 'default'} onValueChange={(v) => {
+                  const meta = fontOptions.find(f => f.value === v);
+                  if (meta && (meta as any).family) ensureGoogleFontLoaded((meta as any).family, (meta as any).weights);
+                  onChange(v === 'default' ? '' : v);
+                }}>
+                  <SelectTrigger className="h-8 bg-background">
+                    <SelectValue placeholder="Default" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {fontOptions.map((f: any) => (
+                      <SelectItem key={f.label} value={f.value}>{f.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </ResponsiveStyleControl>
 
-            <div>
-              <Label className="text-xs">Font Size</Label>
-              <div className="flex items-center space-x-2">
-                <Slider
-                  value={[parseInt(((currentStyles.fontSize || element.styles?.fontSize || '16px').toString()).replace(/\D/g, ''))]}
-                  onValueChange={(value) => handleResponsiveUpdate('fontSize', `${value[0]}px`)}
-                  max={72}
-                  min={8}
-                  step={1}
-                  className="flex-1"
-                />
-                <span className="text-xs text-muted-foreground w-12">
-                  {(currentStyles.fontSize || element.styles?.fontSize || '16px') as string}
-                </span>
-              </div>
-            </div>
+            <ResponsiveStyleControl
+              element={element}
+              property="fontSize"
+              label="Font Size"
+              deviceType={responsiveTab}
+              fallback="16px"
+              onStyleUpdate={onStyleUpdate}
+            >
+              {(value, onChange) => (
+                <div className="flex items-center space-x-2">
+                  <Slider
+                    value={[parseInt(value.toString().replace(/\D/g, ''))]}
+                    onValueChange={(val) => onChange(`${val[0]}px`)}
+                    max={72}
+                    min={8}
+                    step={1}
+                    className="flex-1"
+                  />
+                  <span className="text-xs text-muted-foreground w-12">
+                    {value}
+                  </span>
+                </div>
+              )}
+            </ResponsiveStyleControl>
 
-            <div>
-              <Label className="text-xs">Text Align</Label>
-              <div className="flex space-x-1">
-                <Button
-                  size="sm"
-                  variant={(currentStyles.textAlign || element.styles?.textAlign) === 'left' ? 'default' : 'outline'}
-                  onClick={() => handleResponsiveUpdate('textAlign', 'left')}
-                >
-                  <AlignLeft className="h-4 w-4" />
-                </Button>
-                <Button
-                  size="sm"
-                  variant={(currentStyles.textAlign || element.styles?.textAlign) === 'center' ? 'default' : 'outline'}
-                  onClick={() => handleResponsiveUpdate('textAlign', 'center')}
-                >
-                  <AlignCenter className="h-4 w-4" />
-                </Button>
-                <Button
-                  size="sm"
-                  variant={(currentStyles.textAlign || element.styles?.textAlign) === 'right' ? 'default' : 'outline'}
-                  onClick={() => handleResponsiveUpdate('textAlign', 'right')}
-                >
-                  <AlignRight className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
+            <ResponsiveStyleControl
+              element={element}
+              property="textAlign"
+              label="Text Align"
+              deviceType={responsiveTab}
+              fallback="left"
+              onStyleUpdate={onStyleUpdate}
+            >
+              {(value, onChange) => (
+                <div className="flex space-x-1">
+                  <Button
+                    size="sm"
+                    variant={value === 'left' ? 'default' : 'outline'}
+                    onClick={() => onChange('left')}
+                  >
+                    <AlignLeft className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={value === 'center' ? 'default' : 'outline'}
+                    onClick={() => onChange('center')}
+                  >
+                    <AlignCenter className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={value === 'right' ? 'default' : 'outline'}
+                    onClick={() => onChange('right')}
+                  >
+                    <AlignRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
+            </ResponsiveStyleControl>
 
-            <div>
-              <Label className="text-xs">Line Height</Label>
-              <div className="flex items-center space-x-2">
-                <Slider
-                  value={[parseFloat(((currentStyles.lineHeight ?? element.styles?.lineHeight ?? '1.6').toString()))]}
-                  onValueChange={(value) => handleResponsiveUpdate('lineHeight', value[0].toString())}
-                  max={3}
-                  min={1}
-                  step={0.1}
-                  className="flex-1"
-                />
-                <span className="text-xs text-muted-foreground w-12">
-                  {(currentStyles.lineHeight || element.styles?.lineHeight || '1.6') as string}
-                </span>
-              </div>
-            </div>
+            <ResponsiveStyleControl
+              element={element}
+              property="lineHeight"
+              label="Line Height"
+              deviceType={responsiveTab}
+              fallback="1.6"
+              onStyleUpdate={onStyleUpdate}
+            >
+              {(value, onChange) => (
+                <div className="flex items-center space-x-2">
+                  <Slider
+                    value={[parseFloat(value.toString())]}
+                    onValueChange={(val) => onChange(val[0].toString())}
+                    max={3}
+                    min={1}
+                    step={0.1}
+                    className="flex-1"
+                  />
+                  <span className="text-xs text-muted-foreground w-12">
+                    {value}
+                  </span>
+                </div>
+              )}
+            </ResponsiveStyleControl>
 
-            <ColorPicker 
+            <ResponsiveStyleControl
+              element={element}
+              property="color"
               label="Text Color"
-              color={(currentStyles.color || element.styles?.color) || ''}
-              onChange={(val) => handleResponsiveUpdate('color', val)}
-            />
+              deviceType={responsiveTab}
+              fallback=""
+              onStyleUpdate={onStyleUpdate}
+            >
+              {(value, onChange) => (
+                <ColorPicker 
+                  color={value}
+                  onChange={onChange}
+                />
+              )}
+            </ResponsiveStyleControl>
           </CollapsibleContent>
         </Collapsible>
       )}
@@ -217,11 +213,21 @@ export const TextElementStyles: React.FC<TextElementStylesProps> = ({
             <ChevronDown className={`h-4 w-4 transition-transform ${backgroundOpen ? 'rotate-180' : ''}`} />
           </CollapsibleTrigger>
           <CollapsibleContent className="space-y-3 pt-2">
-            <ColorPicker 
+            <ResponsiveStyleControl
+              element={element}
+              property="backgroundColor"
               label="Background Color"
-              color={(currentStyles.backgroundColor || element.styles?.backgroundColor) || ''}
-              onChange={(val) => handleResponsiveUpdate('backgroundColor', val)}
-            />
+              deviceType={responsiveTab}
+              fallback=""
+              onStyleUpdate={onStyleUpdate}
+            >
+              {(value, onChange) => (
+                <ColorPicker 
+                  color={value}
+                  onChange={onChange}
+                />
+              )}
+            </ResponsiveStyleControl>
           </CollapsibleContent>
         </Collapsible>
       )}
@@ -233,29 +239,55 @@ export const TextElementStyles: React.FC<TextElementStylesProps> = ({
             <ChevronDown className={`h-4 w-4 transition-transform ${borderOpen ? 'rotate-180' : ''}`} />
           </CollapsibleTrigger>
           <CollapsibleContent className="space-y-3 pt-2">
-            <div>
-              <Label className="text-xs">Border Width</Label>
-              <Input
-                value={(currentStyles.borderWidth || element.styles?.borderWidth) || ''}
-                onChange={(e) => handleResponsiveUpdate('borderWidth', e.target.value)}
-                placeholder="e.g., 1px"
-              />
-            </div>
+            <ResponsiveStyleControl
+              element={element}
+              property="borderWidth"
+              label="Border Width"
+              deviceType={responsiveTab}
+              fallback=""
+              onStyleUpdate={onStyleUpdate}
+            >
+              {(value, onChange) => (
+                <Input
+                  value={value}
+                  onChange={(e) => onChange(e.target.value)}
+                  placeholder="e.g., 1px"
+                />
+              )}
+            </ResponsiveStyleControl>
 
-            <ColorPicker 
+            <ResponsiveStyleControl
+              element={element}
+              property="borderColor"
               label="Border Color"
-              color={(currentStyles.borderColor || element.styles?.borderColor) || ''}
-              onChange={(val) => handleResponsiveUpdate('borderColor', val)}
-            />
+              deviceType={responsiveTab}
+              fallback=""
+              onStyleUpdate={onStyleUpdate}
+            >
+              {(value, onChange) => (
+                <ColorPicker 
+                  color={value}
+                  onChange={onChange}
+                />
+              )}
+            </ResponsiveStyleControl>
 
-            <div>
-              <Label className="text-xs">Border Radius</Label>
-              <Input
-                value={(currentStyles.borderRadius || element.styles?.borderRadius) || ''}
-                onChange={(e) => handleResponsiveUpdate('borderRadius', e.target.value)}
-                placeholder="e.g., 4px"
-              />
-            </div>
+            <ResponsiveStyleControl
+              element={element}
+              property="borderRadius"
+              label="Border Radius"
+              deviceType={responsiveTab}
+              fallback=""
+              onStyleUpdate={onStyleUpdate}
+            >
+              {(value, onChange) => (
+                <Input
+                  value={value}
+                  onChange={(e) => onChange(e.target.value)}
+                  placeholder="e.g., 4px"
+                />
+              )}
+            </ResponsiveStyleControl>
           </CollapsibleContent>
         </Collapsible>
       )}
@@ -267,18 +299,41 @@ export const TextElementStyles: React.FC<TextElementStylesProps> = ({
             <ChevronDown className={`h-4 w-4 transition-transform ${spacingOpen ? 'rotate-180' : ''}`} />
           </CollapsibleTrigger>
           <CollapsibleContent className="space-y-4 pt-2">
-            <SpacingSliders
-              marginTop={currentStyles.marginTop || element.styles?.marginTop}
-              marginRight={currentStyles.marginRight || element.styles?.marginRight}
-              marginBottom={currentStyles.marginBottom || element.styles?.marginBottom}
-              marginLeft={currentStyles.marginLeft || element.styles?.marginLeft}
-              paddingTop={currentStyles.paddingTop || element.styles?.paddingTop}
-              paddingRight={currentStyles.paddingRight || element.styles?.paddingRight}
-              paddingBottom={currentStyles.paddingBottom || element.styles?.paddingBottom}
-              paddingLeft={currentStyles.paddingLeft || element.styles?.paddingLeft}
-              onMarginChange={handleSpacingChange}
-              onPaddingChange={handleSpacingChange}
-            />
+            <div className="space-y-3">
+              <ResponsiveStyleControl
+                element={element}
+                property="marginTop"
+                label="Margin Top"
+                deviceType={responsiveTab}
+                fallback=""
+                onStyleUpdate={onStyleUpdate}
+              >
+                {(value, onChange) => (
+                  <Input
+                    value={value}
+                    onChange={(e) => onChange(e.target.value)}
+                    placeholder="e.g., 10px"
+                  />
+                )}
+              </ResponsiveStyleControl>
+              
+              <ResponsiveStyleControl
+                element={element}
+                property="paddingTop"
+                label="Padding Top"
+                deviceType={responsiveTab}
+                fallback=""
+                onStyleUpdate={onStyleUpdate}
+              >
+                {(value, onChange) => (
+                  <Input
+                    value={value}
+                    onChange={(e) => onChange(e.target.value)}
+                    placeholder="e.g., 10px"
+                  />
+                )}
+              </ResponsiveStyleControl>
+            </div>
           </CollapsibleContent>
         </Collapsible>
       )}
