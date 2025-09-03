@@ -734,7 +734,7 @@ const VideoElement: React.FC<{
   isEditing?: boolean;
   deviceType?: 'desktop' | 'tablet' | 'mobile';
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
-}> = ({ element, isEditing, deviceType, onUpdate }) => {
+}> = ({ element, isEditing, deviceType = 'desktop', onUpdate }) => {
   const { 
     videoType = 'url',
     url = '', 
@@ -746,13 +746,33 @@ const VideoElement: React.FC<{
     muted = false
   } = element.content as any;
   
-  const containerStyles = renderElementStyles(element, (deviceType ?? 'desktop'));
+  const containerStyles = renderElementStyles(element, deviceType);
   
   // Strip width-related properties to prevent conflicts with widthByDevice
   const { width: _, maxWidth: __, minWidth: ___, ...cleanContainerStyles } = containerStyles;
   
-  const activeDevice: 'desktop' | 'mobile' = (deviceType === 'mobile' ? 'mobile' : 'desktop');
-  const effectiveWidth = (widthByDevice?.[activeDevice] as string) || (width as string);
+  // Normalize widthByDevice for older content that may not have all device types
+  const normalizedWidthByDevice = {
+    desktop: width,
+    tablet: width,
+    mobile: 'full',
+    ...widthByDevice
+  };
+  
+  // Get effective width with proper inheritance: mobile -> tablet -> desktop
+  const getEffectiveWidth = () => {
+    switch (deviceType) {
+      case 'mobile':
+        return normalizedWidthByDevice.mobile || normalizedWidthByDevice.tablet || normalizedWidthByDevice.desktop;
+      case 'tablet':
+        return normalizedWidthByDevice.tablet || normalizedWidthByDevice.desktop;
+      case 'desktop':
+      default:
+        return normalizedWidthByDevice.desktop;
+    }
+  };
+  
+  const effectiveWidth = getEffectiveWidth();
   // Import video utilities
   const { parseVideoUrl, getVideoWidthClasses, buildEmbedUrl, sanitizeEmbedCode } = React.useMemo(() => {
     return {
