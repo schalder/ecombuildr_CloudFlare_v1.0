@@ -82,13 +82,13 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({
         case 'full':
           return 'w-full';
         case 'wide':
-          return 'w-full px-4';
+          return 'max-w-3xl mx-auto px-4';
         case 'medium':
           return 'max-w-lg mx-auto px-4';
         case 'small':
           return 'max-w-sm mx-auto px-4';
         default:
-          return 'w-full px-4';
+          return 'max-w-3xl mx-auto px-4';
       }
     }
     
