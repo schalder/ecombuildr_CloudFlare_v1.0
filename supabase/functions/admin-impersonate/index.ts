@@ -54,7 +54,7 @@ Deno.serve(async (req) => {
     // Check if user is super admin directly from profiles table using service role
     const { data: profile, error: profileError } = await supabaseAdmin
       .from('profiles')
-      .select('is_super_admin')
+      .select('role')
       .eq('id', user.id)
       .single();
 
@@ -66,7 +66,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    const isAdmin = profile?.is_super_admin;
+    const isAdmin = profile?.role === 'super_admin';
     
     if (!isAdmin) {
       console.log(`Access denied for user ${user.email} (${user.id}) - not a super admin`);
