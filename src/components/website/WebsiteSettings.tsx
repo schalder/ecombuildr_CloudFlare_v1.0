@@ -51,7 +51,13 @@ const websiteSettingsSchema = z.object({
   support_widget_enabled: z.boolean().default(false),
   support_widget_position: z.enum(['bottom-right', 'bottom-left']).default('bottom-right'),
   support_whatsapp_enabled: z.boolean().default(false),
-  support_whatsapp_number: z.string().optional(),
+  support_whatsapp_number: z.string()
+    .optional()
+    .refine((val) => {
+      if (!val) return true;
+      const sanitized = val.replace(/\D/g, '');
+      return sanitized.length >= 7 && sanitized.length <= 15;
+    }, 'WhatsApp number must be 7-15 digits in international format'),
   support_whatsapp_message: z.string().optional(),
   support_phone_enabled: z.boolean().default(false),
   support_phone_number: z.string().optional(),
@@ -285,7 +291,7 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
           position: support_widget_position,
           whatsapp: {
             enabled: support_whatsapp_enabled,
-            number: support_whatsapp_number || null,
+            number: support_whatsapp_number ? support_whatsapp_number.replace(/\D/g, '') : null,
             message: support_whatsapp_message || 'Hi! I need help with my order.',
           },
           phone: {
@@ -1108,16 +1114,16 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
                            render={({ field }) => (
                              <FormItem>
                                <FormLabel>WhatsApp Number</FormLabel>
-                               <FormControl>
-                                 <Input 
-                                   placeholder="+1234567890" 
-                                   {...field}
-                                   disabled={!form.watch('support_whatsapp_enabled') || !form.watch('support_widget_enabled')}
-                                 />
-                               </FormControl>
-                               <FormDescription>
-                                 Include country code (e.g., +8801234567890).
-                               </FormDescription>
+                                <FormControl>
+                                  <Input 
+                                    placeholder="1234567890" 
+                                    {...field}
+                                    disabled={!form.watch('support_whatsapp_enabled') || !form.watch('support_widget_enabled')}
+                                  />
+                                </FormControl>
+                                <FormDescription>
+                                  Full international number with digits only (e.g., 8801234567890).
+                                </FormDescription>
                                <FormMessage />
                              </FormItem>
                            )}
