@@ -22,12 +22,6 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Create regular client to verify admin user
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? ''
-    );
-
     // Get the authorization header
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
@@ -37,20 +31,32 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Verify the requesting user
-    const { data: { user }, error: authError } = await supabaseClient.auth.getUser(
-      authHeader.replace('Bearer ', '')
+    // Create user-scoped client for admin verification (preserves user context)
+    const supabaseUserClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      {
+        global: {
+          headers: {
+            authorization: authHeader,
+          },
+        },
+      }
     );
 
+    // Verify the requesting user and check admin status in one go
+    const { data: { user }, error: authError } = await supabaseUserClient.auth.getUser();
+
     if (authError || !user) {
+      console.log('Authentication failed:', authError);
       return new Response(
         JSON.stringify({ error: 'Invalid authorization' }), 
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Check if user is super admin using service role client to bypass RLS
-    const { data: isAdmin, error: adminError } = await supabaseAdmin.rpc('is_super_admin');
+    // Check if user is super admin using the user-scoped client so auth.uid() works
+    const { data: isAdmin, error: adminError } = await supabaseUserClient.rpc('is_super_admin');
     
     if (adminError) {
       console.error('Admin check error:', adminError);
