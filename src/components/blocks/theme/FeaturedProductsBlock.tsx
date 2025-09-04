@@ -197,7 +197,10 @@ export const FeaturedProductsSave: React.FC<BlockSaveProps> = ({ block }) => {
   }, [store?.id, content.selectedProducts]);
 
   const fetchProducts = async () => {
-    if (!store?.id) return;
+    if (!store?.id) {
+      setProducts([]);
+      return;
+    }
 
     let query = supabase
       .from('products')
@@ -262,7 +265,12 @@ export const FeaturedProductsSave: React.FC<BlockSaveProps> = ({ block }) => {
 
         {products.length === 0 && (
           <div className="text-center py-12">
-            <p className="text-muted-foreground">No products selected. Configure this section to display your featured products.</p>
+            <p className="text-muted-foreground">
+              {!store?.id 
+                ? 'Featured Products will display when connected to a store' 
+                : 'No products selected. Configure this section to display your featured products.'
+              }
+            </p>
           </div>
         )}
       </div>

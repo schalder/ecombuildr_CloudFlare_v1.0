@@ -164,7 +164,11 @@ const ModernProductGridSave: React.FC<BlockSaveProps> = ({ block }) => {
   }, [store?.id, content.limit]);
 
   const fetchProducts = async () => {
-    if (!store?.id) return;
+    if (!store?.id) {
+      setLoading(false);
+      setProducts([]);
+      return;
+    }
 
     try {
       const { data, error } = await supabase
@@ -416,11 +420,21 @@ const ModernProductGridSave: React.FC<BlockSaveProps> = ({ block }) => {
           ))}
         </div>
 
-        <div className="text-center mt-12">
-          <Button size="lg" variant="outline" className="px-8">
-            View All Products
-          </Button>
-        </div>
+        {products.length === 0 && (
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">
+              Product Grid will display when connected to a store
+            </p>
+          </div>
+        )}
+
+        {products.length > 0 && (
+          <div className="text-center mt-12">
+            <Button size="lg" variant="outline" className="px-8">
+              View All Products
+            </Button>
+          </div>
+        )}
       </div>
     </section>
   );

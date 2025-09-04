@@ -9,6 +9,8 @@ import { PageBuilderElement } from '@/components/page-builder/types';
 import { useStoreProducts } from '@/hooks/useStoreData';
 import { CheckoutContentProperties } from './CheckoutContentProperties';
 import { useResolvedWebsiteId } from '@/hooks/useResolvedWebsiteId';
+import { useStore } from '@/contexts/StoreContext';
+import { useUserStore } from '@/hooks/useUserStore';
 
 interface InlineCheckoutContentPropertiesProps {
   element: PageBuilderElement;
@@ -24,6 +26,11 @@ export const InlineCheckoutContentProperties: React.FC<InlineCheckoutContentProp
   const orderBump = cfg.orderBump || { enabled: false, productId: '', label: 'Add this to my order', description: '', prechecked: false };
   const chargeShippingForBump: boolean = cfg.chargeShippingForBump !== false; // default true
   const bumpShippingFee: number = cfg.bumpShippingFee || 0;
+
+  // Check for store context
+  const { store: storeContextStore } = useStore();
+  const { store: userStore } = useUserStore();
+  const hasStoreContext = !!(storeContextStore || userStore);
 
   // Resolve websiteId for filtering
   const resolvedWebsiteId = useResolvedWebsiteId(element);
@@ -60,11 +67,16 @@ export const InlineCheckoutContentProperties: React.FC<InlineCheckoutContentProp
       <div className="space-y-3">
         <Label className="text-sm">Available Products</Label>
         <div className="border rounded-md p-3 max-h-60 overflow-auto space-y-2">
-          {loading && <div className="text-xs text-muted-foreground">Loading products…</div>}
-          {!loading && products.length === 0 && (
+          {!hasStoreContext && (
+            <div className="text-xs text-muted-foreground">
+              Product selection available when connected to a store.
+            </div>
+          )}
+          {hasStoreContext && loading && <div className="text-xs text-muted-foreground">Loading products…</div>}
+          {hasStoreContext && !loading && products.length === 0 && (
             <div className="text-xs text-muted-foreground">No products found for this store.</div>
           )}
-          {!loading && products.map((p) => {
+          {hasStoreContext && !loading && products.map((p) => {
             const checked = (selectedIds || []).includes(p.id);
             return (
               <label key={p.id} className="flex items-center gap-2 text-sm">
@@ -78,9 +90,19 @@ export const InlineCheckoutContentProperties: React.FC<InlineCheckoutContentProp
 
       <div className="grid grid-cols-1 gap-2">
         <Label className="text-sm">Default Product</Label>
-        <Select value={defaultProductId || (selectedIds[0] || '')} onValueChange={handleDefaultChange}>
+        <Select 
+          value={defaultProductId || (selectedIds[0] || '')} 
+          onValueChange={handleDefaultChange}
+          disabled={!hasStoreContext}
+        >
           <SelectTrigger>
-            <SelectValue placeholder={selectedIds.length ? 'Select default product' : 'No products selected'} />
+            <SelectValue placeholder={
+              !hasStoreContext 
+                ? 'Available when connected to store'
+                : selectedIds.length 
+                  ? 'Select default product' 
+                  : 'No products selected'
+            } />
           </SelectTrigger>
           <SelectContent>
             {(selectedIds.length ? products.filter((p) => selectedIds.includes(p.id)) : products).map((p) => (
@@ -112,9 +134,17 @@ export const InlineCheckoutContentProperties: React.FC<InlineCheckoutContentProp
           <div className="space-y-3">
             <div className="grid grid-cols-1 gap-2">
               <Label className="text-sm">Bump Product</Label>
-              <Select value={orderBump.productId || ''} onValueChange={(v) => onUpdate('orderBump', { ...orderBump, productId: v })}>
+              <Select 
+                value={orderBump.productId || ''} 
+                onValueChange={(v) => onUpdate('orderBump', { ...orderBump, productId: v })}
+                disabled={!hasStoreContext}
+              >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select bump product" />
+                  <SelectValue placeholder={
+                    !hasStoreContext 
+                      ? 'Available when connected to store'
+                      : 'Select bump product'
+                  } />
                 </SelectTrigger>
                 <SelectContent>
                   {products.map((p) => (

@@ -107,7 +107,7 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
 
   // Load configured products (include bump product if set)
   const allProductIds = useMemo(() => Array.from(new Set([...(productIds || []), cfg?.orderBump?.productId].filter(Boolean))), [productIds, cfg?.orderBump?.productId]);
-  const { products } = useStoreProducts({ specificProductIds: allProductIds, websiteId: resolvedWebsiteId });
+  const { products, loading: productsLoading } = useStoreProducts({ specificProductIds: allProductIds, websiteId: resolvedWebsiteId });
   const defaultProductId: string = useMemo(() => {
     if (cfg.defaultProductId && productIds.includes(cfg.defaultProductId)) return cfg.defaultProductId;
     return productIds[0] || '';
@@ -557,7 +557,31 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
     }
   };
 
-  if (!store) return <div className="text-center">Loading store...</div>;
+  // Show preview placeholder when no store context is available (like in admin template editor)
+  if (!store) {
+    return (
+      <div className="max-w-5xl mx-auto">
+        <Card className="border">
+          <CardContent className="p-6 text-center space-y-4">
+            <CreditCard className="mx-auto h-12 w-12 text-muted-foreground" />
+            <div className="space-y-2">
+              <h3 className="text-lg font-semibold">Inline Checkout Preview</h3>
+              <p className="text-sm text-muted-foreground">
+                This checkout element will display when connected to a store with products.
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {productIds.length > 0 
+                  ? `Configured with ${productIds.length} product${productIds.length === 1 ? '' : 's'}`
+                  : 'No products configured yet - use the Content panel to select products'
+                }
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+  
   if (productIds.length === 0) return <div className="text-center text-muted-foreground">Select products for this checkout in the Content panel.</div>;
 
   // Layout helpers for form

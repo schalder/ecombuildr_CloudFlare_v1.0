@@ -50,7 +50,11 @@ export const useStoreProducts = (options?: {
   const store = storefrontStore || userStore;
 
   const fetchProducts = useCallback(async () => {
-    if (!store) return;
+    if (!store) {
+      setLoading(false);
+      setProducts([]);
+      return;
+    }
 
     try {
       setLoading(true);
@@ -162,7 +166,11 @@ export const useStoreCategories = (websiteId?: string) => {
   const store = storefrontStore || userStore;
 
   const fetchCategories = useCallback(async () => {
-    if (!store) return;
+    if (!store) {
+      setLoading(false);
+      setCategories([]);
+      return;
+    }
 
     try {
       setLoading(true);
@@ -233,7 +241,11 @@ export const useProductById = (productId?: string) => {
   const store = storefrontStore || userStore;
 
   const fetchProduct = useCallback(async () => {
-    if (!store || !productId) return;
+    if (!store || !productId) {
+      setLoading(false);
+      setProduct(null);
+      return;
+    }
 
     try {
       setLoading(true);

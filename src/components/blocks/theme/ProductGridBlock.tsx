@@ -285,11 +285,18 @@ const ProductGridSave: React.FC<BlockSaveProps> = ({ block }) => {
   useEffect(() => {
     if (store?.id) {
       fetchProducts();
+    } else {
+      setLoading(false);
+      setProducts([]);
     }
   }, [store?.id, content]);
 
   const fetchProducts = async () => {
-    if (!store?.id) return;
+    if (!store?.id) {
+      setLoading(false);
+      setProducts([]);
+      return;
+    }
     
     setLoading(true);
     let query = supabase
@@ -448,7 +455,12 @@ const ProductGridSave: React.FC<BlockSaveProps> = ({ block }) => {
 
         {products.length === 0 && (
           <div className="text-center py-12">
-            <p className="text-muted-foreground">No products found</p>
+            <p className="text-muted-foreground">
+              {!store?.id 
+                ? 'Product Grid will display when connected to a store' 
+                : 'No products found'
+              }
+            </p>
           </div>
         )}
       </div>
