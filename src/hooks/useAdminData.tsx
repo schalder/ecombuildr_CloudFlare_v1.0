@@ -333,14 +333,32 @@ export const useAdminData = () => {
     if (!isAdmin) return false;
 
     try {
-      // This would typically require a special admin endpoint
-      // For now, we'll just redirect to their dashboard
-      // In a real implementation, you'd generate a temporary auth token
-      
-      
-      // Implementation would depend on your auth strategy
-      
-      return true;
+      // Call the admin impersonation edge function
+      const { data, error } = await supabase.functions.invoke('admin-impersonate', {
+        body: { user_id: userId }
+      });
+
+      if (error) {
+        console.error('Impersonation error:', error);
+        return false;
+      }
+
+      if (data.success && data.impersonation_url) {
+        // Store admin context before impersonation
+        sessionStorage.setItem('admin_impersonation', JSON.stringify({
+          admin_user_id: user?.id,
+          admin_email: user?.email,
+          target_user_id: userId,
+          target_user_email: data.target_user_email,
+          impersonation_start: new Date().toISOString()
+        }));
+
+        // Redirect to the magic link to sign in as the target user
+        window.location.href = data.impersonation_url;
+        return true;
+      }
+
+      return false;
     } catch (err) {
       console.error('Error logging in as user:', err);
       return false;
