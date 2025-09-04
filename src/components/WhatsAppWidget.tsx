@@ -44,9 +44,10 @@ export const WhatsAppWidget = () => {
   const openWhatsApp = () => {
     if (!settings) return;
 
-    const message = encodeURIComponent(settings.welcome_message);
-    const phoneNumber = settings.whatsapp_number.replace(/[^\d]/g, '');
-    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${message}`;
+    const rawMessage = settings.welcome_message || '';
+    const message = encodeURIComponent(rawMessage);
+    const phoneNumber = settings.whatsapp_number.replace(/\D/g, '');
+    const whatsappUrl = `https://api.whatsapp.com/send/?phone=${phoneNumber}&text=${message}&type=phone_number&app_absent=0`;
     
     window.open(whatsappUrl, '_blank');
   };

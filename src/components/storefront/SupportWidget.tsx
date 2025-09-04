@@ -43,9 +43,10 @@ export const SupportWidget: React.FC<SupportWidgetProps> = ({ website }) => {
       label: 'WhatsApp',
       color: 'bg-green-500 hover:bg-green-600',
       action: () => {
-        const message = encodeURIComponent(supportSettings.whatsapp.message || 'Hi! I need help with my order.');
-        const phoneNumber = supportSettings.whatsapp.number.replace(/[^\d]/g, '');
-        const whatsappUrl = `https://wa.me/${phoneNumber}?text=${message}`;
+        const rawMessage = supportSettings.whatsapp.message || 'Hi! I need help with my order.';
+        const message = encodeURIComponent(rawMessage);
+        const phoneNumber = supportSettings.whatsapp.number.replace(/\D/g, '');
+        const whatsappUrl = `https://api.whatsapp.com/send/?phone=${phoneNumber}&text=${message}&type=phone_number&app_absent=0`;
         window.open(whatsappUrl, '_blank');
       }
     });
