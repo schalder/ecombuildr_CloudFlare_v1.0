@@ -164,10 +164,10 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
           )}
         </div>
         
-        {/* Floating Add Section button - no layout impact */}
+        {/* Builder UI elements - separate from content area */}
         {!isPreviewMode && pageData.sections.length > 0 && (
-          <div className="fixed bottom-6 right-6 z-50">
-            <Button variant="outline" onClick={handleAddSection} className="shadow-lg">
+          <div className="py-8 text-center" data-builder-ui="true">
+            <Button variant="outline" onClick={handleAddSection}>
               <Plus className="h-4 w-4 mr-2" />
               Add Section
             </Button>
