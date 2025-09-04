@@ -9,6 +9,7 @@ import { setGlobalCurrency } from '@/lib/currency';
 import { PixelManager } from '@/components/pixel/PixelManager';
 import { WebsiteProvider } from '@/contexts/WebsiteContext';
 import { FloatingCartButton } from '@/components/storefront/FloatingCartButton';
+import { SupportWidget } from '@/components/storefront/SupportWidget';
 
 interface WebsiteData {
   id: string;
@@ -127,7 +128,13 @@ export const WebsiteLayout: React.FC = () => {
               <Outlet />
             </main>
             {(website.settings?.floating_cart?.enabled ?? true) && (
-              <FloatingCartButton position={website.settings?.floating_cart?.position ?? 'bottom-right'} />
+              <FloatingCartButton 
+                position={website.settings?.floating_cart?.position ?? 'bottom-right'} 
+                color={website.settings?.floating_cart?.color}
+              />
+            )}
+            {website.settings?.support_widget?.enabled && (
+              <SupportWidget website={website} />
             )}
             <WebsiteFooter website={website} />
           </div>

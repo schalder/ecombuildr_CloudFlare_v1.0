@@ -110,9 +110,14 @@ export const DomainWebsiteRouter: React.FC<DomainWebsiteRouterProps> = ({
         </Routes>
       </main>
       {(website.settings?.floating_cart?.enabled ?? true) && (
-        <FloatingCartButton position={website.settings?.floating_cart?.position ?? 'bottom-right'} />
+        <FloatingCartButton 
+          position={website.settings?.floating_cart?.position ?? 'bottom-right'} 
+          color={website.settings?.floating_cart?.color}
+        />
       )}
-      <SupportWidget website={website} />
+      {website.settings?.support_widget?.enabled && (
+        <SupportWidget website={website} />
+      )}
       <WebsiteFooter website={website} />
     </WebsiteProvider>
   );

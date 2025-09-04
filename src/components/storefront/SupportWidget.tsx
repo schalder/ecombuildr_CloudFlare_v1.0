@@ -19,6 +19,8 @@ export const SupportWidget: React.FC<SupportWidgetProps> = ({ website }) => {
     return null;
   }
 
+  const customColor = supportSettings.color;
+
   // Hide on cart and checkout pages to avoid redundancy
   const hiddenRoutes = ['/cart', '/checkout'];
   const shouldHide = hiddenRoutes.some(route => location.pathname.endsWith(route));
@@ -147,10 +149,14 @@ export const SupportWidget: React.FC<SupportWidgetProps> = ({ website }) => {
         onClick={handleMainButtonClick}
         className={cn(
           'h-14 w-14 rounded-full shadow-lg transition-all duration-300 hover:scale-105',
-          supportOptions.length === 1 
+          !customColor && (supportOptions.length === 1 
             ? supportOptions[0].color 
-            : 'bg-primary hover:bg-primary/90'
+            : 'bg-primary hover:bg-primary/90')
         )}
+        style={customColor ? {
+          backgroundColor: customColor,
+          borderColor: customColor,
+        } : undefined}
         aria-label={supportOptions.length === 1 ? supportOptions[0].label : 'Support options'}
       >
         <MessageCircle className="h-6 w-6 text-white" />

@@ -9,10 +9,12 @@ import { cn } from '@/lib/utils';
 
 interface FloatingCartButtonProps {
   position?: 'bottom-right' | 'bottom-left';
+  color?: string;
 }
 
 export const FloatingCartButton: React.FC<FloatingCartButtonProps> = ({ 
-  position = 'bottom-right' 
+  position = 'bottom-right',
+  color
 }) => {
   const { itemCount } = useCart();
   const location = useLocation();
@@ -40,7 +42,14 @@ export const FloatingCartButton: React.FC<FloatingCartButtonProps> = ({
       >
         <Button
           size="lg"
-          className="h-14 w-14 rounded-full shadow-lg relative bg-primary hover:bg-primary/90"
+          className={cn(
+            "h-14 w-14 rounded-full shadow-lg relative bg-primary hover:bg-primary/90",
+            !color && "bg-primary hover:bg-primary/90"
+          )}
+          style={color ? {
+            backgroundColor: color,
+            borderColor: color,
+          } : undefined}
           aria-label={`Open cart (${itemCount} items)`}
         >
           <ShoppingCart className="h-6 w-6" />

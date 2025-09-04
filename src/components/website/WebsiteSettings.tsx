@@ -47,9 +47,11 @@ const websiteSettingsSchema = z.object({
   // Floating cart settings
   floating_cart_enabled: z.boolean().default(true),
   floating_cart_position: z.enum(['bottom-right', 'bottom-left']).default('bottom-right'),
+  floating_cart_color: z.string().optional(),
   // Support widget settings
   support_widget_enabled: z.boolean().default(false),
   support_widget_position: z.enum(['bottom-right', 'bottom-left']).default('bottom-right'),
+  support_widget_color: z.string().optional(),
   support_whatsapp_enabled: z.boolean().default(false),
   support_whatsapp_number: z.string()
     .optional()
@@ -160,8 +162,10 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
       variant_button_hover_text: website.settings?.variant_button_hover_text || '',
       floating_cart_enabled: website.settings?.floating_cart?.enabled ?? true,
       floating_cart_position: website.settings?.floating_cart?.position ?? 'bottom-right',
+      floating_cart_color: website.settings?.floating_cart?.color ?? '',
       support_widget_enabled: website.settings?.support_widget?.enabled ?? false,
       support_widget_position: website.settings?.support_widget?.position ?? 'bottom-right',
+      support_widget_color: website.settings?.support_widget?.color ?? '',
       support_whatsapp_enabled: website.settings?.support_widget?.whatsapp?.enabled ?? false,
       support_whatsapp_number: website.settings?.support_widget?.whatsapp?.number ?? '',
       support_whatsapp_message: website.settings?.support_widget?.whatsapp?.message ?? 'Hi! I need help with my order.',
@@ -249,8 +253,10 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
         variant_button_hover_text,
         floating_cart_enabled,
         floating_cart_position,
+        floating_cart_color,
         support_widget_enabled,
         support_widget_position,
+        support_widget_color,
         support_whatsapp_enabled,
         support_whatsapp_number,
         support_whatsapp_message,
@@ -285,10 +291,12 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
         floating_cart: {
           enabled: floating_cart_enabled,
           position: floating_cart_position,
+          color: floating_cart_color || null,
         },
         support_widget: {
           enabled: support_widget_enabled,
           position: support_widget_position,
+          color: support_widget_color || null,
           whatsapp: {
             enabled: support_whatsapp_enabled,
             number: support_whatsapp_number ? support_whatsapp_number.replace(/\D/g, '') : null,
@@ -1025,6 +1033,27 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
                         </FormItem>
                       )}
                      />
+
+                     <FormField
+                       control={form.control}
+                       name="floating_cart_color"
+                       render={({ field }) => (
+                         <FormItem>
+                           <FormLabel>Floating Cart Color</FormLabel>
+                           <FormControl>
+                             <ColorPicker
+                               color={field.value || ''}
+                               onChange={field.onChange}
+                               label=""
+                             />
+                           </FormControl>
+                           <FormDescription>
+                             Customize the floating cart button color. Leave empty for default.
+                           </FormDescription>
+                           <FormMessage />
+                         </FormItem>
+                       )}
+                     />
                    </div>
 
                    <Separator />
@@ -1079,10 +1108,31 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
                            </FormDescription>
                            <FormMessage />
                          </FormItem>
-                       )}
-                     />
+                        )}
+                      />
 
-                     <div className="grid grid-cols-1 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="support_widget_color"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Support Widget Color</FormLabel>
+                            <FormControl>
+                              <ColorPicker
+                                color={field.value || ''}
+                                onChange={field.onChange}
+                                label=""
+                              />
+                            </FormControl>
+                            <FormDescription>
+                              Customize the support widget button color. Leave empty for default.
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <div className="grid grid-cols-1 gap-4">
                        <div className="space-y-4">
                          <h5 className="text-sm font-medium">WhatsApp Support</h5>
                          
