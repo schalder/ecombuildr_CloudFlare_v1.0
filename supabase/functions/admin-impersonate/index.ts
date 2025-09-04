@@ -31,21 +31,17 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Create user-scoped client for admin verification (preserves user context)
-    const supabaseUserClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      {
-        global: {
-          headers: {
-            authorization: authHeader,
-          },
-        },
-      }
-    );
+    // Extract JWT from Bearer token
+    const jwt = authHeader.replace('Bearer ', '');
+    if (!jwt) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid token format' }), 
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
-    // Verify the requesting user and check admin status in one go
-    const { data: { user }, error: authError } = await supabaseUserClient.auth.getUser();
+    // Verify the requesting user using service role client with JWT
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(jwt);
 
     if (authError || !user) {
       console.log('Authentication failed:', authError);
@@ -55,16 +51,22 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Check if user is super admin using the user-scoped client so auth.uid() works
-    const { data: isAdmin, error: adminError } = await supabaseUserClient.rpc('is_super_admin');
-    
-    if (adminError) {
-      console.error('Admin check error:', adminError);
+    // Check if user is super admin directly from profiles table using service role
+    const { data: profile, error: profileError } = await supabaseAdmin
+      .from('profiles')
+      .select('is_super_admin')
+      .eq('id', user.id)
+      .single();
+
+    if (profileError) {
+      console.error('Profile lookup error:', profileError);
       return new Response(
         JSON.stringify({ error: 'Failed to verify admin privileges' }), 
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    const isAdmin = profile?.is_super_admin;
     
     if (!isAdmin) {
       console.log(`Access denied for user ${user.email} (${user.id}) - not a super admin`);
