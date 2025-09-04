@@ -246,17 +246,27 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({
               />
             ))}
             
-            {!isPreviewMode && (
-              <div className="pt-4 text-center">
-                <Button variant="outline" size="sm" onClick={handleAddRow}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Row
-                </Button>
-              </div>
-            )}
           </div>
         )}
       </div>
+
+      {/* Floating Add Row Button */}
+      {!isPreviewMode && section.rows.length > 0 && (isSelected || isHovered) && (
+        <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 z-10">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={(e) => {
+              e.stopPropagation();
+              handleAddRow();
+            }}
+            className="bg-background border shadow-sm hover:bg-accent"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add Row
+          </Button>
+        </div>
+      )}
     </div>
   );
 };
