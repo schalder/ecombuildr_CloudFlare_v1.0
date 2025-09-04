@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { MessageCircle, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
+import { buildWhatsAppUrl } from '@/lib/utils';
 
 interface SupportSettings {
   id: string;
@@ -44,11 +45,7 @@ export const WhatsAppWidget = () => {
   const openWhatsApp = () => {
     if (!settings) return;
 
-    const rawMessage = settings.welcome_message || '';
-    const message = encodeURIComponent(rawMessage);
-    const phoneNumber = settings.whatsapp_number.replace(/\D/g, '');
-    const whatsappUrl = `https://api.whatsapp.com/send/?phone=${phoneNumber}&text=${message}&type=phone_number&app_absent=0`;
-    
+    const whatsappUrl = buildWhatsAppUrl(settings.whatsapp_number, settings.welcome_message);
     window.open(whatsappUrl, '_blank');
   };
 

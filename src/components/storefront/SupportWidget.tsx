@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { MessageCircle, Phone, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+import { cn, buildWhatsAppUrl } from '@/lib/utils';
 
 interface SupportWidgetProps {
   website: any;
@@ -43,10 +43,8 @@ export const SupportWidget: React.FC<SupportWidgetProps> = ({ website }) => {
       label: 'WhatsApp',
       color: 'bg-green-500 hover:bg-green-600',
       action: () => {
-        const rawMessage = supportSettings.whatsapp.message || 'Hi! I need help with my order.';
-        const message = encodeURIComponent(rawMessage);
-        const phoneNumber = supportSettings.whatsapp.number.replace(/\D/g, '');
-        const whatsappUrl = `https://api.whatsapp.com/send/?phone=${phoneNumber}&text=${message}&type=phone_number&app_absent=0`;
+        const message = supportSettings.whatsapp.message || 'Hi! I need help with my order.';
+        const whatsappUrl = buildWhatsAppUrl(supportSettings.whatsapp.number, message);
         window.open(whatsappUrl, '_blank');
       }
     });

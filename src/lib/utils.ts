@@ -41,3 +41,14 @@ export function debounce<T extends (...args: any[]) => void>(
   };
 }
 
+export function buildWhatsAppUrl(phoneNumber: string, message?: string): string {
+  const sanitizedNumber = phoneNumber.replace(/\D/g, '');
+  const encodedMessage = message ? encodeURIComponent(message) : '';
+  
+  if (sanitizedNumber) {
+    return `https://wa.me/${sanitizedNumber}?text=${encodedMessage}`;
+  }
+  
+  return `https://wa.me/?text=${encodedMessage}`;
+}
+
