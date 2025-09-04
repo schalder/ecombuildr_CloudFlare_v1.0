@@ -44,7 +44,7 @@ export const SupportWidget: React.FC<SupportWidgetProps> = ({ website }) => {
       color: 'bg-green-500 hover:bg-green-600',
       action: () => {
         const message = supportSettings.whatsapp.message || 'Hi! I need help with my order.';
-        openWhatsApp(supportSettings.whatsapp.number, message);
+        openWhatsApp(supportSettings.whatsapp.number, message, true);
       }
     });
   }

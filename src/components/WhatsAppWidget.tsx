@@ -44,7 +44,7 @@ export const WhatsAppWidget = () => {
 
   const handleWhatsAppClick = () => {
     if (!settings) return;
-    openWhatsApp(settings.whatsapp_number, settings.welcome_message);
+    openWhatsApp(settings.whatsapp_number, settings.welcome_message, true);
   };
 
   if (loading || !settings || !settings.is_enabled) {
