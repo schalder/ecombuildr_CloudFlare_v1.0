@@ -49,10 +49,19 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Check if user is super admin
-    const { data: isAdmin, error: adminError } = await supabaseClient.rpc('is_super_admin');
+    // Check if user is super admin using service role client to bypass RLS
+    const { data: isAdmin, error: adminError } = await supabaseAdmin.rpc('is_super_admin');
     
-    if (adminError || !isAdmin) {
+    if (adminError) {
+      console.error('Admin check error:', adminError);
+      return new Response(
+        JSON.stringify({ error: 'Failed to verify admin privileges' }), 
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    if (!isAdmin) {
+      console.log(`Access denied for user ${user.email} (${user.id}) - not a super admin`);
       return new Response(
         JSON.stringify({ error: 'Access denied - admin privileges required' }), 
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
