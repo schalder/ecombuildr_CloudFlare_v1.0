@@ -1227,7 +1227,7 @@ const ElementorPageBuilderContent: React.FC<ElementorPageBuilderProps> = memo(({
                     </Button>
                   </div>
                 ) : (
-                  <div className="space-y-4">
+                  <div className="space-y-0">
                     {/* Section drop zone at the beginning */}
                     <SectionDropZone 
                       insertIndex={0} 

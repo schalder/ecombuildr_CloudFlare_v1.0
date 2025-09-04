@@ -32,9 +32,9 @@ export const SectionDropZone: React.FC<SectionDropZoneProps> = ({
     <div
       ref={drop}
       className={cn(
-        'relative h-2 mx-4 transition-all duration-200',
+        'relative mx-4 transition-all duration-200',
         className,
-        showDropZone ? 'h-8' : 'h-2'
+        showDropZone ? 'h-8 -my-2' : 'h-2 -my-1'
       )}
     >
       {/* Blue line indicator */}
