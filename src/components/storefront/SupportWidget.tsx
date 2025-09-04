@@ -1,0 +1,146 @@
+import React, { useState } from 'react';
+import { useLocation } from 'react-router-dom';
+import { MessageCircle, Phone, X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
+
+interface SupportWidgetProps {
+  website: any;
+}
+
+export const SupportWidget: React.FC<SupportWidgetProps> = ({ website }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const location = useLocation();
+
+  const supportSettings = website.settings?.support_widget;
+
+  // Don't render if disabled or no settings
+  if (!supportSettings?.enabled) {
+    return null;
+  }
+
+  // Hide on cart and checkout pages to avoid redundancy
+  const hiddenRoutes = ['/cart', '/checkout'];
+  const shouldHide = hiddenRoutes.some(route => location.pathname.endsWith(route));
+
+  if (shouldHide) {
+    return null;
+  }
+
+  const position = supportSettings.position || 'bottom-right';
+  const positionClasses = {
+    'bottom-right': 'bottom-6 right-6',
+    'bottom-left': 'bottom-6 left-6'
+  };
+
+  // Build support options based on configuration
+  const supportOptions = [];
+
+  if (supportSettings.whatsapp?.enabled && supportSettings.whatsapp?.number) {
+    supportOptions.push({
+      type: 'whatsapp',
+      icon: MessageCircle,
+      label: 'WhatsApp',
+      color: 'bg-green-500 hover:bg-green-600',
+      action: () => {
+        const message = encodeURIComponent(supportSettings.whatsapp.message || 'Hi! I need help with my order.');
+        const phoneNumber = supportSettings.whatsapp.number.replace(/[^\d]/g, '');
+        const whatsappUrl = `https://wa.me/${phoneNumber}?text=${message}`;
+        window.open(whatsappUrl, '_blank');
+      }
+    });
+  }
+
+  if (supportSettings.phone?.enabled && supportSettings.phone?.number) {
+    supportOptions.push({
+      type: 'phone',
+      icon: Phone,
+      label: 'Call',
+      color: 'bg-blue-500 hover:bg-blue-600',
+      action: () => {
+        window.location.href = `tel:${supportSettings.phone.number}`;
+      }
+    });
+  }
+
+  if (supportSettings.messenger?.enabled && supportSettings.messenger?.link) {
+    supportOptions.push({
+      type: 'messenger',
+      icon: MessageCircle,
+      label: 'Messenger',
+      color: 'bg-blue-600 hover:bg-blue-700',
+      action: () => {
+        window.open(supportSettings.messenger.link, '_blank');
+      }
+    });
+  }
+
+  // Don't render if no support options are available
+  if (supportOptions.length === 0) {
+    return null;
+  }
+
+  const handleMainButtonClick = () => {
+    if (supportOptions.length === 1) {
+      // If only one option, trigger it directly
+      supportOptions[0].action();
+    } else {
+      // If multiple options, toggle expansion
+      setIsExpanded(!isExpanded);
+    }
+  };
+
+  return (
+    <div className={cn('fixed z-40', positionClasses[position])}>
+      {/* Expanded options */}
+      {isExpanded && supportOptions.length > 1 && (
+        <div className="mb-4 flex flex-col gap-2">
+          {supportOptions.map((option, index) => {
+            const IconComponent = option.icon;
+            return (
+              <Button
+                key={option.type}
+                onClick={option.action}
+                className={cn(
+                  'h-12 w-12 rounded-full shadow-lg transition-all duration-200',
+                  'animate-in slide-in-from-bottom-2',
+                  option.color
+                )}
+                style={{
+                  animationDelay: `${index * 50}ms`,
+                  animationFillMode: 'both'
+                }}
+                aria-label={option.label}
+              >
+                <IconComponent className="h-5 w-5 text-white" />
+              </Button>
+            );
+          })}
+          
+          {/* Close button */}
+          <Button
+            onClick={() => setIsExpanded(false)}
+            className="h-12 w-12 rounded-full bg-gray-500 hover:bg-gray-600 shadow-lg transition-all duration-200"
+            aria-label="Close support options"
+          >
+            <X className="h-5 w-5 text-white" />
+          </Button>
+        </div>
+      )}
+
+      {/* Main support button */}
+      <Button
+        onClick={handleMainButtonClick}
+        className={cn(
+          'h-14 w-14 rounded-full shadow-lg transition-all duration-300 hover:scale-105',
+          supportOptions.length === 1 
+            ? supportOptions[0].color 
+            : 'bg-primary hover:bg-primary/90'
+        )}
+        aria-label={supportOptions.length === 1 ? supportOptions[0].label : 'Support options'}
+      >
+        <MessageCircle className="h-6 w-6 text-white" />
+      </Button>
+    </div>
+  );
+};

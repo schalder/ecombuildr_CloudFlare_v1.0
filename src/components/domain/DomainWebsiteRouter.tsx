@@ -14,6 +14,7 @@ import { StorefrontProducts } from '@/pages/storefront/StorefrontProducts';
 import { WebsiteHeader } from '@/components/storefront/WebsiteHeader';
 import { WebsiteFooter } from '@/components/storefront/WebsiteFooter';
 import { FloatingCartButton } from '@/components/storefront/FloatingCartButton';
+import { SupportWidget } from '@/components/storefront/SupportWidget';
 import { WebsiteProvider } from '@/contexts/WebsiteContext';
 
 const DynamicWebsiteRoute: React.FC<{ fallback: React.ReactElement; websiteId: string }> = ({ fallback, websiteId }) => {
@@ -111,6 +112,7 @@ export const DomainWebsiteRouter: React.FC<DomainWebsiteRouterProps> = ({
       {(website.settings?.floating_cart?.enabled ?? true) && (
         <FloatingCartButton position={website.settings?.floating_cart?.position ?? 'bottom-right'} />
       )}
+      <SupportWidget website={website} />
       <WebsiteFooter website={website} />
     </WebsiteProvider>
   );

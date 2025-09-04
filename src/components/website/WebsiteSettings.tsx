@@ -47,6 +47,16 @@ const websiteSettingsSchema = z.object({
   // Floating cart settings
   floating_cart_enabled: z.boolean().default(true),
   floating_cart_position: z.enum(['bottom-right', 'bottom-left']).default('bottom-right'),
+  // Support widget settings
+  support_widget_enabled: z.boolean().default(false),
+  support_widget_position: z.enum(['bottom-right', 'bottom-left']).default('bottom-right'),
+  support_whatsapp_enabled: z.boolean().default(false),
+  support_whatsapp_number: z.string().optional(),
+  support_whatsapp_message: z.string().optional(),
+  support_phone_enabled: z.boolean().default(false),
+  support_phone_number: z.string().optional(),
+  support_messenger_enabled: z.boolean().default(false),
+  support_messenger_link: z.string().optional(),
 });
 
 type WebsiteSettingsForm = z.infer<typeof websiteSettingsSchema>;
@@ -144,6 +154,15 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
       variant_button_hover_text: website.settings?.variant_button_hover_text || '',
       floating_cart_enabled: website.settings?.floating_cart?.enabled ?? true,
       floating_cart_position: website.settings?.floating_cart?.position ?? 'bottom-right',
+      support_widget_enabled: website.settings?.support_widget?.enabled ?? false,
+      support_widget_position: website.settings?.support_widget?.position ?? 'bottom-right',
+      support_whatsapp_enabled: website.settings?.support_widget?.whatsapp?.enabled ?? false,
+      support_whatsapp_number: website.settings?.support_widget?.whatsapp?.number ?? '',
+      support_whatsapp_message: website.settings?.support_widget?.whatsapp?.message ?? 'Hi! I need help with my order.',
+      support_phone_enabled: website.settings?.support_widget?.phone?.enabled ?? false,
+      support_phone_number: website.settings?.support_widget?.phone?.number ?? '',
+      support_messenger_enabled: website.settings?.support_widget?.messenger?.enabled ?? false,
+      support_messenger_link: website.settings?.support_widget?.messenger?.link ?? '',
     },
   });
 
@@ -224,6 +243,15 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
         variant_button_hover_text,
         floating_cart_enabled,
         floating_cart_position,
+        support_widget_enabled,
+        support_widget_position,
+        support_whatsapp_enabled,
+        support_whatsapp_number,
+        support_whatsapp_message,
+        support_phone_enabled,
+        support_phone_number,
+        support_messenger_enabled,
+        support_messenger_link,
         ...basicFields 
       } = data;
       
@@ -251,6 +279,23 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
         floating_cart: {
           enabled: floating_cart_enabled,
           position: floating_cart_position,
+        },
+        support_widget: {
+          enabled: support_widget_enabled,
+          position: support_widget_position,
+          whatsapp: {
+            enabled: support_whatsapp_enabled,
+            number: support_whatsapp_number || null,
+            message: support_whatsapp_message || 'Hi! I need help with my order.',
+          },
+          phone: {
+            enabled: support_phone_enabled,
+            number: support_phone_number || null,
+          },
+          messenger: {
+            enabled: support_messenger_enabled,
+            link: support_messenger_link || null,
+          },
         },
       };
 
@@ -973,11 +1018,231 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
                           <FormMessage />
                         </FormItem>
                       )}
-                    />
-                  </div>
-                </div>
-              </AccordionContent>
-            </AccordionItem>
+                     />
+                   </div>
+
+                   <Separator />
+
+                   <div className="space-y-4">
+                     <h4 className="text-sm font-semibold">Support Widget</h4>
+                     
+                     <FormField
+                       control={form.control}
+                       name="support_widget_enabled"
+                       render={({ field }) => (
+                         <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                           <div className="space-y-0.5">
+                             <FormLabel className="text-base">Support Widget</FormLabel>
+                             <FormDescription>
+                               Show a floating support widget with contact options for customer support.
+                             </FormDescription>
+                           </div>
+                           <FormControl>
+                             <Switch
+                               checked={field.value}
+                               onCheckedChange={field.onChange}
+                             />
+                           </FormControl>
+                         </FormItem>
+                       )}
+                     />
+
+                     <FormField
+                       control={form.control}
+                       name="support_widget_position"
+                       render={({ field }) => (
+                         <FormItem>
+                           <FormLabel>Support Widget Position</FormLabel>
+                           <FormControl>
+                             <Select 
+                               value={field.value} 
+                               onValueChange={field.onChange}
+                               disabled={!form.watch('support_widget_enabled')}
+                             >
+                               <SelectTrigger>
+                                 <SelectValue placeholder="Select position" />
+                               </SelectTrigger>
+                               <SelectContent>
+                                 <SelectItem value="bottom-right">Bottom Right</SelectItem>
+                                 <SelectItem value="bottom-left">Bottom Left</SelectItem>
+                               </SelectContent>
+                             </Select>
+                           </FormControl>
+                           <FormDescription>
+                             Choose where the support widget appears on the page.
+                           </FormDescription>
+                           <FormMessage />
+                         </FormItem>
+                       )}
+                     />
+
+                     <div className="grid grid-cols-1 gap-4">
+                       <div className="space-y-4">
+                         <h5 className="text-sm font-medium">WhatsApp Support</h5>
+                         
+                         <FormField
+                           control={form.control}
+                           name="support_whatsapp_enabled"
+                           render={({ field }) => (
+                             <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                               <div className="space-y-0.5">
+                                 <FormLabel className="text-sm">Enable WhatsApp</FormLabel>
+                                 <FormDescription className="text-xs">
+                                   Allow customers to contact via WhatsApp.
+                                 </FormDescription>
+                               </div>
+                               <FormControl>
+                                 <Switch
+                                   checked={field.value}
+                                   onCheckedChange={field.onChange}
+                                   disabled={!form.watch('support_widget_enabled')}
+                                 />
+                               </FormControl>
+                             </FormItem>
+                           )}
+                         />
+
+                         <FormField
+                           control={form.control}
+                           name="support_whatsapp_number"
+                           render={({ field }) => (
+                             <FormItem>
+                               <FormLabel>WhatsApp Number</FormLabel>
+                               <FormControl>
+                                 <Input 
+                                   placeholder="+1234567890" 
+                                   {...field}
+                                   disabled={!form.watch('support_whatsapp_enabled') || !form.watch('support_widget_enabled')}
+                                 />
+                               </FormControl>
+                               <FormDescription>
+                                 Include country code (e.g., +8801234567890).
+                               </FormDescription>
+                               <FormMessage />
+                             </FormItem>
+                           )}
+                         />
+
+                         <FormField
+                           control={form.control}
+                           name="support_whatsapp_message"
+                           render={({ field }) => (
+                             <FormItem>
+                               <FormLabel>Default WhatsApp Message</FormLabel>
+                               <FormControl>
+                                 <Input 
+                                   placeholder="Hi! I need help with my order." 
+                                   {...field}
+                                   disabled={!form.watch('support_whatsapp_enabled') || !form.watch('support_widget_enabled')}
+                                 />
+                               </FormControl>
+                               <FormDescription>
+                                 Pre-filled message when customer clicks WhatsApp.
+                               </FormDescription>
+                               <FormMessage />
+                             </FormItem>
+                           )}
+                         />
+                       </div>
+
+                       <div className="space-y-4">
+                         <h5 className="text-sm font-medium">Phone Support</h5>
+                         
+                         <FormField
+                           control={form.control}
+                           name="support_phone_enabled"
+                           render={({ field }) => (
+                             <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                               <div className="space-y-0.5">
+                                 <FormLabel className="text-sm">Enable Phone</FormLabel>
+                                 <FormDescription className="text-xs">
+                                   Allow customers to call directly.
+                                 </FormDescription>
+                               </div>
+                               <FormControl>
+                                 <Switch
+                                   checked={field.value}
+                                   onCheckedChange={field.onChange}
+                                   disabled={!form.watch('support_widget_enabled')}
+                                 />
+                               </FormControl>
+                             </FormItem>
+                           )}
+                         />
+
+                         <FormField
+                           control={form.control}
+                           name="support_phone_number"
+                           render={({ field }) => (
+                             <FormItem>
+                               <FormLabel>Phone Number</FormLabel>
+                               <FormControl>
+                                 <Input 
+                                   placeholder="+1234567890" 
+                                   {...field}
+                                   disabled={!form.watch('support_phone_enabled') || !form.watch('support_widget_enabled')}
+                                 />
+                               </FormControl>
+                               <FormDescription>
+                                 Include country code for international calls.
+                               </FormDescription>
+                               <FormMessage />
+                             </FormItem>
+                           )}
+                         />
+                       </div>
+
+                       <div className="space-y-4">
+                         <h5 className="text-sm font-medium">Messenger Support</h5>
+                         
+                         <FormField
+                           control={form.control}
+                           name="support_messenger_enabled"
+                           render={({ field }) => (
+                             <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                               <div className="space-y-0.5">
+                                 <FormLabel className="text-sm">Enable Messenger</FormLabel>
+                                 <FormDescription className="text-xs">
+                                   Link to Facebook Messenger or other chat platforms.
+                                 </FormDescription>
+                               </div>
+                               <FormControl>
+                                 <Switch
+                                   checked={field.value}
+                                   onCheckedChange={field.onChange}
+                                   disabled={!form.watch('support_widget_enabled')}
+                                 />
+                               </FormControl>
+                             </FormItem>
+                           )}
+                         />
+
+                         <FormField
+                           control={form.control}
+                           name="support_messenger_link"
+                           render={({ field }) => (
+                             <FormItem>
+                               <FormLabel>Messenger Link</FormLabel>
+                               <FormControl>
+                                 <Input 
+                                   placeholder="https://m.me/yourpage" 
+                                   {...field}
+                                   disabled={!form.watch('support_messenger_enabled') || !form.watch('support_widget_enabled')}
+                                 />
+                               </FormControl>
+                               <FormDescription>
+                                 Link to your Facebook Messenger or other chat platform.
+                               </FormDescription>
+                               <FormMessage />
+                             </FormItem>
+                           )}
+                         />
+                       </div>
+                     </div>
+                   </div>
+                 </div>
+               </AccordionContent>
+             </AccordionItem>
           </Accordion>
 
           {/* Save Button - Sticky on mobile for better UX */}
