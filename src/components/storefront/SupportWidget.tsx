@@ -90,11 +90,18 @@ export const SupportWidget: React.FC<SupportWidgetProps> = ({ website }) => {
     }
   };
 
+  const expandDirection = position === 'bottom-right' ? 'left' : 'right';
+  
   return (
-    <div className={cn('fixed z-40', positionClasses[position])}>
+    <div className={cn('fixed z-60', positionClasses[position])}>
       {/* Expanded options */}
       {isExpanded && supportOptions.length > 1 && (
-        <div className="mb-4 flex flex-col gap-2">
+        <div 
+          className={cn(
+            'absolute bottom-0 flex gap-2 items-center',
+            position === 'bottom-right' ? 'right-16' : 'left-16'
+          )}
+        >
           {supportOptions.map((option, index) => {
             const IconComponent = option.icon;
             return (
@@ -103,7 +110,8 @@ export const SupportWidget: React.FC<SupportWidgetProps> = ({ website }) => {
                 onClick={option.action}
                 className={cn(
                   'h-12 w-12 rounded-full shadow-lg transition-all duration-200',
-                  'animate-in slide-in-from-bottom-2',
+                  'animate-in',
+                  position === 'bottom-right' ? 'slide-in-from-right-2' : 'slide-in-from-left-2',
                   option.color
                 )}
                 style={{
@@ -120,7 +128,15 @@ export const SupportWidget: React.FC<SupportWidgetProps> = ({ website }) => {
           {/* Close button */}
           <Button
             onClick={() => setIsExpanded(false)}
-            className="h-12 w-12 rounded-full bg-gray-500 hover:bg-gray-600 shadow-lg transition-all duration-200"
+            className={cn(
+              'h-12 w-12 rounded-full bg-gray-500 hover:bg-gray-600 shadow-lg transition-all duration-200',
+              'animate-in',
+              position === 'bottom-right' ? 'slide-in-from-right-2' : 'slide-in-from-left-2'
+            )}
+            style={{
+              animationDelay: `${supportOptions.length * 50}ms`,
+              animationFillMode: 'both'
+            }}
             aria-label="Close support options"
           >
             <X className="h-5 w-5 text-white" />
