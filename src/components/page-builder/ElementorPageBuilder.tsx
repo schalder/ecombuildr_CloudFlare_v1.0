@@ -1584,9 +1584,18 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
         onSelect();
       }}
     >
+      {/* Overlay border for sections with background/shadow */}
+      {shouldShowToolbar && (userBackground || userShadow) && (
+        <div 
+          className={`absolute inset-0 pointer-events-none z-30 border-2 border-dashed ${
+            isSelected ? 'border-primary' : 'border-primary/50'
+          }`}
+          style={{ borderRadius: 'inherit' }}
+        />
+      )}
       {/* Section Toolbar */}
       {shouldShowToolbar && (
-        <div className="absolute -top-12 left-0 z-20 flex items-center gap-1 bg-sky-100 text-gray-800 border border-sky-200 px-3 py-1 rounded-md text-xs shadow-lg">
+        <div className="absolute -top-12 left-0 z-40 flex items-center gap-1 bg-sky-100 text-gray-800 border border-sky-200 px-3 py-1 rounded-md text-xs shadow-lg">
           <Grip className="h-3 w-3" />
           <span className="font-medium">Section</span>
           <Separator orientation="vertical" className="mx-1 h-4" />
@@ -1852,9 +1861,19 @@ const RowComponent: React.FC<RowComponentProps> = ({
         onSelect();
       }}
     >
+      {/* Overlay border for rows with background/shadow */}
+      {shouldShowToolbar && (userBackground || userShadow) && (
+        <div 
+          className={`absolute inset-0 pointer-events-none z-30 border-2 border-dashed ${
+            isSelected ? 'border-blue-600' : 'border-blue-500'
+          }`}
+          style={{ borderRadius: 'inherit' }}
+        />
+      )}
+
       {/* Row Toolbar */}
       {shouldShowToolbar && (
-        <div className="absolute -top-10 left-0 z-10 flex items-center gap-1 bg-violet-100 text-gray-800 border border-violet-200 px-3 py-1 rounded-md text-xs shadow-lg">
+        <div className="absolute -top-10 left-0 z-40 flex items-center gap-1 bg-violet-100 text-gray-800 border border-violet-200 px-3 py-1 rounded-md text-xs shadow-lg">
           <div ref={dragRef} className="cursor-move">
             <Grip className="h-3 w-3" />
           </div>
@@ -2052,9 +2071,19 @@ const ColumnComponent: React.FC<ColumnComponentProps> = ({
         onSelect();
       }}
     >
+      {/* Overlay border for columns with background/shadow */}
+      {shouldShowToolbar && (userBackground || userShadow) && (
+        <div 
+          className={`absolute inset-0 pointer-events-none z-30 border-2 border-dashed ${
+            isSelected ? 'border-primary/60' : 'border-primary/50'
+          }`}
+          style={{ borderRadius: 'inherit' }}
+        />
+      )}
+
       {/* Column Toolbar */}
       {shouldShowToolbar && (
-        <div className="absolute -top-8 left-0 z-10 flex items-center gap-1 bg-emerald-100 text-gray-800 border border-emerald-200 px-2 py-1 rounded text-xs shadow-lg">
+        <div className="absolute -top-8 left-0 z-40 flex items-center gap-1 bg-emerald-100 text-gray-800 border border-emerald-200 px-2 py-1 rounded text-xs shadow-lg">
           <Grip className="h-3 w-3" />
           <span className="font-medium">Column</span>
           <Separator orientation="vertical" className="mx-1 h-3" />
@@ -2268,7 +2297,7 @@ const ElementWrapper: React.FC<ElementWrapperProps> = ({
     >
       {/* Element Toolbar */}
       {shouldShowToolbar && (
-        <div className="absolute -top-8 left-0 z-20 flex items-center gap-1 bg-amber-100 text-gray-800 border border-amber-200 px-2 py-1 rounded text-xs shadow-lg">
+        <div className="absolute -top-8 left-0 z-40 flex items-center gap-1 bg-amber-100 text-gray-800 border border-amber-200 px-2 py-1 rounded text-xs shadow-lg">
           <div 
             ref={dragRef}
             className="flex items-center cursor-move hover:bg-gray-100 p-1 rounded"
