@@ -184,18 +184,25 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
       className={cn(
         'relative group transition-all duration-200',
         deviceType === 'mobile' ? 'min-h-[40px]' : 'min-h-[80px]',
-        // Only apply border/background styles if not in preview mode - solid blue dashed borders
-        !isPreviewMode && 'border border-dashed border-blue-400',
-        !isPreviewMode && isHovered && 'border-blue-500',
-        !isPreviewMode && isHovered && !userBackground && 'bg-blue-50/50',
-        !isPreviewMode && isOver && 'border-blue-600',
-        !isPreviewMode && isOver && !userBackground && 'bg-blue-50/70'
+        // Only apply border/background styles if not in preview mode and no user background
+        !isPreviewMode && !(userBackground || userShadow) && 'border border-dashed border-blue-400',
+        !isPreviewMode && !(userBackground || userShadow) && isHovered && 'border-blue-500',
+        !isPreviewMode && !(userBackground || userShadow) && isHovered && 'bg-blue-50/50',
+        !isPreviewMode && !(userBackground || userShadow) && isOver && 'border-blue-600',
+        !isPreviewMode && !(userBackground || userShadow) && isOver && 'bg-blue-50/70'
       )}
       style={getRowStyles()}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={handleRowClick}
     >
+      {/* Overlay border for rows with background */}
+      {!isPreviewMode && (userBackground || userShadow) && isHovered && (
+        <div 
+          className="absolute inset-0 pointer-events-none z-20 border border-dashed border-blue-500"
+        />
+      )}
+
       {/* Row Controls */}
       {!isPreviewMode && isHovered && (
         <div className="absolute -top-8 left-0 flex items-center space-x-1 bg-primary text-primary-foreground px-2 py-1 rounded-md text-xs z-10">

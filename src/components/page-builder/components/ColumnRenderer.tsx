@@ -117,11 +117,11 @@ export const ColumnRenderer: React.FC<ColumnRendererProps> = ({
         'relative transition-colors',
         // Apply min-height only when empty and not in preview mode
         !isPreviewMode && column.elements.length === 0 && 'min-h-[60px]',
-        // Only apply border/background styles if not in preview mode - solid borders
-        !isPreviewMode && 'border-2 border-dashed border-gray-300',
-        !isPreviewMode && isOver && 'border-primary/60',
-        !isPreviewMode && isOver && !userBackground && 'bg-primary/5',
-        !isPreviewMode && isHovered && 'border-primary/50',
+        // Only apply border/background styles if not in preview mode and no user background
+        !isPreviewMode && !(userBackground || userShadow) && 'border-2 border-dashed border-gray-300',
+        !isPreviewMode && !(userBackground || userShadow) && isOver && 'border-primary/60',
+        !isPreviewMode && !(userBackground || userShadow) && isOver && 'bg-primary/5',
+        !isPreviewMode && !(userBackground || userShadow) && isHovered && 'border-primary/50',
         getColumnResponsiveClasses(column, deviceType)
       )}
       style={getColumnStyles()}
@@ -129,6 +129,13 @@ export const ColumnRenderer: React.FC<ColumnRendererProps> = ({
       onMouseLeave={() => setIsHovered(false)}
       onClick={handleColumnClick}
     >
+      {/* Overlay border for columns with background */}
+      {!isPreviewMode && (userBackground || userShadow) && isHovered && (
+        <div 
+          className="absolute inset-0 pointer-events-none z-20 border-2 border-dashed border-gray-500"
+        />
+      )}
+
       {/* Column Controls */}
       {!isPreviewMode && isHovered && column.elements.length === 0 && (
         <div className="absolute -top-6 left-0 flex items-center space-x-1 bg-primary text-primary-foreground px-2 py-1 rounded-md text-xs z-10">

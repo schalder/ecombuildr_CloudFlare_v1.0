@@ -156,20 +156,30 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({
       data-pb-section-id={section.id}
       className={cn(
         'relative group transition-all duration-200',
-        // Only apply border styles if not in preview mode
-        !isPreviewMode && 'border-2 border-dashed',
-        !isPreviewMode && isSelected && 'border-primary',
-        !isPreviewMode && isSelected && !userBackground && 'bg-primary/5',
-        !isPreviewMode && isHovered && !isSelected && 'border-primary/30',
-        !isPreviewMode && isHovered && !isSelected && !userBackground && 'bg-primary/2',
-        !isPreviewMode && !isHovered && !isSelected && 'border-transparent',
-        !isPreviewMode && isOver && !userBackground && 'bg-primary/5'
+        // Only apply border styles if not in preview mode and no user background
+        !isPreviewMode && !(userBackground || userShadow) && 'border-2 border-dashed',
+        !isPreviewMode && !(userBackground || userShadow) && isSelected && 'border-primary',
+        !isPreviewMode && !(userBackground || userShadow) && isSelected && 'bg-primary/5',
+        !isPreviewMode && !(userBackground || userShadow) && isHovered && !isSelected && 'border-primary/30',
+        !isPreviewMode && !(userBackground || userShadow) && isHovered && !isSelected && 'bg-primary/2',
+        !isPreviewMode && !(userBackground || userShadow) && !isHovered && !isSelected && 'border-transparent',
+        !isPreviewMode && !(userBackground || userShadow) && isOver && 'bg-primary/5'
       )}
       style={getSectionStyles()}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={handleSectionClick}
     >
+      {/* Overlay border for sections with background */}
+      {!isPreviewMode && (userBackground || userShadow) && (isSelected || isHovered) && (
+        <div 
+          className={cn(
+            'absolute inset-0 pointer-events-none z-20 border-2 border-dashed',
+            isSelected ? 'border-primary' : 'border-primary/30'
+          )}
+        />
+      )}
+
       {/* Section Controls */}
       {!isPreviewMode && (isSelected || isHovered) && (
         <div className="absolute -top-10 left-0 flex items-center space-x-1 bg-primary text-primary-foreground px-2 py-1 rounded-md text-xs z-10">
