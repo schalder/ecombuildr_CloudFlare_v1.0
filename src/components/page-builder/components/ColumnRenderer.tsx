@@ -115,8 +115,8 @@ export const ColumnRenderer: React.FC<ColumnRendererProps> = ({
       data-pb-column-id={column.id}
       className={cn(
         'relative transition-colors',
-        // Apply min-height only when empty and not in preview mode
-        !isPreviewMode && column.elements.length === 0 && 'min-h-[60px]',
+        // Apply minimal height only when empty and not in preview mode
+        !isPreviewMode && column.elements.length === 0 && 'min-h-[24px]',
         // Only apply border/background styles if not in preview mode - solid borders
         !isPreviewMode && 'border-2 border-dashed border-gray-300',
         !isPreviewMode && isOver && 'border-primary/60',
@@ -138,9 +138,12 @@ export const ColumnRenderer: React.FC<ColumnRendererProps> = ({
       )}
 
       {column.elements.length === 0 ? (
-        <div className="min-h-[60px] flex items-center justify-center">
+        <div className={cn(
+          "flex items-center justify-center",
+          !isPreviewMode ? "min-h-[24px]" : "min-h-0"
+        )}>
           {!isPreviewMode && (
-            <Button variant="ghost" size="sm" onClick={handleAddElement} className="text-muted-foreground">
+            <Button variant="ghost" size="sm" onClick={handleAddElement} className="text-muted-foreground opacity-60 hover:opacity-100">
               <Plus className="h-4 w-4 mr-2" />
               Add Element
             </Button>

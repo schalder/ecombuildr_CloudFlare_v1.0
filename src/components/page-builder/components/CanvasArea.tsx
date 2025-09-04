@@ -166,11 +166,14 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
         
         {/* Builder UI elements - separate from content area */}
         {!isPreviewMode && pageData.sections.length > 0 && (
-          <div className="py-8 text-center" data-builder-ui="true">
-            <Button variant="outline" onClick={handleAddSection}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Section
-            </Button>
+          <div className="relative group">
+            <div className="absolute inset-x-0 top-4 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10" data-builder-ui="true">
+              <Button variant="outline" onClick={handleAddSection}>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Section
+              </Button>
+            </div>
+            <div className="h-12"></div>
           </div>
         )}
         
