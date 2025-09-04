@@ -250,14 +250,11 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({
             ))}
             
             {!isPreviewMode && (
-              <div className="relative group">
-                <div className="absolute inset-x-0 top-2 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                  <Button variant="outline" size="sm" onClick={handleAddRow}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Row
-                  </Button>
-                </div>
-                <div className="h-6"></div>
+              <div className="absolute inset-x-0 -bottom-8 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                <Button variant="outline" size="sm" onClick={handleAddRow}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Row
+                </Button>
               </div>
             )}
           </div>
