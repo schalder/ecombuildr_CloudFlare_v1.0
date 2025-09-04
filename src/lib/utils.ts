@@ -52,3 +52,64 @@ export function buildWhatsAppUrl(phoneNumber: string, message?: string): string 
   return `https://wa.me/?text=${encodedMessage}`;
 }
 
+export function openWhatsApp(phoneNumber: string, message?: string): void {
+  const sanitizedNumber = phoneNumber.replace(/\D/g, '');
+  const encodedMessage = message ? encodeURIComponent(message) : '';
+  
+  // Check if we're on mobile
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  
+  if (isMobile && sanitizedNumber) {
+    // Try WhatsApp deep link first on mobile
+    const deepLink = `whatsapp://send?phone=${sanitizedNumber}&text=${encodedMessage}`;
+    
+    // Create hidden link and click it
+    const link = document.createElement('a');
+    link.href = deepLink;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    
+    // Try deep link, fallback to web version after timeout
+    const timeout = setTimeout(() => {
+      const webUrl = sanitizedNumber 
+        ? `https://wa.me/${sanitizedNumber}?text=${encodedMessage}`
+        : `https://wa.me/?text=${encodedMessage}`;
+      
+      const webLink = document.createElement('a');
+      webLink.href = webUrl;
+      webLink.target = '_blank';
+      webLink.rel = 'noopener noreferrer';
+      document.body.appendChild(webLink);
+      webLink.click();
+      document.body.removeChild(webLink);
+    }, 1000);
+    
+    // Listen for page visibility change to cancel fallback if app opened
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        clearTimeout(timeout);
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  } else {
+    // Desktop or no phone number - use web version
+    const webUrl = sanitizedNumber 
+      ? `https://wa.me/${sanitizedNumber}?text=${encodedMessage}`
+      : `https://wa.me/?text=${encodedMessage}`;
+    
+    // Use programmatic link click to ensure new tab
+    const link = document.createElement('a');
+    link.href = webUrl;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+}
+

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { MessageCircle, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
-import { buildWhatsAppUrl } from '@/lib/utils';
+import { openWhatsApp } from '@/lib/utils';
 
 interface SupportSettings {
   id: string;
@@ -42,11 +42,9 @@ export const WhatsAppWidget = () => {
     }
   };
 
-  const openWhatsApp = () => {
+  const handleWhatsAppClick = () => {
     if (!settings) return;
-
-    const whatsappUrl = buildWhatsAppUrl(settings.whatsapp_number, settings.welcome_message);
-    window.open(whatsappUrl, '_blank');
+    openWhatsApp(settings.whatsapp_number, settings.welcome_message);
   };
 
   if (loading || !settings || !settings.is_enabled) {
@@ -87,7 +85,7 @@ export const WhatsAppWidget = () => {
             {settings.availability_message}
           </p>
           <Button
-            onClick={openWhatsApp}
+            onClick={handleWhatsAppClick}
             className="w-full bg-green-500 hover:bg-green-600 text-white"
             size="sm"
           >
@@ -98,7 +96,7 @@ export const WhatsAppWidget = () => {
       )}
       
       <Button
-        onClick={isMinimized ? () => setIsMinimized(false) : openWhatsApp}
+        onClick={isMinimized ? () => setIsMinimized(false) : handleWhatsAppClick}
         className="w-14 h-14 rounded-full bg-green-500 hover:bg-green-600 text-white shadow-lg hover:shadow-xl transition-all duration-200"
       >
         <MessageCircle className="h-6 w-6" />
