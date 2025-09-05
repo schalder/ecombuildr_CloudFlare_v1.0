@@ -107,7 +107,21 @@ export const TextElementStyles: React.FC<TextElementStylesProps> = ({
               property="fontSize"
               label="Font Size"
               deviceType={responsiveTab}
-              fallback="16px"
+              fallback={(() => {
+                // Dynamic fallback based on heading level for heading elements
+                if (element.type === 'heading' && element.content?.level) {
+                  const headingFontSizes = {
+                    1: '48px',  // text-4xl
+                    2: '40px',  // text-3xl  
+                    3: '32px',  // text-2xl
+                    4: '24px',  // text-xl
+                    5: '20px',  // text-lg
+                    6: '16px',  // text-base
+                  };
+                  return headingFontSizes[element.content.level as keyof typeof headingFontSizes] || '16px';
+                }
+                return '16px';
+              })()}
               onStyleUpdate={onStyleUpdate}
             >
               {(value, onChange) => (
