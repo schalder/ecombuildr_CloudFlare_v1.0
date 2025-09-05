@@ -17,6 +17,7 @@ import { Plus, Save, ArrowLeft, GripVertical, Edit, Trash2, ChevronDown, Chevron
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { RichTextEditor } from "@/components/ui/RichTextEditor";
 
 interface Module {
   id: string;
@@ -935,12 +936,11 @@ export default function AdminCourseEditor() {
             {/* Text Content */}
             <div className="space-y-2">
               <Label htmlFor="text-content">Text Content</Label>
-              <Textarea
-                id="text-content"
+              <RichTextEditor
                 value={lessonFormData.text_content}
-                onChange={(e) => setLessonFormData(prev => ({ ...prev, text_content: e.target.value }))}
+                onChange={(value) => setLessonFormData(prev => ({ ...prev, text_content: value }))}
                 placeholder="Additional text content... (optional)"
-                rows={4}
+                className="min-h-[200px]"
               />
             </div>
 
