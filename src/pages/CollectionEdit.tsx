@@ -132,6 +132,7 @@ export default function CollectionEdit() {
           description: collection.description,
           is_published: collection.is_published,
           is_active: collection.is_active,
+          updated_at: new Date().toISOString(),
         })
         .eq('id', collection.id);
 
@@ -149,6 +150,70 @@ export default function CollectionEdit() {
       });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleTogglePublished = async (checked: boolean) => {
+    if (!collection) return;
+
+    // Update local state immediately for responsive UI
+    setCollection(prev => prev ? { ...prev, is_published: checked } : null);
+
+    try {
+      const { error } = await (supabase as any)
+        .from('collections')
+        .update({
+          is_published: checked,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', collection.id);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Success',
+        description: `Collection ${checked ? 'published' : 'unpublished'} successfully`,
+      });
+    } catch (error: any) {
+      // Revert local state on error
+      setCollection(prev => prev ? { ...prev, is_published: !checked } : null);
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to update collection status',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleToggleActive = async (checked: boolean) => {
+    if (!collection) return;
+
+    // Update local state immediately for responsive UI
+    setCollection(prev => prev ? { ...prev, is_active: checked } : null);
+
+    try {
+      const { error } = await (supabase as any)
+        .from('collections')
+        .update({
+          is_active: checked,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', collection.id);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Success',
+        description: `Collection ${checked ? 'activated' : 'deactivated'} successfully`,
+      });
+    } catch (error: any) {
+      // Revert local state on error
+      setCollection(prev => prev ? { ...prev, is_active: !checked } : null);
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to update collection status',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -342,7 +407,7 @@ export default function CollectionEdit() {
               <Switch
                 id="is-published"
                 checked={collection.is_published}
-                onCheckedChange={(checked) => setCollection(prev => prev ? { ...prev, is_published: checked } : null)}
+                onCheckedChange={handleTogglePublished}
               />
             </div>
 
@@ -356,7 +421,7 @@ export default function CollectionEdit() {
               <Switch
                 id="is-active"
                 checked={collection.is_active}
-                onCheckedChange={(checked) => setCollection(prev => prev ? { ...prev, is_active: checked } : null)}
+                onCheckedChange={handleToggleActive}
               />
             </div>
           </CardContent>
