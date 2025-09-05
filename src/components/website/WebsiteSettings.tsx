@@ -53,14 +53,7 @@ const websiteSettingsSchema = z.object({
   support_widget_position: z.enum(['bottom-right', 'bottom-left']).default('bottom-right'),
   support_widget_color: z.string().optional(),
   support_whatsapp_enabled: z.boolean().default(false),
-  support_whatsapp_number: z.string()
-    .optional()
-    .refine((val) => {
-      if (!val) return true;
-      const sanitized = val.replace(/\D/g, '');
-      return sanitized.length >= 7 && sanitized.length <= 15;
-    }, 'WhatsApp number must be 7-15 digits in international format'),
-  support_whatsapp_message: z.string().optional(),
+  support_whatsapp_link: z.string().optional(),
   support_phone_enabled: z.boolean().default(false),
   support_phone_number: z.string().optional(),
   support_messenger_enabled: z.boolean().default(false),
@@ -167,8 +160,7 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
       support_widget_position: website.settings?.support_widget?.position ?? 'bottom-right',
       support_widget_color: website.settings?.support_widget?.color ?? '',
       support_whatsapp_enabled: website.settings?.support_widget?.whatsapp?.enabled ?? false,
-      support_whatsapp_number: website.settings?.support_widget?.whatsapp?.number ?? '',
-      support_whatsapp_message: website.settings?.support_widget?.whatsapp?.message ?? 'Hi! I need help with my order.',
+      support_whatsapp_link: website.settings?.support_widget?.whatsapp?.link ?? '',
       support_phone_enabled: website.settings?.support_widget?.phone?.enabled ?? false,
       support_phone_number: website.settings?.support_widget?.phone?.number ?? '',
       support_messenger_enabled: website.settings?.support_widget?.messenger?.enabled ?? false,
@@ -258,8 +250,7 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
         support_widget_position,
         support_widget_color,
         support_whatsapp_enabled,
-        support_whatsapp_number,
-        support_whatsapp_message,
+        support_whatsapp_link,
         support_phone_enabled,
         support_phone_number,
         support_messenger_enabled,
@@ -299,8 +290,7 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
           color: support_widget_color || null,
           whatsapp: {
             enabled: support_whatsapp_enabled,
-            number: support_whatsapp_number ? support_whatsapp_number.replace(/\D/g, '') : null,
-            message: support_whatsapp_message || 'Hi! I need help with my order.',
+            link: support_whatsapp_link || null,
           },
           phone: {
             enabled: support_phone_enabled,
@@ -1158,47 +1148,26 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
                            )}
                          />
 
-                         <FormField
-                           control={form.control}
-                           name="support_whatsapp_number"
-                           render={({ field }) => (
-                             <FormItem>
-                               <FormLabel>WhatsApp Number</FormLabel>
-                                <FormControl>
-                                  <Input 
-                                    placeholder="1234567890" 
-                                    {...field}
-                                    disabled={!form.watch('support_whatsapp_enabled') || !form.watch('support_widget_enabled')}
-                                  />
-                                </FormControl>
-                                <FormDescription>
-                                  Full international number with digits only (e.g., 8801234567890).
-                                </FormDescription>
-                               <FormMessage />
-                             </FormItem>
-                           )}
-                         />
-
-                         <FormField
-                           control={form.control}
-                           name="support_whatsapp_message"
-                           render={({ field }) => (
-                             <FormItem>
-                               <FormLabel>Default WhatsApp Message</FormLabel>
-                               <FormControl>
-                                 <Input 
-                                   placeholder="Hi! I need help with my order." 
-                                   {...field}
-                                   disabled={!form.watch('support_whatsapp_enabled') || !form.watch('support_widget_enabled')}
-                                 />
-                               </FormControl>
-                               <FormDescription>
-                                 Pre-filled message when customer clicks WhatsApp.
-                               </FormDescription>
-                               <FormMessage />
-                             </FormItem>
-                           )}
-                         />
+                          <FormField
+                            control={form.control}
+                            name="support_whatsapp_link"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>WhatsApp Link</FormLabel>
+                                 <FormControl>
+                                   <Input 
+                                     placeholder="https://wa.me/1234567890" 
+                                     {...field}
+                                     disabled={!form.watch('support_whatsapp_enabled') || !form.watch('support_widget_enabled')}
+                                   />
+                                 </FormControl>
+                                 <FormDescription>
+                                   Enter your custom WhatsApp link (e.g., https://wa.me/1234567890)
+                                 </FormDescription>
+                                 <FormMessage />
+                              </FormItem>
+                            )}
+                          />
                        </div>
 
                        <div className="space-y-4">

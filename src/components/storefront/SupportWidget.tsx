@@ -2,7 +2,9 @@ import React, { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { MessageCircle, Phone, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { cn, openWhatsApp } from '@/lib/utils';
+import { cn } from '@/lib/utils';
+import whatsappIcon from '@/assets/whatsapp-icon.webp';
+import messengerIcon from '@/assets/messenger-icon.svg';
 
 interface SupportWidgetProps {
   website: any;
@@ -38,15 +40,14 @@ export const SupportWidget: React.FC<SupportWidgetProps> = ({ website }) => {
   // Build support options based on configuration
   const supportOptions = [];
 
-  if (supportSettings.whatsapp?.enabled && supportSettings.whatsapp?.number) {
+  if (supportSettings.whatsapp?.enabled && supportSettings.whatsapp?.link) {
     supportOptions.push({
       type: 'whatsapp',
-      icon: MessageCircle,
+      icon: 'whatsapp',
       label: 'WhatsApp',
       color: 'bg-green-500 hover:bg-green-600',
       action: () => {
-        const message = supportSettings.whatsapp.message || 'Hi! I need help with my order.';
-        openWhatsApp(supportSettings.whatsapp.number, message, true);
+        window.open(supportSettings.whatsapp.link, '_blank');
       }
     });
   }
@@ -66,7 +67,7 @@ export const SupportWidget: React.FC<SupportWidgetProps> = ({ website }) => {
   if (supportSettings.messenger?.enabled && supportSettings.messenger?.link) {
     supportOptions.push({
       type: 'messenger',
-      icon: MessageCircle,
+      icon: 'messenger',
       label: 'Messenger',
       color: 'bg-blue-600 hover:bg-blue-700',
       action: () => {
@@ -103,7 +104,6 @@ export const SupportWidget: React.FC<SupportWidgetProps> = ({ website }) => {
           )}
         >
           {supportOptions.map((option, index) => {
-            const IconComponent = option.icon;
             return (
               <Button
                 key={option.type}
@@ -112,7 +112,8 @@ export const SupportWidget: React.FC<SupportWidgetProps> = ({ website }) => {
                   'h-12 w-12 rounded-full shadow-lg transition-all duration-200',
                   'animate-in',
                   position === 'bottom-right' ? 'slide-in-from-right-2' : 'slide-in-from-left-2',
-                  option.color
+                  option.color,
+                  'p-0'
                 )}
                 style={{
                   animationDelay: `${index * 50}ms`,
@@ -120,7 +121,13 @@ export const SupportWidget: React.FC<SupportWidgetProps> = ({ website }) => {
                 }}
                 aria-label={option.label}
               >
-                <IconComponent className="h-5 w-5 text-white" />
+                {option.icon === 'whatsapp' ? (
+                  <img src={whatsappIcon} alt="WhatsApp" className="h-6 w-6" />
+                ) : option.icon === 'messenger' ? (
+                  <img src={messengerIcon} alt="Messenger" className="h-6 w-6" />
+                ) : (
+                  <Phone className="h-5 w-5 text-white" />
+                )}
               </Button>
             );
           })}
