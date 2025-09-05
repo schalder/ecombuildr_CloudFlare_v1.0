@@ -165,6 +165,59 @@ export type Database = {
           },
         ]
       }
+      collections: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean
+          is_published: boolean
+          name: string
+          settings: Json
+          show_on_products_page: boolean
+          slug: string
+          updated_at: string
+          website_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          is_published?: boolean
+          name: string
+          settings?: Json
+          show_on_products_page?: boolean
+          slug: string
+          updated_at?: string
+          website_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          is_published?: boolean
+          name?: string
+          settings?: Json
+          show_on_products_page?: boolean
+          slug?: string
+          updated_at?: string
+          website_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collections_website_id_fkey"
+            columns: ["website_id"]
+            isOneToOne: false
+            referencedRelation: "websites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       courier_return_requests: {
         Row: {
           consignment_id: string | null
@@ -1466,6 +1519,48 @@ export type Database = {
           widget_position?: string
         }
         Relationships: []
+      }
+      product_collection_items: {
+        Row: {
+          collection_id: string
+          created_at: string
+          id: string
+          position: number
+          product_id: string
+          updated_at: string
+        }
+        Insert: {
+          collection_id: string
+          created_at?: string
+          id?: string
+          position?: number
+          product_id: string
+          updated_at?: string
+        }
+        Update: {
+          collection_id?: string
+          created_at?: string
+          id?: string
+          position?: number
+          product_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_collection_items_collection_id_fkey"
+            columns: ["collection_id"]
+            isOneToOne: false
+            referencedRelation: "collections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_collection_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       product_library: {
         Row: {

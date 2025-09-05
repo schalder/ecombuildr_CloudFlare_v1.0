@@ -16,8 +16,16 @@ interface Category {
   count?: number;
 }
 
+interface Collection {
+  id: string;
+  name: string;
+  slug: string;
+  count?: number;
+}
+
 interface FilterState {
   categories: string[];
+  collections: string[];
   priceRange: [number, number];
   rating: number;
   inStock: boolean;
@@ -27,6 +35,7 @@ interface FilterState {
 
 interface ProductFiltersProps {
   categories: Category[];
+  collections?: Collection[];
   filters: FilterState;
   onFiltersChange: (filters: FilterState) => void;
   onClearFilters: () => void;
@@ -35,6 +44,7 @@ interface ProductFiltersProps {
 
 export const ProductFilters: React.FC<ProductFiltersProps> = ({
   categories,
+  collections = [],
   filters,
   onFiltersChange,
   onClearFilters,
@@ -42,6 +52,7 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
 }) => {
   const [expandedSections, setExpandedSections] = useState({
     categories: true,
+    collections: true,
     price: true,
     rating: true,
     features: true
@@ -65,6 +76,17 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
     });
   };
 
+  const handleCollectionChange = (collectionSlug: string, checked: boolean) => {
+    const newCollections = checked
+      ? [...filters.collections, collectionSlug]
+      : filters.collections.filter(c => c !== collectionSlug);
+    
+    onFiltersChange({
+      ...filters,
+      collections: newCollections
+    });
+  };
+
   const handlePriceRangeChange = (value: [number, number]) => {
     onFiltersChange({
       ...filters,
@@ -81,6 +103,7 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
 
   const activeFiltersCount = [
     filters.categories.length > 0,
+    filters.collections.length > 0,
     filters.priceRange[0] > 0 || filters.priceRange[1] < 10000,
     filters.rating > 0,
     filters.inStock,
@@ -161,6 +184,55 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
         </div>
 
         <Separator />
+
+        {/* Collections */}
+        {collections.length > 0 && (
+          <>
+            <div>
+              <button
+                onClick={() => toggleSection('collections')}
+                className="flex items-center justify-between w-full text-left font-semibold mb-3"
+              >
+                Collections
+                {expandedSections.collections ? (
+                  <ChevronUp className="h-4 w-4" />
+                ) : (
+                  <ChevronDown className="h-4 w-4" />
+                )}
+              </button>
+              
+              {expandedSections.collections && (
+                <div className="space-y-3">
+                  {collections.map((collection) => (
+                    <div key={collection.id} className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`collection-${collection.id}`}
+                          checked={filters.collections.includes(collection.slug)}
+                          onCheckedChange={(checked) => 
+                            handleCollectionChange(collection.slug, checked as boolean)
+                          }
+                        />
+                        <label
+                          htmlFor={`collection-${collection.id}`}
+                          className="text-sm cursor-pointer hover:text-foreground transition-colors"
+                        >
+                          {collection.name}
+                        </label>
+                      </div>
+                      {collection.count && (
+                        <span className="text-xs text-muted-foreground">
+                          ({collection.count})
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            <Separator />
+          </>
+        )}
 
         {/* Price Range */}
         <div>

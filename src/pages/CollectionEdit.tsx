@@ -23,6 +23,7 @@ interface Collection {
   description: string | null;
   is_active: boolean;
   is_published: boolean;
+  show_on_products_page: boolean;
   image_url: string | null;
 }
 
@@ -132,6 +133,7 @@ export default function CollectionEdit() {
           description: collection.description,
           is_published: collection.is_published,
           is_active: collection.is_active,
+          show_on_products_page: collection.show_on_products_page,
           updated_at: new Date().toISOString(),
         })
         .eq('id', collection.id);
@@ -224,6 +226,40 @@ export default function CollectionEdit() {
       toast({
         title: 'Error',
         description: error.message || 'Failed to update collection status',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleToggleShowOnProductsPage = async (checked: boolean) => {
+    if (!collection) return;
+
+    // Update local state immediately for responsive UI
+    setCollection(prev => prev ? { ...prev, show_on_products_page: checked } : null);
+
+    try {
+      const { data, error } = await (supabase as any)
+        .from('collections')
+        .update({
+          show_on_products_page: checked,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', collection.id)
+        .select();
+
+      if (error) throw error;
+
+      toast({
+        title: 'Success',
+        description: `Collection ${checked ? 'will show' : 'will not show'} on products page`,
+      });
+    } catch (error: any) {
+      console.error('Toggle Show on Products Page - Error:', error);
+      // Revert local state on error
+      setCollection(prev => prev ? { ...prev, show_on_products_page: !checked } : null);
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to update collection visibility',
         variant: 'destructive',
       });
     }
@@ -434,6 +470,20 @@ export default function CollectionEdit() {
                 id="is-active"
                 checked={collection.is_active}
                 onCheckedChange={handleToggleActive}
+              />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div>
+                <Label htmlFor="show-on-products-page">Show on Products Page</Label>
+                <p className="text-sm text-muted-foreground">
+                  Display this collection as a filter option on the products page
+                </p>
+              </div>
+              <Switch
+                id="show-on-products-page"
+                checked={collection.show_on_products_page}
+                onCheckedChange={handleToggleShowOnProductsPage}
               />
             </div>
           </CardContent>

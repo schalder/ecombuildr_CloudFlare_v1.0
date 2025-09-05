@@ -58,6 +58,7 @@ interface Category {
 
 interface FilterState {
   categories: string[];
+  collections: string[];
   priceRange: [number, number];
   rating: number;
   inStock: boolean;
@@ -78,6 +79,7 @@ export const StorefrontProducts: React.FC = () => {
   
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [collections, setCollections] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   
   // Get review stats for all products
@@ -89,6 +91,7 @@ export const StorefrontProducts: React.FC = () => {
   
   const [filters, setFilters] = useState<FilterState>({
     categories: [],
+    collections: [],
     priceRange: [0, 10000],
     rating: 0,
     inStock: false,
@@ -238,6 +241,52 @@ export const StorefrontProducts: React.FC = () => {
     }
   };
 
+  // Fetch collections for filtering
+  const fetchCollections = async () => {
+    if (!store?.id) return;
+    
+    try {
+      // Get the effective website ID (from params, slug, or custom domain detection)
+      const effectiveWebsiteId = websiteId || detectedWebsiteId;
+      let resolvedWebsiteId = effectiveWebsiteId;
+      
+      // If we have a websiteSlug, resolve it to ID
+      if (websiteSlug && !resolvedWebsiteId) {
+        const { data: websiteData } = await supabase
+          .from('websites')
+          .select('id')
+          .eq('slug', websiteSlug)
+          .single();
+        resolvedWebsiteId = websiteData?.id;
+      }
+      
+      // Get collections that are active, published, and set to show on products page
+      let query = supabase
+        .from('collections')
+        .select('id, name, slug, website_id')
+        .eq('is_active', true)
+        .eq('is_published', true)
+        .eq('show_on_products_page', true);
+      
+      // Filter by website if we have a specific website context
+      if (resolvedWebsiteId) {
+        query = query.eq('website_id', resolvedWebsiteId);
+      } else {
+        // If no website context, don't show any collections (safer)
+        setCollections([]);
+        return;
+      }
+      
+      const { data, error } = await query.order('name');
+      
+      if (error) throw error;
+      setCollections(data || []);
+    } catch (error) {
+      console.error('Error fetching collections:', error);
+      setCollections([]);
+    }
+  };
+
   // Fetch products with filters and website visibility
   const fetchProducts = async () => {
     if (!store?.id) {
@@ -304,6 +353,32 @@ export const StorefrontProducts: React.FC = () => {
         
         if (categoryIds.length > 0) {
           query = query.in('category_id', categoryIds);
+        }
+      }
+
+      // Apply collection filter
+      if (filters.collections.length > 0) {
+        const collectionIds = collections
+          .filter(col => filters.collections.includes(col.slug))
+          .map(col => col.id);
+        
+        if (collectionIds.length > 0) {
+          // Get product IDs from selected collections
+          const { data: collectionProducts } = await supabase
+            .from('product_collection_items')
+            .select('product_id')
+            .in('collection_id', collectionIds);
+          
+          const productIdsInCollections = [...new Set(collectionProducts?.map(cp => cp.product_id) || [])];
+          
+          if (productIdsInCollections.length > 0) {
+            query = query.in('id', productIdsInCollections);
+          } else {
+            // No products in selected collections
+            setProducts([]);
+            setLoading(false);
+            return;
+          }
         }
       }
 
@@ -424,6 +499,7 @@ export const StorefrontProducts: React.FC = () => {
     if (store?.id) {
       console.log('Store loaded, fetching data for store:', store.id);
       fetchCategories();
+      fetchCollections();
       fetchProducts();
     }
   }, [store?.id, searchQuery, sortBy, filters, detectedWebsiteId]);
@@ -439,6 +515,7 @@ export const StorefrontProducts: React.FC = () => {
   const handleClearFilters = () => {
     setFilters({
       categories: [],
+      collections: [],
       priceRange: [0, 10000],
       rating: 0,
       inStock: false,
@@ -522,6 +599,7 @@ export const StorefrontProducts: React.FC = () => {
                 <div className="mt-6">
                   <ProductFilters
                     categories={categories}
+                    collections={collections}
                     filters={filters}
                     onFiltersChange={setFilters}
                     onClearFilters={handleClearFilters}
@@ -574,6 +652,7 @@ export const StorefrontProducts: React.FC = () => {
           <div className="hidden lg:block w-80 flex-shrink-0 animate-slide-up" style={{ animationDelay: '0.1s' }}>
             <ProductFilters
               categories={categories}
+              collections={collections}
               filters={filters}
               onFiltersChange={setFilters}
               onClearFilters={handleClearFilters}

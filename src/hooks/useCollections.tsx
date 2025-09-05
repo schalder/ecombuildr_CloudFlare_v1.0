@@ -10,6 +10,7 @@ interface Collection {
   description: string | null;
   is_active: boolean;
   is_published: boolean;
+  show_on_products_page: boolean;
   image_url: string | null;
   created_at: string;
   updated_at: string;

@@ -51,6 +51,7 @@ interface Category {
 
 interface FilterState {
   categories: string[];
+  collections: string[];
   priceRange: [number, number];
   rating: number;
   inStock: boolean;
@@ -73,6 +74,7 @@ export const ProductsPageElement: React.FC<{
 
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [collections, setCollections] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   
   // Get review stats for all products
@@ -84,6 +86,7 @@ export const ProductsPageElement: React.FC<{
   
   const [filters, setFilters] = useState<FilterState>({
     categories: [],
+    collections: [],
     priceRange: element.content.priceRange || [0, 10000],
     rating: 0,
     inStock: false,
@@ -444,7 +447,7 @@ export const ProductsPageElement: React.FC<{
   };
 
   const handleClearFilters = () => {
-    setFilters({ categories: [], priceRange: [0, 10000], rating: 0, inStock: false, onSale: false, freeShipping: false });
+    setFilters({ categories: [], collections: [], priceRange: [0, 10000], rating: 0, inStock: false, onSale: false, freeShipping: false });
     setSearchQuery('');
   };
 
