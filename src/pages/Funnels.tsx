@@ -98,7 +98,7 @@ export default function Funnels() {
   const handlePreviewFunnel = (funnel: Funnel) => {
     const url = funnel.domain 
       ? `https://${funnel.domain}` 
-      : `/funnel/${funnel.slug}`;
+      : `/funnel/${funnel.id}`;
     window.open(url, '_blank');
   };
 
@@ -172,7 +172,7 @@ export default function Funnels() {
                   <div className="space-y-3">
                     <div className="flex items-center text-sm text-muted-foreground">
                       <TrendingUp className="mr-2 h-4 w-4" />
-                      {funnel.domain || `funnel/${funnel.slug}`}
+                      {funnel.domain || `funnel/${funnel.id}`}
                     </div>
                     
                     <div className="grid grid-cols-2 gap-2">
