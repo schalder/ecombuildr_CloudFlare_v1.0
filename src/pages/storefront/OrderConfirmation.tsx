@@ -420,13 +420,6 @@ useEffect(() => {
             </Button>
           </Link>
           <Button
-            onClick={() => window.print()}
-            variant="outline"
-            className="flex-1"
-          >
-            Print Order
-          </Button>
-          <Button
             onClick={downloadPDF}
             variant="outline"
             className="flex-1"

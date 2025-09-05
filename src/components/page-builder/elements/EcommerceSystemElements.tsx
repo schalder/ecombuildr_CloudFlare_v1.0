@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { ShoppingCart, CreditCard, Package, MapPin, CheckCircle, RefreshCw, Heart, Share2, Star } from 'lucide-react';
+import React, { useEffect, useState, useRef } from 'react';
+import { ShoppingCart, CreditCard, Package, MapPin, CheckCircle, RefreshCw, Heart, Share2, Star, Download, CheckCircle2 } from 'lucide-react';
 import { PageBuilderElement } from '../types';
 import { elementRegistry } from './ElementRegistry';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -1113,6 +1113,7 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
   const [order, setOrder] = useState<any | null>(null);
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const orderContentRef = useRef<HTMLDivElement>(null);
   const query = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
   const id = orderId || query.get('orderId') || '';
   const orderToken = query.get('ot') || '';
@@ -1126,6 +1127,42 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
     itemsTitle: 'Items',
   };
   const show = cfg.show || { email: true, phone: true, notes: true };
+
+  const nameWithVariant = (name: string, variant: any) => {
+    if (!variant) return name;
+    const vars = Object.entries(variant).map(([k, v]) => `${k}: ${v}`);
+    return `${name} (${vars.join(', ')})`;
+  };
+
+  const downloadPDF = async () => {
+    if (!orderContentRef.current || !order) return;
+
+    try {
+      const { default: html2canvas } = await import('html2canvas');
+      const { jsPDF } = await import('jspdf');
+
+      const canvas = await html2canvas(orderContentRef.current, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = canvas.width;
+      const imgHeight = canvas.height;
+      const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
+      const imgX = (pdfWidth - imgWidth * ratio) / 2;
+      const imgY = 10;
+
+      pdf.addImage(imgData, 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
+      pdf.save(`order-confirmation-${order.order_number}.pdf`);
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+    }
+  };
 
   useEffect(() => {
     (async () => {
@@ -1207,25 +1244,26 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
     ].join(' ');
 
     return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className={`max-w-2xl mx-auto space-y-4 element-${element.id}-oc-container`}>
       <style>{css}</style>
-      <div className="text-center">
-        <div className={`inline-flex items-center justify-center w-16 h-16 rounded-full mb-4 element-${element.id}-oc-success`}>
-          <CheckCircle className="h-8 w-8" />
-        </div>
-        <h1 className={`text-3xl font-bold mb-2 element-${element.id}-oc-title`}>{texts.title}</h1>
-        <p className={`text-muted-foreground element-${element.id}-oc-subtitle`}>{texts.subtitle}</p>
-      </div>
-      <Card className={`element-${element.id}-oc-card`}>
-        <CardHeader><CardTitle>Order #{order.order_number}</CardTitle></CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <h3 className={`font-semibold mb-2 element-${element.id}-oc-section-title`}>{texts.customerTitle}</h3>
-            <p className="text-sm">{order.customer_name}{show.phone && order.customer_phone ? ` · ${order.customer_phone}` : ''}</p>
-            {show.email && (
-              <p className="text-sm text-muted-foreground">{order.customer_email}</p>
-            )}
+      <div ref={orderContentRef}>
+        <div className="text-center">
+          <h1 className={`text-2xl font-bold mb-2 element-${element.id}-oc-title`}>{texts.title}</h1>
+          <p className={`text-muted-foreground mb-4 element-${element.id}-oc-subtitle`}>{texts.subtitle}</p>
+          <div className={`inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full element-${element.id}-oc-order-badge`}>
+            <CheckCircle2 className="h-5 w-5" />
+            <span className="font-medium">Order #{order.order_number}</span>
           </div>
+        </div>
+        <Card className={`element-${element.id}-oc-card`}>
+          <CardHeader><CardTitle>{texts.customerTitle}</CardTitle></CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <p className="text-sm">{order.customer_name}{show.phone && order.customer_phone ? ` · ${order.customer_phone}` : ''}</p>
+              {show.email && (
+                <p className="text-sm text-muted-foreground">{order.customer_email}</p>
+              )}
+            </div>
           <Separator />
           <div>
             <h3 className={`font-semibold mb-2 element-${element.id}-oc-section-title`}>{texts.shippingTitle}</h3>
@@ -1286,11 +1324,15 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
           )}
           <Separator className="my-2" />
           <div className="flex justify-between font-bold"><span>Total</span><span>{formatCurrency(Number(order.total))}</span></div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
       <div className="flex gap-3">
         <Button variant="outline" onClick={() => (window.location.href = paths.home)} className="flex-1">Continue Shopping</Button>
-        <Button variant="outline" onClick={() => window.print()} className="flex-1">Print</Button>
+        <Button variant="outline" onClick={downloadPDF} className="flex-1">
+          <Download className="h-4 w-4 mr-2" />
+          Download PDF
+        </Button>
       </div>
     </div>
   );
