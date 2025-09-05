@@ -95,108 +95,174 @@ export default function TrainingCourse() {
   };
 
   const renderLessonContent = (lesson: TrainingLesson) => {
-    switch (lesson.content_type) {
-      case 'video':
-        const videoUrl = lesson.video_url || '';
-        const isYoutube = videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be');
-        
-        if (lesson.embed_code) {
-          return (
-            <div className="w-full">
-              <AspectRatio ratio={16 / 9}>
-                <div dangerouslySetInnerHTML={{ __html: lesson.embed_code }} />
-              </AspectRatio>
-            </div>
-          );
-        }
-        
-        if (isYoutube) {
-          let embedUrl = videoUrl;
-          if (videoUrl.includes('youtube.com/watch?v=')) {
-            embedUrl = videoUrl.replace('youtube.com/watch?v=', 'youtube.com/embed/');
-          } else if (videoUrl.includes('youtu.be/')) {
-            embedUrl = videoUrl.replace('youtu.be/', 'youtube.com/embed/');
-          }
-          
-          return (
-            <div className="w-full">
-              <AspectRatio ratio={16 / 9}>
-                <iframe
-                  src={embedUrl}
-                  className="w-full h-full rounded-lg"
-                  allowFullScreen
-                  title={lesson.title}
-                />
-              </AspectRatio>
-            </div>
-          );
-        }
-        
-        return (
-          <div className="w-full">
-            <AspectRatio ratio={16 / 9}>
-              <video
-                src={videoUrl}
-                controls
-                className="w-full h-full rounded-lg"
-                title={lesson.title}
-              />
-            </AspectRatio>
-          </div>
-        );
+    const contentBlocks: JSX.Element[] = [];
 
-      case 'text':
-        return (
-          <div className="prose prose-sm max-w-none">
-            <div dangerouslySetInnerHTML={{ __html: lesson.text_content || '' }} />
-          </div>
-        );
+    // Render primary content first based on content_type
+    if (lesson.content_type === 'video') {
+      if (lesson.video_url || lesson.embed_code) {
+        contentBlocks.push(renderVideoContent(lesson));
+      }
+    } else if (lesson.content_type === 'text') {
+      if (lesson.text_content) {
+        contentBlocks.push(renderTextContent(lesson));
+      }
+    } else if (lesson.content_type === 'pdf') {
+      if (lesson.pdf_url) {
+        contentBlocks.push(renderPdfContent(lesson));
+      }
+    } else if (lesson.content_type === 'embed') {
+      if (lesson.embed_code) {
+        contentBlocks.push(renderEmbedContent(lesson));
+      }
+    } else if (lesson.content_type === 'link') {
+      if (lesson.link_url) {
+        contentBlocks.push(renderLinkContent(lesson));
+      }
+    }
 
-      case 'pdf':
-        return (
-          <div className="space-y-4">
-            <div className="flex items-center gap-2 p-4 bg-muted rounded-lg">
-              <Download className="h-5 w-5" />
-              <span className="font-medium">PDF Document</span>
-            </div>
+    // Render additional content types that aren't the primary type
+    if (lesson.content_type !== 'video' && (lesson.video_url || lesson.embed_code)) {
+      contentBlocks.push(renderVideoContent(lesson));
+    }
+    if (lesson.content_type !== 'text' && lesson.text_content) {
+      contentBlocks.push(renderTextContent(lesson));
+    }
+    if (lesson.content_type !== 'pdf' && lesson.pdf_url) {
+      contentBlocks.push(renderPdfContent(lesson));
+    }
+    if (lesson.content_type !== 'embed' && lesson.embed_code && lesson.content_type !== 'video') {
+      contentBlocks.push(renderEmbedContent(lesson));
+    }
+    if (lesson.content_type !== 'link' && lesson.link_url) {
+      contentBlocks.push(renderLinkContent(lesson));
+    }
+
+    if (contentBlocks.length === 0) {
+      return <div className="text-muted-foreground">No content available for this lesson.</div>;
+    }
+
+    return (
+      <div className="space-y-6">
+        {contentBlocks.map((block, index) => (
+          <div key={index}>{block}</div>
+        ))}
+      </div>
+    );
+  };
+
+  const renderVideoContent = (lesson: TrainingLesson) => {
+    const videoUrl = lesson.video_url || '';
+    const isYoutube = videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be');
+    
+    if (lesson.embed_code) {
+      return (
+        <div className="w-full">
+          <AspectRatio ratio={16 / 9}>
+            <div dangerouslySetInnerHTML={{ __html: lesson.embed_code }} />
+          </AspectRatio>
+        </div>
+      );
+    }
+    
+    if (isYoutube && videoUrl) {
+      let embedUrl = videoUrl;
+      if (videoUrl.includes('youtube.com/watch?v=')) {
+        embedUrl = videoUrl.replace('youtube.com/watch?v=', 'youtube.com/embed/');
+      } else if (videoUrl.includes('youtu.be/')) {
+        embedUrl = videoUrl.replace('youtu.be/', 'youtube.com/embed/');
+      }
+      
+      return (
+        <div className="w-full">
+          <AspectRatio ratio={16 / 9}>
             <iframe
-              src={lesson.pdf_url || ''}
-              className="w-full h-96 rounded-lg border"
+              src={embedUrl}
+              className="w-full h-full rounded-lg"
+              allowFullScreen
               title={lesson.title}
             />
-          </div>
-        );
-
-      case 'embed':
-        return (
-          <div className="w-full">
-            <AspectRatio ratio={16 / 9}>
-              <div dangerouslySetInnerHTML={{ __html: lesson.embed_code || '' }} />
-            </AspectRatio>
-          </div>
-        );
-
-      case 'link':
-        return (
-          <div className="space-y-4">
-            <div className="flex items-center gap-2 p-4 bg-muted rounded-lg">
-              <ExternalLink className="h-5 w-5" />
-              <span className="font-medium">External Resource</span>
-            </div>
-            <a
-              href={lesson.link_url || ''}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-primary hover:underline"
-            >
-              Open Resource →
-            </a>
-          </div>
-        );
-
-      default:
-        return <div>Unsupported content type</div>;
+          </AspectRatio>
+        </div>
+      );
     }
+    
+    if (videoUrl) {
+      return (
+        <div className="w-full">
+          <AspectRatio ratio={16 / 9}>
+            <video
+              src={videoUrl}
+              controls
+              className="w-full h-full rounded-lg"
+              title={lesson.title}
+            />
+          </AspectRatio>
+        </div>
+      );
+    }
+
+    return null;
+  };
+
+  const renderTextContent = (lesson: TrainingLesson) => {
+    if (!lesson.text_content) return null;
+    
+    return (
+      <div className="prose prose-sm max-w-none">
+        <div dangerouslySetInnerHTML={{ __html: lesson.text_content }} />
+      </div>
+    );
+  };
+
+  const renderPdfContent = (lesson: TrainingLesson) => {
+    if (!lesson.pdf_url) return null;
+    
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center gap-2 p-4 bg-muted rounded-lg">
+          <Download className="h-5 w-5" />
+          <span className="font-medium">PDF Document</span>
+        </div>
+        <iframe
+          src={lesson.pdf_url}
+          className="w-full h-96 rounded-lg border"
+          title={lesson.title}
+        />
+      </div>
+    );
+  };
+
+  const renderEmbedContent = (lesson: TrainingLesson) => {
+    if (!lesson.embed_code) return null;
+    
+    return (
+      <div className="w-full">
+        <AspectRatio ratio={16 / 9}>
+          <div dangerouslySetInnerHTML={{ __html: lesson.embed_code }} />
+        </AspectRatio>
+      </div>
+    );
+  };
+
+  const renderLinkContent = (lesson: TrainingLesson) => {
+    if (!lesson.link_url) return null;
+    
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center gap-2 p-4 bg-muted rounded-lg">
+          <ExternalLink className="h-5 w-5" />
+          <span className="font-medium">External Resource</span>
+        </div>
+        <a
+          href={lesson.link_url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-primary hover:underline"
+        >
+          Open Resource →
+        </a>
+      </div>
+    );
   };
 
   const getLessonIcon = (contentType: string) => {

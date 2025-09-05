@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Plus, Save, ArrowLeft, GripVertical, Edit, Trash2, ChevronDown, ChevronRight, BookOpen } from "lucide-react";
@@ -68,6 +69,11 @@ export default function AdminCourseEditor() {
   const [showLessonDialog, setShowLessonDialog] = useState(false);
   const [selectedModuleId, setSelectedModuleId] = useState<string>("");
   
+  // Edit states
+  const [editingModule, setEditingModule] = useState<Module | null>(null);
+  const [editingLesson, setEditingLesson] = useState<Lesson | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<{type: 'module' | 'lesson', id: string} | null>(null);
+  
   const [moduleFormData, setModuleFormData] = useState({
     title: "",
     description: "",
@@ -94,6 +100,46 @@ export default function AdminCourseEditor() {
     duration_minutes: "",
     is_free_preview: false,
   });
+
+  // Reset form data when editing changes
+  useEffect(() => {
+    if (editingModule) {
+      setModuleFormData({
+        title: editingModule.title,
+        description: editingModule.description || "",
+      });
+    } else {
+      setModuleFormData({ title: "", description: "" });
+    }
+  }, [editingModule]);
+
+  useEffect(() => {
+    if (editingLesson) {
+      setLessonFormData({
+        title: editingLesson.title,
+        content_type: editingLesson.content_type,
+        video_url: editingLesson.video_url || "",
+        embed_code: editingLesson.embed_code || "",
+        text_content: editingLesson.text_content || "",
+        pdf_url: editingLesson.pdf_url || "",
+        link_url: editingLesson.link_url || "",
+        duration_minutes: editingLesson.duration_minutes?.toString() || "",
+        is_free_preview: editingLesson.is_free_preview,
+      });
+    } else {
+      setLessonFormData({
+        title: "",
+        content_type: "video",
+        video_url: "",
+        embed_code: "",
+        text_content: "",
+        pdf_url: "",
+        link_url: "",
+        duration_minutes: "",
+        is_free_preview: false,
+      });
+    }
+  }, [editingLesson]);
 
   const { data: course, isLoading } = useQuery({
     queryKey: ["training-course", effectiveCourseId],
@@ -258,6 +304,61 @@ export default function AdminCourseEditor() {
     },
   });
 
+  const updateModuleMutation = useMutation({
+    mutationFn: async ({ id, moduleData }: { id: string; moduleData: typeof moduleFormData }) => {
+      const { data, error } = await supabase
+        .from("training_modules")
+        .update({
+          title: moduleData.title,
+          description: moduleData.description || null,
+        })
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      toast({ title: "Module updated successfully" });
+      queryClient.invalidateQueries({ queryKey: ["training-modules"] });
+      setShowModuleDialog(false);
+      setEditingModule(null);
+      setModuleFormData({ title: "", description: "" });
+    },
+    onError: (error) => {
+      toast({ 
+        title: "Failed to update module", 
+        description: error.message,
+        variant: "destructive" 
+      });
+    },
+  });
+
+  const deleteModuleMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("training_modules")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({ title: "Module deleted successfully" });
+      queryClient.invalidateQueries({ queryKey: ["training-modules"] });
+      queryClient.invalidateQueries({ queryKey: ["training-lessons"] });
+      setShowDeleteConfirm(null);
+    },
+    onError: (error) => {
+      toast({ 
+        title: "Failed to delete module", 
+        description: error.message,
+        variant: "destructive" 
+      });
+    },
+  });
+
   const createLessonMutation = useMutation({
     mutationFn: async (lessonData: typeof lessonFormData) => {
       const moduleId = selectedModuleId;
@@ -312,6 +413,79 @@ export default function AdminCourseEditor() {
     },
   });
 
+  const updateLessonMutation = useMutation({
+    mutationFn: async ({ id, lessonData }: { id: string; lessonData: typeof lessonFormData }) => {
+      const { data, error } = await supabase
+        .from("training_lessons")
+        .update({
+          title: lessonData.title,
+          content_type: lessonData.content_type,
+          video_url: lessonData.video_url || null,
+          embed_code: lessonData.embed_code || null,
+          text_content: lessonData.text_content || null,
+          pdf_url: lessonData.pdf_url || null,
+          link_url: lessonData.link_url || null,
+          duration_minutes: lessonData.duration_minutes ? parseInt(lessonData.duration_minutes) : null,
+          is_free_preview: lessonData.is_free_preview,
+        })
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      toast({ title: "Lesson updated successfully" });
+      queryClient.invalidateQueries({ queryKey: ["training-lessons"] });
+      queryClient.invalidateQueries({ queryKey: ["training-modules"] });
+      setShowLessonDialog(false);
+      setEditingLesson(null);
+      setLessonFormData({
+        title: "",
+        content_type: "video",
+        video_url: "",
+        embed_code: "",
+        text_content: "",
+        pdf_url: "",
+        link_url: "",
+        duration_minutes: "",
+        is_free_preview: false,
+      });
+    },
+    onError: (error) => {
+      toast({ 
+        title: "Failed to update lesson", 
+        description: error.message,
+        variant: "destructive" 
+      });
+    },
+  });
+
+  const deleteLessonMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("training_lessons")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({ title: "Lesson deleted successfully" });
+      queryClient.invalidateQueries({ queryKey: ["training-lessons"] });
+      queryClient.invalidateQueries({ queryKey: ["training-modules"] });
+      setShowDeleteConfirm(null);
+    },
+    onError: (error) => {
+      toast({ 
+        title: "Failed to delete lesson", 
+        description: error.message,
+        variant: "destructive" 
+      });
+    },
+  });
+
   const addTag = () => {
     if (tagInput.trim() && !formData.tags.includes(tagInput.trim())) {
       setFormData(prev => ({
@@ -343,6 +517,40 @@ export default function AdminCourseEditor() {
 
   const getModuleLessons = (moduleId: string) => {
     return lessons.filter(lesson => lesson.module_id === moduleId);
+  };
+
+  const handleModuleSubmit = () => {
+    if (editingModule) {
+      updateModuleMutation.mutate({ id: editingModule.id, moduleData: moduleFormData });
+    } else {
+      createModuleMutation.mutate(moduleFormData);
+    }
+  };
+
+  const handleLessonSubmit = () => {
+    if (editingLesson) {
+      updateLessonMutation.mutate({ id: editingLesson.id, lessonData: lessonFormData });
+    } else {
+      createLessonMutation.mutate(lessonFormData);
+    }
+  };
+
+  const handleEditModule = (module: Module) => {
+    setEditingModule(module);
+    setShowModuleDialog(true);
+  };
+
+  const handleEditLesson = (lesson: Lesson) => {
+    setEditingLesson(lesson);
+    setShowLessonDialog(true);
+  };
+
+  const handleDeleteConfirmation = (type: 'module' | 'lesson', id: string) => {
+    if (type === 'module') {
+      deleteModuleMutation.mutate(id);
+    } else {
+      deleteLessonMutation.mutate(id);
+    }
   };
 
   if (isLoading) {
@@ -490,7 +698,7 @@ export default function AdminCourseEditor() {
                       </DialogTrigger>
                       <DialogContent>
                         <DialogHeader>
-                          <DialogTitle>Create New Module</DialogTitle>
+                          <DialogTitle>{editingModule ? "Edit Module" : "Create New Module"}</DialogTitle>
                         </DialogHeader>
                         <div className="space-y-4">
                           <div className="space-y-2">
@@ -513,14 +721,19 @@ export default function AdminCourseEditor() {
                             />
                           </div>
                           <div className="flex justify-end gap-2">
-                            <Button variant="outline" onClick={() => setShowModuleDialog(false)}>
+                            <Button variant="outline" onClick={() => {
+                              setShowModuleDialog(false);
+                              setEditingModule(null);
+                            }}>
                               Cancel
                             </Button>
                             <Button 
-                              onClick={() => createModuleMutation.mutate(moduleFormData)}
-                              disabled={!moduleFormData.title.trim() || createModuleMutation.isPending}
+                              onClick={handleModuleSubmit}
+                              disabled={!moduleFormData.title.trim() || createModuleMutation.isPending || updateModuleMutation.isPending}
                             >
-                              {createModuleMutation.isPending ? "Creating..." : "Create Module"}
+                              {(createModuleMutation.isPending || updateModuleMutation.isPending) ? 
+                                (editingModule ? "Updating..." : "Creating...") : 
+                                (editingModule ? "Update Module" : "Create Module")}
                             </Button>
                           </div>
                         </div>
@@ -567,10 +780,18 @@ export default function AdminCourseEditor() {
                                 >
                                   <Plus className="h-4 w-4" />
                                 </Button>
-                                <Button size="sm" variant="ghost">
+                                <Button 
+                                  size="sm" 
+                                  variant="ghost"
+                                  onClick={() => handleEditModule(module)}
+                                >
                                   <Edit className="h-4 w-4" />
                                 </Button>
-                                <Button size="sm" variant="ghost">
+                                <Button 
+                                  size="sm" 
+                                  variant="ghost"
+                                  onClick={() => setShowDeleteConfirm({type: 'module', id: module.id})}
+                                >
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
                               </div>
@@ -594,10 +815,20 @@ export default function AdminCourseEditor() {
                                           </p>
                                         </div>
                                         <div className="flex gap-1">
-                                          <Button size="sm" variant="ghost" className="h-6 w-6 p-0">
+                                          <Button 
+                                            size="sm" 
+                                            variant="ghost" 
+                                            className="h-6 w-6 p-0"
+                                            onClick={() => handleEditLesson(lesson)}
+                                          >
                                             <Edit className="h-3 w-3" />
                                           </Button>
-                                          <Button size="sm" variant="ghost" className="h-6 w-6 p-0">
+                                          <Button 
+                                            size="sm" 
+                                            variant="ghost" 
+                                            className="h-6 w-6 p-0"
+                                            onClick={() => setShowDeleteConfirm({type: 'lesson', id: lesson.id})}
+                                          >
                                             <Trash2 className="h-3 w-3" />
                                           </Button>
                                         </div>
@@ -656,9 +887,9 @@ export default function AdminCourseEditor() {
 
       {/* Add Lesson Dialog */}
       <Dialog open={showLessonDialog} onOpenChange={setShowLessonDialog}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Create New Lesson</DialogTitle>
+            <DialogTitle>{editingLesson ? "Edit Lesson" : "Create New Lesson"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
@@ -672,7 +903,7 @@ export default function AdminCourseEditor() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="content-type">Content Type *</Label>
+              <Label htmlFor="content-type">Primary Content Type *</Label>
               <Select
                 value={lessonFormData.content_type}
                 onValueChange={(value: any) => setLessonFormData(prev => ({ ...prev, content_type: value }))}
@@ -690,67 +921,62 @@ export default function AdminCourseEditor() {
               </Select>
             </div>
 
-            {lessonFormData.content_type === 'video' && (
-              <div className="space-y-2">
-                <Label htmlFor="video-url">Video URL</Label>
-                <Input
-                  id="video-url"
-                  value={lessonFormData.video_url}
-                  onChange={(e) => setLessonFormData(prev => ({ ...prev, video_url: e.target.value }))}
-                  placeholder="https://youtube.com/watch?v=..."
-                />
-              </div>
-            )}
+            {/* Video Content */}
+            <div className="space-y-2">
+              <Label htmlFor="video-url">Video URL</Label>
+              <Input
+                id="video-url"
+                value={lessonFormData.video_url}
+                onChange={(e) => setLessonFormData(prev => ({ ...prev, video_url: e.target.value }))}
+                placeholder="https://youtube.com/watch?v=... (optional)"
+              />
+            </div>
 
-            {lessonFormData.content_type === 'text' && (
-              <div className="space-y-2">
-                <Label htmlFor="text-content">Text Content</Label>
-                <Textarea
-                  id="text-content"
-                  value={lessonFormData.text_content}
-                  onChange={(e) => setLessonFormData(prev => ({ ...prev, text_content: e.target.value }))}
-                  placeholder="Lesson content..."
-                  rows={6}
-                />
-              </div>
-            )}
+            {/* Text Content */}
+            <div className="space-y-2">
+              <Label htmlFor="text-content">Text Content</Label>
+              <Textarea
+                id="text-content"
+                value={lessonFormData.text_content}
+                onChange={(e) => setLessonFormData(prev => ({ ...prev, text_content: e.target.value }))}
+                placeholder="Additional text content... (optional)"
+                rows={4}
+              />
+            </div>
 
-            {lessonFormData.content_type === 'pdf' && (
-              <div className="space-y-2">
-                <Label htmlFor="pdf-url">PDF URL</Label>
-                <Input
-                  id="pdf-url"
-                  value={lessonFormData.pdf_url}
-                  onChange={(e) => setLessonFormData(prev => ({ ...prev, pdf_url: e.target.value }))}
-                  placeholder="https://example.com/file.pdf"
-                />
-              </div>
-            )}
+            {/* Embed Code */}
+            <div className="space-y-2">
+              <Label htmlFor="embed-code">Embed Code</Label>
+              <Textarea
+                id="embed-code"
+                value={lessonFormData.embed_code}
+                onChange={(e) => setLessonFormData(prev => ({ ...prev, embed_code: e.target.value }))}
+                placeholder="<iframe src=... (optional)"
+                rows={3}
+              />
+            </div>
 
-            {lessonFormData.content_type === 'embed' && (
-              <div className="space-y-2">
-                <Label htmlFor="embed-code">Embed Code</Label>
-                <Textarea
-                  id="embed-code"
-                  value={lessonFormData.embed_code}
-                  onChange={(e) => setLessonFormData(prev => ({ ...prev, embed_code: e.target.value }))}
-                  placeholder="<iframe src=..."
-                  rows={4}
-                />
-              </div>
-            )}
+            {/* PDF URL */}
+            <div className="space-y-2">
+              <Label htmlFor="pdf-url">PDF URL</Label>
+              <Input
+                id="pdf-url"
+                value={lessonFormData.pdf_url}
+                onChange={(e) => setLessonFormData(prev => ({ ...prev, pdf_url: e.target.value }))}
+                placeholder="https://example.com/file.pdf (optional)"
+              />
+            </div>
 
-            {lessonFormData.content_type === 'link' && (
-              <div className="space-y-2">
-                <Label htmlFor="link-url">External Link URL</Label>
-                <Input
-                  id="link-url"
-                  value={lessonFormData.link_url}
-                  onChange={(e) => setLessonFormData(prev => ({ ...prev, link_url: e.target.value }))}
-                  placeholder="https://example.com"
-                />
-              </div>
-            )}
+            {/* External Link */}
+            <div className="space-y-2">
+              <Label htmlFor="link-url">External Link URL</Label>
+              <Input
+                id="link-url"
+                value={lessonFormData.link_url}
+                onChange={(e) => setLessonFormData(prev => ({ ...prev, link_url: e.target.value }))}
+                placeholder="https://example.com (optional)"
+              />
+            </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -773,20 +999,42 @@ export default function AdminCourseEditor() {
               </div>
             </div>
 
+            <div className="text-xs text-muted-foreground bg-muted/50 p-3 rounded">
+              <strong>Note:</strong> You can fill in multiple content fields. The "Primary Content Type" determines which content is displayed first, 
+              but all filled content will be available in the lesson.
+            </div>
+
             <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setShowLessonDialog(false)}>
+              <Button variant="outline" onClick={() => {
+                setShowLessonDialog(false);
+                setEditingLesson(null);
+              }}>
                 Cancel
               </Button>
               <Button 
-                onClick={() => createLessonMutation.mutate(lessonFormData)}
-                disabled={!lessonFormData.title.trim() || createLessonMutation.isPending}
+                onClick={handleLessonSubmit}
+                disabled={!lessonFormData.title.trim() || createLessonMutation.isPending || updateLessonMutation.isPending}
               >
-                {createLessonMutation.isPending ? "Creating..." : "Create Lesson"}
+                {(createLessonMutation.isPending || updateLessonMutation.isPending) ? 
+                  (editingLesson ? "Updating..." : "Creating...") : 
+                  (editingLesson ? "Update Lesson" : "Create Lesson")}
               </Button>
             </div>
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmationDialog
+        open={!!showDeleteConfirm}
+        onOpenChange={(open) => !open && setShowDeleteConfirm(null)}
+        title={`Delete ${showDeleteConfirm?.type === 'module' ? 'Module' : 'Lesson'}`}
+        description={`Are you sure you want to delete this ${showDeleteConfirm?.type}? This action cannot be undone.${showDeleteConfirm?.type === 'module' ? ' All lessons in this module will also be deleted.' : ''}`}
+        variant="destructive"
+        confirmText="Delete"
+        onConfirm={() => showDeleteConfirm && handleDeleteConfirmation(showDeleteConfirm.type, showDeleteConfirm.id)}
+        isLoading={deleteModuleMutation.isPending || deleteLessonMutation.isPending}
+      />
     </AdminLayout>
   );
 }
