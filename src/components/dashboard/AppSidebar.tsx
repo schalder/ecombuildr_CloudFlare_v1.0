@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import { LayoutDashboard, Package, ShoppingCart, Users, FileText, BarChart3, Megaphone, Settings, Plus, Search, ChevronDown, ChevronRight, Palette, Globe, Shield, Images } from "lucide-react";
+import { LayoutDashboard, Package, ShoppingCart, Users, FileText, BarChart3, Megaphone, Settings, Plus, Search, ChevronDown, ChevronRight, Palette, Globe, Shield, Images, BookOpen } from "lucide-react";
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarMenuSub, SidebarMenuSubButton, SidebarMenuSubItem, useSidebar } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,6 +32,10 @@ const navigationItems = [{
     title: "Create Funnel",
     url: "/dashboard/funnels/create"
   }]
+}, {
+  title: "Training",
+  url: "/training",
+  icon: BookOpen
 }, {
   title: "Products",
   icon: Package,
@@ -118,6 +122,13 @@ const navigationItems = [{
     title: "Billing",
     url: "/dashboard/settings/billing"
   }]
+}];
+
+// Admin navigation items for super admins
+const adminNavigationItems = [{
+  title: "Admin Training",
+  url: "/admin/training",
+  icon: BookOpen
 }];
 export function AppSidebar() {
   const {
@@ -242,6 +253,29 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {/* Admin Training Navigation - only visible for super admins */}
+        {isSuperAdmin && currentPath.startsWith('/admin') && <SidebarGroup className="border-t border-sidebar-border">
+            <SidebarGroupLabel>Admin Tools</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu className="gap-1">
+                {adminNavigationItems.map(item => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild className="min-h-[44px] touch-manipulation">
+                      <NavLink to={item.url} className={({ isActive }) => 
+                        isActive 
+                          ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium min-h-[44px] touch-manipulation" 
+                          : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground min-h-[44px] touch-manipulation"
+                      }>
+                        <item.icon className="mr-3 h-4 w-4" />
+                        {!collapsed && <span>{item.title}</span>}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+        </SidebarGroup>}
 
         {/* Super Admin Dashboard Switcher - only visible for super admins */}
         {isSuperAdmin && <SidebarGroup className="border-t border-sidebar-border">

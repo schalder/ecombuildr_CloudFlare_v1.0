@@ -63,6 +63,10 @@ import AdminLibraryOrdersSummary from "./pages/admin/AdminLibraryOrdersSummary";
 import AdminTemplateManagement from "./pages/admin/AdminTemplateManagement";
 import AdminTemplateEditor from "./pages/admin/AdminTemplateEditor";
 import AdminTemplatePreview from "./pages/admin/AdminTemplatePreview";
+import AdminTraining from "./pages/admin/AdminTraining";
+import AdminCourseEditor from "./pages/admin/AdminCourseEditor";
+import Training from "./pages/Training";
+import TrainingCourse from "./pages/TrainingCourse";
 import { StorefrontHome } from "./pages/storefront/StorefrontHome";
 import { StorefrontProducts } from "./pages/storefront/StorefrontProducts";
 import ProductDetail from "./pages/storefront/ProductDetail";
@@ -146,6 +150,10 @@ const App = () => (
                   <Route path="websites/:id" element={<WebsiteManagement />} />
                   <Route path="funnels/create" element={<CreateFunnel />} />
                 </Route>
+
+                {/* Training Routes - Protected */}
+                <Route path="/training" element={<Training />} />
+                <Route path="/training/:courseSlug" element={<TrainingCourse />} />
                 
                 
                 {/* Admin Routes */}
@@ -171,6 +179,9 @@ const App = () => (
                 <Route path="/admin/templates/create" element={<AdminTemplateEditor />} />
                 <Route path="/admin/templates/edit/:templateId" element={<AdminTemplateEditor />} />
                 <Route path="/admin/templates/preview/:templateId" element={<AdminTemplatePreview />} />
+                <Route path="/admin/training" element={<AdminTraining />} />
+                <Route path="/admin/training/new" element={<AdminCourseEditor />} />
+                <Route path="/admin/training/:courseId" element={<AdminCourseEditor />} />
                 
                 {/* Demo and Preview Routes */}
                 <Route path="/preview/demo" element={<DemoPreview />} />

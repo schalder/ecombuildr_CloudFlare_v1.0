@@ -1,0 +1,368 @@
+import { useState } from "react";
+import { useParams } from "react-router-dom";
+import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { AspectRatio } from "@/components/ui/aspect-ratio";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ChevronDown, ChevronRight, Play, FileText, Download, ExternalLink, Clock } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { cn } from "@/lib/utils";
+
+interface TrainingLesson {
+  id: string;
+  title: string;
+  content_type: 'video' | 'text' | 'pdf' | 'embed' | 'link';
+  video_url: string | null;
+  embed_code: string | null;
+  text_content: string | null;
+  pdf_url: string | null;
+  link_url: string | null;
+  duration_minutes: number | null;
+  is_free_preview: boolean;
+  sort_order: number;
+}
+
+interface TrainingModule {
+  id: string;
+  title: string;
+  description: string | null;
+  sort_order: number;
+  lessons: TrainingLesson[];
+}
+
+interface TrainingCourse {
+  id: string;
+  title: string;
+  slug: string;
+  description: string | null;
+  category: string | null;
+  tags: string[];
+  estimated_duration_minutes: number | null;
+  thumbnail_url: string | null;
+  modules: TrainingModule[];
+}
+
+export default function TrainingCourse() {
+  const { courseSlug } = useParams();
+  const [selectedLesson, setSelectedLesson] = useState<TrainingLesson | null>(null);
+  const [expandedModules, setExpandedModules] = useState<string[]>([]);
+
+  const { data: course, isLoading } = useQuery({
+    queryKey: ["training-course", courseSlug],
+    queryFn: async () => {
+      const { data: courseData, error: courseError } = await supabase
+        .from("training_courses")
+        .select("*")
+        .eq("slug", courseSlug)
+        .eq("is_published", true)
+        .eq("is_active", true)
+        .single();
+      
+      if (courseError) throw courseError;
+
+      const { data: modulesData, error: modulesError } = await supabase
+        .from("training_modules")
+        .select(`
+          *,
+          lessons:training_lessons(*)
+        `)
+        .eq("course_id", courseData.id)
+        .order("sort_order");
+      
+      if (modulesError) throw modulesError;
+
+      const modules = modulesData.map(module => ({
+        ...module,
+        lessons: (module.lessons as TrainingLesson[]).sort((a, b) => a.sort_order - b.sort_order)
+      }));
+
+      return {
+        ...courseData,
+        modules
+      } as TrainingCourse;
+    },
+  });
+
+  const toggleModule = (moduleId: string) => {
+    setExpandedModules(prev =>
+      prev.includes(moduleId)
+        ? prev.filter(id => id !== moduleId)
+        : [...prev, moduleId]
+    );
+  };
+
+  const renderLessonContent = (lesson: TrainingLesson) => {
+    switch (lesson.content_type) {
+      case 'video':
+        const videoUrl = lesson.video_url || '';
+        const isYoutube = videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be');
+        
+        if (lesson.embed_code) {
+          return (
+            <div className="w-full">
+              <AspectRatio ratio={16 / 9}>
+                <div dangerouslySetInnerHTML={{ __html: lesson.embed_code }} />
+              </AspectRatio>
+            </div>
+          );
+        }
+        
+        if (isYoutube) {
+          let embedUrl = videoUrl;
+          if (videoUrl.includes('youtube.com/watch?v=')) {
+            embedUrl = videoUrl.replace('youtube.com/watch?v=', 'youtube.com/embed/');
+          } else if (videoUrl.includes('youtu.be/')) {
+            embedUrl = videoUrl.replace('youtu.be/', 'youtube.com/embed/');
+          }
+          
+          return (
+            <div className="w-full">
+              <AspectRatio ratio={16 / 9}>
+                <iframe
+                  src={embedUrl}
+                  className="w-full h-full rounded-lg"
+                  allowFullScreen
+                  title={lesson.title}
+                />
+              </AspectRatio>
+            </div>
+          );
+        }
+        
+        return (
+          <div className="w-full">
+            <AspectRatio ratio={16 / 9}>
+              <video
+                src={videoUrl}
+                controls
+                className="w-full h-full rounded-lg"
+                title={lesson.title}
+              />
+            </AspectRatio>
+          </div>
+        );
+
+      case 'text':
+        return (
+          <div className="prose prose-sm max-w-none">
+            <div dangerouslySetInnerHTML={{ __html: lesson.text_content || '' }} />
+          </div>
+        );
+
+      case 'pdf':
+        return (
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 p-4 bg-muted rounded-lg">
+              <Download className="h-5 w-5" />
+              <span className="font-medium">PDF Document</span>
+            </div>
+            <iframe
+              src={lesson.pdf_url || ''}
+              className="w-full h-96 rounded-lg border"
+              title={lesson.title}
+            />
+          </div>
+        );
+
+      case 'embed':
+        return (
+          <div className="w-full">
+            <AspectRatio ratio={16 / 9}>
+              <div dangerouslySetInnerHTML={{ __html: lesson.embed_code || '' }} />
+            </AspectRatio>
+          </div>
+        );
+
+      case 'link':
+        return (
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 p-4 bg-muted rounded-lg">
+              <ExternalLink className="h-5 w-5" />
+              <span className="font-medium">External Resource</span>
+            </div>
+            <a
+              href={lesson.link_url || ''}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:underline"
+            >
+              Open Resource →
+            </a>
+          </div>
+        );
+
+      default:
+        return <div>Unsupported content type</div>;
+    }
+  };
+
+  const getLessonIcon = (contentType: string) => {
+    switch (contentType) {
+      case 'video':
+        return <Play className="h-4 w-4" />;
+      case 'text':
+        return <FileText className="h-4 w-4" />;
+      case 'pdf':
+        return <Download className="h-4 w-4" />;
+      case 'embed':
+        return <Play className="h-4 w-4" />;
+      case 'link':
+        return <ExternalLink className="h-4 w-4" />;
+      default:
+        return <FileText className="h-4 w-4" />;
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <DashboardLayout>
+        <div className="animate-pulse space-y-6">
+          <div className="h-8 bg-muted rounded w-1/2"></div>
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            <div className="h-96 bg-muted rounded"></div>
+            <div className="lg:col-span-3 h-96 bg-muted rounded"></div>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (!course) {
+    return (
+      <DashboardLayout>
+        <div className="text-center py-12">
+          <h2 className="text-xl font-semibold">Course not found</h2>
+          <p className="text-muted-foreground">The course you're looking for doesn't exist or isn't published.</p>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  return (
+    <DashboardLayout title={course.title} description={course.description || ""}>
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        {/* Sidebar - Course Navigation */}
+        <div className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Course Content</CardTitle>
+              <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                <span>{course.modules.length} modules</span>
+                {course.estimated_duration_minutes && (
+                  <div className="flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    <span>{course.estimated_duration_minutes} min</span>
+                  </div>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {course.modules.map((module) => (
+                <Collapsible
+                  key={module.id}
+                  open={expandedModules.includes(module.id)}
+                  onOpenChange={() => toggleModule(module.id)}
+                >
+                  <CollapsibleTrigger className="flex items-center gap-2 w-full p-2 hover:bg-muted rounded-lg text-left">
+                    {expandedModules.includes(module.id) ? (
+                      <ChevronDown className="h-4 w-4" />
+                    ) : (
+                      <ChevronRight className="h-4 w-4" />
+                    )}
+                    <div className="flex-1">
+                      <div className="font-medium">{module.title}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {module.lessons.length} lessons
+                      </div>
+                    </div>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="ml-6 space-y-1">
+                    {module.lessons.map((lesson) => (
+                      <button
+                        key={lesson.id}
+                        onClick={() => setSelectedLesson(lesson)}
+                        className={cn(
+                          "flex items-center gap-2 w-full p-2 rounded text-left text-sm hover:bg-muted",
+                          selectedLesson?.id === lesson.id && "bg-primary/10"
+                        )}
+                      >
+                        {getLessonIcon(lesson.content_type)}
+                        <span className="flex-1">{lesson.title}</span>
+                        {lesson.duration_minutes && (
+                          <span className="text-xs text-muted-foreground">
+                            {lesson.duration_minutes}min
+                          </span>
+                        )}
+                      </button>
+                    ))}
+                  </CollapsibleContent>
+                </Collapsible>
+              ))}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Main Content */}
+        <div className="lg:col-span-3">
+          {selectedLesson ? (
+            <Card>
+              <CardHeader>
+                <CardTitle>{selectedLesson.title}</CardTitle>
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline">{selectedLesson.content_type}</Badge>
+                  {selectedLesson.duration_minutes && (
+                    <Badge variant="outline">
+                      <Clock className="h-3 w-3 mr-1" />
+                      {selectedLesson.duration_minutes} min
+                    </Badge>
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent>
+                {renderLessonContent(selectedLesson)}
+              </CardContent>
+            </Card>
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle>Welcome to {course.title}</CardTitle>
+                {course.category && (
+                  <Badge className="w-fit">{course.category}</Badge>
+                )}
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {course.description && (
+                  <div className="prose prose-sm max-w-none">
+                    <p>{course.description}</p>
+                  </div>
+                )}
+                
+                {course.tags.length > 0 && (
+                  <div className="space-y-2">
+                    <h4 className="font-medium">Tags</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {course.tags.map(tag => (
+                        <Badge key={tag} variant="secondary">{tag}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <Separator />
+                
+                <div className="text-center py-8">
+                  <p className="text-muted-foreground">
+                    Select a lesson from the sidebar to get started
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </div>
+    </DashboardLayout>
+  );
+}

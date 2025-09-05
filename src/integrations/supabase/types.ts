@@ -2238,6 +2238,154 @@ export type Database = {
         }
         Relationships: []
       }
+      training_courses: {
+        Row: {
+          category: string | null
+          created_at: string
+          description: string | null
+          estimated_duration_minutes: number | null
+          id: string
+          is_active: boolean
+          is_published: boolean
+          short_description: string | null
+          slug: string
+          sort_order: number
+          tags: string[]
+          thumbnail_url: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          estimated_duration_minutes?: number | null
+          id?: string
+          is_active?: boolean
+          is_published?: boolean
+          short_description?: string | null
+          slug: string
+          sort_order?: number
+          tags?: string[]
+          thumbnail_url?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          estimated_duration_minutes?: number | null
+          id?: string
+          is_active?: boolean
+          is_published?: boolean
+          short_description?: string | null
+          slug?: string
+          sort_order?: number
+          tags?: string[]
+          thumbnail_url?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      training_lessons: {
+        Row: {
+          content_type: Database["public"]["Enums"]["training_content_type"]
+          created_at: string
+          duration_minutes: number | null
+          embed_code: string | null
+          id: string
+          is_free_preview: boolean
+          link_url: string | null
+          module_id: string
+          pdf_url: string | null
+          sort_order: number
+          text_content: string | null
+          title: string
+          updated_at: string
+          video_url: string | null
+        }
+        Insert: {
+          content_type: Database["public"]["Enums"]["training_content_type"]
+          created_at?: string
+          duration_minutes?: number | null
+          embed_code?: string | null
+          id?: string
+          is_free_preview?: boolean
+          link_url?: string | null
+          module_id: string
+          pdf_url?: string | null
+          sort_order?: number
+          text_content?: string | null
+          title: string
+          updated_at?: string
+          video_url?: string | null
+        }
+        Update: {
+          content_type?: Database["public"]["Enums"]["training_content_type"]
+          created_at?: string
+          duration_minutes?: number | null
+          embed_code?: string | null
+          id?: string
+          is_free_preview?: boolean
+          link_url?: string | null
+          module_id?: string
+          pdf_url?: string | null
+          sort_order?: number
+          text_content?: string | null
+          title?: string
+          updated_at?: string
+          video_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_lessons_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "training_modules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      training_modules: {
+        Row: {
+          course_id: string
+          created_at: string
+          description: string | null
+          id: string
+          sort_order: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          course_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          sort_order?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          course_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          sort_order?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_modules_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "training_courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_usage: {
         Row: {
           created_at: string
@@ -2588,6 +2736,7 @@ export type Database = {
         | "starter"
         | "professional"
         | "enterprise"
+      training_content_type: "video" | "text" | "pdf" | "embed" | "link"
       user_role: "store_owner" | "super_admin"
     }
     CompositeTypes: {
@@ -2735,6 +2884,7 @@ export const Constants = {
         "professional",
         "enterprise",
       ],
+      training_content_type: ["video", "text", "pdf", "embed", "link"],
       user_role: ["store_owner", "super_admin"],
     },
   },
