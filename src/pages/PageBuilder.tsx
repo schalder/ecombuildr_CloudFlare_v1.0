@@ -63,7 +63,7 @@ export default function PageBuilder() {
     sections: [],
     pageStyles: {
       backgroundType: 'none',
-      paddingTop: '40px',
+      paddingTop: '0px',
       paddingBottom: '40px',
       backgroundSize: 'cover',
       backgroundPosition: 'center center',
@@ -131,7 +131,7 @@ export default function PageBuilder() {
             const content = data.content as any;
             const pageStyles = content.pageStyles || {
               backgroundType: 'none',
-              paddingTop: '40px',
+              paddingTop: '0px',
               paddingBottom: '40px',
               backgroundSize: 'cover',
               backgroundPosition: 'center center',
