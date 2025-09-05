@@ -2,7 +2,7 @@ import React from 'react';
 import { useCart } from '@/contexts/CartContext';
 import { useStore } from '@/contexts/StoreContext';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose } from '@/components/ui/sheet';
 import { Separator } from '@/components/ui/separator';
 import { Plus, Minus, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -43,11 +43,13 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ children }) => {
                   </div>
                 </div>
                 <p className="text-muted-foreground mb-4">Your cart is empty</p>
-                <Link to={paths.products}>
-                  <Button variant="outline" className="w-full">
-                    Continue Shopping
-                  </Button>
-                </Link>
+                <SheetClose asChild>
+                  <Link to={paths.products}>
+                    <Button variant="outline" className="w-full">
+                      Continue Shopping
+                    </Button>
+                  </Link>
+                </SheetClose>
               </div>
             ) : (
               <div className="space-y-3">
@@ -120,11 +122,13 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ children }) => {
                   <span>{formatCurrency(total)}</span>
                 </div>
               </div>
-              <Link to={paths.checkout} className="block">
-                <Button className="w-full product-cta" size="lg">
-                  Proceed to Checkout
-                </Button>
-              </Link>
+              <SheetClose asChild>
+                <Link to={paths.checkout} className="block">
+                  <Button className="w-full product-cta" size="lg">
+                    Proceed to Checkout
+                  </Button>
+                </Link>
+              </SheetClose>
             </div>
           )}
         </div>
