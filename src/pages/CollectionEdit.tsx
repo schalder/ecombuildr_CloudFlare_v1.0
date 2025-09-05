@@ -156,17 +156,22 @@ export default function CollectionEdit() {
   const handleTogglePublished = async (checked: boolean) => {
     if (!collection) return;
 
+    console.log('Toggle Published - Before:', { id: collection.id, is_published: collection.is_published, new_value: checked });
+
     // Update local state immediately for responsive UI
     setCollection(prev => prev ? { ...prev, is_published: checked } : null);
 
     try {
-      const { error } = await (supabase as any)
+      const { data, error } = await (supabase as any)
         .from('collections')
         .update({
           is_published: checked,
           updated_at: new Date().toISOString(),
         })
-        .eq('id', collection.id);
+        .eq('id', collection.id)
+        .select();
+
+      console.log('Toggle Published - Database response:', { data, error });
 
       if (error) throw error;
 
@@ -175,6 +180,7 @@ export default function CollectionEdit() {
         description: `Collection ${checked ? 'published' : 'unpublished'} successfully`,
       });
     } catch (error: any) {
+      console.error('Toggle Published - Error:', error);
       // Revert local state on error
       setCollection(prev => prev ? { ...prev, is_published: !checked } : null);
       toast({
@@ -188,17 +194,22 @@ export default function CollectionEdit() {
   const handleToggleActive = async (checked: boolean) => {
     if (!collection) return;
 
+    console.log('Toggle Active - Before:', { id: collection.id, is_active: collection.is_active, new_value: checked });
+
     // Update local state immediately for responsive UI
     setCollection(prev => prev ? { ...prev, is_active: checked } : null);
 
     try {
-      const { error } = await (supabase as any)
+      const { data, error } = await (supabase as any)
         .from('collections')
         .update({
           is_active: checked,
           updated_at: new Date().toISOString(),
         })
-        .eq('id', collection.id);
+        .eq('id', collection.id)
+        .select();
+
+      console.log('Toggle Active - Database response:', { data, error });
 
       if (error) throw error;
 
@@ -207,6 +218,7 @@ export default function CollectionEdit() {
         description: `Collection ${checked ? 'activated' : 'deactivated'} successfully`,
       });
     } catch (error: any) {
+      console.error('Toggle Active - Error:', error);
       // Revert local state on error
       setCollection(prev => prev ? { ...prev, is_active: !checked } : null);
       toast({
