@@ -41,9 +41,9 @@ export const FloatingCartButton: React.FC<FloatingCartButtonProps> = ({
         )}
       >
         <Button
-          size="lg"
+          size="icon"
           className={cn(
-            "h-14 w-14 rounded-full shadow-lg relative bg-primary hover:bg-primary/90",
+            "h-14 w-14 rounded-full shadow-lg relative p-0 transition-all duration-300 hover:scale-105",
             !color && "bg-primary hover:bg-primary/90"
           )}
           style={color ? {

@@ -146,9 +146,10 @@ export const SupportWidget: React.FC<SupportWidgetProps> = ({ website }) => {
 
       {/* Main support button */}
       <Button
+        size="icon"
         onClick={handleMainButtonClick}
         className={cn(
-          'h-14 w-14 rounded-full shadow-lg transition-all duration-300 hover:scale-105',
+          'h-14 w-14 rounded-full shadow-lg transition-all duration-300 hover:scale-105 p-0',
           !customColor && (supportOptions.length === 1 
             ? supportOptions[0].color 
             : 'bg-primary hover:bg-primary/90')
