@@ -26,8 +26,8 @@ export const PlanStatusBanner = ({ onUpgrade }: PlanStatusBannerProps) => {
   const inGracePeriod = isInGracePeriod();
   const accountReadOnly = isAccountReadOnly();
 
-  // Account read-only (after grace period)
-  if (accountReadOnly) {
+  // Account read-only (check actual database status)
+  if (userProfile.account_status === 'read_only') {
     return (
       <Alert variant="destructive" className="mb-6">
         <AlertTriangle className="h-4 w-4" />

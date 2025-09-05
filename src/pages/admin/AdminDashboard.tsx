@@ -12,9 +12,12 @@ import {
   RefreshCw,
   AlertTriangle,
   CheckCircle,
-  BookOpen
+  BookOpen,
+  Shield
 } from 'lucide-react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 const AdminDashboard = () => {
   const { 
@@ -25,6 +28,26 @@ const AdminDashboard = () => {
     error,
     refetch 
   } = useAdminData();
+  
+  const [enforcing, setEnforcing] = useState(false);
+
+  const handleManualEnforcement = async () => {
+    setEnforcing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('account-enforcement');
+      
+      if (error) {
+        toast.error('Failed to run account enforcement: ' + error.message);
+      } else {
+        toast.success(`Account enforcement completed. ${data?.enforcedCount || 0} accounts enforced.`);
+        refetch(); // Refresh the data
+      }
+    } catch (err) {
+      toast.error('Error running account enforcement');
+    } finally {
+      setEnforcing(false);
+    }
+  };
 
   useEffect(() => {
     // Auto-refresh every 30 seconds
@@ -92,8 +115,18 @@ const AdminDashboard = () => {
   return (
     <AdminLayout title="Admin Dashboard" description="Platform Overview & Statistics">
       <div className="space-y-6">
-        {/* Refresh Button */}
-        <div className="flex justify-end">
+        {/* Action Buttons */}
+        <div className="flex justify-end gap-2">
+          <Button
+            onClick={handleManualEnforcement}
+            disabled={enforcing}
+            variant="outline"
+            size="sm"
+            className="gap-2"
+          >
+            <Shield className="h-4 w-4" />
+            {enforcing ? 'Enforcing...' : 'Run Account Enforcement'}
+          </Button>
           <Button
             onClick={refetch}
             variant="outline"
