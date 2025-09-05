@@ -13,6 +13,7 @@ import { SEOHead } from '@/components/SEOHead';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAddToCart } from '@/contexts/AddToCartProvider';
+import { useWebsiteContext } from '@/contexts/WebsiteContext';
 
 interface Collection {
   id: string;
@@ -41,6 +42,7 @@ function CollectionPage() {
   const { collectionSlug } = useParams<{ collectionSlug: string }>();
   const { toast } = useToast();
   const { addToCart } = useAddToCart();
+  const { websiteId, websiteSlug } = useWebsiteContext();
   
   const [collection, setCollection] = useState<Collection | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
@@ -136,9 +138,23 @@ function CollectionPage() {
     product.short_description?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // Check if we're in a website context (custom domain or site slug)
+  const isWebsiteContext = !!(websiteId || websiteSlug);
+
+  const renderContent = (content: React.ReactNode) => {
+    if (isWebsiteContext) {
+      // Don't wrap in StorefrontLayout if we're in website context
+      // The layout is already provided by DomainWebsiteRouter or WebsiteLayout
+      return content;
+    } else {
+      // Wrap in StorefrontLayout for standalone access
+      return <StorefrontLayout>{content}</StorefrontLayout>;
+    }
+  };
+
   if (loading) {
-    return (
-      <StorefrontLayout>
+    return renderContent(
+      <>
         <SEOHead 
           title="Loading Collection..." 
           description="Loading collection page"
@@ -151,13 +167,13 @@ function CollectionPage() {
           </div>
           <ProductGridSkeleton count={6} />
         </div>
-      </StorefrontLayout>
+      </>
     );
   }
 
   if (!collection) {
-    return (
-      <StorefrontLayout>
+    return renderContent(
+      <>
         <SEOHead 
           title="Collection Not Found" 
           description="The requested collection could not be found"
@@ -174,12 +190,12 @@ function CollectionPage() {
             </Link>
           </Button>
         </div>
-      </StorefrontLayout>
+      </>
     );
   }
 
-  return (
-    <StorefrontLayout>
+  return renderContent(
+    <>
       <SEOHead 
         title={collection.name}
         description={collection.description || `Browse products in the ${collection.name} collection`}
@@ -336,7 +352,7 @@ function CollectionPage() {
           </>
         )}
       </div>
-    </StorefrontLayout>
+    </>
   );
 }
 
