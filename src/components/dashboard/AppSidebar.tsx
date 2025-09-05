@@ -33,10 +33,6 @@ const navigationItems = [{
     url: "/dashboard/funnels/create"
   }]
 }, {
-  title: "Training",
-  url: "/training",
-  icon: BookOpen
-}, {
   title: "Products",
   icon: Package,
   items: [{
@@ -109,6 +105,10 @@ const navigationItems = [{
     title: "Discounts",
     url: "/dashboard/marketing/discounts"
   }]
+},{
+  title: "Training",
+  url: "/training",
+  icon: BookOpen
 }, {
   title: "Settings",
   icon: Settings,
