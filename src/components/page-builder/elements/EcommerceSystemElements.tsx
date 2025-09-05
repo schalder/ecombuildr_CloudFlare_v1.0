@@ -1252,7 +1252,7 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
             <CheckCircle className="h-8 w-8" />
           </div>
           <h1 className={`text-3xl font-bold mb-2 element-${element.id}-oc-title`}>{texts.title}</h1>
-          <p className={`text-muted-foreground element-${element.id}-oc-subtitle`}>{texts.subtitle}</p>
+          <p className={`text-muted-foreground mb-8 element-${element.id}-oc-subtitle`}>{texts.subtitle}</p>
         </div>
         <Card className={`element-${element.id}-oc-card`}>
           <CardHeader><CardTitle>Order #{order.order_number}</CardTitle></CardHeader>
