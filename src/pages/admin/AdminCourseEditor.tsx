@@ -45,7 +45,8 @@ export default function AdminCourseEditor() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const isNew = courseId === "new";
+  const isNew = courseId === "new" || !courseId;
+  const effectiveCourseId = isNew ? null : courseId;
 
   const [formData, setFormData] = useState({
     title: "",
@@ -95,32 +96,32 @@ export default function AdminCourseEditor() {
   });
 
   const { data: course, isLoading } = useQuery({
-    queryKey: ["training-course", courseId],
+    queryKey: ["training-course", effectiveCourseId],
     queryFn: async () => {
-      if (isNew) return null;
+      if (!effectiveCourseId) return null;
       const { data, error } = await supabase
         .from("training_courses")
         .select("*")
-        .eq("id", courseId)
+        .eq("id", effectiveCourseId)
         .single();
       
       if (error) throw error;
       return data;
     },
-    enabled: !isNew,
+    enabled: !!effectiveCourseId,
   });
 
   const { data: modules = [] } = useQuery({
-    queryKey: ["training-modules", courseId],
+    queryKey: ["training-modules", effectiveCourseId],
     queryFn: async () => {
-      if (isNew) return [];
+      if (!effectiveCourseId) return [];
       const { data, error } = await supabase
         .from("training_modules")
         .select(`
           *,
           lessons_count:training_lessons(count)
         `)
-        .eq("course_id", courseId)
+        .eq("course_id", effectiveCourseId)
         .order("sort_order");
       
       if (error) throw error;
@@ -129,13 +130,13 @@ export default function AdminCourseEditor() {
         lessons_count: module.lessons_count?.[0]?.count || 0
       })) as Module[];
     },
-    enabled: !isNew,
+    enabled: !!effectiveCourseId,
   });
 
   const { data: lessons = [] } = useQuery({
-    queryKey: ["training-lessons", courseId],
+    queryKey: ["training-lessons", effectiveCourseId],
     queryFn: async () => {
-      if (isNew) return [];
+      if (!effectiveCourseId || modules.length === 0) return [];
       const { data, error } = await supabase
         .from("training_lessons")
         .select("*")
@@ -145,7 +146,7 @@ export default function AdminCourseEditor() {
       if (error) throw error;
       return data as Lesson[];
     },
-    enabled: !isNew && modules.length > 0,
+    enabled: !!effectiveCourseId && modules.length > 0,
   });
 
   useEffect(() => {
@@ -192,10 +193,11 @@ export default function AdminCourseEditor() {
         if (error) throw error;
         return newCourse;
       } else {
+        if (!effectiveCourseId) throw new Error("Course ID is required for update");
         const { data: updatedCourse, error } = await supabase
           .from("training_courses")
           .update(courseData)
-          .eq("id", courseId)
+          .eq("id", effectiveCourseId)
           .select()
           .single();
         
@@ -224,12 +226,13 @@ export default function AdminCourseEditor() {
 
   const createModuleMutation = useMutation({
     mutationFn: async (moduleData: typeof moduleFormData) => {
+      if (!effectiveCourseId) throw new Error("Course ID is required to create module");
       const nextSortOrder = modules.length > 0 ? Math.max(...modules.map(m => m.sort_order)) + 1 : 1;
       
       const { data, error } = await supabase
         .from("training_modules")
         .insert([{
-          course_id: courseId,
+          course_id: effectiveCourseId,
           title: moduleData.title,
           description: moduleData.description || null,
           sort_order: nextSortOrder,
@@ -473,7 +476,7 @@ export default function AdminCourseEditor() {
               </CardContent>
             </Card>
 
-            {!isNew && (
+            {!!effectiveCourseId && (
               <Card>
                 <CardHeader>
                   <div className="flex justify-between items-center">
