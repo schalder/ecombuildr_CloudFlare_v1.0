@@ -1244,21 +1244,21 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
     ].join(' ');
 
     return (
-    <div className={`max-w-2xl mx-auto space-y-4 element-${element.id}-oc-container`}>
+    <div className="max-w-2xl mx-auto space-y-6">
       <style>{css}</style>
       <div ref={orderContentRef}>
         <div className="text-center">
-          <h1 className={`text-2xl font-bold mb-2 element-${element.id}-oc-title`}>{texts.title}</h1>
-          <p className={`text-muted-foreground mb-4 element-${element.id}-oc-subtitle`}>{texts.subtitle}</p>
-          <div className={`inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full element-${element.id}-oc-order-badge`}>
-            <CheckCircle2 className="h-5 w-5" />
-            <span className="font-medium">Order #{order.order_number}</span>
+          <div className={`inline-flex items-center justify-center w-16 h-16 rounded-full mb-4 element-${element.id}-oc-success`}>
+            <CheckCircle className="h-8 w-8" />
           </div>
+          <h1 className={`text-3xl font-bold mb-2 element-${element.id}-oc-title`}>{texts.title}</h1>
+          <p className={`text-muted-foreground element-${element.id}-oc-subtitle`}>{texts.subtitle}</p>
         </div>
         <Card className={`element-${element.id}-oc-card`}>
-          <CardHeader><CardTitle>{texts.customerTitle}</CardTitle></CardHeader>
+          <CardHeader><CardTitle>Order #{order.order_number}</CardTitle></CardHeader>
           <CardContent className="space-y-4">
             <div>
+              <h3 className={`font-semibold mb-2 element-${element.id}-oc-section-title`}>{texts.customerTitle}</h3>
               <p className="text-sm">{order.customer_name}{show.phone && order.customer_phone ? ` · ${order.customer_phone}` : ''}</p>
               {show.email && (
                 <p className="text-sm text-muted-foreground">{order.customer_email}</p>
