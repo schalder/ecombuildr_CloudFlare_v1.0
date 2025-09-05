@@ -86,13 +86,22 @@ export default function Collections() {
     const website = websites.find(w => w.id === collection.website_id);
     if (!website) return '';
     
-    // Check if website has a custom domain
+    // Priority: connected_domain > website.domain > system URL
+    if (website.connected_domain) {
+      return `https://${website.connected_domain}/collections/${collection.slug}`;
+    }
+    
     if (website.domain) {
       return `https://${website.domain}/collections/${collection.slug}`;
     }
     
-    // Use site slug path
-    return `${window.location.origin}/site/${website.slug}/collections/${collection.slug}`;
+    // Fallback to system URL using store and website slugs
+    if (store?.slug) {
+      return `https://${website.slug}.${store.slug}.lovable.app/collections/${collection.slug}`;
+    }
+    
+    // Final fallback to site path
+    return `/site/${website.slug}/collections/${collection.slug}`;
   };
 
   const handleCopyLink = async (collection: any) => {
