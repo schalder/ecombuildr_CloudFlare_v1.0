@@ -18,6 +18,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { RichTextEditor } from "@/components/ui/RichTextEditor";
+import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 
 interface Module {
   id: string;
@@ -487,6 +488,67 @@ export default function AdminCourseEditor() {
     },
   });
 
+  // Reorder modules mutation
+  const reorderModulesMutation = useMutation({
+    mutationFn: async (reorderedModules: Module[]) => {
+      const updates = reorderedModules.map((module, index) => 
+        supabase
+          .from("training_modules")
+          .update({ sort_order: index + 1 })
+          .eq("id", module.id)
+      );
+      
+      const results = await Promise.all(updates);
+      const errors = results.filter(result => result.error);
+      
+      if (errors.length > 0) {
+        throw new Error(`Failed to update ${errors.length} modules`);
+      }
+    },
+    onSuccess: () => {
+      toast({ title: "Modules reordered successfully" });
+      queryClient.invalidateQueries({ queryKey: ["training-modules"] });
+    },
+    onError: (error) => {
+      toast({ 
+        title: "Failed to reorder modules", 
+        description: error.message,
+        variant: "destructive" 
+      });
+    },
+  });
+
+  // Reorder lessons mutation
+  const reorderLessonsMutation = useMutation({
+    mutationFn: async (updates: { id: string; module_id: string; sort_order: number }[]) => {
+      const updatePromises = updates.map(({ id, module_id, sort_order }) => 
+        supabase
+          .from("training_lessons")
+          .update({ module_id, sort_order })
+          .eq("id", id)
+      );
+      
+      const results = await Promise.all(updatePromises);
+      const errors = results.filter(result => result.error);
+      
+      if (errors.length > 0) {
+        throw new Error(`Failed to update ${errors.length} lessons`);
+      }
+    },
+    onSuccess: () => {
+      toast({ title: "Lessons reordered successfully" });
+      queryClient.invalidateQueries({ queryKey: ["training-lessons"] });
+      queryClient.invalidateQueries({ queryKey: ["training-modules"] });
+    },
+    onError: (error) => {
+      toast({ 
+        title: "Failed to reorder lessons", 
+        description: error.message,
+        variant: "destructive" 
+      });
+    },
+  });
+
   const addTag = () => {
     if (tagInput.trim() && !formData.tags.includes(tagInput.trim())) {
       setFormData(prev => ({
@@ -494,6 +556,69 @@ export default function AdminCourseEditor() {
         tags: [...prev.tags, tagInput.trim()]
       }));
       setTagInput("");
+    }
+  };
+
+  // Drag and drop handler
+  const handleDragEnd = (result: DropResult) => {
+    const { destination, source, type } = result;
+
+    // No destination or no movement
+    if (!destination || (destination.droppableId === source.droppableId && destination.index === source.index)) {
+      return;
+    }
+
+    if (type === 'MODULE') {
+      // Reordering modules
+      const reorderedModules = Array.from(modules);
+      const [movedModule] = reorderedModules.splice(source.index, 1);
+      reorderedModules.splice(destination.index, 0, movedModule);
+      
+      reorderModulesMutation.mutate(reorderedModules);
+    } else if (type === 'LESSON') {
+      // Reordering lessons (within same module or between modules)
+      const sourceModuleId = source.droppableId;
+      const destinationModuleId = destination.droppableId;
+      
+      const sourceLessons = getModuleLessons(sourceModuleId);
+      const destinationLessons = sourceModuleId === destinationModuleId 
+        ? sourceLessons 
+        : getModuleLessons(destinationModuleId);
+      
+      const [movedLesson] = sourceLessons.splice(source.index, 1);
+      
+      let updates: { id: string; module_id: string; sort_order: number }[] = [];
+      
+      if (sourceModuleId === destinationModuleId) {
+        // Same module reorder
+        destinationLessons.splice(destination.index, 0, movedLesson);
+        updates = destinationLessons.map((lesson, index) => ({
+          id: lesson.id,
+          module_id: lesson.module_id,
+          sort_order: index + 1
+        }));
+      } else {
+        // Cross-module move
+        destinationLessons.splice(destination.index, 0, movedLesson);
+        
+        // Update source module lessons
+        const sourceUpdates = sourceLessons.map((lesson, index) => ({
+          id: lesson.id,
+          module_id: lesson.module_id,
+          sort_order: index + 1
+        }));
+        
+        // Update destination module lessons (including moved lesson)
+        const destinationUpdates = destinationLessons.map((lesson, index) => ({
+          id: lesson.id,
+          module_id: lesson.id === movedLesson.id ? destinationModuleId : lesson.module_id,
+          sort_order: index + 1
+        }));
+        
+        updates = [...sourceUpdates, ...destinationUpdates];
+      }
+      
+      reorderLessonsMutation.mutate(updates);
     }
   };
 
@@ -748,101 +873,149 @@ export default function AdminCourseEditor() {
                       No modules yet. Add your first module to get started.
                     </p>
                   ) : (
-                    <div className="space-y-3">
-                      {modules.map((module) => (
-                        <Collapsible key={module.id}>
-                          <div className="border rounded-lg">
-                            <div className="flex items-center gap-3 p-3">
-                              <GripVertical className="h-4 w-4 text-muted-foreground" />
-                              <CollapsibleTrigger 
-                                className="flex-1 flex items-center justify-between text-left"
-                                onClick={() => toggleModuleExpanded(module.id)}
-                              >
-                                <div>
-                                  <h4 className="font-medium">{module.title}</h4>
-                                  <p className="text-sm text-muted-foreground">
-                                    {module.lessons_count} lessons
-                                  </p>
-                                </div>
-                                {expandedModules.has(module.id) ? (
-                                  <ChevronDown className="h-4 w-4" />
-                                ) : (
-                                  <ChevronRight className="h-4 w-4" />
-                                )}
-                              </CollapsibleTrigger>
-                              <div className="flex gap-2">
-                                <Button 
-                                  size="sm" 
-                                  variant="ghost"
-                                  onClick={() => {
-                                    setSelectedModuleId(module.id);
-                                    setShowLessonDialog(true);
-                                  }}
-                                >
-                                  <Plus className="h-4 w-4" />
-                                </Button>
-                                <Button 
-                                  size="sm" 
-                                  variant="ghost"
-                                  onClick={() => handleEditModule(module)}
-                                >
-                                  <Edit className="h-4 w-4" />
-                                </Button>
-                                <Button 
-                                  size="sm" 
-                                  variant="ghost"
-                                  onClick={() => setShowDeleteConfirm({type: 'module', id: module.id})}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </div>
-                            <CollapsibleContent>
-                              <div className="px-3 pb-3 border-t">
-                                {getModuleLessons(module.id).length === 0 ? (
-                                  <p className="text-sm text-muted-foreground py-4 text-center">
-                                    No lessons in this module yet.
-                                  </p>
-                                ) : (
-                                  <div className="space-y-2 mt-3">
-                                    {getModuleLessons(module.id).map((lesson) => (
-                                      <div key={lesson.id} className="flex items-center gap-3 p-2 bg-muted/50 rounded">
-                                        <BookOpen className="h-4 w-4 text-muted-foreground" />
-                                        <div className="flex-1">
-                                          <p className="text-sm font-medium">{lesson.title}</p>
-                                          <p className="text-xs text-muted-foreground">
-                                            {lesson.content_type} • {lesson.duration_minutes ? `${lesson.duration_minutes}min` : 'No duration'}
-                                            {lesson.is_free_preview && ' • Free Preview'}
-                                          </p>
-                                        </div>
-                                        <div className="flex gap-1">
-                                          <Button 
-                                            size="sm" 
-                                            variant="ghost" 
-                                            className="h-6 w-6 p-0"
-                                            onClick={() => handleEditLesson(lesson)}
+                    <DragDropContext onDragEnd={handleDragEnd}>
+                      <Droppable droppableId="modules" type="MODULE">
+                        {(provided) => (
+                          <div 
+                            {...provided.droppableProps} 
+                            ref={provided.innerRef}
+                            className="space-y-3"
+                          >
+                            {modules.map((module, index) => (
+                              <Draggable key={module.id} draggableId={module.id} index={index}>
+                                {(provided) => (
+                                  <div
+                                    ref={provided.innerRef}
+                                    {...provided.draggableProps}
+                                  >
+                                    <Collapsible key={module.id}>
+                                      <div className="border rounded-lg">
+                                        <div className="flex items-center gap-3 p-3">
+                                          <div
+                                            {...provided.dragHandleProps}
+                                            className="cursor-grab active:cursor-grabbing"
                                           >
-                                            <Edit className="h-3 w-3" />
-                                          </Button>
-                                          <Button 
-                                            size="sm" 
-                                            variant="ghost" 
-                                            className="h-6 w-6 p-0"
-                                            onClick={() => setShowDeleteConfirm({type: 'lesson', id: lesson.id})}
+                                            <GripVertical className="h-4 w-4 text-muted-foreground" />
+                                          </div>
+                                          <CollapsibleTrigger 
+                                            className="flex-1 flex items-center justify-between text-left"
+                                            onClick={() => toggleModuleExpanded(module.id)}
                                           >
-                                            <Trash2 className="h-3 w-3" />
-                                          </Button>
+                                            <div>
+                                              <h4 className="font-medium">{module.title}</h4>
+                                              <p className="text-sm text-muted-foreground">
+                                                {module.lessons_count} lessons
+                                              </p>
+                                            </div>
+                                            {expandedModules.has(module.id) ? (
+                                              <ChevronDown className="h-4 w-4" />
+                                            ) : (
+                                              <ChevronRight className="h-4 w-4" />
+                                            )}
+                                          </CollapsibleTrigger>
+                                          <div className="flex gap-2">
+                                            <Button 
+                                              size="sm" 
+                                              variant="ghost"
+                                              onClick={() => {
+                                                setSelectedModuleId(module.id);
+                                                setShowLessonDialog(true);
+                                              }}
+                                            >
+                                              <Plus className="h-4 w-4" />
+                                            </Button>
+                                            <Button 
+                                              size="sm" 
+                                              variant="ghost"
+                                              onClick={() => handleEditModule(module)}
+                                            >
+                                              <Edit className="h-4 w-4" />
+                                            </Button>
+                                            <Button 
+                                              size="sm" 
+                                              variant="ghost"
+                                              onClick={() => setShowDeleteConfirm({type: 'module', id: module.id})}
+                                            >
+                                              <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                          </div>
                                         </div>
+                                        <CollapsibleContent>
+                                          <div className="px-3 pb-3 border-t">
+                                            {getModuleLessons(module.id).length === 0 ? (
+                                              <p className="text-sm text-muted-foreground py-4 text-center">
+                                                No lessons in this module yet.
+                                              </p>
+                                            ) : (
+                                              <Droppable droppableId={module.id} type="LESSON">
+                                                {(provided) => (
+                                                  <div 
+                                                    {...provided.droppableProps}
+                                                    ref={provided.innerRef}
+                                                    className="space-y-2 mt-3"
+                                                  >
+                                                    {getModuleLessons(module.id).map((lesson, lessonIndex) => (
+                                                      <Draggable key={lesson.id} draggableId={lesson.id} index={lessonIndex}>
+                                                        {(provided) => (
+                                                          <div
+                                                            ref={provided.innerRef}
+                                                            {...provided.draggableProps}
+                                                            className="flex items-center gap-3 p-2 bg-muted/50 rounded"
+                                                          >
+                                                            <div
+                                                              {...provided.dragHandleProps}
+                                                              className="cursor-grab active:cursor-grabbing"
+                                                            >
+                                                              <GripVertical className="h-3 w-3 text-muted-foreground" />
+                                                            </div>
+                                                            <BookOpen className="h-4 w-4 text-muted-foreground" />
+                                                            <div className="flex-1">
+                                                              <p className="text-sm font-medium">{lesson.title}</p>
+                                                              <p className="text-xs text-muted-foreground">
+                                                                {lesson.content_type} • {lesson.duration_minutes ? `${lesson.duration_minutes}min` : 'No duration'}
+                                                                {lesson.is_free_preview && ' • Free Preview'}
+                                                              </p>
+                                                            </div>
+                                                            <div className="flex gap-1">
+                                                              <Button 
+                                                                size="sm" 
+                                                                variant="ghost" 
+                                                                className="h-6 w-6 p-0"
+                                                                onClick={() => handleEditLesson(lesson)}
+                                                              >
+                                                                <Edit className="h-3 w-3" />
+                                                              </Button>
+                                                              <Button 
+                                                                size="sm" 
+                                                                variant="ghost" 
+                                                                className="h-6 w-6 p-0"
+                                                                onClick={() => setShowDeleteConfirm({type: 'lesson', id: lesson.id})}
+                                                              >
+                                                                <Trash2 className="h-3 w-3" />
+                                                              </Button>
+                                                            </div>
+                                                          </div>
+                                                        )}
+                                                      </Draggable>
+                                                    ))}
+                                                    {provided.placeholder}
+                                                  </div>
+                                                )}
+                                              </Droppable>
+                                            )}
+                                          </div>
+                                        </CollapsibleContent>
                                       </div>
-                                    ))}
+                                    </Collapsible>
                                   </div>
                                 )}
-                              </div>
-                            </CollapsibleContent>
+                              </Draggable>
+                            ))}
+                            {provided.placeholder}
                           </div>
-                        </Collapsible>
-                      ))}
-                    </div>
+                        )}
+                      </Droppable>
+                    </DragDropContext>
                   )}
                 </CardContent>
               </Card>
