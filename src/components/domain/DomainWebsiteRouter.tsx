@@ -11,6 +11,7 @@ import { DomainWebsiteProductDetailRoute } from '@/pages/storefront/DomainWebsit
 import { SearchResults } from '@/pages/storefront/SearchResults';
 import { StorefrontHome } from '@/pages/storefront/StorefrontHome';
 import { StorefrontProducts } from '@/pages/storefront/StorefrontProducts';
+import { CollectionPage } from '@/pages/storefront/CollectionPage';
 import { WebsiteHeader } from '@/components/storefront/WebsiteHeader';
 import { WebsiteFooter } from '@/components/storefront/WebsiteFooter';
 import { FloatingCartButton } from '@/components/storefront/FloatingCartButton';
@@ -72,6 +73,7 @@ export const DomainWebsiteRouter: React.FC<DomainWebsiteRouterProps> = ({
         />
       } />
       <Route path="/products/:productSlug" element={<DomainWebsiteProductDetailRoute websiteId={websiteId} website={website} />} />
+      <Route path="/collections/:collectionSlug" element={<CollectionPage />} />
       
       {/* Cart & Checkout - using website pages */}
       <Route path="/cart" element={

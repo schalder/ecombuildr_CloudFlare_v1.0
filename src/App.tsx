@@ -18,6 +18,8 @@ import AddProduct from "./pages/AddProduct";
 import ProductView from "./pages/ProductView";
 import EditProduct from "./pages/EditProduct";
 import Categories from "./pages/Categories";
+import Collections from "./pages/Collections";
+import CollectionEdit from "./pages/CollectionEdit";
 import ProductLibrary from "./pages/ProductLibrary";
 import Orders from "./pages/Orders";
 import Customers from "./pages/Customers";
@@ -69,6 +71,7 @@ import Training from "./pages/Training";
 import TrainingCourse from "./pages/TrainingCourse";
 import { StorefrontHome } from "./pages/storefront/StorefrontHome";
 import { StorefrontProducts } from "./pages/storefront/StorefrontProducts";
+import { CollectionPage } from "./pages/storefront/CollectionPage";
 import ProductDetail from "./pages/storefront/ProductDetail";
 import { SearchResults } from "./pages/storefront/SearchResults";
 import { CheckoutPage } from "./pages/storefront/CheckoutPage";
@@ -120,6 +123,8 @@ const App = () => (
                     <Route path="products/:id" element={<ProductView />} />
                     <Route path="products/:id/edit" element={<EditProduct />} />
                     <Route path="categories" element={<Categories />} />
+                    <Route path="collections" element={<Collections />} />
+                    <Route path="collections/:id" element={<CollectionEdit />} />
                     <Route path="product-library" element={<ProductLibrary />} />
                     <Route path="orders" element={<Orders />} />
                     <Route path="orders/:orderId" element={<Orders />} />
@@ -189,6 +194,7 @@ const App = () => (
                 {/* Public Storefront Routes */}
                 <Route path="/store/:slug/products" element={<StorefrontProducts />} />
                 <Route path="/store/:slug/products/:productSlug" element={<ProductDetail />} />
+                <Route path="/store/:slug/collections/:collectionSlug" element={<CollectionPage />} />
                 <Route path="/store/:slug/search" element={<SearchResults />} />
                 <Route path="/store/:slug/cart" element={<CartPage />} />
                 <Route path="/store/:slug/checkout" element={<CheckoutPage />} />
@@ -209,6 +215,7 @@ const App = () => (
                     element={<WebsiteOverrideRoute slug="products" fallback={<StorefrontProducts />} />}
                   />
                   <Route path="products/:productSlug" element={<WebsiteProductDetailRoute />} />
+                  <Route path="collections/:collectionSlug" element={<CollectionPage />} />
                   <Route
                     path="search"
                     element={<WebsiteOverrideRoute slug="search" fallback={<SearchResults />} />}
@@ -249,6 +256,7 @@ const App = () => (
                     element={<WebsiteOverrideRoute slug="products" fallback={<StorefrontProducts />} />}
                   />
                   <Route path="products/:productSlug" element={<WebsiteProductDetailRoute />} />
+                  <Route path="collections/:collectionSlug" element={<CollectionPage />} />
                   <Route
                     path="search"
                     element={<WebsiteOverrideRoute slug="search" fallback={<SearchResults />} />}

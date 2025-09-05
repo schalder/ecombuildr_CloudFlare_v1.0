@@ -45,6 +45,9 @@ const navigationItems = [{
     title: "Categories",
     url: "/dashboard/categories"
   }, {
+    title: "Collections",
+    url: "/dashboard/collections"
+  }, {
     title: "Product Library",
     url: "/dashboard/product-library"
   }, {
