@@ -122,9 +122,9 @@ export const SupportWidget: React.FC<SupportWidgetProps> = ({ website }) => {
                 aria-label={option.label}
               >
                 {option.icon === 'whatsapp' ? (
-                  <img src={whatsappIcon} alt="WhatsApp" className="h-6 w-6" />
+                  <img src={whatsappIcon} alt="WhatsApp" className="h-8 w-8" />
                 ) : option.icon === 'messenger' ? (
-                  <img src={messengerIcon} alt="Messenger" className="h-6 w-6" />
+                  <img src={messengerIcon} alt="Messenger" className="h-8 w-8" />
                 ) : (
                   <Phone className="h-5 w-5 text-white" />
                 )}
