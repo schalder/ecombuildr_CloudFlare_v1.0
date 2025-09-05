@@ -13,6 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useStoreProducts } from '@/hooks/useStoreData';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
+import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 
 interface Collection {
   id: string;
@@ -248,30 +249,35 @@ export default function CollectionEdit() {
 
   if (loading) {
     return (
-      <div className="container mx-auto py-8">
+      <DashboardLayout title="Edit Collection">
         <div className="animate-pulse space-y-6">
           <div className="h-8 bg-muted rounded w-1/4"></div>
           <div className="h-32 bg-muted rounded"></div>
           <div className="h-64 bg-muted rounded"></div>
         </div>
-      </div>
+      </DashboardLayout>
     );
   }
 
   if (!collection) {
     return (
-      <div className="container mx-auto py-8 text-center">
-        <h1 className="text-2xl font-bold mb-4">Collection Not Found</h1>
-        <Button onClick={() => navigate('/dashboard/collections')}>
-          Back to Collections
-        </Button>
-      </div>
+      <DashboardLayout title="Collection Not Found">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-4">Collection Not Found</h1>
+          <Button onClick={() => navigate('/dashboard/collections')}>
+            Back to Collections
+          </Button>
+        </div>
+      </DashboardLayout>
     );
   }
 
   return (
-    <div className="container mx-auto py-8">
-      <div className="flex items-center gap-4 mb-8">
+    <DashboardLayout
+      title={`Edit Collection: ${collection.name}`}
+      description="Manage collection settings and products"
+    >
+      <div className="flex items-center gap-4 mb-6">
         <Button
           variant="ghost"
           onClick={() => navigate('/dashboard/collections')}
@@ -279,9 +285,7 @@ export default function CollectionEdit() {
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back
         </Button>
-        <div className="flex-1">
-          <h1 className="text-3xl font-bold text-foreground">Edit Collection</h1>
-        </div>
+        <div className="flex-1" />
         <Button onClick={handleSave} disabled={saving} className="bg-primary hover:bg-primary-glow">
           <Save className="w-4 h-4 mr-2" />
           {saving ? 'Saving...' : 'Save Changes'}
@@ -463,6 +467,6 @@ export default function CollectionEdit() {
           )}
         </CardContent>
       </Card>
-    </div>
+    </DashboardLayout>
   );
 }

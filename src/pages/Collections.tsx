@@ -11,6 +11,7 @@ import { CreateCollectionModal } from '@/components/modals/CreateCollectionModal
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
+import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 
 export default function Collections() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -79,14 +80,11 @@ export default function Collections() {
   };
 
   return (
-    <div className="container mx-auto py-8">
-      <div className="flex justify-between items-center mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground mb-2">Collections</h1>
-          <p className="text-muted-foreground">
-            Create and manage product collections for your websites
-          </p>
-        </div>
+    <DashboardLayout
+      title="Collections"
+      description="Create and manage product collections for your websites"
+    >
+      <div className="flex justify-end mb-6">
         <Button 
           onClick={() => setIsCreateModalOpen(true)} 
           className="bg-primary hover:bg-primary-glow"
@@ -242,6 +240,6 @@ export default function Collections() {
           refetch();
         }}
       />
-    </div>
+    </DashboardLayout>
   );
 }
