@@ -12,6 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useMutation } from '@tanstack/react-query';
 import { useAutoStore } from '@/hooks/useAutoStore';
 import { debounce } from '@/lib/utils';
+import { usePlanLimits } from '@/hooks/usePlanLimits';
 
 type SlugStatus = 'idle' | 'checking' | 'available' | 'taken' | 'error';
 
@@ -19,6 +20,19 @@ export default function CreateWebsite() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { store, getOrCreateStore } = useAutoStore();
+  const { userProfile } = usePlanLimits();
+
+  // Redirect read-only users back to dashboard
+  useEffect(() => {
+    if (userProfile?.account_status === 'read_only') {
+      toast({
+        title: "Account Access Required",
+        description: "Please upgrade your plan to create new websites.",
+        variant: "destructive",
+      });
+      navigate('/dashboard');
+    }
+  }, [userProfile?.account_status, navigate, toast]);
   const [formData, setFormData] = useState({
     name: '',
     slug: '',

@@ -4,6 +4,7 @@ import { useUserStore } from "@/hooks/useUserStore";
 import { PlanStatusBanner } from "@/components/dashboard/PlanStatusBanner";
 
 import { PlanUpgradeModal2 } from "@/components/dashboard/PlanUpgradeModal2";
+import { usePlanLimits } from "@/hooks/usePlanLimits";
 import { supabase } from "@/integrations/supabase/client";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { StatsCards } from "@/components/dashboard/StatsCards";
@@ -65,6 +66,7 @@ export default function DashboardOverview() {
   const [funnelMap, setFunnelMap] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const { userProfile } = usePlanLimits();
   const [dateFilter, setDateFilter] = useState<DateFilterOption>('today');
 
   useEffect(() => {
@@ -74,6 +76,13 @@ export default function DashboardOverview() {
       setLoading(false);
     }
   }, [store, storeLoading, dateFilter]);
+
+  // Auto-show upgrade modal for read-only users (expired trial/subscription)
+  useEffect(() => {
+    if (userProfile?.account_status === 'read_only') {
+      setShowUpgradeModal(true);
+    }
+  }, [userProfile?.account_status]);
 
   const fetchDashboardData = async () => {
     if (!store) return;
