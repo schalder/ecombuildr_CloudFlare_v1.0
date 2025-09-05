@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Search, Edit, Trash2, Globe, Eye, EyeOff } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Globe, Eye, EyeOff, Copy, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,6 +12,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { useEcomPaths } from '@/lib/pathResolver';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 export default function Collections() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -23,6 +25,7 @@ export default function Collections() {
   const { store } = useAutoStore();
   const { websites } = useStoreWebsites(store?.id || '');
   const { collections, loading, refetch } = useCollections(selectedWebsiteId);
+  const paths = useEcomPaths();
 
   const filteredCollections = collections.filter(collection =>
     collection.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -76,6 +79,43 @@ export default function Collections() {
         description: error.message || 'Failed to delete collection',
         variant: 'destructive',
       });
+    }
+  };
+
+  const getCollectionUrl = (collection: any) => {
+    const website = websites.find(w => w.id === collection.website_id);
+    if (!website) return '';
+    
+    // Check if website has a custom domain
+    if (website.domain) {
+      return `https://${website.domain}/collections/${collection.slug}`;
+    }
+    
+    // Use site slug path
+    return `${window.location.origin}/site/${website.slug}/collections/${collection.slug}`;
+  };
+
+  const handleCopyLink = async (collection: any) => {
+    const url = getCollectionUrl(collection);
+    try {
+      await navigator.clipboard.writeText(url);
+      toast({
+        title: 'Success',
+        description: 'Collection link copied to clipboard',
+      });
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to copy link',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleOpenWebsite = (collection: any) => {
+    const url = getCollectionUrl(collection);
+    if (url) {
+      window.open(url, '_blank');
     }
   };
 
@@ -218,9 +258,23 @@ export default function Collections() {
                         <Badge variant={collection.is_published ? "default" : "secondary"}>
                           {collection.is_published ? 'Published' : 'Draft'}
                         </Badge>
-                        <span className="text-xs text-muted-foreground">
-                          /collections/{collection.slug}
-                        </span>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm" className="text-xs text-muted-foreground hover:text-foreground h-auto p-1">
+                              /collections/{collection.slug}
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleCopyLink(collection)}>
+                              <Copy className="w-4 h-4 mr-2" />
+                              Copy Link
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleOpenWebsite(collection)}>
+                              <ExternalLink className="w-4 h-4 mr-2" />
+                              Open on Website
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                     </CardContent>
                   </Card>
