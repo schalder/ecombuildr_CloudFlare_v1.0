@@ -36,21 +36,37 @@ export const useStoreWebsites = (storeId: string) => {
 
       if (websiteError) throw websiteError;
 
-      // Then get connected domains for this store
-      const { data: domainData, error: domainError } = await supabase
-        .from('custom_domains')
-        .select('domain')
-        .eq('store_id', storeId)
-        .eq('is_verified', true)
-        .eq('dns_configured', true)
-        .limit(1);
+      // Get domain connections for each website
+      const websiteIds = (websiteData || []).map(w => w.id);
+      
+      if (websiteIds.length === 0) return [];
+
+      const { data: domainConnections, error: domainError } = await supabase
+        .from('domain_connections')
+        .select(`
+          content_id,
+          custom_domains!inner(domain, is_verified, dns_configured)
+        `)
+        .eq('content_type', 'website')
+        .in('content_id', websiteIds)
+        .eq('custom_domains.is_verified', true)
+        .eq('custom_domains.dns_configured', true);
 
       if (domainError) throw domainError;
+
+      // Create a map of website_id to connected_domain
+      const domainMap: Record<string, string> = {};
+      (domainConnections || []).forEach(connection => {
+        const domain = (connection.custom_domains as any)?.domain;
+        if (domain) {
+          domainMap[connection.content_id] = domain;
+        }
+      });
 
       // Transform the data to include connected_domain
       const websites = (websiteData || []).map(website => ({
         ...website,
-        connected_domain: domainData?.[0]?.domain || null
+        connected_domain: domainMap[website.id] || null
       }));
 
       
