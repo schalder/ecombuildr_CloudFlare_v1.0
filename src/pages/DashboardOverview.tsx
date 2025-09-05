@@ -315,7 +315,7 @@ export default function DashboardOverview() {
                         </div>
                         <div className="flex gap-1">
                           <Button asChild variant="ghost" size="sm">
-                            <NavLink to={`/dashboard/websites/${website.id}/edit`}>
+                            <NavLink to={`/dashboard/websites/${website.id}`}>
                               <Edit className="h-3 w-3" />
                             </NavLink>
                           </Button>
@@ -378,12 +378,12 @@ export default function DashboardOverview() {
                         </div>
                         <div className="flex gap-1">
                           <Button asChild variant="ghost" size="sm">
-                            <NavLink to={`/dashboard/funnels/${funnel.id}/edit`}>
+                            <NavLink to={`/dashboard/funnels/${funnel.id}`}>
                               <Edit className="h-3 w-3" />
                             </NavLink>
                           </Button>
                           <Button asChild variant="ghost" size="sm">
-                            <a href={`/funnel/${funnel.slug}`} target="_blank" rel="noopener noreferrer">
+                            <a href={`/funnel/${funnel.id}`} target="_blank" rel="noopener noreferrer">
                               <Eye className="h-3 w-3" />
                             </a>
                           </Button>
