@@ -198,7 +198,7 @@ export const ProductsPageElement: React.FC<{
   };
 
   useEffect(() => {
-    const fetchCategories = async () => {
+    const fetchCategoriesAndCollections = async () => {
       if (!store?.id) return;
       
       // Check for website selection from element content or URL
@@ -260,7 +260,8 @@ export const ProductsPageElement: React.FC<{
         }
       }
 
-      let query = supabase
+      // Fetch categories
+      let categoryQuery = supabase
         .from('categories')
         .select('id, name, slug')
         .eq('store_id', store.id)
@@ -274,17 +275,34 @@ export const ProductsPageElement: React.FC<{
 
         const categoryIds = visibleCategoryIds?.map(v => v.category_id) || [];
         if (categoryIds.length > 0) {
-          query = query.in('id', categoryIds);
+          categoryQuery = categoryQuery.in('id', categoryIds);
         } else {
           setCategories([]);
-          return;
         }
       }
 
-      const { data, error } = await query;
-      if (!error) setCategories(data || []);
+      const { data: categoryData, error: categoryError } = await categoryQuery;
+      if (!categoryError) setCategories(categoryData || []);
+
+      // Fetch collections if websiteId is available
+      if (websiteId) {
+        const { data: collectionData, error: collectionError } = await supabase
+          .from('collections')
+          .select('id, name, slug')
+          .eq('website_id', websiteId)
+          .eq('is_active', true)
+          .eq('is_published', true)
+          .eq('show_on_products_page', true)
+          .order('name');
+
+        if (!collectionError) {
+          setCollections(collectionData || []);
+        }
+      } else {
+        setCollections([]);
+      }
     };
-    fetchCategories();
+    fetchCategoriesAndCollections();
   }, [store?.id, element.content.websiteId, builderWebsiteId]);
 
   useEffect(() => {
@@ -390,6 +408,30 @@ export const ProductsPageElement: React.FC<{
           if (categoryIds.length) query = query.in('category_id', categoryIds);
         }
 
+        // Apply collection filter
+        if (filters.collections.length > 0) {
+          const collectionIds = collections
+            .filter((c) => filters.collections.includes(c.slug))
+            .map((c) => c.id);
+          
+          if (collectionIds.length > 0) {
+            const { data: collectionProductIds } = await supabase
+              .from('product_collection_items')
+              .select('product_id')
+              .in('collection_id', collectionIds);
+            
+            const productIdsFromCollections = collectionProductIds?.map(item => item.product_id) || [];
+            if (productIdsFromCollections.length > 0) {
+              query = query.in('id', productIdsFromCollections);
+            } else {
+              // If no products in selected collections, return empty result
+              setProducts([]);
+              setLoading(false);
+              return;
+            }
+          }
+        }
+
         if (filters.priceRange[0] > 0 || filters.priceRange[1] < 10000) {
           query = query.gte('price', filters.priceRange[0]).lte('price', filters.priceRange[1]);
         }
@@ -440,7 +482,7 @@ export const ProductsPageElement: React.FC<{
       }
     };
     fetchProducts();
-  }, [store?.id, searchQuery, sortBy, JSON.stringify(filters), categories.length, element.content.websiteId, builderWebsiteId]);
+  }, [store?.id, searchQuery, sortBy, JSON.stringify(filters), categories.length, collections.length, element.content.websiteId, builderWebsiteId]);
 
   const handleAddToCart = (product: Product, quantity?: number) => {
     addToCart(product, quantity || 1);
@@ -511,7 +553,7 @@ export const ProductsPageElement: React.FC<{
                     <SheetTitle>Filters</SheetTitle>
                   </SheetHeader>
                   <div className="mt-6">
-                    <ProductFilters categories={categories} filters={filters} onFiltersChange={setFilters} onClearFilters={handleClearFilters} />
+                    <ProductFilters categories={categories} collections={collections} filters={filters} onFiltersChange={setFilters} onClearFilters={handleClearFilters} />
                   </div>
                 </SheetContent>
               </Sheet>
@@ -552,7 +594,7 @@ export const ProductsPageElement: React.FC<{
         {/* Desktop Filters */}
         {showFilters && (
           <div className="hidden lg:block w-80 flex-shrink-0">
-            <ProductFilters categories={categories} filters={filters} onFiltersChange={setFilters} onClearFilters={handleClearFilters} />
+            <ProductFilters categories={categories} collections={collections} filters={filters} onFiltersChange={setFilters} onClearFilters={handleClearFilters} />
           </div>
         )}
 
