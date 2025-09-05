@@ -51,6 +51,7 @@ interface Funnel {
   id: string;
   name: string;
   slug: string;
+  canonical_domain: string | null;
 }
 
 export default function DashboardOverview() {
@@ -130,7 +131,7 @@ export default function DashboardOverview() {
           .eq('is_active', true),
         supabase
           .from('funnels')
-          .select('id, name, slug')
+          .select('id, name, slug, canonical_domain')
           .eq('store_id', store.id)
           .eq('is_active', true),
         supabase
@@ -383,7 +384,11 @@ export default function DashboardOverview() {
                             </NavLink>
                           </Button>
                           <Button asChild variant="ghost" size="sm">
-                            <a href={`/funnel/${funnel.id}`} target="_blank" rel="noopener noreferrer">
+                            <a 
+                              href={funnel.canonical_domain ? `https://${funnel.canonical_domain}` : `/funnel/${funnel.id}`} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                            >
                               <Eye className="h-3 w-3" />
                             </a>
                           </Button>

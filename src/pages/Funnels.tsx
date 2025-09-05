@@ -17,6 +17,7 @@ interface Funnel {
   slug: string;
   description?: string;
   domain?: string;
+  canonical_domain?: string;
   is_active: boolean;
   is_published: boolean;
   created_at: string;
@@ -96,7 +97,9 @@ export default function Funnels() {
   };
 
   const handlePreviewFunnel = (funnel: Funnel) => {
-    const url = funnel.domain 
+    const url = funnel.canonical_domain 
+      ? `https://${funnel.canonical_domain}` 
+      : funnel.domain 
       ? `https://${funnel.domain}` 
       : `/funnel/${funnel.id}`;
     window.open(url, '_blank');
@@ -172,7 +175,7 @@ export default function Funnels() {
                   <div className="space-y-3">
                     <div className="flex items-center text-sm text-muted-foreground">
                       <TrendingUp className="mr-2 h-4 w-4" />
-                      {funnel.domain || `funnel/${funnel.id}`}
+                      {funnel.canonical_domain || funnel.domain || `funnel/${funnel.id}`}
                     </div>
                     
                     <div className="grid grid-cols-2 gap-2">
