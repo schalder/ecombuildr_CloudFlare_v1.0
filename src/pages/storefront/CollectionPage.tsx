@@ -28,11 +28,10 @@ interface Product {
   id: string;
   name: string;
   price: number;
-  sale_price: number | null;
+  compare_price: number | null;
   images: string[];
   slug: string;
   short_description: string | null;
-  is_featured: boolean;
   inventory_quantity: number | null;
   track_inventory: boolean;
   is_active: boolean;
@@ -83,11 +82,10 @@ function CollectionPage() {
             id,
             name,
             price,
-            sale_price,
+            compare_price,
             images,
             slug,
             short_description,
-            is_featured,
             inventory_quantity,
             track_inventory,
             is_active
@@ -121,7 +119,7 @@ function CollectionPage() {
     addToCart({
       id: product.id,
       name: product.name,
-      price: product.sale_price || product.price,
+      price: product.price,
       images: product.images,
       slug: product.slug,
       is_active: product.is_active,
@@ -298,13 +296,13 @@ function CollectionPage() {
                             )}
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-2">
-                                {product.sale_price ? (
+                                {product.compare_price && product.compare_price > product.price ? (
                                   <>
                                     <span className="font-bold text-lg">
-                                      ${product.sale_price}
+                                      ${product.price}
                                     </span>
                                     <span className="text-sm text-muted-foreground line-through">
-                                      ${product.price}
+                                      ${product.compare_price}
                                     </span>
                                     <Badge variant="destructive" className="text-xs">
                                       Sale
