@@ -1248,7 +1248,7 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
       <style>{css}</style>
       <div ref={orderContentRef}>
         <div className="text-center">
-          <div className={`inline-flex items-center justify-center w-16 h-16 rounded-full mb-4 element-${element.id}-oc-success`}>
+          <div className={`inline-flex items-center justify-center w-16 h-16 rounded-full mb-2 element-${element.id}-oc-success`}>
             <CheckCircle className="h-8 w-8" />
           </div>
           <h1 className={`text-3xl font-bold mb-2 element-${element.id}-oc-title`}>{texts.title}</h1>
