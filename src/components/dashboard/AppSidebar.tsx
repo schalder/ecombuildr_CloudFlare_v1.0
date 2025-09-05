@@ -131,9 +131,16 @@ const adminNavigationItems = [{
   icon: BookOpen
 }];
 export function AppSidebar() {
-  const {
-    open
-  } = useSidebar();
+  // Safety check for sidebar context
+  let sidebarContext;
+  try {
+    sidebarContext = useSidebar();
+  } catch (error) {
+    // Fallback if not in sidebar context
+    sidebarContext = { open: true };
+  }
+  
+  const { open } = sidebarContext;
   const collapsed = !open;
   const location = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
