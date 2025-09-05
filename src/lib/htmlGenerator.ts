@@ -311,26 +311,71 @@ function generateColumnHTML(column: any): string {
 }
 
 function generateElementHTML(element: any): string {
+  const customCSS = element.content?.customCSS;
+  const customJS = element.content?.customJS;
+  const elementId = element.anchor || `element-${element.id}`;
+  
+  let elementHTML = '';
+  
   switch (element.type) {
     case 'heading':
-      return generateHeadingHTML(element);
+      elementHTML = generateHeadingHTML(element);
+      break;
     case 'paragraph':
-      return generateParagraphHTML(element);
+      elementHTML = generateParagraphHTML(element);
+      break;
     case 'image':
-      return generateImageHTML(element);
+      elementHTML = generateImageHTML(element);
+      break;
     case 'button':
-      return generateButtonHTML(element);
+      elementHTML = generateButtonHTML(element);
+      break;
     case 'products_grid':
-      return generateProductsGridHTML(element);
+      elementHTML = generateProductsGridHTML(element);
+      break;
     case 'hero':
-      return generateHeroHTML(element);
+      elementHTML = generateHeroHTML(element);
+      break;
     case 'features':
-      return generateFeaturesHTML(element);
+      elementHTML = generateFeaturesHTML(element);
+      break;
     case 'contact_form':
-      return generateContactFormHTML(element);
+      elementHTML = generateContactFormHTML(element);
+      break;
     default:
-      return `<div class="element-${element.type}">${element.content?.text || element.content?.title || ''}</div>`;
+      elementHTML = `<div class="element-${element.type}">${element.content?.text || element.content?.title || ''}</div>`;
   }
+  
+  // Wrap element with container that has the anchor ID if needed
+  const needsWrapper = customCSS || customJS || element.anchor;
+  let result = needsWrapper ? `<div id="${elementId}">${elementHTML}</div>` : elementHTML;
+  
+  // Add custom CSS if present
+  if (customCSS) {
+    result = `<style>
+      /* Custom CSS for element ${element.id} */
+      #${elementId} { ${customCSS} }
+      #${elementId} * { ${customCSS.replace(/([^{]+){([^}]+)}/g, '$2')} }
+    </style>` + result;
+  }
+  
+  // Add custom JS if present
+  if (customJS) {
+    result += `<script>
+      (function() {
+        const targetElement = document.getElementById('${elementId}');
+        if (targetElement) {
+          try {
+            ${customJS}
+          } catch (error) {
+            console.error('Custom JS execution error for element ${elementId}:', error);
+          }
+        }
+      })();
+    </script>`;
+  }
+  
+  return result;
 }
 
 function generateHeadingHTML(element: any): string {

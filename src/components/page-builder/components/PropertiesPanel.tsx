@@ -501,40 +501,52 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
             <div className="space-y-3">
               <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Advanced</h4>
 
-              {/* Anchor (read-only) */}
+              {/* Element Anchor ID */}
               <div>
-                <Label className="text-xs">Anchor</Label>
+                <Label className="text-xs">Element ID (Anchor)</Label>
                 <div className="flex items-center gap-2 mt-1">
-                  <Input readOnly value={selectedElement.anchor || ''} />
+                  <Input 
+                    value={selectedElement.anchor || ''} 
+                    onChange={(e) => onUpdateElement(selectedElement.id, { anchor: e.target.value })}
+                    placeholder="my-custom-element"
+                  />
                   <Button size="sm" onClick={() => selectedElement.anchor && navigator.clipboard.writeText(selectedElement.anchor!)}>Copy</Button>
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">Use #{selectedElement.anchor} for in-page scrolling</p>
+                <p className="text-xs text-muted-foreground mt-1">Used for CSS targeting, JavaScript access, and in-page scrolling (#anchor)</p>
               </div>
               
 
               <div>
                 <Label className="text-xs">Custom CSS</Label>
                 <textarea
-                  className="w-full h-20 p-2 border border-border rounded text-sm resize-none font-mono"
+                  className="w-full h-24 p-2 border border-border rounded text-sm resize-vertical font-mono"
                   placeholder="color: red; font-weight: bold; border-radius: 8px;"
-                  value={selectedElement.content.customCSS || ''}
+                  value={selectedElement.content?.customCSS || ''}
                   onChange={(e) => handleContentUpdate('customCSS', e.target.value)}
                 />
                 <p className="text-xs text-muted-foreground mt-1">
-                  Custom CSS will override default styles
+                  Custom CSS styles for this element. Will be applied with high specificity.
                 </p>
               </div>
 
               <div>
                 <Label className="text-xs">Custom JavaScript</Label>
                 <textarea
-                  className="w-full h-20 p-2 border border-border rounded text-sm resize-none font-mono"
-                  placeholder="// You can use 'el' to access this element (by #anchor)\nel.style.borderRadius = '8px';"
-                  value={selectedElement.content.customJS || ''}
+                  className="w-full h-24 p-2 border border-border rounded text-sm resize-vertical font-mono"
+                  placeholder="// Access this element via 'targetElement'
+targetElement.addEventListener('click', function() {
+  console.log('Clicked!');
+});
+
+// Optional cleanup function
+cleanup = function() {
+  // cleanup code here
+};"
+                  value={selectedElement.content?.customJS || ''}
                   onChange={(e) => handleContentUpdate('customJS', e.target.value)}
                 />
                 <p className="text-xs text-muted-foreground mt-1">
-                  Runs with el = document.getElementById(selectedElement.anchor). Use with caution.
+                  Custom JavaScript with 'targetElement' variable and optional 'cleanup' function.
                 </p>
               </div>
 

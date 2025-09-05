@@ -89,14 +89,48 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
   React.useEffect(() => {
     const code = (element as any).content?.customJS;
     if (!code) return;
+    
+    let cleanupFn: (() => void) | null = null;
+    
     try {
-      const el = document.getElementById(element.anchor || '') as HTMLElement | null;
+      const targetElement = document.getElementById(element.anchor || '');
+      if (!targetElement) {
+        console.warn('Custom JS target element not found:', element.anchor);
+        return;
+      }
+      
+      // Create a scoped execution context with cleanup support
       // eslint-disable-next-line no-new-func
-      const fn = new Function('el', 'element', 'document', 'window', String(code));
-      fn(el, element, document, window);
+      const fn = new Function(
+        'element', 'targetElement', 'document', 'window', 'console',
+        `
+        try {
+          ${String(code)}
+          // Return cleanup function if defined
+          return typeof cleanup === 'function' ? cleanup : null;
+        } catch (error) {
+          console.error('Custom JS execution error:', error);
+          return null;
+        }
+        `
+      );
+      
+      cleanupFn = fn(element, targetElement, document, window, console);
+      
     } catch (err) {
-      console.warn('Custom JS execution failed for', element.anchor, err);
+      console.error('Custom JS execution failed for', element.anchor, err);
     }
+    
+    // Cleanup function
+    return () => {
+      if (cleanupFn && typeof cleanupFn === 'function') {
+        try {
+          cleanupFn();
+        } catch (err) {
+          console.warn('Custom JS cleanup failed:', err);
+        }
+      }
+    };
   }, [(element as any).content?.customJS, element.anchor]);
 
   const handleElementClick = (e: React.MouseEvent) => {
@@ -204,7 +238,16 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
       )}
       {/* Custom CSS injection targeting the real DOM id (anchor) */}
       {((element as any).content?.customCSS) ? (
-        <style>{`#${element.anchor} { ${String((element as any).content?.customCSS)} }`}</style>
+        <style>{`
+          /* Custom CSS for element ${element.id} */
+          #${element.anchor} { 
+            ${String((element as any).content?.customCSS)} 
+          }
+          /* High specificity selectors for better override capability */
+          #${element.anchor} * { 
+            ${String((element as any).content?.customCSS).replace(/([^{]+){([^}]+)}/g, '$2')} 
+          }
+        `}</style>
       ) : null}
 
       <ElementComponent
