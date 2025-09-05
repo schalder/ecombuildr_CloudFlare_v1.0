@@ -91,8 +91,10 @@ export const PageBuilderRenderer: React.FC<PageBuilderRendererProps> = ({
       styles.backgroundRepeat = pageStyles.backgroundRepeat || 'no-repeat';
     }
     
-    // Padding
-    if (pageStyles.paddingTop) styles.paddingTop = pageStyles.paddingTop;
+    // Padding - normalize legacy 40px paddingTop to 0px
+    if (pageStyles.paddingTop) {
+      styles.paddingTop = pageStyles.paddingTop === '40px' ? '0px' : pageStyles.paddingTop;
+    }
     if (pageStyles.paddingRight) styles.paddingRight = pageStyles.paddingRight;
     if (pageStyles.paddingBottom) styles.paddingBottom = pageStyles.paddingBottom;
     if (pageStyles.paddingLeft) styles.paddingLeft = pageStyles.paddingLeft;

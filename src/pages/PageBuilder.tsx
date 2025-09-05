@@ -138,6 +138,11 @@ export default function PageBuilder() {
               backgroundRepeat: 'no-repeat'
             };
             
+            // Auto-fix legacy 40px paddingTop to 0px
+            if (pageStyles.paddingTop === '40px') {
+              pageStyles.paddingTop = '0px';
+            }
+            
             setBuilderData({ 
               sections: content.sections || [], 
               globalStyles: content.globalStyles,
