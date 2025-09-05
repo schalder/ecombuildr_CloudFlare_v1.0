@@ -124,8 +124,6 @@ export function useNotifications() {
       
       if (!store) return;
 
-      console.log('Setting up notifications real-time subscription for store:', store.id);
-
       channel = supabase
         .channel('notifications-changes')
         .on(
@@ -137,7 +135,6 @@ export function useNotifications() {
             filter: `store_id=eq.${store.id}`,
           },
           (payload) => {
-            console.log('New notification received:', payload);
             const newNotification = payload.new as Notification;
             setNotifications(prev => [newNotification, ...prev.slice(0, 19)]);
             if (!newNotification.is_read) {
@@ -154,7 +151,6 @@ export function useNotifications() {
             filter: `store_id=eq.${store.id}`,
           },
           (payload) => {
-            console.log('Notification updated:', payload);
             const updatedNotification = payload.new as Notification;
             setNotifications(prev => 
               prev.map(n => 
@@ -169,16 +165,13 @@ export function useNotifications() {
             });
           }
         )
-        .subscribe((status) => {
-          console.log('Notifications subscription status:', status);
-        });
+        .subscribe();
     };
 
     setupSubscription();
 
     return () => {
       if (channel) {
-        console.log('Cleaning up notifications subscription');
         supabase.removeChannel(channel);
       }
     };

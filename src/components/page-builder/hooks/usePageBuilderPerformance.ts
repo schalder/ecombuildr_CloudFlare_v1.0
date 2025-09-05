@@ -36,7 +36,8 @@ export const usePageBuilderPerformance = (componentName: string) => {
       const renderTime = performance.now() - renderStartTime.current;
       metricsRef.current.lastRenderTime = renderTime;
       
-      if (renderTime > 16) { // > 1 frame at 60fps
+      // Performance tracking in development only
+      if (renderTime > 16 && import.meta.env.DEV) { 
         console.warn(`🐌 ${componentName} slow render: ${renderTime.toFixed(2)}ms`);
       }
       
