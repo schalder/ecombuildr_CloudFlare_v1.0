@@ -14,6 +14,15 @@ import {
   TableHeader, 
   TableRow 
 } from "@/components/ui/table";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import { Search, Users, Mail, Phone, MapPin, RefreshCw, Calendar } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -38,6 +47,8 @@ export default function Customers() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
+  const [currentPage, setCurrentPage] = useState(1);
+  const customersPerPage = 15;
   const isMobile = useIsMobile();
 
   useEffect(() => {
@@ -114,6 +125,25 @@ export default function Customers() {
     customer.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     customer.phone?.includes(searchTerm)
   );
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredCustomers.length / customersPerPage);
+  const startIndex = (currentPage - 1) * customersPerPage;
+  const endIndex = startIndex + customersPerPage;
+  const paginatedCustomers = filteredCustomers.slice(startIndex, endIndex);
+
+  // Reset to first page when search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
+  const handlePreviousPage = () => {
+    setCurrentPage(prev => Math.max(prev - 1, 1));
+  };
+
+  const handleNextPage = () => {
+    setCurrentPage(prev => Math.min(prev + 1, totalPages));
+  };
 
   const customerStats = {
     total: customers.length,
@@ -195,6 +225,11 @@ export default function Customers() {
             <CardTitle className="flex items-center gap-2">
               <Users className="h-5 w-5" />
               Customers ({filteredCustomers.length})
+              {totalPages > 1 && (
+                <span className="text-sm font-normal text-muted-foreground">
+                  • Page {currentPage} of {totalPages}
+                </span>
+              )}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -204,7 +239,7 @@ export default function Customers() {
                   <div key={i} className="h-16 bg-muted animate-pulse rounded" />
                 ))}
               </div>
-            ) : filteredCustomers.length === 0 ? (
+            ) : paginatedCustomers.length === 0 ? (
               <div className="text-center py-8">
                 <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                 <h3 className="text-lg font-medium">
@@ -226,7 +261,7 @@ export default function Customers() {
             ) : isMobile ? (
               // Mobile Card View
               <div className="space-y-4">
-                {filteredCustomers.map((customer) => (
+                {paginatedCustomers.map((customer) => (
                   <Card key={customer.id} className="p-4">
                     <div className="space-y-3">
                       {/* Header Row */}
@@ -299,7 +334,7 @@ export default function Customers() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredCustomers.map((customer) => (
+                  {paginatedCustomers.map((customer) => (
                     <TableRow key={customer.id}>
                       <TableCell className="font-medium">
                         <div className="flex items-center gap-3">
@@ -352,6 +387,41 @@ export default function Customers() {
                   ))}
                 </TableBody>
               </Table>
+            )}
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="mt-6">
+                <Pagination>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious 
+                        onClick={handlePreviousPage}
+                        className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                      />
+                    </PaginationItem>
+                    
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                      <PaginationItem key={page}>
+                        <PaginationLink
+                          onClick={() => setCurrentPage(page)}
+                          isActive={currentPage === page}
+                          className="cursor-pointer"
+                        >
+                          {page}
+                        </PaginationLink>
+                      </PaginationItem>
+                    ))}
+                    
+                    <PaginationItem>
+                      <PaginationNext 
+                        onClick={handleNextPage}
+                        className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              </div>
             )}
           </CardContent>
         </Card>
