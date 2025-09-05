@@ -15,7 +15,8 @@ import {
   Search,
   Package,
   Truck,
-  Layout
+  Layout,
+  BookOpen
 } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router-dom';
 import {
@@ -88,6 +89,11 @@ const adminMenuItems = [
     title: 'Library Orders',
     url: '/admin/library-orders',
     icon: FileText,
+  },
+  {
+    title: 'Training',
+    url: '/admin/training',
+    icon: BookOpen,
   },
 ];
 

@@ -11,7 +11,8 @@ import {
   DollarSign,
   RefreshCw,
   AlertTriangle,
-  CheckCircle
+  CheckCircle,
+  BookOpen
 } from 'lucide-react';
 import { useEffect } from 'react';
 
@@ -226,6 +227,12 @@ const AdminDashboard = () => {
                 <a href="/admin/analytics">
                   <TrendingUp className="h-6 w-6" />
                   Detailed Analytics
+                </a>
+              </Button>
+              <Button asChild variant="outline" className="h-20 flex-col gap-2">
+                <a href="/admin/training">
+                  <BookOpen className="h-6 w-6" />
+                  Manage Training
                 </a>
               </Button>
             </div>
