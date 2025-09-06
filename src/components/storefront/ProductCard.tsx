@@ -194,19 +194,6 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           className="w-full h-full object-cover transition-transform duration-500 group-hover/card:scale-110"
         />
         
-        {/* Overlay Add to Cart Button - appears on hover */}
-        <div className={cn(
-          "absolute inset-0 bg-black/20 flex items-end justify-center p-4 transition-all duration-300",
-          isHovered ? "opacity-100" : "opacity-0"
-        )}>
-          <Button
-            onClick={() => addToCart(product)}
-            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold product-card-button"
-          >
-            <ShoppingCart className="h-4 w-4 mr-2" />
-            {ctaLabel || 'Add to Cart'}
-          </Button>
-        </div>
       </div>
 
       {/* Product Info */}
