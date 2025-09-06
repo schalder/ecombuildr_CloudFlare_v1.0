@@ -17,7 +17,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { formatCurrency } from '@/lib/currency';
 import { generateResponsiveCSS, mergeResponsiveStyles } from '@/components/page-builder/utils/responsiveStyles';
-import { computeOrderShipping, getAvailableShippingOptions } from '@/lib/shipping-enhanced';
+import { computeOrderShipping, getAvailableShippingOptions, applyShippingOptionToForm } from '@/lib/shipping-enhanced';
 import type { CartItem, ShippingOption } from '@/lib/shipping-enhanced';
 import { ShippingOptionsPicker } from '@/components/storefront/ShippingOptionsPicker';
 import { usePixelTracking } from '@/hooks/usePixelTracking';
@@ -197,7 +197,10 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
     if (websiteShipping?.enabled && !selectedShippingOption) {
       const options = getAvailableShippingOptions(websiteShipping);
       if (options.length > 0) {
-        setSelectedShippingOption(options[0]);
+        const defaultOption = options[0];
+        setSelectedShippingOption(defaultOption);
+        // Apply the default option to form fields
+        applyShippingOptionToForm(defaultOption, websiteShipping, setForm);
       }
     }
   }, [websiteShipping, selectedShippingOption]);
@@ -269,8 +272,8 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
     }
     
     const address = {
-      city: selectedShippingOption?.type === 'city' ? selectedShippingOption.id : form.shipping_city,
-      area: selectedShippingOption?.type === 'area' ? selectedShippingOption.id : form.shipping_area,
+      city: form.shipping_city,
+      area: form.shipping_area,
       address: form.shipping_address,
       postal: form.shipping_postal_code
     };
