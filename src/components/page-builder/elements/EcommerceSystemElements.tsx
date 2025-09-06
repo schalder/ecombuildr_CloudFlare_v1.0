@@ -9,6 +9,8 @@ import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
 import { useCart } from '@/contexts/CartContext';
 import { useStore } from '@/contexts/StoreContext';
 import { useEcomPaths } from '@/lib/pathResolver';
@@ -629,6 +631,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
     payment_method: 'cod' as 'cod' | 'bkash' | 'nagad' | 'sslcommerz', notes: '',
     accept_terms: false,
     custom_fields: {} as Record<string, any>,
+    selected_shipping_zone: '',
   });
   const [shippingCost, setShippingCost] = useState(0);
   const { websiteShipping } = useWebsiteShipping();
@@ -982,7 +985,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
                 </section>
               )}
 
-              {sections.info && (sections.shipping || sections.payment) && <Separator className="my-4" />}
+              
 
               {sections.shipping && (
                 <section className="space-y-4">
@@ -1008,9 +1011,56 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
                     {fields.postalCode?.enabled && (
                       <Input placeholder={fields.postalCode.placeholder} value={form.shipping_postal_code} onChange={e=>setForm(f=>({...f,shipping_postal_code:e.target.value}))} required={!!(fields.postalCode?.enabled && (fields.postalCode?.required ?? false))} aria-required={!!(fields.postalCode?.enabled && (fields.postalCode?.required ?? false))} />
                     )}
-                  </div>
+                   </div>
 
-                  {/* Custom fields */}
+                   {/* Shipping Options */}
+                   {websiteShipping?.enabled && (websiteShipping.areaRules?.length > 0 || websiteShipping.cityRules?.length > 0) && (
+                     <div className="space-y-3">
+                       <h4 className="font-medium">Shipping Options</h4>
+                       <RadioGroup 
+                         value={form.selected_shipping_zone} 
+                         onValueChange={(value) => {
+                           setForm(f => ({ ...f, selected_shipping_zone: value }));
+                           
+                           // Auto-fill shipping fields based on selected zone
+                           const areaRule = websiteShipping.areaRules?.find(rule => rule.area === value);
+                           const cityRule = websiteShipping.cityRules?.find(rule => rule.city === value);
+                           
+                           if (areaRule) {
+                             setForm(f => ({ ...f, shipping_area: areaRule.area }));
+                           } else if (cityRule) {
+                             setForm(f => ({ ...f, shipping_city: cityRule.city }));
+                           }
+                         }}
+                         className="grid grid-cols-1 gap-2"
+                       >
+                         {websiteShipping.areaRules?.map((rule) => (
+                           <div key={`area-${rule.area}`} className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-muted/50">
+                             <RadioGroupItem value={rule.area} id={`area-${rule.area}`} />
+                             <Label htmlFor={`area-${rule.area}`} className="flex-1 cursor-pointer">
+                               <div className="flex justify-between items-center">
+                                 <span>{rule.label || rule.area}</span>
+                                 <span className="font-medium">{formatCurrency(rule.fee)}</span>
+                               </div>
+                             </Label>
+                           </div>
+                         ))}
+                         {websiteShipping.cityRules?.map((rule) => (
+                           <div key={`city-${rule.city}`} className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-muted/50">
+                             <RadioGroupItem value={rule.city} id={`city-${rule.city}`} />
+                             <Label htmlFor={`city-${rule.city}`} className="flex-1 cursor-pointer">
+                               <div className="flex justify-between items-center">
+                                 <span>{rule.label || rule.city}</span>
+                                 <span className="font-medium">{formatCurrency(rule.fee)}</span>
+                               </div>
+                             </Label>
+                           </div>
+                         ))}
+                       </RadioGroup>
+                     </div>
+                   )}
+
+                   {/* Custom fields */}
                   {customFields?.length > 0 && (
                     <div className="space-y-2">
                       {customFields.filter((cf:any)=>cf.enabled).map((cf:any) => (
