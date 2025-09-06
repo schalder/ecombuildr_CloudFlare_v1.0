@@ -56,17 +56,12 @@ export const ShippingOptionsPicker: React.FC<ShippingOptionsPickerProps> = ({
               className="flex-1 text-sm cursor-pointer"
             >
               <div className="flex justify-between items-center">
-                <div>
-                  <span className="font-medium">
-                    {option.type === 'area' && '📍 '}
-                    {option.type === 'city' && '🏙️ '}
-                    {option.type === 'rest_of_country' && '🌍 '}
-                    {option.label.replace(/\(₹\d+\)/, '').trim()}
-                  </span>
-                  {option.description && (
-                    <p className="text-xs text-muted-foreground">{option.description}</p>
-                  )}
-                </div>
+                <span className="font-medium">
+                  {option.type === 'area' && '📍 '}
+                  {option.type === 'city' && '🏙️ '}
+                  {option.type === 'rest_of_country' && '🌍 '}
+                  {option.label.replace(/\(₹\d+\)/, '').trim()}
+                </span>
                 <span className="font-medium text-primary">
                   {option.fee === 0 ? 'Free' : formatCurrency(option.fee)}
                 </span>
