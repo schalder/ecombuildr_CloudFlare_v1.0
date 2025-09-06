@@ -38,9 +38,6 @@ export const ShippingOptionsPicker: React.FC<ShippingOptionsPickerProps> = ({
     <div className={`space-y-3 ${className}`}>
       <div>
         <Label className="text-sm font-medium">Shipping Options</Label>
-        <p className="text-xs text-muted-foreground">
-          Select your delivery location to calculate shipping cost
-        </p>
       </div>
       
       <RadioGroup
