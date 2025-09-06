@@ -20,7 +20,7 @@ import { toast } from 'sonner';
 import { useStoreProducts } from '@/hooks/useStoreData';
 import { generateResponsiveCSS, mergeResponsiveStyles } from '@/components/page-builder/utils/responsiveStyles';
 import { formatCurrency } from '@/lib/currency';
-import { computeOrderShipping, type CartItem, type ShippingAddress } from '@/lib/shipping-enhanced';
+import { computeOrderShipping, type CartItem, type ShippingAddress, type ShippingSettings } from '@/lib/shipping-enhanced';
 import { nameWithVariant } from '@/lib/utils';
 import { useWebsiteShipping } from '@/hooks/useWebsiteShipping';
 import { renderElementStyles } from '@/components/page-builder/utils/styleRenderer';
@@ -635,7 +635,6 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
     custom_fields: {} as Record<string, any>,
     selectedShippingOption: '',
   });
-  const [selectedShippingOption, setSelectedShippingOption] = useState<ShippingOption | null>(null);
   const [shippingCost, setShippingCost] = useState(0);
   const { websiteShipping } = useWebsiteShipping();
   const [loading, setLoading] = useState(false);
@@ -645,12 +644,12 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
   // Initialize default shipping option
   const availableShippingOptions = getAvailableShippingOptions(websiteShipping);
   useEffect(() => {
-    if (availableShippingOptions.length > 0 && !selectedShippingOption) {
+    if (websiteShipping?.enabled && (websiteShipping as any)?.showOptionsAtCheckout && 
+        availableShippingOptions.length > 0 && !form.selectedShippingOption) {
       const defaultOption = availableShippingOptions[0];
-      setSelectedShippingOption(defaultOption);
       setForm(prev => ({ ...prev, selectedShippingOption: defaultOption.id }));
     }
-  }, [availableShippingOptions.length, selectedShippingOption]);
+  }, [availableShippingOptions.length, form.selectedShippingOption, websiteShipping?.enabled, (websiteShipping as any)?.showOptionsAtCheckout]);
 
   useEffect(() => {
     if (!items.length) {
@@ -1027,50 +1026,13 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
                    </div>
 
                    {/* Shipping Options */}
-                   {websiteShipping?.enabled && (websiteShipping.areaRules?.length > 0 || websiteShipping.cityRules?.length > 0) && (
-                     <div className="space-y-3">
-                       <h4 className="font-medium">Shipping Options</h4>
-                       <RadioGroup 
-                          value={form.selectedShippingOption} 
-                          onValueChange={(value) => {
-                            setForm(f => ({ ...f, selectedShippingOption: value }));
-                           
-                           // Auto-fill shipping fields based on selected zone
-                           const areaRule = websiteShipping.areaRules?.find(rule => rule.area === value);
-                           const cityRule = websiteShipping.cityRules?.find(rule => rule.city === value);
-                           
-                           if (areaRule) {
-                             setForm(f => ({ ...f, shipping_area: areaRule.area }));
-                           } else if (cityRule) {
-                             setForm(f => ({ ...f, shipping_city: cityRule.city }));
-                           }
-                         }}
-                         className="grid grid-cols-1 gap-2"
-                       >
-                         {websiteShipping.areaRules?.map((rule) => (
-                           <div key={`area-${rule.area}`} className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-muted/50">
-                             <RadioGroupItem value={rule.area} id={`area-${rule.area}`} />
-                             <Label htmlFor={`area-${rule.area}`} className="flex-1 cursor-pointer">
-                               <div className="flex justify-between items-center">
-                                 <span>{rule.label || rule.area}</span>
-                                 <span className="font-medium">{formatCurrency(rule.fee)}</span>
-                               </div>
-                             </Label>
-                           </div>
-                         ))}
-                         {websiteShipping.cityRules?.map((rule) => (
-                           <div key={`city-${rule.city}`} className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-muted/50">
-                             <RadioGroupItem value={rule.city} id={`city-${rule.city}`} />
-                             <Label htmlFor={`city-${rule.city}`} className="flex-1 cursor-pointer">
-                               <div className="flex justify-between items-center">
-                                 <span>{rule.label || rule.city}</span>
-                                 <span className="font-medium">{formatCurrency(rule.fee)}</span>
-                               </div>
-                             </Label>
-                           </div>
-                         ))}
-                       </RadioGroup>
-                     </div>
+                   {websiteShipping?.enabled && (websiteShipping as any)?.showOptionsAtCheckout && (
+                     <ShippingOptionsPicker
+                       settings={websiteShipping}
+                       selectedOptionId={form.selectedShippingOption}
+                       onOptionSelect={(option) => setForm(prev => ({ ...prev, selectedShippingOption: option.id }))}
+                       setForm={setForm}
+                     />
                    )}
 
                    {/* Custom fields */}
