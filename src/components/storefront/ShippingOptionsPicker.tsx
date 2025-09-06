@@ -54,9 +54,6 @@ export const ShippingOptionsPicker: React.FC<ShippingOptionsPickerProps> = ({
             >
               <div className="flex justify-between items-center">
                 <span className="font-medium">
-                  {option.type === 'area' && '📍 '}
-                  {option.type === 'city' && '🏙️ '}
-                  {option.type === 'rest_of_country' && '🌍 '}
                   {option.label.replace(/\(₹\d+\)/, '').trim()}
                 </span>
                 <span className="font-medium text-primary">
