@@ -189,7 +189,7 @@ export const WebsiteShipping: React.FC<WebsiteShippingProps> = ({ website }) => 
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={() => setShippingSettings((s) => ({ ...s, cityRules: [...s.cityRules, { city: '', fee: 0 }] }))}
+                onClick={() => setShippingSettings((s) => ({ ...s, cityRules: [...s.cityRules, { city: '', fee: 0, label: '' }] }))}
               >
                 Add City Rule
               </Button>
@@ -200,7 +200,7 @@ export const WebsiteShipping: React.FC<WebsiteShippingProps> = ({ website }) => 
             )}
 
             {shippingSettings.cityRules.map((rule, idx) => (
-              <div key={idx} className="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
+              <div key={idx} className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
                 <div>
                   <Label>City</Label>
                   <Input
@@ -213,6 +213,22 @@ export const WebsiteShipping: React.FC<WebsiteShippingProps> = ({ website }) => 
                     })}
                     className="mt-1"
                   />
+                </div>
+                <div>
+                  <Label>Label</Label>
+                  <Input
+                    placeholder="e.g., Dhaka City"
+                    value={rule.label || ''}
+                    onChange={(e) => setShippingSettings((s) => {
+                      const cityRules = [...s.cityRules];
+                      cityRules[idx] = { ...cityRules[idx], label: e.target.value };
+                      return { ...s, cityRules };
+                    })}
+                    className="mt-1"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Custom label shown in checkout. Leave empty to use city name.
+                  </p>
                 </div>
                 <div>
                   <Label>Fee</Label>
@@ -233,7 +249,7 @@ export const WebsiteShipping: React.FC<WebsiteShippingProps> = ({ website }) => 
                   <Button
                     type="button"
                     variant="destructive"
-                    className="md:self-start"
+                    size="sm"
                     onClick={() => setShippingSettings((s) => ({ ...s, cityRules: s.cityRules.filter((_, i) => i !== idx) }))}
                   >
                     Remove
@@ -253,7 +269,7 @@ export const WebsiteShipping: React.FC<WebsiteShippingProps> = ({ website }) => 
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={() => setShippingSettings((s) => ({ ...s, areaRules: [...(s.areaRules || []), { area: '', fee: 0 }] }))}
+                onClick={() => setShippingSettings((s) => ({ ...s, areaRules: [...(s.areaRules || []), { area: '', fee: 0, label: '' }] }))}
               >
                 Add Area Rule
               </Button>
@@ -268,7 +284,7 @@ export const WebsiteShipping: React.FC<WebsiteShippingProps> = ({ website }) => 
             )}
 
             {(shippingSettings.areaRules || []).map((rule, idx) => (
-              <div key={idx} className="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
+              <div key={idx} className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
                 <div>
                   <Label>Area/Zone</Label>
                   <Input
@@ -281,6 +297,22 @@ export const WebsiteShipping: React.FC<WebsiteShippingProps> = ({ website }) => 
                     })}
                     className="mt-1"
                   />
+                </div>
+                <div>
+                  <Label>Label</Label>
+                  <Input
+                    placeholder="e.g., Gazipur Area"
+                    value={rule.label || ''}
+                    onChange={(e) => setShippingSettings((s) => {
+                      const areaRules = [...(s.areaRules || [])];
+                      areaRules[idx] = { ...areaRules[idx], label: e.target.value };
+                      return { ...s, areaRules };
+                    })}
+                    className="mt-1"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Custom label shown in checkout. Leave empty to use area name.
+                  </p>
                 </div>
                 <div>
                   <Label>Fee</Label>
