@@ -189,6 +189,19 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
   // Shipping calculation using enhanced shipping
   const { websiteShipping } = useWebsiteShipping();
 
+  // Track selected shipping option for website shipping
+  const [selectedShippingOption, setSelectedShippingOption] = useState<ShippingOption | null>(null);
+
+  // Set default shipping option when website shipping is available
+  useEffect(() => {
+    if (websiteShipping?.enabled && !selectedShippingOption) {
+      const options = getAvailableShippingOptions(websiteShipping);
+      if (options.length > 0) {
+        setSelectedShippingOption(options[0]);
+      }
+    }
+  }, [websiteShipping, selectedShippingOption]);
+
   // Calculate shipping cost using enhanced shipping calculation or custom options
   const shippingCalculation = useMemo(() => {
     if (!selectedProduct) {
@@ -240,7 +253,7 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
       };
     }
 
-    // Fall back to enhanced shipping calculation
+    // Fall back to enhanced shipping calculation with website shipping options
     if (!websiteShipping || !websiteShipping.enabled) {
       return {
         shippingCost: 0,
@@ -256,8 +269,8 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
     }
     
     const address = {
-      city: form.shipping_city,
-      area: form.shipping_area,
+      city: selectedShippingOption?.type === 'city' ? selectedShippingOption.id : form.shipping_city,
+      area: selectedShippingOption?.type === 'area' ? selectedShippingOption.id : form.shipping_area,
       address: form.shipping_address,
       postal: form.shipping_postal_code
     };
@@ -291,7 +304,7 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
     const subtotal = main + bump;
     
     return computeOrderShipping(websiteShipping, cartItems, address, subtotal);
-  }, [websiteShipping, form, selectedProduct, bumpProduct, orderBump.enabled, bumpChecked, quantity, chargeShippingForBump, bumpShippingFee]);
+  }, [websiteShipping, form, selectedProduct, bumpProduct, orderBump.enabled, bumpChecked, quantity, chargeShippingForBump, bumpShippingFee, selectedShippingOption]);
 
   const shippingCost = shippingCalculation.shippingCost;
   const subtotal = useMemo(() => {
@@ -728,43 +741,59 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
                   )}
                 </div>
 
-                {/* Custom Shipping Options */}
+                {/* Shipping Options */}
                 {(() => {
                   const productShippingConfig = (selectedProduct as any)?.shipping_config;
                   const hasCustomOptions = productShippingConfig?.type === 'custom_options' && productShippingConfig?.customOptions?.length > 0;
                   
-                  if (!hasCustomOptions) return null;
-                  
-                  const customOptions = productShippingConfig.customOptions;
-                  
-                  return (
-                    <div className="space-y-3">
-                      <label className="text-sm font-medium">Shipping Options</label>
-                      <div className="space-y-2">
-                        {customOptions.map((option: any) => (
-                          <label key={option.id} className="flex items-start gap-3 border rounded p-3 cursor-pointer hover:bg-muted/50">
-                            <input
-                              type="radio"
-                              name={`shipping-option-${element.id}`}
-                              value={option.id}
-                              checked={form.selectedShippingOption === option.id}
-                              onChange={(e) => setForm(prev => ({ ...prev, selectedShippingOption: e.target.value }))}
-                              className="mt-1"
-                            />
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center justify-between">
-                                <span className="font-medium text-sm">{option.label}</span>
-                                <span className="font-semibold text-sm">{formatCurrency(option.fee)}</span>
+                  // Show custom product options if available
+                  if (hasCustomOptions) {
+                    const customOptions = productShippingConfig.customOptions;
+                    
+                    return (
+                      <div className="space-y-3">
+                        <label className="text-sm font-medium">Shipping Options</label>
+                        <div className="space-y-2">
+                          {customOptions.map((option: any) => (
+                            <label key={option.id} className="flex items-start gap-3 border rounded p-3 cursor-pointer hover:bg-muted/50">
+                              <input
+                                type="radio"
+                                name={`shipping-option-${element.id}`}
+                                value={option.id}
+                                checked={form.selectedShippingOption === option.id}
+                                onChange={(e) => setForm(prev => ({ ...prev, selectedShippingOption: e.target.value }))}
+                                className="mt-1"
+                              />
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between">
+                                  <span className="font-medium text-sm">{option.label}</span>
+                                  <span className="font-semibold text-sm">{formatCurrency(option.fee)}</span>
+                                </div>
+                                {option.description && (
+                                  <p className="text-xs text-muted-foreground mt-1">{option.description}</p>
+                                )}
                               </div>
-                              {option.description && (
-                                <p className="text-xs text-muted-foreground mt-1">{option.description}</p>
-                              )}
-                            </div>
-                          </label>
-                        ))}
+                            </label>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  );
+                    );
+                  }
+                  
+                  // Show website shipping options if enabled and no custom product options
+                  if (websiteShipping?.enabled) {
+                    return (
+                      <ShippingOptionsPicker
+                        settings={websiteShipping}
+                        selectedOptionId={selectedShippingOption?.id}
+                        onOptionSelect={(option) => setSelectedShippingOption(option)}
+                        setForm={setForm}
+                        className="mt-4"
+                      />
+                    );
+                  }
+                  
+                  return null;
                 })()}
 
                 {customFields?.length > 0 && (
