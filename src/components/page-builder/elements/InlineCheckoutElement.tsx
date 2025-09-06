@@ -306,7 +306,23 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
     const bump = (orderBump.enabled && bumpChecked && bumpProduct) ? Number(bumpProduct.price) : 0;
     const subtotal = main + bump;
     
-    return computeOrderShipping(websiteShipping, cartItems, address, subtotal);
+    const result = computeOrderShipping(websiteShipping, cartItems, address, subtotal);
+    
+    // Add bump shipping fee if enabled and bump is checked
+    if (orderBump.enabled && bumpChecked && chargeShippingForBump) {
+      return {
+        ...result,
+        shippingCost: result.shippingCost + bumpShippingFee,
+        isFreeShipping: (result.shippingCost + bumpShippingFee) === 0,
+        breakdown: {
+          ...result.breakdown,
+          productSpecificFees: result.breakdown.productSpecificFees + bumpShippingFee,
+          totalBeforeDiscount: result.breakdown.totalBeforeDiscount + bumpShippingFee,
+        }
+      };
+    }
+    
+    return result;
   }, [websiteShipping, form, selectedProduct, bumpProduct, orderBump.enabled, bumpChecked, quantity, chargeShippingForBump, bumpShippingFee, selectedShippingOption]);
 
   const shippingCost = shippingCalculation.shippingCost;
