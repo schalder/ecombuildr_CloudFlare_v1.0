@@ -21,8 +21,10 @@ export type ShippingSettings = {
   enabled: boolean;
   country?: string;
   restOfCountryFee: number;
+  restOfCountryLabel?: string; // Label for rest of country option
   cityRules: ShippingCityRule[];
   areaRules?: ShippingAreaRule[];
+  showOptionsAtCheckout?: boolean; // Whether to show shipping options picker
   // Enhanced settings
   weightTiers?: ShippingWeightTier[];
   freeShippingThreshold?: number; // minimum order amount for free shipping
@@ -59,6 +61,14 @@ export type ShippingAddress = {
   area?: string;
   address?: string;
   postal?: string;
+};
+
+export type ShippingOption = {
+  id: string;
+  type: 'area' | 'city' | 'rest_of_country';
+  label: string;
+  fee: number;
+  description?: string;
 };
 
 function normalize(str?: string) {
@@ -237,6 +247,89 @@ export function computeOrderShipping(
       discount,
     },
   };
+}
+
+/**
+ * Get available shipping options for checkout picker
+ */
+export function getAvailableShippingOptions(settings: ShippingSettings | undefined): ShippingOption[] {
+  if (!settings || !settings.enabled || !settings.showOptionsAtCheckout) {
+    return [];
+  }
+
+  const options: ShippingOption[] = [];
+
+  // Add area/zone options (highest priority)
+  if (settings.areaRules && settings.areaRules.length > 0) {
+    settings.areaRules.forEach((rule, index) => {
+      options.push({
+        id: `area_${index}`,
+        type: 'area',
+        label: rule.label || `${rule.area} (₹${rule.fee})`,
+        fee: rule.fee,
+        description: `Delivery to ${rule.area}`,
+      });
+    });
+  }
+
+  // Add city options (medium priority)
+  if (settings.cityRules && settings.cityRules.length > 0) {
+    settings.cityRules.forEach((rule, index) => {
+      options.push({
+        id: `city_${index}`,
+        type: 'city',
+        label: rule.label || `${rule.city} (₹${rule.fee})`,
+        fee: rule.fee,
+        description: `Delivery to ${rule.city}`,
+      });
+    });
+  }
+
+  // Add rest of country option (lowest priority)
+  options.push({
+    id: 'rest_of_country',
+    type: 'rest_of_country',
+    label: settings.restOfCountryLabel || `Rest of ${settings.country || 'Country'} (₹${settings.restOfCountryFee})`,
+    fee: settings.restOfCountryFee,
+    description: `Delivery to other locations in ${settings.country || 'the country'}`,
+  });
+
+  return options;
+}
+
+/**
+ * Apply shipping option selection to form
+ */
+export function applyShippingOptionToForm(
+  option: ShippingOption,
+  settings: ShippingSettings,
+  setFormFn: (updater: (prev: any) => any) => void
+) {
+  if (option.type === 'area') {
+    const areaRule = settings.areaRules?.find((_, index) => option.id === `area_${index}`);
+    if (areaRule) {
+      setFormFn((prev: any) => ({
+        ...prev,
+        shipping_area: areaRule.area,
+        shipping_city: '', // Clear city when area is selected
+      }));
+    }
+  } else if (option.type === 'city') {
+    const cityRule = settings.cityRules?.find((_, index) => option.id === `city_${index}`);
+    if (cityRule) {
+      setFormFn((prev: any) => ({
+        ...prev,
+        shipping_city: cityRule.city,
+        shipping_area: '', // Clear area when city is selected
+      }));
+    }
+  } else if (option.type === 'rest_of_country') {
+    setFormFn((prev: any) => ({
+      ...prev,
+      shipping_city: '',
+      shipping_area: '',
+    }));
+  }
 }
 
 // Legacy function for backward compatibility

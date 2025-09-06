@@ -27,6 +27,8 @@ import { renderElementStyles } from '@/components/page-builder/utils/styleRender
 import { usePixelTracking } from '@/hooks/usePixelTracking';
 import { usePixelContext } from '@/components/pixel/PixelManager';
 import { useChannelContext } from '@/hooks/useChannelContext';
+import { getAvailableShippingOptions, type ShippingOption } from '@/lib/shipping-enhanced';
+import { ShippingOptionsPicker } from '@/components/storefront/ShippingOptionsPicker';
 
 const CartSummaryElement: React.FC<{ element: PageBuilderElement }> = () => {
   const { items, total, updateQuantity, removeItem } = useCart();
@@ -631,13 +633,24 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
     payment_method: 'cod' as 'cod' | 'bkash' | 'nagad' | 'sslcommerz', notes: '',
     accept_terms: false,
     custom_fields: {} as Record<string, any>,
-    selected_shipping_zone: '',
+    selectedShippingOption: '',
   });
+  const [selectedShippingOption, setSelectedShippingOption] = useState<ShippingOption | null>(null);
   const [shippingCost, setShippingCost] = useState(0);
   const { websiteShipping } = useWebsiteShipping();
   const [loading, setLoading] = useState(false);
   const [allowedMethods, setAllowedMethods] = useState<Array<'cod' | 'bkash' | 'nagad' | 'sslcommerz'>>(['cod','bkash','nagad','sslcommerz']);
   const [productShippingData, setProductShippingData] = useState<Map<string, { weight_grams?: number; shipping_config?: any }>>(new Map());
+
+  // Initialize default shipping option
+  const availableShippingOptions = getAvailableShippingOptions(websiteShipping);
+  useEffect(() => {
+    if (availableShippingOptions.length > 0 && !selectedShippingOption) {
+      const defaultOption = availableShippingOptions[0];
+      setSelectedShippingOption(defaultOption);
+      setForm(prev => ({ ...prev, selectedShippingOption: defaultOption.id }));
+    }
+  }, [availableShippingOptions.length, selectedShippingOption]);
 
   useEffect(() => {
     if (!items.length) {
@@ -1018,9 +1031,9 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
                      <div className="space-y-3">
                        <h4 className="font-medium">Shipping Options</h4>
                        <RadioGroup 
-                         value={form.selected_shipping_zone} 
-                         onValueChange={(value) => {
-                           setForm(f => ({ ...f, selected_shipping_zone: value }));
+                          value={form.selectedShippingOption} 
+                          onValueChange={(value) => {
+                            setForm(f => ({ ...f, selectedShippingOption: value }));
                            
                            // Auto-fill shipping fields based on selected zone
                            const areaRule = websiteShipping.areaRules?.find(rule => rule.area === value);

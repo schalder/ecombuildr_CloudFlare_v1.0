@@ -17,8 +17,10 @@ type ShippingSettings = {
   enabled: boolean;
   country?: string;
   restOfCountryFee: number;
+  restOfCountryLabel?: string;
   cityRules: ShippingCityRule[];
   areaRules?: ShippingAreaRule[];
+  showOptionsAtCheckout?: boolean;
   // Enhanced settings
   weightTiers?: ShippingWeightTier[];
   freeShippingThreshold?: number; // minimum order amount for free shipping
@@ -50,8 +52,10 @@ export const WebsiteShipping: React.FC<WebsiteShippingProps> = ({ website }) => 
       enabled: false,
       country: '',
       restOfCountryFee: 0,
+      restOfCountryLabel: '',
       cityRules: [],
       areaRules: [],
+      showOptionsAtCheckout: false,
       weightTiers: [],
       freeShippingThreshold: 0,
       freeShippingMinWeight: 0,
@@ -148,9 +152,34 @@ export const WebsiteShipping: React.FC<WebsiteShippingProps> = ({ website }) => 
                 className="mt-1"
               />
               <p className="text-sm text-muted-foreground mt-1">
-                Applied to all locations not matched by a city rule.
+                Applied to all locations not matched by a city or area rule.
               </p>
             </div>
+            <div>
+              <Label>Rest of country label</Label>
+              <Input
+                placeholder="e.g., Other Cities"
+                value={shippingSettings.restOfCountryLabel || ''}
+                onChange={(e) => setShippingSettings((s) => ({ ...s, restOfCountryLabel: e.target.value }))}
+                className="mt-1"
+              />
+              <p className="text-sm text-muted-foreground mt-1">
+                Custom label for the rest of country option in shipping picker.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-row items-center justify-between rounded-lg border p-4">
+            <div className="space-y-0.5">
+              <Label className="text-base">Show shipping options at checkout</Label>
+              <p className="text-sm text-muted-foreground">
+                Display a shipping options picker on checkout forms instead of manual address entry.
+              </p>
+            </div>
+            <Switch
+              checked={shippingSettings.showOptionsAtCheckout || false}
+              onCheckedChange={(v) => setShippingSettings((s) => ({ ...s, showOptionsAtCheckout: v }))}
+            />
           </div>
 
           <div className="space-y-3">
