@@ -225,10 +225,7 @@ export const WebsiteShipping: React.FC<WebsiteShippingProps> = ({ website }) => 
                       return { ...s, cityRules };
                     })}
                     className="mt-1"
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Custom label shown in checkout. Leave empty to use city name.
-                  </p>
+                  />               
                 </div>
                 <div>
                   <Label>Fee</Label>
@@ -309,10 +306,7 @@ export const WebsiteShipping: React.FC<WebsiteShippingProps> = ({ website }) => 
                       return { ...s, areaRules };
                     })}
                     className="mt-1"
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Custom label shown in checkout. Leave empty to use area name.
-                  </p>
+                  />                
                 </div>
                 <div>
                   <Label>Fee</Label>
