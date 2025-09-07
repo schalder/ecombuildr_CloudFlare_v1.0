@@ -8,6 +8,7 @@ import { usePlanLimits } from "@/hooks/usePlanLimits";
 import { supabase } from "@/integrations/supabase/client";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { StatsCards } from "@/components/dashboard/StatsCards";
+import { OperationalCards } from "@/components/dashboard/OperationalCards";
 import { DateFilter, DateFilterOption, getDateRange } from "@/components/dashboard/DateFilter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -29,6 +30,13 @@ interface DashboardStats {
   totalOrders: number;
   totalCustomers: number;
   totalProducts: number;
+}
+
+interface OperationalStats {
+  pendingOrders: number;
+  shippedOrders: number;
+  cancelledOrders: number;
+  courierBalance: number;
 }
 
 interface RecentOrder {
@@ -59,12 +67,14 @@ export default function DashboardOverview() {
   const { user } = useAuth();
   const { store, loading: storeLoading } = useUserStore();
   const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [operationalStats, setOperationalStats] = useState<OperationalStats | null>(null);
   const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
   const [websites, setWebsites] = useState<Website[]>([]);
   const [funnels, setFunnels] = useState<Funnel[]>([]);
   const [websiteMap, setWebsiteMap] = useState<Record<string, string>>({});
   const [funnelMap, setFunnelMap] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
+  const [operationalLoading, setOperationalLoading] = useState(true);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const { userProfile } = usePlanLimits();
   const [dateFilter, setDateFilter] = useState<DateFilterOption>('today');
@@ -72,8 +82,10 @@ export default function DashboardOverview() {
   useEffect(() => {
     if (store) {
       fetchDashboardData();
+      fetchOperationalData();
     } else if (!storeLoading) {
       setLoading(false);
+      setOperationalLoading(false);
     }
   }, [store, storeLoading, dateFilter]);
 
@@ -186,6 +198,57 @@ export default function DashboardOverview() {
     }
   };
 
+  const fetchOperationalData = async () => {
+    if (!store) return;
+
+    try {
+      setOperationalLoading(true);
+      
+      // Get order counts by status
+      const [
+        { count: pendingCount },
+        { count: shippedCount },
+        { count: cancelledCount }
+      ] = await Promise.all([
+        supabase
+          .from('orders')
+          .select('*', { count: 'exact' })
+          .eq('store_id', store.id)
+          .eq('status', 'pending'),
+        supabase
+          .from('orders')
+          .select('*', { count: 'exact' })
+          .eq('store_id', store.id)
+          .eq('status', 'shipped'),
+        supabase
+          .from('orders')
+          .select('*', { count: 'exact' })
+          .eq('store_id', store.id)
+          .eq('status', 'cancelled')
+      ]);
+
+      // Get courier balance from Steadfast API
+      let courierBalance = 0;
+      try {
+        const { data: balanceData } = await supabase.functions.invoke('steadfast-balance');
+        courierBalance = balanceData?.current_balance || 0;
+      } catch (error) {
+        console.error('Error fetching courier balance:', error);
+      }
+
+      setOperationalStats({
+        pendingOrders: pendingCount || 0,
+        shippedOrders: shippedCount || 0,
+        cancelledOrders: cancelledCount || 0,
+        courierBalance,
+      });
+    } catch (error) {
+      console.error('Error fetching operational data:', error);
+    } finally {
+      setOperationalLoading(false);
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'pending':
@@ -224,6 +287,12 @@ export default function DashboardOverview() {
         
         {/* Stats Cards */}
         <StatsCards stats={stats || undefined} loading={loading} dateFilter={dateFilter} />
+        
+        {/* Operational Cards */}
+        <div className="space-y-2">
+          <h3 className="text-lg font-semibold text-foreground">Operational Overview</h3>
+          <OperationalCards stats={operationalStats || undefined} loading={operationalLoading} />
+        </div>
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
           <div className="md:col-span-2 lg:col-span-5 space-y-6">
