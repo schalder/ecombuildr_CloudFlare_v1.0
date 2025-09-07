@@ -52,17 +52,14 @@ export const Hero = () => {
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-              <Button 
-                variant="accent" 
-                size="lg" 
-                className="group"
-                onClick={() => {
-                  const pricingSection = document.getElementById('pricing');
-                  if (pricingSection) {
-                    pricingSection.scrollIntoView({ behavior: 'smooth' });
-                  }
-                }}
-              >
+              <Button variant="accent" size="lg" className="group" onClick={() => {
+              const pricingSection = document.getElementById('pricing');
+              if (pricingSection) {
+                pricingSection.scrollIntoView({
+                  behavior: 'smooth'
+                });
+              }
+            }}>
                 Start Building Free
                 <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
               </Button>
@@ -77,7 +74,7 @@ export const Hero = () => {
 
             {/* Trust Indicators */}
             <div className="flex flex-wrap gap-4 justify-center lg:justify-start text-sm text-white/70">
-              <span>✓ 14-Day Free Trial</span>
+              <span>✓ 7-Day Free Trial</span>
               <span>✓ No Credit Card Required</span>
               <span>✓ 24/7 Expert Support</span>
             </div>
