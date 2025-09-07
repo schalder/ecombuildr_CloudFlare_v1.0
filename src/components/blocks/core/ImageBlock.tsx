@@ -80,7 +80,7 @@ const ImageSave: React.FC<BlockSaveProps> = ({ block }) => {
   if (!url) return null;
 
   return (
-    <figure className="my-4">
+    <figure>
       <img
         src={url}
         alt={alt || ''}

@@ -277,7 +277,7 @@ const ImageElement: React.FC<{
 
   return (
     <figure 
-      className="my-4 w-full"
+      className="w-full"
       style={getContainerStyles()}
     >
       {imageContent}
