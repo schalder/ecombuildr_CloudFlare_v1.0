@@ -174,4 +174,29 @@ All colors MUST be HSL. Designed for trust, energy, and conversion.
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
+
+  /* Rich text content styling - fixes list rendering from rich text editor */
+  .rich-text-content ul {
+    list-style-type: disc;
+    margin-left: 1.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .rich-text-content ol {
+    list-style-type: decimal;
+    margin-left: 1.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .rich-text-content li {
+    margin-bottom: 0.5rem;
+  }
+
+  .rich-text-content ul ul,
+  .rich-text-content ol ol,
+  .rich-text-content ul ol,
+  .rich-text-content ol ul {
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
 }

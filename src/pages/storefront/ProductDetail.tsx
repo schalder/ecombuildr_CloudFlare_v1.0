@@ -517,7 +517,7 @@ export const ProductDetail: React.FC = () => {
                 </section>
               ) : product.description ? (
                 <article className="prose prose-sm max-w-none text-muted-foreground">
-                  <div dangerouslySetInnerHTML={{ __html: product.description }} />
+                  <div className="rich-text-content" dangerouslySetInnerHTML={{ __html: product.description }} />
                 </article>
               ) : (
                 <p className="text-muted-foreground">No description available.</p>
