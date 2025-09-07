@@ -646,7 +646,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
   useEffect(() => {
     if (websiteShipping?.enabled && (websiteShipping as any)?.showOptionsAtCheckout && 
         availableShippingOptions.length > 0 && !form.selectedShippingOption) {
-      const defaultOption = availableShippingOptions[0];
+      const defaultOption = availableShippingOptions.find(opt => opt.type === 'rest_of_country') || availableShippingOptions[0];
       setForm(prev => ({ ...prev, selectedShippingOption: defaultOption.id }));
     }
   }, [availableShippingOptions.length, form.selectedShippingOption, websiteShipping?.enabled, (websiteShipping as any)?.showOptionsAtCheckout]);

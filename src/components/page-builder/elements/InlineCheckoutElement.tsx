@@ -197,7 +197,7 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
     if (websiteShipping?.enabled && !selectedShippingOption) {
       const options = getAvailableShippingOptions(websiteShipping);
       if (options.length > 0) {
-        const defaultOption = options[0];
+        const defaultOption = options.find(opt => opt.type === 'rest_of_country') || options[0];
         setSelectedShippingOption(defaultOption);
         // Apply the default option to form fields
         applyShippingOptionToForm(defaultOption, websiteShipping, setForm);
