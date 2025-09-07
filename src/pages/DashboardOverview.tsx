@@ -204,27 +204,50 @@ export default function DashboardOverview() {
     try {
       setOperationalLoading(true);
       
+      // Get date range for filtering
+      const { start, end } = getDateRange(dateFilter);
+      
+      // Build order count queries with date filter
+      let pendingQuery = supabase
+        .from('orders')
+        .select('*', { count: 'exact', head: true })
+        .eq('store_id', store.id)
+        .eq('status', 'pending');
+
+      let shippedQuery = supabase
+        .from('orders')
+        .select('*', { count: 'exact', head: true })
+        .eq('store_id', store.id)
+        .eq('status', 'shipped');
+
+      let cancelledQuery = supabase
+        .from('orders')
+        .select('*', { count: 'exact', head: true })
+        .eq('store_id', store.id)
+        .eq('status', 'cancelled');
+
+      // Apply date filtering if specified
+      if (start && end) {
+        pendingQuery = pendingQuery
+          .gte('created_at', start.toISOString())
+          .lte('created_at', end.toISOString());
+        shippedQuery = shippedQuery
+          .gte('created_at', start.toISOString())
+          .lte('created_at', end.toISOString());
+        cancelledQuery = cancelledQuery
+          .gte('created_at', start.toISOString())
+          .lte('created_at', end.toISOString());
+      }
+
       // Get order counts by status
       const [
         { count: pendingCount },
         { count: shippedCount },
         { count: cancelledCount }
       ] = await Promise.all([
-        supabase
-          .from('orders')
-          .select('*', { count: 'exact' })
-          .eq('store_id', store.id)
-          .eq('status', 'pending'),
-        supabase
-          .from('orders')
-          .select('*', { count: 'exact' })
-          .eq('store_id', store.id)
-          .eq('status', 'shipped'),
-        supabase
-          .from('orders')
-          .select('*', { count: 'exact' })
-          .eq('store_id', store.id)
-          .eq('status', 'cancelled')
+        pendingQuery,
+        shippedQuery,
+        cancelledQuery
       ]);
 
       // Get courier balance from Steadfast API
@@ -289,10 +312,7 @@ export default function DashboardOverview() {
         <StatsCards stats={stats || undefined} loading={loading} dateFilter={dateFilter} />
         
         {/* Operational Cards */}
-        <div className="space-y-2">
-          <h3 className="text-lg font-semibold text-foreground">Operational Overview</h3>
-          <OperationalCards stats={operationalStats || undefined} loading={operationalLoading} />
-        </div>
+        <OperationalCards stats={operationalStats || undefined} loading={operationalLoading} />
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
           <div className="md:col-span-2 lg:col-span-5 space-y-6">
