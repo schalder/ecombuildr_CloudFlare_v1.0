@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Heart, Eye, ShoppingCart, Star, GitCompare } from 'lucide-react';
+import { Heart, Eye, ShoppingCart, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WishlistButton } from './WishlistButton';
 import { useToast } from '@/hooks/use-toast';
@@ -117,23 +117,6 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     ? Math.round(((displayComparePrice - displayPrice) / displayComparePrice) * 100)
     : 0;
 
-  const handleAddToComparison = () => {
-    if ((window as any).addToComparison) {
-      const success = (window as any).addToComparison(product);
-      if (success) {
-        toast({
-          title: "Added to comparison",
-          description: `${product.name} has been added to comparison.`,
-        });
-      } else {
-        toast({
-          title: "Cannot add to comparison",
-          description: "You can compare up to 3 products at once.",
-          variant: "destructive"
-        });
-      }
-    }
-  };
 
   return (
     <Card 
@@ -165,14 +148,6 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           className="bg-background/80 backdrop-blur-sm hover:bg-background"
         />
         
-        <Button
-          size="sm"
-          variant="secondary"
-          className="h-8 w-8 p-0 rounded-full bg-background/80 backdrop-blur-sm hover:bg-background"
-          onClick={handleAddToComparison}
-        >
-          <GitCompare className="h-4 w-4" />
-        </Button>
         
         {onQuickView && (
           <Button
