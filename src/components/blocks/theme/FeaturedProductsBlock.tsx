@@ -187,7 +187,6 @@ export const FeaturedProductsSave: React.FC<BlockSaveProps> = ({ block }) => {
   const { store } = useStore();
   const [products, setProducts] = useState<FeaturedProduct[]>([]);
   const { addItem, clearCart } = useCart();
-  const { toast } = useToast();
   const paths = useEcomPaths();
 
   useEffect(() => {
@@ -252,10 +251,9 @@ export const FeaturedProductsSave: React.FC<BlockSaveProps> = ({ block }) => {
                   clearCart();
                   addItem(item);
                   window.location.href = paths.checkout;
-                } else {
-                  addItem(item);
-                  toast({ title: 'Added to cart', description: `${p.name} has been added to your cart.` });
-                }
+                 } else {
+                   addItem(item);
+                 }
               }}
               onQuickView={() => {}}
               ctaLabel={content.ctaText || (content.ctaBehavior === 'buy_now' ? 'Buy Now' : 'Add to Cart')}

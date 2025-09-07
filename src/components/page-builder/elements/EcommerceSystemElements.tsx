@@ -169,7 +169,7 @@ const ProductDetailElement: React.FC<{ element: PageBuilderElement }> = ({ eleme
       sku: product.sku,
       quantity,
     });
-    toast.success(`Added ${quantity} ${product.name} to cart`);
+    
   };
 
   if (loading) {

@@ -155,7 +155,6 @@ const ModernProductGridSave: React.FC<BlockSaveProps> = ({ block }) => {
   const content = block.content as ModernProductGridContent;
   const { store } = useStore();
   const { addItem, clearCart } = useCart();
-  const { toast } = useToast();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -395,16 +394,15 @@ const ModernProductGridSave: React.FC<BlockSaveProps> = ({ block }) => {
                             image: Array.isArray(product.images) ? product.images[0] : (product as any).images,
                           });
                           window.location.href = `/store/${store.slug}/checkout`;
-                        } else {
-                          addItem({
-                            id: `cart-${product.id}`,
-                            productId: product.id,
-                            name: product.name,
-                            price: product.price,
-                            image: Array.isArray(product.images) ? product.images[0] : (product as any).images,
-                          });
-                          toast({ title: 'Added to cart', description: `${product.name} has been added to your cart.` });
-                        }
+                         } else {
+                           addItem({
+                             id: `cart-${product.id}`,
+                             productId: product.id,
+                             name: product.name,
+                             price: product.price,
+                             image: Array.isArray(product.images) ? product.images[0] : (product as any).images,
+                           });
+                         }
                       }}
                     >
                       <ShoppingCart className="w-4 h-4 mr-2" />

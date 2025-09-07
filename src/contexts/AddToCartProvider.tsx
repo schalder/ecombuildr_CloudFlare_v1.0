@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useState } from 'react';
 import { useCart } from '@/contexts/CartContext';
 import { ProductQuickView } from '@/components/storefront/ProductQuickView';
-import { useToast } from '@/hooks/use-toast';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useEcomPaths } from '@/lib/pathResolver';
 
@@ -31,7 +30,6 @@ const AddToCartContext = createContext<AddToCartContextType | undefined>(undefin
 
 export const AddToCartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { addItem, clearCart } = useCart();
-  const { toast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
   const paths = useEcomPaths();
@@ -76,13 +74,6 @@ export const AddToCartProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         variation: selectedOptions,
       });
 
-      toast({
-        title: buyNow ? 'Proceeding to checkout' : 'Added to cart',
-        description: buyNow 
-          ? `${product.name} added. Taking you to checkout...`
-          : `${product.name} has been added to your cart.`,
-      });
-
       if (buyNow) {
         navigate(paths.checkout);
       }
@@ -103,13 +94,6 @@ export const AddToCartProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       quantity,
       image: product.images?.[0],
       variation: selectedOptions,
-    });
-
-    toast({
-      title: pendingBuyNow ? 'Proceeding to checkout' : 'Added to cart',
-      description: pendingBuyNow 
-        ? `${product.name} added. Taking you to checkout...`
-        : `${product.name} has been added to your cart.`,
     });
 
     if (pendingBuyNow) {

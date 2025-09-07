@@ -126,11 +126,6 @@ function CollectionPage() {
       slug: product.slug,
       is_active: product.is_active,
     }, quantity);
-
-    toast({
-      title: 'Added to cart',
-      description: `${product.name} has been added to your cart`,
-    });
   };
 
   const filteredProducts = products.filter(product =>

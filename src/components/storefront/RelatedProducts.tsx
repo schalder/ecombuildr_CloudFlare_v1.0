@@ -4,7 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useStore } from "@/contexts/StoreContext";
 import { ProductCard } from "@/components/storefront/ProductCard";
 import { useCart } from "@/contexts/CartContext";
-import { useToast } from "@/hooks/use-toast";
 import { useProductReviewStats } from "@/hooks/useProductReviewStats";
 
 type Product = {
@@ -28,7 +27,6 @@ export const RelatedProducts: React.FC<RelatedProductsProps> = ({ categoryId, cu
 const { store } = useStore();
 const [items, setItems] = useState<Product[]>([]);
 const { addItem } = useCart();
-const { toast } = useToast();
 
 // Get review stats for all related products
 const productIds = items.map(p => p.id);
@@ -36,7 +34,6 @@ const { reviewStats } = useProductReviewStats(productIds);
 
 const handleAddToCart = (p: Product) => {
   addItem({ id: p.id, productId: p.id, name: p.name, price: p.price, quantity: 1, image: p.images?.[0] });
-  toast({ title: "Added to cart", description: `${p.name} added to cart.` });
 };
 
   useEffect(() => {
