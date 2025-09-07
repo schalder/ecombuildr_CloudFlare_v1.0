@@ -44,15 +44,36 @@ export const useMarketingContent = () => {
 
   const updateContent = async (section: string, data: UpdateMarketingContentData) => {
     try {
-      const { error } = await supabase
+      // First get the existing record to update
+      const { data: existingContent } = await supabase
         .from('platform_marketing_content')
-        .upsert({
-          section,
-          ...data,
-          updated_at: new Date().toISOString()
-        });
+        .select('id')
+        .eq('section', section)
+        .single();
 
-      if (error) throw error;
+      if (existingContent?.id) {
+        // Update existing record
+        const { error } = await supabase
+          .from('platform_marketing_content')
+          .update({
+            ...data,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', existingContent.id);
+
+        if (error) throw error;
+      } else {
+        // Insert new record if none exists
+        const { error } = await supabase
+          .from('platform_marketing_content')
+          .insert({
+            section,
+            ...data,
+            updated_at: new Date().toISOString()
+          });
+
+        if (error) throw error;
+      }
 
       toast({
         title: "Success",
