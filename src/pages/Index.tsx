@@ -10,6 +10,7 @@ import { Testimonials } from "@/components/Testimonials";
 import { Pricing } from "@/components/Pricing";
 import { Footer } from "@/components/Footer";
 import { WhatsAppWidget } from "@/components/WhatsAppWidget";
+import { FAQ } from "@/components/FAQ";
 
 const Index = () => {
   const { user, loading } = useAuth();
@@ -38,6 +39,7 @@ const Index = () => {
       <div id="pricing">
         <Pricing />
       </div>
+      <FAQ />
       <Footer />
       <WhatsAppWidget />
     </div>
