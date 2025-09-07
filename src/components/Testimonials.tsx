@@ -1,6 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Star, Quote } from "lucide-react";
+import femaleAvatar from "@/assets/female-avatar.jpg";
 
 const testimonials = [
   {
@@ -94,7 +95,7 @@ export const Testimonials = () => {
                 <Tooltip>
                   <TooltipTrigger>
                     <img 
-                      src={testimonial.avatar} 
+                      src={femaleAvatar} 
                       alt={testimonial.name}
                       className="w-12 h-12 rounded-full object-cover"
                     />
