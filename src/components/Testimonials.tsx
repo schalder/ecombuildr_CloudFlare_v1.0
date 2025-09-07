@@ -119,7 +119,7 @@ export const Testimonials = () => {
           <div className="inline-flex items-center gap-2 bg-accent/10 backdrop-blur-sm border border-accent/20 rounded-full px-6 py-3">
             <Star className="h-5 w-5 text-accent fill-current" />
             <span className="text-foreground font-medium">
-              ৪.৯/৫ রেটিং - ২৫০+ সন্তুষ্ট বাংলাদেশি গ্রাহক
+              ৪.৯/৫ রেটিং - ২৫০+ সন্তুষ্ট গ্রাহক
             </span>
           </div>
         </div>
