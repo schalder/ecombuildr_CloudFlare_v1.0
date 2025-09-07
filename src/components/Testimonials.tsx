@@ -25,7 +25,7 @@ const testimonials = [
     revenue: "৭৫,০০০ টাকা+ মাসিক",
     content: "আমার মোবাইল ও ইলেকট্রনিক্সের দোকান এখন অনলাইনেও চলছে। গ্রাহকরা খুবই সন্তুষ্ট এবং প্রতিদিন নতুন অর্ডার আসছে।",
     rating: 5,
-    avatar: "https://res.cloudinary.com/funnelsninja/image/upload/v1757228345/3_du0yd6.jpg"
+    avatar: "https://res.cloudinary.com/funnelsninja/image/upload/v1757228830/7_xqdirn.jpg"
   },
   {
     name: "নাসরিন জাহান",
