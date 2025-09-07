@@ -10,7 +10,16 @@ import {
   Target,
   CreditCard,
   Truck,
-  Calculator
+  Calculator,
+  ClipboardList,
+  LayoutDashboard,
+  Globe,
+  Receipt,
+  Boxes,
+  PieChart,
+  GraduationCap,
+  TrendingUp,
+  ShoppingCart
 } from "lucide-react";
 
 const tools = [
@@ -59,6 +68,78 @@ const tools = [
     title: "Setup Shipping Fee",
     description: "Configure flexible shipping options to match your business needs",
     features: ["Global Shipping Rates", "Product-wise Fees", "Weight-based Pricing", "Free Shipping Options"],
+    color: "text-accent",
+    bgColor: "bg-accent-light"
+  },
+  {
+    icon: ClipboardList,
+    title: "Order Management Solution",
+    description: "Manage orders end‑to‑end from purchase to delivery in one dashboard.",
+    features: ["Unified order inbox with filters and search option", "Status updates", "1 click push to integrated Courier", "1 click order details view"],
+    color: "text-primary",
+    bgColor: "bg-primary-light"
+  },
+  {
+    icon: LayoutDashboard,
+    title: "Ready Landing Page",
+    description: "Launch high‑converting landing pages in minutes using pre‑built templates.",
+    features: ["Start building with pre made templates", "Drag‑and‑drop page builder", "Mobile‑optimized layouts"],
+    color: "text-accent",
+    bgColor: "bg-accent-light"
+  },
+  {
+    icon: Globe,
+    title: "Custom Domain",
+    description: "Build trust and brand recognition with your own domain.",
+    features: ["Guided DNS setup wizard", "Supper fast hosting", "Automatic HTTPS redirects"],
+    color: "text-success",
+    bgColor: "bg-success-light"
+  },
+  {
+    icon: Receipt,
+    title: "Auto Invoice Making",
+    description: "Generate tax‑compliant invoices automatically for every order.",
+    features: ["Auto‑create on order confirmation", "Branded PDF download and print", "Full order details"],
+    color: "text-primary",
+    bgColor: "bg-primary-light"
+  },
+  {
+    icon: Boxes,
+    title: "Stock Management",
+    description: "Auto calculate your remaining stock for every products.",
+    features: ["Show remaining quantities", "Low‑stock alerts"],
+    color: "text-success",
+    bgColor: "bg-success-light"
+  },
+  {
+    icon: ShoppingCart,
+    title: "Easy Checkout Pages",
+    description: "Fast, frictionless checkout designed to improve conversions.",
+    features: ["One‑page checkout with guest support", "Multiple payment & shipping options", "Address & shipping auto‑calculation"],
+    color: "text-accent",
+    bgColor: "bg-accent-light"
+  },
+  {
+    icon: PieChart,
+    title: "Orders, Sales & Delivery Reporting Dashboard",
+    description: "Real‑time reports for revenue, orders, and delivery performance.",
+    features: ["Sales by date and channel", "Order funnel & delivery lead time"],
+    color: "text-primary",
+    bgColor: "bg-primary-light"
+  },
+  {
+    icon: GraduationCap,
+    title: "eCommerce Growth Training",
+    description: "Learn proven strategies to scale with step‑by‑step courses.",
+    features: ["Marketing course", "eCommerce sales funnel mastery course", "Playbooks and checklists", "Live workshops and community"],
+    color: "text-success",
+    bgColor: "bg-success-light"
+  },
+  {
+    icon: TrendingUp,
+    title: "1 Click Upsell/Downsell",
+    description: "Maximize revenue with intelligent post-purchase offers.",
+    features: ["Automated upsell triggers", "Smart product recommendations", "One-click purchase flow", "Revenue optimization analytics"],
     color: "text-accent",
     bgColor: "bg-accent-light"
   }
