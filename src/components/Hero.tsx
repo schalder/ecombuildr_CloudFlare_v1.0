@@ -1,7 +1,28 @@
 import { Button } from "@/components/ui/button";
+import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { ArrowRight, Play, Star, Users, TrendingUp } from "lucide-react";
+import { useMarketingContent } from "@/hooks/useMarketingContent";
+import { parseVideoUrl, buildEmbedUrl } from "@/components/page-builder/utils/videoUtils";
 import heroImage from "@/assets/hero-ecommerce.jpg";
 export const Hero = () => {
+  const { content: marketingContent } = useMarketingContent();
+
+  // Determine what media to show
+  const getHeroMedia = () => {
+    if (marketingContent?.youtube_url) {
+      const videoInfo = parseVideoUrl(marketingContent.youtube_url);
+      if (videoInfo.type === 'youtube' && videoInfo.id) {
+        const embedUrl = `https://www.youtube-nocookie.com/embed/${videoInfo.id}?rel=0`;
+        return { type: 'video', url: embedUrl };
+      }
+    }
+    
+    const imageUrl = marketingContent?.hero_image_url || heroImage;
+    return { type: 'image', url: imageUrl };
+  };
+
+  const heroMedia = getHeroMedia();
+
   return <div className="relative min-h-screen bg-gradient-hero overflow-hidden">
       {/* Background Pattern */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_40%,rgba(120,219,226,0.1)_0%,transparent_50%)] pointer-events-none" />
@@ -80,10 +101,26 @@ export const Hero = () => {
             </div>
           </div>
 
-          {/* Right Content - Hero Image */}
+          {/* Right Content - Hero Media */}
           <div className="relative">
             <div className="relative z-10 rounded-2xl overflow-hidden shadow-glow">
-              <img src={heroImage} alt="F-Commerce Platform Dashboard" className="w-full h-auto rounded-2xl" />
+              {heroMedia.type === 'video' ? (
+                <AspectRatio ratio={16 / 9} className="rounded-2xl overflow-hidden">
+                  <iframe
+                    src={heroMedia.url}
+                    title="Hero Video"
+                    className="w-full h-full rounded-2xl"
+                    allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
+                </AspectRatio>
+              ) : (
+                <img 
+                  src={heroMedia.url} 
+                  alt="F-Commerce Platform Dashboard" 
+                  className="w-full h-auto rounded-2xl" 
+                />
+              )}
             </div>
             
             {/* Floating Elements */}

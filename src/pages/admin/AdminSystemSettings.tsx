@@ -9,6 +9,8 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
+import { useMarketingContent } from '@/hooks/useMarketingContent';
+import { ImageUpload } from '@/components/ui/image-upload';
 import { 
   AlertCircle, 
   Settings, 
@@ -17,12 +19,14 @@ import {
   Shield,
   Server,
   Save,
-  AlertTriangle
+  AlertTriangle,
+  Monitor
 } from 'lucide-react';
 
 const AdminSystemSettings = () => {
   const { isAdmin, loading } = useAdminData();
   const { toast } = useToast();
+  const { content: marketingContent, updateContent } = useMarketingContent();
   
   // Local state for settings (in a real app, this would come from the database)
   const [settings, setSettings] = useState({
@@ -100,7 +104,7 @@ const AdminSystemSettings = () => {
     <AdminLayout title="System Settings" description="Configure platform-wide settings and preferences">
       <div className="space-y-6">
         <Tabs defaultValue="system" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="system" className="flex items-center gap-2">
               <Server className="h-4 w-4" />
               System
@@ -116,6 +120,10 @@ const AdminSystemSettings = () => {
             <TabsTrigger value="security" className="flex items-center gap-2">
               <Shield className="h-4 w-4" />
               Security
+            </TabsTrigger>
+            <TabsTrigger value="marketing" className="flex items-center gap-2">
+              <Monitor className="h-4 w-4" />
+              Marketing
             </TabsTrigger>
           </TabsList>
 
@@ -381,6 +389,71 @@ const AdminSystemSettings = () => {
                   <Save className="h-4 w-4 mr-2" />
                   Save Security Settings
                 </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Marketing Settings */}
+          <TabsContent value="marketing">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Monitor className="h-5 w-5" />
+                  Homepage Marketing
+                </CardTitle>
+                <CardDescription>
+                  Configure homepage hero section with video or image
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-2">
+                  <Label htmlFor="youtube_url">YouTube Video URL</Label>
+                  <Input
+                    id="youtube_url"
+                    value={marketingContent?.youtube_url || ''}
+                    onChange={(e) => {
+                      updateContent('hero', { 
+                        youtube_url: e.target.value,
+                        hero_image_url: marketingContent?.hero_image_url 
+                      });
+                    }}
+                    placeholder="https://www.youtube.com/watch?v=..."
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    Video will be shown with controls, no autoplay. Leave empty to use image fallback.
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Hero Fallback Image</Label>
+                  <ImageUpload
+                    value={marketingContent?.hero_image_url || ''}
+                    onChange={(url) => {
+                      updateContent('hero', { 
+                        youtube_url: marketingContent?.youtube_url,
+                        hero_image_url: url 
+                      });
+                    }}
+                    label="Upload hero image"
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    This image will be shown if no YouTube video is set or video fails to load.
+                  </p>
+                </div>
+
+                {marketingContent && (
+                  <div className="p-4 bg-muted rounded-lg">
+                    <h4 className="font-medium mb-2">Current Configuration:</h4>
+                    <p className="text-sm text-muted-foreground">
+                      {marketingContent.youtube_url 
+                        ? `Video: ${marketingContent.youtube_url}`
+                        : marketingContent.hero_image_url 
+                          ? `Image: ${marketingContent.hero_image_url.split('/').pop()}`
+                          : 'Default image will be used'
+                      }
+                    </p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>

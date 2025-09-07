@@ -1415,6 +1415,36 @@ export type Database = {
         }
         Relationships: []
       }
+      platform_marketing_content: {
+        Row: {
+          created_at: string
+          hero_image_url: string | null
+          id: string
+          is_active: boolean
+          section: string
+          updated_at: string
+          youtube_url: string | null
+        }
+        Insert: {
+          created_at?: string
+          hero_image_url?: string | null
+          id?: string
+          is_active?: boolean
+          section: string
+          updated_at?: string
+          youtube_url?: string | null
+        }
+        Update: {
+          created_at?: string
+          hero_image_url?: string | null
+          id?: string
+          is_active?: boolean
+          section?: string
+          updated_at?: string
+          youtube_url?: string | null
+        }
+        Relationships: []
+      }
       platform_payment_options: {
         Row: {
           account_number: string | null
