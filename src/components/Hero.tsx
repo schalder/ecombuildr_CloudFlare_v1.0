@@ -41,7 +41,7 @@ export const Hero = () => {
 
             {/* Main Heading */}
             <div className="space-y-4">
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight">
                 <span className="block">Build Your</span>
                 <span className="block bg-gradient-to-r from-accent to-accent-hover bg-clip-text text-transparent">
                   E-commerce Empire
@@ -53,6 +53,29 @@ export const Hero = () => {
                 Create conversion-driven online stores without coding. 
                 From landing pages to full e-commerce - everything you need to turn traffic into sales.
               </p>
+            </div>
+
+            {/* Mobile Media - Show below headline on mobile only */}
+            <div className="lg:hidden">
+              <div className="relative rounded-2xl overflow-hidden shadow-glow">
+                {heroMedia.type === 'video' ? (
+                  <AspectRatio ratio={16 / 9} className="rounded-2xl overflow-hidden">
+                    <iframe
+                      src={heroMedia.url}
+                      title="Hero Video"
+                      className="w-full h-full rounded-2xl"
+                      allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    />
+                  </AspectRatio>
+                ) : (
+                  <img 
+                    src={heroMedia.url} 
+                    alt="F-Commerce Platform Dashboard" 
+                    className="w-full h-auto rounded-2xl" 
+                  />
+                )}
+              </div>
             </div>
 
             {/* Stats */}
@@ -101,8 +124,8 @@ export const Hero = () => {
             </div>
           </div>
 
-          {/* Right Content - Hero Media */}
-          <div className="relative">
+          {/* Right Content - Hero Media - Hidden on mobile */}
+          <div className="relative hidden lg:block">
             <div className="relative z-10 rounded-2xl overflow-hidden shadow-glow">
               {heroMedia.type === 'video' ? (
                 <AspectRatio ratio={16 / 9} className="rounded-2xl overflow-hidden">
