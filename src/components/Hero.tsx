@@ -38,7 +38,7 @@ export const Hero = () => {
             <div className="flex flex-wrap gap-6 justify-center lg:justify-start text-white/80">
               <div className="flex items-center gap-2">
                 <Users className="h-5 w-5 text-accent" />
-                <span className="font-semibold">10,000+ Entrepreneurs</span>
+                <span className="font-semibold">250+ Entrepreneurs</span>
               </div>
               <div className="flex items-center gap-2">
                 <TrendingUp className="h-5 w-5 text-accent" />
