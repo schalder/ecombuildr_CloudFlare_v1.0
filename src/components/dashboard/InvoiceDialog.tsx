@@ -183,26 +183,38 @@ export const InvoiceDialog: React.FC<Props> = ({ open, onOpenChange, data }) => 
                 )}
               </div>
             </div>
-            {Array.isArray(data?.order?.custom_fields) && data?.order?.custom_fields?.length > 0 && (
-              <div className="mt-4 text-sm">
-                <div className="font-medium mb-1">Additional Information</div>
-                <div className="space-y-1">
-                  {data!.order!.custom_fields.map((cf: any, i: number) => (
-                    <div key={i}><strong>{cf.label || cf.id}:</strong> {String(cf.value)}</div>
-                  ))}
-                </div>
-              </div>
-            )}
-            {!Array.isArray(data?.order?.custom_fields) && data?.order?.custom_fields && (
-              <div className="mt-4 text-sm">
-                <div className="font-medium mb-1">Additional Information</div>
-                <div className="space-y-1">
-                  {Object.entries(data!.order!.custom_fields).map(([k, v]: any) => (
-                    <div key={k}><strong>{k}:</strong> {String(v)}</div>
-                  ))}
-                </div>
-              </div>
-            )}
+            {(() => {
+              if (Array.isArray(data?.order?.custom_fields)) {
+                const filteredFields = data.order.custom_fields.filter((cf: any) => 
+                  (cf.label || cf.id)?.toLowerCase() !== 'order_access_token'
+                );
+                return filteredFields.length > 0 && (
+                  <div className="mt-4 text-sm">
+                    <div className="font-medium mb-1">Additional Information</div>
+                    <div className="space-y-1">
+                      {filteredFields.map((cf: any, i: number) => (
+                        <div key={i}><strong>{cf.label || cf.id}:</strong> {String(cf.value)}</div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              } else if (data?.order?.custom_fields) {
+                const filteredEntries = Object.entries(data.order.custom_fields).filter(([k]) => 
+                  k.toLowerCase() !== 'order_access_token'
+                );
+                return filteredEntries.length > 0 && (
+                  <div className="mt-4 text-sm">
+                    <div className="font-medium mb-1">Additional Information</div>
+                    <div className="space-y-1">
+                      {filteredEntries.map(([k, v]: any) => (
+                        <div key={k}><strong>{k}:</strong> {String(v)}</div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              }
+              return null;
+            })()}
             <Separator className="my-4" />
             <div>
               <div className="font-medium mb-2">Items</div>
