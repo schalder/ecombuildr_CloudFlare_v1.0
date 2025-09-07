@@ -5,7 +5,6 @@ import { Check, Crown, Zap, Rocket, Star, Loader } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-
 interface PricingPlan {
   id: string;
   plan_name: string;
@@ -18,38 +17,30 @@ interface PricingPlan {
   color_class: string;
   button_variant: string;
 }
-
 const iconMap = {
   Zap,
   Crown,
   Rocket,
-  Star,
+  Star
 } as const;
-
 type IconName = keyof typeof iconMap;
-
 export const Pricing = () => {
   const [plans, setPlans] = useState<PricingPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-
   useEffect(() => {
     fetchPlans();
   }, []);
-
   const fetchPlans = async () => {
     try {
-      const { data, error } = await supabase
-        .from('site_pricing_plans')
-        .select('*')
-        .eq('is_active', true)
-        .order('sort_order');
-
+      const {
+        data,
+        error
+      } = await supabase.from('site_pricing_plans').select('*').eq('is_active', true).order('sort_order');
       if (error) {
         console.error('Error fetching pricing plans:', error);
         return;
       }
-
       setPlans((data || []).map(plan => ({
         ...plan,
         features: Array.isArray(plan.features) ? plan.features.map(f => String(f)) : []
@@ -60,29 +51,22 @@ export const Pricing = () => {
       setLoading(false);
     }
   };
-
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('bn-BD').format(price);
   };
-
   const getIcon = (iconName: string) => {
     return iconMap[iconName as IconName] || Crown;
   };
-
   if (loading) {
-    return (
-      <section className="py-20 bg-gradient-to-br from-muted/30 to-background">
+    return <section className="py-20 bg-gradient-to-br from-muted/30 to-background">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-center min-h-[400px]">
             <Loader className="h-8 w-8 animate-spin text-primary" />
           </div>
         </div>
-      </section>
-    );
+      </section>;
   }
-
-  return (
-    <section id="pricing" className="py-20 bg-gradient-to-br from-muted/30 to-background">
+  return <section id="pricing" className="py-20 bg-gradient-to-br from-muted/30 to-background">
       <div className="container mx-auto px-4">
         
         {/* Header */}
@@ -97,24 +81,13 @@ export const Pricing = () => {
 
         {/* Pricing Cards */}
         <div className="grid md:grid-cols-3 gap-8 max-w-7xl mx-auto">
-          {plans.map((plan) => {
-            const IconComponent = getIcon(plan.icon);
-            
-            return (
-              <Card 
-                key={plan.id}
-                className={`relative p-8 transition-all duration-300 hover:shadow-large ${
-                  plan.is_popular 
-                    ? 'border-accent shadow-accent bg-gradient-card ring-2 ring-accent/20 scale-105' 
-                    : 'border-border/50 hover:border-accent/30 bg-gradient-card'
-                }`}
-              >
+          {plans.map(plan => {
+          const IconComponent = getIcon(plan.icon);
+          return <Card key={plan.id} className={`relative p-8 transition-all duration-300 hover:shadow-large ${plan.is_popular ? 'border-accent shadow-accent bg-gradient-card ring-2 ring-accent/20 scale-105' : 'border-border/50 hover:border-accent/30 bg-gradient-card'}`}>
                 {/* Popular Badge */}
-                {plan.is_popular && (
-                  <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-gradient-accent text-accent-foreground px-4 py-1 font-semibold">
+                {plan.is_popular && <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-gradient-accent text-accent-foreground px-4 py-1 font-semibold">
                     সবচেয়ে জনপ্রিয়
-                  </Badge>
-                )}
+                  </Badge>}
 
                 {/* Plan Header */}
                 <div className="text-center mb-6">
@@ -142,38 +115,27 @@ export const Pricing = () => {
 
                 {/* Features List */}
                 <div className="space-y-3 mb-8">
-                  {plan.features.map((feature, featureIndex) => (
-                    <div key={featureIndex} className="flex items-start gap-3">
+                  {plan.features.map((feature, featureIndex) => <div key={featureIndex} className="flex items-start gap-3">
                       <div className="flex-shrink-0 w-5 h-5 rounded-full bg-success/20 flex items-center justify-center mt-0.5">
                         <Check className="h-3 w-3 text-success" />
                       </div>
                       <span className="text-foreground">
                         {feature}
                       </span>
-                    </div>
-                  ))}
+                    </div>)}
                 </div>
 
                 {/* CTA Button */}
-                <Button 
-                  variant={plan.button_variant as any}
-                  className="w-full"
-                  size="lg"
-                  onClick={() => navigate(`/auth?plan=${plan.plan_name}`)}
-                >
+                <Button variant={plan.button_variant as any} className="w-full" size="lg" onClick={() => navigate(`/auth?plan=${plan.plan_name}`)}>
                   {plan.price_bdt === 0 ? "ফ্রি শুরু করুন" : "এই প্ল্যান নিন"}
                 </Button>
 
                 {/* Additional Info */}
                 <p className="text-center text-xs text-muted-foreground mt-4">
-                  {plan.price_bdt === 0
-                    ? "ক্রেডিট কার্ড লাগবে না" 
-                    : "যেকোনো সময় বাতিল করুন"
-                  }
+                  {plan.price_bdt === 0 ? "ক্রেডিট কার্ড লাগবে না" : "যেকোনো সময় বাতিল করুন"}
                 </p>
-              </Card>
-            );
-          })}
+              </Card>;
+        })}
         </div>
 
         {/* Bottom CTA */}
@@ -181,17 +143,13 @@ export const Pricing = () => {
           <p className="text-muted-foreground mb-6">
             কোন প্ল্যান আপনার জন্য উপযুক্ত তা নিশ্চিত নন?
           </p>
-          <Button 
-            variant="outline" 
-            size="lg" 
-            onClick={() => {
-              // First try to open the widget if it's minimized
-              const whatsappButton = document.querySelector('.whatsapp-widget button') as HTMLElement;
-              if (whatsappButton) {
-                whatsappButton.click();
-              }
-            }}
-          >
+          <Button variant="outline" size="lg" onClick={() => {
+          // First try to open the widget if it's minimized
+          const whatsappButton = document.querySelector('.whatsapp-widget button') as HTMLElement;
+          if (whatsappButton) {
+            whatsappButton.click();
+          }
+        }}>
             Contact Sales Team
           </Button>
         </div>
@@ -201,12 +159,9 @@ export const Pricing = () => {
           <h4 className="font-semibold text-success mb-2">
             ১০০% Money Back Guarantee
           </h4>
-          <p className="text-sm text-muted-foreground">
-            ৩০ দিনের মধ্যে সন্তুষ্ট না হলে সম্পূর্ণ টাকা ফেরত
-          </p>
+          <p className="text-sm text-muted-foreground">14 দিনের মধ্যে সন্তুষ্ট না হলে সম্পূর্ণ টাকা ফেরত</p>
         </div>
 
       </div>
-    </section>
-  );
+    </section>;
 };
