@@ -61,7 +61,7 @@ const features = [
 ];
 
 const stats = [
-  { value: "10,000+", label: "Active Stores", icon: Store },
+  { value: "200+", label: "Active Stores", icon: Store },
   { value: "500%", label: "Average ROI Increase", icon: TrendingUp },
   { value: "98%", label: "Customer Satisfaction", icon: Users },
   { value: "24/7", label: "Support Available", icon: Shield }
