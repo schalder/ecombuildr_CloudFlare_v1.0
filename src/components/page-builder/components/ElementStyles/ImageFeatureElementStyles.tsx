@@ -1,5 +1,6 @@
 import React from 'react';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -378,8 +379,8 @@ export const ImageFeatureElementStyles: React.FC<ImageFeatureElementStylesProps>
         <CollapsibleContent className="space-y-4 pt-2">
           <div className="space-y-3">
             <div className="space-y-2">
-              <h5 className="text-xs font-medium text-muted-foreground">Margin</h5>
-              <div className="grid grid-cols-4 gap-2">
+              <Label className="text-xs font-medium">Margin</Label>
+              <div className="space-y-3">
                 <ResponsiveStyleControl
                   element={element}
                   property="marginTop"
@@ -388,15 +389,46 @@ export const ImageFeatureElementStyles: React.FC<ImageFeatureElementStylesProps>
                   fallback=""
                   onStyleUpdate={onStyleUpdate}
                 >
-                  {(value, onChange) => (
-                    <Input
-                      value={value}
-                      onChange={(e) => onChange(e.target.value)}
-                      placeholder="0px"
-                      className="h-8"
-                    />
-                  )}
+                  {(value, onChange) => {
+                    const parsePixelValue = (val: string | undefined): number => {
+                      if (!val) return 0;
+                      return parseInt(val.replace('px', '')) || 0;
+                    };
+                    
+                    const handleSliderChange = (newValue: number) => {
+                      onChange(`${newValue}px`);
+                    };
+                    
+                    const handleInputChange = (inputValue: string) => {
+                      const numValue = Math.max(0, Math.min(200, parseInt(inputValue) || 0));
+                      onChange(`${numValue}px`);
+                    };
+                    
+                    return (
+                      <div className="flex items-center gap-2">
+                        <Label className="text-xs w-12">Top</Label>
+                        <Slider
+                          value={[parsePixelValue(value)]}
+                          onValueChange={(val) => handleSliderChange(val[0])}
+                          max={200}
+                          step={1}
+                          className="flex-1"
+                        />
+                        <Input
+                          type="number"
+                          value={parsePixelValue(value)}
+                          onChange={(e) => handleInputChange(e.target.value)}
+                          min={0}
+                          max={200}
+                          step={1}
+                          className="w-16 h-7 text-xs"
+                        />
+                        <span className="text-xs text-muted-foreground w-6">px</span>
+                      </div>
+                    );
+                  }}
                 </ResponsiveStyleControl>
+                
                 <ResponsiveStyleControl
                   element={element}
                   property="marginRight"
@@ -405,15 +437,46 @@ export const ImageFeatureElementStyles: React.FC<ImageFeatureElementStylesProps>
                   fallback=""
                   onStyleUpdate={onStyleUpdate}
                 >
-                  {(value, onChange) => (
-                    <Input
-                      value={value}
-                      onChange={(e) => onChange(e.target.value)}
-                      placeholder="0px"
-                      className="h-8"
-                    />
-                  )}
+                  {(value, onChange) => {
+                    const parsePixelValue = (val: string | undefined): number => {
+                      if (!val) return 0;
+                      return parseInt(val.replace('px', '')) || 0;
+                    };
+                    
+                    const handleSliderChange = (newValue: number) => {
+                      onChange(`${newValue}px`);
+                    };
+                    
+                    const handleInputChange = (inputValue: string) => {
+                      const numValue = Math.max(0, Math.min(200, parseInt(inputValue) || 0));
+                      onChange(`${numValue}px`);
+                    };
+                    
+                    return (
+                      <div className="flex items-center gap-2">
+                        <Label className="text-xs w-12">Right</Label>
+                        <Slider
+                          value={[parsePixelValue(value)]}
+                          onValueChange={(val) => handleSliderChange(val[0])}
+                          max={200}
+                          step={1}
+                          className="flex-1"
+                        />
+                        <Input
+                          type="number"
+                          value={parsePixelValue(value)}
+                          onChange={(e) => handleInputChange(e.target.value)}
+                          min={0}
+                          max={200}
+                          step={1}
+                          className="w-16 h-7 text-xs"
+                        />
+                        <span className="text-xs text-muted-foreground w-6">px</span>
+                      </div>
+                    );
+                  }}
                 </ResponsiveStyleControl>
+                
                 <ResponsiveStyleControl
                   element={element}
                   property="marginBottom"
@@ -422,15 +485,46 @@ export const ImageFeatureElementStyles: React.FC<ImageFeatureElementStylesProps>
                   fallback=""
                   onStyleUpdate={onStyleUpdate}
                 >
-                  {(value, onChange) => (
-                    <Input
-                      value={value}
-                      onChange={(e) => onChange(e.target.value)}
-                      placeholder="0px"
-                      className="h-8"
-                    />
-                  )}
+                  {(value, onChange) => {
+                    const parsePixelValue = (val: string | undefined): number => {
+                      if (!val) return 0;
+                      return parseInt(val.replace('px', '')) || 0;
+                    };
+                    
+                    const handleSliderChange = (newValue: number) => {
+                      onChange(`${newValue}px`);
+                    };
+                    
+                    const handleInputChange = (inputValue: string) => {
+                      const numValue = Math.max(0, Math.min(200, parseInt(inputValue) || 0));
+                      onChange(`${numValue}px`);
+                    };
+                    
+                    return (
+                      <div className="flex items-center gap-2">
+                        <Label className="text-xs w-12">Bottom</Label>
+                        <Slider
+                          value={[parsePixelValue(value)]}
+                          onValueChange={(val) => handleSliderChange(val[0])}
+                          max={200}
+                          step={1}
+                          className="flex-1"
+                        />
+                        <Input
+                          type="number"
+                          value={parsePixelValue(value)}
+                          onChange={(e) => handleInputChange(e.target.value)}
+                          min={0}
+                          max={200}
+                          step={1}
+                          className="w-16 h-7 text-xs"
+                        />
+                        <span className="text-xs text-muted-foreground w-6">px</span>
+                      </div>
+                    );
+                  }}
                 </ResponsiveStyleControl>
+                
                 <ResponsiveStyleControl
                   element={element}
                   property="marginLeft"
@@ -439,21 +533,51 @@ export const ImageFeatureElementStyles: React.FC<ImageFeatureElementStylesProps>
                   fallback=""
                   onStyleUpdate={onStyleUpdate}
                 >
-                  {(value, onChange) => (
-                    <Input
-                      value={value}
-                      onChange={(e) => onChange(e.target.value)}
-                      placeholder="0px"
-                      className="h-8"
-                    />
-                  )}
+                  {(value, onChange) => {
+                    const parsePixelValue = (val: string | undefined): number => {
+                      if (!val) return 0;
+                      return parseInt(val.replace('px', '')) || 0;
+                    };
+                    
+                    const handleSliderChange = (newValue: number) => {
+                      onChange(`${newValue}px`);
+                    };
+                    
+                    const handleInputChange = (inputValue: string) => {
+                      const numValue = Math.max(0, Math.min(200, parseInt(inputValue) || 0));
+                      onChange(`${numValue}px`);
+                    };
+                    
+                    return (
+                      <div className="flex items-center gap-2">
+                        <Label className="text-xs w-12">Left</Label>
+                        <Slider
+                          value={[parsePixelValue(value)]}
+                          onValueChange={(val) => handleSliderChange(val[0])}
+                          max={200}
+                          step={1}
+                          className="flex-1"
+                        />
+                        <Input
+                          type="number"
+                          value={parsePixelValue(value)}
+                          onChange={(e) => handleInputChange(e.target.value)}
+                          min={0}
+                          max={200}
+                          step={1}
+                          className="w-16 h-7 text-xs"
+                        />
+                        <span className="text-xs text-muted-foreground w-6">px</span>
+                      </div>
+                    );
+                  }}
                 </ResponsiveStyleControl>
               </div>
             </div>
 
             <div className="space-y-2">
-              <h5 className="text-xs font-medium text-muted-foreground">Padding</h5>
-              <div className="grid grid-cols-4 gap-2">
+              <Label className="text-xs font-medium">Padding</Label>
+              <div className="space-y-3">
                 <ResponsiveStyleControl
                   element={element}
                   property="paddingTop"
@@ -462,15 +586,46 @@ export const ImageFeatureElementStyles: React.FC<ImageFeatureElementStylesProps>
                   fallback=""
                   onStyleUpdate={onStyleUpdate}
                 >
-                  {(value, onChange) => (
-                    <Input
-                      value={value}
-                      onChange={(e) => onChange(e.target.value)}
-                      placeholder="0px"
-                      className="h-8"
-                    />
-                  )}
+                  {(value, onChange) => {
+                    const parsePixelValue = (val: string | undefined): number => {
+                      if (!val) return 0;
+                      return parseInt(val.replace('px', '')) || 0;
+                    };
+                    
+                    const handleSliderChange = (newValue: number) => {
+                      onChange(`${newValue}px`);
+                    };
+                    
+                    const handleInputChange = (inputValue: string) => {
+                      const numValue = Math.max(0, Math.min(200, parseInt(inputValue) || 0));
+                      onChange(`${numValue}px`);
+                    };
+                    
+                    return (
+                      <div className="flex items-center gap-2">
+                        <Label className="text-xs w-12">Top</Label>
+                        <Slider
+                          value={[parsePixelValue(value)]}
+                          onValueChange={(val) => handleSliderChange(val[0])}
+                          max={200}
+                          step={1}
+                          className="flex-1"
+                        />
+                        <Input
+                          type="number"
+                          value={parsePixelValue(value)}
+                          onChange={(e) => handleInputChange(e.target.value)}
+                          min={0}
+                          max={200}
+                          step={1}
+                          className="w-16 h-7 text-xs"
+                        />
+                        <span className="text-xs text-muted-foreground w-6">px</span>
+                      </div>
+                    );
+                  }}
                 </ResponsiveStyleControl>
+                
                 <ResponsiveStyleControl
                   element={element}
                   property="paddingRight"
@@ -479,15 +634,46 @@ export const ImageFeatureElementStyles: React.FC<ImageFeatureElementStylesProps>
                   fallback=""
                   onStyleUpdate={onStyleUpdate}
                 >
-                  {(value, onChange) => (
-                    <Input
-                      value={value}
-                      onChange={(e) => onChange(e.target.value)}
-                      placeholder="0px"
-                      className="h-8"
-                    />
-                  )}
+                  {(value, onChange) => {
+                    const parsePixelValue = (val: string | undefined): number => {
+                      if (!val) return 0;
+                      return parseInt(val.replace('px', '')) || 0;
+                    };
+                    
+                    const handleSliderChange = (newValue: number) => {
+                      onChange(`${newValue}px`);
+                    };
+                    
+                    const handleInputChange = (inputValue: string) => {
+                      const numValue = Math.max(0, Math.min(200, parseInt(inputValue) || 0));
+                      onChange(`${numValue}px`);
+                    };
+                    
+                    return (
+                      <div className="flex items-center gap-2">
+                        <Label className="text-xs w-12">Right</Label>
+                        <Slider
+                          value={[parsePixelValue(value)]}
+                          onValueChange={(val) => handleSliderChange(val[0])}
+                          max={200}
+                          step={1}
+                          className="flex-1"
+                        />
+                        <Input
+                          type="number"
+                          value={parsePixelValue(value)}
+                          onChange={(e) => handleInputChange(e.target.value)}
+                          min={0}
+                          max={200}
+                          step={1}
+                          className="w-16 h-7 text-xs"
+                        />
+                        <span className="text-xs text-muted-foreground w-6">px</span>
+                      </div>
+                    );
+                  }}
                 </ResponsiveStyleControl>
+                
                 <ResponsiveStyleControl
                   element={element}
                   property="paddingBottom"
@@ -496,15 +682,46 @@ export const ImageFeatureElementStyles: React.FC<ImageFeatureElementStylesProps>
                   fallback=""
                   onStyleUpdate={onStyleUpdate}
                 >
-                  {(value, onChange) => (
-                    <Input
-                      value={value}
-                      onChange={(e) => onChange(e.target.value)}
-                      placeholder="0px"
-                      className="h-8"
-                    />
-                  )}
+                  {(value, onChange) => {
+                    const parsePixelValue = (val: string | undefined): number => {
+                      if (!val) return 0;
+                      return parseInt(val.replace('px', '')) || 0;
+                    };
+                    
+                    const handleSliderChange = (newValue: number) => {
+                      onChange(`${newValue}px`);
+                    };
+                    
+                    const handleInputChange = (inputValue: string) => {
+                      const numValue = Math.max(0, Math.min(200, parseInt(inputValue) || 0));
+                      onChange(`${numValue}px`);
+                    };
+                    
+                    return (
+                      <div className="flex items-center gap-2">
+                        <Label className="text-xs w-12">Bottom</Label>
+                        <Slider
+                          value={[parsePixelValue(value)]}
+                          onValueChange={(val) => handleSliderChange(val[0])}
+                          max={200}
+                          step={1}
+                          className="flex-1"
+                        />
+                        <Input
+                          type="number"
+                          value={parsePixelValue(value)}
+                          onChange={(e) => handleInputChange(e.target.value)}
+                          min={0}
+                          max={200}
+                          step={1}
+                          className="w-16 h-7 text-xs"
+                        />
+                        <span className="text-xs text-muted-foreground w-6">px</span>
+                      </div>
+                    );
+                  }}
                 </ResponsiveStyleControl>
+                
                 <ResponsiveStyleControl
                   element={element}
                   property="paddingLeft"
@@ -513,14 +730,44 @@ export const ImageFeatureElementStyles: React.FC<ImageFeatureElementStylesProps>
                   fallback=""
                   onStyleUpdate={onStyleUpdate}
                 >
-                  {(value, onChange) => (
-                    <Input
-                      value={value}
-                      onChange={(e) => onChange(e.target.value)}
-                      placeholder="0px"
-                      className="h-8"
-                    />
-                  )}
+                  {(value, onChange) => {
+                    const parsePixelValue = (val: string | undefined): number => {
+                      if (!val) return 0;
+                      return parseInt(val.replace('px', '')) || 0;
+                    };
+                    
+                    const handleSliderChange = (newValue: number) => {
+                      onChange(`${newValue}px`);
+                    };
+                    
+                    const handleInputChange = (inputValue: string) => {
+                      const numValue = Math.max(0, Math.min(200, parseInt(inputValue) || 0));
+                      onChange(`${numValue}px`);
+                    };
+                    
+                    return (
+                      <div className="flex items-center gap-2">
+                        <Label className="text-xs w-12">Left</Label>
+                        <Slider
+                          value={[parsePixelValue(value)]}
+                          onValueChange={(val) => handleSliderChange(val[0])}
+                          max={200}
+                          step={1}
+                          className="flex-1"
+                        />
+                        <Input
+                          type="number"
+                          value={parsePixelValue(value)}
+                          onChange={(e) => handleInputChange(e.target.value)}
+                          min={0}
+                          max={200}
+                          step={1}
+                          className="w-16 h-7 text-xs"
+                        />
+                        <span className="text-xs text-muted-foreground w-6">px</span>
+                      </div>
+                    );
+                  }}
                 </ResponsiveStyleControl>
               </div>
             </div>
