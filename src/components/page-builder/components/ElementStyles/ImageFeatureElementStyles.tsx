@@ -26,7 +26,6 @@ export const ImageFeatureElementStyles: React.FC<ImageFeatureElementStylesProps>
   // Collapsible state
   const [headlineTypographyOpen, setHeadlineTypographyOpen] = React.useState(true);
   const [descriptionTypographyOpen, setDescriptionTypographyOpen] = React.useState(false);
-  const [alignmentOpen, setAlignmentOpen] = React.useState(false);
   const [backgroundOpen, setBackgroundOpen] = React.useState(false);
   const [borderOpen, setBorderOpen] = React.useState(false);
   const [spacingOpen, setSpacingOpen] = React.useState(false);
@@ -241,50 +240,6 @@ export const ImageFeatureElementStyles: React.FC<ImageFeatureElementStylesProps>
         isOpen={descriptionTypographyOpen}
         onToggle={setDescriptionTypographyOpen}
       />
-
-      {/* Element Alignment */}
-      <Collapsible open={alignmentOpen} onOpenChange={setAlignmentOpen}>
-        <CollapsibleTrigger className="flex items-center justify-between w-full p-2 hover:bg-muted/50 rounded">
-          <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Element Alignment</h4>
-          <ChevronDown className={`h-4 w-4 transition-transform ${alignmentOpen ? 'rotate-180' : ''}`} />
-        </CollapsibleTrigger>
-        <CollapsibleContent className="space-y-3 pt-2">
-          <ResponsiveStyleControl
-            element={element}
-            property="textAlign"
-            label="Alignment"
-            deviceType={responsiveTab}
-            fallback="left"
-            onStyleUpdate={onStyleUpdate}
-          >
-            {(value, onChange) => (
-              <div className="flex space-x-1">
-                <Button
-                  size="sm"
-                  variant={value === 'left' ? 'default' : 'outline'}
-                  onClick={() => onChange('left')}
-                >
-                  <AlignLeft className="h-4 w-4" />
-                </Button>
-                <Button
-                  size="sm"
-                  variant={value === 'center' ? 'default' : 'outline'}
-                  onClick={() => onChange('center')}
-                >
-                  <AlignCenter className="h-4 w-4" />
-                </Button>
-                <Button
-                  size="sm"
-                  variant={value === 'right' ? 'default' : 'outline'}
-                  onClick={() => onChange('right')}
-                >
-                  <AlignRight className="h-4 w-4" />
-                </Button>
-              </div>
-            )}
-          </ResponsiveStyleControl>
-        </CollapsibleContent>
-      </Collapsible>
 
       {/* Background */}
       <Collapsible open={backgroundOpen} onOpenChange={setBackgroundOpen}>
