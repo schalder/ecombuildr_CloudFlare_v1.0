@@ -188,9 +188,7 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
         // Only apply border/background styles if not in preview mode and no user background
         !isPreviewMode && !(userBackground || userShadow) && 'border border-dashed border-blue-400',
         !isPreviewMode && !(userBackground || userShadow) && isHovered && 'border-blue-500',
-        !isPreviewMode && !(userBackground || userShadow) && isHovered && 'bg-blue-50/50',
-        !isPreviewMode && !(userBackground || userShadow) && isOver && 'border-blue-600',
-        !isPreviewMode && !(userBackground || userShadow) && isOver && 'bg-blue-50/70'
+        !isPreviewMode && !(userBackground || userShadow) && isOver && 'border-blue-600'
       )}
       style={getRowStyles()}
       onMouseEnter={() => setIsHovered(true)}
