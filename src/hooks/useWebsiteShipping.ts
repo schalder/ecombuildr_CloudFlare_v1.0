@@ -58,7 +58,7 @@ export function useWebsiteShipping() {
         if (websiteId) {
           const { data } = await supabase
             .from('websites')
-            .select('store_id, settings')
+            .select('settings')
             .eq('id', websiteId)
             .maybeSingle();
           const ship = (data as any)?.settings?.shipping;
@@ -72,7 +72,7 @@ export function useWebsiteShipping() {
         if (websiteSlug) {
           const { data } = await supabase
             .from('websites')
-            .select('id, store_id, settings')
+            .select('settings')
             .eq('slug', websiteSlug)
             .eq('is_active', true)
             .maybeSingle();
@@ -147,26 +147,13 @@ export function useWebsiteShipping() {
           // Fallback: try direct website domain fields (legacy approach)
           const { data: domainData } = await supabase
             .from('websites')
-            .select('id, store_id, settings')
+            .select('settings')
             .eq('domain', host)
             .eq('is_active', true)
             .maybeSingle();
           
-          let data = domainData;
-          
-          // If no domain match, try canonical_domain
-          if (!data) {
-            const { data: canonicalData } = await supabase
-              .from('websites')
-              .select('id, store_id, settings')
-              .eq('canonical_domain', host)
-              .eq('is_active', true)
-              .maybeSingle();
-            data = canonicalData;
-          }
-          
-          if (data) {
-            const ship = (data as any)?.settings?.shipping;
+          if (domainData) {
+            const ship = (domainData as any)?.settings?.shipping;
             if (ship) {
               console.log('[useWebsiteShipping] Found legacy domain-based shipping for', host, ship);
               setWebsiteShipping(ship as ShippingSettings);
