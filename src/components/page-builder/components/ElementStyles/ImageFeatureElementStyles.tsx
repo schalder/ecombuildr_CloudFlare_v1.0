@@ -22,7 +22,9 @@ export const ImageFeatureElementStyles: React.FC<ImageFeatureElementStylesProps>
   element,
   onStyleUpdate,
 }) => {
-  const { deviceType } = useDevicePreview();
+  const { deviceType, setDeviceType } = useDevicePreview();
+  const [headlineOpen, setHeadlineOpen] = React.useState(true);
+  const [descriptionOpen, setDescriptionOpen] = React.useState(false);
   const [backgroundOpen, setBackgroundOpen] = React.useState(false);
   const [borderOpen, setBorderOpen] = React.useState(false);
   const [spacingOpen, setSpacingOpen] = React.useState(false);
@@ -41,10 +43,12 @@ export const ImageFeatureElementStyles: React.FC<ImageFeatureElementStylesProps>
     { label: 'Playfair Display', value: '"Playfair Display", serif', family: 'Playfair Display', weights: '400;700' },
   ], []);
 
-  const TypographyGroup = ({ title, prefix, defaultFontSize = '16px' }: {
+  const TypographyGroup = ({ title, prefix, defaultFontSize = '16px', isOpen, onToggle }: {
     title: string;
     prefix: string;
     defaultFontSize?: string;
+    isOpen: boolean;
+    onToggle: () => void;
   }) => {
     const fontFamilyProperty = `${prefix}FontFamily`;
     const fontSizeProperty = `${prefix}FontSize`;
@@ -55,8 +59,8 @@ export const ImageFeatureElementStyles: React.FC<ImageFeatureElementStylesProps>
     return (
       <CollapsibleGroup 
         title={title} 
-        isOpen={prefix === 'headline'} 
-        onToggle={() => {}}
+        isOpen={isOpen} 
+        onToggle={onToggle}
       >
         <ResponsiveStyleControl
           element={element}
@@ -204,18 +208,22 @@ export const ImageFeatureElementStyles: React.FC<ImageFeatureElementStylesProps>
 
   return (
     <div className="space-y-4">
-      <ResponsiveTabs activeTab={deviceType} onTabChange={() => {}} />
+      <ResponsiveTabs activeTab={deviceType} onTabChange={setDeviceType} />
 
       <TypographyGroup
         title="Headline Typography"
         prefix="headline"
         defaultFontSize="24px"
+        isOpen={headlineOpen}
+        onToggle={() => setHeadlineOpen(!headlineOpen)}
       />
 
       <TypographyGroup
         title="Description Typography"
         prefix="description"
         defaultFontSize="16px"
+        isOpen={descriptionOpen}
+        onToggle={() => setDescriptionOpen(!descriptionOpen)}
       />
 
       <CollapsibleGroup title="Background" isOpen={backgroundOpen} onToggle={setBackgroundOpen}>
