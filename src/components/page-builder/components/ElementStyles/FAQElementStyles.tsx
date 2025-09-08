@@ -48,6 +48,7 @@ const TypographyGroup: React.FC<{
       { label: 'Open Sans', value: '"Open Sans", sans-serif', family: 'Open Sans', weights: '400;600;700' },
       { label: 'Lato', value: 'Lato, sans-serif', family: 'Lato', weights: '400;700' },
       { label: 'Playfair Display', value: '"Playfair Display", serif', family: 'Playfair Display', weights: '400;700' },
+      { label: 'Hind Siliguri', value: '"Hind Siliguri", sans-serif', family: 'Hind Siliguri', weights: '300;400;500;600;700' },
     ];
     return [...base, ...google];
   }, []);

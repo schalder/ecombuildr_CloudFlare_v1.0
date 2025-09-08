@@ -7,6 +7,7 @@ import { BREAKPOINTS, DeviceType } from '@/components/page-builder/utils/respons
 // Ensure elements are registered on storefront render too
 import '@/components/page-builder/elements';
 import { elementRegistry } from '@/components/page-builder/elements';
+import { ensureGoogleFontLoaded } from '@/hooks/useGoogleFontLoader';
 
 interface PageBuilderRendererProps {
   data: PageBuilderData;
@@ -20,6 +21,69 @@ export const PageBuilderRenderer: React.FC<PageBuilderRendererProps> = ({
   deviceType: propDeviceType
 }) => {
   const [deviceType, setDeviceType] = React.useState<DeviceType>('desktop');
+
+  // Extract and load all Google fonts used in the page
+  React.useEffect(() => {
+    if (!data || !data.sections) return;
+
+    const usedGoogleFonts = new Set<string>();
+    
+    // Function to recursively extract font families from elements
+    const extractFonts = (obj: any) => {
+      if (!obj) return;
+      
+      if (typeof obj === 'object') {
+        Object.values(obj).forEach((value: any) => {
+          if (typeof value === 'string' && value.includes('"') && (value.includes('Poppins') || value.includes('Montserrat') || value.includes('Roboto') || value.includes('Open Sans') || value.includes('Lato') || value.includes('Playfair Display') || value.includes('Hind Siliguri'))) {
+            // Extract font family from CSS font-family string
+            const match = value.match(/"([^"]+)"/);
+            if (match) {
+              const fontFamily = match[1];
+              // Map to Google Font weights
+              const fontWeights = {
+                'Poppins': '400;500;600;700',
+                'Montserrat': '400;500;600;700', 
+                'Roboto': '400;500;700',
+                'Open Sans': '400;600;700',
+                'Lato': '400;700',
+                'Playfair Display': '400;700',
+                'Hind Siliguri': '300;400;500;600;700'
+              };
+              
+              if (fontWeights[fontFamily as keyof typeof fontWeights]) {
+                usedGoogleFonts.add(`${fontFamily}:${fontWeights[fontFamily as keyof typeof fontWeights]}`);
+              }
+            }
+          }
+          
+          if (typeof value === 'object') {
+            extractFonts(value);
+          }
+        });
+      }
+    };
+
+    // Extract fonts from all sections, rows, columns, and elements
+    data.sections.forEach(section => {
+      extractFonts(section.styles);
+      section.rows?.forEach(row => {
+        extractFonts(row.styles);
+        row.columns?.forEach(column => {
+          extractFonts(column.styles);
+          column.elements?.forEach(element => {
+            extractFonts(element.styles);
+            extractFonts(element.content);
+          });
+        });
+      });
+    });
+
+    // Load all found Google fonts
+    usedGoogleFonts.forEach(fontWithWeights => {
+      const [family, weights] = fontWithWeights.split(':');
+      ensureGoogleFontLoaded(family, weights);
+    });
+  }, [data]);
 
   React.useEffect(() => {
     if (propDeviceType) {
