@@ -15,6 +15,7 @@ interface ColumnRendererProps {
   rowId: string;
   columnCount?: number;
   isPreviewMode: boolean;
+  isExactView?: boolean;
   deviceType?: 'desktop' | 'tablet' | 'mobile';
   onSelectElement: (element: PageBuilderElement | undefined) => void;
   onUpdateElement: (elementId: string, updates: Partial<PageBuilderElement>) => void;
@@ -29,6 +30,7 @@ export const ColumnRenderer: React.FC<ColumnRendererProps> = ({
   rowId,
   columnCount = 1,
   isPreviewMode,
+  isExactView = false,
   deviceType = 'desktop',
   onSelectElement,
   onUpdateElement,
@@ -115,13 +117,13 @@ export const ColumnRenderer: React.FC<ColumnRendererProps> = ({
       data-pb-column-id={column.id}
       className={cn(
         'relative transition-colors',
-        // Apply min-height only when empty and not in preview mode
-        !isPreviewMode && column.elements.length === 0 && 'min-h-[60px]',
-        // Only apply border/background styles if not in preview mode and no user background
-        !isPreviewMode && !(userBackground || userShadow) && 'border-2 border-dashed border-gray-300',
-        !isPreviewMode && !(userBackground || userShadow) && isOver && 'border-primary/60',
-        !isPreviewMode && !(userBackground || userShadow) && isOver && 'bg-primary/5',
-        !isPreviewMode && !(userBackground || userShadow) && isHovered && 'border-primary/50',
+        // Apply min-height only when empty, not in preview mode, and not in exact view
+        !isPreviewMode && !isExactView && column.elements.length === 0 && 'min-h-[60px]',
+        // Only apply border/background styles if not in preview mode, not in exact view, and no user background
+        !isPreviewMode && !isExactView && !(userBackground || userShadow) && 'border-2 border-dashed border-gray-300',
+        !isPreviewMode && !isExactView && !(userBackground || userShadow) && isOver && 'border-primary/60',
+        !isPreviewMode && !isExactView && !(userBackground || userShadow) && isOver && 'bg-primary/5',
+        !isPreviewMode && !isExactView && !(userBackground || userShadow) && isHovered && 'border-primary/50',
         getColumnResponsiveClasses(column, deviceType)
       )}
       style={getColumnStyles()}
@@ -129,8 +131,8 @@ export const ColumnRenderer: React.FC<ColumnRendererProps> = ({
       onMouseLeave={() => setIsHovered(false)}
       onClick={handleColumnClick}
     >
-      {/* Overlay border for columns with background */}
-      {!isPreviewMode && (userBackground || userShadow) && isHovered && (
+      {/* Overlay border for columns with background or in exact view mode */}
+      {!isPreviewMode && ((userBackground || userShadow) || isExactView) && isHovered && (
         <div 
           className="absolute inset-0 pointer-events-none z-20 border-2 border-dashed border-gray-500"
         />
@@ -145,7 +147,10 @@ export const ColumnRenderer: React.FC<ColumnRendererProps> = ({
       )}
 
       {column.elements.length === 0 ? (
-        <div className="min-h-[60px] flex items-center justify-center">
+        <div className={cn(
+          "flex items-center justify-center",
+          !isExactView && "min-h-[60px]"
+        )}>
           {!isPreviewMode && (
             <Button variant="ghost" size="sm" onClick={handleAddElement} className="text-muted-foreground">
               <Plus className="h-4 w-4 mr-2" />

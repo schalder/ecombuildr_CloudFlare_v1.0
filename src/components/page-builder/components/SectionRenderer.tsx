@@ -12,6 +12,7 @@ interface SectionRendererProps {
   sectionIndex: number;
   isSelected: boolean;
   isPreviewMode: boolean;
+  isExactView?: boolean;
   deviceType?: 'desktop' | 'tablet' | 'mobile';
   onSelectElement: (element: PageBuilderElement | undefined) => void;
   onUpdateElement: (elementId: string, updates: Partial<PageBuilderElement>) => void;
@@ -27,6 +28,7 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({
   sectionIndex,
   isSelected,
   isPreviewMode,
+  isExactView = false,
   deviceType = 'desktop',
   onSelectElement,
   onUpdateElement,
@@ -156,22 +158,22 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({
       data-pb-section-id={section.id}
       className={cn(
         'relative group transition-all duration-200',
-        // Only apply border styles if not in preview mode and no user background
-        !isPreviewMode && !(userBackground || userShadow) && 'border-2 border-dashed',
-        !isPreviewMode && !(userBackground || userShadow) && isSelected && 'border-primary',
-        !isPreviewMode && !(userBackground || userShadow) && isSelected && 'bg-primary/5',
-        !isPreviewMode && !(userBackground || userShadow) && isHovered && !isSelected && 'border-primary/30',
-        !isPreviewMode && !(userBackground || userShadow) && isHovered && !isSelected && 'bg-primary/2',
-        !isPreviewMode && !(userBackground || userShadow) && !isHovered && !isSelected && 'border-transparent',
-        !isPreviewMode && !(userBackground || userShadow) && isOver && 'bg-primary/5'
+        // Only apply border styles if not in preview mode and no user background, and not in exact view
+        !isPreviewMode && !isExactView && !(userBackground || userShadow) && 'border-2 border-dashed',
+        !isPreviewMode && !isExactView && !(userBackground || userShadow) && isSelected && 'border-primary',
+        !isPreviewMode && !isExactView && !(userBackground || userShadow) && isSelected && 'bg-primary/5',
+        !isPreviewMode && !isExactView && !(userBackground || userShadow) && isHovered && !isSelected && 'border-primary/30',
+        !isPreviewMode && !isExactView && !(userBackground || userShadow) && isHovered && !isSelected && 'bg-primary/2',
+        !isPreviewMode && !isExactView && !(userBackground || userShadow) && !isHovered && !isSelected && 'border-transparent',
+        !isPreviewMode && !isExactView && !(userBackground || userShadow) && isOver && 'bg-primary/5'
       )}
       style={getSectionStyles()}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={handleSectionClick}
     >
-      {/* Overlay border for sections with background */}
-      {!isPreviewMode && (userBackground || userShadow) && (isSelected || isHovered) && (
+      {/* Overlay border for sections with background or in exact view mode */}
+      {!isPreviewMode && ((userBackground || userShadow) || isExactView) && (isSelected || isHovered) && (
         <div 
           className={cn(
             'absolute inset-0 pointer-events-none z-20 border-2 border-dashed',
@@ -246,6 +248,7 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({
                 rowIndex={rowIndex}
                 sectionId={section.id}
                 isPreviewMode={isPreviewMode}
+                isExactView={isExactView}
                 deviceType={deviceType}
                 onSelectElement={onSelectElement}
                 onUpdateElement={onUpdateElement}

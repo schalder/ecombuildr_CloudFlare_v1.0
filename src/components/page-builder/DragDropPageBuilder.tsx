@@ -7,6 +7,7 @@ import { CanvasArea } from './components/CanvasArea';
 import { ElementLibrary } from './components/ElementLibrary';
 import { PropertiesPanel } from './components/PropertiesPanel';
 import { ResponsiveControls } from './components/ResponsiveControls';
+import { cn } from '@/lib/utils';
 
 interface DragDropPageBuilderProps {
   initialData?: PageBuilderData;
@@ -22,6 +23,7 @@ export const DragDropPageBuilder: React.FC<DragDropPageBuilderProps> = ({
   isSaving = false
 }) => {
   const [isElementsPanelOpen, setIsElementsPanelOpen] = React.useState(false);
+  const [isExactView, setIsExactView] = React.useState(false);
   
   const {
     pageData,
@@ -133,6 +135,16 @@ export const DragDropPageBuilder: React.FC<DragDropPageBuilderProps> = ({
             
             <div className="flex items-center gap-2">
               <button
+                onClick={() => setIsExactView(!isExactView)}
+                className={cn(
+                  "px-3 py-1 text-sm border rounded hover:bg-muted",
+                  isExactView && "bg-primary text-primary-foreground"
+                )}
+                title="Toggle exact view - removes edit mode spacing"
+              >
+                Exact view
+              </button>
+              <button
                 onClick={() => setPreviewMode(!isPreviewMode)}
                 className="px-3 py-1 text-sm border rounded hover:bg-muted"
               >
@@ -168,6 +180,7 @@ export const DragDropPageBuilder: React.FC<DragDropPageBuilderProps> = ({
               pageData={pageData}
               deviceType={deviceType}
               isPreviewMode={isPreviewMode}
+              isExactView={isExactView}
               onSelectElement={selectElement}
               onUpdateElement={updateElement}
               onAddElement={(sectionId, rowId, columnId, elementType, insertIndex) => {
