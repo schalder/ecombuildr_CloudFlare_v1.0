@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { SpacingSliders } from './_shared/SpacingSliders';
 import { ensureGoogleFontLoaded } from '@/hooks/useGoogleFontLoader';
 import { ResponsiveStyleControl, ResponsiveTabs } from './_shared/ResponsiveStyleControl';
+import { useDevicePreview } from '../../contexts/DevicePreviewContext';
 interface TextElementStylesProps {
   element: PageBuilderElement;
   onStyleUpdate: (property: string, value: any) => void;
@@ -30,8 +31,8 @@ export const TextElementStyles: React.FC<TextElementStylesProps> = ({
   showBorder = true,
   showSpacing = true,
 }) => {
-  // Responsive controls state and helpers
-  const [responsiveTab, setResponsiveTab] = React.useState<'desktop' | 'tablet' | 'mobile'>('desktop');
+  // Use global device state instead of local state
+  const { deviceType: responsiveTab, setDeviceType: setResponsiveTab } = useDevicePreview();
   
   // Collapsible state
   const [typographyOpen, setTypographyOpen] = React.useState(true);

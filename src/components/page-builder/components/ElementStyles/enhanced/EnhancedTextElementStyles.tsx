@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { CollapsibleGroup } from '../_shared/CollapsibleGroup';
 import { ResponsiveStyleControl, ResponsiveTabs } from '../_shared/ResponsiveStyleControl';
 import { ensureGoogleFontLoaded } from '@/hooks/useGoogleFontLoader';
+import { useDevicePreview } from '../../../contexts/DevicePreviewContext';
 
 interface EnhancedTextElementStylesProps {
   element: PageBuilderElement;
@@ -20,8 +21,8 @@ export const EnhancedTextElementStyles: React.FC<EnhancedTextElementStylesProps>
   element,
   onStyleUpdate,
 }) => {
-  // Responsive controls state
-  const [responsiveTab, setResponsiveTab] = React.useState<'desktop' | 'tablet' | 'mobile'>('desktop');
+  // Use global device state instead of local state
+  const { deviceType: responsiveTab, setDeviceType: setResponsiveTab } = useDevicePreview();
   
   // Collapsible state
   const [typographyOpen, setTypographyOpen] = React.useState(true);

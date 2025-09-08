@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Monitor, Tablet, Smartphone, RotateCcw } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { PageBuilderElement } from '../../../types';
+import { useDevicePreview } from '../../../contexts/DevicePreviewContext';
 import { 
   getEffectiveResponsiveValue, 
   hasResponsiveOverride, 
@@ -77,6 +78,14 @@ interface ResponsiveTabsProps {
 }
 
 export const ResponsiveTabs: React.FC<ResponsiveTabsProps> = ({ activeTab, onTabChange }) => {
+  const { deviceType, setDeviceType } = useDevicePreview();
+
+  const handleTabChange = (tab: 'desktop' | 'tablet' | 'mobile') => {
+    // Update both local state and global device preview
+    onTabChange(tab);
+    setDeviceType(tab);
+  };
+
   return (
     <div className="flex items-center justify-between mb-4">
       <Label className="text-xs">Device</Label>
@@ -84,21 +93,21 @@ export const ResponsiveTabs: React.FC<ResponsiveTabsProps> = ({ activeTab, onTab
         <Button
           size="sm"
           variant={activeTab === 'desktop' ? 'default' : 'outline'}
-          onClick={() => onTabChange('desktop')}
+          onClick={() => handleTabChange('desktop')}
         >
           <Monitor className="h-3 w-3" />
         </Button>
         <Button
           size="sm"
           variant={activeTab === 'tablet' ? 'default' : 'outline'}
-          onClick={() => onTabChange('tablet')}
+          onClick={() => handleTabChange('tablet')}
         >
           <Tablet className="h-3 w-3" />
         </Button>
         <Button
           size="sm"
           variant={activeTab === 'mobile' ? 'default' : 'outline'}
-          onClick={() => onTabChange('mobile')}
+          onClick={() => handleTabChange('mobile')}
         >
           <Smartphone className="h-3 w-3" />
         </Button>

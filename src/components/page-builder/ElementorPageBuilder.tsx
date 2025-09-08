@@ -68,6 +68,7 @@ import { RowDropZone } from './components/RowDropZone';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ensureAnchors, buildAnchor } from './utils/anchor';
 import { HoverProvider, useHover, HoverTarget } from './contexts/HoverContext';
+import { DevicePreviewProvider, useDevicePreview } from './contexts/DevicePreviewContext';
 import { useDragAutoscroll } from '@/hooks/useDragAutoscroll';
 
 // Helper function to get responsive grid classes for a row
@@ -173,14 +174,16 @@ export const ElementorPageBuilder: React.FC<ElementorPageBuilderProps> = memo(({
   isSaving = false
 }) => {
   return (
-    <HoverProvider>
-      <ElementorPageBuilderContent
-        initialData={initialData}
-        onChange={onChange}
-        onSave={onSave}
-        isSaving={isSaving}
-      />
-    </HoverProvider>
+    <DevicePreviewProvider>
+      <HoverProvider>
+        <ElementorPageBuilderContent
+          initialData={initialData}
+          onChange={onChange}
+          onSave={onSave}
+          isSaving={isSaving}
+        />
+      </HoverProvider>
+    </DevicePreviewProvider>
   );
 });
 
@@ -195,7 +198,7 @@ const ElementorPageBuilderContent: React.FC<ElementorPageBuilderProps> = memo(({
   );
   const [selection, setSelection] = useState<SelectionType | null>(null);
   const [showColumnModal, setShowColumnModal] = useState<{ sectionId: string; insertIndex?: number } | null>(null);
-  const [deviceType, setDeviceType] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
+  const { deviceType, setDeviceType } = useDevicePreview();
   const [isElementsPanelOpen, setIsElementsPanelOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [propertiesPanelCollapsed, setPropertiesPanelCollapsed] = useState(false);
@@ -1312,7 +1315,6 @@ const ElementorPageBuilderContent: React.FC<ElementorPageBuilderProps> = memo(({
                     return (
                       <PropertiesPanel
                         selectedElement={selectedItem.data as PageBuilderElement}
-                        deviceType={deviceType}
                         onUpdateElement={updateHandler}
                       />
                     );

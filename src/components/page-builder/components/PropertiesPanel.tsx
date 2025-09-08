@@ -78,18 +78,18 @@ import { AccordionElementStyles } from './ElementStyles/AccordionElementStyles';
 import { FAQElementStyles } from './ElementStyles/FAQElementStyles';
 
 import { PageBuilderElement } from '../types';
+import { useDevicePreview } from '../contexts/DevicePreviewContext';
 
 interface PropertiesPanelProps {
   selectedElement?: PageBuilderElement | null;
-  deviceType: 'desktop' | 'tablet' | 'mobile';
   onUpdateElement: (elementId: string, updates: Partial<PageBuilderElement>) => void;
 }
 
 export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
   selectedElement,
-  deviceType,
   onUpdateElement
 }) => {
+  const { deviceType } = useDevicePreview();
   if (!selectedElement) {
     return (
       <div className="p-4 text-center text-muted-foreground">
