@@ -1539,7 +1539,7 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
           <Button 
             variant="ghost" 
             size="sm" 
-            className="h-6 w-6 p-0 hover:bg-gray-100" 
+            className="h-6 w-6 p-0 hover:bg-gray-100 cursor-pointer" 
             onClick={(e) => {
               e.stopPropagation();
               onMoveSectionUp();
@@ -1551,7 +1551,7 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
           <Button 
             variant="ghost" 
             size="sm" 
-            className="h-6 w-6 p-0 hover:bg-gray-100" 
+            className="h-6 w-6 p-0 hover:bg-gray-100 cursor-pointer" 
             onClick={(e) => {
               e.stopPropagation();
               onMoveSectionDown();
@@ -1563,7 +1563,7 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
            <Button 
              variant="ghost" 
              size="sm" 
-             className="h-6 w-6 p-0 hover:bg-gray-100" 
+             className="h-6 w-6 p-0 hover:bg-gray-100 cursor-pointer" 
              onClick={(e) => {
                e.stopPropagation();
                onAddRow();
@@ -1574,7 +1574,7 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
            <Button 
              variant="ghost" 
              size="sm" 
-             className="h-6 w-6 p-0 hover:bg-gray-100" 
+             className="h-6 w-6 p-0 hover:bg-gray-100 cursor-pointer" 
              onClick={(e) => {
                e.stopPropagation();
                onAddSectionAfter();
@@ -1582,10 +1582,10 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
            >
              <Plus className="h-3 w-3" />
            </Button>
-          <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-gray-100" onClick={onDuplicate}>
+          <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-gray-100 cursor-pointer" onClick={onDuplicate}>
             <Copy className="h-3 w-3" />
           </Button>
-          <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-red-100 hover:text-red-600" onClick={onDelete}>
+          <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-red-100 hover:text-red-600 cursor-pointer" onClick={onDelete}>
             <Trash2 className="h-3 w-3" />
           </Button>
           <Button 
@@ -1819,7 +1819,7 @@ const RowComponent: React.FC<RowComponentProps> = ({
           <Button 
             variant="ghost" 
             size="sm" 
-            className="h-6 w-6 p-0 hover:bg-gray-100"
+            className="h-6 w-6 p-0 hover:bg-gray-100 cursor-pointer"
             onClick={(e) => {
               e.stopPropagation();
               onMoveRowUp();
@@ -1831,7 +1831,7 @@ const RowComponent: React.FC<RowComponentProps> = ({
           <Button 
             variant="ghost" 
             size="sm" 
-            className="h-6 w-6 p-0 hover:bg-gray-100"
+            className="h-6 w-6 p-0 hover:bg-gray-100 cursor-pointer"
             onClick={(e) => {
               e.stopPropagation();
               onMoveRowDown();
@@ -1843,7 +1843,7 @@ const RowComponent: React.FC<RowComponentProps> = ({
           <Button 
             variant="ghost" 
             size="sm" 
-            className="h-6 w-6 p-0 hover:bg-gray-100"
+            className="h-6 w-6 p-0 hover:bg-gray-100 cursor-pointer"
             onClick={(e) => {
               e.stopPropagation();
               onAddColumn(sectionId, row.id);
@@ -1856,7 +1856,7 @@ const RowComponent: React.FC<RowComponentProps> = ({
           <Button 
             variant="ghost" 
             size="sm" 
-            className="h-6 w-6 p-0 hover:bg-gray-100"
+            className="h-6 w-6 p-0 hover:bg-gray-100 cursor-pointer"
             onClick={(e) => {
               e.stopPropagation();
               onDuplicate();
@@ -1865,13 +1865,13 @@ const RowComponent: React.FC<RowComponentProps> = ({
           >
             <Copy className="h-3 w-3" />
           </Button>
-          <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-red-100 hover:text-red-600" onClick={onDelete}>
+          <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-red-100 hover:text-red-600 cursor-pointer" onClick={onDelete}>
             <Trash2 className="h-3 w-3" />
           </Button>
           <Button 
             variant="ghost" 
             size="sm" 
-            className="h-6 w-6 p-0 hover:bg-gray-100"
+            className="h-6 w-6 p-0 hover:bg-gray-100 cursor-pointer"
             onClick={(e) => {
               e.stopPropagation();
               onSelectionChange({ type: 'row', id: row.id, parentId: sectionId });
@@ -2027,7 +2027,7 @@ const ColumnComponent: React.FC<ColumnComponentProps> = ({
           <Button 
             variant="ghost" 
             size="sm" 
-            className="h-5 w-5 p-0 hover:bg-gray-100"
+            className="h-5 w-5 p-0 hover:bg-gray-100 cursor-pointer"
             onClick={(e) => {
               e.stopPropagation();
               onMoveColumnUp();
@@ -2039,7 +2039,7 @@ const ColumnComponent: React.FC<ColumnComponentProps> = ({
           <Button 
             variant="ghost" 
             size="sm" 
-            className="h-5 w-5 p-0 hover:bg-gray-100"
+            className="h-5 w-5 p-0 hover:bg-gray-100 cursor-pointer"
             onClick={(e) => {
               e.stopPropagation();
               onMoveColumnDown();
@@ -2051,7 +2051,7 @@ const ColumnComponent: React.FC<ColumnComponentProps> = ({
           <Button 
             variant="ghost" 
             size="sm" 
-            className="h-5 w-5 p-0 hover:bg-gray-100"
+            className="h-5 w-5 p-0 hover:bg-gray-100 cursor-pointer"
             onClick={(e) => {
               e.stopPropagation();
               onDuplicateColumn();
@@ -2064,7 +2064,7 @@ const ColumnComponent: React.FC<ColumnComponentProps> = ({
           <Button 
             variant="ghost" 
             size="sm" 
-            className="h-5 w-5 p-0 hover:bg-red-100 hover:text-red-600"
+            className="h-5 w-5 p-0 hover:bg-red-100 hover:text-red-600 cursor-pointer"
             onClick={(e) => {
               e.stopPropagation();
               onDeleteColumn();
@@ -2076,7 +2076,7 @@ const ColumnComponent: React.FC<ColumnComponentProps> = ({
           <Button 
             variant="ghost" 
             size="sm" 
-            className="h-5 w-5 p-0 hover:bg-gray-100"
+            className="h-5 w-5 p-0 hover:bg-gray-100 cursor-pointer"
             onClick={(e) => {
               e.stopPropagation();
               onSelect();
