@@ -1215,40 +1215,38 @@ const ElementorPageBuilderContent: React.FC<ElementorPageBuilderProps> = memo(({
           </div>
 
           {/* Canvas Area */}
-          <ScrollArea scrollbarType="always" className="flex-1 min-h-0 bg-muted/30">
-            <CanvasContent 
-              data={data}
-              deviceType={deviceType}
-              selection={selection}
-              setSelection={setSelection}
-              deleteSection={deleteSection}
-              duplicateSection={duplicateSection}
-              setShowColumnModal={setShowColumnModal}
-              deleteRow={deleteRow}
-              duplicateRow={duplicateRow}
-              moveRow={moveRow}
-              moveRowUp={moveRowUp}
-              moveRowDown={moveRowDown}
-              moveElement={moveElement}
-              moveElementUp={moveElementUp}
-              moveElementDown={moveElementDown}
-              moveSection={moveSection}
-              moveSectionUp={moveSectionUp}
-              moveSectionDown={moveSectionDown}
-              moveColumn={moveColumn}
-              addColumn={addColumn}
-              duplicateColumn={duplicateColumn}
-              setDeleteColumnDialog={setDeleteColumnDialog}
-              addElement={addElement}
-              updateElement={updateElement}
-              deleteElement={deleteElement}
-              duplicateElement={duplicateElement}
-              addSectionAfter={addSectionAfter}
-              addSection={addSection}
-              getDevicePreviewStyles={getDevicePreviewStyles}
-              getPageStyles={getPageStyles}
-            />
-          </ScrollArea>
+          <CanvasAreaWithAutoscroll 
+            data={data}
+            deviceType={deviceType}
+            selection={selection}
+            setSelection={setSelection}
+            deleteSection={deleteSection}
+            duplicateSection={duplicateSection}
+            setShowColumnModal={setShowColumnModal}
+            deleteRow={deleteRow}
+            duplicateRow={duplicateRow}
+            moveRow={moveRow}
+            moveRowUp={moveRowUp}
+            moveRowDown={moveRowDown}
+            moveElement={moveElement}
+            moveElementUp={moveElementUp}
+            moveElementDown={moveElementDown}
+            moveSection={moveSection}
+            moveSectionUp={moveSectionUp}
+            moveSectionDown={moveSectionDown}
+            moveColumn={moveColumn}
+            addColumn={addColumn}
+            duplicateColumn={duplicateColumn}
+            setDeleteColumnDialog={setDeleteColumnDialog}
+            addElement={addElement}
+            updateElement={updateElement}
+            deleteElement={deleteElement}
+            duplicateElement={duplicateElement}
+            addSectionAfter={addSectionAfter}
+            addSection={addSection}
+            getDevicePreviewStyles={getDevicePreviewStyles}
+            getPageStyles={getPageStyles}
+          />
         </div>
 
         {/* Properties Panel */}
@@ -2370,8 +2368,8 @@ const ColumnLayoutModal: React.FC<ColumnLayoutModalProps> = ({
   );
 };
 
-// Canvas Content Component with Autoscroll
-interface CanvasContentProps {
+// Canvas Area with Autoscroll Component
+interface CanvasAreaWithAutoscrollProps {
   data: PageBuilderData;
   deviceType: 'desktop' | 'tablet' | 'mobile';
   selection: SelectionType | null;
@@ -2404,7 +2402,7 @@ interface CanvasContentProps {
   getPageStyles: () => any;
 }
 
-const CanvasContent: React.FC<CanvasContentProps> = ({
+const CanvasAreaWithAutoscroll: React.FC<CanvasAreaWithAutoscrollProps> = ({
   data,
   deviceType,
   selection,
@@ -2442,99 +2440,101 @@ const CanvasContent: React.FC<CanvasContentProps> = ({
   useDragAutoscroll(canvasRef);
 
   return (
-    <div ref={canvasRef} className="p-8">
-      <div style={{ ...getDevicePreviewStyles(), ...getPageStyles() }} className={cn("min-h-full bg-background rounded-lg shadow-sm", deviceType === 'mobile' && "pb-mobile", deviceType === 'tablet' && "pb-tablet")}>
-        {data.sections.length === 0 ? (
-          <div className="p-16 text-center">
-            <h3 className="text-lg font-medium mb-2">Start Building Your Page</h3>
-            <p className="text-muted-foreground mb-4">Add your first section to get started</p>
-            <Button onClick={() => addSection()}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Section
-            </Button>
-          </div>
-        ) : (
-          <div className="space-y-0">
-            {/* Section drop zone at the beginning */}
-            <SectionDropZone 
-              insertIndex={0} 
-              onMoveSection={moveSection}
-            />
-            
-            {data.sections.map((section, sectionIndex) => (
-              <div key={section.id}>
-                <SectionComponent
-                  section={section}
-                  sectionIndex={sectionIndex}
-                  totalSections={data.sections.length}
-                  deviceType={deviceType}
-                  isSelected={selection?.type === 'section' && selection.id === section.id}
-                  onSelect={() => setSelection({ type: 'section', id: section.id })}
-                  onDelete={() => deleteSection(section.id)}
-                  onDuplicate={() => duplicateSection(section.id)}
-                  onAddRow={(insertIndex?: number) => setShowColumnModal({ sectionId: section.id, insertIndex })}
-                  onDeleteRow={(rowId) => deleteRow(section.id, rowId)}
-                  onDuplicateRow={(rowId) => duplicateRow(section.id, rowId)}
-                  onMoveRow={moveRow}
-                  onMoveRowUp={moveRowUp}
-                  onMoveRowDown={moveRowDown}
-                  onMoveElement={moveElement}
-                  onMoveElementUp={moveElementUp}
-                  onMoveElementDown={moveElementDown}
-                  onMoveSection={moveSection}
-                  onMoveSectionUp={() => moveSectionUp(section.id)}
-                  onMoveSectionDown={() => moveSectionDown(section.id)}
-                  onMoveColumn={moveColumn}
-                  onAddColumn={addColumn}
-                  onDuplicateColumn={(columnId) => {
-                    // Find the row that contains this column
-                    const foundRow = section.rows?.find(row => 
-                      row.columns.some(col => col.id === columnId)
-                    );
-                    if (foundRow) {
-                      duplicateColumn(section.id, foundRow.id, columnId);
-                    }
-                  }}
-                  onDeleteColumn={(columnId) => {
-                    // Find the row that contains this column
-                    const foundRow = section.rows?.find(row => 
-                      row.columns.some(col => col.id === columnId)
-                    );
-                    if (foundRow) {
-                      setDeleteColumnDialog({
-                        sectionId: section.id,
-                        rowId: foundRow.id,
-                        columnId
-                      });
-                    }
-                  }}
-                  onAddElement={addElement}
-                  onUpdateElement={updateElement}
-                  onDeleteElement={deleteElement}
-                  onDuplicateElement={duplicateElement}
-                  selection={selection}
-                  onSelectionChange={setSelection}
-                  onAddSectionAfter={() => addSectionAfter(sectionIndex)}
-                />
-                
-                {/* Section drop zone after each section */}
-                <SectionDropZone 
-                  insertIndex={sectionIndex + 1} 
-                  onMoveSection={moveSection}
-                />
-              </div>
-            ))}
-            
-            {/* Add Section button at end */}
-            <div className="pt-4 text-center">
-              <Button variant="outline" onClick={() => addSection()}>
+    <ScrollArea ref={canvasRef} scrollbarType="always" className="flex-1 min-h-0 bg-muted/30">
+      <div className="p-8">
+        <div style={{ ...getDevicePreviewStyles(), ...getPageStyles() }} className={cn("min-h-full bg-background rounded-lg shadow-sm", deviceType === 'mobile' && "pb-mobile", deviceType === 'tablet' && "pb-tablet")}>
+          {data.sections.length === 0 ? (
+            <div className="p-16 text-center">
+              <h3 className="text-lg font-medium mb-2">Start Building Your Page</h3>
+              <p className="text-muted-foreground mb-4">Add your first section to get started</p>
+              <Button onClick={() => addSection()}>
                 <Plus className="h-4 w-4 mr-2" />
                 Add Section
               </Button>
             </div>
-          </div>
-        )}
+          ) : (
+            <div className="space-y-0">
+              {/* Section drop zone at the beginning */}
+              <SectionDropZone 
+                insertIndex={0} 
+                onMoveSection={moveSection}
+              />
+              
+              {data.sections.map((section, sectionIndex) => (
+                <div key={section.id}>
+                  <SectionComponent
+                    section={section}
+                    sectionIndex={sectionIndex}
+                    totalSections={data.sections.length}
+                    deviceType={deviceType}
+                    isSelected={selection?.type === 'section' && selection.id === section.id}
+                    onSelect={() => setSelection({ type: 'section', id: section.id })}
+                    onDelete={() => deleteSection(section.id)}
+                    onDuplicate={() => duplicateSection(section.id)}
+                    onAddRow={(insertIndex?: number) => setShowColumnModal({ sectionId: section.id, insertIndex })}
+                    onDeleteRow={(rowId) => deleteRow(section.id, rowId)}
+                    onDuplicateRow={(rowId) => duplicateRow(section.id, rowId)}
+                    onMoveRow={moveRow}
+                    onMoveRowUp={moveRowUp}
+                    onMoveRowDown={moveRowDown}
+                    onMoveElement={moveElement}
+                    onMoveElementUp={moveElementUp}
+                    onMoveElementDown={moveElementDown}
+                    onMoveSection={moveSection}
+                    onMoveSectionUp={() => moveSectionUp(section.id)}
+                    onMoveSectionDown={() => moveSectionDown(section.id)}
+                    onMoveColumn={moveColumn}
+                    onAddColumn={addColumn}
+                    onDuplicateColumn={(columnId) => {
+                      // Find the row that contains this column
+                      const foundRow = section.rows?.find(row => 
+                        row.columns.some(col => col.id === columnId)
+                      );
+                      if (foundRow) {
+                        duplicateColumn(section.id, foundRow.id, columnId);
+                      }
+                    }}
+                    onDeleteColumn={(columnId) => {
+                      // Find the row that contains this column
+                      const foundRow = section.rows?.find(row => 
+                        row.columns.some(col => col.id === columnId)
+                      );
+                      if (foundRow) {
+                        setDeleteColumnDialog({
+                          sectionId: section.id,
+                          rowId: foundRow.id,
+                          columnId
+                        });
+                      }
+                    }}
+                    onAddElement={addElement}
+                    onUpdateElement={updateElement}
+                    onDeleteElement={deleteElement}
+                    onDuplicateElement={duplicateElement}
+                    selection={selection}
+                    onSelectionChange={setSelection}
+                    onAddSectionAfter={() => addSectionAfter(sectionIndex)}
+                  />
+                  
+                  {/* Section drop zone after each section */}
+                  <SectionDropZone 
+                    insertIndex={sectionIndex + 1} 
+                    onMoveSection={moveSection}
+                  />
+                </div>
+              ))}
+              
+              {/* Add Section button at end */}
+              <div className="pt-4 text-center">
+                <Button variant="outline" onClick={() => addSection()}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Section
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </ScrollArea>
   );
 };
