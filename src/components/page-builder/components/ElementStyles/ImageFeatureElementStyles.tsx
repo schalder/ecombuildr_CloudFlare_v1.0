@@ -13,6 +13,7 @@ import { ResponsiveStyleControl, ResponsiveTabs } from './_shared/ResponsiveStyl
 import { useDevicePreview } from '../../contexts/DevicePreviewContext';
 import { FontSizeControl } from './_shared/FontSizeControl';
 import { LineHeightControl } from './_shared/LineHeightControl';
+import { SpacingControl } from './_shared/SpacingControl';
 
 interface ImageFeatureElementStylesProps {
   element: PageBuilderElement;
@@ -327,386 +328,76 @@ export const ImageFeatureElementStyles: React.FC<ImageFeatureElementStylesProps>
             <div className="space-y-2">
               <Label className="text-xs font-medium">Margin</Label>
               <div className="space-y-3">
-                <ResponsiveStyleControl
+                <SpacingControl
                   element={element}
                   property="marginTop"
+                  label="Top"
                   deviceType={responsiveTab}
                   fallback=""
                   onStyleUpdate={onStyleUpdate}
-                >
-                  {(value, onChange) => {
-                    const parsePixelValue = (val: string | undefined): number => {
-                      if (!val) return 0;
-                      return parseInt(val.replace('px', '')) || 0;
-                    };
-                    
-                    const handleSliderChange = (newValue: number) => {
-                      onChange(`${newValue}px`);
-                    };
-                    
-                    const handleInputChange = (inputValue: string) => {
-                      const numValue = Math.max(0, Math.min(200, parseInt(inputValue) || 0));
-                      onChange(`${numValue}px`);
-                    };
-                    
-                    return (
-                      <div className="flex items-center gap-2">
-                        <Label className="text-xs w-12">Top</Label>
-                        <Slider
-                          value={[parsePixelValue(value)]}
-                          onValueChange={(val) => handleSliderChange(val[0])}
-                          max={200}
-                          step={1}
-                          className="flex-1"
-                        />
-                        <Input
-                          type="number"
-                          value={parsePixelValue(value)}
-                          onChange={(e) => handleInputChange(e.target.value)}
-                          min={0}
-                          max={200}
-                          step={1}
-                          className="w-16 h-7 text-xs"
-                        />
-                        <span className="text-xs text-muted-foreground w-6">px</span>
-                      </div>
-                    );
-                  }}
-                </ResponsiveStyleControl>
-                
-                <ResponsiveStyleControl
+                />
+                <SpacingControl
                   element={element}
                   property="marginRight"
+                  label="Right"
                   deviceType={responsiveTab}
                   fallback=""
                   onStyleUpdate={onStyleUpdate}
-                >
-                  {(value, onChange) => {
-                    const parsePixelValue = (val: string | undefined): number => {
-                      if (!val) return 0;
-                      return parseInt(val.replace('px', '')) || 0;
-                    };
-                    
-                    const handleSliderChange = (newValue: number) => {
-                      onChange(`${newValue}px`);
-                    };
-                    
-                    const handleInputChange = (inputValue: string) => {
-                      const numValue = Math.max(0, Math.min(200, parseInt(inputValue) || 0));
-                      onChange(`${numValue}px`);
-                    };
-                    
-                    return (
-                      <div className="flex items-center gap-2">
-                        <Label className="text-xs w-12">Right</Label>
-                        <Slider
-                          value={[parsePixelValue(value)]}
-                          onValueChange={(val) => handleSliderChange(val[0])}
-                          max={200}
-                          step={1}
-                          className="flex-1"
-                        />
-                        <Input
-                          type="number"
-                          value={parsePixelValue(value)}
-                          onChange={(e) => handleInputChange(e.target.value)}
-                          min={0}
-                          max={200}
-                          step={1}
-                          className="w-16 h-7 text-xs"
-                        />
-                        <span className="text-xs text-muted-foreground w-6">px</span>
-                      </div>
-                    );
-                  }}
-                </ResponsiveStyleControl>
-                
-                <ResponsiveStyleControl
+                />
+                <SpacingControl
                   element={element}
                   property="marginBottom"
+                  label="Bottom"
                   deviceType={responsiveTab}
                   fallback=""
                   onStyleUpdate={onStyleUpdate}
-                >
-                  {(value, onChange) => {
-                    const parsePixelValue = (val: string | undefined): number => {
-                      if (!val) return 0;
-                      return parseInt(val.replace('px', '')) || 0;
-                    };
-                    
-                    const handleSliderChange = (newValue: number) => {
-                      onChange(`${newValue}px`);
-                    };
-                    
-                    const handleInputChange = (inputValue: string) => {
-                      const numValue = Math.max(0, Math.min(200, parseInt(inputValue) || 0));
-                      onChange(`${numValue}px`);
-                    };
-                    
-                    return (
-                      <div className="flex items-center gap-2">
-                        <Label className="text-xs w-12">Bottom</Label>
-                        <Slider
-                          value={[parsePixelValue(value)]}
-                          onValueChange={(val) => handleSliderChange(val[0])}
-                          max={200}
-                          step={1}
-                          className="flex-1"
-                        />
-                        <Input
-                          type="number"
-                          value={parsePixelValue(value)}
-                          onChange={(e) => handleInputChange(e.target.value)}
-                          min={0}
-                          max={200}
-                          step={1}
-                          className="w-16 h-7 text-xs"
-                        />
-                        <span className="text-xs text-muted-foreground w-6">px</span>
-                      </div>
-                    );
-                  }}
-                </ResponsiveStyleControl>
-                
-                <ResponsiveStyleControl
+                />
+                <SpacingControl
                   element={element}
                   property="marginLeft"
+                  label="Left"
                   deviceType={responsiveTab}
                   fallback=""
                   onStyleUpdate={onStyleUpdate}
-                >
-                  {(value, onChange) => {
-                    const parsePixelValue = (val: string | undefined): number => {
-                      if (!val) return 0;
-                      return parseInt(val.replace('px', '')) || 0;
-                    };
-                    
-                    const handleSliderChange = (newValue: number) => {
-                      onChange(`${newValue}px`);
-                    };
-                    
-                    const handleInputChange = (inputValue: string) => {
-                      const numValue = Math.max(0, Math.min(200, parseInt(inputValue) || 0));
-                      onChange(`${numValue}px`);
-                    };
-                    
-                    return (
-                      <div className="flex items-center gap-2">
-                        <Label className="text-xs w-12">Left</Label>
-                        <Slider
-                          value={[parsePixelValue(value)]}
-                          onValueChange={(val) => handleSliderChange(val[0])}
-                          max={200}
-                          step={1}
-                          className="flex-1"
-                        />
-                        <Input
-                          type="number"
-                          value={parsePixelValue(value)}
-                          onChange={(e) => handleInputChange(e.target.value)}
-                          min={0}
-                          max={200}
-                          step={1}
-                          className="w-16 h-7 text-xs"
-                        />
-                        <span className="text-xs text-muted-foreground w-6">px</span>
-                      </div>
-                    );
-                  }}
-                </ResponsiveStyleControl>
+                />
               </div>
             </div>
 
             <div className="space-y-2">
               <Label className="text-xs font-medium">Padding</Label>
               <div className="space-y-3">
-                <ResponsiveStyleControl
+                <SpacingControl
                   element={element}
                   property="paddingTop"
+                  label="Top"
                   deviceType={responsiveTab}
                   fallback=""
                   onStyleUpdate={onStyleUpdate}
-                >
-                  {(value, onChange) => {
-                    const parsePixelValue = (val: string | undefined): number => {
-                      if (!val) return 0;
-                      return parseInt(val.replace('px', '')) || 0;
-                    };
-                    
-                    const handleSliderChange = (newValue: number) => {
-                      onChange(`${newValue}px`);
-                    };
-                    
-                    const handleInputChange = (inputValue: string) => {
-                      const numValue = Math.max(0, Math.min(200, parseInt(inputValue) || 0));
-                      onChange(`${numValue}px`);
-                    };
-                    
-                    return (
-                      <div className="flex items-center gap-2">
-                        <Label className="text-xs w-12">Top</Label>
-                        <Slider
-                          value={[parsePixelValue(value)]}
-                          onValueChange={(val) => handleSliderChange(val[0])}
-                          max={200}
-                          step={1}
-                          className="flex-1"
-                        />
-                        <Input
-                          type="number"
-                          value={parsePixelValue(value)}
-                          onChange={(e) => handleInputChange(e.target.value)}
-                          min={0}
-                          max={200}
-                          step={1}
-                          className="w-16 h-7 text-xs"
-                        />
-                        <span className="text-xs text-muted-foreground w-6">px</span>
-                      </div>
-                    );
-                  }}
-                </ResponsiveStyleControl>
-                
-                <ResponsiveStyleControl
+                />
+                <SpacingControl
                   element={element}
                   property="paddingRight"
+                  label="Right"
                   deviceType={responsiveTab}
                   fallback=""
                   onStyleUpdate={onStyleUpdate}
-                >
-                  {(value, onChange) => {
-                    const parsePixelValue = (val: string | undefined): number => {
-                      if (!val) return 0;
-                      return parseInt(val.replace('px', '')) || 0;
-                    };
-                    
-                    const handleSliderChange = (newValue: number) => {
-                      onChange(`${newValue}px`);
-                    };
-                    
-                    const handleInputChange = (inputValue: string) => {
-                      const numValue = Math.max(0, Math.min(200, parseInt(inputValue) || 0));
-                      onChange(`${numValue}px`);
-                    };
-                    
-                    return (
-                      <div className="flex items-center gap-2">
-                        <Label className="text-xs w-12">Right</Label>
-                        <Slider
-                          value={[parsePixelValue(value)]}
-                          onValueChange={(val) => handleSliderChange(val[0])}
-                          max={200}
-                          step={1}
-                          className="flex-1"
-                        />
-                        <Input
-                          type="number"
-                          value={parsePixelValue(value)}
-                          onChange={(e) => handleInputChange(e.target.value)}
-                          min={0}
-                          max={200}
-                          step={1}
-                          className="w-16 h-7 text-xs"
-                        />
-                        <span className="text-xs text-muted-foreground w-6">px</span>
-                      </div>
-                    );
-                  }}
-                </ResponsiveStyleControl>
-                
-                <ResponsiveStyleControl
+                />
+                <SpacingControl
                   element={element}
                   property="paddingBottom"
+                  label="Bottom"
                   deviceType={responsiveTab}
                   fallback=""
                   onStyleUpdate={onStyleUpdate}
-                >
-                  {(value, onChange) => {
-                    const parsePixelValue = (val: string | undefined): number => {
-                      if (!val) return 0;
-                      return parseInt(val.replace('px', '')) || 0;
-                    };
-                    
-                    const handleSliderChange = (newValue: number) => {
-                      onChange(`${newValue}px`);
-                    };
-                    
-                    const handleInputChange = (inputValue: string) => {
-                      const numValue = Math.max(0, Math.min(200, parseInt(inputValue) || 0));
-                      onChange(`${numValue}px`);
-                    };
-                    
-                    return (
-                      <div className="flex items-center gap-2">
-                        <Label className="text-xs w-12">Bottom</Label>
-                        <Slider
-                          value={[parsePixelValue(value)]}
-                          onValueChange={(val) => handleSliderChange(val[0])}
-                          max={200}
-                          step={1}
-                          className="flex-1"
-                        />
-                        <Input
-                          type="number"
-                          value={parsePixelValue(value)}
-                          onChange={(e) => handleInputChange(e.target.value)}
-                          min={0}
-                          max={200}
-                          step={1}
-                          className="w-16 h-7 text-xs"
-                        />
-                        <span className="text-xs text-muted-foreground w-6">px</span>
-                      </div>
-                    );
-                  }}
-                </ResponsiveStyleControl>
-                
-                <ResponsiveStyleControl
+                />
+                <SpacingControl
                   element={element}
                   property="paddingLeft"
+                  label="Left"
                   deviceType={responsiveTab}
                   fallback=""
                   onStyleUpdate={onStyleUpdate}
-                >
-                  {(value, onChange) => {
-                    const parsePixelValue = (val: string | undefined): number => {
-                      if (!val) return 0;
-                      return parseInt(val.replace('px', '')) || 0;
-                    };
-                    
-                    const handleSliderChange = (newValue: number) => {
-                      onChange(`${newValue}px`);
-                    };
-                    
-                    const handleInputChange = (inputValue: string) => {
-                      const numValue = Math.max(0, Math.min(200, parseInt(inputValue) || 0));
-                      onChange(`${numValue}px`);
-                    };
-                    
-                    return (
-                      <div className="flex items-center gap-2">
-                        <Label className="text-xs w-12">Left</Label>
-                        <Slider
-                          value={[parsePixelValue(value)]}
-                          onValueChange={(val) => handleSliderChange(val[0])}
-                          max={200}
-                          step={1}
-                          className="flex-1"
-                        />
-                        <Input
-                          type="number"
-                          value={parsePixelValue(value)}
-                          onChange={(e) => handleInputChange(e.target.value)}
-                          min={0}
-                          max={200}
-                          step={1}
-                          className="w-16 h-7 text-xs"
-                        />
-                        <span className="text-xs text-muted-foreground w-6">px</span>
-                      </div>
-                    );
-                  }}
-                </ResponsiveStyleControl>
+                />
               </div>
             </div>
           </div>
