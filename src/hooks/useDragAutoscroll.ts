@@ -6,8 +6,11 @@ export const useDragAutoscroll = (containerRef: React.RefObject<HTMLElement>) =>
     isDragging: monitor.isDragging(),
   }));
 
-  const scrollTimeoutRef = useRef<NodeJS.Timeout>();
+  const scrollTimeoutRef = useRef<number>();
   const isScrollingRef = useRef(false);
+  const animationFrameRef = useRef<number>();
+  const isAutoScrollingRef = useRef(false);
+  const lastPointerYRef = useRef<number>(0);
 
   useEffect(() => {
     if (!isDragging || !containerRef.current) return;
@@ -26,82 +29,148 @@ export const useDragAutoscroll = (containerRef: React.RefObject<HTMLElement>) =>
 
     const scrollableElement = findScrollableElement(containerRef.current);
     
-    const handleWheel = (e: WheelEvent) => {
-      if (isDragging) {
-        e.preventDefault();
-        e.stopPropagation();
+    // Edge-based autoscroll using requestAnimationFrame
+    const startAutoScroll = () => {
+      if (isAutoScrollingRef.current) return;
+      
+      isAutoScrollingRef.current = true;
+      
+      const autoScroll = () => {
+        if (!isAutoScrollingRef.current || !containerRef.current) return;
         
-        // Clear any existing scroll timeout
-        if (scrollTimeoutRef.current) {
-          clearTimeout(scrollTimeoutRef.current);
+        const rect = containerRef.current.getBoundingClientRect();
+        const pointerY = lastPointerYRef.current;
+        const scrollZone = 100; // pixels from edge to trigger scroll
+        const maxScrollSpeed = 18; // max pixels per frame
+        const minScrollSpeed = 3; // min pixels per frame
+        
+        // Calculate distance from edges
+        const distanceFromTop = pointerY - rect.top;
+        const distanceFromBottom = rect.bottom - pointerY;
+        
+        let scrollDirection = 0;
+        let scrollSpeed = 0;
+        
+        if (distanceFromTop < scrollZone && distanceFromTop > 0) {
+          // Near top edge - scroll up
+          const proximity = 1 - (distanceFromTop / scrollZone);
+          scrollSpeed = minScrollSpeed + (proximity * (maxScrollSpeed - minScrollSpeed));
+          scrollDirection = -1;
+        } else if (distanceFromBottom < scrollZone && distanceFromBottom > 0) {
+          // Near bottom edge - scroll down
+          const proximity = 1 - (distanceFromBottom / scrollZone);
+          scrollSpeed = minScrollSpeed + (proximity * (maxScrollSpeed - minScrollSpeed));
+          scrollDirection = 1;
         }
         
-        // Scroll the scrollable element
-        scrollableElement.scrollBy({
-          top: e.deltaY,
-          behavior: 'auto'
-        });
-        
-        // Set scrolling flag
-        isScrollingRef.current = true;
-        
-        // Reset scrolling flag after a short delay
-        scrollTimeoutRef.current = setTimeout(() => {
-          isScrollingRef.current = false;
-        }, 100);
+        if (scrollDirection !== 0) {
+          // Check scroll boundaries
+          const canScrollUp = scrollableElement.scrollTop > 0;
+          const canScrollDown = scrollableElement.scrollTop < scrollableElement.scrollHeight - scrollableElement.clientHeight;
+          
+          if ((scrollDirection === -1 && canScrollUp) || (scrollDirection === 1 && canScrollDown)) {
+            scrollableElement.scrollBy({
+              top: scrollDirection * scrollSpeed,
+              behavior: 'auto'
+            });
+          }
+          
+          // Continue animation
+          animationFrameRef.current = requestAnimationFrame(autoScroll);
+        } else {
+          // No scrolling needed, stop animation
+          stopAutoScroll();
+        }
+      };
+      
+      animationFrameRef.current = requestAnimationFrame(autoScroll);
+    };
+    
+    const stopAutoScroll = () => {
+      isAutoScrollingRef.current = false;
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+        animationFrameRef.current = undefined;
       }
     };
 
-    const handleDocumentWheel = (e: WheelEvent) => {
-      if (!isDragging) return;
+    // Handle dragover events for edge-based autoscroll
+    const handleDragOver = (e: DragEvent) => {
+      if (!isDragging || !containerRef.current) return;
       
-      // Check if mouse is over the canvas area
-      const rect = containerRef.current!.getBoundingClientRect();
+      e.preventDefault();
+      lastPointerYRef.current = e.clientY;
+      
+      const rect = containerRef.current.getBoundingClientRect();
       const isOverCanvas = e.clientX >= rect.left && 
                           e.clientX <= rect.right && 
                           e.clientY >= rect.top && 
                           e.clientY <= rect.bottom;
       
       if (isOverCanvas) {
-        e.preventDefault();
-        e.stopPropagation();
+        const scrollZone = 100;
+        const distanceFromTop = e.clientY - rect.top;
+        const distanceFromBottom = rect.bottom - e.clientY;
         
-        scrollableElement.scrollBy({
-          top: e.deltaY,
-          behavior: 'auto'
-        });
+        if ((distanceFromTop < scrollZone && distanceFromTop > 0) || 
+            (distanceFromBottom < scrollZone && distanceFromBottom > 0)) {
+          startAutoScroll();
+        } else {
+          stopAutoScroll();
+        }
+      } else {
+        stopAutoScroll();
       }
     };
 
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!isDragging || isScrollingRef.current) return;
+    // Handle drag end events
+    const handleDragEnd = () => {
+      stopAutoScroll();
+    };
 
-      const rect = containerRef.current!.getBoundingClientRect();
-      const scrollZone = 100; // pixels from edge to trigger scroll
-      const scrollSpeed = 5;
+    // Keep existing wheel handlers for non-drag scenarios
+    const handleWheel = (e: WheelEvent) => {
+      if (!isDragging) return;
       
-      // Check if mouse is near edges
-      const nearTop = e.clientY - rect.top < scrollZone;
-      const nearBottom = rect.bottom - e.clientY < scrollZone;
+      e.preventDefault();
+      e.stopPropagation();
       
-      if (nearTop && scrollableElement.scrollTop > 0) {
-        scrollableElement.scrollBy({ top: -scrollSpeed, behavior: 'auto' });
-      } else if (nearBottom && scrollableElement.scrollTop < scrollableElement.scrollHeight - scrollableElement.clientHeight) {
-        scrollableElement.scrollBy({ top: scrollSpeed, behavior: 'auto' });
+      // Clear any existing scroll timeout
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
       }
+      
+      // Scroll the scrollable element
+      scrollableElement.scrollBy({
+        top: e.deltaY,
+        behavior: 'auto'
+      });
+      
+      // Set scrolling flag
+      isScrollingRef.current = true;
+      
+      // Reset scrolling flag after a short delay
+      scrollTimeoutRef.current = window.setTimeout(() => {
+        isScrollingRef.current = false;
+      }, 100);
     };
 
     // Add event listeners
+    document.addEventListener('dragover', handleDragOver, { passive: false });
+    document.addEventListener('dragend', handleDragEnd);
+    document.addEventListener('drop', handleDragEnd);
     containerRef.current.addEventListener('wheel', handleWheel, { passive: false });
-    document.addEventListener('wheel', handleDocumentWheel, { passive: false });
-    document.addEventListener('mousemove', handleMouseMove);
 
     return () => {
+      stopAutoScroll();
+      
+      document.removeEventListener('dragover', handleDragOver);
+      document.removeEventListener('dragend', handleDragEnd);
+      document.removeEventListener('drop', handleDragEnd);
+      
       if (containerRef.current) {
         containerRef.current.removeEventListener('wheel', handleWheel);
       }
-      document.removeEventListener('wheel', handleDocumentWheel);
-      document.removeEventListener('mousemove', handleMouseMove);
       
       if (scrollTimeoutRef.current) {
         clearTimeout(scrollTimeoutRef.current);
