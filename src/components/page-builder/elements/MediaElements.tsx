@@ -7,6 +7,7 @@ import { PageBuilderElement } from '../types';
 import { elementRegistry } from './ElementRegistry';
 import { InlineEditor } from '../components/InlineEditor';
 import { renderElementStyles } from '../utils/styleRenderer';
+import { getEffectiveResponsiveValue } from '../utils/responsiveHelpers';
 
 // Image Gallery Element
 const ImageGalleryElement: React.FC<{
@@ -338,32 +339,26 @@ const ImageFeatureElement: React.FC<{
   
   // Style helpers using responsive values
   const getHeadlineStyles = () => {
-    const responsiveStyles = element.styles?.responsive || {};
     const currentDevice = deviceType || 'desktop';
-    const currentStyles = (responsiveStyles as any)[currentDevice] || {};
-    const elementStyles = element.styles as any;
     
     return {
-      fontFamily: currentStyles.headlineFontFamily || elementStyles?.headlineFontFamily || '',
-      fontSize: currentStyles.headlineFontSize || elementStyles?.headlineFontSize || '24px',
-      textAlign: currentStyles.headlineTextAlign || elementStyles?.headlineTextAlign || 'left',
-      lineHeight: currentStyles.headlineLineHeight || elementStyles?.headlineLineHeight || '1.4',
-      color: currentStyles.headlineColor || elementStyles?.headlineColor || '',
+      fontFamily: getEffectiveResponsiveValue(element, 'headlineFontFamily', currentDevice, ''),
+      fontSize: getEffectiveResponsiveValue(element, 'headlineFontSize', currentDevice, '24px'),
+      textAlign: getEffectiveResponsiveValue(element, 'headlineTextAlign', currentDevice, 'left'),
+      lineHeight: getEffectiveResponsiveValue(element, 'headlineLineHeight', currentDevice, '1.4'),
+      color: getEffectiveResponsiveValue(element, 'headlineColor', currentDevice, ''),
     };
   };
 
   const getDescriptionStyles = () => {
-    const responsiveStyles = element.styles?.responsive || {};
     const currentDevice = deviceType || 'desktop';
-    const currentStyles = (responsiveStyles as any)[currentDevice] || {};
-    const elementStyles = element.styles as any;
     
     return {
-      fontFamily: currentStyles.descriptionFontFamily || elementStyles?.descriptionFontFamily || '',
-      fontSize: currentStyles.descriptionFontSize || elementStyles?.descriptionFontSize || '16px',
-      textAlign: currentStyles.descriptionTextAlign || elementStyles?.descriptionTextAlign || 'left',
-      lineHeight: currentStyles.descriptionLineHeight || elementStyles?.descriptionLineHeight || '1.6',
-      color: currentStyles.descriptionColor || elementStyles?.descriptionColor || '',
+      fontFamily: getEffectiveResponsiveValue(element, 'descriptionFontFamily', currentDevice, ''),
+      fontSize: getEffectiveResponsiveValue(element, 'descriptionFontSize', currentDevice, '16px'),
+      textAlign: getEffectiveResponsiveValue(element, 'descriptionTextAlign', currentDevice, 'left'),
+      lineHeight: getEffectiveResponsiveValue(element, 'descriptionLineHeight', currentDevice, '1.6'),
+      color: getEffectiveResponsiveValue(element, 'descriptionColor', currentDevice, ''),
     };
   };
 
@@ -375,7 +370,7 @@ const ImageFeatureElement: React.FC<{
 
   return (
     <div 
-      className={`${containerClass} p-6 ${flexDirection === 'flex-col' ? 'space-y-6' : 'space-x-6'} flex ${flexDirection}`}
+      className={`${containerClass} ${flexDirection === 'flex-col' ? 'space-y-6' : 'space-x-6'} flex ${flexDirection}`}
       style={inlineStyles}
     >
       {imageUrl && (
