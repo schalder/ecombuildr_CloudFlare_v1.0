@@ -2244,13 +2244,13 @@ const ElementWrapper: React.FC<ElementWrapperProps> = ({
           <elementDef.icon className="h-3 w-3" />
           <span className="font-medium">{elementDef.name}</span>
           <Separator orientation="vertical" className="mx-1 h-3" />
-          <Button variant="ghost" size="sm" className="h-5 w-5 p-0 hover:bg-gray-100">
+          <Button variant="ghost" size="sm" className="h-5 w-5 p-0 hover:bg-gray-100 cursor-pointer">
             <Edit className="h-2 w-2" />
           </Button>
           <Button 
             variant="ghost" 
             size="sm" 
-            className="h-5 w-5 p-0 hover:bg-gray-100"
+            className="h-5 w-5 p-0 hover:bg-gray-100 cursor-pointer"
             onClick={(e) => {
               e.stopPropagation();
               onDuplicate(element.id);
@@ -2261,7 +2261,7 @@ const ElementWrapper: React.FC<ElementWrapperProps> = ({
           <Button 
             variant="ghost" 
             size="sm" 
-            className="h-5 w-5 p-0 hover:bg-gray-100"
+            className="h-5 w-5 p-0 hover:bg-gray-100 cursor-pointer"
             onClick={(e) => {
               e.stopPropagation();
               onMoveElementUp();
@@ -2273,7 +2273,7 @@ const ElementWrapper: React.FC<ElementWrapperProps> = ({
           <Button 
             variant="ghost" 
             size="sm" 
-            className="h-5 w-5 p-0 hover:bg-gray-100"
+            className="h-5 w-5 p-0 hover:bg-gray-100 cursor-pointer"
             onClick={(e) => {
               e.stopPropagation();
               onMoveElementDown();
@@ -2285,7 +2285,7 @@ const ElementWrapper: React.FC<ElementWrapperProps> = ({
           <Button 
             variant="ghost" 
             size="sm" 
-            className="h-5 w-5 p-0 hover:bg-red-100 hover:text-red-600" 
+            className="h-5 w-5 p-0 hover:bg-red-100 hover:text-red-600 cursor-pointer" 
             onClick={(e) => {
               e.stopPropagation();
               onDelete(element.id);
