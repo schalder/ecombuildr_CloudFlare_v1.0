@@ -10,7 +10,7 @@ import { elementRegistry } from './ElementRegistry';
 import { InlineEditor } from '../components/InlineEditor';
 import { renderElementStyles } from '../utils/styleRenderer';
 import { generateResponsiveCSS } from '../utils/responsiveStyles';
-import { getEffectiveResponsiveValue } from '../utils/responsiveHelpers';
+
 
 // Testimonial Element
 const TestimonialElement: React.FC<{
@@ -485,24 +485,55 @@ const ImageFeatureElement: React.FC<{
   const currentDevice = deviceType || 'desktop';
   const currentResponsiveStyles = (responsiveStyles as any)[currentDevice] || {};
   
+  // Helper function for responsive style resolution
+  const getResponsiveStyleValue = (property: string, fallback: any = '') => {
+    const responsiveStyles = element.styles?.responsive || { desktop: {}, mobile: {} };
+    const currentDevice = deviceType || 'desktop';
+    const currentResponsiveStyles = (responsiveStyles as any)[currentDevice] || {};
+    
+    // Current device value
+    const currentValue = currentResponsiveStyles[property];
+    if (currentValue !== undefined && currentValue !== null && currentValue !== '') {
+      return currentValue;
+    }
+    
+    // Inheritance: mobile -> tablet -> desktop
+    if (currentDevice === 'mobile') {
+      const tabletValue = (responsiveStyles as any).tablet?.[property];
+      if (tabletValue !== undefined && tabletValue !== null && tabletValue !== '') {
+        return tabletValue;
+      }
+    }
+    
+    if (currentDevice === 'mobile' || currentDevice === 'tablet') {
+      const desktopValue = (responsiveStyles as any).desktop?.[property];
+      if (desktopValue !== undefined && desktopValue !== null && desktopValue !== '') {
+        return desktopValue;
+      }
+    }
+    
+    // Final fallback to base styles or provided fallback
+    return (element.styles as any)?.[property] || fallback;
+  };
+
   // Style helpers for different parts using responsive helpers
   const getHeadlineStyles = () => {
     return {
-      fontFamily: getEffectiveResponsiveValue(element, 'headlineFontFamily', deviceType || 'desktop', ''),
-      fontSize: getEffectiveResponsiveValue(element, 'headlineFontSize', deviceType || 'desktop', '24px'),
-      textAlign: getEffectiveResponsiveValue(element, 'headlineTextAlign', deviceType || 'desktop', 'left'),
-      lineHeight: getEffectiveResponsiveValue(element, 'headlineLineHeight', deviceType || 'desktop', '1.4'),
-      color: getEffectiveResponsiveValue(element, 'headlineColor', deviceType || 'desktop', ''),
+      fontFamily: getResponsiveStyleValue('headlineFontFamily', ''),
+      fontSize: getResponsiveStyleValue('headlineFontSize', '24px'),
+      textAlign: getResponsiveStyleValue('headlineTextAlign', 'left'),
+      lineHeight: getResponsiveStyleValue('headlineLineHeight', '1.4'),
+      color: getResponsiveStyleValue('headlineColor', ''),
     };
   };
 
   const getDescriptionStyles = () => {
     return {
-      fontFamily: getEffectiveResponsiveValue(element, 'descriptionFontFamily', deviceType || 'desktop', ''),
-      fontSize: getEffectiveResponsiveValue(element, 'descriptionFontSize', deviceType || 'desktop', '16px'),
-      textAlign: getEffectiveResponsiveValue(element, 'descriptionTextAlign', deviceType || 'desktop', 'left'),
-      lineHeight: getEffectiveResponsiveValue(element, 'descriptionLineHeight', deviceType || 'desktop', '1.6'),
-      color: getEffectiveResponsiveValue(element, 'descriptionColor', deviceType || 'desktop', ''),
+      fontFamily: getResponsiveStyleValue('descriptionFontFamily', ''),
+      fontSize: getResponsiveStyleValue('descriptionFontSize', '16px'),
+      textAlign: getResponsiveStyleValue('descriptionTextAlign', 'left'),
+      lineHeight: getResponsiveStyleValue('descriptionLineHeight', '1.6'),
+      color: getResponsiveStyleValue('descriptionColor', ''),
     };
   };
 
