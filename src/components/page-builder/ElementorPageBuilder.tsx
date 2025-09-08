@@ -1503,7 +1503,7 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
       id={`section-${section.id}`}
       data-anchor={section.anchor}
       data-pb-section-id={section.id}
-      className={`relative group/section transition-all duration-200 ${
+      className={`relative group transition-all duration-200 ${
         // Only apply border/background styles if no user-defined styles and not in preview mode
         !userBackground && !userShadow ? 'border-2 border-dashed' : ''
       } ${
@@ -1919,7 +1919,7 @@ const RowComponent: React.FC<RowComponentProps> = ({
       </div>
 
       {/* Add row below button - appears on hover at bottom border */}
-      <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 opacity-0 group-hover:opacity-100 group-hover/section:opacity-100 transition-opacity duration-200 z-20">
+      <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-20">
         <Button
           size="sm"
           onClick={(e) => {

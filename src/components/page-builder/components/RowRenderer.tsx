@@ -261,7 +261,7 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
 
       {/* Add row below button - appears on hover at bottom border */}
       {!isPreviewMode && (
-        <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 opacity-0 group-hover:opacity-100 group-hover/section:opacity-100 transition-opacity duration-200 z-20">
+        <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-20">
           <Button
             size="sm"
             onClick={(e) => {
