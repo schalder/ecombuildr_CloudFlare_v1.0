@@ -182,7 +182,7 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
       id={row.anchor}
       data-pb-row-id={row.id}
       className={cn(
-        'relative group transition-all duration-200',
+        'relative group/row transition-all duration-200',
         // Only apply min-height to empty rows in edit mode
         !isPreviewMode && displayedColumns.length === 0 && (deviceType === 'mobile' ? 'min-h-[40px]' : 'min-h-[80px]'),
         // Only apply border/background styles if not in preview mode and no user background
@@ -261,7 +261,7 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
 
       {/* Add row below button - appears on hover at bottom border */}
       {!isPreviewMode && (
-        <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-20">
+        <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 opacity-0 group-hover/row:opacity-100 transition-opacity duration-200 z-20">
           <Button
             size="sm"
             onClick={(e) => {
