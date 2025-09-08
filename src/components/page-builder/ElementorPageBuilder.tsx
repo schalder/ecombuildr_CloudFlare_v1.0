@@ -1532,7 +1532,7 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
       )}
       {/* Section Toolbar */}
       {shouldShowToolbar && (
-        <div className="absolute -top-12 left-0 z-40 flex items-center gap-1 bg-sky-100 text-gray-800 border border-sky-200 px-3 py-1 rounded-md text-xs shadow-lg">
+        <div className="absolute -top-8 left-0 z-40 flex items-center gap-1 bg-sky-100 text-gray-800 border border-sky-200 px-3 py-1 rounded-md text-xs shadow-lg">
           <Grip className="h-3 w-3" />
           <span className="font-medium">Section</span>
           <Separator orientation="vertical" className="mx-1 h-4" />
