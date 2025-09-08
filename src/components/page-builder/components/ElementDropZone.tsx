@@ -21,7 +21,7 @@ export const ElementDropZone: React.FC<ElementDropZoneProps> = ({
   onMoveElement,
   className
 }) => {
-  const [{ isOver, canDrop }, drop] = useDrop({
+  const [{ isOver }, drop] = useDrop({
     accept: ['element-type', 'element'],
     drop: (item: { elementType?: string; elementId?: string }, monitor) => {
       if (!monitor.didDrop()) {
@@ -36,48 +36,32 @@ export const ElementDropZone: React.FC<ElementDropZoneProps> = ({
       }
     },
     collect: (monitor) => ({
-      isOver: monitor.isOver() && !monitor.didDrop(),
-      canDrop: monitor.canDrop()
+      isOver: monitor.isOver({ shallow: true }) && !monitor.didDrop()
     }),
   });
 
-  const showDropZone = canDrop || isOver;
+  const showDropZone = isOver;
 
   return (
     <div
       ref={drop}
       className={cn(
-        'relative mx-2 transition-all duration-200',
-        className,
-        showDropZone ? 'h-4' : 'h-0'
+        'relative mx-2 h-1', // Fixed minimal height, no layout shift
+        className
       )}
     >
-      {/* Blue line indicator like Elementor */}
-      <div
-        className={cn(
-          'absolute inset-x-0 top-1/2 -translate-y-1/2 transition-all duration-200',
-          showDropZone 
-            ? 'h-0.5 bg-blue-500 shadow-md opacity-100' 
-            : 'h-0 bg-transparent opacity-0'
-        )}
-      />
+      {/* Always present invisible hit area */}
+      <div className="absolute inset-0 -my-2" />
       
-      {/* Drop zone background */}
-      <div
-        className={cn(
-          'absolute inset-0 transition-all duration-200 rounded',
-          isOver 
-            ? 'bg-blue-100/50 border border-blue-200' 
-            : showDropZone 
-            ? 'bg-blue-50/30' 
-            : 'bg-transparent'
-        )}
-      />
+      {/* Blue line indicator - only visible on hover */}
+      {showDropZone && (
+        <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-0.5 bg-primary shadow-lg z-30" />
+      )}
 
       {/* Drop here indicator */}
       {isOver && (
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
-          <div className="bg-blue-500 text-white px-2 py-1 rounded text-xs font-medium whitespace-nowrap">
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-40">
+          <div className="bg-primary text-primary-foreground px-2 py-1 rounded text-xs font-medium whitespace-nowrap shadow-lg">
             Drop here
           </div>
         </div>

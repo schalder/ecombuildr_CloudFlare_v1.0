@@ -15,7 +15,7 @@ export const RowDropZone: React.FC<RowDropZoneProps> = ({
   onMoveRow,
   className
 }) => {
-  const [{ isOver, canDrop }, drop] = useDrop({
+  const [{ isOver }, drop] = useDrop({
     accept: ['row'],
     drop: (item: { rowId?: string }, monitor) => {
       if (!monitor.didDrop() && item.rowId && onMoveRow) {
@@ -23,48 +23,32 @@ export const RowDropZone: React.FC<RowDropZoneProps> = ({
       }
     },
     collect: (monitor) => ({
-      isOver: monitor.isOver() && !monitor.didDrop(),
-      canDrop: monitor.canDrop()
+      isOver: monitor.isOver({ shallow: true }) && !monitor.didDrop()
     }),
   });
 
-  const showDropZone = canDrop || isOver;
+  const showDropZone = isOver;
 
   return (
     <div
       ref={drop}
       className={cn(
-        'relative h-1.5 mx-2 transition-all duration-200',
-        className,
-        showDropZone ? 'h-6' : 'h-1.5'
+        'relative h-1.5 mx-2', // Fixed height, no layout shift
+        className
       )}
     >
-      {/* Blue line indicator */}
-      <div
-        className={cn(
-          'absolute inset-x-0 top-1/2 -translate-y-1/2 transition-all duration-200',
-          showDropZone 
-            ? 'h-0.5 bg-secondary shadow-md opacity-100' 
-            : 'h-0 bg-transparent opacity-0'
-        )}
-      />
+      {/* Always present invisible hit area */}
+      <div className="absolute inset-0 -my-3" />
       
-      {/* Drop zone background */}
-      <div
-        className={cn(
-          'absolute inset-0 transition-all duration-200 rounded',
-          isOver 
-            ? 'bg-secondary/20 border border-secondary border-dashed' 
-            : showDropZone 
-            ? 'bg-secondary/10' 
-            : 'bg-transparent'
-        )}
-      />
+      {/* Blue line indicator - only visible on hover */}
+      {showDropZone && (
+        <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-0.5 bg-secondary shadow-lg z-30" />
+      )}
 
       {/* Drop here indicator */}
       {isOver && (
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
-          <div className="bg-secondary text-secondary-foreground px-2 py-1 rounded text-xs font-medium whitespace-nowrap">
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-40">
+          <div className="bg-secondary text-secondary-foreground px-2 py-1 rounded text-xs font-medium whitespace-nowrap shadow-lg">
             Drop row here
           </div>
         </div>

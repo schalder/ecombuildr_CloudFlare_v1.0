@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { useDrop } from 'react-dnd';
 import { Plus, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { PageBuilderData, PageBuilderElement, PageBuilderSection } from '../types';
 import { SectionRenderer } from './SectionRenderer';
 import { getDevicePreviewStyles, getResponsiveContainerClasses } from '../utils/responsive';
+import { useDragAutoscroll } from '@/hooks/useDragAutoscroll';
 import { cn } from '@/lib/utils';
 
 interface CanvasAreaProps {
@@ -34,6 +35,10 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
   onAddSection,
   onAddRow
 }) => {
+  const canvasRef = useRef<HTMLDivElement>(null);
+  
+  // Enable auto-scroll during drag operations
+  useDragAutoscroll(canvasRef);
   const [{ isOver }, drop] = useDrop({
     accept: 'element',
     drop: (item: { elementType: string }) => {
@@ -105,7 +110,10 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
   };
 
   return (
-    <div className="flex-1 p-8 overflow-auto bg-muted/20 canvas-container">
+    <div 
+      ref={canvasRef}
+      className="flex-1 p-8 overflow-auto bg-muted/20 canvas-container"
+    >
       <div
         ref={drop}
         data-canvas-area="true"

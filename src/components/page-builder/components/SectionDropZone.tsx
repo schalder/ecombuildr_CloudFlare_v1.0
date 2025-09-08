@@ -13,7 +13,7 @@ export const SectionDropZone: React.FC<SectionDropZoneProps> = ({
   onMoveSection,
   className
 }) => {
-  const [{ isOver, canDrop }, drop] = useDrop({
+  const [{ isOver }, drop] = useDrop({
     accept: ['section'],
     drop: (item: { sectionId?: string }, monitor) => {
       if (!monitor.didDrop() && item.sectionId && onMoveSection) {
@@ -21,47 +21,31 @@ export const SectionDropZone: React.FC<SectionDropZoneProps> = ({
       }
     },
     collect: (monitor) => ({
-      isOver: monitor.isOver() && !monitor.didDrop(),
-      canDrop: monitor.canDrop()
+      isOver: monitor.isOver({ shallow: true }) && !monitor.didDrop()
     }),
   });
 
-  const showDropZone = canDrop || isOver;
+  const showDropZone = isOver;
 
   return (
     <div
       ref={drop}
       className={cn(
-        'relative mx-4 transition-all duration-200',
-        className,
-        showDropZone ? 'h-8 -my-2' : 'h-2 -my-1'
+        'relative h-2 mx-4 -my-1', // Fixed height, no layout shift
+        className
       )}
     >
-      {/* Blue line indicator */}
-      <div
-        className={cn(
-          'absolute inset-x-0 top-1/2 -translate-y-1/2 transition-all duration-200',
-          showDropZone 
-            ? 'h-1 bg-primary shadow-lg opacity-100' 
-            : 'h-0 bg-transparent opacity-0'
-        )}
-      />
+      {/* Always present invisible hit area */}
+      <div className="absolute inset-0 -my-4" />
       
-      {/* Drop zone background */}
-      <div
-        className={cn(
-          'absolute inset-0 transition-all duration-200 rounded-lg',
-          isOver 
-            ? 'bg-primary/20 border-2 border-primary border-dashed' 
-            : showDropZone 
-            ? 'bg-primary/10 border border-primary/30 border-dashed' 
-            : 'bg-transparent'
-        )}
-      />
+      {/* Blue line indicator - only visible on hover */}
+      {showDropZone && (
+        <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-1 bg-primary shadow-lg z-30 rounded" />
+      )}
 
       {/* Drop here indicator */}
       {isOver && (
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-40">
           <div className="bg-primary text-primary-foreground px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap shadow-lg">
             Drop section here
           </div>
