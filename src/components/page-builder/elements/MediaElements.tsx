@@ -305,7 +305,7 @@ const VideoPlaylistElement: React.FC<{
   );
 };
 
-// Image Feature Element
+// Image Feature Element - Fixed and moved from ContentElements
 const ImageFeatureElement: React.FC<{
   element: PageBuilderElement;
   isEditing?: boolean;
