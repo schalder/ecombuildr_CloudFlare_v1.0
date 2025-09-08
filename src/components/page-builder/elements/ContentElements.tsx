@@ -10,6 +10,7 @@ import { elementRegistry } from './ElementRegistry';
 import { InlineEditor } from '../components/InlineEditor';
 import { renderElementStyles } from '../utils/styleRenderer';
 import { generateResponsiveCSS } from '../utils/responsiveStyles';
+import { getEffectiveResponsiveValue } from '../utils/responsiveHelpers';
 
 // Testimonial Element
 const TestimonialElement: React.FC<{
@@ -484,24 +485,24 @@ const ImageFeatureElement: React.FC<{
   const currentDevice = deviceType || 'desktop';
   const currentResponsiveStyles = (responsiveStyles as any)[currentDevice] || {};
   
-  // Style helpers for different parts
+  // Style helpers for different parts using responsive helpers
   const getHeadlineStyles = () => {
     return {
-      fontFamily: (currentResponsiveStyles as any).headlineFontFamily || (element.styles as any)?.headlineFontFamily,
-      fontSize: (currentResponsiveStyles as any).headlineFontSize || (element.styles as any)?.headlineFontSize || '24px',
-      textAlign: (currentResponsiveStyles as any).headlineTextAlign || (element.styles as any)?.headlineTextAlign || 'left',
-      lineHeight: (currentResponsiveStyles as any).headlineLineHeight || (element.styles as any)?.headlineLineHeight || '1.4',
-      color: (currentResponsiveStyles as any).headlineColor || (element.styles as any)?.headlineColor,
+      fontFamily: getEffectiveResponsiveValue(element, 'headlineFontFamily', deviceType || 'desktop', ''),
+      fontSize: getEffectiveResponsiveValue(element, 'headlineFontSize', deviceType || 'desktop', '24px'),
+      textAlign: getEffectiveResponsiveValue(element, 'headlineTextAlign', deviceType || 'desktop', 'left'),
+      lineHeight: getEffectiveResponsiveValue(element, 'headlineLineHeight', deviceType || 'desktop', '1.4'),
+      color: getEffectiveResponsiveValue(element, 'headlineColor', deviceType || 'desktop', ''),
     };
   };
 
   const getDescriptionStyles = () => {
     return {
-      fontFamily: (currentResponsiveStyles as any).descriptionFontFamily || (element.styles as any)?.descriptionFontFamily,
-      fontSize: (currentResponsiveStyles as any).descriptionFontSize || (element.styles as any)?.descriptionFontSize || '16px',
-      textAlign: (currentResponsiveStyles as any).descriptionTextAlign || (element.styles as any)?.descriptionTextAlign || 'left',
-      lineHeight: (currentResponsiveStyles as any).descriptionLineHeight || (element.styles as any)?.descriptionLineHeight || '1.6',
-      color: (currentResponsiveStyles as any).descriptionColor || (element.styles as any)?.descriptionColor,
+      fontFamily: getEffectiveResponsiveValue(element, 'descriptionFontFamily', deviceType || 'desktop', ''),
+      fontSize: getEffectiveResponsiveValue(element, 'descriptionFontSize', deviceType || 'desktop', '16px'),
+      textAlign: getEffectiveResponsiveValue(element, 'descriptionTextAlign', deviceType || 'desktop', 'left'),
+      lineHeight: getEffectiveResponsiveValue(element, 'descriptionLineHeight', deviceType || 'desktop', '1.6'),
+      color: getEffectiveResponsiveValue(element, 'descriptionColor', deviceType || 'desktop', ''),
     };
   };
 
@@ -514,7 +515,7 @@ const ImageFeatureElement: React.FC<{
     <>
       {responsiveCSS && <style dangerouslySetInnerHTML={{ __html: responsiveCSS }} />}
       <div 
-        className={`flex ${flexDirection} gap-6 items-center ${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-4xl mx-auto'}`} 
+        className={`element-${element.id} flex ${flexDirection} gap-6 items-center ${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-4xl mx-auto'}`} 
         style={{
           ...inlineStyles,
           textAlign: textAlign as any
@@ -557,14 +558,14 @@ const ImageFeatureElement: React.FC<{
             />
           </h3>
           
-          <div style={getDescriptionStyles()}>
+          <div>
             <InlineEditor
               value={description}
               onChange={(value) => handleUpdate('description', value)}
               placeholder="Feature description..."
               multiline
               disabled={!isEditing}
-              className="text-muted-foreground"
+              style={getDescriptionStyles()}
             />
           </div>
         </div>

@@ -119,7 +119,7 @@ export const ImageFeatureElementStyles: React.FC<ImageFeatureElementStylesProps>
             {(value, onChange) => (
               <div className="flex items-center space-x-2">
                 <Slider
-                  value={[parseInt(value.toString().replace(/\D/g, ''))]}
+                  value={[parseInt(value.toString().replace(/\D/g, '')) || parseInt(defaultFontSize.replace(/\D/g, ''))]}
                   onValueChange={(val) => onChange(`${val[0]}px`)}
                   max={72}
                   min={8}
@@ -179,7 +179,7 @@ export const ImageFeatureElementStyles: React.FC<ImageFeatureElementStylesProps>
             {(value, onChange) => (
               <div className="flex items-center space-x-2">
                 <Slider
-                  value={[parseFloat(value.toString())]}
+                  value={[parseFloat(value.toString()) || 1.6]}
                   onValueChange={(val) => onChange(val[0].toString())}
                   max={3}
                   min={1}
