@@ -132,6 +132,8 @@ const ImageCarouselElement: React.FC<{
   const autoPlayDelay = element.content.autoPlayDelay || 3000;
   const showArrows = element.content.showArrows !== false;
   const showDots = element.content.showDots !== false;
+  const height = element.content.height || 384;
+  const imageFit = element.content.imageFit || 'cover';
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [api, setApi] = useState<CarouselApi | null>(null);
@@ -181,8 +183,10 @@ const ImageCarouselElement: React.FC<{
                     <img
                       src={image}
                       alt={`Carousel image ${index + 1}`}
-                      className="w-full h-96 object-cover"
+                      className="w-full"
                       style={{
+                        height: `${height}px`,
+                        objectFit: imageFit as 'cover' | 'contain',
                         borderRadius: 'inherit'
                       }}
                     />

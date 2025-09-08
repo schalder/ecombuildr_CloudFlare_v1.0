@@ -155,6 +155,8 @@ export const ImageCarouselProperties: React.FC<MediaPropertiesProps> = ({
   const showArrows = element.content.showArrows !== false;
   const showDots = element.content.showDots !== false;
   const pauseOnHover = element.content.pauseOnHover !== false;
+  const height = element.content.height || 384;
+  const imageFit = element.content.imageFit || 'cover';
 
   const addImage = () => {
     const newImages = [...images, ''];
@@ -174,6 +176,32 @@ export const ImageCarouselProperties: React.FC<MediaPropertiesProps> = ({
 
   return (
     <div className="space-y-4">
+      <div>
+        <Label htmlFor="carousel-height">Carousel Height (px)</Label>
+        <Input
+          id="carousel-height"
+          type="number"
+          value={height}
+          onChange={(e) => onUpdate('height', parseInt(e.target.value) || 384)}
+          min="200"
+          max="800"
+          step="20"
+        />
+      </div>
+
+      <div>
+        <Label htmlFor="image-fit">Image Fit</Label>
+        <Select value={imageFit} onValueChange={(value) => onUpdate('imageFit', value)}>
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="cover">Cover (crop to fill)</SelectItem>
+            <SelectItem value="contain">Contain (fit full image)</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
       <div className="flex items-center space-x-2">
         <Switch
           id="auto-play"
