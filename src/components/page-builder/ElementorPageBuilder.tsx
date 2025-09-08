@@ -1627,18 +1627,21 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
         }}
       >
         {(!section.rows || section.rows.length === 0) ? (
-          <div className="p-12 text-center border border-dashed border-border rounded-lg">
-            <p className="text-muted-foreground mb-4">This section is empty</p>
-            <Button 
-              variant="outline" 
-              onClick={(e) => {
-                e.stopPropagation();
-                onAddRow();
-              }}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add Row
-            </Button>
+          <div className="relative p-12 text-center border border-dashed border-border rounded-lg group">
+            <p className="text-muted-foreground mb-4">Empty section</p>
+            {/* Add first row button - appears on hover at bottom border */}
+            <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+              <Button
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onAddRow();
+                }}
+                className="h-8 w-8 p-0 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg border-2 border-background"
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         ) : (
           <div className="space-y-0">
@@ -1688,13 +1691,6 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
                   </div>
                 ))}
                 
-                {/* Add Row button at end */}
-                <div className="pt-4 text-center">
-                  <Button variant="outline" size="sm" onClick={() => onAddRow()}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Row
-                  </Button>
-                </div>
           </div>
         )}
       </div>
@@ -1920,6 +1916,20 @@ const RowComponent: React.FC<RowComponentProps> = ({
             onSelectionChange={onSelectionChange}
           />
         ))}
+      </div>
+
+      {/* Add row below button - appears on hover at bottom border */}
+      <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-20">
+        <Button
+          size="sm"
+          onClick={(e) => {
+            e.stopPropagation();
+            onAddRow();
+          }}
+          className="h-8 w-8 p-0 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg border-2 border-background"
+        >
+          <Plus className="h-4 w-4" />
+        </Button>
       </div>
     </div>
   );
