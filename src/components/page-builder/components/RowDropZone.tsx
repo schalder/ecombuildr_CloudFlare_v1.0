@@ -33,7 +33,7 @@ export const RowDropZone: React.FC<RowDropZoneProps> = ({
     <div
       ref={drop}
       className={cn(
-        'relative h-1.5 mx-2', // Fixed height, no layout shift
+        'relative h-0 mx-2', // No default height, no layout shift
         className
       )}
     >

@@ -31,7 +31,7 @@ export const SectionDropZone: React.FC<SectionDropZoneProps> = ({
     <div
       ref={drop}
       className={cn(
-        'relative h-2 mx-4 -my-1', // Fixed height, no layout shift
+        'relative h-0 mx-4', // No default height, no layout shift
         className
       )}
     >

@@ -221,3 +221,12 @@ All colors MUST be HSL. Designed for trust, energy, and conversion.
     margin-bottom: 0.5rem;
   }
 }
+
+/* Page Builder - Remove default gaps between elements */
+[data-pb-element-id] > :first-child {
+  margin-top: 0 !important;
+}
+
+[data-pb-element-id] > :last-child {
+  margin-bottom: 0 !important;
+}

@@ -2140,7 +2140,6 @@ const ColumnComponent: React.FC<ColumnComponentProps> = ({
                   insertIndex={index + 1}
                   onAddElement={handleAddElement}
                   onMoveElement={(elementId, insertIndex) => onMoveElement(elementId, sectionId, rowId, column.id, insertIndex)}
-                  className="my-2"
                 />
               </div>
             ))}
