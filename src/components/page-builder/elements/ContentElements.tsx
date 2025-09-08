@@ -485,62 +485,31 @@ const ImageFeatureElement: React.FC<{
   const currentDevice = deviceType || 'desktop';
   const currentResponsiveStyles = (responsiveStyles as any)[currentDevice] || {};
   
-  // Helper function for responsive style resolution
-  const getResponsiveStyleValue = (property: string, fallback: any = '') => {
-    const responsiveStyles = element.styles?.responsive || { desktop: {}, mobile: {} };
-    const currentDevice = deviceType || 'desktop';
-    const currentResponsiveStyles = (responsiveStyles as any)[currentDevice] || {};
-    
-    // Current device value
-    const currentValue = currentResponsiveStyles[property];
-    if (currentValue !== undefined && currentValue !== null && currentValue !== '') {
-      return currentValue;
-    }
-    
-    // Inheritance: mobile -> tablet -> desktop
-    if (currentDevice === 'mobile') {
-      const tabletValue = (responsiveStyles as any).tablet?.[property];
-      if (tabletValue !== undefined && tabletValue !== null && tabletValue !== '') {
-        return tabletValue;
-      }
-    }
-    
-    if (currentDevice === 'mobile' || currentDevice === 'tablet') {
-      const desktopValue = (responsiveStyles as any).desktop?.[property];
-      if (desktopValue !== undefined && desktopValue !== null && desktopValue !== '') {
-        return desktopValue;
-      }
-    }
-    
-    // Final fallback to base styles or provided fallback
-    return (element.styles as any)?.[property] || fallback;
-  };
-
-  // Style helpers for different parts using responsive helpers
+  // Style helpers for different parts - use standard responsive system
   const getHeadlineStyles = () => {
     return {
-      fontFamily: getResponsiveStyleValue('headlineFontFamily', ''),
-      fontSize: getResponsiveStyleValue('headlineFontSize', '24px'),
-      textAlign: getResponsiveStyleValue('headlineTextAlign', 'left'),
-      lineHeight: getResponsiveStyleValue('headlineLineHeight', '1.4'),
-      color: getResponsiveStyleValue('headlineColor', ''),
+      fontFamily: currentResponsiveStyles.headlineFontFamily || (element.styles as any)?.headlineFontFamily || '',
+      fontSize: currentResponsiveStyles.headlineFontSize || (element.styles as any)?.headlineFontSize || '24px',
+      textAlign: currentResponsiveStyles.headlineTextAlign || (element.styles as any)?.headlineTextAlign || 'left',
+      lineHeight: currentResponsiveStyles.headlineLineHeight || (element.styles as any)?.headlineLineHeight || '1.4',
+      color: currentResponsiveStyles.headlineColor || (element.styles as any)?.headlineColor || '',
     };
   };
 
   const getDescriptionStyles = () => {
     return {
-      fontFamily: getResponsiveStyleValue('descriptionFontFamily', ''),
-      fontSize: getResponsiveStyleValue('descriptionFontSize', '16px'),
-      textAlign: getResponsiveStyleValue('descriptionTextAlign', 'left'),
-      lineHeight: getResponsiveStyleValue('descriptionLineHeight', '1.6'),
-      color: getResponsiveStyleValue('descriptionColor', ''),
+      fontFamily: currentResponsiveStyles.descriptionFontFamily || (element.styles as any)?.descriptionFontFamily || '',
+      fontSize: currentResponsiveStyles.descriptionFontSize || (element.styles as any)?.descriptionFontSize || '16px',
+      textAlign: currentResponsiveStyles.descriptionTextAlign || (element.styles as any)?.descriptionTextAlign || 'left',
+      lineHeight: currentResponsiveStyles.descriptionLineHeight || (element.styles as any)?.descriptionLineHeight || '1.6',
+      color: currentResponsiveStyles.descriptionColor || (element.styles as any)?.descriptionColor || '',
     };
   };
 
   // Determine layout based on device
   const isMobile = deviceType === 'mobile';
   const flexDirection = isMobile ? 'flex-col' : (imagePosition === 'right' ? 'flex-row-reverse' : 'flex-row');
-  const textAlign = (currentResponsiveStyles as any).textAlign || (element.styles as any)?.textAlign || 'left';
+  const textAlign = currentResponsiveStyles.textAlign || (element.styles as any)?.textAlign || 'left';
 
   return (
     <>
