@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ensureGoogleFontLoaded } from '@/hooks/useGoogleFontLoader';
 import { ResponsiveStyleControl, ResponsiveTabs } from './_shared/ResponsiveStyleControl';
 import { useDevicePreview } from '../../contexts/DevicePreviewContext';
+import { FontSizeControl } from './_shared/FontSizeControl';
 
 interface ImageFeatureElementStylesProps {
   element: PageBuilderElement;
@@ -112,39 +113,15 @@ export const ImageFeatureElementStyles: React.FC<ImageFeatureElementStylesProps>
           fallback={defaultFontSize}
           onStyleUpdate={onStyleUpdate}
         >
-          {(value, onChange) => {
-            const currentValue = value || defaultFontSize;
-            const numericValue = parseInt(currentValue.toString().replace(/\D/g, '')) || parseInt(defaultFontSize.replace(/\D/g, ''));
-            
-            const handleChange = (newValue: number) => {
-              onChange(`${newValue}px`);
-            };
-            
-            return (
-              <div className="flex items-center space-x-2">
-                <Slider
-                  value={[numericValue]}
-                  onValueChange={(val) => handleChange(val[0])}
-                  max={72}
-                  min={8}
-                  step={1}
-                  className="flex-1"
-                />
-                <Input
-                  type="number"
-                  value={numericValue}
-                  onChange={(e) => {
-                    const val = parseInt(e.target.value) || 8;
-                    handleChange(Math.max(8, Math.min(72, val)));
-                  }}
-                  min={8}
-                  max={72}
-                  className="w-16 h-8"
-                />
-                <span className="text-xs text-muted-foreground">px</span>
-              </div>
-            );
-          }}
+          {(value, onChange) => (
+            <FontSizeControl
+              value={value}
+              onChange={onChange}
+              min={8}
+              max={72}
+              defaultSize={defaultFontSize}
+            />
+          )}
         </ResponsiveStyleControl>
 
         <ResponsiveStyleControl
