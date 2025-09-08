@@ -473,21 +473,21 @@ export const registerMediaElements = () => {
     },
     description: 'Multiple videos with playlist'
   });
-
-  // Image Feature Element
-  elementRegistry.register({
-    id: 'image-feature',
-    name: 'Image Feature',
-    category: 'media',
-    icon: Image,
-    component: ImageFeatureElement,
-    defaultContent: {
-      headline: 'Amazing Feature',
-      description: 'This feature will help you achieve your goals faster and more efficiently.',
-      imageUrl: 'https://images.unsplash.com/photo-1551434678-e076c223a692?w=500&h=300&fit=crop',
-      altText: 'Feature image',
-      imagePosition: 'left',
-      imageWidth: 50
-    }
-  });
 };
+
+// Register Image Feature Element separately to ensure proper scope
+elementRegistry.register({
+  id: 'image-feature',
+  name: 'Image Feature',
+  category: 'media',
+  icon: Image,
+  component: ImageFeatureElement,
+  defaultContent: {
+    headline: 'Amazing Feature',
+    description: 'This feature will help you achieve your goals faster and more efficiently.',
+    imageUrl: 'https://images.unsplash.com/photo-1551434678-e076c223a692?w=500&h=300&fit=crop',
+    altText: 'Feature image',
+    imagePosition: 'left',
+    imageWidth: 50
+  }
+});
