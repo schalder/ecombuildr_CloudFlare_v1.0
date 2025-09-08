@@ -143,11 +143,13 @@ const ImageElement: React.FC<{
     }
   }, [src]);
 
-  // Get responsive styles for current device
-  const responsiveStyles = element.styles?.responsive || { desktop: {}, mobile: {} };
-  const currentResponsiveStyles = responsiveStyles[deviceType] || {};
+  // Generate responsive CSS for this element
+  const responsiveCSS = React.useMemo(() => 
+    generateResponsiveCSS(element.id, element.styles), 
+    [element.id, element.styles]
+  );
 
-  // Get container styles without width/height/border properties
+  // Get container styles using the shared renderer
   const getContainerStyles = (): React.CSSProperties => {
     const styles = renderElementStyles(element, deviceType);
     const cleanStyles = { ...styles };
@@ -167,7 +169,7 @@ const ImageElement: React.FC<{
     return cleanStyles;
   };
 
-  // Calculate image styles with responsive support, alignment, and border
+  // Calculate image styles with alignment and border (width handled by responsive CSS)
   const getImageStyles = (): React.CSSProperties => {
     const baseStyles = {
       height: element.styles?.height || 'auto',
@@ -175,19 +177,13 @@ const ImageElement: React.FC<{
       display: 'block'
     } as React.CSSProperties;
 
-    // Apply width from responsive styles if available, otherwise fallback to base styles
-    const width = currentResponsiveStyles.width || element.styles?.width;
-    const maxWidth = element.styles?.maxWidth;
-
+    // Apply alignment as margin styles directly to the image
     if (alignment === 'full') {
       baseStyles.width = '100%';
       baseStyles.marginLeft = '0';
       baseStyles.marginRight = '0';
     } else {
-      if (width) baseStyles.width = width;
-      if (maxWidth) baseStyles.maxWidth = maxWidth;
-      
-      // Apply alignment as margin styles directly to the image
+      // Apply alignment
       switch (alignment) {
         case 'left':
           baseStyles.marginLeft = '0';
@@ -256,6 +252,7 @@ const ImageElement: React.FC<{
           src={imageUrl}
           alt={alt || (!src ? 'Placeholder image' : '')}
           style={getImageStyles()}
+          className={`element-${element.id}`}
           onLoad={handleImageLoad}
           onError={handleImageError}
         />
@@ -276,17 +273,20 @@ const ImageElement: React.FC<{
   );
 
   return (
-    <figure 
-      className="w-full"
-      style={getContainerStyles()}
-    >
-      {imageContent}
-      {caption && (
-        <figcaption className="text-sm text-muted-foreground mt-2 text-center">
-          {caption}
-        </figcaption>
-      )}
-    </figure>
+    <>
+      <style>{responsiveCSS}</style>
+      <figure 
+        className="w-full"
+        style={getContainerStyles()}
+      >
+        {imageContent}
+        {caption && (
+          <figcaption className="text-sm text-muted-foreground mt-2 text-center">
+            {caption}
+          </figcaption>
+        )}
+      </figure>
+    </>
   );
 };
 
