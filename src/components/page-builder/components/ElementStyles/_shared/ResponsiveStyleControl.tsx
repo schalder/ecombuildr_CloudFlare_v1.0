@@ -17,7 +17,7 @@ import {
 interface ResponsiveStyleControlProps {
   element: PageBuilderElement;
   property: string;
-  label: string;
+  label?: string;
   deviceType: 'desktop' | 'tablet' | 'mobile';
   fallback?: any;
   onStyleUpdate: (property: string, value: any) => void;
@@ -49,12 +49,28 @@ export const ResponsiveStyleControl: React.FC<ResponsiveStyleControlProps> = ({
 
   return (
     <div className="space-y-2">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Label className="text-xs">{label}</Label>
-          {/* Inheritance indicator removed - was confusing to users */}
+      {label && (
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Label className="text-xs">{label}</Label>
+            {/* Inheritance indicator removed - was confusing to users */}
+          </div>
+          {hasOverride && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleClear}
+              className="h-6 px-2"
+              title="Reset to inherit"
+            >
+              <RotateCcw className="h-3 w-3" />
+            </Button>
+          )}
         </div>
-        {hasOverride && (
+      )}
+      
+      {!label && hasOverride && (
+        <div className="flex justify-end">
           <Button
             size="sm"
             variant="outline"
@@ -64,8 +80,8 @@ export const ResponsiveStyleControl: React.FC<ResponsiveStyleControlProps> = ({
           >
             <RotateCcw className="h-3 w-3" />
           </Button>
-        )}
-      </div>
+        </div>
+      )}
       
       {children(effectiveValue, handleChange, isInherited)}
     </div>

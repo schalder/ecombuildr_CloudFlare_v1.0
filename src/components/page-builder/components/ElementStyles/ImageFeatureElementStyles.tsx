@@ -330,7 +330,6 @@ export const ImageFeatureElementStyles: React.FC<ImageFeatureElementStylesProps>
                 <ResponsiveStyleControl
                   element={element}
                   property="marginTop"
-                  label="Top"
                   deviceType={responsiveTab}
                   fallback=""
                   onStyleUpdate={onStyleUpdate}
@@ -378,7 +377,6 @@ export const ImageFeatureElementStyles: React.FC<ImageFeatureElementStylesProps>
                 <ResponsiveStyleControl
                   element={element}
                   property="marginRight"
-                  label="Right"
                   deviceType={responsiveTab}
                   fallback=""
                   onStyleUpdate={onStyleUpdate}
@@ -426,7 +424,6 @@ export const ImageFeatureElementStyles: React.FC<ImageFeatureElementStylesProps>
                 <ResponsiveStyleControl
                   element={element}
                   property="marginBottom"
-                  label="Bottom"
                   deviceType={responsiveTab}
                   fallback=""
                   onStyleUpdate={onStyleUpdate}
@@ -474,7 +471,6 @@ export const ImageFeatureElementStyles: React.FC<ImageFeatureElementStylesProps>
                 <ResponsiveStyleControl
                   element={element}
                   property="marginLeft"
-                  label="Left"
                   deviceType={responsiveTab}
                   fallback=""
                   onStyleUpdate={onStyleUpdate}
@@ -527,7 +523,6 @@ export const ImageFeatureElementStyles: React.FC<ImageFeatureElementStylesProps>
                 <ResponsiveStyleControl
                   element={element}
                   property="paddingTop"
-                  label="Top"
                   deviceType={responsiveTab}
                   fallback=""
                   onStyleUpdate={onStyleUpdate}
@@ -575,7 +570,6 @@ export const ImageFeatureElementStyles: React.FC<ImageFeatureElementStylesProps>
                 <ResponsiveStyleControl
                   element={element}
                   property="paddingRight"
-                  label="Right"
                   deviceType={responsiveTab}
                   fallback=""
                   onStyleUpdate={onStyleUpdate}
@@ -623,7 +617,6 @@ export const ImageFeatureElementStyles: React.FC<ImageFeatureElementStylesProps>
                 <ResponsiveStyleControl
                   element={element}
                   property="paddingBottom"
-                  label="Bottom"
                   deviceType={responsiveTab}
                   fallback=""
                   onStyleUpdate={onStyleUpdate}
@@ -671,7 +664,6 @@ export const ImageFeatureElementStyles: React.FC<ImageFeatureElementStylesProps>
                 <ResponsiveStyleControl
                   element={element}
                   property="paddingLeft"
-                  label="Left"
                   deviceType={responsiveTab}
                   fallback=""
                   onStyleUpdate={onStyleUpdate}
