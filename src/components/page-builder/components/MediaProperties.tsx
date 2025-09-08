@@ -45,16 +45,6 @@ export const ImageGalleryProperties: React.FC<MediaPropertiesProps> = ({
   return (
     <div className="space-y-4">
       <div>
-        <Label htmlFor="gallery-title">Gallery Title</Label>
-        <Input
-          id="gallery-title"
-          value={element.content.title || ''}
-          onChange={(e) => onUpdate('title', e.target.value)}
-          placeholder="Image Gallery"
-        />
-      </div>
-
-      <div>
         <Label htmlFor="columns">Columns</Label>
         <Select value={columns.toString()} onValueChange={(value) => onUpdate('columns', parseInt(value))}>
           <SelectTrigger>

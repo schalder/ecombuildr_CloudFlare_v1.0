@@ -58,25 +58,8 @@ const ImageGalleryElement: React.FC<{
     }
   };
 
-  const handleTitleUpdate = (newTitle: string) => {
-    if (onUpdate) {
-      onUpdate({
-        content: {
-          ...element.content,
-          title: newTitle
-        }
-      });
-    }
-  };
-
   return (
     <div className="max-w-4xl mx-auto" style={element.styles}>
-      <InlineEditor
-        value={element.content.title || 'Image Gallery'}
-        onChange={handleTitleUpdate}
-        className="text-xl font-semibold mb-4"
-        placeholder="Gallery title..."
-      />
       <div className={`grid ${getColumnsClass()} ${getGapClass()}`}>
         {images.map((image: string, index: number) => {
           if (!image) return null;
@@ -331,7 +314,6 @@ export const registerMediaElements = () => {
     icon: Image,
     component: ImageGalleryElement,
     defaultContent: {
-      title: 'Image Gallery',
       images: [
         'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=300&h=200&fit=crop',
         'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=300&h=200&fit=crop',
