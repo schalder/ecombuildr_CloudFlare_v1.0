@@ -318,7 +318,7 @@ const ImageFeatureElement: React.FC<{
   const imageUrl = element.content.imageUrl || '';
   const altText = element.content.altText || 'Feature image';
   const imagePosition = element.content.imagePosition || 'left';
-  const imageWidth = element.content.imageWidth || 50;
+  const imageWidth = element.content.imageWidth || 25;
 
   const handleUpdate = (property: string, value: any) => {
     if (onUpdate) {
@@ -374,7 +374,10 @@ const ImageFeatureElement: React.FC<{
       style={inlineStyles}
     >
       {imageUrl && (
-        <div className={`${imageOrder} ${flexDirection === 'flex-col' ? 'w-full' : `w-${imageWidth}%`} flex-shrink-0`}>
+        <div 
+          className={`${imageOrder} flex-shrink-0`}
+          style={{ width: flexDirection === 'flex-col' ? '100%' : `${imageWidth}%` }}
+        >
           <img 
             src={imageUrl} 
             alt={altText}
@@ -478,7 +481,7 @@ export const registerMediaElements = () => {
       imageUrl: 'https://images.unsplash.com/photo-1551434678-e076c223a692?w=500&h=300&fit=crop',
       altText: 'Feature image',
       imagePosition: 'left',
-      imageWidth: 50
+      imageWidth: 25
     },
     description: 'Feature card with image and text'
   });
