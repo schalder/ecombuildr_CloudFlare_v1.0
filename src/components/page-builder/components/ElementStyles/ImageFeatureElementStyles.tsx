@@ -12,6 +12,7 @@ import { ensureGoogleFontLoaded } from '@/hooks/useGoogleFontLoader';
 import { ResponsiveStyleControl, ResponsiveTabs } from './_shared/ResponsiveStyleControl';
 import { useDevicePreview } from '../../contexts/DevicePreviewContext';
 import { FontSizeControl } from './_shared/FontSizeControl';
+import { LineHeightControl } from './_shared/LineHeightControl';
 
 interface ImageFeatureElementStylesProps {
   element: PageBuilderElement;
@@ -167,40 +168,16 @@ export const ImageFeatureElementStyles: React.FC<ImageFeatureElementStylesProps>
           fallback={defaultLineHeight}
           onStyleUpdate={onStyleUpdate}
         >
-          {(value, onChange) => {
-            const currentValue = value || defaultLineHeight;
-            const numericValue = parseFloat(currentValue.toString()) || parseFloat(defaultLineHeight);
-            
-            const handleChange = (newValue: number) => {
-              onChange(newValue.toString());
-            };
-            
-            return (
-              <div className="flex items-center space-x-2">
-                <Slider
-                  value={[numericValue]}
-                  onValueChange={(val) => handleChange(val[0])}
-                  max={3}
-                  min={1}
-                  step={0.1}
-                  className="flex-1"
-                />
-                <Input
-                  type="number"
-                  value={numericValue}
-                  onChange={(e) => {
-                    const val = parseFloat(e.target.value) || 1;
-                    handleChange(Math.max(1, Math.min(3, val)));
-                  }}
-                  min={1}
-                  max={3}
-                  step={0.1}
-                  className="w-16 h-8"
-                />
-                <span className="text-xs text-muted-foreground">ratio</span>
-              </div>
-            );
-          }}
+          {(value, onChange) => (
+            <LineHeightControl
+              value={value}
+              onChange={onChange}
+              min={1}
+              max={3}
+              step={0.1}
+              defaultHeight={defaultLineHeight}
+            />
+          )}
         </ResponsiveStyleControl>
 
         <ResponsiveStyleControl
