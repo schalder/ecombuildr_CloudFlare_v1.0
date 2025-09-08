@@ -110,37 +110,26 @@ export const ImageFeatureElementStyles: React.FC<ImageFeatureElementStylesProps>
           label="Font Size"
           deviceType={responsiveTab}
           fallback={defaultFontSize}
-          onStyleUpdate={(property, value) => {
-            console.log('FontSize onStyleUpdate - Property:', property, 'Value:', value, 'Device:', responsiveTab);
-            onStyleUpdate(property, value);
-          }}
+          onStyleUpdate={onStyleUpdate}
         >
-          {(value, onChange, isInherited) => {
-            console.log('Font Size Render - Value:', value, 'IsInherited:', isInherited, 'Device:', responsiveTab);
-            
-            // Get the actual current value for this device
-            const currentDeviceValue = element.styles?.responsive?.[responsiveTab]?.[fontSizeProperty];
-            const displayValue = currentDeviceValue || value || defaultFontSize;
-            console.log('Font Size - CurrentDeviceValue:', currentDeviceValue, 'DisplayValue:', displayValue);
-            
-            const numericValue = parseInt(displayValue.toString().replace(/\D/g, '')) || parseInt(defaultFontSize.replace(/\D/g, ''));
+          {(value, onChange) => {
+            const currentValue = value || defaultFontSize;
+            const numericValue = parseInt(currentValue.toString().replace(/\D/g, '')) || parseInt(defaultFontSize.replace(/\D/g, ''));
             
             return (
               <div className="flex items-center space-x-2">
-                <Slider
-                  value={[numericValue]}
-                  onValueChange={(val) => {
-                    console.log('Font Size Slider - Setting value:', val[0], 'for device:', responsiveTab);
-                    onChange(`${val[0]}px`);
+                <Input
+                  type="number"
+                  value={numericValue}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value) || 0;
+                    onChange(`${val}px`);
                   }}
-                  max={72}
                   min={8}
-                  step={1}
-                  className="flex-1"
+                  max={72}
+                  className="w-20 h-8"
                 />
-                <span className="text-xs text-muted-foreground w-12">
-                  {displayValue}
-                </span>
+                <span className="text-xs text-muted-foreground">px</span>
               </div>
             );
           }}
@@ -187,37 +176,27 @@ export const ImageFeatureElementStyles: React.FC<ImageFeatureElementStylesProps>
           label="Line Height"
           deviceType={responsiveTab}
           fallback={defaultLineHeight}
-          onStyleUpdate={(property, value) => {
-            console.log('LineHeight onStyleUpdate - Property:', property, 'Value:', value, 'Device:', responsiveTab);
-            onStyleUpdate(property, value);
-          }}
+          onStyleUpdate={onStyleUpdate}
         >
-          {(value, onChange, isInherited) => {
-            console.log('Line Height Render - Value:', value, 'IsInherited:', isInherited, 'Device:', responsiveTab);
-            
-            // Get the actual current value for this device
-            const currentDeviceValue = element.styles?.responsive?.[responsiveTab]?.[lineHeightProperty];
-            const displayValue = currentDeviceValue || value || defaultLineHeight;
-            console.log('Line Height - CurrentDeviceValue:', currentDeviceValue, 'DisplayValue:', displayValue);
-            
-            const numericValue = parseFloat(displayValue.toString()) || parseFloat(defaultLineHeight);
+          {(value, onChange) => {
+            const currentValue = value || defaultLineHeight;
+            const numericValue = parseFloat(currentValue.toString()) || parseFloat(defaultLineHeight);
             
             return (
               <div className="flex items-center space-x-2">
-                <Slider
-                  value={[numericValue]}
-                  onValueChange={(val) => {
-                    console.log('Line Height Slider - Setting value:', val[0], 'for device:', responsiveTab);
-                    onChange(val[0].toString());
+                <Input
+                  type="number"
+                  value={numericValue}
+                  onChange={(e) => {
+                    const val = parseFloat(e.target.value) || 1;
+                    onChange(val.toString());
                   }}
-                  max={3}
                   min={1}
+                  max={3}
                   step={0.1}
-                  className="flex-1"
+                  className="w-20 h-8"
                 />
-                <span className="text-xs text-muted-foreground w-12">
-                  {displayValue}
-                </span>
+                <span className="text-xs text-muted-foreground">ratio</span>
               </div>
             );
           }}
