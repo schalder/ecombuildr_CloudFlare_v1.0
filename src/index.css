@@ -230,3 +230,10 @@ All colors MUST be HSL. Designed for trust, energy, and conversion.
 [data-pb-element-id] > :last-child {
   margin-bottom: 0 !important;
 }
+
+/* Reset button margins specifically in page builder to prevent inconsistent gaps */
+[data-pb-element-id] button,
+[data-pb-element-id] a[role="button"] {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}
