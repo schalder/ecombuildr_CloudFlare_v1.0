@@ -578,7 +578,7 @@ const ImageFeatureElement: React.FC<{
         </div>
 
         {/* Content */}
-        <div className={`${isMobile ? 'w-full' : 'flex-1'} space-y-4`}>
+        <div className={`${isMobile ? 'w-full' : 'flex-1'} space-y-2`}>
           <h3 style={getHeadlineStyles()}>
             <InlineEditor
               value={headline}
