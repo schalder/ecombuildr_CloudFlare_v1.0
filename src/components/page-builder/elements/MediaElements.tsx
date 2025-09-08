@@ -336,29 +336,34 @@ const ImageFeatureElement: React.FC<{
     `<style>.element-${element.id} { ${renderElementStyles(element, deviceType || 'desktop')} }</style>` : '';
   const inlineStyles = renderElementStyles ? renderElementStyles(element, deviceType || 'desktop') : {};
   
-  // Get responsive styles for current device
-  const responsiveStyles = element.styles?.responsive || { desktop: {}, mobile: {} };
-  const currentDevice = deviceType || 'desktop';
-  const currentResponsiveStyles = (responsiveStyles as any)[currentDevice] || {};
-  
-  // Style helpers for different parts
+  // Style helpers using responsive values
   const getHeadlineStyles = () => {
+    const responsiveStyles = element.styles?.responsive || {};
+    const currentDevice = deviceType || 'desktop';
+    const currentStyles = (responsiveStyles as any)[currentDevice] || {};
+    const elementStyles = element.styles as any;
+    
     return {
-      fontFamily: (currentResponsiveStyles as any).headlineFontFamily || (element.styles as any)?.headlineFontFamily,
-      fontSize: (currentResponsiveStyles as any).headlineFontSize || (element.styles as any)?.headlineFontSize || '24px',
-      textAlign: (currentResponsiveStyles as any).headlineTextAlign || (element.styles as any)?.headlineTextAlign,
-      lineHeight: (currentResponsiveStyles as any).headlineLineHeight || (element.styles as any)?.headlineLineHeight || '1.4',
-      color: (currentResponsiveStyles as any).headlineColor || (element.styles as any)?.headlineColor,
+      fontFamily: currentStyles.headlineFontFamily || elementStyles?.headlineFontFamily || '',
+      fontSize: currentStyles.headlineFontSize || elementStyles?.headlineFontSize || '24px',
+      textAlign: currentStyles.headlineTextAlign || elementStyles?.headlineTextAlign || 'left',
+      lineHeight: currentStyles.headlineLineHeight || elementStyles?.headlineLineHeight || '1.4',
+      color: currentStyles.headlineColor || elementStyles?.headlineColor || '',
     };
   };
 
   const getDescriptionStyles = () => {
+    const responsiveStyles = element.styles?.responsive || {};
+    const currentDevice = deviceType || 'desktop';
+    const currentStyles = (responsiveStyles as any)[currentDevice] || {};
+    const elementStyles = element.styles as any;
+    
     return {
-      fontFamily: (currentResponsiveStyles as any).descriptionFontFamily || (element.styles as any)?.descriptionFontFamily,
-      fontSize: (currentResponsiveStyles as any).descriptionFontSize || (element.styles as any)?.descriptionFontSize || '16px',
-      textAlign: (currentResponsiveStyles as any).descriptionTextAlign || (element.styles as any)?.descriptionTextAlign,
-      lineHeight: (currentResponsiveStyles as any).descriptionLineHeight || (element.styles as any)?.descriptionLineHeight || '1.6',
-      color: (currentResponsiveStyles as any).descriptionColor || (element.styles as any)?.descriptionColor,
+      fontFamily: currentStyles.descriptionFontFamily || elementStyles?.descriptionFontFamily || '',
+      fontSize: currentStyles.descriptionFontSize || elementStyles?.descriptionFontSize || '16px',
+      textAlign: currentStyles.descriptionTextAlign || elementStyles?.descriptionTextAlign || 'left',
+      lineHeight: currentStyles.descriptionLineHeight || elementStyles?.descriptionLineHeight || '1.6',
+      color: currentStyles.descriptionColor || elementStyles?.descriptionColor || '',
     };
   };
 
