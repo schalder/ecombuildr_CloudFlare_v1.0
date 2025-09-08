@@ -41,6 +41,7 @@ import {
   AccordionContentProperties,
   TabsContentProperties
 } from './ContentPropertiesLegacy';
+import { ImageFeatureContentProperties } from './ImageFeatureContentProperties';
 import { 
   ImageGalleryProperties, 
   ImageCarouselProperties, 
@@ -71,6 +72,7 @@ import {
   TestimonialElementStyles,
   FunnelOfferElementStyles
 } from './ElementStyles';
+import { ImageFeatureElementStyles } from './ElementStyles/ImageFeatureElementStyles';
 import { CustomHTMLElementStyles } from './ElementStyles/CustomHTMLElementStyles';
 import { CountdownElementStyles } from './ElementStyles/CountdownElementStyles';
 import { CheckoutElementStyles } from './ElementStyles/CheckoutElementStyles';
@@ -263,6 +265,15 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
       );
     }
     
+    if (selectedElement.type === 'image-feature') {
+      return (
+        <ImageFeatureElementStyles
+          element={selectedElement}
+          onStyleUpdate={handleStyleUpdate}
+        />
+      );
+    }
+    
     // Default fallback for any other element types (ecommerce, content, media, advanced)
     return <TextElementStyles element={selectedElement} onStyleUpdate={handleStyleUpdate} />;
   };
@@ -383,6 +394,13 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
             )}
 
             {/* Content Elements */}
+            {selectedElement.type === 'image-feature' && (
+              <ImageFeatureContentProperties 
+                element={selectedElement}
+                onUpdate={handleContentUpdate}
+              />
+            )}
+
             {selectedElement.type === 'testimonial' && (
               <TestimonialContentProperties 
                 element={selectedElement}

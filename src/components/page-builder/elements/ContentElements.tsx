@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Quote, MessageSquare, ChevronDown, Star } from 'lucide-react';
+import { Quote, MessageSquare, ChevronDown, Star, Image } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -449,8 +449,149 @@ const TabsElement: React.FC<{
   );
 };
 
+// Image Feature Element
+const ImageFeatureElement: React.FC<{
+  element: PageBuilderElement;
+  isEditing?: boolean;
+  deviceType?: 'desktop' | 'tablet' | 'mobile';
+  columnCount?: number;
+  onUpdate?: (updates: Partial<PageBuilderElement>) => void;
+}> = ({ element, isEditing, onUpdate, deviceType, columnCount = 1 }) => {
+  const headline = element.content.headline || 'Feature Headline';
+  const description = element.content.description || 'Feature description goes here...';
+  const imageUrl = element.content.imageUrl || '';
+  const altText = element.content.altText || 'Feature image';
+  const imagePosition = element.content.imagePosition || 'left';
+  const imageWidth = element.content.imageWidth || 50;
+
+  const handleUpdate = (property: string, value: any) => {
+    if (onUpdate) {
+      onUpdate({
+        content: {
+          ...element.content,
+          [property]: value
+        }
+      });
+    }
+  };
+
+  // Generate responsive CSS and get inline styles
+  const responsiveCSS = generateResponsiveCSS(element.id, element.styles);
+  const inlineStyles = renderElementStyles(element, deviceType || 'desktop');
+  
+  // Get responsive styles for current device
+  const responsiveStyles = element.styles?.responsive || { desktop: {}, mobile: {} };
+  const currentDevice = deviceType || 'desktop';
+  const currentResponsiveStyles = (responsiveStyles as any)[currentDevice] || {};
+  
+  // Style helpers for different parts
+  const getHeadlineStyles = () => {
+    return {
+      fontFamily: (currentResponsiveStyles as any).headlineFontFamily || (element.styles as any)?.headlineFontFamily,
+      fontSize: (currentResponsiveStyles as any).headlineFontSize || (element.styles as any)?.headlineFontSize || '24px',
+      textAlign: (currentResponsiveStyles as any).headlineTextAlign || (element.styles as any)?.headlineTextAlign || 'left',
+      lineHeight: (currentResponsiveStyles as any).headlineLineHeight || (element.styles as any)?.headlineLineHeight || '1.4',
+      color: (currentResponsiveStyles as any).headlineColor || (element.styles as any)?.headlineColor,
+    };
+  };
+
+  const getDescriptionStyles = () => {
+    return {
+      fontFamily: (currentResponsiveStyles as any).descriptionFontFamily || (element.styles as any)?.descriptionFontFamily,
+      fontSize: (currentResponsiveStyles as any).descriptionFontSize || (element.styles as any)?.descriptionFontSize || '16px',
+      textAlign: (currentResponsiveStyles as any).descriptionTextAlign || (element.styles as any)?.descriptionTextAlign || 'left',
+      lineHeight: (currentResponsiveStyles as any).descriptionLineHeight || (element.styles as any)?.descriptionLineHeight || '1.6',
+      color: (currentResponsiveStyles as any).descriptionColor || (element.styles as any)?.descriptionColor,
+    };
+  };
+
+  // Determine layout based on device
+  const isMobile = deviceType === 'mobile';
+  const flexDirection = isMobile ? 'flex-col' : (imagePosition === 'right' ? 'flex-row-reverse' : 'flex-row');
+  const textAlign = (currentResponsiveStyles as any).textAlign || (element.styles as any)?.textAlign || 'left';
+
+  return (
+    <>
+      {responsiveCSS && <style dangerouslySetInnerHTML={{ __html: responsiveCSS }} />}
+      <div 
+        className={`flex ${flexDirection} gap-6 items-center ${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-4xl mx-auto'}`} 
+        style={{
+          ...inlineStyles,
+          textAlign: textAlign as any
+        }}
+      >
+        {/* Image */}
+        <div 
+          className={`${isMobile ? 'w-full' : 'flex-shrink-0'}`}
+          style={{
+            width: isMobile ? '100%' : `${imageWidth}%`
+          }}
+        >
+          {imageUrl ? (
+            <img
+              src={imageUrl}
+              alt={altText}
+              className="w-full h-auto rounded-lg object-cover select-none"
+              draggable={false}
+              onDragStart={(e) => e.preventDefault()}
+              style={{
+                maxHeight: '400px'
+              }}
+            />
+          ) : (
+            <div className="w-full h-48 bg-muted rounded-lg flex items-center justify-center pointer-events-none">
+              <span className="text-muted-foreground text-sm">No image selected</span>
+            </div>
+          )}
+        </div>
+
+        {/* Content */}
+        <div className={`${isMobile ? 'w-full' : 'flex-1'} space-y-4`}>
+          <h3 style={getHeadlineStyles()}>
+            <InlineEditor
+              value={headline}
+              onChange={(value) => handleUpdate('headline', value)}
+              placeholder="Feature headline..."
+              disabled={!isEditing}
+              className="font-semibold"
+            />
+          </h3>
+          
+          <div style={getDescriptionStyles()}>
+            <InlineEditor
+              value={description}
+              onChange={(value) => handleUpdate('description', value)}
+              placeholder="Feature description..."
+              multiline
+              disabled={!isEditing}
+              className="text-muted-foreground"
+            />
+          </div>
+        </div>
+      </div>
+    </>
+  );
+};
+
 // Register Content Elements
 export const registerContentElements = () => {
+  elementRegistry.register({
+    id: 'image-feature',
+    name: 'Image Feature',
+    category: 'basic',
+    icon: Image,
+    component: ImageFeatureElement,
+    defaultContent: {
+      headline: 'Amazing Feature',
+      description: 'This feature will help you achieve your goals faster and more efficiently.',
+      imageUrl: 'https://images.unsplash.com/photo-1551434678-e076c223a692?w=500&h=300&fit=crop',
+      altText: 'Feature image',
+      imagePosition: 'left',
+      imageWidth: 50
+    },
+    description: 'Feature card with image and text'
+  });
+
   elementRegistry.register({
     id: 'testimonial',
     name: 'Testimonial',
