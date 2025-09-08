@@ -13,7 +13,6 @@ interface CanvasAreaProps {
   selectedElement?: PageBuilderElement;
   deviceType: 'desktop' | 'tablet' | 'mobile';
   isPreviewMode: boolean;
-  isExactView?: boolean;
   onSelectElement: (element: PageBuilderElement | undefined) => void;
   onUpdateElement: (elementId: string, updates: Partial<PageBuilderElement>) => void;
   onAddElement: (sectionId: string, rowId: string, columnId: string, elementType: string, insertIndex?: number) => void;
@@ -28,7 +27,6 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
   selectedElement,
   deviceType,
   isPreviewMode,
-  isExactView = false,
   onSelectElement,
   onUpdateElement,
   onAddElement,
@@ -55,7 +53,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
   const getCanvasClasses = () => {
     const baseClasses = 'transition-all duration-300 min-h-screen';
     
-    if (deviceType === 'desktop' || isExactView) {
+    if (deviceType === 'desktop') {
       return `${baseClasses} w-full`;
     }
     
@@ -114,10 +112,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
   return (
     <div 
       ref={canvasRef}
-      className={cn(
-        "flex-1 overflow-auto canvas-container",
-        isExactView ? "p-0 bg-background" : "p-8 bg-muted/20"
-      )}
+      className="flex-1 p-8 overflow-auto bg-muted/20 canvas-container"
     >
       <div
         ref={drop}
@@ -127,8 +122,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
           'canvas-area page-builder-canvas',
           getCanvasClasses(),
           isOver && 'ring-2 ring-primary ring-opacity-50',
-          isPreviewMode && 'pointer-events-none',
-          isExactView && 'shadow-none border-none rounded-none'
+          isPreviewMode && 'pointer-events-none'
         )}
         style={{ ...getDevicePreviewStyles(deviceType), ...getCanvasStyles() }}
         onClick={() => !isPreviewMode && onSelectElement(undefined)}
@@ -160,15 +154,14 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
           ) : (
             <div className="space-y-0">
                {pageData.sections.map((section, index) => (
-                  <SectionRenderer
-                    key={section.id}
-                    section={section}
-                    sectionIndex={index}
-                    isSelected={selectedElement?.id === section.id}
-                    isPreviewMode={isPreviewMode}
-                    isExactView={isExactView}
-                    deviceType={deviceType}
-                    onSelectElement={onSelectElement}
+                 <SectionRenderer
+                   key={section.id}
+                   section={section}
+                   sectionIndex={index}
+                   isSelected={selectedElement?.id === section.id}
+                   isPreviewMode={isPreviewMode}
+                   deviceType={deviceType}
+                   onSelectElement={onSelectElement}
                    onUpdateElement={onUpdateElement}
                    onAddElement={onAddElement}
                    onMoveElement={onMoveElement}
@@ -183,10 +176,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
         
         {/* Builder UI elements - separate from content area */}
         {!isPreviewMode && pageData.sections.length > 0 && (
-          <div className={cn(
-            "text-center",
-            isExactView ? "py-4" : "py-8"
-          )} data-builder-ui="true">
+          <div className="py-8 text-center" data-builder-ui="true">
             <Button variant="outline" onClick={handleAddSection}>
               <Plus className="h-4 w-4 mr-2" />
               Add Section

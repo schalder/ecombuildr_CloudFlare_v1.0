@@ -204,7 +204,6 @@ const ElementorPageBuilderContent: React.FC<ElementorPageBuilderProps> = memo(({
     rowId: string;
     columnId: string;
   } | null>(null);
-  const [isExactView, setIsExactView] = useState(false);
   
   const elementsPanelRef = useRef<HTMLDivElement>(null);
 
@@ -1205,13 +1204,6 @@ const ElementorPageBuilderContent: React.FC<ElementorPageBuilderProps> = memo(({
             </div>
             
             <div className="flex items-center gap-2">
-              <Button
-                variant={isExactView ? "default" : "outline"}
-                size="sm"
-                onClick={() => setIsExactView(!isExactView)}
-              >
-                Exact view
-              </Button>
               <Button 
                 variant="outline" 
                 onClick={() => addSection()}
@@ -1254,7 +1246,6 @@ const ElementorPageBuilderContent: React.FC<ElementorPageBuilderProps> = memo(({
             addSection={addSection}
             getDevicePreviewStyles={getDevicePreviewStyles}
             getPageStyles={getPageStyles}
-            isExactView={isExactView}
           />
         </div>
 
@@ -1453,7 +1444,6 @@ interface SectionComponentProps {
   selection: SelectionType | null;
   onSelectionChange: (selection: SelectionType | null) => void;
   onAddSectionAfter: () => void;
-  isExactView: boolean;
 }
 
 const SectionComponent: React.FC<SectionComponentProps> = ({
@@ -1487,8 +1477,7 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
   onDuplicateElement,
   selection,
   onSelectionChange,
-  onAddSectionAfter,
-  isExactView
+  onAddSectionAfter
 }) => {
   const { hoveredTarget, setHoveredTarget } = useHover();
   const userBackground = hasUserBackground(section.styles);
@@ -1615,8 +1604,7 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
 
       <div 
         className={cn(
-          "w-full mx-auto flex flex-col",
-          isExactView ? "p-0" : "p-4",
+          "w-full mx-auto p-4 flex flex-col",
           (() => {
             // Get device-aware vertical alignment
             const verticalAlignment = section.styles?.responsive?.[deviceType]?.contentVerticalAlignment || 
@@ -1684,11 +1672,10 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
                         onAddElement={onAddElement}
                        onUpdateElement={onUpdateElement}
                        onDeleteElement={onDeleteElement}
-                        onDuplicateElement={onDuplicateElement}
-                        selection={selection}
-                        onSelectionChange={onSelectionChange}
-                        isExactView={isExactView}
-                     />
+                       onDuplicateElement={onDuplicateElement}
+                       selection={selection}
+                       onSelectionChange={onSelectionChange}
+                    />
                     
                     {/* Drop zone after each row */}
                     <RowDropZone
@@ -1740,7 +1727,6 @@ interface RowComponentProps {
   onDuplicateElement: (elementId: string) => void;
   selection: SelectionType | null;
   onSelectionChange: (selection: SelectionType | null) => void;
-  isExactView: boolean;
 }
 
 const RowComponent: React.FC<RowComponentProps> = ({
@@ -1768,8 +1754,7 @@ const RowComponent: React.FC<RowComponentProps> = ({
   onDeleteElement,
   onDuplicateElement,
   selection,
-  onSelectionChange,
-  isExactView
+  onSelectionChange
 }) => {
   const { hoveredTarget, setHoveredTarget } = useHover();
   const userBackground = hasUserBackground(row.styles);
@@ -1899,7 +1884,7 @@ const RowComponent: React.FC<RowComponentProps> = ({
 
       <div 
         className={`grid ${getResponsiveGridClasses(row.columnLayout, deviceType)}`}
-        style={{ gap: isExactView ? '0' : '16px' }}
+        style={{ gap: '16px' }}
       >
         {row.columns.map((column, columnIndex) => (
           <ColumnComponent
@@ -1931,7 +1916,6 @@ const RowComponent: React.FC<RowComponentProps> = ({
             onDuplicateElement={onDuplicateElement}
             selection={selection}
             onSelectionChange={onSelectionChange}
-            isExactView={isExactView}
           />
         ))}
       </div>
@@ -1963,7 +1947,6 @@ interface ColumnComponentProps {
   onDuplicateElement: (elementId: string) => void;
   selection: SelectionType | null;
   onSelectionChange: (selection: SelectionType | null) => void;
-  isExactView: boolean;
 }
 
 const ColumnComponent: React.FC<ColumnComponentProps> = ({
@@ -1988,8 +1971,7 @@ const ColumnComponent: React.FC<ColumnComponentProps> = ({
   onDeleteElement,
   onDuplicateElement,
   selection,
-  onSelectionChange,
-  isExactView
+  onSelectionChange
 }) => {
   const { hoveredTarget, setHoveredTarget } = useHover();
   const userBackground = hasUserBackground(column.styles);
@@ -2105,7 +2087,7 @@ const ColumnComponent: React.FC<ColumnComponentProps> = ({
         </div>
       )}
 
-      <div className={isExactView ? "p-0" : "p-2"}>
+      <div className="p-2">
         {/* Drop zone at top of column */}
         <ElementDropZone
           sectionId={sectionId}
@@ -2418,7 +2400,6 @@ interface CanvasAreaWithAutoscrollProps {
   addSection: () => void;
   getDevicePreviewStyles: () => any;
   getPageStyles: () => any;
-  isExactView: boolean;
 }
 
 const CanvasAreaWithAutoscroll: React.FC<CanvasAreaWithAutoscrollProps> = ({
@@ -2451,8 +2432,7 @@ const CanvasAreaWithAutoscroll: React.FC<CanvasAreaWithAutoscrollProps> = ({
   addSectionAfter,
   addSection,
   getDevicePreviewStyles,
-  getPageStyles,
-  isExactView
+  getPageStyles
 }) => {
   const canvasRef = useRef<HTMLDivElement>(null);
   
@@ -2461,8 +2441,8 @@ const CanvasAreaWithAutoscroll: React.FC<CanvasAreaWithAutoscrollProps> = ({
 
   return (
     <ScrollArea ref={canvasRef} scrollbarType="always" className="flex-1 min-h-0 bg-muted/30">
-      <div className={isExactView ? "p-0" : "p-8"}>
-        <div style={{ ...getDevicePreviewStyles(), ...getPageStyles() }} className={cn("min-h-full bg-background", !isExactView && "rounded-lg shadow-sm", deviceType === 'mobile' && "pb-mobile", deviceType === 'tablet' && "pb-tablet")}>
+      <div className="p-8">
+        <div style={{ ...getDevicePreviewStyles(), ...getPageStyles() }} className={cn("min-h-full bg-background rounded-lg shadow-sm", deviceType === 'mobile' && "pb-mobile", deviceType === 'tablet' && "pb-tablet")}>
           {data.sections.length === 0 ? (
             <div className="p-16 text-center">
               <h3 className="text-lg font-medium mb-2">Start Building Your Page</h3>
@@ -2534,7 +2514,6 @@ const CanvasAreaWithAutoscroll: React.FC<CanvasAreaWithAutoscrollProps> = ({
                     selection={selection}
                     onSelectionChange={setSelection}
                     onAddSectionAfter={() => addSectionAfter(sectionIndex)}
-                    isExactView={isExactView}
                   />
                   
                   {/* Section drop zone after each section */}

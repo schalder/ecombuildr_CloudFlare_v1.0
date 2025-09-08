@@ -12,7 +12,6 @@ interface RowRendererProps {
   rowIndex: number;
   sectionId: string;
   isPreviewMode: boolean;
-  isExactView?: boolean;
   deviceType?: 'desktop' | 'tablet' | 'mobile';
   onSelectElement: (element: PageBuilderElement | undefined) => void;
   onUpdateElement: (elementId: string, updates: Partial<PageBuilderElement>) => void;
@@ -27,7 +26,6 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
   rowIndex,
   sectionId,
   isPreviewMode,
-  isExactView = false,
   deviceType = 'desktop',
   onSelectElement,
   onUpdateElement,
@@ -185,22 +183,21 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
       data-pb-row-id={row.id}
       className={cn(
         'relative group transition-all duration-200',
-        // Apply min-height only when not in exact view or when row has elements
-        (!isExactView || row.columns.some(col => col.elements?.length > 0)) && (deviceType === 'mobile' ? 'min-h-[40px]' : 'min-h-[80px]'),
-        // Only apply border/background styles if not in preview mode, not in exact view, and no user background
-        !isPreviewMode && !isExactView && !(userBackground || userShadow) && 'border border-dashed border-blue-400',
-        !isPreviewMode && !isExactView && !(userBackground || userShadow) && isHovered && 'border-blue-500',
-        !isPreviewMode && !isExactView && !(userBackground || userShadow) && isHovered && 'bg-blue-50/50',
-        !isPreviewMode && !isExactView && !(userBackground || userShadow) && isOver && 'border-blue-600',
-        !isPreviewMode && !isExactView && !(userBackground || userShadow) && isOver && 'bg-blue-50/70'
+        deviceType === 'mobile' ? 'min-h-[40px]' : 'min-h-[80px]',
+        // Only apply border/background styles if not in preview mode and no user background
+        !isPreviewMode && !(userBackground || userShadow) && 'border border-dashed border-blue-400',
+        !isPreviewMode && !(userBackground || userShadow) && isHovered && 'border-blue-500',
+        !isPreviewMode && !(userBackground || userShadow) && isHovered && 'bg-blue-50/50',
+        !isPreviewMode && !(userBackground || userShadow) && isOver && 'border-blue-600',
+        !isPreviewMode && !(userBackground || userShadow) && isOver && 'bg-blue-50/70'
       )}
       style={getRowStyles()}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={handleRowClick}
     >
-      {/* Overlay border for rows with background or in exact view mode */}
-      {!isPreviewMode && ((userBackground || userShadow) || isExactView) && isHovered && (
+      {/* Overlay border for rows with background */}
+      {!isPreviewMode && (userBackground || userShadow) && isHovered && (
         <div 
           className="absolute inset-0 pointer-events-none z-20 border border-dashed border-blue-500"
         />
@@ -253,7 +250,6 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
               rowId={row.id}
               columnCount={getEffectiveColumnCount()}
               isPreviewMode={isPreviewMode}
-              isExactView={isExactView}
               deviceType={deviceType}
               onSelectElement={onSelectElement}
               onUpdateElement={onUpdateElement}
