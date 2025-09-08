@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -11,6 +11,7 @@ import { CheckoutContentProperties } from './CheckoutContentProperties';
 import { useResolvedWebsiteId } from '@/hooks/useResolvedWebsiteId';
 import { useStore } from '@/contexts/StoreContext';
 import { useUserStore } from '@/hooks/useUserStore';
+import { CollapsibleGroup } from './ElementStyles/_shared/CollapsibleGroup';
 
 interface InlineCheckoutContentPropertiesProps {
   element: PageBuilderElement;
@@ -18,6 +19,9 @@ interface InlineCheckoutContentPropertiesProps {
 }
 
 export const InlineCheckoutContentProperties: React.FC<InlineCheckoutContentPropertiesProps> = ({ element, onUpdate }) => {
+  const [productsOpen, setProductsOpen] = useState(true);
+  const [orderBumpOpen, setOrderBumpOpen] = useState(false);
+  
   const cfg: any = element.content || {};
   const selectedIds: string[] = Array.isArray(cfg.productIds) ? cfg.productIds : [];
   const defaultProductId: string = cfg.defaultProductId || '';
@@ -59,12 +63,10 @@ export const InlineCheckoutContentProperties: React.FC<InlineCheckoutContentProp
 
   return (
     <div className="space-y-6">
-      <div>
-        <h4 className="text-sm font-medium">Inline Checkout Products</h4>
-        <p className="text-xs text-muted-foreground">Select products to show on this checkout form and choose the default one.</p>
-      </div>
-
-      <div className="space-y-3">
+      <CollapsibleGroup title="Inline Checkout Products" isOpen={productsOpen} onToggle={setProductsOpen}>
+        <p className="text-xs text-muted-foreground mb-3">Select products to show on this checkout form and choose the default one.</p>
+        
+        <div className="space-y-3">
         <Label className="text-sm">Available Products</Label>
         <div className="border rounded-md p-3 max-h-60 overflow-auto space-y-2">
           {!hasStoreContext && (
@@ -117,21 +119,20 @@ export const InlineCheckoutContentProperties: React.FC<InlineCheckoutContentProp
         <Label className="text-sm">Allow switching between products</Label>
       </div>
 
-      <div className="flex items-center gap-2">
-        <input type="checkbox" checked={!!showQuantity} onChange={(e) => onUpdate('showQuantity', e.target.checked)} />
-        <Label className="text-sm">Show quantity selector</Label>
-      </div>
-
-      <Separator />
-
-      <div className="space-y-3">
-        <h4 className="text-sm font-medium">Order Bump (Optional)</h4>
         <div className="flex items-center gap-2">
-          <input type="checkbox" checked={!!orderBump.enabled} onChange={(e) => onUpdate('orderBump', { ...orderBump, enabled: e.target.checked })} />
-          <Label className="text-sm">Enable order bump</Label>
+          <input type="checkbox" checked={!!showQuantity} onChange={(e) => onUpdate('showQuantity', e.target.checked)} />
+          <Label className="text-sm">Show quantity selector</Label>
         </div>
-        {orderBump.enabled && (
-          <div className="space-y-3">
+      </CollapsibleGroup>
+
+      <CollapsibleGroup title="Order Bump (Optional)" isOpen={orderBumpOpen} onToggle={setOrderBumpOpen}>
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <input type="checkbox" checked={!!orderBump.enabled} onChange={(e) => onUpdate('orderBump', { ...orderBump, enabled: e.target.checked })} />
+            <Label className="text-sm">Enable order bump</Label>
+          </div>
+          {orderBump.enabled && (
+            <div className="space-y-3">
             <div className="grid grid-cols-1 gap-2">
               <Label className="text-sm">Bump Product</Label>
               <Select 
@@ -194,7 +195,8 @@ export const InlineCheckoutContentProperties: React.FC<InlineCheckoutContentProp
             </div>
           </div>
         )}
-      </div>
+        </div>
+      </CollapsibleGroup>
 
       <Separator />
 
