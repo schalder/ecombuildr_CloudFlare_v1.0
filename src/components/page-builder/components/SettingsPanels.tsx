@@ -12,11 +12,12 @@ import { ColorPicker } from '@/components/ui/color-picker';
 import { BoxShadowPicker } from '@/components/ui/box-shadow-picker';
 import GradientPicker from '@/components/ui/gradient-picker';
 import { Switch } from '@/components/ui/switch';
-import { ChevronDown, ChevronRight } from 'lucide-react';
+import { ChevronDown, ChevronRight, RotateCcw } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { CompactMediaSelector } from './CompactMediaSelector';
 import { CollapsibleGroup } from './ElementStyles/_shared/CollapsibleGroup';
 import { SpacingSliders } from './ElementStyles/_shared/SpacingSliders';
+import { getEffectiveResponsiveValue, hasResponsiveOverride, getInheritanceSource, getInheritanceLabel, clearResponsiveOverride } from '../utils/responsiveHelpers';
 
 // Section Settings Panel
 interface SectionSettingsProps {
@@ -33,6 +34,72 @@ export const SectionSettings: React.FC<SectionSettingsProps> = ({ section, onUpd
     border: true,
     spacing: true
   });
+
+  // Helper functions for responsive width handling specific to sections
+  const getSectionEffectiveWidth = (deviceType: 'desktop' | 'tablet' | 'mobile'): string => {
+    const responsiveStyles = section.styles?.responsive;
+    if (!responsiveStyles) return '100%';
+
+    const currentValue = responsiveStyles[deviceType]?.width;
+    if (currentValue !== undefined && currentValue !== null && currentValue !== '') {
+      return currentValue;
+    }
+
+    if (deviceType === 'mobile') {
+      const tabletValue = responsiveStyles.tablet?.width;
+      if (tabletValue !== undefined && tabletValue !== null && tabletValue !== '') {
+        return tabletValue;
+      }
+    }
+    
+    if (deviceType === 'mobile' || deviceType === 'tablet') {
+      const desktopValue = responsiveStyles.desktop?.width;
+      if (desktopValue !== undefined && desktopValue !== null && desktopValue !== '') {
+        return desktopValue;
+      }
+    }
+
+    return section.styles?.width || '100%';
+  };
+
+  const hasSectionWidthOverride = (deviceType: 'desktop' | 'tablet' | 'mobile'): boolean => {
+    const responsiveStyles = section.styles?.responsive;
+    if (!responsiveStyles) return false;
+    const value = responsiveStyles[deviceType]?.width;
+    return value !== undefined && value !== null && value !== '';
+  };
+
+  const getSectionInheritanceLabel = (deviceType: 'desktop' | 'tablet' | 'mobile'): string => {
+    const responsiveStyles = section.styles?.responsive;
+    if (!responsiveStyles) {
+      return section.styles?.width ? 'Base Style' : '';
+    }
+
+    const currentValue = responsiveStyles[deviceType]?.width;
+    if (currentValue !== undefined && currentValue !== null && currentValue !== '') {
+      return '';
+    }
+
+    if (deviceType === 'mobile') {
+      const tabletValue = responsiveStyles.tablet?.width;
+      if (tabletValue !== undefined && tabletValue !== null && tabletValue !== '') {
+        return 'Inherited from Tablet';
+      }
+    }
+    
+    if (deviceType === 'mobile' || deviceType === 'tablet') {
+      const desktopValue = responsiveStyles.desktop?.width;
+      if (desktopValue !== undefined && desktopValue !== null && desktopValue !== '') {
+        return 'Inherited from Desktop';
+      }
+    }
+
+    if (section.styles?.width) {
+      return 'Base Style';
+    }
+
+    return '';
+  };
 
   // Helper functions for height mode management
   const getHeightMode = (styles: any, device: 'desktop' | 'mobile' = 'desktop'): 'auto' | 'viewport' | 'custom' => {
@@ -371,38 +438,116 @@ export const SectionSettings: React.FC<SectionSettingsProps> = ({ section, onUpd
               </TabsList>
               <TabsContent value="desktop" className="space-y-4">
                 <div className="space-y-2">
-                  <Label>Width (%): <span className="text-muted-foreground">{Math.min(100, Math.max(30, parseInt(String(section.styles?.responsive?.desktop?.width || '').replace(/[^0-9]/g, '')) || 100))}%</span></Label>
-                  <Slider
-                    min={30}
-                    max={100}
-                    step={1}
-                    value={[Math.min(100, Math.max(30, parseInt(String(section.styles?.responsive?.desktop?.width || '').replace(/[^0-9]/g, '')) || 100))]}
-                    onValueChange={(v) => handleResponsiveStyleUpdate('desktop', 'width', `${v[0]}%`)}
-                  />
+                  {(() => {
+                    const effectiveValue = getSectionEffectiveWidth('desktop');
+                    const hasOverride = hasSectionWidthOverride('desktop');
+                    const inheritanceLabel = getSectionInheritanceLabel('desktop');
+                    const widthValue = Math.min(100, Math.max(30, parseInt(String(effectiveValue).replace(/[^0-9]/g, '')) || 100));
+                    
+                    return (
+                      <>
+                        <div className="flex items-center justify-between">
+                          <Label>Width (%): <span className="text-muted-foreground">{widthValue}%</span></Label>
+                          {hasOverride && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleResponsiveStyleUpdate('desktop', 'width', '')}
+                              className="h-6 w-6 p-0"
+                            >
+                              <RotateCcw className="h-3 w-3" />
+                            </Button>
+                          )}
+                        </div>
+                        {inheritanceLabel && (
+                          <p className="text-xs text-muted-foreground">{inheritanceLabel}</p>
+                        )}
+                        <Slider
+                          min={30}
+                          max={100}
+                          step={1}
+                          value={[widthValue]}
+                          onValueChange={(v) => handleResponsiveStyleUpdate('desktop', 'width', `${v[0]}%`)}
+                        />
+                      </>
+                    );
+                  })()}
                 </div>
               </TabsContent>
               <TabsContent value="tablet" className="space-y-4">
                 <div className="space-y-2">
-                  <Label>Width (%): <span className="text-muted-foreground">{Math.min(100, Math.max(30, parseInt(String(section.styles?.responsive?.tablet?.width || '').replace(/[^0-9]/g, '')) || 100))}%</span></Label>
-                  <Slider
-                    min={30}
-                    max={100}
-                    step={1}
-                    value={[Math.min(100, Math.max(30, parseInt(String(section.styles?.responsive?.tablet?.width || '').replace(/[^0-9]/g, '')) || 100))]}
-                    onValueChange={(v) => handleResponsiveStyleUpdate('tablet', 'width', `${v[0]}%`)}
-                  />
+                  {(() => {
+                    const effectiveValue = getSectionEffectiveWidth('tablet');
+                    const hasOverride = hasSectionWidthOverride('tablet');
+                    const inheritanceLabel = getSectionInheritanceLabel('tablet');
+                    const widthValue = Math.min(100, Math.max(30, parseInt(String(effectiveValue).replace(/[^0-9]/g, '')) || 100));
+                    
+                    return (
+                      <>
+                        <div className="flex items-center justify-between">
+                          <Label>Width (%): <span className="text-muted-foreground">{widthValue}%</span></Label>
+                          {hasOverride && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleResponsiveStyleUpdate('tablet', 'width', '')}
+                              className="h-6 w-6 p-0"
+                            >
+                              <RotateCcw className="h-3 w-3" />
+                            </Button>
+                          )}
+                        </div>
+                        {inheritanceLabel && (
+                          <p className="text-xs text-muted-foreground">{inheritanceLabel}</p>
+                        )}
+                        <Slider
+                          min={30}
+                          max={100}
+                          step={1}
+                          value={[widthValue]}
+                          onValueChange={(v) => handleResponsiveStyleUpdate('tablet', 'width', `${v[0]}%`)}
+                        />
+                      </>
+                    );
+                  })()}
                 </div>
               </TabsContent>
               <TabsContent value="mobile" className="space-y-4">
                 <div className="space-y-2">
-                  <Label>Width (%): <span className="text-muted-foreground">{Math.min(100, Math.max(30, parseInt(String(section.styles?.responsive?.mobile?.width || '').replace(/[^0-9]/g, '')) || 100))}%</span></Label>
-                  <Slider
-                    min={30}
-                    max={100}
-                    step={1}
-                    value={[Math.min(100, Math.max(30, parseInt(String(section.styles?.responsive?.mobile?.width || '').replace(/[^0-9]/g, '')) || 100))]}
-                    onValueChange={(v) => handleResponsiveStyleUpdate('mobile', 'width', `${v[0]}%`)}
-                  />
+                  {(() => {
+                    const effectiveValue = getSectionEffectiveWidth('mobile');
+                    const hasOverride = hasSectionWidthOverride('mobile');
+                    const inheritanceLabel = getSectionInheritanceLabel('mobile');
+                    const widthValue = Math.min(100, Math.max(30, parseInt(String(effectiveValue).replace(/[^0-9]/g, '')) || 100));
+                    
+                    return (
+                      <>
+                        <div className="flex items-center justify-between">
+                          <Label>Width (%): <span className="text-muted-foreground">{widthValue}%</span></Label>
+                          {hasOverride && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleResponsiveStyleUpdate('mobile', 'width', '')}
+                              className="h-6 w-6 p-0"
+                            >
+                              <RotateCcw className="h-3 w-3" />
+                            </Button>
+                          )}
+                        </div>
+                        {inheritanceLabel && (
+                          <p className="text-xs text-muted-foreground">{inheritanceLabel}</p>
+                        )}
+                        <Slider
+                          min={30}
+                          max={100}
+                          step={1}
+                          value={[widthValue]}
+                          onValueChange={(v) => handleResponsiveStyleUpdate('mobile', 'width', `${v[0]}%`)}
+                        />
+                      </>
+                    );
+                  })()}
                 </div>
               </TabsContent>
             </Tabs>
@@ -602,6 +747,72 @@ export const RowSettings: React.FC<RowSettingsProps> = ({ row, onUpdate }) => {
     spacing: true
   });
 
+  // Helper functions for responsive width handling specific to rows
+  const getRowEffectiveWidth = (deviceType: 'desktop' | 'tablet' | 'mobile'): string => {
+    const responsiveStyles = row.styles?.responsive;
+    if (!responsiveStyles) return '100%';
+
+    const currentValue = responsiveStyles[deviceType]?.width;
+    if (currentValue !== undefined && currentValue !== null && currentValue !== '') {
+      return currentValue;
+    }
+
+    if (deviceType === 'mobile') {
+      const tabletValue = responsiveStyles.tablet?.width;
+      if (tabletValue !== undefined && tabletValue !== null && tabletValue !== '') {
+        return tabletValue;
+      }
+    }
+    
+    if (deviceType === 'mobile' || deviceType === 'tablet') {
+      const desktopValue = responsiveStyles.desktop?.width;
+      if (desktopValue !== undefined && desktopValue !== null && desktopValue !== '') {
+        return desktopValue;
+      }
+    }
+
+    return row.styles?.width || '100%';
+  };
+
+  const hasRowWidthOverride = (deviceType: 'desktop' | 'tablet' | 'mobile'): boolean => {
+    const responsiveStyles = row.styles?.responsive;
+    if (!responsiveStyles) return false;
+    const value = responsiveStyles[deviceType]?.width;
+    return value !== undefined && value !== null && value !== '';
+  };
+
+  const getRowInheritanceLabel = (deviceType: 'desktop' | 'tablet' | 'mobile'): string => {
+    const responsiveStyles = row.styles?.responsive;
+    if (!responsiveStyles) {
+      return row.styles?.width ? 'Base Style' : '';
+    }
+
+    const currentValue = responsiveStyles[deviceType]?.width;
+    if (currentValue !== undefined && currentValue !== null && currentValue !== '') {
+      return '';
+    }
+
+    if (deviceType === 'mobile') {
+      const tabletValue = responsiveStyles.tablet?.width;
+      if (tabletValue !== undefined && tabletValue !== null && tabletValue !== '') {
+        return 'Inherited from Tablet';
+      }
+    }
+    
+    if (deviceType === 'mobile' || deviceType === 'tablet') {
+      const desktopValue = responsiveStyles.desktop?.width;
+      if (desktopValue !== undefined && desktopValue !== null && desktopValue !== '') {
+        return 'Inherited from Desktop';
+      }
+    }
+
+    if (row.styles?.width) {
+      return 'Base Style';
+    }
+
+    return '';
+  };
+
   const handleStyleUpdate = (key: string, value: any) => {
     onUpdate({
       styles: {
@@ -728,38 +939,116 @@ export const RowSettings: React.FC<RowSettingsProps> = ({ row, onUpdate }) => {
               </TabsList>
               <TabsContent value="desktop" className="space-y-4">
                 <div className="space-y-2">
-                  <Label>Width (%): <span className="text-muted-foreground">{Math.min(100, Math.max(30, parseInt(String(row.styles?.responsive?.desktop?.width || '').replace(/[^0-9]/g, '')) || 100))}%</span></Label>
-                  <Slider
-                    min={30}
-                    max={100}
-                    step={1}
-                    value={[Math.min(100, Math.max(30, parseInt(String(row.styles?.responsive?.desktop?.width || '').replace(/[^0-9]/g, '')) || 100))]}
-                    onValueChange={(v) => handleResponsiveStyleUpdate('desktop', 'width', `${v[0]}%`)}
-                  />
+                  {(() => {
+                    const effectiveValue = getRowEffectiveWidth('desktop');
+                    const hasOverride = hasRowWidthOverride('desktop');
+                    const inheritanceLabel = getRowInheritanceLabel('desktop');
+                    const widthValue = Math.min(100, Math.max(30, parseInt(String(effectiveValue).replace(/[^0-9]/g, '')) || 100));
+                    
+                    return (
+                      <>
+                        <div className="flex items-center justify-between">
+                          <Label>Width (%): <span className="text-muted-foreground">{widthValue}%</span></Label>
+                          {hasOverride && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleResponsiveStyleUpdate('desktop', 'width', '')}
+                              className="h-6 w-6 p-0"
+                            >
+                              <RotateCcw className="h-3 w-3" />
+                            </Button>
+                          )}
+                        </div>
+                        {inheritanceLabel && (
+                          <p className="text-xs text-muted-foreground">{inheritanceLabel}</p>
+                        )}
+                        <Slider
+                          min={30}
+                          max={100}
+                          step={1}
+                          value={[widthValue]}
+                          onValueChange={(v) => handleResponsiveStyleUpdate('desktop', 'width', `${v[0]}%`)}
+                        />
+                      </>
+                    );
+                  })()}
                 </div>
               </TabsContent>
               <TabsContent value="tablet" className="space-y-4">
                 <div className="space-y-2">
-                  <Label>Width (%): <span className="text-muted-foreground">{Math.min(100, Math.max(30, parseInt(String(row.styles?.responsive?.tablet?.width || '').replace(/[^0-9]/g, '')) || 100))}%</span></Label>
-                  <Slider
-                    min={30}
-                    max={100}
-                    step={1}
-                    value={[Math.min(100, Math.max(30, parseInt(String(row.styles?.responsive?.tablet?.width || '').replace(/[^0-9]/g, '')) || 100))]}
-                    onValueChange={(v) => handleResponsiveStyleUpdate('tablet', 'width', `${v[0]}%`)}
-                  />
+                  {(() => {
+                    const effectiveValue = getRowEffectiveWidth('tablet');
+                    const hasOverride = hasRowWidthOverride('tablet');
+                    const inheritanceLabel = getRowInheritanceLabel('tablet');
+                    const widthValue = Math.min(100, Math.max(30, parseInt(String(effectiveValue).replace(/[^0-9]/g, '')) || 100));
+                    
+                    return (
+                      <>
+                        <div className="flex items-center justify-between">
+                          <Label>Width (%): <span className="text-muted-foreground">{widthValue}%</span></Label>
+                          {hasOverride && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleResponsiveStyleUpdate('tablet', 'width', '')}
+                              className="h-6 w-6 p-0"
+                            >
+                              <RotateCcw className="h-3 w-3" />
+                            </Button>
+                          )}
+                        </div>
+                        {inheritanceLabel && (
+                          <p className="text-xs text-muted-foreground">{inheritanceLabel}</p>
+                        )}
+                        <Slider
+                          min={30}
+                          max={100}
+                          step={1}
+                          value={[widthValue]}
+                          onValueChange={(v) => handleResponsiveStyleUpdate('tablet', 'width', `${v[0]}%`)}
+                        />
+                      </>
+                    );
+                  })()}
                 </div>
               </TabsContent>
               <TabsContent value="mobile" className="space-y-4">
                 <div className="space-y-2">
-                  <Label>Width (%): <span className="text-muted-foreground">{Math.min(100, Math.max(30, parseInt(String(row.styles?.responsive?.mobile?.width || '').replace(/[^0-9]/g, '')) || 100))}%</span></Label>
-                  <Slider
-                    min={30}
-                    max={100}
-                    step={1}
-                    value={[Math.min(100, Math.max(30, parseInt(String(row.styles?.responsive?.mobile?.width || '').replace(/[^0-9]/g, '')) || 100))]}
-                    onValueChange={(v) => handleResponsiveStyleUpdate('mobile', 'width', `${v[0]}%`)}
-                  />
+                  {(() => {
+                    const effectiveValue = getRowEffectiveWidth('mobile');
+                    const hasOverride = hasRowWidthOverride('mobile');
+                    const inheritanceLabel = getRowInheritanceLabel('mobile');
+                    const widthValue = Math.min(100, Math.max(30, parseInt(String(effectiveValue).replace(/[^0-9]/g, '')) || 100));
+                    
+                    return (
+                      <>
+                        <div className="flex items-center justify-between">
+                          <Label>Width (%): <span className="text-muted-foreground">{widthValue}%</span></Label>
+                          {hasOverride && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleResponsiveStyleUpdate('mobile', 'width', '')}
+                              className="h-6 w-6 p-0"
+                            >
+                              <RotateCcw className="h-3 w-3" />
+                            </Button>
+                          )}
+                        </div>
+                        {inheritanceLabel && (
+                          <p className="text-xs text-muted-foreground">{inheritanceLabel}</p>
+                        )}
+                        <Slider
+                          min={30}
+                          max={100}
+                          step={1}
+                          value={[widthValue]}
+                          onValueChange={(v) => handleResponsiveStyleUpdate('mobile', 'width', `${v[0]}%`)}
+                        />
+                      </>
+                    );
+                  })()}
                 </div>
               </TabsContent>
             </Tabs>
@@ -960,6 +1249,72 @@ export const ColumnSettings: React.FC<ColumnSettingsProps> = ({ column, onUpdate
     content: true
   });
 
+  // Helper functions for responsive width handling specific to columns
+  const getColumnEffectiveWidth = (deviceType: 'desktop' | 'tablet' | 'mobile'): string => {
+    const responsiveStyles = column.styles?.responsive;
+    if (!responsiveStyles) return '100%';
+
+    const currentValue = responsiveStyles[deviceType]?.width;
+    if (currentValue !== undefined && currentValue !== null && currentValue !== '') {
+      return currentValue;
+    }
+
+    if (deviceType === 'mobile') {
+      const tabletValue = responsiveStyles.tablet?.width;
+      if (tabletValue !== undefined && tabletValue !== null && tabletValue !== '') {
+        return tabletValue;
+      }
+    }
+    
+    if (deviceType === 'mobile' || deviceType === 'tablet') {
+      const desktopValue = responsiveStyles.desktop?.width;
+      if (desktopValue !== undefined && desktopValue !== null && desktopValue !== '') {
+        return desktopValue;
+      }
+    }
+
+    return column.styles?.width || '100%';
+  };
+
+  const hasColumnWidthOverride = (deviceType: 'desktop' | 'tablet' | 'mobile'): boolean => {
+    const responsiveStyles = column.styles?.responsive;
+    if (!responsiveStyles) return false;
+    const value = responsiveStyles[deviceType]?.width;
+    return value !== undefined && value !== null && value !== '';
+  };
+
+  const getColumnInheritanceLabel = (deviceType: 'desktop' | 'tablet' | 'mobile'): string => {
+    const responsiveStyles = column.styles?.responsive;
+    if (!responsiveStyles) {
+      return column.styles?.width ? 'Base Style' : '';
+    }
+
+    const currentValue = responsiveStyles[deviceType]?.width;
+    if (currentValue !== undefined && currentValue !== null && currentValue !== '') {
+      return '';
+    }
+
+    if (deviceType === 'mobile') {
+      const tabletValue = responsiveStyles.tablet?.width;
+      if (tabletValue !== undefined && tabletValue !== null && tabletValue !== '') {
+        return 'Inherited from Tablet';
+      }
+    }
+    
+    if (deviceType === 'mobile' || deviceType === 'tablet') {
+      const desktopValue = responsiveStyles.desktop?.width;
+      if (desktopValue !== undefined && desktopValue !== null && desktopValue !== '') {
+        return 'Inherited from Desktop';
+      }
+    }
+
+    if (column.styles?.width) {
+      return 'Base Style';
+    }
+
+    return '';
+  };
+
   const handleStyleUpdate = (key: string, value: any) => {
     onUpdate({
       styles: {
@@ -1052,38 +1407,116 @@ export const ColumnSettings: React.FC<ColumnSettingsProps> = ({ column, onUpdate
               </TabsList>
               <TabsContent value="desktop" className="space-y-4">
                 <div className="space-y-2">
-                  <Label>Width (%): <span className="text-muted-foreground">{Math.min(100, Math.max(30, parseInt(String(column.styles?.responsive?.desktop?.width || '').replace(/[^0-9]/g, '')) || 100))}%</span></Label>
-                  <Slider
-                    min={30}
-                    max={100}
-                    step={1}
-                    value={[Math.min(100, Math.max(30, parseInt(String(column.styles?.responsive?.desktop?.width || '').replace(/[^0-9]/g, '')) || 100))]}
-                    onValueChange={(v) => handleResponsiveStyleUpdate('desktop', 'width', `${v[0]}%`)}
-                  />
+                  {(() => {
+                    const effectiveValue = getColumnEffectiveWidth('desktop');
+                    const hasOverride = hasColumnWidthOverride('desktop');
+                    const inheritanceLabel = getColumnInheritanceLabel('desktop');
+                    const widthValue = Math.min(100, Math.max(30, parseInt(String(effectiveValue).replace(/[^0-9]/g, '')) || 100));
+                    
+                    return (
+                      <>
+                        <div className="flex items-center justify-between">
+                          <Label>Width (%): <span className="text-muted-foreground">{widthValue}%</span></Label>
+                          {hasOverride && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleResponsiveStyleUpdate('desktop', 'width', '')}
+                              className="h-6 w-6 p-0"
+                            >
+                              <RotateCcw className="h-3 w-3" />
+                            </Button>
+                          )}
+                        </div>
+                        {inheritanceLabel && (
+                          <p className="text-xs text-muted-foreground">{inheritanceLabel}</p>
+                        )}
+                        <Slider
+                          min={30}
+                          max={100}
+                          step={1}
+                          value={[widthValue]}
+                          onValueChange={(v) => handleResponsiveStyleUpdate('desktop', 'width', `${v[0]}%`)}
+                        />
+                      </>
+                    );
+                  })()}
                 </div>
               </TabsContent>
               <TabsContent value="tablet" className="space-y-4">
                 <div className="space-y-2">
-                  <Label>Width (%): <span className="text-muted-foreground">{Math.min(100, Math.max(30, parseInt(String(column.styles?.responsive?.tablet?.width || '').replace(/[^0-9]/g, '')) || 100))}%</span></Label>
-                  <Slider
-                    min={30}
-                    max={100}
-                    step={1}
-                    value={[Math.min(100, Math.max(30, parseInt(String(column.styles?.responsive?.tablet?.width || '').replace(/[^0-9]/g, '')) || 100))]}
-                    onValueChange={(v) => handleResponsiveStyleUpdate('tablet', 'width', `${v[0]}%`)}
-                  />
+                  {(() => {
+                    const effectiveValue = getColumnEffectiveWidth('tablet');
+                    const hasOverride = hasColumnWidthOverride('tablet');
+                    const inheritanceLabel = getColumnInheritanceLabel('tablet');
+                    const widthValue = Math.min(100, Math.max(30, parseInt(String(effectiveValue).replace(/[^0-9]/g, '')) || 100));
+                    
+                    return (
+                      <>
+                        <div className="flex items-center justify-between">
+                          <Label>Width (%): <span className="text-muted-foreground">{widthValue}%</span></Label>
+                          {hasOverride && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleResponsiveStyleUpdate('tablet', 'width', '')}
+                              className="h-6 w-6 p-0"
+                            >
+                              <RotateCcw className="h-3 w-3" />
+                            </Button>
+                          )}
+                        </div>
+                        {inheritanceLabel && (
+                          <p className="text-xs text-muted-foreground">{inheritanceLabel}</p>
+                        )}
+                        <Slider
+                          min={30}
+                          max={100}
+                          step={1}
+                          value={[widthValue]}
+                          onValueChange={(v) => handleResponsiveStyleUpdate('tablet', 'width', `${v[0]}%`)}
+                        />
+                      </>
+                    );
+                  })()}
                 </div>
               </TabsContent>
               <TabsContent value="mobile" className="space-y-4">
                 <div className="space-y-2">
-                  <Label>Width (%): <span className="text-muted-foreground">{Math.min(100, Math.max(30, parseInt(String(column.styles?.responsive?.mobile?.width || '').replace(/[^0-9]/g, '')) || 100))}%</span></Label>
-                  <Slider
-                    min={30}
-                    max={100}
-                    step={1}
-                    value={[Math.min(100, Math.max(30, parseInt(String(column.styles?.responsive?.mobile?.width || '').replace(/[^0-9]/g, '')) || 100))]}
-                    onValueChange={(v) => handleResponsiveStyleUpdate('mobile', 'width', `${v[0]}%`)}
-                  />
+                  {(() => {
+                    const effectiveValue = getColumnEffectiveWidth('mobile');
+                    const hasOverride = hasColumnWidthOverride('mobile');
+                    const inheritanceLabel = getColumnInheritanceLabel('mobile');
+                    const widthValue = Math.min(100, Math.max(30, parseInt(String(effectiveValue).replace(/[^0-9]/g, '')) || 100));
+                    
+                    return (
+                      <>
+                        <div className="flex items-center justify-between">
+                          <Label>Width (%): <span className="text-muted-foreground">{widthValue}%</span></Label>
+                          {hasOverride && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleResponsiveStyleUpdate('mobile', 'width', '')}
+                              className="h-6 w-6 p-0"
+                            >
+                              <RotateCcw className="h-3 w-3" />
+                            </Button>
+                          )}
+                        </div>
+                        {inheritanceLabel && (
+                          <p className="text-xs text-muted-foreground">{inheritanceLabel}</p>
+                        )}
+                        <Slider
+                          min={30}
+                          max={100}
+                          step={1}
+                          value={[widthValue]}
+                          onValueChange={(v) => handleResponsiveStyleUpdate('mobile', 'width', `${v[0]}%`)}
+                        />
+                      </>
+                    );
+                  })()}
                 </div>
               </TabsContent>
             </Tabs>
