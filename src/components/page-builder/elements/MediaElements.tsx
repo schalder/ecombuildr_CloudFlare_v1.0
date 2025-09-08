@@ -7,7 +7,6 @@ import { PageBuilderElement } from '../types';
 import { elementRegistry } from './ElementRegistry';
 import { InlineEditor } from '../components/InlineEditor';
 import { renderElementStyles } from '../utils/styleRenderer';
-import { getEffectiveResponsiveValue } from '../utils/responsiveHelpers';
 
 // Image Gallery Element
 const ImageGalleryElement: React.FC<{
@@ -306,110 +305,6 @@ const VideoPlaylistElement: React.FC<{
   );
 };
 
-// Image Feature Element - Fixed and moved from ContentElements
-const ImageFeatureElement: React.FC<{
-  element: PageBuilderElement;
-  isEditing?: boolean;
-  deviceType?: 'desktop' | 'tablet' | 'mobile';
-  columnCount?: number;
-  onUpdate?: (updates: Partial<PageBuilderElement>) => void;
-}> = ({ element, isEditing, onUpdate, deviceType, columnCount = 1 }) => {
-  const headline = element.content.headline || 'Feature Headline';
-  const description = element.content.description || 'Feature description goes here...';
-  const imageUrl = element.content.imageUrl || '';
-  const altText = element.content.altText || 'Feature image';
-  const imagePosition = element.content.imagePosition || 'left';
-  const imageWidth = element.content.imageWidth || 25;
-
-  const handleUpdate = (property: string, value: any) => {
-    if (onUpdate) {
-      onUpdate({
-        content: {
-          ...element.content,
-          [property]: value
-        }
-      });
-    }
-  };
-
-  // Generate responsive CSS and get inline styles
-  const responsiveCSS = element.styles && renderElementStyles ? 
-    `<style>.element-${element.id} { ${renderElementStyles(element, deviceType || 'desktop')} }</style>` : '';
-  const inlineStyles = renderElementStyles ? renderElementStyles(element, deviceType || 'desktop') : {};
-  
-  // Style helpers using responsive values
-  const getHeadlineStyles = () => {
-    const currentDevice = deviceType || 'desktop';
-    
-    return {
-      fontFamily: getEffectiveResponsiveValue(element, 'headlineFontFamily', currentDevice, ''),
-      fontSize: getEffectiveResponsiveValue(element, 'headlineFontSize', currentDevice, '24px'),
-      textAlign: getEffectiveResponsiveValue(element, 'headlineTextAlign', currentDevice, 'left'),
-      lineHeight: getEffectiveResponsiveValue(element, 'headlineLineHeight', currentDevice, '1.4'),
-      color: getEffectiveResponsiveValue(element, 'headlineColor', currentDevice, ''),
-    };
-  };
-
-  const getDescriptionStyles = () => {
-    const currentDevice = deviceType || 'desktop';
-    
-    return {
-      fontFamily: getEffectiveResponsiveValue(element, 'descriptionFontFamily', currentDevice, ''),
-      fontSize: getEffectiveResponsiveValue(element, 'descriptionFontSize', currentDevice, '16px'),
-      textAlign: getEffectiveResponsiveValue(element, 'descriptionTextAlign', currentDevice, 'left'),
-      lineHeight: getEffectiveResponsiveValue(element, 'descriptionLineHeight', currentDevice, '1.6'),
-      color: getEffectiveResponsiveValue(element, 'descriptionColor', currentDevice, ''),
-    };
-  };
-
-  const containerClass = deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-4xl mx-auto';
-  const flexDirection = imagePosition === 'top' || imagePosition === 'bottom' ? 'flex-col' : 
-                       deviceType === 'mobile' ? 'flex-col' : 'flex-row';
-  const imageOrder = imagePosition === 'right' || imagePosition === 'bottom' ? 'order-2' : 'order-1';
-  const contentOrder = imagePosition === 'right' || imagePosition === 'bottom' ? 'order-1' : 'order-2';
-
-  return (
-    <div 
-      className={`${containerClass} ${flexDirection === 'flex-col' ? 'space-y-6' : 'space-x-6'} flex ${flexDirection}`}
-      style={inlineStyles}
-    >
-      {imageUrl && (
-        <div 
-          className={`${imageOrder} flex-shrink-0`}
-          style={{ width: flexDirection === 'flex-col' ? '100%' : `${imageWidth}%` }}
-        >
-          <img 
-            src={imageUrl} 
-            alt={altText}
-            className="w-full h-auto object-cover rounded-lg"
-          />
-        </div>
-      )}
-      
-      <div className={`${contentOrder} flex-1 space-y-4`}>
-        <h3 className="text-2xl font-bold" style={getHeadlineStyles()}>
-          <InlineEditor
-            value={headline}
-            onChange={(value) => handleUpdate('headline', value)}
-            placeholder="Enter headline..."
-            disabled={!isEditing}
-          />
-        </h3>
-        
-        <p className="text-muted-foreground" style={getDescriptionStyles()}>
-          <InlineEditor
-            value={description}
-            onChange={(value) => handleUpdate('description', value)}
-            placeholder="Enter description..."
-            multiline
-            disabled={!isEditing}
-          />
-        </p>
-      </div>
-    </div>
-  );
-};
-
 // Register Media Elements
 export const registerMediaElements = () => {
   elementRegistry.register({
@@ -467,22 +362,5 @@ export const registerMediaElements = () => {
       ]
     },
     description: 'Multiple videos with playlist'
-  });
-
-  elementRegistry.register({
-    id: 'image-feature',
-    name: 'Image Feature',
-    category: 'media',
-    icon: Image,
-    component: ImageFeatureElement,
-    defaultContent: {
-      headline: 'Amazing Feature',
-      description: 'This feature will help you achieve your goals faster and more efficiently.',
-      imageUrl: 'https://images.unsplash.com/photo-1551434678-e076c223a692?w=500&h=300&fit=crop',
-      altText: 'Feature image',
-      imagePosition: 'left',
-      imageWidth: 25
-    },
-    description: 'Feature card with image and text'
   });
 };

@@ -21,7 +21,7 @@ export const ImageFeatureContentProperties: React.FC<ImageFeatureContentProperti
   const imageUrl = element.content.imageUrl || '';
   const altText = element.content.altText || '';
   const imagePosition = element.content.imagePosition || 'left';
-  const imageWidth = element.content.imageWidth || 25;
+  const imageWidth = element.content.imageWidth || 50;
 
   return (
     <div className="space-y-4">
