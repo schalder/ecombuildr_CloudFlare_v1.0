@@ -229,12 +229,24 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({
         style={{ minHeight: 'inherit' }}
       >
         {section.rows.length === 0 ? (
-          <div className="min-h-[120px] flex items-center justify-center border-2 border-dashed border-muted-foreground/30">
+          <div className="relative min-h-[120px] flex items-center justify-center border-2 border-dashed border-muted-foreground/30 group">
             {!isPreviewMode && (
-              <Button variant="outline" onClick={handleAddRow}>
-                <Plus className="h-4 w-4 mr-2" />
-                Add Row
-              </Button>
+              <>
+                <div className="text-muted-foreground text-sm">Empty section</div>
+                {/* Add first row button - appears on hover at bottom border */}
+                <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                  <Button
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleAddRow();
+                    }}
+                    className="h-8 w-8 p-0 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg border-2 border-background"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+              </>
             )}
           </div>
         ) : (
@@ -252,31 +264,12 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({
                 onAddElement={onAddElement}
                 onMoveElement={onMoveElement}
                 onRemoveElement={onRemoveElement}
-                onAddRowAfter={() => onAddRowAfter(rowIndex)}
+                onAddRowAfter={() => onAddRowAfter(rowIndex + 1)}
               />
             ))}
-            
           </div>
         )}
       </div>
-
-      {/* Floating Add Row Button */}
-      {!isPreviewMode && section.rows.length > 0 && (isSelected || isHovered) && (
-        <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 z-10">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={(e) => {
-              e.stopPropagation();
-              handleAddRow();
-            }}
-            className="bg-background border shadow-sm hover:bg-accent"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Add Row
-          </Button>
-        </div>
-      )}
     </div>
   );
 };
