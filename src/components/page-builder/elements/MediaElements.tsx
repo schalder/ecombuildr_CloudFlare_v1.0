@@ -305,6 +305,108 @@ const VideoPlaylistElement: React.FC<{
   );
 };
 
+// Image Feature Element
+const ImageFeatureElement: React.FC<{
+  element: PageBuilderElement;
+  isEditing?: boolean;
+  deviceType?: 'desktop' | 'tablet' | 'mobile';
+  columnCount?: number;
+  onUpdate?: (updates: Partial<PageBuilderElement>) => void;
+}> = ({ element, isEditing, onUpdate, deviceType, columnCount = 1 }) => {
+  const headline = element.content.headline || 'Feature Headline';
+  const description = element.content.description || 'Feature description goes here...';
+  const imageUrl = element.content.imageUrl || '';
+  const altText = element.content.altText || 'Feature image';
+  const imagePosition = element.content.imagePosition || 'left';
+  const imageWidth = element.content.imageWidth || 50;
+
+  const handleUpdate = (property: string, value: any) => {
+    if (onUpdate) {
+      onUpdate({
+        content: {
+          ...element.content,
+          [property]: value
+        }
+      });
+    }
+  };
+
+  // Generate responsive CSS and get inline styles
+  const responsiveCSS = element.styles && renderElementStyles ? 
+    `<style>.element-${element.id} { ${renderElementStyles(element, deviceType || 'desktop')} }</style>` : '';
+  const inlineStyles = renderElementStyles ? renderElementStyles(element, deviceType || 'desktop') : {};
+  
+  // Get responsive styles for current device
+  const responsiveStyles = element.styles?.responsive || { desktop: {}, mobile: {} };
+  const currentDevice = deviceType || 'desktop';
+  const currentResponsiveStyles = (responsiveStyles as any)[currentDevice] || {};
+  
+  // Style helpers for different parts
+  const getHeadlineStyles = () => {
+    return {
+      fontFamily: (currentResponsiveStyles as any).headlineFontFamily || (element.styles as any)?.headlineFontFamily,
+      fontSize: (currentResponsiveStyles as any).headlineFontSize || (element.styles as any)?.headlineFontSize || '24px',
+      textAlign: (currentResponsiveStyles as any).headlineTextAlign || (element.styles as any)?.headlineTextAlign,
+      lineHeight: (currentResponsiveStyles as any).headlineLineHeight || (element.styles as any)?.headlineLineHeight || '1.4',
+      color: (currentResponsiveStyles as any).headlineColor || (element.styles as any)?.headlineColor,
+    };
+  };
+
+  const getDescriptionStyles = () => {
+    return {
+      fontFamily: (currentResponsiveStyles as any).descriptionFontFamily || (element.styles as any)?.descriptionFontFamily,
+      fontSize: (currentResponsiveStyles as any).descriptionFontSize || (element.styles as any)?.descriptionFontSize || '16px',
+      textAlign: (currentResponsiveStyles as any).descriptionTextAlign || (element.styles as any)?.descriptionTextAlign,
+      lineHeight: (currentResponsiveStyles as any).descriptionLineHeight || (element.styles as any)?.descriptionLineHeight || '1.6',
+      color: (currentResponsiveStyles as any).descriptionColor || (element.styles as any)?.descriptionColor,
+    };
+  };
+
+  const containerClass = deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-4xl mx-auto';
+  const flexDirection = imagePosition === 'top' || imagePosition === 'bottom' ? 'flex-col' : 
+                       deviceType === 'mobile' ? 'flex-col' : 'flex-row';
+  const imageOrder = imagePosition === 'right' || imagePosition === 'bottom' ? 'order-2' : 'order-1';
+  const contentOrder = imagePosition === 'right' || imagePosition === 'bottom' ? 'order-1' : 'order-2';
+
+  return (
+    <div 
+      className={`${containerClass} p-6 ${flexDirection === 'flex-col' ? 'space-y-6' : 'space-x-6'} flex ${flexDirection}`}
+      style={inlineStyles}
+    >
+      {imageUrl && (
+        <div className={`${imageOrder} ${flexDirection === 'flex-col' ? 'w-full' : `w-${imageWidth}%`} flex-shrink-0`}>
+          <img 
+            src={imageUrl} 
+            alt={altText}
+            className="w-full h-auto object-cover rounded-lg"
+          />
+        </div>
+      )}
+      
+      <div className={`${contentOrder} flex-1 space-y-4`}>
+        <h3 className="text-2xl font-bold" style={getHeadlineStyles()}>
+          <InlineEditor
+            value={headline}
+            onChange={(value) => handleUpdate('headline', value)}
+            placeholder="Enter headline..."
+            disabled={!isEditing}
+          />
+        </h3>
+        
+        <p className="text-muted-foreground" style={getDescriptionStyles()}>
+          <InlineEditor
+            value={description}
+            onChange={(value) => handleUpdate('description', value)}
+            placeholder="Enter description..."
+            multiline
+            disabled={!isEditing}
+          />
+        </p>
+      </div>
+    </div>
+  );
+};
+
 // Register Media Elements
 export const registerMediaElements = () => {
   elementRegistry.register({
@@ -362,5 +464,22 @@ export const registerMediaElements = () => {
       ]
     },
     description: 'Multiple videos with playlist'
+  });
+
+  elementRegistry.register({
+    id: 'image-feature',
+    name: 'Image Feature',
+    category: 'media',
+    icon: Image,
+    component: ImageFeatureElement,
+    defaultContent: {
+      headline: 'Amazing Feature',
+      description: 'This feature will help you achieve your goals faster and more efficiently.',
+      imageUrl: 'https://images.unsplash.com/photo-1551434678-e076c223a692?w=500&h=300&fit=crop',
+      altText: 'Feature image',
+      imagePosition: 'left',
+      imageWidth: 50
+    },
+    description: 'Feature card with image and text'
   });
 };
