@@ -11,8 +11,8 @@ export interface VideoInfo {
 export function parseVideoUrl(url: string): VideoInfo {
   if (!url) return { type: 'unknown' };
 
-  // YouTube patterns
-  const youtubeRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+  // YouTube patterns - includes support for Shorts
+  const youtubeRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|shorts\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
   const youtubeMatch = url.match(youtubeRegex);
   if (youtubeMatch) {
     const id = youtubeMatch[1];

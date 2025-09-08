@@ -63,7 +63,7 @@ export const VideoContentProperties: React.FC<VideoContentPropertiesProps> = ({
             placeholder="https://www.youtube.com/watch?v=... or https://vimeo.com/... or https://example.com/video.mp4"
           />
           <p className="text-xs text-muted-foreground mt-1">
-            Supports YouTube, Vimeo, Wistia URLs, or direct MP4 links
+            Supports YouTube (including Shorts), Vimeo, Wistia URLs, or direct MP4 links
           </p>
         </div>
       )}
