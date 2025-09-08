@@ -85,6 +85,42 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
     }
   }
 
+  // Apply Custom CSS to document head (prevents visible text in builder)
+  React.useEffect(() => {
+    const customCSS = (element as any).content?.customCSS;
+    if (!customCSS || !element.anchor) return;
+
+    const styleId = `custom-css-${element.id}`;
+    let styleElement = document.getElementById(styleId) as HTMLStyleElement;
+    
+    // Create or update style element in document head
+    if (!styleElement) {
+      styleElement = document.createElement('style');
+      styleElement.id = styleId;
+      document.head.appendChild(styleElement);
+    }
+    
+    // Apply CSS with proper scoping to element anchor
+    styleElement.textContent = `
+      /* Custom CSS for element ${element.id} */
+      #${element.anchor} { 
+        ${String(customCSS)} 
+      }
+      /* High specificity selectors for better override capability */
+      #${element.anchor} * { 
+        ${String(customCSS).replace(/([^{]+){([^}]+)}/g, '$2')} 
+      }
+    `;
+    
+    // Cleanup function
+    return () => {
+      const existingStyle = document.getElementById(styleId);
+      if (existingStyle) {
+        existingStyle.remove();
+      }
+    };
+  }, [(element as any).content?.customCSS, element.anchor, element.id]);
+
   // Apply Custom JS for this element (scoped to its DOM node by anchor)
   React.useEffect(() => {
     const code = (element as any).content?.customJS;
@@ -236,19 +272,6 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
           </div>
         </div>
       )}
-      {/* Custom CSS injection targeting the real DOM id (anchor) */}
-      {((element as any).content?.customCSS) ? (
-        <style>{`
-          /* Custom CSS for element ${element.id} */
-          #${element.anchor} { 
-            ${String((element as any).content?.customCSS)} 
-          }
-          /* High specificity selectors for better override capability */
-          #${element.anchor} * { 
-            ${String((element as any).content?.customCSS).replace(/([^{]+){([^}]+)}/g, '$2')} 
-          }
-        `}</style>
-      ) : null}
 
       <ElementComponent
         element={element}

@@ -54,6 +54,42 @@ export const OptimizedElementRenderer = memo<OptimizedElementRendererProps>(({
     [onUpdate, element.id]
   );
 
+  // Apply Custom CSS to document head (prevents visible text in builder)
+  React.useEffect(() => {
+    const customCSS = (element as any).content?.customCSS;
+    if (!customCSS || !element.anchor) return;
+
+    const styleId = `custom-css-${element.id}`;
+    let styleElement = document.getElementById(styleId) as HTMLStyleElement;
+    
+    // Create or update style element in document head
+    if (!styleElement) {
+      styleElement = document.createElement('style');
+      styleElement.id = styleId;
+      document.head.appendChild(styleElement);
+    }
+    
+    // Apply CSS with proper scoping to element anchor
+    styleElement.textContent = `
+      /* Custom CSS for element ${element.id} */
+      #${element.anchor} { 
+        ${String(customCSS)} 
+      }
+      /* High specificity selectors for better override capability */
+      #${element.anchor} * { 
+        ${String(customCSS).replace(/([^{]+){([^}]+)}/g, '$2')} 
+      }
+    `;
+    
+    // Cleanup function
+    return () => {
+      const existingStyle = document.getElementById(styleId);
+      if (existingStyle) {
+        existingStyle.remove();
+      }
+    };
+  }, [(element as any).content?.customCSS, element.anchor, element.id]);
+
   return (
     <>
       <style>{responsiveCSS}</style>
