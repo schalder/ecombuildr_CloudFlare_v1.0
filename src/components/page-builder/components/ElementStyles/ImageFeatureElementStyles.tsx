@@ -28,7 +28,7 @@ export const ImageFeatureElementStyles: React.FC<ImageFeatureElementStylesProps>
   // Collapsible state
   const [headlineTypographyOpen, setHeadlineTypographyOpen] = React.useState(true);
   const [descriptionTypographyOpen, setDescriptionTypographyOpen] = React.useState(false);
-  
+  const [elementAlignmentOpen, setElementAlignmentOpen] = React.useState(false);
   const [backgroundOpen, setBackgroundOpen] = React.useState(false);
   const [borderOpen, setBorderOpen] = React.useState(false);
   const [spacingOpen, setSpacingOpen] = React.useState(false);
@@ -233,6 +233,41 @@ export const ImageFeatureElementStyles: React.FC<ImageFeatureElementStylesProps>
         defaultFontSize="16px"
       />
 
+      {/* Element Alignment */}
+      <Collapsible open={elementAlignmentOpen} onOpenChange={setElementAlignmentOpen}>
+        <CollapsibleTrigger className="flex items-center justify-between w-full p-2 hover:bg-muted/50 rounded">
+          <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Element Alignment</h4>
+          <ChevronDown className={`h-4 w-4 transition-transform ${elementAlignmentOpen ? 'rotate-180' : ''}`} />
+        </CollapsibleTrigger>
+        <CollapsibleContent className="space-y-3 pt-2">
+          <div>
+            <Label className="text-xs">Content Alignment</Label>
+            <div className="flex space-x-1">
+              <Button
+                size="sm"
+                variant={(currentStyles.textAlign || element.styles?.textAlign) === 'left' ? 'default' : 'outline'}
+                onClick={() => handleResponsiveUpdate('textAlign', 'left')}
+              >
+                <AlignLeft className="h-4 w-4" />
+              </Button>
+              <Button
+                size="sm"
+                variant={(currentStyles.textAlign || element.styles?.textAlign) === 'center' ? 'default' : 'outline'}
+                onClick={() => handleResponsiveUpdate('textAlign', 'center')}
+              >
+                <AlignCenter className="h-4 w-4" />
+              </Button>
+              <Button
+                size="sm"
+                variant={(currentStyles.textAlign || element.styles?.textAlign) === 'right' ? 'default' : 'outline'}
+                onClick={() => handleResponsiveUpdate('textAlign', 'right')}
+              >
+                <AlignRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
 
       {/* Background */}
       <Collapsible open={backgroundOpen} onOpenChange={setBackgroundOpen}>
