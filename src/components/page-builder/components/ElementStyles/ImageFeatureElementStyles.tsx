@@ -116,18 +116,30 @@ export const ImageFeatureElementStyles: React.FC<ImageFeatureElementStylesProps>
             const currentValue = value || defaultFontSize;
             const numericValue = parseInt(currentValue.toString().replace(/\D/g, '')) || parseInt(defaultFontSize.replace(/\D/g, ''));
             
+            const handleChange = (newValue: number) => {
+              onChange(`${newValue}px`);
+            };
+            
             return (
               <div className="flex items-center space-x-2">
+                <Slider
+                  value={[numericValue]}
+                  onValueChange={(val) => handleChange(val[0])}
+                  max={72}
+                  min={8}
+                  step={1}
+                  className="flex-1"
+                />
                 <Input
                   type="number"
                   value={numericValue}
                   onChange={(e) => {
-                    const val = parseInt(e.target.value) || 0;
-                    onChange(`${val}px`);
+                    const val = parseInt(e.target.value) || 8;
+                    handleChange(Math.max(8, Math.min(72, val)));
                   }}
                   min={8}
                   max={72}
-                  className="w-20 h-8"
+                  className="w-16 h-8"
                 />
                 <span className="text-xs text-muted-foreground">px</span>
               </div>
@@ -182,19 +194,31 @@ export const ImageFeatureElementStyles: React.FC<ImageFeatureElementStylesProps>
             const currentValue = value || defaultLineHeight;
             const numericValue = parseFloat(currentValue.toString()) || parseFloat(defaultLineHeight);
             
+            const handleChange = (newValue: number) => {
+              onChange(newValue.toString());
+            };
+            
             return (
               <div className="flex items-center space-x-2">
+                <Slider
+                  value={[numericValue]}
+                  onValueChange={(val) => handleChange(val[0])}
+                  max={3}
+                  min={1}
+                  step={0.1}
+                  className="flex-1"
+                />
                 <Input
                   type="number"
                   value={numericValue}
                   onChange={(e) => {
                     const val = parseFloat(e.target.value) || 1;
-                    onChange(val.toString());
+                    handleChange(Math.max(1, Math.min(3, val)));
                   }}
                   min={1}
                   max={3}
                   step={0.1}
-                  className="w-20 h-8"
+                  className="w-16 h-8"
                 />
                 <span className="text-xs text-muted-foreground">ratio</span>
               </div>
