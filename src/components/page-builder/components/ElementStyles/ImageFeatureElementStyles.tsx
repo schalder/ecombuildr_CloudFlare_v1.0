@@ -1,5 +1,5 @@
 import React from 'react';
-import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -7,8 +7,6 @@ import { Monitor, Smartphone, ChevronDown, AlignLeft, AlignCenter, AlignRight } 
 import { PageBuilderElement } from '../../types';
 import { ColorPicker } from '@/components/ui/color-picker';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
-import { SpacingSliders } from './_shared/SpacingSliders';
 import { ensureGoogleFontLoaded } from '@/hooks/useGoogleFontLoader';
 import { ResponsiveStyleControl, ResponsiveTabs } from './_shared/ResponsiveStyleControl';
 import { useDevicePreview } from '../../contexts/DevicePreviewContext';
@@ -22,21 +20,15 @@ export const ImageFeatureElementStyles: React.FC<ImageFeatureElementStylesProps>
   element,
   onStyleUpdate,
 }) => {
-  // Use global device state instead of local state
   const { deviceType: responsiveTab, setDeviceType: setResponsiveTab } = useDevicePreview();
   
   // Collapsible state
   const [headlineTypographyOpen, setHeadlineTypographyOpen] = React.useState(true);
   const [descriptionTypographyOpen, setDescriptionTypographyOpen] = React.useState(false);
-  const [elementAlignmentOpen, setElementAlignmentOpen] = React.useState(false);
+  const [alignmentOpen, setAlignmentOpen] = React.useState(false);
   const [backgroundOpen, setBackgroundOpen] = React.useState(false);
   const [borderOpen, setBorderOpen] = React.useState(false);
   const [spacingOpen, setSpacingOpen] = React.useState(false);
-  
-  const parsePixelValue = (value: string | undefined): number => {
-    if (!value) return 0;
-    return parseInt(value.replace('px', '')) || 0;
-  };
 
   const fontOptions = React.useMemo(() => {
     const base = [
@@ -56,196 +48,210 @@ export const ImageFeatureElementStyles: React.FC<ImageFeatureElementStylesProps>
     return [...base, ...google];
   }, []);
 
-  const TypographyGroup = ({
-    title,
-    prefix,
-    isOpen,
-    setIsOpen,
-    defaultFontSize = '16px'
-  }: {
+  // Typography Group Component
+  const TypographyGroup: React.FC<{
     title: string;
-    prefix: string;
+    fontFamilyProperty: string;
+    fontSizeProperty: string;
+    textAlignProperty: string;
+    lineHeightProperty: string;
+    colorProperty: string;
+    defaultFontSize: string;
+    defaultLineHeight: string;
     isOpen: boolean;
-    setIsOpen: (open: boolean) => void;
-    defaultFontSize?: string;
-  }) => {
-    const fontFamilyProperty = `${prefix}FontFamily`;
-    const fontSizeProperty = `${prefix}FontSize`;
-    const textAlignProperty = `${prefix}TextAlign`;
-    const lineHeightProperty = `${prefix}LineHeight`;
-    const colorProperty = `${prefix}Color`;
+    onToggle: (open: boolean) => void;
+  }> = ({ 
+    title, 
+    fontFamilyProperty, 
+    fontSizeProperty, 
+    textAlignProperty, 
+    lineHeightProperty, 
+    colorProperty,
+    defaultFontSize,
+    defaultLineHeight,
+    isOpen,
+    onToggle
+  }) => (
+    <Collapsible open={isOpen} onOpenChange={onToggle}>
+      <CollapsibleTrigger className="flex items-center justify-between w-full p-2 hover:bg-muted/50 rounded">
+        <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{title}</h4>
+        <ChevronDown className={`h-4 w-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+      </CollapsibleTrigger>
+      <CollapsibleContent className="space-y-3 pt-2">
+        <ResponsiveStyleControl
+          element={element}
+          property={fontFamilyProperty}
+          label="Font Family"
+          deviceType={responsiveTab}
+          fallback=""
+          onStyleUpdate={onStyleUpdate}
+        >
+          {(value, onChange) => (
+            <Select value={fontOptions.find(f => f.value === value)?.value || 'default'} onValueChange={(v) => {
+              const meta = fontOptions.find(f => f.value === v);
+              if (meta && (meta as any).family) ensureGoogleFontLoaded((meta as any).family, (meta as any).weights);
+              onChange(v === 'default' ? '' : v);
+            }}>
+              <SelectTrigger className="h-8 bg-background">
+                <SelectValue placeholder="Default" />
+              </SelectTrigger>
+              <SelectContent>
+                {fontOptions.map((f: any) => (
+                  <SelectItem key={f.label} value={f.value}>{f.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        </ResponsiveStyleControl>
 
-    return (
-      <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-        <CollapsibleTrigger className="flex items-center justify-between w-full p-2 hover:bg-muted/50 rounded">
-          <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{title}</h4>
-          <ChevronDown className={`h-4 w-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-        </CollapsibleTrigger>
-        <CollapsibleContent className="space-y-3 pt-2">
-          <ResponsiveStyleControl
-            element={element}
-            property={fontFamilyProperty}
-            label="Font Family"
-            deviceType={responsiveTab}
-            fallback=""
-            onStyleUpdate={onStyleUpdate}
-          >
-            {(value, onChange) => (
-              <Select value={fontOptions.find(f => f.value === value)?.value || 'default'} onValueChange={(v) => {
-                const meta = fontOptions.find(f => f.value === v);
-                if (meta && (meta as any).family) ensureGoogleFontLoaded((meta as any).family, (meta as any).weights);
-                onChange(v === 'default' ? '' : v);
-              }}>
-                <SelectTrigger className="h-8 bg-background">
-                  <SelectValue placeholder="Default" />
-                </SelectTrigger>
-                <SelectContent>
-                  {fontOptions.map((f: any) => (
-                    <SelectItem key={f.label} value={f.value}>{f.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-          </ResponsiveStyleControl>
-
-          <ResponsiveStyleControl
-            element={element}
-            property={fontSizeProperty}
-            label="Font Size"
-            deviceType={responsiveTab}
-            fallback={defaultFontSize}
-            onStyleUpdate={onStyleUpdate}
-          >
-            {(value, onChange) => (
-              <div className="flex items-center space-x-2">
-                <Slider
-                  value={[parseInt(value.toString().replace(/\D/g, '')) || parseInt(defaultFontSize.replace(/\D/g, ''))]}
-                  onValueChange={(val) => onChange(`${val[0]}px`)}
-                  max={72}
-                  min={8}
-                  step={1}
-                  className="flex-1"
-                />
-                <span className="text-xs text-muted-foreground w-12">
-                  {value}
-                </span>
-              </div>
-            )}
-          </ResponsiveStyleControl>
-
-          <ResponsiveStyleControl
-            element={element}
-            property={textAlignProperty}
-            label="Text Align"
-            deviceType={responsiveTab}
-            fallback="left"
-            onStyleUpdate={onStyleUpdate}
-          >
-            {(value, onChange) => (
-              <div className="flex space-x-1">
-                <Button
-                  size="sm"
-                  variant={value === 'left' ? 'default' : 'outline'}
-                  onClick={() => onChange('left')}
-                >
-                  <AlignLeft className="h-4 w-4" />
-                </Button>
-                <Button
-                  size="sm"
-                  variant={value === 'center' ? 'default' : 'outline'}
-                  onClick={() => onChange('center')}
-                >
-                  <AlignCenter className="h-4 w-4" />
-                </Button>
-                <Button
-                  size="sm"
-                  variant={value === 'right' ? 'default' : 'outline'}
-                  onClick={() => onChange('right')}
-                >
-                  <AlignRight className="h-4 w-4" />
-                </Button>
-              </div>
-            )}
-          </ResponsiveStyleControl>
-
-          <ResponsiveStyleControl
-            element={element}
-            property={lineHeightProperty}
-            label="Line Height"
-            deviceType={responsiveTab}
-            fallback="1.6"
-            onStyleUpdate={onStyleUpdate}
-          >
-            {(value, onChange) => (
-              <div className="flex items-center space-x-2">
-                <Slider
-                  value={[parseFloat(value.toString()) || 1.6]}
-                  onValueChange={(val) => onChange(val[0].toString())}
-                  max={3}
-                  min={1}
-                  step={0.1}
-                  className="flex-1"
-                />
-                <span className="text-xs text-muted-foreground w-12">
-                  {value}
-                </span>
-              </div>
-            )}
-          </ResponsiveStyleControl>
-
-          <ResponsiveStyleControl
-            element={element}
-            property={colorProperty}
-            label="Text Color"
-            deviceType={responsiveTab}
-            fallback=""
-            onStyleUpdate={onStyleUpdate}
-          >
-            {(value, onChange) => (
-              <ColorPicker 
-                color={value}
-                onChange={onChange}
+        <ResponsiveStyleControl
+          element={element}
+          property={fontSizeProperty}
+          label="Font Size"
+          deviceType={responsiveTab}
+          fallback={defaultFontSize}
+          onStyleUpdate={onStyleUpdate}
+        >
+          {(value, onChange) => (
+            <div className="flex items-center space-x-2">
+              <Slider
+                value={[parseInt(value.toString().replace(/\D/g, '')) || parseInt(defaultFontSize.replace(/\D/g, ''))]}
+                onValueChange={(val) => onChange(`${val[0]}px`)}
+                max={72}
+                min={8}
+                step={1}
+                className="flex-1"
               />
-            )}
-          </ResponsiveStyleControl>
-        </CollapsibleContent>
-      </Collapsible>
-    );
-  };
+              <span className="text-xs text-muted-foreground w-12">
+                {value}
+              </span>
+            </div>
+          )}
+        </ResponsiveStyleControl>
+
+        <ResponsiveStyleControl
+          element={element}
+          property={textAlignProperty}
+          label="Text Align"
+          deviceType={responsiveTab}
+          fallback="left"
+          onStyleUpdate={onStyleUpdate}
+        >
+          {(value, onChange) => (
+            <div className="flex space-x-1">
+              <Button
+                size="sm"
+                variant={value === 'left' ? 'default' : 'outline'}
+                onClick={() => onChange('left')}
+              >
+                <AlignLeft className="h-4 w-4" />
+              </Button>
+              <Button
+                size="sm"
+                variant={value === 'center' ? 'default' : 'outline'}
+                onClick={() => onChange('center')}
+              >
+                <AlignCenter className="h-4 w-4" />
+              </Button>
+              <Button
+                size="sm"
+                variant={value === 'right' ? 'default' : 'outline'}
+                onClick={() => onChange('right')}
+              >
+                <AlignRight className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
+        </ResponsiveStyleControl>
+
+        <ResponsiveStyleControl
+          element={element}
+          property={lineHeightProperty}
+          label="Line Height"
+          deviceType={responsiveTab}
+          fallback={defaultLineHeight}
+          onStyleUpdate={onStyleUpdate}
+        >
+          {(value, onChange) => (
+            <div className="flex items-center space-x-2">
+              <Slider
+                value={[parseFloat(value.toString()) || parseFloat(defaultLineHeight)]}
+                onValueChange={(val) => onChange(val[0].toString())}
+                max={3}
+                min={1}
+                step={0.1}
+                className="flex-1"
+              />
+              <span className="text-xs text-muted-foreground w-12">
+                {value}
+              </span>
+            </div>
+          )}
+        </ResponsiveStyleControl>
+
+        <ResponsiveStyleControl
+          element={element}
+          property={colorProperty}
+          label="Text Color"
+          deviceType={responsiveTab}
+          fallback=""
+          onStyleUpdate={onStyleUpdate}
+        >
+          {(value, onChange) => (
+            <ColorPicker 
+              color={value}
+              onChange={onChange}
+            />
+          )}
+        </ResponsiveStyleControl>
+      </CollapsibleContent>
+    </Collapsible>
+  );
 
   return (
     <div className="space-y-4">
       {/* Device Toggle */}
       <ResponsiveTabs activeTab={responsiveTab} onTabChange={setResponsiveTab} />
 
-      {/* Typography Groups */}
+      {/* Headline Typography */}
       <TypographyGroup
         title="Headline Typography"
-        prefix="headline"
-        isOpen={headlineTypographyOpen}
-        setIsOpen={setHeadlineTypographyOpen}
+        fontFamilyProperty="headlineFontFamily"
+        fontSizeProperty="headlineFontSize"
+        textAlignProperty="headlineTextAlign"
+        lineHeightProperty="headlineLineHeight"
+        colorProperty="headlineColor"
         defaultFontSize="24px"
+        defaultLineHeight="1.4"
+        isOpen={headlineTypographyOpen}
+        onToggle={setHeadlineTypographyOpen}
       />
 
+      {/* Description Typography */}
       <TypographyGroup
         title="Description Typography"
-        prefix="description"
-        isOpen={descriptionTypographyOpen}
-        setIsOpen={setDescriptionTypographyOpen}
+        fontFamilyProperty="descriptionFontFamily"
+        fontSizeProperty="descriptionFontSize"
+        textAlignProperty="descriptionTextAlign"
+        lineHeightProperty="descriptionLineHeight"
+        colorProperty="descriptionColor"
         defaultFontSize="16px"
+        defaultLineHeight="1.6"
+        isOpen={descriptionTypographyOpen}
+        onToggle={setDescriptionTypographyOpen}
       />
 
       {/* Element Alignment */}
-      <Collapsible open={elementAlignmentOpen} onOpenChange={setElementAlignmentOpen}>
+      <Collapsible open={alignmentOpen} onOpenChange={setAlignmentOpen}>
         <CollapsibleTrigger className="flex items-center justify-between w-full p-2 hover:bg-muted/50 rounded">
           <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Element Alignment</h4>
-          <ChevronDown className={`h-4 w-4 transition-transform ${elementAlignmentOpen ? 'rotate-180' : ''}`} />
+          <ChevronDown className={`h-4 w-4 transition-transform ${alignmentOpen ? 'rotate-180' : ''}`} />
         </CollapsibleTrigger>
         <CollapsibleContent className="space-y-3 pt-2">
           <ResponsiveStyleControl
             element={element}
             property="textAlign"
-            label="Content Alignment"
+            label="Alignment"
             deviceType={responsiveTab}
             fallback="left"
             onStyleUpdate={onStyleUpdate}
@@ -370,18 +376,155 @@ export const ImageFeatureElementStyles: React.FC<ImageFeatureElementStylesProps>
           <ChevronDown className={`h-4 w-4 transition-transform ${spacingOpen ? 'rotate-180' : ''}`} />
         </CollapsibleTrigger>
         <CollapsibleContent className="space-y-4 pt-2">
-          <SpacingSliders
-            marginTop={element.styles?.marginTop}
-            marginRight={element.styles?.marginRight}
-            marginBottom={element.styles?.marginBottom}
-            marginLeft={element.styles?.marginLeft}
-            paddingTop={element.styles?.paddingTop}
-            paddingRight={element.styles?.paddingRight}
-            paddingBottom={element.styles?.paddingBottom}
-            paddingLeft={element.styles?.paddingLeft}
-            onMarginChange={(property, value) => onStyleUpdate(property, value)}
-            onPaddingChange={(property, value) => onStyleUpdate(property, value)}
-          />
+          <div className="space-y-3">
+            <div className="space-y-2">
+              <h5 className="text-xs font-medium text-muted-foreground">Margin</h5>
+              <div className="grid grid-cols-4 gap-2">
+                <ResponsiveStyleControl
+                  element={element}
+                  property="marginTop"
+                  label="Top"
+                  deviceType={responsiveTab}
+                  fallback=""
+                  onStyleUpdate={onStyleUpdate}
+                >
+                  {(value, onChange) => (
+                    <Input
+                      value={value}
+                      onChange={(e) => onChange(e.target.value)}
+                      placeholder="0px"
+                      className="h-8"
+                    />
+                  )}
+                </ResponsiveStyleControl>
+                <ResponsiveStyleControl
+                  element={element}
+                  property="marginRight"
+                  label="Right"
+                  deviceType={responsiveTab}
+                  fallback=""
+                  onStyleUpdate={onStyleUpdate}
+                >
+                  {(value, onChange) => (
+                    <Input
+                      value={value}
+                      onChange={(e) => onChange(e.target.value)}
+                      placeholder="0px"
+                      className="h-8"
+                    />
+                  )}
+                </ResponsiveStyleControl>
+                <ResponsiveStyleControl
+                  element={element}
+                  property="marginBottom"
+                  label="Bottom"
+                  deviceType={responsiveTab}
+                  fallback=""
+                  onStyleUpdate={onStyleUpdate}
+                >
+                  {(value, onChange) => (
+                    <Input
+                      value={value}
+                      onChange={(e) => onChange(e.target.value)}
+                      placeholder="0px"
+                      className="h-8"
+                    />
+                  )}
+                </ResponsiveStyleControl>
+                <ResponsiveStyleControl
+                  element={element}
+                  property="marginLeft"
+                  label="Left"
+                  deviceType={responsiveTab}
+                  fallback=""
+                  onStyleUpdate={onStyleUpdate}
+                >
+                  {(value, onChange) => (
+                    <Input
+                      value={value}
+                      onChange={(e) => onChange(e.target.value)}
+                      placeholder="0px"
+                      className="h-8"
+                    />
+                  )}
+                </ResponsiveStyleControl>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <h5 className="text-xs font-medium text-muted-foreground">Padding</h5>
+              <div className="grid grid-cols-4 gap-2">
+                <ResponsiveStyleControl
+                  element={element}
+                  property="paddingTop"
+                  label="Top"
+                  deviceType={responsiveTab}
+                  fallback=""
+                  onStyleUpdate={onStyleUpdate}
+                >
+                  {(value, onChange) => (
+                    <Input
+                      value={value}
+                      onChange={(e) => onChange(e.target.value)}
+                      placeholder="0px"
+                      className="h-8"
+                    />
+                  )}
+                </ResponsiveStyleControl>
+                <ResponsiveStyleControl
+                  element={element}
+                  property="paddingRight"
+                  label="Right"
+                  deviceType={responsiveTab}
+                  fallback=""
+                  onStyleUpdate={onStyleUpdate}
+                >
+                  {(value, onChange) => (
+                    <Input
+                      value={value}
+                      onChange={(e) => onChange(e.target.value)}
+                      placeholder="0px"
+                      className="h-8"
+                    />
+                  )}
+                </ResponsiveStyleControl>
+                <ResponsiveStyleControl
+                  element={element}
+                  property="paddingBottom"
+                  label="Bottom"
+                  deviceType={responsiveTab}
+                  fallback=""
+                  onStyleUpdate={onStyleUpdate}
+                >
+                  {(value, onChange) => (
+                    <Input
+                      value={value}
+                      onChange={(e) => onChange(e.target.value)}
+                      placeholder="0px"
+                      className="h-8"
+                    />
+                  )}
+                </ResponsiveStyleControl>
+                <ResponsiveStyleControl
+                  element={element}
+                  property="paddingLeft"
+                  label="Left"
+                  deviceType={responsiveTab}
+                  fallback=""
+                  onStyleUpdate={onStyleUpdate}
+                >
+                  {(value, onChange) => (
+                    <Input
+                      value={value}
+                      onChange={(e) => onChange(e.target.value)}
+                      placeholder="0px"
+                      className="h-8"
+                    />
+                  )}
+                </ResponsiveStyleControl>
+              </div>
+            </div>
+          </div>
         </CollapsibleContent>
       </Collapsible>
     </div>
