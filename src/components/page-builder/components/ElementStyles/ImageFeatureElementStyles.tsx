@@ -115,7 +115,7 @@ export const ImageFeatureElementStyles: React.FC<ImageFeatureElementStylesProps>
           {(value, onChange) => (
             <div className="flex items-center space-x-2">
               <Slider
-                value={[parseInt(value.toString().replace(/\D/g, '')) || parseInt(defaultFontSize.replace(/\D/g, ''))]}
+                value={[parseInt(value?.toString().replace(/\D/g, '')) || parseInt(defaultFontSize.replace(/\D/g, ''))]}
                 onValueChange={(val) => onChange(`${val[0]}px`)}
                 max={72}
                 min={8}
@@ -123,7 +123,7 @@ export const ImageFeatureElementStyles: React.FC<ImageFeatureElementStylesProps>
                 className="flex-1"
               />
               <span className="text-xs text-muted-foreground w-12">
-                {value}
+                {value || defaultFontSize}
               </span>
             </div>
           )}
@@ -175,7 +175,7 @@ export const ImageFeatureElementStyles: React.FC<ImageFeatureElementStylesProps>
           {(value, onChange) => (
             <div className="flex items-center space-x-2">
               <Slider
-                value={[parseFloat(value.toString()) || parseFloat(defaultLineHeight)]}
+                value={[parseFloat(value?.toString()) || parseFloat(defaultLineHeight)]}
                 onValueChange={(val) => onChange(val[0].toString())}
                 max={3}
                 min={1}
@@ -183,7 +183,7 @@ export const ImageFeatureElementStyles: React.FC<ImageFeatureElementStylesProps>
                 className="flex-1"
               />
               <span className="text-xs text-muted-foreground w-12">
-                {value}
+                {value || defaultLineHeight}
               </span>
             </div>
           )}
