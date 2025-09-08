@@ -83,11 +83,12 @@ export const ContentProperties: React.FC<ContentPropertiesProps> = ({
       <div className="space-y-4">
         <div>
           <Label htmlFor="heading-text">Heading Text</Label>
-          <Input
+          <Textarea
             id="heading-text"
             value={element.content.text || ''}
             onChange={(e) => onUpdate('text', e.target.value)}
             placeholder="Enter heading text..."
+            className="min-h-[100px] resize-y"
           />
         </div>
         <div>
