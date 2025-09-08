@@ -12,7 +12,8 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Save, Package, ChevronUp, ChevronDown } from "lucide-react";
+import { ArrowLeft, Save, Package, ChevronUp, ChevronDown, X, Plus } from "lucide-react";
+import { CompactMediaSelector } from "@/components/page-builder/components/CompactMediaSelector";
 import { toast } from "@/hooks/use-toast";
 import RichTextEditor from "@/components/ui/RichTextEditor";
 import ProductDescriptionBuilderDialog from "@/components/products/ProductDescriptionBuilderDialog";
@@ -948,29 +949,32 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
                 </AccordionTrigger>
                 <AccordionContent>
                   <CardContent className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="images">Product Images</Label>
-                      <div className="space-y-2">
+                    <div className="space-y-4">
+                      <Label>Product Images</Label>
+                      <div className="space-y-4">
                         {formData.images.map((image, index) => (
-                          <div key={index} className="flex gap-2">
-                            <Input
+                          <div key={index} className="border rounded-lg p-4">
+                            <CompactMediaSelector
                               value={image}
-                              onChange={(e) => {
+                              onChange={(newUrl) => {
                                 const newImages = [...formData.images];
-                                newImages[index] = e.target.value;
+                                newImages[index] = newUrl;
                                 setFormData((prev) => ({ ...prev, images: newImages }));
                               }}
-                              placeholder="Image URL"
+                              label={`Image ${index + 1}`}
                             />
                             <Button
                               type="button"
                               variant="outline"
+                              size="sm"
                               onClick={() => {
                                 const newImages = formData.images.filter((_, i) => i !== index);
                                 setFormData((prev) => ({ ...prev, images: newImages }));
                               }}
+                              className="mt-3"
                             >
-                              Remove
+                              <X className="w-4 h-4 mr-2" />
+                              Remove Image
                             </Button>
                           </div>
                         ))}
@@ -980,8 +984,10 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
                           onClick={() => {
                             setFormData((prev) => ({ ...prev, images: [...prev.images, ""] }));
                           }}
+                          className="w-full sm:w-auto"
                         >
-                          Add Image URL
+                          <Plus className="w-4 h-4 mr-2" />
+                          Add Image
                         </Button>
                       </div>
                     </div>

@@ -14,6 +14,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { ArrowLeft, Save, Package, Upload, X, Plus, ChevronUp, ChevronDown } from "lucide-react";
+import { CompactMediaSelector } from "@/components/page-builder/components/CompactMediaSelector";
 import { toast } from "@/hooks/use-toast";
 import RichTextEditor from "@/components/ui/RichTextEditor";
 import ProductDescriptionBuilderDialog from "@/components/products/ProductDescriptionBuilderDialog";
@@ -844,28 +845,30 @@ export default function AddProduct() {
                   <CardContent className="space-y-6">
                     <div className="space-y-4">
                       <Label>Product Images</Label>
-                      <div className="space-y-3">
+                      <div className="space-y-4">
                         {formData.images.map((image, index) => (
-                          <div key={index} className="flex gap-3">
-                            <Input
+                          <div key={index} className="border rounded-lg p-4">
+                            <CompactMediaSelector
                               value={image}
-                              onChange={(e) => {
+                              onChange={(newUrl) => {
                                 const newImages = [...formData.images];
-                                newImages[index] = e.target.value;
+                                newImages[index] = newUrl;
                                 setFormData((prev) => ({ ...prev, images: newImages }));
                               }}
-                              placeholder="Image URL"
-                              className="flex-1"
+                              label={`Image ${index + 1}`}
                             />
                             <Button
                               type="button"
                               variant="outline"
+                              size="sm"
                               onClick={() => {
                                 const newImages = formData.images.filter((_, i) => i !== index);
                                 setFormData((prev) => ({ ...prev, images: newImages }));
                               }}
+                              className="mt-3"
                             >
-                              Remove
+                              <X className="w-4 h-4 mr-2" />
+                              Remove Image
                             </Button>
                           </div>
                         ))}
@@ -878,7 +881,7 @@ export default function AddProduct() {
                           className="w-full sm:w-auto"
                         >
                           <Plus className="w-4 h-4 mr-2" />
-                          Add Image URL
+                          Add Image
                         </Button>
                       </div>
                     </div>
