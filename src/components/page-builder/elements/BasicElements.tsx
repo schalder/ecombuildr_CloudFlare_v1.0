@@ -245,7 +245,7 @@ const ImageElement: React.FC<{
     return (
       <div className="relative">
         {imageLoading && src && (
-          <div className="absolute inset-0 bg-muted animate-pulse rounded-lg flex items-center justify-center">
+          <div className="absolute inset-0 bg-muted animate-pulse rounded-lg flex items-center justify-center pointer-events-none">
             <p className="text-xs text-muted-foreground">Loading...</p>
           </div>
         )}
@@ -253,9 +253,11 @@ const ImageElement: React.FC<{
           src={imageUrl}
           alt={alt || (!src ? 'Placeholder image' : '')}
           style={getImageStyles()}
-          className={`element-${element.id}`}
+          className={`element-${element.id} select-none`}
           onLoad={handleImageLoad}
           onError={handleImageError}
+          draggable={false}
+          onDragStart={(e) => e.preventDefault()}
         />
       </div>
     );
@@ -265,13 +267,15 @@ const ImageElement: React.FC<{
     <a 
       href={linkUrl} 
       target={linkTarget}
-      className="inline-block"
+      className="inline-block select-none"
       onClick={(e) => {
         // In editing mode, prevent navigation but allow selection
         if (isEditing) {
           e.preventDefault();
         }
       }}
+      draggable={false}
+      onDragStart={(e) => e.preventDefault()}
     >
       <ImageComponent />
     </a>
