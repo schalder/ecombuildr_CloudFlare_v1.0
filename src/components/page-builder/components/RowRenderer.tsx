@@ -183,7 +183,8 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
       data-pb-row-id={row.id}
       className={cn(
         'relative group transition-all duration-200',
-        deviceType === 'mobile' ? 'min-h-[40px]' : 'min-h-[80px]',
+        // Only apply min-height to empty rows in edit mode
+        !isPreviewMode && displayedColumns.length === 0 && (deviceType === 'mobile' ? 'min-h-[40px]' : 'min-h-[80px]'),
         // Only apply border/background styles if not in preview mode and no user background
         !isPreviewMode && !(userBackground || userShadow) && 'border border-dashed border-blue-400',
         !isPreviewMode && !(userBackground || userShadow) && isHovered && 'border-blue-500',

@@ -112,7 +112,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
   return (
     <div 
       ref={canvasRef}
-      className="flex-1 p-8 overflow-auto bg-muted/20 canvas-container"
+      className="flex-1 overflow-auto bg-muted/20 canvas-container"
     >
       <div
         ref={drop}
