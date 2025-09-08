@@ -112,21 +112,32 @@ export const ImageFeatureElementStyles: React.FC<ImageFeatureElementStylesProps>
           fallback={defaultFontSize}
           onStyleUpdate={onStyleUpdate}
         >
-          {(value, onChange) => (
-            <div className="flex items-center space-x-2">
-              <Slider
-                value={[parseInt(value?.toString().replace(/\D/g, '')) || parseInt(defaultFontSize.replace(/\D/g, ''))]}
-                onValueChange={(val) => onChange(`${val[0]}px`)}
-                max={72}
-                min={8}
-                step={1}
-                className="flex-1"
-              />
-              <span className="text-xs text-muted-foreground w-12">
-                {value || defaultFontSize}
-              </span>
-            </div>
-          )}
+          {(value, onChange) => {
+            console.log('Font Size Slider - Current value:', value, 'Type:', typeof value);
+            const parsedValue = parseInt(value?.toString().replace(/\D/g, '')) || parseInt(defaultFontSize.replace(/\D/g, ''));
+            console.log('Font Size Slider - Parsed value:', parsedValue);
+            
+            return (
+              <div className="flex items-center space-x-2">
+                <Slider
+                  value={[parsedValue]}
+                  onValueChange={(val) => {
+                    console.log('Font Size Slider - New value:', val[0]);
+                    const newValue = `${val[0]}px`;
+                    console.log('Font Size Slider - Setting:', newValue);
+                    onChange(newValue);
+                  }}
+                  max={72}
+                  min={8}
+                  step={1}
+                  className="flex-1"
+                />
+                <span className="text-xs text-muted-foreground w-12">
+                  {value || defaultFontSize}
+                </span>
+              </div>
+            );
+          }}
         </ResponsiveStyleControl>
 
         <ResponsiveStyleControl
@@ -172,21 +183,32 @@ export const ImageFeatureElementStyles: React.FC<ImageFeatureElementStylesProps>
           fallback={defaultLineHeight}
           onStyleUpdate={onStyleUpdate}
         >
-          {(value, onChange) => (
-            <div className="flex items-center space-x-2">
-              <Slider
-                value={[parseFloat(value?.toString()) || parseFloat(defaultLineHeight)]}
-                onValueChange={(val) => onChange(val[0].toString())}
-                max={3}
-                min={1}
-                step={0.1}
-                className="flex-1"
-              />
-              <span className="text-xs text-muted-foreground w-12">
-                {value || defaultLineHeight}
-              </span>
-            </div>
-          )}
+          {(value, onChange) => {
+            console.log('Line Height Slider - Current value:', value, 'Type:', typeof value);
+            const parsedValue = parseFloat(value?.toString()) || parseFloat(defaultLineHeight);
+            console.log('Line Height Slider - Parsed value:', parsedValue);
+            
+            return (
+              <div className="flex items-center space-x-2">
+                <Slider
+                  value={[parsedValue]}
+                  onValueChange={(val) => {
+                    console.log('Line Height Slider - New value:', val[0]);
+                    const newValue = val[0].toString();
+                    console.log('Line Height Slider - Setting:', newValue);
+                    onChange(newValue);
+                  }}
+                  max={3}
+                  min={1}
+                  step={0.1}
+                  className="flex-1"
+                />
+                <span className="text-xs text-muted-foreground w-12">
+                  {value || defaultLineHeight}
+                </span>
+              </div>
+            );
+          }}
         </ResponsiveStyleControl>
 
         <ResponsiveStyleControl
