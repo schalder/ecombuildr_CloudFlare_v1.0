@@ -30,6 +30,7 @@ import { FunnelStepToolbar } from '@/components/page-builder/components/FunnelSt
 import { FunnelStepProvider } from '@/contexts/FunnelStepContext';
 import { ResponsiveControls } from '@/components/page-builder/components/ResponsiveControls';
 import { getDevicePreviewStyles } from '@/components/page-builder/utils/responsive';
+import { PageSettingsPanel } from '@/components/page-builder/components/PageSettingsPanel';
 
 export default function PageBuilder() {
   const navigate = useNavigate();
@@ -428,6 +429,7 @@ export default function PageBuilder() {
               variant="outline"
               size="sm"
               onClick={() => setShowSettings(!showSettings)}
+              data-settings-trigger
             >
               <Settings className="h-4 w-4" />
             </Button>
@@ -502,302 +504,18 @@ export default function PageBuilder() {
           )}
         </div>
 
-        {/* Settings Sidebar */}
-        {showSettings && (
-          <div className="w-80 border-l bg-card flex flex-col h-full">
-            <div className="p-4 border-b flex items-center justify-between">
-              <h3 className="text-lg font-semibold">Page Settings</h3>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowSettings(false)}
-                className="h-8 w-8 p-0"
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-            <div className="p-6 overflow-y-auto flex-1">
-              
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="title">Page Title</Label>
-                  <Input
-                    id="title"
-                    value={pageData.title}
-                    onChange={(e) => setPageData(prev => ({ ...prev, title: e.target.value }))}
-                    placeholder="Enter page title"
-                  />
-                </div>
+      </div>
 
-                <div>
-                  <Label htmlFor="slug">URL Slug</Label>
-                  <Input
-                    id="slug"
-                    value={pageData.slug}
-                    onChange={(e) => setPageData(prev => ({ ...prev, slug: e.target.value }))}
-                    placeholder="page-url"
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {currentStore?.slug && `Will be available at: /store/${currentStore.slug}/${pageData.slug}`}
-                  </p>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="published">Published</Label>
-                  <Switch
-                    id="published"
-                    checked={pageData.is_published}
-                    onCheckedChange={(checked) => setPageData(prev => ({ ...prev, is_published: checked }))}
-                  />
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="homepage">Set as Homepage</Label>
-                  <Switch
-                    id="homepage"
-                    checked={pageData.is_homepage}
-                    onCheckedChange={(checked) => setPageData(prev => ({ ...prev, is_homepage: checked }))}
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="seo_title">SEO Title</Label>
-                  <Input
-                    id="seo_title"
-                    value={pageData.seo_title}
-                    onChange={(e) => setPageData(prev => ({ ...prev, seo_title: e.target.value }))}
-                    placeholder="SEO optimized title"
-                  />
-                </div>
-
-                 <div>
-                   <Label htmlFor="seo_description">SEO Description</Label>
-                   <Input
-                     id="seo_description"
-                     value={pageData.seo_description}
-                     onChange={(e) => setPageData(prev => ({ ...prev, seo_description: e.target.value }))}
-                     placeholder="SEO meta description"
-                   />
-                 </div>
-
-                 {/* SEO Keywords */}
-                 <SEOKeywordsInput
-                   keywords={pageData.seo_keywords}
-                   onChange={(keywords) => setPageData(prev => ({ ...prev, seo_keywords: keywords }))}
-                 />
-
-                 {/* SEO Author Section */}
-                 <SEOAuthorSection
-                   author={pageData.meta_author}
-                   onChange={(author) => setPageData(prev => ({ ...prev, meta_author: author }))}
-                 />
-
-                 {/* SEO Social Image Section */}
-                 <SEOSocialImageSection
-                   socialImageUrl={pageData.social_image_url}
-                   onChange={(url) => setPageData(prev => ({ ...prev, social_image_url: url }))}
-                 />
-
-                 {/* SEO Advanced Section */}
-                 <SEOAdvancedSection
-                   canonicalUrl={pageData.canonical_url}
-                   metaRobots={pageData.meta_robots}
-                   customMetaTags={pageData.custom_meta_tags}
-                   onCanonicalChange={(url) => setPageData(prev => ({ ...prev, canonical_url: url }))}
-                   onMetaRobotsChange={(robots) => setPageData(prev => ({ ...prev, meta_robots: robots }))}
-                   onCustomMetaTagsChange={(tags) => setPageData(prev => ({ ...prev, custom_meta_tags: tags }))}
-                 />
-
-                 {/* SEO Language Section */}
-                 <SEOLanguageSection
-                   languageCode={pageData.language_code}
-                   onChange={(code) => setPageData(prev => ({ ...prev, language_code: code }))}
-                 />
-
-                 {/* SEO Analysis Section */}
-                 <SEOAnalysisSection
-                   data={pageData}
-                 />
-
-                 {/* Page Background Section */}
-                 <Card className="mt-6">
-                   <CardHeader>
-                     <CardTitle className="text-sm">Page Background</CardTitle>
-                   </CardHeader>
-                   <CardContent className="space-y-4">
-                     <div>
-                       <Label>Background Type</Label>
-                       <RadioGroup
-                         value={builderData.pageStyles?.backgroundType || 'none'}
-                         onValueChange={(value: 'none' | 'color' | 'image') =>
-                           setBuilderData(prev => ({
-                             ...prev,
-                             pageStyles: { ...prev.pageStyles, backgroundType: value }
-                           }))
-                         }
-                         className="flex gap-4 mt-2"
-                       >
-                         <div className="flex items-center space-x-2">
-                           <RadioGroupItem value="none" id="bg-none" />
-                           <Label htmlFor="bg-none">None</Label>
-                         </div>
-                         <div className="flex items-center space-x-2">
-                           <RadioGroupItem value="color" id="bg-color" />
-                           <Label htmlFor="bg-color">Color</Label>
-                         </div>
-                         <div className="flex items-center space-x-2">
-                           <RadioGroupItem value="image" id="bg-image" />
-                           <Label htmlFor="bg-image">Image</Label>
-                         </div>
-                       </RadioGroup>
-                     </div>
-
-                     {builderData.pageStyles?.backgroundType === 'color' && (
-                       <div>
-                         <Label>Background Color</Label>
-                         <ColorPicker
-                           color={builderData.pageStyles?.backgroundColor || ''}
-                           onChange={(color) =>
-                             setBuilderData(prev => ({
-                               ...prev,
-                               pageStyles: { ...prev.pageStyles, backgroundColor: color }
-                             }))
-                           }
-                           label="Background Color"
-                           compact
-                         />
-                       </div>
-                     )}
-
-                     {builderData.pageStyles?.backgroundType === 'image' && (
-                       <div>
-                         <Label>Background Image</Label>
-                         <CompactMediaSelector
-                           value={builderData.pageStyles?.backgroundImage || ''}
-                           onChange={(url) =>
-                             setBuilderData(prev => ({
-                               ...prev,
-                               pageStyles: { ...prev.pageStyles, backgroundImage: url }
-                             }))
-                           }
-                           label="Select background image"
-                         />
-                       </div>
-                     )}
-                   </CardContent>
-                 </Card>
-
-                 {/* Page Spacing Section */}
-                 <Card className="mt-6">
-                   <CardHeader>
-                     <CardTitle className="text-sm">Page Spacing</CardTitle>
-                   </CardHeader>
-                   <CardContent className="space-y-4">
-                     <div className="grid grid-cols-2 gap-3">
-                       <div>
-                         <Label htmlFor="padding-top" className="text-xs">Padding Top</Label>
-                         <Input
-                           id="padding-top"
-                           value={builderData.pageStyles?.paddingTop || '40px'}
-                           onChange={(e) =>
-                             setBuilderData(prev => ({
-                               ...prev,
-                               pageStyles: { ...prev.pageStyles, paddingTop: e.target.value }
-                             }))
-                           }
-                           placeholder="40px"
-                           className="text-xs"
-                         />
-                       </div>
-                       <div>
-                         <Label htmlFor="padding-bottom" className="text-xs">Padding Bottom</Label>
-                         <Input
-                           id="padding-bottom"
-                           value={builderData.pageStyles?.paddingBottom || '40px'}
-                           onChange={(e) =>
-                             setBuilderData(prev => ({
-                               ...prev,
-                               pageStyles: { ...prev.pageStyles, paddingBottom: e.target.value }
-                             }))
-                           }
-                           placeholder="40px"
-                           className="text-xs"
-                         />
-                       </div>
-                     </div>
-
-                     <div className="grid grid-cols-2 gap-3">
-                       <div>
-                         <Label htmlFor="padding-left" className="text-xs">Padding Left</Label>
-                         <Input
-                           id="padding-left"
-                           value={builderData.pageStyles?.paddingLeft || ''}
-                           onChange={(e) =>
-                             setBuilderData(prev => ({
-                               ...prev,
-                               pageStyles: { ...prev.pageStyles, paddingLeft: e.target.value }
-                             }))
-                           }
-                           placeholder="0px"
-                           className="text-xs"
-                         />
-                       </div>
-                       <div>
-                         <Label htmlFor="padding-right" className="text-xs">Padding Right</Label>
-                         <Input
-                           id="padding-right"
-                           value={builderData.pageStyles?.paddingRight || ''}
-                           onChange={(e) =>
-                             setBuilderData(prev => ({
-                               ...prev,
-                               pageStyles: { ...prev.pageStyles, paddingRight: e.target.value }
-                             }))
-                           }
-                           placeholder="0px"
-                           className="text-xs"
-                         />
-                       </div>
-                     </div>
-
-                     <div className="grid grid-cols-2 gap-3">
-                       <div>
-                         <Label htmlFor="margin-left" className="text-xs">Margin Left</Label>
-                         <Input
-                           id="margin-left"
-                           value={builderData.pageStyles?.marginLeft || ''}
-                           onChange={(e) =>
-                             setBuilderData(prev => ({
-                               ...prev,
-                               pageStyles: { ...prev.pageStyles, marginLeft: e.target.value }
-                             }))
-                           }
-                           placeholder="0px"
-                           className="text-xs"
-                         />
-                       </div>
-                       <div>
-                         <Label htmlFor="margin-right" className="text-xs">Margin Right</Label>
-                         <Input
-                           id="margin-right"
-                           value={builderData.pageStyles?.marginRight || ''}
-                           onChange={(e) =>
-                             setBuilderData(prev => ({
-                               ...prev,
-                               pageStyles: { ...prev.pageStyles, marginRight: e.target.value }
-                             }))
-                           }
-                           placeholder="0px"
-                           className="text-xs"
-                         />
-                       </div>
-                     </div>
-                   </CardContent>
-                 </Card>
-               </div>
-             </div>
-            </div>
-          )}
-        </div>
+      {/* Page Settings Panel */}
+      <PageSettingsPanel
+        isOpen={showSettings}
+        onClose={() => setShowSettings(false)}
+        pageData={pageData}
+        setPageData={setPageData}
+        builderData={builderData}
+        setBuilderData={setBuilderData}
+        context={context}
+      />
 
         {/* Hidden Preview for Screenshot Generation - Same approach as AdminTemplateEditor */}
         <div 
