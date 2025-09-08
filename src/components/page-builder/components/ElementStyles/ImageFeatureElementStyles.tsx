@@ -292,14 +292,14 @@ export const ImageFeatureElementStyles: React.FC<ImageFeatureElementStylesProps>
 
       <CollapsibleGroup title="Spacing" isOpen={spacingOpen} onToggle={setSpacingOpen}>
         <SpacingSliders
-          marginTop=""
-          marginRight=""
-          marginBottom=""
-          marginLeft=""
-          paddingTop=""
-          paddingRight=""
-          paddingBottom=""
-          paddingLeft=""
+          marginTop={element.styles?.marginTop}
+          marginRight={element.styles?.marginRight}
+          marginBottom={element.styles?.marginBottom}
+          marginLeft={element.styles?.marginLeft}
+          paddingTop={element.styles?.paddingTop}
+          paddingRight={element.styles?.paddingRight}
+          paddingBottom={element.styles?.paddingBottom}
+          paddingLeft={element.styles?.paddingLeft}
           onMarginChange={(property, value) => onStyleUpdate(property, value)}
           onPaddingChange={(property, value) => onStyleUpdate(property, value)}
         />
