@@ -1606,7 +1606,7 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
 
       <div 
         className={cn(
-          "w-full mx-auto p-4 flex flex-col",
+          "w-full mx-auto px-4 flex flex-col",
           (() => {
             // Get device-aware vertical alignment
             const verticalAlignment = section.styles?.responsive?.[deviceType]?.contentVerticalAlignment || 
