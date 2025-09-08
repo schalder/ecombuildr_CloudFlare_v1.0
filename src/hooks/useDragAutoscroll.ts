@@ -12,7 +12,19 @@ export const useDragAutoscroll = (containerRef: React.RefObject<HTMLElement>) =>
   useEffect(() => {
     if (!isDragging || !containerRef.current) return;
 
-    const container = containerRef.current;
+    // Find the actual scrollable element - for Radix ScrollArea, it's the viewport
+    const findScrollableElement = (element: HTMLElement): HTMLElement => {
+      // Check if it's a Radix ScrollArea viewport
+      const viewport = element.querySelector('[data-radix-scroll-area-viewport]') as HTMLElement;
+      if (viewport) {
+        return viewport;
+      }
+      
+      // Fallback to the container itself
+      return element;
+    };
+
+    const scrollableElement = findScrollableElement(containerRef.current);
     
     const handleWheel = (e: WheelEvent) => {
       if (isDragging) {
@@ -24,8 +36,8 @@ export const useDragAutoscroll = (containerRef: React.RefObject<HTMLElement>) =>
           clearTimeout(scrollTimeoutRef.current);
         }
         
-        // Scroll the container
-        container.scrollBy({
+        // Scroll the scrollable element
+        scrollableElement.scrollBy({
           top: e.deltaY,
           behavior: 'auto'
         });
@@ -40,10 +52,31 @@ export const useDragAutoscroll = (containerRef: React.RefObject<HTMLElement>) =>
       }
     };
 
+    const handleDocumentWheel = (e: WheelEvent) => {
+      if (!isDragging) return;
+      
+      // Check if mouse is over the canvas area
+      const rect = containerRef.current!.getBoundingClientRect();
+      const isOverCanvas = e.clientX >= rect.left && 
+                          e.clientX <= rect.right && 
+                          e.clientY >= rect.top && 
+                          e.clientY <= rect.bottom;
+      
+      if (isOverCanvas) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        scrollableElement.scrollBy({
+          top: e.deltaY,
+          behavior: 'auto'
+        });
+      }
+    };
+
     const handleMouseMove = (e: MouseEvent) => {
       if (!isDragging || isScrollingRef.current) return;
 
-      const rect = container.getBoundingClientRect();
+      const rect = containerRef.current!.getBoundingClientRect();
       const scrollZone = 100; // pixels from edge to trigger scroll
       const scrollSpeed = 5;
       
@@ -51,19 +84,23 @@ export const useDragAutoscroll = (containerRef: React.RefObject<HTMLElement>) =>
       const nearTop = e.clientY - rect.top < scrollZone;
       const nearBottom = rect.bottom - e.clientY < scrollZone;
       
-      if (nearTop && container.scrollTop > 0) {
-        container.scrollBy({ top: -scrollSpeed, behavior: 'auto' });
-      } else if (nearBottom && container.scrollTop < container.scrollHeight - container.clientHeight) {
-        container.scrollBy({ top: scrollSpeed, behavior: 'auto' });
+      if (nearTop && scrollableElement.scrollTop > 0) {
+        scrollableElement.scrollBy({ top: -scrollSpeed, behavior: 'auto' });
+      } else if (nearBottom && scrollableElement.scrollTop < scrollableElement.scrollHeight - scrollableElement.clientHeight) {
+        scrollableElement.scrollBy({ top: scrollSpeed, behavior: 'auto' });
       }
     };
 
     // Add event listeners
-    container.addEventListener('wheel', handleWheel, { passive: false });
+    containerRef.current.addEventListener('wheel', handleWheel, { passive: false });
+    document.addEventListener('wheel', handleDocumentWheel, { passive: false });
     document.addEventListener('mousemove', handleMouseMove);
 
     return () => {
-      container.removeEventListener('wheel', handleWheel);
+      if (containerRef.current) {
+        containerRef.current.removeEventListener('wheel', handleWheel);
+      }
+      document.removeEventListener('wheel', handleDocumentWheel);
       document.removeEventListener('mousemove', handleMouseMove);
       
       if (scrollTimeoutRef.current) {

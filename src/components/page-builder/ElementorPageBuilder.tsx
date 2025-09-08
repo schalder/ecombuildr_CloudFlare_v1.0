@@ -68,6 +68,7 @@ import { RowDropZone } from './components/RowDropZone';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ensureAnchors, buildAnchor } from './utils/anchor';
 import { HoverProvider, useHover, HoverTarget } from './contexts/HoverContext';
+import { useDragAutoscroll } from '@/hooks/useDragAutoscroll';
 
 // Helper function to get responsive grid classes for a row
 const getResponsiveGridClasses = (columnLayout: string, deviceType: 'desktop' | 'tablet' | 'mobile'): string => {
@@ -205,6 +206,10 @@ const ElementorPageBuilderContent: React.FC<ElementorPageBuilderProps> = memo(({
   } | null>(null);
   
   const elementsPanelRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLDivElement>(null);
+  
+  // Initialize autoscroll for drag operations
+  useDragAutoscroll(canvasRef);
 
   // Ensure legacy long anchors are converted after hot reloads too
   React.useEffect(() => {
@@ -1214,7 +1219,7 @@ const ElementorPageBuilderContent: React.FC<ElementorPageBuilderProps> = memo(({
           </div>
 
           {/* Canvas Area */}
-          <ScrollArea scrollbarType="always" className="flex-1 min-h-0 bg-muted/30">
+          <ScrollArea ref={canvasRef} scrollbarType="always" className="flex-1 min-h-0 bg-muted/30">
             <div className="p-8">
               <div style={{ ...getDevicePreviewStyles(), ...getPageStyles() }} className={cn("min-h-full bg-background rounded-lg shadow-sm", deviceType === 'mobile' && "pb-mobile", deviceType === 'tablet' && "pb-tablet")}>
                 {data.sections.length === 0 ? (
