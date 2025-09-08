@@ -36,7 +36,7 @@ export const ImageFeatureElementStyles: React.FC<ImageFeatureElementStylesProps>
 
 
   const fontOptions = React.useMemo(() => [
-    { label: 'Default', value: '' },
+    { label: 'Default', value: 'default' },
     { label: 'System Sans', value: 'Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji"' },
     { label: 'Serif', value: 'Georgia, Times New Roman, Times, serif' },
     { label: 'Monospace', value: 'SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace' },
