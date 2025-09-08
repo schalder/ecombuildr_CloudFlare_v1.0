@@ -214,7 +214,7 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
             <Button
               size="sm"
               variant="ghost"
-              className="h-6 w-6 p-0 hover:bg-secondary-foreground/20 cursor-pointer"
+              className="h-6 w-6 p-0 hover:bg-secondary-foreground/20"
               onClick={handleDuplicateRow}
             >
               <Copy className="h-3 w-3" />
@@ -222,7 +222,7 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
             <Button
               size="sm"
               variant="ghost"
-              className="h-6 w-6 p-0 hover:bg-destructive/20 cursor-pointer"
+              className="h-6 w-6 p-0 hover:bg-destructive/20"
               onClick={handleDeleteRow}
             >
               <Trash2 className="h-3 w-3" />
@@ -230,7 +230,7 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
             <Button
               size="sm"
               variant="ghost"
-              className="h-6 w-6 p-0 hover:bg-secondary-foreground/20 cursor-pointer"
+              className="h-6 w-6 p-0 hover:bg-secondary-foreground/20"
               onClick={(e) => {
                 e.stopPropagation();
                 onAddRowAfter();
