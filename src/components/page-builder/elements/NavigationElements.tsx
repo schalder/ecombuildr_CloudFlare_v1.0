@@ -11,6 +11,7 @@ import { CartDrawer } from '@/components/storefront/CartDrawer';
 import { useCart } from '@/contexts/CartContext';
 import { useStore } from '@/contexts/StoreContext';
 import { useEcomPaths } from '@/lib/pathResolver';
+import { useHeadStyle } from '@/hooks/useHeadStyle';
 
 // Navigation Menu Element Component
 const NavigationMenuElement: React.FC<{
@@ -118,10 +119,12 @@ const NavigationMenuElement: React.FC<{
   const desktopNavClass = deviceType ? (deviceType === 'mobile' ? 'hidden' : 'block') : 'hidden md:block';
   const mobileWrapperClass = deviceType ? (deviceType === 'mobile' ? 'block' : 'hidden') : 'md:hidden';
   const globalCSS = `${generateResponsiveCSS(element.id, element.styles)}${hoverColor ? ` .${uniqueClass}:hover { color: ${hoverColor} !important; }` : ''}${submenuHoverBg ? ` .${uniqueClass}-submenu:hover { background-color: ${submenuHoverBg} !important; }` : ''}${hamburgerIconHoverColor ? ` .${uniqueClass}-hamburger:hover svg { color: ${hamburgerIconHoverColor} !important; }` : ''}`;
+  
+  // Inject navigation CSS into document head
+  useHeadStyle(`navigation-css-${element.id}`, globalCSS);
+  
   return (
-    <>
-      <style>{globalCSS}</style>
-      <header
+    <header
         className={[`element-${element.id}`, 'w-full relative z-[60] overflow-visible', !hasUserBackground(element.styles) ? 'bg-background' : ''].join(' ').trim()}
         style={containerStyles}
       >
@@ -260,7 +263,6 @@ const NavigationMenuElement: React.FC<{
         </div>
         </div>
       </header>
-    </>
   );
 };
 

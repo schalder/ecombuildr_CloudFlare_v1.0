@@ -12,6 +12,7 @@ import { generateResponsiveCSS } from '../utils/responsiveStyles';
 import { getIconByName } from '@/components/icons/icon-sources';
 import { useEcomPaths } from '@/lib/pathResolver';
 import { getEffectiveResponsiveValue } from '../utils/responsiveHelpers';
+import { useHeadStyle } from '@/hooks/useHeadStyle';
 
 // Heading Element
 const HeadingElement: React.FC<{
@@ -46,10 +47,11 @@ const HeadingElement: React.FC<{
 
   const className = [`element-${element.id}`, 'outline-none font-bold block rounded'].join(' ');
 
+  // Inject responsive CSS into document head
+  useHeadStyle(`element-responsive-${element.id}`, generateResponsiveCSS(element.id, element.styles));
+
   return (
-    <>
-      <style>{generateResponsiveCSS(element.id, element.styles)}</style>
-      <Tag style={cleanStyles} className={className}>
+    <Tag style={cleanStyles} className={className}>
         {isEditing ? (
           <InlineRTE
             value={text}
@@ -64,7 +66,6 @@ const HeadingElement: React.FC<{
           <span className="whitespace-pre-wrap" dangerouslySetInnerHTML={{ __html: sanitizeHtml(text, 'heading') }} />
         )}
       </Tag>
-    </>
   );
 };
 
@@ -99,10 +100,11 @@ const ParagraphElement: React.FC<{
 
   const className = [`element-${element.id}`, 'outline-none rounded'].join(' ');
 
+  // Inject responsive CSS into document head
+  useHeadStyle(`element-responsive-${element.id}`, generateResponsiveCSS(element.id, element.styles));
+
   return (
-    <>
-      <style>{generateResponsiveCSS(element.id, element.styles)}</style>
-      <div style={cleanStyles} className={className}>
+    <div style={cleanStyles} className={className}>
         {isEditing ? (
           <InlineRTE
             value={text}
@@ -117,7 +119,6 @@ const ParagraphElement: React.FC<{
           <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(text, 'paragraph') }} />
         )}
       </div>
-    </>
   );
 };
 

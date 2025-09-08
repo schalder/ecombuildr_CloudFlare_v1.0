@@ -29,6 +29,7 @@ import { usePixelContext } from '@/components/pixel/PixelManager';
 import { useChannelContext } from '@/hooks/useChannelContext';
 import { getAvailableShippingOptions, type ShippingOption } from '@/lib/shipping-enhanced';
 import { ShippingOptionsPicker } from '@/components/storefront/ShippingOptionsPicker';
+import { useHeadStyle } from '@/hooks/useHeadStyle';
 
 const CartSummaryElement: React.FC<{ element: PageBuilderElement }> = () => {
   const { items, total, updateQuantity, removeItem } = useCart();
@@ -414,10 +415,12 @@ const CartFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 'des
     return layout;
   }, [(element.styles as any)?.buttonStyles, deviceType]);
   
+  // Inject button styles into document head
+  useHeadStyle(`cart-button-styles-${element.id}`, buttonStylesCSS || '');
+
   if (items.length === 0) {
     return (
       <div className={`cart-element-${element.id}`} style={elementStyles}>
-        {buttonStylesCSS && <style>{buttonStylesCSS}</style>}
         <Card className="max-w-3xl mx-auto">
           <CardHeader>
             <CardTitle 
@@ -466,7 +469,6 @@ const CartFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 'des
   
   return (
     <div className={`cart-element-${element.id}`} style={elementStyles}>
-      {buttonStylesCSS && <style>{buttonStylesCSS}</style>}
       <div className="max-w-4xl mx-auto grid md:grid-cols-3 gap-6">
         <div className="md:col-span-2 space-y-4">
           {items.map((item) => (
@@ -973,10 +975,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
   }
 
   return (
-    <>
-      {/* Responsive styles for the primary button */}
-      <style>{buttonCSS + headerCSS}</style>
-      <div className="max-w-5xl mx-auto" style={{ backgroundColor: backgrounds.containerBg || undefined }}>
+    <div className="max-w-5xl mx-auto" style={{ backgroundColor: backgrounds.containerBg || undefined }}>
         {(sections.info || sections.shipping || sections.payment || sections.summary) && (
           <Card className={formBorderWidth > 0 ? undefined : 'border-0'} style={{ backgroundColor: backgrounds.formBg || undefined, borderColor: (backgrounds as any).formBorderColor || undefined, borderWidth: formBorderWidth || 0 }}>
             <CardContent className="p-4 md:p-6 space-y-6 w-full overflow-x-hidden">
@@ -1125,8 +1124,6 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
           </Card>
         )}
       </div>
-
-    </>
   );
 };
 

@@ -24,6 +24,7 @@ import { usePixelTracking } from '@/hooks/usePixelTracking';
 import { usePixelContext } from '@/components/pixel/PixelManager';
 import { useResolvedWebsiteId } from '@/hooks/useResolvedWebsiteId';
 import { useFunnelStepContext } from '@/contexts/FunnelStepContext';
+import { useHeadStyle } from '@/hooks/useHeadStyle';
 
 const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?: 'desktop' | 'tablet' | 'mobile' }> = ({ element, deviceType = 'desktop' }) => {
   const navigate = useNavigate();
@@ -633,9 +634,7 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
   else if (ship3Count === 2) ship3GridCols = 'grid-cols-1 md:grid-cols-2';
 
   return (
-    <>
-      <style>{buttonCSS + headerCSS}</style>
-      <div className="max-w-5xl mx-auto" style={{ backgroundColor: (backgrounds as any).containerBg || undefined }}>
+    <div className="max-w-5xl mx-auto" style={{ backgroundColor: (backgrounds as any).containerBg || undefined }}>
         <Card className={formBorderWidth > 0 ? undefined : 'border-0'} style={{ backgroundColor: (backgrounds as any).formBg || undefined, borderColor: (backgrounds as any).formBorderColor || undefined, borderWidth: formBorderWidth || 0 }}>
           <CardContent className="p-4 md:p-6 space-y-6 w-full overflow-x-hidden" dir="auto">
             {/* Product chooser */}
@@ -933,7 +932,6 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
           </CardContent>
         </Card>
       </div>
-    </>
   );
 };
 

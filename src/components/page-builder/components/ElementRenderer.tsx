@@ -101,13 +101,14 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
     }
     
     // Apply CSS with proper scoping to element anchor
+    // Use highly specific selectors and exclude internal elements like style and script tags
     styleElement.textContent = `
       /* Custom CSS for element ${element.id} */
       #${element.anchor} { 
         ${String(customCSS)} 
       }
-      /* High specificity selectors for better override capability */
-      #${element.anchor} * { 
+      /* High specificity selectors for better override capability, excluding internal elements */
+      #${element.anchor} *:not(style):not(script) { 
         ${String(customCSS).replace(/([^{]+){([^}]+)}/g, '$2')} 
       }
     `;

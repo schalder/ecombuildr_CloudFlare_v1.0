@@ -3,6 +3,7 @@ import { Bold, Italic, Underline, Strikethrough, Link as LinkIcon } from 'lucide
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { ColorPicker } from '@/components/ui/color-picker';
+import { useHeadStyle } from '@/hooks/useHeadStyle';
 
 export interface InlineRTEProps {
   value: string;
@@ -90,6 +91,15 @@ export const InlineRTE: React.FC<InlineRTEProps> = ({ value, onChange, placehold
   const toolbarRef = useRef<HTMLDivElement>(null);
   
   const keepOpenRef = useRef(false);
+
+  // Inject placeholder CSS into document head to prevent visibility issues
+  useHeadStyle('inline-rte-placeholder', `
+    [contenteditable="true"][data-placeholder]:empty:before {
+      content: attr(data-placeholder);
+      color: hsl(var(--muted-foreground));
+      pointer-events: none;
+    }
+  `);
   
 
   // Keep editor content in sync
@@ -351,16 +361,6 @@ export const InlineRTE: React.FC<InlineRTEProps> = ({ value, onChange, placehold
         onInput={onInput}
         onKeyDown={onKeyDown}
       />
-      {/* Placeholder style */}
-      <style>
-        {`
-          [contenteditable="true"][data-placeholder]:empty:before {
-            content: attr(data-placeholder);
-            color: hsl(var(--muted-foreground));
-            pointer-events: none;
-          }
-        `}
-      </style>
     </div>
   );
 };

@@ -3,6 +3,7 @@ import { PageBuilderElement } from '../types';
 import { elementRegistry } from '../elements';
 import { renderElementStyles } from '../utils/styleRenderer';
 import { generateResponsiveCSS } from '../utils/responsiveStyles';
+import { useHeadStyle } from '@/hooks/useHeadStyle';
 
 interface OptimizedElementRendererProps {
   element: PageBuilderElement;
@@ -41,6 +42,9 @@ export const OptimizedElementRenderer = memo<OptimizedElementRendererProps>(({
     [element.id, element.styles]
   );
 
+  // Inject responsive CSS into document head
+  useHeadStyle(`responsive-css-${element.id}`, responsiveCSS);
+
   if (!elementDef) {
     console.warn(`Element type "${element.type}" not found in registry`);
     return null;
@@ -70,13 +74,14 @@ export const OptimizedElementRenderer = memo<OptimizedElementRendererProps>(({
     }
     
     // Apply CSS with proper scoping to element anchor
+    // Use highly specific selectors and exclude internal elements like style and script tags
     styleElement.textContent = `
       /* Custom CSS for element ${element.id} */
       #${element.anchor} { 
         ${String(customCSS)} 
       }
-      /* High specificity selectors for better override capability */
-      #${element.anchor} * { 
+      /* High specificity selectors for better override capability, excluding internal elements */
+      #${element.anchor} *:not(style):not(script) { 
         ${String(customCSS).replace(/([^{]+){([^}]+)}/g, '$2')} 
       }
     `;
@@ -91,15 +96,12 @@ export const OptimizedElementRenderer = memo<OptimizedElementRendererProps>(({
   }, [(element as any).content?.customCSS, element.anchor, element.id]);
 
   return (
-    <>
-      <style>{responsiveCSS}</style>
-      <Component
-        element={element}
-        isEditing={isEditing}
-        onUpdate={handleUpdate}
-        deviceType={deviceType}
-      />
-    </>
+    <Component
+      element={element}
+      isEditing={isEditing}
+      onUpdate={handleUpdate}
+      deviceType={deviceType}
+    />
   );
 });
 
