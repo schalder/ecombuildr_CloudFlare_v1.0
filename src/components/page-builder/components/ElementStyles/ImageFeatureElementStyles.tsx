@@ -25,6 +25,10 @@ export const ImageFeatureElementStyles: React.FC<ImageFeatureElementStylesProps>
   const responsiveStyles = element.styles?.responsive || { desktop: {}, mobile: {} };
   const currentStyles = (responsiveStyles as any)[responsiveTab] || {};
   
+  // Local state for smooth slider interactions
+  const [tempFontSizes, setTempFontSizes] = React.useState<Record<string, number>>({});
+  const [tempLineHeights, setTempLineHeights] = React.useState<Record<string, number>>({});
+  
   // Collapsible state
   const [headlineTypographyOpen, setHeadlineTypographyOpen] = React.useState(true);
   const [descriptionTypographyOpen, setDescriptionTypographyOpen] = React.useState(false);
@@ -126,15 +130,25 @@ export const ImageFeatureElementStyles: React.FC<ImageFeatureElementStylesProps>
             <Label className="text-xs">Font Size</Label>
             <div className="flex items-center space-x-2">
               <Slider
-                value={[parseInt(((currentStyles[fontSizeProperty] || element.styles?.[fontSizeProperty] || defaultFontSize).toString()).replace(/\D/g, ''))]}
-                onValueChange={(value) => handleResponsiveUpdate(fontSizeProperty, `${value[0]}px`)}
+                value={[tempFontSizes[fontSizeProperty] ?? parseInt(((currentStyles[fontSizeProperty] || element.styles?.[fontSizeProperty] || defaultFontSize).toString()).replace(/\D/g, ''))]}
+                onValueChange={(value) => {
+                  setTempFontSizes(prev => ({ ...prev, [fontSizeProperty]: value[0] }));
+                }}
+                onValueCommit={(value) => {
+                  handleResponsiveUpdate(fontSizeProperty, `${value[0]}px`);
+                  setTempFontSizes(prev => {
+                    const updated = { ...prev };
+                    delete updated[fontSizeProperty];
+                    return updated;
+                  });
+                }}
                 max={72}
                 min={8}
                 step={1}
                 className="flex-1"
               />
               <span className="text-xs text-muted-foreground w-12">
-                {(currentStyles[fontSizeProperty] || element.styles?.[fontSizeProperty] || defaultFontSize) as string}
+                {tempFontSizes[fontSizeProperty] ? `${tempFontSizes[fontSizeProperty]}px` : (currentStyles[fontSizeProperty] || element.styles?.[fontSizeProperty] || defaultFontSize) as string}
               </span>
             </div>
           </div>
@@ -170,15 +184,25 @@ export const ImageFeatureElementStyles: React.FC<ImageFeatureElementStylesProps>
             <Label className="text-xs">Line Height</Label>
             <div className="flex items-center space-x-2">
               <Slider
-                value={[parseFloat(((currentStyles[lineHeightProperty] ?? element.styles?.[lineHeightProperty] ?? '1.6').toString()))]}
-                onValueChange={(value) => handleResponsiveUpdate(lineHeightProperty, value[0].toString())}
+                value={[tempLineHeights[lineHeightProperty] ?? parseFloat(((currentStyles[lineHeightProperty] ?? element.styles?.[lineHeightProperty] ?? '1.6').toString()))]}
+                onValueChange={(value) => {
+                  setTempLineHeights(prev => ({ ...prev, [lineHeightProperty]: value[0] }));
+                }}
+                onValueCommit={(value) => {
+                  handleResponsiveUpdate(lineHeightProperty, value[0].toString());
+                  setTempLineHeights(prev => {
+                    const updated = { ...prev };
+                    delete updated[lineHeightProperty];
+                    return updated;
+                  });
+                }}
                 max={3}
                 min={1}
                 step={0.1}
                 className="flex-1"
               />
               <span className="text-xs text-muted-foreground w-12">
-                {(currentStyles[lineHeightProperty] || element.styles?.[lineHeightProperty] || '1.6') as string}
+                {tempLineHeights[lineHeightProperty] ? tempLineHeights[lineHeightProperty].toFixed(1) : (currentStyles[lineHeightProperty] || element.styles?.[lineHeightProperty] || '1.6') as string}
               </span>
             </div>
           </div>
