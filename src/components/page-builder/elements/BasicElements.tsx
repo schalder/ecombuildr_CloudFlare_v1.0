@@ -266,6 +266,12 @@ const ImageElement: React.FC<{
       href={linkUrl} 
       target={linkTarget}
       className="inline-block"
+      onClick={(e) => {
+        // In editing mode, prevent navigation but allow selection
+        if (isEditing) {
+          e.preventDefault();
+        }
+      }}
     >
       <ImageComponent />
     </a>
@@ -279,6 +285,12 @@ const ImageElement: React.FC<{
       <figure 
         className="w-full"
         style={getContainerStyles()}
+        onClick={(e) => {
+          // Allow event to bubble up for element selection in editing mode
+          if (isEditing) {
+            // Don't stop propagation to allow ElementWrapper to handle selection
+          }
+        }}
       >
         {imageContent}
         {caption && (
