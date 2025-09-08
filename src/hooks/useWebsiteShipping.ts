@@ -3,7 +3,32 @@ import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useStore } from '@/contexts/StoreContext';
 import { useWebsiteContext } from '@/contexts/WebsiteContext';
-import type { ShippingSettings } from '@/lib/shipping';
+
+// Define minimal shipping settings type to avoid circular dependency
+type ShippingSettings = {
+  enabled: boolean;
+  country?: string;
+  restOfCountryFee: number;
+  restOfCountryLabel?: string;
+  cityRules: Array<{
+    city: string;
+    fee: number;
+    label?: string;
+  }>;
+  areaRules?: Array<{
+    area: string;
+    fee: number;
+    label?: string;
+  }>;
+  showOptionsAtCheckout?: boolean;
+  weightTiers?: Array<{
+    maxWeight: number;
+    fee: number;
+    label?: string;
+  }>;
+  freeShippingThreshold?: number;
+  freeShippingMinWeight?: number;
+};
 
 // Resolve website-level shipping settings in a route-agnostic, domain-aware way.
 // Priority:
@@ -19,7 +44,7 @@ export function useWebsiteShipping() {
     funnelId?: string;
   }>();
   const { websiteId: contextWebsiteId, websiteSlug: contextWebsiteSlug } = useWebsiteContext();
-  const { store, loadStore, loadStoreById } = useStore();
+  const { store } = useStore();
   const [websiteShipping, setWebsiteShipping] = useState<ShippingSettings | undefined>(undefined);
   
   // Priority: Context -> URL params -> hostname
@@ -29,7 +54,6 @@ export function useWebsiteShipping() {
   useEffect(() => {
     (async () => {
       try {
-        
         // 1) Explicit websiteId (context or param)
         if (websiteId) {
           const { data } = await supabase
@@ -37,10 +61,8 @@ export function useWebsiteShipping() {
             .select('store_id, settings')
             .eq('id', websiteId)
             .maybeSingle();
-          if (data?.store_id) await loadStoreById(data.store_id);
           const ship = (data as any)?.settings?.shipping;
           if (ship) {
-            
             setWebsiteShipping(ship as ShippingSettings);
           }
           return;
@@ -54,10 +76,8 @@ export function useWebsiteShipping() {
             .eq('slug', websiteSlug)
             .eq('is_active', true)
             .maybeSingle();
-          if (data?.store_id) await loadStoreById(data.store_id);
           const ship = (data as any)?.settings?.shipping;
           if (ship) {
-            
             setWebsiteShipping(ship as ShippingSettings);
           }
           return;
@@ -71,8 +91,6 @@ export function useWebsiteShipping() {
             .eq('id', funnelId)
             .maybeSingle();
           
-          if (data?.store_id) await loadStoreById(data.store_id);
-          
           if (data?.website_id) {
             const { data: websiteData } = await supabase
               .from('websites')
@@ -81,62 +99,90 @@ export function useWebsiteShipping() {
               .maybeSingle();
             const ship = (websiteData as any)?.settings?.shipping;
             if (ship) {
-              
               setWebsiteShipping(ship as ShippingSettings);
             }
           }
           return;
         }
 
-        // 4) Storefront slug route ("/store/:slug")
-        if (slug) {
-          await loadStore(slug);
-          // No website-level config here; fallback handled below
-        }
-
-        // 5) Domain-based resolution (custom domains)
+        // 4) Domain-based resolution (custom domains and legacy domains)
         const host = typeof window !== 'undefined' ? window.location.hostname : '';
         if (host) {
-          // First try domain match  
-          const domainQuery = await (supabase as any)
+          // First try custom_domains table for verified domains
+          const { data: customDomainData } = await supabase
+            .from('custom_domains')
+            .select('store_id')
+            .eq('domain', host)
+            .eq('is_verified', true)
+            .eq('dns_configured', true)
+            .maybeSingle();
+
+          if (customDomainData?.store_id) {
+            // Check for domain connections to find associated website
+            const { data: connectionData } = await supabase
+              .from('domain_connections')
+              .select('content_id, content_type')
+              .eq('store_id', customDomainData.store_id)
+              .eq('content_type', 'website')
+              .maybeSingle();
+
+            if (connectionData?.content_id) {
+              // Get website settings from the connected content
+              const { data: websiteData } = await supabase
+                .from('websites')
+                .select('settings')
+                .eq('id', connectionData.content_id)
+                .eq('is_active', true)
+                .maybeSingle();
+              
+              const ship = (websiteData as any)?.settings?.shipping;
+              if (ship) {
+                console.log('[useWebsiteShipping] Found custom domain website shipping for', host, ship);
+                setWebsiteShipping(ship as ShippingSettings);
+                return;
+              }
+            }
+          }
+
+          // Fallback: try direct website domain fields (legacy approach)
+          const { data: domainData } = await supabase
             .from('websites')
             .select('id, store_id, settings')
             .eq('domain', host)
             .eq('is_active', true)
             .maybeSingle();
           
-          let data = domainQuery.data;
+          let data = domainData;
           
           // If no domain match, try canonical_domain
           if (!data) {
-            const canonicalQuery = await (supabase as any)
+            const { data: canonicalData } = await supabase
               .from('websites')
               .select('id, store_id, settings')
               .eq('canonical_domain', host)
               .eq('is_active', true)
               .maybeSingle();
-            data = canonicalQuery.data;
+            data = canonicalData;
           }
           
-          if (data?.store_id) await loadStoreById(data.store_id);
-          const ship = data?.settings?.shipping;
-          if (ship) {
-            console.log('[useWebsiteShipping] Found domain-based shipping for', host, ship);
-            setWebsiteShipping(ship as ShippingSettings);
+          if (data) {
+            const ship = (data as any)?.settings?.shipping;
+            if (ship) {
+              console.log('[useWebsiteShipping] Found legacy domain-based shipping for', host, ship);
+              setWebsiteShipping(ship as ShippingSettings);
+            }
           }
         }
       } catch (e) {
-        // Silent failure; components will fall back to store-level shipping if available
-        // console.warn('[useWebsiteShipping] resolution error', e);
+        console.warn('[useWebsiteShipping] resolution error', e);
       }
     })();
-  }, [slug, websiteId, websiteSlug, funnelId, loadStore, loadStoreById, contextWebsiteId, contextWebsiteSlug]);
+  }, [slug, websiteId, websiteSlug, funnelId, contextWebsiteId, contextWebsiteSlug]);
 
   // Fallback: use store-level shipping settings if website-level not present
   useEffect(() => {
     if (!websiteShipping && (store as any)?.settings?.shipping) {
       setWebsiteShipping(((store as any).settings.shipping) as ShippingSettings);
-      
     }
   }, [store, websiteShipping]);
 
