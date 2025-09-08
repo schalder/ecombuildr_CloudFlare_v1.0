@@ -7,6 +7,7 @@ import { PageBuilderElement } from '../types';
 import { elementRegistry } from './ElementRegistry';
 import { InlineEditor } from '../components/InlineEditor';
 import { renderElementStyles } from '../utils/styleRenderer';
+import { generateResponsiveCSS } from '../utils/responsiveStyles';
 
 // Image Gallery Element
 const ImageGalleryElement: React.FC<{
@@ -305,6 +306,115 @@ const VideoPlaylistElement: React.FC<{
   );
 };
 
+// Image Feature Element
+const ImageFeatureElement: React.FC<{
+  element: PageBuilderElement;
+  isEditing?: boolean;
+  deviceType?: 'desktop' | 'tablet' | 'mobile';
+  columnCount?: number;
+  onUpdate?: (updates: Partial<PageBuilderElement>) => void;
+}> = ({ element, isEditing, onUpdate, deviceType, columnCount = 1 }) => {
+  const headline = element.content.headline || 'Feature Headline';
+  const description = element.content.description || 'Feature description goes here...';
+  const imageUrl = element.content.imageUrl || 'https://images.unsplash.com/photo-1551434678-e076c223a692?w=500&h=300&fit=crop';
+  const altText = element.content.altText || 'Feature image';
+  const imagePosition = element.content.imagePosition || 'left';
+  const imageWidth = element.content.imageWidth || 50;
+
+  const handleUpdate = (property: string, value: any) => {
+    if (onUpdate) {
+      onUpdate({
+        content: {
+          ...element.content,
+          [property]: value
+        }
+      });
+    }
+  };
+
+  // Generate responsive CSS and get inline styles
+  const responsiveCSS = generateResponsiveCSS(element.id, element.styles);
+  const inlineStyles = renderElementStyles(element, deviceType || 'desktop');
+  
+  // Get responsive styles for current device
+  const responsiveStyles = element.styles?.responsive || { desktop: {}, mobile: {} };
+  const currentStyles = (responsiveStyles as any)[deviceType || 'desktop'] || {};
+
+  // Determine if we should stack on mobile
+  const isMobile = deviceType === 'mobile';
+  const flexDirection = isMobile ? 'flex-col' : (imagePosition === 'right' ? 'flex-row-reverse' : 'flex-row');
+  
+  const imageStyles = {
+    width: isMobile ? '100%' : `${imageWidth}%`,
+    minWidth: isMobile ? 'auto' : '200px',
+    maxWidth: isMobile ? '100%' : '60%'
+  };
+
+  const contentStyles = {
+    width: isMobile ? '100%' : `${100 - imageWidth}%`,
+    flex: isMobile ? 'none' : '1'
+  };
+
+  return (
+    <div
+      className={`relative w-full flex gap-6 items-stretch ${flexDirection} ${isMobile ? 'space-y-4' : ''}`}
+      style={inlineStyles}
+    >
+      <style>{responsiveCSS}</style>
+      
+      {/* Image */}
+      <div className="flex-shrink-0" style={imageStyles}>
+        {imageUrl ? (
+          <img
+            src={imageUrl}
+            alt={altText}
+            className="w-full h-full object-cover rounded-lg"
+            draggable={false}
+            style={{ minHeight: '200px' }}
+          />
+        ) : (
+          <div className="w-full h-48 bg-muted rounded-lg flex items-center justify-center">
+            <Image className="h-12 w-12 text-muted-foreground" />
+          </div>
+        )}
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 flex flex-col justify-center space-y-4" style={contentStyles}>
+        <InlineEditor
+          value={headline}
+          onChange={(value) => handleUpdate('headline', value)}
+          placeholder="Feature Headline"
+          className="text-2xl font-bold"
+          style={{
+            fontSize: currentStyles.headlineFontSize || '24px',
+            color: currentStyles.headlineColor || '#333333',
+            fontFamily: currentStyles.headlineFontFamily || '',
+            textAlign: currentStyles.headlineTextAlign || 'left',
+            lineHeight: currentStyles.headlineLineHeight || '1.4'
+          }}
+          disabled={!isEditing}
+        />
+        
+        <InlineEditor
+          value={description}
+          onChange={(value) => handleUpdate('description', value)}
+          placeholder="Feature description goes here..."
+          className="text-base"
+          style={{
+            fontSize: currentStyles.descriptionFontSize || '16px',
+            color: currentStyles.descriptionColor || '#666666',
+            fontFamily: currentStyles.descriptionFontFamily || '',
+            textAlign: currentStyles.descriptionTextAlign || 'left',
+            lineHeight: currentStyles.descriptionLineHeight || '1.6'
+          }}
+          disabled={!isEditing}
+        />
+      </div>
+    </div>
+  );
+};
+
 // Register Media Elements
 export const registerMediaElements = () => {
   elementRegistry.register({
@@ -362,5 +472,22 @@ export const registerMediaElements = () => {
       ]
     },
     description: 'Multiple videos with playlist'
+  });
+
+  // Image Feature Element
+  elementRegistry.register({
+    id: 'image-feature',
+    name: 'Image Feature',
+    category: 'media',
+    icon: Image,
+    component: ImageFeatureElement,
+    defaultContent: {
+      headline: 'Amazing Feature',
+      description: 'This feature will help you achieve your goals faster and more efficiently.',
+      imageUrl: 'https://images.unsplash.com/photo-1551434678-e076c223a692?w=500&h=300&fit=crop',
+      altText: 'Feature image',
+      imagePosition: 'left',
+      imageWidth: 50
+    }
   });
 };
