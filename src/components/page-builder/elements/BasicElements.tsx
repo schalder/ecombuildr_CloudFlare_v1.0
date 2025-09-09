@@ -579,7 +579,12 @@ const ButtonElement: React.FC<{
         <button 
           className={`${customClassName} m-0 h-auto leading-none inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50`}
           onClick={handleClick}
-          style={{...elementStyles, marginTop: 0, marginBottom: 0}}
+          style={{
+            ...elementStyles,
+            // Only override margins if they weren't set by user
+            ...(elementStyles.marginTop === undefined && { marginTop: 0 }),
+            ...(elementStyles.marginBottom === undefined && { marginBottom: 0 })
+          }}
         >
           {IconComponent && (
             <IconComponent 
