@@ -220,11 +220,31 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
   
   // For button elements, only apply margins if explicitly set by user
   const isButtonElement = element.type === 'button';
+  
+  // Helper function to check if margin is defined in any responsive style
+  const hasMarginDefined = (property: string) => {
+    // Check base styles
+    if (element.styles?.[property] !== undefined) return true;
+    
+    // Check responsive overrides
+    if (element.styles?.responsive?.desktop?.[property] !== undefined) return true;
+    if (element.styles?.responsive?.tablet?.[property] !== undefined) return true;
+    if (element.styles?.responsive?.mobile?.[property] !== undefined) return true;
+    
+    // Check shorthand margin
+    if (element.styles?.margin !== undefined) return true;
+    if (element.styles?.responsive?.desktop?.margin !== undefined) return true;
+    if (element.styles?.responsive?.tablet?.margin !== undefined) return true;
+    if (element.styles?.responsive?.mobile?.margin !== undefined) return true;
+    
+    return false;
+  };
+  
   const userDefinedMargins = isButtonElement ? {
-    marginTop: element.styles?.marginTop !== undefined ? mergedStyles.marginTop : undefined,
-    marginBottom: element.styles?.marginBottom !== undefined ? mergedStyles.marginBottom : undefined,
-    marginLeft: element.styles?.marginLeft !== undefined ? mergedStyles.marginLeft : undefined,
-    marginRight: element.styles?.marginRight !== undefined ? mergedStyles.marginRight : undefined,
+    marginTop: hasMarginDefined('marginTop') ? mergedStyles.marginTop : undefined,
+    marginBottom: hasMarginDefined('marginBottom') ? mergedStyles.marginBottom : undefined,
+    marginLeft: hasMarginDefined('marginLeft') ? mergedStyles.marginLeft : undefined,
+    marginRight: hasMarginDefined('marginRight') ? mergedStyles.marginRight : undefined,
   } : {
     marginTop: mergedStyles.marginTop,
     marginBottom: mergedStyles.marginBottom,
