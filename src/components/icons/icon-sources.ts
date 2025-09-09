@@ -49,6 +49,22 @@ export const ICON_OPTIONS_SOLID: IconOption[] = Object.keys(HeroIconsSolid)
   })
   .sort((a, b) => a.label.localeCompare(b.label));
 
+// Add custom WhatsApp icon using MessageCircle from Lucide
+const whatsappIcon: IconOption = {
+  name: 'luc:whatsapp',
+  label: 'WhatsApp',
+  icon: lucideIcons.MessageCircle as IconComponent,
+  set: 'luc' as const
+};
+
+// Insert WhatsApp icon into regular icons in proper alphabetical order
+const whatsappIndex = ICON_OPTIONS_REGULAR.findIndex(icon => icon.label > 'WhatsApp');
+if (whatsappIndex !== -1) {
+  ICON_OPTIONS_REGULAR.splice(whatsappIndex, 0, whatsappIcon);
+} else {
+  ICON_OPTIONS_REGULAR.push(whatsappIcon);
+}
+
 // Combined icons map for resolution
 const ICONS_MAP: Record<string, IconComponent> = {};
 
