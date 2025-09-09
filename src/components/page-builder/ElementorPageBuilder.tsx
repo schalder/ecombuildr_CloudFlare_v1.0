@@ -70,6 +70,7 @@ import { ensureAnchors, buildAnchor } from './utils/anchor';
 import { HoverProvider, useHover, HoverTarget } from './contexts/HoverContext';
 import { DevicePreviewProvider, useDevicePreview } from './contexts/DevicePreviewContext';
 import { useDragAutoscroll } from '@/hooks/useDragAutoscroll';
+import { mergeResponsiveStyles } from './utils/responsiveStyles';
 
 // Helper function to get responsive grid classes for a row
 const getResponsiveGridClasses = (columnLayout: string, deviceType: 'desktop' | 'tablet' | 'mobile'): string => {
@@ -2200,6 +2201,17 @@ const ElementWrapper: React.FC<ElementWrapperProps> = ({
   const isHoveredTarget = hoveredTarget?.type === 'element' && hoveredTarget?.id === element.id;
   const shouldShowToolbar = isSelected || isHoveredTarget;
 
+  // Compute merged responsive styles for the element
+  const mergedStyles = mergeResponsiveStyles({}, element.styles, deviceType);
+  
+  // Extract margins for the wrapper
+  const wrapperMargins = {
+    marginTop: mergedStyles.marginTop,
+    marginRight: mergedStyles.marginRight,
+    marginBottom: mergedStyles.marginBottom,
+    marginLeft: mergedStyles.marginLeft
+  };
+
   // Element drag functionality
   const [{ isDragging }, dragRef] = useDrag({
     type: 'element',
@@ -2236,6 +2248,7 @@ const ElementWrapper: React.FC<ElementWrapperProps> = ({
       } ${
         isDragging ? 'opacity-50' : ''
       }`}
+      style={wrapperMargins}
       onMouseEnter={() => setHoveredTarget({ type: 'element', id: element.id, parentId: columnId, grandParentId: rowId })}
       onMouseLeave={() => setHoveredTarget(null)}
       onClick={(e) => {
