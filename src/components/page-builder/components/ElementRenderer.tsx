@@ -218,6 +218,20 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
   // Don't apply spacing for media elements as they handle it internally
   const isMediaElement = ['image-carousel', 'image-gallery', 'video-playlist'].includes(element.type);
   
+  // For button elements, only apply margins if explicitly set by user
+  const isButtonElement = element.type === 'button';
+  const userDefinedMargins = isButtonElement ? {
+    marginTop: element.styles?.marginTop !== undefined ? mergedStyles.marginTop : undefined,
+    marginBottom: element.styles?.marginBottom !== undefined ? mergedStyles.marginBottom : undefined,
+    marginLeft: element.styles?.marginLeft !== undefined ? mergedStyles.marginLeft : undefined,
+    marginRight: element.styles?.marginRight !== undefined ? mergedStyles.marginRight : undefined,
+  } : {
+    marginTop: mergedStyles.marginTop,
+    marginBottom: mergedStyles.marginBottom,
+    marginLeft: mergedStyles.marginLeft,
+    marginRight: mergedStyles.marginRight,
+  };
+  
   return (
     <div
       ref={drag}
@@ -230,10 +244,7 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
       )}
       style={{
         ...(!isMediaElement ? {
-          marginTop: mergedStyles.marginTop,
-          marginRight: mergedStyles.marginRight,
-          marginBottom: mergedStyles.marginBottom,
-          marginLeft: mergedStyles.marginLeft,
+          ...userDefinedMargins,
           paddingTop: mergedStyles.paddingTop,
           paddingRight: mergedStyles.paddingRight,
           paddingBottom: mergedStyles.paddingBottom,
