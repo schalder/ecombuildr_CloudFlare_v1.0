@@ -13,6 +13,7 @@ import { CollapsibleGroup } from './_shared/CollapsibleGroup';
 import { SpacingSliders } from './_shared/SpacingSliders';
 import { IconPicker } from '@/components/ui/icon-picker';
 import { ResponsiveStyleControl, ResponsiveTabs } from './_shared/ResponsiveStyleControl';
+import { ensureGoogleFontLoaded } from '@/hooks/useGoogleFontLoader';
 
 interface ButtonElementStylesProps {
   element: PageBuilderElement;
@@ -41,6 +42,25 @@ export const ButtonElementStyles: React.FC<ButtonElementStylesProps> = ({
       icon: iconName
     });
   };
+
+  const fontOptions = React.useMemo(() => {
+    const base = [
+      { label: 'Default', value: 'default' },
+      { label: 'System Sans', value: 'Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji"' },
+      { label: 'Serif', value: 'Georgia, Times New Roman, Times, serif' },
+      { label: 'Monospace', value: 'SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace' },
+    ];
+    const google = [
+      { label: 'Poppins', value: '"Poppins", sans-serif', family: 'Poppins', weights: '400;500;600;700' },
+      { label: 'Montserrat', value: '"Montserrat", sans-serif', family: 'Montserrat', weights: '400;500;600;700' },
+      { label: 'Roboto', value: 'Roboto, sans-serif', family: 'Roboto', weights: '400;500;700' },
+      { label: 'Open Sans', value: '"Open Sans", sans-serif', family: 'Open Sans', weights: '400;600;700' },
+      { label: 'Lato', value: 'Lato, sans-serif', family: 'Lato', weights: '400;700' },
+      { label: 'Playfair Display', value: '"Playfair Display", serif', family: 'Playfair Display', weights: '400;700' },
+      { label: 'Hind Siliguri', value: '"Hind Siliguri", sans-serif', family: 'Hind Siliguri', weights: '300;400;500;600;700' },
+    ];
+    return [...base, ...google];
+  }, []);
 
   return (
     <div className="space-y-4">
@@ -130,6 +150,32 @@ export const ButtonElementStyles: React.FC<ButtonElementStylesProps> = ({
 
       {/* Typography */}
       <CollapsibleGroup title="Typography" isOpen={typographyOpen} onToggle={setTypographyOpen}>
+        <ResponsiveStyleControl
+          element={element}
+          property="fontFamily"
+          label="Font Family"
+          deviceType={responsiveTab}
+          fallback=""
+          onStyleUpdate={onStyleUpdate}
+        >
+          {(value, onChange) => (
+            <Select value={fontOptions.find(f => f.value === value)?.value || 'default'} onValueChange={(v) => {
+              const meta = fontOptions.find(f => f.value === v);
+              if (meta && (meta as any).family) ensureGoogleFontLoaded((meta as any).family, (meta as any).weights);
+              onChange(v === 'default' ? '' : v);
+            }}>
+              <SelectTrigger className="h-8 bg-background">
+                <SelectValue placeholder="Default" />
+              </SelectTrigger>
+              <SelectContent>
+                {fontOptions.map((f: any) => (
+                  <SelectItem key={f.label} value={f.value}>{f.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        </ResponsiveStyleControl>
+
         <ResponsiveStyleControl
           element={element}
           property="fontSize"
