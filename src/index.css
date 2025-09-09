@@ -233,7 +233,18 @@ All colors MUST be HSL. Designed for trust, energy, and conversion.
 
 /* Reset button margins specifically in page builder to prevent inconsistent gaps */
 [data-pb-element-id] button,
-[data-pb-element-id] a[role="button"] {
+[data-pb-element-id] a[role="button"],
+[data-pb-element-id] > * button,
+[data-pb-element-id] > * > * button {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
+/* Also reset margins on button wrapper divs */
+[data-pb-element-id] > *:has(button),
+[data-pb-element-id] > * > *:has(button) {
   margin-top: 0 !important;
   margin-bottom: 0 !important;
 }
