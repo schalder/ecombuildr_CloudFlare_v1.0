@@ -42,6 +42,7 @@ export const EnhancedTextElementStyles: React.FC<EnhancedTextElementStylesProps>
       { label: 'Lato', value: 'Lato, sans-serif', family: 'Lato', weights: '400;700' },
       { label: 'Playfair Display', value: '"Playfair Display", serif', family: 'Playfair Display', weights: '400;700' },
       { label: 'Hind Siliguri', value: '"Hind Siliguri", sans-serif', family: 'Hind Siliguri', weights: '300;400;500;600;700' },
+      { label: 'Noto Sans Bengali', value: '"Noto Sans Bengali", sans-serif', family: 'Noto Sans Bengali', weights: '400;500;600;700' },
     ];
     return [...base, ...google];
   }, []);
