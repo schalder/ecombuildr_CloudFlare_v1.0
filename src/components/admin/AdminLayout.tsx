@@ -1,4 +1,5 @@
 import { ReactNode } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
 import { AdminSidebar } from './AdminSidebar';
 import { Button } from '@/components/ui/button';
@@ -17,6 +18,8 @@ interface AdminLayoutProps {
 export function AdminLayout({ children, title, description, fluid = false }: AdminLayoutProps) {
   const navigate = useNavigate();
   const { signOut } = useAuth();
+  
+  const pageTitle = title ? `${title} | Admin | EcomBuildr` : "Admin | EcomBuildr";
 
   const handleSignOut = async () => {
     await signOut();
@@ -24,7 +27,12 @@ export function AdminLayout({ children, title, description, fluid = false }: Adm
   };
 
   return (
-    <SidebarProvider defaultOpen={true}>
+    <>
+      <Helmet>
+        <title>{pageTitle}</title>
+        <meta name="robots" content="noindex,nofollow" />
+      </Helmet>
+      <SidebarProvider defaultOpen={true}>
       <div className="min-h-screen flex w-full bg-background">
         <AdminSidebar />
         <SidebarInset className="flex-1">
@@ -86,5 +94,6 @@ export function AdminLayout({ children, title, description, fluid = false }: Adm
         </SidebarInset>
       </div>
     </SidebarProvider>
+    </>
   );
 }

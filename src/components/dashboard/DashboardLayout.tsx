@@ -1,4 +1,5 @@
 import { ReactNode } from "react";
+import { Helmet } from "react-helmet-async";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
 import { DashboardHeader } from "./DashboardHeader";
@@ -11,8 +12,15 @@ interface DashboardLayoutProps {
 }
 
 export function DashboardLayout({ children, title, description }: DashboardLayoutProps) {
+  const pageTitle = title ? `${title} | EcomBuildr` : "Dashboard | EcomBuildr";
+  
   return (
-    <SidebarProvider defaultOpen={true}>
+    <>
+      <Helmet>
+        <title>{pageTitle}</title>
+        <meta name="robots" content="noindex,nofollow" />
+      </Helmet>
+      <SidebarProvider defaultOpen={true}>
       <div className="min-h-screen flex w-full bg-background">
         <AppSidebar />
         <SidebarInset className="flex-1">
@@ -26,5 +34,6 @@ export function DashboardLayout({ children, title, description }: DashboardLayou
         <WhatsAppWidget />
       </div>
     </SidebarProvider>
+    </>
   );
 }
