@@ -231,6 +231,9 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
     marginLeft: mergedStyles.marginLeft,
     marginRight: mergedStyles.marginRight,
   };
+
+  // For button elements, don't apply padding from the wrapper - let the button handle its own padding
+  const shouldApplyPadding = !isButtonElement;
   
   return (
     <div
@@ -245,10 +248,12 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
       style={{
         ...(!isMediaElement ? {
           ...userDefinedMargins,
-          paddingTop: mergedStyles.paddingTop,
-          paddingRight: mergedStyles.paddingRight,
-          paddingBottom: mergedStyles.paddingBottom,
-          paddingLeft: mergedStyles.paddingLeft,
+          ...(shouldApplyPadding ? {
+            paddingTop: mergedStyles.paddingTop,
+            paddingRight: mergedStyles.paddingRight,
+            paddingBottom: mergedStyles.paddingBottom,
+            paddingLeft: mergedStyles.paddingLeft,
+          } : {})
         } : {}),
         // Apply user-defined border radius to selection ring when selected
         ...(isSelected && !isPreviewMode && mergedStyles.borderRadius ? {
