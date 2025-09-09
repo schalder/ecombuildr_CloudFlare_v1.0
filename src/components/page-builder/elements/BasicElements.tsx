@@ -564,10 +564,17 @@ const ButtonElement: React.FC<{
   const responsiveCSS = generateResponsiveCSS(element.id, element.styles);
   
 
+  // Check if user has defined any margins
+  const hasUserMargins = elementStyles.marginTop || elementStyles.marginRight || 
+                         elementStyles.marginBottom || elementStyles.marginLeft || 
+                         elementStyles.margin;
+
   const customClassName = [
     `element-${element.id}`,
     'outline-none cursor-pointer transition-all duration-200',
-    isFullWidth ? 'w-full' : ''
+    isFullWidth ? 'w-full' : '',
+    // Only apply m-0 if no user margins are defined
+    !hasUserMargins ? 'm-0' : ''
   ].filter(Boolean).join(' ');
 
   return (
@@ -577,14 +584,9 @@ const ButtonElement: React.FC<{
       
       <div className={containerClass}>
         <button 
-          className={`${customClassName} m-0 h-auto leading-none inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50`}
+          className={`${customClassName} h-auto leading-none inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50`}
           onClick={handleClick}
-          style={{
-            ...elementStyles,
-            // Only override margins if they weren't set by user
-            ...(elementStyles.marginTop === undefined && { marginTop: 0 }),
-            ...(elementStyles.marginBottom === undefined && { marginBottom: 0 })
-          }}
+          style={elementStyles}
         >
           {IconComponent && (
             <IconComponent 
