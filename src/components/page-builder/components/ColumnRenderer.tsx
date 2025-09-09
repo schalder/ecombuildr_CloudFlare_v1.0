@@ -8,6 +8,7 @@ import { ElementDropZone } from './ElementDropZone';
 import { isColumnHidden, getColumnResponsiveClasses } from '../utils/responsive';
 import { cn } from '@/lib/utils';
 import { renderColumnStyles, hasUserBackground, hasUserShadow } from '../utils/styleRenderer';
+import { mergeResponsiveStyles } from '../utils/responsiveStyles';
 
 interface ColumnRendererProps {
   column: PageBuilderColumn;
@@ -155,41 +156,56 @@ export const ColumnRenderer: React.FC<ColumnRendererProps> = ({
         </div>
       ) : (
         <div className="space-y-0">
-          {column.elements.map((element, index) => (
-            <div key={element.id} className="relative">
-              {/* Drop zone above element */}
-              {!isPreviewMode && (
-                <ElementDropZone
+          {column.elements.map((element, index) => {
+            // Compute merged responsive styles for the element to get margins
+            const mergedStyles = mergeResponsiveStyles({}, element.styles, deviceType);
+            const elementMargins = {
+              marginTop: mergedStyles.marginTop,
+              marginRight: mergedStyles.marginRight,
+              marginBottom: mergedStyles.marginBottom,
+              marginLeft: mergedStyles.marginLeft,
+            };
+
+            return (
+              <div 
+                key={element.id} 
+                className="relative"
+                style={!isPreviewMode ? elementMargins : {}}
+              >
+                {/* Drop zone above element */}
+                {!isPreviewMode && (
+                  <ElementDropZone
+                    sectionId={sectionId}
+                    rowId={rowId}
+                    columnId={column.id}
+                    insertIndex={index}
+                    onAddElement={(elementType, insertIndex) => {
+                      
+                      onAddElement(sectionId, rowId, column.id, elementType, insertIndex);
+                    }}
+                    onMoveElement={onMoveElement ? (elementId, insertIndex) => {
+                      onMoveElement(elementId, sectionId, rowId, column.id, insertIndex);
+                    } : undefined}
+                  />
+                )}
+                
+                <ElementRenderer
+                  element={element}
+                  isPreviewMode={isPreviewMode}
+                  deviceType={deviceType}
+                  columnCount={columnCount}
+                  onSelectElement={onSelectElement}
+                  onUpdateElement={onUpdateElement}
+                  onRemoveElement={onRemoveElement}
                   sectionId={sectionId}
                   rowId={rowId}
                   columnId={column.id}
-                  insertIndex={index}
-                  onAddElement={(elementType, insertIndex) => {
-                    
-                    onAddElement(sectionId, rowId, column.id, elementType, insertIndex);
-                  }}
-                  onMoveElement={onMoveElement ? (elementId, insertIndex) => {
-                    onMoveElement(elementId, sectionId, rowId, column.id, insertIndex);
-                  } : undefined}
+                  elementIndex={index}
+                  onMoveElement={onMoveElement}
                 />
-              )}
-              
-              <ElementRenderer
-                element={element}
-                isPreviewMode={isPreviewMode}
-                deviceType={deviceType}
-                columnCount={columnCount}
-                onSelectElement={onSelectElement}
-                onUpdateElement={onUpdateElement}
-                onRemoveElement={onRemoveElement}
-                sectionId={sectionId}
-                rowId={rowId}
-                columnId={column.id}
-                elementIndex={index}
-                onMoveElement={onMoveElement}
-              />
-            </div>
-          ))}
+              </div>
+            );
+          })}
           
           {/* Drop zone after last element */}
           {!isPreviewMode && column.elements.length > 0 && (
