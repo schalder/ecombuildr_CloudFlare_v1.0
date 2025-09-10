@@ -12,7 +12,7 @@ export const Navbar = () => {
     { label: "Features", href: "/#features" },
     { label: "Pricing", href: "/#pricing" },
     { label: "Success Stories", href: "/#testimonials" },
-    { label: "Support", href: "/#support" }
+    { label: "FAQ", href: "/#support" }
   ];
 
   return (
