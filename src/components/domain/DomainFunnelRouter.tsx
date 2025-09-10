@@ -67,9 +67,9 @@ export const DomainFunnelRouter: React.FC<DomainFunnelRouterProps> = ({ funnel }
           .select('*')
           .eq('funnel_id', funnel.id);
 
-        // If no specific step slug or it's empty/homepage, get the first published step
+        // If no specific step slug or it's empty/homepage, get the first published step by step_order
         if (!stepSlug || stepSlug === '' || stepSlug === 'home') {
-          query = query.eq('is_published', true).order('created_at', { ascending: true }).limit(1);
+          query = query.eq('is_published', true).order('step_order', { ascending: true }).limit(1);
         } else {
           // Get specific step by slug
           query = query.eq('slug', stepSlug);

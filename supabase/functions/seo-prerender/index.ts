@@ -217,8 +217,7 @@ async function getHTMLSnapshot(supabase: any, domain: string, path: string): Pro
     if (domain !== 'ecombuildr.com' && !domain.includes('lovable.app')) {
       console.log('🌐 Custom domain detected')
       
-      // Look up custom domain mapping to get content_id and content_type
-      // Try both verified and unverified domains to handle DNS propagation delays
+      // Look up custom domain and ALL its connections
       const { data: customDomainData, error: domainError } = await supabase
         .from('custom_domains')
         .select(`
@@ -226,7 +225,8 @@ async function getHTMLSnapshot(supabase: any, domain: string, path: string): Pro
           domain_connections(
             content_type,
             content_id,
-            path
+            path,
+            is_homepage
           )
         `)
         .eq('domain', domain)
@@ -243,13 +243,58 @@ async function getHTMLSnapshot(supabase: any, domain: string, path: string): Pro
         return await getWebsitePageFallback(supabase, path, domain)
       }
       
-      const connection = customDomainData.domain_connections[0]
-      console.log('✅ Found connection')
+      const allConnections = customDomainData.domain_connections || []
+      let selectedConnection = null
       
-      if (connection.content_type === 'website') {
-        return await getWebsitePageSnapshot(supabase, connection.content_id, path === '/' ? '' : path.substring(1), domain)
-      } else if (connection.content_type === 'funnel') {
-        return await getFunnelStepSnapshot(supabase, connection.content_id, path === '/' ? '' : path.substring(1), domain)
+      // Smart routing logic (same as DomainRouter)
+      if (path === '/' || path === '') {
+        // For root path, prioritize: explicit homepage > website > first funnel
+        selectedConnection = 
+          allConnections.find(c => c.is_homepage) ||
+          allConnections.find(c => c.content_type === 'website') ||
+          allConnections.find(c => c.content_type === 'funnel') ||
+          null
+      } else {
+        // For specific paths, check funnel step slugs
+        const pathSegments = path.split('/').filter(Boolean)
+        const potentialSlug = pathSegments[pathSegments.length - 1]
+        
+        // Check if this path matches a funnel step slug
+        const funnelConnections = allConnections.filter(c => c.content_type === 'funnel')
+        
+        for (const funnelConnection of funnelConnections) {
+          // Check if the current path contains a funnel step slug
+          const { data: stepExists } = await supabase
+            .from('funnel_steps')
+            .select('id')
+            .eq('funnel_id', funnelConnection.content_id)
+            .eq('slug', potentialSlug)
+            .eq('is_published', true)
+            .maybeSingle()
+            
+          if (stepExists) {
+            selectedConnection = funnelConnection
+            break
+          }
+        }
+        
+        // If no funnel step matches, use website for all other paths
+        if (!selectedConnection) {
+          selectedConnection = allConnections.find(c => c.content_type === 'website') || null
+        }
+      }
+      
+      if (!selectedConnection) {
+        console.log('❌ No matching connection found for path:', path)
+        return await getWebsitePageFallback(supabase, path, domain)
+      }
+      
+      console.log('✅ Selected connection:', selectedConnection.content_type)
+      
+      if (selectedConnection.content_type === 'website') {
+        return await getWebsitePageSnapshot(supabase, selectedConnection.content_id, path === '/' ? '' : path.substring(1), domain)
+      } else if (selectedConnection.content_type === 'funnel') {
+        return await getFunnelStepSnapshot(supabase, selectedConnection.content_id, path === '/' ? '' : path.substring(1), domain)
       }
     } else {
       // Handle ecombuildr.com domain routes

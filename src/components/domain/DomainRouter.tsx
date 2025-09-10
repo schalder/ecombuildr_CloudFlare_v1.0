@@ -31,8 +31,9 @@ interface DomainRouterProps {
 
 export const DomainRouter: React.FC<DomainRouterProps> = ({ children }) => {
   const [loading, setLoading] = useState(true);
-  const [domainContent, setDomainContent] = useState<DomainConnection | null>(null);
+  const [selectedConnection, setSelectedConnection] = useState<DomainConnection | null>(null);
   const [customDomain, setCustomDomain] = useState<CustomDomain | null>(null);
+  const [allConnections, setAllConnections] = useState<DomainConnection[]>([]);
   
   useEffect(() => {
     const checkCustomDomain = async () => {
@@ -64,24 +65,64 @@ export const DomainRouter: React.FC<DomainRouterProps> = ({ children }) => {
         
         setCustomDomain(domain);
         
-        // Get the current path
-        const currentPath = window.location.pathname;
-        
-        // Look for any connection for this domain (website or funnel)
-        const { data: connection, error: connectionError } = await supabase
+        // Get ALL connections for this domain
+        const { data: connections, error: connectionError } = await supabase
           .from('domain_connections')
           .select('*')
           .eq('domain_id', domain.id)
-          .limit(1)
-          .maybeSingle();
+          .order('is_homepage', { ascending: false }); // Homepage first
           
         if (connectionError) {
-          console.error('Error fetching domain connection:', connectionError);
+          console.error('Error fetching domain connections:', connectionError);
           setLoading(false);
           return;
         }
         
-        setDomainContent(connection as DomainConnection);
+        const connectionsArray = connections as DomainConnection[] || [];
+        setAllConnections(connectionsArray);
+        
+        // Smart routing logic
+        const currentPath = window.location.pathname;
+        let selectedConnection: DomainConnection | null = null;
+        
+        if (currentPath === '/' || currentPath === '') {
+          // For root path, prioritize: explicit homepage > website > first funnel
+          selectedConnection = 
+            connectionsArray.find(c => c.is_homepage) ||
+            connectionsArray.find(c => c.content_type === 'website') ||
+            connectionsArray.find(c => c.content_type === 'funnel') ||
+            null;
+        } else {
+          // For specific paths, check funnel step slugs
+          const pathSegments = currentPath.split('/').filter(Boolean);
+          const potentialSlug = pathSegments[pathSegments.length - 1];
+          
+          // Check if this path matches a funnel step slug
+          const funnelConnections = connectionsArray.filter(c => c.content_type === 'funnel');
+          
+          for (const funnelConnection of funnelConnections) {
+            // Check if the current path contains a funnel step slug
+            const { data: stepExists } = await supabase
+              .from('funnel_steps')
+              .select('id')
+              .eq('funnel_id', funnelConnection.content_id)
+              .eq('slug', potentialSlug)
+              .eq('is_published', true)
+              .maybeSingle();
+              
+            if (stepExists) {
+              selectedConnection = funnelConnection;
+              break;
+            }
+          }
+          
+          // If no funnel step matches, use website for all other paths
+          if (!selectedConnection) {
+            selectedConnection = connectionsArray.find(c => c.content_type === 'website') || null;
+          }
+        }
+        
+        setSelectedConnection(selectedConnection);
       } catch (error) {
         console.error('Error in domain router:', error);
       } finally {
@@ -102,12 +143,12 @@ export const DomainRouter: React.FC<DomainRouterProps> = ({ children }) => {
   }
   
   // If no custom domain or content found, render normal app
-  if (!customDomain || !domainContent) {
+  if (!customDomain || !selectedConnection) {
     return <>{children}</>;
   }
   
   // Render content based on type with proper provider context
-  if (domainContent.content_type === 'website') {
+  if (selectedConnection.content_type === 'website') {
     // Render the entire website with all its routes wrapped in providers
     return (
       <AuthProvider>
@@ -116,7 +157,7 @@ export const DomainRouter: React.FC<DomainRouterProps> = ({ children }) => {
             <CartProvider>
               <AddToCartProvider>
                 <DomainWebsiteRenderer 
-                  websiteId={domainContent.content_id}
+                  websiteId={selectedConnection.content_id}
                   customDomain={customDomain.domain}
                 />
               </AddToCartProvider>
@@ -127,7 +168,7 @@ export const DomainRouter: React.FC<DomainRouterProps> = ({ children }) => {
     );
   }
   
-  if (domainContent.content_type === 'funnel') {
+  if (selectedConnection.content_type === 'funnel') {
     return (
       <AuthProvider>
         <StoreProvider>
@@ -135,7 +176,7 @@ export const DomainRouter: React.FC<DomainRouterProps> = ({ children }) => {
             <CartProvider>
               <AddToCartProvider>
                 <DomainFunnelRenderer 
-                  funnelId={domainContent.content_id}
+                  funnelId={selectedConnection.content_id}
                   customDomain={customDomain.domain}
                 />
               </AddToCartProvider>

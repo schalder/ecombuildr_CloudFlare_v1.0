@@ -68,7 +68,6 @@ export const useDomainManagement = () => {
         supabase
           .from('domain_connections')
           .select('*')
-          .eq('store_id', store.id)
           .order('created_at', { ascending: false }),
         
         supabase
