@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { Helmet } from "react-helmet-async";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -15,6 +14,10 @@ import { z } from "zod";
 import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { MapPin, Clock, CheckCircle, Circle, Loader } from "lucide-react";
+import { Navbar } from "@/components/Navbar";
+import { Footer } from "@/components/Footer";
+import { WhatsAppWidget } from "@/components/WhatsAppWidget";
+import { SEOHead } from "@/components/SEOHead";
 
 interface RoadmapItem {
   id: string;
@@ -177,12 +180,15 @@ const Roadmap = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Helmet>
-        <title>Roadmap - EcomBuildr</title>
-        <meta name="description" content="See what's coming next for EcomBuildr and share your feedback" />
-      </Helmet>
-
-      <div className="container mx-auto px-6 py-12">
+      <SEOHead 
+        title="Roadmap - EcomBuildr"
+        description="See what's coming next for EcomBuildr and share your feedback. View our product roadmap, changelog, and submit feature requests."
+        keywords={['roadmap', 'changelog', 'feedback', 'feature requests', 'ecombuildr updates']}
+      />
+      
+      <Navbar />
+      
+      <div className="container mx-auto px-6 py-12 pt-24">
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold mb-4">EcomBuildr Roadmap</h1>
           <p className="text-xl text-muted-foreground">
@@ -375,6 +381,9 @@ const Roadmap = () => {
           </TabsContent>
         </Tabs>
       </div>
+      
+      <Footer />
+      <WhatsAppWidget />
     </div>
   );
 };
