@@ -35,11 +35,16 @@ const ElementSkeleton = ({ element }: { element: PageBuilderElement }) => {
   );
 };
 
-const ElementNotSupported = ({ elementType }: { elementType: string }) => (
-  <div className="p-4 border border-dashed border-muted-foreground/30 rounded-lg text-center text-muted-foreground">
-    <p className="text-sm">Element "{elementType}" is not available</p>
-  </div>
-);
+const ElementNotSupported = ({ elementType }: { elementType: string }) => {
+  // Enhanced logging for QA
+  console.warn(`[StorefrontElement] Element "${elementType}" is not available - showing fallback UI`);
+  
+  return (
+    <div className="p-4 border border-dashed border-muted-foreground/30 rounded-lg text-center text-muted-foreground">
+      <p className="text-sm">Element "{elementType}" is not available</p>
+    </div>
+  );
+};
 
 export const StorefrontElement: React.FC<StorefrontElementProps> = ({
   element,

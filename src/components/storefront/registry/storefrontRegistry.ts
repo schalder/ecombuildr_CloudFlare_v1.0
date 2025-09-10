@@ -28,26 +28,27 @@ class StorefrontElementRegistry {
     featured: () => import('@/components/page-builder/elements/WeeklyFeaturedElement'),
   };
 
-  // Element to category mapping for targeted loading
+  // Element to category mapping for targeted loading - CORRECTED AND COMPLETE
   private elementCategoryMap: Record<string, string> = {
     // Basic elements (pre-loaded)
     'heading': 'basic',
-    'text': 'basic',
+    'text': 'basic', 
     'button': 'basic',
+    'image': 'basic',  // FIXED: was 'media'
+    'video': 'basic',  // FIXED: was 'media'
     'spacer': 'basic',
+    'divider': 'basic',
+    'list': 'basic',
     
     // Media elements (pre-loaded)
-    'image': 'media',
-    'video': 'media',
-    'gallery': 'media',
     'image-gallery': 'media',
     'image-carousel': 'media',
     'video-playlist': 'media',
     
     // Content elements
     'image-feature': 'content',
-    'tabs': 'content',
     'accordion': 'content',
+    'tabs': 'content',
     'testimonial': 'content',
     'faq': 'content',
     
@@ -55,29 +56,52 @@ class StorefrontElementRegistry {
     'countdown-timer': 'marketing',
     'countdown': 'marketing', // alias
     'social-links': 'marketing',
-    'social-share': 'marketing',
     'hero-slider': 'marketing',
-    'newsletter': 'marketing',
-    
-    // Ecommerce elements
-    'product-grid': 'ecommerce',
-    'product-card': 'ecommerce',
-    'product-carousel': 'ecommerce',
-    
-    // System elements
-    'featured-products': 'system',
-    'product-categories': 'system',
-    'price': 'system',
-    'checkout-full': 'checkout',
-    'order-confirmation': 'system',
-    
-    // Weekly featured
-    'weekly-featured': 'featured',
     
     // Form elements
     'contact-form': 'form',
+    'newsletter': 'form',
+    'form-field': 'form',
+    
+    // Ecommerce elements
+    'products-page': 'ecommerce',
+    'product-grid': 'ecommerce',
+    'featured-products': 'ecommerce',  // FIXED: was 'system'
+    'product-categories': 'ecommerce', // FIXED: was 'system'
+    'weekly-featured': 'ecommerce',    // FIXED: was 'featured'
+    'price': 'ecommerce',              // FIXED: was 'system'
+    'funnel-offer': 'ecommerce',
+    
+    // System elements
+    'cart-summary': 'system',
+    'checkout-cta': 'system',
+    'product-detail': 'system',
+    'related-products': 'system',
+    'cart-full': 'system',
+    'checkout-full': 'system',         // FIXED: was 'checkout'
+    'order-confirmation': 'system',
+    'payment-processing': 'system',
+    
+    // Checkout elements
+    'checkout-inline': 'checkout',
+    
+    // Advanced elements
+    'google-maps': 'advanced',
+    'custom-html': 'advanced',
+    'social-share': 'advanced',        // FIXED: was 'marketing'
+    
+    // Navigation elements
+    'navigation-menu': 'navigation',
+    
+    // Legacy/unused elements (kept for compatibility)
+    'gallery': 'media',
+    'product-card': 'ecommerce',
+    'product-carousel': 'ecommerce',
     'subscription-form': 'form',
   };
+  
+  // Dynamic resolution cache for unknown elements
+  private dynamicResolutions: Map<string, string> = new Map();
 
   // Pre-register critical elements synchronously
   async preloadCriticalElements() {
@@ -164,9 +188,35 @@ class StorefrontElementRegistry {
     }
 
     // Find the category for this element
-    const category = this.elementCategoryMap[elementId];
+    let category = this.elementCategoryMap[elementId];
+    
+    // If not in map, check dynamic resolution cache
     if (!category) {
-      console.warn(`Unknown element type: ${elementId}`);
+      category = this.dynamicResolutions.get(elementId);
+    }
+    
+    // If still not found, try fallback loading sequence
+    if (!category) {
+      console.warn(`[StorefrontRegistry] Unknown element "${elementId}", trying fallback sequence...`);
+      
+      const fallbackCategories = ['content', 'marketing', 'ecommerce', 'form', 'advanced', 'navigation', 'system', 'checkout'];
+      
+      for (const fallbackCategory of fallbackCategories) {
+        try {
+          await this.loadCategory(fallbackCategory);
+          
+          // Check if element is now available
+          if (this.elements.has(elementId)) {
+            console.info(`[StorefrontRegistry] Resolved "${elementId}" via fallback category: ${fallbackCategory}`);
+            this.dynamicResolutions.set(elementId, fallbackCategory);
+            return;
+          }
+        } catch (error) {
+          console.warn(`[StorefrontRegistry] Failed to load fallback category ${fallbackCategory}:`, error);
+        }
+      }
+      
+      console.error(`[StorefrontRegistry] Could not resolve element "${elementId}" even with fallbacks`);
       return;
     }
 
@@ -195,13 +245,26 @@ class StorefrontElementRegistry {
     };
 
     extractElements(pageData.sections);
+    
+    console.info(`[StorefrontRegistry] Page uses elements:`, Array.from(usedElements));
 
     // Group elements by category to minimize bundle loads
     const categorySet = new Set<string>();
+    const unknownElements: string[] = [];
+    
     usedElements.forEach(elementId => {
       const category = this.elementCategoryMap[elementId];
-      if (category) categorySet.add(category);
+      if (category) {
+        categorySet.add(category);
+      } else {
+        unknownElements.push(elementId);
+      }
     });
+    
+    console.info(`[StorefrontRegistry] Loading categories:`, Array.from(categorySet));
+    if (unknownElements.length > 0) {
+      console.warn(`[StorefrontRegistry] Unknown elements:`, unknownElements);
+    }
 
     // Load categories in parallel
     const loadPromises = Array.from(categorySet).map(category => 
@@ -210,6 +273,27 @@ class StorefrontElementRegistry {
 
     try {
       await Promise.all(loadPromises);
+      
+      // Check for unresolved elements after initial load
+      const unresolvedElements = Array.from(usedElements).filter(id => !this.elements.has(id));
+      
+      if (unresolvedElements.length > 0) {
+        console.warn(`[StorefrontRegistry] Unresolved after initial load:`, unresolvedElements);
+        
+        // Fallback: load content and advanced modules as catch-alls
+        console.info(`[StorefrontRegistry] Loading fallback modules for unresolved elements...`);
+        await Promise.all([
+          this.loadCategory('content'),
+          this.loadCategory('advanced')
+        ]);
+        
+        // Final check
+        const stillUnresolved = Array.from(usedElements).filter(id => !this.elements.has(id));
+        if (stillUnresolved.length > 0) {
+          console.error(`[StorefrontRegistry] Still unresolved after fallbacks:`, stillUnresolved);
+        }
+      }
+      
     } catch (error) {
       console.warn('Some elements failed to load:', error);
     }
