@@ -72,23 +72,7 @@ const AdminDashboard = () => {
     );
   }
 
-  if (!isAdmin) {
-    return (
-      <AdminLayout title="Access Denied">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-destructive">
-              <AlertTriangle className="h-5 w-5" />
-              Access Denied
-            </CardTitle>
-            <CardDescription>
-              You don't have permission to view this page. Only super admins can access the admin panel.
-            </CardDescription>
-          </CardHeader>
-        </Card>
-      </AdminLayout>
-    );
-  }
+  // Route guard already ensures only super admins reach this component
 
   const recentUsers = users?.slice(0, 5) || [];
   

@@ -100,6 +100,7 @@ import { WebsiteOverrideRoute } from "./pages/storefront/WebsiteOverrideRoute";
 import { WebsiteProductDetailRoute } from "./pages/storefront/WebsiteProductDetailRoute";
 import { OnboardingGate } from "@/components/dashboard/OnboardingGate";
 import { ScrollToHash } from "@/components/ScrollToHash";
+import { RequireSuperAdmin } from "@/components/admin/RequireSuperAdmin";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -177,37 +178,39 @@ const App = () => (
                 <Route path="/training/:courseSlug" element={<TrainingCourse />} />
                 
                 
-                {/* Admin Routes */}
-                <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
-                <Route path="/admin/dashboard" element={<AdminDashboard />} />
-                <Route path="/admin/users" element={<UserManagement />} />
-                <Route path="/admin/billing" element={<BillingManagement />} />
-                <Route path="/admin/plans" element={<PlanManagement />} />
-                <Route path="/admin/site-pricing" element={<SitePricingManagement />} />
-                <Route path="/admin/sites" element={<AdminSites />} />
-                <Route path="/admin/analytics" element={<AdminAnalytics />} />
-                <Route path="/admin/revenue" element={<AdminRevenue />} />
-                <Route path="/admin/support" element={<AdminSupport />} />
-                <Route path="/admin/seo" element={<SEOSettings />} />
-                <Route path="/admin/settings" element={<AdminSystemSettings />} />
-                <Route path="/admin/product-library" element={<AdminProductLibrary />} />
-                <Route path="/admin/product-library/add" element={<AdminAddLibraryProduct />} />
-                <Route path="/admin/product-library/edit/:id" element={<AdminAddLibraryProduct />} />
-                <Route path="/admin/product-library/orders/:id" element={<AdminLibraryOrders />} />
-                <Route path="/admin/shipping" element={<AdminShipping />} />
-                <Route path="/admin/library-orders" element={<AdminLibraryOrdersSummary />} />
-                <Route path="/admin/templates" element={<AdminTemplateManagement />} />
-                <Route path="/admin/templates/create" element={<AdminTemplateEditor />} />
-                <Route path="/admin/templates/edit/:templateId" element={<AdminTemplateEditor />} />
-                <Route path="/admin/templates/preview/:templateId" element={<AdminTemplatePreview />} />
-                <Route path="/admin/training" element={<AdminTraining />} />
-                <Route path="/admin/training/new" element={<AdminCourseEditor />} />
-                <Route path="/admin/training/:courseId" element={<AdminCourseEditor />} />
-                <Route path="/admin/roadmap" element={<AdminRoadmap />} />
-                <Route path="/admin/changelog" element={<AdminChangelog />} />
-                <Route path="/admin/feedback" element={<AdminFeedback />} />
-                <Route path="/admin/careers" element={<AdminCareers />} />
-                <Route path="/admin/site-templates" element={<AdminSiteTemplates />} />
+                {/* Admin Routes - Protected by SuperAdmin Guard */}
+                <Route path="/admin" element={<RequireSuperAdmin />}>
+                  <Route index element={<Navigate to="/admin/dashboard" replace />} />
+                  <Route path="dashboard" element={<AdminDashboard />} />
+                  <Route path="users" element={<UserManagement />} />
+                  <Route path="billing" element={<BillingManagement />} />
+                  <Route path="plans" element={<PlanManagement />} />
+                  <Route path="site-pricing" element={<SitePricingManagement />} />
+                  <Route path="sites" element={<AdminSites />} />
+                  <Route path="analytics" element={<AdminAnalytics />} />
+                  <Route path="revenue" element={<AdminRevenue />} />
+                  <Route path="support" element={<AdminSupport />} />
+                  <Route path="seo" element={<SEOSettings />} />
+                  <Route path="settings" element={<AdminSystemSettings />} />
+                  <Route path="product-library" element={<AdminProductLibrary />} />
+                  <Route path="product-library/add" element={<AdminAddLibraryProduct />} />
+                  <Route path="product-library/edit/:id" element={<AdminAddLibraryProduct />} />
+                  <Route path="product-library/orders/:id" element={<AdminLibraryOrders />} />
+                  <Route path="shipping" element={<AdminShipping />} />
+                  <Route path="library-orders" element={<AdminLibraryOrdersSummary />} />
+                  <Route path="templates" element={<AdminTemplateManagement />} />
+                  <Route path="templates/create" element={<AdminTemplateEditor />} />
+                  <Route path="templates/edit/:templateId" element={<AdminTemplateEditor />} />
+                  <Route path="templates/preview/:templateId" element={<AdminTemplatePreview />} />
+                  <Route path="training" element={<AdminTraining />} />
+                  <Route path="training/new" element={<AdminCourseEditor />} />
+                  <Route path="training/:courseId" element={<AdminCourseEditor />} />
+                  <Route path="roadmap" element={<AdminRoadmap />} />
+                  <Route path="changelog" element={<AdminChangelog />} />
+                  <Route path="feedback" element={<AdminFeedback />} />
+                  <Route path="careers" element={<AdminCareers />} />
+                  <Route path="site-templates" element={<AdminSiteTemplates />} />
+                </Route>
                 
                 {/* Demo and Preview Routes */}
                 <Route path="/preview/demo" element={<DemoPreview />} />
