@@ -104,13 +104,13 @@ class StorefrontElementRegistry {
     }
 
     const loadPromise = moduleLoader()
-      .then((module) => {
+      .then(async (module) => {
         console.log(`[StorefrontRegistry] Loaded category: ${category}`, module);
         
         // Get elements before importing
         const elementsBefore = new Set(this.elements.keys());
         
-        // Call the register function from the module
+        // Call the register function from the module - these register with main elementRegistry
         if (module.registerBasicElements) module.registerBasicElements();
         if (module.registerMediaElements) module.registerMediaElements();
         if (module.registerEcommerceElements) module.registerEcommerceElements();
@@ -122,6 +122,22 @@ class StorefrontElementRegistry {
         if (module.registerEcommerceSystemElements) module.registerEcommerceSystemElements();
         if (module.registerInlineCheckoutElements) module.registerInlineCheckoutElements();
         if (module.registerWeeklyFeaturedElement) module.registerWeeklyFeaturedElement();
+        
+        // Dynamically import and copy elements from the main registry
+        const { elementRegistry } = await import('@/components/page-builder/elements/ElementRegistry');
+        
+        // Copy all elements from the main registry that belong to this category
+        for (const element of elementRegistry.getAll()) {
+          if (element.category === category || this.elementCategoryMap[element.id] === category) {
+            const storefrontElement: StorefrontElementType = {
+              id: element.id,
+              name: element.name,
+              category: element.category,
+              component: element.component
+            };
+            this.elements.set(element.id, storefrontElement);
+          }
+        }
         
         // Get newly registered elements
         const elementsAfter = new Set(this.elements.keys());
