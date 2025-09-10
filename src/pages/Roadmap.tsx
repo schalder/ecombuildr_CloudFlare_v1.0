@@ -179,7 +179,7 @@ const Roadmap = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <SEOHead 
         title="Roadmap - EcomBuildr"
         description="See what's coming next for EcomBuildr and share your feedback. View our product roadmap, changelog, and submit feature requests."
@@ -188,7 +188,7 @@ const Roadmap = () => {
       
       <Navbar />
       
-      <div className="container mx-auto px-6 py-12 pt-24">
+      <div className="flex-1 container mx-auto px-6 py-12 pt-24">
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold mb-4">EcomBuildr Roadmap</h1>
           <p className="text-xl text-muted-foreground">
