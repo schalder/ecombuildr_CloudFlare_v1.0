@@ -53,6 +53,7 @@ export const useAdminData = () => {
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<AdminUser[]>([]);
+  const [usersTotalCount, setUsersTotalCount] = useState(0);
   const [platformStats, setPlatformStats] = useState<PlatformStats | null>(null);
   const [saasSubscribers, setSaasSubscribers] = useState<SaasSubscriber[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -95,11 +96,15 @@ export const useAdminData = () => {
   };
 
   // Fetch all users for admin management
-  const fetchUsers = async (searchTerm?: string, planFilter?: string) => {
+  const fetchUsers = async (searchTerm?: string, planFilter?: string, page: number = 1, limit: number = 20) => {
     if (!isAdmin) return;
 
     try {
-      let query = supabase
+      let countQuery = supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true });
+
+      let dataQuery = supabase
         .from('profiles')
         .select(`
           id,
@@ -114,14 +119,23 @@ export const useAdminData = () => {
         .order('created_at', { ascending: false });
 
       if (searchTerm) {
-        query = query.or(`email.ilike.%${searchTerm}%,full_name.ilike.%${searchTerm}%`);
+        const searchFilter = `email.ilike.%${searchTerm}%,full_name.ilike.%${searchTerm}%`;
+        countQuery = countQuery.or(searchFilter);
+        dataQuery = dataQuery.or(searchFilter);
       }
 
       if (planFilter && planFilter !== 'all') {
-        query = query.eq('subscription_plan', planFilter as any);
+        countQuery = countQuery.eq('subscription_plan', planFilter as any);
+        dataQuery = dataQuery.eq('subscription_plan', planFilter as any);
       }
 
-      const { data, error } = await query.limit(100);
+      // Get total count
+      const { count, error: countError } = await countQuery;
+      if (countError) throw countError;
+
+      // Get paginated data
+      const { data, error } = await dataQuery
+        .range((page - 1) * limit, page * limit - 1);
       
       if (error) throw error;
 
@@ -132,6 +146,7 @@ export const useAdminData = () => {
       })) || [];
 
       setUsers(usersWithActivity);
+      setUsersTotalCount(count || 0);
     } catch (err) {
       console.error('Error fetching users:', err);
       setError('Failed to fetch users');
@@ -514,6 +529,7 @@ export const useAdminData = () => {
     isAdmin,
     loading,
     users,
+    usersTotalCount,
     platformStats,
     saasSubscribers,
     error,

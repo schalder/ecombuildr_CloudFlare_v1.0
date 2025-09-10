@@ -26,15 +26,21 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 const UserManagement = () => {
-  const { users, loading, fetchUsers, updateUserPlan, updateUserStatus, extendTrial, loginAsUser } = useAdminData();
+  const { users, loading, fetchUsers, updateUserPlan, updateUserStatus, extendTrial, loginAsUser, usersTotalCount } = useAdminData();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [planFilter, setPlanFilter] = useState('all');
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [showUserModal, setShowUserModal] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
 
   useEffect(() => {
-    fetchUsers(searchTerm, planFilter);
+    fetchUsers(searchTerm, planFilter, currentPage, itemsPerPage);
+  }, [searchTerm, planFilter, currentPage]);
+
+  useEffect(() => {
+    setCurrentPage(1);
   }, [searchTerm, planFilter]);
 
   const handlePlanUpdate = async (userId: string, newPlan: string) => {
@@ -163,7 +169,9 @@ const UserManagement = () => {
         <Card>
           <CardHeader>
             <CardTitle>Users List</CardTitle>
-            <CardDescription>Total {users.length} users</CardDescription>
+            <CardDescription>
+              Showing {((currentPage - 1) * itemsPerPage) + 1}-{Math.min(currentPage * itemsPerPage, usersTotalCount)} of {usersTotalCount} users
+            </CardDescription>
           </CardHeader>
           <CardContent>
             {loading ? (
@@ -259,6 +267,33 @@ const UserManagement = () => {
               <div className="text-center py-12 text-muted-foreground">
                 <UserCheck className="mx-auto h-12 w-12 mb-4 opacity-50" />
                 <p>No users found</p>
+              </div>
+            )}
+
+            {/* Pagination */}
+            {usersTotalCount > itemsPerPage && (
+              <div className="flex items-center justify-between pt-4 border-t">
+                <div className="text-sm text-muted-foreground">
+                  Page {currentPage} of {Math.ceil(usersTotalCount / itemsPerPage)}
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    disabled={currentPage === 1}
+                  >
+                    Previous
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(prev => prev + 1)}
+                    disabled={currentPage >= Math.ceil(usersTotalCount / itemsPerPage)}
+                  >
+                    Next
+                  </Button>
+                </div>
               </div>
             )}
           </CardContent>
