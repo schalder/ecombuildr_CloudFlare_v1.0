@@ -83,7 +83,7 @@ const Templates = () => {
               {templates.map((template) => (
                 <Card key={template.id} className="group hover:shadow-lg transition-shadow">
                   <CardContent className="p-0">
-                    <div className="aspect-[4/3] overflow-hidden rounded-t-lg bg-muted">
+                    <div className="h-[260px] md:h-[320px] lg:h-[360px] overflow-hidden rounded-t-lg bg-muted">
                       <img
                         src={template.image_url}
                         alt={template.name}

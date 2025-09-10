@@ -191,7 +191,7 @@ const AdminSiteTemplates = () => {
                   <div className="h-4 bg-muted rounded w-3/4"></div>
                 </CardHeader>
                 <CardContent>
-                  <div className="aspect-video bg-muted rounded mb-4"></div>
+                  <div className="h-[240px] md:h-[300px] lg:h-[340px] bg-muted rounded mb-4"></div>
                   <div className="space-y-2">
                     <div className="h-3 bg-muted rounded"></div>
                     <div className="h-3 bg-muted rounded w-2/3"></div>
@@ -221,11 +221,11 @@ const AdminSiteTemplates = () => {
                 </CardHeader>
                 
                 <CardContent className="space-y-4">
-                  <div className="aspect-video overflow-hidden rounded-lg">
+                  <div className="h-[240px] md:h-[300px] lg:h-[340px] overflow-hidden rounded-lg bg-muted">
                     <img
                       src={template.image_url}
                       alt={template.name}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-contain"
                       loading="lazy"
                     />
                   </div>
