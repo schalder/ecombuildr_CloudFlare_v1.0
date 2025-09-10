@@ -4,6 +4,7 @@ import { useStore } from '@/contexts/StoreContext';
 import { setSEO, buildCanonical } from '@/lib/seo';
 import { Loader2 } from 'lucide-react';
 import { DomainFunnelRouter } from './DomainFunnelRouter';
+import { PixelManager } from '@/components/pixel/PixelManager';
 
 interface DomainFunnelRendererProps {
   funnelId: string;
@@ -137,6 +138,16 @@ export const DomainFunnelRenderer: React.FC<DomainFunnelRendererProps> = ({
   }
 
   return (
-    <DomainFunnelRouter funnel={funnel} />
+    <PixelManager 
+      websitePixels={{
+        facebook_pixel_id: (store as any)?.facebook_pixel_id,
+        google_analytics_id: (store as any)?.google_analytics_id,
+        google_ads_id: (store as any)?.google_ads_id,
+      }}
+      storeId={funnel.store_id}
+      funnelId={funnel.id}
+    >
+      <DomainFunnelRouter funnel={funnel} />
+    </PixelManager>
   );
 };

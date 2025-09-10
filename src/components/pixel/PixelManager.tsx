@@ -11,6 +11,7 @@ interface PixelManagerProps {
   };
   children: React.ReactNode;
   storeId?: string;
+  funnelId?: string;
 }
 
 const PixelContext = React.createContext<{
@@ -28,16 +29,17 @@ const PixelContext = React.createContext<{
 
 export const usePixelContext = () => React.useContext(PixelContext);
 
-export const PixelManager: React.FC<PixelManagerProps> = ({ websitePixels: initialPixels, children, storeId }) => {
+export const PixelManager: React.FC<PixelManagerProps> = ({ websitePixels: initialPixels, children, storeId, funnelId: propFunnelId }) => {
   const [currentPixels, setCurrentPixels] = React.useState(initialPixels);
   const { websiteId } = useWebsiteContext();
   
-  // Extract funnelId from current URL if it's a funnel route
+  // Use passed funnelId or extract from URL if it's a funnel route
   const funnelId = React.useMemo(() => {
+    if (propFunnelId) return propFunnelId;
     const path = window.location.pathname;
     const funnelMatch = path.match(/\/funnel\/([^\/]+)/);
     return funnelMatch ? funnelMatch[1] : undefined;
-  }, []);
+  }, [propFunnelId]);
   
   const { trackPageView } = usePixelTracking(currentPixels, storeId, websiteId, funnelId);
 

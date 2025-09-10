@@ -172,16 +172,14 @@ export const DomainRouter: React.FC<DomainRouterProps> = ({ children }) => {
     return (
       <AuthProvider>
         <StoreProvider>
-          <PixelManager>
-            <CartProvider>
-              <AddToCartProvider>
-                <DomainFunnelRenderer 
-                  funnelId={selectedConnection.content_id}
-                  customDomain={customDomain.domain}
-                />
-              </AddToCartProvider>
-            </CartProvider>
-          </PixelManager>
+          <CartProvider>
+            <AddToCartProvider>
+              <DomainFunnelRenderer 
+                funnelId={selectedConnection.content_id}
+                customDomain={customDomain.domain}
+              />
+            </AddToCartProvider>
+          </CartProvider>
         </StoreProvider>
       </AuthProvider>
     );
