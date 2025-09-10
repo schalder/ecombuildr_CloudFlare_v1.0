@@ -1,4 +1,4 @@
-import React, { memo, useMemo } from 'react';
+import React, { memo, useMemo, useState, useEffect } from 'react';
 import { PageBuilderElement } from '@/components/page-builder/types';
 import { storefrontElementRegistry } from './storefrontElementRegistry';
 import { renderElementStyles } from '@/components/page-builder/utils/styleRenderer';
@@ -6,6 +6,7 @@ import { generateResponsiveCSS } from '@/components/page-builder/utils/responsiv
 import { useHeadStyle } from '@/hooks/useHeadStyle';
 import { mergeResponsiveStyles } from '@/components/page-builder/utils/responsiveStyles';
 import { cn } from '@/lib/utils';
+import { Loader2 } from 'lucide-react';
 
 interface StorefrontElementRendererProps {
   element: PageBuilderElement;
@@ -18,11 +19,69 @@ export const StorefrontElementRenderer = memo<StorefrontElementRendererProps>(({
   deviceType = 'desktop',
   columnCount = 1
 }) => {
-  // Memoize element definition lookup
-  const elementDef = useMemo(() => 
-    storefrontElementRegistry.get(element.type), 
-    [element.type]
-  );
+  const [elementDef, setElementDef] = useState(() => storefrontElementRegistry.get(element.type));
+  const [isLoading, setIsLoading] = useState(!elementDef);
+  const [showFallback, setShowFallback] = useState(false);
+
+  // Reactive element loading
+  useEffect(() => {
+    let mounted = true;
+    
+    const checkAndLoadElement = async () => {
+      // Check if element is already available
+      const existing = storefrontElementRegistry.get(element.type);
+      if (existing) {
+        if (mounted) {
+          setElementDef(existing);
+          setIsLoading(false);
+        }
+        return;
+      }
+
+      // Start loading
+      if (mounted) setIsLoading(true);
+      
+      try {
+        await storefrontElementRegistry.ensureLoaded(element.type);
+        const loaded = storefrontElementRegistry.get(element.type);
+        if (mounted) {
+          setElementDef(loaded);
+          setIsLoading(false);
+        }
+      } catch (err) {
+        console.warn(`Failed to load element ${element.type}:`, err);
+        if (mounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    // Subscribe to registry changes
+    const unsubscribe = storefrontElementRegistry.subscribe(() => {
+      if (mounted) {
+        const updated = storefrontElementRegistry.get(element.type);
+        if (updated && !elementDef) {
+          setElementDef(updated);
+          setIsLoading(false);
+        }
+      }
+    });
+
+    checkAndLoadElement();
+
+    // Show fallback after 800ms if still loading
+    const fallbackTimer = setTimeout(() => {
+      if (mounted && isLoading) {
+        setShowFallback(true);
+      }
+    }, 800);
+
+    return () => {
+      mounted = false;
+      unsubscribe();
+      clearTimeout(fallbackTimer);
+    };
+  }, [element.type, elementDef, isLoading]);
 
   // Memoize styles calculation
   const styles = useMemo(() => 
@@ -111,12 +170,29 @@ export const StorefrontElementRenderer = memo<StorefrontElementRendererProps>(({
     };
   }, [(element as any).content?.customJS, element.anchor]);
 
-  if (!elementDef) {
-    console.warn(`Element type "${element.type}" not found in storefront registry`);
-    // Fallback to a simple div with content
+  // Show loading skeleton while loading
+  if (isLoading && !showFallback) {
     return (
-      <div className="p-4 text-center text-muted-foreground">
-        Element type "{element.type}" not supported in storefront mode
+      <div className="flex items-center justify-center p-4 min-h-[60px]">
+        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  // Show fallback if element not found after timeout
+  if (!elementDef) {
+    if (showFallback) {
+      console.warn(`Element type "${element.type}" not found in storefront registry`);
+      return (
+        <div className="p-4 text-center text-muted-foreground bg-muted/20 rounded">
+          <p className="text-sm">Unable to load element: {element.type}</p>
+        </div>
+      );
+    }
+    // Still loading, show skeleton
+    return (
+      <div className="flex items-center justify-center p-4 min-h-[60px]">
+        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
       </div>
     );
   }

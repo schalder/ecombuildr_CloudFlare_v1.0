@@ -3,8 +3,11 @@ import { useParams, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
 import { StorefrontPageBuilderRenderer } from '@/components/storefront/StorefrontPageBuilderRenderer';
+import { PageBuilderRenderer } from '@/components/storefront/PageBuilderRenderer';
 import { setGlobalCurrency } from '@/lib/currency';
 import { setSEO, buildCanonical } from '@/lib/seo';
+import { ErrorBoundary } from '@/components/ui/error-boundary';
+import { useDeferredInit } from '@/hooks/useDeferredInit';
 
 interface WebsitePageData {
   id: string;
@@ -35,6 +38,7 @@ export const WebsiteOverrideRoute: React.FC<WebsiteOverrideRouteProps> = ({ slug
   const websiteId = propsWebsiteId || paramsWebsiteId;
   const [searchParams] = useSearchParams();
   const isPreview = searchParams.get('preview') === '1';
+  const useStorefront = searchParams.get('storefront') !== '0'; // Default to storefront unless explicitly disabled
   const [page, setPage] = React.useState<WebsitePageData | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [resolvedWebsiteId, setResolvedWebsiteId] = React.useState<string | null>(null);
@@ -155,13 +159,24 @@ export const WebsiteOverrideRoute: React.FC<WebsiteOverrideRouteProps> = ({ slug
       favicon: websiteMeta?.settings?.favicon_url,
     });
 
+    // Defer custom scripts to improve initial load performance
     if (page.custom_scripts) {
-      const scriptElement = document.createElement('div');
-      scriptElement.innerHTML = page.custom_scripts;
-      document.head.appendChild(scriptElement);
-      return () => {
-        document.head.removeChild(scriptElement);
+      const cleanup = () => {
+        const scriptElement = document.createElement('div');
+        scriptElement.innerHTML = page.custom_scripts;
+        document.head.appendChild(scriptElement);
+        return () => {
+          if (document.head.contains(scriptElement)) {
+            document.head.removeChild(scriptElement);
+          }
+        };
       };
+      
+      if ('requestIdleCallback' in window) {
+        requestIdleCallback(cleanup);
+      } else {
+        setTimeout(cleanup, 100);
+      }
     }
   }, [page, websiteMeta, isPreview]);
 
@@ -175,10 +190,20 @@ export const WebsiteOverrideRoute: React.FC<WebsiteOverrideRouteProps> = ({ slug
 
   if (!page) return fallback;
 
+  const PageRenderer = useStorefront ? StorefrontPageBuilderRenderer : PageBuilderRenderer;
+
   return (
     <main>
       {page.content?.sections ? (
-        <StorefrontPageBuilderRenderer data={page.content} />
+        <ErrorBoundary 
+          fallback={({ error, retry }) => (
+            <div className="p-4 text-center text-destructive bg-destructive/10 rounded">
+              <p>Failed to render page content. Please try refreshing.</p>
+            </div>
+          )}
+        >
+          <PageRenderer data={page.content} />
+        </ErrorBoundary>
       ) : (
         <div className="container mx-auto px-4 py-8">
           <h1 className="text-3xl font-bold mb-6">{page.title}</h1>

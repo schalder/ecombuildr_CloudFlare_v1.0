@@ -3,9 +3,70 @@ import { ElementType } from '@/components/page-builder/types';
 class StorefrontElementRegistryClass {
   private elements: Map<string, ElementType> = new Map();
   private loadedCategories: Set<string> = new Set();
+  private listeners: Set<() => void> = new Set();
 
   register(element: ElementType) {
     this.elements.set(element.id, element);
+    this.notify();
+  }
+
+  subscribe(listener: () => void) {
+    this.listeners.add(listener);
+    return () => this.listeners.delete(listener);
+  }
+
+  private notify() {
+    this.listeners.forEach(listener => listener());
+  }
+
+  async ensureLoaded(id: string): Promise<void> {
+    if (this.elements.has(id)) return;
+    
+    // Try backward-compatible fallbacks first
+    const normalized = id.replace(/_/g, '-');
+    const aliasMap: Record<string, string> = {
+      'product_grid': 'product-grid',
+      'featured_products': 'featured-products',
+      'product_categories': 'product-categories',
+      'category_navigation': 'product-categories',
+      'countdown': 'countdown-timer',
+      'social_share': 'social-links',
+    };
+    
+    const candidates = Array.from(
+      new Set([
+        normalized,
+        aliasMap[id],
+        aliasMap[normalized],
+      ].filter(Boolean) as string[])
+    );
+    
+    for (const candidate of candidates) {
+      if (this.elements.has(candidate)) return;
+    }
+
+    // Trigger lazy load
+    this.lazyLoadElement(id);
+    
+    // Wait up to 2 seconds for the element to load
+    return new Promise<void>((resolve) => {
+      const timeout = setTimeout(() => resolve(), 2000);
+      
+      const checkLoaded = () => {
+        if (this.elements.has(id) || candidates.some(c => this.elements.has(c))) {
+          clearTimeout(timeout);
+          resolve();
+        }
+      };
+      
+      const unsubscribe = this.subscribe(checkLoaded);
+      checkLoaded(); // Check immediately
+      
+      setTimeout(() => {
+        unsubscribe();
+        resolve();
+      }, 2000);
+    });
   }
 
   get(id: string): ElementType | undefined {
@@ -20,6 +81,8 @@ class StorefrontElementRegistryClass {
         'featured_products': 'featured-products',
         'product_categories': 'product-categories',
         'category_navigation': 'product-categories',
+        'countdown': 'countdown-timer',
+        'social_share': 'social-links',
       };
       
       const candidates = Array.from(
@@ -37,12 +100,6 @@ class StorefrontElementRegistryClass {
           break;
         }
       }
-    }
-
-    // If still not found, try to lazy load based on element type
-    if (!elementType) {
-      this.lazyLoadElement(id);
-      elementType = this.elements.get(id);
     }
 
     return elementType;
@@ -94,7 +151,6 @@ class StorefrontElementRegistryClass {
       
       // Advanced elements
       'countdown': () => import('@/components/page-builder/elements/AdvancedElements').then(m => m.registerAdvancedElements()),
-      'hero-slider': () => import('@/components/page-builder/elements/AdvancedElements').then(m => m.registerAdvancedElements()),
       'social-share': () => import('@/components/page-builder/elements/AdvancedElements').then(m => m.registerAdvancedElements()),
       'custom-html': () => import('@/components/page-builder/elements/AdvancedElements').then(m => m.registerAdvancedElements()),
       
@@ -104,7 +160,12 @@ class StorefrontElementRegistryClass {
       
       // Marketing elements
       'funnel-offer': () => import('@/components/page-builder/elements/MarketingElements').then(m => m.registerMarketingElements()),
+      'countdown-timer': () => import('@/components/page-builder/elements/MarketingElements').then(m => m.registerMarketingElements()),
+      'social-links': () => import('@/components/page-builder/elements/MarketingElements').then(m => m.registerMarketingElements()),
+      'hero-slider': () => import('@/components/page-builder/elements/AdvancedElements').then(m => m.registerAdvancedElements()),
       'weekly-featured': () => import('@/components/page-builder/elements/WeeklyFeaturedElement').then(m => m.registerWeeklyFeaturedElement()),
+      'image-feature': () => import('@/components/page-builder/elements/ContentElements').then(m => m.registerContentElements()),
+      'tabs': () => import('@/components/page-builder/elements/ContentElements').then(m => m.registerContentElements()),
     };
 
     const loader = elementModuleMap[id];
@@ -142,6 +203,11 @@ class StorefrontElementRegistryClass {
 
 export const storefrontElementRegistry = new StorefrontElementRegistryClass();
 
-// Pre-register the most commonly used elements
-import('@/components/page-builder/elements/BasicElements').then(m => m.registerBasicElements());
-import('@/components/page-builder/elements/MediaElements').then(m => m.registerMediaElements());
+// Pre-register the most commonly used elements to avoid first-paint fallbacks
+Promise.all([
+  import('@/components/page-builder/elements/BasicElements').then(m => m.registerBasicElements()),
+  import('@/components/page-builder/elements/MediaElements').then(m => m.registerMediaElements()),
+  import('@/components/page-builder/elements/ContentElements').then(m => m.registerContentElements()),
+]).catch(err => {
+  console.warn('Failed to pre-register basic elements:', err);
+});
