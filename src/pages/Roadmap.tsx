@@ -13,7 +13,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
-import { MapPin, Clock, CheckCircle, Circle, Loader } from "lucide-react";
+import { MapPin, Clock, CheckCircle, Circle, Loader, ChevronLeft, ChevronRight } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { WhatsAppWidget } from "@/components/WhatsAppWidget";
@@ -67,6 +67,19 @@ const feedbackStatusConfig = {
   implemented: { label: "Implemented", color: "bg-green-500" },
 };
 
+// Helper functions for text processing
+const stripHtml = (html: string) => {
+  const tmp = document.createElement("div");
+  tmp.innerHTML = html;
+  return tmp.textContent || tmp.innerText || "";
+};
+
+const truncateText = (text: string, wordLimit: number) => {
+  const words = text.split(' ');
+  if (words.length <= wordLimit) return text;
+  return words.slice(0, wordLimit).join(' ') + '...';
+};
+
 const Roadmap = () => {
   const { user } = useAuth();
   const [roadmapItems, setRoadmapItems] = useState<RoadmapItem[]>([]);
@@ -74,6 +87,15 @@ const Roadmap = () => {
   const [userFeedback, setUserFeedback] = useState<FeedbackItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+
+  // Pagination state
+  const [changelogCurrentPage, setChangelogCurrentPage] = useState(1);
+  const [feedbackCurrentPage, setFeedbackCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  // Expanded items state
+  const [expandedChangelogItems, setExpandedChangelogItems] = useState<Set<string>>(new Set());
+  const [expandedFeedbackItems, setExpandedFeedbackItems] = useState<Set<string>>(new Set());
 
   const form = useForm<z.infer<typeof feedbackSchema>>({
     resolver: zodResolver(feedbackSchema),
@@ -170,6 +192,46 @@ const Roadmap = () => {
     return acc;
   }, {} as Record<string, RoadmapItem[]>);
 
+  // Pagination helpers
+  const paginateArray = (array: any[], currentPage: number) => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return {
+      items: array.slice(startIndex, endIndex),
+      totalPages: Math.ceil(array.length / itemsPerPage),
+      hasNext: endIndex < array.length,
+      hasPrev: currentPage > 1
+    };
+  };
+
+  const paginatedChangelog = paginateArray(changelogEntries, changelogCurrentPage);
+  const paginatedFeedback = paginateArray(userFeedback, feedbackCurrentPage);
+
+  // Toggle functions
+  const toggleChangelogExpanded = (id: string) => {
+    setExpandedChangelogItems(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return newSet;
+    });
+  };
+
+  const toggleFeedbackExpanded = (id: string) => {
+    setExpandedFeedbackItems(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return newSet;
+    });
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -254,118 +316,226 @@ const Roadmap = () => {
                 </CardContent>
               </Card>
             ) : (
-              changelogEntries.map((entry) => (
-                <Card key={entry.id}>
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="flex items-center gap-3">
-                        {entry.title}
-                        {entry.version && (
-                          <Badge variant="outline">{entry.version}</Badge>
-                        )}
-                      </CardTitle>
-                      <span className="text-sm text-muted-foreground">
-                        {format(new Date(entry.published_at || entry.created_at), 'MMM dd, yyyy')}
-                      </span>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div 
-                      className="prose prose-sm max-w-none"
-                      dangerouslySetInnerHTML={{ __html: entry.content }}
-                    />
-                  </CardContent>
-                </Card>
-              ))
+              <>
+                <div className="grid gap-6 md:grid-cols-2">
+                  {paginatedChangelog.items.map((entry) => {
+                    const isExpanded = expandedChangelogItems.has(entry.id);
+                    const content = stripHtml(entry.content);
+                    const preview = truncateText(content, 20);
+                    const shouldShowReadMore = content.split(' ').length > 20;
+
+                    return (
+                      <Card key={entry.id}>
+                        <CardHeader>
+                          <div className="flex items-start justify-between">
+                            <CardTitle className="flex items-center gap-3 flex-1">
+                              <span className="line-clamp-2">{entry.title}</span>
+                              {entry.version && (
+                                <Badge variant="outline">{entry.version}</Badge>
+                              )}
+                            </CardTitle>
+                          </div>
+                          <span className="text-sm text-muted-foreground">
+                            {format(new Date(entry.published_at || entry.created_at), 'MMM dd, yyyy')}
+                          </span>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="prose prose-sm max-w-none">
+                            {isExpanded ? (
+                              <div dangerouslySetInnerHTML={{ __html: entry.content }} />
+                            ) : (
+                              <p>{preview}</p>
+                            )}
+                          </div>
+                          {shouldShowReadMore && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => toggleChangelogExpanded(entry.id)}
+                              className="mt-2 p-0 h-auto text-primary"
+                            >
+                              {isExpanded ? 'Read less' : 'Read more'}
+                            </Button>
+                          )}
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+
+                {/* Changelog Pagination */}
+                {paginatedChangelog.totalPages > 1 && (
+                  <div className="flex items-center justify-center gap-4 mt-8">
+                    <Button
+                      variant="outline"
+                      onClick={() => setChangelogCurrentPage(prev => prev - 1)}
+                      disabled={!paginatedChangelog.hasPrev}
+                      className="flex items-center gap-2"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                      Previous
+                    </Button>
+                    <span className="text-sm text-muted-foreground">
+                      Page {changelogCurrentPage} of {paginatedChangelog.totalPages}
+                    </span>
+                    <Button
+                      variant="outline"
+                      onClick={() => setChangelogCurrentPage(prev => prev + 1)}
+                      disabled={!paginatedChangelog.hasNext}
+                      className="flex items-center gap-2"
+                    >
+                      Next
+                      <ChevronRight className="w-4 h-4" />
+                    </Button>
+                  </div>
+                )}
+              </>
             )}
           </TabsContent>
 
           <TabsContent value="feedback" className="space-y-6">
             {user ? (
-              <>
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Submit Feedback</CardTitle>
-                    <CardDescription>
-                      Have a feature request or found a bug? Let us know!
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <Form {...form}>
-                      <form onSubmit={form.handleSubmit(onSubmitFeedback)} className="space-y-4">
-                        <FormField
-                          control={form.control}
-                          name="title"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Title</FormLabel>
-                              <FormControl>
-                                <Input placeholder="Brief summary of your feedback" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name="description"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Description</FormLabel>
-                              <FormControl>
-                                <Textarea 
-                                  placeholder="Provide more details about your feedback"
-                                  rows={4}
-                                  {...field} 
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <Button type="submit" disabled={submitting}>
-                          {submitting ? "Submitting..." : "Submit Feedback"}
-                        </Button>
-                      </form>
-                    </Form>
-                  </CardContent>
-                </Card>
+              <div className="grid lg:grid-cols-3 gap-6">
+                {/* Left Column - Feedback List */}
+                <div className="lg:col-span-2 space-y-6">
+                  {userFeedback.length > 0 ? (
+                    <>
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Your Feedback</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                          {paginatedFeedback.items.map((feedback) => {
+                            const isExpanded = expandedFeedbackItems.has(feedback.id);
+                            const preview = truncateText(feedback.description, 15);
+                            const shouldShowReadMore = feedback.description.split(' ').length > 15;
 
-                {userFeedback.length > 0 && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Your Feedback</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      {userFeedback.map((feedback) => (
-                        <div key={feedback.id} className="p-4 border rounded-lg">
-                          <div className="flex items-start justify-between mb-2">
-                            <h4 className="font-medium">{feedback.title}</h4>
-                            <Badge 
-                              variant="secondary" 
-                              className={feedbackStatusConfig[feedback.status].color + " text-white"}
-                            >
-                              {feedbackStatusConfig[feedback.status].label}
-                            </Badge>
-                          </div>
-                          <p className="text-sm text-muted-foreground mb-2">
-                            {feedback.description}
-                          </p>
-                          {feedback.admin_response && (
-                            <div className="mt-3 p-3 bg-muted rounded">
-                              <p className="text-sm font-medium mb-1">Admin Response:</p>
-                              <p className="text-sm">{feedback.admin_response}</p>
-                            </div>
-                          )}
-                          <p className="text-xs text-muted-foreground mt-2">
-                            Submitted {format(new Date(feedback.created_at), 'MMM dd, yyyy')}
-                          </p>
+                            return (
+                              <div key={feedback.id} className="p-4 border rounded-lg">
+                                <div className="flex items-start justify-between mb-2">
+                                  <h4 className="font-medium">{feedback.title}</h4>
+                                  <Badge 
+                                    variant="secondary" 
+                                    className={feedbackStatusConfig[feedback.status].color + " text-white"}
+                                  >
+                                    {feedbackStatusConfig[feedback.status].label}
+                                  </Badge>
+                                </div>
+                                <div className="text-sm text-muted-foreground mb-2">
+                                  {isExpanded ? feedback.description : preview}
+                                  {shouldShowReadMore && (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => toggleFeedbackExpanded(feedback.id)}
+                                      className="ml-2 p-0 h-auto text-primary"
+                                    >
+                                      {isExpanded ? 'Read less' : 'Read more'}
+                                    </Button>
+                                  )}
+                                </div>
+                                {feedback.admin_response && (
+                                  <div className="mt-3 p-3 bg-muted rounded">
+                                    <p className="text-sm font-medium mb-1">Admin Response:</p>
+                                    <p className="text-sm">{feedback.admin_response}</p>
+                                  </div>
+                                )}
+                                <p className="text-xs text-muted-foreground mt-2">
+                                  Submitted {format(new Date(feedback.created_at), 'MMM dd, yyyy')}
+                                </p>
+                              </div>
+                            );
+                          })}
+                        </CardContent>
+                      </Card>
+
+                      {/* Feedback Pagination */}
+                      {paginatedFeedback.totalPages > 1 && (
+                        <div className="flex items-center justify-center gap-4">
+                          <Button
+                            variant="outline"
+                            onClick={() => setFeedbackCurrentPage(prev => prev - 1)}
+                            disabled={!paginatedFeedback.hasPrev}
+                            className="flex items-center gap-2"
+                          >
+                            <ChevronLeft className="w-4 h-4" />
+                            Previous
+                          </Button>
+                          <span className="text-sm text-muted-foreground">
+                            Page {feedbackCurrentPage} of {paginatedFeedback.totalPages}
+                          </span>
+                          <Button
+                            variant="outline"
+                            onClick={() => setFeedbackCurrentPage(prev => prev + 1)}
+                            disabled={!paginatedFeedback.hasNext}
+                            className="flex items-center gap-2"
+                          >
+                            Next
+                            <ChevronRight className="w-4 h-4" />
+                          </Button>
                         </div>
-                      ))}
+                      )}
+                    </>
+                  ) : (
+                    <Card>
+                      <CardContent className="flex items-center justify-center py-12">
+                        <p className="text-muted-foreground">No feedback submitted yet.</p>
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
+
+                {/* Right Column - Feedback Form */}
+                <div className="lg:col-span-1">
+                  <Card className="sticky top-6">
+                    <CardHeader>
+                      <CardTitle>Submit Feedback</CardTitle>
+                      <CardDescription>
+                        Have a feature request or found a bug? Let us know!
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <Form {...form}>
+                        <form onSubmit={form.handleSubmit(onSubmitFeedback)} className="space-y-4">
+                          <FormField
+                            control={form.control}
+                            name="title"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Title</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="Brief summary of your feedback" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="description"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Description</FormLabel>
+                                <FormControl>
+                                  <Textarea 
+                                    placeholder="Provide more details about your feedback"
+                                    rows={6}
+                                    {...field} 
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <Button type="submit" disabled={submitting} className="w-full">
+                            {submitting ? "Submitting..." : "Submit Feedback"}
+                          </Button>
+                        </form>
+                      </Form>
                     </CardContent>
                   </Card>
-                )}
-              </>
+                </div>
+              </div>
             ) : (
               <Card>
                 <CardContent className="flex flex-col items-center justify-center py-12 text-center">
