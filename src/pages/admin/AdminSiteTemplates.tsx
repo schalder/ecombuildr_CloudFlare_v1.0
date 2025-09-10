@@ -57,7 +57,7 @@ const AdminSiteTemplates = () => {
       if (error) throw error;
       return data as SiteTemplate[];
     },
-    enabled: isAdmin,
+    enabled: !!isAdmin, // Convert to boolean to ensure it's never undefined
   });
 
   const createMutation = useMutation({
