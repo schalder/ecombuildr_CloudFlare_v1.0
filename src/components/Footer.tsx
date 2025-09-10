@@ -57,19 +57,11 @@ export const Footer = () => {
               Join thousands of successful entrepreneurs who've built profitable online stores with our platform
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button 
-                variant="accent" 
-                size="lg" 
-                className="group"
-                onClick={() => {
-                  const pricingSection = document.getElementById('pricing');
-                  if (pricingSection) {
-                    pricingSection.scrollIntoView({ behavior: 'smooth' });
-                  }
-                }}
-              >
-                Start Free Trial
-                <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+              <Button asChild variant="accent" size="lg" className="group">
+                <Link to="/#pricing">
+                  Start Free Trial
+                  <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                </Link>
               </Button>
               <Button 
                 variant="outline" 

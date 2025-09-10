@@ -1,5 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 import { ArrowRight, MousePointerClick, Palette, Zap, TrendingUp } from "lucide-react";
 
 const steps = [
@@ -83,19 +84,11 @@ export const ProcessSteps = () => {
 
         {/* CTA */}
         <div className="text-center">
-          <Button 
-            variant="accent" 
-            size="lg" 
-            className="group"
-            onClick={() => {
-              const pricingSection = document.getElementById('pricing');
-              if (pricingSection) {
-                pricingSection.scrollIntoView({ behavior: 'smooth' });
-              }
-            }}
-          >
-            Start Your Website Today
-            <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+          <Button asChild variant="accent" size="lg" className="group">
+            <Link to="/#pricing">
+              Start Your Website Today
+              <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+            </Link>
           </Button>
         </div>
 

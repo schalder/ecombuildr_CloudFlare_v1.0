@@ -39,7 +39,9 @@ const Index = () => {
       <div id="pricing">
         <Pricing />
       </div>
-      <FAQ />
+      <div id="support">
+        <FAQ />
+      </div>
       <Footer />
       <WhatsAppWidget />
     </div>

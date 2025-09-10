@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
+import { Link } from "react-router-dom";
 import { ArrowRight, Play, Star, Users, TrendingUp } from "lucide-react";
 import { useMarketingContent } from "@/hooks/useMarketingContent";
 import { parseVideoUrl, buildEmbedUrl } from "@/components/page-builder/utils/videoUtils";
@@ -96,16 +97,11 @@ export const Hero = () => {
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-              <Button variant="accent" size="lg" className="group" onClick={() => {
-              const pricingSection = document.getElementById('pricing');
-              if (pricingSection) {
-                pricingSection.scrollIntoView({
-                  behavior: 'smooth'
-                });
-              }
-            }}>
-                Start Building Free
-                <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+              <Button asChild variant="accent" size="lg" className="group">
+                <Link to="/#pricing">
+                  Start Building Free
+                  <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                </Link>
               </Button>
               
               <a href="https://shop.powerkits.net/" target="_blank" rel="noopener noreferrer">

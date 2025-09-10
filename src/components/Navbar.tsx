@@ -9,10 +9,10 @@ export const Navbar = () => {
   const { user } = useAuth();
 
   const navItems = [
-    { label: "Features", href: "#features" },
-    { label: "Pricing", href: "#pricing" },
-    { label: "Success Stories", href: "#testimonials" },
-    { label: "Support", href: "#support" }
+    { label: "Features", href: "/#features" },
+    { label: "Pricing", href: "/#pricing" },
+    { label: "Success Stories", href: "/#testimonials" },
+    { label: "Support", href: "/#support" }
   ];
 
   return (
@@ -34,13 +34,13 @@ export const Navbar = () => {
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-8">
             {navItems.map((item) => (
-              <a
+              <Link
                 key={item.label}
-                href={item.href}
+                to={item.href}
                 className="text-muted-foreground hover:text-foreground transition-colors duration-200"
               >
                 {item.label}
-              </a>
+              </Link>
             ))}
           </div>
 
@@ -58,17 +58,8 @@ export const Navbar = () => {
                     Login
                   </Link>
                 </Button>
-                <Button 
-                  variant="accent" 
-                  size="sm"
-                  onClick={() => {
-                    const pricingSection = document.getElementById('pricing');
-                    if (pricingSection) {
-                      pricingSection.scrollIntoView({ behavior: 'smooth' });
-                    }
-                  }}
-                >
-                  Get Started Free
+                <Button asChild variant="accent" size="sm">
+                  <Link to="/#pricing">Get Started Free</Link>
                 </Button>
               </>
             )}
@@ -88,14 +79,14 @@ export const Navbar = () => {
           <div className="md:hidden border-t border-border/50 bg-background/95 backdrop-blur-lg">
             <div className="px-4 py-4 space-y-4">
               {navItems.map((item) => (
-                <a
+                <Link
                   key={item.label}
-                  href={item.href}
+                  to={item.href}
                   className="block text-muted-foreground hover:text-foreground transition-colors duration-200"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   {item.label}
-                </a>
+                </Link>
               ))}
               
               <div className="pt-4 space-y-3 border-t border-border/50">
@@ -111,18 +102,8 @@ export const Navbar = () => {
                         Login
                       </Link>
                     </Button>
-                    <Button 
-                      variant="accent" 
-                      className="w-full" 
-                      onClick={() => {
-                        setIsMenuOpen(false);
-                        const pricingSection = document.getElementById('pricing');
-                        if (pricingSection) {
-                          pricingSection.scrollIntoView({ behavior: 'smooth' });
-                        }
-                      }}
-                    >
-                      Get Started Free
+                    <Button asChild variant="accent" className="w-full" onClick={() => setIsMenuOpen(false)}>
+                      <Link to="/#pricing">Get Started Free</Link>
                     </Button>
                   </>
                 )}

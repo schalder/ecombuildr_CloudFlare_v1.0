@@ -92,6 +92,7 @@ import { WebsiteLayout } from "@/components/storefront/WebsiteLayout";
 import { WebsiteOverrideRoute } from "./pages/storefront/WebsiteOverrideRoute";
 import { WebsiteProductDetailRoute } from "./pages/storefront/WebsiteProductDetailRoute";
 import { OnboardingGate } from "@/components/dashboard/OnboardingGate";
+import { ScrollToHash } from "@/components/ScrollToHash";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -114,6 +115,7 @@ const App = () => (
                 <Toaster />
                 <Sonner />
             <BrowserRouter>
+              <ScrollToHash />
               <AddToCartProvider>
               <DomainRouter>
                 <Routes>

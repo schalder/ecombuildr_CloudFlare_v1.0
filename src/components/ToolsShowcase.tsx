@@ -1,5 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 import { 
   BarChart3, 
   ShoppingBag, 
@@ -204,19 +205,11 @@ export const ToolsShowcase = () => {
             <p className="text-xl text-primary-light mb-8">
               Join thousands of entrepreneurs who've already built their online empire with our platform
             </p>
-            <Button 
-              variant="accent" 
-              size="lg" 
-              className="group"
-              onClick={() => {
-                const pricingSection = document.getElementById('pricing');
-                if (pricingSection) {
-                  pricingSection.scrollIntoView({ behavior: 'smooth' });
-                }
-              }}
-            >
-              Start Your Success Story
-              <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+            <Button asChild variant="accent" size="lg" className="group">
+              <Link to="/#pricing">
+                Start Your Success Story
+                <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+              </Link>
             </Button>
           </div>
         </div>
