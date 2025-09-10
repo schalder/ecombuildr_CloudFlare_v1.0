@@ -70,7 +70,8 @@ export const FunnelSettings: React.FC<FunnelSettingsProps> = ({ funnel }) => {
     connections, 
     loading: domainsLoading, 
     connectContent, 
-    removeConnection 
+    removeConnection,
+    setHomepage
   } = useDomainManagement();
 
   // Accordion state management for mobile optimization
@@ -229,9 +230,9 @@ export const FunnelSettings: React.FC<FunnelSettingsProps> = ({ funnel }) => {
             await removeConnection(currentConnection.id);
           }
           
-          // Create new connection if needed
+          // Create new connection if needed (set is_homepage to false by default)
           if (!currentConnection || currentConnection.domain_id !== selectedDomain.id) {
-            await connectContent(selectedDomain.id, 'funnel', funnel.id, '/', true);
+            await connectContent(selectedDomain.id, 'funnel', funnel.id, '/', false);
           }
         }
       }
@@ -495,14 +496,97 @@ export const FunnelSettings: React.FC<FunnelSettingsProps> = ({ funnel }) => {
                               </Button>
                             </div>
                           )}
+                          {(() => {
+                            const selectedDomainValue = form.watch('domain');
+                            if (!selectedDomainValue || selectedDomainValue === 'none') return null;
+                            
+                            const selectedDomain = domains.find(d => d.domain === selectedDomainValue);
+                            if (!selectedDomain) return null;
+                            
+                            const websiteConnection = connections.find(c => 
+                              c.domain_id === selectedDomain.id && 
+                              c.content_type === 'website'
+                            );
+                            
+                            if (websiteConnection) {
+                              return (
+                                <div className="mt-2 p-3 bg-muted rounded-md">
+                                  <p className="text-sm text-muted-foreground">
+                                    ℹ️ This domain is already connected to a website. 
+                                    {websiteConnection.is_homepage && ' The website is currently set as the homepage.'}
+                                  </p>
+                                </div>
+                              );
+                            }
+                            return null;
+                          })()}
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
-                    )}
-                  />
-                </div>
-              </AccordionContent>
-            </AccordionItem>
+                     )}
+                   />
+
+                   {/* Homepage Setting Control */}
+                   {(() => {
+                     const selectedDomainValue = form.watch('domain');
+                     if (!selectedDomainValue || selectedDomainValue === 'none') return null;
+                     
+                     const selectedDomain = domains.find(d => d.domain === selectedDomainValue);
+                     if (!selectedDomain) return null;
+                     
+                     const currentFunnelConnection = connections.find(c => 
+                       c.content_type === 'funnel' && 
+                       c.content_id === funnel.id &&
+                       c.domain_id === selectedDomain.id
+                     );
+                     
+                     const currentHomepage = connections.find(c => 
+                       c.domain_id === selectedDomain.id && 
+                       c.is_homepage === true
+                     );
+                     
+                     return (
+                       <div className="space-y-4 pt-4 border-t">
+                         <div className="flex flex-row items-center justify-between rounded-lg border p-4">
+                           <div className="space-y-0.5">
+                             <FormLabel className="text-base">Set as Homepage</FormLabel>
+                             <FormDescription>
+                               Make this funnel the homepage for {selectedDomain.domain}
+                               {currentHomepage && currentHomepage.content_id !== funnel.id && (
+                                 <span className="block text-xs text-muted-foreground mt-1">
+                                   Currently, {currentHomepage.content_type === 'website' ? 'a website' : 'another funnel'} is set as homepage
+                                 </span>
+                               )}
+                             </FormDescription>
+                           </div>
+                           <Switch
+                             checked={currentFunnelConnection?.is_homepage || false}
+                             onCheckedChange={async (checked) => {
+                               if (checked && currentFunnelConnection) {
+                                 try {
+                                   await setHomepage(currentFunnelConnection.id, selectedDomain.id);
+                                   toast({
+                                     title: "Homepage updated",
+                                     description: "This funnel is now the homepage for " + selectedDomain.domain,
+                                   });
+                                 } catch (error) {
+                                   toast({
+                                     title: "Error",
+                                     description: "Failed to set as homepage",
+                                     variant: "destructive",
+                                   });
+                                 }
+                               }
+                             }}
+                             disabled={!currentFunnelConnection}
+                           />
+                         </div>
+                       </div>
+                     );
+                   })()}
+                 </div>
+               </AccordionContent>
+             </AccordionItem>
 
             <AccordionItem value="seo" className="border rounded-lg">
               <AccordionTrigger className="px-6 py-4 hover:no-underline">
