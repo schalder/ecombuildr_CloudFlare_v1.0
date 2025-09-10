@@ -40,6 +40,9 @@ class StorefrontElementRegistry {
     'image': 'media',
     'video': 'media',
     'gallery': 'media',
+    'image-gallery': 'media',
+    'image-carousel': 'media',
+    'video-playlist': 'media',
     
     // Content elements
     'image-feature': 'content',
@@ -65,7 +68,7 @@ class StorefrontElementRegistry {
     'featured-products': 'system',
     'product-categories': 'system',
     'price': 'system',
-    'checkout-full': 'system',
+    'checkout-full': 'checkout',
     'order-confirmation': 'system',
     
     // Weekly featured
@@ -94,19 +97,48 @@ class StorefrontElementRegistry {
       return this.loadingPromises.get(category);
     }
 
-    const loadPromise = this.categoryModules[category]?.()
-      .then(() => {
+    const moduleLoader = this.categoryModules[category];
+    if (!moduleLoader) {
+      console.warn(`No module found for category: ${category}`);
+      return;
+    }
+
+    const loadPromise = moduleLoader()
+      .then((module) => {
+        console.log(`[StorefrontRegistry] Loaded category: ${category}`, module);
+        
+        // Get elements before importing
+        const elementsBefore = new Set(this.elements.keys());
+        
+        // Call the register function from the module
+        if (module.registerBasicElements) module.registerBasicElements();
+        if (module.registerMediaElements) module.registerMediaElements();
+        if (module.registerEcommerceElements) module.registerEcommerceElements();
+        if (module.registerMarketingElements) module.registerMarketingElements();
+        if (module.registerFormElements) module.registerFormElements();
+        if (module.registerContentElements) module.registerContentElements();
+        if (module.registerAdvancedElements) module.registerAdvancedElements();
+        if (module.registerNavigationElements) module.registerNavigationElements();
+        if (module.registerEcommerceSystemElements) module.registerEcommerceSystemElements();
+        if (module.registerInlineCheckoutElements) module.registerInlineCheckoutElements();
+        if (module.registerWeeklyFeaturedElement) module.registerWeeklyFeaturedElement();
+        
+        // Get newly registered elements
+        const elementsAfter = new Set(this.elements.keys());
+        const newElements = Array.from(elementsAfter).filter(id => !elementsBefore.has(id));
+        
+        console.log(`[StorefrontRegistry] Registered ${newElements.length} new elements:`, newElements);
+        
         this.notify();
       })
       .catch((error) => {
         console.warn(`Failed to load category ${category}:`, error);
         this.loadingPromises.delete(category);
+        throw error;
       });
 
-    if (loadPromise) {
-      this.loadingPromises.set(category, loadPromise);
-      return loadPromise;
-    }
+    this.loadingPromises.set(category, loadPromise);
+    return loadPromise;
   }
 
   async ensureElementLoaded(elementId: string): Promise<void> {
@@ -168,6 +200,7 @@ class StorefrontElementRegistry {
   }
 
   register(element: StorefrontElementType) {
+    console.log(`[StorefrontRegistry] Registering element: ${element.id} (category: ${element.category})`);
     this.elements.set(element.id, element);
     this.notify();
   }
