@@ -350,6 +350,48 @@ const WebsiteManagement = () => {
         <div className="p-4 sm:p-6">
           {activeTab === 'pages' && (
             <>
+              {/* Website URL Section */}
+              <Card className="mb-6">
+                <CardHeader>
+                  <CardTitle>Website URL</CardTitle>
+                  <CardDescription>
+                    Your website's homepage URL. Share this link with your customers.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="homepage-url">Homepage URL</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="homepage-url"
+                        value={homepageUrl}
+                        readOnly
+                        className="flex-1"
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleCopyUrl}
+                        className="px-3"
+                      >
+                        {urlCopied ? (
+                          <CheckIcon className="h-4 w-4" />
+                        ) : (
+                          <Copy className="h-4 w-4" />
+                        )}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleVisitSite}
+                        className="px-3"
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
                 <div>
                   <h2 className="text-lg sm:text-xl font-semibold">Pages</h2>
@@ -491,52 +533,7 @@ const WebsiteManagement = () => {
           )}
 
           {activeTab === 'settings' && website && (
-            <div className="space-y-6">
-              {/* Website URL Section */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Website URL</CardTitle>
-                  <CardDescription>
-                    Your website's homepage URL. Share this link with your customers.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="homepage-url">Homepage URL</Label>
-                    <div className="flex gap-2">
-                      <Input
-                        id="homepage-url"
-                        value={homepageUrl}
-                        readOnly
-                        className="flex-1"
-                      />
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleCopyUrl}
-                        className="px-3"
-                      >
-                        {urlCopied ? (
-                          <CheckIcon className="h-4 w-4" />
-                        ) : (
-                          <Copy className="h-4 w-4" />
-                        )}
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleVisitSite}
-                        className="px-3"
-                      >
-                        <ExternalLink className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <WebsiteSettings website={website} />
-            </div>
+            <WebsiteSettings website={website} />
           )}
 
           {activeTab === 'stats' && website && (
