@@ -48,7 +48,7 @@ const About = () => {
                 </p>
                 <p className="text-lg leading-relaxed">
                   এই সমস্যার সমাধান দিতেই তৈরি হয়েছে <strong>eComBuildr</strong>—বাংলাদেশি উদ্যোক্তাদের জন্য তৈরি একটি 
-                  অল-ইন-ওয়ান ই-কমার্স প্ল্যাটফর্ম, যেখানে দোকান, ফানেল, পেমেন্ট, শিপিং—সব একসাথে।
+                  অল-ইন-ওয়ান ই-কমার্স প্ল্যাটফর্ম, যেখানে eCommerce Website/store, Sales Funnel, Landing Page, Product mangement, Order management,Shipping integration —সব একসাথে।
                 </p>
               </div>
             </div>
@@ -129,10 +129,10 @@ const About = () => {
                     </div>
                   </div>
                   <div className="text-center">
-                    <h3 className="text-xl font-bold mb-2">Rafiq Ahmed</h3>
+                    <h3 className="text-xl font-bold mb-2">Samir Chandra Halder</h3>
                     <p className="text-primary font-medium mb-3">CEO & Founder</p>
                     <p className="text-muted-foreground text-sm leading-relaxed">
-                      ১০+ বছরের ই-কমার্স অভিজ্ঞতা নিয়ে বাংলাদেশি উদ্যোক্তাদের সফলতার পথে এগিয়ে নিয়ে যাচ্ছেন।
+                    একজন অভিজ্ঞ মার্কেটার ও ওয়েবসাইট/ফানেল বিল্ডার। গত ১৪ বছর ধরে তিনি বিশ্বের শত শত ব্যবসাকে তাদের অনলাইন উপস্থিতি সহজ করতে ও বিক্রি বাড়াতে সহায়তা করেছেন।
                     </p>
                   </div>
                 </div>
