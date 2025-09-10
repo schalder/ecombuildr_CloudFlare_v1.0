@@ -8,11 +8,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { openWhatsApp } from "@/lib/utils";
 const Contact = () => {
   const handleWhatsAppContact = () => {
-    const message = "Hi! I'd like to know more about Ecomflex and how it can help my business.";
-    openWhatsApp("+1234567890", message);
+    const message = "Hi! I'd like to know more about eComBuildr and how it can help my business.";
+    openWhatsApp("+8801776911811", message);
   };
   return <div className="min-h-screen">
-      <SEOHead title="Contact Us - Ecomflex" description="Get in touch with the Ecomflex team. We're here to help you succeed with your e-commerce business." keywords={["contact ecomflex", "customer support", "help", "contact information"]} />
+      <SEOHead title="Contact Us - eComBuildr" description="Get in touch with the eComBuildr team. We're here to help you succeed with your e-commerce business." keywords={["contact ecombuildr", "customer support", "help", "contact information"]} />
       <Navbar />
       
       <main className="min-h-screen bg-background">
@@ -86,7 +86,7 @@ const Contact = () => {
                     <CardContent>
                       <p className="text-lg font-medium">+8801776-911811</p>
                       <p className="text-sm text-muted-foreground mt-1">
-                        Monday - Friday, 9AM - 6PM EST
+                        Sunday - Thursday, 9AM - 6PM GMT+6
                       </p>
                     </CardContent>
                   </Card>
@@ -102,10 +102,9 @@ const Contact = () => {
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-lg font-medium">123 Business Avenue</p>
-                      <p className="text-muted-foreground">Suite 456</p>
-                      <p className="text-muted-foreground">New York, NY 10001</p>
-                      <p className="text-muted-foreground">United States</p>
+                      <p className="text-lg font-medium">Barakota, 311</p>
+                      <p className="text-muted-foreground">Dakuarhat, Wazirpur</p>
+                      <p className="text-muted-foreground">Barisal, Bangladesh</p>
                     </CardContent>
                   </Card>
                 </div>
@@ -154,11 +153,11 @@ const Contact = () => {
                       <div className="space-y-2">
                         <div className="flex justify-between">
                           <span>Sunday - Thursday</span>
-                          <span className="font-medium">9:00 AM - 6:00 PM GMT</span>
+                          <span className="font-medium">9:00 AM - 6:00 PM GMT+6</span>
                         </div>
                         <div className="flex justify-between">
-                          <span>Saterday</span>
-                          <span className="font-medium">10:00 AM - 4:00 PM GMT</span>
+                          <span>Saturday</span>
+                          <span className="font-medium">10:00 AM - 4:00 PM GMT+6</span>
                         </div>
                         <div className="flex justify-between">
                           <span>Friday</span>
