@@ -7,9 +7,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
-import { ArrowLeft, Plus, Edit, ExternalLink, Settings, Eye } from 'lucide-react';
+import { ArrowLeft, Plus, Edit, ExternalLink, Settings, Eye, Copy, CheckIcon } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { CreatePageModal } from '@/components/modals/CreatePageModal';
 import { WebsiteSettings } from '@/components/website/WebsiteSettings';
 import { WebsiteShipping } from '@/components/website/WebsiteShipping';
@@ -54,6 +56,7 @@ const WebsiteManagement = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [selectedPage, setSelectedPage] = useState<WebsitePage | null>(null);
+  const [urlCopied, setUrlCopied] = useState(false);
   
   const activeTab = searchParams.get('tab') || 'pages';
 
@@ -177,6 +180,39 @@ const WebsiteManagement = () => {
 
   const handleTogglePublished = (isPublished: boolean) => {
     updateWebsiteMutation.mutate({ is_published: isPublished });
+  };
+
+  // Compute homepage URL
+  const getHomepageUrl = () => {
+    if (!website) return '';
+    
+    const domain = website.connected_domain || website.canonical_domain;
+    if (domain) {
+      return `https://${domain}`;
+    }
+    
+    // Fallback to site slug pattern
+    return `https://example.com/site/${website.slug}`;
+  };
+
+  const homepageUrl = getHomepageUrl();
+
+  const handleCopyUrl = async () => {
+    try {
+      await navigator.clipboard.writeText(homepageUrl);
+      setUrlCopied(true);
+      toast({ title: 'URL copied to clipboard' });
+      setTimeout(() => setUrlCopied(false), 2000);
+    } catch (error) {
+      toast({ 
+        title: 'Failed to copy URL', 
+        variant: 'destructive' 
+      });
+    }
+  };
+
+  const handleVisitSite = () => {
+    window.open(homepageUrl, '_blank', 'noopener,noreferrer');
   };
 
   const handleCreatePage = () => {
@@ -455,7 +491,52 @@ const WebsiteManagement = () => {
           )}
 
           {activeTab === 'settings' && website && (
-            <WebsiteSettings website={website} />
+            <div className="space-y-6">
+              {/* Website URL Section */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Website URL</CardTitle>
+                  <CardDescription>
+                    Your website's homepage URL. Share this link with your customers.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="homepage-url">Homepage URL</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="homepage-url"
+                        value={homepageUrl}
+                        readOnly
+                        className="flex-1"
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleCopyUrl}
+                        className="px-3"
+                      >
+                        {urlCopied ? (
+                          <CheckIcon className="h-4 w-4" />
+                        ) : (
+                          <Copy className="h-4 w-4" />
+                        )}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleVisitSite}
+                        className="px-3"
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <WebsiteSettings website={website} />
+            </div>
           )}
 
           {activeTab === 'stats' && website && (
