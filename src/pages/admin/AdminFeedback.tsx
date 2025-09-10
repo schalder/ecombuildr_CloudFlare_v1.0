@@ -66,20 +66,31 @@ const AdminFeedback = () => {
     try {
       const { data, error } = await supabase
         .from('platform_feedback')
-        .select(`
-          *,
-          profiles:user_id (
-            full_name,
-            email
-          )
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setFeedback((data as any[])?.map(item => ({
+
+      // Fetch user profiles separately if we have user_ids
+      const userIds = data?.map(item => item.user_id).filter(Boolean) || [];
+      let profiles: any[] = [];
+      
+      if (userIds.length > 0) {
+        const { data: profilesData } = await supabase
+          .from('profiles')
+          .select('id, full_name, email')
+          .in('id', userIds);
+        
+        profiles = profilesData || [];
+      }
+
+      // Combine feedback with user profiles
+      const feedbackWithProfiles = data?.map(item => ({
         ...item,
-        profiles: item.profiles || null
-      })) || []);
+        profiles: profiles.find(profile => profile.id === item.user_id) || null
+      })) || [];
+
+      setFeedback(feedbackWithProfiles);
     } catch (error) {
       console.error('Error fetching feedback:', error);
       toast({
