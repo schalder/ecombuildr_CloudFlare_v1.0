@@ -12,13 +12,15 @@ interface MediaSelectorProps {
   onChange: (url: string) => void;
   label?: string;
   maxSize?: number; // in MB
+  compact?: boolean; // For smaller preview areas like logos
 }
 
 export const MediaSelector: React.FC<MediaSelectorProps> = ({
   value = '',
   onChange,
   label = 'Select Image',
-  maxSize = 5
+  maxSize = 5,
+  compact = false
 }) => {
   const [isMediaLibraryOpen, setIsMediaLibraryOpen] = useState(false);
   const [urlInput, setUrlInput] = useState(value);
@@ -54,11 +56,11 @@ export const MediaSelector: React.FC<MediaSelectorProps> = ({
       
       {hasImage && (
         <div className="relative group">
-          <div className="aspect-video bg-muted rounded-lg overflow-hidden border">
+          <div className={`bg-muted rounded-lg overflow-hidden border ${compact ? 'h-20' : 'aspect-video'}`}>
             <img 
               src={value || urlPreview} 
               alt="Selected image"
-              className="w-full h-full object-contain"
+              className={`w-full h-full ${compact ? 'object-contain' : 'object-contain'}`}
               onError={() => setUrlPreview('')}
             />
           </div>
