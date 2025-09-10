@@ -98,6 +98,11 @@ export const FunnelFooterBuilder: React.FC<Props> = ({ funnel }) => {
 
   const [config, setConfig] = useState<GlobalFooterConfig>(initial);
 
+  // Sync config with funnel settings when they change
+  React.useEffect(() => {
+    setConfig(initial);
+  }, [initial]);
+
   useEffect(() => {
     const fetchSteps = async () => {
       const { data, error } = await supabase

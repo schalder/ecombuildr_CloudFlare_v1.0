@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
+import { useEcomPaths } from '@/lib/pathResolver';
 
 interface FunnelData {
   id: string;
@@ -40,6 +41,7 @@ interface GlobalFooterConfig {
 
 export const FunnelFooter: React.FC<{ funnel: FunnelData; }> = ({ funnel }) => {
   const cfg = (funnel.settings?.global_footer as GlobalFooterConfig | undefined);
+  const paths = useEcomPaths();
   if (!cfg?.enabled) return null;
 
   const styleVars = useMemo(() => ({
@@ -76,7 +78,7 @@ export const FunnelFooter: React.FC<{ funnel: FunnelData; }> = ({ funnel }) => {
       <div className="container mx-auto px-4 py-10">
         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
           <div className="max-w-md space-y-3">
-            <Link to={`/funnel/${funnel.id}/${funnel.slug}`} className="flex items-center gap-3">
+            <Link to={paths.home} className="flex items-center gap-3">
               {cfg?.logo_url ? (
                 <img src={cfg.logo_url} alt={`${funnel.name} logo`} className="h-8 w-auto object-contain" />
               ) : (
@@ -108,7 +110,7 @@ export const FunnelFooter: React.FC<{ funnel: FunnelData; }> = ({ funnel }) => {
                         </a>
                       ) : (
                         <Link 
-                          to={link.step_slug ? `/funnel/${funnel.id}/${link.step_slug}` : `/funnel/${funnel.id}/${funnel.slug}`} 
+                          to={link.step_slug ? `/${link.step_slug}` : paths.home} 
                           className="text-sm transition-colors" 
                           style={{ color: cfg?.style?.text_color || undefined }}
                         >

@@ -5,6 +5,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTrigger } from '@/components/ui/
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useCart } from '@/contexts/CartContext';
+import { useEcomPaths } from '@/lib/pathResolver';
 
 interface FunnelData {
   id: string;
@@ -44,6 +45,7 @@ export const FunnelHeader: React.FC<{ funnel: FunnelData; }> = ({ funnel }) => {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const { itemCount } = useCart();
+  const paths = useEcomPaths();
 
   const fontSizeClass = useMemo(() => {
     switch (cfg?.font_size) {
@@ -73,7 +75,8 @@ export const FunnelHeader: React.FC<{ funnel: FunnelData; }> = ({ funnel }) => {
       );
     }
     const stepSlug = item.step_slug || '';
-    const to = `/funnel/${funnel.id}/${stepSlug}`;
+    // Use clean URL for custom domains, fallback to full funnel path
+    const to = stepSlug ? `/${stepSlug}` : paths.home;
     return (
       <Link to={to} className={`${fontSizeClass} transition-colors`} style={{ color: cfg?.style?.text_color || undefined }}>{item.label}</Link>
     );
@@ -98,7 +101,7 @@ export const FunnelHeader: React.FC<{ funnel: FunnelData; }> = ({ funnel }) => {
         `}</style>
       )}
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-        <Link to={`/funnel/${funnel.id}/${funnel.slug}`} className="flex items-center gap-3">
+        <Link to={paths.home} className="flex items-center gap-3">
           {cfg?.logo_url ? (
             <img src={cfg.logo_url} alt={`${funnel.name} logo`} className="h-8 w-auto object-contain" />
           ) : (
