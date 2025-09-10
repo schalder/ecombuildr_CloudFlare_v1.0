@@ -65,6 +65,45 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
   }
 }
 
+// Simple error fallback for React elements
+export const SimpleErrorFallback: React.FC<{ error?: Error; retry: () => void }> = ({ error, retry }) => (
+  <div className="flex flex-col items-center justify-center p-4 text-center border border-destructive/20 rounded-lg bg-destructive/5">
+    <AlertTriangle className="h-6 w-6 text-destructive mb-2" />
+    <h3 className="text-sm font-medium mb-2">Content Error</h3>
+    <p className="text-xs text-muted-foreground mb-3">
+      {error?.message || 'Content could not be displayed'}
+    </p>
+    <Button variant="outline" size="sm" onClick={retry}>
+      <RefreshCw className="h-4 w-4 mr-2" />
+      Retry
+    </Button>
+  </div>
+);
+
+// Element-specific error fallback
+export const ElementErrorBoundary: React.FC<{ elementId?: string; elementType?: string; children: React.ReactNode }> = ({ 
+  elementId, 
+  elementType, 
+  children 
+}) => {
+  const handleError = (error: Error) => {
+    console.error(`Element error in ${elementType} (${elementId}):`, error);
+  };
+
+  return (
+    <ErrorBoundary
+      onError={handleError}
+      fallback={({ retry }) => (
+        <div className="p-2 border border-yellow-200 bg-yellow-50 rounded text-sm text-yellow-800">
+          Element "{elementType}" failed to render
+        </div>
+      )}
+    >
+      {children}
+    </ErrorBoundary>
+  );
+};
+
 // Chart-specific error fallback
 export const ChartErrorFallback: React.FC<{ error?: Error; retry: () => void }> = ({ error, retry }) => (
   <div className="flex flex-col items-center justify-center h-[300px] text-center p-6 border border-dashed border-muted-foreground/25 rounded-lg">

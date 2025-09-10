@@ -3,6 +3,8 @@ import { useLocation, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
 import { PageBuilderRenderer } from '@/components/storefront/PageBuilderRenderer';
+import { ErrorBoundary } from '@/components/ui/error-boundary';
+import { Button } from '@/components/ui/button';
 import { FunnelHeader } from '@/components/storefront/FunnelHeader';
 import { FunnelFooter } from '@/components/storefront/FunnelFooter';
 import { setSEO } from '@/lib/seo';
@@ -173,14 +175,22 @@ export const DomainFunnelRouter: React.FC<DomainFunnelRouterProps> = ({ funnel }
       <div className="w-full min-h-screen flex flex-col">
         <FunnelHeader funnel={funnel} />
         <main className="flex-1">
-          {step.content?.sections ? (
-            <PageBuilderRenderer data={step.content} />
-          ) : (
-            <div className="container mx-auto px-4 py-8">
-              <h1 className="text-3xl font-bold mb-6">{step.title}</h1>
-              <p className="text-muted-foreground">This funnel step is still being set up.</p>
+          <ErrorBoundary fallback={({ retry }) => (
+            <div className="container mx-auto px-4 py-8 text-center">
+              <h1 className="text-2xl font-bold text-destructive mb-4">Content Loading Error</h1>
+              <p className="text-muted-foreground mb-4">This page content couldn't be displayed properly.</p>
+              <Button onClick={retry}>Try Again</Button>
             </div>
-          )}
+          )}>
+            {step.content?.sections ? (
+              <PageBuilderRenderer data={step.content} />
+            ) : (
+              <div className="container mx-auto px-4 py-8">
+                <h1 className="text-3xl font-bold mb-6">{step.title}</h1>
+                <p className="text-muted-foreground">This funnel step is still being set up.</p>
+              </div>
+            )}
+          </ErrorBoundary>
         </main>
         <FunnelFooter funnel={funnel} />
       </div>

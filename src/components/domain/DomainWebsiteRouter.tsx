@@ -17,6 +17,8 @@ import { WebsiteFooter } from '@/components/storefront/WebsiteFooter';
 import { FloatingCartButton } from '@/components/storefront/FloatingCartButton';
 import { SupportWidget } from '@/components/storefront/SupportWidget';
 import { WebsiteProvider } from '@/contexts/WebsiteContext';
+import { ErrorBoundary } from '@/components/ui/error-boundary';
+import { Button } from '@/components/ui/button';
 
 const DynamicWebsiteRoute: React.FC<{ fallback: React.ReactElement; websiteId: string }> = ({ fallback, websiteId }) => {
   const { slug } = useParams<{ slug: string }>();
@@ -54,7 +56,14 @@ export const DomainWebsiteRouter: React.FC<DomainWebsiteRouterProps> = ({
     <WebsiteProvider websiteId={websiteId} websiteSlug={website.slug}>
       <WebsiteHeader website={website} />
       <main className="flex-1">
-        <Routes>
+        <ErrorBoundary fallback={({ retry }) => (
+          <div className="container mx-auto px-4 py-8 text-center">
+            <h1 className="text-2xl font-bold text-destructive mb-4">Page Loading Error</h1>
+            <p className="text-muted-foreground mb-4">This page couldn't be displayed properly.</p>
+            <Button onClick={retry}>Try Again</Button>
+          </div>
+        )}>
+          <Routes>
       {/* Homepage */}
       <Route path="/" element={
         <WebsiteOverrideRoute 
@@ -109,7 +118,8 @@ export const DomainWebsiteRouter: React.FC<DomainWebsiteRouterProps> = ({
           <DynamicWebsiteRoute fallback={<div className="min-h-screen flex items-center justify-center">Page not found</div>} websiteId={websiteId} />
         } 
       />
-        </Routes>
+          </Routes>
+        </ErrorBoundary>
       </main>
       {(website.settings?.floating_cart?.enabled ?? true) && (
         <FloatingCartButton 

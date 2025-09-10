@@ -2,7 +2,7 @@ import React from 'react';
 import { PageBuilderColumn } from '@/components/page-builder/types';
 import { DeviceType } from '@/components/page-builder/utils/responsive';
 import { mergeResponsiveStyles } from '@/components/page-builder/utils/responsiveStyles';
-import { OptimizedElementRenderer } from '@/components/page-builder/components/OptimizedElementRenderer';
+import { StorefrontOptimizedElementRenderer } from './elements/StorefrontOptimizedElementRenderer';
 
 interface OptimizedColumnRendererProps {
   column: PageBuilderColumn;
@@ -41,7 +41,7 @@ export const OptimizedColumnRenderer: React.FC<OptimizedColumnRendererProps> = R
   return (
     <div className="flex flex-col space-y-2" style={columnStyle}>
       {column.elements.map((element, index) => (
-        <OptimizedElementRenderer
+        <StorefrontOptimizedElementRenderer
           key={`${element.id}-${index}`}
           element={element}
           deviceType={deviceType}

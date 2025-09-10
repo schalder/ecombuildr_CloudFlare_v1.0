@@ -45,5 +45,39 @@ const registerStorefrontElements = () => {
   });
 };
 
-// Auto-register on import
-registerStorefrontElements();
+// Initialize registry with minimal elements for storefront
+let isInitialized = false;
+
+const initializeStorefrontRegistry = async () => {
+  if (isInitialized) return;
+  
+  try {
+    // Only import the full registry if we need it
+    const { elementRegistry } = await import('@/components/page-builder/elements');
+    
+    // Register only essential elements for storefront
+    const essentialTypes = [
+      'text', 'heading', 'image', 'video', 'button', 'spacer', 'divider',
+      'product-grid', 'featured-products', 'collection-grid', 
+      'hero-slider', 'testimonials', 'faq', 'newsletter'
+    ];
+    
+    elementRegistry.getAll()
+      .filter(element => essentialTypes.includes(element.id))
+      .forEach(element => {
+        storefrontElementRegistry.register(element);
+      });
+    
+    isInitialized = true;
+  } catch (error) {
+    console.warn('Failed to initialize storefront registry:', error);
+  }
+};
+
+// Initialize on first access
+export const getStorefrontRegistry = () => {
+  if (!isInitialized) {
+    initializeStorefrontRegistry();
+  }
+  return storefrontElementRegistry;
+};
