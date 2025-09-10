@@ -2286,6 +2286,39 @@ export type Database = {
         }
         Relationships: []
       }
+      site_templates: {
+        Row: {
+          created_at: string
+          demo_url: string | null
+          id: string
+          image_url: string
+          is_active: boolean
+          name: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          demo_url?: string | null
+          id?: string
+          image_url: string
+          is_active?: boolean
+          name: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          demo_url?: string | null
+          id?: string
+          image_url?: string
+          is_active?: boolean
+          name?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       store_customizations: {
         Row: {
           created_at: string

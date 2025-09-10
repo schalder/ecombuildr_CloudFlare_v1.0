@@ -71,6 +71,7 @@ import AdminRoadmap from "./pages/admin/AdminRoadmap";
 import AdminChangelog from "./pages/admin/AdminChangelog";
 import AdminFeedback from "./pages/admin/AdminFeedback";
 import AdminCareers from "./pages/admin/AdminCareers";
+import AdminSiteTemplates from "./pages/admin/AdminSiteTemplates";
 import Training from "./pages/Training";
 import TrainingCourse from "./pages/TrainingCourse";
 import Roadmap from "./pages/Roadmap";
@@ -78,6 +79,7 @@ import About from "./pages/About";
 import Contact from "./pages/Contact";
 import Careers from "./pages/Careers";
 import CareerDetail from "./pages/CareerDetail";
+import Templates from "./pages/Templates";
 import PrivacyPolicy from "./pages/legal/PrivacyPolicy";
 import TermsOfService from "./pages/legal/TermsOfService";
 import CookiePolicy from "./pages/legal/CookiePolicy";
@@ -205,6 +207,7 @@ const App = () => (
                 <Route path="/admin/changelog" element={<AdminChangelog />} />
                 <Route path="/admin/feedback" element={<AdminFeedback />} />
                 <Route path="/admin/careers" element={<AdminCareers />} />
+                <Route path="/admin/site-templates" element={<AdminSiteTemplates />} />
                 
                 {/* Demo and Preview Routes */}
                 <Route path="/preview/demo" element={<DemoPreview />} />
@@ -217,6 +220,7 @@ const App = () => (
                 <Route path="/contact" element={<Contact />} />
                 <Route path="/careers" element={<Careers />} />
                 <Route path="/careers/:id" element={<CareerDetail />} />
+                <Route path="/templates" element={<Templates />} />
                 
                 {/* Legal Pages */}
                 <Route path="/privacy-policy" element={<PrivacyPolicy />} />

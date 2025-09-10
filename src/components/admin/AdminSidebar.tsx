@@ -102,6 +102,11 @@ const adminMenuItems = [
 
 const platformMenuItems = [
   {
+    title: 'Site Templates',
+    url: '/admin/site-templates',
+    icon: Layout,
+  },
+  {
     title: 'Roadmap',
     url: '/admin/roadmap',
     icon: MapPin,

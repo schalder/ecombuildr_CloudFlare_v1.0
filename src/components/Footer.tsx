@@ -20,7 +20,7 @@ export const Footer = () => {
       links: [
         { label: "Features", href: "#features" },
         { label: "Pricing", href: "#pricing" },
-        { label: "Templates", href: "#templates" },
+        { label: "Templates", href: "/templates" },
         { label: "Integrations", href: "#integrations" }
       ]
     },
