@@ -10,6 +10,7 @@ export const Navbar = () => {
 
   const navItems = [
     { label: "Features", href: "/#features" },
+    { label: "Templates", href: "/templates" },
     { label: "Pricing", href: "/#pricing" },
     { label: "Success Stories", href: "/#testimonials" },
     { label: "FAQ", href: "/#support" }
