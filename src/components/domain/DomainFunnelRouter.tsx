@@ -2,9 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useLocation, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
-import { StorefrontPageBuilderRenderer } from '@/components/storefront/StorefrontPageBuilderRenderer';
 import { PageBuilderRenderer } from '@/components/storefront/PageBuilderRenderer';
-import { ErrorBoundary } from '@/components/ui/error-boundary';
 import { FunnelHeader } from '@/components/storefront/FunnelHeader';
 import { FunnelFooter } from '@/components/storefront/FunnelFooter';
 import { setSEO } from '@/lib/seo';
@@ -53,7 +51,6 @@ export const DomainFunnelRouter: React.FC<DomainFunnelRouterProps> = ({ funnel }
   const { store } = useStore();
 
   const isPreview = searchParams.get('preview') === '1';
-  const useStorefront = searchParams.get('storefront') !== '0'; // Default to storefront unless explicitly disabled
 
   // Extract step slug from pathname
   const pathSegments = location.pathname.split('/').filter(Boolean);
@@ -139,24 +136,16 @@ export const DomainFunnelRouter: React.FC<DomainFunnelRouterProps> = ({ funnel }
       favicon: funnel?.settings?.favicon_url || store?.favicon_url,
     });
 
-    // Defer custom scripts to improve initial load performance
+    // Inject custom scripts if they exist
     if (step.custom_scripts) {
-      const cleanup = () => {
-        const scriptElement = document.createElement('div');
-        scriptElement.innerHTML = step.custom_scripts;
-        document.head.appendChild(scriptElement);
-        return () => {
-          if (document.head.contains(scriptElement)) {
-            document.head.removeChild(scriptElement);
-          }
-        };
+      const scriptElement = document.createElement('div');
+      scriptElement.innerHTML = step.custom_scripts;
+      document.head.appendChild(scriptElement);
+
+      // Cleanup function
+      return () => {
+        document.head.removeChild(scriptElement);
       };
-      
-      if ('requestIdleCallback' in window) {
-        requestIdleCallback(cleanup);
-      } else {
-        setTimeout(cleanup, 100);
-      }
     }
   }, [step, funnel, store]);
 
@@ -185,19 +174,7 @@ export const DomainFunnelRouter: React.FC<DomainFunnelRouterProps> = ({ funnel }
         <FunnelHeader funnel={funnel} />
         <main className="flex-1">
           {step.content?.sections ? (
-            <ErrorBoundary 
-              fallback={({ error, retry }) => (
-                <div className="p-4 text-center text-destructive bg-destructive/10 rounded">
-                  <p>Failed to render funnel content. Please try refreshing.</p>
-                </div>
-              )}
-            >
-              {useStorefront ? (
-                <StorefrontPageBuilderRenderer data={step.content} />
-              ) : (
-                <PageBuilderRenderer data={step.content} />
-              )}
-            </ErrorBoundary>
+            <PageBuilderRenderer data={step.content} />
           ) : (
             <div className="container mx-auto px-4 py-8">
               <h1 className="text-3xl font-bold mb-6">{step.title}</h1>
