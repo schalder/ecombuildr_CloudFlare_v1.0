@@ -24,42 +24,38 @@ export const OptimizedElementRenderer = memo<OptimizedElementRendererProps>(({
   onDelete,
   isSelected = false
 }) => {
+  // ALWAYS call all hooks first - never skip any hooks
   // Memoize element definition lookup
   const elementDef = useMemo(() => 
     elementRegistry.get(element.type), 
     [element.type]
   );
 
-  // Memoize styles calculation
+  // Memoize styles calculation - always calculate 
   const styles = useMemo(() => 
     renderElementStyles(element, deviceType), 
     [element, deviceType]
   );
 
-  // Memoize responsive CSS generation
+  // Memoize responsive CSS generation - always calculate
   const responsiveCSS = useMemo(() => 
     generateResponsiveCSS(element.id, element.styles), 
     [element.id, element.styles]
   );
 
-  // Inject responsive CSS into document head
+  // ALWAYS inject responsive CSS into document head
   useHeadStyle(`responsive-css-${element.id}`, responsiveCSS);
 
-  if (!elementDef) {
-    console.warn(`Element type "${element.type}" not found in registry`);
-    return null;
-  }
-
-  const Component = elementDef.component;
-
-  // Wrap onUpdate to match expected signature
+  // Wrap onUpdate to match expected signature - always do this
   const handleUpdate = useMemo(() => 
     onUpdate ? (updates: Partial<PageBuilderElement>) => onUpdate(element.id, updates) : undefined,
     [onUpdate, element.id]
   );
 
-  // Apply Custom CSS to document head (prevents visible text in builder)
+  // ALWAYS apply Custom CSS to document head - even if element doesn't exist
   React.useEffect(() => {
+    if (!elementDef) return; // Safe early return inside effect
+    
     const customCSS = (element as any).content?.customCSS;
     if (!customCSS || !element.anchor) return;
 
@@ -74,7 +70,6 @@ export const OptimizedElementRenderer = memo<OptimizedElementRendererProps>(({
     }
     
     // Apply CSS with proper scoping to element anchor
-    // Use highly specific selectors and exclude internal elements like style and script tags
     styleElement.textContent = `
       /* Custom CSS for element ${element.id} */
       #${element.anchor} { 
@@ -93,7 +88,15 @@ export const OptimizedElementRenderer = memo<OptimizedElementRendererProps>(({
         existingStyle.remove();
       }
     };
-  }, [(element as any).content?.customCSS, element.anchor, element.id]);
+  }, [elementDef, (element as any).content?.customCSS, element.anchor, element.id]);
+
+  // Now safe to do conditional rendering after ALL hooks have been called
+  if (!elementDef) {
+    console.warn(`Element type "${element.type}" not found in registry`);
+    return null;
+  }
+
+  const Component = elementDef.component;
 
   return (
     <Component

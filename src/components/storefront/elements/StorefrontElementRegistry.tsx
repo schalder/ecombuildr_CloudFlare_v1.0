@@ -51,9 +51,13 @@ let isInitialized = false;
 const initializeStorefrontRegistry = async () => {
   if (isInitialized) return;
   
+  console.log('[StorefrontRegistry] Starting initialization...');
+  
   try {
     // Only import the full registry if we need it
     const { elementRegistry } = await import('@/components/page-builder/elements');
+    
+    console.log('[StorefrontRegistry] Main registry loaded, available elements:', elementRegistry.getAll().length);
     
     // Register only essential elements for storefront
     const essentialTypes = [
@@ -62,21 +66,27 @@ const initializeStorefrontRegistry = async () => {
       'hero-slider', 'testimonials', 'faq', 'newsletter'
     ];
     
-    elementRegistry.getAll()
+    const allElements = elementRegistry.getAll();
+    console.log('[StorefrontRegistry] All available elements:', allElements.map(el => el.id));
+    
+    allElements
       .filter(element => essentialTypes.includes(element.id))
       .forEach(element => {
+        console.log('[StorefrontRegistry] Registering element:', element.id);
         storefrontElementRegistry.register(element);
       });
     
+    console.log('[StorefrontRegistry] Registered elements:', storefrontElementRegistry.getAll().map(el => el.id));
     isInitialized = true;
   } catch (error) {
-    console.warn('Failed to initialize storefront registry:', error);
+    console.warn('[StorefrontRegistry] Failed to initialize storefront registry:', error);
   }
 };
 
 // Initialize on first access
 export const getStorefrontRegistry = () => {
   if (!isInitialized) {
+    console.log('[StorefrontRegistry] First access, initializing...');
     initializeStorefrontRegistry();
   }
   return storefrontElementRegistry;
