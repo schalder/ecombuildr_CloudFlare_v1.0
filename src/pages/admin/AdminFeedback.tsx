@@ -2,10 +2,12 @@ import { useState, useEffect } from "react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useForm } from "react-hook-form";
@@ -14,7 +16,7 @@ import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
-import { MessageSquare, User, Calendar } from "lucide-react";
+import { MessageSquare, User, Calendar, Trash2, Search } from "lucide-react";
 
 interface FeedbackItem {
   id: string;
@@ -49,6 +51,9 @@ const AdminFeedback = () => {
   const [loading, setLoading] = useState(true);
   const [selectedFeedback, setSelectedFeedback] = useState<FeedbackItem | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [feedbackToDelete, setFeedbackToDelete] = useState<FeedbackItem | null>(null);
 
   const form = useForm<z.infer<typeof responseSchema>>({
     resolver: zodResolver(responseSchema),
@@ -141,12 +146,53 @@ const AdminFeedback = () => {
     setDialogOpen(true);
   };
 
+  const handleDeleteFeedback = async () => {
+    if (!feedbackToDelete) return;
+
+    try {
+      const { error } = await supabase
+        .from('platform_feedback')
+        .delete()
+        .eq('id', feedbackToDelete.id);
+
+      if (error) throw error;
+
+      toast({ title: "Success", description: "Feedback deleted successfully" });
+      setDeleteDialogOpen(false);
+      setFeedbackToDelete(null);
+      fetchFeedback();
+    } catch (error) {
+      console.error('Error deleting feedback:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete feedback",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const confirmDeleteFeedback = (item: FeedbackItem) => {
+    setFeedbackToDelete(item);
+    setDeleteDialogOpen(true);
+  };
+
+  const filteredFeedback = feedback.filter(item => {
+    if (!searchQuery) return true;
+    
+    const query = searchQuery.toLowerCase();
+    return (
+      item.title.toLowerCase().includes(query) ||
+      item.profiles?.full_name?.toLowerCase().includes(query) ||
+      item.profiles?.email?.toLowerCase().includes(query)
+    );
+  });
+
   const getStatusConfig = (status: string) => {
     return statusOptions.find(s => s.value === status) || statusOptions[0];
   };
 
   const filterFeedbackByStatus = (status: string) => {
-    return feedback.filter(item => item.status === status);
+    return filteredFeedback.filter(item => item.status === status);
   };
 
   if (loading) {
@@ -164,9 +210,20 @@ const AdminFeedback = () => {
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <h2 className="text-2xl font-bold">User Feedback</h2>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <MessageSquare className="w-4 h-4" />
-            Total: {feedback.length}
+          <div className="flex items-center gap-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+              <Input
+                placeholder="Search by name, email, or title..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 w-64"
+              />
+            </div>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <MessageSquare className="w-4 h-4" />
+              Total: {filteredFeedback.length}
+            </div>
           </div>
         </div>
 
@@ -181,14 +238,15 @@ const AdminFeedback = () => {
           </TabsList>
 
           <TabsContent value="all">
-            <FeedbackList items={feedback} onRespond={handleRespondToFeedback} />
+            <FeedbackList items={filteredFeedback} onRespond={handleRespondToFeedback} onDelete={confirmDeleteFeedback} />
           </TabsContent>
           
           {statusOptions.map(({ value }) => (
             <TabsContent key={value} value={value}>
               <FeedbackList 
                 items={filterFeedbackByStatus(value)} 
-                onRespond={handleRespondToFeedback} 
+                onRespond={handleRespondToFeedback}
+                onDelete={confirmDeleteFeedback}
               />
             </TabsContent>
           ))}
@@ -279,6 +337,16 @@ const AdminFeedback = () => {
             )}
           </DialogContent>
         </Dialog>
+
+        <ConfirmationDialog
+          open={deleteDialogOpen}
+          onOpenChange={setDeleteDialogOpen}
+          title="Delete Feedback"
+          description="This will permanently delete this feedback. This action cannot be undone."
+          confirmText="Delete"
+          variant="destructive"
+          onConfirm={handleDeleteFeedback}
+        />
       </div>
     </AdminLayout>
   );
@@ -287,9 +355,10 @@ const AdminFeedback = () => {
 interface FeedbackListProps {
   items: FeedbackItem[];
   onRespond: (item: FeedbackItem) => void;
+  onDelete: (item: FeedbackItem) => void;
 }
 
-const FeedbackList = ({ items, onRespond }: FeedbackListProps) => {
+const FeedbackList = ({ items, onRespond, onDelete }: FeedbackListProps) => {
   const getStatusConfig = (status: string) => {
     return statusOptions.find(s => s.value === status) || statusOptions[0];
   };
@@ -329,14 +398,24 @@ const FeedbackList = ({ items, onRespond }: FeedbackListProps) => {
                   <Badge className={`${statusConfig.color} text-white`}>
                     {statusConfig.label}
                   </Badge>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => onRespond(item)}
-                  >
-                    <MessageSquare className="w-4 h-4 mr-2" />
-                    Respond
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onRespond(item)}
+                    >
+                      <MessageSquare className="w-4 h-4 mr-2" />
+                      Respond
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onDelete(item)}
+                      className="text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
               </div>
             </CardHeader>
