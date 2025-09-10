@@ -116,6 +116,11 @@ const platformMenuItems = [
     url: '/admin/feedback',
     icon: MessageSquare,
   },
+  {
+    title: 'Careers',
+    url: '/admin/careers',
+    icon: UserCheck,
+  },
 ];
 
 const quickActions = [

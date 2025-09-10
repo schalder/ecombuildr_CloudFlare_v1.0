@@ -36,10 +36,10 @@ export const Footer = () => {
     {
       title: "কোম্পানি",
       links: [
-        { label: "About Us", href: "#about" },
-        { label: "Success Stories", href: "#testimonials" },
-        { label: "Careers", href: "#careers" },
-        { label: "Contact", href: "#contact" }
+        { label: "About Us", href: "/about" },
+        { label: "Success Stories", href: "/#testimonials" },
+        { label: "Careers", href: "/careers" },
+        { label: "Contact", href: "/contact" }
       ]
     }
   ];
@@ -149,16 +149,25 @@ export const Footer = () => {
             <div key={index} className="space-y-4">
               <h4 className="text-lg font-semibold">{section.title}</h4>
               <ul className="space-y-3">
-                {section.links.map((link, linkIndex) => (
-                  <li key={linkIndex}>
-                    <a 
-                      href={link.href}
-                      className="text-primary-light hover:text-white transition-colors duration-200"
-                    >
-                      {link.label}
-                    </a>
-                  </li>
-                ))}
+                 {section.links.map((link, linkIndex) => (
+                   <li key={linkIndex}>
+                     {link.href.startsWith('#') ? (
+                       <a 
+                         href={link.href}
+                         className="text-primary-light hover:text-white transition-colors duration-200"
+                       >
+                         {link.label}
+                       </a>
+                     ) : (
+                       <Link 
+                         to={link.href}
+                         className="text-primary-light hover:text-white transition-colors duration-200"
+                       >
+                         {link.label}
+                       </Link>
+                     )}
+                   </li>
+                 ))}
               </ul>
             </div>
           ))}

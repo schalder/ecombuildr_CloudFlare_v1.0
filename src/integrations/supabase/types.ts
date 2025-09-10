@@ -58,6 +58,48 @@ export type Database = {
           },
         ]
       }
+      career_openings: {
+        Row: {
+          apply_url: string | null
+          created_at: string
+          department: string | null
+          description_html: string
+          employment_type: string | null
+          id: string
+          is_published: boolean
+          location: string | null
+          requirements_html: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          apply_url?: string | null
+          created_at?: string
+          department?: string | null
+          description_html: string
+          employment_type?: string | null
+          id?: string
+          is_published?: boolean
+          location?: string | null
+          requirements_html?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          apply_url?: string | null
+          created_at?: string
+          department?: string | null
+          description_html?: string
+          employment_type?: string | null
+          id?: string
+          is_published?: boolean
+          location?: string | null
+          requirements_html?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       cart_sessions: {
         Row: {
           created_at: string
