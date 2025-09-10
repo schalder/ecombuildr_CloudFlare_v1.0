@@ -64,20 +64,21 @@ export default function Analytics() {
 
       const websiteIds = websites?.map(w => w.id) || [];
 
-      // Parallel queries for current and previous periods
+      // Parallel queries for current and previous periods using pixel_events for traffic data
       const [
-        { data: currentWebsiteAnalytics },
+        { data: currentPixelEvents },
         { data: currentOrders },
-        { data: prevWebsiteAnalytics },
+        { data: prevPixelEvents },
         { data: prevOrders }
       ] = await Promise.all([
-        // Current period website analytics
+        // Current period pixel events (for traffic data)
         supabase
-          .from('website_analytics')
-          .select('date, page_views, unique_visitors')
-          .in('website_id', websiteIds)
-          .gte('date', startDate.toISOString().split('T')[0])
-          .lte('date', endDate.toISOString().split('T')[0]),
+          .from('pixel_events')
+          .select('created_at, event_type, session_id')
+          .in('store_id', storeIds)
+          .in('event_type', ['PageView', 'page_view'])
+          .gte('created_at', startDate.toISOString())
+          .lte('created_at', endDate.toISOString()),
         
         // Current period orders
         supabase
@@ -88,13 +89,14 @@ export default function Analytics() {
           .lte('created_at', endDate.toISOString())
           .neq('status', 'cancelled'),
         
-        // Previous period website analytics
+        // Previous period pixel events (for traffic data)
         supabase
-          .from('website_analytics')
-          .select('date, page_views, unique_visitors')
-          .in('website_id', websiteIds)
-          .gte('date', prevStartDate.toISOString().split('T')[0])
-          .lte('date', prevEndDate.toISOString().split('T')[0]),
+          .from('pixel_events')
+          .select('created_at, event_type, session_id')
+          .in('store_id', storeIds)
+          .in('event_type', ['PageView', 'page_view'])
+          .gte('created_at', prevStartDate.toISOString())
+          .lte('created_at', prevEndDate.toISOString()),
         
         // Previous period orders
         supabase
@@ -124,11 +126,25 @@ export default function Analytics() {
         };
       }
 
-      // Aggregate website analytics
-      currentWebsiteAnalytics?.forEach(wa => {
-        if (dailyData[wa.date]) {
-          dailyData[wa.date].visitors += wa.unique_visitors || 0;
-          dailyData[wa.date].page_views += wa.page_views || 0;
+      // Aggregate pixel events data by date
+      const pixelEventsByDate: { [date: string]: { pageViews: number; sessions: Set<string> } } = {};
+      
+      currentPixelEvents?.forEach(event => {
+        const date = event.created_at.split('T')[0];
+        if (!pixelEventsByDate[date]) {
+          pixelEventsByDate[date] = { pageViews: 0, sessions: new Set() };
+        }
+        pixelEventsByDate[date].pageViews += 1;
+        if (event.session_id) {
+          pixelEventsByDate[date].sessions.add(event.session_id);
+        }
+      });
+
+      // Apply pixel events data to daily data
+      Object.entries(pixelEventsByDate).forEach(([date, data]) => {
+        if (dailyData[date]) {
+          dailyData[date].page_views = data.pageViews;
+          dailyData[date].visitors = data.sessions.size;
         }
       });
 
@@ -146,10 +162,23 @@ export default function Analytics() {
         day.conversion_rate = day.visitors > 0 ? (day.orders / day.visitors) * 100 : 0;
       });
 
-      // Calculate previous period totals for comparison
+      // Calculate previous period totals for comparison from pixel events
+      const prevPixelEventsByDate: { [date: string]: { pageViews: number; sessions: Set<string> } } = {};
+      
+      prevPixelEvents?.forEach(event => {
+        const date = event.created_at.split('T')[0];
+        if (!prevPixelEventsByDate[date]) {
+          prevPixelEventsByDate[date] = { pageViews: 0, sessions: new Set() };
+        }
+        prevPixelEventsByDate[date].pageViews += 1;
+        if (event.session_id) {
+          prevPixelEventsByDate[date].sessions.add(event.session_id);
+        }
+      });
+
       const prevTotals = {
-        visitors: prevWebsiteAnalytics?.reduce((sum, wa) => sum + (wa.unique_visitors || 0), 0) || 0,
-        pageViews: prevWebsiteAnalytics?.reduce((sum, wa) => sum + (wa.page_views || 0), 0) || 0,
+        visitors: Object.values(prevPixelEventsByDate).reduce((sum, data) => sum + data.sessions.size, 0),
+        pageViews: Object.values(prevPixelEventsByDate).reduce((sum, data) => sum + data.pageViews, 0),
         orders: prevOrders?.length || 0,
         revenue: prevOrders?.reduce((sum, order) => sum + (Number(order.total) || 0), 0) || 0
       };
