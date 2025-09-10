@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
-import { ArrowLeft, Plus, Edit, ExternalLink, Settings, Eye, ArrowUp, ArrowDown, CheckCircle, Mail, BarChart3, DollarSign, GripVertical, Home, Trash2 } from 'lucide-react';
+import { ArrowLeft, Plus, Edit, ExternalLink, Settings, Eye, ArrowUp, ArrowDown, CheckCircle, Mail, BarChart3, DollarSign, GripVertical, Home, Trash2, Copy, CheckIcon } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { useToast } from '@/hooks/use-toast';
@@ -62,6 +62,7 @@ const FunnelManagement = () => {
   const { deleteHTMLSnapshot } = useHTMLGeneration();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('steps');
+  const [urlCopied, setUrlCopied] = useState(false);
   
   const [selectedStepId, setSelectedStepId] = useState<string | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -250,6 +251,20 @@ const FunnelManagement = () => {
         return stepType;
     }
   };
+
+  const handleCopyUrl = async (url: string) => {
+    try {
+      await navigator.clipboard.writeText(url);
+      setUrlCopied(true);
+      toast({ title: 'URL copied to clipboard' });
+      setTimeout(() => setUrlCopied(false), 2000);
+    } catch (error) {
+      toast({ 
+        title: 'Failed to copy URL', 
+        variant: 'destructive' 
+      });
+    }
+  };
   if (isLoading) {
     return <DashboardLayout>
         <div className="flex items-center justify-center h-64">
@@ -415,16 +430,50 @@ const FunnelManagement = () => {
                             
                           <div className="bg-muted/30 rounded-lg p-8 text-center">
                               <div className="flex justify-between items-center mb-4">
-                                <div className="text-left">
-                                  {funnel?.canonical_domain ? <p className="text-muted-foreground mb-2">
-                                      Live URL: <code className="bg-background px-2 py-1 rounded text-sm">
-                                        {funnel.canonical_domain}/{selectedStep.slug}
-                                      </code>
-                                    </p> : <p className="text-muted-foreground mb-2">
-                                      System URL: <code className="bg-background px-2 py-1 rounded text-sm">
-                                        {window.location.origin}/funnel/{id}/{selectedStep.slug}
-                                      </code>
-                                    </p>}
+                                <div className="text-left flex-1">
+                                  {funnel?.canonical_domain ? (
+                                    <div className="mb-2">
+                                      <p className="text-muted-foreground mb-1">Live URL:</p>
+                                      <div className="flex items-center gap-2">
+                                        <code className="bg-background px-2 py-1 rounded text-sm flex-1">
+                                          {funnel.canonical_domain}/{selectedStep.slug}
+                                        </code>
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          onClick={() => handleCopyUrl(`https://${funnel.canonical_domain}/${selectedStep.slug}`)}
+                                          className="px-3"
+                                        >
+                                          {urlCopied ? (
+                                            <CheckIcon className="h-4 w-4" />
+                                          ) : (
+                                            <Copy className="h-4 w-4" />
+                                          )}
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <div className="mb-2">
+                                      <p className="text-muted-foreground mb-1">System URL:</p>
+                                      <div className="flex items-center gap-2">
+                                        <code className="bg-background px-2 py-1 rounded text-sm flex-1">
+                                          {window.location.origin}/funnel/{id}/{selectedStep.slug}
+                                        </code>
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          onClick={() => handleCopyUrl(`${window.location.origin}/funnel/${id}/${selectedStep.slug}`)}
+                                          className="px-3"
+                                        >
+                                          {urlCopied ? (
+                                            <CheckIcon className="h-4 w-4" />
+                                          ) : (
+                                            <Copy className="h-4 w-4" />
+                                          )}
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  )}
                                 </div>
                                 <div className="flex gap-2">
                                   {steps.findIndex(s => s.id === selectedStep.id) > 0 && <Button variant="outline" size="sm" onClick={() => handleSetAsHomepage(selectedStep.id)} disabled={reorderStepsMutation.isPending}>
