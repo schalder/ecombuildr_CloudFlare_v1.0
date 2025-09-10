@@ -40,7 +40,8 @@ export const WebsiteOverrideRoute: React.FC<WebsiteOverrideRouteProps> = ({ slug
   const websiteId = propsWebsiteId || paramsWebsiteId;
   const [searchParams] = useSearchParams();
   const isPreview = searchParams.get('preview') === '1';
-  const useStorefront = searchParams.get('sf') === '1' || process.env.VITE_STOREFRONT_RENDERER_DEFAULT === 'true';
+  const sf = searchParams.get('sf');
+  const useStorefront = sf === '0' ? false : true;
   const [page, setPage] = React.useState<WebsitePageData | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [resolvedWebsiteId, setResolvedWebsiteId] = React.useState<string | null>(null);

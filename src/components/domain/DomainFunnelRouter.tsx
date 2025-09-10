@@ -56,7 +56,8 @@ export const DomainFunnelRouter: React.FC<DomainFunnelRouterProps> = ({ funnel }
   const { store } = useStore();
 
   const isPreview = searchParams.get('preview') === '1';
-  const useStorefront = searchParams.get('sf') === '1' || process.env.VITE_STOREFRONT_RENDERER_DEFAULT === 'true';
+  const sf = searchParams.get('sf');
+  const useStorefront = sf === '0' ? false : true;
 
   // Extract step slug from pathname
   const pathSegments = location.pathname.split('/').filter(Boolean);
