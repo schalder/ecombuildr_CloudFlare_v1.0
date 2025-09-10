@@ -10,6 +10,7 @@ import { PixelManager } from '@/components/pixel/PixelManager';
 import { WebsiteProvider } from '@/contexts/WebsiteContext';
 import { FloatingCartButton } from '@/components/storefront/FloatingCartButton';
 import { SupportWidget } from '@/components/storefront/SupportWidget';
+import { useWebVitals } from '@/hooks/useWebVitals';
 
 interface WebsiteData {
   id: string;
@@ -105,39 +106,48 @@ export const WebsiteLayout: React.FC = () => {
     );
   }
 
+  // Track web vitals for this website
+  useWebVitals(website.id);
+
   return (
     <WebsiteProvider websiteId={website.id} websiteSlug={website.slug}>
       <PixelManager websitePixels={website.settings} storeId={website.store_id}>
         <div className="min-h-screen flex flex-col bg-background">
-        <style>{`
-          :root {
-            ${store?.primary_color ? `--store-primary: ${store.primary_color};` : '--store-primary: #10B981;'}
-            ${store?.secondary_color ? `--store-secondary: ${store.secondary_color};` : '--store-secondary: #059669;'}
-            ${website.settings?.product_button_bg ? `--product-button-bg: ${website.settings.product_button_bg};` : ''}
-            ${website.settings?.product_button_text ? `--product-button-text: ${website.settings.product_button_text};` : ''}
-            ${website.settings?.product_button_hover_bg ? `--product-button-hover-bg: ${website.settings.product_button_hover_bg};` : ''}
-            ${website.settings?.product_button_hover_text ? `--product-button-hover-text: ${website.settings.product_button_hover_text};` : ''}
-            ${website.settings?.variant_button_selected_bg ? `--variant-button-selected-bg: ${website.settings.variant_button_selected_bg};` : ''}
-            ${website.settings?.variant_button_selected_text ? `--variant-button-selected-text: ${website.settings.variant_button_selected_text};` : ''}
-            ${website.settings?.variant_button_hover_bg ? `--variant-button-hover-bg: ${website.settings.variant_button_hover_bg};` : ''}
-            ${website.settings?.variant_button_hover_text ? `--variant-button-hover-text: ${website.settings.variant_button_hover_text};` : ''}
-          }
-        `}</style>
-            <WebsiteHeader website={website} />
-            <main className="flex-1">
-              <Outlet />
-            </main>
-            {(website.settings?.floating_cart?.enabled ?? true) && (
-              <FloatingCartButton 
-                position={website.settings?.floating_cart?.position ?? 'bottom-right'} 
-                color={website.settings?.floating_cart?.color}
-              />
-            )}
-            {website.settings?.support_widget?.enabled && (
-              <SupportWidget website={website} />
-            )}
-            <WebsiteFooter website={website} />
-          </div>
+          {/* Preconnect to external domains for faster resource loading */}
+          <link rel="preconnect" href="https://fonts.googleapis.com" />
+          <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+          <link rel="preconnect" href="https://fhqwacmokbtbspkxjixf.supabase.co" />
+          <link rel="dns-prefetch" href="//res.cloudinary.com" />
+          
+          <style>{`
+            :root {
+              ${store?.primary_color ? `--store-primary: ${store.primary_color};` : '--store-primary: #10B981;'}
+              ${store?.secondary_color ? `--store-secondary: ${store.secondary_color};` : '--store-secondary: #059669;'}
+              ${website.settings?.product_button_bg ? `--product-button-bg: ${website.settings.product_button_bg};` : ''}
+              ${website.settings?.product_button_text ? `--product-button-text: ${website.settings.product_button_text};` : ''}
+              ${website.settings?.product_button_hover_bg ? `--product-button-hover-bg: ${website.settings.product_button_hover_bg};` : ''}
+              ${website.settings?.product_button_hover_text ? `--product-button-hover-text: ${website.settings.product_button_hover_text};` : ''}
+              ${website.settings?.variant_button_selected_bg ? `--variant-button-selected-bg: ${website.settings.variant_button_selected_bg};` : ''}
+              ${website.settings?.variant_button_selected_text ? `--variant-button-selected-text: ${website.settings.variant_button_selected_text};` : ''}
+              ${website.settings?.variant_button_hover_bg ? `--variant-button-hover-bg: ${website.settings.variant_button_hover_bg};` : ''}
+              ${website.settings?.variant_button_hover_text ? `--variant-button-hover-text: ${website.settings.variant_button_hover_text};` : ''}
+            }
+          `}</style>
+          <WebsiteHeader website={website} />
+          <main className="flex-1">
+            <Outlet />
+          </main>
+          {(website.settings?.floating_cart?.enabled ?? true) && (
+            <FloatingCartButton 
+              position={website.settings?.floating_cart?.position ?? 'bottom-right'} 
+              color={website.settings?.floating_cart?.color}
+            />
+          )}
+          {website.settings?.support_widget?.enabled && (
+            <SupportWidget website={website} />
+          )}
+          <WebsiteFooter website={website} />
+        </div>
       </PixelManager>
     </WebsiteProvider>
   );

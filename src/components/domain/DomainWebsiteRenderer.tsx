@@ -7,6 +7,7 @@ import { setSEO } from '@/lib/seo';
 import { usePixelContext } from '@/components/pixel/PixelManager';
 import { DomainWebsiteRouter } from './DomainWebsiteRouter';
 import { WebsiteProvider } from '@/contexts/WebsiteContext';
+import { useWebVitals } from '@/hooks/useWebVitals';
 
 interface WebsiteData {
   id: string;
@@ -139,10 +140,19 @@ export const DomainWebsiteRenderer: React.FC<DomainWebsiteRendererProps> = ({
   // Set CSS variables for primary/secondary colors if store has them
   const storeData = website.stores;
   
+  // Track web vitals for this website
+  useWebVitals(websiteId);
+
   // Render the website with proper layout structure matching WebsiteLayout
   return (
     <WebsiteProvider websiteId={websiteId} websiteSlug={website.slug}>
       <div className="min-h-screen flex flex-col bg-background">
+        {/* Preconnect to external domains for faster resource loading */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+        <link rel="preconnect" href="https://fhqwacmokbtbspkxjixf.supabase.co" />
+        <link rel="dns-prefetch" href="//res.cloudinary.com" />
+        
         <style>{`
           :root {
             ${storeData?.primary_color ? `--store-primary: ${storeData.primary_color};` : '--store-primary: #10B981;'}
