@@ -23,6 +23,7 @@ export default function Analytics() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [analytics, setAnalytics] = useState<AnalyticsData[]>([]);
+  const [prevTotals, setPrevTotals] = useState({ visitors: 0, pageViews: 0, orders: 0, revenue: 0 });
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState('7d');
 
@@ -34,6 +35,7 @@ export default function Analytics() {
 
   const fetchAnalytics = async () => {
     try {
+      // Get user stores
       const { data: stores } = await supabase
         .from('stores')
         .select('id')
@@ -43,22 +45,119 @@ export default function Analytics() {
 
       const storeIds = stores.map(store => store.id);
       
-      // Calculate date range
+      // Calculate date ranges
       const endDate = new Date();
       const startDate = new Date();
       const days = timeRange === '7d' ? 7 : timeRange === '30d' ? 30 : 90;
       startDate.setDate(endDate.getDate() - days);
 
-      const { data, error } = await supabase
-        .from('analytics')
-        .select('*')
-        .in('store_id', storeIds)
-        .gte('date', startDate.toISOString().split('T')[0])
-        .lte('date', endDate.toISOString().split('T')[0])
-        .order('date', { ascending: false });
+      // Calculate previous period for comparison
+      const prevEndDate = new Date(startDate);
+      const prevStartDate = new Date(prevEndDate);
+      prevStartDate.setDate(prevEndDate.getDate() - days);
 
-      if (error) throw error;
-      setAnalytics(data || []);
+      // Get websites for these stores
+      const { data: websites } = await supabase
+        .from('websites')
+        .select('id, store_id')
+        .in('store_id', storeIds);
+
+      const websiteIds = websites?.map(w => w.id) || [];
+
+      // Parallel queries for current and previous periods
+      const [
+        { data: currentWebsiteAnalytics },
+        { data: currentOrders },
+        { data: prevWebsiteAnalytics },
+        { data: prevOrders }
+      ] = await Promise.all([
+        // Current period website analytics
+        supabase
+          .from('website_analytics')
+          .select('date, page_views, unique_visitors')
+          .in('website_id', websiteIds)
+          .gte('date', startDate.toISOString().split('T')[0])
+          .lte('date', endDate.toISOString().split('T')[0]),
+        
+        // Current period orders
+        supabase
+          .from('orders')
+          .select('created_at, total, status')
+          .in('store_id', storeIds)
+          .gte('created_at', startDate.toISOString())
+          .lte('created_at', endDate.toISOString())
+          .neq('status', 'cancelled'),
+        
+        // Previous period website analytics
+        supabase
+          .from('website_analytics')
+          .select('date, page_views, unique_visitors')
+          .in('website_id', websiteIds)
+          .gte('date', prevStartDate.toISOString().split('T')[0])
+          .lte('date', prevEndDate.toISOString().split('T')[0]),
+        
+        // Previous period orders
+        supabase
+          .from('orders')
+          .select('created_at, total, status')
+          .in('store_id', storeIds)
+          .gte('created_at', prevStartDate.toISOString())
+          .lte('created_at', prevEndDate.toISOString())
+          .neq('status', 'cancelled')
+      ]);
+
+      // Aggregate current period data by date
+      const dailyData: { [date: string]: AnalyticsData } = {};
+      
+      // Fill in all dates with zeros
+      for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+        const dateStr = d.toISOString().split('T')[0];
+        dailyData[dateStr] = {
+          id: dateStr,
+          date: dateStr,
+          visitors: 0,
+          page_views: 0,
+          orders: 0,
+          revenue: 0,
+          conversion_rate: 0,
+          store_id: storeIds[0] // Use first store ID for compatibility
+        };
+      }
+
+      // Aggregate website analytics
+      currentWebsiteAnalytics?.forEach(wa => {
+        if (dailyData[wa.date]) {
+          dailyData[wa.date].visitors += wa.unique_visitors || 0;
+          dailyData[wa.date].page_views += wa.page_views || 0;
+        }
+      });
+
+      // Aggregate orders
+      currentOrders?.forEach(order => {
+        const date = order.created_at.split('T')[0];
+        if (dailyData[date]) {
+          dailyData[date].orders += 1;
+          dailyData[date].revenue += Number(order.total) || 0;
+        }
+      });
+
+      // Calculate conversion rates
+      Object.values(dailyData).forEach(day => {
+        day.conversion_rate = day.visitors > 0 ? (day.orders / day.visitors) * 100 : 0;
+      });
+
+      // Calculate previous period totals for comparison
+      const prevTotals = {
+        visitors: prevWebsiteAnalytics?.reduce((sum, wa) => sum + (wa.unique_visitors || 0), 0) || 0,
+        pageViews: prevWebsiteAnalytics?.reduce((sum, wa) => sum + (wa.page_views || 0), 0) || 0,
+        orders: prevOrders?.length || 0,
+        revenue: prevOrders?.reduce((sum, order) => sum + (Number(order.total) || 0), 0) || 0
+      };
+
+      // Store previous totals for change calculation
+      setPrevTotals(prevTotals);
+
+      setAnalytics(Object.values(dailyData).reverse()); // Most recent first
     } catch (error: any) {
       toast({
         title: "Error",
@@ -85,48 +184,58 @@ export default function Analytics() {
     ? analytics.reduce((acc, curr) => acc + curr.conversion_rate, 0) / analytics.length 
     : 0;
 
+  // Calculate percentage changes
+  const calculateChange = (current: number, previous: number) => {
+    if (previous === 0) return current > 0 ? "+100%" : "0%";
+    const change = ((current - previous) / previous) * 100;
+    return `${change >= 0 ? '+' : ''}${change.toFixed(1)}%`;
+  };
+
   const statsCards = [
     {
       title: "Total Visitors",
       value: totals.visitors.toLocaleString(),
       icon: Users,
-      change: "+12.5%",
-      changeType: "positive" as const,
+      change: calculateChange(totals.visitors, prevTotals.visitors),
+      changeType: totals.visitors >= prevTotals.visitors ? "positive" as const : "negative" as const,
     },
     {
       title: "Page Views",
       value: totals.pageViews.toLocaleString(),
       icon: Eye,
-      change: "+8.2%",
-      changeType: "positive" as const,
+      change: calculateChange(totals.pageViews, prevTotals.pageViews),
+      changeType: totals.pageViews >= prevTotals.pageViews ? "positive" as const : "negative" as const,
     },
     {
       title: "Total Orders",
       value: totals.orders.toLocaleString(),
       icon: ShoppingCart,
-      change: "+23.1%",
-      changeType: "positive" as const,
+      change: calculateChange(totals.orders, prevTotals.orders),
+      changeType: totals.orders >= prevTotals.orders ? "positive" as const : "negative" as const,
     },
     {
       title: "Revenue",
-      value: `$${totals.revenue.toLocaleString()}`,
+      value: `৳${totals.revenue.toLocaleString()}`,
       icon: DollarSign,
-      change: "+18.7%",
-      changeType: "positive" as const,
+      change: calculateChange(totals.revenue, prevTotals.revenue),
+      changeType: totals.revenue >= prevTotals.revenue ? "positive" as const : "negative" as const,
     },
     {
       title: "Conversion Rate",
       value: `${avgConversionRate.toFixed(2)}%`,
       icon: MousePointer,
-      change: "+2.4%",
-      changeType: "positive" as const,
+      change: calculateChange(avgConversionRate, prevTotals.orders > 0 && prevTotals.visitors > 0 ? (prevTotals.orders / prevTotals.visitors) * 100 : 0),
+      changeType: avgConversionRate >= (prevTotals.orders > 0 && prevTotals.visitors > 0 ? (prevTotals.orders / prevTotals.visitors) * 100 : 0) ? "positive" as const : "negative" as const,
     },
     {
       title: "Avg. Order Value",
-      value: totals.orders > 0 ? `$${(totals.revenue / totals.orders).toFixed(2)}` : "$0",
+      value: totals.orders > 0 ? `৳${(totals.revenue / totals.orders).toFixed(2)}` : "৳0",
       icon: TrendingUp,
-      change: "+5.3%",
-      changeType: "positive" as const,
+      change: calculateChange(
+        totals.orders > 0 ? totals.revenue / totals.orders : 0,
+        prevTotals.orders > 0 ? prevTotals.revenue / prevTotals.orders : 0
+      ),
+      changeType: (totals.orders > 0 ? totals.revenue / totals.orders : 0) >= (prevTotals.orders > 0 ? prevTotals.revenue / prevTotals.orders : 0) ? "positive" as const : "negative" as const,
     },
   ];
 
@@ -210,7 +319,7 @@ export default function Analytics() {
                         </div>
                         <div className="text-right">
                           <p className="font-medium">{day.orders} orders</p>
-                          <p className="text-sm text-muted-foreground">${day.revenue}</p>
+                          <p className="text-sm text-muted-foreground">৳{day.revenue.toFixed(2)}</p>
                         </div>
                         <div className="ml-4">
                           <Badge variant={day.conversion_rate > 2 ? "default" : "secondary"}>
