@@ -33,7 +33,7 @@ const MediaStorage = () => {
   const { toast } = useToast();
   const { user } = useAuth();
   
-  const ITEMS_PER_PAGE = 30;
+  const ITEMS_PER_PAGE = 40;
 
   useEffect(() => {
     fetchMediaItems(1);
