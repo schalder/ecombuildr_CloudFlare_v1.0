@@ -309,88 +309,103 @@ const MediaStorage = () => {
         )}
 
         {/* Content */}
-        <Card>
-          <CardContent className="p-0">
-            <ScrollArea className="h-[600px]">
-              {isLoading ? (
-                <div className="flex items-center justify-center h-32">
-                  <p className="text-muted-foreground">Loading media...</p>
-                </div>
-              ) : filteredItems.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-32 space-y-2">
-                  <p className="text-muted-foreground">
-                    {searchTerm ? 'No images found matching your search' : 'No images in your library'}
-                  </p>
-                  {!searchTerm && (
-                    <Button
-                      asChild
-                      variant="outline"
-                      size="sm"
-                    >
-                      <label htmlFor="file-upload" className="cursor-pointer">
-                        <Upload className="w-4 h-4 mr-2" />
-                        Upload Your First Image
-                      </label>
-                    </Button>
-                  )}
-                </div>
-              ) : viewMode === 'grid' ? (
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 p-6">
-                  {filteredItems.map((item) => (
-                    <div
-                      key={item.name}
-                      className={`group relative border rounded-lg overflow-hidden transition-all hover:ring-2 hover:ring-primary ${
-                        selectedItems.includes(item.name) ? 'ring-2 ring-primary' : ''
-                      }`}
-                    >
-                      <input
-                        type="checkbox"
-                        className="absolute top-2 left-2 z-10"
-                        checked={selectedItems.includes(item.name)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setSelectedItems(prev => [...prev, item.name]);
-                          } else {
-                            setSelectedItems(prev => prev.filter(name => name !== item.name));
-                          }
-                        }}
-                      />
-                      
-                      <div className="aspect-square">
-                        <img
-                          src={item.url}
-                          alt={item.name}
-                          className="w-full h-full object-cover"
-                          loading="lazy"
-                        />
-                      </div>
-                      
-                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <div className="space-x-1">
-                          <Button
-                            size="sm"
-                            onClick={() => copyToClipboard(item.url)}
-                          >
-                            <Copy className="w-3 h-3" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            onClick={() => handleDelete(item.name)}
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </Button>
-                        </div>
-                      </div>
-                      
-                      <div className="absolute bottom-0 left-0 right-0 bg-black/70 text-white p-2 text-xs">
-                        <p className="truncate">{item.name}</p>
-                        <p className="text-gray-300">{formatFileSize(item.metadata?.size)}</p>
-                      </div>
+        <div className="min-h-[calc(100vh-16rem)]">
+          {isLoading ? (
+            <div className="flex items-center justify-center h-64">
+              <div className="text-center space-y-3">
+                <div className="animate-pulse w-12 h-12 bg-muted rounded-full mx-auto"></div>
+                <p className="text-muted-foreground">Loading media...</p>
+              </div>
+            </div>
+          ) : filteredItems.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-64 space-y-4">
+              <div className="w-24 h-24 bg-muted rounded-full flex items-center justify-center">
+                <Upload className="w-12 h-12 text-muted-foreground" />
+              </div>
+              <div className="text-center space-y-2">
+                <h3 className="text-lg font-medium">
+                  {searchTerm ? 'No images found' : 'Your media library is empty'}
+                </h3>
+                <p className="text-muted-foreground max-w-md">
+                  {searchTerm 
+                    ? `No images found matching "${searchTerm}". Try adjusting your search.`
+                    : 'Start building your media library by uploading your first image.'
+                  }
+                </p>
+              </div>
+              {!searchTerm && (
+                <Button
+                  asChild
+                  size="lg"
+                  className="bg-primary hover:bg-primary-glow"
+                >
+                  <label htmlFor="file-upload" className="cursor-pointer">
+                    <Upload className="w-4 h-4 mr-2" />
+                    Upload Your First Image
+                  </label>
+                </Button>
+              )}
+            </div>
+          ) : viewMode === 'grid' ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-4">
+              {filteredItems.map((item) => (
+                <div
+                  key={item.name}
+                  className={`group relative border rounded-lg overflow-hidden transition-all hover:ring-2 hover:ring-primary hover:shadow-lg ${
+                    selectedItems.includes(item.name) ? 'ring-2 ring-primary shadow-lg' : ''
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    className="absolute top-2 left-2 z-10 w-4 h-4 accent-primary"
+                    checked={selectedItems.includes(item.name)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedItems(prev => [...prev, item.name]);
+                      } else {
+                        setSelectedItems(prev => prev.filter(name => name !== item.name));
+                      }
+                    }}
+                  />
+                  
+                  <div className="aspect-square">
+                    <img
+                      src={item.url}
+                      alt={item.name}
+                      className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                      loading="lazy"
+                    />
+                  </div>
+                  
+                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <div className="space-x-2">
+                      <Button
+                        size="sm"
+                        onClick={() => copyToClipboard(item.url)}
+                        className="bg-white/10 hover:bg-white/20 text-white border-white/20"
+                      >
+                        <Copy className="w-3 h-3" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => handleDelete(item.name)}
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </Button>
                     </div>
-                  ))}
+                  </div>
+                  
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent text-white p-2 text-xs">
+                    <p className="truncate font-medium">{item.name}</p>
+                    <p className="text-gray-300">{formatFileSize(item.metadata?.size)}</p>
+                  </div>
                 </div>
-              ) : (
+              ))}
+            </div>
+          ) : (
+            <Card>
+              <CardContent className="p-0">
                 <div className="divide-y">
                   {filteredItems.map((item) => (
                     <div
@@ -402,6 +417,7 @@ const MediaStorage = () => {
                       <div className="flex items-center gap-4">
                         <input
                           type="checkbox"
+                          className="w-4 h-4 accent-primary"
                           checked={selectedItems.includes(item.name)}
                           onChange={(e) => {
                             if (e.target.checked) {
@@ -412,7 +428,7 @@ const MediaStorage = () => {
                           }}
                         />
                         
-                        <div className="w-12 h-12 rounded overflow-hidden flex-shrink-0">
+                        <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 border">
                           <img
                             src={item.url}
                             alt={item.name}
@@ -422,13 +438,16 @@ const MediaStorage = () => {
                         </div>
                         
                         <div className="flex-1 min-w-0">
-                          <h4 className="font-medium truncate">{item.name}</h4>
+                          <h4 className="font-medium truncate text-base">{item.name}</h4>
                           <p className="text-sm text-muted-foreground">
                             {formatFileSize(item.metadata?.size)} • {formatDate(item.created_at)}
                           </p>
+                          <p className="text-xs text-muted-foreground mt-1 truncate">
+                            {item.url}
+                          </p>
                         </div>
                         
-                        <div className="flex gap-1">
+                        <div className="flex gap-2">
                           <Button
                             variant="outline"
                             size="sm"
@@ -448,10 +467,10 @@ const MediaStorage = () => {
                     </div>
                   ))}
                 </div>
-              )}
-            </ScrollArea>
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
+          )}
+        </div>
       </div>
     </DashboardLayout>
   );
