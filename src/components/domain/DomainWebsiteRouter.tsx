@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { Routes, Route, useParams, useLocation } from 'react-router-dom';
 import { usePixelTracking } from '@/hooks/usePixelTracking';
+import { useDeferredInit } from '@/hooks/useDeferredInit';
 import { usePixelContext } from '@/components/pixel/PixelManager';
 import { CartPage } from '@/pages/storefront/CartPage';
 import { CheckoutPage } from '@/pages/storefront/CheckoutPage';

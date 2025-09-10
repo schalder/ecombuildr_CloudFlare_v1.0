@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useLocation, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
-import { PageBuilderRenderer } from '@/components/storefront/PageBuilderRenderer';
+import { StorefrontPageBuilderRenderer } from '@/components/storefront/StorefrontPageBuilderRenderer';
 import { FunnelHeader } from '@/components/storefront/FunnelHeader';
 import { FunnelFooter } from '@/components/storefront/FunnelFooter';
 import { setSEO } from '@/lib/seo';
@@ -174,7 +174,7 @@ export const DomainFunnelRouter: React.FC<DomainFunnelRouterProps> = ({ funnel }
         <FunnelHeader funnel={funnel} />
         <main className="flex-1">
           {step.content?.sections ? (
-            <PageBuilderRenderer data={step.content} />
+            <StorefrontPageBuilderRenderer data={step.content} />
           ) : (
             <div className="container mx-auto px-4 py-8">
               <h1 className="text-3xl font-bold mb-6">{step.title}</h1>
