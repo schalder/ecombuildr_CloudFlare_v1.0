@@ -74,10 +74,8 @@ export const FunnelSettings: React.FC<FunnelSettingsProps> = ({ funnel }) => {
     setHomepage
   } = useDomainManagement();
 
-  // Accordion state management for mobile optimization
-  const [openSections, setOpenSections] = React.useState<string[]>(
-    isMobile ? [] : ['basic', 'domain', 'seo', 'tracking']
-  );
+  // Accordion state management - default to all sections collapsed
+  const [openSections, setOpenSections] = React.useState<string[]>([]);
 
   const toggleAllSections = () => {
     const allSections = ['basic', 'domain', 'seo', 'tracking'];
@@ -266,29 +264,39 @@ export const FunnelSettings: React.FC<FunnelSettingsProps> = ({ funnel }) => {
           <h2 className="text-xl font-semibold">Funnel Settings</h2>
           <p className="text-muted-foreground">Configure your funnel's basic information and settings.</p>
         </div>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={toggleAllSections}
-          className="flex items-center gap-2 self-start sm:self-auto"
-        >
-          {openSections.length === 4 ? (
-            <>
-              <ChevronUp className="h-4 w-4" />
-              Collapse All
-            </>
-          ) : (
-            <>
-              <ChevronDown className="h-4 w-4" />
-              Expand All
-            </>
-          )}
-        </Button>
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          <Button
+            type="submit"
+            size="sm"
+            disabled={updateFunnelMutation.isPending}
+            className="flex items-center gap-2"
+          >
+            {updateFunnelMutation.isPending ? 'Saving...' : 'Save Settings'}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={toggleAllSections}
+            className="flex items-center gap-2"
+          >
+            {openSections.length === 4 ? (
+              <>
+                <ChevronUp className="h-4 w-4" />
+                Collapse All
+              </>
+            ) : (
+              <>
+                <ChevronDown className="h-4 w-4" />
+                Expand All
+              </>
+            )}
+          </Button>
+        </div>
       </div>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <form id="funnel-settings-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <Accordion 
             type="multiple" 
             value={openSections} 
