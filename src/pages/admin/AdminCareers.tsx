@@ -12,6 +12,7 @@ import { Plus, Edit, Trash2, Eye, Calendar } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import RichTextEditor from "@/components/ui/RichTextEditor";
+import { AdminLayout } from "@/components/admin/AdminLayout";
 
 interface CareerOpening {
   id: string;
@@ -215,12 +216,12 @@ const AdminCareers = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold">Career Management</h1>
-          <p className="text-muted-foreground">Manage job openings and career opportunities</p>
-        </div>
+    <AdminLayout 
+      title="Career Management" 
+      description="Manage job openings and career opportunities"
+    >
+      <div className="space-y-6">
+        <div className="flex justify-end items-center">
         
         <Dialog open={isDialogOpen} onOpenChange={(open) => {
           setIsDialogOpen(open);
@@ -427,7 +428,8 @@ const AdminCareers = () => {
           )}
         </div>
       )}
-    </div>
+      </div>
+    </AdminLayout>
   );
 };
 
