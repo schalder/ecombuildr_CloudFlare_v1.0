@@ -105,9 +105,9 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
     removeConnection 
   } = useDomainManagement();
 
-  // Accordion state management for mobile optimization
+  // Accordion state management - default to all sections expanded
   const [openSections, setOpenSections] = React.useState<string[]>(
-    isMobile ? [] : ['basic', 'domain', 'buttons', 'currency', 'tracking', 'storefront']
+    ['basic', 'domain', 'buttons', 'currency', 'tracking', 'storefront']
   );
 
   const toggleAllSections = () => {
@@ -374,29 +374,39 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
           <h2 className="text-xl font-semibold">Website Settings</h2>
           <p className="text-muted-foreground">Configure your website's basic information and settings.</p>
         </div>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={toggleAllSections}
-          className="flex items-center gap-2 self-start sm:self-auto"
-        >
-          {openSections.length === 6 ? (
-            <>
-              <ChevronUp className="h-4 w-4" />
-              Collapse All
-            </>
-          ) : (
-            <>
-              <ChevronDown className="h-4 w-4" />
-              Expand All
-            </>
-          )}
-        </Button>
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          <Button
+            type="submit"
+            size="sm"
+            disabled={updateWebsiteMutation.isPending}
+            className="flex items-center gap-2"
+          >
+            {updateWebsiteMutation.isPending ? 'Saving...' : 'Save Settings'}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={toggleAllSections}
+            className="flex items-center gap-2"
+          >
+            {openSections.length === 6 ? (
+              <>
+                <ChevronUp className="h-4 w-4" />
+                Collapse All
+              </>
+            ) : (
+              <>
+                <ChevronDown className="h-4 w-4" />
+                Expand All
+              </>
+            )}
+          </Button>
+        </div>
       </div>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <form id="website-settings-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <Accordion 
             type="multiple" 
             value={openSections} 
