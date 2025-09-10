@@ -137,7 +137,6 @@ export function useWebsiteShipping() {
               
               const ship = (websiteData as any)?.settings?.shipping;
               if (ship) {
-                console.log('[useWebsiteShipping] Found custom domain website shipping for', host, ship);
                 setWebsiteShipping(ship as ShippingSettings);
                 return;
               }
@@ -155,13 +154,12 @@ export function useWebsiteShipping() {
           if (domainData) {
             const ship = (domainData as any)?.settings?.shipping;
             if (ship) {
-              console.log('[useWebsiteShipping] Found legacy domain-based shipping for', host, ship);
               setWebsiteShipping(ship as ShippingSettings);
             }
           }
         }
       } catch (e) {
-        console.warn('[useWebsiteShipping] resolution error', e);
+        // Silent error handling for shipping resolution
       }
     })();
   }, [slug, websiteId, websiteSlug, funnelId, contextWebsiteId, contextWebsiteSlug]);

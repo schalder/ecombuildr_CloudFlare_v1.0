@@ -129,8 +129,6 @@ class StorefrontElementRegistry {
 
     const loadPromise = moduleLoader()
       .then(async (module) => {
-        console.log(`[StorefrontRegistry] Loaded category: ${category}`, module);
-        
         // Get elements before importing
         const elementsBefore = new Set(this.elements.keys());
         
@@ -167,8 +165,6 @@ class StorefrontElementRegistry {
         const elementsAfter = new Set(this.elements.keys());
         const newElements = Array.from(elementsAfter).filter(id => !elementsBefore.has(id));
         
-        console.log(`[StorefrontRegistry] Registered ${newElements.length} new elements:`, newElements);
-        
         this.notify();
       })
       .catch((error) => {
@@ -197,8 +193,6 @@ class StorefrontElementRegistry {
     
     // If still not found, try fallback loading sequence
     if (!category) {
-      console.warn(`[StorefrontRegistry] Unknown element "${elementId}", trying fallback sequence...`);
-      
       const fallbackCategories = ['content', 'marketing', 'ecommerce', 'form', 'advanced', 'navigation', 'system', 'checkout'];
       
       for (const fallbackCategory of fallbackCategories) {
@@ -207,16 +201,14 @@ class StorefrontElementRegistry {
           
           // Check if element is now available
           if (this.elements.has(elementId)) {
-            console.info(`[StorefrontRegistry] Resolved "${elementId}" via fallback category: ${fallbackCategory}`);
             this.dynamicResolutions.set(elementId, fallbackCategory);
             return;
           }
         } catch (error) {
-          console.warn(`[StorefrontRegistry] Failed to load fallback category ${fallbackCategory}:`, error);
+          // Failed to load fallback category
         }
       }
       
-      console.error(`[StorefrontRegistry] Could not resolve element "${elementId}" even with fallbacks`);
       return;
     }
 
@@ -246,8 +238,6 @@ class StorefrontElementRegistry {
 
     extractElements(pageData.sections);
     
-    console.info(`[StorefrontRegistry] Page uses elements:`, Array.from(usedElements));
-
     // Group elements by category to minimize bundle loads
     const categorySet = new Set<string>();
     const unknownElements: string[] = [];
@@ -261,11 +251,6 @@ class StorefrontElementRegistry {
       }
     });
     
-    console.info(`[StorefrontRegistry] Loading categories:`, Array.from(categorySet));
-    if (unknownElements.length > 0) {
-      console.warn(`[StorefrontRegistry] Unknown elements:`, unknownElements);
-    }
-
     // Load categories in parallel
     const loadPromises = Array.from(categorySet).map(category => 
       this.loadCategory(category)
@@ -278,10 +263,7 @@ class StorefrontElementRegistry {
       const unresolvedElements = Array.from(usedElements).filter(id => !this.elements.has(id));
       
       if (unresolvedElements.length > 0) {
-        console.warn(`[StorefrontRegistry] Unresolved after initial load:`, unresolvedElements);
-        
         // Fallback: load content and advanced modules as catch-alls
-        console.info(`[StorefrontRegistry] Loading fallback modules for unresolved elements...`);
         await Promise.all([
           this.loadCategory('content'),
           this.loadCategory('advanced')
@@ -289,9 +271,6 @@ class StorefrontElementRegistry {
         
         // Final check
         const stillUnresolved = Array.from(usedElements).filter(id => !this.elements.has(id));
-        if (stillUnresolved.length > 0) {
-          console.error(`[StorefrontRegistry] Still unresolved after fallbacks:`, stillUnresolved);
-        }
       }
       
     } catch (error) {
@@ -300,7 +279,6 @@ class StorefrontElementRegistry {
   }
 
   register(element: StorefrontElementType) {
-    console.log(`[StorefrontRegistry] Registering element: ${element.id} (category: ${element.category})`);
     this.elements.set(element.id, element);
     this.notify();
   }
