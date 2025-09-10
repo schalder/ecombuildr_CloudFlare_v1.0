@@ -20,10 +20,10 @@ const About = () => {
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto text-center">
               <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-                About Ecomflex
+                About eComBuildr
               </h1>
               <p className="text-xl text-muted-foreground mb-8">
-                Empowering businesses to build beautiful, high-converting e-commerce stores with ease.
+                বাংলাদেশি উদ্যোক্তাদের জন্য তৈরি অল-ইন-ওয়ান ই-কমার্স প্ল্যাটফর্ম
               </p>
             </div>
           </div>
@@ -32,18 +32,23 @@ const About = () => {
         {/* Our Story */}
         <section className="py-20">
           <div className="container mx-auto px-4">
-            <div className="max-w-4xl mx-auto">
-              <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">Our Story</h2>
-              <div className="prose prose-lg max-w-none text-center">
-                <p className="text-lg text-muted-foreground mb-6">
-                  Founded with a vision to democratize e-commerce, Ecomflex was born from the understanding that 
-                  every business deserves a powerful online presence. We saw too many entrepreneurs struggling 
-                  with complex platforms and technical barriers that stood between them and their dreams.
+            <div className="max-w-5xl mx-auto">
+              <div className="flex items-center gap-3 justify-center mb-12">
+                <div className="w-4 h-4 bg-primary rounded-sm"></div>
+                <h2 className="text-3xl md:text-4xl font-bold">Our Story</h2>
+              </div>
+              <div className="text-left space-y-6">
+                <p className="text-lg leading-relaxed">
+                  <strong>eComBuildr</strong> জন্ম নিয়েছে একটি সহজ প্রশ্ন থেকে—বাংলাদেশে ই-কমার্স ব্যবসা এত দ্রুত বাড়ছে, 
+                  কিন্তু কেন এখনো উদ্যোক্তাদেরকে জটিল ওয়েবসাইট, অসংখ্য প্লাগইন আর সার্ভার ম্যানেজমেন্টের ঝামেলায় পড়তে হয়?
                 </p>
-                <p className="text-lg text-muted-foreground">
-                  Today, we're proud to serve thousands of businesses worldwide, providing them with the tools 
-                  and support they need to build successful online stores. From small startups to growing 
-                  enterprises, our platform scales with your ambition.
+                <p className="text-lg leading-relaxed">
+                  আমরা দেখেছি, শত শত উদ্যোক্তা তাদের সময়, টাকা ও এনার্জি নষ্ট করছেন শুধু ওয়েবসাইট ঠিক রাখতে। 
+                  অথচ আসল ফোকাস হওয়া উচিত বিক্রি বাড়ানো ও ব্যবসা বাড়ানো।
+                </p>
+                <p className="text-lg leading-relaxed">
+                  এই সমস্যার সমাধান দিতেই তৈরি হয়েছে <strong>eComBuildr</strong>—বাংলাদেশি উদ্যোক্তাদের জন্য তৈরি একটি 
+                  অল-ইন-ওয়ান ই-কমার্স প্ল্যাটফর্ম, যেখানে দোকান, ফানেল, পেমেন্ট, শিপিং—সব একসাথে।
                 </p>
               </div>
             </div>
@@ -53,36 +58,43 @@ const About = () => {
         {/* Our Mission */}
         <section className="py-20 bg-muted/30">
           <div className="container mx-auto px-4">
-            <div className="max-w-4xl mx-auto text-center">
-              <h2 className="text-3xl md:text-4xl font-bold mb-12">Our Mission</h2>
+            <div className="max-w-5xl mx-auto">
+              <div className="flex items-center gap-3 justify-center mb-12">
+                <div className="w-4 h-4 bg-primary rounded-sm"></div>
+                <h2 className="text-3xl md:text-4xl font-bold">Our Mission</h2>
+              </div>
+              
+              <div className="bg-card p-8 rounded-lg shadow-sm mb-8">
+                <p className="text-xl font-semibold text-center mb-6">
+                  "ই-কমার্স উদ্যোক্তাদের জন্য ব্যবসা শুরু ও পরিচালনাকে সহজ, দ্রুত এবং ঝামেলামুক্ত করা।"
+                </p>
+              </div>
+
               <div className="grid md:grid-cols-3 gap-8">
-                <div className="flex flex-col items-center p-6 bg-card rounded-lg shadow-sm">
-                  <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
-                    <Target className="w-8 h-8 text-primary" />
+                <div className="flex flex-col items-start p-6 bg-card rounded-lg shadow-sm">
+                  <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
+                    <Target className="w-6 h-6 text-primary" />
                   </div>
-                  <h3 className="text-xl font-semibold mb-4">Simplify E-commerce</h3>
-                  <p className="text-muted-foreground text-center">
-                    Making e-commerce accessible to everyone, regardless of technical expertise.
+                  <p className="text-muted-foreground">
+                    👉 আমরা চাই, উদ্যোক্তারা কোডিং বা প্লাগইন আপডেট নিয়ে নয়, বরং ব্যবসা বাড়ানোর দিকে মনোযোগ দিন।
                   </p>
                 </div>
                 
-                <div className="flex flex-col items-center p-6 bg-card rounded-lg shadow-sm">
-                  <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
-                    <Heart className="w-8 h-8 text-primary" />
+                <div className="flex flex-col items-start p-6 bg-card rounded-lg shadow-sm">
+                  <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
+                    <Heart className="w-6 h-6 text-primary" />
                   </div>
-                  <h3 className="text-xl font-semibold mb-4">Empower Growth</h3>
-                  <p className="text-muted-foreground text-center">
-                    Providing tools that scale with your business from day one to enterprise level.
+                  <p className="text-muted-foreground">
+                    👉 আমরা চাই, একজন নতুন উদ্যোক্তা কয়েক মিনিটেই অনলাইন স্টোর চালু করতে পারুক।
                   </p>
                 </div>
                 
-                <div className="flex flex-col items-center p-6 bg-card rounded-lg shadow-sm">
-                  <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
-                    <Users className="w-8 h-8 text-primary" />
+                <div className="flex flex-col items-start p-6 bg-card rounded-lg shadow-sm">
+                  <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
+                    <Users className="w-6 h-6 text-primary" />
                   </div>
-                  <h3 className="text-xl font-semibold mb-4">Build Community</h3>
-                  <p className="text-muted-foreground text-center">
-                    Fostering a community of successful entrepreneurs and business owners.
+                  <p className="text-muted-foreground">
+                    👉 আমরা চাই, বাংলাদেশের ই-কমার্স ইকোসিস্টেমকে আরও শক্তিশালী করা।
                   </p>
                 </div>
               </div>
@@ -94,40 +106,75 @@ const About = () => {
         <section className="py-20">
           <div className="container mx-auto px-4">
             <div className="max-w-6xl mx-auto">
-              <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">Meet Our Team</h2>
+              <div className="flex items-center gap-3 justify-center mb-8">
+                <div className="w-4 h-4 bg-primary rounded-sm"></div>
+                <h2 className="text-3xl md:text-4xl font-bold">Meet Our Team</h2>
+              </div>
+              
+              <div className="text-center mb-12 max-w-4xl mx-auto">
+                <p className="text-lg text-muted-foreground mb-4">
+                  আমাদের টিম গঠিত হয়েছে অভিজ্ঞ টেক এক্সপার্ট, প্রোডাক্ট ডিজাইনার এবং মার্কেটিং স্ট্র্যাটেজিস্টদের নিয়ে।
+                </p>
+                <p className="text-lg font-medium">
+                  আমরা সবাই একটি বিশ্বাসে একত্রিত হয়েছি—বাংলাদেশি উদ্যোক্তাদের হাতে বিশ্বমানের ই-কমার্স টুল তুলে দেওয়া।
+                </p>
+              </div>
+              
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <div className="text-center">
-                  <div className="w-32 h-32 bg-gradient-to-br from-primary/20 to-primary/40 rounded-full mx-auto mb-4 flex items-center justify-center">
-                    <Users className="w-16 h-16 text-primary" />
+                <div className="bg-card rounded-xl p-6 shadow-lg hover:shadow-xl transition-shadow duration-300">
+                  <div className="relative mb-6">
+                    <div className="w-24 h-24 bg-gradient-to-br from-primary/20 to-primary/40 rounded-full mx-auto flex items-center justify-center relative overflow-hidden">
+                      <Users className="w-12 h-12 text-primary" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-primary/10 to-transparent"></div>
+                    </div>
                   </div>
-                  <h3 className="text-xl font-semibold mb-2">Sarah Johnson</h3>
-                  <p className="text-primary mb-2">CEO & Founder</p>
-                  <p className="text-muted-foreground text-sm">
-                    10+ years in e-commerce, passionate about helping businesses succeed online.
-                  </p>
+                  <div className="text-center">
+                    <h3 className="text-xl font-bold mb-2">Rafiq Ahmed</h3>
+                    <p className="text-primary font-medium mb-3">CEO & Founder</p>
+                    <p className="text-muted-foreground text-sm leading-relaxed">
+                      ১০+ বছরের ই-কমার্স অভিজ্ঞতা নিয়ে বাংলাদেশি উদ্যোক্তাদের সফলতার পথে এগিয়ে নিয়ে যাচ্ছেন।
+                    </p>
+                  </div>
                 </div>
                 
-                <div className="text-center">
-                  <div className="w-32 h-32 bg-gradient-to-br from-primary/20 to-primary/40 rounded-full mx-auto mb-4 flex items-center justify-center">
-                    <Users className="w-16 h-16 text-primary" />
+                <div className="bg-card rounded-xl p-6 shadow-lg hover:shadow-xl transition-shadow duration-300">
+                  <div className="relative mb-6">
+                    <div className="w-24 h-24 bg-gradient-to-br from-primary/20 to-primary/40 rounded-full mx-auto flex items-center justify-center relative overflow-hidden">
+                      <Users className="w-12 h-12 text-primary" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-primary/10 to-transparent"></div>
+                    </div>
                   </div>
-                  <h3 className="text-xl font-semibold mb-2">Mike Chen</h3>
-                  <p className="text-primary mb-2">CTO</p>
-                  <p className="text-muted-foreground text-sm">
-                    Tech visionary focused on building scalable, user-friendly platforms.
-                  </p>
+                  <div className="text-center">
+                    <h3 className="text-xl font-bold mb-2">Tasneem Rahman</h3>
+                    <p className="text-primary font-medium mb-3">CTO</p>
+                    <p className="text-muted-foreground text-sm leading-relaxed">
+                      টেক ভিশনারি যিনি স্কেলেবল এবং ইউজার-ফ্রেন্ডলি প্ল্যাটফর্ম তৈরিতে ফোকাসড।
+                    </p>
+                  </div>
                 </div>
                 
-                <div className="text-center">
-                  <div className="w-32 h-32 bg-gradient-to-br from-primary/20 to-primary/40 rounded-full mx-auto mb-4 flex items-center justify-center">
-                    <Users className="w-16 h-16 text-primary" />
+                <div className="bg-card rounded-xl p-6 shadow-lg hover:shadow-xl transition-shadow duration-300">
+                  <div className="relative mb-6">
+                    <div className="w-24 h-24 bg-gradient-to-br from-primary/20 to-primary/40 rounded-full mx-auto flex items-center justify-center relative overflow-hidden">
+                      <Users className="w-12 h-12 text-primary" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-primary/10 to-transparent"></div>
+                    </div>
                   </div>
-                  <h3 className="text-xl font-semibold mb-2">Emily Rodriguez</h3>
-                  <p className="text-primary mb-2">Head of Customer Success</p>
-                  <p className="text-muted-foreground text-sm">
-                    Dedicated to ensuring every customer achieves their e-commerce goals.
-                  </p>
+                  <div className="text-center">
+                    <h3 className="text-xl font-bold mb-2">Mehedi Hasan</h3>
+                    <p className="text-primary font-medium mb-3">Head of Customer Success</p>
+                    <p className="text-muted-foreground text-sm leading-relaxed">
+                      প্রতিটি কাস্টমার যাতে তাদের ই-কমার্স লক্ষ্য অর্জন করতে পারে সেই বিষয়ে নিবেদিত।
+                    </p>
+                  </div>
                 </div>
+              </div>
+              
+              <div className="text-center mt-12 p-6 bg-primary/5 rounded-lg">
+                <p className="text-lg">
+                  📌 টিমের প্রতিটি সদস্য প্রতিদিন কাজ করছে আপনাদের ব্যবসাকে আরও সহজ করতে, যাতে 
+                  <strong className="text-primary"> eComBuildr</strong> শুধু একটি সফটওয়্যার না হয়ে বরং আপনার বিশ্বস্ত ব্যবসা-সহযোগী হয়ে ওঠে।
+                </p>
               </div>
             </div>
           </div>
