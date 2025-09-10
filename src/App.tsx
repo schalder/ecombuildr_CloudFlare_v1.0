@@ -73,6 +73,9 @@ import AdminFeedback from "./pages/admin/AdminFeedback";
 import Training from "./pages/Training";
 import TrainingCourse from "./pages/TrainingCourse";
 import Roadmap from "./pages/Roadmap";
+import PrivacyPolicy from "./pages/legal/PrivacyPolicy";
+import TermsOfService from "./pages/legal/TermsOfService";
+import CookiePolicy from "./pages/legal/CookiePolicy";
 import { StorefrontHome } from "./pages/storefront/StorefrontHome";
 import { StorefrontProducts } from "./pages/storefront/StorefrontProducts";
 import { CollectionPage } from "./pages/storefront/CollectionPage";
@@ -200,6 +203,11 @@ const App = () => (
                 
                 {/* Public Roadmap Route */}
                 <Route path="/roadmap" element={<Roadmap />} />
+                
+                {/* Legal Pages */}
+                <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                <Route path="/terms-of-service" element={<TermsOfService />} />
+                <Route path="/cookie-policy" element={<CookiePolicy />} />
                 
                 {/* Public Storefront Routes */}
                 <Route path="/store/:slug/products" element={<StorefrontProducts />} />

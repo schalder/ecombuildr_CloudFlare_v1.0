@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 import { 
   Store, 
   Facebook, 
@@ -181,18 +182,18 @@ export const Footer = () => {
             </p>
             
             <div className="flex gap-6 text-sm text-primary-light">
-              <a href="#privacy" className="hover:text-white transition-colors">
+              <Link to="/privacy-policy" className="hover:text-white transition-colors">
                 Privacy Policy
-              </a>
-              <a href="#terms" className="hover:text-white transition-colors">
+              </Link>
+              <Link to="/terms-of-service" className="hover:text-white transition-colors">
                 Terms of Service
-              </a>
-              <a href="/roadmap" className="hover:text-white transition-colors">
+              </Link>
+              <Link to="/roadmap" className="hover:text-white transition-colors">
                 Roadmap
-              </a>
-              <a href="#cookies" className="hover:text-white transition-colors">
+              </Link>
+              <Link to="/cookie-policy" className="hover:text-white transition-colors">
                 Cookie Policy
-              </a>
+              </Link>
             </div>
           </div>
         </div>

@@ -252,7 +252,14 @@ const Auth = () => {
 
         <div className="text-center mt-6 text-sm text-muted-foreground">
           <p>
-            By signing up, you agree to our Terms of Service and Privacy Policy
+            By signing up, you agree to our{" "}
+            <Link to="/terms-of-service" className="underline hover:text-primary transition-colors">
+              Terms of Service
+            </Link>
+            {" "}and{" "}
+            <Link to="/privacy-policy" className="underline hover:text-primary transition-colors">
+              Privacy Policy
+            </Link>.
           </p>
         </div>
       </div>
