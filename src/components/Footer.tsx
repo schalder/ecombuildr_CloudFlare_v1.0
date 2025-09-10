@@ -18,7 +18,7 @@ export const Footer = () => {
     {
       title: "প্রোডাক্ট",
       links: [
-        { label: "Features", href: "#features" },
+        { label: "Features", href: "/#tools" },
         { label: "Pricing", href: "#pricing" },
         { label: "Templates", href: "/templates" },
         { label: "Integrations", href: "#integrations" }

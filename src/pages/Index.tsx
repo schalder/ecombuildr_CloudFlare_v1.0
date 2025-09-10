@@ -10,6 +10,7 @@ import { Testimonials } from "@/components/Testimonials";
 import { Pricing } from "@/components/Pricing";
 import { Footer } from "@/components/Footer";
 import { WhatsAppWidget } from "@/components/WhatsAppWidget";
+import { ScrollToHash } from "@/components/ScrollToHash";
 import { FAQ } from "@/components/FAQ";
 
 const Index = () => {
@@ -20,6 +21,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen">
+      <ScrollToHash />
       <SEOHead
         title={seoData?.title}
         description={seoData?.description}
@@ -32,7 +34,9 @@ const Index = () => {
         <Features />
       </div>
       <ProcessSteps />
-      <ToolsShowcase />
+      <div id="tools">
+        <ToolsShowcase />
+      </div>
       <div id="testimonials">
         <Testimonials />
       </div>

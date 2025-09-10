@@ -9,7 +9,7 @@ export const Navbar = () => {
   const { user } = useAuth();
 
   const navItems = [
-    { label: "Features", href: "/#features" },
+    { label: "Features", href: "/#tools" },
     { label: "Templates", href: "/templates" },
     { label: "Pricing", href: "/#pricing" },
     { label: "Success Stories", href: "/#testimonials" },
