@@ -37,7 +37,7 @@ const Templates = () => {
       <>
         <Navbar />
         <main className="min-h-screen bg-background">
-          <div className="container mx-auto px-4 py-16">
+          <div className="container mx-auto px-4 py-20">
             <div className="text-center">
               <div className="animate-pulse">
                 <div className="h-8 bg-muted rounded w-64 mx-auto mb-4"></div>
@@ -66,7 +66,7 @@ const Templates = () => {
       <Navbar />
       
       <main className="min-h-screen bg-background">
-        <div className="container mx-auto px-4 py-16">
+        <div className="container mx-auto px-4 py-20">
           {/* Header */}
           <div className="text-center mb-16">
             <h1 className="text-4xl font-bold mb-4">
