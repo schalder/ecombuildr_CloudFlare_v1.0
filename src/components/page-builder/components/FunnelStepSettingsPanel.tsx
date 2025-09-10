@@ -106,6 +106,13 @@ export const FunnelStepSettingsPanel: React.FC<FunnelStepSettingsPanelProps> = (
     }
   };
 
+  const generateSlug = (title: string) => {
+    return title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '');
+  };
+
   const handleSave = async () => {
     if (!step) return;
 
@@ -114,6 +121,8 @@ export const FunnelStepSettingsPanel: React.FC<FunnelStepSettingsPanelProps> = (
       const { error } = await supabase
         .from('funnel_steps')
         .update({
+          title: step.title,
+          slug: step.slug,
           step_type: step.step_type,
           on_success_step_id: step.on_success_step_id || null,
           on_accept_step_id: step.on_accept_step_id || null,
@@ -173,12 +182,45 @@ export const FunnelStepSettingsPanel: React.FC<FunnelStepSettingsPanelProps> = (
 
       <Card>
         <CardHeader>
-          <CardTitle>Step Type</CardTitle>
+          <CardTitle>Step Information</CardTitle>
           <CardDescription>
-            Configure the behavior of this funnel step
+            Configure the basic information for this funnel step
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="step-title">Step Title</Label>
+            <Input
+              id="step-title"
+              value={step.title}
+              onChange={(e) => setStep({ ...step, title: e.target.value })}
+              placeholder="Enter step title"
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="step-slug">URL Slug</Label>
+            <div className="flex gap-2">
+              <Input
+                id="step-slug"
+                value={step.slug}
+                onChange={(e) => setStep({ ...step, slug: e.target.value })}
+                placeholder="url-slug"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setStep({ ...step, slug: generateSlug(step.title) })}
+              >
+                Generate from Title
+              </Button>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              This will be used in the URL: /funnel-name/{step.slug}
+            </p>
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="step-type">Step Type</Label>
             <Select

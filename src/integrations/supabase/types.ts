@@ -2999,6 +2999,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      reorder_funnel_steps: {
+        Args: { new_orders: number[]; step_ids: string[] }
+        Returns: undefined
+      }
       set_homepage: {
         Args: { page_uuid: string }
         Returns: undefined

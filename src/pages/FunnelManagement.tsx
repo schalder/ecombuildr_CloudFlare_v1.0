@@ -13,6 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { CreateStepModal } from '@/components/modals/CreateStepModal';
+import { FunnelStepSettingsModal } from '@/components/modals/FunnelStepSettingsModal';
 import { FunnelStats } from '@/components/funnel/FunnelStats';
 import { FunnelSales } from '@/components/funnel/FunnelSales';
 import { FunnelSettings } from '@/components/funnel/FunnelSettings';
@@ -63,6 +64,7 @@ const FunnelManagement = () => {
   const [activeTab, setActiveTab] = useState('steps');
   
   const [selectedStepId, setSelectedStepId] = useState<string | null>(null);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<{
     open: boolean;
     stepId: string;
@@ -123,18 +125,15 @@ const FunnelManagement = () => {
   });
   const reorderStepsMutation = useMutation({
     mutationFn: async (reorderedSteps: FunnelStep[]) => {
-      const updates = reorderedSteps.map((step, index) => ({
-        id: step.id,
-        step_order: index + 1
-      }));
-      const promises = updates.map(update => supabase.from('funnel_steps').update({
-        step_order: update.step_order
-      }).eq('id', update.id));
-      const results = await Promise.all(promises);
-      const errors = results.filter(result => result.error);
-      if (errors.length > 0) {
-        throw new Error('Failed to reorder steps');
-      }
+      const stepIds = reorderedSteps.map(step => step.id);
+      const newOrders = reorderedSteps.map((_, index) => index + 1);
+      
+      const { error } = await supabase.rpc('reorder_funnel_steps', {
+        step_ids: stepIds,
+        new_orders: newOrders
+      });
+      
+      if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
@@ -403,6 +402,10 @@ const FunnelManagement = () => {
                                   <Eye className="h-4 w-4 sm:mr-2" />
                                   <span className="hidden sm:inline">Preview</span>
                                 </Button>
+                                <Button variant="outline" size="sm" onClick={() => setIsSettingsOpen(true)}>
+                                  <Settings className="h-4 w-4 sm:mr-2" />
+                                  <span className="hidden sm:inline">Settings</span>
+                                </Button>
                                 <Button size="sm" onClick={() => handleEditStep(selectedStep.id)}>
                                   <Edit className="h-4 w-4 sm:mr-2" />
                                   <span className="hidden sm:inline">Edit</span>
@@ -507,13 +510,35 @@ const FunnelManagement = () => {
 
       </div>
 
-      <CreateStepModal isOpen={isCreateModalOpen} onClose={() => setIsCreateModalOpen(false)} funnelId={id!} />
+      {/* Create Step Modal */}
+      <CreateStepModal
+        funnelId={id!}
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+      />
 
-      <ConfirmationDialog open={deleteConfirm.open} onOpenChange={open => !open && setDeleteConfirm({
-      open: false,
-      stepId: '',
-      stepTitle: ''
-    })} title="Delete Funnel Step" description={`Are you sure you want to delete "${deleteConfirm.stepTitle}"? This action cannot be undone and will permanently delete all associated data.`} confirmText="Delete Step" variant="destructive" onConfirm={confirmDeleteStep} isLoading={deleteStepMutation.isPending} />
+      {/* Step Settings Modal */}
+      {selectedStepId && (
+        <FunnelStepSettingsModal
+          isOpen={isSettingsOpen}
+          onClose={() => setIsSettingsOpen(false)}
+          stepId={selectedStepId}
+          funnelId={id!}
+        />
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmationDialog
+        open={deleteConfirm.open}
+        onOpenChange={(open) => setDeleteConfirm({ ...deleteConfirm, open })}
+        title="Delete Funnel Step"
+        description={`Are you sure you want to delete "${deleteConfirm.stepTitle}"? This action cannot be undone.`}
+        confirmText="Delete Step"
+        cancelText="Cancel"
+        onConfirm={confirmDeleteStep}
+        isLoading={deleteStepMutation.isPending}
+        variant="destructive"
+      />
     </DashboardLayout>;
 };
 export default FunnelManagement;
