@@ -5,6 +5,8 @@ import { renderElementStyles } from '@/components/page-builder/utils/styleRender
 import { generateResponsiveCSS } from '@/components/page-builder/utils/responsiveStyles';
 import { useHeadStyle } from '@/hooks/useHeadStyle';
 import { ElementErrorBoundary } from '@/components/ui/error-boundary';
+import { SafeModeRenderer } from '../SafeModeRenderer';
+import { AlertTriangle } from 'lucide-react';
 
 interface StorefrontOptimizedElementRendererProps {
   element: PageBuilderElement;
@@ -15,15 +17,38 @@ export const StorefrontOptimizedElementRenderer = memo<StorefrontOptimizedElemen
   element,
   deviceType = 'desktop'
 }) => {
+  // Check for safe mode parameter
+  const isSafeMode = new URLSearchParams(window.location.search).has('safe-mode');
+  const problematicElements = ['checkout-full', 'order-confirmation', 'list', 'testimonial'];
+  
   console.log(`[StorefrontElementRenderer] Rendering element: ${element.type} (${element.id})`);
+  console.log(`[StorefrontElementRenderer] Safe mode: ${isSafeMode}`);
+  
+  // If safe mode is enabled and this is a problematic element, render safe placeholder
+  if (isSafeMode && problematicElements.includes(element.type)) {
+    console.log(`[StorefrontElementRenderer] Rendering ${element.type} in safe mode`);
+    return <SafeModeRenderer element={element} deviceType={deviceType} />;
+  }
   
   // CRITICAL: ALL HOOKS MUST BE CALLED IN THE SAME ORDER EVERY TIME
   // Never put hooks after conditional returns or inside conditions
   
-  // Hook 1: Element definition lookup
+  // Hook 1: Element definition lookup with enhanced diagnostics
   const elementDef = useMemo(() => {
+    console.log(`[StorefrontElementRenderer] Looking up element definition for: ${element.type}`);
+    console.log(`[StorefrontElementRenderer] Registry state:`, {
+      isInitialized: getStorefrontRegistry().getAll().length > 0,
+      availableElements: getStorefrontRegistry().getAll().map(el => el.id)
+    });
+    
     const def = getStorefrontRegistry().get(element.type);
     console.log(`[StorefrontElementRenderer] Element definition for ${element.type}:`, def ? 'Found' : 'Missing');
+    
+    if (!def) {
+      console.warn(`[StorefrontElementRenderer] MISSING ELEMENT: ${element.type} not found in registry`);
+      console.log(`[StorefrontElementRenderer] Available elements:`, getStorefrontRegistry().getAll().map(el => el.id));
+    }
+    
     return def;
   }, [element.type]);
 
@@ -42,14 +67,24 @@ export const StorefrontOptimizedElementRenderer = memo<StorefrontOptimizedElemen
   // Hook 4: ALWAYS inject responsive CSS - even if element doesn't exist
   useHeadStyle(`responsive-css-${element.id}`, responsiveCSS);
 
-  // Hook 5: ALWAYS run useEffect - even if element doesn't exist
+  // Hook 5: ALWAYS run useEffect - even if element doesn't exist  
   React.useEffect(() => {
+    console.log(`[StorefrontElementRenderer] Effect running for element: ${element.type} (${element.id})`);
+    console.log(`[StorefrontElementRenderer] Element def exists:`, !!elementDef);
+    
     // Safe to have early returns INSIDE the effect
-    if (!elementDef) return;
+    if (!elementDef) {
+      console.log(`[StorefrontElementRenderer] Skipping custom CSS injection - no element definition`);
+      return;
+    }
     
     const customCSS = (element as any).content?.customCSS;
-    if (!customCSS || !element.anchor) return;
+    if (!customCSS || !element.anchor) {
+      console.log(`[StorefrontElementRenderer] Skipping custom CSS injection - no CSS or anchor`);
+      return;
+    }
 
+    console.log(`[StorefrontElementRenderer] Injecting custom CSS for ${element.anchor}`);
     const styleId = `custom-css-${element.id}`;
     let styleElement = document.getElementById(styleId) as HTMLStyleElement;
     
@@ -66,6 +101,7 @@ export const StorefrontOptimizedElementRenderer = memo<StorefrontOptimizedElemen
     `;
     
     return () => {
+      console.log(`[StorefrontElementRenderer] Cleaning up custom CSS for ${element.id}`);
       const existingStyle = document.getElementById(styleId);
       if (existingStyle) {
         existingStyle.remove();
@@ -75,15 +111,27 @@ export const StorefrontOptimizedElementRenderer = memo<StorefrontOptimizedElemen
 
   // NOW it's safe to do conditional rendering - ALL hooks have been called
   if (!elementDef) {
-    console.warn(`[StorefrontElementRenderer] Element type "${element.type}" not found in storefront registry`);
-    console.log(`[StorefrontElementRenderer] Available elements:`, getStorefrontRegistry().getAll().map(el => el.id));
+    console.warn(`[StorefrontElementRenderer] RENDER FALLBACK: Element type "${element.type}" not found in storefront registry`);
     return (
-      <div className="p-2 border border-yellow-200 bg-yellow-50 rounded text-sm text-yellow-800">
-        Element type "{element.type}" not supported in storefront
+      <div className="p-3 border border-amber-300 bg-amber-50 rounded-lg text-sm">
+        <div className="flex items-center gap-2 mb-2">
+          <AlertTriangle className="h-4 w-4 text-amber-600" />
+          <span className="font-semibold text-amber-800">Unsupported Element</span>
+        </div>
+        <div className="text-amber-700">
+          <div><strong>Type:</strong> {element.type}</div>
+          <div><strong>ID:</strong> {element.id}</div>
+        </div>
+        {isSafeMode && (
+          <div className="mt-2 text-xs text-amber-600">
+            Safe mode is enabled. <a href="?" className="underline">Disable safe mode</a> to try rendering this element.
+          </div>
+        )}
       </div>
     );
   }
 
+  console.log(`[StorefrontElementRenderer] Rendering component for ${element.type}`);
   const Component = elementDef.component;
 
   return (

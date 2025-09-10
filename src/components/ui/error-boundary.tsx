@@ -80,22 +80,53 @@ export const SimpleErrorFallback: React.FC<{ error?: Error; retry: () => void }>
   </div>
 );
 
-// Element-specific error fallback
+// Enhanced element-specific error fallback with detailed diagnostics
 export const ElementErrorBoundary: React.FC<{ elementId?: string; elementType?: string; children: React.ReactNode }> = ({ 
   elementId, 
   elementType, 
   children 
 }) => {
   const handleError = (error: Error) => {
-    console.error(`Element error in ${elementType} (${elementId}):`, error);
+    // Enhanced error logging with stack trace and context
+    console.error(`[CRITICAL] Element error in ${elementType} (${elementId}):`, {
+      error: error.message,
+      stack: error.stack,
+      elementId,
+      elementType,
+      timestamp: new Date().toISOString(),
+      userAgent: navigator.userAgent,
+      url: window.location.href
+    });
+    
+    // Check if this is a React error #310 (hooks issue)
+    if (error.message.includes('310') || error.stack?.includes('310')) {
+      console.error(`[HOOKS ERROR] React error #310 detected in element ${elementType} (${elementId})`);
+      console.error('This indicates conditional hook usage - hooks must be called in the same order every time');
+    }
   };
 
   return (
     <ErrorBoundary
       onError={handleError}
-      fallback={({ retry }) => (
-        <div className="p-2 border border-yellow-200 bg-yellow-50 rounded text-sm text-yellow-800">
-          Element "{elementType}" failed to render
+      fallback={({ error, retry }) => (
+        <div className="p-3 border border-red-300 bg-red-50 rounded-lg text-sm">
+          <div className="flex items-center gap-2 mb-2">
+            <AlertTriangle className="h-4 w-4 text-red-600" />
+            <span className="font-semibold text-red-800">Element Error</span>
+          </div>
+          <div className="text-red-700 mb-2">
+            <div><strong>Type:</strong> {elementType}</div>
+            <div><strong>ID:</strong> {elementId}</div>
+            {error?.message.includes('310') && (
+              <div className="mt-2 p-2 bg-red-100 rounded text-xs">
+                <strong>React Error #310:</strong> This element has conditional hook usage
+              </div>
+            )}
+          </div>
+          <Button variant="outline" size="sm" onClick={retry} className="mt-2">
+            <RefreshCw className="h-3 w-3 mr-1" />
+            Retry Element
+          </Button>
         </div>
       )}
     >
