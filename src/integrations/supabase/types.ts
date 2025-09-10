@@ -1415,6 +1415,72 @@ export type Database = {
         }
         Relationships: []
       }
+      platform_changelog_entries: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          is_published: boolean
+          published_at: string | null
+          title: string
+          updated_at: string
+          version: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          is_published?: boolean
+          published_at?: string | null
+          title: string
+          updated_at?: string
+          version?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          is_published?: boolean
+          published_at?: string | null
+          title?: string
+          updated_at?: string
+          version?: string | null
+        }
+        Relationships: []
+      }
+      platform_feedback: {
+        Row: {
+          admin_response: string | null
+          created_at: string
+          description: string
+          id: string
+          status: Database["public"]["Enums"]["feedback_status"]
+          title: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          admin_response?: string | null
+          created_at?: string
+          description: string
+          id?: string
+          status?: Database["public"]["Enums"]["feedback_status"]
+          title: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          admin_response?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          status?: Database["public"]["Enums"]["feedback_status"]
+          title?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       platform_marketing_content: {
         Row: {
           created_at: string
@@ -1478,6 +1544,42 @@ export type Database = {
           provider?: string
           updated_at?: string
           updated_by?: string | null
+        }
+        Relationships: []
+      }
+      platform_roadmap_items: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_published: boolean
+          priority: number
+          status: Database["public"]["Enums"]["roadmap_status"]
+          target_date: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_published?: boolean
+          priority?: number
+          status?: Database["public"]["Enums"]["roadmap_status"]
+          target_date?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_published?: boolean
+          priority?: number
+          status?: Database["public"]["Enums"]["roadmap_status"]
+          target_date?: string | null
+          title?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -2844,6 +2946,12 @@ export type Database = {
       }
     }
     Enums: {
+      feedback_status:
+        | "new"
+        | "under_review"
+        | "planned"
+        | "rejected"
+        | "implemented"
       order_status:
         | "pending"
         | "confirmed"
@@ -2853,6 +2961,7 @@ export type Database = {
         | "cancelled"
       payment_method: "cod" | "bkash" | "nagad" | "sslcommerz"
       product_library_status: "draft" | "published" | "archived"
+      roadmap_status: "planned" | "in_progress" | "shipped" | "backlog"
       subscription_plan:
         | "free"
         | "pro_monthly"
@@ -2990,6 +3099,13 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      feedback_status: [
+        "new",
+        "under_review",
+        "planned",
+        "rejected",
+        "implemented",
+      ],
       order_status: [
         "pending",
         "confirmed",
@@ -3000,6 +3116,7 @@ export const Constants = {
       ],
       payment_method: ["cod", "bkash", "nagad", "sslcommerz"],
       product_library_status: ["draft", "published", "archived"],
+      roadmap_status: ["planned", "in_progress", "shipped", "backlog"],
       subscription_plan: [
         "free",
         "pro_monthly",

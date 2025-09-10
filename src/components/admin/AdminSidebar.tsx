@@ -16,7 +16,10 @@ import {
   Package,
   Truck,
   Layout,
-  BookOpen
+  BookOpen,
+  MapPin,
+  MessageSquare,
+  Calendar
 } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router-dom';
 import {
@@ -97,6 +100,24 @@ const adminMenuItems = [
   },
 ];
 
+const platformMenuItems = [
+  {
+    title: 'Roadmap',
+    url: '/admin/roadmap',
+    icon: MapPin,
+  },
+  {
+    title: 'Changelog',
+    url: '/admin/changelog',
+    icon: Calendar,
+  },
+  {
+    title: 'Feedback',
+    url: '/admin/feedback',
+    icon: MessageSquare,
+  },
+];
+
 const quickActions = [
   {
     title: 'Revenue Tracking',
@@ -127,6 +148,7 @@ export function AdminSidebar() {
 
   const isActive = (path: string) => currentPath === path;
   const isMainMenuExpanded = adminMenuItems.some((item) => isActive(item.url));
+  const isPlatformMenuExpanded = platformMenuItems.some((item) => isActive(item.url));
   const isQuickActionsExpanded = quickActions.some((item) => isActive(item.url));
 
   const getNavCls = ({ isActive }: { isActive: boolean }) =>
@@ -158,6 +180,28 @@ export function AdminSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {adminMenuItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild>
+                    <NavLink 
+                      to={item.url} 
+                      end 
+                      className={({ isActive }) => getNavCls({ isActive })}
+                    >
+                      <item.icon className="mr-2 h-4 w-4" />
+                      {!isCollapsed && <span>{item.title}</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup>
+          <SidebarGroupLabel>Platform Management</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {platformMenuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     <NavLink 

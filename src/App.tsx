@@ -67,8 +67,12 @@ import AdminTemplateEditor from "./pages/admin/AdminTemplateEditor";
 import AdminTemplatePreview from "./pages/admin/AdminTemplatePreview";
 import AdminTraining from "./pages/admin/AdminTraining";
 import AdminCourseEditor from "./pages/admin/AdminCourseEditor";
+import AdminRoadmap from "./pages/admin/AdminRoadmap";
+import AdminChangelog from "./pages/admin/AdminChangelog";
+import AdminFeedback from "./pages/admin/AdminFeedback";
 import Training from "./pages/Training";
 import TrainingCourse from "./pages/TrainingCourse";
+import Roadmap from "./pages/Roadmap";
 import { StorefrontHome } from "./pages/storefront/StorefrontHome";
 import { StorefrontProducts } from "./pages/storefront/StorefrontProducts";
 import { CollectionPage } from "./pages/storefront/CollectionPage";
@@ -187,9 +191,15 @@ const App = () => (
                 <Route path="/admin/training" element={<AdminTraining />} />
                 <Route path="/admin/training/new" element={<AdminCourseEditor />} />
                 <Route path="/admin/training/:courseId" element={<AdminCourseEditor />} />
+                <Route path="/admin/roadmap" element={<AdminRoadmap />} />
+                <Route path="/admin/changelog" element={<AdminChangelog />} />
+                <Route path="/admin/feedback" element={<AdminFeedback />} />
                 
                 {/* Demo and Preview Routes */}
                 <Route path="/preview/demo" element={<DemoPreview />} />
+                
+                {/* Public Roadmap Route */}
+                <Route path="/roadmap" element={<Roadmap />} />
                 
                 {/* Public Storefront Routes */}
                 <Route path="/store/:slug/products" element={<StorefrontProducts />} />

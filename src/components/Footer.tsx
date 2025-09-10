@@ -187,6 +187,9 @@ export const Footer = () => {
               <a href="#terms" className="hover:text-white transition-colors">
                 Terms of Service
               </a>
+              <a href="/roadmap" className="hover:text-white transition-colors">
+                Roadmap
+              </a>
               <a href="#cookies" className="hover:text-white transition-colors">
                 Cookie Policy
               </a>
