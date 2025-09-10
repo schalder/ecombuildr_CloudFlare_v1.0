@@ -166,7 +166,7 @@ export const FunnelHeaderBuilder: React.FC<Props> = ({ funnel }) => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4">
-              <MediaSelector label="Logo" value={config.logo_url} onChange={(url) => setField({ logo_url: url })} />
+              <MediaSelector label="Logo" value={config.logo_url || ''} onChange={(url) => setField({ logo_url: url })} compact />
             </div>
 
             <div className="space-y-4">
