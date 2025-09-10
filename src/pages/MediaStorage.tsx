@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card, CardContent } from '@/components/ui/card';
-import { Search, Upload, Trash2, Copy, RefreshCw, Grid3X3, List, Filter } from 'lucide-react';
+import { Search, Upload, Trash2, Copy, RefreshCw, Grid3X3, List, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
@@ -27,11 +27,15 @@ const MediaStorage = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasNextPage, setHasNextPage] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
+  
+  const ITEMS_PER_PAGE = 20;
 
   useEffect(() => {
-    fetchMediaItems();
+    fetchMediaItems(1);
   }, []);
 
   useEffect(() => {
@@ -41,37 +45,46 @@ const MediaStorage = () => {
     setFilteredItems(filtered);
   }, [mediaItems, searchTerm]);
 
-  const fetchMediaItems = async () => {
+  const fetchMediaItems = async (page = 1) => {
     if (!user) return;
     
     setIsLoading(true);
     try {
+      const offset = (page - 1) * ITEMS_PER_PAGE;
       const { data, error } = await supabase.storage
         .from('images')
         .list(user.id, {
-          limit: 1000,
-          offset: 0,
+          limit: ITEMS_PER_PAGE + 1, // Fetch one extra to check if there's a next page
+          offset: offset,
           sortBy: { column: 'created_at', order: 'desc' }
         });
 
       if (error) throw error;
 
-      const items: MediaItem[] = data
-        .filter(file => file.metadata && file.metadata.mimetype?.startsWith('image/'))
-        .map(file => {
-          const { data: { publicUrl } } = supabase.storage
-            .from('images')
-            .getPublicUrl(`${user.id}/${file.name}`);
-          
-          return {
-            name: file.name,
-            url: publicUrl,
-            created_at: file.created_at || '',
-            metadata: file.metadata
-          };
-        });
+      const allFiles = data.filter(file => file.metadata && file.metadata.mimetype?.startsWith('image/'));
+      
+      // Check if there's a next page
+      const hasMore = allFiles.length > ITEMS_PER_PAGE;
+      setHasNextPage(hasMore);
+      
+      // Take only the items for current page
+      const pageFiles = hasMore ? allFiles.slice(0, ITEMS_PER_PAGE) : allFiles;
+      
+      const items: MediaItem[] = pageFiles.map(file => {
+        const { data: { publicUrl } } = supabase.storage
+          .from('images')
+          .getPublicUrl(`${user.id}/${file.name}`);
+        
+        return {
+          name: file.name,
+          url: publicUrl,
+          created_at: file.created_at || '',
+          metadata: file.metadata
+        };
+      });
 
       setMediaItems(items);
+      setCurrentPage(page);
     } catch (error) {
       toast({
         title: "Failed to load media",
@@ -123,7 +136,7 @@ const MediaStorage = () => {
         title: "Upload completed",
         description: `${successful.length} file(s) uploaded successfully`
       });
-      fetchMediaItems(); // Refresh the list
+      fetchMediaItems(currentPage); // Refresh the current page
     }
 
     if (failed.length > 0) {
@@ -232,7 +245,7 @@ const MediaStorage = () => {
             <Button
               variant="outline"
               size="sm"
-              onClick={fetchMediaItems}
+              onClick={() => fetchMediaItems(currentPage)}
               disabled={isLoading}
             >
               <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
@@ -306,6 +319,35 @@ const MediaStorage = () => {
               </div>
             </CardContent>
           </Card>
+        )}
+
+        {/* Pagination Controls */}
+        {!isLoading && filteredItems.length > 0 && (
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-muted-foreground">
+              Page {currentPage} • Showing {filteredItems.length} item{filteredItems.length !== 1 ? 's' : ''}
+            </p>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => fetchMediaItems(currentPage - 1)}
+                disabled={currentPage === 1 || isLoading}
+              >
+                <ChevronLeft className="w-4 h-4" />
+                Previous
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => fetchMediaItems(currentPage + 1)}
+                disabled={!hasNextPage || isLoading}
+              >
+                Next
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
         )}
 
         {/* Content */}
