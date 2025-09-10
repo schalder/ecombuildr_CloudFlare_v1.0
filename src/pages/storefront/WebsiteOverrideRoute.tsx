@@ -3,8 +3,13 @@ import { useParams, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
 import { PageBuilderRenderer } from '@/components/storefront/PageBuilderRenderer';
+import { StorefrontPageBuilder } from '@/components/storefront/renderer/StorefrontPageBuilder';
+import { ScriptManager } from '@/components/storefront/optimized/ScriptManager';
 import { setGlobalCurrency } from '@/lib/currency';
 import { setSEO, buildCanonical } from '@/lib/seo';
+import { optimizedWebsitePageQuery } from '@/components/storefront/optimized/DataOptimizer';
+import { PerformanceMonitor } from '@/components/storefront/optimized/PerformanceMonitor';
+import { FontOptimizer } from '@/components/storefront/optimized/FontOptimizer';
 
 interface WebsitePageData {
   id: string;
@@ -35,6 +40,7 @@ export const WebsiteOverrideRoute: React.FC<WebsiteOverrideRouteProps> = ({ slug
   const websiteId = propsWebsiteId || paramsWebsiteId;
   const [searchParams] = useSearchParams();
   const isPreview = searchParams.get('preview') === '1';
+  const useStorefront = searchParams.get('sf') === '1' || process.env.VITE_STOREFRONT_RENDERER_DEFAULT === 'true';
   const [page, setPage] = React.useState<WebsitePageData | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [resolvedWebsiteId, setResolvedWebsiteId] = React.useState<string | null>(null);
@@ -70,7 +76,7 @@ export const WebsiteOverrideRoute: React.FC<WebsiteOverrideRouteProps> = ({ slug
       try {
         let query = supabase
           .from('website_pages')
-          .select('*')
+          .select(useStorefront ? optimizedWebsitePageQuery.select : '*')
           .eq('website_id', resolvedWebsiteId)
           .eq('slug', slug);
 
@@ -80,7 +86,11 @@ export const WebsiteOverrideRoute: React.FC<WebsiteOverrideRouteProps> = ({ slug
 
         const { data, error } = await query.maybeSingle();
         if (error) throw error;
-        setPage(data);
+        if (data) {
+          setPage(data as unknown as WebsitePageData);
+        } else {
+          setPage(null);
+        }
       } catch (e) {
         console.warn('WebsiteOverrideRoute: failed to fetch override page', e);
         setPage(null);
@@ -155,7 +165,8 @@ export const WebsiteOverrideRoute: React.FC<WebsiteOverrideRouteProps> = ({ slug
       favicon: websiteMeta?.settings?.favicon_url,
     });
 
-    if (page.custom_scripts) {
+    // Custom scripts are now handled by ScriptManager for storefront renderer
+    if (!useStorefront && page.custom_scripts) {
       const scriptElement = document.createElement('div');
       scriptElement.innerHTML = page.custom_scripts;
       document.head.appendChild(scriptElement);
@@ -176,15 +187,26 @@ export const WebsiteOverrideRoute: React.FC<WebsiteOverrideRouteProps> = ({ slug
   if (!page) return fallback;
 
   return (
-    <main>
-      {page.content?.sections ? (
-        <PageBuilderRenderer data={page.content} />
-      ) : (
-        <div className="container mx-auto px-4 py-8">
-          <h1 className="text-3xl font-bold mb-6">{page.title}</h1>
-          <p className="text-muted-foreground">This page is still being set up.</p>
-        </div>
-      )}
-    </main>
+    <>
+      <FontOptimizer />
+      <PerformanceMonitor page={`website-${slug}`} />
+      <main>
+        {page.content?.sections ? (
+          useStorefront ? (
+            <>
+              <StorefrontPageBuilder data={page.content} />
+              <ScriptManager customScripts={page.custom_scripts} />
+            </>
+          ) : (
+            <PageBuilderRenderer data={page.content} />
+          )
+        ) : (
+          <div className="container mx-auto px-4 py-8">
+            <h1 className="text-3xl font-bold mb-6">{page.title}</h1>
+            <p className="text-muted-foreground">This page is still being set up.</p>
+          </div>
+        )}
+      </main>
+    </>
   );
 };
