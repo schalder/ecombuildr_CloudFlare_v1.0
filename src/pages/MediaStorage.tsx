@@ -29,6 +29,7 @@ const MediaStorage = () => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [currentPage, setCurrentPage] = useState(1);
   const [hasNextPage, setHasNextPage] = useState(false);
+  const [totalCount, setTotalCount] = useState(0);
   const { toast } = useToast();
   const { user } = useAuth();
   
@@ -50,6 +51,19 @@ const MediaStorage = () => {
     
     setIsLoading(true);
     try {
+      // First, get total count
+      const { data: allData, error: countError } = await supabase.storage
+        .from('images')
+        .list(user.id, {
+          sortBy: { column: 'created_at', order: 'desc' }
+        });
+
+      if (countError) throw countError;
+
+      const totalFiles = allData.filter(file => file.metadata && file.metadata.mimetype?.startsWith('image/'));
+      setTotalCount(totalFiles.length);
+
+      // Then get paginated data
       const offset = (page - 1) * ITEMS_PER_PAGE;
       const { data, error } = await supabase.storage
         .from('images')
@@ -325,7 +339,7 @@ const MediaStorage = () => {
         {!isLoading && filteredItems.length > 0 && (
           <div className="flex items-center justify-between">
             <p className="text-sm text-muted-foreground">
-              Page {currentPage} • Showing {filteredItems.length} item{filteredItems.length !== 1 ? 's' : ''}
+              Page {currentPage} • Showing {filteredItems.length} of {totalCount} item{totalCount !== 1 ? 's' : ''}
             </p>
             <div className="flex items-center gap-2">
               <Button
