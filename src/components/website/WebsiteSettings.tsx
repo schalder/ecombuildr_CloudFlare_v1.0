@@ -105,10 +105,8 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
     removeConnection 
   } = useDomainManagement();
 
-  // Accordion state management - default to all sections expanded
-  const [openSections, setOpenSections] = React.useState<string[]>(
-    ['basic', 'domain', 'buttons', 'currency', 'tracking', 'storefront']
-  );
+  // Accordion state management - default to all sections collapsed
+  const [openSections, setOpenSections] = React.useState<string[]>([]);
 
   const toggleAllSections = () => {
     const allSections = ['basic', 'domain', 'buttons', 'currency', 'tracking', 'storefront'];
