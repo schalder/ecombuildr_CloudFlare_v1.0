@@ -1,14 +1,18 @@
 import { SEOHead } from "@/components/SEOHead";
+import { Navbar } from "@/components/Navbar";
+import { Footer } from "@/components/Footer";
+import { WhatsAppWidget } from "@/components/WhatsAppWidget";
 import { Users, Target, Heart } from "lucide-react";
 
 const About = () => {
   return (
-    <>
+    <div className="min-h-screen">
       <SEOHead 
         title="About Us - Ecomflex"
         description="Learn about Ecomflex's mission to empower businesses with powerful e-commerce solutions. Discover our story and meet our team."
         keywords={["about ecomflex", "ecommerce platform", "our mission", "our team"]}
       />
+      <Navbar />
       
       <main className="min-h-screen bg-background">
         {/* Hero Section */}
@@ -129,7 +133,9 @@ const About = () => {
           </div>
         </section>
       </main>
-    </>
+      <Footer />
+      <WhatsAppWidget />
+    </div>
   );
 };
 

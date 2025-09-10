@@ -1,4 +1,7 @@
 import { SEOHead } from "@/components/SEOHead";
+import { Navbar } from "@/components/Navbar";
+import { Footer } from "@/components/Footer";
+import { WhatsAppWidget } from "@/components/WhatsAppWidget";
 import { Mail, Phone, MapPin, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,12 +14,13 @@ const Contact = () => {
   };
 
   return (
-    <>
+    <div className="min-h-screen">
       <SEOHead 
         title="Contact Us - Ecomflex"
         description="Get in touch with the Ecomflex team. We're here to help you succeed with your e-commerce business."
         keywords={["contact ecomflex", "customer support", "help", "contact information"]}
       />
+      <Navbar />
       
       <main className="min-h-screen bg-background">
         {/* Hero Section */}
@@ -179,7 +183,9 @@ const Contact = () => {
           </div>
         </section>
       </main>
-    </>
+      <Footer />
+      <WhatsAppWidget />
+    </div>
   );
 };
 

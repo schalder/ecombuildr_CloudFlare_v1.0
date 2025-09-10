@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { SEOHead } from "@/components/SEOHead";
+import { Navbar } from "@/components/Navbar";
+import { Footer } from "@/components/Footer";
+import { WhatsAppWidget } from "@/components/WhatsAppWidget";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -78,19 +81,25 @@ const CareerDetail = () => {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-background flex items-center justify-center">
-        <p className="text-muted-foreground">Loading job details...</p>
-      </main>
+      <div className="min-h-screen">
+        <Navbar />
+        <main className="min-h-screen bg-background flex items-center justify-center">
+          <p className="text-muted-foreground">Loading job details...</p>
+        </main>
+        <Footer />
+        <WhatsAppWidget />
+      </div>
     );
   }
 
   if (notFound || !career) {
     return (
-      <>
+      <div className="min-h-screen">
         <SEOHead 
           title="Job Not Found - Ecomflex Careers"
           description="The job posting you're looking for could not be found."
         />
+        <Navbar />
         <main className="min-h-screen bg-background">
           <div className="container mx-auto px-4 py-20">
             <div className="max-w-4xl mx-auto text-center">
@@ -107,17 +116,20 @@ const CareerDetail = () => {
             </div>
           </div>
         </main>
-      </>
+        <Footer />
+        <WhatsAppWidget />
+      </div>
     );
   }
 
   return (
-    <>
+    <div className="min-h-screen">
       <SEOHead 
         title={`${career.title} - Ecomflex Careers`}
         description={`Join our team as a ${career.title}. ${career.description_html.replace(/<[^>]*>/g, '').substring(0, 150)}...`}
         keywords={["job", career.title, "careers", "ecomflex"]}
       />
+      <Navbar />
       
       <main className="min-h-screen bg-background">
         <div className="container mx-auto px-4 py-8">
@@ -276,7 +288,9 @@ const CareerDetail = () => {
           </div>
         </div>
       </main>
-    </>
+      <Footer />
+      <WhatsAppWidget />
+    </div>
   );
 };
 

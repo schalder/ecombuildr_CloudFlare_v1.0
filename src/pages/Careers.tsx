@@ -1,5 +1,8 @@
 import { useState, useEffect } from "react";
 import { SEOHead } from "@/components/SEOHead";
+import { Navbar } from "@/components/Navbar";
+import { Footer } from "@/components/Footer";
+import { WhatsAppWidget } from "@/components/WhatsAppWidget";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -55,12 +58,13 @@ const Careers = () => {
   };
 
   return (
-    <>
+    <div className="min-h-screen">
       <SEOHead 
         title="Careers - Join Our Team | Ecomflex"
         description="Join the Ecomflex team and help shape the future of e-commerce. Explore our current job openings and career opportunities."
         keywords={["careers", "jobs", "ecomflex jobs", "ecommerce careers", "work at ecomflex"]}
       />
+      <Navbar />
       
       <main className="min-h-screen bg-background">
         {/* Hero Section */}
@@ -220,7 +224,9 @@ const Careers = () => {
           </div>
         </section>
       </main>
-    </>
+      <Footer />
+      <WhatsAppWidget />
+    </div>
   );
 };
 
