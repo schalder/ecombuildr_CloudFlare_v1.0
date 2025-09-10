@@ -13,8 +13,11 @@ export const ScrollToHash = () => {
           element.scrollIntoView({ behavior: 'smooth' });
         }
       }, 100);
+    } else {
+      // Scroll to top when navigating to a new page without hash
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
-  }, [location.hash]);
+  }, [location.pathname, location.hash]);
 
   return null;
 };
