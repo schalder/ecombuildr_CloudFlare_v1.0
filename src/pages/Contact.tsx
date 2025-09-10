@@ -6,20 +6,13 @@ import { Mail, Phone, MapPin, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { openWhatsApp } from "@/lib/utils";
-
 const Contact = () => {
   const handleWhatsAppContact = () => {
     const message = "Hi! I'd like to know more about Ecomflex and how it can help my business.";
     openWhatsApp("+1234567890", message);
   };
-
-  return (
-    <div className="min-h-screen">
-      <SEOHead 
-        title="Contact Us - Ecomflex"
-        description="Get in touch with the Ecomflex team. We're here to help you succeed with your e-commerce business."
-        keywords={["contact ecomflex", "customer support", "help", "contact information"]}
-      />
+  return <div className="min-h-screen">
+      <SEOHead title="Contact Us - Ecomflex" description="Get in touch with the Ecomflex team. We're here to help you succeed with your e-commerce business." keywords={["contact ecomflex", "customer support", "help", "contact information"]} />
       <Navbar />
       
       <main className="min-h-screen bg-background">
@@ -73,7 +66,7 @@ const Contact = () => {
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-lg font-medium">support@ecomflex.com</p>
+                      <p className="text-lg font-medium">support@ecombuildr.com</p>
                       <p className="text-sm text-muted-foreground mt-1">
                         For general inquiries and technical support
                       </p>
@@ -91,7 +84,7 @@ const Contact = () => {
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-lg font-medium">+1 (555) 123-4567</p>
+                      <p className="text-lg font-medium">+8801776-911811</p>
                       <p className="text-sm text-muted-foreground mt-1">
                         Monday - Friday, 9AM - 6PM EST
                       </p>
@@ -132,7 +125,7 @@ const Contact = () => {
                         <p className="text-sm text-muted-foreground">
                           Contact our sales team for pricing, demos, and custom solutions.
                         </p>
-                        <p className="text-sm font-medium mt-2">sales@ecomflex.com</p>
+                        <p className="text-sm font-medium mt-2">sales@ecombuildr.com</p>
                       </div>
                       
                       <div className="bg-muted/50 p-4 rounded-lg">
@@ -140,7 +133,7 @@ const Contact = () => {
                         <p className="text-sm text-muted-foreground">
                           Need help with your store? Our technical team is ready to assist.
                         </p>
-                        <p className="text-sm font-medium mt-2">tech@ecomflex.com</p>
+                        <p className="text-sm font-medium mt-2">tech@ecombuildr.com</p>
                       </div>
                       
                       <div className="bg-muted/50 p-4 rounded-lg">
@@ -148,7 +141,7 @@ const Contact = () => {
                         <p className="text-sm text-muted-foreground">
                           Interested in partnering with us? Let's explore opportunities together.
                         </p>
-                        <p className="text-sm font-medium mt-2">partners@ecomflex.com</p>
+                        <p className="text-sm font-medium mt-2">partners@ecombuildr.com</p>
                       </div>
                     </CardContent>
                   </Card>
@@ -160,15 +153,15 @@ const Contact = () => {
                     <CardContent>
                       <div className="space-y-2">
                         <div className="flex justify-between">
-                          <span>Monday - Friday</span>
-                          <span className="font-medium">9:00 AM - 6:00 PM EST</span>
+                          <span>Sunday - Thursday</span>
+                          <span className="font-medium">9:00 AM - 6:00 PM GMT</span>
                         </div>
                         <div className="flex justify-between">
-                          <span>Saturday</span>
-                          <span className="font-medium">10:00 AM - 4:00 PM EST</span>
+                          <span>Saterday</span>
+                          <span className="font-medium">10:00 AM - 4:00 PM GMT</span>
                         </div>
                         <div className="flex justify-between">
-                          <span>Sunday</span>
+                          <span>Friday</span>
                           <span className="font-medium">Closed</span>
                         </div>
                       </div>
@@ -185,8 +178,6 @@ const Contact = () => {
       </main>
       <Footer />
       <WhatsAppWidget />
-    </div>
-  );
+    </div>;
 };
-
 export default Contact;
