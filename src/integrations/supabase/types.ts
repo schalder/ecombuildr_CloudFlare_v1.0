@@ -2923,6 +2923,10 @@ export type Database = {
         Args: { _resource_type: string; _user_id: string }
         Returns: undefined
       }
+      delete_website_admin: {
+        Args: { p_website_id: string }
+        Returns: undefined
+      }
       get_imported_products: {
         Args: { store_id_param: string }
         Returns: string[]

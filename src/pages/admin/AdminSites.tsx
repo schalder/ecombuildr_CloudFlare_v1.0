@@ -7,9 +7,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { Globe, Zap, Search, AlertCircle, CheckCircle, XCircle } from 'lucide-react';
+import { Globe, Zap, Search, AlertCircle, CheckCircle, XCircle, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 
 // Website and Funnel data interfaces
 interface WebsiteData {
@@ -44,21 +45,61 @@ export default function AdminSites() {
   const [funnels, setFunnels] = useState<FunnelData[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  
+  // Pagination states
+  const [websitePage, setWebsitePage] = useState(1);
+  const [funnelPage, setFunnelPage] = useState(1);
+  const [websiteTotal, setWebsiteTotal] = useState(0);
+  const [funnelTotal, setFunnelTotal] = useState(0);
+  const itemsPerPage = 30;
+  
+  // Delete dialog states
+  const [deleteDialog, setDeleteDialog] = useState<{
+    open: boolean;
+    type: 'website' | 'funnel';
+    id: string;
+    name: string;
+  }>({
+    open: false,
+    type: 'website',
+    id: '',
+    name: ''
+  });
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     if (isAdmin) {
       fetchWebsites();
       fetchFunnels();
     }
-  }, [isAdmin]);
+  }, [isAdmin, websitePage, funnelPage]);
+  
+  // Reset page when search term changes
+  useEffect(() => {
+    setWebsitePage(1);
+    setFunnelPage(1);
+  }, [searchTerm]);
 
   const fetchWebsites = async () => {
     try {
-      // Fetch websites with basic data
+      setLoading(true);
+      
+      // First get total count for pagination
+      const { count: totalCount } = await supabase
+        .from('websites')
+        .select('*', { count: 'exact', head: true });
+      
+      setWebsiteTotal(totalCount || 0);
+      
+      // Fetch paginated websites
+      const from = (websitePage - 1) * itemsPerPage;
+      const to = from + itemsPerPage - 1;
+      
       const { data: websitesData, error } = await supabase
         .from('websites')
         .select('id, name, slug, domain, is_active, is_published, created_at, store_id')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .range(from, to);
 
       if (error) throw error;
 
@@ -100,16 +141,31 @@ export default function AdminSites() {
     } catch (error) {
       console.error('Error fetching websites:', error);
       toast.error('Failed to fetch websites');
+    } finally {
+      setLoading(false);
     }
   };
 
   const fetchFunnels = async () => {
     try {
-      // Fetch funnels with basic data
+      setLoading(true);
+      
+      // First get total count for pagination
+      const { count: totalCount } = await supabase
+        .from('funnels')
+        .select('*', { count: 'exact', head: true });
+      
+      setFunnelTotal(totalCount || 0);
+      
+      // Fetch paginated funnels
+      const from = (funnelPage - 1) * itemsPerPage;
+      const to = from + itemsPerPage - 1;
+      
       const { data: funnelsData, error } = await supabase
         .from('funnels')
         .select('id, name, slug, domain, is_active, is_published, created_at, store_id')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .range(from, to);
 
       if (error) throw error;
 
@@ -151,6 +207,8 @@ export default function AdminSites() {
     } catch (error) {
       console.error('Error fetching funnels:', error);
       toast.error('Failed to fetch funnels');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -199,6 +257,59 @@ export default function AdminSites() {
     }
   };
 
+  const handleDeleteWebsite = async () => {
+    if (!deleteDialog.id) return;
+    
+    try {
+      setIsDeleting(true);
+      const { error } = await supabase.rpc('delete_website_admin', {
+        p_website_id: deleteDialog.id
+      });
+
+      if (error) throw error;
+
+      // Remove from local state
+      setWebsites(prev => prev.filter(w => w.id !== deleteDialog.id));
+      setDeleteDialog({ open: false, type: 'website', id: '', name: '' });
+      toast.success('Website deleted successfully');
+      
+      // Refresh to update totals
+      fetchWebsites();
+    } catch (error: any) {
+      console.error('Error deleting website:', error);
+      toast.error(error.message || 'Failed to delete website');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleDeleteFunnel = async () => {
+    if (!deleteDialog.id) return;
+    
+    try {
+      setIsDeleting(true);
+      const { error } = await supabase
+        .from('funnels')
+        .delete()
+        .eq('id', deleteDialog.id);
+
+      if (error) throw error;
+
+      // Remove from local state
+      setFunnels(prev => prev.filter(f => f.id !== deleteDialog.id));
+      setDeleteDialog({ open: false, type: 'funnel', id: '', name: '' });
+      toast.success('Funnel deleted successfully');
+      
+      // Refresh to update totals
+      fetchFunnels();
+    } catch (error: any) {
+      console.error('Error deleting funnel:', error);
+      toast.error(error.message || 'Failed to delete funnel');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   const renderSiteCard = (site: WebsiteData | FunnelData, type: 'website' | 'funnel') => {
     const isFunnel = type === 'funnel';
     
@@ -228,6 +339,20 @@ export default function AdminSites() {
             >
               {site.is_active ? 'Deactivate' : 'Activate'}
             </Button>
+            {type === 'website' && (
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => setDeleteDialog({
+                  open: true,
+                  type: 'website',
+                  id: site.id,
+                  name: site.name
+                })}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
           </div>
         </div>
         
@@ -256,6 +381,43 @@ export default function AdminSites() {
             <span className="text-muted-foreground">Type:</span>
             <p className="font-medium capitalize">{type}</p>
           </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderPagination = (currentPage: number, totalItems: number, onPageChange: (page: number) => void) => {
+    const totalPages = Math.ceil(totalItems / itemsPerPage);
+    const startItem = (currentPage - 1) * itemsPerPage + 1;
+    const endItem = Math.min(currentPage * itemsPerPage, totalItems);
+    
+    return (
+      <div className="flex items-center justify-between mt-6">
+        <div className="text-sm text-muted-foreground">
+          Showing {startItem} to {endItem} of {totalItems} items
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onPageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+          >
+            <ChevronLeft className="h-4 w-4" />
+            Previous
+          </Button>
+          <span className="text-sm text-muted-foreground">
+            Page {currentPage} of {totalPages}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onPageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+          >
+            Next
+            <ChevronRight className="h-4 w-4" />
+          </Button>
         </div>
       </div>
     );
@@ -337,60 +499,78 @@ export default function AdminSites() {
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="websites" className="flex items-center gap-2">
                   <Globe className="h-4 w-4" />
-                  Websites ({filteredWebsites.length})
+                  Websites ({websiteTotal})
                 </TabsTrigger>
                 <TabsTrigger value="funnels" className="flex items-center gap-2">
                   <Zap className="h-4 w-4" />
-                  Funnels ({filteredFunnels.length})
+                  Funnels ({funnelTotal})
                 </TabsTrigger>
               </TabsList>
               
               <TabsContent value="websites" className="mt-6">
                 {loading ? (
-                  <div className="space-y-4">
-                    {[...Array(3)].map((_, i) => (
-                      <Skeleton key={i} className="h-32 w-full" />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {[...Array(6)].map((_, i) => (
+                      <Skeleton key={i} className="h-48 w-full" />
                     ))}
                   </div>
-                ) : filteredWebsites.length === 0 ? (
+                ) : websites.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
                     <Globe className="mx-auto h-12 w-12 mb-4 opacity-50" />
                     <h3 className="text-lg font-semibold mb-2">No Websites Found</h3>
                     <p className="text-sm">
-                      {searchTerm ? 'No websites match your search criteria.' : 'No websites have been created yet.'}
+                      No websites have been created yet.
                     </p>
                   </div>
                 ) : (
-                  <div className="space-y-4">
-                    {filteredWebsites.map((website) => renderSiteCard(website, 'website'))}
-                  </div>
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {websites.map((website) => renderSiteCard(website, 'website'))}
+                    </div>
+                    {renderPagination(websitePage, websiteTotal, setWebsitePage)}
+                  </>
                 )}
               </TabsContent>
               
               <TabsContent value="funnels" className="mt-6">
                 {loading ? (
-                  <div className="space-y-4">
-                    {[...Array(3)].map((_, i) => (
-                      <Skeleton key={i} className="h-32 w-full" />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {[...Array(6)].map((_, i) => (
+                      <Skeleton key={i} className="h-48 w-full" />
                     ))}
                   </div>
-                ) : filteredFunnels.length === 0 ? (
+                ) : funnels.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
                     <Zap className="mx-auto h-12 w-12 mb-4 opacity-50" />
                     <h3 className="text-lg font-semibold mb-2">No Funnels Found</h3>
                     <p className="text-sm">
-                      {searchTerm ? 'No funnels match your search criteria.' : 'No funnels have been created yet.'}
+                      No funnels have been created yet.
                     </p>
                   </div>
                 ) : (
-                  <div className="space-y-4">
-                    {filteredFunnels.map((funnel) => renderSiteCard(funnel, 'funnel'))}
-                  </div>
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {funnels.map((funnel) => renderSiteCard(funnel, 'funnel'))}
+                    </div>
+                    {renderPagination(funnelPage, funnelTotal, setFunnelPage)}
+                  </>
                 )}
               </TabsContent>
             </Tabs>
           </CardContent>
         </Card>
+        
+        <ConfirmationDialog
+          open={deleteDialog.open}
+          onOpenChange={(open) => !open && setDeleteDialog({ open: false, type: 'website', id: '', name: '' })}
+          title={`Delete ${deleteDialog.type === 'website' ? 'Website' : 'Funnel'}`}
+          description={`Are you sure you want to delete "${deleteDialog.name}"? This action cannot be undone and will remove all associated data including pages, domains, and analytics.`}
+          confirmText="Delete"
+          cancelText="Cancel"
+          variant="destructive"
+          onConfirm={deleteDialog.type === 'website' ? handleDeleteWebsite : handleDeleteFunnel}
+          isLoading={isDeleting}
+        />
       </div>
     </AdminLayout>
   );
