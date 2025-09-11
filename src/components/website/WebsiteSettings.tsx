@@ -375,6 +375,7 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
         <div className="flex items-center gap-2 self-start sm:self-auto">
           <Button
             type="submit"
+            form="website-settings-form"
             size="sm"
             disabled={updateWebsiteMutation.isPending}
             className="flex items-center gap-2"
