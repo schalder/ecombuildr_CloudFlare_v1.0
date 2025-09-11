@@ -212,7 +212,7 @@ export const PlanUpgradeModal2: React.FC<PlanUpgradeModal2Props> = ({ open, onOp
                     <CardContent>
                       {/* Plan Limits */}
                       <div className="mb-4 p-3 bg-muted/50 rounded-lg">
-                        <h4 className="text-sm font-semibold mb-2">সীমা ও সুবিধা:</h4>
+                        <h4 className="text-sm font-semibold mb-2">Plan Limit:</h4>
                         <div className="grid grid-cols-2 gap-2 text-xs">
                           <div>ওয়েবসাইট: {plan.limits.max_websites === null ? '∞' : plan.limits.max_websites}</div>
                           <div>ফানেল: {plan.limits.max_funnels === null ? '∞' : plan.limits.max_funnels}</div>
