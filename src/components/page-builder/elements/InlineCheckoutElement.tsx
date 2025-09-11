@@ -130,7 +130,9 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
     customer_name: '', customer_email: '', customer_phone: '',
     shipping_address: '', shipping_city: '', shipping_area: '',
     shipping_country: '', shipping_state: '', shipping_postal_code: '',
-    payment_method: 'cod' as 'cod' | 'bkash' | 'nagad' | 'sslcommerz', notes: '',
+    payment_method: 'cod' as 'cod' | 'bkash' | 'nagad' | 'sslcommerz', 
+    payment_transaction_number: '',
+    notes: '',
     accept_terms: false,
     custom_fields: {} as Record<string, any>,
     selectedShippingOption: '', // For custom shipping options
@@ -404,6 +406,18 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
     if (fields.state?.enabled && (fields.state?.required ?? false) && isEmpty(form.shipping_state)) missing.push('State/Province');
     if (fields.postalCode?.enabled && (fields.postalCode?.required ?? false) && isEmpty(form.shipping_postal_code)) missing.push('ZIP / Postal code');
     (customFields || []).filter((cf:any)=>cf.enabled && cf.required).forEach((cf:any)=>{ const v=(form.custom_fields as any)[cf.id]; if (!String(v ?? '').trim()) missing.push(cf.label || 'Custom field'); });
+    
+    // Validate transaction number for manual payments
+    const hasBkashApi = !!(store?.settings?.bkash?.app_key && store?.settings?.bkash?.app_secret && store?.settings?.bkash?.username && store?.settings?.bkash?.password);
+    const isBkashManual = !!(store?.settings?.bkash?.enabled && (store?.settings?.bkash?.mode === 'number' || !hasBkashApi) && store?.settings?.bkash?.number);
+    const hasNagadApi = !!(store?.settings?.nagad?.merchant_id && store?.settings?.nagad?.public_key && store?.settings?.nagad?.private_key);
+    const isNagadManual = !!(store?.settings?.nagad?.enabled && (store?.settings?.nagad?.mode === 'number' || !hasNagadApi) && store?.settings?.nagad?.number);
+    const isManual = (form.payment_method === 'bkash' && isBkashManual) || (form.payment_method === 'nagad' && isNagadManual);
+    
+    if (isManual && !form.payment_transaction_number?.trim()) {
+      missing.push('Transaction Number');
+    }
+    
     if (missing.length) { toast.error(`Please fill in: ${missing.join(', ')}`); return; }
 
   const total = subtotal + shippingCost;
@@ -845,6 +859,32 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
                     {allowedMethods.includes('sslcommerz') && (<SelectItem value="sslcommerz">Credit/Debit Card (SSLCommerz)</SelectItem>)}
                   </SelectContent>
                 </Select>
+
+                {form.payment_method === 'bkash' && store?.settings?.bkash?.mode === 'number' && store?.settings?.bkash?.number && (
+                  <div className="space-y-2">
+                    <p className="text-sm text-muted-foreground">Pay to bKash number: {store.settings.bkash.number}</p>
+                    <Input
+                      placeholder="Enter transaction ID (e.g., 8M5HA84D5K)"
+                      value={form.payment_transaction_number}
+                      onChange={(e) => setForm(f => ({ ...f, payment_transaction_number: e.target.value }))}
+                      className="w-full"
+                      required
+                    />
+                  </div>
+                )}
+                
+                {form.payment_method === 'nagad' && store?.settings?.nagad?.mode === 'number' && store?.settings?.nagad?.number && (
+                  <div className="space-y-2">
+                    <p className="text-sm text-muted-foreground">Pay to Nagad number: {store.settings.nagad.number}</p>
+                    <Input
+                      placeholder="Enter transaction ID (e.g., NG8M5HA84D5K)"
+                      value={form.payment_transaction_number}
+                      onChange={(e) => setForm(f => ({ ...f, payment_transaction_number: e.target.value }))}
+                      className="w-full"
+                      required
+                    />
+                  </div>
+                )}
                 
               </section>
             )}

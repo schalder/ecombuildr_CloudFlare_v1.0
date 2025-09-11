@@ -57,6 +57,7 @@ interface Order {
   total: number;
   created_at: string;
   payment_method: string;
+  payment_transaction_number?: string;
   shipping_city?: string;
   shipping_address?: string;
   shipping_area?: string;
@@ -183,6 +184,7 @@ export default function Orders() {
             total,
             created_at,
             payment_method,
+            payment_transaction_number,
             shipping_city,
             shipping_area,
             shipping_address,
@@ -611,7 +613,10 @@ export default function Orders() {
                         <div className="flex items-center gap-2">
                           <div className="text-right">
                             <div className="font-semibold">৳{order.total.toLocaleString()}</div>
-                            <div className="text-xs text-muted-foreground">{order.payment_method.toUpperCase()}</div>
+                            <div className="text-xs text-muted-foreground">
+                              {order.payment_method.toUpperCase()}
+                              {order.payment_transaction_number && ` - ${order.payment_transaction_number}`}
+                            </div>
                           </div>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
@@ -869,6 +874,9 @@ export default function Orders() {
                       </TableCell>
                       <TableCell>
                         {order.payment_method.toUpperCase()}
+                        {order.payment_transaction_number && (
+                          <div className="text-xs text-muted-foreground">TXN: {order.payment_transaction_number}</div>
+                        )}
                       </TableCell>
                       <TableCell>
                         {order.courier_name ? (
@@ -1126,7 +1134,9 @@ export default function Orders() {
                     <h4 className="font-medium">Order Summary</h4>
                     <p>Status: <Badge>{selectedOrder.status}</Badge></p>
                     <p>Total: ৳{selectedOrder.total.toLocaleString()}</p>
-                    <p>Payment: {selectedOrder.payment_method}</p>
+                    <p>Payment: {selectedOrder.payment_method}
+                      {selectedOrder.payment_transaction_number && ` (TXN: ${selectedOrder.payment_transaction_number})`}
+                    </p>
                     <p>Date: {new Date(selectedOrder.created_at).toLocaleString()}</p>
                     {selectedOrder.courier_name && (
                       <p>

@@ -32,6 +32,7 @@ interface CheckoutForm {
   shipping_city: string;
   shipping_area: string;
   payment_method: 'cod' | 'bkash' | 'nagad' | 'sslcommerz';
+  payment_transaction_number: string;
   notes: string;
   discount_code: string;
 }
@@ -69,6 +70,7 @@ export const CheckoutPage: React.FC = () => {
     shipping_city: '',
     shipping_area: '',
     payment_method: 'cod',
+    payment_transaction_number: '',
     notes: '',
     discount_code: '',
   });
@@ -196,7 +198,15 @@ useEffect(() => {
       case 2:
         return !!(form.shipping_address && form.shipping_city);
       case 3:
-        return !!form.payment_method;
+        if (!form.payment_method) return false;
+        // Check if manual payment requires transaction number
+        const hasBkashApi = !!(store?.settings?.bkash?.app_key && store?.settings?.bkash?.app_secret && store?.settings?.bkash?.username && store?.settings?.bkash?.password);
+        const isBkashManual = !!(store?.settings?.bkash?.enabled && (store?.settings?.bkash?.mode === 'number' || !hasBkashApi) && store?.settings?.bkash?.number);
+        const hasNagadApi = !!(store?.settings?.nagad?.merchant_id && store?.settings?.nagad?.public_key && store?.settings?.nagad?.private_key);
+        const isNagadManual = !!(store?.settings?.nagad?.enabled && (store?.settings?.nagad?.mode === 'number' || !hasNagadApi) && store?.settings?.nagad?.number);
+        const isManual = (form.payment_method === 'bkash' && isBkashManual) || (form.payment_method === 'nagad' && isNagadManual);
+        if (isManual && !form.payment_transaction_number?.trim()) return false;
+        return true;
       default:
         return true;
     }
@@ -667,10 +677,28 @@ useEffect(() => {
                 </Select>
 
                 {form.payment_method === 'bkash' && store?.settings?.bkash?.mode === 'number' && store?.settings?.bkash?.number && (
-                  <p className="text-sm text-muted-foreground">Pay to bKash number: {store.settings.bkash.number}</p>
+                  <div className="space-y-2">
+                    <p className="text-sm text-muted-foreground">Pay to bKash number: {store.settings.bkash.number}</p>
+                    <Input
+                      placeholder="Enter transaction ID (e.g., 8M5HA84D5K)"
+                      value={form.payment_transaction_number}
+                      onChange={(e) => setForm(f => ({ ...f, payment_transaction_number: e.target.value }))}
+                      className="w-full"
+                      required
+                    />
+                  </div>
                 )}
                 {form.payment_method === 'nagad' && store?.settings?.nagad?.mode === 'number' && store?.settings?.nagad?.number && (
-                  <p className="text-sm text-muted-foreground">Pay to Nagad number: {store.settings.nagad.number}</p>
+                  <div className="space-y-2">
+                    <p className="text-sm text-muted-foreground">Pay to Nagad number: {store.settings.nagad.number}</p>
+                    <Input
+                      placeholder="Enter transaction ID (e.g., NG8M5HA84D5K)"
+                      value={form.payment_transaction_number}
+                      onChange={(e) => setForm(f => ({ ...f, payment_transaction_number: e.target.value }))}
+                      className="w-full"
+                      required
+                    />
+                  </div>
                 )}
                 
                 <div>
