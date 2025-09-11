@@ -197,13 +197,21 @@ export const CountdownTimerElement: React.FC<CountdownTimerElementProps> = ({
     </div>
   );
 
-  // Get element styles but exclude margins (handled by ElementWrapper)
+  // Get element styles - always apply full styles consistently
+  // In builder mode, ElementWrapper handles margins, but on storefront we need them
   const elementStyles = renderElementStyles(element, deviceType);
-  const { marginTop, marginRight, marginBottom, marginLeft, ...stylesWithoutMargin } = elementStyles;
+  const shouldApplyMargins = !isEditing; // Only apply margins on storefront
+  const finalStyles = shouldApplyMargins ? elementStyles : {
+    ...elementStyles,
+    marginTop: undefined,
+    marginRight: undefined,
+    marginBottom: undefined,
+    marginLeft: undefined
+  };
 
   if (isEditing) {
     return (
-      <div className={`element-${element.id} max-w-2xl mx-auto`} style={stylesWithoutMargin}>
+      <div className={`element-${element.id} max-w-2xl mx-auto`} style={finalStyles}>
         <div className={getLayoutClasses()} style={getContainerStyles()}>
           {renderTimeSegment(1, labels.days, false)}
           {renderTimeSegment(23, labels.hours, false)}
@@ -216,7 +224,7 @@ export const CountdownTimerElement: React.FC<CountdownTimerElementProps> = ({
 
   if (expired) {
     return (
-      <div className={`element-${element.id} max-w-2xl mx-auto text-center p-4`} style={stylesWithoutMargin}>
+      <div className={`element-${element.id} max-w-2xl mx-auto text-center p-4`} style={finalStyles}>
         <h3 className="text-xl font-bold mb-2">Time's Up!</h3>
         <p className="text-muted-foreground">The countdown has ended.</p>
       </div>
@@ -224,7 +232,7 @@ export const CountdownTimerElement: React.FC<CountdownTimerElementProps> = ({
   }
 
   return (
-    <div className={`element-${element.id} max-w-2xl mx-auto`} style={stylesWithoutMargin}>
+    <div className={`element-${element.id} max-w-2xl mx-auto`} style={finalStyles}>
       <div className={getLayoutClasses()} style={getContainerStyles()}>
         {renderTimeSegment(timeLeft.days, labels.days, true)}
         {renderTimeSegment(timeLeft.hours, labels.hours, true)}
