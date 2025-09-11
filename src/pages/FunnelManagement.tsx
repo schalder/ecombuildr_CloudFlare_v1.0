@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
@@ -106,6 +106,13 @@ const FunnelManagement = () => {
     },
     enabled: !!id
   });
+
+  // Auto-select first step when steps load
+  useEffect(() => {
+    if (steps.length > 0 && !selectedStepId) {
+      setSelectedStepId(steps[0].id);
+    }
+  }, [steps, selectedStepId]);
   const updateFunnelMutation = useMutation({
     mutationFn: async (updates: Partial<Funnel>) => {
       const {
@@ -417,7 +424,12 @@ const FunnelManagement = () => {
                                   <Eye className="h-4 w-4 sm:mr-2" />
                                   <span className="hidden sm:inline">Preview</span>
                                 </Button>
-                                <Button variant="outline" size="sm" onClick={() => setIsSettingsOpen(true)}>
+                                <Button variant="outline" size="sm" onClick={() => {
+                                  if (selectedStep) {
+                                    setSelectedStepId(selectedStep.id);
+                                    setIsSettingsOpen(true);
+                                  }
+                                }}>
                                   <Settings className="h-4 w-4 sm:mr-2" />
                                   <span className="hidden sm:inline">Settings</span>
                                 </Button>
