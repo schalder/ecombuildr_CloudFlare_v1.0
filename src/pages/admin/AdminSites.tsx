@@ -339,20 +339,18 @@ export default function AdminSites() {
             >
               {site.is_active ? 'Deactivate' : 'Activate'}
             </Button>
-            {type === 'website' && (
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={() => setDeleteDialog({
-                  open: true,
-                  type: 'website',
-                  id: site.id,
-                  name: site.name
-                })}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            )}
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => setDeleteDialog({
+                open: true,
+                type: type,
+                id: site.id,
+                name: site.name
+              })}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
           </div>
         </div>
         
