@@ -724,7 +724,6 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
         .in('id', productIds);
         
       if (error) {
-        console.error('Error fetching product shipping data:', error);
         return;
       }
       
@@ -772,16 +771,6 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
       const cost = shippingCalculation.shippingCost;
       
       setShippingCost(cost);
-      
-      console.debug('[CheckoutFullElement] Enhanced shipping calculation:', {
-        websiteShipping: !!websiteShipping,
-        websiteShippingEnabled: websiteShipping?.enabled,
-        cartItems: cartItemsWithShipping.length,
-        shippingAddress,
-        shippingResult: shippingCalculation,
-        formValues: { city: form.shipping_city, area: form.shipping_area },
-        cost
-      });
     };
 
     if (items.length > 0 || !isEditing) {
@@ -926,7 +915,6 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
         await initiatePayment(orderId, orderData.total, form.payment_method);
       }
     } catch (e) {
-      console.error(e);
       toast.error('Failed to place order');
     } finally {
       setLoading(false);
@@ -963,7 +951,6 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
         throw new Error('Payment URL not received');
       }
     } catch (error) {
-      console.error('Payment initiation error:', error);
       toast.error('Failed to initiate payment');
     }
   };
@@ -1210,7 +1197,7 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
       pdf.addImage(imgData, 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
       pdf.save(`order-confirmation-${order.order_number}.pdf`);
     } catch (error) {
-      console.error('Error generating PDF:', error);
+      // PDF generation failed
     }
   };
 
@@ -1254,7 +1241,6 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
         }
         // Use secure public order access with token
         if (!store) {
-          console.error('Store not loaded yet');
           return;
         }
         const { data, error } = await supabase.functions.invoke('get-order-public', {
@@ -1268,7 +1254,7 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
         setOrder(data?.order || null);
         setItems(data?.items || []);
       } catch (e) {
-        console.error('OrderConfirmationElement fetch error', e);
+        // Error fetching order
       } finally {
         setLoading(false);
       }
@@ -1421,7 +1407,6 @@ const PaymentProcessingElement: React.FC<{ element: PageBuilderElement }> = () =
         toast.error('Payment verification failed');
       }
     } catch (e) {
-      console.error(e);
       toast.error('Failed to verify payment');
     } finally { setVerifying(false); }
   };
