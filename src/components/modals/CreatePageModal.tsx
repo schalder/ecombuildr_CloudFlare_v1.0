@@ -1,11 +1,11 @@
-import React, { useState, useCallback } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import React, { useState, useCallback, useEffect } from 'react';
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Check, X, Loader2, AlertCircle, FileText } from 'lucide-react';
+import { Check, X, Loader2, AlertCircle, FileText, Info } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { debounce } from '@/lib/utils';
@@ -13,6 +13,17 @@ import { TemplateSelectionModal } from '@/components/templates/TemplateSelection
 import type { PageBuilderData } from '@/components/page-builder/types';
 
 type SlugStatus = 'idle' | 'checking' | 'available' | 'taken' | 'error';
+
+// System/E-commerce page types that should have fixed slugs and be unique per website
+const SYSTEM_PAGE_TYPES = {
+  'products': 'products',
+  'cart': 'cart', 
+  'checkout': 'checkout',
+  'order-confirmation': 'order-confirmation',
+  'payment-processing': 'payment-processing'
+} as const;
+
+type SystemPageType = keyof typeof SYSTEM_PAGE_TYPES;
 
 interface PageTemplate {
   id: string;
@@ -54,6 +65,42 @@ export const CreatePageModal: React.FC<CreatePageModalProps> = ({
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Fetch existing pages to check for duplicates
+  const { data: existingPages = [] } = useQuery({
+    queryKey: ['website-pages', websiteId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('website_pages')
+        .select('slug, title')
+        .eq('website_id', websiteId);
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: isOpen && !!websiteId,
+  });
+
+  // Check if the selected page type already exists
+  const isSystemPageType = (pageType: string): pageType is SystemPageType => {
+    return pageType in SYSTEM_PAGE_TYPES;
+  };
+
+  const getSystemPageSlug = (pageType: string): string => {
+    if (isSystemPageType(pageType)) {
+      return SYSTEM_PAGE_TYPES[pageType];
+    }
+    return '';
+  };
+
+  const pageTypeAlreadyExists = (pageType: string): boolean => {
+    if (!isSystemPageType(pageType)) return false;
+    const expectedSlug = getSystemPageSlug(pageType);
+    return existingPages.some(page => page.slug === expectedSlug);
+  };
+
+  const currentPageTypeExists = pageTypeAlreadyExists(formData.pageType);
+  const isCurrentPageTypeSystem = isSystemPageType(formData.pageType);
+
   // Generate unique slug by appending random numbers
   const generateUniqueSlug = async (baseSlug: string): Promise<string> => {
     let attempts = 0;
@@ -79,9 +126,17 @@ export const CreatePageModal: React.FC<CreatePageModalProps> = ({
     return uniqueSlug;
   };
 
-  // Check slug availability
+  // Check slug availability (skip for system pages with fixed slugs)
   const checkSlugAvailability = async (slug: string) => {
     if (!slug.trim()) return;
+    
+    // Skip validation for system pages since they have fixed slugs
+    if (isCurrentPageTypeSystem) {
+      setSlugStatus('available');
+      setFinalSlug(slug);
+      setSuggestedSlug('');
+      return;
+    }
     
     setSlugStatus('checking');
     
@@ -205,6 +260,16 @@ export const CreatePageModal: React.FC<CreatePageModalProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Check for duplicate system page types
+    if (currentPageTypeExists) {
+      toast({
+        title: 'Page type already exists',
+        description: `A ${formData.pageType} page already exists for this website.`,
+        variant: 'destructive'
+      });
+      return;
+    }
+    
     const slugToUse = finalSlug || formData.slug;
     
     if (!formData.title || !slugToUse) {
@@ -215,7 +280,7 @@ export const CreatePageModal: React.FC<CreatePageModalProps> = ({
       return;
     }
 
-    if (slugStatus === 'taken' && !finalSlug) {
+    if (slugStatus === 'taken' && !finalSlug && !isCurrentPageTypeSystem) {
       toast({
         title: "Please wait for slug validation to complete.",
         variant: "destructive",
@@ -273,16 +338,31 @@ export const CreatePageModal: React.FC<CreatePageModalProps> = ({
   const handlePageTypeChange = (value: string) => {
     setFormData(prev => {
       let nextSlug = prev.slug;
-      if (!prev.slug) {
-        if (value === 'products') nextSlug = 'products';
-        if (value === 'cart') nextSlug = 'cart';
-        if (value === 'checkout') nextSlug = 'checkout';
-        if (value === 'order-confirmation') nextSlug = 'order-confirmation';
-        if (value === 'payment-processing') nextSlug = 'payment-processing';
+      
+      // For system pages, always set the fixed slug
+      if (isSystemPageType(value)) {
+        nextSlug = getSystemPageSlug(value);
+        setIsSlugModified(true); // Prevent auto-generation from title
+      } else if (!prev.slug && prev.title) {
+        // For non-system pages, generate slug from title if no slug exists
+        nextSlug = generateSlug(prev.title);
       }
+      
       return { ...prev, pageType: value, slug: nextSlug };
     });
+    
+    // Reset slug validation when page type changes
+    setSlugStatus('idle');
+    setSuggestedSlug('');
+    setFinalSlug('');
   };
+
+  // Effect to validate slug when page type or slug changes
+  useEffect(() => {
+    if (formData.slug && formData.slug.trim()) {
+      debouncedCheckSlug(formData.slug);
+    }
+  }, [formData.pageType, formData.slug, debouncedCheckSlug]);
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
@@ -312,7 +392,10 @@ export const CreatePageModal: React.FC<CreatePageModalProps> = ({
                 onChange={(e) => handleSlugChange(e.target.value)}
                 placeholder="about-us"
                 required
+                readOnly={isCurrentPageTypeSystem}
                 className={`pr-10 ${
+                  isCurrentPageTypeSystem ? 'bg-muted cursor-not-allowed' : ''
+                } ${
                   slugStatus === 'available' ? 'border-green-500' : 
                   slugStatus === 'taken' ? 'border-yellow-500' :
                   slugStatus === 'error' ? 'border-red-500' : ''
@@ -333,6 +416,14 @@ export const CreatePageModal: React.FC<CreatePageModalProps> = ({
                 )}
               </div>
             </div>
+            
+            {/* System page slug notice */}
+            {isCurrentPageTypeSystem && (
+              <p className="text-sm text-muted-foreground mt-1 flex items-center gap-1">
+                <Info className="h-3 w-3" />
+                System pages have fixed URLs that cannot be changed
+              </p>
+            )}
             
             {/* Status Messages */}
             {slugStatus === 'checking' && (
@@ -372,13 +463,51 @@ export const CreatePageModal: React.FC<CreatePageModalProps> = ({
                 <SelectItem value="landing">Landing Page</SelectItem>
                 <SelectItem value="contact">Contact Page</SelectItem>
                 <SelectItem value="blog">Blog Page</SelectItem>
-                <SelectItem value="products">Products Page (Ecommerce)</SelectItem>
-                <SelectItem value="cart">Cart Page (Ecommerce)</SelectItem>
-                <SelectItem value="checkout">Checkout Page (Ecommerce)</SelectItem>
-                <SelectItem value="order-confirmation">Order Confirmation Page (Ecommerce)</SelectItem>
-                <SelectItem value="payment-processing">Payment Processing Page (Ecommerce)</SelectItem>
+                <SelectItem 
+                  value="products" 
+                  disabled={pageTypeAlreadyExists('products')}
+                  className={pageTypeAlreadyExists('products') ? 'opacity-50' : ''}
+                >
+                  Products Page (Ecommerce) {pageTypeAlreadyExists('products') && '✓ Exists'}
+                </SelectItem>
+                <SelectItem 
+                  value="cart" 
+                  disabled={pageTypeAlreadyExists('cart')}
+                  className={pageTypeAlreadyExists('cart') ? 'opacity-50' : ''}
+                >
+                  Cart Page (Ecommerce) {pageTypeAlreadyExists('cart') && '✓ Exists'}
+                </SelectItem>
+                <SelectItem 
+                  value="checkout" 
+                  disabled={pageTypeAlreadyExists('checkout')}
+                  className={pageTypeAlreadyExists('checkout') ? 'opacity-50' : ''}
+                >
+                  Checkout Page (Ecommerce) {pageTypeAlreadyExists('checkout') && '✓ Exists'}
+                </SelectItem>
+                <SelectItem 
+                  value="order-confirmation" 
+                  disabled={pageTypeAlreadyExists('order-confirmation')}
+                  className={pageTypeAlreadyExists('order-confirmation') ? 'opacity-50' : ''}
+                >
+                  Order Confirmation Page (Ecommerce) {pageTypeAlreadyExists('order-confirmation') && '✓ Exists'}
+                </SelectItem>
+                <SelectItem 
+                  value="payment-processing" 
+                  disabled={pageTypeAlreadyExists('payment-processing')}
+                  className={pageTypeAlreadyExists('payment-processing') ? 'opacity-50' : ''}
+                >
+                  Payment Processing Page (Ecommerce) {pageTypeAlreadyExists('payment-processing') && '✓ Exists'}
+                </SelectItem>
               </SelectContent>
             </Select>
+            
+            {/* Duplicate warning */}
+            {currentPageTypeExists && (
+              <p className="text-sm text-amber-600 mt-1 flex items-center gap-1">
+                <AlertCircle className="h-3 w-3" />
+                This page type already exists for this website
+              </p>
+            )}
           </div>
 
           <div>
@@ -415,7 +544,10 @@ export const CreatePageModal: React.FC<CreatePageModalProps> = ({
             <Button type="button" variant="outline" onClick={handleClose}>
               Cancel
             </Button>
-            <Button type="submit" disabled={createPageMutation.isPending}>
+            <Button 
+              type="submit" 
+              disabled={createPageMutation.isPending || currentPageTypeExists}
+            >
               {createPageMutation.isPending ? 'Creating...' : 'Create Page'}
             </Button>
           </div>
