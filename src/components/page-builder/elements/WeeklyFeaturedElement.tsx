@@ -264,7 +264,7 @@ const WeeklyFeaturedElement: React.FC<{
   }
 
   return (
-    <section className="py-8 sm:py-12" style={appliedStyles}>
+    <section style={appliedStyles}>
       <div className="container mx-auto px-4">
         {(showTitle && title) || (showSubtitle && subtitle) ? (
           <div className="text-center mb-6 sm:mb-8 md:mb-12">
