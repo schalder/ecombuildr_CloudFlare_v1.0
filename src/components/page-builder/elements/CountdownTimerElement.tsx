@@ -197,12 +197,13 @@ export const CountdownTimerElement: React.FC<CountdownTimerElementProps> = ({
     </div>
   );
 
-  // Get element styles using standard style renderer
+  // Get element styles but exclude margins (handled by ElementWrapper)
   const elementStyles = renderElementStyles(element, deviceType);
+  const { marginTop, marginRight, marginBottom, marginLeft, ...stylesWithoutMargin } = elementStyles;
 
   if (isEditing) {
     return (
-      <div className={`element-${element.id} max-w-2xl mx-auto`} style={elementStyles}>
+      <div className={`element-${element.id} max-w-2xl mx-auto`} style={stylesWithoutMargin}>
         <div className={getLayoutClasses()} style={getContainerStyles()}>
           {renderTimeSegment(1, labels.days, false)}
           {renderTimeSegment(23, labels.hours, false)}
@@ -215,7 +216,7 @@ export const CountdownTimerElement: React.FC<CountdownTimerElementProps> = ({
 
   if (expired) {
     return (
-      <div className={`element-${element.id} max-w-2xl mx-auto text-center p-4`} style={elementStyles}>
+      <div className={`element-${element.id} max-w-2xl mx-auto text-center p-4`} style={stylesWithoutMargin}>
         <h3 className="text-xl font-bold mb-2">Time's Up!</h3>
         <p className="text-muted-foreground">The countdown has ended.</p>
       </div>
@@ -223,7 +224,7 @@ export const CountdownTimerElement: React.FC<CountdownTimerElementProps> = ({
   }
 
   return (
-    <div className={`element-${element.id} max-w-2xl mx-auto`} style={elementStyles}>
+    <div className={`element-${element.id} max-w-2xl mx-auto`} style={stylesWithoutMargin}>
       <div className={getLayoutClasses()} style={getContainerStyles()}>
         {renderTimeSegment(timeLeft.days, labels.days, true)}
         {renderTimeSegment(timeLeft.hours, labels.hours, true)}
