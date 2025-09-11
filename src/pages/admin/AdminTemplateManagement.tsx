@@ -34,7 +34,7 @@ export default function AdminTemplateManagement() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('page_templates')
-        .select('*')
+        .select('id, name, description, category, template_type, template_types, preview_image, is_published, is_premium, created_at')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -163,6 +163,7 @@ export default function AdminTemplateManagement() {
                     src={template.preview_image} 
                     alt={template.name}
                     className="w-full h-full object-cover"
+                    loading="lazy"
                   />
                 ) : (
                   <div className="flex items-center justify-center h-full">
