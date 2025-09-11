@@ -267,6 +267,7 @@ export const FunnelSettings: React.FC<FunnelSettingsProps> = ({ funnel }) => {
         <div className="flex items-center gap-2 self-start sm:self-auto">
           <Button
             type="submit"
+            form="funnel-settings-form"
             size="sm"
             disabled={updateFunnelMutation.isPending}
             className="flex items-center gap-2"
