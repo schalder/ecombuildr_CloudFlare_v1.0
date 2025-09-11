@@ -1094,7 +1094,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
               {sections.summary && (
                 <section className="space-y-3">
                   <h3 className={`mb-3 font-semibold element-${element.id}-section-header`} style={headerInline as React.CSSProperties}>{headings.summary}</h3>
-                  <div className="rounded-md" style={{ backgroundColor: backgrounds.summaryBg || undefined, borderColor: (backgrounds as any).summaryBorderColor || undefined, borderWidth: summaryBorderWidth || 0, borderStyle: summaryBorderWidth ? 'solid' as any : undefined }}>
+                  <div className="rounded-md p-6" style={{ backgroundColor: backgrounds.summaryBg || undefined, borderColor: (backgrounds as any).summaryBorderColor || undefined, borderWidth: summaryBorderWidth || 0, borderStyle: summaryBorderWidth ? 'solid' as any : undefined }}>
                     {/* Items */}
                     <div className="space-y-2">
                       {displayItems.map((it)=> (
@@ -1115,12 +1115,12 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
                     <div className="flex flex-wrap items-center justify-between gap-2 min-w-0"><span className="truncate">Shipping</span><span className="font-semibold shrink-0 whitespace-nowrap text-right">{formatCurrency(displayShippingCost)}</span></div>
                     <div className="flex flex-wrap items-center justify-between gap-2 min-w-0 font-bold"><span className="truncate">Total</span><span className="shrink-0 whitespace-nowrap text-right">{formatCurrency(displayTotal+displayShippingCost)}</span></div>
 
-                    <Button size={buttonSize as any} className={`w-full mt-2 element-${element.id}`} style={buttonInline as React.CSSProperties} onClick={handleSubmit} disabled={loading || (isEditing && items.length === 0)}>
+                    <Button size={buttonSize as any} className={`w-full mt-4 element-${element.id}`} style={buttonInline as React.CSSProperties} onClick={handleSubmit} disabled={loading || (isEditing && items.length === 0)}>
                       {isEditing && items.length === 0 ? 'Preview Mode - Add items to cart' : (loading? 'Placing Order...' : buttonLabel)}
                     </Button>
 
                     {terms.enabled && (
-                      <label className="flex items-center gap-2 text-sm mt-2">
+                      <label className="flex items-center gap-2 text-sm mt-4">
                         <input type="checkbox" checked={form.accept_terms} onChange={(e)=>setForm(f=>({...f, accept_terms: e.target.checked}))} />
                         <span>
                           {terms.label} {terms.url && (<a href={terms.url} target="_blank" rel="noreferrer" className="underline">Read</a>)}
@@ -1129,7 +1129,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
                     )}
 
                     {trust.enabled && trust.imageUrl && (
-                      <div className="pt-2">
+                      <div className="pt-4">
                         <img src={trust.imageUrl} alt={trust.alt || 'Secure checkout'} className="w-full h-auto object-contain" loading="lazy" />
                       </div>
                     )}
