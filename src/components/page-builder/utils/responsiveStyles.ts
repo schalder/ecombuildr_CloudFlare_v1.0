@@ -197,6 +197,7 @@ export function mergeResponsiveStyles(baseStyles: any, elementStyles: any, devic
         }
         
         if (effectiveValue !== undefined) {
+          console.log(`mergeResponsiveStyles: Setting ${property} = ${effectiveValue}`);
           mergedStyles[property] = effectiveValue;
         }
       });
