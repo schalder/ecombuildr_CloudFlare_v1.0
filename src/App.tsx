@@ -112,13 +112,18 @@ const queryClient = new QueryClient({
   }
 });
 
+// Wrapper component to provide store context to CartProvider
+const CartProviderWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  return <CartProvider>{children}</CartProvider>;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <HelmetProvider>
       <AuthProvider>
         <StoreProvider>
           <PixelManager>
-            <CartProvider>
+            <CartProviderWrapper>
               <TooltipProvider>
                 <Toaster />
                 <Sonner />
@@ -335,7 +340,7 @@ const App = () => (
               </AddToCartProvider>
                 </BrowserRouter>
               </TooltipProvider>
-            </CartProvider>
+            </CartProviderWrapper>
           </PixelManager>
         </StoreProvider>
       </AuthProvider>

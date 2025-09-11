@@ -5,6 +5,11 @@ import { DomainWebsiteRenderer } from './DomainWebsiteRenderer';
 import { DomainFunnelRenderer } from './DomainFunnelRenderer';
 import { StoreProvider } from '@/contexts/StoreContext';
 import { CartProvider } from '@/contexts/CartContext';
+
+// Domain-specific CartProvider wrapper
+const DomainCartProvider: React.FC<{ children: React.ReactNode; storeId?: string }> = ({ children, storeId }) => {
+  return <CartProvider storeId={storeId}>{children}</CartProvider>;
+};
 import { AddToCartProvider } from '@/contexts/AddToCartProvider';
 import { AuthProvider } from '@/hooks/useAuth';
 import { PixelManager } from '@/components/pixel/PixelManager';
@@ -15,6 +20,7 @@ interface DomainConnection {
   content_id: string;
   path: string;
   is_homepage: boolean;
+  store_id: string;
 }
 
 interface CustomDomain {
@@ -153,15 +159,15 @@ export const DomainRouter: React.FC<DomainRouterProps> = ({ children }) => {
     return (
       <AuthProvider>
         <StoreProvider>
-          <PixelManager>
-            <CartProvider>
-              <AddToCartProvider>
+           <PixelManager>
+             <DomainCartProvider storeId={selectedConnection.store_id}>
+               <AddToCartProvider>
                 <DomainWebsiteRenderer 
                   websiteId={selectedConnection.content_id}
                   customDomain={customDomain.domain}
                 />
-              </AddToCartProvider>
-            </CartProvider>
+                </AddToCartProvider>
+              </DomainCartProvider>
           </PixelManager>
         </StoreProvider>
       </AuthProvider>
@@ -170,16 +176,16 @@ export const DomainRouter: React.FC<DomainRouterProps> = ({ children }) => {
   
   if (selectedConnection.content_type === 'funnel') {
     return (
-      <AuthProvider>
-        <StoreProvider>
-          <CartProvider>
+        <AuthProvider>
+          <StoreProvider>
+            <DomainCartProvider storeId={selectedConnection.store_id}>
             <AddToCartProvider>
               <DomainFunnelRenderer 
                 funnelId={selectedConnection.content_id}
                 customDomain={customDomain.domain}
               />
-            </AddToCartProvider>
-          </CartProvider>
+              </AddToCartProvider>
+            </DomainCartProvider>
         </StoreProvider>
       </AuthProvider>
     );

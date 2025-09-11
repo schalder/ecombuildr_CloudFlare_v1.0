@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useReducer, useEffect } from 'react';
+import React, { createContext, useContext, useReducer, useEffect, useState } from 'react';
 import { usePixelTracking } from '@/hooks/usePixelTracking';
 import { usePixelContext } from '@/components/pixel/PixelManager';
 import { createCartItem, mergeCartItems } from '@/lib/cart';
@@ -99,29 +99,49 @@ interface CartContextType extends CartState {
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
-export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+interface CartProviderProps {
+  children: React.ReactNode;
+  storeId?: string;
+}
+
+export const CartProvider: React.FC<CartProviderProps> = ({ children, storeId }) => {
   const [state, dispatch] = useReducer(cartReducer, initialState);
+  const [currentStoreId, setCurrentStoreId] = useState<string | undefined>(storeId);
   const pixelContext = usePixelContext();
   const pixels = pixelContext?.pixels;
   const { trackAddToCart } = usePixelTracking(pixels);
 
-  // Load cart from localStorage on mount
+  // Create store-specific cart key
+  const getCartKey = (id?: string) => id ? `cart_${id}` : 'cart_global';
+
+  // Load cart from localStorage on mount or store change
   useEffect(() => {
-    const savedCart = localStorage.getItem('cart');
-    if (savedCart) {
-      try {
-        const cartItems = JSON.parse(savedCart);
-        dispatch({ type: 'LOAD_CART', payload: cartItems });
-      } catch (error) {
-        console.error('Error loading cart from localStorage:', error);
+    const cartKey = getCartKey(storeId);
+    const savedCart = localStorage.getItem(cartKey);
+    
+    // If store changed, clear current cart and load new store's cart
+    if (currentStoreId !== storeId) {
+      setCurrentStoreId(storeId);
+      
+      if (savedCart) {
+        try {
+          const cartItems = JSON.parse(savedCart);
+          dispatch({ type: 'LOAD_CART', payload: cartItems });
+        } catch (error) {
+          console.error('Error loading cart from localStorage:', error);
+          dispatch({ type: 'CLEAR_CART' });
+        }
+      } else {
+        dispatch({ type: 'CLEAR_CART' });
       }
     }
-  }, []);
+  }, [storeId, currentStoreId]);
 
-  // Save cart to localStorage whenever it changes
+  // Save cart to localStorage whenever it changes (store-specific)
   useEffect(() => {
-    localStorage.setItem('cart', JSON.stringify(state.items));
-  }, [state.items]);
+    const cartKey = getCartKey(storeId);
+    localStorage.setItem(cartKey, JSON.stringify(state.items));
+  }, [state.items, storeId]);
 
   const addItem = (item: Omit<CartItem, 'quantity'> & { quantity?: number }) => {
     dispatch({ type: 'ADD_ITEM', payload: item });
