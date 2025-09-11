@@ -197,12 +197,17 @@ export const CountdownTimerElement: React.FC<CountdownTimerElementProps> = ({
     </div>
   );
 
-  // Use renderElementStyles for proper responsive inheritance
-  const elementStyles = renderElementStyles(element, deviceType);
+  // Get only the non-spacing styles for internal use
+  const getInternalStyles = () => {
+    const elementStyles = renderElementStyles(element, deviceType);
+    // Remove margin and padding from internal styles to prevent double application
+    const { marginTop, marginRight, marginBottom, marginLeft, paddingTop, paddingRight, paddingBottom, paddingLeft, ...internalStyles } = elementStyles;
+    return internalStyles;
+  };
 
   if (isEditing) {
     return (
-      <div className={`element-${element.id} max-w-2xl mx-auto`} style={elementStyles}>
+      <div className={`element-${element.id} max-w-2xl mx-auto`} style={getInternalStyles()}>
         <div className={getLayoutClasses()} style={getContainerStyles()}>
           {renderTimeSegment(1, labels.days, false)}
           {renderTimeSegment(23, labels.hours, false)}
@@ -215,7 +220,7 @@ export const CountdownTimerElement: React.FC<CountdownTimerElementProps> = ({
 
   if (expired) {
     return (
-      <div className={`element-${element.id} max-w-2xl mx-auto text-center p-4`} style={elementStyles}>
+      <div className={`element-${element.id} max-w-2xl mx-auto text-center p-4`} style={getInternalStyles()}>
         <h3 className="text-xl font-bold mb-2">Time's Up!</h3>
         <p className="text-muted-foreground">The countdown has ended.</p>
       </div>
@@ -223,7 +228,7 @@ export const CountdownTimerElement: React.FC<CountdownTimerElementProps> = ({
   }
 
   return (
-      <div className={`element-${element.id} max-w-2xl mx-auto`} style={elementStyles}>
+      <div className={`element-${element.id} max-w-2xl mx-auto`} style={getInternalStyles()}>
         <div className={getLayoutClasses()} style={getContainerStyles()}>
           {renderTimeSegment(timeLeft.days, labels.days, true)}
           {renderTimeSegment(timeLeft.hours, labels.hours, true)}
