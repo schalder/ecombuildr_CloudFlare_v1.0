@@ -198,7 +198,7 @@ const AdminAnalytics = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <TrendingUp className="h-5 w-5" />
-                Website Growth
+                Websites & Funnels Count
               </CardTitle>
             </CardHeader>
             <CardContent>
