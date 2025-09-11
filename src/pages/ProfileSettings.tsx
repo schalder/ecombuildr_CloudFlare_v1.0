@@ -255,13 +255,7 @@ export default function ProfileSettings() {
                 {formatTrialInfo()}
 
                 {planLimits && (
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-muted/50 rounded-lg">
-                    <div className="text-center">
-                      <p className="text-sm text-muted-foreground">Stores</p>
-                      <p className="font-semibold">
-                        {planLimits.max_stores === null ? '∞' : planLimits.max_stores}
-                      </p>
-                    </div>
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-4 p-4 bg-muted/50 rounded-lg">
                     <div className="text-center">
                       <p className="text-sm text-muted-foreground">Websites</p>
                       <p className="font-semibold">
@@ -272,6 +266,12 @@ export default function ProfileSettings() {
                       <p className="text-sm text-muted-foreground">Funnels</p>
                       <p className="font-semibold">
                         {planLimits.max_funnels === null ? '∞' : planLimits.max_funnels}
+                      </p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-sm text-muted-foreground">Pages</p>
+                      <p className="font-semibold">
+                        {planLimits.max_pages_per_store === null ? '∞' : planLimits.max_pages_per_store}
                       </p>
                     </div>
                     <div className="text-center">
