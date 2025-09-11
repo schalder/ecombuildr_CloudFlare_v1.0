@@ -1120,7 +1120,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
                     </Button>
 
                     {terms.enabled && (
-                      <label className="flex items-center gap-2 text-sm mt-4">
+                      <label className="flex items-center gap-2 text-sm mt-2">
                         <input type="checkbox" checked={form.accept_terms} onChange={(e)=>setForm(f=>({...f, accept_terms: e.target.checked}))} />
                         <span>
                           {terms.label} {terms.url && (<a href={terms.url} target="_blank" rel="noreferrer" className="underline">Read</a>)}
@@ -1129,7 +1129,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
                     )}
 
                     {trust.enabled && trust.imageUrl && (
-                      <div className="pt-4">
+                      <div className="pt-2">
                         <img src={trust.imageUrl} alt={trust.alt || 'Secure checkout'} className="w-full h-auto object-contain" loading="lazy" />
                       </div>
                     )}
