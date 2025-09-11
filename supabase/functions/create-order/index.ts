@@ -30,6 +30,7 @@ type OrderInput = {
   shipping_state?: string | null;
   shipping_postal_code?: string | null;
   payment_method: 'cod' | 'bkash' | 'nagad' | 'sslcommerz';
+  payment_transaction_number?: string | null;
   notes?: string | null;
   subtotal: number;
   shipping_cost?: number | null;
@@ -109,6 +110,7 @@ serve(async (req) => {
       shipping_cost: order.shipping_cost ?? 0,
       subtotal: order.subtotal ?? 0,
       total: order.total ?? ((order.subtotal ?? 0) + (order.shipping_cost ?? 0) - (order.discount_amount ?? 0)),
+      payment_transaction_number: order.payment_transaction_number ?? null,
       idempotency_key: order.idempotency_key ?? null,
       custom_fields: {
         ...(order.custom_fields || {}),

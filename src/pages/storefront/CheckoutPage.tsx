@@ -318,6 +318,7 @@ useEffect(() => {
         shipping_city: form.shipping_city,
         shipping_area: form.shipping_area,
         payment_method: form.payment_method,
+        payment_transaction_number: form.payment_transaction_number,
         notes: form.notes,
         subtotal: total,
         shipping_cost: shippingCost,

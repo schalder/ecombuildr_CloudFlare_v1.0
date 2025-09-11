@@ -849,6 +849,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
         shipping_state: form.shipping_state,
         shipping_postal_code: form.shipping_postal_code,
         payment_method: form.payment_method,
+        payment_transaction_number: form.payment_transaction_number,
         notes: form.notes,
         subtotal: total,
         shipping_cost: shippingCost,
