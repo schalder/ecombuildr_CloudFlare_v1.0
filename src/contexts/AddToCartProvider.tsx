@@ -75,7 +75,12 @@ export const AddToCartProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       });
 
       if (buyNow) {
-        navigate(paths.checkout);
+        // For builder preview, open checkout in new tab, for storefront navigate normally
+        if (location.pathname.includes('/builder')) {
+          window.open(paths.checkout, '_blank');
+        } else {
+          navigate(paths.checkout);
+        }
       }
     }
   };
@@ -97,7 +102,12 @@ export const AddToCartProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     });
 
     if (pendingBuyNow) {
-      navigate(paths.checkout);
+      // For builder preview, open checkout in new tab, for storefront navigate normally
+      if (location.pathname.includes('/builder')) {
+        window.open(paths.checkout, '_blank');
+      } else {
+        navigate(paths.checkout);
+      }
       setPendingBuyNow(false);
     }
 
