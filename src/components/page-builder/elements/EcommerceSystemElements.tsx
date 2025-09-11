@@ -607,6 +607,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
     shipping: 'Shipping',
     payment: 'Payment',
     summary: 'Order Summary',
+    customFields: 'Additional Information',
   };
 
   // Dynamic grid helpers for responsive form layout
@@ -1024,17 +1025,20 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
                    </div>
 
                    {/* Custom fields */}
-                  {customFields?.length > 0 && (
-                    <div className="space-y-2">
-                      {customFields.filter((cf:any)=>cf.enabled).map((cf:any) => (
-                        <div key={cf.id}>
-                          {cf.type === 'textarea' ? (
-                            <Textarea placeholder={cf.placeholder || cf.label} value={(form.custom_fields as any)[cf.id] || ''} onChange={(e)=>setForm(f=>({...f, custom_fields: { ...f.custom_fields, [cf.id]: e.target.value }}))} required={!!cf.required} aria-required={!!cf.required} />
-                          ) : (
-                            <Input type={cf.type || 'text'} placeholder={cf.placeholder || cf.label} value={(form.custom_fields as any)[cf.id] || ''} onChange={(e)=>setForm(f=>({...f, custom_fields: { ...f.custom_fields, [cf.id]: e.target.value }}))} required={!!cf.required} aria-required={!!cf.required} />
-                          )}
-                        </div>
-                      ))}
+                  {customFields?.length > 0 && customFields.filter((cf:any)=>cf.enabled).length > 0 && (
+                    <div className="space-y-4 mt-6">
+                      <h3 className={`mb-3 font-semibold element-${element.id}-section-header`} style={headerInline as React.CSSProperties}>{headings.customFields}</h3>
+                      <div className="space-y-2">
+                        {customFields.filter((cf:any)=>cf.enabled).map((cf:any) => (
+                          <div key={cf.id}>
+                            {cf.type === 'textarea' ? (
+                              <Textarea placeholder={cf.placeholder || cf.label} value={(form.custom_fields as any)[cf.id] || ''} onChange={(e)=>setForm(f=>({...f, custom_fields: { ...f.custom_fields, [cf.id]: e.target.value }}))} required={!!cf.required} aria-required={!!cf.required} />
+                            ) : (
+                              <Input type={cf.type || 'text'} placeholder={cf.placeholder || cf.label} value={(form.custom_fields as any)[cf.id] || ''} onChange={(e)=>setForm(f=>({...f, custom_fields: { ...f.custom_fields, [cf.id]: e.target.value }}))} required={!!cf.required} aria-required={!!cf.required} />
+                            )}
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
 

@@ -84,6 +84,10 @@ export const CheckoutContentProperties: React.FC<CheckoutContentPropertiesProps>
                 <Label className="text-sm">Order Summary</Label>
                 <Input value={(element.content?.headings?.summary ?? 'Order Summary')} onChange={(e) => onUpdate('headings', { ...(element.content?.headings || {}), summary: e.target.value })} />
               </div>
+              <div>
+                <Label className="text-sm">Custom Fields</Label>
+                <Input value={(element.content?.headings?.customFields ?? 'Additional Information')} onChange={(e) => onUpdate('headings', { ...(element.content?.headings || {}), customFields: e.target.value })} />
+              </div>
             </div>
           </AccordionContent>
         </AccordionItem>
