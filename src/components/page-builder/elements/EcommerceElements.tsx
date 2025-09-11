@@ -733,7 +733,8 @@ const CategoryNavigationElement: React.FC<{
     };
     
     const handleAddToCart = async (product: any) => {
-      await addToCart(product, 1);
+      const isBuyNow = element.content.ctaBehavior === 'buy_now';
+      await addToCart(product, 1, isBuyNow);
     };
     
     const applyStyles = (baseClasses: string, styleType?: string) => {
@@ -963,7 +964,7 @@ const CategoryNavigationElement: React.FC<{
                   onMouseEnter={buttonProps.onMouseEnter}
                   onMouseLeave={buttonProps.onMouseLeave}
                 >
-                  {element.content.ctaText || 'Add to Cart'}
+                  {element.content.ctaBehavior === 'buy_now' ? (element.content.ctaText || 'Buy Now') : (element.content.ctaText || 'Add to Cart')}
                 </Button>
               </div>
             );
