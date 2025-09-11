@@ -2923,6 +2923,10 @@ export type Database = {
         Args: { _resource_type: string; _user_id: string }
         Returns: undefined
       }
+      delete_funnel_admin: {
+        Args: { p_funnel_id: string }
+        Returns: undefined
+      }
       delete_website_admin: {
         Args: { p_website_id: string }
         Returns: undefined

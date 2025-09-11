@@ -288,10 +288,9 @@ export default function AdminSites() {
     
     try {
       setIsDeleting(true);
-      const { error } = await supabase
-        .from('funnels')
-        .delete()
-        .eq('id', deleteDialog.id);
+      const { error } = await supabase.rpc('delete_funnel_admin', {
+        p_funnel_id: deleteDialog.id
+      });
 
       if (error) throw error;
 
