@@ -1094,7 +1094,8 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
                 <section className="space-y-3">
                   <h3 className={`mb-3 font-semibold element-${element.id}-section-header`} style={headerInline as React.CSSProperties}>{headings.summary}</h3>
                   <div className="rounded-md" style={{ backgroundColor: backgrounds.summaryBg || undefined, borderColor: (backgrounds as any).summaryBorderColor || undefined, borderWidth: summaryBorderWidth || 0, borderStyle: summaryBorderWidth ? 'solid' as any : undefined }}>
-                    <div className="space-y-2 px-4 py-3">
+                    {/* Items */}
+                    <div className="space-y-2">
                       {displayItems.map((it)=> (
                         <div key={it.id} className={`grid items-center gap-3 ${showItemImages && it.image ? 'grid-cols-[auto_1fr_auto]' : 'grid-cols-[1fr_auto]'}`}>
                           {showItemImages && it.image && (
@@ -1109,32 +1110,28 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
                       ))}
                     </div>
                     <Separator className="my-3" />
-                    <div className="px-4 space-y-1">
-                      <div className="flex flex-wrap items-center justify-between gap-2 min-w-0"><span className="truncate">Subtotal</span><span className="font-semibold shrink-0 whitespace-nowrap text-right">{formatCurrency(displayTotal)}</span></div>
-                      <div className="flex flex-wrap items-center justify-between gap-2 min-w-0"><span className="truncate">Shipping</span><span className="font-semibold shrink-0 whitespace-nowrap text-right">{formatCurrency(displayShippingCost)}</span></div>
-                      <div className="flex flex-wrap items-center justify-between gap-2 min-w-0 font-bold"><span className="truncate">Total</span><span className="shrink-0 whitespace-nowrap text-right">{formatCurrency(displayTotal+displayShippingCost)}</span></div>
-                    </div>
+                    <div className="flex flex-wrap items-center justify-between gap-2 min-w-0"><span className="truncate">Subtotal</span><span className="font-semibold shrink-0 whitespace-nowrap text-right">{formatCurrency(displayTotal)}</span></div>
+                    <div className="flex flex-wrap items-center justify-between gap-2 min-w-0"><span className="truncate">Shipping</span><span className="font-semibold shrink-0 whitespace-nowrap text-right">{formatCurrency(displayShippingCost)}</span></div>
+                    <div className="flex flex-wrap items-center justify-between gap-2 min-w-0 font-bold"><span className="truncate">Total</span><span className="shrink-0 whitespace-nowrap text-right">{formatCurrency(displayTotal+displayShippingCost)}</span></div>
 
-                    <div className="px-4 pb-3">
-                      <Button size={buttonSize as any} className={`w-full mt-2 element-${element.id}`} style={buttonInline as React.CSSProperties} onClick={handleSubmit} disabled={loading || (isEditing && items.length === 0)}>
-                        {isEditing && items.length === 0 ? 'Preview Mode - Add items to cart' : (loading? 'Placing Order...' : buttonLabel)}
-                      </Button>
+                    <Button size={buttonSize as any} className={`w-full mt-2 element-${element.id}`} style={buttonInline as React.CSSProperties} onClick={handleSubmit} disabled={loading || (isEditing && items.length === 0)}>
+                      {isEditing && items.length === 0 ? 'Preview Mode - Add items to cart' : (loading? 'Placing Order...' : buttonLabel)}
+                    </Button>
 
-                      {terms.enabled && (
-                        <label className="flex items-center gap-2 text-sm mt-2">
-                          <input type="checkbox" checked={form.accept_terms} onChange={(e)=>setForm(f=>({...f, accept_terms: e.target.checked}))} />
-                          <span>
-                            {terms.label} {terms.url && (<a href={terms.url} target="_blank" rel="noreferrer" className="underline">Read</a>)}
-                          </span>
-                        </label>
-                      )}
+                    {terms.enabled && (
+                      <label className="flex items-center gap-2 text-sm mt-2">
+                        <input type="checkbox" checked={form.accept_terms} onChange={(e)=>setForm(f=>({...f, accept_terms: e.target.checked}))} />
+                        <span>
+                          {terms.label} {terms.url && (<a href={terms.url} target="_blank" rel="noreferrer" className="underline">Read</a>)}
+                        </span>
+                      </label>
+                    )}
 
-                      {trust.enabled && trust.imageUrl && (
-                        <div className="pt-2">
-                          <img src={trust.imageUrl} alt={trust.alt || 'Secure checkout'} className="w-full h-auto object-contain" loading="lazy" />
-                        </div>
-                      )}
-                    </div>
+                    {trust.enabled && trust.imageUrl && (
+                      <div className="pt-2">
+                        <img src={trust.imageUrl} alt={trust.alt || 'Secure checkout'} className="w-full h-auto object-contain" loading="lazy" />
+                      </div>
+                    )}
                   </div>
                 </section>
               )}
