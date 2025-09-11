@@ -676,7 +676,12 @@ useEffect(() => {
                   </SelectContent>
                 </Select>
 
-                {form.payment_method === 'bkash' && store?.settings?.bkash?.mode === 'number' && store?.settings?.bkash?.number && (
+                {/* Show transaction number field for manual bKash payments */}
+                {form.payment_method === 'bkash' && (() => {
+                  const hasBkashApi = !!(store?.settings?.bkash?.app_key && store?.settings?.bkash?.app_secret && store?.settings?.bkash?.username && store?.settings?.bkash?.password);
+                  const isBkashManual = !!(store?.settings?.bkash?.enabled && (store?.settings?.bkash?.mode === 'number' || !hasBkashApi) && store?.settings?.bkash?.number);
+                  return isBkashManual;
+                })() && (
                   <div className="space-y-2">
                     <p className="text-sm text-muted-foreground">Pay to bKash number: {store.settings.bkash.number}</p>
                     <Input
@@ -688,7 +693,13 @@ useEffect(() => {
                     />
                   </div>
                 )}
-                {form.payment_method === 'nagad' && store?.settings?.nagad?.mode === 'number' && store?.settings?.nagad?.number && (
+                
+                {/* Show transaction number field for manual Nagad payments */}
+                {form.payment_method === 'nagad' && (() => {
+                  const hasNagadApi = !!(store?.settings?.nagad?.merchant_id && store?.settings?.nagad?.public_key && store?.settings?.nagad?.private_key);
+                  const isNagadManual = !!(store?.settings?.nagad?.enabled && (store?.settings?.nagad?.mode === 'number' || !hasNagadApi) && store?.settings?.nagad?.number);
+                  return isNagadManual;
+                })() && (
                   <div className="space-y-2">
                     <p className="text-sm text-muted-foreground">Pay to Nagad number: {store.settings.nagad.number}</p>
                     <Input
