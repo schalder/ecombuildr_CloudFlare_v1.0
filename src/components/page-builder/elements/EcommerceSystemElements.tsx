@@ -1026,7 +1026,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
 
                    {/* Custom fields */}
                   {customFields?.length > 0 && customFields.filter((cf:any)=>cf.enabled).length > 0 && (
-                    <div className="space-y-4 mt-6">
+                    <div className="space-y-4">
                       <h3 className={`mb-3 font-semibold element-${element.id}-section-header`} style={headerInline as React.CSSProperties}>{headings.customFields}</h3>
                       <div className="space-y-2">
                         {customFields.filter((cf:any)=>cf.enabled).map((cf:any) => (
