@@ -732,6 +732,16 @@ export const StorefrontProducts: React.FC = () => {
         storeSlug={store.slug}
         onAddToCart={addToCart}
       />
+    </div>
+  );
+
+  if (isWebsiteContext) {
+    return content;
+  }
+
+  return (
+    <StorefrontLayout>
+      {content}
     </StorefrontLayout>
   );
 };

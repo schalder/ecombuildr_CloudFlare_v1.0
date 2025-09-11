@@ -106,92 +106,102 @@ export const SearchResults: React.FC = () => {
     );
   }
 
+  const isWebsiteContext = Boolean(websiteId);
+
+  const content = (
+    <div className="container mx-auto px-4 py-8">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-foreground mb-2">
+          Search Results for "{searchQuery}"
+        </h1>
+        <p className="text-muted-foreground">
+          {loading ? 'Searching...' : `${products.length} product${products.length !== 1 ? 's' : ''} found`}
+        </p>
+      </div>
+
+      {loading ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {[...Array(8)].map((_, i) => (
+            <Card key={i} className="overflow-hidden">
+              <div className="aspect-square bg-muted animate-pulse" />
+              <CardContent className="p-4">
+                <div className="h-4 bg-muted rounded animate-pulse mb-2" />
+                <div className="h-4 bg-muted rounded animate-pulse w-2/3" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : products.length === 0 ? (
+        <div className="text-center py-12">
+          <p className="text-muted-foreground text-lg mb-4">
+            No products found for "{searchQuery}"
+          </p>
+          <Link to={require('@/lib/pathResolver').useEcomPaths().products}>
+            <Button variant="outline">Browse All Products</Button>
+          </Link>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {products.map((product) => (
+            <Card key={product.id} className="overflow-hidden group hover:shadow-lg transition-shadow">
+              <div className="aspect-square relative overflow-hidden">
+                <img
+                  src={product.images[0] || '/placeholder.svg'}
+                  alt={product.name}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                />
+                {product.compare_price && product.compare_price > product.price && (
+                  <Badge variant="destructive" className="absolute top-2 left-2">
+                    Sale
+                  </Badge>
+                )}
+              </div>
+              <CardContent className="p-4">
+                <Link to={require('@/lib/pathResolver').useEcomPaths().productDetail(product.slug)}>
+                  <h3 className="font-semibold text-sm mb-1 hover:text-primary transition-colors line-clamp-2">
+                    {product.name}
+                  </h3>
+                </Link>
+                {product.short_description && (
+                  <p className="text-xs text-muted-foreground mb-2 line-clamp-2">
+                    {product.short_description}
+                  </p>
+                )}
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <div className="flex items-center space-x-1">
+                      <span className="font-bold text-sm">৳{product.price.toFixed(2)}</span>
+                      {product.compare_price && product.compare_price > product.price && (
+                        <span className="text-xs text-muted-foreground line-through">
+                          ৳{product.compare_price.toFixed(2)}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <Button
+                    size="sm"
+                    onClick={() => handleAddToCart(product)}
+                    className="shrink-0"
+                  >
+                    <ShoppingCart className="h-3 w-3 mr-1" />
+                    Add
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
+  if (isWebsiteContext) {
+    return content;
+  }
+
   return (
     <StorefrontLayout>
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">
-            Search Results for "{searchQuery}"
-          </h1>
-          <p className="text-muted-foreground">
-            {loading ? 'Searching...' : `${products.length} product${products.length !== 1 ? 's' : ''} found`}
-          </p>
-        </div>
-
-        {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {[...Array(8)].map((_, i) => (
-              <Card key={i} className="overflow-hidden">
-                <div className="aspect-square bg-muted animate-pulse" />
-                <CardContent className="p-4">
-                  <div className="h-4 bg-muted rounded animate-pulse mb-2" />
-                  <div className="h-4 bg-muted rounded animate-pulse w-2/3" />
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        ) : products.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground text-lg mb-4">
-              No products found for "{searchQuery}"
-            </p>
-            <Link to={require('@/lib/pathResolver').useEcomPaths().products}>
-              <Button variant="outline">Browse All Products</Button>
-            </Link>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {products.map((product) => (
-              <Card key={product.id} className="overflow-hidden group hover:shadow-lg transition-shadow">
-                <div className="aspect-square relative overflow-hidden">
-                  <img
-                    src={product.images[0] || '/placeholder.svg'}
-                    alt={product.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                  {product.compare_price && product.compare_price > product.price && (
-                    <Badge variant="destructive" className="absolute top-2 left-2">
-                      Sale
-                    </Badge>
-                  )}
-                </div>
-                <CardContent className="p-4">
-                  <Link to={require('@/lib/pathResolver').useEcomPaths().productDetail(product.slug)}>
-                    <h3 className="font-semibold text-sm mb-1 hover:text-primary transition-colors line-clamp-2">
-                      {product.name}
-                    </h3>
-                  </Link>
-                  {product.short_description && (
-                    <p className="text-xs text-muted-foreground mb-2 line-clamp-2">
-                      {product.short_description}
-                    </p>
-                  )}
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-1">
-                      <div className="flex items-center space-x-1">
-                        <span className="font-bold text-sm">৳{product.price.toFixed(2)}</span>
-                        {product.compare_price && product.compare_price > product.price && (
-                          <span className="text-xs text-muted-foreground line-through">
-                            ৳{product.compare_price.toFixed(2)}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <Button
-                      size="sm"
-                      onClick={() => handleAddToCart(product)}
-                      className="shrink-0"
-                    >
-                      <ShoppingCart className="h-3 w-3 mr-1" />
-                      Add
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
-      </div>
+      {content}
     </StorefrontLayout>
   );
 };

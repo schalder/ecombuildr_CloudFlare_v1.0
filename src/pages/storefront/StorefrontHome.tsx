@@ -28,18 +28,40 @@ interface PageData {
 }
 
 export const StorefrontHome: React.FC = () => {
-  const { slug } = useParams<{ slug: string }>();
-  const { store, loadStore } = useStore();
+  const { slug, websiteId, websiteSlug } = useParams<{ slug?: string; websiteId?: string; websiteSlug?: string }>();
+  const { store, loadStore, loadStoreById } = useStore();
   const { addItem } = useCart();
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
   const [homepage, setHomepage] = useState<PageData | null>(null);
   const [loading, setLoading] = useState(true);
+  const isWebsiteContext = Boolean(websiteId || websiteSlug);
 
   useEffect(() => {
-    if (slug) {
-      loadStore(slug);
-    }
-  }, [slug, loadStore]);
+    const init = async () => {
+      if (slug) {
+        loadStore(slug);
+      } else if (websiteId) {
+        const { data: website } = await supabase
+          .from('websites')
+          .select('store_id')
+          .eq('id', websiteId)
+          .single();
+        if (website?.store_id) {
+          await loadStoreById(website.store_id);
+        }
+      } else if (websiteSlug) {
+        const { data: website } = await supabase
+          .from('websites')
+          .select('store_id')
+          .eq('slug', websiteSlug)
+          .single();
+        if (website?.store_id) {
+          await loadStoreById(website.store_id);
+        }
+      }
+    };
+    init();
+  }, [slug, websiteId, websiteSlug, loadStore, loadStoreById]);
 
   useEffect(() => {
     if (store?.id) {
@@ -122,13 +144,21 @@ export const StorefrontHome: React.FC = () => {
   };
 
   if (!store) {
+    const content = (
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold">Store not found</h1>
+        </div>
+      </div>
+    );
+
+    if (isWebsiteContext) {
+      return content;
+    }
+
     return (
       <StorefrontLayout>
-        <div className="container mx-auto px-4 py-8">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold">Store not found</h1>
-          </div>
-        </div>
+        {content}
       </StorefrontLayout>
     );
   }
@@ -149,30 +179,44 @@ export const StorefrontHome: React.FC = () => {
       }
     }
 
+    const content = (
+      <div className="w-full">
+        {/* Render custom homepage with page builder */}
+        {homepage.content?.sections ? (
+          <PageBuilderRenderer data={homepage.content} />
+        ) : (
+          <div className="container mx-auto px-4 py-8">
+            <h1 className="text-3xl font-bold mb-6">{homepage.title}</h1>
+            <p className="text-muted-foreground">This homepage is still being set up.</p>
+            <p className="text-sm text-muted-foreground mt-4">
+              Content structure: {JSON.stringify(Object.keys(homepage.content || {}), null, 2)}
+            </p>
+          </div>
+        )}
+      </div>
+    );
+
+    if (isWebsiteContext) {
+      return content;
+    }
+
     return (
       <StorefrontLayout>
-        <div className="w-full">
-          {/* Render custom homepage with page builder */}
-          {homepage.content?.sections ? (
-            <PageBuilderRenderer data={homepage.content} />
-          ) : (
-            <div className="container mx-auto px-4 py-8">
-              <h1 className="text-3xl font-bold mb-6">{homepage.title}</h1>
-              <p className="text-muted-foreground">This homepage is still being set up.</p>
-              <p className="text-sm text-muted-foreground mt-4">
-                Content structure: {JSON.stringify(Object.keys(homepage.content || {}), null, 2)}
-              </p>
-            </div>
-          )}
-        </div>
+        {content}
       </StorefrontLayout>
     );
   }
 
   // Default theme renderer if no custom homepage
+  const content = <ThemeRenderer />;
+
+  if (isWebsiteContext) {
+    return content;
+  }
+
   return (
     <StorefrontLayout>
-      <ThemeRenderer />
+      {content}
     </StorefrontLayout>
   );
 };
