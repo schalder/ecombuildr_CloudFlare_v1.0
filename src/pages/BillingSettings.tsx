@@ -7,17 +7,42 @@ import { CreditCard, Download, Calendar, CheckCircle, Crown } from 'lucide-react
 import { usePlanLimits } from '@/hooks/usePlanLimits';
 import { useAuth } from '@/hooks/useAuth';
 import { PlanUpgradeModal2 } from '@/components/dashboard/PlanUpgradeModal2';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function BillingSettings() {
   const { planLimits, userProfile, loading } = usePlanLimits();
   const { user } = useAuth();
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [sitePricingPlan, setSitePricingPlan] = useState<any>(null);
+
+  useEffect(() => {
+    const fetchSitePricingPlan = async () => {
+      if (!userProfile?.subscription_plan) return;
+
+      const { data } = await supabase
+        .from('site_pricing_plans')
+        .select('*')
+        .eq('plan_name', userProfile.subscription_plan)
+        .eq('is_active', true)
+        .single();
+
+      setSitePricingPlan(data);
+    };
+
+    if (userProfile?.subscription_plan) {
+      fetchSitePricingPlan();
+    }
+  }, [userProfile?.subscription_plan]);
 
   const getPlanDisplayName = (planName: string) => {
+    if (sitePricingPlan?.display_name_en) {
+      return sitePricingPlan.display_name_en;
+    }
+
     const planNames: Record<string, string> = {
       starter: 'Starter Plan',
-      basic: 'Professional Plan',
+      basic: 'Professional Plan', 
       professional: 'Professional Plan',
       pro: 'Enterprise Plan',
       enterprise: 'Enterprise Plan'
@@ -109,7 +134,7 @@ export default function BillingSettings() {
               </div>
               <div className="text-right">
                 <p className="text-3xl font-bold">
-                  ৳{planLimits?.price_bdt || 0}
+                  ৳{sitePricingPlan?.price_bdt || planLimits?.price_bdt || 0}
                 </p>
                 <p className="text-muted-foreground">per month</p>
                 <Button className="mt-2" onClick={() => setShowUpgradeModal(true)}>
@@ -126,47 +151,58 @@ export default function BillingSettings() {
               <CardTitle>Plan Features</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <div className="flex items-center space-x-2">
-                <CheckCircle className="h-4 w-4 text-green-500" />
-                <span className="text-sm">
-                  {planLimits?.max_websites === null ? 'Unlimited' : planLimits?.max_websites || 1} websites
-                </span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <CheckCircle className="h-4 w-4 text-green-500" />
-                <span className="text-sm">
-                  {planLimits?.max_funnels === null ? 'Unlimited' : planLimits?.max_funnels || 1} funnels
-                </span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <CheckCircle className="h-4 w-4 text-green-500" />
-                <span className="text-sm">
-                  {planLimits?.max_products_per_store === null ? 'Unlimited' : planLimits?.max_products_per_store || 100} products per store
-                </span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <CheckCircle className="h-4 w-4 text-green-500" />
-                <span className="text-sm">
-                  {planLimits?.max_orders_per_month === null ? 'Unlimited' : planLimits?.max_orders_per_month || 50} orders per month
-                </span>
-              </div>
-              {planLimits?.custom_domain_allowed && (
-                <div className="flex items-center space-x-2">
-                  <CheckCircle className="h-4 w-4 text-green-500" />
-                  <span className="text-sm">Custom domain support</span>
-                </div>
-              )}
-              {planLimits?.priority_support && (
-                <div className="flex items-center space-x-2">
-                  <CheckCircle className="h-4 w-4 text-green-500" />
-                  <span className="text-sm">Priority support</span>
-                </div>
-              )}
-              {planLimits?.white_label && (
-                <div className="flex items-center space-x-2">
-                  <CheckCircle className="h-4 w-4 text-green-500" />
-                  <span className="text-sm">White label solution</span>
-                </div>
+              {sitePricingPlan?.features_en && Array.isArray(sitePricingPlan.features_en) ? (
+                sitePricingPlan.features_en.map((feature: string, index: number) => (
+                  <div key={index} className="flex items-center space-x-2">
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    <span className="text-sm">{feature}</span>
+                  </div>
+                ))
+              ) : (
+                <>
+                  <div className="flex items-center space-x-2">
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    <span className="text-sm">
+                      {planLimits?.max_websites === null ? 'Unlimited' : planLimits?.max_websites || 1} websites
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    <span className="text-sm">
+                      {planLimits?.max_funnels === null ? 'Unlimited' : planLimits?.max_funnels || 1} funnels
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    <span className="text-sm">
+                      {planLimits?.max_products_per_store === null ? 'Unlimited' : planLimits?.max_products_per_store || 100} products per store
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    <span className="text-sm">
+                      {planLimits?.max_orders_per_month === null ? 'Unlimited' : planLimits?.max_orders_per_month || 50} orders per month
+                    </span>
+                  </div>
+                  {planLimits?.custom_domain_allowed && (
+                    <div className="flex items-center space-x-2">
+                      <CheckCircle className="h-4 w-4 text-green-500" />
+                      <span className="text-sm">Custom domain support</span>
+                    </div>
+                  )}
+                  {planLimits?.priority_support && (
+                    <div className="flex items-center space-x-2">
+                      <CheckCircle className="h-4 w-4 text-green-500" />
+                      <span className="text-sm">Priority support</span>
+                    </div>
+                  )}
+                  {planLimits?.white_label && (
+                    <div className="flex items-center space-x-2">
+                      <CheckCircle className="h-4 w-4 text-green-500" />
+                      <span className="text-sm">White label solution</span>
+                    </div>
+                  )}
+                </>
               )}
             </CardContent>
           </Card>
