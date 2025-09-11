@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { ColorPicker } from '@/components/ui/color-picker';
 import { MediaSelector } from '@/components/page-builder/components/MediaSelector';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface Website {
   id: string;
@@ -56,6 +57,7 @@ interface Props {
 
 export const WebsiteHeaderBuilder: React.FC<Props> = ({ website }) => {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [saving, setSaving] = useState(false);
   const [pages, setPages] = useState<WebsitePageLite[]>([]);
   const initial: GlobalHeaderConfig = useMemo(() => {
@@ -78,6 +80,11 @@ export const WebsiteHeaderBuilder: React.FC<Props> = ({ website }) => {
   }, [website.settings]);
 
   const [config, setConfig] = useState<GlobalHeaderConfig>(initial);
+
+  // Sync config state when initial settings change
+  useEffect(() => {
+    setConfig(initial);
+  }, [initial]);
 
   useEffect(() => {
     const fetchPages = async () => {
@@ -138,6 +145,10 @@ export const WebsiteHeaderBuilder: React.FC<Props> = ({ website }) => {
       const newSettings = { ...(website.settings || {}), global_header: config };
       const { error } = await supabase.from('websites').update({ settings: newSettings }).eq('id', website.id);
       if (error) throw error;
+      
+      // Invalidate React Query cache to refresh website data
+      await queryClient.invalidateQueries({ queryKey: ['website', website.id] });
+      
       toast({ title: 'Header saved' });
     } catch (e) {
       toast({ title: 'Save failed', description: 'Could not save header settings', variant: 'destructive' });
