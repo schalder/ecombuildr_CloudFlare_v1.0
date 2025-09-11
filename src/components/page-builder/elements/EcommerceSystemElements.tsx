@@ -996,7 +996,8 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
 
               
 
-              {sections.shipping && (
+              {/* Always show shipping section if any shipping-related fields are enabled */}
+              {(fields.address?.enabled || fields.city?.enabled || fields.area?.enabled || fields.country?.enabled || fields.state?.enabled || fields.postalCode?.enabled || (websiteShipping?.enabled && (websiteShipping as any)?.showOptionsAtCheckout) || customFields?.length > 0) && (
                 <section className="space-y-4">
                   <h3 className={`mb-3 font-semibold element-${element.id}-section-header`} style={headerInline as React.CSSProperties}>{headings.shipping}</h3>
                   {fields.address?.enabled && (
@@ -1019,7 +1020,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
                     )}
                     {fields.postalCode?.enabled && (
                       <Input placeholder={fields.postalCode.placeholder} value={form.shipping_postal_code} onChange={e=>setForm(f=>({...f,shipping_postal_code:e.target.value}))} required={!!(fields.postalCode?.enabled && (fields.postalCode?.required ?? false))} aria-required={!!(fields.postalCode?.enabled && (fields.postalCode?.required ?? false))} />
-                   )}
+                    )}
                    </div>
 
                    {/* Custom fields */}
@@ -1051,49 +1052,48 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
 
               {sections.shipping && sections.payment && <Separator className="my-4" />}
 
-              {sections.payment && (
-                <section className="space-y-4">
-                  <h3 className={`mb-3 font-semibold element-${element.id}-section-header`} style={headerInline as React.CSSProperties}>{headings.payment}</h3>
-                  <Select value={form.payment_method} onValueChange={(v:any)=>setForm(f=>({...f,payment_method:v}))}>
-                    <SelectTrigger className="w-full"><SelectValue placeholder="Select method" /></SelectTrigger>
-                    <SelectContent>
-                      {allowedMethods.includes('cod') && (<SelectItem value="cod">Cash on Delivery</SelectItem>)}
-                      {allowedMethods.includes('bkash') && (<SelectItem value="bkash">bKash</SelectItem>)}
-                      {allowedMethods.includes('nagad') && (<SelectItem value="nagad">Nagad</SelectItem>)}
-                      {allowedMethods.includes('sslcommerz') && (<SelectItem value="sslcommerz">Credit/Debit Card (SSLCommerz)</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                  {form.payment_method === 'bkash' && store?.settings?.bkash?.mode === 'number' && store?.settings?.bkash?.number && (
-                    <div className="space-y-2">
-                      <p className="text-sm text-muted-foreground">Pay to bKash number: {store.settings.bkash.number}</p>
-                      <Input
-                        placeholder="Enter transaction ID (e.g., 8M5HA84D5K)"
-                        value={form.payment_transaction_number}
-                        onChange={(e) => setForm(f => ({ ...f, payment_transaction_number: e.target.value }))}
-                        className="w-full"
-                        required
-                      />
-                    </div>
-                  )}
-                  {form.payment_method === 'nagad' && store?.settings?.nagad?.mode === 'number' && store?.settings?.nagad?.number && (
-                    <div className="space-y-2">
-                      <p className="text-sm text-muted-foreground">Pay to Nagad number: {store.settings.nagad.number}</p>
-                      <Input
-                        placeholder="Enter transaction ID (e.g., NG8M5HA84D5K)"
-                        value={form.payment_transaction_number}
-                        onChange={(e) => setForm(f => ({ ...f, payment_transaction_number: e.target.value }))}
-                        className="w-full"
-                        required
-                      />
-                    </div>
-                  )}
-                  
-                </section>
-              )}
+              {/* Always show payment section */}
+              <section className="space-y-4">
+                <h3 className={`mb-3 font-semibold element-${element.id}-section-header`} style={headerInline as React.CSSProperties}>{headings.payment}</h3>
+                <Select value={form.payment_method} onValueChange={(v:any)=>setForm(f=>({...f,payment_method:v}))}>
+                  <SelectTrigger className="w-full"><SelectValue placeholder="Select method" /></SelectTrigger>
+                  <SelectContent>
+                    {allowedMethods.includes('cod') && (<SelectItem value="cod">Cash on Delivery</SelectItem>)}
+                    {allowedMethods.includes('bkash') && (<SelectItem value="bkash">bKash</SelectItem>)}
+                    {allowedMethods.includes('nagad') && (<SelectItem value="nagad">Nagad</SelectItem>)}
+                    {allowedMethods.includes('sslcommerz') && (<SelectItem value="sslcommerz">Credit/Debit Card (SSLCommerz)</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                {form.payment_method === 'bkash' && store?.settings?.bkash?.mode === 'number' && store?.settings?.bkash?.number && (
+                  <div className="space-y-2">
+                    <p className="text-sm text-muted-foreground">Pay to bKash number: {store.settings.bkash.number}</p>
+                    <Input
+                      placeholder="Enter transaction ID (e.g., 8M5HA84D5K)"
+                      value={form.payment_transaction_number}
+                      onChange={(e) => setForm(f => ({ ...f, payment_transaction_number: e.target.value }))}
+                      className="w-full"
+                      required
+                    />
+                  </div>
+                )}
+                {form.payment_method === 'nagad' && store?.settings?.nagad?.mode === 'number' && store?.settings?.nagad?.number && (
+                  <div className="space-y-2">
+                    <p className="text-sm text-muted-foreground">Pay to Nagad number: {store.settings.nagad.number}</p>
+                    <Input
+                      placeholder="Enter transaction ID (e.g., NG8M5HA84D5K)"
+                      value={form.payment_transaction_number}
+                      onChange={(e) => setForm(f => ({ ...f, payment_transaction_number: e.target.value }))}
+                      className="w-full"
+                      required
+                    />
+                  </div>
+                )}
+                
+              </section>
 
-              {sections.summary && (
-                <section className="space-y-3">
-                  <h3 className={`mb-3 font-semibold element-${element.id}-section-header`} style={headerInline as React.CSSProperties}>{headings.summary}</h3>
+              {/* Always show order summary section */}
+              <section className="space-y-3">
+                <h3 className={`mb-3 font-semibold element-${element.id}-section-header`} style={headerInline as React.CSSProperties}>{headings.summary}</h3>
                   <div className="rounded-md p-6" style={{ backgroundColor: backgrounds.summaryBg || undefined, borderColor: (backgrounds as any).summaryBorderColor || undefined, borderWidth: summaryBorderWidth || 0, borderStyle: summaryBorderWidth ? 'solid' as any : undefined }}>
                     {/* Items */}
                     <div className="space-y-2">
@@ -1135,7 +1135,6 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
                     )}
                   </div>
                 </section>
-              )}
             </CardContent>
           </Card>
         )}
