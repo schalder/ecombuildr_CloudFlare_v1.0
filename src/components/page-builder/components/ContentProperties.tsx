@@ -28,14 +28,16 @@ export const ContentProperties: React.FC<ContentPropertiesProps> = ({
   element,
   onUpdate
 }) => {
-  const { websiteId } = useParams();
+  const { websiteId, funnelId } = useParams();
   const [pages, setPages] = React.useState<Array<{ id: string; title: string; slug: string; is_homepage?: boolean }>>([]);
+  const [funnelSteps, setFunnelSteps] = React.useState<Array<{ id: string; title: string; slug: string; step_order: number }>>([]);
   const [sectionOptions, setSectionOptions] = React.useState<Array<{ id: string; label: string }>>([]);
   const [scrollSearch, setScrollSearch] = React.useState('');
   const [dividerDevice, setDividerDevice] = React.useState<'desktop' | 'mobile'>('desktop');
 
+  // Fetch website pages when in website context
   React.useEffect(() => {
-    if (element.type === 'button' && websiteId) {
+    if (element.type === 'button' && websiteId && !funnelId) {
       supabase
         .from('website_pages')
         .select('id,title,slug,is_homepage')
@@ -44,7 +46,19 @@ export const ContentProperties: React.FC<ContentPropertiesProps> = ({
         .order('created_at', { ascending: false })
         .then(({ data }) => setPages((data as any) || []));
     }
-  }, [element.type, websiteId]);
+  }, [element.type, websiteId, funnelId]);
+
+  // Fetch funnel steps when in funnel context
+  React.useEffect(() => {
+    if (element.type === 'button' && funnelId) {
+      supabase
+        .from('funnel_steps')
+        .select('id,title,slug,step_order')
+        .eq('funnel_id', funnelId)
+        .order('step_order', { ascending: true })
+        .then(({ data }) => setFunnelSteps((data as any) || []));
+    }
+  }, [element.type, funnelId]);
 
   React.useEffect(() => {
     if (element.type === 'button') {
@@ -166,18 +180,28 @@ export const ContentProperties: React.FC<ContentPropertiesProps> = ({
 
         {linkType === 'page' && (
           <div>
-            <Label htmlFor="button-page">Select Page</Label>
+            <Label htmlFor="button-page">
+              {funnelId ? 'Select Funnel Step' : 'Select Page'}
+            </Label>
             <Select
-              value={element.content.pageSlug || pages.find(p=>p.is_homepage)?.slug || ''}
+              value={element.content.pageSlug || (funnelId ? funnelSteps[0]?.slug : pages.find(p=>p.is_homepage)?.slug) || ''}
               onValueChange={(value) => onUpdate('pageSlug', value)}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Choose a page" />
+                <SelectValue placeholder={funnelId ? "Choose a funnel step" : "Choose a page"} />
               </SelectTrigger>
               <SelectContent>
-                {pages.map(p => (
-                  <SelectItem key={p.id} value={p.slug}>{p.title || p.slug}</SelectItem>
-                ))}
+                {funnelId ? (
+                  funnelSteps.map(step => (
+                    <SelectItem key={step.id} value={step.slug}>
+                      Step {step.step_order}: {step.title || step.slug}
+                    </SelectItem>
+                  ))
+                ) : (
+                  pages.map(p => (
+                    <SelectItem key={p.id} value={p.slug}>{p.title || p.slug}</SelectItem>
+                  ))
+                )}
               </SelectContent>
             </Select>
           </div>

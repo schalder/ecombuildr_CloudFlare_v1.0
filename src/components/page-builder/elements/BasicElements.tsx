@@ -485,8 +485,23 @@ const ButtonElement: React.FC<{
           || (document.querySelector(`[data-pb-row-id="${raw}"]`) as HTMLElement | null)
           || (document.querySelector(`[data-pb-column-id="${raw}"]`) as HTMLElement | null)
           || (document.querySelector(`[data-pb-element-id="${raw}"]`) as HTMLElement | null);
+        
         if (targetEl && 'scrollIntoView' in targetEl) {
           targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } else {
+          // Retry with slight delay for elements that might be loading
+          setTimeout(() => {
+            const retryEl = tryFind(raw)
+              || tryLegacy(raw)
+              || (document.querySelector(`[data-pb-section-id="${raw}"]`) as HTMLElement | null)
+              || (document.querySelector(`[data-pb-row-id="${raw}"]`) as HTMLElement | null)
+              || (document.querySelector(`[data-pb-column-id="${raw}"]`) as HTMLElement | null)
+              || (document.querySelector(`[data-pb-element-id="${raw}"]`) as HTMLElement | null);
+            
+            if (retryEl && 'scrollIntoView' in retryEl) {
+              retryEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+          }, 100);
         }
       }
       return;
