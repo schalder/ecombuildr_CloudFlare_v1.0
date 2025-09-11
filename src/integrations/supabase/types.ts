@@ -2693,6 +2693,8 @@ export type Database = {
           created_at: string
           current_funnels: number
           current_orders_this_month: number
+          current_pages: number
+          current_products: number
           current_stores: number
           current_websites: number
           id: string
@@ -2704,6 +2706,8 @@ export type Database = {
           created_at?: string
           current_funnels?: number
           current_orders_this_month?: number
+          current_pages?: number
+          current_products?: number
           current_stores?: number
           current_websites?: number
           id?: string
@@ -2715,6 +2719,8 @@ export type Database = {
           created_at?: string
           current_funnels?: number
           current_orders_this_month?: number
+          current_pages?: number
+          current_products?: number
           current_stores?: number
           current_websites?: number
           id?: string
@@ -2930,6 +2936,10 @@ export type Database = {
       delete_website_admin: {
         Args: { p_website_id: string }
         Returns: undefined
+      }
+      enforce_plan_limits: {
+        Args: { _resource_type: string; _user_id: string }
+        Returns: boolean
       }
       get_imported_products: {
         Args: { store_id_param: string }

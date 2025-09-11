@@ -182,14 +182,17 @@ const PlanManagement = () => {
 
                 {/* Resource Limits */}
                 <div className="space-y-2">
-                  <Label htmlFor={`${plan.plan_name}-stores`}>Max Stores</Label>
+                  <Label htmlFor={`${plan.plan_name}-stores`}>Max Stores (Fixed to 1)</Label>
                   <Input
                     id={`${plan.plan_name}-stores`}
                     type="number"
-                    value={plan.max_stores || ''}
-                    onChange={(e) => updatePlanField(plan.plan_name, 'max_stores', e.target.value ? Number(e.target.value) : null)}
-                    placeholder="Leave empty for unlimited"
+                    value={1}
+                    disabled
+                    className="bg-gray-50"
                   />
+                  <p className="text-xs text-muted-foreground">
+                    Each user gets exactly 1 store
+                  </p>
                 </div>
 
                 <div className="space-y-2">
@@ -215,7 +218,7 @@ const PlanManagement = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor={`${plan.plan_name}-pages`}>Pages per Store</Label>
+                  <Label htmlFor={`${plan.plan_name}-pages`}>Total Pages (Website + Funnel)</Label>
                   <Input
                     id={`${plan.plan_name}-pages`}
                     type="number"
@@ -223,10 +226,13 @@ const PlanManagement = () => {
                     onChange={(e) => updatePlanField(plan.plan_name, 'max_pages_per_store', e.target.value ? Number(e.target.value) : null)}
                     placeholder="Leave empty for unlimited"
                   />
+                  <p className="text-xs text-muted-foreground">
+                    Combined limit for website pages and funnel steps
+                  </p>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor={`${plan.plan_name}-products`}>Products per Store</Label>
+                  <Label htmlFor={`${plan.plan_name}-products`}>Total Products</Label>
                   <Input
                     id={`${plan.plan_name}-products`}
                     type="number"
@@ -234,6 +240,9 @@ const PlanManagement = () => {
                     onChange={(e) => updatePlanField(plan.plan_name, 'max_products_per_store', e.target.value ? Number(e.target.value) : null)}
                     placeholder="Leave empty for unlimited"
                   />
+                  <p className="text-xs text-muted-foreground">
+                    Total products across all websites
+                  </p>
                 </div>
 
                 <div className="space-y-2">
