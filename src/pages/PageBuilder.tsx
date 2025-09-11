@@ -83,6 +83,20 @@ export default function PageBuilder() {
   const loadPage = useCallback(async () => {
     if (!entityId || !currentStore) return;
     
+    // Validate that entityId is not "undefined" string
+    if (entityId === "undefined") {
+      console.error('Invalid page ID: undefined');
+      toast.error('Invalid page ID. Please select a valid page.');
+      if (context === 'website') {
+        navigate(`/dashboard/websites/${parentId}`);
+      } else if (context === 'funnel') {
+        navigate(`/dashboard/funnels/${parentId}`);
+      } else {
+        navigate('/dashboard/pages');
+      }
+      return;
+    }
+    
     try {
       setIsLoading(true);
       

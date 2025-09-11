@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -47,6 +48,7 @@ export const CreatePageModal: React.FC<CreatePageModalProps> = ({
   onClose,
   websiteId
 }) => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     title: '',
     slug: '',
@@ -227,10 +229,12 @@ export const CreatePageModal: React.FC<CreatePageModalProps> = ({
       if (error) throw error;
       return result;
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ['website-pages', websiteId] });
       toast({ title: 'Page created successfully' });
       handleClose();
+      // Navigate directly to the page builder with the new page ID
+      navigate(`/dashboard/websites/${websiteId}/pages/${result.id}/builder`);
     },
     onError: (error) => {
       console.error('Error creating page:', error);
