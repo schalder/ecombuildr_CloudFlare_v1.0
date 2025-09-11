@@ -479,6 +479,9 @@ const ButtonElement: React.FC<{
       };
 
       if (raw) {
+        console.log('[Button Scroll Debug] Target:', raw);
+        console.log('[Button Scroll Debug] Current domain:', window.location.hostname);
+        
         const targetEl = tryFind(raw)
           || tryLegacy(raw)
           || (document.querySelector(`[data-pb-section-id="${raw}"]`) as HTMLElement | null)
@@ -486,9 +489,13 @@ const ButtonElement: React.FC<{
           || (document.querySelector(`[data-pb-column-id="${raw}"]`) as HTMLElement | null)
           || (document.querySelector(`[data-pb-element-id="${raw}"]`) as HTMLElement | null);
         
+        console.log('[Button Scroll Debug] Target element found:', !!targetEl, targetEl);
+        
         if (targetEl && 'scrollIntoView' in targetEl) {
+          console.log('[Button Scroll Debug] Scrolling to element immediately');
           targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
         } else {
+          console.log('[Button Scroll Debug] Element not found, retrying in 100ms');
           // Retry with slight delay for elements that might be loading
           setTimeout(() => {
             const retryEl = tryFind(raw)
@@ -498,8 +505,13 @@ const ButtonElement: React.FC<{
               || (document.querySelector(`[data-pb-column-id="${raw}"]`) as HTMLElement | null)
               || (document.querySelector(`[data-pb-element-id="${raw}"]`) as HTMLElement | null);
             
+            console.log('[Button Scroll Debug] Retry - Target element found:', !!retryEl, retryEl);
+            
             if (retryEl && 'scrollIntoView' in retryEl) {
+              console.log('[Button Scroll Debug] Scrolling to element after retry');
               retryEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            } else {
+              console.warn('[Button Scroll Debug] Target element not found after retry:', raw);
             }
           }, 100);
         }

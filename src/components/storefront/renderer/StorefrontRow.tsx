@@ -18,6 +18,8 @@ export const StorefrontRow: React.FC<StorefrontRowProps> = ({
   
   return (
     <div 
+      id={row.anchor}
+      data-pb-row-id={row.id}
       className={cn("w-full")}
       style={rowStyles}
     >

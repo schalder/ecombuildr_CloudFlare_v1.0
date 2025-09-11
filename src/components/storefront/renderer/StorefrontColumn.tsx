@@ -19,6 +19,8 @@ export const StorefrontColumn: React.FC<StorefrontColumnProps> = ({
   
   return (
     <div 
+      id={column.anchor}
+      data-pb-column-id={column.id}
       className={cn("relative min-h-[1px]")}
       style={columnStyles}
     >

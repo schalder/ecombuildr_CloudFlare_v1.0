@@ -32,6 +32,8 @@ export const StorefrontSection: React.FC<StorefrontSectionProps> = ({
   
   return (
     <div 
+      id={section.anchor}
+      data-pb-section-id={section.id}
       className={cn("relative")}
       style={sectionStyles}
     >

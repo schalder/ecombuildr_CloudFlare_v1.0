@@ -121,19 +121,24 @@ export const StorefrontElement: React.FC<StorefrontElementProps> = ({
   const ElementComponent = elementDef.component;
 
   return (
-    <ErrorBoundary
-      fallback={({ retry }) => (
-        <div className="p-4 border border-destructive/30 rounded-lg text-center text-destructive">
-          <p className="text-sm">Error rendering "{element.type}"</p>
-        </div>
-      )}
+    <div 
+      id={element.anchor}
+      data-pb-element-id={element.id}
     >
-      <ElementComponent
-        element={element}
-        isEditing={false}
-        deviceType={deviceType}
-        columnCount={columnCount}
-      />
-    </ErrorBoundary>
+      <ErrorBoundary
+        fallback={({ retry }) => (
+          <div className="p-4 border border-destructive/30 rounded-lg text-center text-destructive">
+            <p className="text-sm">Error rendering "{element.type}"</p>
+          </div>
+        )}
+      >
+        <ElementComponent
+          element={element}
+          isEditing={false}
+          deviceType={deviceType}
+          columnCount={columnCount}
+        />
+      </ErrorBoundary>
+    </div>
   );
 };
