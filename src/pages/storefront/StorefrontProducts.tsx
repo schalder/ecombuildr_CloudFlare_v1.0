@@ -88,6 +88,7 @@ export const StorefrontProducts: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
   const [sortBy, setSortBy] = useState('name');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const isWebsiteContext = Boolean(websiteId || websiteSlug || detectedWebsiteId);
   
   const [filters, setFilters] = useState<FilterState>({
     categories: [],
@@ -464,6 +465,20 @@ export const StorefrontProducts: React.FC = () => {
     });
   };
 
+  const handleClearFilters = () => {
+    setFilters({
+      categories: [],
+      collections: [],
+      priceRange: [0, 10000],
+      rating: 0,
+      inStock: false,
+      onSale: false,
+      freeShipping: false
+    });
+    setSearchQuery('');
+    setSearchParams({});
+  };
+
   // Load store and fetch data
   useEffect(() => {
     const init = async () => {
@@ -500,238 +515,239 @@ export const StorefrontProducts: React.FC = () => {
       console.log('Store loaded, fetching data for store:', store.id);
       fetchCategories();
       fetchCollections();
-      fetchProducts();
     }
-  }, [store?.id, searchQuery, sortBy, filters, detectedWebsiteId]);
+  }, [store?.id, websiteId, websiteSlug, detectedWebsiteId]);
 
-  // Refetch products once categories load to apply slug->id mapping
   useEffect(() => {
     if (store?.id) {
       fetchProducts();
     }
-  }, [categories]);
+  }, [store?.id, searchQuery, filters, sortBy, categories, collections, websiteId, websiteSlug, detectedWebsiteId]);
 
-
-  const handleClearFilters = () => {
-    setFilters({
-      categories: [],
-      collections: [],
-      priceRange: [0, 10000],
-      rating: 0,
-      inStock: false,
-      onSale: false,
-      freeShipping: false
-    });
-    setSearchQuery('');
-    setSearchParams({});
-  };
-
-  if (storeLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
-    );
-  }
-
-  if (!store) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-2">Store Not Found</h1>
-          <p className="text-muted-foreground">The requested store could not be found.</p>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <StorefrontLayout>
-      <div className="container mx-auto px-4 py-8 space-y-8">
-        {/* Page Header */}
-        <div className="animate-fade-in">
-          <h1 className="text-3xl font-bold mb-2">Products</h1>
-          <p className="text-muted-foreground">
-            Discover our amazing collection of products
-          </p>
-        </div>
-
-        {/* Search and Controls */}
-        <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between animate-slide-up">
-          {/* Search */}
-          <form onSubmit={handleSearchSubmit} className="flex-1 max-w-md">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="text"
-                placeholder="Search products..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 pr-4"
-              />
+  if (storeLoading || !store) {
+    const loadingContent = (
+      <div className="container mx-auto px-4 py-8">
+        {storeLoading ? (
+          <div className="space-y-8">
+            <div className="animate-pulse">
+              <div className="h-8 bg-muted rounded w-1/3 mb-6" />
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                {[...Array(8)].map((_, i) => (
+                  <div key={i} className="space-y-3">
+                    <div className="aspect-square bg-muted rounded" />
+                    <div className="h-4 bg-muted rounded w-3/4" />
+                    <div className="h-4 bg-muted rounded w-1/2" />
+                  </div>
+                ))}
+              </div>
             </div>
-          </form>
+          </div>
+        ) : (
+          <div className="text-center">
+            <h1 className="text-2xl font-bold">Store not found</h1>
+          </div>
+        )}
+      </div>
+    );
 
-          {/* Controls */}
-          <div className="flex items-center gap-4">
-            {/* Mobile Filter Trigger */}
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button variant="outline" size="sm" className="lg:hidden">
-                  <SlidersHorizontal className="h-4 w-4 mr-2" />
-                  Filters
-                  {(filters.categories.length > 0 || filters.onSale || filters.inStock) && (
-                    <Badge variant="secondary" className="ml-2">
-                      {[
-                        filters.categories.length > 0,
-                        filters.onSale,
-                        filters.inStock,
-                        filters.rating > 0
-                      ].filter(Boolean).length}
-                    </Badge>
-                  )}
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="left" className="w-80">
-                <SheetHeader>
-                  <SheetTitle>Filters</SheetTitle>
-                </SheetHeader>
-                <div className="mt-6">
+    if (isWebsiteContext) {
+      return loadingContent;
+    }
+
+    return (
+      <StorefrontLayout>
+        {loadingContent}
+      </StorefrontLayout>
+    );
+  }
+
+  const content = (
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto px-4 py-8">
+        <div className="space-y-8">
+          {/* Page Header */}
+          <div className="animate-fade-in">
+            <h1 className="text-3xl font-bold mb-2">Products</h1>
+            <p className="text-muted-foreground">
+              Discover our amazing collection of products
+            </p>
+          </div>
+
+          {/* Search and Controls */}
+          <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between animate-slide-up">
+            {/* Search */}
+            <form onSubmit={handleSearchSubmit} className="flex-1 max-w-md">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder="Search products..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 pr-4"
+                />
+              </div>
+            </form>
+
+            {/* Controls */}
+            <div className="flex items-center gap-4">
+              {/* Mobile Filter Trigger */}
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button variant="outline" size="sm" className="lg:hidden">
+                    <SlidersHorizontal className="h-4 w-4 mr-2" />
+                    Filters
+                    {(filters.categories.length > 0 || filters.onSale || filters.inStock) && (
+                      <Badge variant="secondary" className="ml-2">
+                        {[
+                          filters.categories.length > 0,
+                          filters.onSale,
+                          filters.inStock,
+                          filters.rating > 0
+                        ].filter(Boolean).length}
+                      </Badge>
+                    )}
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="left" className="w-80">
+                  <SheetHeader>
+                    <SheetTitle>Filters</SheetTitle>
+                  </SheetHeader>
                   <ProductFilters
                     categories={categories}
                     collections={collections}
                     filters={filters}
                     onFiltersChange={setFilters}
                     onClearFilters={handleClearFilters}
+                    className="mt-6"
+                  />
+                </SheetContent>
+              </Sheet>
+
+              {/* Sort */}
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger className="w-40">
+                  <ArrowUpDown className="h-4 w-4 mr-2" />
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="name">Name</SelectItem>
+                  <SelectItem value="price-low">Price: Low to High</SelectItem>
+                  <SelectItem value="price-high">Price: High to Low</SelectItem>
+                  <SelectItem value="newest">Newest First</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {/* View Mode */}
+              <div className="flex items-center border rounded-lg p-1">
+                <Button
+                  variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setViewMode('grid')}
+                  className="h-8 px-3"
+                >
+                  <Grid3X3 className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant={viewMode === 'list' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setViewMode('list')}
+                  className="h-8 px-3"
+                >
+                  <List className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Main Content */}
+          <div className="flex gap-8">
+            {/* Desktop Filters Sidebar */}
+            <div className="hidden lg:block w-80 flex-shrink-0 animate-slide-up" style={{ animationDelay: '0.1s' }}>
+              <ProductFilters
+                categories={categories}
+                collections={collections}
+                filters={filters}
+                onFiltersChange={setFilters}
+                onClearFilters={handleClearFilters}
+              />
+            </div>
+
+            {/* Products Section */}
+            <div className="flex-1">
+              {loading ? (
+                <ProductGridSkeleton count={8} />
+              ) : products.length === 0 ? (
+                <div className="text-center py-16 animate-fade-in">
+                  <div className="text-6xl mb-4">🛍️</div>
+                  <h3 className="text-xl font-semibold mb-2">No products found</h3>
+                  <p className="text-muted-foreground mb-6">
+                    Try adjusting your search or filters to find what you're looking for.
+                  </p>
+                  <div className="flex gap-2 justify-center">
+                    <Button variant="outline" onClick={handleClearFilters}>
+                      Clear Filters
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-8">
+                  {/* Results Info */}
+                  <div className="flex items-center justify-between pb-4 border-b animate-fade-in">
+                    <p className="text-sm text-muted-foreground">
+                      Showing {products.length} products
+                    </p>
+                  </div>
+
+                  {/* Products Grid/List */}
+                  <div className={cn(
+                    "transition-all duration-300",
+                    viewMode === 'grid' 
+                      ? "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
+                      : "space-y-4"
+                  )}>
+                    {products.map((product, index) => {
+                      const stats = reviewStats[product.id];
+                      return (
+                        <div 
+                          key={product.id} 
+                          className="animate-fade-in" 
+                          style={{ animationDelay: `${index * 0.05}s` }}
+                        >
+                          <ProductCard
+                            product={product}
+                            storeSlug={store.slug}
+                            onAddToCart={addToCart}
+                            onQuickView={openQuickView}
+                            className={viewMode === 'list' ? "flex flex-row" : ""}
+                            ratingAverage={stats?.rating_average || 0}
+                            ratingCount={stats?.rating_count || 0}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Recently Viewed Products */}
+                  <RecentlyViewed
+                    storeSlug={store.slug}
+                    onAddToCart={addToCart}
+                    onQuickView={openQuickView}
                   />
                 </div>
-              </SheetContent>
-            </Sheet>
-
-            {/* Sort */}
-            <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-40">
-                <ArrowUpDown className="h-4 w-4 mr-2" />
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="name">Name</SelectItem>
-                <SelectItem value="price-low">Price: Low to High</SelectItem>
-                <SelectItem value="price-high">Price: High to Low</SelectItem>
-                <SelectItem value="newest">Newest First</SelectItem>
-              </SelectContent>
-            </Select>
-
-            {/* View Mode */}
-            <div className="flex items-center border rounded-lg p-1">
-              <Button
-                variant={viewMode === 'grid' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setViewMode('grid')}
-                className="h-8 px-3"
-              >
-                <Grid3X3 className="h-4 w-4" />
-              </Button>
-              <Button
-                variant={viewMode === 'list' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setViewMode('list')}
-                className="h-8 px-3"
-              >
-                <List className="h-4 w-4" />
-              </Button>
+              )}
             </div>
           </div>
         </div>
 
-        <Separator />
-
-        {/* Main Content */}
-        <div className="flex gap-8">
-          {/* Desktop Filters Sidebar */}
-          <div className="hidden lg:block w-80 flex-shrink-0 animate-slide-up" style={{ animationDelay: '0.1s' }}>
-            <ProductFilters
-              categories={categories}
-              collections={collections}
-              filters={filters}
-              onFiltersChange={setFilters}
-              onClearFilters={handleClearFilters}
-            />
-          </div>
-
-          {/* Products Section */}
-          <div className="flex-1">
-            {loading ? (
-              <ProductGridSkeleton count={8} />
-            ) : products.length === 0 ? (
-              <div className="text-center py-16 animate-fade-in">
-                <div className="text-6xl mb-4">🛍️</div>
-                <h3 className="text-xl font-semibold mb-2">No products found</h3>
-                <p className="text-muted-foreground mb-6">
-                  Try adjusting your search or filters to find what you're looking for.
-                </p>
-                <div className="flex gap-2 justify-center">
-                  <Button variant="outline" onClick={handleClearFilters}>
-                    Clear Filters
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-8">
-                {/* Results Info */}
-                <div className="flex items-center justify-between pb-4 border-b animate-fade-in">
-                  <p className="text-sm text-muted-foreground">
-                    Showing {products.length} products
-                  </p>
-                </div>
-
-                {/* Products Grid/List */}
-                <div className={cn(
-                  "transition-all duration-300",
-                  viewMode === 'grid' 
-                    ? "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
-                    : "space-y-4"
-                )}>
-                  {products.map((product, index) => {
-                    const stats = reviewStats[product.id];
-                    return (
-                      <div 
-                        key={product.id} 
-                        className="animate-fade-in" 
-                        style={{ animationDelay: `${index * 0.05}s` }}
-                      >
-                        <ProductCard
-                          product={product}
-                          storeSlug={store.slug}
-                          onAddToCart={addToCart}
-                          onQuickView={openQuickView}
-                          className={viewMode === 'list' ? "flex flex-row" : ""}
-                          ratingAverage={stats?.rating_average || 0}
-                          ratingCount={stats?.rating_count || 0}
-                        />
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* Recently Viewed Products */}
-                <RecentlyViewed
-                  storeSlug={store.slug}
-                  onAddToCart={addToCart}
-                  onQuickView={openQuickView}
-                />
-              </div>
-            )}
-          </div>
-        </div>
+        {/* Product Comparison */}
+        <ProductComparison
+          storeSlug={store.slug}
+          onAddToCart={addToCart}
+        />
       </div>
-
-
-      {/* Product Comparison */}
-      <ProductComparison
-        storeSlug={store.slug}
-        onAddToCart={addToCart}
-      />
     </div>
   );
 
