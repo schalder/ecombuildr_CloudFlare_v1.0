@@ -191,8 +191,8 @@ const WebsiteManagement = () => {
       return `https://${domain}`;
     }
     
-    // Fallback to site slug pattern
-    return `https://example.com/site/${website.slug}`;
+    // Fallback to current application domain with site path
+    return `${window.location.origin}/site/${website.slug}`;
   };
 
   const homepageUrl = getHomepageUrl();
