@@ -314,23 +314,29 @@ export default function AdminSites() {
     
     return (
       <div key={site.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
-        <div className="flex items-start justify-between mb-3">
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-1">
-              <h3 className="font-semibold text-lg">{site.name}</h3>
-              <Badge variant={site.is_active ? 'default' : 'secondary'}>
-                {site.is_active ? 'Active' : 'Inactive'}
-              </Badge>
-              <Badge variant={site.is_published ? 'default' : 'outline'}>
-                {site.is_published ? 'Published' : 'Draft'}
-              </Badge>
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-3 flex-1">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <h3 className="font-semibold text-base">{site.name}</h3>
+                <Badge variant={site.is_active ? 'default' : 'secondary'} className="text-xs">
+                  {site.is_active ? 'Active' : 'Inactive'}
+                </Badge>
+                <Badge variant={site.is_published ? 'default' : 'outline'} className="text-xs">
+                  {site.is_published ? 'Published' : 'Draft'}
+                </Badge>
+                <Badge variant="outline" className="text-xs capitalize">
+                  {type}
+                </Badge>
+              </div>
+              <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                <span>/{site.slug}</span>
+                {site.domain && <span className="text-blue-600">{site.domain}</span>}
+                <span>Created: {new Date(site.created_at).toLocaleDateString()}</span>
+              </div>
             </div>
-            <p className="text-sm text-muted-foreground mb-2">/{site.slug}</p>
-            {site.domain && (
-              <p className="text-sm text-blue-600 mb-2">{site.domain}</p>
-            )}
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 ml-4">
             <Button
               variant="outline"
               size="sm"
@@ -353,30 +359,18 @@ export default function AdminSites() {
           </div>
         </div>
         
-        <div className="grid grid-cols-2 gap-4 text-sm">
-          <div>
-            <span className="text-muted-foreground">Site Name:</span>
-            <p className="font-medium">{site.name}</p>
+        <div className="flex items-center gap-6 text-sm pt-2 border-t">
+          <div className="flex items-center gap-2">
+            <span className="text-muted-foreground">Owner:</span>
+            <span className="font-medium">{site.owner_name || 'N/A'}</span>
           </div>
-          <div>
-            <span className="text-muted-foreground">Site Slug:</span>
-            <p className="font-medium">/{site.slug}</p>
+          <div className="flex items-center gap-2">
+            <span className="text-muted-foreground">Email:</span>
+            <span className="font-medium">{site.owner_email || 'N/A'}</span>
           </div>
-          <div>
-            <span className="text-muted-foreground">Owner Name:</span>
-            <p className="font-medium">{site.owner_name || 'N/A'}</p>
-          </div>
-          <div>
-            <span className="text-muted-foreground">Owner Email:</span>
-            <p className="font-medium">{site.owner_email || 'N/A'}</p>
-          </div>
-          <div>
-            <span className="text-muted-foreground">Created:</span>
-            <p className="font-medium">{new Date(site.created_at).toLocaleDateString()}</p>
-          </div>
-          <div>
-            <span className="text-muted-foreground">Type:</span>
-            <p className="font-medium capitalize">{type}</p>
+          <div className="flex items-center gap-2">
+            <span className="text-muted-foreground">Store:</span>
+            <span className="font-medium">{site.store_name || 'N/A'}</span>
           </div>
         </div>
       </div>
@@ -521,7 +515,7 @@ export default function AdminSites() {
                   </div>
                 ) : (
                   <>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 gap-3">
                       {websites.map((website) => renderSiteCard(website, 'website'))}
                     </div>
                     {renderPagination(websitePage, websiteTotal, setWebsitePage)}
@@ -546,7 +540,7 @@ export default function AdminSites() {
                   </div>
                 ) : (
                   <>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 gap-3">
                       {funnels.map((funnel) => renderSiteCard(funnel, 'funnel'))}
                     </div>
                     {renderPagination(funnelPage, funnelTotal, setFunnelPage)}
