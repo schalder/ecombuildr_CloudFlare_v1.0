@@ -63,7 +63,7 @@ const Templates = () => {
         <div className="container mx-auto px-4 py-20">
           {/* Header */}
           <div className="text-center mb-16">
-            <h1 className="text-4xl font-bold mb-4">Professional Landing Page Templates</h1>
+            <h1 className="text-4xl font-bold mb-4">Pre-Made landing Page Templates</h1>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
               Choose from our collection of stunning, mobile-responsive templates designed to help you create the perfect online store.
             </p>
