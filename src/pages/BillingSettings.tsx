@@ -27,7 +27,9 @@ export default function BillingSettings() {
         .eq('is_active', true)
         .single();
 
-      setSitePricingPlan(data);
+      if (data) {
+        setSitePricingPlan(data);
+      }
     };
 
     if (userProfile?.subscription_plan) {
