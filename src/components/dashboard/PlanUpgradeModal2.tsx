@@ -27,6 +27,7 @@ interface PlanWithLimits {
     max_stores: number | null;
     max_websites: number | null;
     max_funnels: number | null;
+    max_pages_per_store: number | null;
     max_products_per_store: number | null;
     max_orders_per_month: number | null;
     custom_domain_allowed: boolean;
@@ -92,6 +93,7 @@ export const PlanUpgradeModal2: React.FC<PlanUpgradeModal2Props> = ({ open, onOp
               max_stores: limits?.max_stores || null,
               max_websites: limits?.max_websites || null,
               max_funnels: limits?.max_funnels || null,
+              max_pages_per_store: limits?.max_pages_per_store || null,
               max_products_per_store: limits?.max_products_per_store || null,
               max_orders_per_month: limits?.max_orders_per_month || null,
               custom_domain_allowed: limits?.custom_domain_allowed || false,
@@ -212,9 +214,9 @@ export const PlanUpgradeModal2: React.FC<PlanUpgradeModal2Props> = ({ open, onOp
                       <div className="mb-4 p-3 bg-muted/50 rounded-lg">
                         <h4 className="text-sm font-semibold mb-2">সীমা ও সুবিধা:</h4>
                         <div className="grid grid-cols-2 gap-2 text-xs">
-                          <div>স্টোর: {plan.limits.max_stores === null ? '∞' : plan.limits.max_stores}</div>
                           <div>ওয়েবসাইট: {plan.limits.max_websites === null ? '∞' : plan.limits.max_websites}</div>
                           <div>ফানেল: {plan.limits.max_funnels === null ? '∞' : plan.limits.max_funnels}</div>
+                          <div>পেজ: {plan.limits.max_pages_per_store === null ? '∞' : plan.limits.max_pages_per_store}</div>
                           <div>প্রোডাক্ট: {plan.limits.max_products_per_store === null ? '∞' : plan.limits.max_products_per_store}</div>
                           <div>অর্ডার/মাস: {plan.limits.max_orders_per_month === null ? '∞' : plan.limits.max_orders_per_month}</div>
                         </div>
