@@ -1019,18 +1019,8 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
                     )}
                     {fields.postalCode?.enabled && (
                       <Input placeholder={fields.postalCode.placeholder} value={form.shipping_postal_code} onChange={e=>setForm(f=>({...f,shipping_postal_code:e.target.value}))} required={!!(fields.postalCode?.enabled && (fields.postalCode?.required ?? false))} aria-required={!!(fields.postalCode?.enabled && (fields.postalCode?.required ?? false))} />
-                    )}
-                   </div>
-
-                   {/* Shipping Options */}
-                   {websiteShipping?.enabled && (websiteShipping as any)?.showOptionsAtCheckout && (
-                     <ShippingOptionsPicker
-                       settings={websiteShipping}
-                       selectedOptionId={form.selectedShippingOption}
-                       onOptionSelect={(option) => setForm(prev => ({ ...prev, selectedShippingOption: option.id }))}
-                       setForm={setForm}
-                     />
                    )}
+                   </div>
 
                    {/* Custom fields */}
                   {customFields?.length > 0 && (
@@ -1046,6 +1036,16 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
                       ))}
                     </div>
                   )}
+
+                   {/* Shipping Options */}
+                   {websiteShipping?.enabled && (websiteShipping as any)?.showOptionsAtCheckout && (
+                     <ShippingOptionsPicker
+                       settings={websiteShipping}
+                       selectedOptionId={form.selectedShippingOption}
+                       onOptionSelect={(option) => setForm(prev => ({ ...prev, selectedShippingOption: option.id }))}
+                       setForm={setForm}
+                     />
+                   )}
                 </section>
               )}
 
