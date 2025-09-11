@@ -156,14 +156,7 @@ export default function BillingSettings() {
               <CardTitle>Plan Features</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              {sitePricingPlan?.features_en && Array.isArray(sitePricingPlan.features_en) && sitePricingPlan.features_en.length > 0 ? (
-                sitePricingPlan.features_en.map((feature: string, index: number) => (
-                  <div key={index} className="flex items-center space-x-2">
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                    <span className="text-sm">{feature}</span>
-                  </div>
-                ))
-              ) : sitePricingPlan?.features && Array.isArray(sitePricingPlan.features) && sitePricingPlan.features.length > 0 ? (
+              {sitePricingPlan?.features && Array.isArray(sitePricingPlan.features) && sitePricingPlan.features.length > 0 ? (
                 sitePricingPlan.features.map((feature: string, index: number) => (
                   <div key={index} className="flex items-center space-x-2">
                     <CheckCircle className="h-4 w-4 text-green-500" />
