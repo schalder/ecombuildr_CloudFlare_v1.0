@@ -8,6 +8,7 @@ import { PageBuilderElement } from '../../types';
 import { ColorPicker } from '@/components/ui/color-picker';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ResponsiveTabs, ResponsiveStyleControl } from './_shared/ResponsiveStyleControl';
+import { SpacingControl } from './_shared/SpacingControl';
 
 interface CountdownElementStylesProps {
   element: PageBuilderElement;
@@ -383,6 +384,83 @@ export const CountdownElementStyles: React.FC<CountdownElementStylesProps> = ({
             </div>
           )}
         </ResponsiveStyleControl>
+      </div>
+
+      <Separator />
+
+      {/* Spacing */}
+      <div className="space-y-3">
+        <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Spacing</h4>
+        
+        {/* Margin */}
+        <div className="space-y-2">
+          <Label className="text-xs font-medium">Margin</Label>
+          <div className="space-y-2">
+            <SpacingControl
+              element={element}
+              property="marginTop"
+              label="Top"
+              deviceType={deviceType}
+              onStyleUpdate={onStyleUpdate}
+            />
+            <SpacingControl
+              element={element}
+              property="marginRight"
+              label="Right"
+              deviceType={deviceType}
+              onStyleUpdate={onStyleUpdate}
+            />
+            <SpacingControl
+              element={element}
+              property="marginBottom"
+              label="Bottom"
+              deviceType={deviceType}
+              onStyleUpdate={onStyleUpdate}
+            />
+            <SpacingControl
+              element={element}
+              property="marginLeft"
+              label="Left"
+              deviceType={deviceType}
+              onStyleUpdate={onStyleUpdate}
+            />
+          </div>
+        </div>
+
+        {/* Padding */}
+        <div className="space-y-2">
+          <Label className="text-xs font-medium">Padding</Label>
+          <div className="space-y-2">
+            <SpacingControl
+              element={element}
+              property="paddingTop"
+              label="Top"
+              deviceType={deviceType}
+              onStyleUpdate={onStyleUpdate}
+            />
+            <SpacingControl
+              element={element}
+              property="paddingRight"
+              label="Right"
+              deviceType={deviceType}
+              onStyleUpdate={onStyleUpdate}
+            />
+            <SpacingControl
+              element={element}
+              property="paddingBottom"
+              label="Bottom"
+              deviceType={deviceType}
+              onStyleUpdate={onStyleUpdate}
+            />
+            <SpacingControl
+              element={element}
+              property="paddingLeft"
+              label="Left"
+              deviceType={deviceType}
+              onStyleUpdate={onStyleUpdate}
+            />
+          </div>
+        </div>
       </div>
     </div>
   );
