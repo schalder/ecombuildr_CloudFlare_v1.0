@@ -157,20 +157,10 @@ export const ColumnRenderer: React.FC<ColumnRendererProps> = ({
       ) : (
         <div className="space-y-0">
           {column.elements.map((element, index) => {
-            // Compute merged responsive styles for the element to get margins
-            const mergedStyles = mergeResponsiveStyles({}, element.styles, deviceType);
-            const elementMargins = {
-              marginTop: mergedStyles.marginTop,
-              marginRight: mergedStyles.marginRight,
-              marginBottom: mergedStyles.marginBottom,
-              marginLeft: mergedStyles.marginLeft,
-            };
-
             return (
               <div 
                 key={element.id} 
                 className="relative"
-                style={!isPreviewMode ? elementMargins : {}}
               >
                 {/* Drop zone above element */}
                 {!isPreviewMode && (

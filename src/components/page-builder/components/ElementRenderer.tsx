@@ -240,20 +240,18 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
     return false;
   };
   
-  // In the builder, don't apply margins here since they're applied to the outer wrapper in ColumnRenderer
-  // In preview mode, apply margins normally
-  const userDefinedMargins = isPreviewMode ? 
-    (isButtonElement ? {
-      marginTop: hasMarginDefined('marginTop') ? mergedStyles.marginTop : undefined,
-      marginBottom: hasMarginDefined('marginBottom') ? mergedStyles.marginBottom : undefined,
-      marginLeft: hasMarginDefined('marginLeft') ? mergedStyles.marginLeft : undefined,
-      marginRight: hasMarginDefined('marginRight') ? mergedStyles.marginRight : undefined,
-    } : {
-      marginTop: mergedStyles.marginTop,
-      marginBottom: mergedStyles.marginBottom,
-      marginLeft: mergedStyles.marginLeft,
-      marginRight: mergedStyles.marginRight,
-    }) : {};
+  // Apply margins in both edit and preview mode
+  const userDefinedMargins = isButtonElement ? {
+    marginTop: hasMarginDefined('marginTop') ? mergedStyles.marginTop : undefined,
+    marginBottom: hasMarginDefined('marginBottom') ? mergedStyles.marginBottom : undefined,
+    marginLeft: hasMarginDefined('marginLeft') ? mergedStyles.marginLeft : undefined,
+    marginRight: hasMarginDefined('marginRight') ? mergedStyles.marginRight : undefined,
+  } : {
+    marginTop: mergedStyles.marginTop,
+    marginBottom: mergedStyles.marginBottom,
+    marginLeft: mergedStyles.marginLeft,
+    marginRight: mergedStyles.marginRight,
+  };
 
   // For button elements, don't apply padding from the wrapper - let the button handle its own padding
   const shouldApplyPadding = !isButtonElement;

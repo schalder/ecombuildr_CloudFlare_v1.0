@@ -30,7 +30,6 @@ export const SpacingControl: React.FC<SpacingControlProps> = ({
   };
 
   const handleSliderChange = (newValue: number) => {
-    console.log(`SpacingControl: Setting ${property} to ${newValue}px for ${deviceType}`);
     setResponsiveOverride(element, property, `${newValue}px`, deviceType, onStyleUpdate);
   };
 

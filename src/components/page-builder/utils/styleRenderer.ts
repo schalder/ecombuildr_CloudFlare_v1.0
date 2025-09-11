@@ -415,9 +415,7 @@ export const renderElementStyles = (element: PageBuilderElement, deviceType: 'de
   }
   
   // Merge responsive overrides
-  console.log('Before responsive merge:', styles);
   const merged = mergeResponsiveStyles(styles, element.styles, deviceType);
-  console.log('After responsive merge:', merged);
   return merged;
 };
 

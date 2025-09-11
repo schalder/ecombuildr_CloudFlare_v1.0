@@ -117,8 +117,6 @@ export function setResponsiveOverride(
   deviceType: 'desktop' | 'tablet' | 'mobile',
   onStyleUpdate: (property: string, value: any) => void
 ): void {
-  console.log(`setResponsiveOverride: ${property} = ${value} for ${deviceType}`);
-  
   const currentResponsive = element.styles?.responsive as ResponsiveStyles || {
     desktop: {},
     tablet: {},
@@ -133,7 +131,6 @@ export function setResponsiveOverride(
     }
   };
 
-  console.log('Updated responsive styles:', updatedResponsive);
   onStyleUpdate('responsive', updatedResponsive);
 }
 
