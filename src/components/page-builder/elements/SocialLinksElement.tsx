@@ -81,10 +81,7 @@ export const SocialLinksElement: React.FC<SocialLinksElementProps> = ({
       ? `${currentStyles.borderWidth} solid ${currentStyles.borderColor || 'hsl(var(--border))'}` 
       : undefined,
     boxShadow: currentStyles.boxShadow && currentStyles.boxShadow !== 'none' ? currentStyles.boxShadow : undefined,
-    marginTop: currentStyles.marginTop || undefined,
-    marginRight: currentStyles.marginRight || undefined,
-    marginBottom: currentStyles.marginBottom || undefined,
-    marginLeft: currentStyles.marginLeft || undefined,
+    // NOTE: Margins removed - handled by ElementRenderer wrapper to prevent double application
     paddingTop: currentStyles.paddingTop || undefined,
     paddingRight: currentStyles.paddingRight || undefined,
     paddingBottom: currentStyles.paddingBottom || undefined,

@@ -300,10 +300,7 @@ const SocialShareElement: React.FC<{
     paddingRight: mergedStyles.paddingRight || '0',
     paddingBottom: mergedStyles.paddingBottom || '0',
     paddingLeft: mergedStyles.paddingLeft || '0',
-    marginTop: mergedStyles.marginTop || '0',
-    marginRight: mergedStyles.marginRight || '0',
-    marginBottom: mergedStyles.marginBottom || '0',
-    marginLeft: mergedStyles.marginLeft || '0',
+    // NOTE: Margins removed - handled by ElementRenderer wrapper to prevent double application
   };
 
   const titleStyles = {

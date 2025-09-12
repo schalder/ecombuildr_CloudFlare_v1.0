@@ -197,21 +197,13 @@ export const CountdownTimerElement: React.FC<CountdownTimerElementProps> = ({
     </div>
   );
 
-  // Get element styles - always apply full styles consistently
-  // In builder mode, ElementWrapper handles margins, but on storefront we need them
+  // Get element styles - margins are now always handled by ElementRenderer wrapper
+  // This ensures consistent behavior in both builder and storefront modes
   const elementStyles = renderElementStyles(element, deviceType);
-  const shouldApplyMargins = !isEditing; // Only apply margins on storefront
-  const finalStyles = shouldApplyMargins ? elementStyles : {
-    ...elementStyles,
-    marginTop: undefined,
-    marginRight: undefined,
-    marginBottom: undefined,
-    marginLeft: undefined
-  };
 
   if (isEditing) {
     return (
-      <div className={`element-${element.id} max-w-2xl mx-auto`} style={finalStyles}>
+      <div className={`element-${element.id} max-w-2xl mx-auto`} style={elementStyles}>
         <div className={getLayoutClasses()} style={getContainerStyles()}>
           {renderTimeSegment(1, labels.days, false)}
           {renderTimeSegment(23, labels.hours, false)}
@@ -224,7 +216,7 @@ export const CountdownTimerElement: React.FC<CountdownTimerElementProps> = ({
 
   if (expired) {
     return (
-      <div className={`element-${element.id} max-w-2xl mx-auto text-center p-4`} style={finalStyles}>
+      <div className={`element-${element.id} max-w-2xl mx-auto text-center p-4`} style={elementStyles}>
         <h3 className="text-xl font-bold mb-2">Time's Up!</h3>
         <p className="text-muted-foreground">The countdown has ended.</p>
       </div>
@@ -232,7 +224,7 @@ export const CountdownTimerElement: React.FC<CountdownTimerElementProps> = ({
   }
 
   return (
-    <div className={`element-${element.id} max-w-2xl mx-auto`} style={finalStyles}>
+    <div className={`element-${element.id} max-w-2xl mx-auto`} style={elementStyles}>
       <div className={getLayoutClasses()} style={getContainerStyles()}>
         {renderTimeSegment(timeLeft.days, labels.days, true)}
         {renderTimeSegment(timeLeft.hours, labels.hours, true)}

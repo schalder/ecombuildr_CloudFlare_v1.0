@@ -393,11 +393,11 @@ export const renderElementStyles = (element: PageBuilderElement, deviceType: 'de
       styles.padding = element.styles.padding;
     }
     
-    // NOTE: Margins are intentionally excluded here since they're handled by ElementRenderer wrapper
-    // This prevents double application of margins
-    
-    // Typography
-    if (element.styles.color) styles.color = element.styles.color;
+  // NOTE: Margins are intentionally excluded here since they're handled by ElementRenderer wrapper
+  // This prevents double application of margins
+  
+  // Typography
+  if (element.styles.color) styles.color = element.styles.color;
     if (element.styles.fontSize) styles.fontSize = element.styles.fontSize;
     if (element.styles.lineHeight) styles.lineHeight = element.styles.lineHeight;
     if (element.styles.textAlign) styles.textAlign = element.styles.textAlign;
@@ -411,12 +411,16 @@ export const renderElementStyles = (element: PageBuilderElement, deviceType: 'de
   // Merge responsive overrides but exclude margins to prevent double application
   const merged = mergeResponsiveStyles(styles, element.styles, deviceType);
   
-  // Remove any margins that might have been added by responsive merge
+  // CRITICAL: Remove any margins that might have been added by responsive merge or base styles
+  // Margins are ONLY handled by ElementRenderer wrapper to prevent double application
   delete merged.marginTop;
-  delete merged.marginRight;
+  delete merged.marginRight;  
   delete merged.marginBottom;
   delete merged.marginLeft;
   delete merged.margin;
+  
+  // Also remove any shorthand margin that might exist
+  if (merged.margin !== undefined) delete merged.margin;
   
   return merged;
 };

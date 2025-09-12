@@ -579,7 +579,8 @@ const ButtonElement: React.FC<{
   const responsiveCSS = generateResponsiveCSS(element.id, element.styles);
   
 
-  // Check if user has defined any margins
+  // NOTE: Margins are now handled by ElementRenderer wrapper
+  // This check should always be false now due to our central fix in styleRenderer.ts
   const hasUserMargins = elementStyles.marginTop || elementStyles.marginRight || 
                          elementStyles.marginBottom || elementStyles.marginLeft || 
                          elementStyles.margin;
@@ -693,36 +694,26 @@ const DividerElement: React.FC<{
   
   const elementStyles = renderElementStyles(element);
   
-  // Parse individual margin values from the new spacing system
-  const parseMarginValue = (value: string | number | undefined): string => {
-    if (!value) return '0px';
-    return typeof value === 'number' ? `${value}px` : String(value);
-  };
+  // NOTE: Margins are now handled by ElementRenderer wrapper
+  // ElementStyles should not contain margins due to our central fix in styleRenderer.ts
+  // The parseMarginValue logic is kept for backward compatibility but should receive undefined values
   
-  // Get individual margin values
-  const marginTop = parseMarginValue(elementStyles.marginTop);
-  const marginRight = parseMarginValue(elementStyles.marginRight);
-  const marginBottom = parseMarginValue(elementStyles.marginBottom);
-  const marginLeft = parseMarginValue(elementStyles.marginLeft);
-  
-  // Calculate alignment margins (only when user hasn't set specific left/right margins)
+  // Calculate alignment margins for divider positioning
   let dividerMarginLeft = '0';
   let dividerMarginRight = '0';
   
-  // Only apply alignment if no explicit left/right margins are set
-  const hasExplicitHorizontalMargins = elementStyles.marginLeft !== undefined || elementStyles.marginRight !== undefined;
+  // Apply alignment-based margins (margins from ElementRenderer wrapper are separate)
   
-  if (!hasExplicitHorizontalMargins) {
-    if (alignment === 'center') {
-      dividerMarginLeft = 'auto';
-      dividerMarginRight = 'auto';
-    } else if (alignment === 'right') {
-      dividerMarginLeft = 'auto';
-      dividerMarginRight = '0';
-    } else {
-      dividerMarginLeft = '0';
-      dividerMarginRight = 'auto';
-    }
+  // Apply alignment regardless of margins (since margins are handled by wrapper)
+  if (alignment === 'center') {
+    dividerMarginLeft = 'auto';
+    dividerMarginRight = 'auto';
+  } else if (alignment === 'right') {
+    dividerMarginLeft = 'auto';
+    dividerMarginRight = '0';
+  } else {
+    dividerMarginLeft = '0';
+    dividerMarginRight = 'auto';
   }
 
   const dividerStyle = {
@@ -739,10 +730,7 @@ const DividerElement: React.FC<{
   
   const wrapperStyle = {
     ...wrapperStylesWithoutBg,
-    marginTop,
-    marginRight,
-    marginBottom,
-    marginLeft,
+    // NOTE: Margins removed - handled by ElementRenderer wrapper to prevent double application
     backgroundColor: 'transparent',
     background: 'transparent',
   };

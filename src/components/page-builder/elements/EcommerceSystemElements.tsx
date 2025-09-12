@@ -318,11 +318,7 @@ const RelatedProductsElement: React.FC<{ element: PageBuilderElement; deviceType
             borderWidth: elementStyles.borderWidth as any,
             borderStyle: elementStyles.borderWidth ? 'solid' : undefined,
             borderRadius: elementStyles.borderRadius as any,
-            margin: elementStyles.margin as any,
-            marginTop: elementStyles.marginTop as any,
-            marginRight: elementStyles.marginRight as any,
-            marginBottom: elementStyles.marginBottom as any,
-            marginLeft: elementStyles.marginLeft as any,
+            // NOTE: Margins removed - handled by ElementRenderer wrapper to prevent double application
           }}>
             <CardContent className="p-3" style={{
               padding: elementStyles.padding as any,
