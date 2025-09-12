@@ -1,28 +1,55 @@
 // Utility functions for generating responsive CSS from element styles
 
 export function generateResponsiveCSS(elementId: string, styles: any): string {
-  if (!styles?.responsive) return '';
+  if (!styles) return '';
   
-  const { desktop = {}, tablet = {}, mobile = {} } = styles.responsive;
+  // Extract non-responsive base styles and responsive overrides
+  const { responsive, ...nonResponsiveStyles } = styles;
+  const { desktop = {}, tablet = {}, mobile = {} } = responsive || {};
+  
+  // Parse shorthand spacing in base styles
+  const baseStyles = { ...nonResponsiveStyles };
+  if (baseStyles.margin && typeof baseStyles.margin === 'string') {
+    const parsed = parseShorthandSpacing(baseStyles.margin);
+    if (parsed.top) baseStyles.marginTop = parsed.top;
+    if (parsed.right) baseStyles.marginRight = parsed.right;
+    if (parsed.bottom) baseStyles.marginBottom = parsed.bottom;
+    if (parsed.left) baseStyles.marginLeft = parsed.left;
+    delete baseStyles.margin;
+  }
+  if (baseStyles.padding && typeof baseStyles.padding === 'string') {
+    const parsed = parseShorthandSpacing(baseStyles.padding);
+    if (parsed.top) baseStyles.paddingTop = parsed.top;
+    if (parsed.right) baseStyles.paddingRight = parsed.right;
+    if (parsed.bottom) baseStyles.paddingBottom = parsed.bottom;
+    if (parsed.left) baseStyles.paddingLeft = parsed.left;
+    delete baseStyles.padding;
+  }
   
   let css = '';
   
-  // Desktop styles (default)
-  if (Object.keys(desktop).length > 0) {
-    const { hoverColor, hoverBackgroundColor, ...restDesktop } = desktop as any;
-    const desktopProps = Object.entries(restDesktop)
-      .map(([prop, value]) => `${kebabCase(prop)}: ${value}`)
-      .join('; ');
+  // Merge base styles with desktop responsive overrides for default rule
+  const { hoverColor: baseHoverColor, hoverBackgroundColor: baseHoverBg, ...restBase } = baseStyles;
+  const { hoverColor: dHoverColor, hoverBackgroundColor: dHoverBg, ...restDesktop } = desktop as any;
+  
+  const mergedDefault = { ...restBase, ...restDesktop };
+  const defaultProps = Object.entries(mergedDefault)
+    .map(([prop, value]) => `${kebabCase(prop)}: ${value}`)
+    .join('; ');
 
-    if (desktopProps) {
-      css += `.element-${elementId} { ${desktopProps}; }`;
-    }
-    if (hoverColor || hoverBackgroundColor) {
-      const hoverPairs: string[] = [];
-      if (hoverColor) hoverPairs.push(`color: ${hoverColor} !important`);
-      if (hoverBackgroundColor) hoverPairs.push(`background-color: ${hoverBackgroundColor} !important`);
-      css += `.element-${elementId}:hover { ${hoverPairs.join('; ')}; transition: all 0.2s ease; }`;
-    }
+  // Default styles (base + desktop responsive)
+  if (defaultProps) {
+    css += `.element-${elementId} { ${defaultProps}; }`;
+  }
+  
+  // Default hover styles (base hover + desktop hover)
+  const finalHoverColor = dHoverColor || baseHoverColor;
+  const finalHoverBg = dHoverBg || baseHoverBg;
+  if (finalHoverColor || finalHoverBg) {
+    const hoverPairs: string[] = [];
+    if (finalHoverColor) hoverPairs.push(`color: ${finalHoverColor} !important`);
+    if (finalHoverBg) hoverPairs.push(`background-color: ${finalHoverBg} !important`);
+    css += `.element-${elementId}:hover { ${hoverPairs.join('; ')}; transition: all 0.2s ease; }`;
   }
   
   // Tablet styles (768px to 1023px)

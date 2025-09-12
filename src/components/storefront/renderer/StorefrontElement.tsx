@@ -59,6 +59,26 @@ export const StorefrontElement: React.FC<StorefrontElementProps> = ({
 
   // Generate and inject responsive CSS for this element
   const responsiveCSS = generateResponsiveCSS(element.id, element.styles);
+  
+  // Debug log for spacing issues
+  if (element.styles) {
+    const hasResponsive = !!element.styles.responsive;
+    const baseSpacing = {
+      margin: element.styles.margin,
+      marginTop: element.styles.marginTop,
+      marginRight: element.styles.marginRight,
+      marginBottom: element.styles.marginBottom,
+      marginLeft: element.styles.marginLeft,
+      padding: element.styles.padding,
+      paddingTop: element.styles.paddingTop,
+      paddingRight: element.styles.paddingRight,
+      paddingBottom: element.styles.paddingBottom,
+      paddingLeft: element.styles.paddingLeft
+    };
+    const spacingKeys = Object.keys(baseSpacing).filter(k => baseSpacing[k as keyof typeof baseSpacing]);
+    console.log(`[StorefrontElement] ${element.id} (${element.type}): hasResponsive=${hasResponsive}, baseSpacing=[${spacingKeys.join(',')}], css=${responsiveCSS.substring(0, 160)}...`);
+  }
+  
   useHeadStyle(`storefront-element-${element.id}`, responsiveCSS);
 
   useEffect(() => {
