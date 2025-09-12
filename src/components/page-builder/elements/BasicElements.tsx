@@ -45,14 +45,7 @@ const HeadingElement: React.FC<{
     ...elementStyles, // Apply all styles from renderElementStyles
   } as React.CSSProperties;
 
-  const shouldApplyMargins = !isEditing;
-  const finalStyles = shouldApplyMargins ? cleanStyles : {
-    ...cleanStyles,
-    marginTop: undefined,
-    marginRight: undefined,
-    marginBottom: undefined,
-    marginLeft: undefined,
-  } as React.CSSProperties;
+  const finalStyles = cleanStyles;
 
   const className = [`element-${element.id}`, 'outline-none font-bold block rounded'].join(' ');
 
@@ -104,14 +97,7 @@ const ParagraphElement: React.FC<{
     ...elementStyles, // Apply all styles from renderElementStyles
   } as React.CSSProperties;
 
-  const shouldApplyMargins = !isEditing;
-  const finalStyles = shouldApplyMargins ? cleanStyles : {
-    ...cleanStyles,
-    marginTop: undefined,
-    marginRight: undefined,
-    marginBottom: undefined,
-    marginLeft: undefined,
-  } as React.CSSProperties;
+  const finalStyles = cleanStyles;
 
   const className = [`element-${element.id}`, 'outline-none rounded'].join(' ');
 
@@ -298,7 +284,7 @@ const ImageElement: React.FC<{
     <>
       <style>{responsiveCSS}</style>
       <figure 
-        className="w-full"
+        className=""
         style={containerStylesFinal}
         onClick={(e) => {
           // Allow event to bubble up for element selection in editing mode
@@ -350,14 +336,7 @@ const ListElement: React.FC<{
     paddingLeft: indent ? `${indent}px` : baseStyles.paddingLeft,
   };
 
-  const shouldApplyMargins = !isEditing;
-  const finalContainerStyles = shouldApplyMargins ? containerStyles : {
-    ...containerStyles,
-    marginTop: undefined,
-    marginRight: undefined,
-    marginBottom: undefined,
-    marginLeft: undefined,
-  };
+  const finalContainerStyles = containerStyles;
 
   let listNode: React.ReactNode;
 
@@ -574,14 +553,7 @@ const ButtonElement: React.FC<{
 
   // Use renderElementStyles for consistent styling
   const elementStyles = renderElementStyles(element, deviceType);
-  const shouldApplyMargins = !isEditing;
-  const finalStyles = shouldApplyMargins ? elementStyles : {
-    ...elementStyles,
-    marginTop: undefined,
-    marginRight: undefined,
-    marginBottom: undefined,
-    marginLeft: undefined,
-  };
+  const finalStyles = elementStyles;
   // Smart padding fallback when no padding is set - ratio-based
   const hasExistingPadding = elementStyles.padding || elementStyles.paddingTop || elementStyles.paddingRight || 
                            elementStyles.paddingBottom || elementStyles.paddingLeft;
@@ -677,14 +649,7 @@ const SpacerElement: React.FC<{
 
   const elementStyles = renderElementStyles(element);
   const spacerHeight = String(height);
-  const shouldApplyMargins = !isEditing;
-  const finalElementStyles = shouldApplyMargins ? elementStyles : {
-    ...elementStyles,
-    marginTop: undefined,
-    marginRight: undefined,
-    marginBottom: undefined,
-    marginLeft: undefined,
-  };
+  const finalElementStyles = elementStyles;
   
   if (isEditing) {
     return (
@@ -773,12 +738,9 @@ const DividerElement: React.FC<{
   // Remove background styles for the wrapper - dividers should be transparent
   const { backgroundColor, background, ...wrapperStylesWithoutBg } = elementStyles as any;
   
-  const shouldApplyMargins = !isEditing;
-  const wrapperMargins: React.CSSProperties = shouldApplyMargins
-    ? (shorthandMargin !== undefined && !hasExplicitHorizontalMargins
-        ? { margin: shorthandMargin as any }
-        : { marginTop, marginRight, marginBottom, marginLeft })
-    : { margin: undefined, marginTop: undefined, marginRight: undefined, marginBottom: undefined, marginLeft: undefined };
+  const wrapperMargins: React.CSSProperties = (shorthandMargin !== undefined && !hasExplicitHorizontalMargins)
+    ? { margin: shorthandMargin as any }
+    : { marginTop, marginRight, marginBottom, marginLeft };
   
   const wrapperStyle: React.CSSProperties = {
     ...wrapperStylesWithoutBg,

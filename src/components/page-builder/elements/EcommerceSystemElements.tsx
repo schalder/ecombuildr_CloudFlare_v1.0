@@ -352,15 +352,7 @@ const CartFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 'des
   
   // Apply responsive element styles
   const elementStyles = renderElementStyles(element, deviceType);
-  const shouldApplyMargins = !isEditing;
-  const finalStyles = shouldApplyMargins ? elementStyles : {
-    ...elementStyles,
-    margin: undefined,
-    marginTop: undefined,
-    marginRight: undefined,
-    marginBottom: undefined,
-    marginLeft: undefined,
-  };
+  const finalStyles = elementStyles;
   
   // Get button styles safely without deep nesting
   const buttonStyles = React.useMemo(() => {
