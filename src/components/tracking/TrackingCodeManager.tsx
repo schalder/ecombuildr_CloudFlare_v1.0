@@ -19,12 +19,17 @@ export const TrackingCodeManager: React.FC<TrackingCodeManagerProps> = ({
     try {
       // Create a unique ID based on priority and content hash
       const headerId = `tracking-header-${priority}`;
+      const trackingId = `tracking-${priority}-${Date.now()}`;
       
       // Clean existing script for this priority level
       const existingScript = document.getElementById(headerId);
       if (existingScript) {
         existingScript.remove();
       }
+
+      // Clean any previous tracking elements for this priority
+      const existingElements = document.head.querySelectorAll(`[data-tracking-priority="${priority}"]`);
+      existingElements.forEach((el) => el.remove());
 
       // Create script element
       const scriptElement = document.createElement('div');
@@ -35,6 +40,8 @@ export const TrackingCodeManager: React.FC<TrackingCodeManagerProps> = ({
       const scripts = scriptElement.querySelectorAll('script');
       scripts.forEach((script) => {
         const newScript = document.createElement('script');
+        newScript.setAttribute('data-tracking-priority', priority);
+        newScript.setAttribute('data-tracking-id', trackingId);
         
         // Copy attributes
         Array.from(script.attributes).forEach((attr) => {
@@ -54,7 +61,9 @@ export const TrackingCodeManager: React.FC<TrackingCodeManagerProps> = ({
       // Handle non-script elements (meta tags, links, etc.)
       const nonScripts = Array.from(scriptElement.children).filter(el => el.tagName !== 'SCRIPT');
       nonScripts.forEach((element) => {
-        const clonedElement = element.cloneNode(true);
+        const clonedElement = element.cloneNode(true) as Element;
+        clonedElement.setAttribute('data-tracking-priority', priority);
+        clonedElement.setAttribute('data-tracking-id', trackingId);
         document.head.appendChild(clonedElement);
       });
 
@@ -80,12 +89,17 @@ export const TrackingCodeManager: React.FC<TrackingCodeManagerProps> = ({
 
     try {
       const footerId = `tracking-footer-${priority}`;
+      const trackingId = `tracking-${priority}-${Date.now()}`;
       
       // Clean existing script for this priority level
       const existingScript = document.getElementById(footerId);
       if (existingScript) {
         existingScript.remove();
       }
+
+      // Clean any previous tracking elements for this priority
+      const existingElements = document.body.querySelectorAll(`[data-tracking-priority="${priority}"]`);
+      existingElements.forEach((el) => el.remove());
 
       // Create script element
       const scriptElement = document.createElement('div');
@@ -96,6 +110,8 @@ export const TrackingCodeManager: React.FC<TrackingCodeManagerProps> = ({
       const scripts = scriptElement.querySelectorAll('script');
       scripts.forEach((script) => {
         const newScript = document.createElement('script');
+        newScript.setAttribute('data-tracking-priority', priority);
+        newScript.setAttribute('data-tracking-id', trackingId);
         
         // Copy attributes
         Array.from(script.attributes).forEach((attr) => {
@@ -116,7 +132,9 @@ export const TrackingCodeManager: React.FC<TrackingCodeManagerProps> = ({
       // Handle non-script elements
       const nonScripts = Array.from(scriptElement.children).filter(el => el.tagName !== 'SCRIPT');
       nonScripts.forEach((element) => {
-        const clonedElement = element.cloneNode(true);
+        const clonedElement = element.cloneNode(true) as Element;
+        clonedElement.setAttribute('data-tracking-priority', priority);
+        clonedElement.setAttribute('data-tracking-id', trackingId);
         document.body.appendChild(clonedElement);
       });
 

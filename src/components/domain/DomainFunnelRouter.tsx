@@ -113,7 +113,7 @@ export const DomainFunnelRouter: React.FC<DomainFunnelRouterProps> = ({ funnel }
     }
   }, [funnel.id, stepSlug, isPreview]);
 
-  // SEO and script management - using only step-level SEO data
+  // SEO management - using only step-level SEO data
   useEffect(() => {
     if (!step || !funnel) return;
 
@@ -143,18 +143,6 @@ export const DomainFunnelRouter: React.FC<DomainFunnelRouterProps> = ({ funnel }
       ogType: 'website',
       favicon: funnel?.settings?.favicon_url || store?.favicon_url,
     });
-
-    // Custom scripts are now handled by ScriptManager for storefront renderer
-    if (!useStorefront && step.custom_scripts) {
-      const scriptElement = document.createElement('div');
-      scriptElement.innerHTML = step.custom_scripts;
-      document.head.appendChild(scriptElement);
-
-      // Cleanup function
-      return () => {
-        document.head.removeChild(scriptElement);
-      };
-    }
   }, [step, funnel, store]);
 
   if (loading) {
@@ -180,10 +168,12 @@ export const DomainFunnelRouter: React.FC<DomainFunnelRouterProps> = ({ funnel }
     <FunnelStepProvider stepId={step.id} funnelId={funnel.id}>
       <FontOptimizer />
       <PerformanceMonitor page={`funnel-${stepSlug || 'home'}`} />
-      <TrackingCodeManager 
-        headerCode={step.custom_scripts}
-        priority="page"
-      />
+      {!useStorefront && (
+        <TrackingCodeManager 
+          headerCode={step.custom_scripts}
+          priority="page"
+        />
+      )}
       <div className="w-full min-h-screen flex flex-col">
         <FunnelHeader funnel={funnel} />
         <main className="flex-1">
