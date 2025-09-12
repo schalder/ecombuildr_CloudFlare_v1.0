@@ -85,7 +85,9 @@ export const useFacebookPixelAnalytics = (storeId: string, dateRange: DateRange,
         let totalRevenue = 0;
         const productViews: Record<string, { name: string; views: number; conversions: number }> = {};
         const dailyEvents: Record<string, any> = {};
+        const productIds = new Set<string>();
 
+        // First pass: collect all product IDs and count events
         events?.forEach((event) => {
           const eventType = event.event_type;
           const eventData = event.event_data as any || {};
@@ -113,16 +115,16 @@ export const useFacebookPixelAnalytics = (storeId: string, dateRange: DateRange,
               eventCounts.viewContent++;
               dailyEvents[eventDate].view_content++;
               
-              // Track product views
-              if (eventData.content_ids && eventData.content_name) {
-                const productId = Array.isArray(eventData.content_ids) 
-                  ? eventData.content_ids[0] || 'unknown'
-                  : eventData.content_ids || 'unknown';
-                const productName = eventData.content_name || 'Unknown Product';
-                if (!productViews[productId]) {
-                  productViews[productId] = { name: productName, views: 0, conversions: 0 };
-                }
-                productViews[productId].views++;
+              // Collect product IDs from ViewContent events
+              if (eventData.content_ids) {
+                const ids = Array.isArray(eventData.content_ids) 
+                  ? eventData.content_ids 
+                  : [eventData.content_ids];
+                ids.forEach((id: string) => {
+                  if (id && id !== 'unknown') {
+                    productIds.add(id);
+                  }
+                });
               }
               break;
             case 'AddToCart':
@@ -142,15 +144,71 @@ export const useFacebookPixelAnalytics = (storeId: string, dateRange: DateRange,
                 totalRevenue += parseFloat(String(eventData.value)) || 0;
               }
               
-              // Track product conversions
+              // Collect product IDs from Purchase events
               if (eventData.contents && Array.isArray(eventData.contents)) {
                 eventData.contents.forEach((item: any) => {
-                  const productId = item.id || 'unknown';
-                  const productName = item.name || 'Unknown Product';
-                  if (!productViews[productId]) {
-                    productViews[productId] = { name: productName, views: 0, conversions: 0 };
+                  if (item.id && item.id !== 'unknown') {
+                    productIds.add(item.id);
                   }
-                  productViews[productId].conversions++;
+                });
+              }
+              break;
+          }
+        });
+
+        // Fetch product names from database
+        const productLookup: Record<string, string> = {};
+        if (productIds.size > 0) {
+          try {
+            const { data: products } = await supabase
+              .from('products')
+              .select('id, name')
+              .in('id', Array.from(productIds));
+            
+            products?.forEach((product) => {
+              productLookup[product.id] = product.name;
+            });
+          } catch (err) {
+            console.warn('Failed to fetch product names:', err);
+          }
+        }
+
+        // Second pass: process events with proper product names
+        events?.forEach((event) => {
+          const eventType = event.event_type;
+          const eventData = event.event_data as any || {};
+
+          switch (eventType) {
+            case 'ViewContent':
+              // Track product views with proper names
+              if (eventData.content_ids) {
+                const ids = Array.isArray(eventData.content_ids) 
+                  ? eventData.content_ids 
+                  : [eventData.content_ids];
+                
+                ids.forEach((productId: string) => {
+                  if (productId && productId !== 'unknown') {
+                    const productName = productLookup[productId] || eventData.content_name || 'Unknown Product';
+                    if (!productViews[productId]) {
+                      productViews[productId] = { name: productName, views: 0, conversions: 0 };
+                    }
+                    productViews[productId].views++;
+                  }
+                });
+              }
+              break;
+            case 'Purchase':
+              // Track product conversions with proper names
+              if (eventData.contents && Array.isArray(eventData.contents)) {
+                eventData.contents.forEach((item: any) => {
+                  const productId = item.id;
+                  if (productId && productId !== 'unknown') {
+                    const productName = productLookup[productId] || item.name || 'Unknown Product';
+                    if (!productViews[productId]) {
+                      productViews[productId] = { name: productName, views: 0, conversions: 0 };
+                    }
+                    productViews[productId].conversions++;
+                  }
                 });
               }
               break;
