@@ -47,6 +47,14 @@ const TestimonialElement: React.FC<{
   // Generate responsive CSS and get inline styles
   const responsiveCSS = generateResponsiveCSS(element.id, element.styles);
   const inlineStyles = renderElementStyles(element, deviceType || 'desktop');
+  const shouldApplyMargins = !isEditing;
+  const finalStyles = shouldApplyMargins ? inlineStyles : {
+    ...inlineStyles,
+    marginTop: undefined,
+    marginRight: undefined,
+    marginBottom: undefined,
+    marginLeft: undefined,
+  };
   
   // Get responsive styles for current device
   const responsiveStyles = element.styles?.responsive || { desktop: {}, mobile: {} };

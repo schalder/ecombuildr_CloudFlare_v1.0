@@ -45,13 +45,22 @@ const HeadingElement: React.FC<{
     ...elementStyles, // Apply all styles from renderElementStyles
   } as React.CSSProperties;
 
+  const shouldApplyMargins = !isEditing;
+  const finalStyles = shouldApplyMargins ? cleanStyles : {
+    ...cleanStyles,
+    marginTop: undefined,
+    marginRight: undefined,
+    marginBottom: undefined,
+    marginLeft: undefined,
+  } as React.CSSProperties;
+
   const className = [`element-${element.id}`, 'outline-none font-bold block rounded'].join(' ');
 
   // Inject responsive CSS into document head
   useHeadStyle(`element-responsive-${element.id}`, generateResponsiveCSS(element.id, element.styles));
 
   return (
-    <Tag style={cleanStyles} className={className}>
+    <Tag style={finalStyles} className={className}>
         {isEditing ? (
           <InlineRTE
             value={text}
@@ -98,13 +107,22 @@ const ParagraphElement: React.FC<{
     ...elementStyles, // Apply all styles from renderElementStyles
   } as React.CSSProperties;
 
+  const shouldApplyMargins = !isEditing;
+  const finalStyles = shouldApplyMargins ? cleanStyles : {
+    ...cleanStyles,
+    marginTop: undefined,
+    marginRight: undefined,
+    marginBottom: undefined,
+    marginLeft: undefined,
+  } as React.CSSProperties;
+
   const className = [`element-${element.id}`, 'outline-none rounded'].join(' ');
 
   // Inject responsive CSS into document head
   useHeadStyle(`element-responsive-${element.id}`, generateResponsiveCSS(element.id, element.styles));
 
   return (
-    <div style={cleanStyles} className={className}>
+    <div style={finalStyles} className={className}>
         {isEditing ? (
           <InlineRTE
             value={text}
@@ -283,12 +301,14 @@ const ImageElement: React.FC<{
     <ImageComponent />
   );
 
+  const containerStylesFinal = (() => { const cs = getContainerStyles(); return !isEditing ? cs : { ...cs, marginTop: undefined, marginRight: undefined, marginBottom: undefined, marginLeft: undefined }; })();
+
   return (
     <>
       <style>{responsiveCSS}</style>
       <figure 
         className="w-full"
-        style={getContainerStyles()}
+        style={containerStylesFinal}
         onClick={(e) => {
           // Allow event to bubble up for element selection in editing mode
           if (isEditing) {
@@ -339,11 +359,20 @@ const ListElement: React.FC<{
     paddingLeft: indent ? `${indent}px` : baseStyles.paddingLeft,
   };
 
+  const shouldApplyMargins = !isEditing;
+  const finalContainerStyles = shouldApplyMargins ? containerStyles : {
+    ...containerStyles,
+    marginTop: undefined,
+    marginRight: undefined,
+    marginBottom: undefined,
+    marginLeft: undefined,
+  };
+
   let listNode: React.ReactNode;
 
   if (style === 'numbers') {
     listNode = (
-      <ol style={containerStyles} className={`element-${element.id} list-decimal list-inside`}>
+      <ol style={finalContainerStyles} className={`element-${element.id} list-decimal list-inside`}>
         {items.map((item, index) => (
           <li key={index} className="mb-1" style={{ marginBottom: `${itemGap}px` }}>{item.text}</li>
         ))}
@@ -360,7 +389,7 @@ const ListElement: React.FC<{
     };
 
     listNode = (
-      <ul style={containerStyles} className={`element-${element.id} list-none pl-0`}>
+      <ul style={finalContainerStyles} className={`element-${element.id} list-none pl-0`}>
         {items.map((item, index) => {
           const iconName = item.icon || defaultIcon;
           const IconComponent = getIconByName(iconName) || getIconByName('check');
@@ -397,7 +426,7 @@ const ListElement: React.FC<{
     );
   } else {
     listNode = (
-      <ul style={containerStyles} className={`element-${element.id} list-disc list-inside`}>
+      <ul style={finalContainerStyles} className={`element-${element.id} list-disc list-inside`}>
         {items.map((item, index) => (
           <li key={index} className="mb-1" style={{ marginBottom: `${itemGap}px` }}>{item.text}</li>
         ))}
@@ -554,7 +583,14 @@ const ButtonElement: React.FC<{
 
   // Use renderElementStyles for consistent styling
   const elementStyles = renderElementStyles(element, deviceType);
-
+  const shouldApplyMargins = !isEditing;
+  const finalStyles = shouldApplyMargins ? elementStyles : {
+    ...elementStyles,
+    marginTop: undefined,
+    marginRight: undefined,
+    marginBottom: undefined,
+    marginLeft: undefined,
+  };
   // Smart padding fallback when no padding is set - ratio-based
   const hasExistingPadding = elementStyles.padding || elementStyles.paddingTop || elementStyles.paddingRight || 
                            elementStyles.paddingBottom || elementStyles.paddingLeft;
@@ -601,7 +637,7 @@ const ButtonElement: React.FC<{
         <button 
           className={`${customClassName} h-auto leading-none inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50`}
           onClick={handleClick}
-          style={elementStyles}
+          style={finalStyles}
         >
           {IconComponent && (
             <IconComponent 
@@ -650,13 +686,21 @@ const SpacerElement: React.FC<{
 
   const elementStyles = renderElementStyles(element);
   const spacerHeight = String(height);
+  const shouldApplyMargins = !isEditing;
+  const finalElementStyles = shouldApplyMargins ? elementStyles : {
+    ...elementStyles,
+    marginTop: undefined,
+    marginRight: undefined,
+    marginBottom: undefined,
+    marginLeft: undefined,
+  };
   
   if (isEditing) {
     return (
       <div 
         style={{ 
-          ...elementStyles, 
-          height: elementStyles.height || spacerHeight,
+          ...finalElementStyles, 
+          height: finalElementStyles.height || spacerHeight,
           position: 'relative'
         }} 
         className="w-full"
@@ -671,7 +715,7 @@ const SpacerElement: React.FC<{
   }
   
   return (
-    <div style={{ ...elementStyles, height: elementStyles.height || spacerHeight }} className="w-full" />
+    <div style={{ ...finalElementStyles, height: finalElementStyles.height || spacerHeight }} className="w-full" />
   );
 };
 
@@ -737,15 +781,15 @@ const DividerElement: React.FC<{
   // Remove background styles for the wrapper - dividers should be transparent
   const { backgroundColor, background, ...wrapperStylesWithoutBg } = elementStyles;
   
+  const shouldApplyMargins = !isEditing;
+  const marginStyles = shouldApplyMargins ? { marginTop, marginRight, marginBottom, marginLeft } : {} as React.CSSProperties;
+  
   const wrapperStyle = {
     ...wrapperStylesWithoutBg,
-    marginTop,
-    marginRight,
-    marginBottom,
-    marginLeft,
+    ...marginStyles,
     backgroundColor: 'transparent',
     background: 'transparent',
-  };
+  } as React.CSSProperties;
 
   if (isEditing) {
     return (
@@ -787,6 +831,14 @@ const VideoElement: React.FC<{
   
   // Strip width-related properties to prevent conflicts with widthByDevice
   const { width: _, maxWidth: __, minWidth: ___, ...cleanContainerStyles } = containerStyles;
+  
+  const finalContainerStyles = !isEditing ? cleanContainerStyles : {
+    ...cleanContainerStyles,
+    marginTop: undefined,
+    marginRight: undefined,
+    marginBottom: undefined,
+    marginLeft: undefined,
+  };
   
   // Normalize widthByDevice for older content that may not have all device types
   const normalizedWidthByDevice = {
@@ -910,7 +962,7 @@ const VideoElement: React.FC<{
     return (
       <div 
         className="w-full h-48 bg-muted flex items-center justify-center border-2 border-dashed border-border rounded-lg"
-        style={cleanContainerStyles}
+        style={finalContainerStyles}
       >
         <p className="text-sm text-muted-foreground">Add a video URL in the properties panel</p>
       </div>
@@ -921,7 +973,7 @@ const VideoElement: React.FC<{
     return (
       <div 
         className="w-full h-48 bg-muted flex items-center justify-center border-2 border-dashed border-border rounded-lg"
-        style={cleanContainerStyles}
+        style={finalContainerStyles}
       >
         <p className="text-sm text-muted-foreground">Add custom embed code in the properties panel</p>
       </div>
@@ -934,7 +986,7 @@ const VideoElement: React.FC<{
   if (videoType === 'embed' && embedCode) {
     const sanitizedCode = sanitizeEmbedCode(embedCode);
     return (
-      <div className={`${widthClasses} aspect-video`} style={cleanContainerStyles}>
+      <div className={`${widthClasses} aspect-video`} style={finalContainerStyles}>
         <div 
           className="w-full h-full"
           dangerouslySetInnerHTML={{ __html: sanitizedCode }}
@@ -950,7 +1002,7 @@ const VideoElement: React.FC<{
     if (videoInfo.type === 'hosted') {
       // Direct video file
       return (
-        <div className={`${widthClasses} aspect-video`} style={cleanContainerStyles}>
+        <div className={`${widthClasses} aspect-video`} style={finalContainerStyles}>
           <video
             src={url}
             controls={controls}
@@ -973,7 +1025,7 @@ const VideoElement: React.FC<{
       });
 
       return (
-        <div className={`${widthClasses} aspect-video`} style={cleanContainerStyles}>
+        <div className={`${widthClasses} aspect-video`} style={finalContainerStyles}>
           <iframe
             src={finalEmbedUrl}
             className="w-full h-full rounded-lg"
@@ -990,7 +1042,7 @@ const VideoElement: React.FC<{
   return (
     <div 
       className={`${widthClasses} aspect-video bg-muted flex items-center justify-center border-2 border-dashed border-border rounded-lg`}
-      style={cleanContainerStyles}
+      style={finalContainerStyles}
     >
       <p className="text-sm text-muted-foreground">
         {videoType === 'url' ? 'Invalid video URL' : 'No video content'}
