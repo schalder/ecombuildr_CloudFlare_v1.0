@@ -3,7 +3,7 @@ import { usePixelTracking } from '@/hooks/usePixelTracking';
 import { usePixelContext } from '@/components/pixel/PixelManager';
 import { createCartItem, mergeCartItems } from '@/lib/cart';
 
-interface CartItem {
+export interface CartItem {
   id: string;
   productId: string;
   name: string;
