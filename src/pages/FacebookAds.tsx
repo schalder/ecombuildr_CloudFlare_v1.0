@@ -30,28 +30,28 @@ export default function FacebookAds() {
     return { startDate, endDate: new Date() };
   }, [dateRange]);
   
-  const selectedFunnel = funnels.find(f => f.id === selectedFunnelId);
-  
   const { analytics, loading, error } = useFacebookPixelAnalytics(
     store?.id || '', 
     dateRangeObj,
     selectedWebsiteId === 'all' ? undefined : selectedWebsiteId,
-    selectedFunnelId === 'all' ? undefined : selectedFunnel?.slug
+    selectedFunnelId === 'all' ? undefined : funnels.find(f => f.id === selectedFunnelId)?.slug
   );
 
-  // Get pixel ID based on selection
+  // Get pixel ID based on selection - only website/funnel level pixels
   const selectedWebsite = websites.find(w => w.id === selectedWebsiteId);
+  const selectedFunnel = funnels.find(f => f.id === selectedFunnelId);
+  
   const hasPixelId = selectedWebsiteId !== 'all' 
     ? selectedWebsite?.facebook_pixel_id
     : selectedFunnelId !== 'all'
-    ? store?.facebook_pixel_id
-    : store?.facebook_pixel_id || websites.some(w => w.facebook_pixel_id);
+    ? selectedFunnel?.settings?.facebook_pixel_id
+    : websites.some(w => w.facebook_pixel_id) || funnels.some(f => f.settings?.facebook_pixel_id);
   
   const displayPixelId = selectedWebsiteId !== 'all' 
     ? selectedWebsite?.facebook_pixel_id 
     : selectedFunnelId !== 'all'
-    ? store?.facebook_pixel_id
-    : store?.facebook_pixel_id || 'Multiple';
+    ? selectedFunnel?.settings?.facebook_pixel_id
+    : 'Multiple';
 
   // Refresh function to manually refresh all data
   const handleRefresh = async () => {
@@ -171,14 +171,14 @@ export default function FacebookAds() {
                     {selectedWebsiteId !== 'all' 
                       ? `The selected website "${selectedWebsite?.name}" doesn't have a Facebook Pixel ID configured.`
                       : selectedFunnelId !== 'all'
-                      ? `To track funnel events, configure your Facebook Pixel ID in store settings.`
-                      : 'To track Facebook pixel events, you need to configure Facebook Pixel ID in store settings or website settings.'
+                      ? `The selected funnel "${selectedFunnel?.name}" doesn't have a Facebook Pixel ID configured.`
+                      : 'To track Facebook pixel events, you need to configure Facebook Pixel ID in your website or funnel settings.'
                     }
                   </p>
                   <Button variant="outline" size="sm" className="mt-3" asChild>
-                    <a href={selectedWebsiteId !== 'all' ? "/dashboard/websites" : "/dashboard/settings/store"}>
+                    <a href={selectedWebsiteId !== 'all' ? "/dashboard/websites" : selectedFunnelId !== 'all' ? "/dashboard/funnels" : "/dashboard/websites"}>
                       <Settings className="h-4 w-4 mr-2" />
-                      {selectedWebsiteId !== 'all' ? 'Configure Website Pixel' : 'Configure Store Pixel'}
+                      {selectedWebsiteId !== 'all' ? 'Configure Website Pixel' : selectedFunnelId !== 'all' ? 'Configure Funnel Pixel' : 'Configure Pixels'}
                     </a>
                   </Button>
                 </div>

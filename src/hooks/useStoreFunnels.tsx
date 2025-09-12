@@ -10,6 +10,7 @@ interface Funnel {
   canonical_domain: string | null;
   is_published: boolean;
   is_active: boolean;
+  settings?: any;
 }
 
 export const useStoreFunnels = (storeId: string) => {
@@ -27,7 +28,7 @@ export const useStoreFunnels = (storeId: string) => {
 
       const { data, error } = await supabase
         .from('funnels')
-        .select('id, name, slug, domain, canonical_domain, is_published, is_active')
+        .select('id, name, slug, domain, canonical_domain, is_published, is_active, settings')
         .eq('store_id', storeId)
         .eq('is_active', true)
         .order('created_at');

@@ -139,7 +139,7 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
       favicon_url: website.settings?.favicon_url || '',
       header_tracking_code: website.settings?.header_tracking_code || '',
       footer_tracking_code: website.settings?.footer_tracking_code || '',
-      facebook_pixel_id: (website as any).facebook_pixel_id || website.settings?.facebook_pixel_id || '',
+      facebook_pixel_id: website.settings?.facebook_pixel_id || '',
       google_analytics_id: website.settings?.google_analytics_id || '',
       google_ads_id: website.settings?.google_ads_id || '',
       currency_code: website.settings?.currency?.code || 'BDT',

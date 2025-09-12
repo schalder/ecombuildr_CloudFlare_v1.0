@@ -2399,10 +2399,7 @@ export type Database = {
           created_at: string | null
           description: string | null
           domain: string | null
-          facebook_pixel_id: string | null
           favicon_url: string | null
-          google_ads_id: string | null
-          google_analytics_id: string | null
           id: string
           is_active: boolean | null
           logo_url: string | null
@@ -2419,10 +2416,7 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           domain?: string | null
-          facebook_pixel_id?: string | null
           favicon_url?: string | null
-          google_ads_id?: string | null
-          google_analytics_id?: string | null
           id?: string
           is_active?: boolean | null
           logo_url?: string | null
@@ -2439,10 +2433,7 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           domain?: string | null
-          facebook_pixel_id?: string | null
           favicon_url?: string | null
-          google_ads_id?: string | null
-          google_analytics_id?: string | null
           id?: string
           is_active?: boolean | null
           logo_url?: string | null
