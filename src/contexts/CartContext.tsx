@@ -2,6 +2,7 @@ import React, { createContext, useContext, useReducer, useEffect, useState } fro
 import { usePixelTracking } from '@/hooks/usePixelTracking';
 import { usePixelContext } from '@/components/pixel/PixelManager';
 import { createCartItem, mergeCartItems } from '@/lib/cart';
+import { useChannelContext } from '@/hooks/useChannelContext';
 
 interface CartItem {
   id: string;
@@ -110,7 +111,8 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children, storeId })
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const pixelContext = usePixelContext();
   const pixels = pixelContext?.pixels;
-  const { trackAddToCart } = usePixelTracking(pixels, storeId);
+  const { websiteId: resolvedWebsiteId, funnelId: resolvedFunnelId } = useChannelContext();
+  const { trackAddToCart } = usePixelTracking(pixels, storeId, resolvedWebsiteId, resolvedFunnelId);
 
   // Create store-specific cart key
   const getCartKey = (id?: string) => id ? `cart_${id}` : 'cart_global';

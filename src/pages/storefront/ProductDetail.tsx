@@ -5,6 +5,7 @@ import { useStore } from '@/contexts/StoreContext';
 import { useAddToCart } from '@/contexts/AddToCartProvider';
 import { usePixelTracking } from '@/hooks/usePixelTracking';
 import { usePixelContext } from '@/components/pixel/PixelManager';
+import { useChannelContext } from '@/hooks/useChannelContext';
 import { StorefrontLayout } from '@/components/storefront/StorefrontLayout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -60,7 +61,8 @@ export const ProductDetail: React.FC = () => {
   const navigate = useNavigate();
   const paths = useEcomPaths();
   const { pixels } = usePixelContext();
-  const { trackViewContent } = usePixelTracking(pixels, store?.id);
+  const { websiteId: resolvedWebsiteId, funnelId: resolvedFunnelId } = useChannelContext();
+  const { trackViewContent } = usePixelTracking(pixels, store?.id, resolvedWebsiteId, resolvedFunnelId);
   
   // Detect if we're in a website context (either system domain or custom domain)
   const isCustomDomain = () => {

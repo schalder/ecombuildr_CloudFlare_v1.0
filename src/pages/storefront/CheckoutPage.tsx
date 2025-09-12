@@ -512,6 +512,24 @@ useEffect(() => {
     }
   }, [currentStep, hasTrackedCheckout, finalTotal, items, trackInitiateCheckout, store]);
 
+  // Track add payment info when payment method is selected
+  useEffect(() => {
+    if (form.payment_method && currentStep >= 3 && items.length > 0) {
+      trackAddPaymentInfo({
+        currency: 'BDT',
+        value: finalTotal,
+        payment_type: form.payment_method,
+        items: items.map(item => ({
+          item_id: item.productId,
+          item_name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          item_variant: item.variation ? JSON.stringify(item.variation) : undefined,
+        })),
+      });
+    }
+  }, [form.payment_method, currentStep, finalTotal, items, trackAddPaymentInfo]);
+
   const checkoutContent = (
     <div className="max-w-4xl mx-auto">
       <div className="text-center mb-8">
