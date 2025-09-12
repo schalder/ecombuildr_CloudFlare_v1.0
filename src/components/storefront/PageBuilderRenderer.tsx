@@ -190,7 +190,7 @@ export const PageBuilderRenderer: React.FC<PageBuilderRendererProps> = ({
       )}
       
       {/* Render sections in preview mode for storefront */}
-      <div className="space-y-0">
+      <div>
         {data.sections.map((section, index) => (
           <SectionRenderer
             key={section.id}

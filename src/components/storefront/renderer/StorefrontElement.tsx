@@ -3,6 +3,7 @@ import { PageBuilderElement } from '@/components/page-builder/types';
 import { storefrontRegistry } from '../registry/storefrontRegistry';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
 import { Skeleton } from '@/components/ui/skeleton';
+import { mergeResponsiveStyles } from '@/components/page-builder/utils/responsiveStyles';
 
 interface StorefrontElementProps {
   element: PageBuilderElement;
@@ -120,10 +121,21 @@ export const StorefrontElement: React.FC<StorefrontElementProps> = ({
 
   const ElementComponent = elementDef.component;
 
+  // Apply user-defined margins consistently with editor
+  const mergedStyles = mergeResponsiveStyles({}, element.styles, deviceType);
+  
+  const userDefinedMargins = {
+    marginTop: mergedStyles.marginTop,
+    marginBottom: mergedStyles.marginBottom,
+    marginLeft: mergedStyles.marginLeft,
+    marginRight: mergedStyles.marginRight,
+  };
+
   return (
     <div 
       id={element.anchor}
       data-pb-element-id={element.id}
+      style={userDefinedMargins}
     >
       <ErrorBoundary
         fallback={({ retry }) => (
