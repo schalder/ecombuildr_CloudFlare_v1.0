@@ -152,7 +152,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
               </div>
             </div>
           ) : (
-            <div>
+            <div className="space-y-0">
                {pageData.sections.map((section, index) => (
                  <SectionRenderer
                    key={section.id}

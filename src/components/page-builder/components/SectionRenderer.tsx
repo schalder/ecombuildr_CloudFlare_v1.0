@@ -250,7 +250,7 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({
             )}
           </div>
         ) : (
-          <div>
+          <div className="space-y-0">
             {section.rows.map((row, rowIndex) => (
               <RowRenderer
                 key={row.id}
