@@ -47,9 +47,9 @@ export function generateResponsiveCSS(elementId: string, styles: any): string {
   const finalHoverBg = dHoverBg || baseHoverBg;
   if (finalHoverColor || finalHoverBg) {
     const hoverPairs: string[] = [];
-    if (finalHoverColor) hoverPairs.push(`color: ${finalHoverColor} !important`);
-    if (finalHoverBg) hoverPairs.push(`background-color: ${finalHoverBg} !important`);
-    css += `.element-${elementId}:hover { ${hoverPairs.join('; ')}; transition: all 0.2s ease; }`;
+    if (finalHoverColor) hoverPairs.push(`color: ${finalHoverColor}`);
+    if (finalHoverBg) hoverPairs.push(`background-color: ${finalHoverBg}`);
+    css += `.element-${elementId}:hover { ${hoverPairs.join('; ')}; transition: color 0.2s ease, background-color 0.2s ease; }`;
   }
   
   // Tablet styles (768px to 1023px)
@@ -64,9 +64,9 @@ export function generateResponsiveCSS(elementId: string, styles: any): string {
       if (tabletProps) css += `.element-${elementId} { ${tabletProps}; }`;
       if (tHoverColor || tHoverBg) {
         const hoverPairs: string[] = [];
-        if (tHoverColor) hoverPairs.push(`color: ${tHoverColor} !important`);
-        if (tHoverBg) hoverPairs.push(`background-color: ${tHoverBg} !important`);
-        css += `.element-${elementId}:hover { ${hoverPairs.join('; ')}; transition: all 0.2s ease; }`;
+        if (tHoverColor) hoverPairs.push(`color: ${tHoverColor}`);
+        if (tHoverBg) hoverPairs.push(`background-color: ${tHoverBg}`);
+        css += `.element-${elementId}:hover { ${hoverPairs.join('; ')}; transition: color 0.2s ease, background-color 0.2s ease; }`;
       }
       css += ` }`;
     }
@@ -77,9 +77,9 @@ export function generateResponsiveCSS(elementId: string, styles: any): string {
     }
     if (tHoverColor || tHoverBg) {
       const hoverPairs: string[] = [];
-      if (tHoverColor) hoverPairs.push(`color: ${tHoverColor} !important`);
-      if (tHoverBg) hoverPairs.push(`background-color: ${tHoverBg} !important`);
-      css += `.pb-tablet .element-${elementId}:hover { ${hoverPairs.join('; ')}; transition: all 0.2s ease; }`;
+      if (tHoverColor) hoverPairs.push(`color: ${tHoverColor}`);
+      if (tHoverBg) hoverPairs.push(`background-color: ${tHoverBg}`);
+      css += `.pb-tablet .element-${elementId}:hover { ${hoverPairs.join('; ')}; transition: color 0.2s ease, background-color 0.2s ease; }`;
     }
   }
   
@@ -95,9 +95,9 @@ export function generateResponsiveCSS(elementId: string, styles: any): string {
       if (mobileProps) css += `.element-${elementId} { ${mobileProps}; }`;
       if (mHoverColor || mHoverBg) {
         const hoverPairs: string[] = [];
-        if (mHoverColor) hoverPairs.push(`color: ${mHoverColor} !important`);
-        if (mHoverBg) hoverPairs.push(`background-color: ${mHoverBg} !important`);
-        css += `.element-${elementId}:hover { ${hoverPairs.join('; ')}; transition: all 0.2s ease; }`;
+        if (mHoverColor) hoverPairs.push(`color: ${mHoverColor}`);
+        if (mHoverBg) hoverPairs.push(`background-color: ${mHoverBg}`);
+        css += `.element-${elementId}:hover { ${hoverPairs.join('; ')}; transition: color 0.2s ease, background-color 0.2s ease; }`;
       }
       css += ` }`;
     }
@@ -108,12 +108,48 @@ export function generateResponsiveCSS(elementId: string, styles: any): string {
     }
     if (mHoverColor || mHoverBg) {
       const hoverPairs: string[] = [];
-      if (mHoverColor) hoverPairs.push(`color: ${mHoverColor} !important`);
-      if (mHoverBg) hoverPairs.push(`background-color: ${mHoverBg} !important`);
-      css += `.pb-mobile .element-${elementId}:hover { ${hoverPairs.join('; ')}; transition: all 0.2s ease; }`;
+      if (mHoverColor) hoverPairs.push(`color: ${mHoverColor}`);
+      if (mHoverBg) hoverPairs.push(`background-color: ${mHoverBg}`);
+      css += `.pb-mobile .element-${elementId}:hover { ${hoverPairs.join('; ')}; transition: color 0.2s ease, background-color 0.2s ease; }`;
     }
   }
   
+  
+  // Add image alignment CSS rules
+  const imageAlignmentCSS = generateImageAlignmentCSS(elementId, styles);
+  if (imageAlignmentCSS) {
+    css += imageAlignmentCSS;
+  }
+  
+  return css;
+}
+
+// Generate CSS for image alignment to ensure it works on live pages
+function generateImageAlignmentCSS(elementId: string, styles: any): string {
+  if (!styles || !styles.content) return '';
+  
+  const { alignment } = styles.content;
+  if (!alignment) return '';
+  
+  let css = '';
+  
+  // Base alignment styles
+  if (alignment === 'full') {
+    css += `.element-${elementId} { width: 100% !important; margin-left: 0 !important; margin-right: 0 !important; }`;
+  } else {
+    switch (alignment) {
+      case 'left':
+        css += `.element-${elementId} { margin-left: 0 !important; margin-right: auto !important; }`;
+        break;
+      case 'right':
+        css += `.element-${elementId} { margin-left: auto !important; margin-right: 0 !important; }`;
+        break;
+      case 'center':
+      default:
+        css += `.element-${elementId} { margin-left: auto !important; margin-right: auto !important; }`;
+        break;
+    }
+  }
   
   return css;
 }

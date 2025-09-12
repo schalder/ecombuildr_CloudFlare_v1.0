@@ -156,11 +156,32 @@ const ImageElement: React.FC<{
     }
   }, [src]);
 
-  // Generate responsive CSS for this element
-  const responsiveCSS = React.useMemo(() => 
-    generateResponsiveCSS(element.id, element.styles), 
-    [element.id, element.styles]
-  );
+  // Generate responsive CSS for this element including alignment
+  const responsiveCSS = React.useMemo(() => {
+    const baseCSS = generateResponsiveCSS(element.id, element.styles);
+    
+    // Add image-specific alignment CSS
+    let alignmentCSS = '';
+    if (alignment === 'full') {
+      alignmentCSS += `.element-${element.id} { width: 100% !important; margin-left: 0 !important; margin-right: 0 !important; }`;
+    } else {
+      switch (alignment) {
+        case 'left':
+          alignmentCSS += `.element-${element.id} { margin-left: 0 !important; margin-right: auto !important; }`;
+          break;
+        case 'right':
+          alignmentCSS += `.element-${element.id} { margin-left: auto !important; margin-right: 0 !important; }`;
+          break;
+        case 'center':
+        default:
+          alignmentCSS += `.element-${element.id} { margin-left: auto !important; margin-right: auto !important; }`;
+          break;
+      }
+    }
+    
+    console.log(`Image alignment CSS for ${element.id}:`, alignmentCSS);
+    return baseCSS + alignmentCSS;
+  }, [element.id, element.styles, alignment]);
 
   // Get container styles using the shared renderer
   const getContainerStyles = (): React.CSSProperties => {
@@ -182,37 +203,13 @@ const ImageElement: React.FC<{
     return cleanStyles;
   };
 
-  // Calculate image styles with alignment and border (width handled by responsive CSS)
+  // Calculate image styles with border only (alignment handled by CSS)
   const getImageStyles = (): React.CSSProperties => {
     const baseStyles = {
       height: element.styles?.height || 'auto',
       objectFit: element.styles?.objectFit || 'cover',
       display: 'block'
     } as React.CSSProperties;
-
-    // Apply alignment as margin styles directly to the image
-    if (alignment === 'full') {
-      baseStyles.width = '100%';
-      baseStyles.marginLeft = '0';
-      baseStyles.marginRight = '0';
-    } else {
-      // Apply alignment
-      switch (alignment) {
-        case 'left':
-          baseStyles.marginLeft = '0';
-          baseStyles.marginRight = 'auto';
-          break;
-        case 'right':
-          baseStyles.marginLeft = 'auto';
-          baseStyles.marginRight = '0';
-          break;
-        case 'center':
-        default:
-          baseStyles.marginLeft = 'auto';
-          baseStyles.marginRight = 'auto';
-          break;
-      }
-    }
 
     // Apply border styles directly to the image
     if (element.styles?.borderWidth) {
