@@ -471,15 +471,15 @@ const CartFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 'des
   return (
     <div className={`cart-element-${element.id}`} style={elementStyles}>
       <div className="max-w-6xl mx-auto">
-        <div className="grid lg:grid-cols-[1fr_400px] gap-8">
+        <div className="grid lg:grid-cols-[1fr_400px] gap-4 lg:gap-8">
           {/* Cart Table */}
-          <div className="space-y-6">
+          <div className="space-y-6 px-4 sm:px-6 lg:px-8">
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead>
+                <thead className="hidden sm:table-header-group">
                   <tr className="border-b border-border">
                     <th 
-                      className="text-left py-4 font-medium text-sm uppercase tracking-wider"
+                      className="text-left py-3 sm:py-4 font-medium text-xs sm:text-sm uppercase tracking-wider"
                       style={{
                         color: elementStyles.color,
                         fontFamily: elementStyles.fontFamily
@@ -488,7 +488,7 @@ const CartFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 'des
                       PRODUCT
                     </th>
                     <th 
-                      className="text-center py-4 font-medium text-sm uppercase tracking-wider"
+                      className="text-center py-3 sm:py-4 font-medium text-xs sm:text-sm uppercase tracking-wider hidden md:table-cell"
                       style={{
                         color: elementStyles.color,
                         fontFamily: elementStyles.fontFamily
@@ -497,7 +497,7 @@ const CartFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 'des
                       PRICE
                     </th>
                     <th 
-                      className="text-center py-4 font-medium text-sm uppercase tracking-wider"
+                      className="text-center py-3 sm:py-4 font-medium text-xs sm:text-sm uppercase tracking-wider"
                       style={{
                         color: elementStyles.color,
                         fontFamily: elementStyles.fontFamily
@@ -506,7 +506,7 @@ const CartFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 'des
                       QUANTITY
                     </th>
                     <th 
-                      className="text-right py-4 font-medium text-sm uppercase tracking-wider"
+                      className="text-right py-3 sm:py-4 font-medium text-xs sm:text-sm uppercase tracking-wider hidden sm:table-cell"
                       style={{
                         color: elementStyles.color,
                         fontFamily: elementStyles.fontFamily
@@ -514,46 +514,72 @@ const CartFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 'des
                     >
                       SUBTOTAL
                     </th>
-                    <th className="w-8"></th>
                   </tr>
                 </thead>
                 <tbody>
                   {items.map((item) => (
                     <tr key={item.id} className="border-b border-border">
-                      <td className="py-6">
-                        <div className="flex items-center gap-4">
-                          {item.image && (
-                            <img 
-                              src={item.image} 
-                              alt={item.name} 
-                              className="w-20 h-20 object-cover rounded border shrink-0" 
-                            />
-                          )}
-                          <div className="min-w-0">
-                            <div 
-                              className="font-medium text-base break-words"
-                              style={{
-                                color: elementStyles.color,
-                                fontFamily: elementStyles.fontFamily,
-                                lineHeight: elementStyles.lineHeight
-                              }}
-                            >
-                              {item.name}
-                            </div>
-                            {(item as any).variation && (
+                      {/* Mobile-first responsive layout */}
+                      <td className="py-4 sm:py-6">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+                          <div className="flex items-start gap-3">
+                            {item.image && (
+                              <img 
+                                src={item.image} 
+                                alt={item.name} 
+                                className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded border shrink-0" 
+                              />
+                            )}
+                            <div className="min-w-0 flex-1">
                               <div 
-                                className="text-sm text-muted-foreground mt-1"
+                                className="font-medium text-sm sm:text-base break-words"
                                 style={{
-                                  fontFamily: elementStyles.fontFamily
+                                  color: elementStyles.color,
+                                  fontFamily: elementStyles.fontFamily,
+                                  lineHeight: elementStyles.lineHeight
                                 }}
                               >
-                                {formatVariant((item as any).variation)}
+                                {item.name}
                               </div>
-                            )}
+                              {(item as any).variation && (
+                                <div 
+                                  className="text-xs sm:text-sm text-muted-foreground mt-1"
+                                  style={{
+                                    fontFamily: elementStyles.fontFamily
+                                  }}
+                                >
+                                  {formatVariant((item as any).variation)}
+                                </div>
+                              )}
+                              {/* Remove button below title on mobile */}
+                              <div className="mt-2">
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  className="h-6 px-2 text-xs text-muted-foreground hover:text-destructive"
+                                  onClick={() => removeItem(item.id)}
+                                >
+                                  Remove
+                                </Button>
+                              </div>
+                              {/* Price on mobile */}
+                              <div className="mt-2 sm:hidden">
+                                <span 
+                                  className="font-medium text-sm"
+                                  style={{
+                                    color: elementStyles.color,
+                                    fontFamily: elementStyles.fontFamily
+                                  }}
+                                >
+                                  {formatCurrency(item.price)}
+                                </span>
+                              </div>
+                            </div>
                           </div>
                         </div>
                       </td>
-                      <td className="py-6 text-center">
+                      {/* Price column - hidden on mobile, shown on desktop */}
+                      <td className="py-4 sm:py-6 text-center hidden md:table-cell">
                         <span 
                           className="font-medium"
                           style={{
@@ -564,18 +590,19 @@ const CartFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 'des
                           {formatCurrency(item.price)}
                         </span>
                       </td>
-                      <td className="py-6">
+                      {/* Quantity column */}
+                      <td className="py-4 sm:py-6">
                         <div className="flex items-center justify-center gap-2">
                           <Button 
                             variant="outline" 
                             size="sm" 
-                            className="w-8 h-8 p-0"
+                            className="w-8 h-8 p-0 text-xs"
                             onClick={() => updateQuantity(item.id, Math.max(1, item.quantity-1))}
                           >
                             -
                           </Button>
                           <span 
-                            className="w-12 text-center font-medium"
+                            className="w-8 sm:w-12 text-center font-medium text-sm"
                             style={{
                               color: elementStyles.color,
                               fontFamily: elementStyles.fontFamily
@@ -586,14 +613,27 @@ const CartFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 'des
                           <Button 
                             variant="outline" 
                             size="sm" 
-                            className="w-8 h-8 p-0"
+                            className="w-8 h-8 p-0 text-xs"
                             onClick={() => updateQuantity(item.id, item.quantity+1)}
                           >
                             +
                           </Button>
                         </div>
+                        {/* Subtotal on mobile */}
+                        <div className="mt-2 text-center sm:hidden">
+                          <span 
+                            className="font-semibold text-sm"
+                            style={{
+                              color: elementStyles.color,
+                              fontFamily: elementStyles.fontFamily
+                            }}
+                          >
+                            {formatCurrency(item.price * item.quantity)}
+                          </span>
+                        </div>
                       </td>
-                      <td className="py-6 text-right">
+                      {/* Subtotal column - hidden on mobile */}
+                      <td className="py-4 sm:py-6 text-right hidden sm:table-cell">
                         <span 
                           className="font-semibold"
                           style={{
@@ -603,16 +643,6 @@ const CartFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 'des
                         >
                           {formatCurrency(item.price * item.quantity)}
                         </span>
-                      </td>
-                      <td className="py-6 text-right">
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="w-8 h-8 p-0 text-muted-foreground hover:text-destructive"
-                          onClick={() => removeItem(item.id)}
-                        >
-                          ×
-                        </Button>
                       </td>
                     </tr>
                   ))}
