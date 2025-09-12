@@ -56,9 +56,6 @@ const HeadingElement: React.FC<{
 
   const className = [`element-${element.id}`, 'outline-none font-bold block rounded'].join(' ');
 
-  // Inject responsive CSS into document head
-  useHeadStyle(`element-responsive-${element.id}`, generateResponsiveCSS(element.id, element.styles));
-
   return (
     <Tag style={finalStyles} className={className}>
         {isEditing ? (
@@ -117,9 +114,6 @@ const ParagraphElement: React.FC<{
   } as React.CSSProperties;
 
   const className = [`element-${element.id}`, 'outline-none rounded'].join(' ');
-
-  // Inject responsive CSS into document head
-  useHeadStyle(`element-responsive-${element.id}`, generateResponsiveCSS(element.id, element.styles));
 
   return (
     <div style={finalStyles} className={className}>
