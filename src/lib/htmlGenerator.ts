@@ -1,5 +1,6 @@
 import { PageBuilderData } from '@/components/page-builder/types';
 import { SEOConfig } from './seo';
+import { generateResponsiveCSS } from '@/components/page-builder/utils/responsiveStyles';
 
 export interface HTMLGenerationOptions {
   title?: string;
@@ -315,6 +316,9 @@ function generateElementHTML(element: any): string {
   const customJS = element.content?.customJS;
   const elementId = element.anchor || `element-${element.id}`;
   
+  // Generate responsive CSS for this element
+  const responsiveCSS = generateResponsiveCSS(element.id, element.styles);
+  
   let elementHTML = '';
   
   switch (element.type) {
@@ -347,8 +351,13 @@ function generateElementHTML(element: any): string {
   }
   
   // Wrap element with container that has the anchor ID if needed
-  const needsWrapper = customCSS || customJS || element.anchor;
+  const needsWrapper = customCSS || customJS || element.anchor || responsiveCSS;
   let result = needsWrapper ? `<div id="${elementId}">${elementHTML}</div>` : elementHTML;
+  
+  // Add responsive CSS if present
+  if (responsiveCSS) {
+    result = `<style>${responsiveCSS}</style>` + result;
+  }
   
   // Add custom CSS if present
   if (customCSS) {
