@@ -17,7 +17,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { formatCurrency } from '@/lib/currency';
 import { generateResponsiveCSS, mergeResponsiveStyles } from '@/components/page-builder/utils/responsiveStyles';
-import { getEffectiveResponsiveValue } from '@/components/page-builder/utils/responsiveHelpers';
 import { computeOrderShipping, getAvailableShippingOptions, applyShippingOptionToForm } from '@/lib/shipping-enhanced';
 import type { CartItem, ShippingOption } from '@/lib/shipping-enhanced';
 import { ShippingOptionsPicker } from '@/components/storefront/ShippingOptionsPicker';
@@ -607,18 +606,15 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
     }
   };
 
-  // Calculate responsive padding for the checkout element
-  const paddingTop = getEffectiveResponsiveValue(element, 'paddingTop', deviceType, '0');
-  const paddingRight = getEffectiveResponsiveValue(element, 'paddingRight', deviceType, '0');
-  const paddingBottom = getEffectiveResponsiveValue(element, 'paddingBottom', deviceType, '0');
-  const paddingLeft = getEffectiveResponsiveValue(element, 'paddingLeft', deviceType, '0');
-
+  // Calculate responsive padding for the checkout element using mergeResponsiveStyles
+  const mergedStyles = mergeResponsiveStyles({}, element.styles, deviceType);
+  
   const checkoutPadding = useMemo(() => ({
-    paddingTop,
-    paddingRight, 
-    paddingBottom,
-    paddingLeft
-  }), [paddingTop, paddingRight, paddingBottom, paddingLeft]);
+    paddingTop: mergedStyles.paddingTop || '0',
+    paddingRight: mergedStyles.paddingRight || '0', 
+    paddingBottom: mergedStyles.paddingBottom || '0',
+    paddingLeft: mergedStyles.paddingLeft || '0'
+  }), [mergedStyles.paddingTop, mergedStyles.paddingRight, mergedStyles.paddingBottom, mergedStyles.paddingLeft]);
 
   // Show preview placeholder when no store context is available (like in admin template editor)
   if (!store) {

@@ -31,7 +31,6 @@ import { useChannelContext } from '@/hooks/useChannelContext';
 import { getAvailableShippingOptions, type ShippingOption } from '@/lib/shipping-enhanced';
 import { ShippingOptionsPicker } from '@/components/storefront/ShippingOptionsPicker';
 import { useHeadStyle } from '@/hooks/useHeadStyle';
-import { getEffectiveResponsiveValue } from '@/components/page-builder/utils/responsiveHelpers';
 
 const CartSummaryElement: React.FC<{ element: PageBuilderElement }> = () => {
   const { items, total, updateQuantity, removeItem } = useCart();
@@ -1167,17 +1166,14 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
     return <div className="text-center text-muted-foreground">Your cart is empty.</div>;
   }
 
-  // Calculate responsive padding for the checkout element
-  const paddingTop = getEffectiveResponsiveValue(element, 'paddingTop', deviceType, '0');
-  const paddingRight = getEffectiveResponsiveValue(element, 'paddingRight', deviceType, '0');
-  const paddingBottom = getEffectiveResponsiveValue(element, 'paddingBottom', deviceType, '0');
-  const paddingLeft = getEffectiveResponsiveValue(element, 'paddingLeft', deviceType, '0');
-
+  // Calculate responsive padding for the checkout element using mergeResponsiveStyles
+  const mergedStyles = mergeResponsiveStyles({}, element.styles, deviceType);
+  
   const checkoutPadding = {
-    paddingTop,
-    paddingRight, 
-    paddingBottom,
-    paddingLeft
+    paddingTop: mergedStyles.paddingTop || '0',
+    paddingRight: mergedStyles.paddingRight || '0', 
+    paddingBottom: mergedStyles.paddingBottom || '0',
+    paddingLeft: mergedStyles.paddingLeft || '0'
   };
 
   return (
