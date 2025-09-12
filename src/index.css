@@ -231,6 +231,11 @@ All colors MUST be HSL. Designed for trust, energy, and conversion.
   margin-bottom: 0 !important;
 }
 
+/* When toolbar is present as first child, also remove margin on the first content element */
+[data-pb-element-id] > [data-pb-toolbar] + * {
+  margin-top: 0 !important;
+}
+
 /* Reset button margins specifically in page builder to prevent inconsistent gaps */
 [data-pb-element-id] button,
 [data-pb-element-id] a[role="button"],

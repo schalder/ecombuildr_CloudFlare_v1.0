@@ -2258,7 +2258,7 @@ const ElementWrapper: React.FC<ElementWrapperProps> = ({
     >
       {/* Element Toolbar */}
       {shouldShowToolbar && (
-        <div className="absolute -top-8 left-0 z-40 flex items-center gap-1 bg-amber-100 text-gray-800 border border-amber-200 px-2 py-1 rounded text-xs shadow-lg">
+        <div data-pb-toolbar className="absolute -top-8 left-0 z-40 flex items-center gap-1 bg-amber-100 text-gray-800 border border-amber-200 px-2 py-1 rounded text-xs shadow-lg">
           <div 
             ref={dragRef}
             className="flex items-center cursor-move hover:bg-gray-100 p-1 rounded"
