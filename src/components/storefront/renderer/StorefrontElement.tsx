@@ -3,6 +3,7 @@ import { PageBuilderElement } from '@/components/page-builder/types';
 import { storefrontRegistry } from '../registry/storefrontRegistry';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
 import { Skeleton } from '@/components/ui/skeleton';
+import { mergeResponsiveStylesEnhanced } from '@/components/page-builder/utils/responsiveHelpers';
 
 interface StorefrontElementProps {
   element: PageBuilderElement;
@@ -120,10 +121,23 @@ export const StorefrontElement: React.FC<StorefrontElementProps> = ({
 
   const ElementComponent = elementDef.component;
 
+  // Apply only outer spacing to avoid inner element margin resets
+  const getWrapperSpacingStyles = (): React.CSSProperties => {
+    const merged = mergeResponsiveStylesEnhanced({}, element.styles, deviceType);
+    const style: React.CSSProperties = {};
+    if (merged?.marginTop) style.marginTop = merged.marginTop;
+    if (merged?.marginRight) style.marginRight = merged.marginRight;
+    if (merged?.marginBottom) style.marginBottom = merged.marginBottom;
+    if (merged?.marginLeft) style.marginLeft = merged.marginLeft;
+    return style;
+  };
+
+
   return (
     <div 
       id={element.anchor}
       data-pb-element-id={element.id}
+      style={getWrapperSpacingStyles()}
     >
       <ErrorBoundary
         fallback={({ retry }) => (
