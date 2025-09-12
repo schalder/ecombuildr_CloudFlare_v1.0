@@ -160,21 +160,21 @@ const ImageElement: React.FC<{
   const responsiveCSS = React.useMemo(() => {
     const baseCSS = generateResponsiveCSS(element.id, element.styles);
     
-    // Add image-specific alignment CSS
+    // Add image-specific alignment CSS with proper scoping
     let alignmentCSS = '';
     if (alignment === 'full') {
-      alignmentCSS += `.storefront-page-content .element-${element.id}, .storefront .element-${element.id}, .element-${element.id} { width: 100% !important; margin-left: 0 !important; margin-right: 0 !important; }`;
+      alignmentCSS += `.storefront-page-content .element-${element.id} { width: 100% !important; margin-left: 0 !important; margin-right: 0 !important; }`;
     } else {
       switch (alignment) {
         case 'left':
-          alignmentCSS += `.storefront-page-content .element-${element.id}, .storefront .element-${element.id}, .element-${element.id} { margin-left: 0 !important; margin-right: auto !important; }`;
+          alignmentCSS += `.storefront-page-content .element-${element.id} { margin-left: 0 !important; margin-right: auto !important; }`;
           break;
         case 'right':
-          alignmentCSS += `.storefront-page-content .element-${element.id}, .storefront .element-${element.id}, .element-${element.id} { margin-left: auto !important; margin-right: 0 !important; }`;
+          alignmentCSS += `.storefront-page-content .element-${element.id} { margin-left: auto !important; margin-right: 0 !important; }`;
           break;
         case 'center':
         default:
-          alignmentCSS += `.storefront-page-content .element-${element.id}, .storefront .element-${element.id}, .element-${element.id} { margin-left: auto !important; margin-right: auto !important; }`;
+          alignmentCSS += `.storefront-page-content .element-${element.id} { margin-left: auto !important; margin-right: auto !important; }`;
           break;
       }
     }

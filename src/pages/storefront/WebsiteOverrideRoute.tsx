@@ -3,7 +3,6 @@ import { useParams, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
 import { PageBuilderRenderer } from '@/components/storefront/PageBuilderRenderer';
-import { StorefrontPageBuilder } from '@/components/storefront/renderer/StorefrontPageBuilder';
 import { ScriptManager } from '@/components/storefront/optimized/ScriptManager';
 import { setGlobalCurrency } from '@/lib/currency';
 import { setSEO, buildCanonical } from '@/lib/seo';
@@ -40,8 +39,6 @@ export const WebsiteOverrideRoute: React.FC<WebsiteOverrideRouteProps> = ({ slug
   const websiteId = propsWebsiteId || paramsWebsiteId;
   const [searchParams] = useSearchParams();
   const isPreview = searchParams.get('preview') === '1';
-  const sf = searchParams.get('sf');
-  const useStorefront = sf === '0' ? false : true;
   const [page, setPage] = React.useState<WebsitePageData | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [resolvedWebsiteId, setResolvedWebsiteId] = React.useState<string | null>(null);
@@ -77,7 +74,7 @@ export const WebsiteOverrideRoute: React.FC<WebsiteOverrideRouteProps> = ({ slug
       try {
         let query = supabase
           .from('website_pages')
-          .select(useStorefront ? optimizedWebsitePageQuery.select : '*')
+          .select(optimizedWebsitePageQuery.select)
           .eq('website_id', resolvedWebsiteId)
           .eq('slug', slug);
 
@@ -166,15 +163,7 @@ export const WebsiteOverrideRoute: React.FC<WebsiteOverrideRouteProps> = ({ slug
       favicon: websiteMeta?.settings?.favicon_url,
     });
 
-    // Custom scripts are now handled by ScriptManager for storefront renderer
-    if (!useStorefront && page.custom_scripts) {
-      const scriptElement = document.createElement('div');
-      scriptElement.innerHTML = page.custom_scripts;
-      document.head.appendChild(scriptElement);
-      return () => {
-        document.head.removeChild(scriptElement);
-      };
-    }
+    // Custom scripts are handled by ScriptManager in StorefrontPageBuilder
   }, [page, websiteMeta, isPreview]);
 
   if (loading) {
@@ -193,14 +182,10 @@ export const WebsiteOverrideRoute: React.FC<WebsiteOverrideRouteProps> = ({ slug
       <PerformanceMonitor page={`website-${slug}`} />
       <main>
         {page.content?.sections ? (
-          useStorefront ? (
-            <>
-              <StorefrontPageBuilder data={page.content} />
-              <ScriptManager customScripts={page.custom_scripts} />
-            </>
-          ) : (
+          <>
             <PageBuilderRenderer data={page.content} />
-          )
+            <ScriptManager customScripts={page.custom_scripts} />
+          </>
         ) : (
           <div className="container mx-auto px-4 py-8">
             <h1 className="text-3xl font-bold mb-6">{page.title}</h1>
