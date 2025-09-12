@@ -222,25 +222,25 @@ All colors MUST be HSL. Designed for trust, energy, and conversion.
   }
 }
 
-/* Page Builder - Remove default gaps between elements */
-[data-pb-element-id] > :first-child {
+/* Page Builder (Editor only) - Remove default gaps between elements */
+.page-builder-canvas [data-pb-element-id] > :first-child {
   margin-top: 0 !important;
 }
 
-[data-pb-element-id] > :last-child {
+.page-builder-canvas [data-pb-element-id] > :last-child {
   margin-bottom: 0 !important;
 }
 
 /* When toolbar is present as first child, also remove margin on the first content element */
-[data-pb-element-id] > [data-pb-toolbar] + * {
+.page-builder-canvas [data-pb-element-id] > [data-pb-toolbar] + * {
   margin-top: 0 !important;
 }
 
 /* Reset button margins specifically in page builder to prevent inconsistent gaps */
-[data-pb-element-id] button,
-[data-pb-element-id] a[role="button"],
-[data-pb-element-id] > * button,
-[data-pb-element-id] > * > * button {
+.page-builder-canvas [data-pb-element-id] button,
+.page-builder-canvas [data-pb-element-id] a[role="button"],
+.page-builder-canvas [data-pb-element-id] > * button,
+.page-builder-canvas [data-pb-element-id] > * > * button {
   margin-top: 0 !important;
   margin-bottom: 0 !important;
   margin-left: 0 !important;
@@ -248,8 +248,8 @@ All colors MUST be HSL. Designed for trust, energy, and conversion.
 }
 
 /* Also reset margins on button wrapper divs */
-[data-pb-element-id] > *:has(button),
-[data-pb-element-id] > * > *:has(button) {
+.page-builder-canvas [data-pb-element-id] > *:has(button),
+.page-builder-canvas [data-pb-element-id] > * > *:has(button) {
   margin-top: 0 !important;
   margin-bottom: 0 !important;
 }
