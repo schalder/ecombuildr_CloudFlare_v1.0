@@ -554,12 +554,12 @@ const CartFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 'des
                               {/* Remove button below title on mobile */}
                               <div className="mt-2">
                                 <Button 
-                                  variant="ghost" 
+                                  variant="destructive" 
                                   size="sm" 
-                                  className="h-6 px-2 text-xs text-muted-foreground hover:text-destructive"
+                                  className="h-7 px-3 text-xs font-medium"
                                   onClick={() => removeItem(item.id)}
                                 >
-                                  Remove
+                                  🗑️ Remove
                                 </Button>
                               </div>
                               {/* Price on mobile */}
