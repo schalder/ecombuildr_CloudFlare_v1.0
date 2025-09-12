@@ -346,12 +346,20 @@ const RelatedProductsElement: React.FC<{ element: PageBuilderElement; deviceType
 };
 
 // Full Cart Element
-const CartFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 'desktop' | 'tablet' | 'mobile' }> = ({ element, deviceType = 'desktop' }) => {
+const CartFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 'desktop' | 'tablet' | 'mobile'; isEditing?: boolean }> = ({ element, deviceType = 'desktop', isEditing }) => {
   const { items, total, updateQuantity, removeItem } = useCart();
   const paths = useEcomPaths();
   
   // Apply responsive element styles
   const elementStyles = renderElementStyles(element, deviceType);
+  const shouldApplyMargins = !isEditing;
+  const finalStyles = shouldApplyMargins ? elementStyles : {
+    ...elementStyles,
+    marginTop: undefined,
+    marginRight: undefined,
+    marginBottom: undefined,
+    marginLeft: undefined,
+  };
   
   // Get button styles safely without deep nesting
   const buttonStyles = React.useMemo(() => {
@@ -421,7 +429,7 @@ const CartFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 'des
 
   if (items.length === 0) {
     return (
-      <div className={`cart-element-${element.id}`} style={elementStyles}>
+      <div className={`cart-element-${element.id}`} style={finalStyles}>
         <Card className="max-w-3xl mx-auto">
           <CardHeader>
             <CardTitle 
@@ -469,7 +477,7 @@ const CartFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 'des
   }
   
   return (
-    <div className={`cart-element-${element.id}`} style={elementStyles}>
+    <div className={`cart-element-${element.id}`} style={finalStyles}>
       <div className="max-w-6xl mx-auto">
         <div className="grid lg:grid-cols-[1fr_400px] gap-4 lg:gap-8">
           {/* Cart Table */}
