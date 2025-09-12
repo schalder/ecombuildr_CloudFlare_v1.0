@@ -9,6 +9,7 @@ import { PageBuilderElement } from '../types';
 import { elementRegistry } from './ElementRegistry';
 import { supabase } from '@/integrations/supabase/client';
 import { useParams } from 'react-router-dom';
+import { renderElementStyles, stripElementMargins } from '../utils/styleRenderer';
 
 // Contact Form Element
 const ContactFormElement: React.FC<{
@@ -65,8 +66,11 @@ const ContactFormElement: React.FC<{
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  const elementStyles = renderElementStyles(element, deviceType);
+  const finalStyles = !isEditing ? elementStyles : stripElementMargins(elementStyles);
+
   return (
-    <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-md mx-auto'} p-6 border rounded-lg`} style={element.styles}>
+    <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-md mx-auto'} p-6 border rounded-lg`} style={finalStyles}>
       <h3 className="text-lg font-semibold mb-4">
         {element.content.title || 'Contact Us'}
       </h3>
@@ -173,8 +177,11 @@ const NewsletterElement: React.FC<{
     }
   };
 
+  const elementStyles = renderElementStyles(element, deviceType);
+  const finalStyles = !isEditing ? elementStyles : stripElementMargins(elementStyles);
+
   return (
-    <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-md mx-auto'} p-6 text-center`} style={element.styles}>
+    <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-md mx-auto'} p-6 text-center`} style={finalStyles}>
       <Mail className="h-12 w-12 mx-auto mb-4 text-primary" />
       <h3 className="text-xl font-semibold mb-2">
         {element.content.title || 'Subscribe to Newsletter'}
@@ -210,8 +217,11 @@ const FormFieldElement: React.FC<{
   const label = element.content.label || 'Field Label';
   const placeholder = element.content.placeholder || 'Enter value...';
 
+  const elementStyles = renderElementStyles(element, deviceType);
+  const finalStyles = !isEditing ? elementStyles : stripElementMargins(elementStyles);
+
   return (
-    <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-md'}`} style={element.styles}>
+    <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-md'}`} style={finalStyles}>
       <Label htmlFor={element.id}>{label}</Label>
       {fieldType === 'textarea' ? (
         <Textarea

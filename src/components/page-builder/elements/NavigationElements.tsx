@@ -4,7 +4,7 @@ import { elementRegistry } from './ElementRegistry';
 import { PageBuilderElement, ElementType } from '../types';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { renderElementStyles, hasUserBackground } from '../utils/styleRenderer';
+import { renderElementStyles, hasUserBackground, stripElementMargins } from '../utils/styleRenderer';
 import { generateResponsiveCSS, mergeResponsiveStyles } from '../utils/responsiveStyles';
 import { Badge } from '@/components/ui/badge';
 import { CartDrawer } from '@/components/storefront/CartDrawer';
@@ -84,7 +84,8 @@ const NavigationMenuElement: React.FC<{
     return item.pagePath || '#';
   };
 
-  const containerStyles = renderElementStyles(element);
+  const containerStyles = renderElementStyles(element, deviceType);
+  const finalStyles = !isEditing ? containerStyles : stripElementMargins(containerStyles);
 
   const merged = mergeResponsiveStyles({}, element.styles, deviceType || 'desktop');
   const linkColor: string | undefined = element.content.linkColor || (merged?.color as string) || undefined;
@@ -126,7 +127,7 @@ const NavigationMenuElement: React.FC<{
   return (
     <header
         className={[`element-${element.id}`, 'w-full relative z-[60] overflow-visible', !hasUserBackground(element.styles) ? 'bg-background' : ''].join(' ').trim()}
-        style={containerStyles}
+        style={finalStyles}
       >
         <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between">
         <div className="flex items-center gap-3">

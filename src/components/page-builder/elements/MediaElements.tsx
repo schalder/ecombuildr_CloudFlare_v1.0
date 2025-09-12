@@ -6,7 +6,7 @@ import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious
 import { PageBuilderElement } from '../types';
 import { elementRegistry } from './ElementRegistry';
 import { InlineEditor } from '../components/InlineEditor';
-import { renderElementStyles } from '../utils/styleRenderer';
+import { renderElementStyles, stripElementMargins } from '../utils/styleRenderer';
 
 // Image Gallery Element
 const ImageGalleryElement: React.FC<{
@@ -14,7 +14,7 @@ const ImageGalleryElement: React.FC<{
   isEditing?: boolean;
   deviceType?: 'desktop' | 'tablet' | 'mobile';
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
-}> = ({ element, isEditing, onUpdate }) => {
+}> = ({ element, isEditing, deviceType = 'desktop', onUpdate }) => {
   const images = element.content.images || [
     'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=300&h=200&fit=crop',
     'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=300&h=200&fit=crop',
@@ -58,8 +58,11 @@ const ImageGalleryElement: React.FC<{
     }
   };
 
+  const elementStyles = renderElementStyles(element, deviceType);
+  const finalStyles = !isEditing ? elementStyles : stripElementMargins(elementStyles);
+
   return (
-    <div className="max-w-4xl mx-auto" style={element.styles}>
+    <div className="max-w-4xl mx-auto" style={finalStyles}>
       <div className={`grid ${getColumnsClass()} ${getGapClass()}`}>
         {images.map((image: string, index: number) => {
           if (!image) return null;
@@ -150,10 +153,13 @@ const ImageCarouselElement: React.FC<{
     }
   };
 
+  const elementStyles = renderElementStyles(element, deviceType);
+  const finalStyles = !isEditing ? elementStyles : stripElementMargins(elementStyles);
+
   return (
     <div 
       className="max-w-4xl mx-auto" 
-      style={renderElementStyles(element, deviceType)}
+      style={finalStyles}
     >
       <div className="relative">
         <Carousel className="w-full" setApi={setApi} opts={{ loop: true }}>
@@ -210,7 +216,7 @@ const VideoPlaylistElement: React.FC<{
   isEditing?: boolean;
   deviceType?: 'desktop' | 'tablet' | 'mobile';
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
-}> = ({ element, isEditing, onUpdate }) => {
+}> = ({ element, isEditing, deviceType = 'desktop', onUpdate }) => {
   const videos = element.content.videos || [
     {
       title: 'Sample Video 1',
@@ -242,9 +248,12 @@ const VideoPlaylistElement: React.FC<{
     }
   };
 
+  const elementStyles = renderElementStyles(element, deviceType);
+  const finalStyles = !isEditing ? elementStyles : stripElementMargins(elementStyles);
+
   if (!currentVideo) {
     return (
-      <div className="max-w-4xl mx-auto" style={element.styles}>
+      <div className="max-w-4xl mx-auto" style={finalStyles}>
         <InlineEditor
           value={element.content.title || 'Video Playlist'}
           onChange={handleTitleUpdate}
@@ -259,7 +268,7 @@ const VideoPlaylistElement: React.FC<{
   }
 
   return (
-    <div className="max-w-4xl mx-auto" style={element.styles}>
+    <div className="max-w-4xl mx-auto" style={finalStyles}>
       <InlineEditor
         value={element.content.title || 'Video Playlist'}
         onChange={handleTitleUpdate}

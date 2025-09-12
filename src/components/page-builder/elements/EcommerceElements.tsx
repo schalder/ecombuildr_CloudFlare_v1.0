@@ -10,7 +10,7 @@ import { useStore } from '@/contexts/StoreContext';
 import { useUserStore } from '@/hooks/useUserStore';
 import { useEcomPaths } from '@/lib/pathResolver';
 import { useAddToCart } from '@/contexts/AddToCartProvider';
-import { renderElementStyles } from '@/components/page-builder/utils/styleRenderer';
+import { renderElementStyles, stripElementMargins } from '@/components/page-builder/utils/styleRenderer';
 import { mergeResponsiveStyles } from '@/components/page-builder/utils/responsiveStyles';
 import { ProductsPageElement } from './ProductsPageElement';
 import { formatCurrency } from '@/lib/currency';
@@ -98,10 +98,11 @@ const ProductGridElement: React.FC<{
   }, [deviceType, (element as any).styles?.buttonStyles]);
 
   const elementStyles = renderElementStyles(element, deviceType);
+  const finalStyles = !isEditing ? elementStyles : stripElementMargins(elementStyles);
 
   if (loading) {
     return (
-      <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-6xl mx-auto'}`} style={elementStyles}>
+      <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-6xl mx-auto'}`} style={finalStyles}>
         <div className={`grid gap-4 ${getGridClasses()}`}>
           {[...Array(limit)].map((_, i) => (
             <Card key={i} className="animate-pulse">
@@ -118,7 +119,7 @@ const ProductGridElement: React.FC<{
   }
 
   return (
-    <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-6xl mx-auto'}`} style={elementStyles}>
+    <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-6xl mx-auto'}`} style={finalStyles}>
       {element.content.title && (
         <h3 style={{ color: elementStyles.color, fontSize: elementStyles.fontSize, textAlign: elementStyles.textAlign, lineHeight: elementStyles.lineHeight, fontWeight: elementStyles.fontWeight }} className="font-semibold mb-4">{element.content.title}</h3>
       )}

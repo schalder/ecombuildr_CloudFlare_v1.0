@@ -19,7 +19,7 @@ import { useStore } from '@/contexts/StoreContext';
 import { useProductReviewStats } from '@/hooks/useProductReviewStats';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
-import { renderElementStyles } from '@/components/page-builder/utils/styleRenderer';
+import { renderElementStyles, stripElementMargins } from '@/components/page-builder/utils/styleRenderer';
 import { mergeResponsiveStyles } from '@/components/page-builder/utils/responsiveStyles';
 import { ArrowUpDown, Grid3X3, List, Search, SlidersHorizontal, Eye, GitCompare, Star } from 'lucide-react';
 import { useEcomPaths } from '@/lib/pathResolver';
@@ -101,6 +101,7 @@ export const ProductsPageElement: React.FC<{
   const showRecentlyViewed = element.content.showRecentlyViewed !== false;
 
   const elementStyles = renderElementStyles(element, deviceType);
+  const finalStyles = !isEditing ? elementStyles : stripElementMargins(elementStyles);
   const buttonStyles = useMemo(() => {
     const bs = (element as any).styles?.buttonStyles || {};
     if ((bs as any).responsive) return mergeResponsiveStyles({}, bs, deviceType as any) as React.CSSProperties;
@@ -494,7 +495,7 @@ export const ProductsPageElement: React.FC<{
   };
 
   return (
-    <div className={`products-element-${elementId} ${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-7xl mx-auto'}`} style={elementStyles}>
+    <div className={`products-element-${elementId} ${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-7xl mx-auto'}`} style={finalStyles}>
       {dynamicCSS && <style dangerouslySetInnerHTML={{ __html: dynamicCSS }} />}
       {/* Header */}
       <div className="mb-6">

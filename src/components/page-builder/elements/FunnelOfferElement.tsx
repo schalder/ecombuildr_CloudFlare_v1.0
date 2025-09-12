@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useFunnelStepContext } from '@/contexts/FunnelStepContext';
-import { renderElementStyles } from '@/components/page-builder/utils/styleRenderer';
+import { renderElementStyles, stripElementMargins } from '@/components/page-builder/utils/styleRenderer';
 import { formatCurrency } from '@/lib/currency';
 import { useEcomPaths } from '@/lib/pathResolver';
 import type { PageBuilderElement } from '../types';
@@ -149,6 +149,7 @@ export const FunnelOfferElement: React.FC<FunnelOfferElementProps> = ({
 
   // Render element styles
   const elementStyles = renderElementStyles(element, deviceType);
+  const finalStyles = isBuilder ? stripElementMargins(elementStyles) : elementStyles;
   const responsiveStyles = element.styles?.responsive || { desktop: {}, mobile: {} };
   const currentStyles = responsiveStyles[deviceType] || {};
 
@@ -195,7 +196,7 @@ export const FunnelOfferElement: React.FC<FunnelOfferElementProps> = ({
   };
 
   return (
-    <div className="max-w-lg mx-auto" style={elementStyles}>
+    <div className="max-w-lg mx-auto" style={finalStyles}>
       <div 
         className="p-6 text-center"
         style={containerStyles}
