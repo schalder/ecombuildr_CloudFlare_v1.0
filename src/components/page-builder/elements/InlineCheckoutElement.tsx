@@ -17,6 +17,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { formatCurrency } from '@/lib/currency';
 import { generateResponsiveCSS, mergeResponsiveStyles } from '@/components/page-builder/utils/responsiveStyles';
+import { getEffectiveResponsiveValue } from '@/components/page-builder/utils/responsiveHelpers';
 import { computeOrderShipping, getAvailableShippingOptions, applyShippingOptionToForm } from '@/lib/shipping-enhanced';
 import type { CartItem, ShippingOption } from '@/lib/shipping-enhanced';
 import { ShippingOptionsPicker } from '@/components/storefront/ShippingOptionsPicker';
@@ -606,10 +607,23 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
     }
   };
 
+  // Calculate responsive padding for the checkout element
+  const paddingTop = getEffectiveResponsiveValue(element, 'paddingTop', deviceType, '0');
+  const paddingRight = getEffectiveResponsiveValue(element, 'paddingRight', deviceType, '0');
+  const paddingBottom = getEffectiveResponsiveValue(element, 'paddingBottom', deviceType, '0');
+  const paddingLeft = getEffectiveResponsiveValue(element, 'paddingLeft', deviceType, '0');
+
+  const checkoutPadding = useMemo(() => ({
+    paddingTop,
+    paddingRight, 
+    paddingBottom,
+    paddingLeft
+  }), [paddingTop, paddingRight, paddingBottom, paddingLeft]);
+
   // Show preview placeholder when no store context is available (like in admin template editor)
   if (!store) {
     return (
-      <div className="max-w-5xl mx-auto">
+      <div className="max-w-5xl mx-auto" style={checkoutPadding}>
         <Card className="border">
           <CardContent className="p-6 text-center space-y-4">
             <CreditCard className="mx-auto h-12 w-12 text-muted-foreground" />
@@ -649,7 +663,7 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
   else if (ship3Count === 2) ship3GridCols = 'grid-cols-1 md:grid-cols-2';
 
   return (
-    <div className="max-w-5xl mx-auto" style={{ backgroundColor: (backgrounds as any).containerBg || undefined }}>
+    <div className="max-w-5xl mx-auto" style={{ backgroundColor: (backgrounds as any).containerBg || undefined, ...checkoutPadding }}>
         <Card className={formBorderWidth > 0 ? undefined : 'border-0'} style={{ backgroundColor: (backgrounds as any).formBg || undefined, borderColor: (backgrounds as any).formBorderColor || undefined, borderWidth: formBorderWidth || 0 }}>
           <CardContent className="p-4 md:p-6 space-y-6 w-full overflow-x-hidden" dir="auto">
             {/* Product chooser */}

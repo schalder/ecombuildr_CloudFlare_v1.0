@@ -31,6 +31,7 @@ import { useChannelContext } from '@/hooks/useChannelContext';
 import { getAvailableShippingOptions, type ShippingOption } from '@/lib/shipping-enhanced';
 import { ShippingOptionsPicker } from '@/components/storefront/ShippingOptionsPicker';
 import { useHeadStyle } from '@/hooks/useHeadStyle';
+import { getEffectiveResponsiveValue } from '@/components/page-builder/utils/responsiveHelpers';
 
 const CartSummaryElement: React.FC<{ element: PageBuilderElement }> = () => {
   const { items, total, updateQuantity, removeItem } = useCart();
@@ -1166,8 +1167,21 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
     return <div className="text-center text-muted-foreground">Your cart is empty.</div>;
   }
 
+  // Calculate responsive padding for the checkout element
+  const paddingTop = getEffectiveResponsiveValue(element, 'paddingTop', deviceType, '0');
+  const paddingRight = getEffectiveResponsiveValue(element, 'paddingRight', deviceType, '0');
+  const paddingBottom = getEffectiveResponsiveValue(element, 'paddingBottom', deviceType, '0');
+  const paddingLeft = getEffectiveResponsiveValue(element, 'paddingLeft', deviceType, '0');
+
+  const checkoutPadding = {
+    paddingTop,
+    paddingRight, 
+    paddingBottom,
+    paddingLeft
+  };
+
   return (
-    <div className="max-w-5xl mx-auto" style={{ backgroundColor: backgrounds.containerBg || undefined }}>
+    <div className="max-w-5xl mx-auto" style={{ backgroundColor: backgrounds.containerBg || undefined, ...checkoutPadding }}>
         {(sections.info || sections.shipping || sections.payment || sections.summary) && (
           <Card className={formBorderWidth > 0 ? undefined : 'border-0'} style={{ backgroundColor: backgrounds.formBg || undefined, borderColor: (backgrounds as any).formBorderColor || undefined, borderWidth: formBorderWidth || 0 }}>
             <CardContent className="p-4 md:p-6 space-y-6 w-full overflow-x-hidden">
