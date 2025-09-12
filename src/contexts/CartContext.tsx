@@ -106,7 +106,8 @@ interface CartProviderProps {
 
 export const CartProvider: React.FC<CartProviderProps> = ({ children, storeId }) => {
   const [state, dispatch] = useReducer(cartReducer, initialState);
-  const [currentStoreId, setCurrentStoreId] = useState<string | undefined>(storeId);
+  const [currentStoreId, setCurrentStoreId] = useState<string | undefined>(undefined);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const pixelContext = usePixelContext();
   const pixels = pixelContext?.pixels;
   const { trackAddToCart } = usePixelTracking(pixels);
@@ -119,7 +120,24 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children, storeId })
     const cartKey = getCartKey(storeId);
     const savedCart = localStorage.getItem(cartKey);
     
-    // If store changed, clear current cart and load new store's cart
+    // Handle initial load
+    if (isInitialLoad) {
+      setIsInitialLoad(false);
+      setCurrentStoreId(storeId);
+      
+      if (savedCart) {
+        try {
+          const cartItems = JSON.parse(savedCart);
+          dispatch({ type: 'LOAD_CART', payload: cartItems });
+        } catch (error) {
+          console.error('Error loading cart from localStorage:', error);
+          dispatch({ type: 'CLEAR_CART' });
+        }
+      }
+      return;
+    }
+    
+    // Handle store changes (not initial load)
     if (currentStoreId !== storeId) {
       setCurrentStoreId(storeId);
       
@@ -135,7 +153,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children, storeId })
         dispatch({ type: 'CLEAR_CART' });
       }
     }
-  }, [storeId, currentStoreId]);
+  }, [storeId, currentStoreId, isInitialLoad]);
 
   // Save cart to localStorage whenever it changes (store-specific)
   useEffect(() => {
