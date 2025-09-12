@@ -18,6 +18,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useStoreProducts } from '@/hooks/useStoreData';
+import { formatVariant } from '@/lib/utils';
 import { generateResponsiveCSS, mergeResponsiveStyles } from '@/components/page-builder/utils/responsiveStyles';
 import { formatCurrency } from '@/lib/currency';
 import { computeOrderShipping, type CartItem, type ShippingAddress, type ShippingSettings } from '@/lib/shipping-enhanced';
@@ -469,18 +470,215 @@ const CartFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 'des
   
   return (
     <div className={`cart-element-${element.id}`} style={elementStyles}>
-      <div className="max-w-4xl mx-auto grid md:grid-cols-3 gap-6">
-        <div className="md:col-span-2 space-y-4">
-          {items.map((item) => (
-            <Card key={item.id}>
-              <CardContent className="p-4">
-                <div className={`grid items-start gap-3 ${item.image ? 'grid-cols-[auto_1fr_auto]' : 'grid-cols-[1fr_auto]'}`}>
-                  {item.image && (
-                    <img src={item.image} alt={item.name} className="w-16 h-16 object-cover rounded border shrink-0" />
-                  )}
-                  <div className="min-w-0">
-                    <div 
-                      className="font-medium break-words"
+      <div className="max-w-6xl mx-auto">
+        <div className="grid lg:grid-cols-[1fr_400px] gap-8">
+          {/* Cart Table */}
+          <div className="space-y-6">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-border">
+                    <th 
+                      className="text-left py-4 font-medium text-sm uppercase tracking-wider"
+                      style={{
+                        color: elementStyles.color,
+                        fontFamily: elementStyles.fontFamily
+                      }}
+                    >
+                      PRODUCT
+                    </th>
+                    <th 
+                      className="text-center py-4 font-medium text-sm uppercase tracking-wider"
+                      style={{
+                        color: elementStyles.color,
+                        fontFamily: elementStyles.fontFamily
+                      }}
+                    >
+                      PRICE
+                    </th>
+                    <th 
+                      className="text-center py-4 font-medium text-sm uppercase tracking-wider"
+                      style={{
+                        color: elementStyles.color,
+                        fontFamily: elementStyles.fontFamily
+                      }}
+                    >
+                      QUANTITY
+                    </th>
+                    <th 
+                      className="text-right py-4 font-medium text-sm uppercase tracking-wider"
+                      style={{
+                        color: elementStyles.color,
+                        fontFamily: elementStyles.fontFamily
+                      }}
+                    >
+                      SUBTOTAL
+                    </th>
+                    <th className="w-8"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {items.map((item) => (
+                    <tr key={item.id} className="border-b border-border">
+                      <td className="py-6">
+                        <div className="flex items-center gap-4">
+                          {item.image && (
+                            <img 
+                              src={item.image} 
+                              alt={item.name} 
+                              className="w-20 h-20 object-cover rounded border shrink-0" 
+                            />
+                          )}
+                          <div className="min-w-0">
+                            <div 
+                              className="font-medium text-base break-words"
+                              style={{
+                                color: elementStyles.color,
+                                fontFamily: elementStyles.fontFamily,
+                                lineHeight: elementStyles.lineHeight
+                              }}
+                            >
+                              {item.name}
+                            </div>
+                            {(item as any).variation && (
+                              <div 
+                                className="text-sm text-muted-foreground mt-1"
+                                style={{
+                                  fontFamily: elementStyles.fontFamily
+                                }}
+                              >
+                                {formatVariant((item as any).variation)}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-6 text-center">
+                        <span 
+                          className="font-medium"
+                          style={{
+                            color: elementStyles.color,
+                            fontFamily: elementStyles.fontFamily
+                          }}
+                        >
+                          {formatCurrency(item.price)}
+                        </span>
+                      </td>
+                      <td className="py-6">
+                        <div className="flex items-center justify-center gap-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="w-8 h-8 p-0"
+                            onClick={() => updateQuantity(item.id, Math.max(1, item.quantity-1))}
+                          >
+                            -
+                          </Button>
+                          <span 
+                            className="w-12 text-center font-medium"
+                            style={{
+                              color: elementStyles.color,
+                              fontFamily: elementStyles.fontFamily
+                            }}
+                          >
+                            {item.quantity}
+                          </span>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="w-8 h-8 p-0"
+                            onClick={() => updateQuantity(item.id, item.quantity+1)}
+                          >
+                            +
+                          </Button>
+                        </div>
+                      </td>
+                      <td className="py-6 text-right">
+                        <span 
+                          className="font-semibold"
+                          style={{
+                            color: elementStyles.color,
+                            fontFamily: elementStyles.fontFamily
+                          }}
+                        >
+                          {formatCurrency(item.price * item.quantity)}
+                        </span>
+                      </td>
+                      <td className="py-6 text-right">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="w-8 h-8 p-0 text-muted-foreground hover:text-destructive"
+                          onClick={() => removeItem(item.id)}
+                        >
+                          ×
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Order Summary Sidebar */}
+          <div className="lg:sticky lg:top-4 h-fit">
+            <Card>
+              <CardHeader>
+                <CardTitle 
+                  className="text-lg"
+                  style={{
+                    color: elementStyles.color,
+                    fontSize: elementStyles.fontSize,
+                    fontFamily: elementStyles.fontFamily,
+                    lineHeight: elementStyles.lineHeight,
+                    textAlign: elementStyles.textAlign
+                  }}
+                >
+                  Order Summary
+                </CardTitle>
+                <p 
+                  className="text-sm text-muted-foreground"
+                  style={{
+                    fontFamily: elementStyles.fontFamily
+                  }}
+                >
+                  {items.length} {items.length === 1 ? 'item' : 'items'} in cart
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-6" style={{
+                padding: elementStyles.padding,
+                paddingTop: elementStyles.paddingTop,
+                paddingRight: elementStyles.paddingRight,
+                paddingBottom: elementStyles.paddingBottom,
+                paddingLeft: elementStyles.paddingLeft,
+              }}>
+                {/* Coupon Code Section */}
+                <div className="space-y-3">
+                  <div className="flex gap-2">
+                    <input 
+                      type="text" 
+                      placeholder="Coupon code"
+                      className="flex-1 px-3 py-2 text-sm border border-input rounded-md bg-background"
+                      style={{
+                        fontFamily: elementStyles.fontFamily
+                      }}
+                    />
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      className="px-4"
+                    >
+                      Apply
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Order Totals */}
+                <div className="space-y-3 pt-4 border-t border-border">
+                  <div className="flex items-center justify-between">
+                    <span 
+                      className="text-base"
                       style={{
                         color: elementStyles.color,
                         fontSize: elementStyles.fontSize,
@@ -488,83 +686,52 @@ const CartFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 'des
                         lineHeight: elementStyles.lineHeight
                       }}
                     >
-                      {nameWithVariant(item.name, (item as any).variation)}
-                    </div>
+                      Subtotal
+                    </span>
+                    <span 
+                      className="font-semibold text-base"
+                      style={{
+                        color: elementStyles.color,
+                        fontSize: elementStyles.fontSize,
+                        fontFamily: elementStyles.fontFamily
+                      }}
+                    >
+                      {formatCurrency(total)}
+                    </span>
                   </div>
-                  <div 
-                    className="text-sm font-medium shrink-0 whitespace-nowrap text-right self-start"
-                    style={{
-                      color: elementStyles.color,
-                      fontSize: elementStyles.fontSize,
-                      fontFamily: elementStyles.fontFamily
-                    }}
-                  >
-                    {formatCurrency(item.price)}
-                  </div>
-                  <div className={`${item.image ? 'col-span-3' : 'col-span-2'} flex items-center gap-2 pt-2`}>
-                    <Button variant="outline" size="sm" onClick={() => updateQuantity(item.id, Math.max(1, item.quantity-1))}>-</Button>
-                    <span className="w-8 text-center">{item.quantity}</span>
-                    <Button variant="outline" size="sm" onClick={() => updateQuantity(item.id, item.quantity+1)}>+</Button>
-                    <Button variant="ghost" size="sm" onClick={() => removeItem(item.id)}>Remove</Button>
+                  <div className="flex items-center justify-between pt-2 border-t border-border">
+                    <span 
+                      className="text-lg font-semibold"
+                      style={{
+                        color: elementStyles.color,
+                        fontFamily: elementStyles.fontFamily
+                      }}
+                    >
+                      Total
+                    </span>
+                    <span 
+                      className="text-lg font-bold"
+                      style={{
+                        color: elementStyles.color,
+                        fontFamily: elementStyles.fontFamily
+                      }}
+                    >
+                      {formatCurrency(total)}
+                    </span>
                   </div>
                 </div>
+
+                {/* Checkout Button */}
+                <Button 
+                  className="w-full h-12 text-base font-semibold product-cta cart-action-button"
+                  style={layoutStyles}
+                  onClick={() => (window.location.href = paths.checkout)}
+                >
+                  PROCEED TO CHECKOUT →
+                </Button>
               </CardContent>
             </Card>
-          ))}
-        </div>
-        <div>
-          <Card>
-            <CardHeader>
-              <CardTitle 
-                style={{
-                  color: elementStyles.color,
-                  fontSize: elementStyles.fontSize,
-                  fontFamily: elementStyles.fontFamily,
-                  lineHeight: elementStyles.lineHeight,
-                  textAlign: elementStyles.textAlign
-                }}
-              >
-                Order Summary
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4" style={{
-              padding: elementStyles.padding,
-              paddingTop: elementStyles.paddingTop,
-              paddingRight: elementStyles.paddingRight,
-              paddingBottom: elementStyles.paddingBottom,
-              paddingLeft: elementStyles.paddingLeft,
-            }}>
-              <div className="flex items-center justify-between">
-                <span 
-                  style={{
-                    color: elementStyles.color,
-                    fontSize: elementStyles.fontSize,
-                    fontFamily: elementStyles.fontFamily,
-                    lineHeight: elementStyles.lineHeight
-                  }}
-                >
-                  Subtotal
-                </span>
-                <span 
-                  className="font-semibold"
-                  style={{
-                    color: elementStyles.color,
-                    fontSize: elementStyles.fontSize,
-                    fontFamily: elementStyles.fontFamily
-                  }}
-                >
-                  {formatCurrency(total)}
-                </span>
-              </div>
-              <Button 
-                className="w-full product-cta cart-action-button"
-                style={layoutStyles}
-                onClick={() => (window.location.href = paths.checkout)}
-              >
-                Proceed to Checkout
-              </Button>
-            </CardContent>
-          </Card>
+          </div>
         </div>
       </div>
     </div>
