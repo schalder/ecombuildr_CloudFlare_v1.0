@@ -1645,7 +1645,7 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
             </div>
           </div>
         ) : (
-          <div>
+          <div className="space-y-0">
                 {/* Drop zone at the beginning */}
                 <RowDropZone
                   sectionId={section.id}
@@ -2477,7 +2477,7 @@ const CanvasAreaWithAutoscroll: React.FC<CanvasAreaWithAutoscrollProps> = ({
               </Button>
             </div>
           ) : (
-            <div>
+            <div className="space-y-0">
               {/* Section drop zone at the beginning */}
               <SectionDropZone 
                 insertIndex={0} 
