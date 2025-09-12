@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { PageBuilderElement } from '@/components/page-builder/types';
 import { storefrontRegistry } from '../registry/storefrontRegistry';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
 import { Skeleton } from '@/components/ui/skeleton';
+import { getEffectiveResponsiveValue } from '@/components/page-builder/utils/responsiveHelpers';
 
 interface StorefrontElementProps {
   element: PageBuilderElement;
@@ -120,10 +121,25 @@ export const StorefrontElement: React.FC<StorefrontElementProps> = ({
 
   const ElementComponent = elementDef.component;
 
+  const wrapperStyle = useMemo<React.CSSProperties>(() => {
+    const mt = getEffectiveResponsiveValue(element, 'marginTop', deviceType, '');
+    const mr = getEffectiveResponsiveValue(element, 'marginRight', deviceType, '');
+    const mb = getEffectiveResponsiveValue(element, 'marginBottom', deviceType, '');
+    const ml = getEffectiveResponsiveValue(element, 'marginLeft', deviceType, '');
+
+    const style: React.CSSProperties = {};
+    if (mt) style.marginTop = mt;
+    if (mr) style.marginRight = mr;
+    if (mb) style.marginBottom = mb;
+    if (ml) style.marginLeft = ml;
+    return style;
+  }, [element, deviceType]);
+
   return (
     <div 
       id={element.anchor}
       data-pb-element-id={element.id}
+      style={wrapperStyle}
     >
       <ErrorBoundary
         fallback={({ retry }) => (
