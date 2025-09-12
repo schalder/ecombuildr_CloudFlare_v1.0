@@ -10,6 +10,7 @@ import { PixelManager } from '@/components/pixel/PixelManager';
 import { WebsiteProvider } from '@/contexts/WebsiteContext';
 import { FloatingCartButton } from '@/components/storefront/FloatingCartButton';
 import { SupportWidget } from '@/components/storefront/SupportWidget';
+import { TrackingCodeManager } from '@/components/tracking/TrackingCodeManager';
 
 interface WebsiteData {
   id: string;
@@ -108,6 +109,11 @@ export const WebsiteLayout: React.FC = () => {
   return (
     <WebsiteProvider websiteId={website.id} websiteSlug={website.slug}>
       <PixelManager websitePixels={website.settings} storeId={website.store_id}>
+        <TrackingCodeManager 
+          headerCode={website.settings?.header_tracking_code}
+          footerCode={website.settings?.footer_tracking_code}
+          priority="website"
+        />
         <div className="min-h-screen flex flex-col bg-background">
         <style>{`
           :root {

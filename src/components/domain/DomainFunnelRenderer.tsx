@@ -5,6 +5,7 @@ import { setSEO, buildCanonical } from '@/lib/seo';
 import { Loader2 } from 'lucide-react';
 import { DomainFunnelRouter } from './DomainFunnelRouter';
 import { PixelManager } from '@/components/pixel/PixelManager';
+import { TrackingCodeManager } from '@/components/tracking/TrackingCodeManager';
 
 interface DomainFunnelRendererProps {
   funnelId: string;
@@ -147,6 +148,11 @@ export const DomainFunnelRenderer: React.FC<DomainFunnelRendererProps> = ({
       storeId={funnel.store_id}
       funnelId={funnel.id}
     >
+      <TrackingCodeManager 
+        headerCode={funnel.settings?.header_tracking_code}
+        footerCode={funnel.settings?.footer_tracking_code}
+        priority="funnel"
+      />
       <DomainFunnelRouter funnel={funnel} />
     </PixelManager>
   );

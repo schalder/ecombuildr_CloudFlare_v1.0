@@ -13,6 +13,7 @@ import { useStore } from '@/contexts/StoreContext';
 import { optimizedFunnelStepQuery } from '@/components/storefront/optimized/DataOptimizer';
 import { PerformanceMonitor } from '@/components/storefront/optimized/PerformanceMonitor';
 import { FontOptimizer } from '@/components/storefront/optimized/FontOptimizer';
+import { TrackingCodeManager } from '@/components/tracking/TrackingCodeManager';
 
 interface FunnelData {
   id: string;
@@ -179,6 +180,10 @@ export const DomainFunnelRouter: React.FC<DomainFunnelRouterProps> = ({ funnel }
     <FunnelStepProvider stepId={step.id} funnelId={funnel.id}>
       <FontOptimizer />
       <PerformanceMonitor page={`funnel-${stepSlug || 'home'}`} />
+      <TrackingCodeManager 
+        headerCode={step.custom_scripts}
+        priority="page"
+      />
       <div className="w-full min-h-screen flex flex-col">
         <FunnelHeader funnel={funnel} />
         <main className="flex-1">
