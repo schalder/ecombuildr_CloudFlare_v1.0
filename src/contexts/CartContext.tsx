@@ -95,6 +95,9 @@ interface CartContextType extends CartState {
   removeItem: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
   clearCart: () => void;
+  isDrawerOpen: boolean;
+  openDrawer: () => void;
+  closeDrawer: () => void;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -108,6 +111,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children, storeId })
   const [state, dispatch] = useReducer(cartReducer, initialState);
   const [currentStoreId, setCurrentStoreId] = useState<string | undefined>(undefined);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const pixelContext = usePixelContext();
   const pixels = pixelContext?.pixels;
   const { trackAddToCart } = usePixelTracking(pixels);
@@ -164,6 +168,9 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children, storeId })
   const addItem = (item: Omit<CartItem, 'quantity'> & { quantity?: number }) => {
     dispatch({ type: 'ADD_ITEM', payload: item });
     
+    // Auto-open cart drawer when item is added
+    setIsDrawerOpen(true);
+    
     // Track add to cart event (only if pixels are available)
     try {
       if (pixels) {
@@ -192,6 +199,9 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children, storeId })
     dispatch({ type: 'CLEAR_CART' });
   };
 
+  const openDrawer = () => setIsDrawerOpen(true);
+  const closeDrawer = () => setIsDrawerOpen(false);
+
   return (
     <CartContext.Provider value={{
       ...state,
@@ -199,6 +209,9 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children, storeId })
       removeItem,
       updateQuantity,
       clearCart,
+      isDrawerOpen,
+      openDrawer,
+      closeDrawer,
     }}>
       {children}
     </CartContext.Provider>
