@@ -221,50 +221,6 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
   
   // Inject responsive CSS into document head for consistency with storefront
   useHeadStyle(`responsive-css-${element.id}`, responsiveCSS);
-
-  // Merge responsive styles for spacing
-  const mergedStyles = mergeResponsiveStyles({}, element.styles, deviceType);
-  
-  // Don't apply spacing for media elements as they handle it internally
-  const isMediaElement = ['image-carousel', 'image-gallery', 'video-playlist'].includes(element.type);
-  
-  // For button elements, only apply margins if explicitly set by user
-  const isButtonElement = element.type === 'button';
-  
-  // Helper function to check if margin is defined in any responsive style
-  const hasMarginDefined = (property: string) => {
-    // Check base styles
-    if (element.styles?.[property] !== undefined) return true;
-    
-    // Check responsive overrides
-    if (element.styles?.responsive?.desktop?.[property] !== undefined) return true;
-    if (element.styles?.responsive?.tablet?.[property] !== undefined) return true;
-    if (element.styles?.responsive?.mobile?.[property] !== undefined) return true;
-    
-    // Check shorthand margin
-    if (element.styles?.margin !== undefined) return true;
-    if (element.styles?.responsive?.desktop?.margin !== undefined) return true;
-    if (element.styles?.responsive?.tablet?.margin !== undefined) return true;
-    if (element.styles?.responsive?.mobile?.margin !== undefined) return true;
-    
-    return false;
-  };
-  
-  // Apply margins in both edit and preview mode
-  const userDefinedMargins = isButtonElement ? {
-    marginTop: hasMarginDefined('marginTop') ? mergedStyles.marginTop : undefined,
-    marginBottom: hasMarginDefined('marginBottom') ? mergedStyles.marginBottom : undefined,
-    marginLeft: hasMarginDefined('marginLeft') ? mergedStyles.marginLeft : undefined,
-    marginRight: hasMarginDefined('marginRight') ? mergedStyles.marginRight : undefined,
-  } : {
-    marginTop: mergedStyles.marginTop,
-    marginBottom: mergedStyles.marginBottom,
-    marginLeft: mergedStyles.marginLeft,
-    marginRight: mergedStyles.marginRight,
-  };
-
-  // For button elements, don't apply padding from the wrapper - let the button handle its own padding
-  const shouldApplyPadding = !isButtonElement;
   
   return (
     <div
@@ -272,25 +228,11 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
       id={element.anchor}
       data-pb-element-id={element.id}
       className={cn(
-        'relative group transition-all duration-200 w-full',
+        'relative group transition-all duration-200',
+        `element-${element.id}`, // Use same class as StorefrontElement
         isDragging && 'opacity-50',
         isSelected && !isPreviewMode && 'ring-2 ring-primary ring-opacity-50'
       )}
-      style={{
-        ...(!isMediaElement ? {
-          ...userDefinedMargins,
-          ...(shouldApplyPadding ? {
-            paddingTop: mergedStyles.paddingTop,
-            paddingRight: mergedStyles.paddingRight,
-            paddingBottom: mergedStyles.paddingBottom,
-            paddingLeft: mergedStyles.paddingLeft,
-          } : {})
-        } : {}),
-        // Apply user-defined border radius to selection ring when selected
-        ...(isSelected && !isPreviewMode && mergedStyles.borderRadius ? {
-          borderRadius: mergedStyles.borderRadius
-        } : {})
-      }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={handleElementClick}
