@@ -7,6 +7,7 @@ import { setSEO } from '@/lib/seo';
 import { usePixelContext } from '@/components/pixel/PixelManager';
 import { DomainWebsiteRouter } from './DomainWebsiteRouter';
 import { WebsiteProvider } from '@/contexts/WebsiteContext';
+import { TrackingCodeManager } from '@/components/tracking/TrackingCodeManager';
 
 interface WebsiteData {
   id: string;
@@ -142,6 +143,11 @@ export const DomainWebsiteRenderer: React.FC<DomainWebsiteRendererProps> = ({
   // Render the website with proper layout structure matching WebsiteLayout
   return (
     <WebsiteProvider websiteId={websiteId} websiteSlug={website.slug}>
+      <TrackingCodeManager
+        headerCode={website.settings?.header_tracking_code}
+        footerCode={website.settings?.footer_tracking_code}
+        priority="website"
+      />
       <div className="min-h-screen flex flex-col bg-background">
         <style>{`
           :root {
