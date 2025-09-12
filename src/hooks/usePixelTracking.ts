@@ -81,11 +81,16 @@ export const usePixelTracking = (pixelConfig?: PixelConfig, storeId?: string, we
       return;
     }
 
-    // Store event in database
+    // Warn if tracking is called without store ID (helps debugging)
+    if (!storeId) {
+      console.warn('[PixelTracking] trackEvent called without storeId - events will not be stored in database');
+    }
+
+    // Store event in database (only if storeId is provided)
     storePixelEvent(eventName, eventData);
 
-    // Facebook Pixel tracking
-    if (pixelConfig?.facebook_pixel_id && window.fbq) {
+    // Facebook Pixel tracking - fire if fbq is available (regardless of pixelConfig)
+    if (window.fbq) {
       try {
         window.fbq('track', eventName, eventData);
         logger.debug('[PixelTracking] Facebook event:', eventName, eventData);
@@ -256,8 +261,8 @@ export const usePixelTracking = (pixelConfig?: PixelConfig, storeId?: string, we
     };
     storePixelEvent('PageView', eventData);
 
-    // Facebook Pixel
-    if (pixelConfig?.facebook_pixel_id && window.fbq) {
+    // Facebook Pixel - fire if fbq is available
+    if (window.fbq) {
       window.fbq('track', 'PageView');
     }
 

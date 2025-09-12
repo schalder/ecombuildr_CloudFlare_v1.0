@@ -45,9 +45,9 @@ export const CheckoutPage: React.FC = () => {
   const { items, total, clearCart } = useCart();
   const paths = useEcomPaths();
   const { pixels } = usePixelContext();
-  const { trackInitiateCheckout, trackPurchase, trackAddPaymentInfo } = usePixelTracking(pixels);
   const { websiteId: contextWebsiteId } = useWebsiteContext();
   const { websiteId: resolvedWebsiteId, funnelId: resolvedFunnelId } = useChannelContext();
+  const { trackInitiateCheckout, trackPurchase, trackAddPaymentInfo } = usePixelTracking(pixels, store?.id, resolvedWebsiteId, resolvedFunnelId);
   const isWebsiteContext = Boolean(websiteId || websiteSlug || contextWebsiteId);
   
   // Error states

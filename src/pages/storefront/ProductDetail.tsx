@@ -60,7 +60,7 @@ export const ProductDetail: React.FC = () => {
   const navigate = useNavigate();
   const paths = useEcomPaths();
   const { pixels } = usePixelContext();
-  const { trackViewContent } = usePixelTracking(pixels);
+  const { trackViewContent } = usePixelTracking(pixels, store?.id);
   
   // Detect if we're in a website context (either system domain or custom domain)
   const isCustomDomain = () => {

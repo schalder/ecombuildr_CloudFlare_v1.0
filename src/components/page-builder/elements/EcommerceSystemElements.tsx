@@ -772,8 +772,8 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
   const { items, total, clearCart } = useCart();
   const paths = useEcomPaths();
   const { pixels } = usePixelContext();
-  const { trackPurchase } = usePixelTracking(pixels);
   const { websiteId, funnelId } = useChannelContext();
+  const { trackPurchase } = usePixelTracking(pixels, store?.id, websiteId, funnelId);
 
   const cfg: any = element.content || {};
   const fields = cfg.fields || {

@@ -22,7 +22,7 @@ export const CartPage: React.FC = () => {
   const navigate = useNavigate();
   const isWebsiteContext = Boolean(websiteId || websiteSlug);
   const { pixels } = usePixelContext();
-  const { trackInitiateCheckout } = usePixelTracking(pixels);
+  const { trackInitiateCheckout } = usePixelTracking(pixels, store?.id);
 
   // Basic SEO
   useEffect(() => {

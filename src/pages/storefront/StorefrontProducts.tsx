@@ -31,6 +31,7 @@ import { useAddToCart } from '@/contexts/AddToCartProvider';
 import { useToast } from '@/hooks/use-toast';
 import { useProductReviewStats } from '@/hooks/useProductReviewStats';
 import { usePixelTracking } from '@/hooks/usePixelTracking';
+import { usePixelContext } from '@/components/pixel/PixelManager';
 
 interface Product {
   id: string;
@@ -78,14 +79,9 @@ export const StorefrontProducts: React.FC = () => {
   const { addToCart, openQuickView } = useAddToCart();
   const { toast } = useToast();
 
-  // Get pixel configuration
-  const pixelConfig = store ? {
-    facebook_pixel_id: (store as any)?.facebook_pixel_id,
-    google_analytics_id: (store as any)?.google_analytics_id,
-    google_ads_id: (store as any)?.google_ads_id,
-  } : undefined;
 
-  const { trackSearch } = usePixelTracking(pixelConfig, store?.id, websiteId || detectedWebsiteId);
+  const { pixels } = usePixelContext();
+  const { trackSearch } = usePixelTracking(pixels, store?.id, websiteId || detectedWebsiteId);
   
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);

@@ -32,8 +32,8 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
   const paths = useEcomPaths();
   const { store, loadStoreById } = useStore();
   const { pixels } = usePixelContext();
-  const { trackPurchase } = usePixelTracking(pixels);
   const { stepId } = useFunnelStepContext();
+  const { trackPurchase } = usePixelTracking(pixels, store?.id, websiteId, funnelId);
   
   // Error states
   const [phoneError, setPhoneError] = useState<string>('');

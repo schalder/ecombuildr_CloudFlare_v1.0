@@ -110,7 +110,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children, storeId })
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const pixelContext = usePixelContext();
   const pixels = pixelContext?.pixels;
-  const { trackAddToCart } = usePixelTracking(pixels);
+  const { trackAddToCart } = usePixelTracking(pixels, storeId);
 
   // Create store-specific cart key
   const getCartKey = (id?: string) => id ? `cart_${id}` : 'cart_global';

@@ -59,7 +59,7 @@ export const OrderConfirmation: React.FC = () => {
   const orderToken = searchParams.get('ot') || '';
   const isWebsiteContext = Boolean(websiteId || websiteSlug);
   const { pixels } = usePixelContext();
-  const { trackPurchase } = usePixelTracking(pixels);
+  const { trackPurchase } = usePixelTracking(pixels, store?.id);
 useEffect(() => {
   if (slug) {
     loadStore(slug);

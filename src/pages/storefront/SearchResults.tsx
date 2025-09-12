@@ -10,6 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { ShoppingCart } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { usePixelTracking } from '@/hooks/usePixelTracking';
+import { usePixelContext } from '@/components/pixel/PixelManager';
 
 interface Product {
   id: string;
@@ -32,14 +33,9 @@ export const SearchResults: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const searchQuery = searchParams.get('q') || '';
 
-  // Get pixel configuration - stores don't have direct pixel settings anymore
-  const pixelConfig = store ? {
-    facebook_pixel_id: (store as any)?.facebook_pixel_id,
-    google_analytics_id: (store as any)?.google_analytics_id,
-    google_ads_id: (store as any)?.google_ads_id,
-  } : undefined;
 
-  const { trackSearch } = usePixelTracking(pixelConfig, store?.id, websiteId);
+  const { pixels } = usePixelContext();
+  const { trackSearch } = usePixelTracking(pixels, store?.id, websiteId);
 
   useEffect(() => {
     const init = async () => {

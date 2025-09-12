@@ -36,7 +36,7 @@ export const DomainWebsiteRouter: React.FC<DomainWebsiteRouterProps> = ({
 }) => {
   const location = useLocation();
   const { pixels } = usePixelContext();
-  const { trackPageView } = usePixelTracking(pixels);
+  const { trackPageView } = usePixelTracking(pixels, website?.store_id, websiteId);
 
   // Track page views on route changes
   useEffect(() => {
