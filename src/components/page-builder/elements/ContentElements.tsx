@@ -96,8 +96,8 @@ const TestimonialElement: React.FC<{
     <>
       {responsiveCSS && <style dangerouslySetInnerHTML={{ __html: responsiveCSS }} />}
       <div 
-        className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-md mx-auto'} p-6 border rounded-lg bg-background`} 
-        style={inlineStyles}
+        className={`element-${element.id} ${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-md mx-auto'} p-6 border rounded-lg bg-background`} 
+        style={finalStyles}
       >
         <div className="flex items-center space-x-1 mb-4">
           {[...Array(5)].map((_, i) => (
@@ -424,9 +424,23 @@ const TabsElement: React.FC<{
 
   const gridCols = tabs.length <= 2 ? 'grid-cols-2' : tabs.length === 3 ? 'grid-cols-3' : 'grid-cols-4';
 
+  // Generate responsive CSS and get inline styles
+  const responsiveCSS = generateResponsiveCSS(element.id, element.styles);
+  const inlineStyles = renderElementStyles(element, deviceType || 'desktop');
+  const shouldApplyMargins = !isEditing;
+  const finalStyles = shouldApplyMargins ? inlineStyles : {
+    ...inlineStyles,
+    marginTop: undefined,
+    marginRight: undefined,
+    marginBottom: undefined,
+    marginLeft: undefined,
+  };
+
   return (
-    <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-2xl mx-auto'}`} style={element.styles}>
-      <Tabs defaultValue={defaultTab} className="w-full">
+    <>
+      {responsiveCSS && <style dangerouslySetInnerHTML={{ __html: responsiveCSS }} />}
+      <div className={`element-${element.id} ${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-2xl mx-auto'}`} style={finalStyles}>
+        <Tabs defaultValue={defaultTab} className="w-full">
         <TabsList className={`grid w-full ${gridCols}`}>
           {tabs.map((tab: any, index: number) => (
             <TabsTrigger key={tab.id} value={tab.id} className="min-w-0">
@@ -453,8 +467,9 @@ const TabsElement: React.FC<{
             </div>
           </TabsContent>
         ))}
-      </Tabs>
-    </div>
+        </Tabs>
+      </div>
+    </>
   );
 };
 

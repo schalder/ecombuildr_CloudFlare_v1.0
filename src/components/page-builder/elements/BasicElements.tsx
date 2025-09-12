@@ -798,7 +798,7 @@ const DividerElement: React.FC<{
 
   if (isEditing) {
     return (
-      <div className="border border-dashed border-muted-foreground/30 rounded p-2 bg-muted/10" style={wrapperStyle}>
+      <div className={`element-${element.id} border border-dashed border-muted-foreground/30 rounded p-2 bg-muted/10`} style={wrapperStyle}>
         <hr style={dividerStyle} />
         <div className="text-xs text-muted-foreground text-center mt-2">
           Divider ({alignment})
@@ -808,7 +808,7 @@ const DividerElement: React.FC<{
   }
 
   return (
-    <div style={wrapperStyle}>
+    <div className={`element-${element.id}`} style={wrapperStyle}>
       <hr style={dividerStyle} className="border-none" />
     </div>
   );
@@ -991,7 +991,7 @@ const VideoElement: React.FC<{
   if (videoType === 'embed' && embedCode) {
     const sanitizedCode = sanitizeEmbedCode(embedCode);
     return (
-      <div className={`${widthClasses} aspect-video`} style={finalContainerStyles}>
+      <div className={`element-${element.id} ${widthClasses} aspect-video`} style={finalContainerStyles}>
         <div 
           className="w-full h-full"
           dangerouslySetInnerHTML={{ __html: sanitizedCode }}
@@ -1007,7 +1007,7 @@ const VideoElement: React.FC<{
     if (videoInfo.type === 'hosted') {
       // Direct video file
       return (
-        <div className={`${widthClasses} aspect-video`} style={finalContainerStyles}>
+        <div className={`element-${element.id} ${widthClasses} aspect-video`} style={finalContainerStyles}>
           <video
             src={url}
             controls={controls}
@@ -1030,7 +1030,7 @@ const VideoElement: React.FC<{
       });
 
       return (
-        <div className={`${widthClasses} aspect-video`} style={finalContainerStyles}>
+        <div className={`element-${element.id} ${widthClasses} aspect-video`} style={finalContainerStyles}>
           <iframe
             src={finalEmbedUrl}
             className="w-full h-full rounded-lg"
@@ -1046,7 +1046,7 @@ const VideoElement: React.FC<{
   // Fallback for invalid or unrecognized video
   return (
     <div 
-      className={`${widthClasses} aspect-video bg-muted flex items-center justify-center border-2 border-dashed border-border rounded-lg`}
+      className={`element-${element.id} ${widthClasses} aspect-video bg-muted flex items-center justify-center border-2 border-dashed border-border rounded-lg`}
       style={finalContainerStyles}
     >
       <p className="text-sm text-muted-foreground">

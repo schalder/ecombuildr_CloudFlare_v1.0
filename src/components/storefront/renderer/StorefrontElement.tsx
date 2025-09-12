@@ -3,6 +3,8 @@ import { PageBuilderElement } from '@/components/page-builder/types';
 import { storefrontRegistry } from '../registry/storefrontRegistry';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
 import { Skeleton } from '@/components/ui/skeleton';
+import { generateResponsiveCSS } from '@/components/page-builder/utils/responsiveStyles';
+import { useHeadStyle } from '@/hooks/useHeadStyle';
 
 interface StorefrontElementProps {
   element: PageBuilderElement;
@@ -54,6 +56,10 @@ export const StorefrontElement: React.FC<StorefrontElementProps> = ({
   const [elementDef, setElementDef] = useState(() => storefrontRegistry.get(element.type));
   const [isLoading, setIsLoading] = useState(!elementDef);
   const [showFallback, setShowFallback] = useState(false);
+
+  // Generate and inject responsive CSS for this element
+  const responsiveCSS = generateResponsiveCSS(element.id, element.styles);
+  useHeadStyle(`storefront-element-${element.id}`, responsiveCSS);
 
   useEffect(() => {
     let mounted = true;
@@ -124,6 +130,7 @@ export const StorefrontElement: React.FC<StorefrontElementProps> = ({
     <div 
       id={element.anchor}
       data-pb-element-id={element.id}
+      className={`element-${element.id}`}
     >
       <ErrorBoundary
         fallback={({ retry }) => (
