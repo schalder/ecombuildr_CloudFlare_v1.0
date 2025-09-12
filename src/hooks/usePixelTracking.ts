@@ -270,6 +270,57 @@ export const usePixelTracking = (pixelConfig?: PixelConfig, storeId?: string, we
     }
   }, [pixelConfig, storePixelEvent]);
 
+  const trackSearch = useCallback((data: {
+    search_string: string;
+    content_category?: string;
+  }) => {
+    const eventData = {
+      search_string: data.search_string,
+      content_category: data.content_category || 'product',
+    };
+
+    // Facebook Pixel
+    trackEvent('Search', eventData);
+
+    // Google Analytics 4
+    if ((pixelConfig?.google_analytics_id || pixelConfig?.google_ads_id) && window.gtag) {
+      window.gtag('event', 'search', {
+        search_term: data.search_string,
+      });
+    }
+  }, [trackEvent, pixelConfig]);
+
+  const trackAddPaymentInfo = useCallback((data: {
+    currency?: string;
+    value?: number;
+    payment_type?: string;
+    items?: EcommerceItem[];
+  }) => {
+    const eventData = {
+      currency: data.currency || 'BDT',
+      value: data.value || 0,
+      payment_type: data.payment_type || 'credit_card',
+      content_ids: data.items?.map(item => item.item_id) || [],
+      contents: data.items?.map(item => ({
+        id: item.item_id,
+        quantity: item.quantity,
+      })) || [],
+    };
+
+    // Facebook Pixel
+    trackEvent('AddPaymentInfo', eventData);
+
+    // Google Analytics 4
+    if ((pixelConfig?.google_analytics_id || pixelConfig?.google_ads_id) && window.gtag) {
+      window.gtag('event', 'add_payment_info', {
+        currency: data.currency || 'BDT',
+        value: data.value || 0,
+        payment_type: data.payment_type || 'credit_card',
+        items: data.items || [],
+      });
+    }
+  }, [trackEvent, pixelConfig]);
+
   return {
     trackEvent,
     trackViewContent,
@@ -277,5 +328,7 @@ export const usePixelTracking = (pixelConfig?: PixelConfig, storeId?: string, we
     trackInitiateCheckout,
     trackPurchase,
     trackPageView,
+    trackSearch,
+    trackAddPaymentInfo,
   };
 };

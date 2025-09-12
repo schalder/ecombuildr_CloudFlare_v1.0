@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { ShoppingCart } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { usePixelTracking } from '@/hooks/usePixelTracking';
 
 interface Product {
   id: string;
@@ -30,6 +31,15 @@ export const SearchResults: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const searchQuery = searchParams.get('q') || '';
+
+  // Get pixel configuration - stores don't have direct pixel settings anymore
+  const pixelConfig = store ? {
+    facebook_pixel_id: (store as any)?.facebook_pixel_id,
+    google_analytics_id: (store as any)?.google_analytics_id,
+    google_ads_id: (store as any)?.google_ads_id,
+  } : undefined;
+
+  const { trackSearch } = usePixelTracking(pixelConfig, store?.id, websiteId);
 
   useEffect(() => {
     const init = async () => {
@@ -76,6 +86,12 @@ export const SearchResults: React.FC = () => {
       })) || [];
       
       setProducts(products);
+
+      // Track search event with results count
+      trackSearch({
+        search_string: searchQuery,
+        content_category: 'product',
+      });
     } catch (error) {
       console.error('Error fetching search results:', error);
       setProducts([]);

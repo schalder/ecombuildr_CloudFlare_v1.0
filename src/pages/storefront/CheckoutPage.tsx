@@ -45,7 +45,7 @@ export const CheckoutPage: React.FC = () => {
   const { items, total, clearCart } = useCart();
   const paths = useEcomPaths();
   const { pixels } = usePixelContext();
-  const { trackInitiateCheckout, trackPurchase } = usePixelTracking(pixels);
+  const { trackInitiateCheckout, trackPurchase, trackAddPaymentInfo } = usePixelTracking(pixels);
   const { websiteId: contextWebsiteId } = useWebsiteContext();
   const { websiteId: resolvedWebsiteId, funnelId: resolvedFunnelId } = useChannelContext();
   const isWebsiteContext = Boolean(websiteId || websiteSlug || contextWebsiteId);
@@ -772,7 +772,25 @@ useEffect(() => {
             </Button>
             {currentStep < 4 ? (
               <Button
-                onClick={() => setCurrentStep(prev => prev + 1)}
+                onClick={() => {
+                  const nextStep = currentStep + 1;
+                  setCurrentStep(nextStep);
+                  
+                  // Track AddPaymentInfo when entering payment step (step 3)
+                  if (nextStep === 3) {
+                    trackAddPaymentInfo({
+                      currency: 'BDT',
+                      value: total + shippingCost - discountAmount,
+                      items: items.map(item => ({
+                        item_id: item.productId,
+                        item_name: item.name,
+                        price: item.price,
+                        quantity: item.quantity,
+                        item_category: 'product',
+                      })),
+                    });
+                  }
+                }}
                 disabled={!validateStep(currentStep)}
               >
                 Next

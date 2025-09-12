@@ -140,9 +140,9 @@ export const DomainFunnelRenderer: React.FC<DomainFunnelRendererProps> = ({
   return (
     <PixelManager 
       websitePixels={{
-        facebook_pixel_id: (store as any)?.facebook_pixel_id,
-        google_analytics_id: (store as any)?.google_analytics_id,
-        google_ads_id: (store as any)?.google_ads_id,
+        facebook_pixel_id: funnel.settings?.facebook_pixel_id || (store as any)?.facebook_pixel_id,
+        google_analytics_id: funnel.settings?.google_analytics_id || (store as any)?.google_analytics_id,
+        google_ads_id: funnel.settings?.google_ads_id || (store as any)?.google_ads_id,
       }}
       storeId={funnel.store_id}
       funnelId={funnel.id}

@@ -30,6 +30,7 @@ import { cn } from '@/lib/utils';
 import { useAddToCart } from '@/contexts/AddToCartProvider';
 import { useToast } from '@/hooks/use-toast';
 import { useProductReviewStats } from '@/hooks/useProductReviewStats';
+import { usePixelTracking } from '@/hooks/usePixelTracking';
 
 interface Product {
   id: string;
@@ -76,6 +77,15 @@ export const StorefrontProducts: React.FC = () => {
   const [detectedWebsiteId, setDetectedWebsiteId] = useState<string | null>(null);
   const { addToCart, openQuickView } = useAddToCart();
   const { toast } = useToast();
+
+  // Get pixel configuration
+  const pixelConfig = store ? {
+    facebook_pixel_id: (store as any)?.facebook_pixel_id,
+    google_analytics_id: (store as any)?.google_analytics_id,
+    google_ads_id: (store as any)?.google_ads_id,
+  } : undefined;
+
+  const { trackSearch } = usePixelTracking(pixelConfig, store?.id, websiteId || detectedWebsiteId);
   
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -458,6 +468,11 @@ export const StorefrontProducts: React.FC = () => {
       const newParams = new URLSearchParams(prev);
       if (searchQuery) {
         newParams.set('q', searchQuery);
+        // Track search event
+        trackSearch({
+          search_string: searchQuery,
+          content_category: 'product',
+        });
       } else {
         newParams.delete('q');
       }
