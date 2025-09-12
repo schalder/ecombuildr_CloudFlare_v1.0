@@ -559,7 +559,7 @@ const CartFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 'des
                                   className="h-7 px-3 text-xs font-medium"
                                   onClick={() => removeItem(item.id)}
                                 >
-                                  🗑️ Remove
+                                  Remove
                                 </Button>
                               </div>
                               {/* Price on mobile */}
