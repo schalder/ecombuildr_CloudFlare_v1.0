@@ -9,6 +9,7 @@ import { Monitor, Smartphone } from 'lucide-react';
 import { PageBuilderElement } from '../../types';
 import { ColorPicker } from '@/components/ui/color-picker';
 import { CollapsibleGroup } from './_shared/CollapsibleGroup';
+import { SpacingControl } from './_shared/SpacingControl';
 
 interface CheckoutElementStylesProps {
   element: PageBuilderElement;
@@ -20,6 +21,7 @@ export const CheckoutElementStyles: React.FC<CheckoutElementStylesProps> = ({ el
   const [buttonOpen, setButtonOpen] = useState(true);
   const [headerOpen, setHeaderOpen] = useState(false);
   const [backgroundsOpen, setBackgroundsOpen] = useState(false);
+  const [spacingOpen, setSpacingOpen] = useState(false);
   
   const styles = ((element.styles as any)?.checkoutButton) || { responsive: { desktop: {}, mobile: {} } } as any;
   
@@ -279,6 +281,149 @@ export const CheckoutElementStyles: React.FC<CheckoutElementStylesProps> = ({ el
             </div>
           </div>
         </div>
+      </CollapsibleGroup>
+
+      <CollapsibleGroup title="Spacing" isOpen={spacingOpen} onToggle={setSpacingOpen}>
+        <p className="text-xs text-muted-foreground mb-3">Adjust margin and padding spacing around the checkout element.</p>
+        
+        <Tabs value={tab} onValueChange={(v) => setTab(v as any)}>
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="desktop" className="flex items-center gap-2"><Monitor className="h-3 w-3" />Desktop</TabsTrigger>
+            <TabsTrigger value="mobile" className="flex items-center gap-2"><Smartphone className="h-3 w-3" />Mobile</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="desktop" className="space-y-4 mt-3">
+            <div className="space-y-3">
+              <h5 className="text-xs font-medium">Margin</h5>
+              <SpacingControl
+                element={element}
+                property="marginTop"
+                label="Top"
+                deviceType="desktop"
+                onStyleUpdate={onStyleUpdate}
+              />
+              <SpacingControl
+                element={element}
+                property="marginRight"
+                label="Right"
+                deviceType="desktop"
+                onStyleUpdate={onStyleUpdate}
+              />
+              <SpacingControl
+                element={element}
+                property="marginBottom"
+                label="Bottom"
+                deviceType="desktop"
+                onStyleUpdate={onStyleUpdate}
+              />
+              <SpacingControl
+                element={element}
+                property="marginLeft"
+                label="Left"
+                deviceType="desktop"
+                onStyleUpdate={onStyleUpdate}
+              />
+            </div>
+            
+            <div className="space-y-3">
+              <h5 className="text-xs font-medium">Padding</h5>
+              <SpacingControl
+                element={element}
+                property="paddingTop"
+                label="Top"
+                deviceType="desktop"
+                onStyleUpdate={onStyleUpdate}
+              />
+              <SpacingControl
+                element={element}
+                property="paddingRight"
+                label="Right"
+                deviceType="desktop"
+                onStyleUpdate={onStyleUpdate}
+              />
+              <SpacingControl
+                element={element}
+                property="paddingBottom"
+                label="Bottom"
+                deviceType="desktop"
+                onStyleUpdate={onStyleUpdate}
+              />
+              <SpacingControl
+                element={element}
+                property="paddingLeft"
+                label="Left"
+                deviceType="desktop"
+                onStyleUpdate={onStyleUpdate}
+              />
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="mobile" className="space-y-4 mt-3">
+            <div className="space-y-3">
+              <h5 className="text-xs font-medium">Margin</h5>
+              <SpacingControl
+                element={element}
+                property="marginTop"
+                label="Top"
+                deviceType="mobile"
+                onStyleUpdate={onStyleUpdate}
+              />
+              <SpacingControl
+                element={element}
+                property="marginRight"
+                label="Right"
+                deviceType="mobile"
+                onStyleUpdate={onStyleUpdate}
+              />
+              <SpacingControl
+                element={element}
+                property="marginBottom"
+                label="Bottom"
+                deviceType="mobile"
+                onStyleUpdate={onStyleUpdate}
+              />
+              <SpacingControl
+                element={element}
+                property="marginLeft"
+                label="Left"
+                deviceType="mobile"
+                onStyleUpdate={onStyleUpdate}
+              />
+            </div>
+            
+            <div className="space-y-3">
+              <h5 className="text-xs font-medium">Padding</h5>
+              <SpacingControl
+                element={element}
+                property="paddingTop"
+                label="Top"
+                deviceType="mobile"
+                onStyleUpdate={onStyleUpdate}
+              />
+              <SpacingControl
+                element={element}
+                property="paddingRight"
+                label="Right"
+                deviceType="mobile"
+                onStyleUpdate={onStyleUpdate}
+              />
+              <SpacingControl
+                element={element}
+                property="paddingBottom"
+                label="Bottom"
+                deviceType="mobile"
+                onStyleUpdate={onStyleUpdate}
+              />
+              <SpacingControl
+                element={element}
+                property="paddingLeft"
+                label="Left"
+                deviceType="mobile"
+                onStyleUpdate={onStyleUpdate}
+              />
+            </div>
+          </TabsContent>
+        </Tabs>
       </CollapsibleGroup>
 
       <Separator />
