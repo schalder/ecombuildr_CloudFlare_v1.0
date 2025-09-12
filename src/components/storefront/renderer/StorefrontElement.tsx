@@ -150,7 +150,7 @@ export const StorefrontElement: React.FC<StorefrontElementProps> = ({
     <div 
       id={element.anchor}
       data-pb-element-id={element.id}
-      className={`element-${element.id}`}
+      className={`storefront element-${element.id}`}
     >
       <ErrorBoundary
         fallback={({ retry }) => (

@@ -163,18 +163,18 @@ const ImageElement: React.FC<{
     // Add image-specific alignment CSS
     let alignmentCSS = '';
     if (alignment === 'full') {
-      alignmentCSS += `.element-${element.id} { width: 100% !important; margin-left: 0 !important; margin-right: 0 !important; }`;
+      alignmentCSS += `.storefront-page-content .element-${element.id}, .storefront .element-${element.id}, .element-${element.id} { width: 100% !important; margin-left: 0 !important; margin-right: 0 !important; }`;
     } else {
       switch (alignment) {
         case 'left':
-          alignmentCSS += `.element-${element.id} { margin-left: 0 !important; margin-right: auto !important; }`;
+          alignmentCSS += `.storefront-page-content .element-${element.id}, .storefront .element-${element.id}, .element-${element.id} { margin-left: 0 !important; margin-right: auto !important; }`;
           break;
         case 'right':
-          alignmentCSS += `.element-${element.id} { margin-left: auto !important; margin-right: 0 !important; }`;
+          alignmentCSS += `.storefront-page-content .element-${element.id}, .storefront .element-${element.id}, .element-${element.id} { margin-left: auto !important; margin-right: 0 !important; }`;
           break;
         case 'center':
         default:
-          alignmentCSS += `.element-${element.id} { margin-left: auto !important; margin-right: auto !important; }`;
+          alignmentCSS += `.storefront-page-content .element-${element.id}, .storefront .element-${element.id}, .element-${element.id} { margin-left: auto !important; margin-right: auto !important; }`;
           break;
       }
     }
