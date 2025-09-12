@@ -37,9 +37,9 @@ export function generateResponsiveCSS(elementId: string, styles: any): string {
     .map(([prop, value]) => `${kebabCase(prop)}: ${value}`)
     .join('; ');
 
-  // Default styles (base + desktop responsive) - Use higher specificity for storefront to prevent conflicts
+  // Default styles (base + desktop responsive) - Use consistent class targeting
   if (defaultProps) {
-    css += `.storefront-page-content .element-${elementId}, .storefront .element-${elementId}, .element-${elementId} { ${defaultProps}; }`;
+    css += `.storefront-page-content .element-${elementId} { ${defaultProps}; }`;
   }
   
   // Default hover styles (base hover + desktop hover)
@@ -49,7 +49,7 @@ export function generateResponsiveCSS(elementId: string, styles: any): string {
     const hoverPairs: string[] = [];
     if (finalHoverColor) hoverPairs.push(`color: ${finalHoverColor}`);
     if (finalHoverBg) hoverPairs.push(`background-color: ${finalHoverBg}`);
-    css += `.storefront-page-content .element-${elementId}:hover, .storefront .element-${elementId}:hover, .element-${elementId}:hover { ${hoverPairs.join('; ')}; transition: color 0.2s ease, background-color 0.2s ease; }`;
+    css += `.storefront-page-content .element-${elementId}:hover { ${hoverPairs.join('; ')}; transition: color 0.2s ease, background-color 0.2s ease; }`;
   }
   
   // Tablet styles (768px to 1023px)
@@ -61,25 +61,25 @@ export function generateResponsiveCSS(elementId: string, styles: any): string {
     
     if (tabletProps || tHoverColor || tHoverBg) {
       css += `@media (min-width: 768px) and (max-width: 1023px) { `;
-      if (tabletProps) css += `.storefront-page-content .element-${elementId}, .storefront .element-${elementId}, .element-${elementId} { ${tabletProps}; }`;
+      if (tabletProps) css += `.storefront-page-content .element-${elementId} { ${tabletProps}; }`;
       if (tHoverColor || tHoverBg) {
         const hoverPairs: string[] = [];
         if (tHoverColor) hoverPairs.push(`color: ${tHoverColor}`);
         if (tHoverBg) hoverPairs.push(`background-color: ${tHoverBg}`);
-        css += `.storefront-page-content .element-${elementId}:hover, .storefront .element-${elementId}:hover, .element-${elementId}:hover { ${hoverPairs.join('; ')}; transition: color 0.2s ease, background-color 0.2s ease; }`;
+        css += `.storefront-page-content .element-${elementId}:hover { ${hoverPairs.join('; ')}; transition: color 0.2s ease, background-color 0.2s ease; }`;
       }
       css += ` }`;
     }
     
     // Add forced tablet styles for builder preview
     if (tabletProps) {
-      css += `.pb-tablet .storefront-page-content .element-${elementId}, .pb-tablet .storefront .element-${elementId}, .pb-tablet .element-${elementId} { ${tabletProps}; }`;
+      css += `.pb-tablet .storefront-page-content .element-${elementId} { ${tabletProps}; }`;
     }
     if (tHoverColor || tHoverBg) {
       const hoverPairs: string[] = [];
       if (tHoverColor) hoverPairs.push(`color: ${tHoverColor}`);
       if (tHoverBg) hoverPairs.push(`background-color: ${tHoverBg}`);
-      css += `.pb-tablet .storefront-page-content .element-${elementId}:hover, .pb-tablet .storefront .element-${elementId}:hover, .pb-tablet .element-${elementId}:hover { ${hoverPairs.join('; ')}; transition: color 0.2s ease, background-color 0.2s ease; }`;
+      css += `.pb-tablet .storefront-page-content .element-${elementId}:hover { ${hoverPairs.join('; ')}; transition: color 0.2s ease, background-color 0.2s ease; }`;
     }
   }
   
@@ -92,25 +92,25 @@ export function generateResponsiveCSS(elementId: string, styles: any): string {
     
     if (mobileProps || mHoverColor || mHoverBg) {
       css += `@media (max-width: 767px) { `;
-      if (mobileProps) css += `.storefront-page-content .element-${elementId}, .storefront .element-${elementId}, .element-${elementId} { ${mobileProps}; }`;
+      if (mobileProps) css += `.storefront-page-content .element-${elementId} { ${mobileProps}; }`;
       if (mHoverColor || mHoverBg) {
         const hoverPairs: string[] = [];
         if (mHoverColor) hoverPairs.push(`color: ${mHoverColor}`);
         if (mHoverBg) hoverPairs.push(`background-color: ${mHoverBg}`);
-        css += `.storefront-page-content .element-${elementId}:hover, .storefront .element-${elementId}:hover, .element-${elementId}:hover { ${hoverPairs.join('; ')}; transition: color 0.2s ease, background-color 0.2s ease; }`;
+        css += `.storefront-page-content .element-${elementId}:hover { ${hoverPairs.join('; ')}; transition: color 0.2s ease, background-color 0.2s ease; }`;
       }
       css += ` }`;
     }
     
     // Add forced mobile styles for builder preview
     if (mobileProps) {
-      css += `.pb-mobile .storefront-page-content .element-${elementId}, .pb-mobile .storefront .element-${elementId}, .pb-mobile .element-${elementId} { ${mobileProps}; }`;
+      css += `.pb-mobile .storefront-page-content .element-${elementId} { ${mobileProps}; }`;
     }
     if (mHoverColor || mHoverBg) {
       const hoverPairs: string[] = [];
       if (mHoverColor) hoverPairs.push(`color: ${mHoverColor}`);
       if (mHoverBg) hoverPairs.push(`background-color: ${mHoverBg}`);
-      css += `.pb-mobile .storefront-page-content .element-${elementId}:hover, .pb-mobile .storefront .element-${elementId}:hover, .pb-mobile .element-${elementId}:hover { ${hoverPairs.join('; ')}; transition: color 0.2s ease, background-color 0.2s ease; }`;
+      css += `.pb-mobile .storefront-page-content .element-${elementId}:hover { ${hoverPairs.join('; ')}; transition: color 0.2s ease, background-color 0.2s ease; }`;
     }
   }
   
@@ -133,20 +133,20 @@ function generateImageAlignmentCSS(elementId: string, styles: any): string {
   
   let css = '';
   
-  // Base alignment styles with higher specificity for storefront
+  // Base alignment styles with consistent class targeting
   if (alignment === 'full') {
-    css += `.storefront .element-${elementId}, .element-${elementId} { width: 100% !important; margin-left: 0 !important; margin-right: 0 !important; }`;
+    css += `.storefront-page-content .element-${elementId} { width: 100% !important; margin-left: 0 !important; margin-right: 0 !important; }`;
   } else {
     switch (alignment) {
       case 'left':
-        css += `.storefront .element-${elementId}, .element-${elementId} { margin-left: 0 !important; margin-right: auto !important; }`;
+        css += `.storefront-page-content .element-${elementId} { margin-left: 0 !important; margin-right: auto !important; }`;
         break;
       case 'right':
-        css += `.storefront .element-${elementId}, .element-${elementId} { margin-left: auto !important; margin-right: 0 !important; }`;
+        css += `.storefront-page-content .element-${elementId} { margin-left: auto !important; margin-right: 0 !important; }`;
         break;
       case 'center':
       default:
-        css += `.storefront .element-${elementId}, .element-${elementId} { margin-left: auto !important; margin-right: auto !important; }`;
+        css += `.storefront-page-content .element-${elementId} { margin-left: auto !important; margin-right: auto !important; }`;
         break;
     }
   }

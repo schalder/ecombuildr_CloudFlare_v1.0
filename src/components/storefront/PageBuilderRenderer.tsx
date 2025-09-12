@@ -179,11 +179,11 @@ export const PageBuilderRenderer: React.FC<PageBuilderRendererProps> = ({
   };
 
   const content = (
-    <div className={`page-builder-content ${className}`} style={getPageStyles()}>
+    <div className={`storefront-page-content ${className}`} style={getPageStyles()}>
       {/* Apply global styles if they exist */}
       {data.globalStyles && (
         <style>{`
-          .page-builder-content {
+          .storefront-page-content {
             ${Object.entries(data.globalStyles).map(([key, value]) => `${key}: ${value};`).join(' ')}
           }
         `}</style>
