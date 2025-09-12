@@ -476,7 +476,7 @@ const ImageFeatureElement: React.FC<{
     }
   };
 
-  // Generate responsive CSS and get inline styles
+  // Generate responsive CSS and get inline styles (margins handled by ElementRenderer)
   const responsiveCSS = generateResponsiveCSS(element.id, element.styles);
   const inlineStyles = renderElementStyles(element, deviceType || 'desktop');
   
