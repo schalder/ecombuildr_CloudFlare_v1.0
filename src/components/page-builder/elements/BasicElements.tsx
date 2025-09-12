@@ -636,7 +636,7 @@ const SpacerElement: React.FC<{
   isEditing?: boolean;
   deviceType?: 'desktop' | 'tablet' | 'mobile';
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
-}> = ({ element, isEditing, onUpdate }) => {
+}> = ({ element, isEditing, deviceType = 'desktop', onUpdate }) => {
   // Handle both numeric and string height values for backwards compatibility
   const heightValue = typeof element.content.height === 'number' ? element.content.height : parseInt(String(element.content.height || '50px').replace('px', '')) || 50;
   const height = `${heightValue}px`;
@@ -649,7 +649,7 @@ const SpacerElement: React.FC<{
     });
   };
 
-  const elementStyles = renderElementStyles(element);
+  const elementStyles = renderElementStyles(element, deviceType);
   const spacerHeight = String(height);
   
   if (isEditing) {
@@ -692,7 +692,7 @@ const DividerElement: React.FC<{
   const alignment = element.content.responsive?.[deviceType]?.alignment || 'center';
   
   
-  const elementStyles = renderElementStyles(element);
+  const elementStyles = renderElementStyles(element, deviceType);
   
   // NOTE: Margins are now handled by ElementRenderer wrapper
   // ElementStyles should not contain margins due to our central fix in styleRenderer.ts

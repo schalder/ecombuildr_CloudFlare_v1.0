@@ -3,7 +3,7 @@ import { PageBuilderElement } from '@/components/page-builder/types';
 import { storefrontRegistry } from '../registry/storefrontRegistry';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
 import { Skeleton } from '@/components/ui/skeleton';
-import { getEffectiveResponsiveValue } from '@/components/page-builder/utils/responsiveHelpers';
+import { mergeResponsiveStyles } from '@/components/page-builder/utils/responsiveStyles';
 
 interface StorefrontElementProps {
   element: PageBuilderElement;
@@ -122,16 +122,15 @@ export const StorefrontElement: React.FC<StorefrontElementProps> = ({
   const ElementComponent = elementDef.component;
 
   const wrapperStyle = useMemo<React.CSSProperties>(() => {
-    const mt = getEffectiveResponsiveValue(element, 'marginTop', deviceType, '');
-    const mr = getEffectiveResponsiveValue(element, 'marginRight', deviceType, '');
-    const mb = getEffectiveResponsiveValue(element, 'marginBottom', deviceType, '');
-    const ml = getEffectiveResponsiveValue(element, 'marginLeft', deviceType, '');
-
+    // Use mergeResponsiveStyles to properly handle shorthand margin/padding parsing
+    // This is especially important for spacer/divider elements that use shorthand styles
+    const mergedStyles = mergeResponsiveStyles({}, element.styles, deviceType);
+    
     const style: React.CSSProperties = {};
-    if (mt) style.marginTop = mt;
-    if (mr) style.marginRight = mr;
-    if (mb) style.marginBottom = mb;
-    if (ml) style.marginLeft = ml;
+    if (mergedStyles.marginTop) style.marginTop = mergedStyles.marginTop;
+    if (mergedStyles.marginRight) style.marginRight = mergedStyles.marginRight;
+    if (mergedStyles.marginBottom) style.marginBottom = mergedStyles.marginBottom;
+    if (mergedStyles.marginLeft) style.marginLeft = mergedStyles.marginLeft;
     return style;
   }, [element, deviceType]);
 
