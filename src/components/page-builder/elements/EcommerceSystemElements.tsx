@@ -355,6 +355,7 @@ const CartFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 'des
   const shouldApplyMargins = !isEditing;
   const finalStyles = shouldApplyMargins ? elementStyles : {
     ...elementStyles,
+    margin: undefined,
     marginTop: undefined,
     marginRight: undefined,
     marginBottom: undefined,

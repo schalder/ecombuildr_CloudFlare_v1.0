@@ -18,7 +18,7 @@ const ContactFormElement: React.FC<{
   deviceType?: 'desktop' | 'tablet' | 'mobile';
   columnCount?: number;
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
-}> = ({ element, isEditing, onUpdate, deviceType, columnCount = 1 }) => {
+}> = ({ element, isEditing, onUpdate, deviceType = 'desktop', columnCount = 1 }) => {
   const { storeId } = useParams();
   const [formData, setFormData] = useState({
     name: '',
@@ -139,7 +139,7 @@ const NewsletterElement: React.FC<{
   deviceType?: 'desktop' | 'tablet' | 'mobile';
   columnCount?: number;
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
-}> = ({ element, isEditing, onUpdate, deviceType, columnCount = 1 }) => {
+}> = ({ element, isEditing, onUpdate, deviceType = 'desktop', columnCount = 1 }) => {
   const { storeId } = useParams();
   const [email, setEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -212,7 +212,7 @@ const FormFieldElement: React.FC<{
   deviceType?: 'desktop' | 'tablet' | 'mobile';
   columnCount?: number;
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
-}> = ({ element, isEditing, onUpdate, deviceType, columnCount = 1 }) => {
+}> = ({ element, isEditing, onUpdate, deviceType = 'desktop', columnCount = 1 }) => {
   const fieldType = element.content.fieldType || 'text';
   const label = element.content.label || 'Field Label';
   const placeholder = element.content.placeholder || 'Enter value...';

@@ -735,7 +735,7 @@ const DividerElement: React.FC<{
   const alignment = element.content.responsive?.[deviceType]?.alignment || 'center';
   
   
-  const elementStyles = renderElementStyles(element);
+  const elementStyles = renderElementStyles(element, deviceType);
   
   // Parse individual margin values from the new spacing system
   const parseMarginValue = (value: string | number | undefined): string => {
@@ -748,6 +748,7 @@ const DividerElement: React.FC<{
   const marginRight = parseMarginValue(elementStyles.marginRight);
   const marginBottom = parseMarginValue(elementStyles.marginBottom);
   const marginLeft = parseMarginValue(elementStyles.marginLeft);
+  const shorthandMargin = elementStyles.margin as string | number | undefined;
   
   // Calculate alignment margins (only when user hasn't set specific left/right margins)
   let dividerMarginLeft = '0';
@@ -776,20 +777,24 @@ const DividerElement: React.FC<{
     margin: 0,
     marginLeft: dividerMarginLeft,
     marginRight: dividerMarginRight,
-  };
+  } as React.CSSProperties;
 
   // Remove background styles for the wrapper - dividers should be transparent
-  const { backgroundColor, background, ...wrapperStylesWithoutBg } = elementStyles;
+  const { backgroundColor, background, ...wrapperStylesWithoutBg } = elementStyles as any;
   
   const shouldApplyMargins = !isEditing;
-  const marginStyles = shouldApplyMargins ? { marginTop, marginRight, marginBottom, marginLeft } : {} as React.CSSProperties;
+  const wrapperMargins: React.CSSProperties = shouldApplyMargins
+    ? (shorthandMargin !== undefined && !hasExplicitHorizontalMargins
+        ? { margin: shorthandMargin as any }
+        : { marginTop, marginRight, marginBottom, marginLeft })
+    : { margin: undefined, marginTop: undefined, marginRight: undefined, marginBottom: undefined, marginLeft: undefined };
   
-  const wrapperStyle = {
+  const wrapperStyle: React.CSSProperties = {
     ...wrapperStylesWithoutBg,
-    ...marginStyles,
+    ...wrapperMargins,
     backgroundColor: 'transparent',
     background: 'transparent',
-  } as React.CSSProperties;
+  };
 
   if (isEditing) {
     return (
