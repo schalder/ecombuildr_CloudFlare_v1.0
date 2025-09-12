@@ -514,8 +514,21 @@ function generateElementStyles(styles: any): string {
   if (styles.fontSize) cssProps.push(`font-size: ${styles.fontSize}`);
   if (styles.fontWeight) cssProps.push(`font-weight: ${styles.fontWeight}`);
   if (styles.textAlign) cssProps.push(`text-align: ${styles.textAlign}`);
+  
+  // Padding properties
   if (styles.padding) cssProps.push(`padding: ${styles.padding}`);
+  if (styles.paddingTop) cssProps.push(`padding-top: ${styles.paddingTop}`);
+  if (styles.paddingRight) cssProps.push(`padding-right: ${styles.paddingRight}`);
+  if (styles.paddingBottom) cssProps.push(`padding-bottom: ${styles.paddingBottom}`);
+  if (styles.paddingLeft) cssProps.push(`padding-left: ${styles.paddingLeft}`);
+  
+  // Margin properties
   if (styles.margin) cssProps.push(`margin: ${styles.margin}`);
+  if (styles.marginTop) cssProps.push(`margin-top: ${styles.marginTop}`);
+  if (styles.marginRight) cssProps.push(`margin-right: ${styles.marginRight}`);
+  if (styles.marginBottom) cssProps.push(`margin-bottom: ${styles.marginBottom}`);
+  if (styles.marginLeft) cssProps.push(`margin-left: ${styles.marginLeft}`);
+  
   if (styles.border) cssProps.push(`border: ${styles.border}`);
   if (styles.borderRadius) cssProps.push(`border-radius: ${styles.borderRadius}`);
   if (styles.width) cssProps.push(`width: ${styles.width}`);
