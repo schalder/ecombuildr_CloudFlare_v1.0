@@ -3,6 +3,7 @@ import { useLocation, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
 import { PageBuilderRenderer } from '@/components/storefront/PageBuilderRenderer';
+import { StorefrontPageBuilder } from '@/components/storefront/renderer/StorefrontPageBuilder';
 import { ScriptManager } from '@/components/storefront/optimized/ScriptManager';
 import { FunnelHeader } from '@/components/storefront/FunnelHeader';
 import { FunnelFooter } from '@/components/storefront/FunnelFooter';
@@ -55,6 +56,8 @@ export const DomainFunnelRouter: React.FC<DomainFunnelRouterProps> = ({ funnel }
   const { store } = useStore();
 
   const isPreview = searchParams.get('preview') === '1';
+  const sf = searchParams.get('sf');
+  const useStorefront = sf === '0' ? false : true;
 
   // Extract step slug from pathname
   const pathSegments = location.pathname.split('/').filter(Boolean);
@@ -68,7 +71,7 @@ export const DomainFunnelRouter: React.FC<DomainFunnelRouterProps> = ({ funnel }
 
         let query = supabase
           .from('funnel_steps')
-          .select(optimizedFunnelStepQuery.select)
+          .select(useStorefront ? optimizedFunnelStepQuery.select : '*')
           .eq('funnel_id', funnel.id);
 
         // If no specific step slug or it's empty/homepage, get the first published step by step_order
@@ -140,7 +143,17 @@ export const DomainFunnelRouter: React.FC<DomainFunnelRouterProps> = ({ funnel }
       favicon: funnel?.settings?.favicon_url || store?.favicon_url,
     });
 
-    // Custom scripts are handled by ScriptManager in StorefrontPageBuilder
+    // Custom scripts are now handled by ScriptManager for storefront renderer
+    if (!useStorefront && step.custom_scripts) {
+      const scriptElement = document.createElement('div');
+      scriptElement.innerHTML = step.custom_scripts;
+      document.head.appendChild(scriptElement);
+
+      // Cleanup function
+      return () => {
+        document.head.removeChild(scriptElement);
+      };
+    }
   }, [step, funnel, store]);
 
   if (loading) {
@@ -169,17 +182,21 @@ export const DomainFunnelRouter: React.FC<DomainFunnelRouterProps> = ({ funnel }
       <div className="w-full min-h-screen flex flex-col">
         <FunnelHeader funnel={funnel} />
         <main className="flex-1">
-            {step.content?.sections ? (
+          {step.content?.sections ? (
+            useStorefront ? (
               <>
-                <PageBuilderRenderer data={step.content} />
+                <StorefrontPageBuilder data={step.content} />
                 <ScriptManager customScripts={step.custom_scripts} />
               </>
             ) : (
-              <div className="container mx-auto px-4 py-8">
-                <h1 className="text-3xl font-bold mb-6">{step.title}</h1>
-                <p className="text-muted-foreground">This funnel step is still being set up.</p>
-              </div>
-            )}
+              <PageBuilderRenderer data={step.content} />
+            )
+          ) : (
+            <div className="container mx-auto px-4 py-8">
+              <h1 className="text-3xl font-bold mb-6">{step.title}</h1>
+              <p className="text-muted-foreground">This funnel step is still being set up.</p>
+            </div>
+          )}
         </main>
         <FunnelFooter funnel={funnel} />
       </div>

@@ -1,55 +1,28 @@
 // Utility functions for generating responsive CSS from element styles
 
 export function generateResponsiveCSS(elementId: string, styles: any): string {
-  if (!styles) return '';
+  if (!styles?.responsive) return '';
   
-  // Extract non-responsive base styles and responsive overrides
-  const { responsive, ...nonResponsiveStyles } = styles;
-  const { desktop = {}, tablet = {}, mobile = {} } = responsive || {};
-  
-  // Parse shorthand spacing in base styles
-  const baseStyles = { ...nonResponsiveStyles };
-  if (baseStyles.margin && typeof baseStyles.margin === 'string') {
-    const parsed = parseShorthandSpacing(baseStyles.margin);
-    if (parsed.top) baseStyles.marginTop = parsed.top;
-    if (parsed.right) baseStyles.marginRight = parsed.right;
-    if (parsed.bottom) baseStyles.marginBottom = parsed.bottom;
-    if (parsed.left) baseStyles.marginLeft = parsed.left;
-    delete baseStyles.margin;
-  }
-  if (baseStyles.padding && typeof baseStyles.padding === 'string') {
-    const parsed = parseShorthandSpacing(baseStyles.padding);
-    if (parsed.top) baseStyles.paddingTop = parsed.top;
-    if (parsed.right) baseStyles.paddingRight = parsed.right;
-    if (parsed.bottom) baseStyles.paddingBottom = parsed.bottom;
-    if (parsed.left) baseStyles.paddingLeft = parsed.left;
-    delete baseStyles.padding;
-  }
+  const { desktop = {}, tablet = {}, mobile = {} } = styles.responsive;
   
   let css = '';
   
-  // Merge base styles with desktop responsive overrides for default rule
-  const { hoverColor: baseHoverColor, hoverBackgroundColor: baseHoverBg, ...restBase } = baseStyles;
-  const { hoverColor: dHoverColor, hoverBackgroundColor: dHoverBg, ...restDesktop } = desktop as any;
-  
-  const mergedDefault = { ...restBase, ...restDesktop };
-  const defaultProps = Object.entries(mergedDefault)
-    .map(([prop, value]) => `${kebabCase(prop)}: ${value}`)
-    .join('; ');
+  // Desktop styles (default)
+  if (Object.keys(desktop).length > 0) {
+    const { hoverColor, hoverBackgroundColor, ...restDesktop } = desktop as any;
+    const desktopProps = Object.entries(restDesktop)
+      .map(([prop, value]) => `${kebabCase(prop)}: ${value}`)
+      .join('; ');
 
-  // Default styles (base + desktop responsive) - Use consistent class targeting
-  if (defaultProps) {
-    css += `.storefront-page-content .element-${elementId} { ${defaultProps}; }`;
-  }
-  
-  // Default hover styles (base hover + desktop hover)
-  const finalHoverColor = dHoverColor || baseHoverColor;
-  const finalHoverBg = dHoverBg || baseHoverBg;
-  if (finalHoverColor || finalHoverBg) {
-    const hoverPairs: string[] = [];
-    if (finalHoverColor) hoverPairs.push(`color: ${finalHoverColor}`);
-    if (finalHoverBg) hoverPairs.push(`background-color: ${finalHoverBg}`);
-    css += `.storefront-page-content .element-${elementId}:hover { ${hoverPairs.join('; ')}; transition: color 0.2s ease, background-color 0.2s ease; }`;
+    if (desktopProps) {
+      css += `.element-${elementId} { ${desktopProps}; }`;
+    }
+    if (hoverColor || hoverBackgroundColor) {
+      const hoverPairs: string[] = [];
+      if (hoverColor) hoverPairs.push(`color: ${hoverColor} !important`);
+      if (hoverBackgroundColor) hoverPairs.push(`background-color: ${hoverBackgroundColor} !important`);
+      css += `.element-${elementId}:hover { ${hoverPairs.join('; ')}; transition: all 0.2s ease; }`;
+    }
   }
   
   // Tablet styles (768px to 1023px)
@@ -61,25 +34,25 @@ export function generateResponsiveCSS(elementId: string, styles: any): string {
     
     if (tabletProps || tHoverColor || tHoverBg) {
       css += `@media (min-width: 768px) and (max-width: 1023px) { `;
-      if (tabletProps) css += `.storefront-page-content .element-${elementId} { ${tabletProps}; }`;
+      if (tabletProps) css += `.element-${elementId} { ${tabletProps}; }`;
       if (tHoverColor || tHoverBg) {
         const hoverPairs: string[] = [];
-        if (tHoverColor) hoverPairs.push(`color: ${tHoverColor}`);
-        if (tHoverBg) hoverPairs.push(`background-color: ${tHoverBg}`);
-        css += `.storefront-page-content .element-${elementId}:hover { ${hoverPairs.join('; ')}; transition: color 0.2s ease, background-color 0.2s ease; }`;
+        if (tHoverColor) hoverPairs.push(`color: ${tHoverColor} !important`);
+        if (tHoverBg) hoverPairs.push(`background-color: ${tHoverBg} !important`);
+        css += `.element-${elementId}:hover { ${hoverPairs.join('; ')}; transition: all 0.2s ease; }`;
       }
       css += ` }`;
     }
     
     // Add forced tablet styles for builder preview
     if (tabletProps) {
-      css += `.pb-tablet .storefront-page-content .element-${elementId} { ${tabletProps}; }`;
+      css += `.pb-tablet .element-${elementId} { ${tabletProps}; }`;
     }
     if (tHoverColor || tHoverBg) {
       const hoverPairs: string[] = [];
-      if (tHoverColor) hoverPairs.push(`color: ${tHoverColor}`);
-      if (tHoverBg) hoverPairs.push(`background-color: ${tHoverBg}`);
-      css += `.pb-tablet .storefront-page-content .element-${elementId}:hover { ${hoverPairs.join('; ')}; transition: color 0.2s ease, background-color 0.2s ease; }`;
+      if (tHoverColor) hoverPairs.push(`color: ${tHoverColor} !important`);
+      if (tHoverBg) hoverPairs.push(`background-color: ${tHoverBg} !important`);
+      css += `.pb-tablet .element-${elementId}:hover { ${hoverPairs.join('; ')}; transition: all 0.2s ease; }`;
     }
   }
   
@@ -92,64 +65,28 @@ export function generateResponsiveCSS(elementId: string, styles: any): string {
     
     if (mobileProps || mHoverColor || mHoverBg) {
       css += `@media (max-width: 767px) { `;
-      if (mobileProps) css += `.storefront-page-content .element-${elementId} { ${mobileProps}; }`;
+      if (mobileProps) css += `.element-${elementId} { ${mobileProps}; }`;
       if (mHoverColor || mHoverBg) {
         const hoverPairs: string[] = [];
-        if (mHoverColor) hoverPairs.push(`color: ${mHoverColor}`);
-        if (mHoverBg) hoverPairs.push(`background-color: ${mHoverBg}`);
-        css += `.storefront-page-content .element-${elementId}:hover { ${hoverPairs.join('; ')}; transition: color 0.2s ease, background-color 0.2s ease; }`;
+        if (mHoverColor) hoverPairs.push(`color: ${mHoverColor} !important`);
+        if (mHoverBg) hoverPairs.push(`background-color: ${mHoverBg} !important`);
+        css += `.element-${elementId}:hover { ${hoverPairs.join('; ')}; transition: all 0.2s ease; }`;
       }
       css += ` }`;
     }
     
     // Add forced mobile styles for builder preview
     if (mobileProps) {
-      css += `.pb-mobile .storefront-page-content .element-${elementId} { ${mobileProps}; }`;
+      css += `.pb-mobile .element-${elementId} { ${mobileProps}; }`;
     }
     if (mHoverColor || mHoverBg) {
       const hoverPairs: string[] = [];
-      if (mHoverColor) hoverPairs.push(`color: ${mHoverColor}`);
-      if (mHoverBg) hoverPairs.push(`background-color: ${mHoverBg}`);
-      css += `.pb-mobile .storefront-page-content .element-${elementId}:hover { ${hoverPairs.join('; ')}; transition: color 0.2s ease, background-color 0.2s ease; }`;
+      if (mHoverColor) hoverPairs.push(`color: ${mHoverColor} !important`);
+      if (mHoverBg) hoverPairs.push(`background-color: ${mHoverBg} !important`);
+      css += `.pb-mobile .element-${elementId}:hover { ${hoverPairs.join('; ')}; transition: all 0.2s ease; }`;
     }
   }
   
-  
-  // Add image alignment CSS rules
-  const imageAlignmentCSS = generateImageAlignmentCSS(elementId, styles);
-  if (imageAlignmentCSS) {
-    css += imageAlignmentCSS;
-  }
-  
-  return css;
-}
-
-// Generate CSS for image alignment to ensure it works on live pages
-function generateImageAlignmentCSS(elementId: string, styles: any): string {
-  if (!styles || !styles.content) return '';
-  
-  const { alignment } = styles.content;
-  if (!alignment) return '';
-  
-  let css = '';
-  
-  // Base alignment styles with consistent class targeting
-  if (alignment === 'full') {
-    css += `.storefront-page-content .element-${elementId} { width: 100% !important; margin-left: 0 !important; margin-right: 0 !important; }`;
-  } else {
-    switch (alignment) {
-      case 'left':
-        css += `.storefront-page-content .element-${elementId} { margin-left: 0 !important; margin-right: auto !important; }`;
-        break;
-      case 'right':
-        css += `.storefront-page-content .element-${elementId} { margin-left: auto !important; margin-right: 0 !important; }`;
-        break;
-      case 'center':
-      default:
-        css += `.storefront-page-content .element-${elementId} { margin-left: auto !important; margin-right: auto !important; }`;
-        break;
-    }
-  }
   
   return css;
 }

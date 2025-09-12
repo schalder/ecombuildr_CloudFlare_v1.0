@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { formatCurrency } from '@/lib/currency';
-import { renderElementStyles, stripElementMargins } from '@/components/page-builder/utils/styleRenderer';
+import { renderElementStyles } from '@/components/page-builder/utils/styleRenderer';
 import { useAddToCart } from '@/contexts/AddToCartProvider';
 import { useStoreProducts } from '@/hooks/useStoreData';
 import { useResolvedWebsiteId } from '@/hooks/useResolvedWebsiteId';
@@ -47,7 +47,6 @@ const WeeklyFeaturedElement: React.FC<{
   
   // Get responsive styles for this element
   const appliedStyles = renderElementStyles(element, deviceType);
-  const finalStyles = !isEditing ? appliedStyles : stripElementMargins(appliedStyles);
 
   // Only fetch products if we have a resolved websiteId (prevents store-wide fallback)
   const shouldFetchProducts = websiteId !== undefined;
@@ -252,7 +251,7 @@ const WeeklyFeaturedElement: React.FC<{
 
   if (loading || !shouldFetchProducts) {
     return (
-      <section style={finalStyles}>
+      <section style={appliedStyles}>
         <div className="container mx-auto">
           <div className="text-center mb-8">
             <div className="h-8 bg-muted rounded w-64 mx-auto mb-2"></div>
@@ -265,7 +264,7 @@ const WeeklyFeaturedElement: React.FC<{
   }
 
   return (
-    <section style={finalStyles}>
+    <section style={appliedStyles}>
       <div className="container mx-auto px-4">
         {(showTitle && title) || (showSubtitle && subtitle) ? (
           <div className="text-center mb-6 sm:mb-8 md:mb-12">

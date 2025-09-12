@@ -7,7 +7,6 @@ import { PageBuilderElement } from '../types';
 import { elementRegistry } from './ElementRegistry';
 import { InlineEditor } from '../components/InlineEditor';
 import { generateResponsiveCSS, mergeResponsiveStyles } from '../utils/responsiveStyles';
-import { renderElementStyles, stripElementMargins } from '../utils/styleRenderer';
 
 // Google Maps Element
 const GoogleMapsElement: React.FC<{
@@ -15,7 +14,7 @@ const GoogleMapsElement: React.FC<{
   isEditing?: boolean;
   deviceType?: 'desktop' | 'tablet' | 'mobile';
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
-}> = ({ element, isEditing, deviceType = 'desktop', onUpdate }) => {
+}> = ({ element, isEditing, onUpdate }) => {
   const apiKey = element.content.apiKey || '';
   const location = element.content.location || 'New York, NY';
   const zoom = element.content.zoom || 15;
@@ -39,11 +38,8 @@ const GoogleMapsElement: React.FC<{
     ? `https://www.google.com/maps/embed/v1/place?key=${apiKey}&q=${encodeURIComponent(location)}&zoom=${zoom}&maptype=${mapType}`
     : null;
 
-  const elementStyles = renderElementStyles(element, deviceType);
-  const finalStyles = !isEditing ? elementStyles : stripElementMargins(elementStyles);
-
   return (
-    <div className="max-w-4xl mx-auto" style={finalStyles}>
+    <div className="max-w-4xl mx-auto" style={element.styles}>
       <InlineEditor
         value={element.content.title || 'Location'}
         onChange={handleTitleUpdate}
@@ -88,7 +84,7 @@ const CustomHTMLElement: React.FC<{
   isEditing?: boolean;
   deviceType?: 'desktop' | 'tablet' | 'mobile';
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
-}> = ({ element, isEditing, deviceType = 'desktop', onUpdate }) => {
+}> = ({ element, isEditing, onUpdate }) => {
   const html = element.content.html || '';
   const allowDangerousHTML = element.content.allowDangerousHTML || false;
   const [showPreview, setShowPreview] = useState(!isEditing);
@@ -172,12 +168,9 @@ const CustomHTMLElement: React.FC<{
     });
   }, [html, allowDangerousHTML]);
 
-  const elementStyles = renderElementStyles(element, deviceType);
-  const finalStyles = !isEditing ? elementStyles : stripElementMargins(elementStyles);
-
   if (isEditing) {
     return (
-      <div className="max-w-4xl mx-auto p-4 border rounded-lg" style={finalStyles}>
+      <div className="max-w-4xl mx-auto p-4 border rounded-lg" style={element.styles}>
         <div className="flex items-center justify-end mb-4">
           <div className="flex items-center space-x-2">
             <label className="flex items-center space-x-2 text-sm">
@@ -244,7 +237,7 @@ Example:
   }
 
   return (
-    <div className="max-w-4xl mx-auto" style={finalStyles}>
+    <div className="max-w-4xl mx-auto" style={element.styles}>
       <div 
         ref={containerRef}
         className="min-h-[100px] overflow-auto"

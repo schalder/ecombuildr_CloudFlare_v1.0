@@ -200,7 +200,14 @@ export const CountdownTimerElement: React.FC<CountdownTimerElementProps> = ({
   // Get element styles - always apply full styles consistently
   // In builder mode, ElementWrapper handles margins, but on storefront we need them
   const elementStyles = renderElementStyles(element, deviceType);
-  const finalStyles = elementStyles;
+  const shouldApplyMargins = !isEditing; // Only apply margins on storefront
+  const finalStyles = shouldApplyMargins ? elementStyles : {
+    ...elementStyles,
+    marginTop: undefined,
+    marginRight: undefined,
+    marginBottom: undefined,
+    marginLeft: undefined
+  };
 
   if (isEditing) {
     return (

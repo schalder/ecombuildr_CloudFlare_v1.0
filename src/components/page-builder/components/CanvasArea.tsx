@@ -127,29 +127,11 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
         style={{ ...getDevicePreviewStyles(deviceType), ...getCanvasStyles() }}
         onClick={() => !isPreviewMode && onSelectElement(undefined)}
       >
-        {/* Global styles injection like StorefrontPageBuilder */}
-        {pageData.globalStyles && (
-          <style>{`
-            .storefront-page-content {
-              ${Object.entries(pageData.globalStyles).map(([key, value]) => `${key}: ${value};`).join(' ')}
-            }
-          `}</style>
-        )}
-
-        {/* Content area wrapper with storefront class for consistent styling */}
+        {/* Content area wrapper for clean preview capture */}
         <div 
           data-content-area="true" 
-          className={cn(
-            'page-content-area storefront-page-content',
-            // Add device type classes for responsive CSS targeting
-            deviceType === 'tablet' && 'pb-tablet',
-            deviceType === 'mobile' && 'pb-mobile'
-          )}
-          style={{ 
-            minHeight: pageData.sections.length === 0 ? '400px' : 'auto',
-            /* CSS Reset to prevent external style interference */
-            boxSizing: 'border-box'
-          }}
+          className="page-content-area"
+          style={{ minHeight: pageData.sections.length === 0 ? '400px' : 'auto' }}
         >
           {pageData.sections.length === 0 ? (
             <div className="min-h-[400px] flex items-center justify-center">

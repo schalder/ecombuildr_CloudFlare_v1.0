@@ -45,12 +45,13 @@ const HeadingElement: React.FC<{
     ...elementStyles, // Apply all styles from renderElementStyles
   } as React.CSSProperties;
 
-  const finalStyles = cleanStyles;
-
   const className = [`element-${element.id}`, 'outline-none font-bold block rounded'].join(' ');
 
+  // Inject responsive CSS into document head
+  useHeadStyle(`element-responsive-${element.id}`, generateResponsiveCSS(element.id, element.styles));
+
   return (
-    <Tag style={finalStyles} className={className}>
+    <Tag style={cleanStyles} className={className}>
         {isEditing ? (
           <InlineRTE
             value={text}
@@ -97,12 +98,13 @@ const ParagraphElement: React.FC<{
     ...elementStyles, // Apply all styles from renderElementStyles
   } as React.CSSProperties;
 
-  const finalStyles = cleanStyles;
-
   const className = [`element-${element.id}`, 'outline-none rounded'].join(' ');
 
+  // Inject responsive CSS into document head
+  useHeadStyle(`element-responsive-${element.id}`, generateResponsiveCSS(element.id, element.styles));
+
   return (
-    <div style={finalStyles} className={className}>
+    <div style={cleanStyles} className={className}>
         {isEditing ? (
           <InlineRTE
             value={text}
@@ -142,32 +144,11 @@ const ImageElement: React.FC<{
     }
   }, [src]);
 
-  // Generate responsive CSS for this element including alignment
-  const responsiveCSS = React.useMemo(() => {
-    const baseCSS = generateResponsiveCSS(element.id, element.styles);
-    
-    // Add image-specific alignment CSS with proper scoping
-    let alignmentCSS = '';
-    if (alignment === 'full') {
-      alignmentCSS += `.storefront-page-content .element-${element.id} { width: 100% !important; margin-left: 0 !important; margin-right: 0 !important; }`;
-    } else {
-      switch (alignment) {
-        case 'left':
-          alignmentCSS += `.storefront-page-content .element-${element.id} { margin-left: 0 !important; margin-right: auto !important; }`;
-          break;
-        case 'right':
-          alignmentCSS += `.storefront-page-content .element-${element.id} { margin-left: auto !important; margin-right: 0 !important; }`;
-          break;
-        case 'center':
-        default:
-          alignmentCSS += `.storefront-page-content .element-${element.id} { margin-left: auto !important; margin-right: auto !important; }`;
-          break;
-      }
-    }
-    
-    console.log(`Image alignment CSS for ${element.id}:`, alignmentCSS);
-    return baseCSS + alignmentCSS;
-  }, [element.id, element.styles, alignment]);
+  // Generate responsive CSS for this element
+  const responsiveCSS = React.useMemo(() => 
+    generateResponsiveCSS(element.id, element.styles), 
+    [element.id, element.styles]
+  );
 
   // Get container styles using the shared renderer
   const getContainerStyles = (): React.CSSProperties => {
@@ -189,13 +170,37 @@ const ImageElement: React.FC<{
     return cleanStyles;
   };
 
-  // Calculate image styles with border only (alignment handled by CSS)
+  // Calculate image styles with alignment and border (width handled by responsive CSS)
   const getImageStyles = (): React.CSSProperties => {
     const baseStyles = {
       height: element.styles?.height || 'auto',
       objectFit: element.styles?.objectFit || 'cover',
       display: 'block'
     } as React.CSSProperties;
+
+    // Apply alignment as margin styles directly to the image
+    if (alignment === 'full') {
+      baseStyles.width = '100%';
+      baseStyles.marginLeft = '0';
+      baseStyles.marginRight = '0';
+    } else {
+      // Apply alignment
+      switch (alignment) {
+        case 'left':
+          baseStyles.marginLeft = '0';
+          baseStyles.marginRight = 'auto';
+          break;
+        case 'right':
+          baseStyles.marginLeft = 'auto';
+          baseStyles.marginRight = '0';
+          break;
+        case 'center':
+        default:
+          baseStyles.marginLeft = 'auto';
+          baseStyles.marginRight = 'auto';
+          break;
+      }
+    }
 
     // Apply border styles directly to the image
     if (element.styles?.borderWidth) {
@@ -278,14 +283,12 @@ const ImageElement: React.FC<{
     <ImageComponent />
   );
 
-  const containerStylesFinal = (() => { const cs = getContainerStyles(); return !isEditing ? cs : { ...cs, marginTop: undefined, marginRight: undefined, marginBottom: undefined, marginLeft: undefined }; })();
-
   return (
     <>
       <style>{responsiveCSS}</style>
       <figure 
-        className=""
-        style={containerStylesFinal}
+        className="w-full"
+        style={getContainerStyles()}
         onClick={(e) => {
           // Allow event to bubble up for element selection in editing mode
           if (isEditing) {
@@ -336,13 +339,11 @@ const ListElement: React.FC<{
     paddingLeft: indent ? `${indent}px` : baseStyles.paddingLeft,
   };
 
-  const finalContainerStyles = containerStyles;
-
   let listNode: React.ReactNode;
 
   if (style === 'numbers') {
     listNode = (
-      <ol style={finalContainerStyles} className={`element-${element.id} list-decimal list-inside`}>
+      <ol style={containerStyles} className={`element-${element.id} list-decimal list-inside`}>
         {items.map((item, index) => (
           <li key={index} className="mb-1" style={{ marginBottom: `${itemGap}px` }}>{item.text}</li>
         ))}
@@ -359,7 +360,7 @@ const ListElement: React.FC<{
     };
 
     listNode = (
-      <ul style={finalContainerStyles} className={`element-${element.id} list-none pl-0`}>
+      <ul style={containerStyles} className={`element-${element.id} list-none pl-0`}>
         {items.map((item, index) => {
           const iconName = item.icon || defaultIcon;
           const IconComponent = getIconByName(iconName) || getIconByName('check');
@@ -396,7 +397,7 @@ const ListElement: React.FC<{
     );
   } else {
     listNode = (
-      <ul style={finalContainerStyles} className={`element-${element.id} list-disc list-inside`}>
+      <ul style={containerStyles} className={`element-${element.id} list-disc list-inside`}>
         {items.map((item, index) => (
           <li key={index} className="mb-1" style={{ marginBottom: `${itemGap}px` }}>{item.text}</li>
         ))}
@@ -553,7 +554,7 @@ const ButtonElement: React.FC<{
 
   // Use renderElementStyles for consistent styling
   const elementStyles = renderElementStyles(element, deviceType);
-  const finalStyles = elementStyles;
+
   // Smart padding fallback when no padding is set - ratio-based
   const hasExistingPadding = elementStyles.padding || elementStyles.paddingTop || elementStyles.paddingRight || 
                            elementStyles.paddingBottom || elementStyles.paddingLeft;
@@ -600,7 +601,7 @@ const ButtonElement: React.FC<{
         <button 
           className={`${customClassName} h-auto leading-none inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50`}
           onClick={handleClick}
-          style={finalStyles}
+          style={elementStyles}
         >
           {IconComponent && (
             <IconComponent 
@@ -649,14 +650,13 @@ const SpacerElement: React.FC<{
 
   const elementStyles = renderElementStyles(element);
   const spacerHeight = String(height);
-  const finalElementStyles = elementStyles;
   
   if (isEditing) {
     return (
       <div 
         style={{ 
-          ...finalElementStyles, 
-          height: finalElementStyles.height || spacerHeight,
+          ...elementStyles, 
+          height: elementStyles.height || spacerHeight,
           position: 'relative'
         }} 
         className="w-full"
@@ -671,7 +671,7 @@ const SpacerElement: React.FC<{
   }
   
   return (
-    <div style={{ ...finalElementStyles, height: finalElementStyles.height || spacerHeight }} className="w-full" />
+    <div style={{ ...elementStyles, height: elementStyles.height || spacerHeight }} className="w-full" />
   );
 };
 
@@ -691,7 +691,7 @@ const DividerElement: React.FC<{
   const alignment = element.content.responsive?.[deviceType]?.alignment || 'center';
   
   
-  const elementStyles = renderElementStyles(element, deviceType);
+  const elementStyles = renderElementStyles(element);
   
   // Parse individual margin values from the new spacing system
   const parseMarginValue = (value: string | number | undefined): string => {
@@ -704,7 +704,6 @@ const DividerElement: React.FC<{
   const marginRight = parseMarginValue(elementStyles.marginRight);
   const marginBottom = parseMarginValue(elementStyles.marginBottom);
   const marginLeft = parseMarginValue(elementStyles.marginLeft);
-  const shorthandMargin = elementStyles.margin as string | number | undefined;
   
   // Calculate alignment margins (only when user hasn't set specific left/right margins)
   let dividerMarginLeft = '0';
@@ -733,25 +732,24 @@ const DividerElement: React.FC<{
     margin: 0,
     marginLeft: dividerMarginLeft,
     marginRight: dividerMarginRight,
-  } as React.CSSProperties;
+  };
 
   // Remove background styles for the wrapper - dividers should be transparent
-  const { backgroundColor, background, ...wrapperStylesWithoutBg } = elementStyles as any;
+  const { backgroundColor, background, ...wrapperStylesWithoutBg } = elementStyles;
   
-  const wrapperMargins: React.CSSProperties = (shorthandMargin !== undefined && !hasExplicitHorizontalMargins)
-    ? { margin: shorthandMargin as any }
-    : { marginTop, marginRight, marginBottom, marginLeft };
-  
-  const wrapperStyle: React.CSSProperties = {
+  const wrapperStyle = {
     ...wrapperStylesWithoutBg,
-    ...wrapperMargins,
+    marginTop,
+    marginRight,
+    marginBottom,
+    marginLeft,
     backgroundColor: 'transparent',
     background: 'transparent',
   };
 
   if (isEditing) {
     return (
-      <div className={`element-${element.id} border border-dashed border-muted-foreground/30 rounded p-2 bg-muted/10`} style={wrapperStyle}>
+      <div className="border border-dashed border-muted-foreground/30 rounded p-2 bg-muted/10" style={wrapperStyle}>
         <hr style={dividerStyle} />
         <div className="text-xs text-muted-foreground text-center mt-2">
           Divider ({alignment})
@@ -761,7 +759,7 @@ const DividerElement: React.FC<{
   }
 
   return (
-    <div className={`element-${element.id}`} style={wrapperStyle}>
+    <div style={wrapperStyle}>
       <hr style={dividerStyle} className="border-none" />
     </div>
   );
@@ -789,14 +787,6 @@ const VideoElement: React.FC<{
   
   // Strip width-related properties to prevent conflicts with widthByDevice
   const { width: _, maxWidth: __, minWidth: ___, ...cleanContainerStyles } = containerStyles;
-  
-  const finalContainerStyles = !isEditing ? cleanContainerStyles : {
-    ...cleanContainerStyles,
-    marginTop: undefined,
-    marginRight: undefined,
-    marginBottom: undefined,
-    marginLeft: undefined,
-  };
   
   // Normalize widthByDevice for older content that may not have all device types
   const normalizedWidthByDevice = {
@@ -920,7 +910,7 @@ const VideoElement: React.FC<{
     return (
       <div 
         className="w-full h-48 bg-muted flex items-center justify-center border-2 border-dashed border-border rounded-lg"
-        style={finalContainerStyles}
+        style={cleanContainerStyles}
       >
         <p className="text-sm text-muted-foreground">Add a video URL in the properties panel</p>
       </div>
@@ -931,7 +921,7 @@ const VideoElement: React.FC<{
     return (
       <div 
         className="w-full h-48 bg-muted flex items-center justify-center border-2 border-dashed border-border rounded-lg"
-        style={finalContainerStyles}
+        style={cleanContainerStyles}
       >
         <p className="text-sm text-muted-foreground">Add custom embed code in the properties panel</p>
       </div>
@@ -944,7 +934,7 @@ const VideoElement: React.FC<{
   if (videoType === 'embed' && embedCode) {
     const sanitizedCode = sanitizeEmbedCode(embedCode);
     return (
-      <div className={`element-${element.id} ${widthClasses} aspect-video`} style={finalContainerStyles}>
+      <div className={`${widthClasses} aspect-video`} style={cleanContainerStyles}>
         <div 
           className="w-full h-full"
           dangerouslySetInnerHTML={{ __html: sanitizedCode }}
@@ -960,7 +950,7 @@ const VideoElement: React.FC<{
     if (videoInfo.type === 'hosted') {
       // Direct video file
       return (
-        <div className={`element-${element.id} ${widthClasses} aspect-video`} style={finalContainerStyles}>
+        <div className={`${widthClasses} aspect-video`} style={cleanContainerStyles}>
           <video
             src={url}
             controls={controls}
@@ -983,7 +973,7 @@ const VideoElement: React.FC<{
       });
 
       return (
-        <div className={`element-${element.id} ${widthClasses} aspect-video`} style={finalContainerStyles}>
+        <div className={`${widthClasses} aspect-video`} style={cleanContainerStyles}>
           <iframe
             src={finalEmbedUrl}
             className="w-full h-full rounded-lg"
@@ -999,8 +989,8 @@ const VideoElement: React.FC<{
   // Fallback for invalid or unrecognized video
   return (
     <div 
-      className={`element-${element.id} ${widthClasses} aspect-video bg-muted flex items-center justify-center border-2 border-dashed border-border rounded-lg`}
-      style={finalContainerStyles}
+      className={`${widthClasses} aspect-video bg-muted flex items-center justify-center border-2 border-dashed border-border rounded-lg`}
+      style={cleanContainerStyles}
     >
       <p className="text-sm text-muted-foreground">
         {videoType === 'url' ? 'Invalid video URL' : 'No video content'}

@@ -431,15 +431,3 @@ export const hasUserBackground = (styles?: any): boolean => {
 export const hasUserShadow = (styles?: any): boolean => {
   return !!(styles?.boxShadow && styles.boxShadow !== 'none');
 };
-
-// Helper function to strip margins from element styles (for editor mode)
-export const stripElementMargins = (styles: React.CSSProperties): React.CSSProperties => {
-  return {
-    ...styles,
-    margin: undefined,
-    marginTop: undefined,
-    marginRight: undefined,
-    marginBottom: undefined,
-    marginLeft: undefined,
-  };
-};

@@ -3,8 +3,6 @@ import { PageBuilderElement } from '@/components/page-builder/types';
 import { storefrontRegistry } from '../registry/storefrontRegistry';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
 import { Skeleton } from '@/components/ui/skeleton';
-import { generateResponsiveCSS } from '@/components/page-builder/utils/responsiveStyles';
-import { useHeadStyle } from '@/hooks/useHeadStyle';
 
 interface StorefrontElementProps {
   element: PageBuilderElement;
@@ -56,30 +54,6 @@ export const StorefrontElement: React.FC<StorefrontElementProps> = ({
   const [elementDef, setElementDef] = useState(() => storefrontRegistry.get(element.type));
   const [isLoading, setIsLoading] = useState(!elementDef);
   const [showFallback, setShowFallback] = useState(false);
-
-  // Generate and inject responsive CSS for this element
-  const responsiveCSS = generateResponsiveCSS(element.id, element.styles);
-  
-  // Debug log for spacing issues
-  if (element.styles) {
-    const hasResponsive = !!element.styles.responsive;
-    const baseSpacing = {
-      margin: element.styles.margin,
-      marginTop: element.styles.marginTop,
-      marginRight: element.styles.marginRight,
-      marginBottom: element.styles.marginBottom,
-      marginLeft: element.styles.marginLeft,
-      padding: element.styles.padding,
-      paddingTop: element.styles.paddingTop,
-      paddingRight: element.styles.paddingRight,
-      paddingBottom: element.styles.paddingBottom,
-      paddingLeft: element.styles.paddingLeft
-    };
-    const spacingKeys = Object.keys(baseSpacing).filter(k => baseSpacing[k as keyof typeof baseSpacing]);
-    console.log(`[StorefrontElement] ${element.id} (${element.type}): hasResponsive=${hasResponsive}, baseSpacing=[${spacingKeys.join(',')}], css=${responsiveCSS.substring(0, 160)}...`);
-  }
-  
-  useHeadStyle(`storefront-element-${element.id}`, responsiveCSS);
 
   useEffect(() => {
     let mounted = true;
@@ -150,7 +124,6 @@ export const StorefrontElement: React.FC<StorefrontElementProps> = ({
     <div 
       id={element.anchor}
       data-pb-element-id={element.id}
-      className={`element-${element.id}`}
     >
       <ErrorBoundary
         fallback={({ retry }) => (

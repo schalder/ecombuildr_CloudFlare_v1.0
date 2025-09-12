@@ -15,14 +15,14 @@ interface CartDrawerProps {
 }
 
 export const CartDrawer: React.FC<CartDrawerProps> = ({ children }) => {
-  const { items, total, updateQuantity, removeItem, isDrawerOpen, closeDrawer } = useCart();
+  const { items, total, updateQuantity, removeItem } = useCart();
   const { store } = useStore();
   const paths = useEcomPaths();
 
   if (!store) return null;
 
   return (
-    <Sheet open={isDrawerOpen} onOpenChange={closeDrawer}>
+    <Sheet>
       <SheetTrigger asChild>
         {children}
       </SheetTrigger>
