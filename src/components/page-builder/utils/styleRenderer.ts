@@ -383,7 +383,7 @@ export const renderElementStyles = (element: PageBuilderElement, deviceType: 'de
       styles.boxShadow = element.styles.boxShadow;
     }
     
-    // Spacing styles - prioritize individual properties over shorthand to prevent conflicts
+    // Spacing styles - ONLY apply padding, margins are handled by ElementRenderer wrapper
     if (element.styles.paddingTop || element.styles.paddingRight || element.styles.paddingBottom || element.styles.paddingLeft) {
       if (element.styles.paddingTop) styles.paddingTop = element.styles.paddingTop;
       if (element.styles.paddingRight) styles.paddingRight = element.styles.paddingRight;
@@ -393,14 +393,8 @@ export const renderElementStyles = (element: PageBuilderElement, deviceType: 'de
       styles.padding = element.styles.padding;
     }
     
-    if (element.styles.marginTop || element.styles.marginRight || element.styles.marginBottom || element.styles.marginLeft) {
-      if (element.styles.marginTop) styles.marginTop = element.styles.marginTop;
-      if (element.styles.marginRight) styles.marginRight = element.styles.marginRight;
-      if (element.styles.marginBottom) styles.marginBottom = element.styles.marginBottom;
-      if (element.styles.marginLeft) styles.marginLeft = element.styles.marginLeft;
-    } else if (element.styles.margin) {
-      styles.margin = element.styles.margin;
-    }
+    // NOTE: Margins are intentionally excluded here since they're handled by ElementRenderer wrapper
+    // This prevents double application of margins
     
     // Typography
     if (element.styles.color) styles.color = element.styles.color;
@@ -414,8 +408,16 @@ export const renderElementStyles = (element: PageBuilderElement, deviceType: 'de
     if (element.styles.objectFit) styles.objectFit = element.styles.objectFit;
   }
   
-  // Merge responsive overrides
+  // Merge responsive overrides but exclude margins to prevent double application
   const merged = mergeResponsiveStyles(styles, element.styles, deviceType);
+  
+  // Remove any margins that might have been added by responsive merge
+  delete merged.marginTop;
+  delete merged.marginRight;
+  delete merged.marginBottom;
+  delete merged.marginLeft;
+  delete merged.margin;
+  
   return merged;
 };
 
