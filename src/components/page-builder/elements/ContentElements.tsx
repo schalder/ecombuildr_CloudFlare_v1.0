@@ -476,9 +476,22 @@ const ImageFeatureElement: React.FC<{
     }
   };
 
-  // Generate responsive CSS and get inline styles
-  const responsiveCSS = generateResponsiveCSS(element.id, element.styles);
+  // Generate responsive CSS without margins/padding and get inline styles
+  const omitSpacing = (obj?: any) => {
+    if (!obj) return {};
+    const { margin, marginTop, marginRight, marginBottom, marginLeft, padding, paddingTop, paddingRight, paddingBottom, paddingLeft, ...rest } = obj;
+    return rest;
+  };
+  const responsiveCSS = generateResponsiveCSS(element.id, {
+    ...element.styles,
+    responsive: {
+      desktop: omitSpacing(element.styles?.responsive?.desktop),
+      tablet: omitSpacing(element.styles?.responsive?.tablet),
+      mobile: omitSpacing(element.styles?.responsive?.mobile),
+    },
+  });
   const inlineStyles = renderElementStyles(element, deviceType || 'desktop');
+  const { padding, paddingTop, paddingRight, paddingBottom, paddingLeft, ...stylesNoPadding } = (inlineStyles as any);
   
   // Get responsive styles for current device
   const responsiveStyles = element.styles?.responsive || { desktop: {}, mobile: {} };
@@ -548,7 +561,7 @@ const ImageFeatureElement: React.FC<{
       <div 
         className={`element-${element.id} flex ${flexDirection} gap-6 items-center ${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-4xl mx-auto'}`} 
         style={{
-          ...inlineStyles,
+          ...stylesNoPadding,
           textAlign: textAlign as any
         }}
       >
