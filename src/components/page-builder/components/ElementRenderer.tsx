@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { PageBuilderElement } from '../types';
 import { elementRegistry } from '../elements';
 import { cn } from '@/lib/utils';
-import { mergeResponsiveStyles } from '../utils/responsiveStyles';
+import { mergeResponsiveStyles, generateResponsiveCSS } from '../utils/responsiveStyles';
+import { useHeadStyle } from '@/hooks/useHeadStyle';
 
 interface ElementRendererProps {
   element: PageBuilderElement;
@@ -211,6 +212,15 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
   }
 
   const ElementComponent = elementType.component;
+
+  // Generate and inject responsive CSS like StorefrontElement does
+  const responsiveCSS = React.useMemo(() => 
+    generateResponsiveCSS(element.id, element.styles), 
+    [element.id, element.styles]
+  );
+  
+  // Inject responsive CSS into document head for consistency with storefront
+  useHeadStyle(`responsive-css-${element.id}`, responsiveCSS);
 
   // Merge responsive styles for spacing
   const mergedStyles = mergeResponsiveStyles({}, element.styles, deviceType);
