@@ -196,7 +196,7 @@ export const StorefrontPageBuilder: React.FC<StorefrontPageBuilderProps> = ({
         `}</style>
       )}
       
-      <div>
+      <div className="space-y-0">
         {data.sections.map((section) => (
           <StorefrontSection
             key={section.id}

@@ -155,7 +155,7 @@ export const ColumnRenderer: React.FC<ColumnRendererProps> = ({
           )}
         </div>
       ) : (
-        <div>
+        <div className="space-y-0">
           {column.elements.map((element, index) => {
             return (
               <div 
