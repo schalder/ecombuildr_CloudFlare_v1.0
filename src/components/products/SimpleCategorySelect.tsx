@@ -94,7 +94,7 @@ export function SimpleCategorySelect({
   }, [value, filteredCategories]);
 
   const handleMainCategoryChange = (categoryId: string) => {
-    if (categoryId === '') {
+    if (categoryId === 'none') {
       // No category selected
       setSelectedMainCategory('');
       setSelectedSubCategory('');
@@ -118,6 +118,13 @@ export function SimpleCategorySelect({
   };
 
   const handleSubCategoryChange = (categoryId: string) => {
+    if (categoryId === 'none-sub') {
+      // Use main category instead
+      setSelectedSubCategory('');
+      onValueChange(selectedMainCategory);
+      return;
+    }
+    
     setSelectedSubCategory(categoryId);
     onValueChange(categoryId);
   };
@@ -135,7 +142,7 @@ export function SimpleCategorySelect({
       <div className="space-y-2">
         <Label>Main Category</Label>
         <Select 
-          value={selectedMainCategory} 
+          value={selectedMainCategory || 'none'} 
           onValueChange={handleMainCategoryChange}
           disabled={disabled || !websiteId}
         >
@@ -143,7 +150,7 @@ export function SimpleCategorySelect({
             <SelectValue placeholder={disabled ? placeholder : "Select main category"} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">No category</SelectItem>
+            <SelectItem value="none">No category</SelectItem>
             {mainCategories.map((category) => (
               <SelectItem key={category.id} value={category.id}>
                 {category.name}
@@ -161,14 +168,14 @@ export function SimpleCategorySelect({
         <div className="space-y-2">
           <Label>Subcategory of "{selectedMainCategoryName}"</Label>
           <Select 
-            value={selectedSubCategory} 
+            value={selectedSubCategory || 'none-sub'} 
             onValueChange={handleSubCategoryChange}
           >
             <SelectTrigger>
               <SelectValue placeholder="Select subcategory (optional)" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">No subcategory (use main category)</SelectItem>
+              <SelectItem value="none-sub">No subcategory (use main category)</SelectItem>
               {availableSubCategories.map((category) => (
                 <SelectItem key={category.id} value={category.id}>
                   {category.name}
