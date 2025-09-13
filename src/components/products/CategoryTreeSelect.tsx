@@ -213,7 +213,12 @@ export function CategoryTreeSelect({
             "text-sm"
           )}
           style={{ paddingLeft: `${level * 16 + 8}px` }}
-          onClick={() => onValueChange(category.id)}
+          onClick={(e) => {
+            e.stopPropagation();
+            console.log('Category selected:', category.id, category.name);
+            onValueChange(category.id);
+            setOpen(false);
+          }}
         >
           {hasChildren ? (
             <Button
@@ -355,7 +360,12 @@ export function CategoryTreeSelect({
                       !value && "bg-accent text-accent-foreground",
                       "text-sm border-b mb-2 pb-2"
                     )}
-                    onClick={() => onValueChange('')}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      console.log('No category selected');
+                      onValueChange('');
+                      setOpen(false);
+                    }}
                   >
                     <Package className="h-4 w-4 text-gray-400" />
                     <span className="italic text-muted-foreground">No category</span>
