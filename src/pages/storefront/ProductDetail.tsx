@@ -21,6 +21,7 @@ import { useEcomPaths } from '@/lib/pathResolver';
 import { PageBuilderRenderer } from '@/components/storefront/PageBuilderRenderer';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { parseVideoUrl, buildEmbedUrl } from '@/components/page-builder/utils/videoUtils';
+import { StorefrontImage } from '@/components/storefront/renderer/StorefrontImage';
 
 interface Product {
   id: string;
@@ -341,10 +342,14 @@ export const ProductDetail: React.FC = () => {
                     />
                   )
                 ) : (
-                  <img
+                  <StorefrontImage
                     src={mediaItems[selectedImage]?.src || '/placeholder.svg'}
                     alt={product.name}
                     className="w-full h-full object-cover transition-opacity duration-300"
+                    enableMagnifier={true}
+                    zoomLevel={3}
+                    magnifierSize={180}
+                    priority={selectedImage === 0}
                   />
                 )}
                 {discountPercentage > 0 && (
