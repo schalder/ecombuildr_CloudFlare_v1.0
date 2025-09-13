@@ -44,10 +44,8 @@ export const AdvancedImageOptimizer: React.FC<AdvancedImageOptimizerProps> = ({
     const baseUrl = 'https://fhqwacmokbtbspkxjixf.supabase.co/functions/v1/image-transform';
     const targetFormat = format || 'webp';
     
-    // If preserveOriginal is true, just convert format without resizing
-    if (preserveOriginal) {
-      return `${baseUrl}?url=${encodeURIComponent(originalSrc)}&format=${targetFormat}&q=85`;
-    }
+    // If preserving original, don't generate a srcset (single candidate handled elsewhere)
+    if (preserveOriginal) return '';
     
     // Otherwise, use responsive resolutions
     const resolutions = [400, 600, 800, 1200, 1600, 2000];
@@ -66,21 +64,27 @@ export const AdvancedImageOptimizer: React.FC<AdvancedImageOptimizerProps> = ({
       <>
         {/* AVIF - best compression */}
         <source 
-          srcSet={generateResponsiveSrcSet(src, 'avif')} 
+          srcSet={preserveOriginal
+            ? `${transformBaseUrl}?url=${encodeURIComponent(src)}&format=avif&q=85 1x`
+            : generateResponsiveSrcSet(src, 'avif')
+          }
           type="image/avif" 
           sizes={preserveOriginal ? undefined : sizes} 
         />
         {/* WebP - wide support, good compression */}
         <source 
-          srcSet={generateResponsiveSrcSet(src, 'webp')} 
+          srcSet={preserveOriginal
+            ? `${transformBaseUrl}?url=${encodeURIComponent(src)}&format=webp&q=85 1x`
+            : generateResponsiveSrcSet(src, 'webp')
+          }
           type="image/webp" 
           sizes={preserveOriginal ? undefined : sizes} 
         />
         {/* Original format fallback */}
         <source 
-          srcSet={generateResponsiveSrcSet(src, 'original')} 
+          srcSet={`${transformBaseUrl}?url=${encodeURIComponent(src)}&format=original&q=85 1x`} 
           type="image/*"
-          sizes={sizes} 
+          sizes={preserveOriginal ? undefined : sizes} 
         />
       </>
     );
@@ -133,7 +137,7 @@ export const AdvancedImageOptimizer: React.FC<AdvancedImageOptimizerProps> = ({
     onError?.();
   }, [onError, src]);
 
-  // Calculate container styles with aspect ratio preservation
+  // Calculate container styles
   const getContainerStyles = useCallback((): React.CSSProperties => {
     const baseStyles: React.CSSProperties = {
       position: 'relative',
@@ -142,7 +146,7 @@ export const AdvancedImageOptimizer: React.FC<AdvancedImageOptimizerProps> = ({
       ...style
     };
 
-    // Use explicit dimensions if provided
+    // Explicit dimensions take precedence
     if (width && height) {
       return {
         ...baseStyles,
@@ -152,7 +156,13 @@ export const AdvancedImageOptimizer: React.FC<AdvancedImageOptimizerProps> = ({
       };
     }
 
-    // Use aspect ratio if provided
+    // When preserving original, do not enforce any aspect ratio by default
+    if (preserveOriginal) {
+      // Respect explicit aspectRatio only if provided with preserveOriginal? We'll avoid forcing it
+      return baseStyles;
+    }
+
+    // Use aspect ratio if provided (responsive layout mode)
     if (aspectRatio) {
       return {
         ...baseStyles,
@@ -160,12 +170,12 @@ export const AdvancedImageOptimizer: React.FC<AdvancedImageOptimizerProps> = ({
       };
     }
 
-    // Default aspect ratio for unknown dimensions
+    // Default aspect ratio for unknown dimensions in responsive mode
     return {
       ...baseStyles,
       aspectRatio: '16 / 9'
     };
-  }, [width, height, aspectRatio, style]);
+  }, [width, height, aspectRatio, style, preserveOriginal]);
 
   // Error fallback
   if (hasError) {
@@ -210,13 +220,13 @@ export const AdvancedImageOptimizer: React.FC<AdvancedImageOptimizerProps> = ({
             alt={alt}
             width={width}
             height={height}
-            className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${
+            className={`${preserveOriginal ? 'block max-w-full h-auto' : 'absolute inset-0 w-full h-full object-cover'} transition-opacity duration-300 ${
               isLoaded ? 'opacity-100' : 'opacity-0'
             }`}
             loading={isCritical ? 'eager' : 'lazy'}
             decoding="async"
             sizes={preserveOriginal ? undefined : sizes}
-            srcSet={generateResponsiveSrcSet(src, 'webp')}
+            srcSet={preserveOriginal ? undefined : generateResponsiveSrcSet(src, 'webp')}
             onLoad={handleLoad}
             onError={handleError}
           />
