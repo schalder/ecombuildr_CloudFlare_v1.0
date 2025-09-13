@@ -120,56 +120,68 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
     });
   };
 
+  const hasSubcategories = (category: CategoryWithChildren) => {
+    return category.children.length > 0;
+  };
+
   const renderCategoryTree = (categoryList: CategoryWithChildren[], level = 0): React.ReactNode => {
     return categoryList.map((category) => (
       <div key={category.id}>
         <div 
           className={cn(
-            "flex items-center justify-between py-1",
+            "flex items-center py-2 px-1 rounded hover:bg-muted/50 transition-colors",
             level > 0 && "ml-6"
           )}
+          onClick={(e) => {
+            // Only toggle expansion if clicking outside the checkbox
+            if (e.target !== e.currentTarget.querySelector('input')) {
+              if (hasSubcategories(category)) {
+                toggleCategoryExpansion(category.id);
+              }
+            }
+          }}
         >
-          <div className="flex items-center space-x-2 flex-1">
-            {category.children.length > 0 ? (
-              <button
-                onClick={() => toggleCategoryExpansion(category.id)}
-                className="p-0.5 hover:bg-muted rounded transition-colors"
-              >
-                {expandedCategories.has(category.id) ? (
-                  <ChevronUp className="h-3 w-3 text-muted-foreground" />
-                ) : (
-                  <ChevronDown className="h-3 w-3 text-muted-foreground" />
-                )}
-              </button>
-            ) : (
-              <div className="w-4" /> // Spacer for alignment
-            )}
+          <div className="flex items-center space-x-3 flex-1">
             <Checkbox
               id={`category-${category.id}`}
               checked={filters.categories.includes(category.slug)}
               onCheckedChange={(checked) => 
                 handleCategoryChange(category.slug, checked as boolean)
               }
+              onClick={(e) => e.stopPropagation()}
             />
             <label
               htmlFor={`category-${category.id}`}
               className={cn(
-                "text-sm cursor-pointer hover:text-foreground transition-colors",
+                "text-sm cursor-pointer hover:text-foreground transition-colors flex-1",
                 level === 0 ? "font-medium" : "font-normal text-muted-foreground"
               )}
+              onClick={(e) => e.stopPropagation()}
             >
               {category.name}
             </label>
           </div>
-          {category.count && (
-            <span className="text-xs text-muted-foreground">
-              ({category.count})
-            </span>
-          )}
+          
+          <div className="flex items-center space-x-2">
+            {category.count && (
+              <span className="text-xs text-muted-foreground">
+                ({category.count})
+              </span>
+            )}
+            {hasSubcategories(category) && (
+              <div className="p-1">
+                {expandedCategories.has(category.id) ? (
+                  <ChevronUp className="h-5 w-5 text-muted-foreground" />
+                ) : (
+                  <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                )}
+              </div>
+            )}
+          </div>
         </div>
         
-        {category.children.length > 0 && expandedCategories.has(category.id) && (
-          <div className="mt-2 space-y-2">
+        {hasSubcategories(category) && expandedCategories.has(category.id) && (
+          <div className="mt-1 space-y-1">
             {renderCategoryTree(category.children, level + 1)}
           </div>
         )}
@@ -183,6 +195,12 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
     if (checked) {
       // Add the category to the filter
       newCategories = [...filters.categories, categorySlug];
+      
+      // Auto-expand parent categories when selected
+      const category = categories.find(cat => cat.slug === categorySlug);
+      if (category && hasSubcategories(category as CategoryWithChildren)) {
+        setExpandedCategories(prev => new Set([...prev, category.id]));
+      }
     } else {
       // Remove the category from the filter
       newCategories = filters.categories.filter(c => c !== categorySlug);
