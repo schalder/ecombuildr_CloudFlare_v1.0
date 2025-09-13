@@ -30,7 +30,7 @@ export default function FacebookAds() {
     return { startDate, endDate: new Date() };
   }, [dateRange]);
   
-  const { analytics, loading, error } = useFacebookPixelAnalytics(
+  const { analytics, loading, error, refetch: refetchAnalytics } = useFacebookPixelAnalytics(
     store?.id || '', 
     dateRangeObj,
     selectedWebsiteId === 'all' ? undefined : selectedWebsiteId,
@@ -60,6 +60,8 @@ export default function FacebookAds() {
       refetchWebsites(),
       refetchFunnels()
     ]);
+    // Also refresh analytics data
+    refetchAnalytics();
   };
 
   // OnboardingGate ensures store exists, so this shouldn't happen
@@ -138,10 +140,10 @@ export default function FacebookAds() {
               variant="outline" 
               size="sm" 
               onClick={handleRefresh}
-              disabled={websitesLoading || funnelsLoading}
+              disabled={websitesLoading || funnelsLoading || loading}
               className="flex items-center space-x-2"
             >
-              <RefreshCw className={`h-4 w-4 ${websitesLoading || funnelsLoading ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`h-4 w-4 ${websitesLoading || funnelsLoading || loading ? 'animate-spin' : ''}`} />
               <span>Refresh</span>
             </Button>
             

@@ -38,10 +38,7 @@ export const useFacebookPixelAnalytics = (storeId: string, dateRange: DateRange,
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
 
-  useEffect(() => {
-    if (!user || !storeId) return;
-
-    const fetchAnalytics = async () => {
+  const fetchAnalytics = async () => {
       setLoading(true);
       setError(null);
       
@@ -57,6 +54,9 @@ export const useFacebookPixelAnalytics = (storeId: string, dateRange: DateRange,
         // Apply website filter if provided
         if (websiteId) {
           query = query.eq('website_id', websiteId);
+        } else if (websiteId === undefined) {
+          // When no specific website is selected, include both null and non-null website_ids
+          // This handles legacy events that may have null website_id
         }
 
         // Apply funnel filter if provided (check if event_data contains funnel info)
@@ -251,8 +251,14 @@ export const useFacebookPixelAnalytics = (storeId: string, dateRange: DateRange,
       }
     };
 
+  useEffect(() => {
+    if (!user || !storeId) return;
     fetchAnalytics();
   }, [user, storeId, websiteId, funnelSlug, dateRange.startDate, dateRange.endDate]);
 
-  return { analytics, loading, error };
+  const refetch = () => {
+    fetchAnalytics();
+  };
+
+  return { analytics, loading, error, refetch };
 };
