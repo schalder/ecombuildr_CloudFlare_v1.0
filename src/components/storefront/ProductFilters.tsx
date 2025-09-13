@@ -312,7 +312,7 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
           </button>
           
           {expandedSections.categories && (
-            <div className="space-y-2">
+            <div className="space-y-1">
               {renderCategoryTree(hierarchicalCategories)}
             </div>
           )}
