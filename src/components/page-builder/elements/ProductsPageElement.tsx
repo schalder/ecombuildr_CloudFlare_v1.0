@@ -187,9 +187,6 @@ export const ProductsPageElement: React.FC<{
     let tablet = tabletConfigured && !isNaN(Number(tabletConfigured))
       ? Math.max(1, Math.min(4, Number(tabletConfigured)))
       : (desktop >= 4 ? 3 : Math.max(1, desktop - 1));
-    
-    // Preserve builder behavior: when a single column is forced in tablet layout
-    if (columnCount === 1) tablet = 1;
 
     const mobileConfigured = (element.content as any).mobileColumns as number | undefined;
     const mobile = typeof mobileConfigured === 'number' ? Math.max(1, Math.min(3, mobileConfigured)) : 2;
@@ -207,11 +204,11 @@ export const ProductsPageElement: React.FC<{
       }
     };
 
-    // More explicit responsive classes to ensure proper cascade
-    // Mobile-first approach: base mobile, then tablet (md:), then desktop (lg:)
+    // Device-aware responsive classes: md for tablet, lg continues tablet, xl for desktop
     const mobileClass = map(mobile);
     const tabletClass = `md:${map(tablet)}`;
-    const desktopClass = `lg:${map(desktop)}`;
+    const tabletContinueClass = `lg:${map(tablet)}`;  // Keep tablet layout on lg screens
+    const desktopClass = `xl:${map(desktop)}`;        // Desktop only starts at xl (1280px)
 
     // Debug info in development
     if (process.env.NODE_ENV === 'development') {
@@ -219,13 +216,13 @@ export const ProductsPageElement: React.FC<{
         mobile,
         tablet,
         desktop,
-        classes: `${mobileClass} ${tabletClass} ${desktopClass}`,
+        classes: `${mobileClass} ${tabletClass} ${tabletContinueClass} ${desktopClass}`,
         deviceType,
         windowWidth: window.innerWidth
       });
     }
 
-    return `${mobileClass} ${tabletClass} ${desktopClass}`;
+    return `${mobileClass} ${tabletClass} ${tabletContinueClass} ${desktopClass}`;
   };
 
   useEffect(() => {
