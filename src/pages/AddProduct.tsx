@@ -12,6 +12,8 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { ArrowLeft, Save, Package, Upload, X, Plus, ChevronUp, ChevronDown } from "lucide-react";
 import { CompactMediaSelector } from "@/components/page-builder/components/CompactMediaSelector";
@@ -24,13 +26,12 @@ import VariantMatrix, { VariantEntry } from "@/components/products/VariantMatrix
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { parseVideoUrl, buildEmbedUrl } from "@/components/page-builder/utils/videoUtils";
 import { useStoreWebsitesForSelection } from '@/hooks/useWebsiteVisibility';
+import { CategoryTreeSelect } from '@/components/products/CategoryTreeSelect';
 
 export default function AddProduct() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
-  const [categories, setCategories] = useState<{id: string, name: string}[]>([]);
-  const [filteredCategories, setFilteredCategories] = useState<{id: string, name: string}[]>([]);
   const [selectedWebsiteId, setSelectedWebsiteId] = useState<string>('');
   const [storeId, setStoreId] = useState<string>('');
 
@@ -106,10 +107,10 @@ export default function AddProduct() {
     }
   };
 
-  // Fetch categories for the dropdown
+  // Fetch store ID
   useEffect(() => {
     if (user) {
-      fetchCategories();
+      fetchStoreId();
     }
   }, [user]);
 
@@ -128,58 +129,7 @@ export default function AddProduct() {
     }
   }, [storeWebsites, selectedWebsiteId]);
 
-  // Filter categories based on selected website (strict filtering)
-  useEffect(() => {
-    const filterCategories = async () => {
-      console.log('📂 AddProduct - Category filtering started:', {
-        selectedWebsiteId,
-        totalCategories: categories.length,
-        categoryNames: categories.map(c => c.name)
-      });
-
-      if (!selectedWebsiteId) {
-        console.log('📂 AddProduct - No website selected, clearing categories');
-        setFilteredCategories([]);
-        return;
-      }
-
-      try {
-        const { data: visibilityData } = await supabase
-          .from('category_website_visibility')
-          .select('category_id')
-          .eq('website_id', selectedWebsiteId);
-
-        console.log('📂 AddProduct - Visibility data from DB:', visibilityData);
-
-        const visibleCategoryIds = visibilityData?.map(v => v.category_id) || [];
-        
-        console.log('📂 AddProduct - Visible category IDs for website:', {
-          websiteId: selectedWebsiteId,
-          visibleCategoryIds
-        });
-
-        // Only show categories assigned to this specific website
-        const filtered = categories.filter(cat => visibleCategoryIds.includes(cat.id));
-        
-        console.log('📂 AddProduct - Filtered categories result:', {
-          filteredCount: filtered.length,
-          filteredNames: filtered.map(c => c.name),
-          originalCount: categories.length
-        });
-
-        setFilteredCategories(filtered);
-      } catch (error) {
-        console.error('📂 AddProduct - Error filtering categories:', error);
-        setFilteredCategories([]);
-      }
-    };
-
-    filterCategories();
-  }, [selectedWebsiteId, categories]);
-
-  const fetchCategories = async () => {
-    console.log('📂 AddProduct - Fetching categories...');
-    
+  const fetchStoreId = async () => {
     try {
       const { data: stores, error: storesError } = await supabase
         .from('stores')
@@ -188,29 +138,12 @@ export default function AddProduct() {
 
       if (storesError) throw storesError;
 
-      console.log('🏪 AddProduct - User stores:', stores);
-
       if (stores && stores.length > 0) {
         setStoreId(stores[0].id);
         console.log('🏪 AddProduct - Store ID set to:', stores[0].id);
-
-        const { data: categories, error: categoriesError } = await supabase
-          .from('categories')
-          .select('id, name')
-          .in('store_id', stores.map(store => store.id))
-          .order('name');
-
-        if (categoriesError) throw categoriesError;
-        
-        console.log('📂 AddProduct - Categories fetched:', {
-          count: categories?.length || 0,
-          categories: categories?.map(c => ({ id: c.id, name: c.name })) || []
-        });
-        
-        setCategories(categories || []);
       }
     } catch (error) {
-      console.error('📂 AddProduct - Error fetching categories:', error);
+      console.error('🏪 AddProduct - Error fetching store ID:', error);
     }
   };
 
@@ -256,8 +189,7 @@ export default function AddProduct() {
       // Guard: Ensure website is selected
       console.log('💾 AddProduct - Form submission validation:', {
         selectedWebsiteId,
-        formDataCategoryId: formData.category_id,
-        filteredCategoriesCount: filteredCategories.length
+        formDataCategoryId: formData.category_id
       });
 
       if (!selectedWebsiteId) {
@@ -429,27 +361,16 @@ export default function AddProduct() {
 
                       <div className="space-y-3">
                         <Label htmlFor="category_id">Category</Label>
-                        <Select 
-                          value={formData.category_id} 
+                        <CategoryTreeSelect
+                          value={formData.category_id}
                           onValueChange={(value) => setFormData(prev => ({ ...prev, category_id: value }))}
+                          storeId={storeId}
+                          websiteId={selectedWebsiteId}
                           disabled={!selectedWebsiteId}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder={selectedWebsiteId ? "Select a category" : "Select a website first"} />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="none">No category</SelectItem>
-                            {filteredCategories.map((category) => (
-                              <SelectItem key={category.id} value={category.id}>
-                                {category.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                          placeholder={selectedWebsiteId ? "Select a category" : "Select a website first"}
+                        />
                         <p className="text-sm text-muted-foreground">
-                          {selectedWebsiteId 
-                            ? `${filteredCategories.length} categories available for this website` 
-                            : 'Select a website first to see available categories'}
+                          Categories are filtered by the selected website and shown in hierarchical order.
                         </p>
                       </div>
                     </div>
