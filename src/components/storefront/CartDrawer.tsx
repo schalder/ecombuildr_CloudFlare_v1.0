@@ -129,11 +129,9 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ children, trigger = fals
               </Link>
             </SheetClose>
             <SheetClose asChild>
-              <Link to={paths.products} className="block">
-                <Button variant="outline" className="w-full" size="lg">
-                  Continue Shopping
-                </Button>
-              </Link>
+              <Button variant="outline" className="w-full" size="lg">
+                Continue Shopping
+              </Button>
             </SheetClose>
           </div>
         )}
