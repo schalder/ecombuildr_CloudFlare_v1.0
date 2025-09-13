@@ -14,6 +14,7 @@ interface AdvancedImageOptimizerProps {
   onLoad?: () => void;
   onError?: () => void;
   style?: React.CSSProperties;
+  preserveOriginal?: boolean; // New prop to preserve original dimensions
 }
 
 export const AdvancedImageOptimizer: React.FC<AdvancedImageOptimizerProps> = ({
@@ -29,7 +30,8 @@ export const AdvancedImageOptimizer: React.FC<AdvancedImageOptimizerProps> = ({
   aspectRatio,
   onLoad,
   onError,
-  style
+  style,
+  preserveOriginal = true // Default to preserving original dimensions
 }) => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
@@ -42,12 +44,17 @@ export const AdvancedImageOptimizer: React.FC<AdvancedImageOptimizerProps> = ({
     const baseUrl = 'https://fhqwacmokbtbspkxjixf.supabase.co/functions/v1/image-transform';
     const targetFormat = format || 'webp';
     
-    // Generate multiple resolutions for responsive images
+    // If preserveOriginal is true, just convert format without resizing
+    if (preserveOriginal) {
+      return `${baseUrl}?url=${encodeURIComponent(originalSrc)}&format=${targetFormat}&q=85`;
+    }
+    
+    // Otherwise, use responsive resolutions
     const resolutions = [400, 600, 800, 1200, 1600, 2000];
     return resolutions
       .map(res => `${baseUrl}?url=${encodeURIComponent(originalSrc)}&format=${targetFormat}&w=${res}&q=85 ${res}w`)
       .join(', ');
-  }, []);
+  }, [preserveOriginal]);
 
   // Generate modern format sources with responsive srcSet using transformation endpoint
   const generateModernSources = useCallback(() => {
@@ -61,13 +68,13 @@ export const AdvancedImageOptimizer: React.FC<AdvancedImageOptimizerProps> = ({
         <source 
           srcSet={generateResponsiveSrcSet(src, 'avif')} 
           type="image/avif" 
-          sizes={sizes} 
+          sizes={preserveOriginal ? undefined : sizes} 
         />
         {/* WebP - wide support, good compression */}
         <source 
           srcSet={generateResponsiveSrcSet(src, 'webp')} 
           type="image/webp" 
-          sizes={sizes} 
+          sizes={preserveOriginal ? undefined : sizes} 
         />
         {/* Original format fallback */}
         <source 
@@ -77,7 +84,7 @@ export const AdvancedImageOptimizer: React.FC<AdvancedImageOptimizerProps> = ({
         />
       </>
     );
-  }, [src, sizes, generateResponsiveSrcSet]);
+  }, [src, sizes, generateResponsiveSrcSet, preserveOriginal]);
 
   // Intelligent lazy loading with intersection observer
   useEffect(() => {
@@ -201,7 +208,10 @@ export const AdvancedImageOptimizer: React.FC<AdvancedImageOptimizerProps> = ({
           {generateModernSources()}
           <img
             ref={imgRef}
-            src={`https://fhqwacmokbtbspkxjixf.supabase.co/functions/v1/image-transform?url=${encodeURIComponent(src)}&format=webp&q=85`}
+            src={preserveOriginal 
+              ? `https://fhqwacmokbtbspkxjixf.supabase.co/functions/v1/image-transform?url=${encodeURIComponent(src)}&format=webp&q=85`
+              : `https://fhqwacmokbtbspkxjixf.supabase.co/functions/v1/image-transform?url=${encodeURIComponent(src)}&format=webp&w=800&q=85`
+            }
             alt={alt}
             width={width}
             height={height}
@@ -210,7 +220,7 @@ export const AdvancedImageOptimizer: React.FC<AdvancedImageOptimizerProps> = ({
             }`}
             loading={isCritical ? 'eager' : 'lazy'}
             decoding="async"
-            sizes={sizes}
+            sizes={preserveOriginal ? undefined : sizes}
             srcSet={generateResponsiveSrcSet(src, 'webp')}
             onLoad={handleLoad}
             onError={handleError}

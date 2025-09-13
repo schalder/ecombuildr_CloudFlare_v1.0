@@ -156,15 +156,34 @@ serve(async (req) => {
       const blob = new Blob([originalBuffer], { type: contentType });
       const bitmap = await createImageBitmap(blob);
       
-      // Calculate dimensions
-      const targetWidth = width || bitmap.width;
-      const targetHeight = height || bitmap.height;
+      // Calculate dimensions - preserve original if no width/height specified
+      let targetWidth = bitmap.width;
+      let targetHeight = bitmap.height;
       
-      // Create canvas
+      // Only resize if width or height is explicitly provided
+      if (width || height) {
+        if (width && height) {
+          // Both dimensions provided - use them directly
+          targetWidth = width;
+          targetHeight = height;
+        } else if (width) {
+          // Only width provided - maintain aspect ratio
+          const aspectRatio = bitmap.height / bitmap.width;
+          targetWidth = width;
+          targetHeight = Math.round(width * aspectRatio);
+        } else if (height) {
+          // Only height provided - maintain aspect ratio
+          const aspectRatio = bitmap.width / bitmap.height;
+          targetHeight = height;
+          targetWidth = Math.round(height * aspectRatio);
+        }
+      }
+      
+      // Create canvas with calculated dimensions
       const canvas = new OffscreenCanvas(targetWidth, targetHeight);
       const ctx = canvas.getContext('2d')!;
       
-      // Draw and resize image
+      // Draw image (resize only if dimensions changed)
       ctx.drawImage(bitmap, 0, 0, targetWidth, targetHeight);
       
       // Convert to desired format

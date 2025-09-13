@@ -26,6 +26,7 @@ interface StorefrontImageProps {
   sizes?: string;
   aspectRatio?: string;
   style?: React.CSSProperties;
+  preserveOriginal?: boolean; // Pass through to AdvancedImageOptimizer
 }
 
 export const StorefrontImage: React.FC<StorefrontImageProps> = ({
@@ -38,7 +39,8 @@ export const StorefrontImage: React.FC<StorefrontImageProps> = ({
   isCritical,
   sizes,
   aspectRatio,
-  style
+  style,
+  preserveOriginal = true // Default to preserving original dimensions
 }) => {
   const { addCriticalImage, isCriticalImage } = useSafeCriticalImage();
   const [autoDetectedCritical, setAutoDetectedCritical] = useState(false);
@@ -66,6 +68,7 @@ export const StorefrontImage: React.FC<StorefrontImageProps> = ({
       sizes={sizes || '(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw'}
       aspectRatio={aspectRatio}
       style={style}
+      preserveOriginal={preserveOriginal}
     />
   );
 };
