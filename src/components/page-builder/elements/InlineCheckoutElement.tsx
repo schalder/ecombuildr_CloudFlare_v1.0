@@ -33,7 +33,7 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
   const { store, loadStoreById } = useStore();
   const { pixels } = usePixelContext();
   const { stepId } = useFunnelStepContext();
-  const { trackPurchase } = usePixelTracking(pixels, store?.id, websiteId, funnelId);
+  const { trackPurchase, trackInitiateCheckout } = usePixelTracking(pixels, store?.id, websiteId, funnelId);
   
   // Error states
   const [phoneError, setPhoneError] = useState<string>('');
@@ -125,6 +125,9 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
 
   const isSelectedOut = !!(selectedProduct?.track_inventory && typeof selectedProduct?.inventory_quantity === 'number' && selectedProduct?.inventory_quantity <= 0);
 
+  // Tracking state
+  const [hasTrackedInitiateCheckout, setHasTrackedInitiateCheckout] = useState<boolean>(false);
+
   // Form state
   const [form, setForm] = useState({
     customer_name: '', customer_email: '', customer_phone: '',
@@ -176,6 +179,52 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
       setForm(prev => ({ ...prev, payment_method: methods[0] as any }));
     }
   }, [selectedProduct?.id, bumpProduct?.id, bumpChecked, orderBump.enabled, store]);
+
+  // Calculate subtotal for tracking (defined before useEffect)
+  const trackingSubtotal = useMemo(() => {
+    const main = selectedProduct ? Number(selectedProduct.price) * Math.max(1, quantity || 1) : 0;
+    const bump = (orderBump.enabled && bumpChecked && bumpProduct) ? Number(bumpProduct.price) : 0;
+    return main + bump;
+  }, [selectedProduct, quantity, orderBump.enabled, bumpChecked, bumpProduct]);
+
+  // Track InitiateCheckout event when component mounts and has configured products
+  useEffect(() => {
+    const sessionKey = `initiate_checkout_tracked_${element.id}`;
+    const alreadyTracked = sessionStorage.getItem(sessionKey);
+    
+    if (!hasTrackedInitiateCheckout && !alreadyTracked && selectedProduct && store && pixels && trackingSubtotal > 0) {
+      console.log('🛒 Tracking InitiateCheckout on inline checkout mount:', {
+        productId: selectedProduct.id,
+        productName: selectedProduct.name,
+        value: trackingSubtotal,
+        store: store.name,
+        websiteId,
+        funnelId
+      });
+
+      trackInitiateCheckout({
+        value: trackingSubtotal,
+        items: [{
+          item_id: selectedProduct.id,
+          item_name: selectedProduct.name,
+          price: selectedProduct.price,
+          quantity: quantity,
+          item_category: (selectedProduct as any).category || 'General'
+        }]
+      });
+      
+      setHasTrackedInitiateCheckout(true);
+      sessionStorage.setItem(sessionKey, 'true');
+    } else if (!selectedProduct) {
+      console.log('🛒 No product selected for inline checkout, skipping InitiateCheckout tracking');
+    } else if (!store) {
+      console.log('🛒 Store not loaded yet for inline checkout, skipping InitiateCheckout tracking');
+    } else if (!pixels) {
+      console.log('🛒 Pixels not configured for inline checkout, skipping InitiateCheckout tracking');
+    } else if (alreadyTracked || hasTrackedInitiateCheckout) {
+      console.log('🛒 InitiateCheckout already tracked for inline checkout this session');
+    }
+  }, [selectedProduct, store, pixels, trackingSubtotal, quantity, element.id, hasTrackedInitiateCheckout, trackInitiateCheckout, websiteId, funnelId]);
 
   // Styles
   const buttonStyles = (element.styles as any)?.checkoutButton || { responsive: { desktop: {}, mobile: {} } };
@@ -511,6 +560,11 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
           value: total,
           items: trackingItems
         });
+        
+        // Clear InitiateCheckout tracking on successful order
+        const sessionKey = `initiate_checkout_tracked_${element.id}`;
+        sessionStorage.removeItem(sessionKey);
+        setHasTrackedInitiateCheckout(false);
         
         toast.success(isManual ? 'Order placed! Please complete payment to the provided number.' : 'Order placed!');
         

@@ -773,7 +773,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
   const paths = useEcomPaths();
   const { pixels } = usePixelContext();
   const { websiteId, funnelId } = useChannelContext();
-  const { trackPurchase } = usePixelTracking(pixels, store?.id, websiteId, funnelId);
+  const { trackPurchase, trackInitiateCheckout } = usePixelTracking(pixels, store?.id, websiteId, funnelId);
 
   const cfg: any = element.content || {};
   const fields = cfg.fields || {
@@ -836,6 +836,9 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
   const [loading, setLoading] = useState(false);
   const [allowedMethods, setAllowedMethods] = useState<Array<'cod' | 'bkash' | 'nagad' | 'sslcommerz'>>(['cod','bkash','nagad','sslcommerz']);
   const [productShippingData, setProductShippingData] = useState<Map<string, { weight_grams?: number; shipping_config?: any }>>(new Map());
+  
+  // Tracking state
+  const [hasTrackedInitiateCheckout, setHasTrackedInitiateCheckout] = useState<boolean>(false);
 
   // Initialize default shipping option
   const availableShippingOptions = getAvailableShippingOptions(websiteShipping);
@@ -887,6 +890,44 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
     };
     loadAllowed();
   }, [items, store]);
+
+  // Track InitiateCheckout event when component mounts and has items in cart
+  useEffect(() => {
+    const sessionKey = `initiate_checkout_tracked_${element.id}`;
+    const alreadyTracked = sessionStorage.getItem(sessionKey);
+    
+    if (!hasTrackedInitiateCheckout && !alreadyTracked && items.length > 0 && store && pixels && total > 0) {
+      console.log('🛒 Tracking InitiateCheckout on full checkout mount:', {
+        itemCount: items.length,
+        value: total + shippingCost,
+        store: store.name,
+        websiteId,
+        funnelId
+      });
+
+      trackInitiateCheckout({
+        value: total + shippingCost,
+        items: items.map(item => ({
+          item_id: item.productId,
+          item_name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          item_category: 'General'
+        }))
+      });
+      
+      setHasTrackedInitiateCheckout(true);
+      sessionStorage.setItem(sessionKey, 'true');
+    } else if (items.length === 0) {
+      console.log('🛒 No items in cart for full checkout, skipping InitiateCheckout tracking');
+    } else if (!store) {
+      console.log('🛒 Store not loaded yet for full checkout, skipping InitiateCheckout tracking');
+    } else if (!pixels) {
+      console.log('🛒 Pixels not configured for full checkout, skipping InitiateCheckout tracking');
+    } else if (alreadyTracked || hasTrackedInitiateCheckout) {
+      console.log('🛒 InitiateCheckout already tracked for full checkout this session');
+    }
+  }, [items, store, pixels, total, shippingCost, element.id, hasTrackedInitiateCheckout, trackInitiateCheckout, websiteId, funnelId]);
 
   // Button and header responsive CSS + background settings
   const buttonStyles = (element.styles as any)?.checkoutButton || { responsive: { desktop: {}, mobile: {} } };
@@ -1100,6 +1141,11 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
           value: orderData.total,
           items: trackingItems
         });
+        
+        // Clear InitiateCheckout tracking on successful order
+        const sessionKey = `initiate_checkout_tracked_${element.id}`;
+        sessionStorage.removeItem(sessionKey);
+        setHasTrackedInitiateCheckout(false);
         
         clearCart();
         toast.success(isManual ? 'Order placed! Please complete payment to the provided number.' : 'Order placed!');
