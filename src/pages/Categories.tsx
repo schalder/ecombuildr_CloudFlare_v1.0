@@ -63,7 +63,7 @@ export default function Categories() {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    parent_category_id: ''
+    parent_category_id: 'none'
   });
 
   // Get parent categories for dropdown (only categories without parents)
@@ -77,11 +77,11 @@ export default function Categories() {
     createCategory.mutate({
       name: formData.name.trim(),
       description: formData.description.trim() || undefined,
-      parent_category_id: formData.parent_category_id || undefined
+      parent_category_id: formData.parent_category_id === 'none' ? undefined : formData.parent_category_id || undefined
     });
 
     // Reset form and close modal
-    setFormData({ name: '', description: '', parent_category_id: '' });
+    setFormData({ name: '', description: '', parent_category_id: 'none' });
     setIsAddModalOpen(false);
   };
 
@@ -94,11 +94,11 @@ export default function Categories() {
       id: editingCategory.id,
       name: formData.name.trim(),
       description: formData.description.trim() || undefined,
-      parent_category_id: formData.parent_category_id || undefined
+      parent_category_id: formData.parent_category_id === 'none' ? undefined : formData.parent_category_id || undefined
     });
 
     // Reset form and close modal
-    setFormData({ name: '', description: '', parent_category_id: '' });
+    setFormData({ name: '', description: '', parent_category_id: 'none' });
     setIsEditModalOpen(false);
     setEditingCategory(null);
   };
@@ -118,7 +118,7 @@ export default function Categories() {
     setFormData({
       name: category.name,
       description: category.description || '',
-      parent_category_id: category.parent_category_id || ''
+      parent_category_id: category.parent_category_id || 'none'
     });
     setIsEditModalOpen(true);
   };
@@ -234,7 +234,7 @@ export default function Categories() {
                       <SelectValue placeholder="Select parent category (optional)" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">No parent (Main category)</SelectItem>
+                      <SelectItem value="none">No parent (Main category)</SelectItem>
                       {parentCategories.map((category) => (
                         <SelectItem key={category.id} value={category.id}>
                           {category.name}
@@ -405,7 +405,7 @@ export default function Categories() {
                     <SelectValue placeholder="Select parent category (optional)" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">No parent (Main category)</SelectItem>
+                    <SelectItem value="none">No parent (Main category)</SelectItem>
                     {parentCategories
                       .filter(cat => cat.id !== editingCategory?.id) // Don't allow self as parent
                       .map((category) => (
