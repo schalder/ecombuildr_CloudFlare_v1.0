@@ -56,6 +56,20 @@ export const StorefrontElement: React.FC<StorefrontElementProps> = ({
   const [isLoading, setIsLoading] = useState(!elementDef);
   const [showFallback, setShowFallback] = useState(false);
 
+  // Move useMemo to top level - this was causing the hooks rule violation
+  const wrapperStyle = useMemo<React.CSSProperties>(() => {
+    // Use mergeResponsiveStyles to properly handle shorthand margin/padding parsing
+    // This is especially important for spacer/divider elements that use shorthand styles
+    const mergedStyles = mergeResponsiveStyles({}, element.styles, deviceType);
+    
+    const style: React.CSSProperties = {};
+    if (mergedStyles.marginTop) style.marginTop = mergedStyles.marginTop;
+    if (mergedStyles.marginRight) style.marginRight = mergedStyles.marginRight;
+    if (mergedStyles.marginBottom) style.marginBottom = mergedStyles.marginBottom;
+    if (mergedStyles.marginLeft) style.marginLeft = mergedStyles.marginLeft;
+    return style;
+  }, [element, deviceType]);
+
   useEffect(() => {
     let mounted = true;
     let fallbackTimer: NodeJS.Timeout;
@@ -109,30 +123,16 @@ export const StorefrontElement: React.FC<StorefrontElementProps> = ({
     };
   }, [element.type, elementDef]);
 
-  // Show loading skeleton while element is being loaded
+  // Use conditional rendering instead of early returns to fix hooks rule violation
   if (isLoading && !showFallback) {
     return <ElementSkeleton element={element} />;
   }
 
-  // Show gentle fallback if element failed to load
   if (showFallback || !elementDef) {
     return <ElementNotSupported elementType={element.type} />;
   }
 
   const ElementComponent = elementDef.component;
-
-  const wrapperStyle = useMemo<React.CSSProperties>(() => {
-    // Use mergeResponsiveStyles to properly handle shorthand margin/padding parsing
-    // This is especially important for spacer/divider elements that use shorthand styles
-    const mergedStyles = mergeResponsiveStyles({}, element.styles, deviceType);
-    
-    const style: React.CSSProperties = {};
-    if (mergedStyles.marginTop) style.marginTop = mergedStyles.marginTop;
-    if (mergedStyles.marginRight) style.marginRight = mergedStyles.marginRight;
-    if (mergedStyles.marginBottom) style.marginBottom = mergedStyles.marginBottom;
-    if (mergedStyles.marginLeft) style.marginLeft = mergedStyles.marginLeft;
-    return style;
-  }, [element, deviceType]);
 
   return (
     <div 
