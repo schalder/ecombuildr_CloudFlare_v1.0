@@ -75,8 +75,23 @@ interface Product {
   updated_at: string;
   categories?: {
     name: string;
+    parent_category_id?: string;
+    parent_category?: {
+      name: string;
+    };
   };
 }
+
+// Helper function to get the full category path
+const getCategoryPath = (categories?: Product['categories']): string => {
+  if (!categories) return 'Uncategorized';
+  
+  if (categories.parent_category?.name) {
+    return `${categories.parent_category.name} → ${categories.name}`;
+  }
+  
+  return categories.name;
+};
 
 export default function ProductView() {
   const { id } = useParams<{ id: string }>();
@@ -108,7 +123,11 @@ export default function ProductView() {
           .from('products')
           .select(`
             *,
-            categories:category_id(name)
+            categories:category_id(
+              name,
+              parent_category_id,
+              parent_category:parent_category_id(name)
+            )
           `)
           .eq('id', id)
           .in('store_id', stores.map(store => store.id))
@@ -274,7 +293,7 @@ export default function ProductView() {
                   </div>
                   <div>
                     <span className="font-medium text-muted-foreground">Category:</span>
-                    <p>{product.categories?.name || 'Uncategorized'}</p>
+                    <p>{getCategoryPath(product.categories)}</p>
                   </div>
                   <div>
                     <span className="font-medium text-muted-foreground">Slug:</span>
