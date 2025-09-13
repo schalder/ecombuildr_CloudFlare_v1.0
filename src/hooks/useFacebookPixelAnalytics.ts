@@ -113,54 +113,50 @@ export const useFacebookPixelAnalytics = (storeId: string, dateRangeDays: number
             };
           }
 
-          // Count events by type
-          switch (eventType) {
-            case 'PageView':
-              eventCounts.pageViews++;
-              dailyEvents[eventDate].page_views++;
-              break;
-            case 'ViewContent':
-              eventCounts.viewContent++;
-              dailyEvents[eventDate].view_content++;
-              
-              // Collect product IDs from ViewContent events
-              if (eventData.content_ids) {
-                const ids = Array.isArray(eventData.content_ids) 
-                  ? eventData.content_ids 
-                  : [eventData.content_ids];
-                ids.forEach((id: string) => {
-                  if (id && id !== 'unknown') {
-                    productIds.add(id);
-                  }
-                });
-              }
-              break;
-            case 'AddToCart':
-              eventCounts.addToCart++;
-              dailyEvents[eventDate].add_to_cart++;
-              break;
-            case 'InitiateCheckout':
-              eventCounts.initiateCheckout++;
-              dailyEvents[eventDate].initiate_checkout++;
-              break;
-            case 'Purchase':
-              eventCounts.purchases++;
-              dailyEvents[eventDate].purchases++;
-              
-              // Calculate revenue
-              if (eventData.value) {
-                totalRevenue += parseFloat(String(eventData.value)) || 0;
-              }
-              
-              // Collect product IDs from Purchase events
-              if (eventData.contents && Array.isArray(eventData.contents)) {
-                eventData.contents.forEach((item: any) => {
-                  if (item.id && item.id !== 'unknown') {
-                    productIds.add(item.id);
-                  }
-                });
-              }
-              break;
+          // Count events by type - normalize event names to handle both camelCase and snake_case
+          const normalizedEventType = eventType.toLowerCase();
+          
+          if (normalizedEventType === 'pageview' || normalizedEventType === 'page_view') {
+            eventCounts.pageViews++;
+            dailyEvents[eventDate].page_views++;
+          } else if (normalizedEventType === 'viewcontent' || normalizedEventType === 'view_content') {
+            eventCounts.viewContent++;
+            dailyEvents[eventDate].view_content++;
+            
+            // Collect product IDs from ViewContent events
+            if (eventData.content_ids) {
+              const ids = Array.isArray(eventData.content_ids) 
+                ? eventData.content_ids 
+                : [eventData.content_ids];
+              ids.forEach((id: string) => {
+                if (id && id !== 'unknown') {
+                  productIds.add(id);
+                }
+              });
+            }
+          } else if (normalizedEventType === 'addtocart' || normalizedEventType === 'add_to_cart') {
+            eventCounts.addToCart++;
+            dailyEvents[eventDate].add_to_cart++;
+          } else if (normalizedEventType === 'initiatecheckout' || normalizedEventType === 'initiate_checkout') {
+            eventCounts.initiateCheckout++;
+            dailyEvents[eventDate].initiate_checkout++;
+          } else if (normalizedEventType === 'purchase') {
+            eventCounts.purchases++;
+            dailyEvents[eventDate].purchases++;
+            
+            // Calculate revenue
+            if (eventData.value) {
+              totalRevenue += parseFloat(String(eventData.value)) || 0;
+            }
+            
+            // Collect product IDs from Purchase events
+            if (eventData.contents && Array.isArray(eventData.contents)) {
+              eventData.contents.forEach((item: any) => {
+                if (item.id && item.id !== 'unknown') {
+                  productIds.add(item.id);
+                }
+              });
+            }
           }
         });
 
@@ -185,41 +181,39 @@ export const useFacebookPixelAnalytics = (storeId: string, dateRangeDays: number
         filteredEvents.forEach((event) => {
           const eventType = event.event_type;
           const eventData = event.event_data as any || {};
+          const normalizedEventType = eventType.toLowerCase();
 
-          switch (eventType) {
-            case 'ViewContent':
-              // Track product views with proper names
-              if (eventData.content_ids) {
-                const ids = Array.isArray(eventData.content_ids) 
-                  ? eventData.content_ids 
-                  : [eventData.content_ids];
-                
-                ids.forEach((productId: string) => {
-                  if (productId && productId !== 'unknown') {
-                    const productName = productLookup[productId] || eventData.content_name || 'Unknown Product';
-                    if (!productViews[productId]) {
-                      productViews[productId] = { name: productName, views: 0, conversions: 0 };
-                    }
-                    productViews[productId].views++;
+          if (normalizedEventType === 'viewcontent' || normalizedEventType === 'view_content') {
+            // Track product views with proper names
+            if (eventData.content_ids) {
+              const ids = Array.isArray(eventData.content_ids) 
+                ? eventData.content_ids 
+                : [eventData.content_ids];
+              
+              ids.forEach((productId: string) => {
+                if (productId && productId !== 'unknown') {
+                  const productName = productLookup[productId] || eventData.content_name || 'Unknown Product';
+                  if (!productViews[productId]) {
+                    productViews[productId] = { name: productName, views: 0, conversions: 0 };
                   }
-                });
-              }
-              break;
-            case 'Purchase':
-              // Track product conversions with proper names
-              if (eventData.contents && Array.isArray(eventData.contents)) {
-                eventData.contents.forEach((item: any) => {
-                  const productId = item.id;
-                  if (productId && productId !== 'unknown') {
-                    const productName = productLookup[productId] || item.name || 'Unknown Product';
-                    if (!productViews[productId]) {
-                      productViews[productId] = { name: productName, views: 0, conversions: 0 };
-                    }
-                    productViews[productId].conversions++;
+                  productViews[productId].views++;
+                }
+              });
+            }
+          } else if (normalizedEventType === 'purchase') {
+            // Track product conversions with proper names
+            if (eventData.contents && Array.isArray(eventData.contents)) {
+              eventData.contents.forEach((item: any) => {
+                const productId = item.id;
+                if (productId && productId !== 'unknown') {
+                  const productName = productLookup[productId] || item.name || 'Unknown Product';
+                  if (!productViews[productId]) {
+                    productViews[productId] = { name: productName, views: 0, conversions: 0 };
                   }
-                });
-              }
-              break;
+                  productViews[productId].conversions++;
+                }
+              });
+            }
           }
         });
 
@@ -239,8 +233,22 @@ export const useFacebookPixelAnalytics = (storeId: string, dateRangeDays: number
           .sort((a, b) => b.views - a.views)
           .slice(0, 5);
 
+        // Fill in missing dates with zero values for continuous timeline
+        const filledDailyEvents: Record<string, any> = {};
+        for (let d = new Date(startDate); d <= now; d.setDate(d.getDate() + 1)) {
+          const dateStr = d.toISOString().split('T')[0];
+          filledDailyEvents[dateStr] = dailyEvents[dateStr] || {
+            date: dateStr,
+            page_views: 0,
+            view_content: 0,
+            add_to_cart: 0,
+            initiate_checkout: 0,
+            purchases: 0,
+          };
+        }
+
         // Convert daily events to array and sort by date
-        const dailyEventsArray = Object.values(dailyEvents)
+        const dailyEventsArray = Object.values(filledDailyEvents)
           .sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
         setAnalytics({

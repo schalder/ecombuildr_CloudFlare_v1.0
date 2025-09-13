@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
 
 interface EventTimelineProps {
   dailyEvents: Array<{
@@ -11,9 +12,10 @@ interface EventTimelineProps {
     purchases: number;
   }>;
   loading: boolean;
+  providerFilter?: 'facebook' | 'all';
 }
 
-export const EventTimeline = ({ dailyEvents, loading }: EventTimelineProps) => {
+export const EventTimeline = ({ dailyEvents, loading, providerFilter = 'facebook' }: EventTimelineProps) => {
   if (loading) {
     return (
       <Card className="animate-pulse">
@@ -27,7 +29,14 @@ export const EventTimeline = ({ dailyEvents, loading }: EventTimelineProps) => {
     );
   }
 
-  if (!dailyEvents || dailyEvents.length === 0) {
+  // Check if we have data but all values are zero
+  const hasData = dailyEvents && dailyEvents.length > 0;
+  const hasNonZeroData = hasData && dailyEvents.some(event => 
+    event.page_views > 0 || event.view_content > 0 || event.add_to_cart > 0 || 
+    event.initiate_checkout > 0 || event.purchases > 0
+  );
+
+  if (!hasData) {
     return (
       <Card>
         <CardHeader>
@@ -45,6 +54,31 @@ export const EventTimeline = ({ dailyEvents, loading }: EventTimelineProps) => {
     );
   }
 
+  if (!hasNonZeroData) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Event Timeline</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-center h-80 text-muted-foreground">
+            <div className="text-center">
+              <p className="text-lg font-medium">
+                {providerFilter === 'facebook' ? 'No Facebook pixel events found' : 'No events recorded'}
+              </p>
+              <p className="text-sm">
+                {providerFilter === 'facebook' 
+                  ? 'Configure Facebook Pixel or switch to "Internal Data" to see all events'
+                  : 'Events will appear here once tracking begins'
+                }
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   // Format data for chart
   const chartData = dailyEvents.map(event => ({
     ...event,
@@ -53,6 +87,30 @@ export const EventTimeline = ({ dailyEvents, loading }: EventTimelineProps) => {
       day: 'numeric' 
     }),
   }));
+
+  // Chart configuration for consistent theming
+  const chartConfig = {
+    page_views: {
+      label: "Page Views",
+      color: "hsl(var(--chart-1))",
+    },
+    view_content: {
+      label: "View Content", 
+      color: "hsl(var(--chart-2))",
+    },
+    add_to_cart: {
+      label: "Add to Cart",
+      color: "hsl(var(--chart-3))",
+    },
+    initiate_checkout: {
+      label: "Initiate Checkout",
+      color: "hsl(var(--chart-4))",
+    },
+    purchases: {
+      label: "Purchases",
+      color: "hsl(var(--chart-5))",
+    },
+  } as const;
 
   return (
     <Card>
@@ -63,7 +121,7 @@ export const EventTimeline = ({ dailyEvents, loading }: EventTimelineProps) => {
         </p>
       </CardHeader>
       <CardContent>
-        <ResponsiveContainer width="100%" height={400}>
+        <ChartContainer config={chartConfig} className="h-[400px]">
           <LineChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
             <XAxis 
@@ -71,56 +129,50 @@ export const EventTimeline = ({ dailyEvents, loading }: EventTimelineProps) => {
               className="text-muted-foreground text-xs"
             />
             <YAxis className="text-muted-foreground text-xs" />
-            <Tooltip 
-              contentStyle={{ 
-                backgroundColor: 'hsl(var(--card))',
-                border: '1px solid hsl(var(--border))',
-                borderRadius: '8px',
-              }}
-            />
+            <Tooltip content={<ChartTooltipContent />} />
             <Legend />
             <Line
               type="monotone"
               dataKey="page_views"
-              stroke="hsl(var(--chart-1))"
+              stroke={chartConfig.page_views.color}
               strokeWidth={2}
-              name="Page Views"
+              name={chartConfig.page_views.label}
               dot={{ r: 4 }}
             />
             <Line
               type="monotone"
               dataKey="view_content"
-              stroke="hsl(var(--chart-2))"
+              stroke={chartConfig.view_content.color}
               strokeWidth={2}
-              name="View Content"
+              name={chartConfig.view_content.label}
               dot={{ r: 4 }}
             />
             <Line
               type="monotone"
               dataKey="add_to_cart"
-              stroke="hsl(var(--chart-3))"
+              stroke={chartConfig.add_to_cart.color}
               strokeWidth={2}
-              name="Add to Cart"
+              name={chartConfig.add_to_cart.label}
               dot={{ r: 4 }}
             />
             <Line
               type="monotone"
               dataKey="initiate_checkout"
-              stroke="hsl(var(--chart-4))"
+              stroke={chartConfig.initiate_checkout.color}
               strokeWidth={2}
-              name="Initiate Checkout"
+              name={chartConfig.initiate_checkout.label}
               dot={{ r: 4 }}
             />
             <Line
               type="monotone"
               dataKey="purchases"
-              stroke="hsl(var(--chart-5))"
+              stroke={chartConfig.purchases.color}
               strokeWidth={2}
-              name="Purchases"
+              name={chartConfig.purchases.label}
               dot={{ r: 4 }}
             />
           </LineChart>
-        </ResponsiveContainer>
+        </ChartContainer>
       </CardContent>
     </Card>
   );

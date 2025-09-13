@@ -249,7 +249,11 @@ export default function FacebookAds() {
         </div>
 
         {/* Event Timeline */}
-        <EventTimeline dailyEvents={analytics?.dailyEvents || []} loading={loading} />
+        <EventTimeline 
+          dailyEvents={analytics?.dailyEvents || []} 
+          loading={loading} 
+          providerFilter={showFacebookOnly ? 'facebook' : 'all'}
+        />
 
         {/* Facebook Ads Manager Link */}
         <Card>
