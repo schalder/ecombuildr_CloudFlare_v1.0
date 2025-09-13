@@ -2,6 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { AdvancedImageOptimizer } from '../optimized/AdvancedImageOptimizer';
 import { useCriticalImage } from '../optimized/CriticalImageManager';
 
+// Hook to safely use CriticalImageManager (returns null if not available)
+const useSafeCriticalImage = () => {
+  try {
+    return useCriticalImage();
+  } catch {
+    // Return a safe fallback when CriticalImageManager is not provided
+    return {
+      addCriticalImage: () => {},
+      isCriticalImage: () => false,
+    };
+  }
+};
+
 interface StorefrontImageProps {
   src: string;
   alt: string;
@@ -27,7 +40,7 @@ export const StorefrontImage: React.FC<StorefrontImageProps> = ({
   aspectRatio,
   style
 }) => {
-  const { addCriticalImage, isCriticalImage } = useCriticalImage();
+  const { addCriticalImage, isCriticalImage } = useSafeCriticalImage();
   const [autoDetectedCritical, setAutoDetectedCritical] = useState(false);
 
   // Auto-detect critical images (above the fold)
