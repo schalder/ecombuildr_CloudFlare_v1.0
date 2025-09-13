@@ -54,20 +54,36 @@ export const useCategories = (storeId?: string) => {
     queryFn: async () => {
       if (!user || !storeId) return [];
 
-      const { data, error } = await supabase
-        .from('categories')
-        .select(`
-          *,
-          category_website_visibility(
-            website_id,
-            websites(id, name, slug)
-          )
-        `)
-        .eq('store_id', storeId)
-        .order('name');
+        const { data: cats, error: catErr } = await supabase
+          .from('categories')
+          .select('*')
+          .eq('store_id', storeId)
+          .order('name');
 
-      if (error) throw error;
-      return (data || []) as any[];
+        if (catErr) throw catErr;
+        if (!cats || cats.length === 0) return [] as any[];
+
+        const categoryIds = cats.map((c: any) => c.id);
+
+        const { data: vis, error: visErr } = await supabase
+          .from('category_website_visibility')
+          .select('category_id, website_id')
+          .in('category_id', categoryIds);
+
+        if (visErr) throw visErr;
+
+        const byCat: Record<string, any[]> = {};
+        (vis || []).forEach((v: any) => {
+          if (!byCat[v.category_id]) byCat[v.category_id] = [];
+          byCat[v.category_id].push({ website_id: v.website_id });
+        });
+
+        const result = cats.map((c: any) => ({
+          ...c,
+          category_website_visibility: byCat[c.id] || [],
+        }));
+
+        return result as any[];
     },
     enabled: !!user && !!storeId,
     staleTime: 2 * 60 * 1000,
