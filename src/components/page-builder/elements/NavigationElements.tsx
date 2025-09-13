@@ -184,7 +184,7 @@ const NavigationMenuElement: React.FC<{
         {/* Desktop cart */}
         {showCart && !isMobileView && (
           <div className="hidden md:flex items-center ml-3">
-            <CartDrawer>
+            <CartDrawer trigger>
               <Button variant="ghost" size="sm" aria-label="Open cart" className="relative">
                 <ShoppingCart className="h-4 w-4" />
                 {itemCount > 0 && (
@@ -204,7 +204,7 @@ const NavigationMenuElement: React.FC<{
         <div className={mobileWrapperClass}>
           <div className="flex items-center gap-2">
             {showCart && (
-              <CartDrawer>
+              <CartDrawer trigger>
                 <Button variant="outline" size="icon" aria-label="Open cart" className="relative">
                   <ShoppingCart className="h-5 w-5" />
                   {itemCount > 0 && (

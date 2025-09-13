@@ -84,7 +84,7 @@ export const StorefrontHeader: React.FC = () => {
             </Button>
 
             {/* Cart */}
-            <CartDrawer>
+            <CartDrawer trigger>
               <Button variant="ghost" size="sm" className="relative">
                 <ShoppingCart className="h-4 w-4" />
                 {itemCount > 0 && (

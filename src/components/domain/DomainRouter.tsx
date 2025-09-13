@@ -5,6 +5,7 @@ import { DomainWebsiteRenderer } from './DomainWebsiteRenderer';
 import { DomainFunnelRenderer } from './DomainFunnelRenderer';
 import { StoreProvider } from '@/contexts/StoreContext';
 import { CartProvider } from '@/contexts/CartContext';
+import { CartDrawerProvider } from '@/contexts/CartDrawerContext';
 
 // Domain-specific CartProvider wrapper
 const DomainCartProvider: React.FC<{ children: React.ReactNode; storeId?: string; websiteId?: string }> = ({ children, storeId, websiteId }) => {
@@ -13,6 +14,7 @@ const DomainCartProvider: React.FC<{ children: React.ReactNode; storeId?: string
 import { AddToCartProvider } from '@/contexts/AddToCartProvider';
 import { AuthProvider } from '@/hooks/useAuth';
 import { PixelManager } from '@/components/pixel/PixelManager';
+import { CartDrawer } from '@/components/storefront/CartDrawer';
 
 interface DomainConnection {
   id: string;
@@ -160,14 +162,17 @@ export const DomainRouter: React.FC<DomainRouterProps> = ({ children }) => {
       <AuthProvider>
         <StoreProvider>
            <PixelManager>
-              <DomainCartProvider storeId={selectedConnection.store_id} websiteId={selectedConnection.content_id}>
-               <AddToCartProvider>
-                <DomainWebsiteRenderer 
-                  websiteId={selectedConnection.content_id}
-                  customDomain={customDomain.domain}
-                />
-                </AddToCartProvider>
-              </DomainCartProvider>
+              <CartDrawerProvider>
+                <DomainCartProvider storeId={selectedConnection.store_id} websiteId={selectedConnection.content_id}>
+                 <AddToCartProvider>
+                  <CartDrawer />
+                  <DomainWebsiteRenderer 
+                    websiteId={selectedConnection.content_id}
+                    customDomain={customDomain.domain}
+                  />
+                  </AddToCartProvider>
+                </DomainCartProvider>
+              </CartDrawerProvider>
           </PixelManager>
         </StoreProvider>
       </AuthProvider>
@@ -178,14 +183,17 @@ export const DomainRouter: React.FC<DomainRouterProps> = ({ children }) => {
     return (
         <AuthProvider>
           <StoreProvider>
-            <DomainCartProvider storeId={selectedConnection.store_id}>
-            <AddToCartProvider>
-              <DomainFunnelRenderer 
-                funnelId={selectedConnection.content_id}
-                customDomain={customDomain.domain}
-              />
-              </AddToCartProvider>
-            </DomainCartProvider>
+            <CartDrawerProvider>
+              <DomainCartProvider storeId={selectedConnection.store_id}>
+              <AddToCartProvider>
+                <CartDrawer />
+                <DomainFunnelRenderer 
+                  funnelId={selectedConnection.content_id}
+                  customDomain={customDomain.domain}
+                />
+                </AddToCartProvider>
+              </DomainCartProvider>
+            </CartDrawerProvider>
         </StoreProvider>
       </AuthProvider>
     );

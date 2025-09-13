@@ -9,7 +9,9 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { StoreProvider } from "@/contexts/StoreContext";
 import { PixelManager } from "@/components/pixel/PixelManager";
 import { CartProvider } from "@/contexts/CartContext";
+import { CartDrawerProvider } from "@/contexts/CartDrawerContext";
 import { AddToCartProvider } from "@/contexts/AddToCartProvider";
+import { CartDrawer } from "@/components/storefront/CartDrawer";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
@@ -123,13 +125,15 @@ const App = () => (
       <AuthProvider>
         <StoreProvider>
           <PixelManager>
-            <CartProviderWrapper>
-              <TooltipProvider>
-                <Toaster />
-                <Sonner />
-            <BrowserRouter>
-              <ScrollToHash />
-              <AddToCartProvider>
+            <CartDrawerProvider>
+              <CartProviderWrapper>
+                <TooltipProvider>
+                  <Toaster />
+                  <Sonner />
+              <BrowserRouter>
+                <ScrollToHash />
+                <AddToCartProvider>
+                  <CartDrawer />
               <DomainRouter>
                 <Routes>
                 <Route path="/" element={<Index />} />
@@ -337,10 +341,11 @@ const App = () => (
                 <Route path="*" element={<NotFound />} />
                 </Routes>
               </DomainRouter>
-              </AddToCartProvider>
+                </AddToCartProvider>
                 </BrowserRouter>
-              </TooltipProvider>
-            </CartProviderWrapper>
+                </TooltipProvider>
+              </CartProviderWrapper>
+            </CartDrawerProvider>
           </PixelManager>
         </StoreProvider>
       </AuthProvider>

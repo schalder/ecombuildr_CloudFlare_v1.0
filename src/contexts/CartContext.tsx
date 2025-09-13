@@ -3,6 +3,7 @@ import { usePixelTracking } from '@/hooks/usePixelTracking';
 import { usePixelContext } from '@/components/pixel/PixelManager';
 import { createCartItem, mergeCartItems } from '@/lib/cart';
 import { useChannelContext } from '@/hooks/useChannelContext';
+import { useCartDrawer } from '@/contexts/CartDrawerContext';
 
 interface CartItem {
   id: string;
@@ -113,6 +114,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children, storeId, w
   const pixelContext = usePixelContext();
   const pixels = pixelContext?.pixels;
   const { websiteId: resolvedWebsiteId, funnelId: resolvedFunnelId } = useChannelContext();
+  const cartDrawer = useCartDrawer();
   
   // Use websiteIdOverride if provided, otherwise fall back to resolved websiteId
   const effectiveWebsiteId = websiteIdOverride || resolvedWebsiteId;
@@ -183,6 +185,11 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children, storeId, w
       }
     } catch (error) {
       console.warn('Failed to track add to cart event:', error);
+    }
+
+    // Auto-open cart drawer when item is added
+    if (cartDrawer?.openCart) {
+      cartDrawer.openCart();
     }
   };
 
