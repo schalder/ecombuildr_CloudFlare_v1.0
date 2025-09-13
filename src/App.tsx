@@ -107,9 +107,16 @@ import { RequireSuperAdmin } from "@/components/admin/RequireSuperAdmin";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 60_000, // 1 minute
-      retry: 1,
-      refetchOnWindowFocus: false,
+      staleTime: 5 * 60 * 1000, // 5 minutes - cache data longer for better performance
+      gcTime: 10 * 60 * 1000, // 10 minutes - keep in memory longer
+      retry: (failureCount, error) => {
+        // Don't retry on 4xx errors, only server errors
+        if (error && 'status' in error && typeof error.status === 'number') {
+          return error.status >= 500 && failureCount < 3;
+        }
+        return failureCount < 3;
+      },
+      refetchOnWindowFocus: false, // Reduce network requests
     }
   }
 });

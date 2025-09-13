@@ -8,19 +8,36 @@ import { BREAKPOINTS, DeviceType } from '@/components/page-builder/utils/respons
 import '@/components/page-builder/elements';
 import { elementRegistry } from '@/components/page-builder/elements';
 import { ensureGoogleFontLoaded } from '@/hooks/useGoogleFontLoader';
+import { useStorefrontRenderer } from '@/hooks/useStorefrontRenderer';
+import { StorefrontPageBuilder } from './renderer/StorefrontPageBuilder';
 
 interface PageBuilderRendererProps {
   data: PageBuilderData;
   className?: string;
   deviceType?: DeviceType;
+  customScripts?: string;
 }
 
 export const PageBuilderRenderer: React.FC<PageBuilderRendererProps> = ({ 
   data, 
   className = '',
-  deviceType: propDeviceType
+  deviceType: propDeviceType,
+  customScripts
 }) => {
   const [deviceType, setDeviceType] = React.useState<DeviceType>('desktop');
+  const { useStorefront } = useStorefrontRenderer();
+
+  // Use optimized storefront renderer when enabled
+  if (useStorefront) {
+    return (
+      <StorefrontPageBuilder 
+        data={data} 
+        className={className} 
+        deviceType={propDeviceType}
+        customScripts={customScripts}
+      />
+    );
+  }
 
   // Extract and load all Google fonts used in the page
   React.useEffect(() => {

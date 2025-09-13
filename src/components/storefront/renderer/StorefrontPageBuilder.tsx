@@ -4,17 +4,24 @@ import { StorefrontSection } from './StorefrontSection';
 import { storefrontRegistry } from '../registry/storefrontRegistry';
 import { BREAKPOINTS, DeviceType } from '@/components/page-builder/utils/responsive';
 import { ensureGoogleFontLoaded } from '@/hooks/useGoogleFontLoader';
+import { CriticalResourceLoader } from '../optimized/CriticalResourceLoader';
+import { FontOptimizer } from '../optimized/FontOptimizer';
+import { ScriptManager } from '../optimized/ScriptManager';
+import { PerformanceMonitor } from '../optimized/PerformanceMonitor';
+import { ServiceWorkerManager } from '../optimized/ServiceWorkerManager';
 
 interface StorefrontPageBuilderProps {
   data: PageBuilderData;
   className?: string;
   deviceType?: DeviceType;
+  customScripts?: string;
 }
 
 export const StorefrontPageBuilder: React.FC<StorefrontPageBuilderProps> = ({ 
   data, 
   className = '',
-  deviceType: propDeviceType
+  deviceType: propDeviceType,
+  customScripts
 }) => {
   const [deviceType, setDeviceType] = useState<DeviceType>('desktop');
   const [isLoading, setIsLoading] = useState(true);
@@ -186,25 +193,79 @@ export const StorefrontPageBuilder: React.FC<StorefrontPageBuilderProps> = ({
     );
   }
 
+  // Extract critical resources for optimization
+  const extractCriticalResources = () => {
+    const heroImage = data.sections?.[0]?.rows?.[0]?.columns?.[0]?.elements?.find(
+      el => el.type === 'image'
+    )?.content?.src;
+    
+    const usedFonts = new Set<string>();
+    const preloadImages: string[] = [];
+    
+    // Extract first few images for preloading
+    data.sections?.slice(0, 2)?.forEach(section => {
+      section.rows?.forEach(row => {
+        row.columns?.forEach(column => {
+          column.elements?.forEach(element => {
+            if (element.type === 'image' && element.content?.src) {
+              preloadImages.push(element.content.src);
+            }
+            
+            // Extract fonts from styles
+            if (element.styles) {
+              Object.values(element.styles).forEach((value: any) => {
+                if (typeof value === 'string' && value.includes('"')) {
+                  const match = value.match(/"([^"]+)"/);
+                  if (match) usedFonts.add(match[1]);
+                }
+              });
+            }
+          });
+        });
+      });
+    });
+    
+    return {
+      heroImage,
+      fonts: Array.from(usedFonts),
+      preloadImages: preloadImages.slice(0, 3) // Limit to first 3 images
+    };
+  };
+
+  const criticalResources = extractCriticalResources();
+
   return (
-    <div className={`storefront-page-content ${className}`} style={getPageStyles()}>
-      {data.globalStyles && (
-        <style>{`
-          .storefront-page-content {
-            ${Object.entries(data.globalStyles).map(([key, value]) => `${key}: ${value};`).join(' ')}
-          }
-        `}</style>
-      )}
+    <>
+      {/* Critical resource optimization */}
+      <CriticalResourceLoader 
+        heroImage={criticalResources.heroImage}
+        primaryFonts={criticalResources.fonts}
+        preloadImages={criticalResources.preloadImages}
+      />
+      <FontOptimizer fonts={criticalResources.fonts} />
+      <ScriptManager customScripts={customScripts} defer={true} />
+      <PerformanceMonitor page="storefront" enabled={process.env.NODE_ENV === 'development'} />
+      <ServiceWorkerManager enabled={process.env.NODE_ENV === 'production'} />
       
-      <div className="space-y-0">
-        {data.sections.map((section) => (
-          <StorefrontSection
-            key={section.id}
-            section={section}
-            deviceType={deviceType}
-          />
-        ))}
+      <div className={`storefront-page-content ${className}`} style={getPageStyles()}>
+        {data.globalStyles && (
+          <style>{`
+            .storefront-page-content {
+              ${Object.entries(data.globalStyles).map(([key, value]) => `${key}: ${value};`).join(' ')}
+            }
+          `}</style>
+        )}
+        
+        <div className="space-y-0">
+          {data.sections.map((section) => (
+            <StorefrontSection
+              key={section.id}
+              section={section}
+              deviceType={deviceType}
+            />
+          ))}
+        </div>
       </div>
-    </div>
+    </>
   );
 };

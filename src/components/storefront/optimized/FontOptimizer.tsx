@@ -33,12 +33,20 @@ export const FontOptimizer: React.FC<FontOptimizerProps> = ({ fonts = [] }) => {
       document.head.appendChild(preconnectGstaticLink);
     }
 
-    // If specific fonts are provided, preload them
+    // If specific fonts are provided, preload them with font-display: swap
     const preloadPromises = fonts.map(fontFamily => {
       return new Promise<void>((resolve) => {
+        const fontId = `font-${fontFamily.replace(/\s+/g, '-').toLowerCase()}`;
+        
+        // Check if font is already loaded
+        if (document.getElementById(fontId)) {
+          resolve();
+          return;
+        }
+        
         const link = document.createElement('link');
-        link.rel = 'preload';
-        link.as = 'style';
+        link.id = fontId;
+        link.rel = 'stylesheet';
         link.href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(fontFamily)}:wght@400;500;600;700&display=swap`;
         link.onload = () => resolve();
         link.onerror = () => resolve(); // Don't fail if font fails to load
