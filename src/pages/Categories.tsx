@@ -1,296 +1,193 @@
-import { useState, useEffect } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
-import { Plus, MoreVertical, Edit, Trash2 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useStoreWebsitesForSelection, useCategoryWebsiteVisibility } from '@/hooks/useWebsiteVisibility';
+import { MoreHorizontal, Plus, Search, Edit, Trash2, ChevronRight } from 'lucide-react';
+import { useStoreWebsitesForSelection } from '@/hooks/useWebsiteVisibility';
+import { useCategories } from '@/hooks/useCategories';
+import { supabase } from '@/integrations/supabase/client';
 
-interface Category {
-  id: string;
-  name: string;
-  description: string;
-  slug: string;
-  image_url: string;
-  store_id: string;
-  created_at: string;
-}
-
+// Data interfaces
 interface Website {
   id: string;
   name: string;
   slug: string;
 }
 
-interface CategoryWithWebsites extends Category {
-  websites?: Website[];
-}
-
 export default function Categories() {
   const { user } = useAuth();
-  const { toast } = useToast();
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [categoriesByWebsite, setCategoriesByWebsite] = useState<{[key: string]: CategoryWithWebsites[]}>({});
-  const [websites, setWebsites] = useState<Website[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [storeId, setStoreId] = useState<string>('');
-  const [selectedWebsite, setSelectedWebsite] = useState<string>('');
-  const [editSelectedWebsite, setEditSelectedWebsite] = useState<string>('');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedStoreId, setSelectedStoreId] = useState<string>('');
+  const { websites } = useStoreWebsitesForSelection(selectedStoreId);
+  const { 
+    categories, 
+    flatCategories, 
+    loading, 
+    error, 
+    createCategory, 
+    updateCategory, 
+    deleteCategory 
+  } = useCategories(selectedStoreId);
 
-  const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    image_url: '',
-  });
-
-  const [editFormData, setEditFormData] = useState({
-    name: '',
-    description: '',
-    image_url: '',
-  });
-
-  // Get websites for store
-  const { websites: storeWebsites } = useStoreWebsitesForSelection(storeId);
-
+  // Get first store on component mount
   useEffect(() => {
-    if (user) {
-      fetchCategories();
-    }
-  }, [user]);
-
-  const fetchCategories = async () => {
-    try {
-      const { data: stores } = await supabase
-        .from('stores')
-        .select('id')
-        .eq('owner_id', user?.id);
-
-      if (!stores || stores.length === 0) return;
-
-      setStoreId(stores[0].id); // Set the first store as default
-      const storeIds = stores.map(store => store.id);
-
-      // Fetch websites
-      const { data: websitesData } = await supabase
-        .from('websites')
-        .select('id, name, slug')
-        .in('store_id', storeIds)
-        .eq('is_active', true)
-        .order('name');
-
-      setWebsites(websitesData || []);
-
-      // Fetch categories
-      const { data: categoriesData, error } = await supabase
-        .from('categories')
-        .select('*')
-        .in('store_id', storeIds)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-
-      // Fetch category visibility data separately
-      const { data: visibilityData } = await supabase
-        .from('category_website_visibility')
-        .select('category_id, website_id');
-
-      // Create a map of website_id to website data for quick lookup
-      const websiteMap = new Map(
-        (websitesData || []).map(site => [site.id, site])
-      );
-
-      const processedCategories = (categoriesData || []).map(cat => ({
-        ...cat,
-        websites: (visibilityData || [])
-          .filter(v => v.category_id === cat.id)
-          .map(v => websiteMap.get(v.website_id))
-          .filter(Boolean)
-      }));
-
-      setCategories(processedCategories);
-
-      // Group categories by website
-      const grouped: {[key: string]: CategoryWithWebsites[]} = {
-        'all': processedCategories.filter(cat => cat.websites.length === 0)
-      };
-
-      websitesData?.forEach(website => {
-        grouped[website.id] = processedCategories.filter(cat => 
-          cat.websites.some((w: Website) => w.id === website.id)
-        );
-      });
-
-      setCategoriesByWebsite(grouped);
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to fetch categories",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleCreateCategory = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user) return;
-
-    try {
+    const fetchFirstStore = async () => {
+      if (!user) return;
+      
       const { data: stores } = await supabase
         .from('stores')
         .select('id')
         .eq('owner_id', user.id)
         .limit(1);
-
-      if (!stores || stores.length === 0) {
-        toast({
-          title: "Error",
-          description: "No store found",
-          variant: "destructive",
-        });
-        return;
+        
+      if (stores && stores.length > 0) {
+        setSelectedStoreId(stores[0].id);
       }
+    };
+    
+    fetchFirstStore();
+  }, [user]);
 
-      const slug = formData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+  // State management
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<any | null>(null);
+  const [formData, setFormData] = useState({
+    name: '',
+    description: '',
+    parent_category_id: ''
+  });
 
-      const { data: categoryData, error: insertError } = await supabase.from('categories').insert({
-        ...formData,
-        slug,
-        store_id: stores[0].id,
-      }).select('id').single();
+  // Get parent categories for dropdown (only categories without parents)
+  const parentCategories = flatCategories.filter(cat => !cat.parent_category_id);
 
-      if (insertError) throw insertError;
+  // Handle form submission for creating categories
+  const handleCreateCategory = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.name.trim()) return;
 
-      // Add website visibility record (each category belongs to exactly one website)
-      if (selectedWebsite && categoryData?.id) {
-        const { error: visibilityError } = await supabase
-          .from('category_website_visibility')
-          .insert({
-            category_id: categoryData.id,
-            website_id: selectedWebsite
-          });
+    createCategory.mutate({
+      name: formData.name.trim(),
+      description: formData.description.trim() || undefined,
+      parent_category_id: formData.parent_category_id || undefined
+    });
 
-        if (visibilityError) throw visibilityError;
-      }
-
-      toast({
-        title: "Success",
-        description: "Category created successfully!",
-      });
-
-      setFormData({ name: '', description: '', image_url: '' });
-      setSelectedWebsite('');
-      setIsAddModalOpen(false);
-      fetchCategories();
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to create category",
-        variant: "destructive",
-      });
-    }
+    // Reset form and close modal
+    setFormData({ name: '', description: '', parent_category_id: '' });
+    setIsAddModalOpen(false);
   };
 
+  // Handle form submission for updating categories
   const handleUpdateCategory = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editingCategory) return;
+    if (!editingCategory || !formData.name.trim()) return;
 
-    try {
-      const slug = editFormData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    updateCategory.mutate({
+      id: editingCategory.id,
+      name: formData.name.trim(),
+      description: formData.description.trim() || undefined,
+      parent_category_id: formData.parent_category_id || undefined
+    });
 
-      const { error } = await supabase
-        .from('categories')
-        .update({
-          name: editFormData.name,
-          description: editFormData.description,
-          image_url: editFormData.image_url,
-          slug,
-        })
-        .eq('id', editingCategory.id);
-
-      if (error) throw error;
-
-      // Update website visibility (each category belongs to exactly one website)
-      await supabase
-        .from('category_website_visibility')
-        .delete()
-        .eq('category_id', editingCategory.id);
-
-      if (editSelectedWebsite) {
-        const { error: visibilityError } = await supabase
-          .from('category_website_visibility')
-          .insert({
-            category_id: editingCategory.id,
-            website_id: editSelectedWebsite
-          });
-
-        if (visibilityError) throw visibilityError;
-      }
-
-      toast({
-        title: "Success",
-        description: "Category updated successfully!",
-      });
-
-      setIsEditDialogOpen(false);
-      setEditingCategory(null);
-      setEditSelectedWebsite('');
-      fetchCategories();
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to update category",
-        variant: "destructive",
-      });
-    }
+    // Reset form and close modal
+    setFormData({ name: '', description: '', parent_category_id: '' });
+    setIsEditModalOpen(false);
+    setEditingCategory(null);
   };
 
-  const handleDeleteCategory = async (id: string) => {
-    try {
-      const { error } = await supabase
-        .from('categories')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "Category deleted successfully!",
-      });
-
-      fetchCategories();
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to delete category",
-        variant: "destructive",
-      });
+  // Handle category deletion
+  const handleDeleteCategory = async (categoryId: string) => {
+    if (!confirm('Are you sure you want to delete this category? This action cannot be undone.')) {
+      return;
     }
+
+    deleteCategory.mutate(categoryId);
   };
+
+  // Handle edit button click
+  const handleEditClick = (category: any) => {
+    setEditingCategory(category);
+    setFormData({
+      name: category.name,
+      description: category.description || '',
+      parent_category_id: category.parent_category_id || ''
+    });
+    setIsEditModalOpen(true);
+  };
+
+  // Filter categories based on search term
+  const filteredCategories = useMemo(() => {
+    if (!searchTerm.trim()) return categories;
+    
+    return categories.filter(category =>
+      category.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      category.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      category.full_path?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [categories, searchTerm]);
+
+  // Organize categories by hierarchy
+  const organizedCategories = useMemo(() => {
+    return filteredCategories.filter(cat => cat.level === 0); // Only show parent categories, subcategories will be nested
+  }, [filteredCategories]);
+
+  // Get subcategories for a parent
+  const getSubcategories = (parentId: string) => {
+    return filteredCategories.filter(cat => cat.parent_category_id === parentId);
+  };
+
+  if (loading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Loading categories...</p>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <p className="text-destructive mb-4">Error: {error}</p>
+            <Button onClick={() => window.location.reload()}>Retry</Button>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
-    <DashboardLayout title="Categories" description="Manage your product categories">
+    <DashboardLayout title="Categories" description="Manage your product categories and subcategories">
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <div className="flex items-center space-x-2">
+        {/* Header Section */}
+        <div className="flex flex-col sm:flex-row justify-between gap-4">
+          <div className="flex items-center gap-4">
             <Badge variant="secondary">{categories.length} categories</Badge>
+            <div className="relative">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search categories..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-8 w-[300px]"
+              />
+            </div>
           </div>
+          
           <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
             <DialogTrigger asChild>
               <Button>
@@ -301,291 +198,233 @@ export default function Categories() {
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>Create New Category</DialogTitle>
+                <DialogDescription>
+                  Add a new category or subcategory to organize your products.
+                </DialogDescription>
               </DialogHeader>
               <form onSubmit={handleCreateCategory} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="name">Name *</Label>
                   <Input
                     id="name"
+                    placeholder="Category name"
                     value={formData.name}
                     onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                     required
                   />
                 </div>
+                
                 <div className="space-y-2">
                   <Label htmlFor="description">Description</Label>
                   <Textarea
                     id="description"
+                    placeholder="Category description (optional)"
                     value={formData.description}
                     onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                    rows={3}
                   />
                 </div>
-                 <div className="space-y-2">
-                   <Label htmlFor="image_url">Image URL</Label>
-                   <Input
-                     id="image_url"
-                     type="url"
-                     value={formData.image_url}
-                     onChange={(e) => setFormData(prev => ({ ...prev, image_url: e.target.value }))}
-                   />
-                 </div>
-                 <div className="space-y-2">
-                   <Label>Website *</Label>
-                   <Select value={selectedWebsite} onValueChange={setSelectedWebsite} required>
-                     <SelectTrigger>
-                       <SelectValue placeholder="Select a website for this category" />
-                     </SelectTrigger>
-                     <SelectContent>
-                       {storeWebsites.map(w => (
-                         <SelectItem key={w.id} value={w.id}>{w.name}</SelectItem>
-                       ))}
-                     </SelectContent>
-                   </Select>
-                   <p className="text-sm text-muted-foreground">
-                     Each category must belong to exactly one website.
-                   </p>
-                 </div>
-                <div className="flex justify-end space-x-2">
+                
+                <div className="space-y-2">
+                  <Label htmlFor="parent_category">Parent Category (Optional)</Label>
+                  <Select 
+                    value={formData.parent_category_id} 
+                    onValueChange={(value) => setFormData(prev => ({ ...prev, parent_category_id: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select parent category (optional)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">No parent (Main category)</SelectItem>
+                      {parentCategories.map((category) => (
+                        <SelectItem key={category.id} value={category.id}>
+                          {category.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <DialogFooter>
                   <Button type="button" variant="outline" onClick={() => setIsAddModalOpen(false)}>
                     Cancel
                   </Button>
-                  <Button type="submit">Create</Button>
-                </div>
+                  <Button type="submit" disabled={createCategory.isPending}>
+                    {createCategory.isPending ? 'Creating...' : 'Create Category'}
+                  </Button>
+                </DialogFooter>
               </form>
             </DialogContent>
           </Dialog>
         </div>
 
-        {/* Categories by Website */}
+        {/* Categories List */}
         <div className="space-y-6">
-          <div className="flex items-center gap-4">
-            <Input
-              placeholder="Search categories..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="max-w-sm"
-            />
-          </div>
-          
-          {loading ? (
-            <div className="text-center py-8">Loading...</div>
-          ) : (
-            <>
-              {/* All Websites Categories */}
-              {categoriesByWebsite.all && categoriesByWebsite.all.length > 0 && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>All Websites ({categoriesByWebsite.all.length} categories)</CardTitle>
-                    <p className="text-sm text-muted-foreground">Categories visible on all websites</p>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-                      {categoriesByWebsite.all
-                        .filter(category => 
-                          searchQuery === '' || 
-                          category.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          category.description.toLowerCase().includes(searchQuery.toLowerCase())
-                        )
-                        .map((category) => (
-                        <div key={category.id} className="flex items-center justify-between p-3 border rounded-lg">
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-medium text-sm">{category.name}</h4>
-                            <p className="text-xs text-muted-foreground truncate">{category.description}</p>
-                            <code className="text-xs bg-muted px-1.5 py-0.5 rounded mt-1 inline-block">
-                              {category.slug}
-                            </code>
+          {organizedCategories.length > 0 ? (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {organizedCategories.map((category) => {
+                const subcategories = getSubcategories(category.id);
+                
+                return (
+                  <Card key={category.id} className="hover:shadow-md transition-shadow">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-base flex items-center">
+                          {category.name}
+                          {subcategories.length > 0 && (
+                            <Badge variant="outline" className="ml-2 text-xs">
+                              {subcategories.length} sub
+                            </Badge>
+                          )}
+                        </CardTitle>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleEditClick(category)}>
+                              <Edit className="mr-2 h-4 w-4" />
+                              Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              onClick={() => handleDeleteCategory(category.id)}
+                              className="text-destructive"
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                      <CardDescription className="text-sm">
+                        Slug: /{category.slug}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="pt-0 space-y-3">
+                      {category.description && (
+                        <p className="text-sm text-muted-foreground">{category.description}</p>
+                      )}
+                      
+                      {/* Subcategories */}
+                      {subcategories.length > 0 && (
+                        <div className="space-y-2">
+                          <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                            Subcategories
+                          </h4>
+                          <div className="space-y-1">
+                            {subcategories.map((subcat) => (
+                              <div key={subcat.id} className="flex items-center justify-between p-2 bg-muted/50 rounded text-sm">
+                                <div className="flex items-center">
+                                  <ChevronRight className="h-3 w-3 text-muted-foreground mr-1" />
+                                  <span>{subcat.name}</span>
+                                </div>
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                                      <MoreHorizontal className="h-3 w-3" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    <DropdownMenuItem onClick={() => handleEditClick(subcat)}>
+                                      <Edit className="mr-2 h-3 w-3" />
+                                      Edit
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem 
+                                      onClick={() => handleDeleteCategory(subcat.id)}
+                                      className="text-destructive"
+                                    >
+                                      <Trash2 className="mr-2 h-3 w-3" />
+                                      Delete
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </div>
+                            ))}
                           </div>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="sm">
-                                <MoreVertical className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="z-50 bg-popover">
-                              <DropdownMenuItem 
-                               onClick={async () => {
-                                   setEditingCategory(category);
-                                   setEditFormData({
-                                     name: category.name,
-                                     description: category.description,
-                                     image_url: category.image_url || '',
-                                   });
-                                   
-                                    // Load existing visibility
-                                    const { data: visibilityData } = await supabase
-                                      .from('category_website_visibility')
-                                      .select('website_id')
-                                      .eq('category_id', category.id)
-                                      .single();
-                                    
-                                    setEditSelectedWebsite(visibilityData?.website_id || '');
-                                   setIsEditDialogOpen(true);
-                                 }}
-                              >
-                                <Edit className="mr-2 h-4 w-4" />
-                                Edit
-                              </DropdownMenuItem>
-                              <DropdownMenuItem 
-                                className="text-destructive"
-                                onClick={() => handleDeleteCategory(category.id)}
-                              >
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                Delete
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
                         </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground mb-4">
+                {searchTerm ? 'No categories found matching your search.' : 'No categories found. Create your first category to get started.'}
+              </p>
+              {!searchTerm && (
+                <Button onClick={() => setIsAddModalOpen(true)}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Category
+                </Button>
               )}
-
-              {/* Website-specific Categories */}
-              {websites.map((website) => (
-                <Card key={website.id}>
-                  <CardHeader>
-                    <CardTitle>{website.name} ({categoriesByWebsite[website.id]?.length || 0} categories)</CardTitle>
-                    <p className="text-sm text-muted-foreground">Categories visible only on {website.name}</p>
-                  </CardHeader>
-                  <CardContent>
-                    {!categoriesByWebsite[website.id] || categoriesByWebsite[website.id].length === 0 ? (
-                      <div className="text-center py-8 text-muted-foreground">
-                        No categories specific to {website.name}
-                      </div>
-                    ) : (
-                      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-                        {categoriesByWebsite[website.id]
-                          .filter(category => 
-                            searchQuery === '' || 
-                            category.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                            category.description.toLowerCase().includes(searchQuery.toLowerCase())
-                          )
-                          .map((category) => (
-                          <div key={category.id} className="flex items-center justify-between p-3 border rounded-lg">
-                            <div className="flex-1 min-w-0">
-                              <h4 className="font-medium text-sm">{category.name}</h4>
-                              <p className="text-xs text-muted-foreground truncate">{category.description}</p>
-                              <code className="text-xs bg-muted px-1.5 py-0.5 rounded mt-1 inline-block">
-                                {category.slug}
-                              </code>
-                            </div>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="sm">
-                                  <MoreVertical className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" className="z-50 bg-popover">
-                                <DropdownMenuItem 
-                                 onClick={async () => {
-                                     setEditingCategory(category);
-                                     setEditFormData({
-                                       name: category.name,
-                                       description: category.description,
-                                       image_url: category.image_url || '',
-                                     });
-                                     
-                                      // Load existing visibility
-                                      const { data: visibilityData } = await supabase
-                                        .from('category_website_visibility')
-                                        .select('website_id')
-                                        .eq('category_id', category.id)
-                                        .single();
-                                      
-                                      setEditSelectedWebsite(visibilityData?.website_id || '');
-                                     setIsEditDialogOpen(true);
-                                   }}
-                                >
-                                  <Edit className="mr-2 h-4 w-4" />
-                                  Edit
-                                </DropdownMenuItem>
-                                <DropdownMenuItem 
-                                  className="text-destructive"
-                                  onClick={() => handleDeleteCategory(category.id)}
-                                >
-                                  <Trash2 className="mr-2 h-4 w-4" />
-                                  Delete
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
-
-              {/* No categories at all */}
-              {categories.length === 0 && (
-                <Card>
-                  <CardContent className="text-center py-8 text-muted-foreground">
-                    No categories found. Create your first category to get started.
-                  </CardContent>
-                </Card>
-              )}
-            </>
+            </div>
           )}
         </div>
 
         {/* Edit Category Dialog */}
-        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Edit Category</DialogTitle>
+              <DialogDescription>
+                Update the category information and hierarchy.
+              </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleUpdateCategory} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="edit-name">Name *</Label>
                 <Input
                   id="edit-name"
-                  value={editFormData.name}
-                  onChange={(e) => setEditFormData(prev => ({ ...prev, name: e.target.value }))}
+                  placeholder="Category name"
+                  value={formData.name}
+                  onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                   required
                 />
               </div>
+              
               <div className="space-y-2">
                 <Label htmlFor="edit-description">Description</Label>
                 <Textarea
                   id="edit-description"
-                  value={editFormData.description}
-                  onChange={(e) => setEditFormData(prev => ({ ...prev, description: e.target.value }))}
-                  rows={3}
+                  placeholder="Category description (optional)"
+                  value={formData.description}
+                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                 />
               </div>
+              
               <div className="space-y-2">
-                <Label htmlFor="edit-image-url">Image URL</Label>
-                <Input
-                  id="edit-image-url"
-                  type="url"
-                  value={editFormData.image_url}
-                  onChange={(e) => setEditFormData(prev => ({ ...prev, image_url: e.target.value }))}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Website *</Label>
-                <Select value={editSelectedWebsite} onValueChange={setEditSelectedWebsite} required>
+                <Label htmlFor="edit-parent-category">Parent Category (Optional)</Label>
+                <Select 
+                  value={formData.parent_category_id} 
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, parent_category_id: value }))}
+                >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select a website for this category" />
+                    <SelectValue placeholder="Select parent category (optional)" />
                   </SelectTrigger>
                   <SelectContent>
-                    {storeWebsites.map(w => (
-                      <SelectItem key={w.id} value={w.id}>{w.name}</SelectItem>
-                    ))}
+                    <SelectItem value="">No parent (Main category)</SelectItem>
+                    {parentCategories
+                      .filter(cat => cat.id !== editingCategory?.id) // Don't allow self as parent
+                      .map((category) => (
+                        <SelectItem key={category.id} value={category.id}>
+                          {category.name}
+                        </SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
-                <p className="text-sm text-muted-foreground">
-                  Each category must belong to exactly one website.
-                </p>
               </div>
-              <div className="flex justify-end space-x-2">
-                <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+              
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setIsEditModalOpen(false)}>
                   Cancel
                 </Button>
-                <Button type="submit">Save Changes</Button>
-              </div>
+                <Button type="submit" disabled={updateCategory.isPending}>
+                  {updateCategory.isPending ? 'Updating...' : 'Update Category'}
+                </Button>
+              </DialogFooter>
             </form>
           </DialogContent>
         </Dialog>
