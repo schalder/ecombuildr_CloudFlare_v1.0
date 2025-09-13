@@ -441,6 +441,16 @@ export const ProductsPageElement: React.FC<{
           query = query.not('compare_price', 'is', null);
         }
 
+        // In-stock filter: include products that don't track inventory OR have inventory_quantity > 0
+        if (filters.inStock) {
+          query = query.or('track_inventory.is.null,track_inventory.eq.false,and(track_inventory.eq.true,inventory_quantity.gt.0)');
+        }
+
+        // Free shipping filter: only products explicitly set to free shipping (min amount = 0)
+        if (filters.freeShipping) {
+          query = query.eq('free_shipping_min_amount', 0);
+        }
+
         switch (sortBy) {
           case 'price-low':
             query = query.order('price', { ascending: true });

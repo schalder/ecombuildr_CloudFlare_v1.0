@@ -401,12 +401,12 @@ export const StorefrontProducts: React.FC = () => {
 
       // Apply in stock filter
       if (filters.inStock) {
-        query = query.or('track_inventory.is.null,and(track_inventory.eq.true,inventory_quantity.gt.0)');
+        query = query.or('track_inventory.is.null,track_inventory.eq.false,and(track_inventory.eq.true,inventory_quantity.gt.0)');
       }
 
       // Apply free shipping filter
       if (filters.freeShipping) {
-        query = query.or('free_shipping_min_amount.is.null,free_shipping_min_amount.eq.0');
+        query = query.eq('free_shipping_min_amount', 0);
       }
 
       // Apply sorting
