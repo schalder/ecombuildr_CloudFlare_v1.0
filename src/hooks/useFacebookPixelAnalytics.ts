@@ -237,7 +237,7 @@ export const useFacebookPixelAnalytics = (storeId: string, dateRangeDays: number
             conversions: data.conversions,
           }))
           .sort((a, b) => b.views - a.views)
-          .slice(0, 10);
+          .slice(0, 5);
 
         // Convert daily events to array and sort by date
         const dailyEventsArray = Object.values(dailyEvents)

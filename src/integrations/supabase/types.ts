@@ -2456,6 +2456,27 @@ export type Database = {
           },
         ]
       }
+      system_logs: {
+        Row: {
+          created_at: string
+          details: Json | null
+          id: string
+          operation: string
+        }
+        Insert: {
+          created_at?: string
+          details?: Json | null
+          id?: string
+          operation: string
+        }
+        Update: {
+          created_at?: string
+          details?: Json | null
+          id?: string
+          operation?: string
+        }
+        Relationships: []
+      }
       theme_templates: {
         Row: {
           config: Json
@@ -2917,6 +2938,10 @@ export type Database = {
       }
       cleanup_expired_cart_sessions: {
         Args: Record<PropertyKey, never>
+        Returns: number
+      }
+      cleanup_old_pixel_events: {
+        Args: { retention_days?: number }
         Returns: number
       }
       decrement_usage: {

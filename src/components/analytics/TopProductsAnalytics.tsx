@@ -66,7 +66,7 @@ export const TopProductsAnalytics = ({ topProducts, loading }: TopProductsAnalyt
         </p>
       </CardHeader>
       <CardContent className="space-y-4">
-        {topProducts.slice(0, 10).map((product, index) => {
+        {topProducts.slice(0, 5).map((product, index) => {
           const conversionRate = product.views > 0 ? (product.conversions / product.views) * 100 : 0;
           const viewPercentage = maxViews > 0 ? (product.views / maxViews) * 100 : 0;
           
