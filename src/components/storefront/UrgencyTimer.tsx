@@ -37,7 +37,7 @@ export const UrgencyTimer: React.FC<UrgencyTimerProps> = ({
   className = '',
 }) => {
   const [timeLeft, setTimeLeft] = useState<TimeLeft>({ hours: 0, minutes: 0, seconds: 0 });
-  const [isExpired, setIsExpired] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
 
   useEffect(() => {
     const initializeTimer = () => {
@@ -105,25 +105,32 @@ export const UrgencyTimer: React.FC<UrgencyTimerProps> = ({
 
     const endTime = initializeTimer();
     
+    let currentEndTime = endTime;
+    
     const updateTimer = () => {
       const now = Date.now();
-      const difference = endTime - now;
+      const difference = currentEndTime - now;
       
       if (difference <= 0) {
-        setIsExpired(true);
+        // Show reset state briefly
+        setIsResetting(true);
         setTimeLeft({ hours: 0, minutes: 0, seconds: 0 });
-        // Reset timer after expiry for next visit
-        const newEndTime = now + (duration * 60 * 1000);
-        const newData: StoredTimerData = {
-          endTime: newEndTime,
-          config: {
-            duration,
-            text,
-            backgroundColor,
-            textColor
-          }
-        };
-        localStorage.setItem(`urgency_timer_${productId}`, JSON.stringify(newData));
+        
+        // Immediately start new timer
+        setTimeout(() => {
+          currentEndTime = now + (duration * 60 * 1000);
+          const newData: StoredTimerData = {
+            endTime: currentEndTime,
+            config: {
+              duration,
+              text,
+              backgroundColor,
+              textColor
+            }
+          };
+          localStorage.setItem(`urgency_timer_${productId}`, JSON.stringify(newData));
+          setIsResetting(false);
+        }, 1500); // Show reset state for 1.5 seconds
         return;
       }
       
@@ -132,7 +139,7 @@ export const UrgencyTimer: React.FC<UrgencyTimerProps> = ({
       const seconds = Math.floor((difference % (1000 * 60)) / 1000);
       
       setTimeLeft({ hours, minutes, seconds });
-      setIsExpired(false);
+      setIsResetting(false);
     };
 
     // Update immediately
@@ -148,21 +155,19 @@ export const UrgencyTimer: React.FC<UrgencyTimerProps> = ({
     return value.toString().padStart(2, '0');
   };
 
-  if (isExpired) {
-    return null; // Timer will reset on next page load
-  }
-
   return (
     <div className={`flex flex-col items-center sm:items-start gap-3 py-2 animate-fade-in ${className}`}>
       {/* Timer text with icon */}
       <div className="flex items-center gap-2 text-foreground">
         <Clock className="w-4 h-4" />
-        <span className="text-sm font-medium">{text}</span>
+        <span className="text-sm font-medium">
+          {isResetting ? "🔄 Restarting..." : text}
+        </span>
       </div>
       
       {/* Time boxes */}
       <div className="flex items-center gap-2">
-        {timeLeft.hours > 0 && (
+        {timeLeft.hours > 0 && !isResetting && (
           <div className="flex flex-col items-center gap-1">
             <div 
               className="px-3 py-2 rounded-lg text-lg font-bold min-w-[3rem] text-center"
@@ -177,17 +182,17 @@ export const UrgencyTimer: React.FC<UrgencyTimerProps> = ({
           </div>
         )}
         
-        {timeLeft.hours > 0 && <span className="text-muted-foreground">:</span>}
+        {timeLeft.hours > 0 && !isResetting && <span className="text-muted-foreground">:</span>}
         
         <div className="flex flex-col items-center gap-1">
           <div 
-            className="px-3 py-2 rounded-lg text-lg font-bold min-w-[3rem] text-center"
+            className={`px-3 py-2 rounded-lg text-lg font-bold min-w-[3rem] text-center ${isResetting ? 'animate-pulse' : ''}`}
             style={{ 
               backgroundColor,
               color: textColor
             }}
           >
-            {formatTime(timeLeft.minutes)}
+            {isResetting ? "00" : formatTime(timeLeft.minutes)}
           </div>
           <span className="text-xs text-muted-foreground">Minutes</span>
         </div>
@@ -196,13 +201,13 @@ export const UrgencyTimer: React.FC<UrgencyTimerProps> = ({
         
         <div className="flex flex-col items-center gap-1">
           <div 
-            className="px-3 py-2 rounded-lg text-lg font-bold min-w-[3rem] text-center"
+            className={`px-3 py-2 rounded-lg text-lg font-bold min-w-[3rem] text-center ${isResetting ? 'animate-pulse' : ''}`}
             style={{ 
               backgroundColor,
               color: textColor
             }}
           >
-            {formatTime(timeLeft.seconds)}
+            {isResetting ? "00" : formatTime(timeLeft.seconds)}
           </div>
           <span className="text-xs text-muted-foreground">Seconds</span>
         </div>
