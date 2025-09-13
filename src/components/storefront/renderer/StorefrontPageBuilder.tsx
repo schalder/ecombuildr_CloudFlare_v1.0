@@ -9,6 +9,8 @@ import { FontOptimizer } from '../optimized/FontOptimizer';
 import { ScriptManager } from '../optimized/ScriptManager';
 import { PerformanceMonitor } from '../optimized/PerformanceMonitor';
 import { ServiceWorkerManager } from '../optimized/ServiceWorkerManager';
+import { CriticalCSSLoader } from '../optimized/CriticalCSSLoader';
+import { PreloadManager } from '../optimized/PreloadManager';
 
 interface StorefrontPageBuilderProps {
   data: PageBuilderData;

@@ -37,15 +37,10 @@ export default defineConfig(({ mode }) => ({
             '@hello-pangea/dnd'
           ],
           
-          // Split element categories for lazy loading
-          'elements-basic': ['src/components/page-builder/elements/BasicElements'],
-          'elements-ecommerce': ['src/components/page-builder/elements/EcommerceElements'],
-          'elements-form': ['src/components/page-builder/elements/FormElements'],
-          'elements-content': ['src/components/page-builder/elements/ContentElements'],
-          'elements-media': ['src/components/page-builder/elements/MediaElements'],
-          'elements-advanced': ['src/components/page-builder/elements/AdvancedElements'],
-          'elements-marketing': ['src/components/page-builder/elements/MarketingElements'],
-          'elements-navigation': ['src/components/page-builder/elements/NavigationElements']
+          // Split major libraries that are actually used
+          'ui-libs': ['lucide-react', '@radix-ui/react-slot', 'class-variance-authority'],
+          'form-libs': ['react-hook-form', '@hookform/resolvers/zod'],
+          'dnd-libs': ['react-dnd', 'react-dnd-html5-backend', '@hello-pangea/dnd']
         },
       },
     },
@@ -65,8 +60,15 @@ export default defineConfig(({ mode }) => ({
   },
   // Environment variable defaults
   define: {
-    'process.env.VITE_STOREFRONT_RENDERER_DEFAULT': JSON.stringify(
-      process.env.VITE_STOREFRONT_RENDERER_DEFAULT || 'true'
-    ),
+    'process.env.VITE_STOREFRONT_RENDERER_DEFAULT': JSON.stringify('true'),
+    'process.env.NODE_ENV': JSON.stringify(mode),
+  },
+  // Enable experimental features for better performance
+  esbuild: {
+    target: 'es2020',
+    keepNames: false,
+    minifyIdentifiers: mode === 'production',
+    minifySyntax: true,
+    minifyWhitespace: true,
   },
 }));
