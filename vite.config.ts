@@ -44,13 +44,7 @@ export default defineConfig(({ mode }) => ({
     },
     // Optimize build for performance
     target: 'es2020',
-    minify: 'terser',
-    terserOptions: {
-      compress: {
-        drop_console: mode === 'production',
-        drop_debugger: mode === 'production',
-      },
-    },
+    minify: 'esbuild', // Use ESBuild for faster minification
     // Enable CSS code splitting
     cssCodeSplit: true,
     // Reduce chunk size warnings for better performance
