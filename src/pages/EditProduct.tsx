@@ -25,6 +25,7 @@ import { parseVideoUrl, buildEmbedUrl } from "@/components/page-builder/utils/vi
 import { useStoreWebsitesForSelection, useProductWebsiteVisibility } from '@/hooks/useWebsiteVisibility';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { SimpleCategorySelect } from "@/components/products/SimpleCategorySelect";
 
 interface Product {
   id: string;
@@ -533,31 +534,14 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
                         </p>
                       </div>
 
-                      <div className="space-y-2">
-                        <Label htmlFor="category_id">Category</Label>
-                        <Select 
-                          value={formData.category_id} 
-                          onValueChange={(value) => handleInputChange('category_id', value)}
-                          disabled={!selectedWebsiteId}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder={selectedWebsiteId ? "Select a category" : "Select a website first"} />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="none">No category</SelectItem>
-                            {filteredCategories.map((category) => (
-                              <SelectItem key={category.id} value={category.id}>
-                                {category.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <p className="text-sm text-muted-foreground">
-                          {selectedWebsiteId 
-                            ? `${filteredCategories.length} categories available for this website` 
-                            : 'Select a website first to see available categories'}
-                        </p>
-                      </div>
+                      <SimpleCategorySelect
+                        value={formData.category_id}
+                        onValueChange={(value) => handleInputChange('category_id', value)}
+                        storeId={storeId}
+                        websiteId={selectedWebsiteId}
+                        disabled={!selectedWebsiteId}
+                        placeholder={selectedWebsiteId ? "Select a category" : "Select a website first"}
+                      />
                     </div>
                   </CardContent>
                 </AccordionContent>
