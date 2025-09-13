@@ -258,18 +258,44 @@ export const useCategories = (storeId?: string) => {
   // Category visibility management
   const updateCategoryVisibility = useMutation({
     mutationFn: async ({ categoryId, websiteIds }: { categoryId: string; websiteIds: string[] }) => {
-      // Remove existing visibility records
+      // First, get all subcategories recursively
+      const getAllSubcategories = async (parentId: string): Promise<string[]> => {
+        const { data, error } = await supabase
+          .from('categories')
+          .select('id')
+          .eq('parent_category_id', parentId)
+          .eq('store_id', storeId);
+
+        if (error) throw error;
+        
+        let allIds = data?.map(cat => cat.id) || [];
+        
+        // Recursively get subcategories of subcategories
+        for (const childId of [...allIds]) {
+          const grandchildren = await getAllSubcategories(childId);
+          allIds = [...allIds, ...grandchildren];
+        }
+        
+        return allIds;
+      };
+
+      const subcategoryIds = await getAllSubcategories(categoryId);
+      const allCategoryIds = [categoryId, ...subcategoryIds];
+
+      // Remove existing visibility records for parent and all subcategories
       await supabase
         .from('category_website_visibility')
         .delete()
-        .eq('category_id', categoryId);
+        .in('category_id', allCategoryIds);
 
-      // Add new visibility records
+      // Add new visibility records for parent and all subcategories
       if (websiteIds.length > 0) {
-        const records = websiteIds.map(websiteId => ({
-          category_id: categoryId,
-          website_id: websiteId
-        }));
+        const records = allCategoryIds.flatMap(catId => 
+          websiteIds.map(websiteId => ({
+            category_id: catId,
+            website_id: websiteId
+          }))
+        );
 
         const { error } = await supabase
           .from('category_website_visibility')
@@ -277,12 +303,20 @@ export const useCategories = (storeId?: string) => {
 
         if (error) throw error;
       }
+
+      return { updatedCategories: allCategoryIds.length };
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ['categories-with-websites', storeId] });
+      queryClient.invalidateQueries({ queryKey: ['categories', storeId] });
+      
+      const message = result.updatedCategories === 1 
+        ? 'Category visibility updated successfully'
+        : `Category visibility updated for ${result.updatedCategories} categories (including subcategories)`;
+        
       toast({
         title: 'Success',
-        description: 'Category visibility updated successfully',
+        description: message,
       });
     },
     onError: (error: any) => {
