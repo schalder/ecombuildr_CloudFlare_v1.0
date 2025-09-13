@@ -94,6 +94,7 @@ const Roadmap = () => {
   const itemsPerPage = 10;
 
   // Expanded items state
+  const [expandedRoadmapItems, setExpandedRoadmapItems] = useState<Set<string>>(new Set());
   const [expandedChangelogItems, setExpandedChangelogItems] = useState<Set<string>>(new Set());
   const [expandedFeedbackItems, setExpandedFeedbackItems] = useState<Set<string>>(new Set());
 
@@ -208,6 +209,18 @@ const Roadmap = () => {
   const paginatedFeedback = paginateArray(userFeedback, feedbackCurrentPage);
 
   // Toggle functions
+  const toggleRoadmapExpanded = (id: string) => {
+    setExpandedRoadmapItems(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return newSet;
+    });
+  };
+
   const toggleChangelogExpanded = (id: string) => {
     setExpandedChangelogItems(prev => {
       const newSet = new Set(prev);
@@ -284,30 +297,53 @@ const Roadmap = () => {
                           <p className="text-muted-foreground text-sm">No items yet</p>
                         </Card>
                       ) : (
-                        items.map((item) => (
-                          <Card key={item.id} className={`transition-all duration-200 hover:shadow-medium ${config.bgClass} border-l-4`}>
-                            <CardHeader className="pb-3">
-                              <div className="flex items-start justify-between">
-                                <CardTitle className="text-base leading-tight">{item.title}</CardTitle>
-                                <config.icon className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                              </div>
-                            </CardHeader>
-                            <CardContent className="pt-0">
-                              {item.description && (
-                                <div 
-                                  className="rich-text-content prose prose-sm max-w-none text-muted-foreground mb-3 leading-relaxed text-sm"
-                                  dangerouslySetInnerHTML={{ __html: item.description }}
-                                />
-                              )}
-                              {item.target_date && (
-                                <div className="flex items-center gap-2 text-xs font-medium text-foreground bg-background/50 rounded-md px-2 py-1">
-                                  <Clock className="w-3 h-3 text-primary" />
-                                  Target: {format(new Date(item.target_date), 'MMM yyyy')}
+                        items.map((item) => {
+                          const isExpanded = expandedRoadmapItems.has(item.id);
+                          const content = stripHtml(item.description || '');
+                          const preview = truncateText(content, 15);
+                          const shouldShowReadMore = content.split(' ').length > 15;
+
+                          return (
+                            <Card key={item.id} className={`transition-all duration-200 hover:shadow-medium ${config.bgClass} border-l-4`}>
+                              <CardHeader className="pb-3">
+                                <div className="flex items-start justify-between">
+                                  <CardTitle className="text-base leading-tight">{item.title}</CardTitle>
+                                  <config.icon className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                                 </div>
-                              )}
-                            </CardContent>
-                          </Card>
-                        ))
+                              </CardHeader>
+                              <CardContent className="pt-0">
+                                {item.description && (
+                                  <div className="mb-3">
+                                    {isExpanded ? (
+                                      <div 
+                                        className="rich-text-content prose prose-sm max-w-none text-muted-foreground leading-relaxed text-sm"
+                                        dangerouslySetInnerHTML={{ __html: item.description }}
+                                      />
+                                    ) : (
+                                      <p className="text-muted-foreground text-sm leading-relaxed">{preview}</p>
+                                    )}
+                                    {shouldShowReadMore && (
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => toggleRoadmapExpanded(item.id)}
+                                        className="mt-2 p-0 h-auto text-primary hover:text-primary-glow font-medium text-xs"
+                                      >
+                                        {isExpanded ? 'Read less' : 'Read more'}
+                                      </Button>
+                                    )}
+                                  </div>
+                                )}
+                                {item.target_date && (
+                                  <div className="flex items-center gap-2 text-xs font-medium text-foreground bg-background/50 rounded-md px-2 py-1">
+                                    <Clock className="w-3 h-3 text-primary" />
+                                    Target: {format(new Date(item.target_date), 'MMM yyyy')}
+                                  </div>
+                                )}
+                              </CardContent>
+                            </Card>
+                          );
+                        })
                       )}
                     </div>
                   </div>
@@ -333,8 +369,8 @@ const Roadmap = () => {
                     {paginatedChangelog.items.map((entry, index) => {
                       const isExpanded = expandedChangelogItems.has(entry.id);
                       const content = stripHtml(entry.content);
-                      const preview = truncateText(content, 20);
-                      const shouldShowReadMore = content.split(' ').length > 20;
+                      const preview = truncateText(content, 15);
+                      const shouldShowReadMore = content.split(' ').length > 15;
 
                       return (
                         <div key={entry.id} className="relative flex items-start gap-6">
@@ -373,7 +409,7 @@ const Roadmap = () => {
                                     variant="ghost"
                                     size="sm"
                                     onClick={() => toggleChangelogExpanded(entry.id)}
-                                    className="mt-3 p-0 h-auto text-primary hover:text-primary-glow font-medium"
+                                    className="mt-3 p-0 h-auto text-primary hover:text-primary-glow font-medium text-sm"
                                   >
                                     {isExpanded ? 'Read less' : 'Read more'}
                                   </Button>
