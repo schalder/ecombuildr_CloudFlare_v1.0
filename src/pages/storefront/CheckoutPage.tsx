@@ -495,9 +495,16 @@ useEffect(() => {
   
   const finalTotal = total + shippingCost - discountAmount;
 
-  // Track initial checkout when reaching step 2 or 3
+  // Track InitiateCheckout event when page loads with items in cart
   useEffect(() => {
-    if (!hasTrackedCheckout && currentStep >= 2 && items.length > 0 && store) {
+    if (!hasTrackedCheckout && items.length > 0 && store && total > 0) {
+      console.log('🛒 Tracking InitiateCheckout on page load:', {
+        itemCount: items.length,
+        value: finalTotal,
+        store: store.name,
+        hasTrackedCheckout
+      });
+      
       trackInitiateCheckout({
         value: finalTotal,
         items: items.map(item => ({
@@ -509,8 +516,14 @@ useEffect(() => {
         })),
       });
       setHasTrackedCheckout(true);
+    } else if (items.length === 0) {
+      console.log('🛒 No items in cart, skipping InitiateCheckout tracking');
+    } else if (!store) {
+      console.log('🛒 Store not loaded yet, skipping InitiateCheckout tracking');
+    } else if (hasTrackedCheckout) {
+      console.log('🛒 InitiateCheckout already tracked this session');
     }
-  }, [currentStep, hasTrackedCheckout, finalTotal, items, trackInitiateCheckout, store]);
+  }, [items, store, total, hasTrackedCheckout, finalTotal, trackInitiateCheckout]);
 
   // Track add payment info when payment method is selected
   useEffect(() => {
