@@ -196,7 +196,25 @@ export const ProductsPageElement: React.FC<{
       }
     };
 
-    return `${map(mobile)} md:${map(tablet)} lg:${map(desktop)}`;
+    // More explicit responsive classes to ensure proper cascade
+    // Mobile-first approach: base mobile, then tablet (md:), then desktop (lg:)
+    const mobileClass = map(mobile);
+    const tabletClass = `md:${map(tablet)}`;
+    const desktopClass = `lg:${map(desktop)}`;
+
+    // Debug info in development
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Grid Classes Debug:', {
+        mobile,
+        tablet,
+        desktop,
+        classes: `${mobileClass} ${tabletClass} ${desktopClass}`,
+        deviceType,
+        windowWidth: window.innerWidth
+      });
+    }
+
+    return `${mobileClass} ${tabletClass} ${desktopClass}`;
   };
 
   useEffect(() => {
