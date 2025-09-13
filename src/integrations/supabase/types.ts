@@ -140,6 +140,7 @@ export type Database = {
           id: string
           image_url: string | null
           name: string
+          parent_category_id: string | null
           slug: string
           store_id: string | null
         }
@@ -149,6 +150,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           name: string
+          parent_category_id?: string | null
           slug: string
           store_id?: string | null
         }
@@ -158,10 +160,18 @@ export type Database = {
           id?: string
           image_url?: string | null
           name?: string
+          parent_category_id?: string | null
           slug?: string
           store_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "categories_parent_category_id_fkey"
+            columns: ["parent_category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "categories_store_id_fkey"
             columns: ["store_id"]
@@ -2959,6 +2969,20 @@ export type Database = {
       enforce_plan_limits: {
         Args: { _resource_type: string; _user_id: string }
         Returns: boolean
+      }
+      get_category_hierarchy: {
+        Args: { store_uuid: string }
+        Returns: {
+          description: string
+          full_path: string
+          id: string
+          image_url: string
+          level: number
+          name: string
+          parent_category_id: string
+          parent_name: string
+          slug: string
+        }[]
       }
       get_imported_products: {
         Args: { store_id_param: string }
