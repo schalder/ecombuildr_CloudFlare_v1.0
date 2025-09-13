@@ -26,7 +26,7 @@ import VariantMatrix, { VariantEntry } from "@/components/products/VariantMatrix
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { parseVideoUrl, buildEmbedUrl } from "@/components/page-builder/utils/videoUtils";
 import { useStoreWebsitesForSelection } from '@/hooks/useWebsiteVisibility';
-import { CategoryTreeSelect } from '@/components/products/CategoryTreeSelect';
+import { SimpleCategorySelect } from '@/components/products/SimpleCategorySelect';
 
 export default function AddProduct() {
   const navigate = useNavigate();
@@ -360,8 +360,7 @@ export default function AddProduct() {
                       </div>
 
                       <div className="space-y-3">
-                        <Label htmlFor="category_id">Category</Label>
-                        <CategoryTreeSelect
+                        <SimpleCategorySelect
                           value={formData.category_id}
                           onValueChange={(value) => setFormData(prev => ({ ...prev, category_id: value }))}
                           storeId={storeId}
@@ -370,7 +369,7 @@ export default function AddProduct() {
                           placeholder={selectedWebsiteId ? "Select a category" : "Select a website first"}
                         />
                         <p className="text-sm text-muted-foreground">
-                          Categories are filtered by the selected website and shown in hierarchical order.
+                          Select a main category first, then choose a subcategory if available.
                         </p>
                       </div>
                     </div>
