@@ -266,52 +266,54 @@ const Roadmap = () => {
           </TabsList>
 
           <TabsContent value="roadmap" className="space-y-8">
-            {Object.entries(statusConfig).map(([status, config]) => {
-              const items = groupedRoadmapItems[status] || [];
-              if (items.length === 0) return null;
-
-              return (
-                <div key={status} className="space-y-4">
-                  <div className="flex items-center gap-2">
-                    <div className={`w-3 h-3 rounded-full ${config.color}`} />
-                    <h2 className="text-2xl font-semibold">{config.label}</h2>
-                    <Badge variant="secondary">{items.length}</Badge>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {Object.entries(statusConfig).map(([status, config]) => {
+                const items = groupedRoadmapItems[status] || [];
+                
+                return (
+                  <div key={status} className="space-y-4">
+                    <div className="flex items-center gap-2 justify-center">
+                      <div className={`w-3 h-3 rounded-full ${config.color}`} />
+                      <h2 className="text-xl font-semibold">{config.label}</h2>
+                      <Badge variant="secondary">{items.length}</Badge>
+                    </div>
+                    
+                    <div className="space-y-4 min-h-[400px]">
+                      {items.length === 0 ? (
+                        <Card className={`h-24 flex items-center justify-center ${config.bgClass} border-l-4 opacity-50`}>
+                          <p className="text-muted-foreground text-sm">No items yet</p>
+                        </Card>
+                      ) : (
+                        items.map((item) => (
+                          <Card key={item.id} className={`transition-all duration-200 hover:shadow-medium ${config.bgClass} border-l-4`}>
+                            <CardHeader className="pb-3">
+                              <div className="flex items-start justify-between">
+                                <CardTitle className="text-base leading-tight">{item.title}</CardTitle>
+                                <config.icon className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                              </div>
+                            </CardHeader>
+                            <CardContent className="pt-0">
+                              {item.description && (
+                                <div 
+                                  className="rich-text-content prose prose-sm max-w-none text-muted-foreground mb-3 leading-relaxed text-sm"
+                                  dangerouslySetInnerHTML={{ __html: item.description }}
+                                />
+                              )}
+                              {item.target_date && (
+                                <div className="flex items-center gap-2 text-xs font-medium text-foreground bg-background/50 rounded-md px-2 py-1">
+                                  <Clock className="w-3 h-3 text-primary" />
+                                  Target: {format(new Date(item.target_date), 'MMM yyyy')}
+                                </div>
+                              )}
+                            </CardContent>
+                          </Card>
+                        ))
+                      )}
+                    </div>
                   </div>
-                  
-                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    {items.map((item) => (
-                      <Card key={item.id} className={`transition-all duration-200 hover:shadow-medium ${config.bgClass} border-l-4`}>
-                        <CardHeader className="pb-4">
-                          <div className="flex items-start justify-between">
-                            <CardTitle className="text-lg leading-tight">{item.title}</CardTitle>
-                            <div className="flex items-center gap-2 flex-shrink-0">
-                              <Badge className={`${config.color} text-white px-2 py-1 text-xs`}>
-                                {config.label}
-                              </Badge>
-                              <config.icon className="w-5 h-5 text-muted-foreground" />
-                            </div>
-                          </div>
-                        </CardHeader>
-                        <CardContent className="pt-0">
-                          {item.description && (
-                            <div 
-                              className="rich-text-content prose prose-sm max-w-none text-muted-foreground mb-4 leading-relaxed"
-                              dangerouslySetInnerHTML={{ __html: item.description }}
-                            />
-                          )}
-                          {item.target_date && (
-                            <div className="flex items-center gap-2 text-sm font-medium text-foreground bg-background/50 rounded-md px-3 py-2">
-                              <Clock className="w-4 h-4 text-primary" />
-                              Target: {format(new Date(item.target_date), 'MMM yyyy')}
-                            </div>
-                          )}
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </TabsContent>
 
           <TabsContent value="changelog" className="space-y-6">
@@ -323,52 +325,66 @@ const Roadmap = () => {
               </Card>
             ) : (
               <>
-                <div className="grid gap-6 md:grid-cols-2">
-                  {paginatedChangelog.items.map((entry) => {
-                    const isExpanded = expandedChangelogItems.has(entry.id);
-                    const content = stripHtml(entry.content);
-                    const preview = truncateText(content, 20);
-                    const shouldShowReadMore = content.split(' ').length > 20;
+                <div className="relative max-w-4xl mx-auto">
+                  {/* Timeline line */}
+                  <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-border"></div>
+                  
+                  <div className="space-y-8">
+                    {paginatedChangelog.items.map((entry, index) => {
+                      const isExpanded = expandedChangelogItems.has(entry.id);
+                      const content = stripHtml(entry.content);
+                      const preview = truncateText(content, 20);
+                      const shouldShowReadMore = content.split(' ').length > 20;
 
-                    return (
-                      <Card key={entry.id} className="transition-all duration-200 hover:shadow-medium border-l-4 border-l-primary bg-card">
-                        <CardHeader className="pb-4">
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <CardTitle className="text-lg leading-tight mb-2">{entry.title}</CardTitle>
-                              <div className="flex items-center gap-3">
-                                <span className="text-sm text-muted-foreground font-medium">
-                                  {format(new Date(entry.published_at || entry.created_at), 'MMM dd, yyyy')}
-                                </span>
-                                {entry.version && (
-                                  <Badge variant="outline" className="text-xs">v{entry.version}</Badge>
-                                )}
-                              </div>
+                      return (
+                        <div key={entry.id} className="relative flex items-start gap-6">
+                          {/* Timeline dot */}
+                          <div className="relative z-10 flex-shrink-0">
+                            <div className="w-4 h-4 bg-primary rounded-full border-4 border-background shadow-sm"></div>
+                          </div>
+                          
+                          {/* Content */}
+                          <div className="flex-1 min-w-0 pb-8">
+                            <div className="flex items-center gap-3 mb-2">
+                              <span className="text-sm text-muted-foreground font-medium">
+                                {format(new Date(entry.published_at || entry.created_at), 'MMM dd, yyyy')}
+                              </span>
+                              {entry.version && (
+                                <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/20">
+                                  v{entry.version}
+                                </Badge>
+                              )}
                             </div>
+                            
+                            <Card className="transition-all duration-200 hover:shadow-medium bg-card border-l-4 border-l-primary">
+                              <CardHeader className="pb-4">
+                                <CardTitle className="text-lg leading-tight">{entry.title}</CardTitle>
+                              </CardHeader>
+                              <CardContent className="pt-0">
+                                <div className="rich-text-content prose prose-sm max-w-none leading-relaxed">
+                                  {isExpanded ? (
+                                    <div dangerouslySetInnerHTML={{ __html: entry.content }} />
+                                  ) : (
+                                    <p className="text-muted-foreground">{preview}</p>
+                                  )}
+                                </div>
+                                {shouldShowReadMore && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => toggleChangelogExpanded(entry.id)}
+                                    className="mt-3 p-0 h-auto text-primary hover:text-primary-glow font-medium"
+                                  >
+                                    {isExpanded ? 'Read less' : 'Read more'}
+                                  </Button>
+                                )}
+                              </CardContent>
+                            </Card>
                           </div>
-                        </CardHeader>
-                        <CardContent className="pt-0">
-                          <div className="rich-text-content prose prose-sm max-w-none leading-relaxed">
-                            {isExpanded ? (
-                              <div dangerouslySetInnerHTML={{ __html: entry.content }} />
-                            ) : (
-                              <p className="text-muted-foreground">{preview}</p>
-                            )}
-                          </div>
-                          {shouldShowReadMore && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => toggleChangelogExpanded(entry.id)}
-                              className="mt-3 p-0 h-auto text-primary hover:text-primary-glow font-medium"
-                            >
-                              {isExpanded ? 'Read less' : 'Read more'}
-                            </Button>
-                          )}
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
 
                 {/* Changelog Pagination */}
