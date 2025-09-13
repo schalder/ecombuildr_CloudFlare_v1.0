@@ -38,9 +38,7 @@ export default defineConfig(({ mode }) => ({
           ],
           
           // Split major libraries that are actually used
-          'ui-libs': ['lucide-react', '@radix-ui/react-slot', 'class-variance-authority'],
-          'form-libs': ['react-hook-form', '@hookform/resolvers/zod'],
-          'dnd-libs': ['react-dnd', 'react-dnd-html5-backend', '@hello-pangea/dnd']
+          'ui-libs': ['lucide-react', '@radix-ui/react-slot', 'class-variance-authority']
         },
       },
     },
