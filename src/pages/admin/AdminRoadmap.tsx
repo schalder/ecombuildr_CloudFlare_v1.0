@@ -3,7 +3,7 @@ import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { InlineRTE } from "@/components/page-builder/components/InlineRTE";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -45,10 +45,10 @@ const statusOptions = [
 ];
 
 const statusColors = {
-  planned: 'bg-blue-500',
-  in_progress: 'bg-yellow-500',
-  shipped: 'bg-green-500',
-  backlog: 'bg-gray-500',
+  planned: 'bg-blue-500 text-white',
+  in_progress: 'bg-warning text-warning-foreground',
+  shipped: 'bg-success text-success-foreground',
+  backlog: 'bg-muted-foreground text-white',
 };
 
 const AdminRoadmap = () => {
@@ -230,7 +230,13 @@ const AdminRoadmap = () => {
                       <FormItem>
                         <FormLabel>Description</FormLabel>
                         <FormControl>
-                          <Textarea placeholder="Feature description" rows={3} {...field} />
+                          <InlineRTE
+                            value={field.value || ""}
+                            onChange={field.onChange}
+                            placeholder="Write a detailed description..."
+                            variant="paragraph"
+                            className="min-h-[120px] border border-input rounded-md p-3"
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -335,7 +341,7 @@ const AdminRoadmap = () => {
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
                       <CardTitle className="text-lg">{item.title}</CardTitle>
-                      <Badge className={`${statusColors[item.status]} text-white`}>
+                      <Badge className={statusColors[item.status]}>
                         {statusOptions.find(s => s.value === item.status)?.label}
                       </Badge>
                       {item.is_published ? (
@@ -378,7 +384,10 @@ const AdminRoadmap = () => {
               </CardHeader>
               {item.description && (
                 <CardContent className="pt-0">
-                  <CardDescription>{item.description}</CardDescription>
+                  <div 
+                    className="rich-text-content prose prose-sm max-w-none text-muted-foreground"
+                    dangerouslySetInnerHTML={{ __html: item.description }}
+                  />
                 </CardContent>
               )}
             </Card>

@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { InlineRTE } from "@/components/page-builder/components/InlineRTE";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -53,18 +53,18 @@ const feedbackSchema = z.object({
 });
 
 const statusConfig = {
-  planned: { label: "Planned", icon: Circle, color: "bg-blue-500" },
-  in_progress: { label: "In Progress", icon: Loader, color: "bg-yellow-500" },
-  shipped: { label: "Shipped", icon: CheckCircle, color: "bg-green-500" },
-  backlog: { label: "Backlog", icon: Circle, color: "bg-gray-500" },
+  planned: { label: "Planned", icon: Circle, color: "bg-blue-500", bgClass: "bg-blue-50 border-blue-200" },
+  in_progress: { label: "In Progress", icon: Loader, color: "bg-warning", bgClass: "bg-warning-light border-warning-border" },
+  shipped: { label: "Shipped", icon: CheckCircle, color: "bg-success", bgClass: "bg-success-light border-success" },
+  backlog: { label: "Backlog", icon: Circle, color: "bg-muted-foreground", bgClass: "bg-muted border-border" },
 };
 
 const feedbackStatusConfig = {
-  new: { label: "New", color: "bg-blue-500" },
-  under_review: { label: "Under Review", color: "bg-yellow-500" },
-  planned: { label: "Planned", color: "bg-purple-500" },
-  rejected: { label: "Rejected", color: "bg-red-500" },
-  implemented: { label: "Implemented", color: "bg-green-500" },
+  new: { label: "New", color: "bg-blue-500 text-white" },
+  under_review: { label: "Under Review", color: "bg-warning text-warning-foreground" },
+  planned: { label: "Planned", color: "bg-purple-500 text-white" },
+  rejected: { label: "Rejected", color: "bg-destructive text-destructive-foreground" },
+  implemented: { label: "Implemented", color: "bg-success text-success-foreground" },
 };
 
 // Helper functions for text processing
@@ -280,22 +280,28 @@ const Roadmap = () => {
                   
                   <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     {items.map((item) => (
-                      <Card key={item.id}>
+                      <Card key={item.id} className={`transition-all duration-200 hover:shadow-medium ${config.bgClass} border-l-4`}>
                         <CardHeader className="pb-4">
                           <div className="flex items-start justify-between">
-                            <CardTitle className="text-lg">{item.title}</CardTitle>
-                            <config.icon className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+                            <CardTitle className="text-lg leading-tight">{item.title}</CardTitle>
+                            <div className="flex items-center gap-2 flex-shrink-0">
+                              <Badge className={`${config.color} text-white px-2 py-1 text-xs`}>
+                                {config.label}
+                              </Badge>
+                              <config.icon className="w-5 h-5 text-muted-foreground" />
+                            </div>
                           </div>
                         </CardHeader>
                         <CardContent className="pt-0">
                           {item.description && (
-                            <CardDescription className="mb-3">
-                              {item.description}
-                            </CardDescription>
+                            <div 
+                              className="rich-text-content prose prose-sm max-w-none text-muted-foreground mb-4 leading-relaxed"
+                              dangerouslySetInnerHTML={{ __html: item.description }}
+                            />
                           )}
                           {item.target_date && (
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                              <Clock className="w-4 h-4" />
+                            <div className="flex items-center gap-2 text-sm font-medium text-foreground bg-background/50 rounded-md px-3 py-2">
+                              <Clock className="w-4 h-4 text-primary" />
                               Target: {format(new Date(item.target_date), 'MMM yyyy')}
                             </div>
                           )}
@@ -325,26 +331,28 @@ const Roadmap = () => {
                     const shouldShowReadMore = content.split(' ').length > 20;
 
                     return (
-                      <Card key={entry.id}>
-                        <CardHeader>
+                      <Card key={entry.id} className="transition-all duration-200 hover:shadow-medium border-l-4 border-l-primary bg-card">
+                        <CardHeader className="pb-4">
                           <div className="flex items-start justify-between">
-                            <CardTitle className="flex items-center gap-3 flex-1">
-                              <span className="line-clamp-2">{entry.title}</span>
-                              {entry.version && (
-                                <Badge variant="outline">{entry.version}</Badge>
-                              )}
-                            </CardTitle>
+                            <div className="flex-1">
+                              <CardTitle className="text-lg leading-tight mb-2">{entry.title}</CardTitle>
+                              <div className="flex items-center gap-3">
+                                <span className="text-sm text-muted-foreground font-medium">
+                                  {format(new Date(entry.published_at || entry.created_at), 'MMM dd, yyyy')}
+                                </span>
+                                {entry.version && (
+                                  <Badge variant="outline" className="text-xs">v{entry.version}</Badge>
+                                )}
+                              </div>
+                            </div>
                           </div>
-                          <span className="text-sm text-muted-foreground">
-                            {format(new Date(entry.published_at || entry.created_at), 'MMM dd, yyyy')}
-                          </span>
                         </CardHeader>
-                        <CardContent>
-                          <div className="prose prose-sm max-w-none">
+                        <CardContent className="pt-0">
+                          <div className="rich-text-content prose prose-sm max-w-none leading-relaxed">
                             {isExpanded ? (
                               <div dangerouslySetInnerHTML={{ __html: entry.content }} />
                             ) : (
-                              <p>{preview}</p>
+                              <p className="text-muted-foreground">{preview}</p>
                             )}
                           </div>
                           {shouldShowReadMore && (
@@ -352,7 +360,7 @@ const Roadmap = () => {
                               variant="ghost"
                               size="sm"
                               onClick={() => toggleChangelogExpanded(entry.id)}
-                              className="mt-2 p-0 h-auto text-primary"
+                              className="mt-3 p-0 h-auto text-primary hover:text-primary-glow font-medium"
                             >
                               {isExpanded ? 'Read less' : 'Read more'}
                             </Button>
@@ -411,18 +419,25 @@ const Roadmap = () => {
                             const shouldShowReadMore = feedback.description.split(' ').length > 15;
 
                             return (
-                              <div key={feedback.id} className="p-4 border rounded-lg">
-                                <div className="flex items-start justify-between mb-2">
-                                  <h4 className="font-medium">{feedback.title}</h4>
+                              <div key={feedback.id} className="p-5 border border-border rounded-lg bg-gradient-card transition-all duration-200 hover:shadow-soft">
+                                <div className="flex items-start justify-between mb-3">
+                                  <h4 className="font-semibold text-foreground leading-tight">{feedback.title}</h4>
                                   <Badge 
                                     variant="secondary" 
-                                    className={feedbackStatusConfig[feedback.status].color + " text-white"}
+                                    className={feedbackStatusConfig[feedback.status].color}
                                   >
                                     {feedbackStatusConfig[feedback.status].label}
                                   </Badge>
                                 </div>
                                 <div className="text-sm text-muted-foreground mb-2">
-                                  {isExpanded ? feedback.description : preview}
+                                  {isExpanded ? (
+                                    <div 
+                                      className="rich-text-content prose prose-sm max-w-none"
+                                      dangerouslySetInnerHTML={{ __html: feedback.description }}
+                                    />
+                                  ) : (
+                                    <span>{preview}</span>
+                                  )}
                                   {shouldShowReadMore && (
                                     <Button
                                       variant="ghost"
@@ -435,9 +450,12 @@ const Roadmap = () => {
                                   )}
                                 </div>
                                 {feedback.admin_response && (
-                                  <div className="mt-3 p-3 bg-muted rounded">
-                                    <p className="text-sm font-medium mb-1">Admin Response:</p>
-                                    <p className="text-sm">{feedback.admin_response}</p>
+                                  <div className="mt-4 p-4 bg-primary-light border border-primary/20 rounded-lg">
+                                    <p className="text-sm font-semibold text-primary mb-2 flex items-center gap-2">
+                                      <CheckCircle className="w-4 h-4" />
+                                      Admin Response:
+                                    </p>
+                                    <p className="text-sm text-foreground leading-relaxed">{feedback.admin_response}</p>
                                   </div>
                                 )}
                                 <p className="text-xs text-muted-foreground mt-2">
@@ -517,10 +535,12 @@ const Roadmap = () => {
                               <FormItem>
                                 <FormLabel>Description</FormLabel>
                                 <FormControl>
-                                  <Textarea 
-                                    placeholder="Provide more details about your feedback"
-                                    rows={6}
-                                    {...field} 
+                                  <InlineRTE
+                                    value={field.value || ""}
+                                    onChange={field.onChange}
+                                    placeholder="Provide more details about your feedback..."
+                                    variant="paragraph"
+                                    className="min-h-[150px] border border-input rounded-md p-3"
                                   />
                                 </FormControl>
                                 <FormMessage />
