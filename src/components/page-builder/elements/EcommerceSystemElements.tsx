@@ -15,6 +15,7 @@ import { useCart } from '@/contexts/CartContext';
 import { useStore } from '@/contexts/StoreContext';
 import { useEcomPaths } from '@/lib/pathResolver';
 import { useParams, useNavigate } from 'react-router-dom';
+import { StorefrontImage } from '@/components/storefront/renderer/StorefrontImage';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useStoreProducts } from '@/hooks/useStoreData';
@@ -211,18 +212,18 @@ const ProductDetailElement: React.FC<{ element: PageBuilderElement }> = ({ eleme
         <div className="flex flex-col lg:flex-row gap-4">
           {product.images?.length > 1 && (
             <div className="order-2 lg:order-1 flex flex-row lg:flex-col gap-2 overflow-x-auto lg:overflow-x-visible lg:w-20">
-              {product.images.map((img: string, i: number) => (
-                <button key={i} onClick={() => setSelectedImage(i)} className={`flex-shrink-0 aspect-square w-16 lg:w-full rounded border-2 overflow-hidden transition-all ${selectedImage===i?'border-primary ring-2 ring-primary/20':'border-border hover:border-primary/50'}`}>
-                  <img src={img} alt={`${product.name} ${i+1}`} className="w-full h-full object-cover" />
-                </button>
-              ))}
+               {product.images.map((img: string, i: number) => (
+                 <button key={i} onClick={() => setSelectedImage(i)} className={`flex-shrink-0 aspect-square w-16 lg:w-full rounded border-2 overflow-hidden transition-all ${selectedImage===i?'border-primary ring-2 ring-primary/20':'border-border hover:border-primary/50'}`}>
+                   <StorefrontImage src={img} alt={`${product.name} ${i+1}`} className="w-full h-full object-cover" aspectRatio="1" />
+                 </button>
+               ))}
             </div>
           )}
-          <div className="order-1 lg:order-2 flex-1">
-            <div className="aspect-square relative overflow-hidden rounded-lg border bg-muted">
-              <img src={product.images?.[selectedImage] || '/placeholder.svg'} alt={product.name} className="w-full h-full object-cover" />
-              {discount>0 && (<Badge variant="destructive" className="absolute top-4 left-4 text-xs">-{discount}%</Badge>)}
-            </div>
+           <div className="order-1 lg:order-2 flex-1">
+             <div className="aspect-square relative overflow-hidden rounded-lg border bg-muted">
+               <StorefrontImage src={product.images?.[selectedImage] || '/placeholder.svg'} alt={product.name} className="w-full h-full object-cover" aspectRatio="1" priority={true} />
+               {discount>0 && (<Badge variant="destructive" className="absolute top-4 left-4 text-xs">-{discount}%</Badge>)}
+             </div>
           </div>
         </div>
         <div className="space-y-6">
@@ -327,9 +328,9 @@ const RelatedProductsElement: React.FC<{ element: PageBuilderElement; deviceType
               paddingBottom: elementStyles.paddingBottom as any,
               paddingLeft: elementStyles.paddingLeft as any,
             }}>
-              <div className="aspect-square rounded-lg overflow-hidden mb-2">
-                <img src={(Array.isArray(p.images)?p.images[0]:p.images) || '/placeholder.svg'} alt={p.name} className="w-full h-full object-cover group-hover/card:scale-105 transition-transform" />
-              </div>
+               <div className="aspect-square rounded-lg overflow-hidden mb-2">
+                 <StorefrontImage src={(Array.isArray(p.images)?p.images[0]:p.images) || '/placeholder.svg'} alt={p.name} className="w-full h-full object-cover group-hover/card:scale-105 transition-transform" aspectRatio="1" />
+               </div>
               <div className="text-sm font-medium" style={{ color: elementStyles.color, fontSize: elementStyles.fontSize, textAlign: elementStyles.textAlign, lineHeight: elementStyles.lineHeight, fontWeight: elementStyles.fontWeight }}>{p.name}</div>
               <div className="text-sm">{formatCurrency(Number(p.price))}</div>
               <Button variant="outline" size="sm" className="mt-2 w-full" style={buttonStyles as React.CSSProperties} onClick={() => (window.location.href = paths.productDetail(p.slug))}>{element.content?.ctaText || 'View'}</Button>

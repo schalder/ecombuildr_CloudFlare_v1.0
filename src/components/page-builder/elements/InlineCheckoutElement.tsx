@@ -17,6 +17,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { formatCurrency } from '@/lib/currency';
 import { generateResponsiveCSS, mergeResponsiveStyles } from '@/components/page-builder/utils/responsiveStyles';
+import { StorefrontImage } from '@/components/storefront/renderer/StorefrontImage';
 import { computeOrderShipping, getAvailableShippingOptions, applyShippingOptionToForm } from '@/lib/shipping-enhanced';
 import type { CartItem, ShippingOption } from '@/lib/shipping-enhanced';
 import { ShippingOptionsPicker } from '@/components/storefront/ShippingOptionsPicker';
@@ -726,7 +727,7 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
                     return (
                       <label key={p.id} className="flex items-start gap-3 border rounded p-3 w-full">
                         {Array.isArray(p.images) && p.images[0] && (
-                          <img src={p.images[0]} alt={`${p.name} product`} className="w-12 h-12 object-cover rounded border flex-shrink-0" />
+                           <StorefrontImage src={p.images[0]} alt={`${p.name} product`} className="w-12 h-12 object-cover rounded border flex-shrink-0" aspectRatio="1" />
                         )}
                         <input type="radio" name={`inline-product-${element.id}`} className="mt-1 flex-shrink-0" checked={selectedId === p.id} disabled={isOut} onChange={() => setSelectedId(p.id)} />
                         <div className="flex-1 min-w-0">

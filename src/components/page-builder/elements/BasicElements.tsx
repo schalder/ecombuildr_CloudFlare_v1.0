@@ -13,6 +13,7 @@ import { getIconByName } from '@/components/icons/icon-sources';
 import { useEcomPaths } from '@/lib/pathResolver';
 import { getEffectiveResponsiveValue } from '../utils/responsiveHelpers';
 import { useHeadStyle } from '@/hooks/useHeadStyle';
+import { StorefrontImage } from '@/components/storefront/renderer/StorefrontImage';
 
 // Heading Element
 const HeadingElement: React.FC<{
@@ -249,15 +250,12 @@ const ImageElement: React.FC<{
             <p className="text-xs text-muted-foreground">Loading...</p>
           </div>
         )}
-        <img
+        <StorefrontImage
           src={imageUrl}
           alt={alt || (!src ? 'Placeholder image' : '')}
           style={getImageStyles()}
           className={`element-${element.id} select-none`}
-          onLoad={handleImageLoad}
-          onError={handleImageError}
-          draggable={false}
-          onDragStart={(e) => e.preventDefault()}
+          priority={false}
         />
       </div>
     );

@@ -11,6 +11,7 @@ import { Separator } from '@/components/ui/separator';
 import { ProductFilters } from '@/components/storefront/ProductFilters';
 import { ProductGridSkeleton } from '@/components/storefront/ProductGridSkeleton';
 import { ProductCard } from '@/components/storefront/ProductCard';
+import { StorefrontImage } from '@/components/storefront/renderer/StorefrontImage';
 
 import { RecentlyViewed } from '@/components/storefront/RecentlyViewed';
 import { WishlistButton } from '@/components/storefront/WishlistButton';
@@ -638,7 +639,7 @@ export const ProductsPageElement: React.FC<{
                     <Card key={product.id} className="p-4">
                       <div className="flex gap-4 items-start">
                         <a href={paths.productDetail(product.slug)} className="w-28 sm:w-40 h-28 sm:h-40 rounded-md overflow-hidden bg-muted flex-shrink-0">
-                          <img src={product.images[0] || '/placeholder.svg'} alt={product.name} className="w-full h-full object-cover" />
+                           <StorefrontImage src={product.images[0] || '/placeholder.svg'} alt={product.name} className="w-full h-full object-cover" aspectRatio="1" />
                         </a>
                         <div className="flex-1 min-w-0 space-y-2">
                           <a href={paths.productDetail(product.slug)} className="hover:text-primary transition-colors">

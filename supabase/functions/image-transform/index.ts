@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.4";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -11,6 +12,62 @@ const cacheHeaders = {
   'Cache-Control': 'public, max-age=31536000, immutable', // Cache for 1 year
   'Vary': 'Accept',
 };
+
+// Initialize Supabase client for storage operations
+const supabase = createClient(
+  Deno.env.get('SUPABASE_URL') ?? '',
+  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+);
+
+// Generate deterministic cache key for transformed images
+function generateCacheKey(originalUrl: string, format: string, width?: number, height?: number, quality?: number): string {
+  const url = new URL(originalUrl);
+  const filename = url.pathname.split('/').pop() || 'image';
+  const nameWithoutExt = filename.split('.')[0];
+  
+  const params = [];
+  if (width) params.push(`w${width}`);
+  if (height) params.push(`h${height}`);
+  params.push(`${format}`);
+  if (quality && quality !== 85) params.push(`q${quality}`);
+  
+  return `${nameWithoutExt}_${params.join('_')}.${format}`;
+}
+
+// Check if transformed image exists in storage
+async function getTransformedImage(cacheKey: string) {
+  try {
+    const { data, error } = await supabase.storage
+      .from('images-transformed')
+      .download(cacheKey);
+    
+    if (error || !data) return null;
+    return data;
+  } catch {
+    return null;
+  }
+}
+
+// Save transformed image to storage
+async function saveTransformedImage(cacheKey: string, buffer: ArrayBuffer, contentType: string) {
+  try {
+    const { error } = await supabase.storage
+      .from('images-transformed')
+      .upload(cacheKey, new Uint8Array(buffer), {
+        contentType,
+        cacheControl: '31536000', // 1 year
+      });
+    
+    if (error) {
+      console.warn('Failed to save transformed image:', error);
+      return false;
+    }
+    return true;
+  } catch (error) {
+    console.warn('Error saving transformed image:', error);
+    return false;
+  }
+}
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -43,6 +100,26 @@ serve(async (req) => {
     }
 
     console.log('Transforming image:', { imageUrl, format, width, height, quality });
+
+    // Generate cache key for this transformation
+    const cacheKey = generateCacheKey(imageUrl, format, width, height, quality);
+    console.log('Cache key:', cacheKey);
+
+    // Check if transformed image already exists
+    const existingImage = await getTransformedImage(cacheKey);
+    if (existingImage) {
+      console.log('Serving from cache:', cacheKey);
+      
+      // Redirect to the cached version for better CDN performance
+      const cachedUrl = `${Deno.env.get('SUPABASE_URL')}/storage/v1/object/public/images-transformed/${cacheKey}`;
+      return new Response(null, {
+        status: 302,
+        headers: {
+          ...corsHeaders,
+          'Location': cachedUrl,
+        },
+      });
+    }
 
     // Fetch the original image
     const imageResponse = await fetch(imageUrl);
@@ -121,8 +198,12 @@ serve(async (req) => {
       console.log('Image processed successfully:', {
         originalSize: originalBuffer.byteLength,
         processedSize: processedBuffer.byteLength,
-        compressionRatio: ((1 - processedBuffer.byteLength / originalBuffer.byteLength) * 100).toFixed(1) + '%'
+        compressionRatio: ((1 - processedBuffer.byteLength / originalBuffer.byteLength) * 100).toFixed(1) + '%',
+        cacheKey
       });
+
+      // Save the transformed image to storage for future requests
+      await saveTransformedImage(cacheKey, processedBuffer, outputContentType);
 
     } catch (processError) {
       console.warn('Image processing failed, returning original:', processError);
