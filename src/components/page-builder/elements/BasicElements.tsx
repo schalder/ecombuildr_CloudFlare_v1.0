@@ -246,16 +246,18 @@ const ImageElement: React.FC<{
     return (
       <div className="relative">
         {imageLoading && src && (
-          <div className="absolute inset-0 bg-muted animate-pulse rounded-lg flex items-center justify-center pointer-events-none">
+          <div className="absolute inset-0 bg-muted animate-pulse rounded-lg flex items-center justify-center pointer-events-none z-10">
             <p className="text-xs text-muted-foreground">Loading...</p>
           </div>
         )}
-        <StorefrontImage
+        <img
           src={imageUrl}
           alt={alt || (!src ? 'Placeholder image' : '')}
           style={getImageStyles()}
           className={`element-${element.id} select-none`}
-          priority={false}
+          onLoad={handleImageLoad}
+          onError={handleImageError}
+          draggable={false}
         />
       </div>
     );
