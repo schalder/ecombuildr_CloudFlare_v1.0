@@ -92,65 +92,60 @@ export const UrgencyTimer: React.FC<UrgencyTimerProps> = ({
   }
 
   return (
-    <div 
-      className={`relative overflow-hidden rounded-lg border shadow-sm animate-fade-in ${className}`}
-      style={{ 
-        backgroundColor,
-        color: textColor,
-        borderColor: backgroundColor
-      }}
-    >
-      {/* Background gradient overlay */}
-      <div 
-        className="absolute inset-0 opacity-10"
-        style={{
-          background: `linear-gradient(135deg, ${textColor}00, ${textColor}40)`
-        }}
-      />
-      
-      <div className="relative p-4">
-        <div className="flex items-center justify-center gap-3 flex-wrap">
-          <div className="flex items-center gap-2">
-            <Clock 
-              className="w-4 h-4 animate-pulse" 
-              style={{ color: textColor }}
-            />
-            <span className="text-sm font-medium">{text}</span>
-          </div>
-          
-          <div className="flex items-center gap-1 text-lg font-bold">
-            {timeLeft.hours > 0 && (
-              <>
-                <div className="bg-black/20 px-2 py-1 rounded text-center min-w-[2.5rem]">
-                  {formatTime(timeLeft.hours)}
-                </div>
-                <span className="text-sm">:</span>
-              </>
-            )}
-            <div className="bg-black/20 px-2 py-1 rounded text-center min-w-[2.5rem]">
-              {formatTime(timeLeft.minutes)}
-            </div>
-            <span className="text-sm">:</span>
-            <div className="bg-black/20 px-2 py-1 rounded text-center min-w-[2.5rem]">
-              {formatTime(timeLeft.seconds)}
-            </div>
-          </div>
-        </div>
-        
-        <div className="flex justify-center gap-1 text-xs mt-2 opacity-90">
-          {timeLeft.hours > 0 && <span>Hours</span>}
-          <span>Minutes</span>
-          <span>Seconds</span>
-        </div>
+    <div className={`flex flex-col items-center gap-3 py-4 animate-fade-in ${className}`}>
+      {/* Timer text with icon */}
+      <div className="flex items-center gap-2 text-foreground">
+        <Clock className="w-4 h-4" />
+        <span className="text-sm font-medium">{text}</span>
       </div>
       
-      {/* Pulse animation border */}
-      <div 
-        className="absolute inset-0 rounded-lg animate-pulse"
-        style={{
-          boxShadow: `0 0 0 1px ${backgroundColor}40`
-        }}
-      />
+      {/* Time boxes */}
+      <div className="flex items-center gap-2">
+        {timeLeft.hours > 0 && (
+          <div className="flex flex-col items-center gap-1">
+            <div 
+              className="px-3 py-2 rounded-lg text-lg font-bold min-w-[3rem] text-center"
+              style={{ 
+                backgroundColor,
+                color: textColor
+              }}
+            >
+              {formatTime(timeLeft.hours)}
+            </div>
+            <span className="text-xs text-muted-foreground">Hours</span>
+          </div>
+        )}
+        
+        {timeLeft.hours > 0 && <span className="text-muted-foreground">:</span>}
+        
+        <div className="flex flex-col items-center gap-1">
+          <div 
+            className="px-3 py-2 rounded-lg text-lg font-bold min-w-[3rem] text-center"
+            style={{ 
+              backgroundColor,
+              color: textColor
+            }}
+          >
+            {formatTime(timeLeft.minutes)}
+          </div>
+          <span className="text-xs text-muted-foreground">Minutes</span>
+        </div>
+        
+        <span className="text-muted-foreground">:</span>
+        
+        <div className="flex flex-col items-center gap-1">
+          <div 
+            className="px-3 py-2 rounded-lg text-lg font-bold min-w-[3rem] text-center"
+            style={{ 
+              backgroundColor,
+              color: textColor
+            }}
+          >
+            {formatTime(timeLeft.seconds)}
+          </div>
+          <span className="text-xs text-muted-foreground">Seconds</span>
+        </div>
+      </div>
     </div>
   );
 };
