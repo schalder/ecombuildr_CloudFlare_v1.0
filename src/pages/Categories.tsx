@@ -75,7 +75,7 @@ export default function Categories() {
     website_id: ''
   });
 
-  // Filter categories by selected website
+  // Filter categories by selected website and include necessary ancestors
   const filteredCategories = useMemo(() => {
     if (!categoriesWithWebsites || categoriesWithWebsites.length === 0) return [];
     
@@ -83,11 +83,37 @@ export default function Categories() {
       return categoriesWithWebsites;
     }
     
-    return categoriesWithWebsites.filter(category => {
+    // Get categories directly assigned to the selected website
+    const directlyVisible = categoriesWithWebsites.filter(category => {
       const rawVisibility = (category as any).category_website_visibility;
       const visibleWebsites = Array.isArray(rawVisibility) ? rawVisibility : [];
       return visibleWebsites.some((v: any) => v.website_id === selectedWebsiteId);
     });
+    
+    // Find all ancestor categories needed to maintain hierarchy
+    const neededAncestors = new Set();
+    directlyVisible.forEach(category => {
+      let current = category;
+      while (current.parent_category_id) {
+        neededAncestors.add(current.parent_category_id);
+        current = categoriesWithWebsites.find(c => c.id === current.parent_category_id);
+        if (!current) break;
+      }
+    });
+    
+    // Include both directly visible categories and their ancestors
+    const result = categoriesWithWebsites.filter(category => {
+      const isDirectlyVisible = directlyVisible.some(c => c.id === category.id);
+      const isNeededAncestor = neededAncestors.has(category.id);
+      return isDirectlyVisible || isNeededAncestor;
+    });
+    
+    // Mark categories as directly visible or ancestor-only
+    return result.map(category => ({
+      ...category,
+      isDirectlyVisible: directlyVisible.some(c => c.id === category.id),
+      isAncestorOnly: neededAncestors.has(category.id)
+    }));
   }, [categoriesWithWebsites, selectedWebsiteId]);
 
   // Get hierarchical structure for display
@@ -151,8 +177,15 @@ export default function Categories() {
     const parentVisibility = Array.isArray((parent as any)?.category_website_visibility) ? (parent as any).category_website_visibility : [];
     const parentWebsiteIds = parentVisibility.map((v: any) => v.website_id);
     
-    // Prevent creating subcategory without website assignment
-    const websiteIds = parentWebsiteIds.length > 0 ? parentWebsiteIds : (selectedWebsiteId !== 'all' ? [selectedWebsiteId] : []);
+    // When a specific website is selected, ensure subcategory is assigned to that website
+    let websiteIds: string[];
+    if (selectedWebsiteId !== 'all') {
+      // If a specific website is selected, assign subcategory to that website
+      websiteIds = [selectedWebsiteId];
+    } else {
+      // If "All Websites" is selected, inherit from parent
+      websiteIds = parentWebsiteIds;
+    }
     
     if (websiteIds.length === 0) {
       alert('Cannot create subcategory: Parent category has no website assignment and no website is selected. Please select a website or assign the parent category to a website first.');
@@ -402,16 +435,21 @@ export default function Categories() {
                   <>
                     {/* Parent Category Row */}
                     <TableRow key={category.id} className="group">
-                      <TableCell className="font-medium">
-                        <div className="flex items-center gap-2">
-                          {category.name}
-                          {category.subcategories.length > 0 && (
-                            <Badge variant="secondary" className="text-xs">
-                              {category.subcategories.length} sub
-                            </Badge>
-                          )}
-                        </div>
-                      </TableCell>
+                       <TableCell className="font-medium">
+                         <div className="flex items-center gap-2">
+                           {category.name}
+                           {category.subcategories.length > 0 && (
+                             <Badge variant="secondary" className="text-xs">
+                               {category.subcategories.length} sub
+                             </Badge>
+                           )}
+                           {selectedWebsiteId !== 'all' && (category as any).isAncestorOnly && (
+                             <Badge variant="outline" className="text-xs text-muted-foreground">
+                               ancestor only
+                             </Badge>
+                           )}
+                         </div>
+                       </TableCell>
                       <TableCell className="text-muted-foreground">
                         {category.description || '—'}
                       </TableCell>
@@ -463,12 +501,17 @@ export default function Categories() {
                     {/* Subcategory Rows */}
                     {category.subcategories.map((subcat) => (
                       <TableRow key={subcat.id} className="group bg-muted/25">
-                        <TableCell className="font-medium">
-                          <div className="flex items-center gap-2 pl-6">
-                            <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                            {subcat.name}
-                          </div>
-                        </TableCell>
+                         <TableCell className="font-medium">
+                           <div className="flex items-center gap-2 pl-6">
+                             <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                             {subcat.name}
+                             {selectedWebsiteId !== 'all' && (subcat as any).isAncestorOnly && (
+                               <Badge variant="outline" className="text-xs text-muted-foreground">
+                                 ancestor only
+                               </Badge>
+                             )}
+                           </div>
+                         </TableCell>
                         <TableCell className="text-muted-foreground">
                           {subcat.description || '—'}
                         </TableCell>
