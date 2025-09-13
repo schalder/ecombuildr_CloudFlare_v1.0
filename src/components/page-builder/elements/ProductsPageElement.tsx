@@ -47,6 +47,7 @@ interface Category {
   id: string;
   name: string;
   slug: string;
+  parent_category_id?: string | null;
   count?: number;
 }
 
@@ -264,7 +265,7 @@ export const ProductsPageElement: React.FC<{
       // Fetch categories
       let categoryQuery = supabase
         .from('categories')
-        .select('id, name, slug')
+        .select('id, name, slug, parent_category_id')
         .eq('store_id', store.id)
         .order('name');
 

@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { ChevronDown, ChevronUp, Filter, X } from 'lucide-react';
+import { ChevronDown, ChevronUp, Filter, X, Folder, FolderOpen, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatCurrency } from '@/lib/currency';
 
@@ -13,7 +13,9 @@ interface Category {
   id: string;
   name: string;
   slug: string;
+  parent_category_id?: string | null;
   count?: number;
+  children?: Category[];
 }
 
 interface Collection {
@@ -58,6 +60,47 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
     features: true
   });
 
+  // Initialize with parent categories expanded by default
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(() => {
+    const parentCategoryIds = categories
+      .filter(cat => categories.some(c => c.parent_category_id === cat.id))
+      .map(cat => cat.id);
+    return new Set(parentCategoryIds);
+  });
+
+  type CategoryWithChildren = Category & { children: CategoryWithChildren[] };
+
+  // Transform flat categories into hierarchical structure
+  const hierarchicalCategories = useMemo(() => {
+    const categoryMap = new Map<string, CategoryWithChildren>();
+    const rootCategories: CategoryWithChildren[] = [];
+
+    // First pass: create all categories with empty children arrays
+    categories.forEach(category => {
+      categoryMap.set(category.id, { ...category, children: [] });
+    });
+
+    // Second pass: organize into hierarchy
+    categories.forEach(category => {
+      const categoryWithChildren = categoryMap.get(category.id);
+      if (!categoryWithChildren) return;
+
+      if (category.parent_category_id) {
+        const parent = categoryMap.get(category.parent_category_id);
+        if (parent) {
+          parent.children.push(categoryWithChildren);
+        } else {
+          // Parent not found, treat as root
+          rootCategories.push(categoryWithChildren);
+        }
+      } else {
+        rootCategories.push(categoryWithChildren);
+      }
+    });
+
+    return rootCategories;
+  }, [categories]);
+
   const toggleSection = (section: keyof typeof expandedSections) => {
     setExpandedSections(prev => ({
       ...prev,
@@ -65,10 +108,85 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
     }));
   };
 
+  const toggleCategoryExpansion = (categoryId: string) => {
+    setExpandedCategories(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(categoryId)) {
+        newSet.delete(categoryId);
+      } else {
+        newSet.add(categoryId);
+      }
+      return newSet;
+    });
+  };
+
+  const renderCategoryTree = (categoryList: CategoryWithChildren[], level = 0): React.ReactNode => {
+    return categoryList.map((category) => (
+      <div key={category.id}>
+        <div 
+          className={cn(
+            "flex items-center justify-between py-1",
+            level > 0 && "ml-6"
+          )}
+        >
+          <div className="flex items-center space-x-2 flex-1">
+            {category.children.length > 0 ? (
+              <button
+                onClick={() => toggleCategoryExpansion(category.id)}
+                className="p-0.5 hover:bg-muted rounded transition-colors"
+              >
+                {expandedCategories.has(category.id) ? (
+                  <ChevronUp className="h-3 w-3 text-muted-foreground" />
+                ) : (
+                  <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                )}
+              </button>
+            ) : (
+              <div className="w-4" /> // Spacer for alignment
+            )}
+            <Checkbox
+              id={`category-${category.id}`}
+              checked={filters.categories.includes(category.slug)}
+              onCheckedChange={(checked) => 
+                handleCategoryChange(category.slug, checked as boolean)
+              }
+            />
+            <label
+              htmlFor={`category-${category.id}`}
+              className={cn(
+                "text-sm cursor-pointer hover:text-foreground transition-colors",
+                level === 0 ? "font-medium" : "font-normal text-muted-foreground"
+              )}
+            >
+              {category.name}
+            </label>
+          </div>
+          {category.count && (
+            <span className="text-xs text-muted-foreground">
+              ({category.count})
+            </span>
+          )}
+        </div>
+        
+        {category.children.length > 0 && expandedCategories.has(category.id) && (
+          <div className="mt-2 space-y-2">
+            {renderCategoryTree(category.children, level + 1)}
+          </div>
+        )}
+      </div>
+    ));
+  };
+
   const handleCategoryChange = (categorySlug: string, checked: boolean) => {
-    const newCategories = checked
-      ? [...filters.categories, categorySlug]
-      : filters.categories.filter(c => c !== categorySlug);
+    let newCategories: string[];
+    
+    if (checked) {
+      // Add the category to the filter
+      newCategories = [...filters.categories, categorySlug];
+    } else {
+      // Remove the category from the filter
+      newCategories = filters.categories.filter(c => c !== categorySlug);
+    }
     
     onFiltersChange({
       ...filters,
@@ -155,30 +273,7 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
           
           {expandedSections.categories && (
             <div className="space-y-3">
-              {categories.map((category) => (
-                <div key={category.id} className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id={`category-${category.id}`}
-                      checked={filters.categories.includes(category.slug)}
-                      onCheckedChange={(checked) => 
-                        handleCategoryChange(category.slug, checked as boolean)
-                      }
-                    />
-                    <label
-                      htmlFor={`category-${category.id}`}
-                      className="text-sm cursor-pointer hover:text-foreground transition-colors"
-                    >
-                      {category.name}
-                    </label>
-                  </div>
-                  {category.count && (
-                    <span className="text-xs text-muted-foreground">
-                      ({category.count})
-                    </span>
-                  )}
-                </div>
-              ))}
+              {renderCategoryTree(hierarchicalCategories)}
             </div>
           )}
         </div>
