@@ -45,6 +45,34 @@ export const useCategories = (storeId?: string) => {
     retry: 1,
   });
 
+  // Get categories with website visibility info
+  const {
+    data: categoriesWithWebsites = [],
+    isLoading: websiteLoading
+  } = useQuery({
+    queryKey: ['categories-with-websites', storeId],
+    queryFn: async () => {
+      if (!user || !storeId) return [];
+
+      const { data, error } = await supabase
+        .from('categories')
+        .select(`
+          *,
+          category_website_visibility(
+            website_id,
+            websites(id, name, slug)
+          )
+        `)
+        .eq('store_id', storeId)
+        .order('name');
+
+      if (error) throw error;
+      return (data || []) as any[];
+    },
+    enabled: !!user && !!storeId,
+    staleTime: 2 * 60 * 1000,
+  });
+
   // Get flat categories for dropdowns
   const {
     data: flatCategories = [],
@@ -68,16 +96,17 @@ export const useCategories = (storeId?: string) => {
   });
 
   const createCategory = useMutation({
-    mutationFn: async ({ name, description, parent_category_id }: { 
+    mutationFn: async ({ name, description, parent_category_id, websiteIds = [] }: { 
       name: string; 
       description?: string; 
       parent_category_id?: string;
+      websiteIds?: string[];
     }) => {
       if (!storeId) throw new Error('Store ID is required');
 
       const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
       
-      const { data, error } = await supabase
+      const { data: categoryData, error: categoryError } = await supabase
         .from('categories')
         .insert({
           store_id: storeId,
@@ -89,12 +118,43 @@ export const useCategories = (storeId?: string) => {
         .select()
         .single();
 
-      if (error) throw error;
-      return data;
+      if (categoryError) throw categoryError;
+
+      // Add to all websites by default if no specific websites selected
+      if (websiteIds.length === 0) {
+        const { data: websites } = await supabase
+          .from('websites')
+          .select('id')
+          .eq('store_id', storeId);
+        
+        if (websites && websites.length > 0) {
+          const visibilityRecords = websites.map(w => ({
+            category_id: categoryData.id,
+            website_id: w.id
+          }));
+
+          await supabase
+            .from('category_website_visibility')
+            .insert(visibilityRecords);
+        }
+      } else {
+        // Add to selected websites
+        const visibilityRecords = websiteIds.map(websiteId => ({
+          category_id: categoryData.id,
+          website_id: websiteId
+        }));
+
+        await supabase
+          .from('category_website_visibility')
+          .insert(visibilityRecords);
+      }
+
+      return categoryData;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories', storeId] });
       queryClient.invalidateQueries({ queryKey: ['flat-categories', storeId] });
+      queryClient.invalidateQueries({ queryKey: ['categories-with-websites', storeId] });
       toast({
         title: 'Success',
         description: 'Category created successfully',
@@ -141,6 +201,7 @@ export const useCategories = (storeId?: string) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories', storeId] });
       queryClient.invalidateQueries({ queryKey: ['flat-categories', storeId] });
+      queryClient.invalidateQueries({ queryKey: ['categories-with-websites', storeId] });
       toast({
         title: 'Success',
         description: 'Category updated successfully',
@@ -167,6 +228,7 @@ export const useCategories = (storeId?: string) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories', storeId] });
       queryClient.invalidateQueries({ queryKey: ['flat-categories', storeId] });
+      queryClient.invalidateQueries({ queryKey: ['categories-with-websites', storeId] });
       toast({
         title: 'Success',
         description: 'Category deleted successfully',
@@ -181,17 +243,58 @@ export const useCategories = (storeId?: string) => {
     },
   });
 
+  // Category visibility management
+  const updateCategoryVisibility = useMutation({
+    mutationFn: async ({ categoryId, websiteIds }: { categoryId: string; websiteIds: string[] }) => {
+      // Remove existing visibility records
+      await supabase
+        .from('category_website_visibility')
+        .delete()
+        .eq('category_id', categoryId);
+
+      // Add new visibility records
+      if (websiteIds.length > 0) {
+        const records = websiteIds.map(websiteId => ({
+          category_id: categoryId,
+          website_id: websiteId
+        }));
+
+        const { error } = await supabase
+          .from('category_website_visibility')
+          .insert(records);
+
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['categories-with-websites', storeId] });
+      toast({
+        title: 'Success',
+        description: 'Category visibility updated successfully',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to update category visibility',
+        variant: 'destructive',
+      });
+    },
+  });
+
   const error = queryError ? (queryError instanceof Error ? queryError.message : 'Unknown error') : null;
 
   return {
     categories,
     flatCategories,
-    loading: loading || flatLoading,
+    categoriesWithWebsites,
+    loading: loading || flatLoading || websiteLoading,
     error,
     refetch,
     createCategory,
     updateCategory,
-    deleteCategory
+    deleteCategory,
+    updateCategoryVisibility
   };
 };
 
