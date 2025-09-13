@@ -194,12 +194,6 @@ export const ProductsPageElement: React.FC<{
 
     // Enhanced debugging for tablet columns
     const tabletConfigured = element.content.tabletColumns;
-    console.log('Tablet Columns Debug:', {
-      raw: tabletConfigured,
-      type: typeof tabletConfigured,
-      elementContent: element.content,
-      asNumber: Number(tabletConfigured)
-    });
 
     let tablet = tabletConfigured && !isNaN(Number(tabletConfigured))
       ? Math.max(1, Math.min(4, Number(tabletConfigured)))
@@ -227,17 +221,6 @@ export const ProductsPageElement: React.FC<{
     const tabletContinueClass = `lg:${map(tablet)}`;  // Keep tablet layout on lg screens
     const desktopClass = `xl:${map(desktop)}`;        // Desktop only starts at xl (1280px)
 
-    // Debug info in development
-    if (process.env.NODE_ENV === 'development') {
-      console.log('Grid Classes Debug:', {
-        mobile,
-        tablet,
-        desktop,
-        classes: `${mobileClass} ${tabletClass} ${tabletContinueClass} ${desktopClass}`,
-        deviceType,
-        windowWidth: window.innerWidth
-      });
-    }
 
     return `${mobileClass} ${tabletClass} ${tabletContinueClass} ${desktopClass}`;
   };
