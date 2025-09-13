@@ -1,0 +1,116 @@
+/* Critical CSS for image optimization and layout shift prevention */
+
+/* Shimmer animation for loading states */
+@keyframes shimmer {
+  0% { 
+    background-position: -200% 0; 
+  }
+  100% { 
+    background-position: 200% 0; 
+  }
+}
+
+/* Base image container to prevent layout shifts */
+.image-container {
+  position: relative;
+  overflow: hidden;
+  background-color: hsl(var(--muted));
+}
+
+/* Aspect ratio preservation */
+.image-container::before {
+  content: '';
+  display: block;
+  width: 100%;
+  height: 0;
+  padding-bottom: var(--aspect-ratio, 56.25%); /* Default 16:9 */
+}
+
+/* Image positioning within container */
+.image-container img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: opacity 0.3s ease;
+}
+
+/* Loading shimmer effect */
+.loading-shimmer {
+  background: linear-gradient(
+    90deg,
+    hsl(var(--muted)) 25%,
+    hsl(var(--muted-foreground) / 0.1) 50%,
+    hsl(var(--muted)) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+/* Responsive image utilities */
+.img-responsive {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Critical image prioritization */
+.img-critical {
+  content-visibility: auto;
+  contain-intrinsic-size: 300px 200px;
+}
+
+/* Lazy loading states */
+.img-lazy {
+  transition: opacity 0.3s ease-in-out;
+}
+
+.img-lazy[data-loaded="false"] {
+  opacity: 0;
+}
+
+.img-lazy[data-loaded="true"] {
+  opacity: 1;
+}
+
+/* WebP/AVIF support detection fallbacks */
+.no-webp .webp-image,
+.no-avif .avif-image {
+  display: none;
+}
+
+/* Performance optimizations */
+picture {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Prevent layout shifts with explicit sizing */
+img[width][height] {
+  aspect-ratio: attr(width) / attr(height);
+}
+
+/* High-performance image containers */
+.perf-image-container {
+  contain: layout style paint;
+  will-change: auto;
+}
+
+/* Gradient placeholder for unknown aspect ratios */
+.image-placeholder {
+  background: linear-gradient(
+    135deg,
+    hsl(var(--muted)) 0%,
+    hsl(var(--muted-foreground) / 0.05) 50%,
+    hsl(var(--muted)) 100%
+  );
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: hsl(var(--muted-foreground));
+  font-size: 0.875rem;
+  min-height: 200px;
+}

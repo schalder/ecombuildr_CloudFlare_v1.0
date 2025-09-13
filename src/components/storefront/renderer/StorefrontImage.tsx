@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { AdvancedImageOptimizer } from '../optimized/AdvancedImageOptimizer';
+import { useCriticalImage } from '../optimized/CriticalImageManager';
 
 interface StorefrontImageProps {
   src: string;
@@ -7,6 +9,9 @@ interface StorefrontImageProps {
   height?: number;
   className?: string;
   priority?: boolean;
+  isCritical?: boolean;
+  sizes?: string;
+  aspectRatio?: string;
   style?: React.CSSProperties;
 }
 
@@ -17,38 +22,37 @@ export const StorefrontImage: React.FC<StorefrontImageProps> = ({
   height,
   className,
   priority = false,
+  isCritical,
+  sizes,
+  aspectRatio,
   style
 }) => {
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [hasError, setHasError] = useState(false);
+  const { addCriticalImage, isCriticalImage } = useCriticalImage();
+  const [autoDetectedCritical, setAutoDetectedCritical] = useState(false);
 
-  const handleLoad = () => setIsLoaded(true);
-  const handleError = () => setHasError(true);
+  // Auto-detect critical images (above the fold)
+  useEffect(() => {
+    if (priority && !isCriticalImage(src)) {
+      addCriticalImage(src);
+      setAutoDetectedCritical(true);
+    }
+  }, [src, priority, addCriticalImage, isCriticalImage]);
 
-  if (hasError) {
-    return (
-      <div 
-        className={`bg-muted rounded flex items-center justify-center text-muted-foreground text-sm ${className}`}
-        style={{ width, height, ...style }}
-      >
-        Image unavailable
-      </div>
-    );
-  }
+  const isImageCritical = isCritical ?? autoDetectedCritical ?? isCriticalImage(src);
 
   return (
-    <img
+    <AdvancedImageOptimizer
       src={src}
       alt={alt}
       width={width}
       height={height}
       className={className}
-      style={style}
+      priority={priority ? 'high' : 'auto'}
       loading={priority ? 'eager' : 'lazy'}
-      decoding="async"
-      fetchPriority={priority ? 'high' : 'auto'}
-      onLoad={handleLoad}
-      onError={handleError}
+      isCritical={isImageCritical}
+      sizes={sizes || '(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw'}
+      aspectRatio={aspectRatio}
+      style={style}
     />
   );
 };

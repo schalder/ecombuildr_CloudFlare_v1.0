@@ -11,6 +11,7 @@ import { PerformanceMonitor } from '../optimized/PerformanceMonitor';
 import { ServiceWorkerManager } from '../optimized/ServiceWorkerManager';
 import { CriticalCSSLoader } from '../optimized/CriticalCSSLoader';
 import { PreloadManager } from '../optimized/PreloadManager';
+import { CriticalImageManager } from '../optimized/CriticalImageManager';
 
 interface StorefrontPageBuilderProps {
   data: PageBuilderData;
@@ -237,7 +238,7 @@ export const StorefrontPageBuilder: React.FC<StorefrontPageBuilderProps> = ({
   const criticalResources = extractCriticalResources();
 
   return (
-    <>
+    <CriticalImageManager maxCriticalImages={3}>
       {/* Critical resource optimization */}
       <CriticalResourceLoader 
         heroImage={criticalResources.heroImage}
@@ -268,6 +269,6 @@ export const StorefrontPageBuilder: React.FC<StorefrontPageBuilderProps> = ({
           ))}
         </div>
       </div>
-    </>
+    </CriticalImageManager>
   );
 };
