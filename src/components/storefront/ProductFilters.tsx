@@ -331,8 +331,6 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
           )}
         </div>
 
-        <Separator />
-
         {/* Categories */}
         <div>
           <button
