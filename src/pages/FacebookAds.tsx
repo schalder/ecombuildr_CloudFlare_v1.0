@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -24,16 +24,9 @@ export default function FacebookAds() {
   const { funnels, loading: funnelsLoading, refetch: refetchFunnels } = useStoreFunnels(store?.id || '');
   const { refetch: refetchStore } = useUserStore();
   
-  // Memoize date range to prevent recreation on every render
-  const dateRangeObj = useMemo(() => {
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - parseInt(dateRange));
-    return { startDate, endDate: new Date() };
-  }, [dateRange]);
-  
   const { analytics, loading, error, refetch: refetchAnalytics } = useFacebookPixelAnalytics(
-    store?.id || '', 
-    dateRangeObj,
+    store?.id || '',
+    parseInt(dateRange, 10),
     selectedWebsiteId === 'all' ? undefined : selectedWebsiteId,
     selectedFunnelId === 'all' ? undefined : funnels.find(f => f.id === selectedFunnelId)?.slug
   );

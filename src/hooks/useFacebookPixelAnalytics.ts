@@ -27,12 +27,7 @@ interface PixelAnalytics {
   }>;
 }
 
-interface DateRange {
-  startDate: Date;
-  endDate: Date;
-}
-
-export const useFacebookPixelAnalytics = (storeId: string, dateRange: DateRange, websiteId?: string, funnelSlug?: string) => {
+export const useFacebookPixelAnalytics = (storeId: string, dateRangeDays: number, websiteId?: string, funnelSlug?: string) => {
   const [analytics, setAnalytics] = useState<PixelAnalytics | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -43,13 +38,18 @@ export const useFacebookPixelAnalytics = (storeId: string, dateRange: DateRange,
       setError(null);
       
       try {
+        // Compute date range fresh on each fetch
+        const now = new Date();
+        const startDate = new Date(now);
+        startDate.setDate(now.getDate() - dateRangeDays);
+
         // Build query filters
         let query = supabase
           .from('pixel_events')
           .select('*')
           .eq('store_id', storeId)
-          .gte('created_at', dateRange.startDate.toISOString())
-          .lte('created_at', dateRange.endDate.toISOString());
+          .gte('created_at', startDate.toISOString())
+          .lte('created_at', now.toISOString());
 
         // Apply website filter if provided
         if (websiteId) {
@@ -61,7 +61,7 @@ export const useFacebookPixelAnalytics = (storeId: string, dateRange: DateRange,
 
         // Apply funnel filter if provided (check if event_data contains funnel info)
         if (funnelSlug) {
-          query = query.like('event_data', `%"funnel_slug":"${funnelSlug}"%`);
+          query = query.contains('event_data', { funnel_slug: funnelSlug });
         }
 
         const { data: events, error: fetchError } = await query;
@@ -254,7 +254,7 @@ export const useFacebookPixelAnalytics = (storeId: string, dateRange: DateRange,
   useEffect(() => {
     if (!user || !storeId) return;
     fetchAnalytics();
-  }, [user, storeId, websiteId, funnelSlug, dateRange.startDate, dateRange.endDate]);
+  }, [user, storeId, websiteId, funnelSlug, dateRangeDays]);
 
   const refetch = () => {
     return fetchAnalytics();
