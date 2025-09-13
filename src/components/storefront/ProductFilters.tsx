@@ -101,6 +101,34 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
     return rootCategories;
   }, [categories]);
 
+  // Lookup maps for category nodes and parent relationships
+  const { nodeBySlug, parentById } = useMemo(() => {
+    const bySlug = new Map<string, CategoryWithChildren>();
+    const parent = new Map<string, string | null>();
+
+    const walk = (nodeList: CategoryWithChildren[], parentId: string | null) => {
+      nodeList.forEach((node) => {
+        bySlug.set(node.slug, node);
+        parent.set(node.id, parentId);
+        if (node.children?.length) walk(node.children, node.id);
+      });
+    };
+
+    walk(hierarchicalCategories, null);
+    return { nodeBySlug: bySlug, parentById: parent };
+  }, [hierarchicalCategories]);
+
+  const getAncestorIds = (id: string) => {
+    const ids: string[] = [];
+    let cur: string | null | undefined = id;
+    while (cur) {
+      const p = parentById.get(cur) ?? null;
+      if (p) ids.push(p);
+      cur = p;
+    }
+    return ids;
+  };
+
   const toggleSection = (section: keyof typeof expandedSections) => {
     setExpandedSections(prev => ({
       ...prev,
@@ -132,23 +160,19 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
             "flex items-center py-2 px-1 rounded hover:bg-muted/50 transition-colors",
             level > 0 && "ml-6"
           )}
-          onClick={(e) => {
-            // Only toggle expansion if clicking outside the checkbox
-            if (e.target !== e.currentTarget.querySelector('input')) {
-              if (hasSubcategories(category)) {
-                toggleCategoryExpansion(category.id);
-              }
+          onClick={() => {
+            if (hasSubcategories(category)) {
+              toggleCategoryExpansion(category.id);
             }
           }}
         >
-          <div className="flex items-center space-x-3 flex-1">
+          <div className="flex items-center space-x-3 flex-1" onClick={(e) => e.stopPropagation()}>
             <Checkbox
               id={`category-${category.id}`}
               checked={filters.categories.includes(category.slug)}
               onCheckedChange={(checked) => 
                 handleCategoryChange(category.slug, checked as boolean)
               }
-              onClick={(e) => e.stopPropagation()}
             />
             <label
               htmlFor={`category-${category.id}`}
@@ -156,7 +180,6 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
                 "text-sm cursor-pointer hover:text-foreground transition-colors flex-1",
                 level === 0 ? "font-medium" : "font-normal text-muted-foreground"
               )}
-              onClick={(e) => e.stopPropagation()}
             >
               {category.name}
             </label>
@@ -169,13 +192,13 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
               </span>
             )}
             {hasSubcategories(category) && (
-              <div className="p-1">
+              <button className="p-1 rounded hover:bg-muted/70" onClick={(e) => { e.stopPropagation(); toggleCategoryExpansion(category.id); }} aria-label={expandedCategories.has(category.id) ? 'Collapse' : 'Expand'}>
                 {expandedCategories.has(category.id) ? (
                   <ChevronUp className="h-5 w-5 text-muted-foreground" />
                 ) : (
                   <ChevronDown className="h-5 w-5 text-muted-foreground" />
                 )}
-              </div>
+              </button>
             )}
           </div>
         </div>
@@ -193,16 +216,15 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
     let newCategories: string[];
     
     if (checked) {
-      // Add the category to the filter
       newCategories = [...filters.categories, categorySlug];
-      
-      // Auto-expand parent categories when selected
-      const category = categories.find(cat => cat.slug === categorySlug);
-      if (category && hasSubcategories(category as CategoryWithChildren)) {
-        setExpandedCategories(prev => new Set([...prev, category.id]));
+
+      // Auto-expand selected node and its ancestors
+      const node = nodeBySlug.get(categorySlug);
+      if (node) {
+        const ancestors = getAncestorIds(node.id);
+        setExpandedCategories(prev => new Set([...prev, node.id, ...ancestors]));
       }
     } else {
-      // Remove the category from the filter
       newCategories = filters.categories.filter(c => c !== categorySlug);
     }
     
