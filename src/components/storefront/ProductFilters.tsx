@@ -297,6 +297,40 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
       </CardHeader>
 
       <CardContent className="space-y-6">
+        {/* Price Range */}
+        <div>
+          <button
+            onClick={() => toggleSection('price')}
+            className="flex items-center justify-between w-full text-left font-semibold mb-3"
+          >
+            Price Range
+            {expandedSections.price ? (
+              <ChevronUp className="h-4 w-4" />
+            ) : (
+              <ChevronDown className="h-4 w-4" />
+            )}
+          </button>
+          
+          {expandedSections.price && (
+            <div className="space-y-4">
+              <Slider
+                value={filters.priceRange}
+                onValueChange={handlePriceRangeChange}
+                max={10000}
+                min={0}
+                step={100}
+                className="w-full"
+              />
+              <div className="flex items-center justify-between text-sm text-muted-foreground">
+                <span>{formatCurrency(filters.priceRange[0])}</span>
+                <span>{formatCurrency(filters.priceRange[1])}</span>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <Separator />
+
         {/* Categories */}
         <div>
           <button
@@ -368,38 +402,6 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
             <Separator />
           </>
         )}
-
-        {/* Price Range */}
-        <div>
-          <button
-            onClick={() => toggleSection('price')}
-            className="flex items-center justify-between w-full text-left font-semibold mb-3"
-          >
-            Price Range
-            {expandedSections.price ? (
-              <ChevronUp className="h-4 w-4" />
-            ) : (
-              <ChevronDown className="h-4 w-4" />
-            )}
-          </button>
-          
-          {expandedSections.price && (
-            <div className="space-y-4">
-              <Slider
-                value={filters.priceRange}
-                onValueChange={handlePriceRangeChange}
-                max={10000}
-                min={0}
-                step={100}
-                className="w-full"
-              />
-              <div className="flex items-center justify-between text-sm text-muted-foreground">
-                <span>{formatCurrency(filters.priceRange[0])}</span>
-                <span>{formatCurrency(filters.priceRange[1])}</span>
-              </div>
-            </div>
-          )}
-        </div>
 
         <Separator />
 
