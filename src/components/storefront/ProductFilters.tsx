@@ -297,8 +297,6 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
       </CardHeader>
 
       <CardContent className="space-y-6">
-        <Separator />
-        
         {/* Price Range */}
         <div>
           <button
