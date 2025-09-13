@@ -16,6 +16,18 @@ interface TimeLeft {
   seconds: number;
 }
 
+interface TimerConfig {
+  duration: number;
+  text: string;
+  backgroundColor: string;
+  textColor: string;
+}
+
+interface StoredTimerData {
+  endTime: number;
+  config: TimerConfig;
+}
+
 export const UrgencyTimer: React.FC<UrgencyTimerProps> = ({
   productId,
   duration,
@@ -30,22 +42,62 @@ export const UrgencyTimer: React.FC<UrgencyTimerProps> = ({
   useEffect(() => {
     const initializeTimer = () => {
       const storageKey = `urgency_timer_${productId}`;
-      const savedEndTime = localStorage.getItem(storageKey);
+      const savedData = localStorage.getItem(storageKey);
+      
+      const currentConfig: TimerConfig = {
+        duration,
+        text,
+        backgroundColor,
+        textColor
+      };
       
       let endTime: number;
       
-      if (savedEndTime) {
-        endTime = parseInt(savedEndTime, 10);
-        // Check if saved timer has expired
-        if (Date.now() >= endTime) {
-          // Reset timer for new session
-          endTime = Date.now() + (duration * 60 * 1000);
-          localStorage.setItem(storageKey, endTime.toString());
+      if (savedData) {
+        try {
+          // Try to parse as new format with config
+          const parsedData: StoredTimerData = JSON.parse(savedData);
+          
+          // Check if config has changed
+          const configChanged = JSON.stringify(parsedData.config) !== JSON.stringify(currentConfig);
+          
+          if (configChanged || Date.now() >= parsedData.endTime) {
+            // Config changed or timer expired - create new timer
+            endTime = Date.now() + (duration * 60 * 1000);
+            const newData: StoredTimerData = {
+              endTime,
+              config: currentConfig
+            };
+            localStorage.setItem(storageKey, JSON.stringify(newData));
+          } else {
+            // Use existing timer
+            endTime = parsedData.endTime;
+          }
+        } catch {
+          // Fallback for old format (just endTime as string)
+          const oldEndTime = parseInt(savedData, 10);
+          if (Date.now() >= oldEndTime) {
+            // Old timer expired - create new one
+            endTime = Date.now() + (duration * 60 * 1000);
+          } else {
+            // Reset old timer with new config
+            endTime = Date.now() + (duration * 60 * 1000);
+          }
+          
+          const newData: StoredTimerData = {
+            endTime,
+            config: currentConfig
+          };
+          localStorage.setItem(storageKey, JSON.stringify(newData));
         }
       } else {
         // First visit - create new timer
         endTime = Date.now() + (duration * 60 * 1000);
-        localStorage.setItem(storageKey, endTime.toString());
+        const newData: StoredTimerData = {
+          endTime,
+          config: currentConfig
+        };
+        localStorage.setItem(storageKey, JSON.stringify(newData));
       }
       
       return endTime;
@@ -62,7 +114,16 @@ export const UrgencyTimer: React.FC<UrgencyTimerProps> = ({
         setTimeLeft({ hours: 0, minutes: 0, seconds: 0 });
         // Reset timer after expiry for next visit
         const newEndTime = now + (duration * 60 * 1000);
-        localStorage.setItem(`urgency_timer_${productId}`, newEndTime.toString());
+        const newData: StoredTimerData = {
+          endTime: newEndTime,
+          config: {
+            duration,
+            text,
+            backgroundColor,
+            textColor
+          }
+        };
+        localStorage.setItem(`urgency_timer_${productId}`, JSON.stringify(newData));
         return;
       }
       
