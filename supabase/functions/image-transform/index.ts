@@ -1,0 +1,149 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'GET, OPTIONS',
+};
+
+// Cache headers for optimized performance
+const cacheHeaders = {
+  'Cache-Control': 'public, max-age=31536000, immutable', // Cache for 1 year
+  'Vary': 'Accept',
+};
+
+serve(async (req) => {
+  // Handle CORS preflight requests
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  if (req.method !== 'GET') {
+    return new Response('Method not allowed', { 
+      status: 405, 
+      headers: corsHeaders 
+    });
+  }
+
+  try {
+    const url = new URL(req.url);
+    const params = url.searchParams;
+    
+    const imageUrl = params.get('url');
+    const format = params.get('format') || 'webp';
+    const width = params.get('w') ? parseInt(params.get('w')!) : undefined;
+    const height = params.get('h') ? parseInt(params.get('h')!) : undefined;
+    const quality = params.get('q') ? parseInt(params.get('q')!) : 85;
+
+    if (!imageUrl) {
+      return new Response('Missing url parameter', { 
+        status: 400, 
+        headers: corsHeaders 
+      });
+    }
+
+    console.log('Transforming image:', { imageUrl, format, width, height, quality });
+
+    // Fetch the original image
+    const imageResponse = await fetch(imageUrl);
+    
+    if (!imageResponse.ok) {
+      throw new Error(`Failed to fetch image: ${imageResponse.status}`);
+    }
+
+    const originalBuffer = await imageResponse.arrayBuffer();
+    
+    // Check if we can process this format
+    const contentType = imageResponse.headers.get('content-type') || '';
+    const isProcessableImage = contentType.includes('image/') && 
+      (contentType.includes('jpeg') || contentType.includes('jpg') || 
+       contentType.includes('png') || contentType.includes('webp'));
+
+    // If it's not a processable image or already in the desired format, return as-is
+    if (!isProcessableImage || (format === 'original')) {
+      return new Response(originalBuffer, {
+        headers: {
+          ...corsHeaders,
+          ...cacheHeaders,
+          'Content-Type': contentType,
+        },
+      });
+    }
+
+    // Use Deno's built-in image processing
+    let processedBuffer: ArrayBuffer;
+    let outputContentType: string;
+
+    try {
+      // Convert image using Canvas API (available in Deno Deploy)
+      const blob = new Blob([originalBuffer], { type: contentType });
+      const bitmap = await createImageBitmap(blob);
+      
+      // Calculate dimensions
+      const targetWidth = width || bitmap.width;
+      const targetHeight = height || bitmap.height;
+      
+      // Create canvas
+      const canvas = new OffscreenCanvas(targetWidth, targetHeight);
+      const ctx = canvas.getContext('2d')!;
+      
+      // Draw and resize image
+      ctx.drawImage(bitmap, 0, 0, targetWidth, targetHeight);
+      
+      // Convert to desired format
+      let mimeType: string;
+      switch (format.toLowerCase()) {
+        case 'webp':
+          mimeType = 'image/webp';
+          break;
+        case 'avif':
+          mimeType = 'image/avif';
+          break;
+        case 'jpeg':
+        case 'jpg':
+          mimeType = 'image/jpeg';
+          break;
+        case 'png':
+          mimeType = 'image/png';
+          break;
+        default:
+          mimeType = 'image/webp'; // Default to WebP
+      }
+
+      const convertedBlob = await canvas.convertToBlob({
+        type: mimeType,
+        quality: quality / 100,
+      });
+      
+      processedBuffer = await convertedBlob.arrayBuffer();
+      outputContentType = mimeType;
+      
+      console.log('Image processed successfully:', {
+        originalSize: originalBuffer.byteLength,
+        processedSize: processedBuffer.byteLength,
+        compressionRatio: ((1 - processedBuffer.byteLength / originalBuffer.byteLength) * 100).toFixed(1) + '%'
+      });
+
+    } catch (processError) {
+      console.warn('Image processing failed, returning original:', processError);
+      // Fallback to original image if processing fails
+      processedBuffer = originalBuffer;
+      outputContentType = contentType;
+    }
+
+    return new Response(processedBuffer, {
+      headers: {
+        ...corsHeaders,
+        ...cacheHeaders,
+        'Content-Type': outputContentType,
+      },
+    });
+
+  } catch (error) {
+    console.error('Error in image-transform function:', error);
+    return new Response(`Error processing image: ${error.message}`, {
+      status: 500,
+      headers: corsHeaders,
+    });
+  }
+});

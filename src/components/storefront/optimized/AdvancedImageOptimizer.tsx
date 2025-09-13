@@ -37,29 +37,23 @@ export const AdvancedImageOptimizer: React.FC<AdvancedImageOptimizerProps> = ({
   const imgRef = useRef<HTMLImageElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Generate responsive srcSet with multiple resolutions
+  // Generate responsive srcSet with multiple resolutions using transformation endpoint
   const generateResponsiveSrcSet = useCallback((originalSrc: string, format?: string) => {
-    const baseUrl = originalSrc.split('.').slice(0, -1).join('.');
-    const extension = format || originalSrc.split('.').pop();
+    const baseUrl = 'https://fhqwacmokbtbspkxjixf.supabase.co/functions/v1/image-transform';
+    const targetFormat = format || 'webp';
     
     // Generate multiple resolutions for responsive images
     const resolutions = [400, 600, 800, 1200, 1600, 2000];
     return resolutions
-      .map(res => `${baseUrl}_${res}w.${extension} ${res}w`)
+      .map(res => `${baseUrl}?url=${encodeURIComponent(originalSrc)}&format=${targetFormat}&w=${res}&q=85 ${res}w`)
       .join(', ');
   }, []);
 
-  // Generate modern format sources with responsive srcSet
+  // Generate modern format sources with responsive srcSet using transformation endpoint
   const generateModernSources = useCallback(() => {
     if (!src) return null;
 
-    const baseUrl = src.split('.').slice(0, -1).join('.');
-    const extension = src.split('.').pop()?.toLowerCase();
-
-    // Only generate for common raster formats
-    if (!['jpg', 'jpeg', 'png'].includes(extension || '')) {
-      return null;
-    }
+    const transformBaseUrl = 'https://fhqwacmokbtbspkxjixf.supabase.co/functions/v1/image-transform';
 
     return (
       <>
@@ -75,10 +69,10 @@ export const AdvancedImageOptimizer: React.FC<AdvancedImageOptimizerProps> = ({
           type="image/webp" 
           sizes={sizes} 
         />
-        {/* Original format fallback with responsive srcSet */}
+        {/* Original format fallback */}
         <source 
-          srcSet={generateResponsiveSrcSet(src)} 
-          type={`image/${extension}`}
+          srcSet={generateResponsiveSrcSet(src, 'original')} 
+          type="image/*"
           sizes={sizes} 
         />
       </>
@@ -196,7 +190,7 @@ export const AdvancedImageOptimizer: React.FC<AdvancedImageOptimizerProps> = ({
           {generateModernSources()}
           <img
             ref={imgRef}
-            src={src}
+            src={`https://fhqwacmokbtbspkxjixf.supabase.co/functions/v1/image-transform?url=${encodeURIComponent(src)}&format=webp&q=85`}
             alt={alt}
             width={width}
             height={height}
@@ -206,7 +200,7 @@ export const AdvancedImageOptimizer: React.FC<AdvancedImageOptimizerProps> = ({
             loading={isCritical ? 'eager' : 'lazy'}
             decoding="async"
             sizes={sizes}
-            srcSet={generateResponsiveSrcSet(src)}
+            srcSet={generateResponsiveSrcSet(src, 'webp')}
             onLoad={handleLoad}
             onError={handleError}
           />
