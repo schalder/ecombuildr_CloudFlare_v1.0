@@ -167,22 +167,21 @@ export const UrgencyTimer: React.FC<UrgencyTimerProps> = ({
       
       {/* Time boxes */}
       <div className="flex items-center gap-2">
-        {timeLeft.hours > 0 && !isResetting && (
-          <div className="flex flex-col items-center gap-1">
-            <div 
-              className="px-3 py-2 rounded-lg text-lg font-bold min-w-[3rem] text-center"
-              style={{ 
-                backgroundColor,
-                color: textColor
-              }}
-            >
-              {formatTime(timeLeft.hours)}
-            </div>
-            <span className="text-xs text-muted-foreground">Hours</span>
+        {/* Always show hours */}
+        <div className="flex flex-col items-center gap-1">
+          <div 
+            className={`px-3 py-2 rounded-lg text-lg font-bold min-w-[3rem] text-center ${isResetting ? 'animate-pulse' : ''}`}
+            style={{ 
+              backgroundColor,
+              color: textColor
+            }}
+          >
+            {isResetting ? "00" : formatTime(timeLeft.hours)}
           </div>
-        )}
+          <span className="text-xs text-muted-foreground">Hours</span>
+        </div>
         
-        {timeLeft.hours > 0 && !isResetting && <span className="text-muted-foreground">:</span>}
+        <span className="text-muted-foreground">:</span>
         
         <div className="flex flex-col items-center gap-1">
           <div 
