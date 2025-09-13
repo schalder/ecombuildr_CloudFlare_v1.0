@@ -27,7 +27,7 @@ interface PixelAnalytics {
   }>;
 }
 
-export const useFacebookPixelAnalytics = (storeId: string, dateRangeDays: number, websiteId?: string, funnelSlug?: string) => {
+export const useFacebookPixelAnalytics = (storeId: string, dateRangeDays: number, websiteId?: string, funnelSlug?: string, providerFilter: 'facebook' | 'all' = 'facebook') => {
   const [analytics, setAnalytics] = useState<PixelAnalytics | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -72,9 +72,17 @@ export const useFacebookPixelAnalytics = (storeId: string, dateRangeDays: number
           return;
         }
 
+        // Filter events based on provider filter
+        const filteredEvents = providerFilter === 'facebook' 
+          ? (events || []).filter(event => {
+              const eventData = event.event_data as any;
+              return eventData?._providers?.facebook?.attempted === true;
+            })
+          : (events || []);
+
         // Process events data
         const eventCounts = {
-          totalEvents: events?.length || 0,
+          totalEvents: filteredEvents.length,
           pageViews: 0,
           viewContent: 0,
           addToCart: 0,
@@ -88,7 +96,7 @@ export const useFacebookPixelAnalytics = (storeId: string, dateRangeDays: number
         const productIds = new Set<string>();
 
         // First pass: collect all product IDs and count events
-        events?.forEach((event) => {
+        filteredEvents.forEach((event) => {
           const eventType = event.event_type;
           const eventData = event.event_data as any || {};
           const eventDate = new Date(event.created_at).toISOString().split('T')[0];
@@ -174,7 +182,7 @@ export const useFacebookPixelAnalytics = (storeId: string, dateRangeDays: number
         }
 
         // Second pass: process events with proper product names
-        events?.forEach((event) => {
+        filteredEvents.forEach((event) => {
           const eventType = event.event_type;
           const eventData = event.event_data as any || {};
 
@@ -254,7 +262,7 @@ export const useFacebookPixelAnalytics = (storeId: string, dateRangeDays: number
   useEffect(() => {
     if (!user || !storeId) return;
     fetchAnalytics();
-  }, [user, storeId, websiteId, funnelSlug, dateRangeDays]);
+  }, [user, storeId, websiteId, funnelSlug, dateRangeDays, providerFilter]);
 
   const refetch = () => {
     return fetchAnalytics();

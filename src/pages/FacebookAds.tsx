@@ -28,7 +28,8 @@ export default function FacebookAds() {
     store?.id || '',
     parseInt(dateRange, 10),
     selectedWebsiteId === 'all' ? undefined : selectedWebsiteId,
-    selectedFunnelId === 'all' ? undefined : funnels.find(f => f.id === selectedFunnelId)?.slug
+    selectedFunnelId === 'all' ? undefined : funnels.find(f => f.id === selectedFunnelId)?.slug,
+    'facebook' // Only show events that were actually sent to Facebook
   );
 
   // Get pixel ID based on selection - only website/funnel level pixels
@@ -82,13 +83,23 @@ export default function FacebookAds() {
             <div>
               <h1 className="text-xl font-semibold">Facebook Pixel Analytics</h1>
               {hasPixelId ? (
-                <Badge variant="secondary" className="mt-1">
-                  Pixel ID: {displayPixelId}
-                </Badge>
+                <div className="flex items-center gap-2 mt-1">
+                  <Badge variant="secondary">
+                    Pixel ID: {displayPixelId}
+                  </Badge>
+                  <span className="text-xs text-muted-foreground">
+                    Showing events sent to Facebook
+                  </span>
+                </div>
               ) : (
-                <Badge variant="destructive" className="mt-1">
-                  No Pixel Configured
-                </Badge>
+                <div className="flex items-center gap-2 mt-1">
+                  <Badge variant="destructive">
+                    No Pixel Configured
+                  </Badge>
+                  <span className="text-xs text-muted-foreground">
+                    No Facebook events will be tracked
+                  </span>
+                </div>
               )}
             </div>
           </div>

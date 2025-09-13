@@ -36,7 +36,7 @@ interface EcommerceEvent {
 }
 
 export const usePixelTracking = (pixelConfig?: PixelConfig, storeId?: string, websiteId?: string, funnelId?: string) => {
-  const storePixelEvent = useCallback(async (eventType: string, eventData: any) => {
+  const storePixelEvent = useCallback(async (eventType: string, eventData: any, providers?: { facebook?: { configured: boolean; attempted: boolean; success: boolean }; google?: { configured: boolean; attempted: boolean; success: boolean } }) => {
     if (!storeId) return;
     
     try {
@@ -47,11 +47,17 @@ export const usePixelTracking = (pixelConfig?: PixelConfig, storeId?: string, we
         sessionStorage.setItem('session_id', sessionId);
       }
       
+      // Add provider metadata to event data
+      const enhancedEventData = {
+        ...eventData,
+        _providers: providers || {}
+      };
+      
       const eventRecord = {
         store_id: storeId,
         website_id: websiteId || null,
         event_type: eventType,
-        event_data: eventData,
+        event_data: enhancedEventData,
         session_id: sessionId,
         page_url: window.location.href,
         referrer: document.referrer || null,
@@ -65,11 +71,11 @@ export const usePixelTracking = (pixelConfig?: PixelConfig, storeId?: string, we
       
       // Add funnel context if available
       if (funnelId) {
-        eventRecord.event_data = { ...eventData, funnel_id: funnelId };
+        eventRecord.event_data = { ...enhancedEventData, funnel_id: funnelId };
       }
 
       await supabase.from('pixel_events').insert(eventRecord);
-      logger.debug('[PixelTracking] Stored event in database:', eventType, eventData, { websiteId, funnelId });
+      logger.debug('[PixelTracking] Stored event in database:', eventType, enhancedEventData, { websiteId, funnelId });
     } catch (error) {
       logger.warn('[PixelTracking] Failed to store event:', error);
     }
@@ -86,13 +92,26 @@ export const usePixelTracking = (pixelConfig?: PixelConfig, storeId?: string, we
       console.warn('[PixelTracking] trackEvent called without storeId - events will not be stored in database');
     }
 
-    // Store event in database (only if storeId is provided)
-    storePixelEvent(eventName, eventData);
+    // Track provider attempts and success
+    const providers = {
+      facebook: {
+        configured: !!pixelConfig?.facebook_pixel_id,
+        attempted: false,
+        success: false
+      },
+      google: {
+        configured: !!(pixelConfig?.google_analytics_id || pixelConfig?.google_ads_id),
+        attempted: false,
+        success: false
+      }
+    };
 
     // Facebook Pixel tracking - fire if fbq is available (regardless of pixelConfig)
     if (window.fbq) {
+      providers.facebook.attempted = true;
       try {
         window.fbq('track', eventName, eventData);
+        providers.facebook.success = true;
         logger.debug('[PixelTracking] Facebook event:', eventName, eventData);
       } catch (error) {
         logger.warn('[PixelTracking] Facebook tracking error:', error);
@@ -101,16 +120,21 @@ export const usePixelTracking = (pixelConfig?: PixelConfig, storeId?: string, we
 
     // Google Analytics 4 tracking
     if ((pixelConfig?.google_analytics_id || pixelConfig?.google_ads_id) && window.gtag) {
+      providers.google.attempted = true;
       try {
         window.gtag('event', eventName.toLowerCase().replace(/([A-Z])/g, '_$1'), {
           ...eventData,
           send_to: pixelConfig?.google_analytics_id,
         });
+        providers.google.success = true;
         logger.debug('[PixelTracking] Google event:', eventName, eventData);
       } catch (error) {
         logger.warn('[PixelTracking] Google tracking error:', error);
       }
     }
+
+    // Store event in database with provider metadata (only if storeId is provided)
+    storePixelEvent(eventName, eventData, providers);
   }, [pixelConfig, storePixelEvent]);
 
   const trackViewContent = useCallback((product: {
@@ -261,26 +285,53 @@ export const usePixelTracking = (pixelConfig?: PixelConfig, storeId?: string, we
       return;
     }
 
-    // Store PageView event in database
     const eventData = {
       page_title: data?.page_title || document.title,
       page_location: data?.page_location || window.location.href,
       referrer: document.referrer || null,
     };
-    storePixelEvent('PageView', eventData);
+
+    // Track provider attempts and success
+    const providers = {
+      facebook: {
+        configured: !!pixelConfig?.facebook_pixel_id,
+        attempted: false,
+        success: false
+      },
+      google: {
+        configured: !!(pixelConfig?.google_analytics_id || pixelConfig?.google_ads_id),
+        attempted: false,
+        success: false
+      }
+    };
 
     // Facebook Pixel - fire if fbq is available
     if (window.fbq) {
-      window.fbq('track', 'PageView');
+      providers.facebook.attempted = true;
+      try {
+        window.fbq('track', 'PageView');
+        providers.facebook.success = true;
+      } catch (error) {
+        logger.warn('[PixelTracking] Facebook PageView tracking error:', error);
+      }
     }
 
     // Google Analytics 4
     if ((pixelConfig?.google_analytics_id || pixelConfig?.google_ads_id) && window.gtag) {
-      window.gtag('event', 'page_view', {
-        page_title: data?.page_title || document.title,
-        page_location: data?.page_location || window.location.href,
-      });
+      providers.google.attempted = true;
+      try {
+        window.gtag('event', 'page_view', {
+          page_title: data?.page_title || document.title,
+          page_location: data?.page_location || window.location.href,
+        });
+        providers.google.success = true;
+      } catch (error) {
+        logger.warn('[PixelTracking] Google PageView tracking error:', error);
+      }
     }
+
+    // Store PageView event in database with provider metadata
+    storePixelEvent('PageView', eventData, providers);
   }, [pixelConfig, storePixelEvent]);
 
   const trackSearch = useCallback((data: {
