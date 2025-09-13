@@ -319,7 +319,7 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
             onClick={() => toggleSection('features')}
             className="flex items-center justify-between w-full text-left font-semibold mb-3"
           >
-            Features
+            Availability
             {expandedSections.features ? (
               <ChevronUp className="h-4 w-4" />
             ) : (
