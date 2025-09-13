@@ -9,6 +9,7 @@ import { Monitor, Smartphone } from 'lucide-react';
 import { PageBuilderElement } from '../../types';
 import { CollapsibleGroup } from './_shared/CollapsibleGroup';
 import { SpacingSliders } from './_shared/SpacingSliders';
+import { useDevicePreview } from '../../contexts/DevicePreviewContext';
 
 interface MediaElementStylesProps {
   element: PageBuilderElement;
@@ -19,8 +20,8 @@ export const MediaElementStyles: React.FC<MediaElementStylesProps> = ({
   element,
   onStyleUpdate,
 }) => {
-  // Responsive controls (desktop/mobile)
-  const [responsiveTab, setResponsiveTab] = React.useState<'desktop' | 'mobile'>('desktop');
+  // Use global device state instead of local state
+  const { deviceType: responsiveTab, setDeviceType: setResponsiveTab } = useDevicePreview();
   const [dimensionsOpen, setDimensionsOpen] = React.useState(true);
   const [backgroundOpen, setBackgroundOpen] = React.useState(false);
   const [borderOpen, setBorderOpen] = React.useState(false);
