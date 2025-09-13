@@ -30,11 +30,11 @@ export const SectionSettings: React.FC<SectionSettingsProps> = ({ section, onUpd
   const { setDeviceType } = useDevicePreview();
   const [customWidthMode, setCustomWidthMode] = useState(!!section.customWidth);
   const [openCards, setOpenCards] = useState({
-    anchor: true,
-    layout: true,
-    background: true,
-    border: true,
-    spacing: true
+    anchor: false,
+    layout: false,
+    background: false,
+    border: false,
+    spacing: false
   });
 
   // Helper functions for responsive width handling specific to sections
@@ -743,11 +743,11 @@ export const RowSettings: React.FC<RowSettingsProps> = ({ row, onUpdate }) => {
   const { setDeviceType } = useDevicePreview();
   const [customWidthMode, setCustomWidthMode] = useState(!!row.customWidth);
   const [openCards, setOpenCards] = useState({
-    anchor: true,
-    layout: true,
-    background: true,
-    border: true,
-    spacing: true
+    anchor: false,
+    layout: false,
+    background: false,
+    border: false,
+    spacing: false
   });
 
   // Helper functions for responsive width handling specific to rows
@@ -1245,12 +1245,12 @@ export const ColumnSettings: React.FC<ColumnSettingsProps> = ({ column, onUpdate
   const { setDeviceType } = useDevicePreview();
   const [customWidthMode, setCustomWidthMode] = useState(!!column.customWidth);
   const [openCards, setOpenCards] = useState({
-    anchor: true,
-    layout: true,
-    background: true,
-    border: true,
-    spacing: true,
-    content: true
+    anchor: false,
+    layout: false,
+    background: false,
+    border: false,
+    spacing: false,
+    content: false
   });
 
   // Helper functions for responsive width handling specific to columns
