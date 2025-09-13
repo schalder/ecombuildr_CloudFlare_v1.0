@@ -5,9 +5,6 @@ import { storefrontRegistry } from '../registry/storefrontRegistry';
 import { BREAKPOINTS, DeviceType } from '@/components/page-builder/utils/responsive';
 import { ensureGoogleFontLoaded } from '@/hooks/useGoogleFontLoader';
 import { CriticalResourceLoader } from '../optimized/CriticalResourceLoader';
-import { ResourcePreloader } from '../optimized/ResourcePreloader';
-import { CriticalCSSInliner } from '../optimized/CriticalCSSInliner';
-import { LayoutStabilizer } from '../optimized/LayoutStabilizer';
 import { FontOptimizer } from '../optimized/FontOptimizer';
 import { ScriptManager } from '../optimized/ScriptManager';
 import { PerformanceMonitor } from '../optimized/PerformanceMonitor';
@@ -198,70 +195,42 @@ export const StorefrontPageBuilder: React.FC<StorefrontPageBuilderProps> = ({
     );
   }
 
-  // Enhanced critical resource extraction for optimization
+  // Extract critical resources for optimization
   const extractCriticalResources = () => {
-    const resources = {
-      heroImage: '',
-      fonts: new Set<string>(),
-      images: [] as string[],
-      criticalImages: [] as string[], // Above-the-fold images
-      preloadRoutes: [] as string[]
-    };
-
-    const extractFromElement = (element: any, sectionIndex: number) => {
-      // Extract hero images (first image in first section)
-      if (element.type === 'image' && sectionIndex === 0 && !resources.heroImage) {
-        if (element.content?.src || element.content?.url) {
-          resources.heroImage = element.content.src || element.content.url;
-          resources.criticalImages.push(element.content.src || element.content.url);
-        }
-      }
-
-      // Extract critical images (first 2 sections)
-      if (element.type === 'image' && sectionIndex < 2 && (element.content?.src || element.content?.url)) {
-        const imageSrc = element.content.src || element.content.url;
-        resources.criticalImages.push(imageSrc);
-        resources.images.push(imageSrc);
-      }
-
-      // Extract all other images for lazy loading
-      if (element.type === 'image' && sectionIndex >= 2 && (element.content?.src || element.content?.url)) {
-        resources.images.push(element.content.src || element.content.url);
-      }
-
-      // Extract fonts from styles with priority
-      if (element.styles) {
-        Object.values(element.styles).forEach((value: any) => {
-          if (typeof value === 'string' && value.includes('"')) {
-            const match = value.match(/"([^"]+)"/);
-            if (match) resources.fonts.add(match[1]);
-          }
-        });
-      }
-
-      // Extract button links for prefetching
-      if (element.type === 'button' && element.content?.href) {
-        const href = element.content.href;
-        if (href.startsWith('/') && !href.includes('#')) {
-          resources.preloadRoutes.push(href);
-        }
-      }
-    };
-
-    data.sections?.forEach((section, sectionIndex) => {
+    const heroImage = data.sections?.[0]?.rows?.[0]?.columns?.[0]?.elements?.find(
+      el => el.type === 'image'
+    )?.content?.src;
+    
+    const usedFonts = new Set<string>();
+    const preloadImages: string[] = [];
+    
+    // Extract first few images for preloading
+    data.sections?.slice(0, 2)?.forEach(section => {
       section.rows?.forEach(row => {
         row.columns?.forEach(column => {
-          column.elements?.forEach(element => extractFromElement(element, sectionIndex));
+          column.elements?.forEach(element => {
+            if (element.type === 'image' && element.content?.src) {
+              preloadImages.push(element.content.src);
+            }
+            
+            // Extract fonts from styles
+            if (element.styles) {
+              Object.values(element.styles).forEach((value: any) => {
+                if (typeof value === 'string' && value.includes('"')) {
+                  const match = value.match(/"([^"]+)"/);
+                  if (match) usedFonts.add(match[1]);
+                }
+              });
+            }
+          });
         });
       });
     });
-
+    
     return {
-      heroImage: resources.heroImage,
-      fonts: Array.from(resources.fonts),
-      images: resources.images,
-      criticalImages: resources.criticalImages.slice(0, 3), // Limit critical images
-      preloadRoutes: [...new Set(resources.preloadRoutes)].slice(0, 5) // Dedupe and limit
+      heroImage,
+      fonts: Array.from(usedFonts),
+      preloadImages: preloadImages.slice(0, 3) // Limit to first 3 images
     };
   };
 
@@ -270,20 +239,10 @@ export const StorefrontPageBuilder: React.FC<StorefrontPageBuilderProps> = ({
   return (
     <>
       {/* Critical resource optimization */}
-      <CriticalResourceLoader
+      <CriticalResourceLoader 
         heroImage={criticalResources.heroImage}
         primaryFonts={criticalResources.fonts}
-        preloadImages={criticalResources.criticalImages}
-      />
-      <ResourcePreloader
-        criticalImages={criticalResources.criticalImages}
-        preloadRoutes={criticalResources.preloadRoutes}
-        enableDNSPrefetch={true}
-      />
-      <CriticalCSSInliner inlineCriticalCSS={true} />
-      <LayoutStabilizer 
-        reserveHeroSpace={!!criticalResources.heroImage}
-        preventFontSwap={true}
+        preloadImages={criticalResources.preloadImages}
       />
       <FontOptimizer fonts={criticalResources.fonts} />
       <ScriptManager customScripts={customScripts} defer={true} />
