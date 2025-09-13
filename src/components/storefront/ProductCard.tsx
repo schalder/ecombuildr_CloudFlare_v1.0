@@ -216,28 +216,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             )}
           </div>
 
-          {/* Stock Status + CTA */}
-          <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            {(() => {
-              // Determine stock status
-              if (!product.track_inventory) {
-                return <span className="text-xs text-emerald-600 font-medium">In Stock</span>;
-              }
-              
-              const inventory = product.inventory_quantity || 0;
-              if (inventory <= 0) {
-                return <span className="text-xs text-red-600 font-medium">Out of Stock</span>;
-              } else if (inventory <= 5) {
-                return <span className="text-xs text-orange-600 font-medium">Low Stock ({inventory} left)</span>;
-              } else {
-                return <span className="text-xs text-emerald-600 font-medium">In Stock</span>;
-              }
-            })()}
+          {/* CTA Button */}
+          <div className="mt-2">
             <Button
               size="sm"
               variant="ghost"
               onClick={() => addToCart(product)}
-              className="h-9 px-3 text-xs w-full sm:w-auto opacity-80 group-hover/card:opacity-100 transition-opacity product-card-button"
+              className="h-9 px-3 text-xs w-full opacity-80 group-hover/card:opacity-100 transition-opacity product-card-button"
             >
               <ShoppingCart className="h-3 w-3 mr-1" />
               {ctaLabel || 'Add to Cart'}
