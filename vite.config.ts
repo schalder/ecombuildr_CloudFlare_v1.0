@@ -140,14 +140,27 @@ export default defineConfig(({ mode }) => ({
       'fast-deep-equal',
       '@react-dnd/invariant',
       '@react-dnd/shallowequal',
-      '@react-dnd/asap'
+      '@react-dnd/asap',
+      // Include recharts and lodash functions to fix CommonJS import issues
+      'recharts',
+      'lodash/get',
+      'lodash/isFunction',
+      'lodash/isArray',
+      'lodash/isObject',
+      'lodash/isNumber',
+      'lodash/isString',
+      'lodash/isEmpty',
+      'lodash/isNil',
+      'lodash/isEqual',
+      'lodash/pick',
+      'lodash/omit',
+      'lodash/merge'
     ],
     exclude: [
-      // Heavy libraries that should be loaded on demand
-      'recharts',
+      // Heavy libraries that should be loaded on demand  
       'html2canvas', 
       'jspdf'
-      // Removed react-dnd from exclude list to fix CommonJS import issues
+      // Moved recharts to include list to fix CommonJS import issues
     ],
   },
 }));
