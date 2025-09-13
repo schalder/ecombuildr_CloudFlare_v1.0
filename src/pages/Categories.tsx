@@ -97,11 +97,12 @@ export default function Categories() {
       cat.description?.toLowerCase().includes(searchTerm.toLowerCase())
     );
     
-    const parents = filtered.filter(cat => !cat.parent_category_id);
+    const filteredIds = new Set(filtered.map(c => c.id));
+    const roots = filtered.filter(cat => !cat.parent_category_id || !filteredIds.has(cat.parent_category_id));
     
-    return parents.map(parent => ({
-      ...parent,
-      subcategories: filtered.filter(cat => cat.parent_category_id === parent.id)
+    return roots.map(root => ({
+      ...root,
+      subcategories: filtered.filter(cat => cat.parent_category_id === root.id)
     }));
   }, [filteredCategories, searchTerm]);
 
@@ -119,17 +120,9 @@ export default function Categories() {
       parent_category_id: formData.parent_category_id === 'none' ? undefined : formData.parent_category_id || undefined
     };
 
-    // Create category with website visibility if specific website is selected
-    createCategory.mutate(categoryData, {
-      onSuccess: (newCategory) => {
-        if (selectedWebsiteId !== 'all' && newCategory) {
-          updateCategoryVisibility.mutate({
-            categoryId: newCategory.id,
-            websiteIds: [selectedWebsiteId]
-          });
-        }
-      }
-    });
+    // Create category with website assignment based on current filter
+    const websiteIds = selectedWebsiteId !== 'all' ? [selectedWebsiteId] : [];
+    createCategory.mutate({ ...categoryData, websiteIds });
 
     // Reset form and close modal
     setFormData({ 
@@ -152,16 +145,12 @@ export default function Categories() {
       parent_category_id: addingSubcategoryTo
     };
 
-    createCategory.mutate(categoryData, {
-      onSuccess: (newCategory) => {
-        if (selectedWebsiteId !== 'all' && newCategory) {
-          updateCategoryVisibility.mutate({
-            categoryId: newCategory.id,
-            websiteIds: [selectedWebsiteId]
-          });
-        }
-      }
-    });
+    // Inherit website(s) from parent if available, else use current filter
+    const parent = categoriesWithWebsites.find(c => c.id === addingSubcategoryTo);
+    const parentVisibility = Array.isArray((parent as any)?.category_website_visibility) ? (parent as any).category_website_visibility : [];
+    const parentWebsiteIds = parentVisibility.map((v: any) => v.website_id);
+    const websiteIds = parentWebsiteIds.length > 0 ? parentWebsiteIds : (selectedWebsiteId !== 'all' ? [selectedWebsiteId] : []);
+    createCategory.mutate({ ...categoryData, websiteIds });
 
     // Reset form and close modal
     setFormData({ 
