@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -376,129 +377,147 @@ export default function Categories() {
           </div>
         )}
 
-        {/* Categories Tree List */}
-        <div className="space-y-4">
-          {hierarchicalCategories.length > 0 ? (
-            hierarchicalCategories.map((category) => (
-              <div key={category.id} className="border rounded-lg p-4 space-y-3">
-                {/* Parent Category */}
-                <div className="flex items-center justify-between group">
-                  <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">{category.name}</span>
-                      {category.description && (
-                        <span className="text-sm text-muted-foreground">• {category.description}</span>
-                      )}
-                    </div>
-                    <Badge variant="outline" className="text-xs">
-                      /{category.slug}
-                    </Badge>
-                    {category.subcategories.length > 0 && (
-                      <Badge variant="secondary" className="text-xs">
-                        {category.subcategories.length} sub
-                      </Badge>
-                    )}
-                  </div>
-                  
-                  <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleAddSubcategory(category.id)}
-                      className="h-8 px-2"
-                    >
-                      <Plus className="h-3 w-3 mr-1" />
-                      Sub
-                    </Button>
-                    
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleEditClick(category)}>
-                          <Edit className="mr-2 h-4 w-4" />
-                          Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleManageVisibility(category)}>
-                          <Eye className="mr-2 h-4 w-4" />
-                          Manage Visibility
-                        </DropdownMenuItem>
-                        <DropdownMenuItem 
-                          onClick={() => handleDeleteCategory(category.id)}
-                          className="text-destructive"
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                </div>
-
-                {/* Subcategories */}
-                {category.subcategories.length > 0 && (
-                  <div className="pl-6 space-y-2 border-l-2 border-muted">
-                    {category.subcategories.map((subcat) => (
-                      <div key={subcat.id} className="flex items-center justify-between group py-2">
-                        <div className="flex items-center gap-3">
-                          <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm">{subcat.name}</span>
-                            {subcat.description && (
-                              <span className="text-xs text-muted-foreground">• {subcat.description}</span>
-                            )}
-                          </div>
-                          <Badge variant="outline" className="text-xs">
-                            /{subcat.slug}
-                          </Badge>
+        {/* Categories Table */}
+        {hierarchicalCategories.length > 0 ? (
+          <div className="border rounded-lg">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Description</TableHead>
+                  <TableHead>Slug</TableHead>
+                  <TableHead className="w-[120px]">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {hierarchicalCategories.map((category) => (
+                  <>
+                    {/* Parent Category Row */}
+                    <TableRow key={category.id} className="group">
+                      <TableCell className="font-medium">
+                        <div className="flex items-center gap-2">
+                          {category.name}
+                          {category.subcategories.length > 0 && (
+                            <Badge variant="secondary" className="text-xs">
+                              {category.subcategories.length} sub
+                            </Badge>
+                          )}
                         </div>
-                        
-                        <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {category.description || '—'}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="font-mono text-xs">
+                          /{category.slug}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleAddSubcategory(category.id)}
+                            className="h-8 px-2"
+                            title="Add Subcategory"
+                          >
+                            <Plus className="h-3 w-3" />
+                          </Button>
+                          
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                                <MoreHorizontal className="h-3 w-3" />
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => handleEditClick(category)}>
+                                <Edit className="mr-2 h-4 w-4" />
+                                Edit
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleManageVisibility(category)}>
+                                <Eye className="mr-2 h-4 w-4" />
+                                Manage Visibility
+                              </DropdownMenuItem>
+                              <DropdownMenuItem 
+                                onClick={() => handleDeleteCategory(category.id)}
+                                className="text-destructive"
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                    
+                    {/* Subcategory Rows */}
+                    {category.subcategories.map((subcat) => (
+                      <TableRow key={subcat.id} className="group bg-muted/25">
+                        <TableCell className="font-medium">
+                          <div className="flex items-center gap-2 pl-6">
+                            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                            {subcat.name}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {subcat.description || '—'}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="font-mono text-xs">
+                            /{subcat.slug}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                <MoreHorizontal className="h-4 w-4" />
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem onClick={() => handleEditClick(subcat)}>
-                                <Edit className="mr-2 h-3 w-3" />
+                                <Edit className="mr-2 h-4 w-4" />
                                 Edit
                               </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => handleManageVisibility(subcat)}>
-                                <Eye className="mr-2 h-3 w-3" />
+                                <Eye className="mr-2 h-4 w-4" />
                                 Manage Visibility
                               </DropdownMenuItem>
                               <DropdownMenuItem 
                                 onClick={() => handleDeleteCategory(subcat.id)}
                                 className="text-destructive"
                               >
-                                <Trash2 className="mr-2 h-3 w-3" />
+                                <Trash2 className="mr-2 h-4 w-4" />
                                 Delete
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
-                        </div>
-                      </div>
+                        </TableCell>
+                      </TableRow>
                     ))}
-                  </div>
-                )}
-              </div>
-            ))
-          ) : (
-            <div className="text-center py-12">
-              <p className="text-muted-foreground">
-                {selectedWebsiteId === 'all' 
-                  ? 'No categories found. Select a website and create your first category.'
-                  : 'No categories found for this website. Create your first category to get started.'
+                  </>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <div className="text-muted-foreground">
+              <p className="text-lg font-medium mb-2">No categories found</p>
+              <p className="text-sm">
+                {searchTerm ? 
+                  'No categories match your search. Try a different search term.' : 
+                  (selectedWebsiteId === 'all' 
+                    ? 'Select a website and create your first category.'
+                    : 'Create your first category to organize your products.'
+                  )
                 }
               </p>
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Add Subcategory Dialog */}
         <Dialog open={isAddSubcategoryModalOpen} onOpenChange={setIsAddSubcategoryModalOpen}>
