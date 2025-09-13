@@ -683,7 +683,7 @@ export default function AddProduct() {
                             <Label htmlFor="call_phone">Phone Number</Label>
                             <Input 
                               id="call_phone" 
-                              placeholder="e.g. +8801XXXXXXXXX" 
+                              placeholder="e.g. +8801XXXXXXXXXX" 
                               value={actionButtons.call.phone || ''}
                               onChange={(e) => setActionButtons(prev => ({ ...prev, call: { ...prev.call, phone: e.target.value } }))}
                               className="mt-2"
@@ -719,7 +719,7 @@ export default function AddProduct() {
                           <Label htmlFor="whatsapp_url">WhatsApp URL</Label>
                           <Input 
                             id="whatsapp_url" 
-                            placeholder="e.g. https://wa.me/8801XXXXXXXXX?text=Hello" 
+                            placeholder="e.g. https://wa.me/8801XXXXXXXXXX?text=Hello" 
                             value={actionButtons.whatsapp.url || ''}
                             onChange={(e) => setActionButtons(prev => ({ ...prev, whatsapp: { ...prev.whatsapp, url: e.target.value } }))}
                             className="mt-2"
