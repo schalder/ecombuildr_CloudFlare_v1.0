@@ -110,6 +110,23 @@ export const ProductsPageElement: React.FC<{
   }, [deviceType, (element as any).styles?.buttonStyles]);
 
   const elementId = element.id || 'products-page-element';
+  
+  // Helper function to get all descendant categories for a given category
+  const getAllCategoryDescendants = (categoryId: string, allCategories: Category[]): string[] => {
+    const descendants = [categoryId]; // Include the category itself
+    
+    const findChildren = (parentId: string) => {
+      const children = allCategories.filter(cat => cat.parent_category_id === parentId);
+      children.forEach(child => {
+        descendants.push(child.id);
+        findChildren(child.id); // Recursively find grandchildren
+      });
+    };
+    
+    findChildren(categoryId);
+    return descendants;
+  };
+  
   const dynamicCSS = useMemo(() => {
     const bs = (element as any).styles?.buttonStyles || {};
     
@@ -430,10 +447,20 @@ export const ProductsPageElement: React.FC<{
         }
 
         if (filters.categories.length > 0) {
-          const categoryIds = categories
-            .filter((c) => filters.categories.includes(c.slug))
-            .map((c) => c.id);
-          if (categoryIds.length) query = query.in('category_id', categoryIds);
+          const selectedCategories = categories
+            .filter((c) => filters.categories.includes(c.slug));
+          
+          // Get all category IDs including descendants for each selected category
+          const allCategoryIds: string[] = [];
+          selectedCategories.forEach(category => {
+            const descendantIds = getAllCategoryDescendants(category.id, categories);
+            allCategoryIds.push(...descendantIds);
+          });
+          
+          // Remove duplicates
+          const uniqueCategoryIds = [...new Set(allCategoryIds)];
+          
+          if (uniqueCategoryIds.length) query = query.in('category_id', uniqueCategoryIds);
         }
 
         // Apply collection filter
