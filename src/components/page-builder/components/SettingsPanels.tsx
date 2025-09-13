@@ -18,6 +18,7 @@ import { CompactMediaSelector } from './CompactMediaSelector';
 import { CollapsibleGroup } from './ElementStyles/_shared/CollapsibleGroup';
 import { SpacingSliders } from './ElementStyles/_shared/SpacingSliders';
 import { getEffectiveResponsiveValue, hasResponsiveOverride, getInheritanceSource, getInheritanceLabel, clearResponsiveOverride } from '../utils/responsiveHelpers';
+import { useDevicePreview } from '../contexts/DevicePreviewContext';
 
 // Section Settings Panel
 interface SectionSettingsProps {
@@ -26,6 +27,7 @@ interface SectionSettingsProps {
 }
 
 export const SectionSettings: React.FC<SectionSettingsProps> = ({ section, onUpdate }) => {
+  const { setDeviceType } = useDevicePreview();
   const [customWidthMode, setCustomWidthMode] = useState(!!section.customWidth);
   const [openCards, setOpenCards] = useState({
     anchor: true,
@@ -430,7 +432,7 @@ export const SectionSettings: React.FC<SectionSettingsProps> = ({ section, onUpd
           <Separator className="my-4" />
           <div className="space-y-4">
             <Label className="text-sm font-medium">Responsive Overrides</Label>
-            <Tabs defaultValue="desktop" className="w-full">
+            <Tabs defaultValue="desktop" className="w-full" onValueChange={(value) => setDeviceType(value as 'desktop' | 'tablet' | 'mobile')}>
               <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="desktop">Desktop</TabsTrigger>
                 <TabsTrigger value="tablet">Tablet</TabsTrigger>
@@ -738,6 +740,7 @@ interface RowSettingsProps {
 }
 
 export const RowSettings: React.FC<RowSettingsProps> = ({ row, onUpdate }) => {
+  const { setDeviceType } = useDevicePreview();
   const [customWidthMode, setCustomWidthMode] = useState(!!row.customWidth);
   const [openCards, setOpenCards] = useState({
     anchor: true,
@@ -931,7 +934,7 @@ export const RowSettings: React.FC<RowSettingsProps> = ({ row, onUpdate }) => {
           
           <div className="space-y-4">
             <Label className="text-sm font-medium">Responsive Overrides</Label>
-            <Tabs defaultValue="desktop" className="w-full">
+            <Tabs defaultValue="desktop" className="w-full" onValueChange={(value) => setDeviceType(value as 'desktop' | 'tablet' | 'mobile')}>
               <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="desktop">Desktop</TabsTrigger>
                 <TabsTrigger value="tablet">Tablet</TabsTrigger>
@@ -1239,6 +1242,7 @@ interface ColumnSettingsProps {
 }
 
 export const ColumnSettings: React.FC<ColumnSettingsProps> = ({ column, onUpdate }) => {
+  const { setDeviceType } = useDevicePreview();
   const [customWidthMode, setCustomWidthMode] = useState(!!column.customWidth);
   const [openCards, setOpenCards] = useState({
     anchor: true,
@@ -1399,7 +1403,7 @@ export const ColumnSettings: React.FC<ColumnSettingsProps> = ({ column, onUpdate
           
           <div className="space-y-4">
             <Label className="text-sm font-medium">Responsive Overrides</Label>
-            <Tabs defaultValue="desktop" className="w-full">
+            <Tabs defaultValue="desktop" className="w-full" onValueChange={(value) => setDeviceType(value as 'desktop' | 'tablet' | 'mobile')}>
               <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="desktop">Desktop</TabsTrigger>
                 <TabsTrigger value="tablet">Tablet</TabsTrigger>
