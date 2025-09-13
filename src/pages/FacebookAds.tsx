@@ -76,73 +76,73 @@ export default function FacebookAds() {
   return (
     <DashboardLayout title="Facebook Pixel Analytics" description="Track your Facebook pixel events and conversions">
       <div className="space-y-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="flex items-center space-x-3">
-            <div className="p-2 bg-blue-500/10 rounded-lg">
-              {showFacebookOnly ? (
-                <Facebook className="h-6 w-6 text-blue-600" />
-              ) : (
-                <BarChart3 className="h-6 w-6 text-green-600" />
-              )}
-            </div>
-            <div>
-              <h1 className="text-xl font-semibold">
-                {showFacebookOnly ? 'Facebook Pixel Analytics' : 'Internal Analytics'}
-              </h1>
-              {showFacebookOnly ? (
-                hasPixelId ? (
-                  <div className="flex items-center gap-2 mt-1">
-                    <Badge variant="secondary">
-                      Pixel ID: {displayPixelId}
-                    </Badge>
-                    <span className="text-xs text-muted-foreground">
-                      Showing events sent to Facebook
-                    </span>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2 mt-1">
-                    <Badge variant="destructive">
-                      No Pixel Configured
-                    </Badge>
-                    <span className="text-xs text-muted-foreground">
-                      No Facebook events will be tracked
-                    </span>
-                  </div>
-                )
-              ) : (
+        {/* Page Title */}
+        <div className="flex items-center space-x-3">
+          <div className="p-2 bg-blue-500/10 rounded-lg">
+            {showFacebookOnly ? (
+              <Facebook className="h-6 w-6 text-blue-600" />
+            ) : (
+              <BarChart3 className="h-6 w-6 text-green-600" />
+            )}
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold">
+              {showFacebookOnly ? 'Facebook Pixel Analytics' : 'Internal Analytics'}
+            </h1>
+            {showFacebookOnly ? (
+              hasPixelId ? (
                 <div className="flex items-center gap-2 mt-1">
-                  <Badge variant="outline">
-                    All Events
+                  <Badge variant="secondary">
+                    Pixel ID: {displayPixelId}
                   </Badge>
-                  <span className="text-xs text-muted-foreground">
-                    Showing all tracked interactions
+                  <span className="text-sm text-muted-foreground">
+                    Showing events sent to Facebook
                   </span>
                 </div>
-              )}
-            </div>
-          </div>
-          
-          <div className="flex items-center space-x-4">
-            {/* Data Source Toggle */}
-            <div className="flex items-center space-x-3 px-3 py-2 border rounded-lg">
-              <span className="text-sm font-medium">Data Source:</span>
-              <div className="flex items-center space-x-2">
-                <span className={`text-xs ${!showFacebookOnly ? 'text-foreground' : 'text-muted-foreground'}`}>
-                  Internal
-                </span>
-                <Switch
-                  checked={showFacebookOnly}
-                  onCheckedChange={setShowFacebookOnly}
-                />
-                <span className={`text-xs ${showFacebookOnly ? 'text-foreground' : 'text-muted-foreground'}`}>
-                  Facebook
+              ) : (
+                <div className="flex items-center gap-2 mt-1">
+                  <Badge variant="destructive">
+                    No Pixel Configured
+                  </Badge>
+                  <span className="text-sm text-muted-foreground">
+                    No Facebook events will be tracked
+                  </span>
+                </div>
+              )
+            ) : (
+              <div className="flex items-center gap-2 mt-1">
+                <Badge variant="outline">
+                  All Events
+                </Badge>
+                <span className="text-sm text-muted-foreground">
+                  Showing all tracked interactions
                 </span>
               </div>
+            )}
+          </div>
+        </div>
+
+        {/* Controls Row */}
+        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between bg-muted/30 p-4 rounded-lg">
+          {/* Data Source Toggle */}
+          <div className="flex items-center space-x-3 px-3 py-2 bg-background border rounded-lg">
+            <span className="text-sm font-medium">Data Source:</span>
+            <div className="flex items-center space-x-2">
+              <span className={`text-xs ${!showFacebookOnly ? 'text-foreground' : 'text-muted-foreground'}`}>
+                Internal
+              </span>
+              <Switch
+                checked={showFacebookOnly}
+                onCheckedChange={setShowFacebookOnly}
+              />
+              <span className={`text-xs ${showFacebookOnly ? 'text-foreground' : 'text-muted-foreground'}`}>
+                Facebook
+              </span>
             </div>
           </div>
-          
-          <div className="flex items-center space-x-3">
+
+          {/* Filter Controls */}
+          <div className="flex flex-wrap items-center gap-3">
             {!websitesLoading && !funnelsLoading && (websites.length > 0 || funnels.length > 0) && (
               <>
                 <Select value={selectedWebsiteId} onValueChange={(value) => { setSelectedWebsiteId(value); setSelectedFunnelId('all'); }}>
