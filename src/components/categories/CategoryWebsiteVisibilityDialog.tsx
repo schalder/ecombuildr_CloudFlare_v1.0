@@ -26,9 +26,13 @@ export const CategoryWebsiteVisibilityDialog = ({
   const [selectedWebsites, setSelectedWebsites] = useState<string[]>([]);
 
   useEffect(() => {
-    if (category && category.category_website_visibility) {
-      const visibleWebsiteIds = category.category_website_visibility.map((v: any) => v.website_id);
+    if (category) {
+      const raw = (category as any).category_website_visibility;
+      const list = Array.isArray(raw) ? raw : [];
+      const visibleWebsiteIds = list.map((v: any) => v.website_id);
       setSelectedWebsites(visibleWebsiteIds);
+    } else {
+      setSelectedWebsites([]);
     }
   }, [category]);
 

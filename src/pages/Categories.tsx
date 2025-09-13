@@ -137,13 +137,14 @@ export default function Categories() {
     
     // Group categories by their website visibility
     categoriesWithWebsites.forEach(category => {
-      const visibleWebsites = category.category_website_visibility || [];
+      const rawVisibility = (category as any).category_website_visibility;
+      const visibleWebsites = Array.isArray(rawVisibility) ? rawVisibility : [];
       
       if (visibleWebsites.length === 0) {
         // Category not visible on any website - show in "Not Visible" group
         if (!result['Not Visible']) result['Not Visible'] = [];
         result['Not Visible'].push(category);
-      } else if (visibleWebsites.length === websites.length) {
+      } else if (websites.length > 0 && visibleWebsites.length === websites.length) {
         // Category visible on all websites
         if (!result['All Websites']) result['All Websites'] = [];
         result['All Websites'].push(category);
