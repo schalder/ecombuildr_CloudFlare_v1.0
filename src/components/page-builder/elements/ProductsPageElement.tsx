@@ -173,12 +173,12 @@ export const ProductsPageElement: React.FC<{
   const getGridClasses = () => {
     // Always emit responsive classes so CSS handles breakpoints on live pages
     const desktopColsRaw = Number(element.content.columns ?? 4);
-    const desktop = Math.max(1, Math.min(4, isNaN(desktopColsRaw) ? 4 : desktopColsRaw));
+    const desktop = Math.max(1, Math.min(6, isNaN(desktopColsRaw) ? 4 : desktopColsRaw));
 
     const tabletConfigured = (element.content as any).tabletColumns as number | undefined;
     let tablet = typeof tabletConfigured === 'number'
       ? Math.max(1, Math.min(4, tabletConfigured))
-      : (desktop >= 4 ? 3 : 2);
+      : (desktop >= 4 ? 3 : Math.max(1, desktop - 1));
     // Preserve builder behavior: when a single column is forced in tablet layout
     if (columnCount === 1) tablet = 1;
 
@@ -192,6 +192,8 @@ export const ProductsPageElement: React.FC<{
         case 2: return 'grid-cols-2';
         case 3: return 'grid-cols-3';
         case 4: return 'grid-cols-4';
+        case 5: return 'grid-cols-5';
+        case 6: return 'grid-cols-6';
         default: return 'grid-cols-2';
       }
     };
