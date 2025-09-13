@@ -92,7 +92,7 @@ export const UrgencyTimer: React.FC<UrgencyTimerProps> = ({
   }
 
   return (
-    <div className={`flex flex-col items-center gap-3 py-4 animate-fade-in ${className}`}>
+    <div className={`flex flex-col items-center sm:items-start gap-3 py-2 animate-fade-in ${className}`}>
       {/* Timer text with icon */}
       <div className="flex items-center gap-2 text-foreground">
         <Clock className="w-4 h-4" />
