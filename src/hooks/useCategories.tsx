@@ -119,6 +119,11 @@ export const useCategories = (storeId?: string) => {
       websiteIds?: string[];
     }) => {
       if (!storeId) throw new Error('Store ID is required');
+      
+      // Require website selection - don't add to all websites by default
+      if (websiteIds.length === 0) {
+        throw new Error('Please select at least one website for this category');
+      }
 
       const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
       
@@ -136,33 +141,24 @@ export const useCategories = (storeId?: string) => {
 
       if (categoryError) throw categoryError;
 
-      // Add to all websites by default if no specific websites selected
-      if (websiteIds.length === 0) {
-        const { data: websites } = await supabase
-          .from('websites')
-          .select('id')
-          .eq('store_id', storeId);
+      // Add to selected websites only
+      const visibilityRecords = websiteIds.map(websiteId => ({
+        category_id: categoryData.id,
+        website_id: websiteId
+      }));
+
+      const { error: visibilityError } = await supabase
+        .from('category_website_visibility')
+        .insert(visibilityRecords);
+
+      if (visibilityError) {
+        // If visibility insert fails, clean up the category
+        await supabase.from('categories').delete().eq('id', categoryData.id);
         
-        if (websites && websites.length > 0) {
-          const visibilityRecords = websites.map(w => ({
-            category_id: categoryData.id,
-            website_id: w.id
-          }));
-
-          await supabase
-            .from('category_website_visibility')
-            .insert(visibilityRecords);
+        if (visibilityError.code === '23505') {
+          throw new Error('A category with this name already exists for the selected website');
         }
-      } else {
-        // Add to selected websites
-        const visibilityRecords = websiteIds.map(websiteId => ({
-          category_id: categoryData.id,
-          website_id: websiteId
-        }));
-
-        await supabase
-          .from('category_website_visibility')
-          .insert(visibilityRecords);
+        throw new Error(`Failed to assign category to website: ${visibilityError.message}`);
       }
 
       return categoryData;

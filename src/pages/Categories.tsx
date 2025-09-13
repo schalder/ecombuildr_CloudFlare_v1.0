@@ -150,7 +150,15 @@ export default function Categories() {
     const parent = categoriesWithWebsites.find(c => c.id === addingSubcategoryTo);
     const parentVisibility = Array.isArray((parent as any)?.category_website_visibility) ? (parent as any).category_website_visibility : [];
     const parentWebsiteIds = parentVisibility.map((v: any) => v.website_id);
+    
+    // Prevent creating subcategory without website assignment
     const websiteIds = parentWebsiteIds.length > 0 ? parentWebsiteIds : (selectedWebsiteId !== 'all' ? [selectedWebsiteId] : []);
+    
+    if (websiteIds.length === 0) {
+      alert('Cannot create subcategory: Parent category has no website assignment and no website is selected. Please select a website or assign the parent category to a website first.');
+      return;
+    }
+    
     createCategory.mutate({ ...categoryData, websiteIds });
 
     // Reset form and close modal
