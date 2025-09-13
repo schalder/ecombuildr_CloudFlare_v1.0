@@ -7,8 +7,8 @@ import { StoreProvider } from '@/contexts/StoreContext';
 import { CartProvider } from '@/contexts/CartContext';
 
 // Domain-specific CartProvider wrapper
-const DomainCartProvider: React.FC<{ children: React.ReactNode; storeId?: string }> = ({ children, storeId }) => {
-  return <CartProvider storeId={storeId}>{children}</CartProvider>;
+const DomainCartProvider: React.FC<{ children: React.ReactNode; storeId?: string; websiteId?: string }> = ({ children, storeId, websiteId }) => {
+  return <CartProvider storeId={storeId} websiteIdOverride={websiteId}>{children}</CartProvider>;
 };
 import { AddToCartProvider } from '@/contexts/AddToCartProvider';
 import { AuthProvider } from '@/hooks/useAuth';
@@ -160,7 +160,7 @@ export const DomainRouter: React.FC<DomainRouterProps> = ({ children }) => {
       <AuthProvider>
         <StoreProvider>
            <PixelManager>
-             <DomainCartProvider storeId={selectedConnection.store_id}>
+              <DomainCartProvider storeId={selectedConnection.store_id} websiteId={selectedConnection.content_id}>
                <AddToCartProvider>
                 <DomainWebsiteRenderer 
                   websiteId={selectedConnection.content_id}

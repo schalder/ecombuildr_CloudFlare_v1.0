@@ -103,16 +103,20 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 interface CartProviderProps {
   children: React.ReactNode;
   storeId?: string;
+  websiteIdOverride?: string;
 }
 
-export const CartProvider: React.FC<CartProviderProps> = ({ children, storeId }) => {
+export const CartProvider: React.FC<CartProviderProps> = ({ children, storeId, websiteIdOverride }) => {
   const [state, dispatch] = useReducer(cartReducer, initialState);
   const [currentStoreId, setCurrentStoreId] = useState<string | undefined>(undefined);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const pixelContext = usePixelContext();
   const pixels = pixelContext?.pixels;
   const { websiteId: resolvedWebsiteId, funnelId: resolvedFunnelId } = useChannelContext();
-  const { trackAddToCart } = usePixelTracking(pixels, storeId, resolvedWebsiteId, resolvedFunnelId);
+  
+  // Use websiteIdOverride if provided, otherwise fall back to resolved websiteId
+  const effectiveWebsiteId = websiteIdOverride || resolvedWebsiteId;
+  const { trackAddToCart } = usePixelTracking(pixels, storeId, effectiveWebsiteId, resolvedFunnelId);
 
   // Create store-specific cart key
   const getCartKey = (id?: string) => id ? `cart_${id}` : 'cart_global';
