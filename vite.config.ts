@@ -22,45 +22,126 @@ export default defineConfig(({ mode }) => ({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
-          // Split vendor libraries
-          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'ui-vendor': ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-toast'],
-          'form-vendor': ['react-hook-form', '@hookform/resolvers', 'zod'],
-          'chart-vendor': ['recharts'],
-          'date-vendor': ['date-fns', 'react-day-picker'],
+        manualChunks: (id) => {
+          // Separate admin/builder from storefront for optimal loading
+          if (id.includes('page-builder') || id.includes('react-dnd') || id.includes('@hello-pangea/dnd')) {
+            return 'admin-builder';
+          }
           
-          // Split page builder (admin only)
-          'page-builder': [
-            'react-dnd',
-            'react-dnd-html5-backend',
-            '@hello-pangea/dnd'
-          ],
+          // Core React - highest priority
+          if (id.includes('react') || id.includes('react-dom')) {
+            return 'react-core';
+          }
           
-          // Split major libraries that are actually used
-          'ui-libs': ['lucide-react', '@radix-ui/react-slot', 'class-variance-authority']
+          // Router - page navigation
+          if (id.includes('react-router')) {
+            return 'react-router';
+          }
+          
+          // UI framework - critical for rendering
+          if (id.includes('@radix-ui') || id.includes('class-variance-authority')) {
+            return 'ui-framework';
+          }
+          
+          // Form handling - only when needed
+          if (id.includes('react-hook-form') || id.includes('@hookform') || id.includes('zod')) {
+            return 'form-libs';
+          }
+          
+          // Charts - heavy, lazy load
+          if (id.includes('recharts')) {
+            return 'charts';
+          }
+          
+          // Date handling - specific pages only
+          if (id.includes('date-fns') || id.includes('react-day-picker')) {
+            return 'date-libs';
+          }
+          
+          // Icons - frequently used but cacheable
+          if (id.includes('lucide-react') || id.includes('@heroicons')) {
+            return 'icons';
+          }
+          
+          // Supabase - backend communication
+          if (id.includes('@supabase') || id.includes('@tanstack/react-query')) {
+            return 'backend-libs';
+          }
+          
+          // Utility libraries
+          if (id.includes('clsx') || id.includes('tailwind-merge') || id.includes('cmdk')) {
+            return 'utilities';
+          }
+          
+          // Node modules fallback
+          if (id.includes('node_modules')) {
+            return 'vendor';
+          }
+        },
+        // Optimize chunk naming for better caching
+        chunkFileNames: (chunkInfo) => {
+          const name = chunkInfo.name || 'chunk';
+          return `assets/${name}-[hash].js`;
+        },
+        assetFileNames: (assetInfo) => {
+          const extType = assetInfo.name?.split('.').at(1);
+          if (extType === 'css') {
+            return 'assets/styles/[name]-[hash].css';
+          }
+          if (['png', 'jpg', 'jpeg', 'svg', 'webp', 'avif'].includes(extType || '')) {
+            return 'assets/images/[name]-[hash].[ext]';
+          }
+          if (['woff', 'woff2', 'ttf'].includes(extType || '')) {
+            return 'assets/fonts/[name]-[hash].[ext]';
+          }
+          return 'assets/[name]-[hash].[ext]';
         },
       },
     },
     // Optimize build for performance
     target: 'es2020',
-    minify: 'esbuild', // Use ESBuild for faster minification
-    // Enable CSS code splitting
+    minify: 'esbuild',
     cssCodeSplit: true,
-    // Reduce chunk size warnings for better performance
-    chunkSizeWarningLimit: 1000,
+    chunkSizeWarningLimit: 500, // More strict limit
+    // Advanced optimizations
+    cssMinify: 'esbuild',
+    assetsInlineLimit: 4096, // Inline small assets
+    sourcemap: false, // Disable sourcemaps in production for smaller bundles
   },
   // Environment variable defaults
   define: {
     'process.env.VITE_STOREFRONT_RENDERER_DEFAULT': JSON.stringify('true'),
     'process.env.NODE_ENV': JSON.stringify(mode),
   },
-  // Enable experimental features for better performance
+  // Advanced optimizations
   esbuild: {
     target: 'es2020',
     keepNames: false,
     minifyIdentifiers: mode === 'production',
     minifySyntax: true,
     minifyWhitespace: true,
+    treeShaking: true,
+    // Remove console logs in production
+    drop: mode === 'production' ? ['console', 'debugger'] : [],
+  },
+  // Optimize dependencies
+  optimizeDeps: {
+    include: [
+      'react', 
+      'react-dom', 
+      'react-router-dom',
+      '@radix-ui/react-slot',
+      'class-variance-authority',
+      'clsx',
+      'tailwind-merge'
+    ],
+    exclude: [
+      // Heavy libraries that should be loaded on demand
+      'recharts',
+      'html2canvas', 
+      'jspdf',
+      'react-dnd',
+      '@hello-pangea/dnd'
+    ],
   },
 }));
