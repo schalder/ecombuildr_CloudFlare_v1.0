@@ -2006,6 +2006,11 @@ export type Database = {
           supplier_link: string | null
           track_inventory: boolean | null
           updated_at: string | null
+          urgency_timer_color: string | null
+          urgency_timer_duration: number | null
+          urgency_timer_enabled: boolean | null
+          urgency_timer_text: string | null
+          urgency_timer_text_color: string | null
           variations: Json | null
           video_url: string | null
           weight_grams: number | null
@@ -2041,6 +2046,11 @@ export type Database = {
           supplier_link?: string | null
           track_inventory?: boolean | null
           updated_at?: string | null
+          urgency_timer_color?: string | null
+          urgency_timer_duration?: number | null
+          urgency_timer_enabled?: boolean | null
+          urgency_timer_text?: string | null
+          urgency_timer_text_color?: string | null
           variations?: Json | null
           video_url?: string | null
           weight_grams?: number | null
@@ -2076,6 +2086,11 @@ export type Database = {
           supplier_link?: string | null
           track_inventory?: boolean | null
           updated_at?: string | null
+          urgency_timer_color?: string | null
+          urgency_timer_duration?: number | null
+          urgency_timer_enabled?: boolean | null
+          urgency_timer_text?: string | null
+          urgency_timer_text_color?: string | null
           variations?: Json | null
           video_url?: string | null
           weight_grams?: number | null

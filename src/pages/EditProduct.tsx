@@ -12,7 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Save, Package, ChevronUp, ChevronDown, X, Plus } from "lucide-react";
+import { ArrowLeft, Save, Package, ChevronUp, ChevronDown, X, Plus, Clock } from "lucide-react";
 import { CompactMediaSelector } from "@/components/page-builder/components/CompactMediaSelector";
 import { toast } from "@/hooks/use-toast";
 import RichTextEditor from "@/components/ui/RichTextEditor";
@@ -75,6 +75,11 @@ export default function EditProduct() {
     seo_title: '',
     seo_description: '',
     weight_kg: '', // Store weight in kg for UI, convert to grams for backend
+    urgency_timer_enabled: false,
+    urgency_timer_duration: 60,
+    urgency_timer_text: 'Limited Time Offer!',
+    urgency_timer_color: '#ef4444',
+    urgency_timer_text_color: '#ffffff',
   });
 
   // Collapsible sections state
@@ -255,6 +260,11 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
           seo_title: (product as any).seo_title || '',
           seo_description: (product as any).seo_description || '',
           weight_kg: (product as any).weight_grams ? ((product as any).weight_grams / 1000).toString() : '',
+          urgency_timer_enabled: !!(product as any).urgency_timer_enabled,
+          urgency_timer_duration: (product as any).urgency_timer_duration || 60,
+          urgency_timer_text: (product as any).urgency_timer_text || 'Limited Time Offer!',
+          urgency_timer_color: (product as any).urgency_timer_color || '#ef4444',
+          urgency_timer_text_color: (product as any).urgency_timer_text_color || '#ffffff',
         });
 
         // Shipping configuration
@@ -369,6 +379,11 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
         seo_title: formData.seo_title || null,
         seo_description: formData.seo_description || null,
         weight_grams: formData.weight_kg ? parseFloat(formData.weight_kg) * 1000 : null, // Convert kg to grams
+        urgency_timer_enabled: formData.urgency_timer_enabled,
+        urgency_timer_duration: formData.urgency_timer_duration,
+        urgency_timer_text: formData.urgency_timer_text,
+        urgency_timer_color: formData.urgency_timer_color,
+        urgency_timer_text_color: formData.urgency_timer_text_color,
         shipping_config: {
           type: shippingType,
           fixedFee: shippingType === 'fixed' && fixedShippingFee ? parseFloat(fixedShippingFee) : undefined,
@@ -424,7 +439,7 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
     }
   };
 
-  const handleInputChange = (field: string, value: string | boolean) => {
+  const handleInputChange = (field: string, value: string | boolean | number) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -895,6 +910,83 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
                           />
                         </div>
                       </div>
+                    </div>
+
+                    <Separator />
+
+                    {/* Urgency Timer */}
+                    <div className="space-y-4">
+                      <div>
+                        <Label className="text-sm font-medium">Urgency Timer</Label>
+                        <p className="text-sm text-muted-foreground mt-1">Add an evergreen countdown timer to create urgency and boost conversions</p>
+                      </div>
+                      
+                      <div className="flex items-center gap-3">
+                        <Switch
+                          id="urgency_timer_enabled"
+                          checked={!!formData.urgency_timer_enabled}
+                          onCheckedChange={(checked) => handleInputChange('urgency_timer_enabled', checked)}
+                        />
+                        <Label htmlFor="urgency_timer_enabled" className="text-sm font-medium">Enable urgency timer</Label>
+                      </div>
+
+                      {formData.urgency_timer_enabled && (
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 ml-6 pt-4 border-t border-border/50">
+                          <div className="space-y-4">
+                            <div>
+                              <Label htmlFor="urgency_timer_duration">Timer Duration (minutes)</Label>
+                              <Input
+                                id="urgency_timer_duration"
+                                type="number"
+                                min="1"
+                                max="1440"
+                                value={formData.urgency_timer_duration || 60}
+                                onChange={(e) => handleInputChange('urgency_timer_duration', parseInt(e.target.value) || 60)}
+                                className="mt-2"
+                              />
+                              <p className="text-xs text-muted-foreground mt-1">How long the timer should run (1-1440 minutes)</p>
+                            </div>
+                            
+                            <div>
+                              <Label htmlFor="urgency_timer_text">Timer Text</Label>
+                              <Input
+                                id="urgency_timer_text"
+                                value={formData.urgency_timer_text || 'Limited Time Offer!'}
+                                onChange={(e) => handleInputChange('urgency_timer_text', e.target.value)}
+                                placeholder="Limited Time Offer!"
+                                className="mt-2"
+                              />
+                              <p className="text-xs text-muted-foreground mt-1">Text displayed with the timer</p>
+                            </div>
+                          </div>
+                          
+                          <div className="space-y-4">
+                            <div>
+                              <Label htmlFor="urgency_timer_color">Background Color</Label>
+                              <Input
+                                id="urgency_timer_color"
+                                type="color"
+                                value={formData.urgency_timer_color || '#ef4444'}
+                                onChange={(e) => handleInputChange('urgency_timer_color', e.target.value)}
+                                className="mt-2 h-10 w-20"
+                              />
+                              <p className="text-xs text-muted-foreground mt-1">Timer background color</p>
+                            </div>
+                            
+                            <div>
+                              <Label htmlFor="urgency_timer_text_color">Text Color</Label>
+                              <Input
+                                id="urgency_timer_text_color"
+                                type="color"
+                                value={formData.urgency_timer_text_color || '#ffffff'}
+                                onChange={(e) => handleInputChange('urgency_timer_text_color', e.target.value)}
+                                className="mt-2 h-10 w-20"
+                              />
+                              <p className="text-xs text-muted-foreground mt-1">Timer text color</p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     <Separator />

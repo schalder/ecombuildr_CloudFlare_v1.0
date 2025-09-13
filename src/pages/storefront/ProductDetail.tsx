@@ -22,6 +22,7 @@ import { PageBuilderRenderer } from '@/components/storefront/PageBuilderRenderer
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { parseVideoUrl, buildEmbedUrl } from '@/components/page-builder/utils/videoUtils';
 import { StorefrontImage } from '@/components/storefront/renderer/StorefrontImage';
+import { UrgencyTimer } from '@/components/storefront/UrgencyTimer';
 
 interface Product {
   id: string;
@@ -45,6 +46,11 @@ interface Product {
   allowed_payment_methods?: string[] | null;
   description_mode?: 'rich_text' | 'builder';
   description_builder?: any;
+  urgency_timer_enabled?: boolean;
+  urgency_timer_duration?: number;
+  urgency_timer_text?: string;
+  urgency_timer_color?: string;
+  urgency_timer_text_color?: string;
 }
 
 
@@ -412,6 +418,18 @@ export const ProductDetail: React.FC = () => {
                   </div>
                 ))}
               </div>
+            )}
+
+            {/* Urgency Timer */}
+            {product.urgency_timer_enabled && (
+              <UrgencyTimer
+                productId={product.id}
+                duration={product.urgency_timer_duration || 60}
+                text={product.urgency_timer_text || 'Limited Time Offer!'}
+                backgroundColor={product.urgency_timer_color || '#ef4444'}
+                textColor={product.urgency_timer_text_color || '#ffffff'}
+                className="mb-6"
+              />
             )}
 
             {/* Quantity and Add to Cart */}
