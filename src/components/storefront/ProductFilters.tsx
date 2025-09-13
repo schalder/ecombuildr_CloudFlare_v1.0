@@ -405,8 +405,6 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
           </>
         )}
 
-        <Separator />
-
         {/* Rating */}
         <div>
           <button
