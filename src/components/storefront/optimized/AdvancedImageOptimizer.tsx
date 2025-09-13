@@ -118,18 +118,13 @@ export const AdvancedImageOptimizer: React.FC<AdvancedImageOptimizerProps> = ({
   }, [isCritical, priority]);
 
   const handleLoad = useCallback(() => {
-    console.log('Image loaded successfully:', src);
     setIsLoaded(true);
     onLoad?.();
-  }, [onLoad, src]);
+  }, [onLoad]);
 
   const handleError = useCallback(() => {
-    console.error('Image failed to load:', src);
-    console.error('Transform URL:', `https://fhqwacmokbtbspkxjixf.supabase.co/functions/v1/image-transform?url=${encodeURIComponent(src)}&format=webp&q=85`);
-    
     // Try fallback to original image if transform fails
     if (imgRef.current && imgRef.current.src !== src) {
-      console.log('Trying fallback to original image:', src);
       imgRef.current.src = src;
       return;
     }
