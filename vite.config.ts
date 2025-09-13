@@ -133,15 +133,21 @@ export default defineConfig(({ mode }) => ({
       '@radix-ui/react-slot',
       'class-variance-authority',
       'clsx',
-      'tailwind-merge'
+      'tailwind-merge',
+      // Include react-dnd and its dependencies to fix CommonJS import issues
+      'react-dnd',
+      'react-dnd-html5-backend',
+      'fast-deep-equal',
+      '@react-dnd/invariant',
+      '@react-dnd/shallowequal',
+      '@react-dnd/asap'
     ],
     exclude: [
       // Heavy libraries that should be loaded on demand
       'recharts',
       'html2canvas', 
-      'jspdf',
-      'react-dnd',
-      '@hello-pangea/dnd'
+      'jspdf'
+      // Removed react-dnd from exclude list to fix CommonJS import issues
     ],
   },
 }));
