@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ResponsiveTabs, ResponsiveStyleControl } from './_shared/ResponsiveStyleControl';
 import { SpacingControl } from './_shared/SpacingControl';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { useDevicePreview } from '../../contexts/DevicePreviewContext';
 
 interface CountdownElementStylesProps {
   element: PageBuilderElement;
@@ -20,8 +21,8 @@ export const CountdownElementStyles: React.FC<CountdownElementStylesProps> = ({
   element,
   onStyleUpdate,
 }) => {
-  // Responsive controls state and helpers
-  const [deviceType, setDeviceType] = React.useState<'desktop' | 'tablet' | 'mobile'>('desktop');
+  // Use global device state instead of local state
+  const { deviceType, setDeviceType } = useDevicePreview();
   
   // Collapsible sections state
   const [openSections, setOpenSections] = React.useState({

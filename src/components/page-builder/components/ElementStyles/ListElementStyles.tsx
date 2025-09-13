@@ -5,6 +5,7 @@ import { ColorPicker } from '@/components/ui/color-picker';
 import { PageBuilderElement } from '../../types';
 import { ResponsiveTabs } from './_shared/ResponsiveStyleControl';
 import { ResponsiveStyleControl } from './_shared/ResponsiveStyleControl';
+import { useDevicePreview } from '../../contexts/DevicePreviewContext';
 
 interface ListElementStylesProps {
   element: PageBuilderElement;
@@ -12,7 +13,8 @@ interface ListElementStylesProps {
 }
 
 export const ListElementStyles: React.FC<ListElementStylesProps> = ({ element, onStyleUpdate }) => {
-  const [deviceType, setDeviceType] = React.useState<'desktop' | 'tablet' | 'mobile'>('desktop');
+  // Use global device state instead of local state
+  const { deviceType, setDeviceType } = useDevicePreview();
 
   return (
     <div className="space-y-4">
