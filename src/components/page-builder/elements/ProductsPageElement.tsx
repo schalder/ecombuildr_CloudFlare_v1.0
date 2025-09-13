@@ -175,10 +175,19 @@ export const ProductsPageElement: React.FC<{
     const desktopColsRaw = Number(element.content.columns ?? 4);
     const desktop = Math.max(1, Math.min(6, isNaN(desktopColsRaw) ? 4 : desktopColsRaw));
 
-    const tabletConfigured = (element.content as any).tabletColumns as number | undefined;
-    let tablet = typeof tabletConfigured === 'number'
-      ? Math.max(1, Math.min(4, tabletConfigured))
+    // Enhanced debugging for tablet columns
+    const tabletConfigured = element.content.tabletColumns;
+    console.log('Tablet Columns Debug:', {
+      raw: tabletConfigured,
+      type: typeof tabletConfigured,
+      elementContent: element.content,
+      asNumber: Number(tabletConfigured)
+    });
+
+    let tablet = tabletConfigured && !isNaN(Number(tabletConfigured))
+      ? Math.max(1, Math.min(4, Number(tabletConfigured)))
       : (desktop >= 4 ? 3 : Math.max(1, desktop - 1));
+    
     // Preserve builder behavior: when a single column is forced in tablet layout
     if (columnCount === 1) tablet = 1;
 
