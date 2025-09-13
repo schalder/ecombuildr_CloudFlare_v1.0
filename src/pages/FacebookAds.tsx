@@ -18,6 +18,7 @@ export default function FacebookAds() {
   const [dateRange, setDateRange] = useState('30');
   const [selectedWebsiteId, setSelectedWebsiteId] = useState<string>('all');
   const [selectedFunnelId, setSelectedFunnelId] = useState<string>('all');
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const { store } = useUserStore();
   const { websites, loading: websitesLoading, refetch: refetchWebsites } = useStoreWebsites(store?.id || '');
   const { funnels, loading: funnelsLoading, refetch: refetchFunnels } = useStoreFunnels(store?.id || '');
@@ -55,13 +56,20 @@ export default function FacebookAds() {
 
   // Refresh function to manually refresh all data
   const handleRefresh = async () => {
-    await Promise.all([
-      refetchStore(),
-      refetchWebsites(),
-      refetchFunnels()
-    ]);
-    // Also refresh analytics data
-    refetchAnalytics();
+    try {
+      setIsRefreshing(true);
+      await Promise.all([
+        refetchStore(),
+        refetchWebsites(),
+        refetchFunnels()
+      ]);
+      // Also refresh analytics data and wait for it to complete
+      await refetchAnalytics();
+    } catch (error) {
+      console.error('Error refreshing data:', error);
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
   // OnboardingGate ensures store exists, so this shouldn't happen
@@ -140,11 +148,11 @@ export default function FacebookAds() {
               variant="outline" 
               size="sm" 
               onClick={handleRefresh}
-              disabled={websitesLoading || funnelsLoading || loading}
+              disabled={websitesLoading || funnelsLoading || loading || isRefreshing}
               className="flex items-center space-x-2"
             >
-              <RefreshCw className={`h-4 w-4 ${websitesLoading || funnelsLoading || loading ? 'animate-spin' : ''}`} />
-              <span>Refresh</span>
+              <RefreshCw className={`h-4 w-4 ${websitesLoading || funnelsLoading || loading || isRefreshing ? 'animate-spin' : ''}`} />
+              <span>{isRefreshing ? 'Refreshing...' : 'Refresh'}</span>
             </Button>
             
             <Button variant="outline" size="sm" asChild>

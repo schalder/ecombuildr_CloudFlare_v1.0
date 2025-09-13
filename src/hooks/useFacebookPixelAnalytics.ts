@@ -257,7 +257,7 @@ export const useFacebookPixelAnalytics = (storeId: string, dateRange: DateRange,
   }, [user, storeId, websiteId, funnelSlug, dateRange.startDate, dateRange.endDate]);
 
   const refetch = () => {
-    fetchAnalytics();
+    return fetchAnalytics();
   };
 
   return { analytics, loading, error, refetch };
