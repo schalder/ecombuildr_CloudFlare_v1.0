@@ -3,15 +3,13 @@ import { useAuth } from '@/hooks/useAuth';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
-import { MoreHorizontal, Plus, Search, Edit, Trash2, ChevronRight, Globe, Eye } from 'lucide-react';
+import { MoreHorizontal, Plus, Search, Edit, Trash2, ChevronRight, Eye, Filter } from 'lucide-react';
 import { useStoreWebsitesForSelection } from '@/hooks/useWebsiteVisibility';
 import { useCategories } from '@/hooks/useCategories';
 import { CategoryWebsiteVisibilityDialog } from '@/components/categories/CategoryWebsiteVisibilityDialog';
@@ -27,6 +25,7 @@ interface Website {
 export default function Categories() {
   const { user } = useAuth();
   const [selectedStoreId, setSelectedStoreId] = useState<string>('');
+  const [selectedWebsiteId, setSelectedWebsiteId] = useState<string>('all');
   const { websites } = useStoreWebsitesForSelection(selectedStoreId);
   const { 
     categories, 
@@ -64,31 +63,115 @@ export default function Categories() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isVisibilityModalOpen, setIsVisibilityModalOpen] = useState(false);
+  const [isAddSubcategoryModalOpen, setIsAddSubcategoryModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<any | null>(null);
   const [visibilityCategory, setVisibilityCategory] = useState<any | null>(null);
+  const [addingSubcategoryTo, setAddingSubcategoryTo] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    parent_category_id: 'none'
+    parent_category_id: 'none',
+    website_id: ''
   });
 
-  // Get parent categories for dropdown (only categories without parents)
-  const parentCategories = flatCategories.filter(cat => !cat.parent_category_id);
+  // Filter categories by selected website
+  const filteredCategories = useMemo(() => {
+    if (!categoriesWithWebsites || categoriesWithWebsites.length === 0) return [];
+    
+    if (selectedWebsiteId === 'all') {
+      return categoriesWithWebsites;
+    }
+    
+    return categoriesWithWebsites.filter(category => {
+      const rawVisibility = (category as any).category_website_visibility;
+      const visibleWebsites = Array.isArray(rawVisibility) ? rawVisibility : [];
+      return visibleWebsites.some((v: any) => v.website_id === selectedWebsiteId);
+    });
+  }, [categoriesWithWebsites, selectedWebsiteId]);
+
+  // Get hierarchical structure for display
+  const hierarchicalCategories = useMemo(() => {
+    const filtered = filteredCategories.filter(cat => 
+      !searchTerm.trim() || 
+      cat.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      cat.description?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    
+    const parents = filtered.filter(cat => !cat.parent_category_id);
+    
+    return parents.map(parent => ({
+      ...parent,
+      subcategories: filtered.filter(cat => cat.parent_category_id === parent.id)
+    }));
+  }, [filteredCategories, searchTerm]);
+
+  // Get parent categories for dropdown (only categories without parents from current website)
+  const parentCategories = filteredCategories.filter(cat => !cat.parent_category_id);
 
   // Handle form submission for creating categories
   const handleCreateCategory = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name.trim()) return;
 
-    createCategory.mutate({
+    const categoryData = {
       name: formData.name.trim(),
       description: formData.description.trim() || undefined,
       parent_category_id: formData.parent_category_id === 'none' ? undefined : formData.parent_category_id || undefined
+    };
+
+    // Create category with website visibility if specific website is selected
+    createCategory.mutate(categoryData, {
+      onSuccess: (newCategory) => {
+        if (selectedWebsiteId !== 'all' && newCategory) {
+          updateCategoryVisibility.mutate({
+            categoryId: newCategory.id,
+            websiteIds: [selectedWebsiteId]
+          });
+        }
+      }
     });
 
     // Reset form and close modal
-    setFormData({ name: '', description: '', parent_category_id: 'none' });
+    setFormData({ 
+      name: '', 
+      description: '', 
+      parent_category_id: 'none',
+      website_id: ''
+    });
     setIsAddModalOpen(false);
+  };
+
+  // Handle subcategory creation
+  const handleCreateSubcategory = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.name.trim() || !addingSubcategoryTo) return;
+
+    const categoryData = {
+      name: formData.name.trim(),
+      description: formData.description.trim() || undefined,
+      parent_category_id: addingSubcategoryTo
+    };
+
+    createCategory.mutate(categoryData, {
+      onSuccess: (newCategory) => {
+        if (selectedWebsiteId !== 'all' && newCategory) {
+          updateCategoryVisibility.mutate({
+            categoryId: newCategory.id,
+            websiteIds: [selectedWebsiteId]
+          });
+        }
+      }
+    });
+
+    // Reset form and close modal
+    setFormData({ 
+      name: '', 
+      description: '', 
+      parent_category_id: 'none',
+      website_id: ''
+    });
+    setIsAddSubcategoryModalOpen(false);
+    setAddingSubcategoryTo(null);
   };
 
   // Handle form submission for updating categories
@@ -104,7 +187,12 @@ export default function Categories() {
     });
 
     // Reset form and close modal
-    setFormData({ name: '', description: '', parent_category_id: 'none' });
+    setFormData({ 
+      name: '', 
+      description: '', 
+      parent_category_id: 'none',
+      website_id: ''
+    });
     setIsEditModalOpen(false);
     setEditingCategory(null);
   };
@@ -124,59 +212,29 @@ export default function Categories() {
     setFormData({
       name: category.name,
       description: category.description || '',
-      parent_category_id: category.parent_category_id || 'none'
+      parent_category_id: category.parent_category_id || 'none',
+      website_id: ''
     });
     setIsEditModalOpen(true);
   };
 
-  // Organize categories by website visibility
-  const categoriesByWebsite = useMemo(() => {
-    if (!categoriesWithWebsites || categoriesWithWebsites.length === 0) return {};
-    
-    const result: { [key: string]: any[] } = {};
-    
-    // Group categories by their website visibility
-    categoriesWithWebsites.forEach(category => {
-      const rawVisibility = (category as any).category_website_visibility;
-      const visibleWebsites = Array.isArray(rawVisibility) ? rawVisibility : [];
-      
-      if (visibleWebsites.length === 0) {
-        // Category not visible on any website - show in "Not Visible" group
-        if (!result['Not Visible']) result['Not Visible'] = [];
-        result['Not Visible'].push(category);
-      } else if (websites.length > 0 && visibleWebsites.length === websites.length) {
-        // Category visible on all websites
-        if (!result['All Websites']) result['All Websites'] = [];
-        result['All Websites'].push(category);
-      } else {
-        // Category visible on specific websites
-        visibleWebsites.forEach((visibility: any) => {
-          const websiteName = visibility.websites?.name || 'Unknown Website';
-          if (!result[websiteName]) result[websiteName] = [];
-          if (!result[websiteName].find((cat: any) => cat.id === category.id)) {
-            result[websiteName].push(category);
-          }
-        });
-      }
+  // Handle add subcategory click
+  const handleAddSubcategory = (parentId: string) => {
+    setAddingSubcategoryTo(parentId);
+    setFormData({
+      name: '',
+      description: '',
+      parent_category_id: parentId,
+      website_id: ''
     });
-    
-    // Filter by search term
-    if (searchTerm.trim()) {
-      Object.keys(result).forEach(key => {
-        result[key] = result[key].filter((category: any) =>
-          category.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          category.description?.toLowerCase().includes(searchTerm.toLowerCase())
-        );
-        if (result[key].length === 0) delete result[key];
-      });
-    }
-    
-    return result;
-  }, [categoriesWithWebsites, websites, searchTerm]);
+    setIsAddSubcategoryModalOpen(true);
+  };
 
-  // Get subcategories for a parent
-  const getSubcategories = (parentId: string, categoriesList: any[]) => {
-    return categoriesList.filter(cat => cat.parent_category_id === parentId);
+  // Get current website name
+  const getCurrentWebsiteName = () => {
+    if (selectedWebsiteId === 'all') return 'All Websites';
+    const website = websites.find(w => w.id === selectedWebsiteId);
+    return website?.name || 'Unknown Website';
   };
 
   // Handle visibility management
@@ -221,7 +279,26 @@ export default function Categories() {
         {/* Header Section */}
         <div className="flex flex-col sm:flex-row justify-between gap-4">
           <div className="flex items-center gap-4">
-            <Badge variant="secondary">{categories.length} categories</Badge>
+            <Badge variant="secondary">{hierarchicalCategories.length} categories</Badge>
+            
+            {/* Website Filter */}
+            <div className="flex items-center gap-2">
+              <Filter className="h-4 w-4 text-muted-foreground" />
+              <Select value={selectedWebsiteId} onValueChange={setSelectedWebsiteId}>
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="Filter by website" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Websites</SelectItem>
+                  {websites.map((website) => (
+                    <SelectItem key={website.id} value={website.id}>
+                      {website.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
             <div className="relative">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
@@ -235,7 +312,7 @@ export default function Categories() {
           
           <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
             <DialogTrigger asChild>
-              <Button>
+              <Button disabled={selectedWebsiteId === 'all'}>
                 <Plus className="mr-2 h-4 w-4" />
                 Add Category
               </Button>
@@ -244,7 +321,7 @@ export default function Categories() {
               <DialogHeader>
                 <DialogTitle>Create New Category</DialogTitle>
                 <DialogDescription>
-                  Add a new category or subcategory to organize your products.
+                  Add a new category for {getCurrentWebsiteName()}.
                 </DialogDescription>
               </DialogHeader>
               <form onSubmit={handleCreateCategory} className="space-y-4">
@@ -302,137 +379,180 @@ export default function Categories() {
           </Dialog>
         </div>
 
-        {/* Categories List by Website */}
-        <div className="space-y-6">
-          {Object.keys(categoriesByWebsite).length > 0 ? (
-            Object.entries(categoriesByWebsite).map(([websiteName, websiteCategories]) => (
-              <Card key={websiteName} className="border-l-4 border-l-primary/20">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Globe className="h-5 w-5" />
-                    {websiteName}
-                    <Badge variant="secondary" className="text-xs">
-                      {websiteCategories.length} categories
+        {/* Website Info */}
+        {selectedWebsiteId !== 'all' && (
+          <div className="bg-muted/50 rounded-lg p-4">
+            <h3 className="font-medium text-sm text-muted-foreground mb-1">Categories for</h3>
+            <p className="font-semibold">{getCurrentWebsiteName()}</p>
+          </div>
+        )}
+
+        {/* Categories Tree List */}
+        <div className="space-y-4">
+          {hierarchicalCategories.length > 0 ? (
+            hierarchicalCategories.map((category) => (
+              <div key={category.id} className="border rounded-lg p-4 space-y-3">
+                {/* Parent Category */}
+                <div className="flex items-center justify-between group">
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">{category.name}</span>
+                      {category.description && (
+                        <span className="text-sm text-muted-foreground">• {category.description}</span>
+                      )}
+                    </div>
+                    <Badge variant="outline" className="text-xs">
+                      /{category.slug}
                     </Badge>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    {websiteCategories
-                      .filter(cat => !cat.parent_category_id) // Show only parent categories
-                      .map((category) => {
-                        const subcategories = getSubcategories(category.id, websiteCategories);
-                        
-                        return (
-                          <Card key={category.id} className="hover:shadow-md transition-shadow">
-                            <CardHeader className="pb-3">
-                              <div className="flex items-center justify-between">
-                                <CardTitle className="text-base flex items-center">
-                                  {category.name}
-                                  {subcategories.length > 0 && (
-                                    <Badge variant="outline" className="ml-2 text-xs">
-                                      {subcategories.length} sub
-                                    </Badge>
-                                  )}
-                                </CardTitle>
-                                <DropdownMenu>
-                                  <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                                      <MoreHorizontal className="h-4 w-4" />
-                                    </Button>
-                                  </DropdownMenuTrigger>
-                                  <DropdownMenuContent align="end">
-                                    <DropdownMenuItem onClick={() => handleEditClick(category)}>
-                                      <Edit className="mr-2 h-4 w-4" />
-                                      Edit
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => handleManageVisibility(category)}>
-                                      <Eye className="mr-2 h-4 w-4" />
-                                      Manage Visibility
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem 
-                                      onClick={() => handleDeleteCategory(category.id)}
-                                      className="text-destructive"
-                                    >
-                                      <Trash2 className="mr-2 h-4 w-4" />
-                                      Delete
-                                    </DropdownMenuItem>
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
-                              </div>
-                              <CardDescription className="text-sm">
-                                Slug: /{category.slug}
-                              </CardDescription>
-                            </CardHeader>
-                            <CardContent className="pt-0 space-y-3">
-                              {category.description && (
-                                <p className="text-sm text-muted-foreground">{category.description}</p>
-                              )}
-                              
-                              {/* Subcategories */}
-                              {subcategories.length > 0 && (
-                                <div className="space-y-2">
-                                  <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                                    Subcategories
-                                  </h4>
-                                  <div className="space-y-1">
-                                    {subcategories.map((subcat) => (
-                                      <div key={subcat.id} className="flex items-center justify-between p-2 bg-muted/50 rounded text-sm">
-                                        <div className="flex items-center">
-                                          <ChevronRight className="h-3 w-3 text-muted-foreground mr-1" />
-                                          <span>{subcat.name}</span>
-                                        </div>
-                                        <DropdownMenu>
-                                          <DropdownMenuTrigger asChild>
-                                            <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-                                              <MoreHorizontal className="h-3 w-3" />
-                                            </Button>
-                                          </DropdownMenuTrigger>
-                                          <DropdownMenuContent align="end">
-                                            <DropdownMenuItem onClick={() => handleEditClick(subcat)}>
-                                              <Edit className="mr-2 h-3 w-3" />
-                                              Edit
-                                            </DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => handleManageVisibility(subcat)}>
-                                              <Eye className="mr-2 h-3 w-3" />
-                                              Manage Visibility
-                                            </DropdownMenuItem>
-                                            <DropdownMenuItem 
-                                              onClick={() => handleDeleteCategory(subcat.id)}
-                                              className="text-destructive"
-                                            >
-                                              <Trash2 className="mr-2 h-3 w-3" />
-                                              Delete
-                                            </DropdownMenuItem>
-                                          </DropdownMenuContent>
-                                        </DropdownMenu>
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-                            </CardContent>
-                          </Card>
-                        );
-                      })}
+                    {category.subcategories.length > 0 && (
+                      <Badge variant="secondary" className="text-xs">
+                        {category.subcategories.length} sub
+                      </Badge>
+                    )}
                   </div>
-                </CardContent>
-              </Card>
+                  
+                  <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleAddSubcategory(category.id)}
+                      className="h-8 px-2"
+                    >
+                      <Plus className="h-3 w-3 mr-1" />
+                      Sub
+                    </Button>
+                    
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => handleEditClick(category)}>
+                          <Edit className="mr-2 h-4 w-4" />
+                          Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleManageVisibility(category)}>
+                          <Eye className="mr-2 h-4 w-4" />
+                          Manage Visibility
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          onClick={() => handleDeleteCategory(category.id)}
+                          className="text-destructive"
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </div>
+
+                {/* Subcategories */}
+                {category.subcategories.length > 0 && (
+                  <div className="pl-6 space-y-2 border-l-2 border-muted">
+                    {category.subcategories.map((subcat) => (
+                      <div key={subcat.id} className="flex items-center justify-between group py-2">
+                        <div className="flex items-center gap-3">
+                          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm">{subcat.name}</span>
+                            {subcat.description && (
+                              <span className="text-xs text-muted-foreground">• {subcat.description}</span>
+                            )}
+                          </div>
+                          <Badge variant="outline" className="text-xs">
+                            /{subcat.slug}
+                          </Badge>
+                        </div>
+                        
+                        <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                <MoreHorizontal className="h-3 w-3" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => handleEditClick(subcat)}>
+                                <Edit className="mr-2 h-3 w-3" />
+                                Edit
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleManageVisibility(subcat)}>
+                                <Eye className="mr-2 h-3 w-3" />
+                                Manage Visibility
+                              </DropdownMenuItem>
+                              <DropdownMenuItem 
+                                onClick={() => handleDeleteCategory(subcat.id)}
+                                className="text-destructive"
+                              >
+                                <Trash2 className="mr-2 h-3 w-3" />
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             ))
           ) : (
             <div className="text-center py-12">
-              <p className="text-muted-foreground mb-4">
-                {searchTerm ? 'No categories found matching your search.' : 'No categories found. Create your first category to get started.'}
+              <p className="text-muted-foreground">
+                {selectedWebsiteId === 'all' 
+                  ? 'No categories found. Select a website and create your first category.'
+                  : 'No categories found for this website. Create your first category to get started.'
+                }
               </p>
-              {!searchTerm && (
-                <Button onClick={() => setIsAddModalOpen(true)}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add Category
-                </Button>
-              )}
             </div>
           )}
         </div>
+
+        {/* Add Subcategory Dialog */}
+        <Dialog open={isAddSubcategoryModalOpen} onOpenChange={setIsAddSubcategoryModalOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Add Subcategory</DialogTitle>
+              <DialogDescription>
+                Add a subcategory under the selected parent category.
+              </DialogDescription>
+            </DialogHeader>
+            <form onSubmit={handleCreateSubcategory} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="sub-name">Name *</Label>
+                <Input
+                  id="sub-name"
+                  placeholder="Subcategory name"
+                  value={formData.name}
+                  onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                  required
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="sub-description">Description</Label>
+                <Textarea
+                  id="sub-description"
+                  placeholder="Subcategory description (optional)"
+                  value={formData.description}
+                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                />
+              </div>
+              
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setIsAddSubcategoryModalOpen(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={createCategory.isPending}>
+                  {createCategory.isPending ? 'Creating...' : 'Create Subcategory'}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
 
         {/* Edit Category Dialog */}
         <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
@@ -440,7 +560,7 @@ export default function Categories() {
             <DialogHeader>
               <DialogTitle>Edit Category</DialogTitle>
               <DialogDescription>
-                Update the category information and hierarchy.
+                Update the category information.
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleUpdateCategory} className="space-y-4">
@@ -477,7 +597,7 @@ export default function Categories() {
                   <SelectContent>
                     <SelectItem value="none">No parent (Main category)</SelectItem>
                     {parentCategories
-                      .filter(cat => cat.id !== editingCategory?.id) // Don't allow self as parent
+                      .filter(category => category.id !== editingCategory?.id) // Don't allow self as parent
                       .map((category) => (
                         <SelectItem key={category.id} value={category.id}>
                           {category.name}
