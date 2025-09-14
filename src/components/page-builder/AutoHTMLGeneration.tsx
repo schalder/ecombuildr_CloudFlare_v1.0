@@ -31,14 +31,9 @@ export function AutoHTMLGeneration({
       try {
         console.log('🔄 Auto-generating HTML snapshot for:', contentType, contentId);
         
-        // Map content types to the expected format
-        const mappedContentType = contentType === 'website_page' ? 'website' : 
-                                 contentType === 'funnel_step' ? 'funnel' : 
-                                 contentType;
-
         await generateAndSaveHTML({
           pageData,
-          contentType: mappedContentType as 'website' | 'funnel',
+          contentType: contentType as any,
           contentId,
           seoConfig
         });

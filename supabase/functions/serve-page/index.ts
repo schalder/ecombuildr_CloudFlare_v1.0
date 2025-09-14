@@ -57,6 +57,78 @@ Deno.serve(async (req) => {
         contentType = connectionData.content_type;
         contentId = connectionData.content_id;
         console.log(`🔗 Found domain connection: ${contentType}/${contentId}`);
+
+        // Resolve path within the connected content for custom domains
+        const pathSegments = path.split('/').filter(Boolean);
+        const firstSegment = pathSegments[0] || '';
+
+        if (contentType === 'website' && contentId) {
+          // If a slug is present, try to resolve to a specific website page
+          if (firstSegment && firstSegment !== 'home') {
+            const { data: pageData } = await supabase
+              .from('website_pages')
+              .select('id')
+              .eq('website_id', contentId)
+              .eq('slug', firstSegment)
+              .eq('is_published', true)
+              .maybeSingle();
+
+            if (pageData?.id) {
+              contentType = 'website_page';
+              contentId = pageData.id;
+              console.log(`🧭 Resolved custom domain slug to website_page/${contentId}`);
+            }
+          }
+
+          // If still pointing to website, try homepage
+          if (contentType === 'website') {
+            const { data: homePage } = await supabase
+              .from('website_pages')
+              .select('id')
+              .eq('website_id', contentId)
+              .eq('is_homepage', true)
+              .eq('is_published', true)
+              .maybeSingle();
+
+            if (homePage?.id) {
+              contentType = 'website_page';
+              contentId = homePage.id;
+              console.log(`🏠 Using website homepage website_page/${contentId}`);
+            }
+          }
+        } else if (contentType === 'funnel' && contentId) {
+          if (firstSegment && firstSegment !== 'home') {
+            const { data: stepData } = await supabase
+              .from('funnel_steps')
+              .select('id')
+              .eq('funnel_id', contentId)
+              .eq('slug', firstSegment)
+              .eq('is_published', true)
+              .maybeSingle();
+
+            if (stepData?.id) {
+              contentType = 'funnel_step';
+              contentId = stepData.id;
+              console.log(`🧭 Resolved custom domain slug to funnel_step/${contentId}`);
+            }
+          }
+
+          if (contentType === 'funnel') {
+            const { data: homeStep } = await supabase
+              .from('funnel_steps')
+              .select('id')
+              .eq('funnel_id', contentId)
+              .eq('is_homepage', true)
+              .eq('is_published', true)
+              .maybeSingle();
+
+            if (homeStep?.id) {
+              contentType = 'funnel_step';
+              contentId = homeStep.id;
+              console.log(`🏠 Using funnel homepage funnel_step/${contentId}`);
+            }
+          }
+        }
       } else {
         // No specific connection, fall back to React app
         console.log(`❌ No domain connection found for ${domain}`);
@@ -161,18 +233,42 @@ Deno.serve(async (req) => {
     if (contentId && contentType) {
       console.log(`🔍 Looking for HTML snapshot: ${contentType}/${contentId}`);
       
-      const { data: htmlSnapshot } = await supabase
-        .from('html_snapshots')
-        .select('html_content')
-        .eq('content_type', contentType)
-        .eq('content_id', contentId)
-        .eq('custom_domain', customDomain)
-        .single();
+      let htmlContent: string | null = null;
 
-      if (htmlSnapshot?.html_content) {
-        console.log(`✅ Found HTML snapshot, serving pre-generated HTML`);
-        
-        return new Response(htmlSnapshot.html_content, {
+      // Try custom domain-specific snapshot first
+      if (customDomain) {
+        const { data: domainSnapshot } = await supabase
+          .from('html_snapshots')
+          .select('html_content')
+          .eq('content_type', contentType)
+          .eq('content_id', contentId)
+          .eq('custom_domain', customDomain)
+          .maybeSingle();
+
+        if (domainSnapshot?.html_content) {
+          htmlContent = domainSnapshot.html_content;
+          console.log(`✅ Found domain-specific snapshot for ${contentType}/${contentId} on ${customDomain}`);
+        }
+      }
+
+      // Fallback to default snapshot (no custom domain)
+      if (!htmlContent) {
+        const { data: defaultSnapshot } = await supabase
+          .from('html_snapshots')
+          .select('html_content')
+          .eq('content_type', contentType)
+          .eq('content_id', contentId)
+          .is('custom_domain', null)
+          .maybeSingle();
+
+        if (defaultSnapshot?.html_content) {
+          htmlContent = defaultSnapshot.html_content;
+          console.log(`✅ Found default snapshot for ${contentType}/${contentId}`);
+        }
+      }
+
+      if (htmlContent) {
+        return new Response(htmlContent, {
           headers: {
             ...corsHeaders,
             'Content-Type': 'text/html; charset=utf-8',
@@ -180,7 +276,7 @@ Deno.serve(async (req) => {
           }
         });
       } else {
-        console.log(`❌ No HTML snapshot found for ${contentType}/${contentId}`);
+        console.log(`❌ No HTML snapshot found for ${contentType}/${contentId} (domain: ${customDomain ?? 'default'})`);
       }
     }
 
