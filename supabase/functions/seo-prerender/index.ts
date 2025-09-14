@@ -68,15 +68,34 @@ serve(async (req) => {
   // Check if JSON format is requested
   const format = url.searchParams.get('format')
   const isJsonRequest = format === 'json'
+  const forceBotParam = url.searchParams.get('force_bot')
   
   // Get domain and path from query parameters first (Netlify prerendering), then fall back to headers/pathname
   let domainParam = url.searchParams.get('domain') 
   let pathParam = url.searchParams.get('path')
   
-  // Handle Netlify's :host placeholder issue - log if it happens
-  if (domainParam === ':host' || domainParam === '' || !domainParam) {
-    console.log('⚠️ Received empty/placeholder domain param:', domainParam, '- using headers as fallback')
-    domainParam = req.headers.get('x-forwarded-host') || req.headers.get('host') || 'ecombuildr.com'
+  // Handle __bot debug path stripping
+  if (pathParam?.startsWith('/__bot/')) {
+    pathParam = '/' + pathParam.substring(7) // Remove /__bot prefix
+    console.log('🔧 Stripped __bot prefix, new path:', pathParam)
+  }
+  
+  // Handle Netlify's :host placeholder issue and Supabase domains
+  if (domainParam === ':host' || domainParam === '' || !domainParam || 
+      domainParam.includes('supabase.co') || domainParam.includes('edge-runtime')) {
+    console.log('⚠️ Received invalid/placeholder domain param:', domainParam, '- using headers as fallback')
+    
+    // Priority order: x-forwarded-host > host > referer origin
+    domainParam = req.headers.get('x-forwarded-host') || 
+                 req.headers.get('host') || 
+                 (req.headers.get('referer') ? new URL(req.headers.get('referer')).hostname : null) ||
+                 'ecombuildr.com'
+    
+    // Skip Supabase/Edge runtime domains
+    if (domainParam && (domainParam.includes('supabase.co') || domainParam.includes('edge-runtime'))) {
+      domainParam = 'ecombuildr.com'
+    }
+    
     console.log('🔧 Resolved domain from headers:', domainParam)
   }
   
@@ -90,7 +109,7 @@ serve(async (req) => {
   const userAgent = req.headers.get('user-agent') || ''
   
   // Reduced logging - don't expose sensitive headers or full user agent
-  console.log('🔍 SEO request:', { path, domain, format, isJsonRequest })
+  console.log('🔍 SEO request:', { path, domain, format, isJsonRequest, force_bot: forceBotParam })
 
   // Handle JSON format requests (for dynamic SEO loading)
   if (isJsonRequest) {
@@ -135,8 +154,8 @@ serve(async (req) => {
     }
   }
 
-  // Detect if request is from a human browser vs bot
-  const isBot = isLikelyBot(userAgent)
+  // Detect if request is from a human browser vs bot (or forced)
+  const isBot = forceBotParam === '1' || isLikelyBot(userAgent)
   console.log('🤖 Bot detection result:', isBot)
   
   // If human browser, redirect to SPA with no_prerender param
