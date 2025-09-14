@@ -31,13 +31,16 @@ export function useHTMLGeneration() {
     setIsGenerating(true);
 
     try {
-      // Generate the static HTML
+      // Generate self-contained HTML with app bundle
       const options: HTMLGenerationOptions = {
         title: seoConfig.title,
         seoConfig,
         customDomain,
         websiteSettings,
-        funnelSettings
+        funnelSettings,
+        includeAppBundle: true,
+        contentType,
+        contentId
       };
 
       const htmlContent = generateStaticHTML(pageData, options);

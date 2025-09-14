@@ -1,3 +1,4 @@
+// Simplified serve-page function - now just serves pre-generated self-contained HTML snapshots
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.57.4'
 
 const corsHeaders = {
@@ -12,11 +13,6 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? ''
-    );
-
     const url = new URL(req.url);
     let domain = req.headers.get('host') || url.hostname;
     
@@ -30,133 +26,128 @@ Deno.serve(async (req) => {
       domain = 'ecombuildr.com';
     }
 
-    console.log(`🌐 Serving request for domain: ${domain}, original path: ${path}, reconstructed from prefix: ${prefix}, splat: ${splat}`);
+    console.log(`📄 Serving self-contained HTML for domain: ${domain}, path: ${path}`);
 
-    // Try to find HTML snapshot for this domain and path
-    let contentType: string;
+    // Initialize Supabase client
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? ''
+    );
+
+    let contentType: string = '';
     let contentId: string | null = null;
     let customDomain: string | null = null;
 
-    // First, check if this is a custom domain
-    const { data: domainData } = await supabase
-      .from('custom_domains')
-      .select(`
-        domain,
-        store_id,
-        is_verified,
-        dns_configured
-      `)
-      .eq('domain', domain)
-      .eq('is_verified', true)
-      .eq('dns_configured', true)
-      .single();
-
-    if (domainData) {
+    // Check if this is a custom domain
+    if (!domain.includes('ecombuildr.com') && !domain.includes('localhost') && !domain.includes('127.0.0.1')) {
       customDomain = domain;
-      console.log(`📍 Found custom domain: ${domain}`);
-
-      // Check for domain connections to find the content
-      const { data: connectionData } = await supabase
-        .from('domain_connections')
-        .select('content_type, content_id')
-        .eq('custom_domain', domain)
+      
+      // Get custom domain configuration
+      const { data: domainData } = await supabase
+        .from('custom_domains')
+        .select(`
+          domain,
+          store_id,
+          is_verified,
+          dns_configured
+        `)
+        .eq('domain', domain)
+        .eq('is_verified', true)
+        .eq('dns_configured', true)
         .single();
 
-      if (connectionData) {
-        contentType = connectionData.content_type;
-        contentId = connectionData.content_id;
-        console.log(`🔗 Found domain connection: ${contentType}/${contentId}`);
+      if (domainData) {
+        console.log(`📍 Found custom domain: ${domain}`);
 
-        // Resolve path within the connected content for custom domains
-        const pathSegments = path.split('/').filter(Boolean);
-        const firstSegment = pathSegments[0] || '';
+        // Check for domain connections to find the content
+        const { data: connectionData } = await supabase
+          .from('domain_connections')
+          .select('content_type, content_id')
+          .eq('custom_domain', domain)
+          .single();
 
-        if (contentType === 'website' && contentId) {
-          // If a slug is present, try to resolve to a specific website page
-          if (firstSegment && firstSegment !== 'home') {
-            const { data: pageData } = await supabase
-              .from('website_pages')
-              .select('id')
-              .eq('website_id', contentId)
-              .eq('slug', firstSegment)
-              .eq('is_published', true)
-              .maybeSingle();
+        if (connectionData) {
+          contentType = connectionData.content_type;
+          contentId = connectionData.content_id;
+          console.log(`🔗 Found domain connection: ${contentType}/${contentId}`);
 
-            if (pageData?.id) {
-              contentType = 'website_page';
-              contentId = pageData.id;
-              console.log(`🧭 Resolved custom domain slug to website_page/${contentId}`);
+          // Resolve path within the connected content for custom domains
+          const pathSegments = path.split('/').filter(Boolean);
+          const firstSegment = pathSegments[0] || '';
+
+          if (contentType === 'website' && contentId) {
+            // If a slug is present, try to resolve to a specific website page
+            if (firstSegment && firstSegment !== 'home') {
+              const { data: pageData } = await supabase
+                .from('website_pages')
+                .select('id')
+                .eq('website_id', contentId)
+                .eq('slug', firstSegment)
+                .eq('is_published', true)
+                .maybeSingle();
+
+              if (pageData?.id) {
+                contentType = 'website_page';
+                contentId = pageData.id;
+                console.log(`🧭 Resolved custom domain slug to website_page/${contentId}`);
+              }
             }
-          }
 
-          // If still pointing to website, try homepage
-          if (contentType === 'website') {
-            const { data: homePage } = await supabase
-              .from('website_pages')
-              .select('id')
-              .eq('website_id', contentId)
-              .eq('is_homepage', true)
-              .eq('is_published', true)
-              .maybeSingle();
+            // If still pointing to website, try homepage
+            if (contentType === 'website') {
+              const { data: homePage } = await supabase
+                .from('website_pages')
+                .select('id')
+                .eq('website_id', contentId)
+                .eq('is_homepage', true)
+                .eq('is_published', true)
+                .maybeSingle();
 
-            if (homePage?.id) {
-              contentType = 'website_page';
-              contentId = homePage.id;
-              console.log(`🏠 Using website homepage website_page/${contentId}`);
+              if (homePage?.id) {
+                contentType = 'website_page';
+                contentId = homePage.id;
+                console.log(`🏠 Using website homepage website_page/${contentId}`);
+              }
             }
-          }
-        } else if (contentType === 'funnel' && contentId) {
-          if (firstSegment && firstSegment !== 'home') {
-            const { data: stepData } = await supabase
-              .from('funnel_steps')
-              .select('id')
-              .eq('funnel_id', contentId)
-              .eq('slug', firstSegment)
-              .eq('is_published', true)
-              .maybeSingle();
+          } else if (contentType === 'funnel' && contentId) {
+            if (firstSegment && firstSegment !== 'home') {
+              const { data: stepData } = await supabase
+                .from('funnel_steps')
+                .select('id')
+                .eq('funnel_id', contentId)
+                .eq('slug', firstSegment)
+                .eq('is_published', true)
+                .maybeSingle();
 
-            if (stepData?.id) {
-              contentType = 'funnel_step';
-              contentId = stepData.id;
-              console.log(`🧭 Resolved custom domain slug to funnel_step/${contentId}`);
+              if (stepData?.id) {
+                contentType = 'funnel_step';
+                contentId = stepData.id;
+                console.log(`🧭 Resolved custom domain slug to funnel_step/${contentId}`);
+              }
             }
-          }
 
-          if (contentType === 'funnel') {
-            const { data: homeStep } = await supabase
-              .from('funnel_steps')
-              .select('id')
-              .eq('funnel_id', contentId)
-              .eq('is_homepage', true)
-              .eq('is_published', true)
-              .maybeSingle();
+            if (contentType === 'funnel') {
+              const { data: homeStep } = await supabase
+                .from('funnel_steps')
+                .select('id')
+                .eq('funnel_id', contentId)
+                .eq('is_homepage', true)
+                .eq('is_published', true)
+                .maybeSingle();
 
-            if (homeStep?.id) {
-              contentType = 'funnel_step';
-              contentId = homeStep.id;
-              console.log(`🏠 Using funnel homepage funnel_step/${contentId}`);
+              if (homeStep?.id) {
+                contentType = 'funnel_step';
+                contentId = homeStep.id;
+                console.log(`🏠 Using funnel homepage funnel_step/${contentId}`);
+              }
             }
           }
         }
-      } else {
-        // No specific connection, fall back to React app with original path
-        console.log(`❌ No domain connection found for ${domain}`);
-        return new Response(null, {
-          status: 302,
-          headers: {
-            ...corsHeaders,
-            'Location': `https://681a2e99-80e9-42b8-b8d3-dc8717d4c55a.sandbox.lovable.dev${path}`,
-          }
-        });
       }
     } else {
       // System domain - determine content type based on path
       console.log(`🏠 System domain request: ${domain}${path}`);
 
-      // For system domains, we need to look up the content based on path
-      // This is more complex as we need to parse the URL structure
-      
-      // Check if this is a website page request
       const pathSegments = path.split('/').filter(Boolean);
       
       if (pathSegments.length >= 2 && pathSegments[0] === 'site') {
@@ -168,7 +159,7 @@ Deno.serve(async (req) => {
         
         // Check if identifier is UUID or slug
         const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(websiteIdentifier);
-        let websiteId: string;
+        let websiteId: string = '';
         
         if (isUUID) {
           websiteId = websiteIdentifier;
@@ -183,11 +174,7 @@ Deno.serve(async (req) => {
             .eq('is_active', true)
             .maybeSingle();
             
-          if (!websiteData?.id) {
-            console.log(`❌ Website not found by slug: ${websiteIdentifier}`);
-            contentType = '';
-            contentId = null;
-          } else {
+          if (websiteData?.id) {
             websiteId = websiteData.id;
             console.log(`✅ Resolved website slug "${websiteIdentifier}" to ID: ${websiteId}`);
           }
@@ -208,8 +195,6 @@ Deno.serve(async (req) => {
               contentType = 'website_page';
               contentId = pageData.id;
               console.log(`✅ Found website page: ${pageSlug} -> ${contentId}`);
-            } else {
-              console.log(`❌ Website page not found: ${pageSlug} in website ${websiteId}`);
             }
           } else {
             // This is the website homepage
@@ -225,94 +210,15 @@ Deno.serve(async (req) => {
               contentType = 'website_page';
               contentId = pageData.id;
               console.log(`✅ Found website homepage: ${contentId}`);
-            } else {
-              // Fall back to website-level snapshot
-              contentType = 'website';
-              contentId = websiteId;
-              console.log(`📄 Falling back to website-level snapshot: ${websiteId}`);
-            }
-          }
-        }
-      } else if (pathSegments.length >= 2 && pathSegments[0] === 'funnel') {
-        // Format: /funnel/{funnelIdOrSlug}/{stepSlug?}
-        const funnelIdentifier = pathSegments[1];
-        const stepSlug = pathSegments[2] || '';
-        
-        console.log(`🔍 Resolving funnel: ${funnelIdentifier}, step slug: ${stepSlug}`);
-        
-        // Check if identifier is UUID or slug
-        const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(funnelIdentifier);
-        let funnelId: string;
-        
-        if (isUUID) {
-          funnelId = funnelIdentifier;
-          console.log(`📋 Using funnel ID: ${funnelId}`);
-        } else {
-          // Resolve funnel by slug
-          const { data: funnelData } = await supabase
-            .from('funnels')
-            .select('id')
-            .eq('slug', funnelIdentifier)
-            .eq('is_published', true)
-            .eq('is_active', true)
-            .maybeSingle();
-            
-          if (!funnelData?.id) {
-            console.log(`❌ Funnel not found by slug: ${funnelIdentifier}`);
-            contentType = '';
-            contentId = null;
-          } else {
-            funnelId = funnelData.id;
-            console.log(`✅ Resolved funnel slug "${funnelIdentifier}" to ID: ${funnelId}`);
-          }
-        }
-        
-        if (funnelId) {
-          if (stepSlug && stepSlug !== 'home') {
-            // This is a specific funnel step
-            const { data: stepData } = await supabase
-              .from('funnel_steps')
-              .select('id')
-              .eq('funnel_id', funnelId)
-              .eq('slug', stepSlug)
-              .eq('is_published', true)
-              .maybeSingle();
-
-            if (stepData?.id) {
-              contentType = 'funnel_step';
-              contentId = stepData.id;
-              console.log(`✅ Found funnel step: ${stepSlug} -> ${contentId}`);
-            } else {
-              console.log(`❌ Funnel step not found: ${stepSlug} in funnel ${funnelId}`);
-            }
-          } else {
-            // This is the funnel homepage
-            const { data: stepData } = await supabase
-              .from('funnel_steps')
-              .select('id')
-              .eq('funnel_id', funnelId)
-              .eq('is_homepage', true)
-              .eq('is_published', true)
-              .maybeSingle();
-
-            if (stepData?.id) {
-              contentType = 'funnel_step';
-              contentId = stepData.id;
-              console.log(`✅ Found funnel homepage: ${contentId}`);
-            } else {
-              // Fall back to funnel-level snapshot
-              contentType = 'funnel';
-              contentId = funnelId;
-              console.log(`📄 Falling back to funnel-level snapshot: ${funnelId}`);
             }
           }
         }
       }
     }
 
-    // If we found content, try to get the HTML snapshot
-    if (contentId && contentType) {
-      console.log(`🔍 Looking for HTML snapshot: ${contentType}/${contentId}`);
+    // Lookup self-contained HTML snapshot
+    if (contentType && contentId) {
+      console.log(`🔍 Looking for self-contained HTML snapshot: ${contentType}/${contentId}`);
       
       let htmlContent: string | null = null;
 
@@ -328,7 +234,7 @@ Deno.serve(async (req) => {
 
         if (domainSnapshot?.html_content) {
           htmlContent = domainSnapshot.html_content;
-          console.log(`✅ Serving domain-specific snapshot for ${contentType}/${contentId} on ${customDomain}`);
+          console.log(`✅ Serving domain-specific self-contained HTML for ${contentType}/${contentId} on ${customDomain}`);
         }
       }
 
@@ -344,7 +250,7 @@ Deno.serve(async (req) => {
 
         if (defaultSnapshot?.html_content) {
           htmlContent = defaultSnapshot.html_content;
-          console.log(`✅ Serving default snapshot for ${contentType}/${contentId}`);
+          console.log(`✅ Serving default self-contained HTML for ${contentType}/${contentId}`);
         }
       }
 
@@ -357,68 +263,87 @@ Deno.serve(async (req) => {
           }
         });
       } else {
-        console.log(`❌ No HTML snapshot found for ${contentType}/${contentId} (domain: ${customDomain ?? 'default'})`);
+        console.log(`❌ No self-contained HTML snapshot found for ${contentType}/${contentId} (domain: ${customDomain ?? 'default'})`);
       }
     }
 
-    // Return 404 HTML when no content is found
-    console.log(`🔄 No content found, returning 404`);
-    const canonicalUrl = `https://${domain}${path}`;
-    const notFoundHtml = `
-<!DOCTYPE html>
+    // 404 fallback with potential hydration for preview URLs
+    const isPreviewUrl = path.startsWith('/website/') || path.startsWith('/funnel/');
+    
+    const notFoundHTML = `<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>404 - Page Not Found</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Page Not Found</title>
   <meta name="description" content="The page you are looking for does not exist.">
   <meta name="robots" content="noindex, nofollow">
-  <link rel="canonical" href="${canonicalUrl}">
   
-  <!-- Open Graph -->
-  <meta property="og:title" content="404 - Page Not Found">
-  <meta property="og:description" content="The page you are looking for does not exist.">
-  <meta property="og:type" content="website">
-  <meta property="og:url" content="${canonicalUrl}">
-  
-  <!-- Twitter Card -->
-  <meta name="twitter:card" content="summary">
-  <meta name="twitter:title" content="404 - Page Not Found">
-  <meta name="twitter:description" content="The page you are looking for does not exist.">
-  
-  <!-- Hydration bridge script for React SPA -->
-  <script>
-    window.__STATIC_HYDRATION_DATA__ = {
-      contentType: '404',
-      domain: '${domain}',
-      path: '${path}'
-    };
-  </script>
+  <style>
+    body { 
+      font-family: 'Inter', system-ui, sans-serif; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      min-height: 100vh; 
+      margin: 0; 
+      background: #f8fafc; 
+    }
+    .container { 
+      text-align: center; 
+      max-width: 500px; 
+      padding: 2rem; 
+      background: white; 
+      border-radius: 12px; 
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); 
+    }
+    h1 { 
+      color: #dc2626; 
+      margin-bottom: 1rem; 
+      font-size: 2rem; 
+    }
+    p { 
+      color: #64748b; 
+      margin-bottom: 1.5rem; 
+      line-height: 1.6; 
+    }
+    a { 
+      color: #3b82f6; 
+      text-decoration: none; 
+      background: #3b82f6; 
+      color: white; 
+      padding: 12px 24px; 
+      border-radius: 8px; 
+      font-weight: 500; 
+      display: inline-block; 
+    }
+    a:hover { 
+      background: #2563eb; 
+    }
+  </style>
 </head>
-<body style="font-family: system-ui, sans-serif; text-align: center; padding: 50px; background: #f5f5f5;">
-  <div style="max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px;">
-    <h1 style="color: #dc2626; margin-bottom: 20px;">404 - Page Not Found</h1>
-    <p style="color: #666; margin-bottom: 30px;">The page you are looking for does not exist or has been moved.</p>
-    <a href="/" style="background: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 500;">Go Home</a>
+<body>
+  <div class="container">
+    <h1>Page Not Found</h1>
+    <p>The page you're looking for doesn't exist${isPreviewUrl ? ' or hasn\'t been published yet.' : '.'}</p>
+    ${isPreviewUrl ? '<p>If this is a preview URL, the page may need to be published first.</p>' : ''}
+    <a href="/">Go Home</a>
   </div>
   
-  <!-- Hydration script that loads the React SPA -->
+  ${isPreviewUrl ? `
   <script>
-    (function() {
-      var script = document.createElement('script');
-      script.type = 'module';
-      script.src = '/src/main.tsx';
-      script.onload = function() {
-        // The React app will take over from here
-        console.log('React app loaded for 404 page');
-      };
-      document.head.appendChild(script);
-    })();
+    // For preview URLs, try to redirect to the React app after a delay
+    if (window.location.pathname.startsWith('/website/') || window.location.pathname.startsWith('/funnel/')) {
+      setTimeout(() => {
+        window.location.href = 'https://ecombuildr.com' + window.location.pathname;
+      }, 3000);
+    }
   </script>
+  ` : ''}
 </body>
 </html>`;
-    
-    return new Response(notFoundHtml, {
+
+    return new Response(notFoundHTML, {
       status: 404,
       headers: {
         ...corsHeaders,
@@ -429,7 +354,7 @@ Deno.serve(async (req) => {
   } catch (error) {
     console.error('❌ Error in serve-page function:', error);
     
-    // Fall back to React app on error with original path
+    // Fall back to React app on error
     const url = new URL(req.url);
     const prefix = url.searchParams.get('prefix');
     const splat = url.searchParams.get('splat');
@@ -439,7 +364,7 @@ Deno.serve(async (req) => {
       status: 302,
       headers: {
         ...corsHeaders,
-        'Location': `https://681a2e99-80e9-42b8-b8d3-dc8717d4c55a.sandbox.lovable.dev${originalPath}`,
+        'Location': `https://ecombuildr.com${originalPath}`,
       }
     });
   }
