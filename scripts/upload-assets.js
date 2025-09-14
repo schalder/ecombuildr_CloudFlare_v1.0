@@ -80,9 +80,17 @@ async function uploadAssetsFromDist() {
   console.log('🚀 Starting asset upload to Supabase...');
 
   try {
-    const assetFiles = fs.readdirSync(assetsPath);
     const uploadPromises = [];
+    
+    // Upload bundle manifest first
+    const manifestPath = path.join(distPath, 'bundle-manifest.json');
+    if (fs.existsSync(manifestPath)) {
+      const manifestContent = fs.readFileSync(manifestPath, 'utf-8');
+      uploadPromises.push(uploadAsset('bundle-manifest.json', manifestContent, 'application/json'));
+    }
 
+    // Upload all asset files
+    const assetFiles = fs.readdirSync(assetsPath);
     for (const fileName of assetFiles) {
       const filePath = path.join(assetsPath, fileName);
       const stats = fs.statSync(filePath);

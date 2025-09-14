@@ -50,7 +50,7 @@ serve(async (req) => {
         throw new Error(`Website not found: ${websiteError?.message}`)
       }
       
-      htmlContent = generateSelfContainedWebsiteHTML(website, page, customDomain)
+      htmlContent = await generateSelfContainedWebsiteHTML(website, page, customDomain)
       
     } else if (contentType === 'funnel_step') {
       const { data: step, error: stepError } = await supabase
@@ -73,7 +73,7 @@ serve(async (req) => {
         throw new Error(`Funnel not found: ${funnelError?.message}`)
       }
       
-      htmlContent = generateSelfContainedFunnelHTML(funnel, step, customDomain)
+      htmlContent = await generateSelfContainedFunnelHTML(funnel, step, customDomain)
     } else {
       throw new Error(`Unsupported content type: ${contentType}`)
     }
@@ -123,11 +123,11 @@ serve(async (req) => {
   }
 })
 
-function generateSelfContainedWebsiteHTML(website: any, page: any, customDomain?: string): string {
+async function generateSelfContainedWebsiteHTML(website: any, page: any, customDomain?: string): Promise<string> {
   const seoTitle = page.seo_title || page.title || website.name;
   const seoDescription = page.seo_description || 'Discover amazing products';
   
-  return generateCompleteHTML({
+  return await generateCompleteHTML({
     pageData: page.content || {},
     seoConfig: {
       title: seoTitle,
@@ -144,11 +144,11 @@ function generateSelfContainedWebsiteHTML(website: any, page: any, customDomain?
   });
 }
 
-function generateSelfContainedFunnelHTML(funnel: any, step: any, customDomain?: string): string {
+async function generateSelfContainedFunnelHTML(funnel: any, step: any, customDomain?: string): Promise<string> {
   const seoTitle = step.seo_title || step.title || funnel.name;
   const seoDescription = step.seo_description || 'High converting sales funnel';
   
-  return generateCompleteHTML({
+  return await generateCompleteHTML({
     pageData: step.content || {},
     seoConfig: {
       title: seoTitle,
@@ -165,11 +165,11 @@ function generateSelfContainedFunnelHTML(funnel: any, step: any, customDomain?: 
   });
 }
 
-function generateCompleteHTML(options: any): string {
+async function generateCompleteHTML(options: any): Promise<string> {
   const { seoConfig, contentType, contentId, customDomain, pageData } = options;
   
   // Get app bundle information
-  const bundle = getAppBundle();
+  const bundle = await getAppBundle();
   
   // Generate asset URLs based on custom domain or system domain
   const assetBaseUrl = customDomain 
@@ -311,14 +311,42 @@ function generateCompleteHTML(options: any): string {
 </html>`;
 }
 
-function getAppBundle() {
-  // This would be called from Node.js context in actual deployment
-  // For now, return a basic bundle structure
-  return {
-    cssFiles: ['assets/index.css'],
-    jsFiles: ['assets/index.js'],
-    preloadLinks: '<link rel="modulepreload" href="assets/vendor.js">'
+async function getAppBundle() {
+  try {
+    // Fetch the bundle manifest from asset-storage
+    const response = await fetch('https://fhqwacmokbtbspkxjixf.functions.supabase.co/asset-storage/bundle-manifest.json');
+    if (response.ok) {
+      const manifest = await response.json();
+      return {
+        cssFiles: manifest.cssFiles || [],
+        jsFiles: manifest.jsFiles || [],
+        preloadLinks: manifest.preloadLinks || ''
+      };
+    }
+  } catch (error) {
+    console.warn('Failed to fetch bundle manifest:', error);
+  }
+  
+  // Fallback: try to get known asset files from asset-storage
+  const knownAssets = {
+    cssFiles: [],
+    jsFiles: [],
+    preloadLinks: ''
   };
+  
+  try {
+    // Try to fetch common asset files that should exist
+    const cssResponse = await fetch('https://fhqwacmokbtbspkxjixf.functions.supabase.co/asset-storage/assets/', { method: 'HEAD' });
+    if (cssResponse.ok) {
+      // Look for typical Vite build patterns
+      knownAssets.cssFiles = ['assets/index.css'];
+      knownAssets.jsFiles = ['assets/index.js'];
+    }
+  } catch (error) {
+    console.warn('Failed to check for assets:', error);
+  }
+  
+  return knownAssets;
 }
 
 function renderPageContent(pageData: any): string {

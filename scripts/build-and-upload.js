@@ -8,6 +8,7 @@
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import { uploadAssetsFromDist } from './upload-assets.js';
+import { generateBundleManifest } from './generate-bundle-manifest.js';
 
 const execAsync = promisify(exec);
 
@@ -19,6 +20,11 @@ async function buildAndUpload() {
     console.log('📦 Building React app...');
     await execAsync('npm run build', { cwd: process.cwd() });
     console.log('✅ Build completed successfully');
+
+    // Generate bundle manifest
+    console.log('📋 Generating bundle manifest...');
+    await generateBundleManifest();
+    console.log('✅ Bundle manifest generated successfully');
 
     // Upload assets to Supabase
     console.log('☁️  Uploading assets to Supabase...');

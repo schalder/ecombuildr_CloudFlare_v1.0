@@ -12,6 +12,7 @@ import { Footer } from "@/components/Footer";
 import { WhatsAppWidget } from "@/components/WhatsAppWidget";
 import { ScrollToHash } from "@/components/ScrollToHash";
 import { FAQ } from "@/components/FAQ";
+import { HydratedPageRenderer } from "@/components/HydratedPageRenderer";
 
 const Index = () => {
   const { user, loading } = useAuth();
@@ -28,26 +29,28 @@ const Index = () => {
         ogImage={seoData?.og_image}
         keywords={seoData?.keywords}
       />
-      <Navbar />
-      <Hero />
-      <div id="features">
-        <Features />
-      </div>
-      <ProcessSteps />
-      <div id="tools">
-        <ToolsShowcase />
-      </div>
-      <div id="testimonials">
-        <Testimonials />
-      </div>
-      <div id="pricing">
-        <Pricing />
-      </div>
-      <div id="support">
-        <FAQ />
-      </div>
-      <Footer />
-      <WhatsAppWidget />
+      <HydratedPageRenderer>
+        <Navbar />
+        <Hero />
+        <div id="features">
+          <Features />
+        </div>
+        <ProcessSteps />
+        <div id="tools">
+          <ToolsShowcase />
+        </div>
+        <div id="testimonials">
+          <Testimonials />
+        </div>
+        <div id="pricing">
+          <Pricing />
+        </div>
+        <div id="support">
+          <FAQ />
+        </div>
+        <Footer />
+        <WhatsAppWidget />
+      </HydratedPageRenderer>
     </div>
   );
 };
