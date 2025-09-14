@@ -99,7 +99,7 @@ serve(async (req) => {
       if (domain !== 'localhost' && !domain.includes('ecombuildr.com')) {
         // This is a custom domain - find associated content
         // First try to match the specific path
-        let { data: domainConnection } = await supabase
+        let { data: domainConnection, error: domainError } = await supabase
           .from('domain_connections')
           .select(`
             content_type, 
@@ -110,10 +110,14 @@ serve(async (req) => {
           .eq('path', path)
           .single();
 
+        if (domainError && domainError.code !== 'PGRST116') {
+          console.error('❌ Error querying domain connections:', domainError);
+        }
+
         // If no specific path match, try to find website and then look for specific page
         if (!domainConnection) {
           // Find the website for this domain
-          const { data: websiteConnection } = await supabase
+          const { data: websiteConnection, error: websiteError } = await supabase
             .from('domain_connections')
             .select(`
               content_type, 
@@ -123,6 +127,10 @@ serve(async (req) => {
             .eq('custom_domains.domain', domain)
             .eq('content_type', 'website')
             .single();
+
+          if (websiteError && websiteError.code !== 'PGRST116') {
+            console.error('❌ Error querying website connections:', websiteError);
+          }
 
           if (websiteConnection && websiteConnection.content_type === 'website') {
             // Look for the specific page within this website
@@ -188,7 +196,11 @@ serve(async (req) => {
       query = query.is('custom_domain', null);
     }
 
-    const { data: snapshot } = await query.single();
+    const { data: snapshot, error: snapshotError } = await query.single();
+    
+    if (snapshotError && snapshotError.code !== 'PGRST116') {
+      console.error('❌ Error querying HTML snapshots:', snapshotError);
+    }
 
     if (snapshot && snapshot.html_content) {
       console.log(`✅ Serving cached HTML snapshot (generated: ${snapshot.generated_at})`);
