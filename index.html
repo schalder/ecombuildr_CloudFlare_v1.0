@@ -38,31 +38,32 @@
           const p = window.location.pathname;
           const isAdmin = p.includes('/dashboard') || p.includes('/admin') || p.includes('/builder') || p.includes('/edit');
 
-          // Opt-out or admin/builder routes -> keep SPA
-          if (sf === '0' || sf === 'false' || isAdmin) return;
+          if (sf === '0' || sf === 'false' || isAdmin) { console.debug('[SSR bootstrap] Skipped (admin or sf=0)'); return; }
 
-          // Prevent double execution
           if (window.__servedStatic) return; window.__servedStatic = true;
 
           const url = `https://fhqwacmokbtbspkxjixf.supabase.co/functions/v1/serve-static-page?domain=${encodeURIComponent(window.location.hostname)}&path=${encodeURIComponent(p)}`;
+          console.debug('[SSR bootstrap] Fetching snapshot:', url);
 
           const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 2500); // fail fast to SPA
+          const timeoutId = setTimeout(() => { console.warn('[SSR bootstrap] Timeout, falling back to SPA'); controller.abort(); }, 5000);
 
-          fetch(url, { method: 'GET', signal: controller.signal })
+          fetch(url, { method: 'GET', signal: controller.signal, cache: 'no-store' })
             .then(async (res) => {
               clearTimeout(timeoutId);
-              if (!res.ok) return;
               const ct = res.headers.get('content-type') || '';
-              const html = await res.text();
-              if (ct.includes('text/html') && html && html.includes('<html')) {
+              const text = await res.text();
+              console.debug('[SSR bootstrap] Status:', res.status, 'CT:', ct, 'Len:', text.length);
+              if (!res.ok) return;
+              const looksHTML = ct.includes('text/html') || /<html[\s>]/i.test(text);
+              if (looksHTML && text && !/^Page not found|Page temporarily unavailable$/i.test(text.trim())) {
                 document.open();
-                document.write(html);
+                document.write(text);
                 document.close();
               }
             })
-            .catch(() => { /* silent fallback to SPA */ });
-        } catch (_) { /* ignore */ }
+            .catch((e) => { console.warn('[SSR bootstrap] Error, SPA fallback', e); });
+        } catch (e) { console.warn('[SSR bootstrap] Failed', e); }
       })();
     </script>
 
