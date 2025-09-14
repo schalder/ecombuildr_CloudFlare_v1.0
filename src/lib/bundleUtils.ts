@@ -2,8 +2,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 export interface AppBundle {
-  css: string;
-  js: string;
+  cssFiles: string[];
+  jsFiles: string[];
   preloadLinks: string;
 }
 
@@ -31,42 +31,36 @@ export function readAppBundle(): AppBundle | null {
     const jsMatches = indexContent.match(/<script[^>]*src="([^"]*\.js)"[^>]*>/g) || [];
     const preloadMatches = indexContent.match(/<link[^>]*rel="modulepreload"[^>]*>/g) || [];
 
-    let combinedCSS = '';
-    let combinedJS = '';
+    let cssFiles: string[] = [];
+    let jsFiles: string[] = [];
 
-    // Read and combine all CSS files
+    // Extract CSS file paths
     for (const cssMatch of cssMatches) {
       const hrefMatch = cssMatch.match(/href="([^"]*)"/);
       if (hrefMatch) {
-        const cssFile = hrefMatch[1].startsWith('/') ? hrefMatch[1].slice(1) : hrefMatch[1];
-        const cssPath = path.join(distPath, cssFile);
-        if (fs.existsSync(cssPath)) {
-          combinedCSS += fs.readFileSync(cssPath, 'utf-8') + '\n';
-        }
+        const cssFile = hrefMatch[1];
+        cssFiles.push(cssFile);
       }
     }
 
-    // Read and combine all JS files (excluding page builder chunks for storefront)
+    // Extract JS file paths (excluding page builder chunks for storefront)
     for (const jsMatch of jsMatches) {
       const srcMatch = jsMatch.match(/src="([^"]*)"/);
       if (srcMatch) {
-        const jsFile = srcMatch[1].startsWith('/') ? srcMatch[1].slice(1) : srcMatch[1];
+        const jsFile = srcMatch[1];
         
         // Skip page builder chunks for storefront
         if (jsFile.includes('page-builder')) {
           continue;
         }
         
-        const jsPath = path.join(distPath, jsFile);
-        if (fs.existsSync(jsPath)) {
-          combinedJS += fs.readFileSync(jsPath, 'utf-8') + '\n';
-        }
+        jsFiles.push(jsFile);
       }
     }
 
     return {
-      css: combinedCSS,
-      js: combinedJS,
+      cssFiles,
+      jsFiles,
       preloadLinks: preloadMatches.join('\n')
     };
 

@@ -316,11 +316,11 @@ export function generateSelfContainedHTML(
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   
   ${appBundle ? `
-  <!-- Inlined App CSS -->
+  <!-- App CSS Files -->
+  ${appBundle.cssFiles.map(cssFile => `<link rel="stylesheet" href="${cssFile}">`).join('\n  ')}
+  
+  <!-- Page specific styles -->
   <style>
-    ${appBundle.css}
-    
-    /* Additional page styles */
     ${pageStyles}
   </style>
   ` : `
@@ -369,10 +369,8 @@ export function generateSelfContainedHTML(
   ${hydrationScript}
   
   ${appBundle ? `
-  <!-- Inlined App JavaScript -->
-  <script>
-    ${appBundle.js}
-  </script>
+  <!-- App JavaScript Files -->
+  ${appBundle.jsFiles.map(jsFile => `<script type="module" src="${jsFile}"></script>`).join('\n  ')}
   ` : `
   <!-- Fallback: Basic interaction scripts -->
   <script>

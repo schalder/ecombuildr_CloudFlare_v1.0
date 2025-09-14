@@ -11,3 +11,6 @@ verify_jwt = false
 
 [functions.serve-page]
 verify_jwt = false
+
+[functions.asset-storage]
+verify_jwt = false

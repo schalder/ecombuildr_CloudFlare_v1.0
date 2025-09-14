@@ -26,7 +26,23 @@ Deno.serve(async (req) => {
       domain = 'ecombuildr.com';
     }
 
-    console.log(`📄 Serving self-contained HTML for domain: ${domain}, path: ${path}`);
+    // Handle asset requests (CSS, JS files from /assets/)
+    if (path.startsWith('/assets/')) {
+      console.log(`📦 Redirecting asset request to asset-storage function: ${path}`);
+      
+      // Redirect to asset-storage function
+      const assetUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/asset-storage${path}`;
+      
+      return new Response(null, {
+        status: 302,
+        headers: {
+          ...corsHeaders,
+          'Location': assetUrl,
+        }
+      });
+    }
+
+    console.log(`📄 Serving HTML snapshot for domain: ${domain}, path: ${path}`);
 
     // Initialize Supabase client
     const supabase = createClient(
