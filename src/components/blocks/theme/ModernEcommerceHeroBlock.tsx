@@ -105,7 +105,7 @@ const ModernEcommerceHeroSave: React.FC<BlockSaveProps> = ({ block }) => {
       <nav className="relative z-10 px-6 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center space-x-8">
-            <div className="text-white font-bold text-2xl">{websiteData?.name || 'Your Store'}</div>
+            <div className="text-white font-bold text-2xl">Your Store</div>
             <div className="hidden lg:flex space-x-8">
               <a href="#" className="text-white/90 hover:text-white transition-colors">Home</a>
               <a href="#" className="text-white/90 hover:text-white transition-colors">VR Headsets</a>
