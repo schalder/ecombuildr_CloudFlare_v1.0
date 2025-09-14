@@ -258,8 +258,8 @@ async function getHTMLSnapshot(supabase: any, domain: string, path: string): Pro
       
       if (!customDomainData?.domain_connections?.length) {
         console.log('❌ No domain connections found')
-        // Fallback: Try to find any published website page with this slug
-        return await getWebsitePageFallback(supabase, path, domain)
+        // Continue to fallback logic in generateFallbackSEOHTML
+        return null
       }
       
       const allConnections = customDomainData.domain_connections || []
@@ -305,7 +305,8 @@ async function getHTMLSnapshot(supabase: any, domain: string, path: string): Pro
       
       if (!selectedConnection) {
         console.log('❌ No matching connection found for path:', path)
-        return await getWebsitePageFallback(supabase, path, domain)
+        // Continue to fallback logic in generateFallbackSEOHTML
+        return null
       }
       
       console.log('✅ Selected connection:', selectedConnection.content_type)
@@ -516,136 +517,22 @@ async function resolveFunnelSlug(supabase: any, funnelSlug: string): Promise<str
   return data.id
 }
 
-// Generate SEO content for a website page
+// Generate SEO content for a website page (legacy function for old calls)
 async function generateWebsitePageSEO(supabase: any, websiteId: string, pageSlug: string, domain: string): Promise<string> {
   try {
-    // Fetch website data
-    const { data: website, error: websiteError } = await supabase
-      .from('websites')
-      .select('name, slug, description')
-      .eq('id', websiteId)
-      .eq('is_active', true)
-      .single()
-    
-    if (websiteError || !website) {
-      console.error('Website not found:', websiteError)
-      return getDefaultSEO()
-    }
-    
-    // Fetch page data - use homepage if no slug provided
-    let pageQuery = supabase
-      .from('website_pages')
-      .select('*')
-      .eq('website_id', websiteId)
-      .eq('is_published', true)
-    
-    if (pageSlug) {
-      pageQuery = pageQuery.eq('slug', pageSlug)
-    } else {
-      pageQuery = pageQuery.eq('is_homepage', true)
-    }
-    
-    const { data: page, error: pageError } = await pageQuery.maybeSingle()
-    
-    if (pageError || !page) {
-      console.error('Page not found:', pageError)
-      return getDefaultSEO()
-    }
-    
-    // Build SEO metadata using only page-level data
-    const title = page.seo_title || `${page.title} - ${website.name}`
-    const description = page.seo_description || undefined
-    const image = page.og_image || undefined
-    const canonicalUrl = page.canonical_url || (domain === 'ecombuildr.com' || domain.includes('lovable.app')
-      ? `https://ecombuildr.com/w/${website.slug}${pageSlug ? `/${pageSlug}` : ''}` 
-      : `https://${domain}${pageSlug ? `/${pageSlug}` : ''}`)
-    const robots = page.meta_robots || 'index, follow'
-    const keywords = Array.isArray(page.seo_keywords) ? page.seo_keywords.join(', ') : ''
-    const author = page.meta_author || undefined
-    const languageCode = page.language_code || 'en'
-    
-    return generateSEOTags({
-      title,
-      description,
-      image,
-      canonicalUrl,
-      robots,
-      siteName: website.name,
-      ogType: 'website',
-      keywords,
-      author,
-      languageCode,
-      customMetaTags: page.custom_meta_tags,
-      customScripts: page.custom_scripts
-    })
+    // This now generates the full HTML document instead of just tags
+    return await generateWebsitePageHTML(supabase, websiteId, pageSlug, domain)
   } catch (error) {
     console.error('Error generating website page SEO:', error)
     return getDefaultSEO()
   }
 }
 
-// Generate SEO content for a funnel step
+// Generate SEO content for a funnel step (legacy function for old calls)
 async function generateFunnelStepSEO(supabase: any, funnelId: string, stepSlug: string, domain: string): Promise<string> {
   try {
-    // Fetch funnel data
-    const { data: funnel, error: funnelError } = await supabase
-      .from('funnels')
-      .select('name, slug, description')
-      .eq('id', funnelId)
-      .eq('is_active', true)
-      .single()
-    
-    if (funnelError || !funnel) {
-      console.error('Funnel not found:', funnelError)
-      return getDefaultSEO()
-    }
-    
-    // Fetch step data - use first step if no slug provided
-    let stepQuery = supabase
-      .from('funnel_steps')
-      .select('*')
-      .eq('funnel_id', funnelId)
-      .eq('is_published', true)
-    
-    if (stepSlug) {
-      stepQuery = stepQuery.eq('slug', stepSlug)
-    } else {
-      stepQuery = stepQuery.order('step_order', { ascending: true }).limit(1)
-    }
-    
-    const { data: step, error: stepError } = await stepQuery.maybeSingle()
-    
-    if (stepError || !step) {
-      console.error('Step not found:', stepError)
-      return getDefaultSEO()
-    }
-    
-    // Build SEO metadata using only step-level data
-    const title = step.seo_title || `${step.title} - ${funnel.name}`
-    const description = step.seo_description || undefined
-    const image = step.social_image_url || step.og_image || undefined
-    const canonicalUrl = step.canonical_url || (domain === 'ecombuildr.com' || domain.includes('lovable.app')
-      ? `https://ecombuildr.com/f/${funnel.slug}${stepSlug ? `/${stepSlug}` : ''}` 
-      : `https://${domain}${stepSlug ? `/${stepSlug}` : ''}`)
-    const robots = step.meta_robots || 'index, follow'
-    const keywords = Array.isArray(step.seo_keywords) ? step.seo_keywords.join(', ') : ''
-    const author = step.meta_author || undefined
-    const languageCode = step.language_code || 'en'
-    
-    return generateSEOTags({
-      title,
-      description,
-      image,
-      canonicalUrl,
-      robots,
-      siteName: funnel.name,
-      ogType: 'website',
-      keywords,
-      author,
-      languageCode,
-      customMetaTags: step.custom_meta_tags,
-      customScripts: step.custom_scripts
-    })
+    // This now generates the full HTML document instead of just tags
+    return await generateFunnelStepHTML(supabase, funnelId, stepSlug, domain)
   } catch (error) {
     console.error('Error generating funnel step SEO:', error)
     return getDefaultSEO()
@@ -1198,7 +1085,7 @@ async function generateFallbackSEOHTML(supabase: any, domain: string, path: stri
           
           if (content_type === 'website') {
             const pageSlug = path === '/' ? '' : (path.startsWith('/') ? path.substring(1) : path)
-            return await generateWebsitePageSEO(supabase, content_id, pageSlug, domain)
+            return await generateWebsitePageHTML(supabase, content_id, pageSlug, domain)
           } else if (content_type === 'website_page') {
             // Get the website_id for this page
             const { data: pageData } = await supabase
@@ -1208,11 +1095,11 @@ async function generateFallbackSEOHTML(supabase: any, domain: string, path: stri
               .single()
             
             if (pageData) {
-              return await generateWebsitePageSEO(supabase, pageData.website_id, pageData.slug, domain)
+              return await generateWebsitePageHTML(supabase, pageData.website_id, pageData.slug, domain)
             }
           } else if (content_type === 'funnel') {
             const stepSlug = path === '/' ? '' : (path.startsWith('/') ? path.substring(1) : path)
-            return await generateFunnelStepSEO(supabase, content_id, stepSlug, domain)
+            return await generateFunnelStepHTML(supabase, content_id, stepSlug, domain)
           } else if (content_type === 'funnel_step') {
             // Get the funnel_id for this step
             const { data: stepData } = await supabase
@@ -1222,11 +1109,46 @@ async function generateFallbackSEOHTML(supabase: any, domain: string, path: stri
               .single()
             
             if (stepData) {
-              return await generateFunnelStepSEO(supabase, stepData.funnel_id, stepData.slug, domain)
+              return await generateFunnelStepHTML(supabase, stepData.funnel_id, stepData.slug, domain)
             }
           }
         }
       }
+      
+      // FALLBACK: Try to find website pages by slug when no domain connections exist
+      console.log('🔄 Attempting fallback: looking for published pages with path', path)
+      const pageSlug = path === '/' ? '' : path.substring(1)
+      
+      // Try to find any published website page with this slug
+      const { data: pages, error: pageError } = await supabase
+        .from('website_pages')
+        .select(`
+          id,
+          title,
+          slug,
+          seo_title,
+          seo_description,
+          og_image,
+          social_image_url,
+          canonical_url,
+          meta_robots,
+          seo_keywords,
+          meta_author,
+          language_code,
+          website_id,
+          websites(name, slug, domain)
+        `)
+        .eq('slug', pageSlug)
+        .eq('is_published', true)
+        .limit(1)
+      
+      if (!pageError && pages && pages.length > 0) {
+        const page = pages[0]
+        console.log(`✅ Found fallback page: "${page.title}" from website: "${page.websites?.name}"`)
+        return await generateWebsitePageHTML(supabase, page.website_id, page.slug, domain)
+      }
+      
+      console.log('❌ No fallback pages found')
     } else {
       // Handle ecombuildr.com URLs
       const pathParts = path.split('/').filter(p => p)
@@ -1238,7 +1160,7 @@ async function generateFallbackSEOHTML(supabase: any, domain: string, path: stri
         // Resolve website slug to ID
         const websiteId = await resolveWebsiteSlug(supabase, websiteSlug)
         if (websiteId) {
-          return await generateWebsitePageSEO(supabase, websiteId, pageSlug, domain)
+          return await generateWebsitePageHTML(supabase, websiteId, pageSlug, domain)
         }
       } else if (pathParts.length >= 2 && pathParts[0] === 'f') {
         const funnelSlug = pathParts[1]
@@ -1247,7 +1169,7 @@ async function generateFallbackSEOHTML(supabase: any, domain: string, path: stri
         // Resolve funnel slug to ID
         const funnelId = await resolveFunnelSlug(supabase, funnelSlug)
         if (funnelId) {
-          return await generateFunnelStepSEO(supabase, funnelId, stepSlug, domain)
+          return await generateFunnelStepHTML(supabase, funnelId, stepSlug, domain)
         }
       }
     }
@@ -1259,47 +1181,307 @@ async function generateFallbackSEOHTML(supabase: any, domain: string, path: stri
   }
 }
 
-// Fallback function to find published website pages by path
-async function getWebsitePageFallback(supabase: any, path: string, domain: string): Promise<string | null> {
+// Generate complete HTML document for website pages
+async function generateWebsitePageHTML(supabase: any, websiteId: string, pageSlug: string, domain: string): Promise<string> {
   try {
-    console.log(`🔄 Attempting fallback: looking for published pages with path "${path}"`)
+    // Fetch website data
+    const { data: website, error: websiteError } = await supabase
+      .from('websites')
+      .select('name, slug, description')
+      .eq('id', websiteId)
+      .eq('is_active', true)
+      .single()
     
-    // Extract potential slug from path
-    const slug = path === '/' ? '' : path.substring(1)
+    if (websiteError || !website) {
+      console.error('Website not found:', websiteError)
+      return generateCompleteHTML({
+        title: 'Page Not Found',
+        description: 'This page could not be found.',
+        canonicalUrl: `https://${domain}${pageSlug ? `/${pageSlug}` : ''}`,
+        siteName: 'Website'
+      })
+    }
     
-    // Try to find any published website page with this slug
-    let query = supabase
+    // Fetch page data - use homepage if no slug provided
+    let pageQuery = supabase
       .from('website_pages')
-      .select(`
-        id,
-        title,
-        slug,
-        website_id,
-        websites(name, slug, store_id)
-      `)
+      .select('*')
+      .eq('website_id', websiteId)
       .eq('is_published', true)
     
-    if (slug) {
-      query = query.eq('slug', slug)
+    if (pageSlug) {
+      pageQuery = pageQuery.eq('slug', pageSlug)
     } else {
-      query = query.eq('is_homepage', true)
+      pageQuery = pageQuery.eq('is_homepage', true)
     }
     
-    const { data: pages, error } = await query
+    const { data: page, error: pageError } = await pageQuery.maybeSingle()
     
-    if (error || !pages || pages.length === 0) {
-      console.log('❌ No fallback pages found')
-      return null
+    if (pageError || !page) {
+      console.error('Page not found:', pageError)
+      return generateCompleteHTML({
+        title: `${website.name}`,
+        description: website.description || `Welcome to ${website.name}`,
+        canonicalUrl: `https://${domain}${pageSlug ? `/${pageSlug}` : ''}`,
+        siteName: website.name
+      })
     }
     
-    // Use the first found page
-    const page = pages[0]
-    console.log(`✅ Fallback found page: "${page.title}" from website: "${page.websites?.name}"`)
+    // Build SEO metadata using page data
+    const title = page.seo_title || `${page.title} - ${website.name}`
+    const description = page.seo_description || website.description || `Welcome to ${page.title}`
+    const image = page.social_image_url || page.og_image || undefined
+    const canonicalUrl = page.canonical_url || `https://${domain}${pageSlug ? `/${pageSlug}` : ''}`
+    const robots = page.meta_robots || 'index, follow'
+    const keywords = Array.isArray(page.seo_keywords) ? page.seo_keywords.join(', ') : ''
+    const author = page.meta_author || undefined
+    const languageCode = page.language_code || 'en'
     
-    // Get snapshot for this page
-    return await getContentSnapshot(supabase, page.id, 'website_page', null)
+    console.log('✅ Generated HTML for page:', { title, description, image, canonicalUrl })
+    
+    return generateCompleteHTML({
+      title,
+      description,
+      image,
+      canonicalUrl,
+      robots,
+      siteName: website.name,
+      ogType: 'website',
+      keywords,
+      author,
+      languageCode
+    })
   } catch (error) {
-    console.error('Error in getWebsitePageFallback:', error)
-    return null
+    console.error('Error generating website page HTML:', error)
+    return generateCompleteHTML({
+      title: 'Error Loading Page',
+      description: 'There was an error loading this page.',
+      canonicalUrl: `https://${domain}${pageSlug ? `/${pageSlug}` : ''}`,
+      siteName: 'Website'
+    })
   }
+}
+
+// Generate complete HTML document for funnel steps
+async function generateFunnelStepHTML(supabase: any, funnelId: string, stepSlug: string, domain: string): Promise<string> {
+  try {
+    // Fetch funnel data
+    const { data: funnel, error: funnelError } = await supabase
+      .from('funnels')
+      .select('name, slug, description')
+      .eq('id', funnelId)
+      .eq('is_active', true)
+      .single()
+    
+    if (funnelError || !funnel) {
+      console.error('Funnel not found:', funnelError)
+      return generateCompleteHTML({
+        title: 'Page Not Found',
+        description: 'This page could not be found.',
+        canonicalUrl: `https://${domain}${stepSlug ? `/${stepSlug}` : ''}`,
+        siteName: 'Funnel'
+      })
+    }
+    
+    // Fetch step data - use first step if no slug provided
+    let stepQuery = supabase
+      .from('funnel_steps')
+      .select('*')
+      .eq('funnel_id', funnelId)
+      .eq('is_published', true)
+    
+    if (stepSlug) {
+      stepQuery = stepQuery.eq('slug', stepSlug)
+    } else {
+      stepQuery = stepQuery.order('step_order', { ascending: true }).limit(1)
+    }
+    
+    const { data: step, error: stepError } = await stepQuery.maybeSingle()
+    
+    if (stepError || !step) {
+      console.error('Step not found:', stepError)
+      return generateCompleteHTML({
+        title: `${funnel.name}`,
+        description: funnel.description || `Welcome to ${funnel.name}`,
+        canonicalUrl: `https://${domain}${stepSlug ? `/${stepSlug}` : ''}`,
+        siteName: funnel.name
+      })
+    }
+    
+    // Build SEO metadata using step data
+    const title = step.seo_title || `${step.title} - ${funnel.name}`
+    const description = step.seo_description || funnel.description || `Welcome to ${step.title}`
+    const image = step.social_image_url || step.og_image || undefined
+    const canonicalUrl = step.canonical_url || `https://${domain}${stepSlug ? `/${stepSlug}` : ''}`
+    const robots = step.meta_robots || 'index, follow'
+    const keywords = Array.isArray(step.seo_keywords) ? step.seo_keywords.join(', ') : ''
+    const author = step.meta_author || undefined
+    const languageCode = step.language_code || 'en'
+    
+    console.log('✅ Generated HTML for step:', { title, description, image, canonicalUrl })
+    
+    return generateCompleteHTML({
+      title,
+      description,
+      image,
+      canonicalUrl,
+      robots,
+      siteName: funnel.name,
+      ogType: 'website',
+      keywords,
+      author,
+      languageCode
+    })
+  } catch (error) {
+    console.error('Error generating funnel step HTML:', error)
+    return generateCompleteHTML({
+      title: 'Error Loading Page',
+      description: 'There was an error loading this page.',
+      canonicalUrl: `https://${domain}${stepSlug ? `/${stepSlug}` : ''}`,
+      siteName: 'Funnel'
+    })
+  }
+}
+
+// Generate complete HTML document with all required meta tags
+function generateCompleteHTML(seo: {
+  title?: string
+  description?: string
+  image?: string
+  canonicalUrl?: string
+  robots?: string
+  siteName?: string
+  ogType?: string
+  keywords?: string
+  author?: string
+  languageCode?: string
+}): string {
+  // Sanitize all inputs
+  const title = sanitizeText(seo.title || 'Page', 60)
+  const description = sanitizeText(seo.description, 160)
+  const image = validateUrl(seo.image)
+  const canonicalUrl = validateUrl(seo.canonicalUrl)
+  const robots = sanitizeText(seo.robots || 'index, follow', 50)
+  const siteName = sanitizeText(seo.siteName || 'Website', 50)
+  const ogType = sanitizeText(seo.ogType || 'website', 20)
+  const keywords = sanitizeText(seo.keywords, 200)
+  const author = sanitizeText(seo.author, 100)
+  const languageCode = sanitizeText(seo.languageCode || 'en', 10)
+
+  return `<!DOCTYPE html>
+<html lang="${languageCode}">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <!-- Primary Meta Tags -->
+  <title>${title}</title>
+  ${description ? `<meta name="description" content="${description}" />` : ''}
+  ${keywords ? `<meta name="keywords" content="${keywords}" />` : ''}
+  ${author ? `<meta name="author" content="${author}" />` : ''}
+  <meta name="robots" content="${robots}" />
+  ${canonicalUrl ? `<link rel="canonical" href="${canonicalUrl}" />` : ''}
+  
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="${ogType}" />
+  <meta property="og:title" content="${title}" />
+  ${description ? `<meta property="og:description" content="${description}" />` : ''}
+  ${image ? `<meta property="og:image" content="${image}" />` : ''}
+  ${canonicalUrl ? `<meta property="og:url" content="${canonicalUrl}" />` : ''}
+  <meta property="og:site_name" content="${siteName}" />
+  
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image" />
+  <meta property="twitter:title" content="${title}" />
+  ${description ? `<meta property="twitter:description" content="${description}" />` : ''}
+  ${image ? `<meta property="twitter:image" content="${image}" />` : ''}
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+  
+  <!-- Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "name": "${title}",
+    "url": "${canonicalUrl || ''}",
+    ${image ? `"image": "${image}",` : ''}
+    "description": "${description || ''}"
+  }
+  </script>
+  
+  <style>
+    body { 
+      font-family: system-ui, -apple-system, sans-serif; 
+      margin: 0; 
+      padding: 20px; 
+      background: #f8fafc; 
+      color: #334155;
+      line-height: 1.6;
+    }
+    .container { 
+      max-width: 600px; 
+      margin: 50px auto; 
+      background: white; 
+      padding: 40px; 
+      border-radius: 12px; 
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+    .title { 
+      color: #1e293b; 
+      margin-bottom: 16px; 
+      font-size: 28px; 
+      font-weight: 600;
+      line-height: 1.2;
+    }
+    .description { 
+      color: #64748b; 
+      margin-bottom: 24px; 
+      font-size: 16px;
+    }
+    .loading-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 24px;
+      background: #f1f5f9;
+      border-radius: 6px;
+      font-size: 14px;
+      color: #475569;
+    }
+    .spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid #e2e8f0;
+      border-top: 2px solid #3b82f6;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1 class="title">${title}</h1>
+    ${description ? `<p class="description">${description}</p>` : ''}
+    <div class="loading-indicator">
+      <div class="spinner"></div>
+      Loading interactive content...
+    </div>
+  </div>
+  
+  <script>
+    // Redirect to interactive version after brief delay for bots
+    setTimeout(() => {
+      if (window.location.search.indexOf('no_prerender') === -1) {
+        window.location.href = window.location.href + (window.location.search ? '&' : '?') + 'no_prerender=1';
+      }
+    }, 2000);
+  </script>
+</body>
+</html>`
 }
