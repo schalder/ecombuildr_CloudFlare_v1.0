@@ -31,51 +31,73 @@ export function useHTMLGeneration() {
     setIsGenerating(true);
 
     try {
-      console.log('📝 Generating HTML snapshot via edge function...', { contentType, contentId, customDomain });
-      
-      // Call the html-snapshot edge function to generate optimized HTML
-      const { data, error } = await supabase.functions.invoke('html-snapshot', {
-        body: {
-          contentType,
-          contentId,
-          customDomain,
-          seoConfig,
-          pageData,
-          websiteSettings,
-          funnelSettings
-        }
-      });
+      // Generate the static HTML
+      const options: HTMLGenerationOptions = {
+        title: seoConfig.title,
+        seoConfig,
+        customDomain,
+        websiteSettings,
+        funnelSettings
+      };
 
-      if (error) {
-        console.error('Error calling html-snapshot function:', error);
+      const htmlContent = generateStaticHTML(pageData, options);
+
+      // Save to html_snapshots table using a more reliable upsert approach
+      // First try to update existing record
+      let query = supabase
+        .from('html_snapshots')
+        .select('id')
+        .eq('content_id', contentId)
+        .eq('content_type', contentType);
+
+      if (customDomain) {
+        query = query.eq('custom_domain', customDomain);
+      } else {
+        query = query.is('custom_domain', null);
+      }
+
+      const { data: existingRecord } = await query.maybeSingle();
+
+      let result;
+      if (existingRecord) {
+        // Update existing record
+        result = await supabase
+          .from('html_snapshots')
+          .update({
+            html_content: htmlContent,
+            generated_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', existingRecord.id);
+      } else {
+        // Insert new record
+        result = await supabase
+          .from('html_snapshots')
+          .insert({
+            content_id: contentId,
+            content_type: contentType,
+            custom_domain: customDomain || null,
+            html_content: htmlContent,
+            generated_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          });
+      }
+
+      if (result.error) {
+        console.error('Error saving HTML snapshot:', result.error);
         toast({
           title: 'HTML Generation Failed',
-          description: 'Failed to generate HTML snapshot via edge function',
+          description: 'Failed to save static HTML snapshot',
           variant: 'destructive'
         });
         return false;
       }
 
-      if (!data?.success) {
-        console.error('HTML snapshot generation failed:', data);
-        toast({
-          title: 'HTML Generation Failed',
-          description: data?.error || 'Unknown error during HTML generation',
-          variant: 'destructive'
-        });
-        return false;
-      }
-
-      console.log('✅ HTML snapshot generated successfully via edge function');
-      toast({
-        title: 'HTML Generated',
-        description: 'Static HTML snapshot created successfully',
-      });
       
       return true;
 
     } catch (error) {
-      console.error('❌ Error generating HTML:', error);
+      console.error('Error generating HTML:', error);
       toast({
         title: 'HTML Generation Error',
         description: 'Failed to generate static HTML',

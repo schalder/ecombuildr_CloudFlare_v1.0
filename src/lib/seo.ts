@@ -90,12 +90,11 @@ export function setSEO(input: SEOConfig) {
     upsertMeta('meta[name="twitter:description"]', { name: 'twitter:description', content: cfg.description });
   }
 
-  // Image - ensure absolute URLs for social sharing
+  // Image
   const imageUrl = cfg.socialImageUrl || cfg.image;
   if (imageUrl) {
-    const absoluteImageUrl = imageUrl.startsWith('http') ? imageUrl : `https://ecombuildr.com${imageUrl}`;
-    upsertMeta('meta[property="og:image"]', { property: 'og:image', content: absoluteImageUrl });
-    upsertMeta('meta[name="twitter:image"]', { name: 'twitter:image', content: absoluteImageUrl });
+    upsertMeta('meta[property="og:image"]', { property: 'og:image', content: imageUrl });
+    upsertMeta('meta[name="twitter:image"]', { name: 'twitter:image', content: imageUrl });
   }
 
   // Keywords
@@ -135,12 +134,9 @@ export function setSEO(input: SEOConfig) {
   // Twitter card
   upsertMeta('meta[name="twitter:card"]', { name: 'twitter:card', content: 'summary_large_image' });
 
-  // Canonical - ensure absolute URLs
+  // Canonical
   if (cfg.canonical) {
-    const absoluteCanonical = cfg.canonical.startsWith('http') ? cfg.canonical : `https://ecombuildr.com${cfg.canonical}`;
-    upsertLink('canonical', absoluteCanonical);
-    upsertMeta('meta[property="og:url"]', { property: 'og:url', content: absoluteCanonical });
-    upsertMeta('meta[name="twitter:url"]', { name: 'twitter:url', content: absoluteCanonical });
+    upsertLink('canonical', cfg.canonical);
   }
 
   // Robots

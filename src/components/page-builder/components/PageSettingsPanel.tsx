@@ -14,9 +14,6 @@ import { SEOSocialImageSection } from '@/components/seo/SEOSocialImageSection';
 import { SEOAdvancedSection } from '@/components/seo/SEOAdvancedSection';
 import { SEOLanguageSection } from '@/components/seo/SEOLanguageSection';
 import { SEOAnalysisSection } from '@/components/seo/SEOAnalysisSection';
-import { SEOValidation } from '@/components/seo/SEOValidation';
-import { SocialMediaDebugger } from '@/components/seo/SocialMediaDebugger';
-import { EnhancedSEOInput } from '@/components/seo/EnhancedSEOInput';
 import { PageBuilderData } from '../types';
 
 interface PageSettingsPanelProps {
@@ -164,33 +161,25 @@ export const PageSettingsPanel: React.FC<PageSettingsPanelProps> = ({
               <CardTitle>SEO Settings</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <EnhancedSEOInput
-                label="SEO Title"
-                value={pageData.seo_title || ''}
-                placeholder="SEO optimized title"
-                maxLength={60}
-                onChange={(value) => setPageData(prev => ({ ...prev, seo_title: value }))}
-                helpText="Appears in search results and browser tabs. Include your main keyword."
-              />
+              <div>
+                <Label htmlFor="seo-title">SEO Title</Label>
+                <Input
+                  id="seo-title"
+                  value={pageData.seo_title}
+                  onChange={(e) => setPageData(prev => ({ ...prev, seo_title: e.target.value }))}
+                  placeholder="SEO optimized title"
+                />
+              </div>
               
-              <EnhancedSEOInput
-                label="SEO Description"
-                value={pageData.seo_description || ''}
-                placeholder="Brief page description for search engines"
-                maxLength={160}
-                type="textarea"
-                onChange={(value) => setPageData(prev => ({ ...prev, seo_description: value }))}
-                helpText="Shown in search results. Write a compelling description to increase clicks."
-              />
-
-              <SEOValidation
-                title={pageData.title}
-                seoTitle={pageData.seo_title}
-                seoDescription={pageData.seo_description}
-                keywords={pageData.seo_keywords}
-                socialImageUrl={pageData.social_image_url}
-                canonicalUrl={pageData.canonical_url}
-              />
+              <div>
+                <Label htmlFor="seo-description">SEO Description</Label>
+                <Input
+                  id="seo-description"
+                  value={pageData.seo_description}
+                  onChange={(e) => setPageData(prev => ({ ...prev, seo_description: e.target.value }))}
+                  placeholder="Brief page description for search engines"
+                />
+              </div>
               
               <SEOKeywordsInput
                 keywords={pageData.seo_keywords}
@@ -232,17 +221,6 @@ export const PageSettingsPanel: React.FC<PageSettingsPanelProps> = ({
                   canonical_url: pageData.canonical_url
                 }}
               />
-
-              {process.env.NODE_ENV === 'development' && (
-                <SocialMediaDebugger
-                  pageUrl={typeof window !== 'undefined' ? window.location.href : ''}
-                  title={pageData.title}
-                  seoTitle={pageData.seo_title}
-                  seoDescription={pageData.seo_description}
-                  socialImageUrl={pageData.social_image_url}
-                  canonicalUrl={pageData.canonical_url}
-                />
-              )}
             </CardContent>
           </Card>
 

@@ -55,7 +55,6 @@ interface Funnel {
   og_image?: string;
   meta_robots?: string;
   canonical_domain?: string;
-  store_id: string;
 }
 
 interface FunnelSettingsProps {
@@ -236,53 +235,13 @@ export const FunnelSettings: React.FC<FunnelSettingsProps> = ({ funnel }) => {
         }
       }
     },
-    onSuccess: async (_, variables) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['funnel', funnel.id] });
       queryClient.invalidateQueries({ queryKey: ['funnels'] });
       toast({ 
         title: 'Settings saved',
         description: 'Funnel settings have been updated successfully.',
       });
-      
-      // Generate HTML snapshots for all domains when funnel is published
-      if (variables.is_published === true) {
-        try {
-          console.log(`Triggering HTML snapshots for funnel: ${funnel.id}`);
-          
-          // Generate snapshot for default domain
-          await supabase.functions.invoke('html-snapshot', {
-            body: {
-              contentType: 'funnel',
-              contentId: funnel.id
-            }
-          });
-          
-          // Generate snapshots for custom domains if any
-          const { data: customDomains } = await supabase
-            .from('custom_domains')
-            .select('domain')
-            .eq('store_id', funnel.store_id)
-            .eq('is_verified', true)
-            .eq('dns_configured', true);
-            
-          if (customDomains?.length > 0) {
-            for (const domain of customDomains) {
-              await supabase.functions.invoke('html-snapshot', {
-                body: {
-                  contentType: 'funnel',
-                  contentId: funnel.id,
-                  customDomain: domain.domain
-                }
-              });
-            }
-          }
-          
-          console.log('Funnel HTML snapshots generated successfully');
-        } catch (snapshotError) {
-          console.warn('Failed to generate funnel HTML snapshots:', snapshotError);
-          // Don't show error to user - this is background optimization
-        }
-      }
     },
     onError: (error) => {
       toast({

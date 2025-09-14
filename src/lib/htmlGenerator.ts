@@ -1,6 +1,5 @@
 import { PageBuilderData } from '@/components/page-builder/types';
 import { SEOConfig } from './seo';
-import { readAppBundle, generateHydrationScript, AppBundle } from './bundleUtils';
 
 export interface HTMLGenerationOptions {
   title?: string;
@@ -8,9 +7,6 @@ export interface HTMLGenerationOptions {
   customDomain?: string;
   websiteSettings?: any;
   funnelSettings?: any;
-  includeAppBundle?: boolean;
-  contentType?: string;
-  contentId?: string;
 }
 
 export function generateStaticHTML(
@@ -22,16 +18,8 @@ export function generateStaticHTML(
     seoConfig = {},
     customDomain,
     websiteSettings = {},
-    funnelSettings = {},
-    includeAppBundle = false,
-    contentType = 'website',
-    contentId = ''
+    funnelSettings = {}
   } = options;
-
-  // If includeAppBundle is true, generate self-contained HTML
-  if (includeAppBundle) {
-    return generateSelfContainedHTML(pageData, options);
-  }
 
   // Extract page styles for inline CSS
   const pageStyles = generatePageCSS(pageData);
@@ -266,140 +254,6 @@ function generatePageCSS(pageData: PageBuilderData): string {
   }
   
   return css;
-}
-
-export function generateSelfContainedHTML(
-  pageData: PageBuilderData,
-  options: HTMLGenerationOptions = {}
-): string {
-  const {
-    title = 'Page',
-    seoConfig = {},
-    customDomain,
-    websiteSettings = {},
-    funnelSettings = {},
-    contentType = 'website',
-    contentId = ''
-  } = options;
-
-  // Read the app bundle
-  const appBundle = readAppBundle();
-  
-  // Extract page styles for inline CSS
-  const pageStyles = generatePageCSS(pageData);
-  
-  // Generate meta tags
-  const metaTags = generateMetaTags(seoConfig, title);
-  
-  // Generate page content HTML
-  const contentHTML = generatePageContent(pageData);
-  
-  // Generate structured data if available
-  const structuredData = seoConfig.structuredData ? 
-    `<script type="application/ld+json">${JSON.stringify(seoConfig.structuredData)}</script>` : '';
-
-  // Generate hydration script
-  const hydrationScript = generateHydrationScript(pageData, contentType, contentId);
-
-  return `<!DOCTYPE html>
-<html lang="${seoConfig.languageCode || 'en'}">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  ${metaTags}
-  ${seoConfig.canonical ? `<link rel="canonical" href="${seoConfig.canonical}">` : ''}
-  ${seoConfig.favicon ? `<link rel="icon" type="image/png" href="${seoConfig.favicon}">` : ''}
-  
-  <!-- Load fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  
-  ${appBundle ? `
-  <!-- App CSS Files -->
-  ${appBundle.cssFiles.map(cssFile => `<link rel="stylesheet" href="${cssFile}">`).join('\n  ')}
-  
-  <!-- Page specific styles -->
-  <style>
-    ${pageStyles}
-  </style>
-  ` : `
-  <!-- Fallback: Tailwind CSS via CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    ${pageStyles}
-    
-    /* Base styles */
-    body { font-family: 'Inter', sans-serif; }
-    
-    /* Animation classes */
-    .animate-fade-in { animation: fadeIn 0.6s ease-out; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-    
-    .animate-slide-up { animation: slideUp 0.8s ease-out; }
-    @keyframes slideUp { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
-    
-    /* Component styles */
-    .btn-primary {
-      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-      color: white;
-      padding: 0.75rem 1.5rem;
-      border-radius: 0.5rem;
-      font-weight: 600;
-      text-decoration: none;
-      display: inline-block;
-      transition: transform 0.2s, box-shadow 0.2s;
-    }
-    .btn-primary:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
-    }
-  </style>
-  `}
-  
-  ${structuredData}
-  ${seoConfig.customMetaTags && Array.isArray(seoConfig.customMetaTags) ? 
-    seoConfig.customMetaTags.map(tag => `<meta name="${tag.name}" content="${tag.content}">`).join('\n') : ''}
-</head>
-<body>
-  <!-- Static content for immediate display -->
-  ${contentHTML}
-  
-  <!-- Hydration data for React app -->
-  ${hydrationScript}
-  
-  ${appBundle ? `
-  <!-- App JavaScript Files -->
-  ${appBundle.jsFiles.map(jsFile => `<script type="module" src="${jsFile}"></script>`).join('\n  ')}
-  ` : `
-  <!-- Fallback: Basic interaction scripts -->
-  <script>
-    // Handle mobile menu toggle
-    function toggleMobileMenu() {
-      const menu = document.getElementById('mobile-menu');
-      if (menu) {
-        menu.classList.toggle('hidden');
-      }
-    }
-    
-    // Handle smooth scrolling for anchor links
-    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-      anchor.addEventListener('click', function (e) {
-        e.preventDefault();
-        const target = document.querySelector(this.getAttribute('href'));
-        if (target) {
-          target.scrollIntoView({ behavior: 'smooth' });
-        }
-      });
-    });
-  </script>
-  `}
-  
-  ${websiteSettings?.customScripts || funnelSettings?.customScripts || ''}
-  ${seoConfig.customMetaTags && Array.isArray(seoConfig.customMetaTags) ? 
-    seoConfig.customMetaTags.find(tag => tag.name === 'custom-scripts')?.content || '' : ''}
-</body>
-</html>`;
 }
 
 function generatePageContent(pageData: PageBuilderData): string {

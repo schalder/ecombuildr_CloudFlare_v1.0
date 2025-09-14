@@ -28,7 +28,7 @@ export const SEOHead: React.FC<SEOHeadProps> = ({
   metaRobots = 'index,follow',
   customMetaTags = []
 }) => {
-  const currentUrl = canonical || (typeof window !== 'undefined' ? window.location.href : 'https://ecombuildr.com');
+  const currentUrl = canonical || window.location.href;
   const keywordsString = keywords.length > 0 ? keywords.join(', ') : 'ecommerce builder, online store, no code, bangladesh ecommerce';
   const finalOgImage = socialImageUrl || ogImage;
 

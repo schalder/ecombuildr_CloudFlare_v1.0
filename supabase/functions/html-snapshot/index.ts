@@ -21,7 +21,8 @@ serve(async (req) => {
     const body = await req.json().catch(() => ({}))
     const { contentType, contentId, customDomain } = body
     
-    console.log(`🔍 Generating self-contained HTML for ${contentType}:${contentId}`)
+    console.log(`🔍 Generating HTML snapshot for ${contentType}:${contentId}`)
+    console.log(`📋 Request body:`, { contentType, contentId, customDomain })
 
     if (!contentType || !contentId) {
       throw new Error('Missing contentType or contentId in request body')
@@ -29,376 +30,329 @@ serve(async (req) => {
 
     let htmlContent = ''
     
-    if (contentType === 'website_page') {
-      const { data: page, error: pageError } = await supabase
-        .from('website_pages')
-        .select('*')
-        .eq('id', contentId)
-        .single()
-      
-      if (pageError || !page) {
-        throw new Error(`Website page not found: ${pageError?.message}`)
+    try {
+      if (contentType === 'website_page') {
+        // Fetch specific website page
+        console.log(`📄 Fetching website page: ${contentId}`)
+        const { data: page, error: pageError } = await supabase
+          .from('website_pages')
+          .select('*')
+          .eq('id', contentId)
+          .maybeSingle()
+
+        if (pageError) {
+          console.error('❌ Error fetching website page:', pageError)
+          throw new Error(`Error fetching website page: ${pageError.message}`)
+        }
+
+        if (!page) {
+          console.error('❌ Website page not found:', contentId)
+          throw new Error('Website page not found')
+        }
+
+        console.log(`✅ Found website page: ${page.title} (website_id: ${page.website_id})`)
+
+        // Fetch the related website separately
+        console.log(`🌐 Fetching website: ${page.website_id}`)
+        const { data: website, error: websiteError } = await supabase
+          .from('websites')
+          .select('*')
+          .eq('id', page.website_id)
+          .maybeSingle()
+
+        if (websiteError) {
+          console.error('❌ Error fetching website:', websiteError)
+          throw new Error(`Error fetching website: ${websiteError.message}`)
+        }
+
+        if (!website) {
+          console.error('❌ Website not found for page:', page.website_id)
+          throw new Error('Website not found for page')
+        }
+
+        console.log(`✅ Found website: ${website.name}`)
+        console.log(`🎨 Generating HTML for page: ${page.title}`)
+        htmlContent = generateWebsiteHTML(website, page, customDomain)
+        
+      } else if (contentType === 'funnel_step') {
+        // Fetch specific funnel step
+        console.log(`📄 Fetching funnel step: ${contentId}`)
+        const { data: step, error: stepError } = await supabase
+          .from('funnel_steps')
+          .select('*')
+          .eq('id', contentId)
+          .maybeSingle()
+
+        if (stepError) {
+          console.error('❌ Error fetching funnel step:', stepError)
+          throw new Error(`Error fetching funnel step: ${stepError.message}`)
+        }
+
+        if (!step) {
+          console.error('❌ Funnel step not found:', contentId)
+          throw new Error('Funnel step not found')
+        }
+
+        console.log(`✅ Found funnel step: ${step.title} (funnel_id: ${step.funnel_id})`)
+
+        // Fetch the related funnel
+        console.log(`🎯 Fetching funnel: ${step.funnel_id}`)
+        const { data: funnel, error: funnelError } = await supabase
+          .from('funnels')
+          .select('*')
+          .eq('id', step.funnel_id)
+          .maybeSingle()
+
+        if (funnelError) {
+          console.error('❌ Error fetching funnel:', funnelError)
+          throw new Error(`Error fetching funnel: ${funnelError.message}`)
+        }
+
+        if (!funnel) {
+          console.error('❌ Funnel not found for step:', step.funnel_id)
+          throw new Error('Funnel not found for step')
+        }
+
+        console.log(`✅ Found funnel: ${funnel.name}`)
+        console.log(`🎨 Generating HTML for step: ${step.title}`)
+        htmlContent = generateFunnelHTML(funnel, step, customDomain)
+        
+      } else {
+        throw new Error(`Unsupported content type: ${contentType}`)
       }
+
+      console.log(`📝 Generated HTML content length: ${htmlContent.length}`)
       
-      const { data: website, error: websiteError } = await supabase
-        .from('websites')
-        .select('*')
-        .eq('id', page.website_id)
-        .single()
-      
-      if (websiteError || !website) {
-        throw new Error(`Website not found: ${websiteError?.message}`)
-      }
-      
-      htmlContent = await generateSelfContainedWebsiteHTML(website, page, customDomain)
-      
-    } else if (contentType === 'funnel_step') {
-      const { data: step, error: stepError } = await supabase
-        .from('funnel_steps')
-        .select('*')
-        .eq('id', contentId)
-        .single()
-      
-      if (stepError || !step) {
-        throw new Error(`Funnel step not found: ${stepError?.message}`)
-      }
-      
-      const { data: funnel, error: funnelError } = await supabase
-        .from('funnels')
-        .select('*')
-        .eq('id', step.funnel_id)
-        .single()
-      
-      if (funnelError || !funnel) {
-        throw new Error(`Funnel not found: ${funnelError?.message}`)
-      }
-      
-      htmlContent = await generateSelfContainedFunnelHTML(funnel, step, customDomain)
-    } else {
-      throw new Error(`Unsupported content type: ${contentType}`)
+    } catch (dataError) {
+      console.error('❌ Error fetching data:', dataError)
+      throw dataError
     }
 
-    // Store the self-contained HTML snapshot
-    let query = supabase.from('html_snapshots').select('id').eq('content_id', contentId).eq('content_type', contentType)
-    if (customDomain) {
-      query = query.eq('custom_domain', customDomain)
-    } else {
-      query = query.is('custom_domain', null)
-    }
-
-    const { data: existingRecord } = await query.maybeSingle()
+    // Store the snapshot using manual update/insert approach to avoid constraint issues
+    console.log(`💾 Storing HTML snapshot: ${contentType}:${contentId}`)
     
-    if (existingRecord) {
-      await supabase.from('html_snapshots').update({
-        html_content: htmlContent,
-        generated_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      }).eq('id', existingRecord.id)
-    } else {
-      await supabase.from('html_snapshots').insert({
-        content_id: contentId,
-        content_type: contentType,
-        custom_domain: customDomain || null,
-        html_content: htmlContent,
-        generated_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      })
+    try {
+      // First, check if a record already exists
+      let query = supabase
+        .from('html_snapshots')
+        .select('id')
+        .eq('content_id', contentId)
+        .eq('content_type', contentType)
+
+      if (customDomain) {
+        query = query.eq('custom_domain', customDomain)
+      } else {
+        query = query.is('custom_domain', null)
+      }
+
+      const { data: existingRecord, error: selectError } = await query.maybeSingle()
+      
+      if (selectError) {
+        console.error('❌ Error checking existing record:', selectError)
+        throw selectError
+      }
+
+      let result
+      if (existingRecord) {
+        // Update existing record
+        console.log(`🔄 Updating existing snapshot: ${existingRecord.id}`)
+        result = await supabase
+          .from('html_snapshots')
+          .update({
+            html_content: htmlContent,
+            generated_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', existingRecord.id)
+      } else {
+        // Insert new record
+        console.log(`✨ Creating new snapshot`)
+        result = await supabase
+          .from('html_snapshots')
+          .insert({
+            content_id: contentId,
+            content_type: contentType,
+            custom_domain: customDomain || null,
+            html_content: htmlContent,
+            generated_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+      }
+
+      if (result.error) {
+        console.error('❌ Database error:', result.error)
+        throw result.error
+      }
+
+      console.log('✅ HTML snapshot stored successfully')
+      
+    } catch (dbError) {
+      console.error('❌ Database operation failed:', dbError)
+      throw dbError
     }
 
-    return new Response(JSON.stringify({ 
-      success: true, 
-      message: 'Self-contained HTML generated successfully',
-      htmlLength: htmlContent.length
-    }), { 
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 200 
-    })
+    return new Response(
+      JSON.stringify({ 
+        success: true, 
+        message: 'HTML snapshot generated successfully',
+        contentType,
+        contentId,
+        htmlLength: htmlContent.length
+      }),
+      { 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200 
+      }
+    )
 
   } catch (error) {
-    console.error('❌ Error:', error)
-    return new Response(JSON.stringify({ error: error.message }), { 
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 500 
-    })
+    console.error('❌ Error generating HTML snapshot:', error)
+    return new Response(
+      JSON.stringify({ 
+        error: error.message,
+        stack: error.stack
+      }),
+      { 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500 
+      }
+    )
   }
 })
 
-async function generateSelfContainedWebsiteHTML(website: any, page: any, customDomain?: string): Promise<string> {
-  const seoTitle = page.seo_title || page.title || website.name;
-  const seoDescription = page.seo_description || 'Discover amazing products';
-  
-  return await generateCompleteHTML({
-    pageData: page.content || {},
-    seoConfig: {
-      title: seoTitle,
-      description: seoDescription,
-      ogTitle: page.seo_title || page.title,
-      ogDescription: page.seo_description,
-      ogImage: page.og_image,
-      siteName: website.name
-    },
-    customDomain,
-    websiteSettings: website,
-    contentType: 'website_page',
-    contentId: page.id
-  });
-}
+function generateWebsiteHTML(website: any, page: any, customDomain?: string): string {
+  // Use ONLY page-level SEO data (no fallbacks to website-level)
+  const title = page.seo_title || page.title || website.name
+  const description = page.seo_description || 'Discover amazing products'
+  const image = page.og_image || page.social_image_url
+  const keywords = (page.seo_keywords || []).join(', ')
+  const canonical = page.canonical_url || (customDomain ? `https://${customDomain}` : `https://ecombuildr.com/w/${website.slug}/${page.slug}`)
+  const robots = page.meta_robots || 'index,follow'
+  const author = page.meta_author
+  const language = page.language_code || 'en'
 
-async function generateSelfContainedFunnelHTML(funnel: any, step: any, customDomain?: string): Promise<string> {
-  const seoTitle = step.seo_title || step.title || funnel.name;
-  const seoDescription = step.seo_description || 'High converting sales funnel';
-  
-  return await generateCompleteHTML({
-    pageData: step.content || {},
-    seoConfig: {
-      title: seoTitle,
-      description: seoDescription,
-      ogTitle: step.seo_title || step.title,
-      ogDescription: step.seo_description,
-      ogImage: funnel.og_image,
-      siteName: funnel.name
-    },
-    customDomain,
-    funnelSettings: funnel,
-    contentType: 'funnel_step',
-    contentId: step.id
-  });
-}
-
-async function generateCompleteHTML(options: any): Promise<string> {
-  const { seoConfig, contentType, contentId, customDomain, pageData } = options;
-  
-  // Get app bundle information
-  const bundle = await getAppBundle();
-  
-  // Generate asset URLs - use relative paths for custom domains, absolute for system domains
-  const assetBaseUrl = customDomain 
-    ? '/assets' // Relative path for custom domains (served via serve-page proxy)
-    : 'https://fhqwacmokbtbspkxjixf.functions.supabase.co/asset-storage/assets';
-  
-  // Generate CSS link tags
-  const cssLinks = bundle.cssFiles.map(file => 
-    `<link rel="stylesheet" href="${assetBaseUrl}/${file}">`
-  ).join('\n  ');
-  
-  // Generate JS script tags
-  const jsScripts = bundle.jsFiles.map(file => 
-    `<script type="module" src="${assetBaseUrl}/${file}"></script>`
-  ).join('\n  ');
-  
-  // Include preload links for better performance - adjust for asset path
-  const preloadLinks = bundle.preloadLinks.replace(/href="([^"]*)"/g, 
-    `href="${assetBaseUrl}/$1"`
-  );
-  
   return `<!DOCTYPE html>
-<html lang="en">
+<html lang="${language}">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>${seoConfig.title}</title>
-  <meta name="description" content="${seoConfig.description}">
-  ${seoConfig.ogTitle ? `<meta property="og:title" content="${seoConfig.ogTitle}">` : ''}
-  ${seoConfig.ogDescription ? `<meta property="og:description" content="${seoConfig.ogDescription}">` : ''}
-  ${seoConfig.ogImage ? `<meta property="og:image" content="${seoConfig.ogImage}">` : ''}
-  <meta property="og:type" content="website">
-  <meta name="robots" content="index,follow">
-  
-  <!-- Preload critical resources -->
-  ${preloadLinks}
-  
-  <!-- CSS Assets -->
-  ${cssLinks}
-  
-  <!-- Critical inline CSS for initial render -->
-  <style>
-    body { 
-      font-family: 'Inter', system-ui, sans-serif; 
-      margin: 0; 
-      line-height: 1.6;
-      color: #333;
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>${title}</title>
+    <meta name="description" content="${description}" />
+    ${keywords ? `<meta name="keywords" content="${keywords}" />` : ''}
+    ${author ? `<meta name="author" content="${author}" />` : ''}
+    <meta name="robots" content="${robots}" />
+    <link rel="canonical" href="${canonical}" />
+    
+    <!-- Open Graph -->
+    <meta property="og:title" content="${title}" />
+    <meta property="og:description" content="${description}" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="${canonical}" />
+    ${image ? `<meta property="og:image" content="${image}" />` : ''}
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="${title}" />
+    <meta name="twitter:description" content="${description}" />
+    ${image ? `<meta name="twitter:image" content="${image}" />` : ''}
+    
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "${title}",
+      "description": "${description}",
+      "url": "${canonical}"
     }
-    .server-rendered-content {
-      min-height: 100vh;
-      padding: 2rem;
-    }
-    .content-section {
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-    .hero-section {
-      text-align: center;
-      padding: 4rem 0;
-    }
-    .hero-title {
-      font-size: 2.5rem;
-      font-weight: 700;
-      margin-bottom: 1rem;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-    .hero-description {
-      font-size: 1.125rem;
-      color: #6b7280;
-      margin-bottom: 2rem;
-    }
-    .features-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 2rem;
-      margin: 3rem 0;
-    }
-    .feature-card {
-      padding: 2rem;
-      border-radius: 0.5rem;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-      background: white;
-    }
-    .feature-title {
-      font-size: 1.25rem;
-      font-weight: 600;
-      margin-bottom: 1rem;
-    }
-    .loading-spinner {
-      display: inline-block;
-      width: 20px;
-      height: 20px;
-      border: 3px solid #f3f3f3;
-      border-top: 3px solid #3498db;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-    }
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-  </style>
+    </script>
+    
+    ${website.facebook_pixel_id ? `<script>
+      !function(f,b,e,v,n,t,s)
+      {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+      n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+      if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+      n.queue=[];t=b.createElement(e);t.async=!0;
+      t.src=v;s=b.getElementsByTagName(e)[0];
+      s.parentNode.insertBefore(t,s)}(window, document,'script',
+      'https://connect.facebook.net/en_US/fbevents.js');
+      fbq('init', '${website.facebook_pixel_id}');
+      fbq('track', 'PageView');
+    </script>` : ''}
+    
+    ${page.custom_scripts || ''}
 </head>
 <body>
-  <div id="root">
-    <div class="server-rendered-content">
-      <div class="content-section">
-        <div class="hero-section">
-          <h1 class="hero-title">${seoConfig.title}</h1>
-          <p class="hero-description">${seoConfig.description}</p>
-        </div>
-        
-        <!-- Render actual page content for SEO -->
-        ${renderPageContent(pageData)}
-      </div>
+    <div id="root">
+        <main>
+            <h1>${title}</h1>
+            <p>${description}</p>
+            <div id="loading">Loading page content...</div>
+        </main>
     </div>
-  </div>
-  
-  <!-- Hydration Data -->
-  <script>
-    window.__HYDRATION_DATA__ = {
-      pageData: ${JSON.stringify(pageData)},
-      contentType: '${contentType}',
-      contentId: '${contentId}',
-      customDomain: ${customDomain ? `'${customDomain}'` : 'null'},
-      timestamp: ${Date.now()}
-    };
-    
-    // Mark when assets start loading
-    console.log('📦 Loading React assets for hydration...');
-  </script>
-  
-  <!-- React App Assets -->
-  ${jsScripts}
+    <script type="module" src="/src/main.tsx"></script>
 </body>
-</html>`;
+</html>`
 }
 
-async function getAppBundle() {
-  try {
-    // Fetch the bundle manifest from asset-storage
-    const response = await fetch('https://fhqwacmokbtbspkxjixf.functions.supabase.co/asset-storage/bundle-manifest.json');
-    if (response.ok) {
-      const manifest = await response.json();
-      return {
-        cssFiles: manifest.cssFiles || [],
-        jsFiles: manifest.jsFiles || [],
-        preloadLinks: manifest.preloadLinks || ''
-      };
-    }
-  } catch (error) {
-    console.warn('Failed to fetch bundle manifest:', error);
-  }
-  
-  // Fallback: try to get known asset files from asset-storage
-  const knownAssets = {
-    cssFiles: [],
-    jsFiles: [],
-    preloadLinks: ''
-  };
-  
-  try {
-    // Try to fetch common asset files that should exist
-    const cssResponse = await fetch('https://fhqwacmokbtbspkxjixf.functions.supabase.co/asset-storage/assets/', { method: 'HEAD' });
-    if (cssResponse.ok) {
-      // Look for typical Vite build patterns
-      knownAssets.cssFiles = ['assets/index.css'];
-      knownAssets.jsFiles = ['assets/index.js'];
-    }
-  } catch (error) {
-    console.warn('Failed to check for assets:', error);
-  }
-  
-  return knownAssets;
-}
+function generateFunnelHTML(funnel: any, step: any, customDomain?: string): string {
+  // Use ONLY step-level SEO data (no fallbacks to funnel-level)
+  const title = step.seo_title || step.title || funnel.name
+  const description = step.seo_description || 'High converting sales funnel'
+  const image = step.og_image || step.social_image_url
+  const keywords = (step.seo_keywords || []).join(', ')
+  const canonical = step.canonical_url || (customDomain ? `https://${customDomain}` : `https://ecombuildr.com/f/${funnel.slug}/${step.slug}`)
+  const robots = step.meta_robots || 'index,follow'
+  const author = step.meta_author
+  const language = step.language_code || 'en'
 
-function renderPageContent(pageData: any): string {
-  if (!pageData?.sections?.length) {
-    return '<div class="text-center"><div class="loading-spinner"></div> Loading content...</div>';
-  }
-  
-  let contentHtml = '';
-  
-  for (const section of pageData.sections) {
-    switch (section.type) {
-      case 'hero':
-        contentHtml += `
-          <section class="hero-section">
-            <h2 class="hero-title">${section.content?.title || ''}</h2>
-            <p class="hero-description">${section.content?.subtitle || ''}</p>
-          </section>
-        `;
-        break;
-        
-      case 'content':
-      case 'text':
-        contentHtml += `
-          <section class="content-section">
-            <h3 class="feature-title">${section.content?.title || ''}</h3>
-            <p>${section.content?.text || section.content?.content || ''}</p>
-          </section>
-        `;
-        break;
-        
-      case 'featured_products':
-        contentHtml += `
-          <section class="features-grid">
-            <div class="feature-card">
-              <h3 class="feature-title">Featured Products</h3>
-              <p>Discover our top products carefully selected for you.</p>
-            </div>
-          </section>
-        `;
-        break;
-        
-      default:
-        if (section.content?.title) {
-          contentHtml += `
-            <section class="content-section">
-              <h3 class="feature-title">${section.content.title}</h3>
-              ${section.content.description ? `<p>${section.content.description}</p>` : ''}
-            </section>
-          `;
-        }
+  return `<!DOCTYPE html>
+<html lang="${language}">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>${title}</title>
+    <meta name="description" content="${description}" />
+    ${keywords ? `<meta name="keywords" content="${keywords}" />` : ''}
+    ${author ? `<meta name="author" content="${author}" />` : ''}
+    <meta name="robots" content="${robots}" />
+    <link rel="canonical" href="${canonical}" />
+    
+    <!-- Open Graph -->
+    <meta property="og:title" content="${title}" />
+    <meta property="og:description" content="${description}" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="${canonical}" />
+    ${image ? `<meta property="og:image" content="${image}" />` : ''}
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="${title}" />
+    <meta name="twitter:description" content="${description}" />
+    ${image ? `<meta name="twitter:image" content="${image}" />` : ''}
+    
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "${title}",
+      "description": "${description}",
+      "url": "${canonical}"
     }
-  }
-  
-  return contentHtml || '<div class="text-center">Welcome to our site!</div>';
+    </script>
+    
+    ${step.custom_scripts || ''}
+</head>
+<body>
+    <div id="root">
+        <main>
+            <h1>${title}</h1>
+            <p>${description}</p>
+            <div id="loading">Loading funnel step...</div>
+        </main>
+    </div>
+    <script type="module" src="/src/main.tsx"></script>
+</body>
+</html>`
 }
