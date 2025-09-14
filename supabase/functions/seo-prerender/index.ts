@@ -182,11 +182,13 @@ serve(async (req) => {
     if (htmlSnapshot) {
       console.log('✅ Serving HTML snapshot from database')
       return new Response(htmlSnapshot, {
+        status: 200,
         headers: {
           ...corsHeaders,
           'Content-Type': 'text/html; charset=UTF-8',
           'Cache-Control': 'public, max-age=300, s-maxage=3600',
-          'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; img-src 'self' data: https:; font-src 'self' https:;"
+          'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; img-src 'self' data: https:; font-src 'self' https:;",
+          'Vary': 'User-Agent'
         },
       })
     }
@@ -199,10 +201,12 @@ serve(async (req) => {
     if (fallbackHTML) {
       console.log('✅ Serving generated SEO HTML from database')
       return new Response(fallbackHTML, {
+        status: 200,
         headers: {
           ...corsHeaders,
           'Content-Type': 'text/html; charset=UTF-8',
-          'Cache-Control': 'public, max-age=60, s-maxage=300', // Shorter cache for fallback
+          'Cache-Control': 'public, max-age=60, s-maxage=300',
+          'Vary': 'User-Agent'
         },
       })
     }
@@ -619,13 +623,14 @@ function generateFallbackHTML(domain?: string, path?: string): Response {
 </body>
 </html>`
   
-  return new Response(html, {
-    status: 200, // Return 200 instead of 404 to avoid redirect loops
-    headers: {
-      ...corsHeaders,
-      'Content-Type': 'text/html'
-    }
-  })
+    return new Response(html, {
+      status: 200, // Return 200 instead of 404 to avoid redirect loops
+      headers: {
+        ...corsHeaders,
+        'Content-Type': 'text/html; charset=UTF-8',
+        'Vary': 'User-Agent'
+      }
+    })
 }
 
 // Helper function to generate SEO meta tags

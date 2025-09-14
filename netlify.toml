@@ -57,6 +57,13 @@
   to = "/index.html"
   status = 200
 
+# Cache control for SEO prerender responses
+[[headers]]
+  for = "/__bot/*"
+  [headers.values]
+    Cache-Control = "public, max-age=300, s-maxage=3600"
+    Content-Type = "text/html; charset=UTF-8"
+
 # Cache static assets
 [[headers]]
   for = "/static/*"
