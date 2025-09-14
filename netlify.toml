@@ -16,34 +16,6 @@
   to = "https://fhqwacmokbtbspkxjixf.functions.supabase.co/steadfast-webhook"
   status = 200
 
-# Universal SEO routing - all requests go to seo-prerender function
-[[redirects]]
-  from = "/*"
-  to = "https://fhqwacmokbtbspkxjixf.functions.supabase.co/seo-prerender?domain=:host&path=/:splat"
-  status = 200
-
-# Debug route for testing crawlers
-[[redirects]]
-  from = "/__bot/*"
-  to = "https://fhqwacmokbtbspkxjixf.functions.supabase.co/seo-prerender?domain=:host&path=/:splat&force_bot=1"
-  status = 200
-
-# Pass-through for static assets (JS, CSS, images, etc.)
-[[redirects]]
-  from = "/assets/*"
-  to = "/assets/:splat"
-  status = 200
-
-[[redirects]]
-  from = "/favicon.ico"
-  to = "/favicon.ico" 
-  status = 200
-
-[[redirects]]
-  from = "/robots.txt"
-  to = "/robots.txt"
-  status = 200
-
 # Serve SPA for all routes
 [[redirects]]
   from = "/*"
