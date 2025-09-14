@@ -29,6 +29,43 @@
       img[width][height] { aspect-ratio: attr(width) / attr(height); }
     </style>
     
+    <!-- Static snapshot bootstrap: load server-rendered HTML before SPA -->
+    <script>
+      (function () {
+        try {
+          const params = new URLSearchParams(window.location.search);
+          const sf = params.get('sf');
+          const p = window.location.pathname;
+          const isAdmin = p.includes('/dashboard') || p.includes('/admin') || p.includes('/builder') || p.includes('/edit');
+
+          // Opt-out or admin/builder routes -> keep SPA
+          if (sf === '0' || sf === 'false' || isAdmin) return;
+
+          // Prevent double execution
+          if (window.__servedStatic) return; window.__servedStatic = true;
+
+          const url = `https://fhqwacmokbtbspkxjixf.supabase.co/functions/v1/serve-static-page?domain=${encodeURIComponent(window.location.hostname)}&path=${encodeURIComponent(p)}`;
+
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 2500); // fail fast to SPA
+
+          fetch(url, { method: 'GET', signal: controller.signal })
+            .then(async (res) => {
+              clearTimeout(timeoutId);
+              if (!res.ok) return;
+              const ct = res.headers.get('content-type') || '';
+              const html = await res.text();
+              if (ct.includes('text/html') && html && html.includes('<html')) {
+                document.open();
+                document.write(html);
+                document.close();
+              }
+            })
+            .catch(() => { /* silent fallback to SPA */ });
+        } catch (_) { /* ignore */ }
+      })();
+    </script>
+
     <!-- Dynamic SEO tags will be loaded here -->
     <script>
       (function() {
