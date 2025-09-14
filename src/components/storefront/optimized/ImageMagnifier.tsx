@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 
 interface ImageMagnifierProps {
   src: string;
@@ -9,7 +9,7 @@ interface ImageMagnifierProps {
   magnifierSize?: number;
   className?: string;
   style?: React.CSSProperties;
-  responsive?: boolean; // Enable responsive magnifier sizing
+  responsive?: boolean;
 }
 
 export const ImageMagnifier: React.FC<ImageMagnifierProps> = ({
@@ -17,8 +17,8 @@ export const ImageMagnifier: React.FC<ImageMagnifierProps> = ({
   alt,
   width,
   height,
-  zoomLevel = 4.5, // Increased default zoom level
-  magnifierSize = 280, // Increased default size
+  zoomLevel = 3.5, // Optimized for performance
+  magnifierSize = 200, // Lighter default size
   className = '',
   style = {},
   responsive = true
@@ -27,112 +27,143 @@ export const ImageMagnifier: React.FC<ImageMagnifierProps> = ({
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [imageLoaded, setImageLoaded] = useState(false);
   const [actualMagnifierSize, setActualMagnifierSize] = useState(magnifierSize);
+  const [containerRect, setContainerRect] = useState<DOMRect | null>(null);
+  
   const imageRef = useRef<HTMLImageElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const rafRef = useRef<number | null>(null);
+  const resizeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Check if device supports hover (non-touch devices)
   const [supportsHover, setSupportsHover] = useState(true);
   
+  // Cache container rect for performance
+  const updateContainerRect = useCallback(() => {
+    if (containerRef.current) {
+      setContainerRect(containerRef.current.getBoundingClientRect());
+    }
+  }, []);
+
+  // Debounced resize handler
+  const handleResize = useCallback(() => {
+    if (resizeTimeoutRef.current) {
+      clearTimeout(resizeTimeoutRef.current);
+    }
+    resizeTimeoutRef.current = setTimeout(() => {
+      updateContainerRect();
+      if (responsive) {
+        const screenWidth = window.innerWidth;
+        if (screenWidth >= 1024) {
+          setActualMagnifierSize(Math.max(magnifierSize, 240));
+        } else if (screenWidth >= 768) {
+          setActualMagnifierSize(Math.max(magnifierSize * 0.85, 200));
+        } else {
+          setActualMagnifierSize(Math.max(magnifierSize * 0.7, 160));
+        }
+      }
+    }, 100);
+  }, [magnifierSize, responsive, updateContainerRect]);
+
   useEffect(() => {
     // Detect touch devices and disable magnifier on them
     const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
     setSupportsHover(!isTouchDevice);
     
-    // Set responsive magnifier size
-    if (responsive) {
-      const updateMagnifierSize = () => {
-        const screenWidth = window.innerWidth;
-        if (screenWidth >= 1024) {
-          // Desktop: larger magnifier
-          setActualMagnifierSize(Math.max(magnifierSize, 300));
-        } else if (screenWidth >= 768) {
-          // Tablet: medium magnifier
-          setActualMagnifierSize(Math.max(magnifierSize * 0.85, 240));
-        } else {
-          // Mobile: smaller magnifier
-          setActualMagnifierSize(Math.max(magnifierSize * 0.65, 180));
-        }
-      };
-      
-      updateMagnifierSize();
-      window.addEventListener('resize', updateMagnifierSize);
-      return () => window.removeEventListener('resize', updateMagnifierSize);
-    } else {
-      setActualMagnifierSize(magnifierSize);
-    }
-  }, [magnifierSize, responsive]);
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!containerRef.current || !supportsHover) return;
-
-    const rect = containerRef.current.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width) * 100;
-    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    // Initial setup
+    updateContainerRect();
+    handleResize();
     
-    setMousePosition({ x, y });
-  };
+    window.addEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (resizeTimeoutRef.current) {
+        clearTimeout(resizeTimeoutRef.current);
+      }
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+      }
+    };
+  }, [handleResize, updateContainerRect]);
 
-  const handleMouseEnter = () => {
+  // Throttled mouse move handler using RAF
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (!containerRect || !supportsHover) return;
+
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current);
+    }
+
+    rafRef.current = requestAnimationFrame(() => {
+      const x = ((e.clientX - containerRect.left) / containerRect.width) * 100;
+      const y = ((e.clientY - containerRect.top) / containerRect.height) * 100;
+      
+      setMousePosition({ x: Math.max(0, Math.min(100, x)), y: Math.max(0, Math.min(100, y)) });
+    });
+  }, [containerRect, supportsHover]);
+
+  const handleMouseEnter = useCallback(() => {
     if (supportsHover && imageLoaded) {
+      updateContainerRect();
       setIsHovered(true);
     }
-  };
+  }, [supportsHover, imageLoaded, updateContainerRect]);
 
-  const handleMouseLeave = () => {
+  const handleMouseLeave = useCallback(() => {
     setIsHovered(false);
-  };
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current);
+    }
+  }, []);
 
-  const handleImageLoad = () => {
+  const handleImageLoad = useCallback(() => {
     setImageLoaded(true);
-  };
+    updateContainerRect();
+  }, [updateContainerRect]);
 
-  // Calculate magnifier styles with enhanced visual appearance
-  const magnifierStyle: React.CSSProperties = {
-    position: 'absolute',
-    width: `${actualMagnifierSize}px`,
-    height: `${actualMagnifierSize}px`,
-    border: '3px solid hsl(var(--primary))',
-    borderRadius: '50%',
-    background: `url(${src}) no-repeat`,
-    backgroundSize: `${100 * zoomLevel}% ${100 * zoomLevel}%`,
-    backgroundPosition: `${mousePosition.x}% ${mousePosition.y}%`,
-    pointerEvents: 'none',
-    opacity: isHovered ? 1 : 0,
-    transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-    transform: 'translate(-50%, -50%)',
-    zIndex: 50,
-    boxShadow: `
-      0 0 0 2px hsl(var(--background)),
-      0 10px 25px -5px hsl(var(--foreground) / 0.15),
-      0 20px 40px -10px hsl(var(--primary) / 0.2),
-      inset 0 0 0 1px hsl(var(--primary) / 0.1)
-    `,
-    backdropFilter: 'blur(0.5px)',
-    // Position the magnifier with slight offset from cursor for better visibility
-    left: `${mousePosition.x}%`,
-    top: `${mousePosition.y}%`,
-  };
+  // Optimized magnifier styles using memoization
+  const magnifierStyle = useMemo((): React.CSSProperties => {
+    let adjustedX = mousePosition.x;
+    let adjustedY = mousePosition.y;
 
-  // Adjust magnifier position to stay within bounds
-  if (containerRef.current) {
-    const rect = containerRef.current.getBoundingClientRect();
-    const offsetX = rect.width * (mousePosition.x / 100);
-    const offsetY = rect.height * (mousePosition.y / 100);
-    
-    // Keep magnifier within container bounds using actual size
-    const padding = actualMagnifierSize / 2 + 10;
-    if (offsetX < padding) {
-      magnifierStyle.left = `${(padding / rect.width) * 100}%`;
-    } else if (offsetX > rect.width - padding) {
-      magnifierStyle.left = `${((rect.width - padding) / rect.width) * 100}%`;
+    // Optimize positioning calculation using cached rect
+    if (containerRect) {
+      const offsetX = containerRect.width * (mousePosition.x / 100);
+      const offsetY = containerRect.height * (mousePosition.y / 100);
+      
+      const padding = actualMagnifierSize / 2 + 10;
+      if (offsetX < padding) {
+        adjustedX = (padding / containerRect.width) * 100;
+      } else if (offsetX > containerRect.width - padding) {
+        adjustedX = ((containerRect.width - padding) / containerRect.width) * 100;
+      }
+      
+      if (offsetY < padding) {
+        adjustedY = (padding / containerRect.height) * 100;
+      } else if (offsetY > containerRect.height - padding) {
+        adjustedY = ((containerRect.height - padding) / containerRect.height) * 100;
+      }
     }
-    
-    if (offsetY < padding) {
-      magnifierStyle.top = `${(padding / rect.height) * 100}%`;
-    } else if (offsetY > rect.height - padding) {
-      magnifierStyle.top = `${((rect.height - padding) / rect.height) * 100}%`;
-    }
-  }
+
+    return {
+      position: 'absolute',
+      width: `${actualMagnifierSize}px`,
+      height: `${actualMagnifierSize}px`,
+      border: '2px solid hsl(var(--primary))',
+      borderRadius: '50%',
+      background: `url(${src}) no-repeat`,
+      backgroundSize: `${100 * zoomLevel}% ${100 * zoomLevel}%`,
+      backgroundPosition: `${mousePosition.x}% ${mousePosition.y}%`,
+      pointerEvents: 'none',
+      opacity: isHovered ? 1 : 0,
+      transition: 'opacity 0.15s ease-out, transform 0.15s ease-out',
+      transform: 'translate(-50%, -50%)',
+      zIndex: 50,
+      boxShadow: '0 4px 12px hsl(var(--foreground) / 0.1)',
+      willChange: 'transform, opacity',
+      left: `${adjustedX}%`,
+      top: `${adjustedY}%`,
+    };
+  }, [mousePosition, actualMagnifierSize, isHovered, src, zoomLevel, containerRect]);
 
   return (
     <div
