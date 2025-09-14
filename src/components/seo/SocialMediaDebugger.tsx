@@ -192,7 +192,7 @@ export const SocialMediaDebugger: React.FC<SocialMediaDebuggerProps> = ({
         <div className="space-y-2">
           <label className="text-sm font-medium">Debug Tools</label>
           <div className="space-y-2">
-            {debuggers.map((debugger, index) => (
+            {debuggers.map((tool, index) => (
               <Button
                 key={index}
                 variant="outline"
@@ -201,15 +201,15 @@ export const SocialMediaDebugger: React.FC<SocialMediaDebuggerProps> = ({
                 className="w-full justify-start"
               >
                 <a
-                  href={debugger.url}
+                  href={tool.url}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-2"
                 >
-                  <span className={debugger.color}>{debugger.icon}</span>
+                  <span className={tool.color}>{tool.icon}</span>
                   <div className="flex-1 text-left">
-                    <div className="font-medium">{debugger.name}</div>
-                    <div className="text-xs text-muted-foreground">{debugger.description}</div>
+                    <div className="font-medium">{tool.name}</div>
+                    <div className="text-xs text-muted-foreground">{tool.description}</div>
                   </div>
                   <ExternalLink className="h-4 w-4" />
                 </a>
