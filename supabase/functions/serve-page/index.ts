@@ -28,18 +28,31 @@ Deno.serve(async (req) => {
 
     // Handle asset requests (CSS, JS files from /assets/)
     if (path.startsWith('/assets/')) {
-      console.log(`📦 Redirecting asset request to asset-storage function: ${path}`);
+      console.log(`📦 Proxying asset request to asset-storage function: ${path}`);
       
-      // Redirect to asset-storage function
+      // Proxy to asset-storage function to maintain same-origin
       const assetUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/asset-storage${path}`;
       
-      return new Response(null, {
-        status: 302,
-        headers: {
-          ...corsHeaders,
-          'Location': assetUrl,
-        }
-      });
+      try {
+        const assetResponse = await fetch(assetUrl);
+        const assetBody = await assetResponse.text();
+        
+        return new Response(assetBody, {
+          status: assetResponse.status,
+          headers: {
+            ...corsHeaders,
+            'Content-Type': assetResponse.headers.get('Content-Type') || 'application/octet-stream',
+            'Cache-Control': 'public, max-age=31536000, immutable', // 1 year cache
+            'ETag': assetResponse.headers.get('ETag') || '',
+          }
+        });
+      } catch (error) {
+        console.error(`❌ Error proxying asset: ${error}`);
+        return new Response('Asset not found', { 
+          status: 404,
+          headers: corsHeaders 
+        });
+      }
     }
 
     console.log(`📄 Serving HTML snapshot for domain: ${domain}, path: ${path}`);

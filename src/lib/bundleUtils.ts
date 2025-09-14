@@ -70,18 +70,20 @@ export function readAppBundle(): AppBundle | null {
   }
 }
 
-export function generateHydrationScript(pageData: any, contentType: string, contentId: string): string {
+export function generateHydrationScript(pageData: any, contentType: string, contentId: string, customDomain?: string): string {
   return `
     <script>
       window.__HYDRATION_DATA__ = {
         pageData: ${JSON.stringify(pageData)},
         contentType: '${contentType}',
         contentId: '${contentId}',
+        customDomain: ${customDomain ? `'${customDomain}'` : 'null'},
         timestamp: ${Date.now()}
       };
       
       // Initialize React app hydration
       window.addEventListener('DOMContentLoaded', function() {
+        console.log('🔄 Starting React app hydration...');
         // The React app will detect hydration data and hydrate accordingly
         if (window.__REACT_APP_LOADED__) {
           window.__REACT_APP_LOADED__();
@@ -89,4 +91,29 @@ export function generateHydrationScript(pageData: any, contentType: string, cont
       });
     </script>
   `;
+}
+
+export function generateAssetHTML(bundle: AppBundle, baseUrl?: string): { cssLinks: string; jsScripts: string; preloadLinks: string } {
+  const assetBaseUrl = baseUrl || '';
+  
+  // Generate CSS link tags
+  const cssLinks = bundle.cssFiles.map(file => 
+    `<link rel="stylesheet" href="${assetBaseUrl}/${file}">`
+  ).join('\n  ');
+  
+  // Generate JS script tags
+  const jsScripts = bundle.jsFiles.map(file => 
+    `<script type="module" src="${assetBaseUrl}/${file}"></script>`
+  ).join('\n  ');
+  
+  // Include preload links for better performance
+  const preloadLinks = bundle.preloadLinks.replace(/href="([^"]*)"/g, 
+    `href="${assetBaseUrl}/$1"`
+  );
+  
+  return {
+    cssLinks,
+    jsScripts,
+    preloadLinks
+  };
 }

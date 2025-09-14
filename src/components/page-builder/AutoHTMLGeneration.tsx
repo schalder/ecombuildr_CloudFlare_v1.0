@@ -29,23 +29,27 @@ export function AutoHTMLGeneration({
 
     const generateHTML = async () => {
       try {
-        console.log('🔄 Auto-generating HTML snapshot for:', contentType, contentId);
+        console.log('🔄 Auto-generating optimized HTML snapshot for:', contentType, contentId);
         
-        await generateAndSaveHTML({
+        const success = await generateAndSaveHTML({
           pageData,
           contentType: contentType as any,
           contentId,
           seoConfig
         });
         
-        console.log('✅ HTML snapshot generated successfully');
+        if (success) {
+          console.log('✅ Optimized HTML snapshot with assets generated successfully');
+        } else {
+          console.warn('⚠️ HTML snapshot generation returned false');
+        }
       } catch (error) {
         console.error('❌ Failed to auto-generate HTML:', error);
       }
     };
 
-    // Debounce the generation
-    const timeoutId = setTimeout(generateHTML, 1000);
+    // Debounce the generation to avoid excessive calls
+    const timeoutId = setTimeout(generateHTML, 2000);
     
     return () => clearTimeout(timeoutId);
   }, [pageData, contentType, contentId, seoConfig, isPublished, triggerGeneration, generateAndSaveHTML]);
