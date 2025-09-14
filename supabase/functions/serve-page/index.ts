@@ -342,11 +342,14 @@ Deno.serve(async (req) => {
       }
 
       if (htmlContent) {
+        // Bulletproof HTML response with proper headers
         return new Response(htmlContent, {
           headers: {
             ...corsHeaders,
             'Content-Type': 'text/html; charset=utf-8',
-            'Cache-Control': 'public, max-age=300, s-maxage=3600',
+            'X-Content-Type-Options': 'nosniff',
+            'Cache-Control': 'public, max-age=300, s-maxage=3600, must-revalidate',
+            'Vary': 'Accept-Encoding',
           }
         });
       } else {

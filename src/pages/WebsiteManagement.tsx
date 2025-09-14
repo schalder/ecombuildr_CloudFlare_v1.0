@@ -126,19 +126,42 @@ const WebsiteManagement = () => {
       queryClient.invalidateQueries({ queryKey: ['website', id] });
       toast({ title: 'Website updated successfully' });
 
-      // Generate HTML snapshot when website is published for better SEO
+      // Generate HTML snapshots for all domains when website is published
       if (variables.is_published === true && data) {
         try {
-          console.log(`Triggering HTML snapshot for website: ${data.id}`);
+          console.log(`Triggering HTML snapshots for website: ${data.id}`);
+          
+          // Generate snapshot for default domain
           await supabase.functions.invoke('html-snapshot', {
             body: {
               contentType: 'website',
               contentId: data.id
             }
           });
-          console.log('Website HTML snapshot generated successfully');
+          
+          // Generate snapshots for custom domains if any
+          const { data: customDomains } = await supabase
+            .from('custom_domains')
+            .select('domain')
+            .eq('store_id', data.store_id)
+            .eq('is_verified', true)
+            .eq('dns_configured', true);
+            
+          if (customDomains?.length > 0) {
+            for (const domain of customDomains) {
+              await supabase.functions.invoke('html-snapshot', {
+                body: {
+                  contentType: 'website',
+                  contentId: data.id,
+                  customDomain: domain.domain
+                }
+              });
+            }
+          }
+          
+          console.log('Website HTML snapshots generated successfully');
         } catch (snapshotError) {
-          console.warn('Failed to generate website HTML snapshot:', snapshotError);
+          console.warn('Failed to generate website HTML snapshots:', snapshotError);
           // Don't show error to user - this is background optimization
         }
       }

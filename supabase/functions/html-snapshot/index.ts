@@ -171,10 +171,10 @@ async function generateCompleteHTML(options: any): Promise<string> {
   // Get app bundle information
   const bundle = await getAppBundle();
   
-  // Generate asset URLs based on custom domain or system domain
+  // Generate asset URLs - use relative paths for custom domains, absolute for system domains
   const assetBaseUrl = customDomain 
-    ? `https://${customDomain}` 
-    : 'https://fhqwacmokbtbspkxjixf.functions.supabase.co/asset-storage';
+    ? '/assets' // Relative path for custom domains (served via serve-page proxy)
+    : 'https://fhqwacmokbtbspkxjixf.functions.supabase.co/asset-storage/assets';
   
   // Generate CSS link tags
   const cssLinks = bundle.cssFiles.map(file => 
@@ -186,7 +186,7 @@ async function generateCompleteHTML(options: any): Promise<string> {
     `<script type="module" src="${assetBaseUrl}/${file}"></script>`
   ).join('\n  ');
   
-  // Include preload links for better performance
+  // Include preload links for better performance - adjust for asset path
   const preloadLinks = bundle.preloadLinks.replace(/href="([^"]*)"/g, 
     `href="${assetBaseUrl}/$1"`
   );

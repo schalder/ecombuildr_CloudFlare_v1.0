@@ -29,6 +29,20 @@ export function HydratedPageRenderer({ children }: HydratedPageRendererProps) {
           navigate(targetPath, { replace: true });
         }
       }
+    } else {
+      // No hydration data found - check if this is a system/preview URL that should have snapshot
+      const currentPath = location.pathname;
+      const isSystemPreviewUrl = currentPath.startsWith('/website/') || 
+                                  currentPath.startsWith('/funnel/') || 
+                                  currentPath.startsWith('/site/');
+      
+      if (isSystemPreviewUrl) {
+        console.log('🔄 System/preview URL without hydration data, redirecting to serve-page...');
+        // Redirect to serve-page function with a 308 (permanent redirect) to preserve method/body
+        const servePageUrl = `https://fhqwacmokbtbspkxjixf.supabase.co/functions/v1/serve-page?prefix=${encodeURIComponent(currentPath.split('/')[1])}&splat=${encodeURIComponent(currentPath.split('/').slice(2).join('/'))}`;
+        window.location.href = servePageUrl;
+        return;
+      }
     }
   }, [navigate, location.pathname]);
 

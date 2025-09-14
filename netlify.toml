@@ -38,10 +38,10 @@
 # Custom domain routing - route all custom domain traffic through serve-page
 [[redirects]]
   from = "/*"
-  to = "https://fhqwacmokbtbspkxjixf.functions.supabase.co/serve-page?domain=:host&path=:splat"
+  to = "https://fhqwacmokbtbspkxjixf.functions.supabase.co/serve-page"
   status = 200
   force = true
-  conditions = {Host = "!ecombuildr.com,!*.netlify.app"}
+  conditions = {Host = "!ecombuildr.com,!*.netlify.app,!localhost"}
 
 # Serve SPA for all other routes (app, admin, etc.)
 [[redirects]]
