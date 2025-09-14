@@ -58,6 +58,33 @@ export type Database = {
           },
         ]
       }
+      assets: {
+        Row: {
+          content: string
+          content_type: string | null
+          created_at: string
+          file_name: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          content: string
+          content_type?: string | null
+          created_at?: string
+          file_name: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          content_type?: string | null
+          created_at?: string
+          file_name?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       career_openings: {
         Row: {
           apply_url: string | null
