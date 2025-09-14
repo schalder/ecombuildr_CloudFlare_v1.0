@@ -108,12 +108,12 @@ serve(async (req) => {
           `)
           .eq('custom_domains.domain', domain)
           .eq('path', path)
-          .eq('is_homepage', false)
           .single();
 
-        // If no specific path match, try homepage
+        // If no specific path match, try to find website and then look for specific page
         if (!domainConnection) {
-          const { data: homepageConnection } = await supabase
+          // Find the website for this domain
+          const { data: websiteConnection } = await supabase
             .from('domain_connections')
             .select(`
               content_type, 
@@ -121,13 +121,44 @@ serve(async (req) => {
               custom_domains!inner(domain)
             `)
             .eq('custom_domains.domain', domain)
-            .eq('is_homepage', true)
+            .eq('content_type', 'website')
             .single();
-          
-          domainConnection = homepageConnection;
-        }
 
-        if (domainConnection) {
+          if (websiteConnection && websiteConnection.content_type === 'website') {
+            // Look for the specific page within this website
+            const pathSlug = path.replace('/', '') || '';
+            if (pathSlug) {
+              const { data: page } = await supabase
+                .from('website_pages')
+                .select('id')
+                .eq('website_id', websiteConnection.content_id)
+                .eq('slug', pathSlug)
+                .eq('is_published', true)
+                .single();
+
+              if (page) {
+                contentType = 'website_page';
+                contentId = page.id;
+                customDomain = domain;
+              }
+            } else {
+              // Homepage request - find homepage for this website
+              const { data: homepage } = await supabase
+                .from('website_pages')
+                .select('id')
+                .eq('website_id', websiteConnection.content_id)
+                .eq('is_homepage', true)
+                .eq('is_published', true)
+                .single();
+
+              if (homepage) {
+                contentType = 'website_page';
+                contentId = homepage.id;
+                customDomain = domain;
+              }
+            }
+          }
+        } else {
           contentType = domainConnection.content_type;
           contentId = domainConnection.content_id;
           customDomain = domain;
