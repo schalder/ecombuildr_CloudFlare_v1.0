@@ -32,6 +32,7 @@ import { FunnelStepProvider } from '@/contexts/FunnelStepContext';
 import { ResponsiveControls } from '@/components/page-builder/components/ResponsiveControls';
 import { getDevicePreviewStyles } from '@/components/page-builder/utils/responsive';
 import { PageSettingsPanel } from '@/components/page-builder/components/PageSettingsPanel';
+import { AutoHTMLGeneration } from '@/components/page-builder/AutoHTMLGeneration';
 
 export default function PageBuilder() {
   const navigate = useNavigate();
@@ -551,6 +552,28 @@ export default function PageBuilder() {
         >
           <PageBuilderRenderer data={builderData} deviceType="desktop" />
         </div>
+
+        {/* Auto HTML Generation for SEO */}
+        {entityId && (
+          <AutoHTMLGeneration
+            pageData={builderData}
+            contentType={context === 'website' ? 'website_page' : context === 'funnel' ? 'funnel_step' : 'website_page'}
+            contentId={entityId}
+            isPublished={pageData.is_published}
+            seoConfig={{
+              title: pageData.seo_title || pageData.title,
+              description: pageData.seo_description,
+              keywords: pageData.seo_keywords,
+              author: pageData.meta_author,
+              canonical: pageData.canonical_url,
+              customMetaTags: pageData.custom_meta_tags,
+              socialImageUrl: pageData.social_image_url,
+              languageCode: pageData.language_code,
+              robots: pageData.meta_robots
+            }}
+            triggerGeneration={Date.now()} // This will trigger regeneration on each save
+          />
+        )}
           </div>
         </FunnelStepProvider>
       </WebsiteProvider>

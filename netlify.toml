@@ -16,10 +16,31 @@
   to = "https://fhqwacmokbtbspkxjixf.functions.supabase.co/steadfast-webhook"
   status = 200
 
-# Serve SPA for all routes
+# Static assets bypass (keep SPA loading fast)
+[[redirects]]
+  from = "/assets/*"
+  to = "/assets/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/*.js"
+  to = "/:splat.js"
+  status = 200
+
+[[redirects]]
+  from = "/*.css"
+  to = "/:splat.css"
+  status = 200
+
+[[redirects]]
+  from = "/favicon.ico"
+  to = "/favicon.ico"
+  status = 200
+
+# Serve HTML snapshots for all other routes
 [[redirects]]
   from = "/*"
-  to = "/index.html"
+  to = "https://fhqwacmokbtbspkxjixf.functions.supabase.co/serve-html?domain=:host&path=/:splat"
   status = 200
 
 # Cache control for SEO prerender responses
