@@ -16,6 +16,7 @@ import { WebsiteHeader } from '@/components/storefront/WebsiteHeader';
 import { WebsiteFooter } from '@/components/storefront/WebsiteFooter';
 import { FloatingCartButton } from '@/components/storefront/FloatingCartButton';
 import { SupportWidget } from '@/components/storefront/SupportWidget';
+import { FOMOManager } from '@/components/storefront/FOMOManager';
 import { WebsiteProvider } from '@/contexts/WebsiteContext';
 
 const DynamicWebsiteRoute: React.FC<{ fallback: React.ReactElement; websiteId: string }> = ({ fallback, websiteId }) => {
@@ -119,6 +120,12 @@ export const DomainWebsiteRouter: React.FC<DomainWebsiteRouterProps> = ({
       )}
       {website.settings?.support_widget?.enabled && (
         <SupportWidget website={website} />
+      )}
+      {website.settings?.fomo?.enabled && (
+        <FOMOManager 
+          websiteId={websiteId} 
+          settings={website.settings.fomo} 
+        />
       )}
       <WebsiteFooter website={website} />
     </WebsiteProvider>
