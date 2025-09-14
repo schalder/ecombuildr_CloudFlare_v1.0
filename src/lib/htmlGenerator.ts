@@ -1,5 +1,6 @@
 import { PageBuilderData } from '@/components/page-builder/types';
 import { SEOConfig } from './seo';
+import { generateCompleteCSS } from './staticCSS';
 
 export interface HTMLGenerationOptions {
   title?: string;
@@ -9,10 +10,11 @@ export interface HTMLGenerationOptions {
   funnelSettings?: any;
 }
 
-export function generateStaticHTML(
+export async function generateStaticHTML(
   pageData: PageBuilderData, 
-  options: HTMLGenerationOptions = {}
-): string {
+  options: HTMLGenerationOptions = {},
+  supabaseClient?: any
+): Promise<string> {
   const {
     title = 'Page',
     seoConfig = {},
@@ -27,12 +29,15 @@ export function generateStaticHTML(
   // Generate meta tags
   const metaTags = generateMetaTags(seoConfig, title);
   
-  // Generate page content HTML
-  const contentHTML = generatePageContent(pageData);
+  // Generate page content HTML with dynamic data
+  const contentHTML = await generatePageContent(pageData, supabaseClient, options);
   
   // Generate structured data if available
   const structuredData = seoConfig.structuredData ? 
     `<script type="application/ld+json">${JSON.stringify(seoConfig.structuredData)}</script>` : '';
+
+  // Include complete CSS from our design system
+  const completeCSS = await generateCompleteCSS(pageStyles);
 
   return `<!DOCTYPE html>
 <html lang="${seoConfig.languageCode || 'en'}">
@@ -43,100 +48,13 @@ export function generateStaticHTML(
   ${seoConfig.canonical ? `<link rel="canonical" href="${seoConfig.canonical}">` : ''}
   ${seoConfig.favicon ? `<link rel="icon" type="image/png" href="${seoConfig.favicon}">` : ''}
   
-  <!-- Load fonts -->
+  <!-- Critical fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   
-  <!-- Tailwind CSS via CDN for static HTML -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  
   <style>
-    ${pageStyles}
-    
-    /* Base styles */
-    body { font-family: 'Inter', sans-serif; }
-    
-    /* Animation classes */
-    .animate-fade-in { animation: fadeIn 0.6s ease-out; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-    
-    .animate-slide-up { animation: slideUp 0.8s ease-out; }
-    @keyframes slideUp { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
-    
-    /* Responsive utilities */
-    @media (max-width: 768px) {
-      .hide-mobile { display: none !important; }
-      .text-responsive { font-size: 1.25rem !important; line-height: 1.75rem !important; }
-      .px-responsive { padding-left: 1rem !important; padding-right: 1rem !important; }
-    }
-    
-    /* Component styles */
-    .btn-primary {
-      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-      color: white;
-      padding: 0.75rem 1.5rem;
-      border-radius: 0.5rem;
-      font-weight: 600;
-      text-decoration: none;
-      display: inline-block;
-      transition: transform 0.2s, box-shadow 0.2s;
-    }
-    .btn-primary:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
-    }
-    
-    .card {
-      background: white;
-      border-radius: 1rem;
-      padding: 2rem;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-      border: 1px solid rgba(0, 0, 0, 0.05);
-    }
-    
-    /* Product grid styles */
-    .product-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 2rem;
-      padding: 2rem 0;
-    }
-    
-    .product-card {
-      background: white;
-      border-radius: 1rem;
-      overflow: hidden;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-      transition: transform 0.3s, box-shadow 0.3s;
-    }
-    .product-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15);
-    }
-    
-    .product-image {
-      width: 100%;
-      height: 200px;
-      object-fit: cover;
-    }
-    
-    .product-info {
-      padding: 1.5rem;
-    }
-    
-    .product-title {
-      font-size: 1.125rem;
-      font-weight: 600;
-      margin-bottom: 0.5rem;
-      color: #1f2937;
-    }
-    
-    .product-price {
-      font-size: 1.25rem;
-      font-weight: 700;
-      color: #3b82f6;
-    }
+    ${completeCSS}
   </style>
   
   ${structuredData}
@@ -146,9 +64,9 @@ export function generateStaticHTML(
 <body>
   ${contentHTML}
   
-  <!-- Basic interaction scripts for static HTML -->
+  <!-- Static HTML interaction scripts -->
   <script>
-    // Handle mobile menu toggle
+    // Mobile menu toggle
     function toggleMobileMenu() {
       const menu = document.getElementById('mobile-menu');
       if (menu) {
@@ -156,7 +74,7 @@ export function generateStaticHTML(
       }
     }
     
-    // Handle smooth scrolling for anchor links
+    // Smooth scrolling for anchor links
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
       anchor.addEventListener('click', function (e) {
         e.preventDefault();
@@ -167,16 +85,35 @@ export function generateStaticHTML(
       });
     });
     
-    // Simple form submission handler
-    document.querySelectorAll('form').forEach(form => {
-      form.addEventListener('submit', function(e) {
+    // Form submission to edge functions
+    document.querySelectorAll('form[data-form-type]').forEach(form => {
+      form.addEventListener('submit', async function(e) {
         e.preventDefault();
-        // In static version, forms would need to submit to a separate endpoint
-        alert('Thank you for your message! We will get back to you soon.');
+        const formData = new FormData(this);
+        const data = Object.fromEntries(formData.entries());
+        const formType = this.getAttribute('data-form-type');
+        const storeId = this.getAttribute('data-store-id');
+        
+        try {
+          const response = await fetch('https://fhqwacmokbtbspkxjixf.supabase.co/functions/v1/form-submit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ...data, formType, storeId })
+          });
+          
+          if (response.ok) {
+            this.innerHTML = '<div class="text-center p-8"><h3 class="text-2xl font-bold text-green-600 mb-4">Thank You!</h3><p class="text-gray-600">We have received your message and will get back to you soon.</p></div>';
+          } else {
+            throw new Error('Submission failed');
+          }
+        } catch (error) {
+          console.error('Form submission error:', error);
+          alert('There was an error submitting your form. Please try again.');
+        }
       });
     });
     
-    // Add fade-in animation on scroll
+    // Intersection observer for animations
     const observerOptions = { threshold: 0.1, rootMargin: '0px 0px -50px 0px' };
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
@@ -190,8 +127,6 @@ export function generateStaticHTML(
   </script>
   
   ${websiteSettings?.customScripts || funnelSettings?.customScripts || ''}
-  ${seoConfig.customMetaTags && Array.isArray(seoConfig.customMetaTags) ? 
-    seoConfig.customMetaTags.find(tag => tag.name === 'custom-scripts')?.content || '' : ''}
 </body>
 </html>`;
 }
@@ -256,30 +191,35 @@ function generatePageCSS(pageData: PageBuilderData): string {
   return css;
 }
 
-function generatePageContent(pageData: PageBuilderData): string {
+async function generatePageContent(pageData: PageBuilderData, supabaseClient?: any, options: HTMLGenerationOptions = {}): Promise<string> {
   if (!pageData.sections || pageData.sections.length === 0) {
     return '<div class="min-h-screen flex items-center justify-center"><p>No content available</p></div>';
   }
   
-  const sectionsHTML = pageData.sections.map(section => generateSectionHTML(section)).join('\n');
+  const sectionsHTML = await Promise.all(
+    pageData.sections.map(section => generateSectionHTML(section, supabaseClient, options))
+  );
   
-  return `<div class="page-container min-h-screen">${sectionsHTML}</div>`;
+  return `<div class="page-container min-h-screen">${sectionsHTML.join('\n')}</div>`;
 }
 
-function generateSectionHTML(section: any): string {
+async function generateSectionHTML(section: any, supabaseClient?: any, options: HTMLGenerationOptions = {}): Promise<string> {
   const sectionStyles = section.styles ? generateElementStyles(section.styles) : '';
   
   let sectionHTML = `<section class="animate-on-scroll" style="${sectionStyles}">`;
   
   if (section.rows && section.rows.length > 0) {
-    sectionHTML += section.rows.map((row: any) => generateRowHTML(row)).join('\n');
+    const rowsHTML = await Promise.all(
+      section.rows.map((row: any) => generateRowHTML(row, supabaseClient, options))
+    );
+    sectionHTML += rowsHTML.join('\n');
   }
   
   sectionHTML += '</section>';
   return sectionHTML;
 }
 
-function generateRowHTML(row: any): string {
+async function generateRowHTML(row: any, supabaseClient?: any, options: HTMLGenerationOptions = {}): Promise<string> {
   const rowStyles = row.styles ? generateElementStyles(row.styles) : '';
   let rowHTML = `<div class="row" style="${rowStyles}">`;
   
@@ -290,7 +230,10 @@ function generateRowHTML(row: any): string {
                     'md:grid-cols-4';
     
     rowHTML += `<div class="grid ${gridCols} gap-6">`;
-    rowHTML += row.columns.map((column: any) => generateColumnHTML(column)).join('\n');
+    const columnsHTML = await Promise.all(
+      row.columns.map((column: any) => generateColumnHTML(column, supabaseClient, options))
+    );
+    rowHTML += columnsHTML.join('\n');
     rowHTML += '</div>';
   }
   
@@ -298,19 +241,22 @@ function generateRowHTML(row: any): string {
   return rowHTML;
 }
 
-function generateColumnHTML(column: any): string {
+async function generateColumnHTML(column: any, supabaseClient?: any, options: HTMLGenerationOptions = {}): Promise<string> {
   const columnStyles = column.styles ? generateElementStyles(column.styles) : '';
   let columnHTML = `<div class="column" style="${columnStyles}">`;
   
   if (column.elements && column.elements.length > 0) {
-    columnHTML += column.elements.map((element: any) => generateElementHTML(element)).join('\n');
+    const elementsHTML = await Promise.all(
+      column.elements.map((element: any) => generateElementHTML(element, supabaseClient, options))
+    );
+    columnHTML += elementsHTML.join('\n');
   }
   
   columnHTML += '</div>';
   return columnHTML;
 }
 
-function generateElementHTML(element: any): string {
+async function generateElementHTML(element: any, supabaseClient?: any, options: HTMLGenerationOptions = {}): Promise<string> {
   const customCSS = element.content?.customCSS;
   const customJS = element.content?.customJS;
   const elementId = element.anchor || `element-${element.id}`;
@@ -331,7 +277,7 @@ function generateElementHTML(element: any): string {
       elementHTML = generateButtonHTML(element);
       break;
     case 'products_grid':
-      elementHTML = generateProductsGridHTML(element);
+      elementHTML = await generateProductsGridHTML(element, supabaseClient, options);
       break;
     case 'hero':
       elementHTML = generateHeroHTML(element);
@@ -340,7 +286,7 @@ function generateElementHTML(element: any): string {
       elementHTML = generateFeaturesHTML(element);
       break;
     case 'contact_form':
-      elementHTML = generateContactFormHTML(element);
+      elementHTML = generateContactFormHTML(element, options);
       break;
     default:
       elementHTML = `<div class="element-${element.type}">${element.content?.text || element.content?.title || ''}</div>`;
@@ -451,33 +397,72 @@ function generateFeaturesHTML(element: any): string {
   `;
 }
 
-function generateProductsGridHTML(element: any): string {
+async function generateProductsGridHTML(element: any, supabaseClient?: any, options: HTMLGenerationOptions = {}): Promise<string> {
   const title = element.content?.title || 'Products';
-  // In static HTML, we'd need to pre-populate products or make an API call
-  // For now, we'll show a placeholder structure
+  const limit = element.content?.limit || 8;
+  const categoryId = element.content?.categoryId;
+  
+  let products = [];
+  
+  // Fetch real products if supabase client is available
+  if (supabaseClient && options.websiteSettings?.storeId) {
+    try {
+      let query = supabaseClient
+        .from('products')
+        .select('id, name, slug, description, price, images, is_active')
+        .eq('store_id', options.websiteSettings.storeId)
+        .eq('is_active', true)
+        .limit(limit);
+      
+      if (categoryId) {
+        query = query.eq('category_id', categoryId);
+      }
+      
+      const { data } = await query;
+      products = data || [];
+    } catch (error) {
+      console.error('Error fetching products for static HTML:', error);
+    }
+  }
+  
+  const productsHTML = products.length > 0 ? 
+    products.map(product => {
+      const image = product.images?.[0] || '/placeholder.svg';
+      const productUrl = `/products/${product.slug}`;
+      
+      return `
+        <div class="product-card animate-fade-in">
+          <a href="${productUrl}" class="block">
+            <img src="${image}" alt="${product.name}" class="product-image" loading="lazy">
+            <div class="product-info">
+              <h3 class="product-title">${product.name}</h3>
+              <p class="product-price">৳${product.price}</p>
+              ${product.description ? `<p class="text-sm text-gray-600 mt-2">${product.description.substring(0, 80)}...</p>` : ''}
+            </div>
+          </a>
+        </div>
+      `;
+    }).join('') : 
+    `<div class="col-span-full text-center py-12">
+      <p class="text-gray-500">No products available at the moment.</p>
+    </div>`;
   
   return `
-    <section class="py-16 px-responsive">
+    <section class="py-16 px-4 md:px-8">
       <div class="max-w-6xl mx-auto">
         <h2 class="text-4xl font-bold text-center mb-12">${title}</h2>
-        <div class="product-grid" id="products-container">
-          <!-- Products will be loaded dynamically -->
-          <div class="product-card animate-fade-in">
-            <img src="/placeholder.svg" alt="Product" class="product-image">
-            <div class="product-info">
-              <h3 class="product-title">Sample Product</h3>
-              <p class="product-price">$99.99</p>
-            </div>
-          </div>
+        <div class="product-grid">
+          ${productsHTML}
         </div>
       </div>
     </section>
   `;
 }
 
-function generateContactFormHTML(element: any): string {
+function generateContactFormHTML(element: any, options: HTMLGenerationOptions = {}): string {
   const title = element.content?.title || 'Contact Us';
   const subtitle = element.content?.text || 'Get in touch with us';
+  const storeId = options.websiteSettings?.storeId || options.funnelSettings?.storeId;
   
   return `
     <section class="py-16 px-responsive">

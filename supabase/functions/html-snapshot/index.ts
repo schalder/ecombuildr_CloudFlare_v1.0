@@ -72,7 +72,42 @@ serve(async (req) => {
 
         console.log(`✅ Found website: ${website.name}`)
         console.log(`🎨 Generating HTML for page: ${page.title}`)
-        htmlContent = generateWebsiteHTML(website, page, customDomain)
+        
+        // Use the new static HTML generator
+        const { generateStaticHTML } = await import('../../../src/lib/htmlGenerator.ts');
+        
+        try {
+          // Prepare page data structure that matches PageBuilderData
+          const pageData = {
+            sections: page.content?.sections || [],
+            pageStyles: page.content?.pageStyles || {},
+            globalStyles: page.content?.globalStyles || '',
+            storeId: website.store_id
+          };
+          
+          const seoConfig = {
+            title: page.seo_title || page.title,
+            description: page.seo_description || '',
+            keywords: page.seo_keywords || [],
+            canonical: page.canonical_url,
+            robots: page.meta_robots,
+            author: page.meta_author,
+            languageCode: page.language_code,
+            socialImageUrl: page.og_image || page.social_image_url,
+            customMetaTags: page.custom_meta_tags
+          };
+          
+          htmlContent = await generateStaticHTML(pageData, {
+            title: seoConfig.title,
+            seoConfig,
+            customDomain,
+            websiteSettings: { storeId: website.store_id }
+          }, supabase);
+          
+        } catch (genError) {
+          console.error('❌ Error with new generator, falling back to old:', genError);
+          htmlContent = generateWebsiteHTML(website, page, customDomain);
+        }
         
       } else if (contentType === 'funnel_step') {
         // Fetch specific funnel step
@@ -115,7 +150,42 @@ serve(async (req) => {
 
         console.log(`✅ Found funnel: ${funnel.name}`)
         console.log(`🎨 Generating HTML for step: ${step.title}`)
-        htmlContent = generateFunnelHTML(funnel, step, customDomain)
+        
+        // Use the new static HTML generator
+        const { generateStaticHTML } = await import('../../../src/lib/htmlGenerator.ts');
+        
+        try {
+          // Prepare page data structure that matches PageBuilderData
+          const pageData = {
+            sections: step.content?.sections || [],
+            pageStyles: step.content?.pageStyles || {},
+            globalStyles: step.content?.globalStyles || '',
+            storeId: funnel.store_id
+          };
+          
+          const seoConfig = {
+            title: step.seo_title || step.title,
+            description: step.seo_description || '',
+            keywords: step.seo_keywords || [],
+            canonical: step.canonical_url,
+            robots: step.meta_robots,
+            author: step.meta_author,
+            languageCode: step.language_code,
+            socialImageUrl: step.og_image || step.social_image_url,
+            customMetaTags: step.custom_meta_tags
+          };
+          
+          htmlContent = await generateStaticHTML(pageData, {
+            title: seoConfig.title,
+            seoConfig,
+            customDomain,
+            funnelSettings: { storeId: funnel.store_id }
+          }, supabase);
+          
+        } catch (genError) {
+          console.error('❌ Error with new generator, falling back to old:', genError);
+          htmlContent = generateFunnelHTML(funnel, step, customDomain);
+        }
         
       } else {
         throw new Error(`Unsupported content type: ${contentType}`)

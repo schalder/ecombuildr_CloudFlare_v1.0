@@ -10,7 +10,25 @@
     command = "npm run build"
     environment = { NETLIFY_PRERENDER = "true" }
 
-# Bot-specific routing: redirect bots to seo-prerender function
+# Static page routing - ALL traffic to static serving for website/funnel pages
+[[redirects]]
+  from = "/w/*"
+  to = "https://fhqwacmokbtbspkxjixf.supabase.co/functions/v1/serve-static-page?domain=:host&path=:path"
+  status = 200
+
+[[redirects]]
+  from = "/f/*"
+  to = "https://fhqwacmokbtbspkxjixf.supabase.co/functions/v1/serve-static-page?domain=:host&path=:path"
+  status = 200
+
+# Custom domain routing - serve static content for custom domains
+[[redirects]]
+  from = "/*"
+  to = "https://fhqwacmokbtbspkxjixf.supabase.co/functions/v1/serve-static-page?domain=:host&path=:path"
+  status = 200
+  conditions = {User-Agent = ["*"], Host = ["!*.lovable.app", "!localhost*", "!*.ecombuildr.com"]}
+
+# Bot-specific routing for SEO (fallback for dashboard routes)
 [[redirects]]
   from = "/*"
   to = "https://fhqwacmokbtbspkxjixf.supabase.co/functions/v1/seo-prerender?domain=:host&path=:path"

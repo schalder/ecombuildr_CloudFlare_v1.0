@@ -40,7 +40,7 @@ export function useHTMLGeneration() {
         funnelSettings
       };
 
-      const htmlContent = generateStaticHTML(pageData, options);
+      const htmlContent = await generateStaticHTML(pageData, options, supabase);
 
       // Save to html_snapshots table using a more reliable upsert approach
       // First try to update existing record
