@@ -20,14 +20,20 @@
 [[redirects]]
   from = "/"
   to = "https://fhqwacmokbtbspkxjixf.functions.supabase.co/seo-prerender?domain=:host&path=/"
-  status = 200
+  status = 302
   conditions = {User-Agent = ["*bot*", "*crawler*", "*spider*", "*Googlebot*", "*Bingbot*", "*facebookexternalhit*", "*Twitterbot*", "*Facebot*", "*facebookcatalog*", "*LinkedInBot*", "*Slackbot*", "*TelegramBot*", "*WhatsApp*", "*Discordbot*"]}
 
 [[redirects]]
   from = "/*"
   to = "https://fhqwacmokbtbspkxjixf.functions.supabase.co/seo-prerender?domain=:host&path=/:splat"
-  status = 200
+  status = 302
   conditions = {User-Agent = ["*bot*", "*crawler*", "*spider*", "*Googlebot*", "*Bingbot*", "*facebookexternalhit*", "*Twitterbot*", "*Facebot*", "*facebookcatalog*", "*LinkedInBot*", "*Slackbot*", "*TelegramBot*", "*WhatsApp*", "*Discordbot*"]}
+
+# Debug route for testing (temporary)
+[[redirects]]
+  from = "/__bot/*"
+  to = "https://fhqwacmokbtbspkxjixf.functions.supabase.co/seo-prerender?domain=:host&path=/:splat"
+  status = 302
 
 # Pass-through for static assets (JS, CSS, images, etc.)
 [[redirects]]
