@@ -4,12 +4,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useHTMLGeneration } from "@/hooks/useHTMLGeneration";
+import { SEOSettingsCard } from "@/components/seo/SEOSettingsCard";
+import { usePageSEO } from "@/hooks/usePageSEO";
+import { Search } from "lucide-react";
 
 export interface WebsitePageSettingsModalProps {
   open: boolean;
@@ -49,6 +53,13 @@ export const WebsitePageSettingsModal: React.FC<WebsitePageSettingsModalProps> =
   const [slug, setSlug] = useState("");
   const [websiteMeta, setWebsiteMeta] = useState<{ slug?: string; domain?: string } | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
+
+  // SEO hook
+  const { seoData, loading: seoLoading, saving: seoSaving, saveSEOData } = usePageSEO(
+    page?.id || '', 
+    page?.slug || '', 
+    'website_page'
+  );
 
   useEffect(() => {
     (async () => {
@@ -179,68 +190,94 @@ export const WebsitePageSettingsModal: React.FC<WebsitePageSettingsModalProps> =
 
   return (
     <Dialog open={open} onOpenChange={(o) => (!o ? onClose() : undefined)}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Page settings</DialogTitle>
           <DialogDescription>Update page details, publish status, and actions.</DialogDescription>
         </DialogHeader>
 
         {page && (
-          <div className="space-y-5">
-            <div className="grid gap-2">
-              <Label htmlFor="title">Title</Label>
-              <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} />
-            </div>
+          <Tabs defaultValue="general" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="general">General</TabsTrigger>
+              <TabsTrigger value="seo">
+                <Search className="w-4 h-4 mr-2" />
+                SEO
+              </TabsTrigger>
+            </TabsList>
 
-            <div className="grid gap-2">
-              <Label htmlFor="slug">Slug</Label>
-              <Input id="slug" value={slug} onChange={(e) => setSlug(e.target.value.replace(/\s+/g, "-").toLowerCase())} />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div>
-                <Label className="block">Publication Status</Label>
-                <p className="text-sm text-muted-foreground">Use the page builder to publish changes.</p>
+            <TabsContent value="general" className="space-y-5">
+              <div className="grid gap-2">
+                <Label htmlFor="title">Title</Label>
+                <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} />
               </div>
-              <Badge variant={page.is_published ? "default" : "secondary"}>
-                {page.is_published ? "Published" : "Not Published"}
-              </Badge>
-            </div>
 
-            <div className="grid gap-2">
-              <Label>Page Builder</Label>
-              <Button variant="outline" onClick={handleOpenInBuilder} className="justify-start">
-                Open in Page Builder
-              </Button>
-              <p className="text-sm text-muted-foreground">Use "Save & Publish" in the builder to publish your changes.</p>
-            </div>
-
-            <div className="grid gap-2">
-              <Label>Public URL</Label>
-              <div className="flex items-center gap-2">
-                <Input readOnly value={url} />
-                <Button variant="outline" onClick={handleCopyUrl}>Copy</Button>
+              <div className="grid gap-2">
+                <Label htmlFor="slug">Slug</Label>
+                <Input id="slug" value={slug} onChange={(e) => setSlug(e.target.value.replace(/\s+/g, "-").toLowerCase())} />
               </div>
-            </div>
 
-            <div className="flex items-center justify-between pt-2">
-              <Button variant="secondary" onClick={handleSetHomepage} disabled={page.is_homepage || setHomepageMutation.isPending}>
-                {page.is_homepage ? "Already homepage" : "Set as homepage"}
-              </Button>
-              <Button 
-                variant="destructive" 
-                onClick={handleDelete} 
-                disabled={deleteMutation.isPending}
-              >
-                {deleteMutation.isPending ? "Deleting..." : "Delete page"}
-              </Button>
-            </div>
-          </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="block">Publication Status</Label>
+                  <p className="text-sm text-muted-foreground">Use the page builder to publish changes.</p>
+                </div>
+                <Badge variant={page.is_published ? "default" : "secondary"}>
+                  {page.is_published ? "Published" : "Not Published"}
+                </Badge>
+              </div>
+
+              <div className="grid gap-2">
+                <Label>Page Builder</Label>
+                <Button variant="outline" onClick={handleOpenInBuilder} className="justify-start">
+                  Open in Page Builder
+                </Button>
+                <p className="text-sm text-muted-foreground">Use "Save & Publish" in the builder to publish your changes.</p>
+              </div>
+
+              <div className="grid gap-2">
+                <Label>Public URL</Label>
+                <div className="flex items-center gap-2">
+                  <Input readOnly value={url} />
+                  <Button variant="outline" onClick={handleCopyUrl}>Copy</Button>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between pt-2">
+                <Button variant="secondary" onClick={handleSetHomepage} disabled={page.is_homepage || setHomepageMutation.isPending}>
+                  {page.is_homepage ? "Already homepage" : "Set as homepage"}
+                </Button>
+                <Button 
+                  variant="destructive" 
+                  onClick={handleDelete} 
+                  disabled={deleteMutation.isPending}
+                >
+                  {deleteMutation.isPending ? "Deleting..." : "Delete page"}
+                </Button>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="seo" className="space-y-4">
+              {seoLoading ? (
+                <div className="flex items-center justify-center p-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                </div>
+              ) : (
+                <SEOSettingsCard
+                  data={seoData || {}}
+                  onChange={(data) => saveSEOData(data)}
+                  pageUrl={url}
+                />
+              )}
+            </TabsContent>
+          </Tabs>
         )}
 
         <DialogFooter className="pt-4">
           <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={handleSave} disabled={updateMutation.isPending}>Save changes</Button>
+          <Button onClick={handleSave} disabled={updateMutation.isPending || seoSaving}>
+            {updateMutation.isPending || seoSaving ? "Saving..." : "Save changes"}
+          </Button>
         </DialogFooter>
       </DialogContent>
 

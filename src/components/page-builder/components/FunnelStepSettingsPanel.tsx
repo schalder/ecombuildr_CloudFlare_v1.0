@@ -4,11 +4,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
-import { Textarea } from '@/components/ui/textarea';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, Plus, Trash2 } from 'lucide-react';
+import { Loader2, Search } from 'lucide-react';
+import { SEOSettingsCard } from '@/components/seo/SEOSettingsCard';
+import { usePageSEO } from '@/hooks/usePageSEO';
 
 interface FunnelStepSettingsPanelProps {
   stepId: string;
@@ -47,6 +48,13 @@ export const FunnelStepSettingsPanel: React.FC<FunnelStepSettingsPanelProps> = (
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
+
+  // SEO hook
+  const { seoData, loading: seoLoading, saving: seoSaving, saveSEOData } = usePageSEO(
+    stepId, 
+    step?.slug || '', 
+    'funnel_step'
+  );
 
   useEffect(() => {
     loadData();
@@ -179,6 +187,17 @@ export const FunnelStepSettingsPanel: React.FC<FunnelStepSettingsPanelProps> = (
           Close
         </Button>
       </div>
+
+      <Tabs defaultValue="general" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="general">General</TabsTrigger>
+          <TabsTrigger value="seo">
+            <Search className="w-4 h-4 mr-2" />
+            SEO
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="general" className="space-y-6">
 
       <Card>
         <CardHeader>
@@ -380,12 +399,29 @@ export const FunnelStepSettingsPanel: React.FC<FunnelStepSettingsPanelProps> = (
         </CardContent>
       </Card>
 
+        </TabsContent>
+
+        <TabsContent value="seo" className="space-y-4">
+          {seoLoading ? (
+            <div className="flex items-center justify-center p-8">
+              <Loader2 className="h-8 w-8 animate-spin" />
+            </div>
+          ) : (
+            <SEOSettingsCard
+              data={seoData || {}}
+              onChange={(data) => saveSEOData(data)}
+              pageUrl={`/funnel/${step?.slug}`}
+            />
+          )}
+        </TabsContent>
+      </Tabs>
+
       <div className="flex justify-end space-x-2">
         <Button variant="outline" onClick={onClose}>
           Cancel
         </Button>
-        <Button onClick={handleSave} disabled={saving}>
-          {saving ? (
+        <Button onClick={handleSave} disabled={saving || seoSaving}>
+          {saving || seoSaving ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               Saving...
