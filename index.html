@@ -29,47 +29,6 @@
       img[width][height] { aspect-ratio: attr(width) / attr(height); }
     </style>
     
-    <!-- Static snapshot bootstrap: load server-rendered HTML before SPA -->
-    <script>
-      (function () {
-        try {
-          const params = new URLSearchParams(window.location.search);
-          const sf = params.get('sf');
-          const p = window.location.pathname;
-          const isAdmin = p.includes('/dashboard') || p.includes('/admin') || p.includes('/builder') || p.includes('/edit');
-          const servedCookie = document.cookie.includes('servedStatic=1');
-
-          if (sf === '0' || sf === 'false' || isAdmin || servedCookie) { console.debug('[SSR bootstrap] Skipped (admin/sf=0/already served)'); return; }
-
-          if (window.__servedStatic) return; window.__servedStatic = true;
-
-          const url = `https://fhqwacmokbtbspkxjixf.supabase.co/functions/v1/serve-static-page?domain=${encodeURIComponent(window.location.hostname)}&path=${encodeURIComponent(p)}`;
-          console.debug('[SSR bootstrap] Fetching snapshot:', url);
-
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => { console.warn('[SSR bootstrap] Timeout, falling back to SPA'); controller.abort(); }, 5000);
-
-          fetch(url, { method: 'GET', signal: controller.signal, cache: 'no-store' })
-            .then(async (res) => {
-              clearTimeout(timeoutId);
-              const ct = res.headers.get('content-type') || '';
-              const text = await res.text();
-              console.debug('[SSR bootstrap] Status:', res.status, 'CT:', ct, 'Len:', text.length);
-              if (!res.ok) return;
-              const looksHTML = ct.includes('text/html') || /<html[\s>]/i.test(text);
-              if (looksHTML && text && !/^Page not found|Page temporarily unavailable$/i.test(text.trim())) {
-                // Prevent re-bootstrap after writing the new document
-                document.cookie = 'servedStatic=1; path=/; max-age=60';
-                document.open();
-                document.write(text);
-                document.close();
-              }
-            })
-            .catch((e) => { console.warn('[SSR bootstrap] Error, SPA fallback', e); });
-        } catch (e) { console.warn('[SSR bootstrap] Failed', e); }
-      })();
-    </script>
-
     <!-- Dynamic SEO tags will be loaded here -->
     <script>
       (function() {

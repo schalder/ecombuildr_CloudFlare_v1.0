@@ -102,7 +102,6 @@ import { WebsiteOverrideRoute } from "./pages/storefront/WebsiteOverrideRoute";
 import { WebsiteProductDetailRoute } from "./pages/storefront/WebsiteProductDetailRoute";
 import { OnboardingGate } from "@/components/dashboard/OnboardingGate";
 import { ScrollToHash } from "@/components/ScrollToHash";
-import { ClientSideSEOInjector } from "@/components/ClientSideSEOInjector";
 import { RequireSuperAdmin } from "@/components/admin/RequireSuperAdmin";
 
 const queryClient = new QueryClient({

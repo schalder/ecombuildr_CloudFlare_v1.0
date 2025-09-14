@@ -8,7 +8,6 @@ import { usePixelContext } from '@/components/pixel/PixelManager';
 import { DomainWebsiteRouter } from './DomainWebsiteRouter';
 import { WebsiteProvider } from '@/contexts/WebsiteContext';
 import { TrackingCodeManager } from '@/components/tracking/TrackingCodeManager';
-import { ClientSideSEOInjector } from '@/components/ClientSideSEOInjector';
 
 interface WebsiteData {
   id: string;
@@ -164,7 +163,6 @@ export const DomainWebsiteRenderer: React.FC<DomainWebsiteRendererProps> = ({
             ${website.settings?.variant_button_hover_text ? `--variant-button-hover-text: ${website.settings.variant_button_hover_text};` : ''}
           }
         `}</style>
-        <ClientSideSEOInjector />
         <DomainWebsiteRouter 
           websiteId={websiteId} 
           customDomain={customDomain}
