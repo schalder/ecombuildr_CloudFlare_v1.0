@@ -65,17 +65,17 @@ export const FOMONotification: React.FC<FOMONotificationProps> = ({
     if (!isVisible) {
       switch (animationStyle) {
         case 'slide-left':
-          return `${baseClasses} transform -translate-x-full opacity-0`;
+          return `${baseClasses} transform translate-y-full opacity-0`;
         case 'slide-right':
-          return `${baseClasses} transform translate-x-full opacity-0`;
+          return `${baseClasses} transform translate-y-full opacity-0`;
         case 'fade':
-          return `${baseClasses} opacity-0 scale-95`;
+          return `${baseClasses} opacity-0 scale-95 translate-y-4`;
         default:
-          return `${baseClasses} opacity-0`;
+          return `${baseClasses} opacity-0 translate-y-full`;
       }
     }
     
-    return `${baseClasses} transform translate-x-0 opacity-100 scale-100`;
+    return `${baseClasses} transform translate-y-0 opacity-100 scale-100`;
   };
 
   const getPositionClasses = () => {
