@@ -11,6 +11,7 @@ import { WebsiteProvider } from '@/contexts/WebsiteContext';
 import { FloatingCartButton } from '@/components/storefront/FloatingCartButton';
 import { SupportWidget } from '@/components/storefront/SupportWidget';
 import { TrackingCodeManager } from '@/components/tracking/TrackingCodeManager';
+import { FOMOManager } from '@/components/storefront/FOMOManager';
 
 interface WebsiteData {
   id: string;
@@ -141,6 +142,16 @@ export const WebsiteLayout: React.FC = () => {
             )}
             {website.settings?.support_widget?.enabled && (
               <SupportWidget website={website} />
+            )}
+            {website.settings?.fomo?.enabled && (
+              <FOMOManager 
+                websiteId={website.id}
+                settings={website.settings.fomo}
+                onProductClick={(productName) => {
+                  // Navigate to products page or search for product
+                  console.log('Clicked product:', productName);
+                }}
+              />
             )}
             <WebsiteFooter website={website} />
           </div>

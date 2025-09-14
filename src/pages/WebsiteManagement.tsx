@@ -20,6 +20,7 @@ import { WebsiteHeaderBuilder } from '@/components/website/WebsiteHeaderBuilder'
 import { WebsiteFooterBuilder } from '@/components/website/WebsiteFooterBuilder';
 import { WebsiteStats } from '@/components/website/WebsiteStats';
 import { WebsiteSales } from '@/components/website/WebsiteSales';
+import { WebsiteFOMO } from '@/components/website/WebsiteFOMO';
 
 interface Website {
   id: string;
@@ -335,6 +336,16 @@ const WebsiteManagement = () => {
             </button>
             <button 
               className={`py-4 px-3 sm:px-1 border-b-2 font-medium transition-colors whitespace-nowrap text-sm sm:text-base min-w-0 flex-shrink-0 ${
+                activeTab === 'fomo' 
+                  ? 'border-primary text-primary' 
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
+              }`}
+              onClick={() => handleTabChange('fomo')}
+            >
+              FOMO
+            </button>
+            <button 
+              className={`py-4 px-3 sm:px-1 border-b-2 font-medium transition-colors whitespace-nowrap text-sm sm:text-base min-w-0 flex-shrink-0 ${
                 activeTab === 'settings' 
                   ? 'border-primary text-primary' 
                   : 'border-transparent text-muted-foreground hover:text-foreground'
@@ -553,6 +564,10 @@ const WebsiteManagement = () => {
 
           {activeTab === 'shipping' && website && (
             <WebsiteShipping website={website} />
+          )}
+
+          {activeTab === 'fomo' && website && (
+            <WebsiteFOMO website={website} />
           )}
 
         </div>
