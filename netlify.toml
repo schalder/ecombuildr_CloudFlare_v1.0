@@ -19,13 +19,13 @@
 # Route website and funnel pages through our serve-page function
 [[redirects]]
   from = "/site/*"
-  to = "https://fhqwacmokbtbspkxjixf.functions.supabase.co/serve-page"
+  to = "https://fhqwacmokbtbspkxjixf.functions.supabase.co/serve-page?prefix=site&splat=:splat"
   status = 200
   force = true
 
 [[redirects]]
   from = "/funnel/*"
-  to = "https://fhqwacmokbtbspkxjixf.functions.supabase.co/serve-page"
+  to = "https://fhqwacmokbtbspkxjixf.functions.supabase.co/serve-page?prefix=funnel&splat=:splat"
   status = 200
   force = true
 

@@ -19,9 +19,13 @@ Deno.serve(async (req) => {
 
     const url = new URL(req.url);
     const domain = req.headers.get('host') || url.hostname;
-    const path = url.pathname;
+    
+    // Get original path from query params or fallback to pathname
+    const prefix = url.searchParams.get('prefix');
+    const splat = url.searchParams.get('splat');
+    const path = prefix && splat ? `/${prefix}/${splat}` : url.pathname;
 
-    console.log(`🌐 Serving request for domain: ${domain}, path: ${path}`);
+    console.log(`🌐 Serving request for domain: ${domain}, original path: ${path}, reconstructed from prefix: ${prefix}, splat: ${splat}`);
 
     // Try to find HTML snapshot for this domain and path
     let contentType: string;
@@ -130,7 +134,7 @@ Deno.serve(async (req) => {
           }
         }
       } else {
-        // No specific connection, fall back to React app
+        // No specific connection, fall back to React app with original path
         console.log(`❌ No domain connection found for ${domain}`);
         return new Response(null, {
           status: 302,
@@ -151,79 +155,151 @@ Deno.serve(async (req) => {
       const pathSegments = path.split('/').filter(Boolean);
       
       if (pathSegments.length >= 2 && pathSegments[0] === 'site') {
-        // Format: /site/{websiteId}/{pageSlug?}
-        const websiteId = pathSegments[1];
+        // Format: /site/{websiteIdOrSlug}/{pageSlug?}
+        const websiteIdentifier = pathSegments[1];
         const pageSlug = pathSegments[2] || '';
         
-        if (pageSlug) {
-          // This is a specific website page
-          const { data: pageData } = await supabase
-            .from('website_pages')
-            .select('id')
-            .eq('website_id', websiteId)
-            .eq('slug', pageSlug)
-            .eq('is_published', true)
-            .single();
-
-          if (pageData) {
-            contentType = 'website_page';
-            contentId = pageData.id;
-          }
+        console.log(`🔍 Resolving website: ${websiteIdentifier}, page slug: ${pageSlug}`);
+        
+        // Check if identifier is UUID or slug
+        const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(websiteIdentifier);
+        let websiteId: string;
+        
+        if (isUUID) {
+          websiteId = websiteIdentifier;
+          console.log(`📋 Using website ID: ${websiteId}`);
         } else {
-          // This is the website homepage
-          const { data: pageData } = await supabase
-            .from('website_pages')
+          // Resolve website by slug
+          const { data: websiteData } = await supabase
+            .from('websites')
             .select('id')
-            .eq('website_id', websiteId)
-            .eq('is_homepage', true)
+            .eq('slug', websiteIdentifier)
             .eq('is_published', true)
-            .single();
-
-          if (pageData) {
-            contentType = 'website_page';
-            contentId = pageData.id;
+            .eq('is_active', true)
+            .maybeSingle();
+            
+          if (!websiteData?.id) {
+            console.log(`❌ Website not found by slug: ${websiteIdentifier}`);
+            contentType = '';
+            contentId = null;
           } else {
-            // Fall back to website-level snapshot
-            contentType = 'website';
-            contentId = websiteId;
+            websiteId = websiteData.id;
+            console.log(`✅ Resolved website slug "${websiteIdentifier}" to ID: ${websiteId}`);
+          }
+        }
+        
+        if (websiteId) {
+          if (pageSlug && pageSlug !== 'home') {
+            // This is a specific website page
+            const { data: pageData } = await supabase
+              .from('website_pages')
+              .select('id')
+              .eq('website_id', websiteId)
+              .eq('slug', pageSlug)
+              .eq('is_published', true)
+              .maybeSingle();
+
+            if (pageData?.id) {
+              contentType = 'website_page';
+              contentId = pageData.id;
+              console.log(`✅ Found website page: ${pageSlug} -> ${contentId}`);
+            } else {
+              console.log(`❌ Website page not found: ${pageSlug} in website ${websiteId}`);
+            }
+          } else {
+            // This is the website homepage
+            const { data: pageData } = await supabase
+              .from('website_pages')
+              .select('id')
+              .eq('website_id', websiteId)
+              .eq('is_homepage', true)
+              .eq('is_published', true)
+              .maybeSingle();
+
+            if (pageData?.id) {
+              contentType = 'website_page';
+              contentId = pageData.id;
+              console.log(`✅ Found website homepage: ${contentId}`);
+            } else {
+              // Fall back to website-level snapshot
+              contentType = 'website';
+              contentId = websiteId;
+              console.log(`📄 Falling back to website-level snapshot: ${websiteId}`);
+            }
           }
         }
       } else if (pathSegments.length >= 2 && pathSegments[0] === 'funnel') {
-        // Format: /funnel/{funnelId}/{stepSlug?}
-        const funnelId = pathSegments[1];
+        // Format: /funnel/{funnelIdOrSlug}/{stepSlug?}
+        const funnelIdentifier = pathSegments[1];
         const stepSlug = pathSegments[2] || '';
         
-        if (stepSlug && stepSlug !== 'home') {
-          // This is a specific funnel step
-          const { data: stepData } = await supabase
-            .from('funnel_steps')
-            .select('id')
-            .eq('funnel_id', funnelId)
-            .eq('slug', stepSlug)
-            .eq('is_published', true)
-            .single();
-
-          if (stepData) {
-            contentType = 'funnel_step';
-            contentId = stepData.id;
-          }
+        console.log(`🔍 Resolving funnel: ${funnelIdentifier}, step slug: ${stepSlug}`);
+        
+        // Check if identifier is UUID or slug
+        const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(funnelIdentifier);
+        let funnelId: string;
+        
+        if (isUUID) {
+          funnelId = funnelIdentifier;
+          console.log(`📋 Using funnel ID: ${funnelId}`);
         } else {
-          // This is the funnel homepage
-          const { data: stepData } = await supabase
-            .from('funnel_steps')
+          // Resolve funnel by slug
+          const { data: funnelData } = await supabase
+            .from('funnels')
             .select('id')
-            .eq('funnel_id', funnelId)
-            .eq('is_homepage', true)
+            .eq('slug', funnelIdentifier)
             .eq('is_published', true)
-            .single();
-
-          if (stepData) {
-            contentType = 'funnel_step';
-            contentId = stepData.id;
+            .eq('is_active', true)
+            .maybeSingle();
+            
+          if (!funnelData?.id) {
+            console.log(`❌ Funnel not found by slug: ${funnelIdentifier}`);
+            contentType = '';
+            contentId = null;
           } else {
-            // Fall back to funnel-level snapshot
-            contentType = 'funnel';
-            contentId = funnelId;
+            funnelId = funnelData.id;
+            console.log(`✅ Resolved funnel slug "${funnelIdentifier}" to ID: ${funnelId}`);
+          }
+        }
+        
+        if (funnelId) {
+          if (stepSlug && stepSlug !== 'home') {
+            // This is a specific funnel step
+            const { data: stepData } = await supabase
+              .from('funnel_steps')
+              .select('id')
+              .eq('funnel_id', funnelId)
+              .eq('slug', stepSlug)
+              .eq('is_published', true)
+              .maybeSingle();
+
+            if (stepData?.id) {
+              contentType = 'funnel_step';
+              contentId = stepData.id;
+              console.log(`✅ Found funnel step: ${stepSlug} -> ${contentId}`);
+            } else {
+              console.log(`❌ Funnel step not found: ${stepSlug} in funnel ${funnelId}`);
+            }
+          } else {
+            // This is the funnel homepage
+            const { data: stepData } = await supabase
+              .from('funnel_steps')
+              .select('id')
+              .eq('funnel_id', funnelId)
+              .eq('is_homepage', true)
+              .eq('is_published', true)
+              .maybeSingle();
+
+            if (stepData?.id) {
+              contentType = 'funnel_step';
+              contentId = stepData.id;
+              console.log(`✅ Found funnel homepage: ${contentId}`);
+            } else {
+              // Fall back to funnel-level snapshot
+              contentType = 'funnel';
+              contentId = funnelId;
+              console.log(`📄 Falling back to funnel-level snapshot: ${funnelId}`);
+            }
           }
         }
       }
@@ -247,7 +323,7 @@ Deno.serve(async (req) => {
 
         if (domainSnapshot?.html_content) {
           htmlContent = domainSnapshot.html_content;
-          console.log(`✅ Found domain-specific snapshot for ${contentType}/${contentId} on ${customDomain}`);
+          console.log(`✅ Serving domain-specific snapshot for ${contentType}/${contentId} on ${customDomain}`);
         }
       }
 
@@ -263,7 +339,7 @@ Deno.serve(async (req) => {
 
         if (defaultSnapshot?.html_content) {
           htmlContent = defaultSnapshot.html_content;
-          console.log(`✅ Found default snapshot for ${contentType}/${contentId}`);
+          console.log(`✅ Serving default snapshot for ${contentType}/${contentId}`);
         }
       }
 
@@ -280,25 +356,44 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Fall back to React app
-    console.log(`🔄 Falling back to React app`);
-    return new Response(null, {
-      status: 302,
+    // Return 404 HTML when no content is found
+    console.log(`🔄 No content found, returning 404`);
+    const notFoundHtml = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Page Not Found</title>
+</head>
+<body>
+  <h1>404 - Page Not Found</h1>
+  <p>The requested page could not be found.</p>
+</body>
+</html>`;
+    
+    return new Response(notFoundHtml, {
+      status: 404,
       headers: {
         ...corsHeaders,
-        'Location': `https://681a2e99-80e9-42b8-b8d3-dc8717d4c55a.sandbox.lovable.dev${path}`,
+        'Content-Type': 'text/html; charset=utf-8',
       }
     });
 
   } catch (error) {
     console.error('❌ Error in serve-page function:', error);
     
-    // Fall back to React app on error
+    // Fall back to React app on error with original path
+    const url = new URL(req.url);
+    const prefix = url.searchParams.get('prefix');
+    const splat = url.searchParams.get('splat');
+    const originalPath = prefix && splat ? `/${prefix}/${splat}` : url.pathname;
+    
     return new Response(null, {
       status: 302,
       headers: {
         ...corsHeaders,
-        'Location': `https://681a2e99-80e9-42b8-b8d3-dc8717d4c55a.sandbox.lovable.dev${req.url.replace(req.url.split('/')[2], '681a2e99-80e9-42b8-b8d3-dc8717d4c55a.sandbox.lovable.dev')}`,
+        'Location': `https://681a2e99-80e9-42b8-b8d3-dc8717d4c55a.sandbox.lovable.dev${originalPath}`,
       }
     });
   }
