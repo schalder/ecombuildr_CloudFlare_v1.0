@@ -1,5 +1,5 @@
 [build]
-  command = "npm run build"
+  command = "node scripts/build-and-upload.js"
   publish = "dist"
 
 # Enable Netlify's built-in prerendering for SEO
@@ -7,7 +7,7 @@
   [context.production.processing]
     skip_processing = false
   [context.production.build]
-    command = "npm run build"
+    command = "node scripts/build-and-upload.js"
     environment = { NETLIFY_PRERENDER = "true" }
 
 # Webhook redirects
@@ -15,6 +15,13 @@
   from = "/steadfast-webhook"
   to = "https://fhqwacmokbtbspkxjixf.functions.supabase.co/steadfast-webhook"
   status = 200
+
+# Asset proxy for built app files
+[[redirects]]
+  from = "/assets/*"
+  to = "https://fhqwacmokbtbspkxjixf.functions.supabase.co/asset-storage/assets/:splat"
+  status = 200
+  force = true
 
 # Route website and funnel pages through our serve-page function
 [[redirects]]
@@ -65,5 +72,33 @@
 # Cache fonts
 [[headers]]
   for = "*.woff2"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# Ensure HTML content-type for server-rendered pages
+[[headers]]
+  for = "/website/*"
+  [headers.values]
+    Content-Type = "text/html; charset=UTF-8"
+    X-Content-Type-Options = "nosniff"
+    Cache-Control = "public, max-age=300, s-maxage=3600"
+
+[[headers]]
+  for = "/site/*"
+  [headers.values]
+    Content-Type = "text/html; charset=UTF-8"
+    X-Content-Type-Options = "nosniff"
+    Cache-Control = "public, max-age=300, s-maxage=3600"
+
+[[headers]]
+  for = "/funnel/*"
+  [headers.values]
+    Content-Type = "text/html; charset=UTF-8"
+    X-Content-Type-Options = "nosniff"
+    Cache-Control = "public, max-age=300, s-maxage=3600"
+
+# Long cache for proxied assets
+[[headers]]
+  for = "/assets/*"
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"

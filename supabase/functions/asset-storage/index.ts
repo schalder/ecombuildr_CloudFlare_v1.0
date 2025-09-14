@@ -52,46 +52,54 @@ Deno.serve(async (req) => {
     }
 
     if (req.method === 'GET') {
-      // Serve assets
-      const fileName = pathname.split('/').pop();
-      
-      if (!fileName) {
-        return new Response('Asset not found', { 
-          status: 404,
-          headers: corsHeaders 
-        });
+      // Serve assets (supports nested paths like /assets/...)
+      // Determine the asset key as stored in DB (e.g., 'assets/index-xxxx.css' or 'bundle-manifest.json')
+      let assetKey = '';
+      const pathStr = pathname;
+      const marker = '/asset-storage/';
+      const idx = pathStr.lastIndexOf(marker);
+      if (idx !== -1) {
+        assetKey = pathStr.slice(idx + marker.length);
+      } else {
+        // Fallback: use last segment
+        const last = pathStr.split('/').pop();
+        assetKey = last || '';
       }
 
-      console.log(`📦 Serving asset: ${fileName}`);
+      if (!assetKey) {
+        return new Response('Asset not found', { status: 404, headers: corsHeaders });
+      }
+
+      console.log(`📦 Serving asset: ${assetKey}`);
 
       // Get asset from database
       const { data: asset, error } = await supabase
         .from('assets')
         .select('content, content_type')
-        .eq('file_name', fileName)
+        .eq('file_name', assetKey)
         .single();
 
       if (error || !asset) {
-        console.log(`Asset not found: ${fileName}`);
-        return new Response('Asset not found', { 
-          status: 404,
-          headers: corsHeaders 
-        });
+        console.log(`Asset not found: ${assetKey}`);
+        return new Response('Asset not found', { status: 404, headers: corsHeaders });
       }
 
       // Determine content type
       let contentType = asset.content_type || 'application/octet-stream';
-      if (fileName.endsWith('.css')) {
-        contentType = 'text/css';
-      } else if (fileName.endsWith('.js')) {
-        contentType = 'application/javascript';
+      if (assetKey.endsWith('.css')) {
+        contentType = 'text/css; charset=utf-8';
+      } else if (assetKey.endsWith('.js')) {
+        contentType = 'application/javascript; charset=utf-8';
+      } else if (assetKey.endsWith('.json')) {
+        contentType = 'application/json; charset=utf-8';
       }
 
       return new Response(asset.content, {
         headers: {
           ...corsHeaders,
           'Content-Type': contentType,
-          'Cache-Control': 'public, max-age=31536000', // 1 year cache for assets
+          'Cache-Control': 'public, max-age=31536000, immutable',
+          'X-Content-Type-Options': 'nosniff',
         }
       });
     }
