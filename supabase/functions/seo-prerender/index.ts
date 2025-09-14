@@ -172,29 +172,48 @@ serve(async (req) => {
       })
     }
 
-    // NO FALLBACK - If no snapshot exists, something is wrong
-    console.log('❌ No HTML snapshot found - page needs to be published!')
+    // RESILIENT FALLBACK - Generate SEO from database when no snapshot exists
+    console.log('⚠️ No HTML snapshot found - generating SEO from database...')
     
+    // Try to generate SEO from database data
+    const fallbackHTML = await generateFallbackSEOHTML(supabase, domain, path)
+    if (fallbackHTML) {
+      console.log('✅ Serving generated SEO HTML from database')
+      return new Response(fallbackHTML, {
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'text/html; charset=UTF-8',
+          'Cache-Control': 'public, max-age=60, s-maxage=300', // Shorter cache for fallback
+        },
+      })
+    }
+    
+    // Final fallback - minimal HTML with basic meta tags
+    console.log('❌ Unable to generate SEO from database - serving minimal fallback')
     return new Response(`<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Page Not Published</title>
+  <title>Page Loading...</title>
+  <meta name="description" content="Loading page content..." />
+  <meta name="robots" content="noindex, nofollow" />
   <style>
-    body { font-family: system-ui; margin: 0; padding: 20px; background: #f5f5f5; }
-    .container { max-width: 500px; margin: 50px auto; background: white; padding: 30px; border-radius: 8px; text-align: center; }
-    .error { color: #dc2626; font-size: 18px; margin-bottom: 20px; }
-    .instruction { color: #666; line-height: 1.6; }
+    body { font-family: system-ui; margin: 0; padding: 20px; background: #f5f5f5; text-align: center; }
+    .container { max-width: 500px; margin: 50px auto; background: white; padding: 30px; border-radius: 8px; }
+    .loading { color: #666; font-size: 18px; margin-bottom: 20px; }
   </style>
 </head>
 <body>
   <div class="container">
-    <div class="error">⚠️ This page hasn't been published yet</div>
-    <div class="instruction">
-      Please go to your page builder and click <strong>"Save & Publish"</strong> to generate this page.
-    </div>
+    <div class="loading">🔄 Loading page...</div>
   </div>
+  <script>
+    // Redirect to SPA after 1 second for browsers
+    setTimeout(() => {
+      window.location.href = window.location.href;
+    }, 1000);
+  </script>
 </body>
 </html>`, {
       status: 200,
@@ -1133,6 +1152,109 @@ function parseHTMLForSEO(htmlContent: string): any {
     return null
   } catch (error) {
     console.error('Error parsing HTML for SEO:', error)
+    return null
+  }
+}
+
+// Generate SEO HTML from database when no snapshot exists
+async function generateFallbackSEOHTML(supabase: any, domain: string, path: string): Promise<string | null> {
+  try {
+    console.log(`🔄 Generating fallback SEO for domain: ${domain}, path: ${path}`)
+    
+    // Handle custom domains first
+    if (domain !== 'ecombuildr.com' && !domain.includes('lovable.app')) {
+      // Look up custom domain connections
+      const { data: customDomainData, error: domainError } = await supabase
+        .from('custom_domains')
+        .select(`
+          *,
+          domain_connections(
+            content_type,
+            content_id,
+            path,
+            is_homepage
+          )
+        `)
+        .eq('domain', domain)
+        .maybeSingle()
+      
+      if (!domainError && customDomainData?.domain_connections?.length) {
+        const allConnections = customDomainData.domain_connections
+        let selectedConnection = null
+        
+        // Smart routing logic (same as main function)
+        if (path === '/' || path === '') {
+          selectedConnection = allConnections.find(conn => conn.is_homepage) || allConnections[0]
+        } else {
+          selectedConnection = allConnections.find(conn => conn.path === path)
+          if (!selectedConnection) {
+            const pathWithoutSlash = path.startsWith('/') ? path.substring(1) : path
+            selectedConnection = allConnections.find(conn => conn.path === pathWithoutSlash)
+          }
+        }
+        
+        if (selectedConnection) {
+          const { content_type, content_id } = selectedConnection
+          
+          if (content_type === 'website') {
+            const pageSlug = path === '/' ? '' : (path.startsWith('/') ? path.substring(1) : path)
+            return await generateWebsitePageSEO(supabase, content_id, pageSlug, domain)
+          } else if (content_type === 'website_page') {
+            // Get the website_id for this page
+            const { data: pageData } = await supabase
+              .from('website_pages')
+              .select('website_id, slug')
+              .eq('id', content_id)
+              .single()
+            
+            if (pageData) {
+              return await generateWebsitePageSEO(supabase, pageData.website_id, pageData.slug, domain)
+            }
+          } else if (content_type === 'funnel') {
+            const stepSlug = path === '/' ? '' : (path.startsWith('/') ? path.substring(1) : path)
+            return await generateFunnelStepSEO(supabase, content_id, stepSlug, domain)
+          } else if (content_type === 'funnel_step') {
+            // Get the funnel_id for this step
+            const { data: stepData } = await supabase
+              .from('funnel_steps')
+              .select('funnel_id, slug')
+              .eq('id', content_id)
+              .single()
+            
+            if (stepData) {
+              return await generateFunnelStepSEO(supabase, stepData.funnel_id, stepData.slug, domain)
+            }
+          }
+        }
+      }
+    } else {
+      // Handle ecombuildr.com URLs
+      const pathParts = path.split('/').filter(p => p)
+      
+      if (pathParts.length >= 2 && pathParts[0] === 'w') {
+        const websiteSlug = pathParts[1]
+        const pageSlug = pathParts.slice(2).join('/')
+        
+        // Resolve website slug to ID
+        const websiteId = await resolveWebsiteSlug(supabase, websiteSlug)
+        if (websiteId) {
+          return await generateWebsitePageSEO(supabase, websiteId, pageSlug, domain)
+        }
+      } else if (pathParts.length >= 2 && pathParts[0] === 'f') {
+        const funnelSlug = pathParts[1]
+        const stepSlug = pathParts.slice(2).join('/')
+        
+        // Resolve funnel slug to ID
+        const funnelId = await resolveFunnelSlug(supabase, funnelSlug)
+        if (funnelId) {
+          return await generateFunnelStepSEO(supabase, funnelId, stepSlug, domain)
+        }
+      }
+    }
+    
+    return null
+  } catch (error) {
+    console.error('Error generating fallback SEO HTML:', error)
     return null
   }
 }

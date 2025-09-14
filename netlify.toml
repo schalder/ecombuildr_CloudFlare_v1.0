@@ -15,7 +15,7 @@
   from = "/*"
   to = "https://fhqwacmokbtbspkxjixf.supabase.co/functions/v1/seo-prerender?domain=:host&path=:path"
   status = 200
-  conditions = {User-Agent = ["*bot*", "*crawler*", "*spider*", "*Googlebot*", "*Bingbot*", "*facebookexternalhit*", "*Twitterbot*"]}
+  conditions = {User-Agent = ["*bot*", "*crawler*", "*spider*", "*Googlebot*", "*Bingbot*", "*facebookexternalhit*", "*Twitterbot*", "*Facebot*", "*facebookcatalog*", "*LinkedInBot*", "*Slackbot*", "*TelegramBot*", "*WhatsApp*", "*Discordbot*"]}
 
 # Pass-through for static assets (JS, CSS, images, etc.)
 [[redirects]]
