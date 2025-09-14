@@ -31,6 +31,7 @@ interface StorefrontImageProps {
   enableMagnifier?: boolean; // Enable image magnification on hover
   magnifierSize?: number; // Size of the magnifier lens
   zoomLevel?: number; // Magnification level
+  responsiveMagnifier?: boolean; // Enable responsive magnifier sizing
 }
 
 export const StorefrontImage: React.FC<StorefrontImageProps> = ({
@@ -46,8 +47,9 @@ export const StorefrontImage: React.FC<StorefrontImageProps> = ({
   style,
   preserveOriginal = true, // Default to preserving original dimensions
   enableMagnifier = false,
-  magnifierSize = 150,
-  zoomLevel = 2.5
+  magnifierSize = 280, // Enhanced default size
+  zoomLevel = 4.5, // Enhanced default zoom
+  responsiveMagnifier = true
 }) => {
   const { addCriticalImage, isCriticalImage } = useSafeCriticalImage();
   const [autoDetectedCritical, setAutoDetectedCritical] = useState(false);
@@ -74,6 +76,7 @@ export const StorefrontImage: React.FC<StorefrontImageProps> = ({
         style={style}
         zoomLevel={zoomLevel}
         magnifierSize={magnifierSize}
+        responsive={responsiveMagnifier}
       />
     );
   }
