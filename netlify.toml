@@ -16,7 +16,41 @@
   to = "https://fhqwacmokbtbspkxjixf.functions.supabase.co/steadfast-webhook"
   status = 200
 
-# Serve SPA for all routes
+# Bot detection for SEO prerendering - only for known crawlers
+[[redirects]]
+  from = "/*"
+  to = "https://fhqwacmokbtbspkxjixf.functions.supabase.co/seo-prerender?domain=:host&path=/:splat"
+  status = 200
+  headers = {User-Agent = "*bot*,*crawl*,*spider*,*facebook*,*twitter*,*linkedin*,*pinterest*,*whatsapp*,*telegram*,*slack*"}
+
+# Debug route for testing social media crawlers
+[[redirects]]
+  from = "/__bot/*"
+  to = "https://fhqwacmokbtbspkxjixf.functions.supabase.co/seo-prerender?domain=:host&path=/:splat&force_bot=1"
+  status = 200
+
+# Static assets bypass (keep SPA loading fast)
+[[redirects]]
+  from = "/assets/*"
+  to = "/assets/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/*.js"
+  to = "/:splat.js"
+  status = 200
+
+[[redirects]]
+  from = "/*.css"
+  to = "/:splat.css"
+  status = 200
+
+[[redirects]]
+  from = "/favicon.ico"
+  to = "/favicon.ico"
+  status = 200
+
+# Serve SPA for all other routes (human users)
 [[redirects]]
   from = "/*"
   to = "/index.html"
