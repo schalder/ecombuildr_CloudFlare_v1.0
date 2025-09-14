@@ -6,7 +6,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -15,161 +15,119 @@ serve(async (req) => {
   try {
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+      }
     )
 
-    const url = new URL(req.url);
-    const domain = url.searchParams.get('domain') || url.hostname;
-    const path = url.searchParams.get('path') || url.pathname;
+    // Handle both GET params and POST body
+    let domain, path, contentType, contentId;
+    
+    if (req.method === 'POST') {
+      const body = await req.json();
+      domain = body.domain;
+      path = body.path;
+      contentType = body.contentType;
+      contentId = body.contentId;
+    } else {
+      const url = new URL(req.url);
+      domain = url.searchParams.get('domain') || url.hostname;
+      path = url.searchParams.get('path') || url.pathname;
+    }
     
     console.log(`🚀 Serving static page for ${domain}${path}`);
 
-    // Check if this is a website or funnel page
-    let contentType = '';
-    let contentId = '';
-    let customDomain = '';
+    // If contentType and contentId are provided directly, use them
+    if (!contentType || !contentId) {
+      // Determine content type and ID based on domain and path
+      contentType = 'website_page';
+      contentId = null;
 
-    // Parse the path to determine content type
-    if (path.startsWith('/w/')) {
-      // Website page: /w/{website-slug}/{page-slug}
-      const pathParts = path.split('/').filter(Boolean);
-      if (pathParts.length >= 2) {
-        const websiteSlug = pathParts[1];
-        const pageSlug = pathParts[2] || '';
-        
-        // Find website by slug
-        const { data: website } = await supabase
-          .from('websites')
-          .select('id, store_id')
-          .eq('slug', websiteSlug)
-          .eq('is_published', true)
-          .eq('is_active', true)
-          .single();
+      // First, try to find domain connections
+      const { data: connections, error: connectionsError } = await supabase
+        .from('domain_connections')
+        .select(`
+          content_type,
+          content_id,
+          path_pattern
+        `)
+        .eq('domain', domain)
+        .order('created_at', { ascending: false });
 
-        if (website) {
-          // Find page by slug
-          const { data: page } = await supabase
-            .from('website_pages')
-            .select('id')
-            .eq('website_id', website.id)
-            .eq('slug', pageSlug)
-            .eq('is_published', true)
-            .single();
-
-          if (page) {
-            contentType = 'website_page';
-            contentId = page.id;
+      if (!connectionsError && connections && connections.length > 0) {
+        // Find the best matching connection
+        for (const connection of connections) {
+          if (connection.path_pattern === '/' && path === '/') {
+            contentType = connection.content_type;
+            contentId = connection.content_id;
+            break;
+          } else if (connection.path_pattern && path.startsWith(connection.path_pattern)) {
+            contentType = connection.content_type;
+            contentId = connection.content_id;
+            break;
           }
         }
       }
-    } else if (path.startsWith('/f/')) {
-      // Funnel step: /f/{funnel-slug}/{step-slug}
-      const pathParts = path.split('/').filter(Boolean);
-      if (pathParts.length >= 2) {
-        const funnelSlug = pathParts[1];
-        const stepSlug = pathParts[2] || '';
-        
-        // Find funnel by slug
-        const { data: funnel } = await supabase
-          .from('funnels')
-          .select('id, store_id')
-          .eq('slug', funnelSlug)
-          .eq('is_published', true)
-          .eq('is_active', true)
+
+      // If no domain connection found, try to find by website/page structure
+      if (!contentId) {
+        // First check if this domain has a verified custom domain
+        const { data: domainData } = await supabase
+          .from('custom_domains')
+          .select('store_id')
+          .eq('domain', domain)
+          .eq('is_verified', true)
           .single();
 
-        if (funnel) {
-          // Find step by slug
-          const { data: step } = await supabase
-            .from('funnel_steps')
-            .select('id')
-            .eq('funnel_id', funnel.id)
-            .eq('slug', stepSlug)
+        if (domainData) {
+          // Find website for this store
+          const { data: websiteData } = await supabase
+            .from('websites')
+            .select('id, is_published, is_active')
+            .eq('store_id', domainData.store_id)
             .eq('is_published', true)
+            .eq('is_active', true)
             .single();
 
-          if (step) {
-            contentType = 'funnel_step';
-            contentId = step.id;
-          }
-        }
-      }
-    } else {
-      // Check for custom domain routing
-      if (domain !== 'localhost' && !domain.includes('ecombuildr.com')) {
-        // This is a custom domain - find associated content
-        // First try to match the specific path
-        let { data: domainConnection, error: domainError } = await supabase
-          .from('domain_connections')
-          .select(`
-            content_type, 
-            content_id,
-            custom_domains!inner(domain)
-          `)
-          .eq('custom_domains.domain', domain)
-          .eq('path', path)
-          .single();
-
-        if (domainError && domainError.code !== 'PGRST116') {
-          console.error('❌ Error querying domain connections:', domainError);
-        }
-
-        // If no specific path match, try to find website and then look for specific page
-        if (!domainConnection) {
-          // Find the website for this domain
-          const { data: websiteConnection, error: websiteError } = await supabase
-            .from('domain_connections')
-            .select(`
-              content_type, 
-              content_id,
-              custom_domains!inner(domain)
-            `)
-            .eq('custom_domains.domain', domain)
-            .eq('content_type', 'website')
-            .single();
-
-          if (websiteError && websiteError.code !== 'PGRST116') {
-            console.error('❌ Error querying website connections:', websiteError);
-          }
-
-          if (websiteConnection && websiteConnection.content_type === 'website') {
-            // Look for the specific page within this website
-            const pathSlug = path.replace('/', '') || '';
-            if (pathSlug) {
-              const { data: page } = await supabase
+          if (websiteData) {
+            if (path === '/') {
+              // Homepage - find homepage or use website itself
+              const { data: homepageData } = await supabase
                 .from('website_pages')
                 .select('id')
-                .eq('website_id', websiteConnection.content_id)
-                .eq('slug', pathSlug)
-                .eq('is_published', true)
-                .single();
-
-              if (page) {
-                contentType = 'website_page';
-                contentId = page.id;
-                customDomain = domain;
-              }
-            } else {
-              // Homepage request - find homepage for this website
-              const { data: homepage } = await supabase
-                .from('website_pages')
-                .select('id')
-                .eq('website_id', websiteConnection.content_id)
+                .eq('website_id', websiteData.id)
                 .eq('is_homepage', true)
                 .eq('is_published', true)
                 .single();
 
-              if (homepage) {
+              if (homepageData) {
                 contentType = 'website_page';
-                contentId = homepage.id;
-                customDomain = domain;
+                contentId = homepageData.id;
+              } else {
+                contentType = 'website';
+                contentId = websiteData.id;
+              }
+            } else {
+              // Try to find specific page by slug
+              const slug = path.startsWith('/') ? path.slice(1) : path;
+              const { data: pageData } = await supabase
+                .from('website_pages')
+                .select('id')
+                .eq('website_id', websiteData.id)
+                .eq('slug', slug)
+                .eq('is_published', true)
+                .single();
+
+              if (pageData) {
+                contentType = 'website_page';
+                contentId = pageData.id;
               }
             }
           }
-        } else {
-          contentType = domainConnection.content_type;
-          contentId = domainConnection.content_id;
-          customDomain = domain;
         }
       }
     }
