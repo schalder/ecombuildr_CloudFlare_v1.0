@@ -257,6 +257,7 @@ export const WebsiteFOMO: React.FC<WebsiteFOMOProps> = ({ website }) => {
                 <SelectContent>
                   <SelectItem value="slide-left">Slide from Left</SelectItem>
                   <SelectItem value="slide-right">Slide from Right</SelectItem>
+                  <SelectItem value="slide-bottom">Slide from Bottom</SelectItem>
                   <SelectItem value="fade">Fade In</SelectItem>
                 </SelectContent>
               </Select>

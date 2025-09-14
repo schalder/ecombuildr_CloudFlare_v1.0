@@ -17,7 +17,7 @@ interface FOMONotificationProps {
   backgroundColor: string;
   iconUrl?: string;
   showProductImage: boolean;
-  animationStyle: 'slide-left' | 'slide-right' | 'fade';
+  animationStyle: 'slide-left' | 'slide-right' | 'slide-bottom' | 'fade';
   clickAction: 'product' | 'close' | 'none';
   onClose: () => void;
   onProductClick?: (productName: string) => void;
@@ -68,6 +68,8 @@ export const FOMONotification: React.FC<FOMONotificationProps> = ({
           return `${baseClasses} transform -translate-x-full opacity-0`;
         case 'slide-right':
           return `${baseClasses} transform translate-x-full opacity-0`;
+        case 'slide-bottom':
+          return `${baseClasses} transform translate-y-full opacity-0`;
         case 'fade':
           return `${baseClasses} opacity-0 scale-95`;
         default:
