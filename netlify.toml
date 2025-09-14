@@ -18,8 +18,14 @@
 
 # Bot-specific routing: redirect bots to seo-prerender function
 [[redirects]]
+  from = "/"
+  to = "https://fhqwacmokbtbspkxjixf.functions.supabase.co/seo-prerender?domain=:host&path=/"
+  status = 200
+  conditions = {User-Agent = ["*bot*", "*crawler*", "*spider*", "*Googlebot*", "*Bingbot*", "*facebookexternalhit*", "*Twitterbot*", "*Facebot*", "*facebookcatalog*", "*LinkedInBot*", "*Slackbot*", "*TelegramBot*", "*WhatsApp*", "*Discordbot*"]}
+
+[[redirects]]
   from = "/*"
-  to = "https://fhqwacmokbtbspkxjixf.supabase.co/functions/v1/seo-prerender?domain=:host&path=:splat"
+  to = "https://fhqwacmokbtbspkxjixf.functions.supabase.co/seo-prerender?domain=:host&path=/:splat"
   status = 200
   conditions = {User-Agent = ["*bot*", "*crawler*", "*spider*", "*Googlebot*", "*Bingbot*", "*facebookexternalhit*", "*Twitterbot*", "*Facebot*", "*facebookcatalog*", "*LinkedInBot*", "*Slackbot*", "*TelegramBot*", "*WhatsApp*", "*Discordbot*"]}
 
