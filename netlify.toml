@@ -16,23 +16,16 @@
   to = "https://fhqwacmokbtbspkxjixf.functions.supabase.co/steadfast-webhook"
   status = 200
 
-# Bot-specific routing: rewrite bots to seo-prerender function
-[[redirects]]
-  from = "/"
-  to = "https://fhqwacmokbtbspkxjixf.functions.supabase.co/seo-prerender?domain=:host&path=/&format=html"
-  status = 200
-  conditions = {User-Agent = ["*bot*", "*crawler*", "*spider*", "*Googlebot*", "*Bingbot*", "*facebookexternalhit*", "*Twitterbot*", "*Facebot*", "*facebookcatalog*", "*LinkedInBot*", "*Slackbot*", "*TelegramBot*", "*WhatsApp*", "*Discordbot*"]}
-
+# Universal SEO routing - all requests go to seo-prerender function
 [[redirects]]
   from = "/*"
-  to = "https://fhqwacmokbtbspkxjixf.functions.supabase.co/seo-prerender?domain=:host&path=/:splat&format=html"
+  to = "https://fhqwacmokbtbspkxjixf.functions.supabase.co/seo-prerender?domain=:host&path=/:splat"
   status = 200
-  conditions = {User-Agent = ["*bot*", "*crawler*", "*spider*", "*Googlebot*", "*Bingbot*", "*facebookexternalhit*", "*Twitterbot*", "*Facebot*", "*facebookcatalog*", "*LinkedInBot*", "*Slackbot*", "*TelegramBot*", "*WhatsApp*", "*Discordbot*"]}
 
-# Debug route for testing (temporary)
+# Debug route for testing crawlers
 [[redirects]]
   from = "/__bot/*"
-  to = "https://fhqwacmokbtbspkxjixf.functions.supabase.co/seo-prerender?domain=:host&path=/:splat&format=html&force_bot=1"
+  to = "https://fhqwacmokbtbspkxjixf.functions.supabase.co/seo-prerender?domain=:host&path=/:splat&force_bot=1"
   status = 200
 
 # Pass-through for static assets (JS, CSS, images, etc.)
