@@ -16,7 +16,20 @@
   to = "https://fhqwacmokbtbspkxjixf.functions.supabase.co/steadfast-webhook"
   status = 200
 
-# Serve SPA for all routes
+# Route website and funnel pages through our serve-page function
+[[redirects]]
+  from = "/site/*"
+  to = "https://fhqwacmokbtbspkxjixf.functions.supabase.co/serve-page"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/funnel/*"
+  to = "https://fhqwacmokbtbspkxjixf.functions.supabase.co/serve-page"
+  status = 200
+  force = true
+
+# Serve SPA for all other routes (app, admin, etc.)
 [[redirects]]
   from = "/*"
   to = "/index.html"
