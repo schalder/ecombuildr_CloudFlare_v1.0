@@ -24,6 +24,12 @@
   force = true
 
 [[redirects]]
+  from = "/website/*"
+  to = "https://fhqwacmokbtbspkxjixf.functions.supabase.co/serve-page?prefix=website&splat=:splat"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "/funnel/*"
   to = "https://fhqwacmokbtbspkxjixf.functions.supabase.co/serve-page?prefix=funnel&splat=:splat"
   status = 200

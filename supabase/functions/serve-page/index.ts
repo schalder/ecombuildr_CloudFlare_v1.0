@@ -71,104 +71,99 @@ Deno.serve(async (req) => {
     if (!domain.includes('ecombuildr.com') && !domain.includes('localhost') && !domain.includes('127.0.0.1')) {
       customDomain = domain;
       
-      // Get custom domain configuration
+      // Get custom domain configuration and connection data
       const { data: domainData } = await supabase
         .from('custom_domains')
         .select(`
+          id,
           domain,
           store_id,
           is_verified,
-          dns_configured
+          dns_configured,
+          domain_connections (
+            content_type,
+            content_id
+          )
         `)
         .eq('domain', domain)
         .eq('is_verified', true)
         .eq('dns_configured', true)
         .single();
 
-      if (domainData) {
-        console.log(`📍 Found custom domain: ${domain}`);
+      if (domainData?.domain_connections?.length > 0) {
+        const connection = domainData.domain_connections[0];
+        contentType = connection.content_type;
+        contentId = connection.content_id;
+        console.log(`🔗 Found domain connection: ${contentType}/${contentId}`);
 
-        // Check for domain connections to find the content
-        const { data: connectionData } = await supabase
-          .from('domain_connections')
-          .select('content_type, content_id')
-          .eq('custom_domain', domain)
-          .single();
+        // Resolve path within the connected content for custom domains
+        const pathSegments = path.split('/').filter(Boolean);
+        const firstSegment = pathSegments[0] || '';
 
-        if (connectionData) {
-          contentType = connectionData.content_type;
-          contentId = connectionData.content_id;
-          console.log(`🔗 Found domain connection: ${contentType}/${contentId}`);
+        if (contentType === 'website' && contentId) {
+          // If a slug is present, try to resolve to a specific website page
+          if (firstSegment && firstSegment !== 'home') {
+            const { data: pageData } = await supabase
+              .from('website_pages')
+              .select('id')
+              .eq('website_id', contentId)
+              .eq('slug', firstSegment)
+              .eq('is_published', true)
+              .maybeSingle();
 
-          // Resolve path within the connected content for custom domains
-          const pathSegments = path.split('/').filter(Boolean);
-          const firstSegment = pathSegments[0] || '';
-
-          if (contentType === 'website' && contentId) {
-            // If a slug is present, try to resolve to a specific website page
-            if (firstSegment && firstSegment !== 'home') {
-              const { data: pageData } = await supabase
-                .from('website_pages')
-                .select('id')
-                .eq('website_id', contentId)
-                .eq('slug', firstSegment)
-                .eq('is_published', true)
-                .maybeSingle();
-
-              if (pageData?.id) {
-                contentType = 'website_page';
-                contentId = pageData.id;
-                console.log(`🧭 Resolved custom domain slug to website_page/${contentId}`);
-              }
+            if (pageData?.id) {
+              contentType = 'website_page';
+              contentId = pageData.id;
+              console.log(`🧭 Resolved custom domain slug to website_page/${contentId}`);
             }
+          }
 
-            // If still pointing to website, try homepage
-            if (contentType === 'website') {
-              const { data: homePage } = await supabase
-                .from('website_pages')
-                .select('id')
-                .eq('website_id', contentId)
-                .eq('is_homepage', true)
-                .eq('is_published', true)
-                .maybeSingle();
+          // If still pointing to website, try homepage
+          if (contentType === 'website') {
+            const { data: homePage } = await supabase
+              .from('website_pages')
+              .select('id')
+              .eq('website_id', contentId)
+              .eq('is_homepage', true)
+              .eq('is_published', true)
+              .maybeSingle();
 
-              if (homePage?.id) {
-                contentType = 'website_page';
-                contentId = homePage.id;
-                console.log(`🏠 Using website homepage website_page/${contentId}`);
-              }
+            if (homePage?.id) {
+              contentType = 'website_page';
+              contentId = homePage.id;
+              console.log(`🏠 Using website homepage website_page/${contentId}`);
             }
-          } else if (contentType === 'funnel' && contentId) {
-            if (firstSegment && firstSegment !== 'home') {
-              const { data: stepData } = await supabase
-                .from('funnel_steps')
-                .select('id')
-                .eq('funnel_id', contentId)
-                .eq('slug', firstSegment)
-                .eq('is_published', true)
-                .maybeSingle();
+          }
+        } else if (contentType === 'funnel' && contentId) {
+          if (firstSegment && firstSegment !== 'home') {
+            const { data: stepData } = await supabase
+              .from('funnel_steps')
+              .select('id')
+              .eq('funnel_id', contentId)
+              .eq('slug', firstSegment)
+              .eq('is_published', true)
+              .maybeSingle();
 
-              if (stepData?.id) {
-                contentType = 'funnel_step';
-                contentId = stepData.id;
-                console.log(`🧭 Resolved custom domain slug to funnel_step/${contentId}`);
-              }
+            if (stepData?.id) {
+              contentType = 'funnel_step';
+              contentId = stepData.id;
+              console.log(`🧭 Resolved custom domain slug to funnel_step/${contentId}`);
             }
+          }
 
-            if (contentType === 'funnel') {
-              const { data: homeStep } = await supabase
-                .from('funnel_steps')
-                .select('id')
-                .eq('funnel_id', contentId)
-                .eq('is_homepage', true)
-                .eq('is_published', true)
-                .maybeSingle();
+          if (contentType === 'funnel') {
+            const { data: homeStep } = await supabase
+              .from('funnel_steps')
+              .select('id')
+              .eq('funnel_id', contentId)
+              .eq('is_homepage', true)
+              .eq('is_published', true)
+              .maybeSingle();
 
-              if (homeStep?.id) {
-                contentType = 'funnel_step';
-                contentId = homeStep.id;
-                console.log(`🏠 Using funnel homepage funnel_step/${contentId}`);
-              }
+            if (homeStep?.id) {
+              contentType = 'funnel_step';
+              contentId = homeStep.id;
+              console.log(`🏠 Using funnel homepage funnel_step/${contentId}`);
             }
           }
         }
@@ -179,8 +174,8 @@ Deno.serve(async (req) => {
 
       const pathSegments = path.split('/').filter(Boolean);
       
-      if (pathSegments.length >= 2 && pathSegments[0] === 'site') {
-        // Format: /site/{websiteIdOrSlug}/{pageSlug?}
+      if (pathSegments.length >= 2 && (pathSegments[0] === 'site' || pathSegments[0] === 'website')) {
+        // Format: /site/{websiteIdOrSlug}/{pageSlug?} or /website/{websiteIdOrSlug}/{pageSlug?}
         const websiteIdentifier = pathSegments[1];
         const pageSlug = pathSegments[2] || '';
         
@@ -239,6 +234,69 @@ Deno.serve(async (req) => {
               contentType = 'website_page';
               contentId = pageData.id;
               console.log(`✅ Found website homepage: ${contentId}`);
+            }
+          }
+        }
+      } else if (pathSegments.length >= 2 && pathSegments[0] === 'funnel') {
+        // Format: /funnel/{funnelIdOrSlug}/{stepSlug?}
+        const funnelIdentifier = pathSegments[1];
+        const stepSlug = pathSegments[2] || '';
+        
+        console.log(`🔍 Resolving funnel: ${funnelIdentifier}, step slug: ${stepSlug}`);
+        
+        // Check if identifier is UUID or slug
+        const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(funnelIdentifier);
+        let funnelId: string = '';
+        
+        if (isUUID) {
+          funnelId = funnelIdentifier;
+          console.log(`📋 Using funnel ID: ${funnelId}`);
+        } else {
+          // Resolve funnel by slug
+          const { data: funnelData } = await supabase
+            .from('funnels')
+            .select('id')
+            .eq('slug', funnelIdentifier)
+            .eq('is_published', true)
+            .eq('is_active', true)
+            .maybeSingle();
+            
+          if (funnelData?.id) {
+            funnelId = funnelData.id;
+            console.log(`✅ Resolved funnel slug "${funnelIdentifier}" to ID: ${funnelId}`);
+          }
+        }
+        
+        if (funnelId) {
+          if (stepSlug && stepSlug !== 'home') {
+            // This is a specific funnel step
+            const { data: stepData } = await supabase
+              .from('funnel_steps')
+              .select('id')
+              .eq('funnel_id', funnelId)
+              .eq('slug', stepSlug)
+              .eq('is_published', true)
+              .maybeSingle();
+
+            if (stepData?.id) {
+              contentType = 'funnel_step';
+              contentId = stepData.id;
+              console.log(`✅ Found funnel step: ${stepSlug} -> ${contentId}`);
+            }
+          } else {
+            // This is the funnel homepage
+            const { data: stepData } = await supabase
+              .from('funnel_steps')
+              .select('id')
+              .eq('funnel_id', funnelId)
+              .eq('is_homepage', true)
+              .eq('is_published', true)
+              .maybeSingle();
+
+            if (stepData?.id) {
+              contentType = 'funnel_step';
+              contentId = stepData.id;
+              console.log(`✅ Found funnel homepage: ${contentId}`);
             }
           }
         }
