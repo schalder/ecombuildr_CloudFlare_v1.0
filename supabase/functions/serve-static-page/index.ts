@@ -98,17 +98,39 @@ serve(async (req) => {
       // Check for custom domain routing
       if (domain !== 'localhost' && !domain.includes('ecombuildr.com')) {
         // This is a custom domain - find associated content
-        const { data: domainConnection } = await supabase
+        // First try to match the specific path
+        let { data: domainConnection } = await supabase
           .from('domain_connections')
-          .select('content_type, content_id, custom_domain')
-          .eq('custom_domain', domain)
-          .eq('is_active', true)
+          .select(`
+            content_type, 
+            content_id,
+            custom_domains!inner(domain)
+          `)
+          .eq('custom_domains.domain', domain)
+          .eq('path', path)
+          .eq('is_homepage', false)
           .single();
+
+        // If no specific path match, try homepage
+        if (!domainConnection) {
+          const { data: homepageConnection } = await supabase
+            .from('domain_connections')
+            .select(`
+              content_type, 
+              content_id,
+              custom_domains!inner(domain)
+            `)
+            .eq('custom_domains.domain', domain)
+            .eq('is_homepage', true)
+            .single();
+          
+          domainConnection = homepageConnection;
+        }
 
         if (domainConnection) {
           contentType = domainConnection.content_type;
           contentId = domainConnection.content_id;
-          customDomain = domainConnection.custom_domain;
+          customDomain = domain;
         }
       }
     }
