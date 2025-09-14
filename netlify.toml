@@ -10,10 +10,16 @@
     command = "npm run build"
     environment = { NETLIFY_PRERENDER = "true" }
 
+# Webhook redirects
+[[redirects]]
+  from = "/steadfast-webhook"
+  to = "https://fhqwacmokbtbspkxjixf.functions.supabase.co/steadfast-webhook"
+  status = 200
+
 # Bot-specific routing: redirect bots to seo-prerender function
 [[redirects]]
   from = "/*"
-  to = "https://fhqwacmokbtbspkxjixf.supabase.co/functions/v1/seo-prerender?domain=:host&path=:path"
+  to = "https://fhqwacmokbtbspkxjixf.supabase.co/functions/v1/seo-prerender?domain=:host&path=:splat"
   status = 200
   conditions = {User-Agent = ["*bot*", "*crawler*", "*spider*", "*Googlebot*", "*Bingbot*", "*facebookexternalhit*", "*Twitterbot*", "*Facebot*", "*facebookcatalog*", "*LinkedInBot*", "*Slackbot*", "*TelegramBot*", "*WhatsApp*", "*Discordbot*"]}
 
