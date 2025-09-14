@@ -16,31 +16,10 @@
   to = "https://fhqwacmokbtbspkxjixf.functions.supabase.co/steadfast-webhook"
   status = 200
 
-# Serve static assets normally
-[[redirects]]
-  from = "/src/*"
-  to = "/src/:splat"
-  status = 200
-
-[[redirects]]
-  from = "/*.js"
-  to = "/:splat.js"
-  status = 200
-
-[[redirects]]
-  from = "/*.css"
-  to = "/:splat.css"
-  status = 200
-
-[[redirects]]
-  from = "/assets/*"
-  to = "/assets/:splat"
-  status = 200
-
-# Serve pre-generated HTML for all page routes
+# Serve SPA for all routes
 [[redirects]]
   from = "/*"
-  to = "https://fhqwacmokbtbspkxjixf.functions.supabase.co/serve-page-html"
+  to = "/index.html"
   status = 200
 
 # Cache control for SEO prerender responses
