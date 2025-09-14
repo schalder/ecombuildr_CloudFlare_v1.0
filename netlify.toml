@@ -10,7 +10,7 @@
     command = "npm run build"
     environment = { NETLIFY_PRERENDER = "true" }
 
-# Static page routing - ALL traffic to static serving for website/funnel pages
+# Static page routing - website/funnel paths
 [[redirects]]
   from = "/w/*"
   to = "https://fhqwacmokbtbspkxjixf.supabase.co/functions/v1/serve-static-page?domain=:host&path=:path"
@@ -21,12 +21,19 @@
   to = "https://fhqwacmokbtbspkxjixf.supabase.co/functions/v1/serve-static-page?domain=:host&path=:path"
   status = 200
 
-# Custom domain routing - serve static content for custom domains
+# Custom domain routing - serve static content for shop.powerkits.net
 [[redirects]]
   from = "/*"
   to = "https://fhqwacmokbtbspkxjixf.supabase.co/functions/v1/serve-static-page?domain=:host&path=:path"
   status = 200
-  conditions = {User-Agent = ["*"], Host = ["!*.lovable.app", "!localhost*", "!*.ecombuildr.com"]}
+  conditions = {Host = ["shop.powerkits.net"]}
+
+# Custom domain routing - serve static content for other custom domains (not main app domains)
+[[redirects]]
+  from = "/*"
+  to = "https://fhqwacmokbtbspkxjixf.supabase.co/functions/v1/serve-static-page?domain=:host&path=:path"
+  status = 200
+  conditions = {Host = ["!*.lovable.app", "!localhost*", "!*.ecombuildr.com"]}
 
 # Bot-specific routing for SEO (fallback for dashboard routes)
 [[redirects]]
