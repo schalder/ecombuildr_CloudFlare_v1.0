@@ -16,35 +16,7 @@
   to = "https://fhqwacmokbtbspkxjixf.functions.supabase.co/steadfast-webhook"
   status = 200
 
-# Static assets bypass (keep SPA loading fast)
-[[redirects]]
-  from = "/assets/*"
-  to = "/assets/:splat"
-  status = 200
-
-[[redirects]]
-  from = "/*.js"
-  to = "/:splat.js"
-  status = 200
-
-[[redirects]]
-  from = "/*.css"
-  to = "/:splat.css"
-  status = 200
-
-[[redirects]]
-  from = "/favicon.ico"
-  to = "/favicon.ico"
-  status = 200
-
-# Bot-only: serve HTML snapshots
-[[redirects]]
-  from = "/*"
-  to = "https://fhqwacmokbtbspkxjixf.functions.supabase.co/serve-html?path=/:splat"
-  status = 200
-  headers = {User-Agent = "*bot*,*crawl*,*spider*,*facebook*,*twitter*,*linkedin*,*pinterest*,*whatsapp*,*telegram*,*slack*"}
-
-# SPA for humans
+# Serve SPA for all routes
 [[redirects]]
   from = "/*"
   to = "/index.html"

@@ -25,12 +25,13 @@ import { useUserStore } from '@/hooks/useUserStore';
 import { setGlobalCurrency } from '@/lib/currency';
 import { useStore } from '@/contexts/StoreContext';
 import { WebsiteProvider } from '@/contexts/WebsiteContext';
+import { useHTMLGeneration } from '@/hooks/useHTMLGeneration';
+import { SEOConfig } from '@/lib/seo';
 import { FunnelStepToolbar } from '@/components/page-builder/components/FunnelStepToolbar';
 import { FunnelStepProvider } from '@/contexts/FunnelStepContext';
 import { ResponsiveControls } from '@/components/page-builder/components/ResponsiveControls';
 import { getDevicePreviewStyles } from '@/components/page-builder/utils/responsive';
 import { PageSettingsPanel } from '@/components/page-builder/components/PageSettingsPanel';
-
 
 export default function PageBuilder() {
   const navigate = useNavigate();
@@ -77,7 +78,7 @@ export default function PageBuilder() {
   const [showPreview, setShowPreview] = useState(false);
   const [previewDeviceType, setPreviewDeviceType] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
   
-  
+  const { generateAndSaveHTML, isGenerating } = useHTMLGeneration();
 
   const loadPage = useCallback(async () => {
     if (!entityId || !currentStore) return;
@@ -550,7 +551,6 @@ export default function PageBuilder() {
         >
           <PageBuilderRenderer data={builderData} deviceType="desktop" />
         </div>
-
           </div>
         </FunnelStepProvider>
       </WebsiteProvider>
