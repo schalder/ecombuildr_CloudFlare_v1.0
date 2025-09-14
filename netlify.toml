@@ -37,10 +37,17 @@
   to = "/favicon.ico"
   status = 200
 
-# Serve HTML snapshots for all other routes
+# Bot-only: serve HTML snapshots
 [[redirects]]
   from = "/*"
-  to = "https://fhqwacmokbtbspkxjixf.functions.supabase.co/serve-html?domain=:host&path=/:splat"
+  to = "https://fhqwacmokbtbspkxjixf.functions.supabase.co/serve-html?path=/:splat"
+  status = 200
+  headers = {User-Agent = "*bot*,*crawl*,*spider*,*facebook*,*twitter*,*linkedin*,*pinterest*,*whatsapp*,*telegram*,*slack*"}
+
+# SPA for humans
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
   status = 200
 
 # Cache control for SEO prerender responses
