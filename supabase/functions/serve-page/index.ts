@@ -18,12 +18,17 @@ Deno.serve(async (req) => {
     );
 
     const url = new URL(req.url);
-    const domain = req.headers.get('host') || url.hostname;
+    let domain = req.headers.get('host') || url.hostname;
     
     // Get original path from query params or fallback to pathname
     const prefix = url.searchParams.get('prefix');
     const splat = url.searchParams.get('splat');
     const path = prefix && splat ? `/${prefix}/${splat}` : url.pathname;
+
+    // Clean up domain to remove edge function hostnames
+    if (domain.includes('supabase.co') || domain.includes('edge-runtime')) {
+      domain = 'ecombuildr.com';
+    }
 
     console.log(`🌐 Serving request for domain: ${domain}, original path: ${path}, reconstructed from prefix: ${prefix}, splat: ${splat}`);
 
@@ -358,17 +363,58 @@ Deno.serve(async (req) => {
 
     // Return 404 HTML when no content is found
     console.log(`🔄 No content found, returning 404`);
+    const canonicalUrl = `https://${domain}${path}`;
     const notFoundHtml = `
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Page Not Found</title>
+  <title>404 - Page Not Found</title>
+  <meta name="description" content="The page you are looking for does not exist.">
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="canonical" href="${canonicalUrl}">
+  
+  <!-- Open Graph -->
+  <meta property="og:title" content="404 - Page Not Found">
+  <meta property="og:description" content="The page you are looking for does not exist.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="${canonicalUrl}">
+  
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="404 - Page Not Found">
+  <meta name="twitter:description" content="The page you are looking for does not exist.">
+  
+  <!-- Hydration bridge script for React SPA -->
+  <script>
+    window.__STATIC_HYDRATION_DATA__ = {
+      contentType: '404',
+      domain: '${domain}',
+      path: '${path}'
+    };
+  </script>
 </head>
-<body>
-  <h1>404 - Page Not Found</h1>
-  <p>The requested page could not be found.</p>
+<body style="font-family: system-ui, sans-serif; text-align: center; padding: 50px; background: #f5f5f5;">
+  <div style="max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px;">
+    <h1 style="color: #dc2626; margin-bottom: 20px;">404 - Page Not Found</h1>
+    <p style="color: #666; margin-bottom: 30px;">The page you are looking for does not exist or has been moved.</p>
+    <a href="/" style="background: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 500;">Go Home</a>
+  </div>
+  
+  <!-- Hydration script that loads the React SPA -->
+  <script>
+    (function() {
+      var script = document.createElement('script');
+      script.type = 'module';
+      script.src = '/src/main.tsx';
+      script.onload = function() {
+        // The React app will take over from here
+        console.log('React app loaded for 404 page');
+      };
+      document.head.appendChild(script);
+    })();
+  </script>
 </body>
 </html>`;
     

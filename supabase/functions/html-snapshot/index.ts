@@ -281,6 +281,16 @@ function generateWebsiteHTML(website: any, page: any, customDomain?: string): st
     </script>` : ''}
     
     ${page.custom_scripts || ''}
+    
+    <!-- Hydration bridge script for React SPA -->
+    <script>
+      window.__STATIC_HYDRATION_DATA__ = {
+        contentType: 'website_page',
+        contentId: '${page.id}',
+        websiteId: '${website.id}',
+        customDomain: ${customDomain ? `'${customDomain}'` : 'null'}
+      };
+    </script>
 </head>
 <body>
     <div id="root">
@@ -290,7 +300,21 @@ function generateWebsiteHTML(website: any, page: any, customDomain?: string): st
             <div id="loading">Loading page content...</div>
         </main>
     </div>
-    <script type="module" src="/src/main.tsx"></script>
+    
+    <!-- Hydration script that loads the React SPA -->
+    <script>
+      (function() {
+        var script = document.createElement('script');
+        script.type = 'module';
+        script.src = '/src/main.tsx';
+        script.onload = function() {
+          // Hide the static content after React loads
+          var loading = document.getElementById('loading');
+          if (loading) loading.style.display = 'none';
+        };
+        document.head.appendChild(script);
+      })();
+    </script>
 </body>
 </html>`
 }
@@ -343,6 +367,16 @@ function generateFunnelHTML(funnel: any, step: any, customDomain?: string): stri
     </script>
     
     ${step.custom_scripts || ''}
+    
+    <!-- Hydration bridge script for React SPA -->
+    <script>
+      window.__STATIC_HYDRATION_DATA__ = {
+        contentType: 'funnel_step',
+        contentId: '${step.id}',
+        funnelId: '${funnel.id}',
+        customDomain: ${customDomain ? `'${customDomain}'` : 'null'}
+      };
+    </script>
 </head>
 <body>
     <div id="root">
@@ -352,7 +386,21 @@ function generateFunnelHTML(funnel: any, step: any, customDomain?: string): stri
             <div id="loading">Loading funnel step...</div>
         </main>
     </div>
-    <script type="module" src="/src/main.tsx"></script>
+    
+    <!-- Hydration script that loads the React SPA -->
+    <script>
+      (function() {
+        var script = document.createElement('script');
+        script.type = 'module';
+        script.src = '/src/main.tsx';
+        script.onload = function() {
+          // Hide the static content after React loads
+          var loading = document.getElementById('loading');
+          if (loading) loading.style.display = 'none';
+        };
+        document.head.appendChild(script);
+      })();
+    </script>
 </body>
 </html>`
 }

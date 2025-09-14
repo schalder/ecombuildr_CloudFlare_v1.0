@@ -73,8 +73,14 @@ export const WebsiteLayout: React.FC = () => {
   }, [websiteId, websiteSlug, isPreview, loadStoreById]);
 
   // Redirect legacy /website/:id to clean /site/:slug while preserving the rest of the path
+  // But skip redirects for builder preview URLs
   React.useEffect(() => {
-    if (website && websiteId && !websiteSlug) {
+    // Check if this is a builder preview URL (contains /website/ as preview)
+    const isBuilderPreview = websiteId && !websiteSlug && 
+                           window.location.pathname.includes('/website/');
+    
+    // Only redirect if it's not a builder preview and we have the website data
+    if (website && websiteId && !websiteSlug && !isBuilderPreview) {
       const current = window.location.pathname + window.location.search + window.location.hash;
       const next = current.replace(`/website/${websiteId}`, `/site/${website.slug}`);
       if (next !== current) {
