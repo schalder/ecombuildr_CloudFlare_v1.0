@@ -23,13 +23,24 @@ Deno.serve(async (req) => {
   }
 
   try {
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? Deno.env.get('SUPABASE_ANON_KEY') ?? '';
     const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? ''
+      supabaseUrl,
+      supabaseServiceKey
     );
 
-    const { websiteId, limit = 10 } = await req.json();
-
+    // Parse body safely
+    let websiteId: string | null = null;
+    let limit: number = 10;
+    try {
+      const body = await req.json();
+      websiteId = body?.websiteId ?? null;
+      limit = typeof body?.limit === 'number' ? body.limit : 10;
+      console.log('FOMO: function invoked', { websiteId, limit });
+    } catch (_e) {
+      console.warn('FOMO: invalid JSON body');
+    }
     if (!websiteId) {
       return new Response(
         JSON.stringify({ error: 'Website ID is required' }),
@@ -44,6 +55,7 @@ Deno.serve(async (req) => {
       .eq('id', websiteId)
       .single();
 
+    console.log('FOMO: website resolved', { store_id: website?.store_id });
     if (websiteError || !website) {
       return new Response(
         JSON.stringify({ error: 'Website not found' }),
@@ -73,6 +85,7 @@ Deno.serve(async (req) => {
       .order('created_at', { ascending: false })
       .limit(limit);
 
+    console.log('FOMO: orders fetched', { count: orders?.length ?? 0 });
     if (ordersError) {
       console.error('Orders fetch error:', ordersError);
       return new Response(
