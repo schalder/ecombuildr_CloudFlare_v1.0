@@ -37,8 +37,9 @@
           const sf = params.get('sf');
           const p = window.location.pathname;
           const isAdmin = p.includes('/dashboard') || p.includes('/admin') || p.includes('/builder') || p.includes('/edit');
+          const servedCookie = document.cookie.includes('servedStatic=1');
 
-          if (sf === '0' || sf === 'false' || isAdmin) { console.debug('[SSR bootstrap] Skipped (admin or sf=0)'); return; }
+          if (sf === '0' || sf === 'false' || isAdmin || servedCookie) { console.debug('[SSR bootstrap] Skipped (admin/sf=0/already served)'); return; }
 
           if (window.__servedStatic) return; window.__servedStatic = true;
 
@@ -57,6 +58,8 @@
               if (!res.ok) return;
               const looksHTML = ct.includes('text/html') || /<html[\s>]/i.test(text);
               if (looksHTML && text && !/^Page not found|Page temporarily unavailable$/i.test(text.trim())) {
+                // Prevent re-bootstrap after writing the new document
+                document.cookie = 'servedStatic=1; path=/; max-age=60';
                 document.open();
                 document.write(text);
                 document.close();
