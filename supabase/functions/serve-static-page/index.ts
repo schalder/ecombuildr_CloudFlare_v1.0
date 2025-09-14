@@ -184,22 +184,42 @@ serve(async (req) => {
     // Try to get existing HTML snapshot
     console.log(`📄 Looking for HTML snapshot: ${contentType}:${contentId}`);
     
-    let query = supabase
+    // Build primary snapshot query (domain-scoped when available)
+    let { data: snapshot, error: snapshotError } = await supabase
       .from('html_snapshots')
       .select('html_content, generated_at')
       .eq('content_type', contentType)
-      .eq('content_id', contentId);
+      .eq('content_id', contentId)
+      .eq('custom_domain', customDomain || '')
+      .order('generated_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
-    if (customDomain) {
-      query = query.eq('custom_domain', customDomain);
-    } else {
-      query = query.is('custom_domain', null);
+    if (snapshotError && snapshotError.code !== 'PGRST116') {
+      console.error('❌ Error querying domain-scoped HTML snapshots:', snapshotError);
     }
 
-    const { data: snapshot, error: snapshotError } = await query.single();
-    
-    if (snapshotError && snapshotError.code !== 'PGRST116') {
-      console.error('❌ Error querying HTML snapshots:', snapshotError);
+    // Fallback: try generic snapshot (custom_domain IS NULL) if none found for this domain
+    if ((!snapshot || !snapshot.html_content) && customDomain) {
+      console.log('🔄 No domain-scoped snapshot found, trying generic snapshot fallback');
+      const { data: fallbackSnapshot, error: fallbackError } = await supabase
+        .from('html_snapshots')
+        .select('html_content, generated_at')
+        .eq('content_type', contentType)
+        .eq('content_id', contentId)
+        .is('custom_domain', null)
+        .order('generated_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (fallbackError && fallbackError.code !== 'PGRST116') {
+        console.error('❌ Error querying generic HTML snapshots:', fallbackError);
+      }
+
+      if (fallbackSnapshot) {
+        snapshot = fallbackSnapshot;
+        console.log(`✅ Found generic snapshot fallback (generated: ${snapshot.generated_at})`);
+      }
     }
 
     if (snapshot && snapshot.html_content) {
