@@ -361,33 +361,8 @@ serve(async (req) => {
     })
   }
 }
-  <style>
-    body { font-family: system-ui; margin: 0; padding: 20px; background: #f5f5f5; }
-    .container { max-width: 500px; margin: 50px auto; background: white; padding: 30px; border-radius: 8px; text-align: center; }
-    .error { color: #dc2626; font-size: 18px; margin-bottom: 20px; }
-    .instruction { color: #666; line-height: 1.6; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="error">⚠️ This page hasn't been published yet</div>
-    <div class="instruction">
-      Please go to your page builder and click <strong>"Save & Publish"</strong> to generate this page.
-    </div>
-  </div>
-</body>
-</html>`, {
-      status: 200,
-      headers: {
-        ...corsHeaders,
-        'Content-Type': 'text/html; charset=UTF-8',
-      },
-    })
-    
-  } catch (error) {
-    console.error('SEO Prerender error:', error)
-    return generateFallbackHTML(domain, path)
-  }
+// Get HTML snapshot from database
+async function getHTMLSnapshot(supabase: any, domain: string, path: string, userAgent: string = ''): Promise<string | null> {
 })
 
 // Get HTML snapshot from database
