@@ -11,7 +11,8 @@ const corsHeaders = {
 // In-memory cache for SEO responses (5 minute TTL)
 const seoCache = new Map<string, { data: any, timestamp: number }>()
 const CACHE_TTL = 5 * 60 * 1000 // 5 minutes
-const DB_TIMEOUT = 3000 // 3 second timeout for database operations
+const DB_TIMEOUT = 2000 // 2 second timeout for database operations
+const FB_BOT_TIMEOUT = 1500 // 1.5 second timeout for Facebook bots (they have strict requirements)
 
 // Performance monitoring
 function logPerformance(operation: string, startTime: number) {
@@ -68,10 +69,13 @@ function getFallbackHTML(domain: string, path: string) {
 }
 
 // Database operation with timeout
-async function withTimeout<T>(promise: Promise<T>, timeoutMs: number = DB_TIMEOUT): Promise<T | null> {
+async function withTimeout<T>(promise: Promise<T>, timeoutMs: number = DB_TIMEOUT, userAgent?: string): Promise<T | null> {
   try {
+    // Use faster timeout for Facebook bots to prevent 504 errors
+    const finalTimeout = userAgent && isFacebookBot(userAgent) ? FB_BOT_TIMEOUT : timeoutMs
+    
     const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('Database timeout')), timeoutMs)
+      setTimeout(() => reject(new Error('Database timeout')), finalTimeout)
     )
     
     return await Promise.race([promise, timeoutPromise]) as T
@@ -79,6 +83,11 @@ async function withTimeout<T>(promise: Promise<T>, timeoutMs: number = DB_TIMEOU
     console.error(`⚠️ Database operation failed:`, error)
     return null
   }
+}
+
+// Check if user agent is specifically Facebook bot
+function isFacebookBot(userAgent: string): boolean {
+  return /facebookexternalhit|facebookcatalog|facebot/i.test(userAgent)
 }
 
 // Security: Sanitization functions
@@ -287,8 +296,9 @@ serve(async (req) => {
     
     // First try to get HTML snapshot from database with timeout
     const htmlSnapshot = await withTimeout(
-      getHTMLSnapshot(supabase, domain, path),
-      isFacebookBot ? 2000 : DB_TIMEOUT // Even shorter timeout for Facebook
+      getHTMLSnapshot(supabase, domain, path, userAgent),
+      isFacebookBot ? FB_BOT_TIMEOUT : DB_TIMEOUT, // Use specific timeouts
+      userAgent
     )
     
     if (htmlSnapshot) {
@@ -297,17 +307,24 @@ serve(async (req) => {
       
       logPerformance('HTML SEO (database)', startTime)
       console.log('✅ Serving HTML snapshot from database')
-      return new Response(htmlSnapshot, {
-        headers: {
-          ...corsHeaders,
-          'Content-Type': 'text/html; charset=UTF-8',
-          'Cache-Control': 'public, max-age=300, s-maxage=3600',
-          'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; img-src 'self' data: https:; font-src 'self' https:;",
-          'X-Cache': 'MISS',
-          'X-Robots-Tag': 'index, follow',
-          'X-Content-Source': 'supabase-prerender',
-          'Vary': 'User-Agent'
-        },
+      
+      // Add Facebook-specific headers for better sharing support
+      const headers = {
+        ...corsHeaders,
+        'Content-Type': 'text/html; charset=UTF-8',
+        'Cache-Control': isFacebookBot(userAgent) ? 'public, max-age=600, s-maxage=3600' : 'public, max-age=300, s-maxage=3600',
+        'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; img-src 'self' data: https:; font-src 'self' https:;",
+        'X-Cache': 'MISS',
+        'X-Robots-Tag': 'index, follow',
+        'X-Content-Source': 'supabase-prerender',
+        'Vary': 'User-Agent',
+        ...(isFacebookBot(userAgent) && {
+          'X-Facebook-Content-Type': 'text/html',
+          'X-Frame-Options': 'ALLOWALL'
+        })
+      }
+      
+      return new Response(htmlSnapshot, { headers,
       })
     }
 
@@ -374,7 +391,7 @@ serve(async (req) => {
 })
 
 // Get HTML snapshot from database
-async function getHTMLSnapshot(supabase: any, domain: string, path: string): Promise<string | null> {
+async function getHTMLSnapshot(supabase: any, domain: string, path: string, userAgent: string = ''): Promise<string | null> {
   const startTime = Date.now()
   
   try {
@@ -422,23 +439,13 @@ async function getHTMLSnapshot(supabase: any, domain: string, path: string): Pro
           allConnections.find(c => c.content_type === 'funnel') ||
           null
       } else {
-        // For specific paths, prefer website pages over funnel steps for simplicity
-        // This avoids the expensive funnel step lookup query
+        // For specific paths, try to match content in this order:
+        // 1. Try website first (most common case)
+        // 2. Then funnel as fallback
         selectedConnection = 
           allConnections.find(c => c.content_type === 'website') ||
           allConnections.find(c => c.content_type === 'funnel') ||
           null
-            
-          if (stepExists) {
-            selectedConnection = funnelConnection
-            break
-          }
-        }
-        
-        // If no funnel step matches, use website for all other paths
-        if (!selectedConnection) {
-          selectedConnection = allConnections.find(c => c.content_type === 'website') || null
-        }
       }
       
       if (!selectedConnection) {
@@ -877,8 +884,8 @@ function generateSEOTags(seo: {
   customScripts?: string
 }): string {
   // Sanitize all inputs
-  const title = sanitizeText(seo.title || 'EcomBuildr', 60)
-  const description = sanitizeText(seo.description, 160)
+  const title = sanitizeText(seo.title || 'EcomBuildr', 90) // Optimized for Facebook (60-90 chars)
+  const description = sanitizeText(seo.description, 160) // Optimized for Facebook (155-160 chars)
   const image = validateUrl(seo.image)
   const canonicalUrl = validateUrl(seo.canonicalUrl)
   const robots = sanitizeText(seo.robots || 'index, follow', 50)
@@ -888,6 +895,11 @@ function generateSEOTags(seo: {
   const author = sanitizeText(seo.author, 100)
   const languageCode = sanitizeText(seo.languageCode || 'en', 10)
 
+  // Facebook requires these image dimensions for optimal display
+  const imageWidth = '1200'
+  const imageHeight = '630'
+  const imageAlt = title // Use title as image alt text
+
   let seoTags = `
   <!-- Primary Meta Tags -->
   <title>${title}</title>
@@ -895,21 +907,35 @@ function generateSEOTags(seo: {
   ${keywords ? `<meta name="keywords" content="${keywords}" />` : ''}
   ${author ? `<meta name="author" content="${author}" />` : ''}
   <meta name="robots" content="${robots}" />
+  <meta name="language" content="${languageCode}" />
   ${canonicalUrl ? `<link rel="canonical" href="${canonicalUrl}" />` : ''}
   
-  <!-- Open Graph / Facebook -->
+  <!-- Open Graph / Facebook - Enhanced for sharing -->
   <meta property="og:type" content="${ogType}" />
   <meta property="og:title" content="${title}" />
   ${description ? `<meta property="og:description" content="${description}" />` : ''}
   ${image ? `<meta property="og:image" content="${image}" />` : ''}
+  ${image ? `<meta property="og:image:secure_url" content="${image}" />` : ''}
+  ${image ? `<meta property="og:image:type" content="image/png" />` : ''}
+  ${image ? `<meta property="og:image:width" content="${imageWidth}" />` : ''}
+  ${image ? `<meta property="og:image:height" content="${imageHeight}" />` : ''}
+  ${image ? `<meta property="og:image:alt" content="${imageAlt}" />` : ''}
   ${canonicalUrl ? `<meta property="og:url" content="${canonicalUrl}" />` : ''}
   <meta property="og:site_name" content="${siteName}" />
+  <meta property="og:locale" content="${languageCode === 'en' ? 'en_US' : languageCode + '_' + languageCode.toUpperCase()}" />
   
-  <!-- Twitter -->
-  <meta property="twitter:card" content="summary_large_image" />
-  <meta property="twitter:title" content="${title}" />
-  ${description ? `<meta property="twitter:description" content="${description}" />` : ''}
-  ${image ? `<meta property="twitter:image" content="${image}" />` : ''}
+  <!-- Twitter Card - Enhanced -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="${title}" />
+  ${description ? `<meta name="twitter:description" content="${description}" />` : ''}
+  ${image ? `<meta name="twitter:image" content="${image}" />` : ''}
+  ${image ? `<meta name="twitter:image:alt" content="${imageAlt}" />` : ''}
+  
+  <!-- LinkedIn -->
+  ${image ? `<meta property="linkedin:image" content="${image}" />` : ''}
+  
+  <!-- WhatsApp -->
+  ${image ? `<meta property="whatsapp:image" content="${image}" />` : ''}
   
   <!-- Favicon -->
   <link rel="icon" type="image/svg+xml" href="/favicon.ico" />
