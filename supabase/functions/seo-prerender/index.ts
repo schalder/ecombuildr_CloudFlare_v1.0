@@ -363,10 +363,6 @@ serve(async (req) => {
 }
 // Get HTML snapshot from database
 async function getHTMLSnapshot(supabase: any, domain: string, path: string, userAgent: string = ''): Promise<string | null> {
-})
-
-// Get HTML snapshot from database
-async function getHTMLSnapshot(supabase: any, domain: string, path: string, userAgent: string = ''): Promise<string | null> {
   const startTime = Date.now()
   
   try {
