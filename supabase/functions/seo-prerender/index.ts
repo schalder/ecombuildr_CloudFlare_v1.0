@@ -167,7 +167,10 @@ serve(async (req) => {
           ...corsHeaders,
           'Content-Type': 'text/html; charset=UTF-8',
           'Cache-Control': 'public, max-age=300, s-maxage=3600',
-          'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; img-src 'self' data: https:; font-src 'self' https:;"
+          'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; img-src 'self' data: https:; font-src 'self' https:;",
+          'X-Robots-Tag': 'index, follow',
+          'X-Content-Source': 'supabase-prerender',
+          'Vary': 'User-Agent'
         },
       })
     }
@@ -300,10 +303,11 @@ async function getHTMLSnapshot(supabase: any, domain: string, path: string): Pro
       // Handle ecombuildr.com domain routes
       console.log('🏠 EcomBuildr domain detected')
       
-      // Parse website routes: /w/:websiteSlug/:pageSlug?
-      const websiteMatch = path.match(/^\/w\/([^\/]+)(?:\/([^\/]+))?$/)
+      // Parse website routes: /w/:websiteSlug/:pageSlug? OR /site/:websiteSlug/:pageSlug?
+      const websiteMatch = path.match(/^\/(?:w|site)\/([^\/]+)(?:\/([^\/]+))?$/)
       if (websiteMatch) {
         const [, websiteSlug, pageSlug] = websiteMatch
+        console.log('🎯 Matched website pattern:', { websiteSlug, pageSlug })
         const websiteId = await resolveWebsiteSlug(supabase, websiteSlug)
         if (websiteId) {
           return await getWebsitePageSnapshot(supabase, websiteId, pageSlug || '', null)
@@ -780,16 +784,23 @@ function isLikelyBot(userAgent: string): boolean {
   
   const botPatterns = [
     // Search engines
-    'googlebot', 'bingbot', 'slurp', 'duckduckbot', 'baiduspider',
-    // Social media crawlers
-    'facebookexternalhit', 'twitterbot', 'linkedinbot', 'whatsapp',
+    'googlebot', 'bingbot', 'slurp', 'duckduckbot', 'baiduspider', 'yandex',
+    // Social media crawlers - Enhanced Facebook detection
+    'facebookexternalhit', 'facebookcatalog', 'facebot', 'twitterbot', 'linkedinbot', 
+    'whatsapp', 'telegrambot', 'discordbot', 'slackbot', 'pinterestbot',
     // SEO tools
-    'screaming frog', 'ahrefs', 'semrush', 'moz',
+    'screaming frog', 'ahrefs', 'semrush', 'moz', 'majestic',
     // Other bots
-    'bot', 'crawler', 'spider', 'scraper'
+    'bot', 'crawler', 'spider', 'scraper', 'archiver', 'monitor'
   ]
   
   const lowercaseUA = userAgent.toLowerCase()
+  
+  // Special handling for Facebook crawlers that might not match patterns
+  if (lowercaseUA.includes('facebook') || lowercaseUA.includes('facebot')) {
+    return true
+  }
+  
   return botPatterns.some(pattern => lowercaseUA.includes(pattern))
 }
 
@@ -831,10 +842,11 @@ async function getSEODataAsJSON(supabase: any, domain: string, path: string): Pr
       // Handle ecombuildr.com domain routes
       console.log('🏠 EcomBuildr domain SEO JSON request')
       
-      // Parse website routes: /w/:websiteSlug/:pageSlug?
-      const websiteMatch = path.match(/^\/w\/([^\/]+)(?:\/([^\/]+))?$/)
+      // Parse website routes: /w/:websiteSlug/:pageSlug? OR /site/:websiteSlug/:pageSlug?
+      const websiteMatch = path.match(/^\/(?:w|site)\/([^\/]+)(?:\/([^\/]+))?$/)
       if (websiteMatch) {
         const [, websiteSlug, pageSlug] = websiteMatch
+        console.log('🎯 Matched website pattern for SEO JSON:', { websiteSlug, pageSlug })
         const websiteId = await resolveWebsiteSlug(supabase, websiteSlug)
         if (websiteId) {
           return await getWebsitePageSEOData(supabase, websiteId, pageSlug || '', null)

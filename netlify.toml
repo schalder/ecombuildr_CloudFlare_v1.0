@@ -15,7 +15,15 @@
   from = "/*"
   to = "https://fhqwacmokbtbspkxjixf.supabase.co/functions/v1/seo-prerender?domain=:host&path=:splat"
   status = 200
-  conditions = {User-Agent = ["*bot*", "*crawler*", "*spider*", "*Googlebot*", "*Bingbot*", "*facebookexternalhit*", "*Twitterbot*"]}
+  conditions = {User-Agent = ["*bot*", "*crawler*", "*spider*", "*Googlebot*", "*Bingbot*", "*facebookexternalhit*", "*Twitterbot*", "*LinkedInBot*", "*WhatsApp*", "*Telegram*", "facebookexternalhit/1.1", "facebookcatalog/*", "Facebot"]}
+  
+# Force HTTPS and add debug headers
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "SAMEORIGIN"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
 
 # Pass-through for static assets (JS, CSS, images, etc.)
 [[redirects]]
