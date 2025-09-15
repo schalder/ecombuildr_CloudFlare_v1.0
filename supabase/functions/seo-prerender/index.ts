@@ -792,7 +792,7 @@ async function generateWebsitePageSEO(supabase: any, websiteId: string, pageSlug
     // Build SEO metadata using only page-level data
     const title = page.seo_title || `${page.title} - ${website.name}`
     const description = page.seo_description || undefined
-    const image = page.og_image || undefined
+    const image = page.social_image_url || page.preview_image_url || page.og_image || undefined
     const canonicalUrl = page.canonical_url || (domain === 'ecombuildr.com' || domain.includes('lovable.app')
       ? `https://ecombuildr.com/w/${website.slug}${pageSlug ? `/${pageSlug}` : ''}` 
       : `https://${domain}${pageSlug ? `/${pageSlug}` : ''}`)
@@ -1209,7 +1209,7 @@ async function getWebsitePageSEOData(supabase: any, websiteId: string, pageSlug:
     return {
       title: page.seo_title || `${page.title} - ${website.name}`,
       description: page.seo_description || website.description,
-      og_image: page.og_image,
+      og_image: page.social_image_url || page.preview_image_url || page.og_image,
       canonical: canonicalUrl,
       robots: page.meta_robots || 'index, follow',
       keywords: Array.isArray(page.seo_keywords) ? page.seo_keywords : [],
