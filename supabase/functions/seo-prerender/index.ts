@@ -56,16 +56,68 @@ function getFallbackHTML(domain: string, path: string) {
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://${domain}${path}">
   <meta property="og:image" content="https://ecombuildr.com/og-image.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="EcomBuildr - Build Your Online Store">
+  <meta property="og:image:secure_url" content="https://ecombuildr.com/og-image.jpg">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="EcomBuildr - Build Your Online Store">
   <meta name="twitter:description" content="Create and grow your online business with EcomBuildr. Build a full-featured shop, accept payments, and manage orders—all from one simple platform.">
   <meta name="twitter:image" content="https://ecombuildr.com/og-image.jpg">
+  <link rel="canonical" href="https://${domain}${path}">
 </head>
 <body>
   <h1>EcomBuildr - Build Your Online Store</h1>
   <p>Create and grow your online business with EcomBuildr.</p>
 </body>
 </html>`
+}
+
+// Rewrite HTML snapshot to use custom domain
+function rewriteHTMLForCustomDomain(html: string, customDomain: string, path: string): string {
+  const newCanonical = `https://${customDomain}${path}`
+  const newOgUrl = `https://${customDomain}${path}`
+  
+  let result = html
+  
+  // Replace canonical URL
+  result = result.replace(
+    /<link\s+rel="canonical"\s+href="[^"]*"/gi,
+    `<link rel="canonical" href="${newCanonical}"`
+  )
+  
+  // Replace og:url
+  result = result.replace(
+    /<meta\s+property="og:url"\s+content="[^"]*"/gi,
+    `<meta property="og:url" content="${newOgUrl}"`
+  )
+  
+  // Add missing og:url if it doesn't exist
+  if (!result.includes('property="og:url"')) {
+    const metaIndex = result.indexOf('</head>')
+    if (metaIndex !== -1) {
+      result = result.slice(0, metaIndex) + 
+        `  <meta property="og:url" content="${newOgUrl}">\n` +
+        result.slice(metaIndex)
+    }
+  }
+  
+  // Enhance og:image with required attributes
+  result = result.replace(
+    /<meta\s+property="og:image"\s+content="([^"]*)"/gi,
+    (match, imageUrl) => {
+      const imageAttributes = [
+        `<meta property="og:image" content="${imageUrl}">`,
+        `<meta property="og:image:width" content="1200">`,
+        `<meta property="og:image:height" content="630">`,
+        `<meta property="og:image:alt" content="Product Image">`,
+        `<meta property="og:image:secure_url" content="${imageUrl}">`
+      ]
+      return imageAttributes.join('\n  ')
+    }
+  )
+  
+  return result
 }
 
 // Database operation with timeout
@@ -302,8 +354,15 @@ serve(async (req) => {
     )
     
     if (htmlSnapshot) {
+      // Rewrite HTML for custom domains to fix og:url and canonical
+      let finalHtml = htmlSnapshot
+      if (domain !== 'ecombuildr.com' && !domain.includes('lovable.app')) {
+        finalHtml = rewriteHTMLForCustomDomain(htmlSnapshot, domain, path)
+        console.log('🔄 Rewrote HTML for custom domain:', domain)
+      }
+      
       // Cache the successful response
-      setCachedResponse(cacheKey, htmlSnapshot)
+      setCachedResponse(cacheKey, finalHtml)
       
       logPerformance('HTML SEO (database)', startTime)
       console.log('✅ Serving HTML snapshot from database')
@@ -324,8 +383,7 @@ serve(async (req) => {
         })
       }
       
-      return new Response(htmlSnapshot, { headers,
-      })
+      return new Response(finalHtml, { headers })
     }
 
     // Fallback to static HTML if no database snapshot exists

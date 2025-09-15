@@ -15,7 +15,7 @@
   from = "/*"
   to = "https://fhqwacmokbtbspkxjixf.supabase.co/functions/v1/seo-prerender?domain=:host&path=:splat"
   status = 200
-  conditions = {User-Agent = ["*bot*", "*crawler*", "*spider*", "*Googlebot*", "*Bingbot*", "*facebookexternalhit*", "*Twitterbot*", "*LinkedInBot*", "*WhatsApp*", "*Telegram*", "facebookexternalhit/1.1", "facebookcatalog/*", "Facebot"]}
+  conditions = {User-Agent = ["*bot*", "*crawler*", "*spider*", "*Googlebot*", "*Bingbot*", "*facebookexternalhit*", "*Twitterbot*", "*LinkedInBot*", "*WhatsApp*", "*Telegram*", "facebookexternalhit/1.1", "facebookcatalog/*", "Facebot", "*FacebookBot*", "*facebookcatalog*", "*FacebookExternalHit*"]}
   
 # Force HTTPS and add debug headers
 [[headers]]
