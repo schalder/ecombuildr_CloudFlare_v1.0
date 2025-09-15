@@ -498,11 +498,21 @@ async function getHTMLSnapshot(supabase: any, domain: string, path: string, user
       if (domainError) {
         console.error('❌ Error fetching custom domain:', domainError)
         logPerformance('Custom domain query (error)', startTime)
-        return getFallbackHTML(domain, path)
+        // Try fallback by matching websites.domain
       }
       
       if (!customDomainData?.domain_connections?.length) {
-        console.log('❌ No domain connections found')
+        console.log('❌ No domain connections found, trying websites.domain fallback')
+        // Fallback: directly map domain to a website record
+        const { data: siteByDomain } = await supabase
+          .from('websites')
+          .select('id')
+          .eq('domain', domain)
+          .maybeSingle()
+        if (siteByDomain?.id) {
+          console.log('✅ Matched website by domain')
+          return await getWebsitePageSnapshot(supabase, siteByDomain.id, path === '/' ? '' : path.substring(1), domain)
+        }
         logPerformance('Custom domain query (no connections)', startTime)
         // Quick fallback instead of complex website page lookup
         return getFallbackHTML(domain, path)
@@ -1089,7 +1099,20 @@ async function getSEODataAsJSON(supabase: any, domain: string, path: string): Pr
         .maybeSingle()
       
       if (domainError || !customDomainData?.domain_connections?.length) {
-        console.log('❌ No domain connections found')
+        console.log('❌ No domain connections found for SEO JSON, trying websites.domain fallback')
+        const { data: siteByDomain } = await supabase
+          .from('websites')
+          .select('id')
+          .eq('domain', domain)
+          .maybeSingle()
+        if (siteByDomain?.id) {
+          return await getWebsitePageSEOData(
+            supabase,
+            siteByDomain.id,
+            path === '/' ? '' : path.substring(1),
+            domain
+          )
+        }
         return getDefaultSEOData()
       }
       
