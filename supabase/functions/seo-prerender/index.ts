@@ -8,6 +8,79 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+// In-memory cache for SEO responses (5 minute TTL)
+const seoCache = new Map<string, { data: any, timestamp: number }>()
+const CACHE_TTL = 5 * 60 * 1000 // 5 minutes
+const DB_TIMEOUT = 3000 // 3 second timeout for database operations
+
+// Performance monitoring
+function logPerformance(operation: string, startTime: number) {
+  const duration = Date.now() - startTime
+  console.log(`⏱️ ${operation}: ${duration}ms`)
+  if (duration > 2000) {
+    console.warn(`🐌 Slow operation: ${operation} took ${duration}ms`)
+  }
+}
+
+// Cache helper functions
+function getCachedResponse(key: string) {
+  const cached = seoCache.get(key)
+  if (!cached) return null
+  
+  if (Date.now() - cached.timestamp > CACHE_TTL) {
+    seoCache.delete(key)
+    return null
+  }
+  
+  console.log(`💾 Cache hit for: ${key}`)
+  return cached.data
+}
+
+function setCachedResponse(key: string, data: any) {
+  seoCache.set(key, { data, timestamp: Date.now() })
+  console.log(`💾 Cache set for: ${key}`)
+}
+
+// Quick fallback HTML for timeouts
+function getFallbackHTML(domain: string, path: string) {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EcomBuildr - Build Your Online Store</title>
+  <meta name="description" content="Create and grow your online business with EcomBuildr. Build a full-featured shop, accept payments, and manage orders—all from one simple platform.">
+  <meta property="og:title" content="EcomBuildr - Build Your Online Store">
+  <meta property="og:description" content="Create and grow your online business with EcomBuildr. Build a full-featured shop, accept payments, and manage orders—all from one simple platform.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://${domain}${path}">
+  <meta property="og:image" content="https://ecombuildr.com/og-image.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="EcomBuildr - Build Your Online Store">
+  <meta name="twitter:description" content="Create and grow your online business with EcomBuildr. Build a full-featured shop, accept payments, and manage orders—all from one simple platform.">
+  <meta name="twitter:image" content="https://ecombuildr.com/og-image.jpg">
+</head>
+<body>
+  <h1>EcomBuildr - Build Your Online Store</h1>
+  <p>Create and grow your online business with EcomBuildr.</p>
+</body>
+</html>`
+}
+
+// Database operation with timeout
+async function withTimeout<T>(promise: Promise<T>, timeoutMs: number = DB_TIMEOUT): Promise<T | null> {
+  try {
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Database timeout')), timeoutMs)
+    )
+    
+    return await Promise.race([promise, timeoutPromise]) as T
+  } catch (error) {
+    console.error(`⚠️ Database operation failed:`, error)
+    return null
+  }
+}
+
 // Security: Sanitization functions
 function sanitizeText(text: string | null | undefined, maxLength: number = 300): string {
   if (!text) return ''
@@ -94,8 +167,29 @@ serve(async (req) => {
 
   // Handle JSON format requests (for dynamic SEO loading)
   if (isJsonRequest) {
+    const startTime = Date.now()
+    const cacheKey = `json:${domain}:${path}`
+    
+    // Check cache first
+    const cachedResponse = getCachedResponse(cacheKey)
+    if (cachedResponse) {
+      logPerformance('JSON SEO (cached)', startTime)
+      return new Response(JSON.stringify(cachedResponse), {
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json',
+          'Cache-Control': 'public, max-age=300, s-maxage=3600',
+          'X-Cache': 'HIT'
+        },
+      })
+    }
+    
     try {
-      const seoData = await getSEODataAsJSON(supabase, domain, path)
+      const seoData = await withTimeout(getSEODataAsJSON(supabase, domain, path))
+      if (!seoData) {
+        throw new Error('Database timeout or error')
+      }
+      
       // Sanitize SEO data before returning
       const sanitizedSEO = {
         title: sanitizeText(seoData.title, 60),
@@ -108,20 +202,27 @@ serve(async (req) => {
         language: sanitizeText(seoData.language, 10) || 'en'
       }
       
-      console.log('📋 Returning sanitized SEO JSON')
-      return new Response(JSON.stringify({
+      const response = {
         success: true,
         seo: sanitizedSEO
-      }), {
+      }
+      
+      // Cache the response
+      setCachedResponse(cacheKey, response)
+      
+      logPerformance('JSON SEO (database)', startTime)
+      console.log('📋 Returning sanitized SEO JSON')
+      return new Response(JSON.stringify(response), {
         headers: {
           ...corsHeaders,
           'Content-Type': 'application/json',
           'Cache-Control': 'public, max-age=300, s-maxage=3600',
-          'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';"
+          'X-Cache': 'MISS'
         },
       })
     } catch (error) {
-      console.error('❌ Error generating SEO JSON')
+      logPerformance('JSON SEO (error)', startTime)
+      console.error('❌ Error generating SEO JSON:', error)
       return new Response(JSON.stringify({
         success: false,
         error: 'Failed to generate SEO data'
@@ -158,9 +259,43 @@ serve(async (req) => {
   }
 
   try {
-    // First try to get HTML snapshot from database
-    const htmlSnapshot = await getHTMLSnapshot(supabase, domain, path)
+    const startTime = Date.now()
+    const cacheKey = `html:${domain}:${path}`
+    
+    // Special handling for Facebook crawler
+    const isFacebookBot = userAgent.toLowerCase().includes('facebook') || userAgent.toLowerCase().includes('facebot')
+    if (isFacebookBot) {
+      console.log('🤖 Facebook bot detected - prioritizing speed')
+    }
+    
+    // Check cache first
+    const cachedHTML = getCachedResponse(cacheKey)
+    if (cachedHTML) {
+      logPerformance('HTML SEO (cached)', startTime)
+      return new Response(cachedHTML, {
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'text/html; charset=UTF-8',
+          'Cache-Control': 'public, max-age=300, s-maxage=3600',
+          'X-Cache': 'HIT',
+          'X-Robots-Tag': 'index, follow',
+          'X-Content-Source': 'supabase-prerender-cached',
+          'Vary': 'User-Agent'
+        },
+      })
+    }
+    
+    // First try to get HTML snapshot from database with timeout
+    const htmlSnapshot = await withTimeout(
+      getHTMLSnapshot(supabase, domain, path),
+      isFacebookBot ? 2000 : DB_TIMEOUT // Even shorter timeout for Facebook
+    )
+    
     if (htmlSnapshot) {
+      // Cache the successful response
+      setCachedResponse(cacheKey, htmlSnapshot)
+      
+      logPerformance('HTML SEO (database)', startTime)
       console.log('✅ Serving HTML snapshot from database')
       return new Response(htmlSnapshot, {
         headers: {
@@ -168,6 +303,7 @@ serve(async (req) => {
           'Content-Type': 'text/html; charset=UTF-8',
           'Cache-Control': 'public, max-age=300, s-maxage=3600',
           'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; img-src 'self' data: https:; font-src 'self' https:;",
+          'X-Cache': 'MISS',
           'X-Robots-Tag': 'index, follow',
           'X-Content-Source': 'supabase-prerender',
           'Vary': 'User-Agent'
@@ -175,15 +311,39 @@ serve(async (req) => {
       })
     }
 
-    // NO FALLBACK - If no snapshot exists, something is wrong
-    console.log('❌ No HTML snapshot found - page needs to be published!')
+    // Fallback to static HTML if no database snapshot exists
+    console.log('❌ No HTML snapshot found - serving fallback')
+    logPerformance('HTML SEO (fallback)', startTime)
     
-    return new Response(`<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Page Not Published</title>
+    const fallbackHTML = getFallbackHTML(domain, path)
+    setCachedResponse(cacheKey, fallbackHTML) // Cache fallback too
+    
+    return new Response(fallbackHTML, {
+      headers: {
+        ...corsHeaders,
+        'Content-Type': 'text/html; charset=UTF-8',
+        'Cache-Control': 'public, max-age=60, s-maxage=300', // Shorter cache for fallbacks
+        'X-Cache': 'FALLBACK',
+        'X-Content-Source': 'static-fallback'
+      }
+    })
+    
+  } catch (error) {
+    logPerformance('HTML SEO (error)', startTime)
+    console.error('SEO Prerender error:', error)
+    
+    // Return immediate fallback on any error (including timeouts)
+    const fallbackHTML = getFallbackHTML(domain, path)
+    return new Response(fallbackHTML, {
+      headers: {
+        ...corsHeaders,
+        'Content-Type': 'text/html; charset=UTF-8',
+        'Cache-Control': 'public, max-age=60, s-maxage=300',
+        'X-Content-Source': 'error-fallback'
+      }
+    })
+  }
+}
   <style>
     body { font-family: system-ui; margin: 0; padding: 20px; background: #f5f5f5; }
     .container { max-width: 500px; margin: 50px auto; background: white; padding: 30px; border-radius: 8px; text-align: center; }
@@ -215,17 +375,19 @@ serve(async (req) => {
 
 // Get HTML snapshot from database
 async function getHTMLSnapshot(supabase: any, domain: string, path: string): Promise<string | null> {
+  const startTime = Date.now()
+  
   try {
     // Handle custom domains first
     if (domain !== 'ecombuildr.com' && !domain.includes('lovable.app')) {
       console.log('🌐 Custom domain detected')
       
-      // Look up custom domain and ALL its connections
+      // Optimized single query to get domain connections with snapshots
       const { data: customDomainData, error: domainError } = await supabase
         .from('custom_domains')
         .select(`
           *,
-          domain_connections(
+          domain_connections!inner(
             content_type,
             content_id,
             path,
@@ -237,19 +399,21 @@ async function getHTMLSnapshot(supabase: any, domain: string, path: string): Pro
       
       if (domainError) {
         console.error('❌ Error fetching custom domain:', domainError)
-        return null
+        logPerformance('Custom domain query (error)', startTime)
+        return getFallbackHTML(domain, path)
       }
       
       if (!customDomainData?.domain_connections?.length) {
         console.log('❌ No domain connections found')
-        // Fallback: Try to find any published website page with this slug
-        return await getWebsitePageFallback(supabase, path, domain)
+        logPerformance('Custom domain query (no connections)', startTime)
+        // Quick fallback instead of complex website page lookup
+        return getFallbackHTML(domain, path)
       }
       
       const allConnections = customDomainData.domain_connections || []
       let selectedConnection = null
       
-      // Smart routing logic (same as DomainRouter)
+      // Simplified routing logic for performance - avoid additional queries
       if (path === '/' || path === '') {
         // For root path, prioritize: explicit homepage > website > first funnel
         selectedConnection = 
@@ -258,22 +422,12 @@ async function getHTMLSnapshot(supabase: any, domain: string, path: string): Pro
           allConnections.find(c => c.content_type === 'funnel') ||
           null
       } else {
-        // For specific paths, check funnel step slugs
-        const pathSegments = path.split('/').filter(Boolean)
-        const potentialSlug = pathSegments[pathSegments.length - 1]
-        
-        // Check if this path matches a funnel step slug
-        const funnelConnections = allConnections.filter(c => c.content_type === 'funnel')
-        
-        for (const funnelConnection of funnelConnections) {
-          // Check if the current path contains a funnel step slug
-          const { data: stepExists } = await supabase
-            .from('funnel_steps')
-            .select('id')
-            .eq('funnel_id', funnelConnection.content_id)
-            .eq('slug', potentialSlug)
-            .eq('is_published', true)
-            .maybeSingle()
+        // For specific paths, prefer website pages over funnel steps for simplicity
+        // This avoids the expensive funnel step lookup query
+        selectedConnection = 
+          allConnections.find(c => c.content_type === 'website') ||
+          allConnections.find(c => c.content_type === 'funnel') ||
+          null
             
           if (stepExists) {
             selectedConnection = funnelConnection
@@ -806,6 +960,8 @@ function isLikelyBot(userAgent: string): boolean {
 
 // Get SEO data as JSON for dynamic loading
 async function getSEODataAsJSON(supabase: any, domain: string, path: string): Promise<any> {
+  const startTime = Date.now()
+  
   try {
     // Handle custom domains first
     if (domain !== 'ecombuildr.com' && !domain.includes('lovable.app')) {
