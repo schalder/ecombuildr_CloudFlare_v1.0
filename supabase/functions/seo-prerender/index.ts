@@ -11,8 +11,8 @@ const corsHeaders = {
 // In-memory cache for SEO responses (5 minute TTL)
 const seoCache = new Map<string, { data: any, timestamp: number }>()
 const CACHE_TTL = 5 * 60 * 1000 // 5 minutes
-const DB_TIMEOUT = 2000 // 2 second timeout for database operations
-const FB_BOT_TIMEOUT = 1500 // 1.5 second timeout for Facebook bots (they have strict requirements)
+const DB_TIMEOUT = 1500 // 1.5s timeout for database operations
+const FB_BOT_TIMEOUT = 800 // 0.8s timeout for Facebook bots (very strict)
 
 // Performance monitoring
 function logPerformance(operation: string, startTime: number) {
@@ -246,11 +246,15 @@ serve(async (req) => {
     }
     
     try {
-      const seoData = await withTimeout(getSEODataAsJSON(supabase, domain, path))
+      const seoData = await withTimeout(
+        getSEODataAsJSON(supabase, domain, path),
+        undefined,
+        userAgent
+      )
       if (!seoData) {
         throw new Error('Database timeout or error')
       }
-      
+
       // Sanitize SEO data before returning
       const sanitizedSEO = {
         title: sanitizeText(seoData.title, 60),
@@ -319,16 +323,16 @@ serve(async (req) => {
     })
   }
 
+  let startTime = Date.now()
   try {
-    const startTime = Date.now()
     const cacheKey = `html:${domain}:${path}`
     
     // Special handling for Facebook crawler
-    const isFacebookBot = userAgent.toLowerCase().includes('facebook') || userAgent.toLowerCase().includes('facebot')
-    if (isFacebookBot) {
+    const fbBot = userAgent.toLowerCase().includes('facebook') || userAgent.toLowerCase().includes('facebot')
+    if (fbBot) {
       console.log('🤖 Facebook bot detected - prioritizing speed')
     }
-    
+
     // Check cache first
     const cachedHTML = getCachedResponse(cacheKey)
     if (cachedHTML) {
@@ -349,10 +353,10 @@ serve(async (req) => {
     // First try to get HTML snapshot from database with timeout
     const htmlSnapshot = await withTimeout(
       getHTMLSnapshot(supabase, domain, path, userAgent),
-      isFacebookBot ? FB_BOT_TIMEOUT : DB_TIMEOUT, // Use specific timeouts
+      fbBot ? FB_BOT_TIMEOUT : DB_TIMEOUT, // Use specific timeouts
       userAgent
     )
-    
+
     if (htmlSnapshot) {
       // Rewrite HTML for custom domains to fix og:url and canonical
       let finalHtml = htmlSnapshot

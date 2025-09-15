@@ -1,4 +1,10 @@
 # Custom domain and SEO prerender handling
+# Bot prerender: route crawlers to Supabase SEO function
+/*  https://fhqwacmokbtbspkxjixf.functions.supabase.co/seo-prerender?domain=:host&path=:splat 200!  User-Agent=*facebookexternalhit*
+/*  https://fhqwacmokbtbspkxjixf.functions.supabase.co/seo-prerender?domain=:host&path=:splat 200!  User-Agent=*Facebot*
+/*  https://fhqwacmokbtbspkxjixf.functions.supabase.co/seo-prerender?domain=:host&path=:splat 200!  User-Agent=*FacebookBot*
+/*  https://fhqwacmokbtbspkxjixf.functions.supabase.co/seo-prerender?domain=:host&path=:splat 200!  User-Agent=*facebookcatalog*
+
 # Static assets and API routes pass through normally
 /steadfast-webhook https://fhqwacmokbtbspkxjixf.functions.supabase.co/steadfast-webhook 200
 
