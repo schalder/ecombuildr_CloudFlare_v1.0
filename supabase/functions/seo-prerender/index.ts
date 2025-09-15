@@ -391,9 +391,56 @@ serve(async (req) => {
     }
 
     // Fallback to static HTML if no database snapshot exists
-    console.log('❌ No HTML snapshot found - serving fallback')
-    logPerformance('HTML SEO (fallback)', startTime)
+    console.log('❌ No HTML snapshot found - attempting SEO JSON fallback')
+    logPerformance('HTML SEO (no snapshot)', startTime)
     
+    // Try to build minimal HTML from DB SEO data to avoid empty OG tags
+    try {
+      const jsonSeo = await withTimeout(
+        getSEODataAsJSON(supabase, domain, path),
+        fbBot ? FB_BOT_TIMEOUT : DB_TIMEOUT,
+        userAgent
+      )
+      if (jsonSeo) {
+        const seo = jsonSeo.seo || jsonSeo
+        const htmlFromSeo = `<!DOCTYPE html>
+<html lang="${sanitizeText(seo.language || 'en', 10)}">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  ${generateSEOTags({
+    title: seo.title,
+    description: seo.description,
+    image: seo.og_image,
+    canonicalUrl: seo.canonical || `https://${domain}${path}`,
+    robots: seo.robots || 'index, follow',
+    siteName: undefined,
+    ogType: 'website',
+    keywords: Array.isArray(seo.keywords) ? seo.keywords.join(', ') : undefined,
+    author: seo.author,
+    languageCode: seo.language || 'en'
+  })}
+</head>
+<body>
+  <h1>${sanitizeText(seo.title || 'Page')}</h1>
+</body>
+</html>`
+        setCachedResponse(cacheKey, htmlFromSeo)
+        return new Response(htmlFromSeo, {
+          headers: {
+            ...corsHeaders,
+            'Content-Type': 'text/html; charset=UTF-8',
+            'Cache-Control': 'public, max-age=120, s-maxage=600',
+            'X-Cache': 'SEO-JSON-FALLBACK',
+            'X-Content-Source': 'seo-json-fallback'
+          }
+        })
+      }
+    } catch (e) {
+      console.warn('⚠️ SEO JSON fallback failed, using static fallback', e)
+    }
+    
+    // Final static fallback
     const fallbackHTML = getFallbackHTML(domain, path)
     setCachedResponse(cacheKey, fallbackHTML) // Cache fallback too
     
