@@ -249,18 +249,21 @@ async function getSEOData(domain: string, path: string): Promise<SEOData | null>
       .from('custom_domains')
       .select('id, domain, store_id')
       .in('domain', domainVariants)
-      .eq('is_verified', true)
-      .eq('dns_configured', true)
       .maybeSingle();
 
     // Fetch connection mapping first (domain -> website or specific page)
     let website: any = null;
 
-    const { data: domainConn } = await supabaseClient
-      .from('domain_connections')
-      .select('content_type, content_id, domain')
-      .in('domain', domainVariants)
-      .maybeSingle();
+    // Try resolve via domain_connections joined to custom_domains
+    let domainConn: any = null;
+    for (const dv of domainVariants) {
+      const { data } = await supabaseClient
+        .from('domain_connections')
+        .select('content_type, content_id, custom_domains(domain)')
+        .eq('custom_domains.domain', dv)
+        .maybeSingle();
+      if (data) { domainConn = data; break; }
+    }
 
     if (domainConn) {
       if (domainConn.content_type === 'website') {
