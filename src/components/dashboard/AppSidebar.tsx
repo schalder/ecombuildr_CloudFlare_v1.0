@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import { LayoutDashboard, Package, ShoppingCart, Users, FileText, BarChart3, Megaphone, Settings, Plus, Search, ChevronDown, ChevronRight, Palette, Globe, Shield, Images, BookOpen } from "lucide-react";
+import { LayoutDashboard, Package, ShoppingCart, Users, FileText, BarChart3, Megaphone, Settings, Plus, Search, ChevronDown, ChevronRight, Palette, Globe, Shield, Images, BookOpen, PlayCircle, GraduationCap } from "lucide-react";
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarMenuSub, SidebarMenuSubButton, SidebarMenuSubItem, useSidebar } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,6 +31,19 @@ const navigationItems = [{
   }, {
     title: "Create Funnel",
     url: "/dashboard/funnels/create"
+  }]
+}, {
+  title: "Courses",
+  icon: GraduationCap,
+  items: [{
+    title: "All Courses",
+    url: "/dashboard/courses"
+  }, {
+    title: "Create Course",
+    url: "/dashboard/courses/create"
+  }, {
+    title: "Course Analytics",
+    url: "/dashboard/courses/analytics"
   }]
 }, {
   title: "Products",
@@ -207,6 +220,12 @@ export function AppSidebar() {
         {!collapsed && <div className="p-4 border-b border-sidebar-border">
             <div className="space-y-2">
               <Button asChild size="sm" className="w-full justify-start bg-primary hover:bg-primary-glow min-h-[44px] touch-manipulation">
+                <NavLink to="/dashboard/courses/create">
+                  <GraduationCap className="mr-2 h-4 w-4" />
+                  Create Course
+                </NavLink>
+              </Button>
+              <Button asChild size="sm" variant="outline" className="w-full justify-start min-h-[44px] touch-manipulation">
                 <NavLink to="/dashboard/products/add">
                   <Plus className="mr-2 h-4 w-4" />
                   Add Product
