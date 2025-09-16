@@ -190,6 +190,7 @@ const App = () => (
                     <Route path="domains" element={<Domains />} />
                     <Route path="courses" element={<Courses />} />
                     <Route path="courses/create" element={<CreateCourse />} />
+                    <Route path="courses/analytics" element={<Analytics />} />
                     <Route path="courses/domains" element={<CourseDomainSettings />} />
                     <Route path="courses/:courseId/edit" element={<CourseEditor />} />
                   </Route>
