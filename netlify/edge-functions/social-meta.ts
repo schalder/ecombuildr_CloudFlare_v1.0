@@ -182,7 +182,7 @@ async function resolveSEOData(domain: string, path: string): Promise<SEOData | n
     // Step 3: Get website data
     const { data: website } = await supabase
       .from('websites')
-      .select('id, name, seo_title, seo_description, og_image')
+      .select('id, name, description, settings')
       .eq('id', websiteId)
       .maybeSingle();
     
@@ -191,15 +191,24 @@ async function resolveSEOData(domain: string, path: string): Promise<SEOData | n
       return null;
     }
     
+    // Derive website-level SEO from settings JSON
+    const ws: any = (website as any).settings || {};
+    const websiteSeoTitle: string | undefined = (ws.seo && ws.seo.title) || undefined;
+    const websiteSeoDescription: string = (ws.seo && ws.seo.description) || (website as any).description || `Welcome to ${website.name}`;
+    const websiteImage = normalizeImageUrl(
+      (ws.seo && (ws.seo.og_image || ws.seo.social_image_url)) ||
+      (ws.branding && (ws.branding.social_image_url || ws.branding.logo)) ||
+      ws.favicon
+    );
+
     // Step 4: Route-specific resolution
     
     // Root path - use website SEO
     if (!cleanPath) {
-      const image = normalizeImageUrl(website.og_image);
       return {
-        title: website.seo_title || website.name,
-        description: website.seo_description || `Welcome to ${website.name}`,
-        og_image: image,
+        title: websiteSeoTitle || website.name,
+        description: websiteSeoDescription,
+        og_image: websiteImage,
         keywords: [],
         canonical: `https://${domain}/`,
         robots: 'index, follow',
@@ -221,7 +230,7 @@ async function resolveSEOData(domain: string, path: string): Promise<SEOData | n
       if (product) {
         const contentDesc = extractContentDescription(product.description);
         const description = product.seo_description || contentDesc || `${product.name} - Available at ${website.name}`;
-        const image = normalizeImageUrl(product.og_image || product.images?.[0] || website.og_image);
+        const image = normalizeImageUrl(product.og_image || product.images?.[0] || websiteImage);
         
         return {
           title: product.seo_title || `${product.name} | ${website.name}`,
@@ -322,10 +331,10 @@ async function resolveSEOData(domain: string, path: string): Promise<SEOData | n
         ? 'page.seo_description'
         : (contentDesc ? 'content_extracted' : 'fallback_title_website');
 
-      let pickedImage = page.social_image_url || page.og_image || page.preview_image_url || website.og_image;
+      let pickedImage = page.social_image_url || page.og_image || page.preview_image_url || websiteImage;
       let imageSource = page.social_image_url
         ? 'page.social_image_url'
-        : (page.og_image ? 'page.og_image' : (page.preview_image_url ? 'page.preview_image_url' : 'website.og_image'));
+        : (page.og_image ? 'page.og_image' : (page.preview_image_url ? 'page.preview_image_url' : 'website.settings_image'));
       const image = normalizeImageUrl(pickedImage);
 
       console.log(`🔎 Page SEO resolved for slug="${cleanPath}" (page:${page.id}, website:${websiteId})`);
@@ -354,11 +363,10 @@ async function resolveSEOData(domain: string, path: string): Promise<SEOData | n
     }
     
     // Fallback to website SEO
-    const image = normalizeImageUrl(website.og_image);
   return {
-    title: website.name,
-    description: website.seo_description || `Welcome to ${website.name}`,
-    og_image: image,
+    title: websiteSeoTitle || website.name,
+    description: websiteSeoDescription,
+    og_image: websiteImage,
     keywords: [],
     canonical: `https://${domain}${path}`,
     robots: 'index, follow',
@@ -398,7 +406,7 @@ function generateHTML(seo: SEOData, url: string): string {
   <meta property="og:url" content="${canonical}" />
   <meta property="og:title" content="${title}" />
   <meta property="og:description" content="${description}" />
-  ${image ? `<meta property="og:image" content="${image}" />` : ''}
+  <meta property="og:image" content="${image || ''}" />
   ${image ? `<meta property="og:image:secure_url" content="${image}" />` : ''}
   ${image ? `<meta property="og:image:width" content="1200" />` : ''}
   ${image ? `<meta property="og:image:height" content="630" />` : ''}
@@ -411,8 +419,8 @@ function generateHTML(seo: SEOData, url: string): string {
   <meta name="twitter:url" content="${canonical}" />
   <meta name="twitter:title" content="${title}" />
   <meta name="twitter:description" content="${description}" />
-  ${image ? `<meta name="twitter:image" content="${image}" />` : ''}
-  ${image ? `<meta name="twitter:image:alt" content="${title}" />` : ''}
+  ${image ? `<meta name=\"twitter:image\" content=\"${image}\" />` : ''}
+  ${image ? `<meta name=\"twitter:image:alt\" content=\"${title}\" />` : ''}
   
   <!-- Additional SEO -->
   <link rel="canonical" href="${canonical}" />
