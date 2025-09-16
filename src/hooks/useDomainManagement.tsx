@@ -328,16 +328,19 @@ export const useDomainManagement = () => {
     if (!store?.id) throw new Error('No store found');
     
     try {
+      const payload = {
+        domain_id: domainId,
+        store_id: store.id,
+        content_type: contentType,
+        content_id: contentId || store.id, // Use store.id for course_area
+        path: path || '',
+        is_homepage: isHomepage || false
+      } as const;
+
+      // Use upsert to avoid duplicate key errors for same domain/path/content_type
       const { data, error } = await supabase
         .from('domain_connections')
-        .insert({
-          domain_id: domainId,
-          store_id: store.id,
-          content_type: contentType,
-          content_id: contentId || store.id, // Use store.id for course_area
-          path: path || '',
-          is_homepage: isHomepage || false
-        })
+        .upsert(payload, { onConflict: 'domain_id,path,content_type' })
         .select()
         .single();
 
