@@ -60,15 +60,15 @@ const CourseDomainSettings = () => {
 
       if (setupType === 'integrated') {
         // Set up integrated course area
-        await connectCourseContent(domain.id, 'course_area', '', '/courses', true);
+        await connectCourseContent(domain.id, 'course_area', currentStore.id, '/courses', false);
         
         toast({
           title: "Course Domain Setup Complete",
           description: `Courses are now available at ${domain.domain}/courses`,
         });
-      } else if (setupType === 'custom' && customSlug && slugAvailable) {
-        // Set up custom course domain
-        await connectCourseContent(domain.id, 'course_area', customSlug, '/', true);
+      } else if (setupType === 'custom') {
+        // Set up custom course domain (entire domain for courses)
+        await connectCourseContent(domain.id, 'course_area', currentStore.id, '', true);
         
         toast({
           title: "Course Domain Setup Complete",

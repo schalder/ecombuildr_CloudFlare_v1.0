@@ -116,14 +116,10 @@ const CourseDomainRouter = ({ customDomain, storeSlug }: CourseDomainRouterProps
     return <CourseLibrary />;
   }
 
-  if (coursePath.startsWith(`${basePath}/members`) || coursePath.startsWith('/members')) {
+  if (coursePath.includes('/members')) {
     return (
       <MemberAuthProvider>
-        <Routes>
-          <Route path="/members/login" element={<MemberLogin />} />
-          <Route path="/members/dashboard" element={<MemberDashboard />} />
-          <Route path="/members" element={<MemberDashboard />} />
-        </Routes>
+        {coursePath.includes('/login') ? <MemberLogin /> : <MemberDashboard />}
       </MemberAuthProvider>
     );
   }

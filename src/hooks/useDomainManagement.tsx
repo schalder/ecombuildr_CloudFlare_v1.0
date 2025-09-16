@@ -334,7 +334,7 @@ export const useDomainManagement = () => {
           domain_id: domainId,
           store_id: store.id,
           content_type: contentType,
-          content_id: contentId || null,
+          content_id: contentId || store.id, // Use store.id for course_area
           path: path || '',
           is_homepage: isHomepage || false
         })

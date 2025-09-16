@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
 import { DomainWebsiteRenderer } from './DomainWebsiteRenderer';
 import { DomainFunnelRenderer } from './DomainFunnelRenderer';
+import CourseDomainRouter from './CourseDomainRouter';
 import { StoreProvider } from '@/contexts/StoreContext';
 import { CartProvider } from '@/contexts/CartContext';
 import { CartDrawerProvider } from '@/contexts/CartDrawerContext';
@@ -18,7 +19,7 @@ import { CartDrawer } from '@/components/storefront/CartDrawer';
 
 interface DomainConnection {
   id: string;
-  content_type: 'website' | 'funnel';
+  content_type: 'website' | 'funnel' | 'course_area';
   content_id: string;
   path: string;
   is_homepage: boolean;
@@ -94,10 +95,11 @@ export const DomainRouter: React.FC<DomainRouterProps> = ({ children }) => {
         let selectedConnection: DomainConnection | null = null;
         
         if (currentPath === '/' || currentPath === '') {
-          // For root path, prioritize: explicit homepage > website > first funnel
+          // For root path, prioritize: explicit homepage > website > course_area > first funnel
           selectedConnection = 
             connectionsArray.find(c => c.is_homepage) ||
             connectionsArray.find(c => c.content_type === 'website') ||
+            connectionsArray.find(c => c.content_type === 'course_area') ||
             connectionsArray.find(c => c.content_type === 'funnel') ||
             null;
         } else {
@@ -124,9 +126,17 @@ export const DomainRouter: React.FC<DomainRouterProps> = ({ children }) => {
             }
           }
           
-          // If no funnel step matches, use website for all other paths
+          // If no funnel step matches, check if path matches course paths
           if (!selectedConnection) {
-            selectedConnection = connectionsArray.find(c => c.content_type === 'website') || null;
+            // Check for course paths (/courses, /courses/members, etc)
+            if (currentPath.startsWith('/courses') || currentPath.startsWith('/members')) {
+              selectedConnection = connectionsArray.find(c => c.content_type === 'course_area') || null;
+            }
+            
+            // Otherwise use website for all other paths
+            if (!selectedConnection) {
+              selectedConnection = connectionsArray.find(c => c.content_type === 'website') || null;
+            }
           }
         }
         
@@ -194,6 +204,18 @@ export const DomainRouter: React.FC<DomainRouterProps> = ({ children }) => {
                 </AddToCartProvider>
               </DomainCartProvider>
             </CartDrawerProvider>
+        </StoreProvider>
+      </AuthProvider>
+    );
+  }
+
+  if (selectedConnection.content_type === 'course_area') {
+    return (
+      <AuthProvider>
+        <StoreProvider>
+          <CourseDomainRouter 
+            customDomain={customDomain.domain}
+          />
         </StoreProvider>
       </AuthProvider>
     );
