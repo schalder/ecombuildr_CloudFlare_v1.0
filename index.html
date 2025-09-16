@@ -132,7 +132,7 @@
 
           // Set default Open Graph and Twitter properties
           updateOrCreateMeta('og:type', 'website', 'property');
-          updateOrCreateMeta('og:site_name', 'EcomBuildr', 'property');
+          updateOrCreateMeta('og:site_name', seo.site_name || document.title || window.location.hostname, 'property');
           updateOrCreateMeta('twitter:card', 'summary_large_image', 'name');
         }
 

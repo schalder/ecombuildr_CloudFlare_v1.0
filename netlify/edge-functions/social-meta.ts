@@ -331,7 +331,7 @@ async function getSEOData(domain: string, path: string): Promise<SEOData | null>
       // For specific pages, try to find page content
       const { data: pageData } = await supabaseClient
         .from('website_pages')
-        .select('title, seo_title, seo_description, og_image, content')
+        .select('title, seo_title, seo_description, og_image, social_image_url, seo_keywords, canonical_url, meta_robots, content')
         .eq('website_id', website.id)
         .eq('slug', cleanPath)
         .eq('is_published', true)
@@ -345,9 +345,10 @@ async function getSEOData(domain: string, path: string): Promise<SEOData | null>
         return {
           title: pageData.seo_title || pageData.title || website.name,
           description,
-          og_image: pageData.og_image || website.og_image,
-          canonical: `https://${domain}${path}`,
-          robots: 'index, follow',
+          og_image: pageData.social_image_url || pageData.og_image || website.og_image,
+          keywords: pageData.seo_keywords || [],
+          canonical: pageData.canonical_url || `https://${domain}${path}`,
+          robots: pageData.meta_robots || 'index, follow',
           site_name: website.name || 'EcomBuildr Store'
         };
       }
@@ -495,5 +496,5 @@ export default async function handler(request: Request, context: any): Promise<R
 }
 
 export const config = {
-  path: ["/p/*", "/*/product/*", "/funnel/*"]
+  path: "/*"
 };
