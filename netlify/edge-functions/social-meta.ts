@@ -253,9 +253,58 @@ async function getSEOData(domain: string, path: string): Promise<SEOData | null>
       .eq('dns_configured', true)
       .maybeSingle();
 
-    // Fetch website by store and try to match domain
+    // Fetch connection mapping first (domain -> website or specific page)
     let website: any = null;
-    if (customDomainData?.store_id) {
+
+    const { data: domainConn } = await supabaseClient
+      .from('domain_connections')
+      .select('content_type, content_id, domain')
+      .in('domain', domainVariants)
+      .maybeSingle();
+
+    if (domainConn) {
+      if (domainConn.content_type === 'website') {
+        const { data: siteByConn } = await supabaseClient
+          .from('websites')
+          .select('id, name, slug, settings, seo_title, seo_description, og_image, domain, is_active, is_published')
+          .eq('id', domainConn.content_id)
+          .eq('is_active', true)
+          .eq('is_published', true)
+          .maybeSingle();
+        website = siteByConn || website;
+      } else if (domainConn.content_type === 'website_page') {
+        // Direct page connection: return page SEO immediately
+        const { data: pageConnData } = await supabaseClient
+          .from('website_pages')
+          .select('id, website_id, title, seo_title, seo_description, og_image, social_image_url, seo_keywords, canonical_url, meta_robots, content')
+          .eq('id', domainConn.content_id)
+          .eq('is_published', true)
+          .maybeSingle();
+
+        if (pageConnData) {
+          const { data: siteForPage } = await supabaseClient
+            .from('websites')
+            .select('id, name, og_image')
+            .eq('id', pageConnData.website_id)
+            .maybeSingle();
+
+          const contentDescription = extractContentDescription(pageConnData.content);
+          const description = pageConnData.seo_description || contentDescription || `${pageConnData.title}`;
+          return {
+            title: pageConnData.seo_title || pageConnData.title || siteForPage?.name,
+            description,
+            og_image: pageConnData.social_image_url || pageConnData.og_image || siteForPage?.og_image,
+            keywords: pageConnData.seo_keywords || [],
+            canonical: pageConnData.canonical_url || `https://${domain}${path}`,
+            robots: pageConnData.meta_robots || 'index, follow',
+            site_name: siteForPage?.name || 'Website'
+          };
+        }
+      }
+    }
+
+    // If no explicit connection, fall back to custom_domains -> store -> active website(s)
+    if (!website && customDomainData?.store_id) {
       const { data: websitesForStore } = await supabaseClient
         .from('websites')
         .select('id, name, slug, settings, seo_title, seo_description, og_image, domain, is_active, is_published')
