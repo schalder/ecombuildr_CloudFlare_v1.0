@@ -1,4 +1,4 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.0';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.57.4?target=deno';
 
 const SUPABASE_URL = "https://fhqwacmokbtbspkxjixf.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZocXdhY21va2J0YnNwa3hqaXhmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM2MjYyMzUsImV4cCI6MjA2OTIwMjIzNX0.BaqDCDcynSahyDxEUIyZLLtyXpd959y5Tv6t6tIF3GM";
@@ -406,8 +406,9 @@ export default async function handler(request: Request, context: any): Promise<R
   const userAgent = request.headers.get('user-agent') || '';
   const domain = url.hostname;
   const pathname = url.pathname;
+  const traceId = (globalThis as any).crypto?.randomUUID?.() || Math.random().toString(36).slice(2);
   
-  console.log(`🌐 Request: ${domain}${pathname} | UA: ${userAgent.substring(0, 50)}`);
+  console.log(`[${traceId}] 🌐 Request: ${domain}${pathname} | UA: ${userAgent.substring(0, 80)}`);
   
   // Only handle social crawlers
   if (!isSocialCrawler(userAgent)) {
@@ -421,8 +422,30 @@ export default async function handler(request: Request, context: any): Promise<R
     const seoData = await resolveSEOData(domain, pathname);
     
     if (!seoData) {
-      console.log('❌ No SEO data found - passing through');
-      return context.next();
+      console.log(`[${traceId}] ❌ No SEO data found - rendering minimal fallback`);
+      const minimal = {
+        title: domain,
+        description: `Preview of ${domain}`,
+        og_image: undefined,
+        keywords: [],
+        canonical: url.toString(),
+        robots: 'index, follow',
+        site_name: domain,
+        source: 'fallback_no_data'
+      } as SEOData;
+      const html = generateHTML(minimal, url.toString());
+      return new Response(html, {
+        headers: {
+          'Content-Type': 'text/html; charset=utf-8',
+          'Cache-Control': 'public, max-age=120, s-maxage=120',
+          'X-Trace-Id': traceId,
+          'X-SEO-Source': 'fallback_no_data',
+          'X-SEO-Website': domain,
+          'X-SEO-Page': domain,
+          'X-SEO-Domain': domain,
+          'X-SEO-Path': pathname
+        },
+      });
     }
     
     console.log(`✅ SEO resolved via ${seoData.source}: ${seoData.title}`);
@@ -433,9 +456,12 @@ export default async function handler(request: Request, context: any): Promise<R
       headers: {
         'Content-Type': 'text/html; charset=utf-8',
         'Cache-Control': 'public, max-age=300, s-maxage=300',
+        'X-Trace-Id': traceId,
         'X-SEO-Source': seoData.source || 'unknown',
         'X-SEO-Website': seoData.site_name,
-        'X-SEO-Page': seoData.title
+        'X-SEO-Page': seoData.title,
+        'X-SEO-Domain': domain,
+        'X-SEO-Path': pathname
       },
     });
 
