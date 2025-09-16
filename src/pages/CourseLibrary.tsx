@@ -1,6 +1,6 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -26,6 +26,7 @@ interface Course {
 
 const CourseLibrary = () => {
   const [searchQuery, setSearchQuery] = React.useState('');
+  const location = useLocation();
 
   const { data: courses, isLoading } = useQuery({
     queryKey: ['public-courses'],
@@ -33,12 +34,12 @@ const CourseLibrary = () => {
       const { data, error } = await supabase
         .from('courses')
         .select(`
-          *,
-          course_modules!inner(
+          id, title, description, thumbnail_url, price, compare_price, created_at, updated_at,
+          course_modules(
             id,
-            course_lessons!inner(id)
+            course_lessons(id)
           )
-        `)
+        `) // left join style embed to avoid filtering out courses with no modules/lessons
         .eq('is_published', true)
         .eq('is_active', true)
         .order('created_at', { ascending: false });
@@ -46,12 +47,12 @@ const CourseLibrary = () => {
       if (error) throw error;
 
       // Calculate module and lesson counts
-      return data.map(course => ({
+      return (data || []).map((course: any) => ({
         ...course,
         modules_count: course.course_modules?.length || 0,
-        lessons_count: course.course_modules?.reduce((total, module) => 
+        lessons_count: course.course_modules?.reduce((total: number, module: any) => 
           total + (module.course_lessons?.length || 0), 0) || 0,
-        estimated_duration: (course.course_modules?.reduce((total, module) => 
+        estimated_duration: (course.course_modules?.reduce((total: number, module: any) => 
           total + (module.course_lessons?.length || 0), 0) || 0) * 15 // 15 min per lesson estimate
       }));
     }
@@ -70,6 +71,20 @@ const CourseLibrary = () => {
           name="description" 
           content="Discover our extensive library of professional courses. Learn new skills with expert-created content and advance your career." 
         />
+        <link rel="canonical" href={`${window.location.origin}${location.pathname}`} />
+        <meta property="og:title" content="Course Library | Learn from Expert-Created Courses" />
+        <meta property="og:description" content="Discover our extensive library of professional courses. Learn new skills with expert-created content and advance your career." />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content={`${window.location.origin}${location.pathname}`} />
+        {((filteredCourses && filteredCourses[0]?.thumbnail_url) ? (
+          <meta property="og:image" content={filteredCourses[0].thumbnail_url} />
+        ) : null)}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Course Library | Learn from Expert-Created Courses" />
+        <meta name="twitter:description" content="Discover our extensive library of professional courses. Learn new skills with expert-created content and advance your career." />
+        {((filteredCourses && filteredCourses[0]?.thumbnail_url) ? (
+          <meta name="twitter:image" content={filteredCourses[0].thumbnail_url} />
+        ) : null)}
       </Helmet>
 
       <div className="min-h-screen bg-background">

@@ -71,33 +71,20 @@ const CourseDetail = () => {
       const { data, error } = await supabase
         .from('courses')
         .select(`
-          *,
-          course_modules!inner(
-            id,
-            title,
-            description,
-            sort_order,
-            is_published,
-            course_lessons!inner(
-              id,
-              title,
-              content,
-              video_url,
-              sort_order,
-              is_published,
-              is_preview,
-              video_duration
+          id, title, description, thumbnail_url, price, compare_price, is_published, is_active, created_at,
+          course_modules(
+            id, title, description, sort_order, is_published,
+            course_lessons(
+              id, title, content, video_url, sort_order, is_published, is_preview, video_duration
             )
           )
         `)
         .eq('id', courseId)
         .eq('is_published', true)
         .eq('is_active', true)
-        .eq('course_modules.is_published', true)
-        .eq('course_modules.course_lessons.is_published', true)
         .order('sort_order', { referencedTable: 'course_modules' })
         .order('sort_order', { referencedTable: 'course_modules.course_lessons' })
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
       return data as CourseDetail;
@@ -225,6 +212,16 @@ const CourseDetail = () => {
           name="description" 
           content={course.description || `Learn ${course.title} with our comprehensive course`} 
         />
+        <link rel="canonical" href={`${window.location.origin}/courses/${course.id}`} />
+        <meta property="og:title" content={`${course.title} | Course Library`} />
+        <meta property="og:description" content={course.description || `Learn ${course.title} with our comprehensive course`} />
+        <meta property="og:type" content="article" />
+        <meta property="og:url" content={`${window.location.origin}/courses/${course.id}`} />
+        {course.thumbnail_url && <meta property="og:image" content={course.thumbnail_url} />}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={`${course.title} | Course Library`} />
+        <meta name="twitter:description" content={course.description || `Learn ${course.title} with our comprehensive course`} />
+        {course.thumbnail_url && <meta name="twitter:image" content={course.thumbnail_url} />}
       </Helmet>
 
       <div className="min-h-screen bg-background">
