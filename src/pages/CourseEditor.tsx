@@ -76,7 +76,7 @@ interface Lesson {
 }
 
 const CourseEditor = () => {
-  const { id } = useParams();
+  const { courseId } = useParams();
   const navigate = useNavigate();
   const { store } = useUserStore();
   
@@ -104,7 +104,7 @@ const CourseEditor = () => {
   });
 
   const fetchCourseData = async () => {
-    if (!id) return;
+    if (!courseId) return;
 
     try {
       setLoading(true);
@@ -113,10 +113,13 @@ const CourseEditor = () => {
       const { data: courseData, error: courseError } = await supabase
         .from('courses')
         .select('*')
-        .eq('id', id)
-        .single();
+        .eq('id', courseId)
+        .maybeSingle();
 
       if (courseError) throw courseError;
+      if (!courseData) {
+        throw new Error('Course not found');
+      }
       setCourse(courseData);
 
       // Fetch modules with lessons
@@ -126,7 +129,7 @@ const CourseEditor = () => {
           *,
           course_lessons (*)
         `)
-        .eq('course_id', id)
+        .eq('course_id', courseId)
         .order('sort_order', { ascending: true });
 
       if (modulesError) throw modulesError;
@@ -149,7 +152,7 @@ const CourseEditor = () => {
 
   useEffect(() => {
     fetchCourseData();
-  }, [id]);
+  }, [courseId]);
 
   const saveCourse = async () => {
     if (!course) return;
