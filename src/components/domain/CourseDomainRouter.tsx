@@ -6,8 +6,8 @@ import { MemberAuthProvider } from '@/hooks/useMemberAuth';
 import CourseLibrary from '@/pages/CourseLibrary';
 import CourseDetail from '@/pages/CourseDetail';
 import StorefrontCourseDetail from '@/components/storefront/StorefrontCourseDetail';
-import MemberLogin from '@/pages/MemberLogin';
-import MemberDashboard from '@/pages/MemberDashboard';
+import CourseMemberLogin from '@/components/course/CourseMemberLogin';
+import CourseMemberDashboard from '@/components/course/CourseMemberDashboard';
 import { Loader2 } from 'lucide-react';
 
 interface CourseDomainRouterProps {
@@ -120,7 +120,7 @@ const CourseDomainRouter = ({ customDomain, storeSlug }: CourseDomainRouterProps
   if (coursePath.includes('/members')) {
     return (
       <MemberAuthProvider>
-        {coursePath.includes('/login') ? <MemberLogin /> : <MemberDashboard />}
+        {coursePath.includes('/login') ? <CourseMemberLogin /> : <CourseMemberDashboard />}
       </MemberAuthProvider>
     );
   }
