@@ -70,7 +70,8 @@ const MemberDashboard = () => {
         const { data, error } = await supabase
           .from('member_content_access')
           .select(`
-            product:products (
+            product_id,
+            products!inner (
               id,
               name,
               description,
@@ -85,8 +86,8 @@ const MemberDashboard = () => {
           return;
         }
 
-        const accessibleProducts = data
-          ?.map(item => item.product)
+        const accessibleProducts = (data as any)
+          ?.map((item: any) => item.products)
           .filter(Boolean) as Product[];
 
         setProducts(accessibleProducts || []);

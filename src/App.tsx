@@ -103,6 +103,8 @@ import { WebsiteProductDetailRoute } from "./pages/storefront/WebsiteProductDeta
 import { OnboardingGate } from "@/components/dashboard/OnboardingGate";
 import { ScrollToHash } from "@/components/ScrollToHash";
 import { RequireSuperAdmin } from "@/components/admin/RequireSuperAdmin";
+import MemberRoutes from "@/components/MemberRoutes";
+import MembershipProductManager from "@/pages/MembershipProductManager";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -181,6 +183,8 @@ const App = () => (
                     <Route path="settings/profile" element={<ProfileSettings />} />
                     <Route path="settings/billing" element={<BillingSettings />} />
                     <Route path="domains" element={<Domains />} />
+                    <Route path="products/membership/new" element={<MembershipProductManager />} />
+                    <Route path="products/membership/:id" element={<MembershipProductManager />} />
                   </Route>
                   
                   {/* These routes are outside OnboardingGate so new users can access them */}
@@ -343,6 +347,9 @@ const App = () => (
                   />
                   <Route path=":pageSlug" element={<WebsitePage />} />
                 </Route>
+
+                {/* Member Routes */}
+                <Route path="/members/*" element={<MemberRoutes />} />
 
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
