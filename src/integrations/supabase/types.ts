@@ -958,6 +958,78 @@ export type Database = {
         }
         Relationships: []
       }
+      member_accounts: {
+        Row: {
+          created_at: string
+          email: string
+          full_name: string | null
+          id: string
+          is_active: boolean
+          last_login_at: string | null
+          password_hash: string
+          phone: string | null
+          store_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          full_name?: string | null
+          id?: string
+          is_active?: boolean
+          last_login_at?: string | null
+          password_hash: string
+          phone?: string | null
+          store_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          full_name?: string | null
+          id?: string
+          is_active?: boolean
+          last_login_at?: string | null
+          password_hash?: string
+          phone?: string | null
+          store_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      member_content_access: {
+        Row: {
+          created_at: string
+          expires_at: string | null
+          granted_at: string
+          id: string
+          is_active: boolean
+          member_account_id: string
+          order_id: string
+          product_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string | null
+          granted_at?: string
+          id?: string
+          is_active?: boolean
+          member_account_id: string
+          order_id: string
+          product_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string | null
+          granted_at?: string
+          id?: string
+          is_active?: boolean
+          member_account_id?: string
+          order_id?: string
+          product_id?: string
+        }
+        Relationships: []
+      }
       navigation_menus: {
         Row: {
           created_at: string
@@ -2020,7 +2092,9 @@ export type Database = {
           images: Json | null
           inventory_quantity: number | null
           is_active: boolean | null
+          is_membership: boolean
           library_item_id: string | null
+          membership_content: Json | null
           name: string
           price: number
           seo_description: string | null
@@ -2060,7 +2134,9 @@ export type Database = {
           images?: Json | null
           inventory_quantity?: number | null
           is_active?: boolean | null
+          is_membership?: boolean
           library_item_id?: string | null
+          membership_content?: Json | null
           name: string
           price?: number
           seo_description?: string | null
@@ -2100,7 +2176,9 @@ export type Database = {
           images?: Json | null
           inventory_quantity?: number | null
           is_active?: boolean | null
+          is_membership?: boolean
           library_item_id?: string | null
+          membership_content?: Json | null
           name?: string
           price?: number
           seo_description?: string | null
