@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
-import { useStore } from '@/contexts/StoreContext';
+import { useUserStore } from './useUserStore';
 import { toast } from '@/components/ui/use-toast';
 
 interface CustomDomain {
@@ -53,7 +53,7 @@ interface Funnel {
 
 export const useDomainManagement = () => {
   const { user } = useAuth();
-  const { store } = useStore();
+  const { store } = useUserStore();
   const queryClient = useQueryClient();
 
   const { data, isLoading: loading, error } = useQuery({
