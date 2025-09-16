@@ -107,6 +107,7 @@ import MemberRoutes from "@/components/MemberRoutes";
 import Courses from "@/pages/Courses";
 import CreateCourse from "@/pages/CreateCourse";
 import CourseEditor from "@/pages/CourseEditor";
+import CourseView from "@/pages/CourseView";
 import CourseLibrary from "@/pages/CourseLibrary";
 import CourseDetail from "@/pages/CourseDetail";
 import CourseDomainSettings from "@/pages/CourseDomainSettings";
@@ -193,7 +194,7 @@ const App = () => (
                     <Route path="courses/analytics" element={<Analytics />} />
                     <Route path="courses/domains" element={<CourseDomainSettings />} />
                     <Route path="courses/:courseId/edit" element={<CourseEditor />} />
-                    <Route path="courses/:courseId" element={<CourseEditor />} />
+                    <Route path="courses/:courseId" element={<CourseView />} />
                   </Route>
                   
                   {/* These routes are outside OnboardingGate so new users can access them */}
