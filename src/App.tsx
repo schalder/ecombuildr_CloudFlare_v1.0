@@ -107,6 +107,8 @@ import MemberRoutes from "@/components/MemberRoutes";
 import Courses from "@/pages/Courses";
 import CreateCourse from "@/pages/CreateCourse";
 import CourseEditor from "@/pages/CourseEditor";
+import CourseLibrary from "@/pages/CourseLibrary";
+import CourseDetail from "@/pages/CourseDetail";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -200,6 +202,10 @@ const App = () => (
                 {/* Training Routes - Protected */}
                 <Route path="/training" element={<Training />} />
                 <Route path="/training/:courseSlug" element={<TrainingCourse />} />
+                
+                {/* Public Course Library Routes */}
+                <Route path="/courses" element={<CourseLibrary />} />
+                <Route path="/courses/:courseId" element={<CourseDetail />} />
                 
                 
                 {/* Admin Routes - Protected by SuperAdmin Guard */}
