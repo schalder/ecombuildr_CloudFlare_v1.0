@@ -128,8 +128,8 @@ const CourseDomainRouter = ({ customDomain, storeSlug }: CourseDomainRouterProps
   if (coursePath.startsWith(`${basePath}/courses/`) || coursePath.startsWith('/courses/')) {
     const courseSlugMatch = coursePath.match(/\/courses\/([^/]+)/);
     if (courseSlugMatch) {
-      const courseSlug = courseSlugMatch[1];
-      return <CourseDetailWrapper courseSlug={courseSlug} />;
+      const courseIdOrSlug = courseSlugMatch[1];
+      return <StorefrontCourseDetail courseId={courseIdOrSlug} />;
     }
   }
 

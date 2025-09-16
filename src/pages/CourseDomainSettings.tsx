@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,14 +8,14 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
-import { useStore } from '@/contexts/StoreContext';
+import { useUserStore } from '@/hooks/useUserStore';
 import { useDomainManagement } from '@/hooks/useDomainManagement';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, ExternalLink, Globe, Settings } from 'lucide-react';
 
 const CourseDomainSettings = () => {
   const navigate = useNavigate();
-  const { store: currentStore } = useStore();
+  const { store: userStore } = useUserStore();
   const { domains, connections, connectCourseContent, checkCourseSlugAvailability } = useDomainManagement();
   const { toast } = useToast();
   
@@ -28,6 +28,12 @@ const CourseDomainSettings = () => {
 
   const verifiedDomains = domains?.filter(d => d.is_verified && d.dns_configured) || [];
 
+  // Auto-select first verified domain if none selected
+  useEffect(() => {
+    if (!selectedDomain && verifiedDomains.length > 0) {
+      setSelectedDomain(verifiedDomains[0].id);
+    }
+  }, [verifiedDomains, selectedDomain]);
   const handleSlugCheck = async () => {
     if (!customSlug || !selectedDomain) return;
     
@@ -51,7 +57,7 @@ const CourseDomainSettings = () => {
   };
 
   const handleSetupCourses = async () => {
-    if (!currentStore || !selectedDomain) return;
+    if (!userStore || !selectedDomain) return;
 
     setIsConnecting(true);
     try {
@@ -60,7 +66,7 @@ const CourseDomainSettings = () => {
 
       if (setupType === 'integrated') {
         // Set up integrated course area
-        await connectCourseContent(domain.id, 'course_area', currentStore.id, '/courses', false);
+        await connectCourseContent(domain.id, 'course_area', userStore.id, '/courses', false);
         
         toast({
           title: "Course Domain Setup Complete",
@@ -68,7 +74,7 @@ const CourseDomainSettings = () => {
         });
       } else if (setupType === 'custom') {
         // Set up custom course domain (entire domain for courses)
-        await connectCourseContent(domain.id, 'course_area', currentStore.id, '', true);
+        await connectCourseContent(domain.id, 'course_area', userStore.id, '', true);
         
         toast({
           title: "Course Domain Setup Complete",
@@ -263,7 +269,7 @@ const CourseDomainSettings = () => {
                 <Button
                   onClick={handleSetupCourses}
                   disabled={
-                    !selectedDomain || 
+                    !selectedDomain || !userStore || 
                     isConnecting ||
                     (setupType === 'custom' && customSlug && slugAvailable !== true)
                   }
