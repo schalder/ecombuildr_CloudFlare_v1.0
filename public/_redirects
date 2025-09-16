@@ -1,9 +1,18 @@
-# Custom domain and SEO prerender handling
-# Bot prerender: route crawlers to Supabase SEO function
-/*  https://fhqwacmokbtbspkxjixf.functions.supabase.co/seo-prerender?domain=:host&path=:splat 200!  User-Agent=*facebookexternalhit*
-/*  https://fhqwacmokbtbspkxjixf.functions.supabase.co/seo-prerender?domain=:host&path=:splat 200!  User-Agent=*Facebot*
-/*  https://fhqwacmokbtbspkxjixf.functions.supabase.co/seo-prerender?domain=:host&path=:splat 200!  User-Agent=*FacebookBot*
-/*  https://fhqwacmokbtbspkxjixf.functions.supabase.co/seo-prerender?domain=:host&path=:splat 200!  User-Agent=*facebookcatalog*
+# Universal bot prerender routing (domain-agnostic)
+# Route common crawlers to Supabase seo-prerender with domain + path
+/*  https://fhqwacmokbtbspkxjixf.supabase.co/functions/v1/seo-prerender?domain=:host&path=:splat 200!  User-Agent=*bot*
+/*  https://fhqwacmokbtbspkxjixf.supabase.co/functions/v1/seo-prerender?domain=:host&path=:splat 200!  User-Agent=*crawler*
+/*  https://fhqwacmokbtbspkxjixf.supabase.co/functions/v1/seo-prerender?domain=:host&path=:splat 200!  User-Agent=*spider*
+/*  https://fhqwacmokbtbspkxjixf.supabase.co/functions/v1/seo-prerender?domain=:host&path=:splat 200!  User-Agent=*Googlebot*
+/*  https://fhqwacmokbtbspkxjixf.supabase.co/functions/v1/seo-prerender?domain=:host&path=:splat 200!  User-Agent=*Bingbot*
+/*  https://fhqwacmokbtbspkxjixf.supabase.co/functions/v1/seo-prerender?domain=:host&path=:splat 200!  User-Agent=*facebookexternalhit*
+/*  https://fhqwacmokbtbspkxjixf.supabase.co/functions/v1/seo-prerender?domain=:host&path=:splat 200!  User-Agent=*Facebot*
+/*  https://fhqwacmokbtbspkxjixf.supabase.co/functions/v1/seo-prerender?domain=:host&path=:splat 200!  User-Agent=*FacebookBot*
+/*  https://fhqwacmokbtbspkxjixf.supabase.co/functions/v1/seo-prerender?domain=:host&path=:splat 200!  User-Agent=*facebookcatalog*
+/*  https://fhqwacmokbtbspkxjixf.supabase.co/functions/v1/seo-prerender?domain=:host&path=:splat 200!  User-Agent=*Twitterbot*
+/*  https://fhqwacmokbtbspkxjixf.supabase.co/functions/v1/seo-prerender?domain=:host&path=:splat 200!  User-Agent=*LinkedInBot*
+/*  https://fhqwacmokbtbspkxjixf.supabase.co/functions/v1/seo-prerender?domain=:host&path=:splat 200!  User-Agent=*WhatsApp*
+/*  https://fhqwacmokbtbspkxjixf.supabase.co/functions/v1/seo-prerender?domain=:host&path=:splat 200!  User-Agent=*Telegram*
 
 # Static assets and API routes pass through normally
 /steadfast-webhook https://fhqwacmokbtbspkxjixf.functions.supabase.co/steadfast-webhook 200
