@@ -362,12 +362,38 @@ export default async function handler(request: Request, context: any): Promise<R
   console.log('Edge Function - Social crawler detected, generating HTML');
   
   try {
-    // Fetch SEO data
+    // 1) Try proxying the canonical HTML prerender from Supabase (best source of truth)
+    try {
+      const prerenderUrl = `https://fhqwacmokbtbspkxjixf.functions.supabase.co/seo-prerender?domain=${encodeURIComponent(domain)}&path=${encodeURIComponent(pathname)}`;
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 3000);
+      const resp = await fetch(prerenderUrl, {
+        headers: {
+          Accept: 'text/html',
+          // Forward the original crawler UA so the function treats it as a bot
+          'user-agent': userAgent,
+        },
+        signal: controller.signal,
+      });
+      clearTimeout(timeout);
+      if (resp.ok && (resp.headers.get('content-type') || '').includes('text/html')) {
+        const html = await resp.text();
+        return new Response(html, {
+          headers: {
+            'Content-Type': 'text/html; charset=utf-8',
+            'Cache-Control': 'public, max-age=300, s-maxage=300',
+          },
+        });
+      }
+      console.log('Supabase HTML prerender not available, status:', resp.status);
+    } catch (e) {
+      console.log('Supabase HTML prerender fetch failed:', e);
+    }
+
+    // 2) Fallback: get SEO JSON/DB and synthesize minimal HTML
     const seoData = await getSEOData(domain, pathname);
-    
     console.log('Edge Function - SEO data found:', !!seoData);
-    
-    // Generate HTML with meta tags (use fallback data if none found)
+
     const fallbackSEOData: SEOData = seoData || {
       title: 'EcomBuildr - Build Beautiful Online Stores & Funnels',
       description: 'Create stunning websites, online stores, and sales funnels with EcomBuildr. Drag & drop builder, custom domains, and powerful e-commerce features.',
@@ -377,16 +403,15 @@ export default async function handler(request: Request, context: any): Promise<R
       robots: 'index, follow',
       site_name: 'EcomBuildr'
     };
-    
+
     const html = generateHTML(fallbackSEOData, url.toString(), pathname);
-    
     return new Response(html, {
       headers: {
         'Content-Type': 'text/html; charset=utf-8',
-        'Cache-Control': 'public, max-age=300, s-maxage=300', // Cache for 5 minutes
+        'Cache-Control': 'public, max-age=300, s-maxage=300',
       },
     });
-    
+
   } catch (error) {
     console.error('Edge Function - Error:', error);
     return new Response('Internal Server Error', { status: 500 });
