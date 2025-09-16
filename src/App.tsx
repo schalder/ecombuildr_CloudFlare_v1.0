@@ -109,6 +109,7 @@ import CreateCourse from "@/pages/CreateCourse";
 import CourseEditor from "@/pages/CourseEditor";
 import CourseLibrary from "@/pages/CourseLibrary";
 import CourseDetail from "@/pages/CourseDetail";
+import CourseDomainSettings from "@/pages/CourseDomainSettings";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -189,8 +190,8 @@ const App = () => (
                     <Route path="domains" element={<Domains />} />
                     <Route path="courses" element={<Courses />} />
                     <Route path="courses/create" element={<CreateCourse />} />
-                    <Route path="courses/:id/edit" element={<CourseEditor />} />
-                    <Route path="courses/:id" element={<CourseEditor />} />
+                    <Route path="courses/domains" element={<CourseDomainSettings />} />
+                    <Route path="courses/:courseId/edit" element={<CourseEditor />} />
                   </Route>
                   
                   {/* These routes are outside OnboardingGate so new users can access them */}
