@@ -129,6 +129,31 @@ async function getSEOData(domain: string, path: string): Promise<SEOData | null>
     // Clean up path
     const cleanPath = path === '/' ? '' : path.replace(/^\/+|\/+$/g, '');
     
+    // Prefer canonical SEO generation via Supabase Edge Function
+    try {
+      const edgeUrl = `https://fhqwacmokbtbspkxjixf.functions.supabase.co/seo-prerender?format=json&domain=${encodeURIComponent(domain)}&path=${encodeURIComponent(path)}`;
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 1500);
+      const resp = await fetch(edgeUrl, { headers: { Accept: 'application/json' }, signal: controller.signal });
+      clearTimeout(timeout);
+      if (resp.ok) {
+        const json = await resp.json();
+        if (json && (json.title || json.description)) {
+          return {
+            title: json.title,
+            description: json.description,
+            og_image: json.image || json.og_image || json.social_image_url,
+            keywords: json.keywords || json.seo_keywords || [],
+            canonical: json.canonical || `https://${domain}${path}`,
+            robots: json.robots || json.meta_robots || 'index, follow',
+            site_name: json.site_name || json.website_name || json.funnel_name || 'Site'
+          };
+        }
+      }
+    } catch (e) {
+      console.log('Supabase SEO JSON fetch failed, falling back', e);
+    }
+    
     // Check if this is EcomBuildr main domain
     if (domain === 'ecombuildr.com' || domain === 'localhost' || domain.includes('lovable.app')) {
       // Check seo_pages table for main domain
@@ -317,7 +342,7 @@ async function getSEOData(domain: string, path: string): Promise<SEOData | null>
   }
 }
 
-export default async function handler(request: Request): Promise<Response> {
+export default async function handler(request: Request, context: any): Promise<Response | undefined> {
   const url = new URL(request.url);
   const userAgent = request.headers.get('user-agent') || '';
   const domain = url.hostname;
@@ -330,8 +355,8 @@ export default async function handler(request: Request): Promise<Response> {
   // Check if it's a social media crawler
   if (!isSocialCrawler(userAgent)) {
     console.log('Edge Function - Not a crawler, letting request pass through');
-    // Don't return anything - let the request continue to normal handling
-    return;
+    // Let Netlify continue to the origin/app
+    return context.next();
   }
   
   console.log('Edge Function - Social crawler detected, generating HTML');
