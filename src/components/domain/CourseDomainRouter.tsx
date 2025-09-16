@@ -147,20 +147,23 @@ const CourseDetailWrapper = ({ courseSlug }: { courseSlug: string }) => {
   useEffect(() => {
     const fetchCourseBySlug = async () => {
       try {
-        const { data, error } = await supabase
-          .from('courses')
-          .select('id')
-          .eq('slug', courseSlug)
-          .eq('is_published', true)
-          .eq('is_active', true)
-          .single();
-
-        if (error || !data) {
-          console.error('Course not found:', error);
+        // Use a simple fetch to avoid TypeScript infinite recursion issues
+        const response = await fetch(`https://fhqwacmokbtbspkxjixf.supabase.co/rest/v1/courses?slug=eq.${courseSlug}&is_published=eq.true&is_active=eq.true&select=id`, {
+          headers: {
+            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZocXdhY21va2J0YnNwa3hqaXhmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM2MjYyMzUsImV4cCI6MjA2OTIwMjIzNX0.BaqDCDcynSahyDxEUIyZLLtyXpd959y5Tv6t6tIF3GM',
+            'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZocXdhY21va2J0YnNwa3hqaXhmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM2MjYyMzUsImV4cCI6MjA2OTIwMjIzNX0.BaqDCDcynSahyDxEUIyZLLtyXpd959y5Tv6t6tIF3GM'
+          }
+        });
+        
+        const data = await response.json();
+        
+        if (!data || data.length === 0) {
+          console.error('Course not found');
           setCourseId(null);
         } else {
-          setCourseId(data.id);
+          setCourseId(data[0].id);
         }
+
       } catch (error) {
         console.error('Error fetching course:', error);
         setCourseId(null);
