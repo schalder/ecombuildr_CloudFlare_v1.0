@@ -27,6 +27,14 @@ interface SEOData {
   robots: string;
   site_name: string;
   source?: string; // Debug info
+  debug?: {
+    titleSource?: string;
+    descSource?: string;
+    imageSource?: string;
+    websiteId?: string;
+    pageId?: string;
+    slug?: string;
+  };
 }
 
 // Extract meaningful description from page content
@@ -303,18 +311,45 @@ async function resolveSEOData(domain: string, path: string): Promise<SEOData | n
     
     if (page) {
       const contentDesc = extractContentDescription(page.content);
-      const description = page.seo_description || contentDesc || `${page.title} - ${website.name}`;
-      const image = normalizeImageUrl(page.social_image_url || page.og_image || page.preview_image_url || website.og_image);
+
+      const rawTitle = (page.seo_title && page.seo_title.trim()) ? page.seo_title.trim() : page.title;
+      const titleSource = (page.seo_title && page.seo_title.trim()) ? 'page.seo_title' : 'page.title';
+
+      const rawDesc = (page.seo_description && page.seo_description.trim())
+        ? page.seo_description.trim()
+        : (contentDesc || `${page.title} - ${website.name}`);
+      const descSource = (page.seo_description && page.seo_description.trim())
+        ? 'page.seo_description'
+        : (contentDesc ? 'content_extracted' : 'fallback_title_website');
+
+      let pickedImage = page.social_image_url || page.og_image || page.preview_image_url || website.og_image;
+      let imageSource = page.social_image_url
+        ? 'page.social_image_url'
+        : (page.og_image ? 'page.og_image' : (page.preview_image_url ? 'page.preview_image_url' : 'website.og_image'));
+      const image = normalizeImageUrl(pickedImage);
+
+      console.log(`🔎 Page SEO resolved for slug="${cleanPath}" (page:${page.id}, website:${websiteId})`);
+      console.log(`   • title="${rawTitle}" [${titleSource}]`);
+      console.log(`   • description="${rawDesc}" [${descSource}]`);
+      console.log(`   • image="${image}" [${imageSource}]`);
       
       return {
-        title: page.seo_title || page.title,
-        description,
+        title: rawTitle,
+        description: rawDesc,
         og_image: image,
         keywords: page.seo_keywords || [],
         canonical: page.canonical_url || `https://${domain}${path}`,
         robots: page.meta_robots || 'index, follow',
         site_name: website.name,
-        source: `website_page|website:${websiteId}|slug:${cleanPath}`
+        source: `website_page|website:${websiteId}|slug:${cleanPath}`,
+        debug: {
+          titleSource,
+          descSource,
+          imageSource,
+          websiteId,
+          pageId: page.id,
+          slug: cleanPath
+        }
       };
     }
     
@@ -478,7 +513,13 @@ export default async function handler(request: Request, context: any): Promise<R
         'X-SEO-Website': seoData.site_name,
         'X-SEO-Page': seoData.title,
         'X-SEO-Domain': domain,
-        'X-SEO-Path': pathname
+        'X-SEO-Path': pathname,
+        ...(seoData.debug?.websiteId ? { 'X-SEO-Website-Id': seoData.debug.websiteId } : {}),
+        ...(seoData.debug?.pageId ? { 'X-SEO-Page-Id': seoData.debug.pageId } : {}),
+        ...(seoData.debug?.slug ? { 'X-SEO-Slug': seoData.debug.slug } : {}),
+        ...(seoData.debug?.titleSource ? { 'X-SEO-Title-Source': seoData.debug.titleSource } : {}),
+        ...(seoData.debug?.descSource ? { 'X-SEO-Desc-Source': seoData.debug.descSource } : {}),
+        ...(seoData.debug?.imageSource ? { 'X-SEO-Image-Source': seoData.debug.imageSource } : {}),
       },
     });
 
