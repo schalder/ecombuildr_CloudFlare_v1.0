@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
 import { Loader2, Save, ArrowLeft, Upload, Image, DollarSign } from 'lucide-react';
-import { MediaLibrary } from '@/components/page-builder/components/MediaLibrary';
+import { MediaSelector } from '@/components/page-builder/components/MediaSelector';
 import { useUserStore } from '@/hooks/useUserStore';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -30,7 +30,6 @@ const CreateCourse = () => {
   const { store } = useUserStore();
   
   const [loading, setLoading] = useState(false);
-  const [showMediaLibrary, setShowMediaLibrary] = useState(false);
   const [formData, setFormData] = useState<CourseFormData>({
     title: '',
     description: '',
@@ -146,36 +145,13 @@ const CreateCourse = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="thumbnail">Course Thumbnail URL</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      id="thumbnail"
-                      value={formData.thumbnail_url}
-                      onChange={(e) => handleInputChange('thumbnail_url', e.target.value)}
-                      placeholder="https://example.com/image.jpg"
-                    />
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => setShowMediaLibrary(true)}
-                    >
-                      <Upload className="h-4 w-4 mr-2" />
-                      Upload
-                    </Button>
-                  </div>
-                  {formData.thumbnail_url && (
-                    <div className="mt-2">
-                      <img 
-                        src={formData.thumbnail_url} 
-                        alt="Course thumbnail" 
-                        className="w-32 h-20 object-cover rounded border"
-                        onError={(e) => {
-                          e.currentTarget.style.display = 'none';
-                        }}
-                      />
-                    </div>
-                  )}
+                  <Label htmlFor="thumbnail">Course Thumbnail</Label>
+                  <MediaSelector
+                    value={formData.thumbnail_url}
+                    onChange={(url) => handleInputChange('thumbnail_url', url)}
+                    label="Select Course Thumbnail"
+                    maxSize={10}
+                  />
                 </div>
               </CardContent>
             </Card>
@@ -309,16 +285,6 @@ const CreateCourse = () => {
           </div>
         </div>
       </div>
-
-      {/* Media Library Dialog */}
-      <MediaLibrary
-        isOpen={showMediaLibrary}
-        onClose={() => setShowMediaLibrary(false)}
-        onSelect={(url) => {
-          handleInputChange('thumbnail_url', url);
-          setShowMediaLibrary(false);
-        }}
-      />
     </DashboardLayout>
   );
 };

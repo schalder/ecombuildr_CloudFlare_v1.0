@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { MediaLibrary } from '@/components/page-builder/components/MediaLibrary';
+import { MediaSelector } from '@/components/page-builder/components/MediaSelector';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
 import { 
   Dialog,
@@ -88,7 +88,6 @@ const CourseEditor = () => {
   // Dialog states
   const [showModuleDialog, setShowModuleDialog] = useState(false);
   const [showLessonDialog, setShowLessonDialog] = useState(false);
-  const [showMediaLibrary, setShowMediaLibrary] = useState(false);
   const [editingModule, setEditingModule] = useState<Module | null>(null);
   const [editingLesson, setEditingLesson] = useState<Lesson | null>(null);
   const [selectedModuleId, setSelectedModuleId] = useState<string>('');
@@ -626,31 +625,14 @@ const CourseEditor = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label>Thumbnail</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      value={course.thumbnail_url || ''}
-                      onChange={(e) => setCourse(prev => prev ? {...prev, thumbnail_url: e.target.value} : null)}
-                      placeholder="https://example.com/image.jpg"
-                      className="flex-1"
-                    />
-                    <Button 
-                      type="button" 
-                      variant="outline"
-                      onClick={() => setShowMediaLibrary(true)}
-                    >
-                      <Upload className="h-4 w-4 mr-2" />
-                      Upload
-                    </Button>
-                  </div>
-                </div>
-                {course.thumbnail_url && (
-                  <img 
-                    src={course.thumbnail_url} 
-                    alt="Course thumbnail" 
-                    className="w-full aspect-video object-cover rounded border"
+                  <Label>Course Thumbnail</Label>
+                  <MediaSelector
+                    value={course.thumbnail_url || ''}
+                    onChange={(url) => setCourse(prev => prev ? {...prev, thumbnail_url: url} : null)}
+                    label="Select Course Thumbnail"
+                    maxSize={10}
                   />
-                )}
+                </div>
               </CardContent>
             </Card>
           </div>
@@ -775,16 +757,6 @@ const CourseEditor = () => {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-
-        {/* Media Library Dialog */}
-        <MediaLibrary
-          isOpen={showMediaLibrary}
-          onClose={() => setShowMediaLibrary(false)}
-          onSelect={(url) => {
-            setCourse(prev => prev ? {...prev, thumbnail_url: url} : null);
-            setShowMediaLibrary(false);
-          }}
-        />
       </div>
     </DashboardLayout>
   );
