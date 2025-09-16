@@ -2,20 +2,10 @@
   command = "npm run build"
   publish = "dist"
 
-# Disable Netlify's built-in prerendering (handled by Supabase Edge Function)
-[context.production]
-  [context.production.processing]
-    skip_processing = false
-  [context.production.build]
-    command = "npm run build"
-    environment = { NETLIFY_PRERENDER = "false" }
-
-# Bot-specific routing: redirect bots to seo-prerender function
-[[redirects]]
-  from = "/*"
-  to = "https://fhqwacmokbtbspkxjixf.supabase.co/functions/v1/seo-prerender?domain=:host&path=:splat"
-  status = 200
-  conditions = {User-Agent = ["*bot*", "*crawler*", "*spider*", "*Googlebot*", "*Bingbot*", "*facebookexternalhit*", "*Twitterbot*", "*LinkedInBot*", "*WhatsApp*", "*Telegram*", "facebookexternalhit/1.1", "facebookcatalog/*", "Facebot", "*FacebookBot*", "*facebookcatalog*", "*FacebookExternalHit*"]}
+# Netlify Edge Function for social media crawlers
+[[edge_functions]]
+  function = "social-meta"
+  path = "/*"
   
 # Force HTTPS and add debug headers
 [[headers]]
