@@ -154,7 +154,7 @@ async function getSEOData(domain: string, path: string): Promise<SEOData | null>
       return null; // Will use fallback
     }
     
-    // For custom domains, find associated content
+    // For custom domains, find associated content by joining with custom_domains
     const { data: domainConnection } = await supabaseClient
       .from('domain_connections')
       .select(`
@@ -171,9 +171,12 @@ async function getSEOData(domain: string, path: string): Promise<SEOData | null>
           name,
           slug,
           settings
+        ),
+        custom_domains!inner (
+          domain
         )
       `)
-      .eq('domain', domain)
+      .eq('custom_domains.domain', domain)
       .eq('is_active', true)
       .single();
     
