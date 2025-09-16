@@ -49,114 +49,18 @@
       img[width][height] { aspect-ratio: attr(width) / attr(height); }
     </style>
     
-    <!-- Dynamic SEO tags will be loaded here -->
+    <!-- Dynamic SEO tags placeholder; social crawlers are handled by Netlify Edge Function (social-meta) -->
     <script>
-      (function() {
-        // Get current domain and path
-        const currentDomain = window.location.hostname;
-        const currentPath = window.location.pathname;
-        const cacheKey = `seo_${currentDomain}${currentPath}`;
-        
-        // Check cache first (1 hour expiry)
-        const cached = localStorage.getItem(cacheKey);
-        if (cached) {
-          try {
-            const { data, timestamp } = JSON.parse(cached);
-            if (Date.now() - timestamp < 3600000) { // 1 hour
-              updateSEOTags(data);
-              return;
-            }
-          } catch (e) {
-            localStorage.removeItem(cacheKey);
+      (function () {
+        // Do NOT fetch external SEO. Crawlers receive prerendered HTML from social-meta.
+        // For regular users, pages/components should manage their own SEO.
+        // Small safeguard: if og:site_name is still the platform default, set it to current hostname.
+        try {
+          const siteName = document.querySelector('meta[property="og:site_name"]');
+          if (siteName && /EcomBuildr/i.test(siteName.getAttribute('content') || '')) {
+            siteName.setAttribute('content', window.location.hostname);
           }
-        }
-
-        // Always fetch SEO data from seo-prerender function for consistency
-        fetchSEOFromPrerender(currentDomain, currentPath).then(seoData => {
-          if (seoData) {
-            updateSEOTags(seoData);
-            // Cache the result
-            localStorage.setItem(cacheKey, JSON.stringify({
-              data: seoData,
-              timestamp: Date.now()
-            }));
-          }
-        }).catch(console.error);
-
-        function fetchSEOFromPrerender(domain, path) {
-          const url = `https://fhqwacmokbtbspkxjixf.supabase.co/functions/v1/seo-prerender?domain=${encodeURIComponent(domain)}&path=${encodeURIComponent(path)}&format=json`;
-          return fetch(url)
-            .then(response => response.json())
-            .then(data => data.success ? data.seo : null)
-            .catch(() => null);
-        }
-
-        function updateSEOTags(seo) {
-          if (!seo) return;
-
-          // Update title
-          if (seo.title) {
-            document.title = seo.title;
-            updateOrCreateMeta('og:title', seo.title, 'property');
-            updateOrCreateMeta('twitter:title', seo.title, 'name');
-          }
-
-          // Update description
-          if (seo.description) {
-            updateOrCreateMeta('description', seo.description);
-            updateOrCreateMeta('og:description', seo.description, 'property');
-            updateOrCreateMeta('twitter:description', seo.description, 'name');
-          }
-
-          // Update keywords
-          if (seo.keywords && Array.isArray(seo.keywords)) {
-            updateOrCreateMeta('keywords', seo.keywords.join(', '));
-          }
-
-          // Update robots
-          if (seo.robots) {
-            updateOrCreateMeta('robots', seo.robots);
-          }
-
-          // Update canonical
-          if (seo.canonical) {
-            updateOrCreateLink('canonical', seo.canonical);
-            updateOrCreateMeta('og:url', seo.canonical, 'property');
-          }
-
-          // Update images
-          if (seo.og_image) {
-            updateOrCreateMeta('og:image', seo.og_image, 'property');
-            updateOrCreateMeta('twitter:image', seo.og_image, 'name');
-          }
-
-          // Set default Open Graph and Twitter properties
-          updateOrCreateMeta('og:type', 'website', 'property');
-          updateOrCreateMeta('og:site_name', seo.site_name || document.title || window.location.hostname, 'property');
-          updateOrCreateMeta('twitter:card', 'summary_large_image', 'name');
-        }
-
-        function updateOrCreateMeta(name, content, property = 'name') {
-          const selector = `meta[${property}="${name}"]`;
-          let meta = document.querySelector(selector);
-          if (!meta) {
-            meta = document.createElement('meta');
-            meta.setAttribute(property, name);
-            document.head.appendChild(meta);
-          }
-          meta.setAttribute('content', content);
-        }
-
-        function updateOrCreateLink(rel, href) {
-          const selector = `link[rel="${rel}"]`;
-          let link = document.querySelector(selector);
-          if (!link) {
-            link = document.createElement('link');
-            link.setAttribute('rel', rel);
-            document.head.appendChild(link);
-          }
-          link.setAttribute('href', href);
-        }
+        } catch (e) { /* noop */ }
       })();
     </script>
     
