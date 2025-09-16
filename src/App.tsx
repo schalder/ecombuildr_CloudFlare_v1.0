@@ -193,6 +193,7 @@ const App = () => (
                     <Route path="courses/analytics" element={<Analytics />} />
                     <Route path="courses/domains" element={<CourseDomainSettings />} />
                     <Route path="courses/:courseId/edit" element={<CourseEditor />} />
+                    <Route path="courses/:courseId" element={<CourseEditor />} />
                   </Route>
                   
                   {/* These routes are outside OnboardingGate so new users can access them */}
