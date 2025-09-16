@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
+import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { useStore } from '@/contexts/StoreContext';
 import { useDomainManagement } from '@/hooks/useDomainManagement';
 import { useToast } from '@/components/ui/use-toast';
@@ -93,28 +94,19 @@ const CourseDomainSettings = () => {
   ) || [];
 
   return (
-    <div className="container mx-auto p-6">
-      <div className="flex items-center gap-2 mb-6">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => navigate('/dashboard/courses')}
-          className="flex items-center gap-2"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to Courses
-        </Button>
-      </div>
-
-      <div className="max-w-4xl">
-        <div className="flex items-center gap-3 mb-6">
-          <Globe className="h-6 w-6" />
-          <div>
-            <h1 className="text-2xl font-bold">Course Domain Settings</h1>
-            <p className="text-muted-foreground">
-              Set up a custom domain for your course marketplace
-            </p>
-          </div>
+    <DashboardLayout title="Course Domain Settings" description="Set up a custom domain for your course marketplace">
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate('/dashboard/courses')}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Courses
+          </Button>
         </div>
 
         {existingCourseConnections.length > 0 && (
@@ -287,7 +279,7 @@ const CourseDomainSettings = () => {
           </Card>
         )}
       </div>
-    </div>
+    </DashboardLayout>
   );
 };
 
