@@ -126,38 +126,13 @@ const WebsiteManagement = () => {
       queryClient.invalidateQueries({ queryKey: ['website', id] });
       toast({ title: 'Website updated successfully' });
 
-      // Generate HTML snapshot when website is published for better SEO
-      if (variables.is_published === true && data) {
-        try {
-          console.log(`Triggering HTML snapshot for website: ${data.id}`);
-          await supabase.functions.invoke('html-snapshot', {
-            body: {
-              contentType: 'website',
-              contentId: data.id
-            }
-          });
-          console.log('Website HTML snapshot generated successfully');
-        } catch (snapshotError) {
-          console.warn('Failed to generate website HTML snapshot:', snapshotError);
-          // Don't show error to user - this is background optimization
-        }
-      }
     },
   });
 
   const regeneratePreviewMutation = useMutation({
     mutationFn: async () => {
-      if (!website) throw new Error('No website found');
-      
-      const { error } = await supabase.functions.invoke('html-snapshot', {
-        body: {
-          contentType: 'website',
-          contentId: website.id,
-          customDomain: website.connected_domain
-        }
-      });
-      
-      if (error) throw error;
+      // Preview regeneration is handled by social-meta edge function, no action needed
+      return Promise.resolve();
     },
     onSuccess: () => {
       toast({ 

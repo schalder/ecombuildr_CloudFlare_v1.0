@@ -22,6 +22,7 @@ import { PageBuilderData } from '@/components/page-builder/types';
 import { PageBuilderRenderer } from '@/components/storefront/PageBuilderRenderer';
 import { supabase } from '@/integrations/supabase/client';
 import { useUserStore } from '@/hooks/useUserStore';
+import { useQueryClient } from '@tanstack/react-query';
 import { setGlobalCurrency } from '@/lib/currency';
 import { useStore } from '@/contexts/StoreContext';
 import { WebsiteProvider } from '@/contexts/WebsiteContext';
@@ -39,6 +40,7 @@ export default function PageBuilder() {
   const location = useLocation();
   const { store: currentStore } = useUserStore();
   const { loadStoreById } = useStore();
+  const queryClient = useQueryClient();
   
   // Determine context based on URL parameters
   const context = websiteId ? 'website' : funnelId ? 'funnel' : 'store';
@@ -269,30 +271,6 @@ export default function PageBuilder() {
 
       toast.success(publishedState ? 'Page saved and published successfully!' : 'Page saved successfully!');
 
-      // Generate static HTML if page is published for better SEO
-      if (publishedState && (context === 'website' || context === 'funnel') && entityId) {
-        try {
-          console.log(`Generating static HTML for ${context} page: ${entityId}`);
-          
-          // Generate HTML snapshot for the specific page/step using html-snapshot function
-          const contentType = context === 'website' ? 'website_page' : 'funnel_step';
-          const { error } = await supabase.functions.invoke('html-snapshot', {
-            body: {
-              contentType,
-              contentId: entityId
-            }
-          });
-
-          if (error) {
-            throw error;
-          }
-          
-          console.log('✅ Static HTML generated successfully for page');
-        } catch (htmlError) {
-          console.warn('Failed to generate static HTML:', htmlError);
-          // Don't show error to user - this is background optimization
-        }
-      }
 
     } catch (error) {
       console.error('Error saving content:', error);
@@ -432,9 +410,12 @@ export default function PageBuilder() {
             variant="ghost"
             size="sm"
             onClick={() => {
+              // Invalidate relevant queries when navigating back
               if (context === 'website') {
+                queryClient.invalidateQueries({ queryKey: ['website-pages', parentId] });
                 navigate(`/dashboard/websites/${parentId}`);
               } else if (context === 'funnel') {
+                queryClient.invalidateQueries({ queryKey: ['funnel-steps', parentId] });
                 navigate(`/dashboard/funnels/${parentId}`);
               } else {
                 navigate('/dashboard/pages');
