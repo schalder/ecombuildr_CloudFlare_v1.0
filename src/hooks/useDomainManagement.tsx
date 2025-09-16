@@ -337,12 +337,34 @@ export const useDomainManagement = () => {
         is_homepage: isHomepage || false
       } as const;
 
-      // Use upsert to avoid duplicate key errors for same domain/path/content_type
-      const { data, error } = await supabase
+      // Avoid relying on ON CONFLICT (requires DB constraint). Do a select-then-update/insert flow
+      const { data: existing } = await supabase
         .from('domain_connections')
-        .upsert(payload, { onConflict: 'domain_id,path,content_type' })
-        .select()
-        .single();
+        .select('id')
+        .eq('domain_id', payload.domain_id)
+        .eq('path', payload.path)
+        .eq('content_type', payload.content_type)
+        .maybeSingle();
+
+      let data;
+      if (existing?.id) {
+        const { data: updated, error: updateError } = await supabase
+          .from('domain_connections')
+          .update(payload)
+          .eq('id', existing.id)
+          .select()
+          .single();
+        if (updateError) throw updateError;
+        data = updated;
+      } else {
+        const { data: inserted, error: insertError } = await supabase
+          .from('domain_connections')
+          .insert(payload)
+          .select()
+          .single();
+        if (insertError) throw insertError;
+        data = inserted;
+      }
 
       if (error) throw error;
 
