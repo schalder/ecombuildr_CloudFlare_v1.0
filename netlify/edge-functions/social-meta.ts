@@ -123,7 +123,7 @@ async function resolveSEOData(domain: string, path: string): Promise<SEOData | n
     const domainVariants = [domain, apexDomain, `www.${apexDomain}`];
     const cleanPath = path === '/' ? '' : path.replace(/^\/+|\/+$/g, '');
     
-    // Step 1: Find custom domain mapping
+    // Step 1: Find custom domain mapping  
     const { data: customDomain } = await supabase
       .from('custom_domains')
       .select('id, domain, store_id')
@@ -137,90 +137,24 @@ async function resolveSEOData(domain: string, path: string): Promise<SEOData | n
     
     console.log(`✅ Found custom domain: ${customDomain.domain} -> store ${customDomain.store_id}`);
     
-    // Step 2: Check for specific page mapping via domain_connections
-    const { data: pageConnection } = await supabase
-      .from('domain_connections')
-      .select('content_type, content_id')
-      .eq('custom_domain_id', customDomain.id)
-      .eq('content_type', 'website_page')
-      .maybeSingle();
-    
-    if (pageConnection) {
-      console.log(`🎯 Found direct page connection: ${pageConnection.content_id}`);
-      
-      const { data: pageData } = await supabase
-        .from('website_pages')
-        .select(`
-          id, website_id, title, slug,
-          seo_title, seo_description, og_image, social_image_url,
-          seo_keywords, canonical_url, meta_robots, content
-        `)
-        .eq('id', pageConnection.content_id)
-        .eq('is_published', true)
-        .maybeSingle();
-      
-      if (pageData) {
-        const { data: websiteData } = await supabase
-          .from('websites')
-          .select('name, og_image')
-          .eq('id', pageData.website_id)
-          .maybeSingle();
-        
-        const contentDesc = extractContentDescription(pageData.content);
-        const description = pageData.seo_description || contentDesc || pageData.title;
-        const image = normalizeImageUrl(pageData.social_image_url || pageData.og_image || websiteData?.og_image);
-        
-        return {
-          title: pageData.seo_title || pageData.title,
-          description,
-          og_image: image,
-          keywords: pageData.seo_keywords || [],
-          canonical: pageData.canonical_url || `https://${domain}${path}`,
-          robots: pageData.meta_robots || 'index, follow',
-          site_name: websiteData?.name || 'Website',
-          source: 'direct_page_connection'
-        };
-      }
-    }
-    
-    // Step 3: Find website mapping via domain_connections
+    // Step 2: Find website mapping via domain_connections
     const { data: websiteConnection } = await supabase
       .from('domain_connections')
       .select('content_type, content_id')
-      .eq('custom_domain_id', customDomain.id)
+      .eq('domain_id', customDomain.id)
       .eq('content_type', 'website')
       .maybeSingle();
     
-    let websiteId: string | null = null;
-    
-    if (websiteConnection) {
-      websiteId = websiteConnection.content_id;
-      console.log(`🎯 Found website connection: ${websiteId}`);
-    } else {
-      // Step 4: Fallback - find active website for store
-      const { data: storeWebsites } = await supabase
-        .from('websites')
-        .select('id, domain')
-        .eq('store_id', customDomain.store_id)
-        .eq('is_active', true)
-        .eq('is_published', true);
-      
-      if (storeWebsites && storeWebsites.length > 0) {
-        // Prefer exact domain match, then first active
-        const exactMatch = storeWebsites.find(w => 
-          w.domain && w.domain.replace(/^www\./, '') === apexDomain
-        );
-        websiteId = exactMatch?.id || storeWebsites[0].id;
-        console.log(`📦 Using store website: ${websiteId}`);
-      }
-    }
-    
-    if (!websiteId) {
-      console.log('❌ No website found');
+    if (!websiteConnection) {
+      console.log('❌ No website connection found');
       return null;
     }
+
+    const websiteId = websiteConnection.content_id;
+    console.log(`✅ Found website connection: ${websiteId}`);
     
-    // Step 5: Get website data
+    
+    // Step 3: Get website data
     const { data: website } = await supabase
       .from('websites')
       .select('id, name, seo_title, seo_description, og_image')
@@ -232,7 +166,7 @@ async function resolveSEOData(domain: string, path: string): Promise<SEOData | n
       return null;
     }
     
-    // Step 6: Route-specific resolution
+    // Step 4: Route-specific resolution
     
     // Root path - use website SEO
     if (!cleanPath) {
@@ -337,7 +271,7 @@ async function resolveSEOData(domain: string, path: string): Promise<SEOData | n
       }
     }
     
-    // Regular website pages
+    // Website pages - try exact slug match first
     const { data: page } = await supabase
       .from('website_pages')
       .select(`
