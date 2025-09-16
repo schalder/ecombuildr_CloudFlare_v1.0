@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
 import { Loader2, Save, ArrowLeft, Upload, Image, DollarSign } from 'lucide-react';
+import { MediaLibrary } from '@/components/page-builder/components/MediaLibrary';
 import { useUserStore } from '@/hooks/useUserStore';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -29,6 +30,7 @@ const CreateCourse = () => {
   const { store } = useUserStore();
   
   const [loading, setLoading] = useState(false);
+  const [showMediaLibrary, setShowMediaLibrary] = useState(false);
   const [formData, setFormData] = useState<CourseFormData>({
     title: '',
     description: '',
@@ -152,7 +154,12 @@ const CreateCourse = () => {
                       onChange={(e) => handleInputChange('thumbnail_url', e.target.value)}
                       placeholder="https://example.com/image.jpg"
                     />
-                    <Button variant="outline" size="sm">
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => setShowMediaLibrary(true)}
+                    >
                       <Upload className="h-4 w-4 mr-2" />
                       Upload
                     </Button>
@@ -302,6 +309,16 @@ const CreateCourse = () => {
           </div>
         </div>
       </div>
+
+      {/* Media Library Dialog */}
+      <MediaLibrary
+        isOpen={showMediaLibrary}
+        onClose={() => setShowMediaLibrary(false)}
+        onSelect={(url) => {
+          handleInputChange('thumbnail_url', url);
+          setShowMediaLibrary(false);
+        }}
+      />
     </DashboardLayout>
   );
 };

@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
+import { MediaLibrary } from '@/components/page-builder/components/MediaLibrary';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
 import { 
   Dialog,
@@ -87,6 +88,7 @@ const CourseEditor = () => {
   // Dialog states
   const [showModuleDialog, setShowModuleDialog] = useState(false);
   const [showLessonDialog, setShowLessonDialog] = useState(false);
+  const [showMediaLibrary, setShowMediaLibrary] = useState(false);
   const [editingModule, setEditingModule] = useState<Module | null>(null);
   const [editingLesson, setEditingLesson] = useState<Lesson | null>(null);
   const [selectedModuleId, setSelectedModuleId] = useState<string>('');
@@ -276,6 +278,53 @@ const CourseEditor = () => {
     } catch (error) {
       console.error('Error creating lesson:', error);
       toast.error('Failed to create lesson');
+    }
+  };
+
+  const handleUpdateLesson = async () => {
+    if (!editingLesson || !lessonForm.title.trim()) return;
+
+    try {
+      const { error } = await supabase
+        .from('course_lessons')
+        .update({
+          title: lessonForm.title.trim(),
+          content: lessonForm.content,
+          video_url: lessonForm.video_url.trim() || null,
+          video_duration: lessonForm.video_duration || null,
+          is_published: lessonForm.is_published,
+          is_preview: lessonForm.is_preview,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', editingLesson.id);
+
+      if (error) throw error;
+
+      // Update the lesson in the local state
+      setModules(prev => prev.map(module => ({
+        ...module,
+        course_lessons: module.course_lessons.map(lesson =>
+          lesson.id === editingLesson.id
+            ? {
+                ...lesson,
+                title: lessonForm.title,
+                content: lessonForm.content,
+                video_url: lessonForm.video_url || null,
+                video_duration: lessonForm.video_duration || null,
+                is_published: lessonForm.is_published,
+                is_preview: lessonForm.is_preview
+              }
+            : lesson
+        )
+      })));
+
+      setEditingLesson(null);
+      setLessonForm({ title: '', content: '', video_url: '', video_duration: 0, is_published: false, is_preview: false });
+      setShowLessonDialog(false);
+      toast.success('Lesson updated successfully!');
+    } catch (error) {
+      console.error('Error updating lesson:', error);
+      toast.error('Failed to update lesson');
     }
   };
 
@@ -577,12 +626,23 @@ const CourseEditor = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label>Image URL</Label>
-                  <Input
-                    value={course.thumbnail_url || ''}
-                    onChange={(e) => setCourse(prev => prev ? {...prev, thumbnail_url: e.target.value} : null)}
-                    placeholder="https://example.com/image.jpg"
-                  />
+                  <Label>Thumbnail</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      value={course.thumbnail_url || ''}
+                      onChange={(e) => setCourse(prev => prev ? {...prev, thumbnail_url: e.target.value} : null)}
+                      placeholder="https://example.com/image.jpg"
+                      className="flex-1"
+                    />
+                    <Button 
+                      type="button" 
+                      variant="outline"
+                      onClick={() => setShowMediaLibrary(true)}
+                    >
+                      <Upload className="h-4 w-4 mr-2" />
+                      Upload
+                    </Button>
+                  </div>
                 </div>
                 {course.thumbnail_url && (
                   <img 
@@ -709,12 +769,22 @@ const CourseEditor = () => {
               <Button variant="outline" onClick={() => setShowLessonDialog(false)}>
                 Cancel
               </Button>
-              <Button onClick={editingLesson ? () => {} : handleCreateLesson}>
+              <Button onClick={editingLesson ? handleUpdateLesson : handleCreateLesson}>
                 {editingLesson ? 'Update Lesson' : 'Create Lesson'}
               </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {/* Media Library Dialog */}
+        <MediaLibrary
+          isOpen={showMediaLibrary}
+          onClose={() => setShowMediaLibrary(false)}
+          onSelect={(url) => {
+            setCourse(prev => prev ? {...prev, thumbnail_url: url} : null);
+            setShowMediaLibrary(false);
+          }}
+        />
       </div>
     </DashboardLayout>
   );
