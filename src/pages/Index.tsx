@@ -1,6 +1,8 @@
 import { useAuth } from "@/hooks/useAuth";
 import { useSEO } from "@/hooks/useSEO";
 import { SEOHead } from "@/components/SEOHead";
+import { MetaTags } from "@/components/MetaTags";
+import { SocialDebugger } from "@/components/SocialDebugger";
 import { Navbar } from "@/components/Navbar";
 import { Hero } from "@/components/Hero";
 import { Features } from "@/components/Features";
@@ -22,11 +24,13 @@ const Index = () => {
   return (
     <div className="min-h-screen">
       <ScrollToHash />
-      <SEOHead
-        title={seoData?.title}
-        description={seoData?.description}
-        ogImage={seoData?.og_image}
-        keywords={seoData?.keywords}
+      <MetaTags
+        title={seoData?.title || 'EcomBuildr - Build Your E-commerce Empire in Minutes'}
+        description={seoData?.description || 'Create professional e-commerce stores with our no-code platform. Build websites, funnels, and conversion systems that turn visitors into customers.'}
+        image={seoData?.og_image || 'https://res.cloudinary.com/funnelsninja/image/upload/v1755206321/ecombuildr-og-image_default.jpg'}
+        keywords={seoData?.keywords || ['ecommerce builder', 'online store', 'no code', 'bangladesh ecommerce']}
+        type="website"
+        siteName="EcomBuildr"
       />
       <Navbar />
       <Hero />
@@ -48,6 +52,7 @@ const Index = () => {
       </div>
       <Footer />
       <WhatsAppWidget />
+      <SocialDebugger />
     </div>
   );
 };

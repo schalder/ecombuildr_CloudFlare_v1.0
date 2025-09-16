@@ -2,10 +2,18 @@
   command = "npm run build"
   publish = "dist"
 
-# Netlify Edge Function for social media crawlers
+# Netlify Edge Function for social media crawlers - targeted routes
 [[edge_functions]]
   function = "social-meta"
-  path = "/*"
+  path = "/p/*"
+
+[[edge_functions]]
+  function = "social-meta"
+  path = "/*/product/*"
+  
+[[edge_functions]]
+  function = "social-meta"
+  path = "/funnel/*"
   
 # Force HTTPS and add debug headers
 [[headers]]

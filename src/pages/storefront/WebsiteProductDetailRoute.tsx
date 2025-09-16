@@ -6,6 +6,8 @@ import ProductDetail from '@/pages/storefront/ProductDetail';
 import { PageBuilderRenderer } from '@/components/storefront/PageBuilderRenderer';
 import { setGlobalCurrency } from '@/lib/currency';
 import { setSEO, buildCanonical } from '@/lib/seo';
+import { MetaTags, generateDescriptionFromContent } from '@/components/MetaTags';
+import { SocialDebugger } from '@/components/SocialDebugger';
 
 interface WebsiteData {
   id: string;
@@ -173,13 +175,41 @@ export const WebsiteProductDetailRoute: React.FC = () => {
 
   if (!page) return <ProductDetail />;
 
+  // Generate enhanced meta tags
+  const enhancedTitle = page?.seo_title || page?.title || websiteMeta?.name || 'EcomBuildr Store';
+  const enhancedDescription = page?.seo_description || 
+    generateDescriptionFromContent(page?.content) || 
+    websiteMeta?.seo_description || 
+    'Professional e-commerce store built with EcomBuildr';
+  const enhancedImage = page?.og_image || websiteMeta?.og_image;
+  const enhancedUrl = buildCanonical(undefined, websiteMeta?.canonical_domain || websiteMeta?.domain);
+
   return (
-    <main>
-      {page.content?.sections ? (
-        <PageBuilderRenderer data={page.content} />
-      ) : (
-        <ProductDetail />
-      )}
-    </main>
+    <>
+      <MetaTags
+        title={enhancedTitle}
+        description={enhancedDescription}
+        image={enhancedImage}
+        url={enhancedUrl}
+        type="product"
+        siteName={websiteMeta?.name || 'EcomBuildr Store'}
+        robots={isPreview ? 'noindex, nofollow' : 'index, follow'}
+        canonical={enhancedUrl}
+        favicon={websiteMeta?.settings?.favicon_url}
+      />
+      <main>
+        {page.content?.sections ? (
+          <PageBuilderRenderer data={page.content} />
+        ) : (
+          <ProductDetail />
+        )}
+      </main>
+      <SocialDebugger
+        url={enhancedUrl}
+        title={enhancedTitle}
+        description={enhancedDescription}
+        image={enhancedImage}
+      />
+    </>
   );
 };

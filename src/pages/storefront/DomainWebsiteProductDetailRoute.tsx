@@ -6,6 +6,8 @@ import ProductDetail from '@/pages/storefront/ProductDetail';
 import { PageBuilderRenderer } from '@/components/storefront/PageBuilderRenderer';
 import { setGlobalCurrency } from '@/lib/currency';
 import { setSEO, buildCanonical } from '@/lib/seo';
+import { MetaTags, generateDescriptionFromContent } from '@/components/MetaTags';
+import { SocialDebugger } from '@/components/SocialDebugger';
 
 interface WebsitePageData {
   id: string;
@@ -160,13 +162,43 @@ export const DomainWebsiteProductDetailRoute: React.FC<DomainWebsiteProductDetai
 
   if (!page) return <ProductDetail />;
 
+  // Generate enhanced meta tags
+  const currentWebsite = websiteMeta || website;
+  const enhancedTitle = page?.seo_title || page?.title || currentWebsite?.name || 'EcomBuildr Store';
+  const enhancedDescription = page?.seo_description || 
+    generateDescriptionFromContent(page?.content) || 
+    currentWebsite?.seo_description || 
+    'Professional e-commerce store built with EcomBuildr';
+  const enhancedImage = page?.og_image || currentWebsite?.og_image;
+  const enhancedUrl = buildCanonical(undefined, currentWebsite?.canonical_domain || currentWebsite?.domain);
+
   return (
     <>
+      <MetaTags
+        title={enhancedTitle}
+        description={enhancedDescription}
+        image={enhancedImage}
+        url={enhancedUrl}
+        type="product"
+        siteName={currentWebsite?.name || 'EcomBuildr Store'}
+        robots={isPreview ? 'noindex, nofollow' : (page?.meta_robots || currentWebsite?.meta_robots || 'index, follow')}
+        canonical={enhancedUrl}
+        favicon={currentWebsite?.settings?.favicon_url}
+        keywords={page?.keywords ? page.keywords.split(',').map(k => k.trim()) : []}
+        author={page?.author}
+        customMetaTags={page?.custom_meta_tags ? (typeof page.custom_meta_tags === 'string' ? JSON.parse(page.custom_meta_tags) : page.custom_meta_tags) : undefined}
+      />
       {page.content?.sections ? (
         <PageBuilderRenderer data={page.content} />
       ) : (
         <ProductDetail />
       )}
+      <SocialDebugger
+        url={enhancedUrl}
+        title={enhancedTitle}
+        description={enhancedDescription}
+        image={enhancedImage}
+      />
     </>
   );
 };

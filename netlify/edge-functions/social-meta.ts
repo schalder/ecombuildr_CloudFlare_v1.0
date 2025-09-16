@@ -122,6 +122,91 @@ function generateHTML(seoData: SEOData, url: string, pathname: string): string {
 </html>`;
 }
 
+// Enhanced content extraction with better description generation
+function extractContentDescription(content: any): string {
+  if (!content) return '';
+  
+  try {
+    // Handle string content
+    if (typeof content === 'string') {
+      return stripHtmlAndExtract(content);
+    }
+    
+    // Handle page builder content
+    if (content.sections && Array.isArray(content.sections)) {
+      const textContent = content.sections
+        .map((section: any) => {
+          if (section.type === 'text' || section.type === 'paragraph') {
+            return section.content || section.text || '';
+          }
+          if (section.type === 'heading') {
+            return section.content || section.text || '';
+          }
+          if (section.blocks && Array.isArray(section.blocks)) {
+            return section.blocks
+              .map((block: any) => block.content || block.text || '')
+              .join(' ');
+          }
+          return '';
+        })
+        .join(' ');
+      
+      return stripHtmlAndExtract(textContent);
+    }
+    
+    return '';
+  } catch (error) {
+    console.warn('Error extracting content description:', error);
+    return '';
+  }
+}
+
+function stripHtmlAndExtract(html: string, maxLength: number = 155): string {
+  if (!html) return '';
+  
+  // Remove HTML tags
+  const withoutTags = html.replace(/<[^>]*>/g, ' ');
+  
+  // Decode HTML entities
+  const decoded = withoutTags
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#039;/g, "'");
+  
+  // Clean up whitespace and split into sentences
+  const sentences = decoded
+    .replace(/\s+/g, ' ')
+    .trim()
+    .split(/[.!?]+/)
+    .filter(sentence => sentence.trim().length > 0);
+  
+  if (sentences.length === 0) return '';
+  
+  let result = sentences[0].trim();
+  let currentLength = result.length;
+  
+  // Add more sentences if they fit
+  for (let i = 1; i < sentences.length && currentLength < maxLength - 20; i++) {
+    const nextSentence = sentences[i].trim();
+    if (currentLength + nextSentence.length + 2 <= maxLength) {
+      result += '. ' + nextSentence;
+      currentLength = result.length;
+    } else {
+      break;
+    }
+  }
+  
+  // Ensure proper ending
+  if (!result.match(/[.!?]$/)) {
+    result += '.';
+  }
+  
+  return result.length > maxLength ? result.substring(0, maxLength - 3) + '...' : result;
+}
+
 async function getSEOData(domain: string, path: string): Promise<SEOData | null> {
   try {
     console.log(`Fetching SEO data for domain: ${domain}, path: ${path}`);
@@ -179,106 +264,92 @@ async function getSEOData(domain: string, path: string): Promise<SEOData | null>
       return null; // Will use fallback
     }
     
-    // For custom domains, find associated content by joining with custom_domains
-    const { data: domainConnection } = await supabaseClient
-      .from('domain_connections')
+    // Check for custom domain connections with enhanced content handling
+    const { data: customDomainData } = await supabaseClient
+      .from('custom_domains')
       .select(`
-        content_type,
-        content_id,
-        websites (
+        id,
+        domain,
+        store_id,
+        websites!websites_store_id_fkey(
           id,
           name,
           slug,
-          settings
-        ),
-        funnels (
-          id,
-          name,
-          slug,
-          settings
-        ),
-        custom_domains!inner (
-          domain
+          settings,
+          seo_title,
+          seo_description,
+          og_image
         )
       `)
-      .eq('custom_domains.domain', domain)
-      .eq('is_active', true)
+      .eq('domain', domain)
+      .eq('is_verified', true)
+      .eq('dns_configured', true)
       .single();
-    
-    if (!domainConnection) {
-      console.log('No domain connection found');
-      return null;
-    }
-    
-    console.log('Domain connection found:', domainConnection.content_type);
-    
-    if (domainConnection.content_type === 'website' && domainConnection.websites) {
-      const website = domainConnection.websites;
+
+    if (customDomainData?.websites) {
+      const website = customDomainData.websites;
+      console.log('✅ Found website via custom domain');
       
-      // If root path, check if there's a homepage
+      // For root path, return website-level SEO
       if (cleanPath === '') {
-        const { data: homepage } = await supabaseClient
-          .from('website_pages')
-          .select(`
-            id,
-            title,
-            slug,
-            seo_title,
-            seo_description,
-            og_image,
-            social_image_url,
-            seo_keywords,
-            canonical_url,
-            meta_robots
-          `)
-          .eq('website_id', website.id)
-          .eq('is_published', true)
-          .eq('is_homepage', true)
+        return {
+          title: website.seo_title || website.name || 'EcomBuildr Store',
+          description: website.seo_description || 'Professional e-commerce store built with EcomBuildr',
+          og_image: website.og_image,
+          canonical: `https://${domain}${path}`,
+          robots: 'index, follow',
+          site_name: website.name || 'EcomBuildr Store'
+        };
+      }
+
+      // For product pages, try to extract product info
+      if (path.includes('/product/')) {
+        const productSlug = path.split('/product/')[1];
+        const { data: productData } = await supabaseClient
+          .from('products')
+          .select('name, description, images, price, store_id')
+          .eq('slug', productSlug)
+          .eq('is_active', true)
           .single();
-        
-        if (homepage) {
+
+        if (productData) {
+          const productImage = productData.images?.[0] || website.og_image;
+          const description = extractContentDescription(productData.description) || 
+                            `${productData.name} - Available at ${website.name}`;
+          
           return {
-            title: homepage.seo_title || homepage.title || website.name,
-            description: homepage.seo_description || `Welcome to ${website.name}`,
-            og_image: homepage.og_image || homepage.social_image_url,
-            keywords: homepage.seo_keywords || [],
-            canonical: homepage.canonical_url || `https://${domain}`,
-            robots: homepage.meta_robots || 'index, follow',
-            site_name: website.name
+            title: `${productData.name} | ${website.name}`,
+            description,
+            og_image: productImage,
+            canonical: `https://${domain}${path}`,
+            robots: 'index, follow',
+            site_name: website.name || 'EcomBuildr Store'
           };
         }
-      } else {
-        // Look for specific page
-        const { data: page } = await supabaseClient
-          .from('website_pages')
-          .select(`
-            id,
-            title,
-            slug,
-            seo_title,
-            seo_description,
-            og_image,
-            social_image_url,
-            seo_keywords,
-            canonical_url,
-            meta_robots
-          `)
-          .eq('website_id', website.id)
-          .eq('slug', cleanPath)
-          .eq('is_published', true)
-          .single();
+      }
+
+      // For specific pages, try to find page content
+      const { data: pageData } = await supabaseClient
+        .from('website_pages')
+        .select('title, seo_title, seo_description, og_image, content')
+        .eq('website_id', website.id)
+        .eq('slug', cleanPath)
+        .eq('is_published', true)
+        .single();
+
+      if (pageData) {
+        const contentDescription = extractContentDescription(pageData.content);
+        const description = pageData.seo_description || contentDescription || 
+                          `${pageData.title} - Page from ${website.name}`;
         
-        if (page) {
-          return {
-            title: page.seo_title || page.title,
-            description: page.seo_description || `${page.title} - ${website.name}`,
-            og_image: page.og_image || page.social_image_url,
-            keywords: page.seo_keywords || [],
-            canonical: page.canonical_url || `https://${domain}${path}`,
-            robots: page.meta_robots || 'index, follow',
-            site_name: website.name
-          };
-        }
+        return {
+          title: pageData.seo_title || pageData.title || website.name,
+          description,
+          og_image: pageData.og_image || website.og_image,
+          canonical: `https://${domain}${path}`,
+          robots: 'index, follow',
+          site_name: website.name || 'EcomBuildr Store'
+        };
       }
       
       // Fallback to website defaults
@@ -289,51 +360,56 @@ async function getSEOData(domain: string, path: string): Promise<SEOData | null>
         site_name: website.name
       };
     }
-    
-    if (domainConnection.content_type === 'funnel' && domainConnection.funnels) {
-      const funnel = domainConnection.funnels;
-      
-      // Look for funnel step
-      const { data: step } = await supabaseClient
-        .from('funnel_steps')
-        .select(`
-          id,
-          title,
-          slug,
-          seo_title,
-          seo_description,
-          og_image,
-          social_image_url,
-          seo_keywords,
-          canonical_url,
-          meta_robots,
-          step_order
-        `)
-        .eq('funnel_id', funnel.id)
-        .eq('slug', cleanPath || '')
+
+    // Check funnel routes
+    if (path.startsWith('/funnel/')) {
+      const funnelSlug = path.split('/funnel/')[1]?.split('/')[0];
+      const { data: funnelData } = await supabaseClient
+        .from('funnels')
+        .select('name, seo_title, seo_description, og_image, domain')
+        .eq('slug', funnelSlug)
         .eq('is_published', true)
+        .eq('is_active', true)
         .single();
-      
-      if (step) {
+
+      if (funnelData) {
+        // Check for funnel steps
+        const stepSlug = path.split('/funnel/')[1]?.split('/')[1];
+        if (stepSlug) {
+          const { data: stepData } = await supabaseClient
+            .from('funnel_steps')
+            .select('name, seo_title, seo_description, og_image, content')
+            .eq('slug', stepSlug)
+            .eq('is_published', true)
+            .single();
+
+          if (stepData) {
+            const contentDescription = extractContentDescription(stepData.content);
+            const description = stepData.seo_description || contentDescription || 
+                              `${stepData.name} - ${funnelData.name}`;
+            
+            return {
+              title: stepData.seo_title || `${stepData.name} | ${funnelData.name}`,
+              description,
+              og_image: stepData.og_image || funnelData.og_image,
+              canonical: `https://${domain}${path}`,
+              robots: 'index, follow',
+              site_name: funnelData.name
+            };
+          }
+        }
+
         return {
-          title: step.seo_title || step.title,
-          description: step.seo_description || `${step.title} - ${funnel.name}`,
-          og_image: step.og_image || step.social_image_url,
-          keywords: step.seo_keywords || [],
-          canonical: step.canonical_url || `https://${domain}${path}`,
-          robots: step.meta_robots || 'index, follow',
-          site_name: funnel.name
+          title: funnelData.seo_title || funnelData.name,
+          description: funnelData.seo_description || `Sales funnel: ${funnelData.name}`,
+          og_image: funnelData.og_image,
+          canonical: `https://${domain}${path}`,
+          robots: 'index, follow',
+          site_name: funnelData.name
         };
       }
-      
-      // Fallback to funnel defaults
-      return {
-        title: funnel.name,
-        description: `Welcome to ${funnel.name}`,
-        canonical: `https://${domain}`,
-        site_name: funnel.name
-      };
     }
+    
     
     return null;
   } catch (error) {
@@ -419,5 +495,5 @@ export default async function handler(request: Request, context: any): Promise<R
 }
 
 export const config = {
-  path: "/*"
+  path: ["/p/*", "/*/product/*", "/funnel/*"]
 };
