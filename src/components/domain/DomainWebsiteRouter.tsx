@@ -12,6 +12,8 @@ import { SearchResults } from '@/pages/storefront/SearchResults';
 import { StorefrontHome } from '@/pages/storefront/StorefrontHome';
 import { StorefrontProducts } from '@/pages/storefront/StorefrontProducts';
 import { CollectionPage } from '@/pages/storefront/CollectionPage';
+import StorefrontCourseLibrary from '@/components/storefront/StorefrontCourseLibrary';
+import StorefrontCourseDetail from '@/components/storefront/StorefrontCourseDetail';
 import { WebsiteHeader } from '@/components/storefront/WebsiteHeader';
 import { WebsiteFooter } from '@/components/storefront/WebsiteFooter';
 import { FloatingCartButton } from '@/components/storefront/FloatingCartButton';
@@ -102,6 +104,16 @@ export const DomainWebsiteRouter: React.FC<DomainWebsiteRouterProps> = ({
       
       {/* Search */}
       <Route path="/search" element={<SearchResults />} />
+      
+      {/* Courses */}
+      <Route path="/courses" element={
+        <WebsiteOverrideRoute 
+          slug="courses" 
+          websiteId={websiteId}
+          fallback={<StorefrontCourseLibrary />} 
+        />
+      } />
+      <Route path="/courses/:courseId" element={<StorefrontCourseDetail />} />
       
       {/* Website Pages - catch all other routes */}
       <Route 

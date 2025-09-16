@@ -5,6 +5,7 @@ import { useStore } from '@/contexts/StoreContext';
 import { MemberAuthProvider } from '@/hooks/useMemberAuth';
 import CourseLibrary from '@/pages/CourseLibrary';
 import CourseDetail from '@/pages/CourseDetail';
+import StorefrontCourseDetail from '@/components/storefront/StorefrontCourseDetail';
 import MemberLogin from '@/pages/MemberLogin';
 import MemberDashboard from '@/pages/MemberDashboard';
 import { Loader2 } from 'lucide-react';
@@ -192,7 +193,7 @@ const CourseDetailWrapper = ({ courseSlug }: { courseSlug: string }) => {
     );
   }
 
-  return <CourseDetail />;
+  return <StorefrontCourseDetail courseSlug={courseSlug} />;
 };
 
 export default CourseDomainRouter;
