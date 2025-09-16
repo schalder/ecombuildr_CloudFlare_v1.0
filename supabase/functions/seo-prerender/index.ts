@@ -350,6 +350,53 @@ serve(async (req) => {
       })
     }
     
+    // FAST PATH: Build minimal HTML from DB SEO data first (per-page OG)
+    try {
+      const dbSeo = await withTimeout(
+        getSEODataAsJSON(supabase, domain, path),
+        fbBot ? FB_BOT_TIMEOUT : DB_TIMEOUT,
+        userAgent
+      )
+      if (dbSeo) {
+        const seo = dbSeo.seo || dbSeo
+        const htmlFromSeo = `<!DOCTYPE html>
+<html lang="${sanitizeText(seo.language || 'en', 10)}">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  ${generateSEOTags({
+    title: seo.title,
+    description: seo.description,
+    image: seo.og_image,
+    canonicalUrl: seo.canonical || `https://${domain}${path}`,
+    robots: seo.robots || 'index, follow',
+    siteName: undefined,
+    ogType: 'website',
+    keywords: Array.isArray(seo.keywords) ? seo.keywords.join(', ') : undefined,
+    author: seo.author,
+    languageCode: seo.language || 'en'
+  })}
+</head>
+<body>
+  <h1>${sanitizeText(seo.title || 'Page')}</h1>
+</body>
+</html>`
+        setCachedResponse(cacheKey, htmlFromSeo)
+        return new Response(htmlFromSeo, {
+          headers: {
+            ...corsHeaders,
+            'Content-Type': 'text/html; charset=UTF-8',
+            'Cache-Control': 'public, max-age=300, s-maxage=3600',
+            'X-Cache': 'SEO-DB-DIRECT',
+            'X-Content-Source': 'seo-db-direct',
+            'Vary': 'User-Agent'
+          }
+        })
+      }
+    } catch (e) {
+      console.warn('⚠️ Direct SEO DB path failed, falling back to snapshots', e)
+    }
+    
     // First try to get HTML snapshot from database with timeout
     const htmlSnapshot = await withTimeout(
       getHTMLSnapshot(supabase, domain, path, userAgent),
