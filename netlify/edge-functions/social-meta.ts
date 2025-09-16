@@ -145,13 +145,30 @@ async function resolveSEOData(domain: string, path: string): Promise<SEOData | n
       .eq('content_type', 'website')
       .maybeSingle();
     
-    if (!websiteConnection) {
-      console.log('❌ No website connection found');
+    let websiteId: string | null = null;
+    
+    if (websiteConnection) {
+      websiteId = websiteConnection.content_id;
+      console.log(`✅ Found website connection: ${websiteId}`);
+    } else {
+      console.log('⚠️ No website connection found for domain. Falling back to store websites');
+      const { data: storeWebsites } = await supabase
+        .from('websites')
+        .select('id, domain')
+        .eq('store_id', customDomain.store_id)
+        .eq('is_active', true)
+        .eq('is_published', true);
+      if (storeWebsites && storeWebsites.length > 0) {
+        const exactMatch = storeWebsites.find(w => w.domain && w.domain.replace(/^www\./, '') === apexDomain);
+        websiteId = exactMatch?.id || storeWebsites[0].id;
+        console.log(`📦 Using store website fallback: ${websiteId}`);
+      }
+    }
+    
+    if (!websiteId) {
+      console.log('❌ No website resolved after fallback');
       return null;
     }
-
-    const websiteId = websiteConnection.content_id;
-    console.log(`✅ Found website connection: ${websiteId}`);
     
     
     // Step 3: Get website data
@@ -179,7 +196,7 @@ async function resolveSEOData(domain: string, path: string): Promise<SEOData | n
         canonical: `https://${domain}/`,
         robots: 'index, follow',
         site_name: website.name,
-        source: 'website_root'
+        source: `website_root|website:${websiteId}`
       };
     }
     
@@ -206,7 +223,7 @@ async function resolveSEOData(domain: string, path: string): Promise<SEOData | n
           canonical: `https://${domain}${path}`,
           robots: 'index, follow',
           site_name: website.name,
-          source: 'product_page'
+          source: `product_page|website:${websiteId}|slug:${productSlug}`
         };
       }
     }
@@ -249,7 +266,7 @@ async function resolveSEOData(domain: string, path: string): Promise<SEOData | n
               canonical: `https://${domain}${path}`,
               robots: 'index, follow',
               site_name: funnel.name,
-              source: 'funnel_step'
+              source: `funnel_step|funnel:${funnel.id}|step:${stepSlug}`
             };
           }
         } else {
@@ -265,7 +282,7 @@ async function resolveSEOData(domain: string, path: string): Promise<SEOData | n
             canonical: `https://${domain}${path}`,
             robots: 'index, follow',
             site_name: funnel.name,
-            source: 'funnel_landing'
+            source: `funnel_landing|funnel:${funnel.id}`
           };
         }
       }
@@ -276,7 +293,7 @@ async function resolveSEOData(domain: string, path: string): Promise<SEOData | n
       .from('website_pages')
       .select(`
         id, title, slug,
-        seo_title, seo_description, og_image, social_image_url,
+        seo_title, seo_description, og_image, social_image_url, preview_image_url,
         seo_keywords, canonical_url, meta_robots, content
       `)
       .eq('website_id', websiteId)
@@ -287,7 +304,7 @@ async function resolveSEOData(domain: string, path: string): Promise<SEOData | n
     if (page) {
       const contentDesc = extractContentDescription(page.content);
       const description = page.seo_description || contentDesc || `${page.title} - ${website.name}`;
-      const image = normalizeImageUrl(page.social_image_url || page.og_image || website.og_image);
+      const image = normalizeImageUrl(page.social_image_url || page.og_image || page.preview_image_url || website.og_image);
       
       return {
         title: page.seo_title || page.title,
@@ -297,22 +314,22 @@ async function resolveSEOData(domain: string, path: string): Promise<SEOData | n
         canonical: page.canonical_url || `https://${domain}${path}`,
         robots: page.meta_robots || 'index, follow',
         site_name: website.name,
-        source: 'website_page'
+        source: `website_page|website:${websiteId}|slug:${cleanPath}`
       };
     }
     
     // Fallback to website SEO
     const image = normalizeImageUrl(website.og_image);
-    return {
-      title: website.name,
-      description: website.seo_description || `Welcome to ${website.name}`,
-      og_image: image,
-      keywords: [],
-      canonical: `https://${domain}${path}`,
-      robots: 'index, follow',
-      site_name: website.name,
-      source: 'website_fallback'
-    };
+  return {
+    title: website.name,
+    description: website.seo_description || `Welcome to ${website.name}`,
+    og_image: image,
+    keywords: [],
+    canonical: `https://${domain}${path}`,
+    robots: 'index, follow',
+    site_name: website.name,
+    source: `website_fallback|website:${websiteId}`
+  };
     
   } catch (error) {
     console.error('❌ SEO resolution error:', error);
