@@ -25,7 +25,7 @@ import { useUserStore } from '@/hooks/useUserStore';
 import { setGlobalCurrency } from '@/lib/currency';
 import { useStore } from '@/contexts/StoreContext';
 import { WebsiteProvider } from '@/contexts/WebsiteContext';
-import { useHTMLGeneration } from '@/hooks/useHTMLGeneration';
+
 import { SEOConfig } from '@/lib/seo';
 import { FunnelStepToolbar } from '@/components/page-builder/components/FunnelStepToolbar';
 import { FunnelStepProvider } from '@/contexts/FunnelStepContext';
@@ -78,7 +78,7 @@ export default function PageBuilder() {
   const [showPreview, setShowPreview] = useState(false);
   const [previewDeviceType, setPreviewDeviceType] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
   
-  const { generateAndSaveHTML, isGenerating } = useHTMLGeneration();
+  
 
   const loadPage = useCallback(async () => {
     if (!entityId || !currentStore) return;

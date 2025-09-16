@@ -49,20 +49,8 @@
       img[width][height] { aspect-ratio: attr(width) / attr(height); }
     </style>
     
-    <!-- Dynamic SEO tags placeholder; social crawlers are handled by Netlify Edge Function (social-meta) -->
-    <script>
-      (function () {
-        // Do NOT fetch external SEO. Crawlers receive prerendered HTML from social-meta.
-        // For regular users, pages/components should manage their own SEO.
-        // Small safeguard: if og:site_name is still the platform default, set it to current hostname.
-        try {
-          const siteName = document.querySelector('meta[property="og:site_name"]');
-          if (siteName && /EcomBuildr/i.test(siteName.getAttribute('content') || '')) {
-            siteName.setAttribute('content', window.location.hostname);
-          }
-        } catch (e) { /* noop */ }
-      })();
-    </script>
+    <!-- Social crawlers are handled by Netlify Edge Function (social-meta) -->
+    <!-- Client-side SEO is managed by individual pages/components -->
     
     <!-- Dynamic SEO tags are managed in code per-page via setSEO function -->
     <!-- Favicon is set dynamically per website/funnel in setSEO() function -->
