@@ -3247,6 +3247,14 @@ export type Database = {
         Args: { _resource_type: string; _user_id: string }
         Returns: boolean
       }
+      check_course_slug_availability: {
+        Args: {
+          p_domain_id: string
+          p_exclude_connection_id?: string
+          p_slug: string
+        }
+        Returns: boolean
+      }
       cleanup_expired_cart_sessions: {
         Args: Record<PropertyKey, never>
         Returns: number

@@ -28,7 +28,8 @@ import {
   Eye,
   GraduationCap,
   PlayCircle,
-  BookOpen
+  BookOpen,
+  Globe
 } from 'lucide-react';
 import { useUserStore } from '@/hooks/useUserStore';
 import { supabase } from '@/integrations/supabase/client';
@@ -159,10 +160,16 @@ const Courses = () => {
               Create and manage your online courses with modules and lessons
             </p>
           </div>
+        <div className="flex gap-2">
+          <Button onClick={() => navigate('/dashboard/courses/domains')} variant="outline">
+            <Globe className="h-4 w-4 mr-2" />
+            Course Domains
+          </Button>
           <Button onClick={() => navigate('/dashboard/courses/create')}>
             <Plus className="h-4 w-4 mr-2" />
             Create Course
           </Button>
+        </div>
         </div>
 
         {/* Search and Stats */}
