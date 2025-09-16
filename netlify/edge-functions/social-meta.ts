@@ -214,30 +214,8 @@ async function getSEOData(domain: string, path: string): Promise<SEOData | null>
     // Clean up path
     const cleanPath = path === '/' ? '' : path.replace(/^\/+|\/+$/g, '');
     
-    // Prefer canonical SEO generation via Supabase Edge Function
-    try {
-      const edgeUrl = `https://fhqwacmokbtbspkxjixf.functions.supabase.co/seo-prerender?format=json&domain=${encodeURIComponent(domain)}&path=${encodeURIComponent(path)}`;
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 1500);
-      const resp = await fetch(edgeUrl, { headers: { Accept: 'application/json' }, signal: controller.signal });
-      clearTimeout(timeout);
-      if (resp.ok) {
-        const json = await resp.json();
-        if (json && (json.title || json.description)) {
-          return {
-            title: json.title,
-            description: json.description,
-            og_image: json.image || json.og_image || json.social_image_url,
-            keywords: json.keywords || json.seo_keywords || [],
-            canonical: json.canonical || `https://${domain}${path}`,
-            robots: json.robots || json.meta_robots || 'index, follow',
-            site_name: json.site_name || json.website_name || json.funnel_name || 'Site'
-          };
-        }
-      }
-    } catch (e) {
-      console.log('Supabase SEO JSON fetch failed, falling back', e);
-    }
+    // Disabled external Supabase seo-prerender dependency. Using local DB-only SEO generation.
+
     
     // Check if this is EcomBuildr main domain
     if (domain === 'ecombuildr.com' || domain === 'localhost' || domain.includes('lovable.app')) {
@@ -265,29 +243,30 @@ async function getSEOData(domain: string, path: string): Promise<SEOData | null>
     }
     
     // Check for custom domain connections with enhanced content handling
+    const apexDomain = domain.replace(/^www\./, '');
+    const domainVariants = [domain, apexDomain, `www.${apexDomain}`];
     const { data: customDomainData } = await supabaseClient
       .from('custom_domains')
-      .select(`
-        id,
-        domain,
-        store_id,
-        websites!websites_store_id_fkey(
-          id,
-          name,
-          slug,
-          settings,
-          seo_title,
-          seo_description,
-          og_image
-        )
-      `)
-      .eq('domain', domain)
+      .select('id, domain, store_id')
+      .in('domain', domainVariants)
       .eq('is_verified', true)
       .eq('dns_configured', true)
-      .single();
+      .maybeSingle();
 
-    if (customDomainData?.websites) {
-      const website = customDomainData.websites;
+    // Fetch website by store and try to match domain
+    let website: any = null;
+    if (customDomainData?.store_id) {
+      const { data: websitesForStore } = await supabaseClient
+        .from('websites')
+        .select('id, name, slug, settings, seo_title, seo_description, og_image, domain, is_active, is_published')
+        .eq('store_id', customDomainData.store_id)
+        .eq('is_active', true)
+        .eq('is_published', true);
+
+      website = websitesForStore?.find((w: any) => (w.domain || '').replace(/^www\./, '') === apexDomain) || websitesForStore?.[0] || null;
+    }
+
+    if (website) {
       console.log('✅ Found website via custom domain');
       
       // For root path, return website-level SEO
@@ -310,7 +289,7 @@ async function getSEOData(domain: string, path: string): Promise<SEOData | null>
           .select('name, description, images, price, store_id')
           .eq('slug', productSlug)
           .eq('is_active', true)
-          .single();
+            .maybeSingle();
 
         if (productData) {
           const productImage = productData.images?.[0] || website.og_image;
@@ -335,7 +314,7 @@ async function getSEOData(domain: string, path: string): Promise<SEOData | null>
         .eq('website_id', website.id)
         .eq('slug', cleanPath)
         .eq('is_published', true)
-        .single();
+        .maybeSingle();
 
       if (pageData) {
         const contentDescription = extractContentDescription(pageData.content);
@@ -371,7 +350,7 @@ async function getSEOData(domain: string, path: string): Promise<SEOData | null>
         .eq('slug', funnelSlug)
         .eq('is_published', true)
         .eq('is_active', true)
-        .single();
+        .maybeSingle();
 
       if (funnelData) {
         // Check for funnel steps
@@ -382,7 +361,7 @@ async function getSEOData(domain: string, path: string): Promise<SEOData | null>
             .select('name, seo_title, seo_description, og_image, content')
             .eq('slug', stepSlug)
             .eq('is_published', true)
-            .single();
+            .maybeSingle();
 
           if (stepData) {
             const contentDescription = extractContentDescription(stepData.content);
@@ -401,8 +380,8 @@ async function getSEOData(domain: string, path: string): Promise<SEOData | null>
         }
 
         return {
-          title: funnelData.seo_title || funnelData.name,
-          description: funnelData.seo_description || `Sales funnel: ${funnelData.name}`,
+          title: funnelData?.seo_title || funnelData?.name,
+          description: funnelData?.seo_description || (funnelData ? `Sales funnel: ${funnelData.name}` : 'Sales funnel'),
           og_image: funnelData.og_image,
           canonical: `https://${domain}${path}`,
           robots: 'index, follow',
@@ -439,33 +418,7 @@ export default async function handler(request: Request, context: any): Promise<R
   console.log('Edge Function - Social crawler detected, generating HTML');
   
   try {
-    // 1) Try proxying the canonical HTML prerender from Supabase (best source of truth)
-    try {
-      const prerenderUrl = `https://fhqwacmokbtbspkxjixf.functions.supabase.co/seo-prerender?domain=${encodeURIComponent(domain)}&path=${encodeURIComponent(pathname)}`;
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 3000);
-      const resp = await fetch(prerenderUrl, {
-        headers: {
-          Accept: 'text/html',
-          // Forward the original crawler UA so the function treats it as a bot
-          'user-agent': userAgent,
-        },
-        signal: controller.signal,
-      });
-      clearTimeout(timeout);
-      if (resp.ok && (resp.headers.get('content-type') || '').includes('text/html')) {
-        const html = await resp.text();
-        return new Response(html, {
-          headers: {
-            'Content-Type': 'text/html; charset=utf-8',
-            'Cache-Control': 'public, max-age=300, s-maxage=300',
-          },
-        });
-      }
-      console.log('Supabase HTML prerender not available, status:', resp.status);
-    } catch (e) {
-      console.log('Supabase HTML prerender fetch failed:', e);
-    }
+    // Using local SEO synthesis only (no external prerender).
 
     // 2) Fallback: get SEO JSON/DB and synthesize minimal HTML
     const seoData = await getSEOData(domain, pathname);
