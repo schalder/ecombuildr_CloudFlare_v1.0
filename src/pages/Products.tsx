@@ -54,7 +54,6 @@ interface Product {
   sku?: string;
   inventory_quantity?: number;
   is_active: boolean;
-  is_membership?: boolean;
   images: any;
   created_at: string;
   categories?: {
@@ -141,7 +140,6 @@ export default function Products() {
             sku,
             inventory_quantity,
             is_active,
-            is_membership,
             images,
             created_at,
             categories:category_id(name)
@@ -400,25 +398,10 @@ export default function Products() {
                 <Download className="h-4 w-4 mr-2" />
                 {isMobile ? "" : "Export"}
               </Button>
-              
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button size={isMobile ? "sm" : "default"}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    {isMobile ? "Add" : "Add Product"}
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => navigate('/dashboard/products/add')}>
-                    <Package className="h-4 w-4 mr-2" />
-                    Physical Product
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/dashboard/products/membership/new')}>
-                    <CheckSquare className="h-4 w-4 mr-2" />
-                    Digital/Membership Product
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <Button onClick={() => navigate('/dashboard/products/add')} size={isMobile ? "sm" : "default"}>
+                <Plus className="h-4 w-4 mr-2" />
+                {isMobile ? "Add" : "Add Product"}
+              </Button>
             </div>
           </div>
           
@@ -578,12 +561,7 @@ export default function Products() {
                               <Eye className="mr-2 h-3.5 w-3.5" />
                               View
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => {
-                              const editPath = product.is_membership 
-                                ? `/dashboard/products/membership/${product.id}`
-                                : `/dashboard/products/${product.id}/edit`;
-                              navigate(editPath);
-                            }}>
+                            <DropdownMenuItem onClick={() => navigate(`/dashboard/products/${product.id}/edit`)}>
                                <Edit className="mr-2 h-3.5 w-3.5" />
                                Edit
                              </DropdownMenuItem>
@@ -705,15 +683,7 @@ export default function Products() {
                             />
                           )}
                           <div>
-                            <div className="flex items-center gap-2">
-                              <span className="font-medium">{product.name}</span>
-                              {product.is_membership && (
-                                <Badge variant="outline" className="text-xs">
-                                  <CheckSquare className="h-3 w-3 mr-1" />
-                                  Digital
-                                </Badge>
-                              )}
-                            </div>
+                            <div className="font-medium">{product.name}</div>
                             <div className="text-sm text-muted-foreground">
                               Added {new Date(product.created_at).toLocaleDateString()}
                             </div>
@@ -760,12 +730,7 @@ export default function Products() {
                               <Eye className="mr-2 h-4 w-4" />
                               View
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => {
-                              const editPath = product.is_membership 
-                                ? `/dashboard/products/membership/${product.id}`
-                                : `/dashboard/products/${product.id}/edit`;
-                              navigate(editPath);
-                            }}>
+                            <DropdownMenuItem onClick={() => navigate(`/dashboard/products/${product.id}/edit`)}>
                                <Edit className="mr-2 h-4 w-4" />
                                Edit
                              </DropdownMenuItem>

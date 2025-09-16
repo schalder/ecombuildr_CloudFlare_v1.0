@@ -104,7 +104,9 @@ import { OnboardingGate } from "@/components/dashboard/OnboardingGate";
 import { ScrollToHash } from "@/components/ScrollToHash";
 import { RequireSuperAdmin } from "@/components/admin/RequireSuperAdmin";
 import MemberRoutes from "@/components/MemberRoutes";
-import MembershipProductManager from "@/pages/MembershipProductManager";
+import Courses from "@/pages/Courses";
+import CreateCourse from "@/pages/CreateCourse";
+import CourseEditor from "@/pages/CourseEditor";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -183,8 +185,10 @@ const App = () => (
                     <Route path="settings/profile" element={<ProfileSettings />} />
                     <Route path="settings/billing" element={<BillingSettings />} />
                     <Route path="domains" element={<Domains />} />
-                    <Route path="products/membership/new" element={<MembershipProductManager />} />
-                    <Route path="products/membership/:id" element={<MembershipProductManager />} />
+                    <Route path="courses" element={<Courses />} />
+                    <Route path="courses/create" element={<CreateCourse />} />
+                    <Route path="courses/:id/edit" element={<CourseEditor />} />
+                    <Route path="courses/:id" element={<CourseEditor />} />
                   </Route>
                   
                   {/* These routes are outside OnboardingGate so new users can access them */}
