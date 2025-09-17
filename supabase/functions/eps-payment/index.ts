@@ -1,7 +1,7 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.208.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-import { HmacSha512 } from "https://deno.land/std@0.190.0/crypto/hmac.ts";
-import { encode } from "https://deno.land/std@0.190.0/encoding/base64.ts";
+import { crypto } from "https://deno.land/std@0.208.0/crypto/crypto.ts";
+import { encodeBase64 } from "https://deno.land/std@0.208.0/encoding/base64.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -24,11 +24,21 @@ interface EPSPaymentRequest {
 }
 
 // Helper function to generate HMAC-SHA512 hash
-function generateHash(data: string, key: string): string {
-  const hmac = new HmacSha512(key);
-  hmac.update(data);
-  const hash = hmac.digest();
-  return encode(hash).replace(/=/g, '');
+async function generateHash(data: string, key: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const keyData = encoder.encode(key);
+  const dataToSign = encoder.encode(data);
+  
+  const cryptoKey = await crypto.subtle.importKey(
+    'raw',
+    keyData,
+    { name: 'HMAC', hash: 'SHA-512' },
+    false,
+    ['sign']
+  );
+  
+  const signature = await crypto.subtle.sign('HMAC', cryptoKey, dataToSign);
+  return encodeBase64(new Uint8Array(signature));
 }
 
 serve(async (req) => {
@@ -72,7 +82,7 @@ serve(async (req) => {
     // Step 1: Get authentication token
     const timestamp = Math.floor(Date.now() / 1000).toString();
     const tokenData = `${epsConfig.merchant_id}${epsConfig.store_id}${timestamp}`;
-    const tokenHash = generateHash(tokenData, epsConfig.hash_key);
+    const tokenHash = await generateHash(tokenData, epsConfig.hash_key);
 
     const tokenResponse = await fetch(`${epsConfig.base_url}/api/v1/get-token`, {
       method: 'POST',
@@ -101,7 +111,7 @@ serve(async (req) => {
     const transactionId = `TXN-${orderId}-${Date.now()}`;
     const paymentTimestamp = Math.floor(Date.now() / 1000).toString();
     const paymentHashData = `${epsConfig.merchant_id}${transactionId}${amount}BDT${paymentTimestamp}`;
-    const paymentHash = generateHash(paymentHashData, epsConfig.hash_key);
+    const paymentHash = await generateHash(paymentHashData, epsConfig.hash_key);
 
     const paymentData = {
       merchant_id: epsConfig.merchant_id,

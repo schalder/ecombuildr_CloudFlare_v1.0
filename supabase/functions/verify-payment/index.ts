@@ -1,9 +1,12 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.208.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { crypto } from "https://deno.land/std@0.208.0/crypto/crypto.ts";
+import { encodeBase64 } from "https://deno.land/std@0.208.0/encoding/base64.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
 };
 
 interface VerifyPaymentRequest {
@@ -212,27 +215,21 @@ async function verifyEPSPayment(transactionId: string, storeId: string, supabase
     };
 
     // Helper function to generate HMAC-SHA512 hash
-    function generateHash(data: string, key: string): string {
+    async function generateHash(data: string, key: string): Promise<string> {
       const encoder = new TextEncoder();
-      const keyBytes = encoder.encode(key);
-      const dataBytes = encoder.encode(data);
+      const keyData = encoder.encode(key);
+      const dataToSign = encoder.encode(data);
       
-      // Simple HMAC implementation for Deno
-      const hmac = crypto.subtle.importKey(
+      const cryptoKey = await crypto.subtle.importKey(
         'raw',
-        keyBytes,
+        keyData,
         { name: 'HMAC', hash: 'SHA-512' },
         false,
         ['sign']
       );
       
-      return hmac.then(key => 
-        crypto.subtle.sign('HMAC', key, dataBytes)
-      ).then(signature => 
-        Array.from(new Uint8Array(signature))
-          .map(b => b.toString(16).padStart(2, '0'))
-          .join('')
-      );
+      const signature = await crypto.subtle.sign('HMAC', cryptoKey, dataToSign);
+      return encodeBase64(new Uint8Array(signature));
     }
 
     // Get authentication token
