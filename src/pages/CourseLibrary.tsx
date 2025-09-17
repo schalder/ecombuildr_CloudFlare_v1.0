@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Clock, Users, Star, BookOpen, Search, DollarSign } from 'lucide-react';
+import { Clock, Users, Star, BookOpen, Search } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useCourseCurrency } from '@/hooks/useCourseCurrency';
 import { formatCoursePrice } from '@/utils/currency';
@@ -154,14 +154,7 @@ const CourseLibrary = () => {
                     {/* Price Badge */}
                     <div className="absolute top-3 right-3">
                       <Badge variant="secondary" className="bg-background/90 text-foreground">
-                        {course.price > 0 ? (
-                          <div className="flex items-center gap-1">
-                            <DollarSign className="h-3 w-3" />
-                            {formatCoursePrice(course.price, currency, false)}
-                          </div>
-                        ) : (
-                          'Free'
-                        )}
+                        {course.price > 0 ? formatCoursePrice(course.price, currency, true) : 'Free'}
                       </Badge>
                     </div>
                   </div>

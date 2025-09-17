@@ -14,7 +14,6 @@ import {
   PlayCircle,
   Clock,
   Users,
-  DollarSign,
   Globe
 } from 'lucide-react';
 import { useUserStore } from '@/hooks/useUserStore';
@@ -255,9 +254,8 @@ const CourseView = () => {
               
               <Card>
                 <CardContent className="p-4 text-center">
-                  <DollarSign className="h-8 w-8 mx-auto mb-2 text-primary" />
-                  <div className="text-2xl font-bold">{formatCoursePrice(course.price, currency)}</div>
-                  <div className="text-sm text-muted-foreground">Price</div>
+                  <div className="text-2xl font-bold mb-2">{formatCoursePrice(course.price, currency)}</div>
+                  <div className="text-sm text-muted-foreground">Course Price</div>
                 </CardContent>
               </Card>
             </div>
