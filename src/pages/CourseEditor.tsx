@@ -51,6 +51,8 @@ interface Course {
   thumbnail_url?: string;
   is_published: boolean;
   is_active: boolean;
+  includes_title?: string;
+  includes_items?: string[];
 }
 
 interface Module {
@@ -456,6 +458,69 @@ const CourseEditor = () => {
                     placeholder="Write a detailed description of your course content, objectives, prerequisites, etc..."
                     className="min-h-[150px]"
                   />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* What it includes Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle>What This Course Includes</CardTitle>
+                <CardDescription>
+                  Optional section to highlight what students will get with this course
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="includes-title">Section Title (Optional)</Label>
+                  <Input
+                    id="includes-title"
+                    value={course.includes_title || ''}
+                    onChange={(e) => setCourse(prev => prev ? {...prev, includes_title: e.target.value} : null)}
+                    placeholder="e.g., This Course Includes"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Course Features (Optional)</Label>
+                  <div className="space-y-2">
+                    {(course.includes_items || []).map((item, index) => (
+                      <div key={index} className="flex gap-2">
+                        <Input
+                          value={item}
+                          onChange={(e) => {
+                            const newItems = [...(course.includes_items || [])];
+                            newItems[index] = e.target.value;
+                            setCourse(prev => prev ? {...prev, includes_items: newItems} : null);
+                          }}
+                          placeholder="e.g., 5.4 hours on-demand video"
+                          className="flex-1"
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          onClick={() => {
+                            const newItems = (course.includes_items || []).filter((_, i) => i !== index);
+                            setCourse(prev => prev ? {...prev, includes_items: newItems} : null);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        setCourse(prev => prev ? {...prev, includes_items: [...(prev.includes_items || []), '']} : null);
+                      }}
+                      className="w-full"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Feature
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>

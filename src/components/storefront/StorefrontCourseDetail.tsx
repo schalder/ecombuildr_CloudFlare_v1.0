@@ -376,10 +376,11 @@ const StorefrontCourseDetail: React.FC<StorefrontCourseDetailProps> = ({ courseS
 
             {/* Right Sidebar */}
             <div className="lg:col-span-1 space-y-6">
-              {/* Course Thumbnail */}
+              {/* Combined Course Card: Thumbnail + Pricing + Includes */}
               <Card>
-                <CardContent className="p-4">
-                  <div className="aspect-video bg-muted rounded-lg mb-4 flex items-center justify-center">
+                <CardContent className="p-6 space-y-6">
+                  {/* Course Thumbnail */}
+                  <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
                     {course.thumbnail_url ? (
                       <img 
                         src={course.thumbnail_url} 
@@ -393,12 +394,8 @@ const StorefrontCourseDetail: React.FC<StorefrontCourseDetailProps> = ({ courseS
                       </div>
                     )}
                   </div>
-                </CardContent>
-              </Card>
 
-              {/* Pricing & Enrollment */}
-              <Card>
-                <CardContent className="p-6 space-y-4">
+                  {/* Pricing Section */}
                   <div className="text-center">
                     {course.price > 0 ? (
                       <div className="space-y-2">
@@ -422,6 +419,7 @@ const StorefrontCourseDetail: React.FC<StorefrontCourseDetailProps> = ({ courseS
                     )}
                   </div>
 
+                  {/* Payment Options */}
                   {course.price > 0 && (
                     <div className="space-y-3">
                       <Select value={selectedPaymentGateway} onValueChange={setSelectedPaymentGateway}>
@@ -449,6 +447,7 @@ const StorefrontCourseDetail: React.FC<StorefrontCourseDetailProps> = ({ courseS
                     </div>
                   )}
 
+                  {/* Enroll Button */}
                   <Button className="w-full" size="lg">
                     <Star className="h-5 w-5 mr-2" />
                     Enrol Now
@@ -457,37 +456,35 @@ const StorefrontCourseDetail: React.FC<StorefrontCourseDetailProps> = ({ courseS
                   <div className="text-center text-sm text-muted-foreground">
                     <p>30-day money-back guarantee</p>
                   </div>
-                </CardContent>
-              </Card>
 
-              {/* Course Includes */}
-              <Card>
-                <CardContent className="p-6">
-                  <h3 className="font-semibold mb-4">This Course Includes</h3>
-                  <div className="space-y-3 text-sm">
-                    <div className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-600" />
-                      <span>{Math.floor(totalDuration / 60)}.{Math.floor((totalDuration % 60) * 10 / 60)} hours on-demand video</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-600" />
-                      <span>{publishedLessons} articles</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-600" />
-                      <span>{totalResources} downloadable resources</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-600" />
-                      <span>Full lifetime access</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-600" />
-                      <span>Access on mobile and TV</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-600" />
-                      <span>Certificate of completion</span>
+                  {/* Course Includes */}
+                  <div className="border-t pt-6">
+                    <h3 className="font-semibold mb-4">This Course Includes</h3>
+                    <div className="space-y-3 text-sm">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="h-4 w-4 text-green-600" />
+                        <span>{Math.floor(totalDuration / 60)}.{Math.floor((totalDuration % 60) * 10 / 60)} hours on-demand video</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="h-4 w-4 text-green-600" />
+                        <span>{publishedLessons} articles</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="h-4 w-4 text-green-600" />
+                        <span>{totalResources} downloadable resources</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="h-4 w-4 text-green-600" />
+                        <span>Full lifetime access</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="h-4 w-4 text-green-600" />
+                        <span>Access on mobile and TV</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="h-4 w-4 text-green-600" />
+                        <span>Certificate of completion</span>
+                      </div>
                     </div>
                   </div>
                 </CardContent>

@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
-import { Loader2, Save, ArrowLeft, Upload, Image, DollarSign } from 'lucide-react';
+import { Loader2, Save, ArrowLeft, Upload, Image, DollarSign, Plus, Trash2 } from 'lucide-react';
 import { MediaSelector } from '@/components/page-builder/components/MediaSelector';
 import { useUserStore } from '@/hooks/useUserStore';
 import { supabase } from '@/integrations/supabase/client';
@@ -23,6 +23,8 @@ interface CourseFormData {
   thumbnail_url: string;
   is_published: boolean;
   is_active: boolean;
+  includes_title: string;
+  includes_items: string[];
 }
 
 const CreateCourse = () => {
@@ -38,7 +40,9 @@ const CreateCourse = () => {
     compare_price: null,
     thumbnail_url: '',
     is_published: false,
-    is_active: true
+    is_active: true,
+    includes_title: '',
+    includes_items: []
   });
 
   const handleInputChange = (field: keyof CourseFormData, value: any) => {
@@ -200,6 +204,69 @@ const CreateCourse = () => {
                   onChange={(content) => handleInputChange('content', content)}
                   placeholder="Describe what students will learn, course objectives, prerequisites, etc..."
                 />
+              </CardContent>
+            </Card>
+
+            {/* What it includes Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle>What This Course Includes</CardTitle>
+                <CardDescription>
+                  Optional section to highlight what students will get with this course
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="includes-title">Section Title (Optional)</Label>
+                  <Input
+                    id="includes-title"
+                    value={formData.includes_title}
+                    onChange={(e) => handleInputChange('includes_title', e.target.value)}
+                    placeholder="e.g., This Course Includes"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Course Features (Optional)</Label>
+                  <div className="space-y-2">
+                    {formData.includes_items.map((item, index) => (
+                      <div key={index} className="flex gap-2">
+                        <Input
+                          value={item}
+                          onChange={(e) => {
+                            const newItems = [...formData.includes_items];
+                            newItems[index] = e.target.value;
+                            handleInputChange('includes_items', newItems);
+                          }}
+                          placeholder="e.g., 5.4 hours on-demand video"
+                          className="flex-1"
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          onClick={() => {
+                            const newItems = formData.includes_items.filter((_, i) => i !== index);
+                            handleInputChange('includes_items', newItems);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        handleInputChange('includes_items', [...formData.includes_items, '']);
+                      }}
+                      className="w-full"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Feature
+                    </Button>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </div>
