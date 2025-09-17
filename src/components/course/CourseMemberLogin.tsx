@@ -7,6 +7,9 @@ import { Label } from '@/components/ui/label';
 import { Loader2, Lock } from 'lucide-react';
 import { useMemberAuth } from '@/hooks/useMemberAuth';
 import { useStore } from '@/contexts/StoreContext';
+import { MetaTags } from '@/components/MetaTags';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 const CourseMemberLogin = () => {
   const navigate = useNavigate();
@@ -17,6 +20,24 @@ const CourseMemberLogin = () => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Fetch store settings for logo and favicon
+  const { data: storeSettings } = useQuery({
+    queryKey: ['store-settings', store?.id],
+    queryFn: async () => {
+      if (!store?.id) return null;
+      
+      const { data, error } = await supabase
+        .from('stores')
+        .select('course_login_logo_url, course_favicon_url')
+        .eq('id', store.id)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!store?.id,
+  });
 
   // Redirect if already logged in
   useEffect(() => {
@@ -52,15 +73,31 @@ const CourseMemberLogin = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-primary/10 rounded-full mb-4">
-            <Lock className="h-8 w-8 text-primary" />
+    <>
+      <MetaTags
+        title={`Course Members Login - ${store.name}`}
+        description="Access your purchased courses"
+        favicon={storeSettings?.course_favicon_url}
+      />
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <div className="w-full max-w-md">
+          <div className="text-center mb-8">
+            {storeSettings?.course_login_logo_url ? (
+              <div className="inline-flex items-center justify-center w-20 h-20 mb-4">
+                <img 
+                  src={storeSettings.course_login_logo_url} 
+                  alt={`${store.name} Logo`}
+                  className="max-w-full max-h-full object-contain"
+                />
+              </div>
+            ) : (
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-primary/10 rounded-full mb-4">
+                <Lock className="h-8 w-8 text-primary" />
+              </div>
+            )}
+            <h1 className="text-2xl font-bold">Course Members Area</h1>
+            <p className="text-muted-foreground">Access your purchased courses from {store.name}</p>
           </div>
-          <h1 className="text-2xl font-bold">{store.name}</h1>
-          <p className="text-muted-foreground">Course Members Area</p>
-        </div>
 
         <Card>
           <CardHeader>
@@ -124,6 +161,7 @@ const CourseMemberLogin = () => {
         </Card>
       </div>
     </div>
+    </>
   );
 };
 

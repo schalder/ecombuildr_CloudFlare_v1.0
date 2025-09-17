@@ -22,6 +22,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useStore } from '@/contexts/StoreContext';
 import { useCourseCurrency } from '@/hooks/useCourseCurrency';
 import { formatCoursePrice } from '@/utils/currency';
+import { MetaTags } from '@/components/MetaTags';
 
 interface Course {
   id: string;
@@ -49,6 +50,24 @@ const StorefrontCourseLibrary: React.FC = () => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const { store } = useStore();
   const { currency } = useCourseCurrency();
+
+  // Fetch store settings for favicon
+  const { data: storeSettings } = useQuery({
+    queryKey: ['store-favicon', store?.id],
+    queryFn: async () => {
+      if (!store?.id) return null;
+      
+      const { data, error } = await supabase
+        .from('stores')
+        .select('course_favicon_url')
+        .eq('id', store.id)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!store?.id,
+  });
 
   const { data: courses, isLoading, error } = useQuery({
     queryKey: ['storefront-courses', store?.id, searchTerm, selectedCategory, priceFilter],
@@ -140,16 +159,12 @@ const StorefrontCourseLibrary: React.FC = () => {
 
   return (
     <>
-      <Helmet>
-        <title>Course Library | Learn with Our Courses</title>
-        <meta name="description" content="Explore our comprehensive course library and start learning today." />
-        <link rel="canonical" href={`${window.location.origin}/courses`} />
-        <meta property="og:title" content="Course Library | Learn with Our Courses" />
-        <meta property="og:description" content="Explore our comprehensive course library and start learning today." />
-        <meta property="og:type" content="website" />
-        <meta property="og:url" content={`${window.location.origin}/courses`} />
-        <meta name="twitter:card" content="summary_large_image" />
-      </Helmet>
+      <MetaTags
+        title="Course Library | Learn with Our Courses"
+        description="Explore our comprehensive course library and start learning today."
+        canonical={`${window.location.origin}/courses`}
+        favicon={storeSettings?.course_favicon_url}
+      />
 
       <div className="min-h-screen bg-background">
         <div className="container mx-auto px-4 py-8">

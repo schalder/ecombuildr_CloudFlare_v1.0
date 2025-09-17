@@ -27,6 +27,7 @@ const CourseSettings = () => {
   const [libraryHeadline, setLibraryHeadline] = useState('Course Library');
   const [librarySubheadline, setLibrarySubheadline] = useState('Discover our comprehensive collection of courses and start your learning journey today.');
   const [courseLoginLogo, setCourseLoginLogo] = useState('');
+  const [courseFavicon, setCourseFavicon] = useState('');
   const [courseCurrency, setCourseCurrency] = useState('USD');
 
   // Fetch store settings including currency
@@ -37,7 +38,7 @@ const CourseSettings = () => {
       
       const { data, error } = await supabase
         .from('stores')
-        .select('course_currency')
+        .select('course_currency, course_login_logo_url, course_favicon_url')
         .eq('id', userStore.id)
         .single();
 
@@ -47,10 +48,16 @@ const CourseSettings = () => {
     enabled: !!userStore?.id,
   });
 
-  // Update currency when store settings change
+  // Update settings when store data changes
   useEffect(() => {
     if (storeSettings?.course_currency) {
       setCourseCurrency(storeSettings.course_currency);
+    }
+    if (storeSettings?.course_login_logo_url) {
+      setCourseLoginLogo(storeSettings.course_login_logo_url);
+    }
+    if (storeSettings?.course_favicon_url) {
+      setCourseFavicon(storeSettings.course_favicon_url);
     }
   }, [storeSettings]);
 
@@ -115,10 +122,14 @@ const CourseSettings = () => {
     try {
       if (!userStore?.id) return;
 
-      // Save currency setting to the store
+      // Save settings to the store
       const { error } = await supabase
         .from('stores')
-        .update({ course_currency: courseCurrency })
+        .update({ 
+          course_currency: courseCurrency,
+          course_login_logo_url: courseLoginLogo,
+          course_favicon_url: courseFavicon
+        })
         .eq('id', userStore.id);
 
       if (error) throw error;
@@ -140,13 +151,6 @@ const CourseSettings = () => {
     }
   };
 
-  const handleLogoChange = (url: string) => {
-    setCourseLoginLogo(url);
-    toast({
-      title: "Logo updated",
-      description: "Course login logo has been updated successfully.",
-    });
-  };
 
   if (isLoading) {
     return (
@@ -243,12 +247,25 @@ const CourseSettings = () => {
                     <Label htmlFor="course-logo">Course Login Page Logo</Label>
                     <CompactMediaSelector
                       value={courseLoginLogo}
-                      onChange={handleLogoChange}
+                      onChange={setCourseLoginLogo}
                       label="Upload Logo"
                       maxSize={3}
                     />
                     <p className="text-sm text-muted-foreground">
                       This logo will appear on the course login page for member authentication
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="course-favicon">Course Favicon</Label>
+                    <CompactMediaSelector
+                      value={courseFavicon}
+                      onChange={setCourseFavicon}
+                      label="Upload Favicon"
+                      maxSize={2}
+                    />
+                    <p className="text-sm text-muted-foreground">
+                      This favicon will be used for all course-related pages (Library, Details, Members Area, Login)
                     </p>
                   </div>
                 </div>

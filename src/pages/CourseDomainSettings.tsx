@@ -26,9 +26,6 @@ const CourseDomainSettings = () => {
   const [isCheckingSlug, setIsCheckingSlug] = useState(false);
   const [slugAvailable, setSlugAvailable] = useState<boolean | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
-  
-  // Favicon states - single favicon for all course pages
-  const [courseFavicon, setCourseFavicon] = useState('');
   const [copiedUrl, setCopiedUrl] = useState<string>('');
 
   const verifiedDomains = domains?.filter(d => d.is_verified && d.dns_configured) || [];
@@ -335,53 +332,6 @@ const CourseDomainSettings = () => {
           </CardContent>
         </Card>
 
-        {/* Favicon Management Section */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Image className="h-5 w-5" />
-              Course Pages Favicon
-            </CardTitle>
-            <CardDescription>
-              Upload a single favicon that will be used for all course-related pages
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="course-favicon">Favicon for All Course Pages</Label>
-                <CompactMediaSelector
-                  value={courseFavicon}
-                  onChange={(url) => {
-                    setCourseFavicon(url);
-                    toast({
-                      title: "Favicon updated",
-                      description: "Course favicon has been updated for all pages.",
-                    });
-                  }}
-                  label="Upload Favicon"
-                  maxSize={2}
-                />
-                <p className="text-sm text-muted-foreground">
-                  This favicon will be used for:
-                </p>
-                <ul className="text-sm text-muted-foreground list-disc list-inside space-y-1">
-                  <li>Course Library page</li>
-                  <li>Course Details page</li>
-                  <li>Members Area</li>
-                  <li>Course Login page</li>
-                </ul>
-              </div>
-            </div>
-
-            <div className="bg-muted/30 p-4 rounded-lg">
-              <p className="text-sm text-muted-foreground">
-                <strong>Note:</strong> Favicons should be square images (preferably 32x32 or 16x16 pixels) 
-                in PNG or ICO format for best compatibility across browsers.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
       </div>
     </DashboardLayout>
   );

@@ -2717,6 +2717,8 @@ export type Database = {
       stores: {
         Row: {
           course_currency: string | null
+          course_favicon_url: string | null
+          course_login_logo_url: string | null
           created_at: string | null
           description: string | null
           domain: string | null
@@ -2735,6 +2737,8 @@ export type Database = {
         }
         Insert: {
           course_currency?: string | null
+          course_favicon_url?: string | null
+          course_login_logo_url?: string | null
           created_at?: string | null
           description?: string | null
           domain?: string | null
@@ -2753,6 +2757,8 @@ export type Database = {
         }
         Update: {
           course_currency?: string | null
+          course_favicon_url?: string | null
+          course_login_logo_url?: string | null
           created_at?: string | null
           description?: string | null
           domain?: string | null

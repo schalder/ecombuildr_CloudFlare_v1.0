@@ -11,6 +11,8 @@ import { Clock, Users, Star, BookOpen, Search } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useCourseCurrency } from '@/hooks/useCourseCurrency';
 import { formatCoursePrice } from '@/utils/currency';
+import { MetaTags } from '@/components/MetaTags';
+import { useStore } from '@/contexts/StoreContext';
 
 interface Course {
   id: string;
@@ -30,6 +32,25 @@ const CourseLibrary = () => {
   const [searchQuery, setSearchQuery] = React.useState('');
   const location = useLocation();
   const { currency } = useCourseCurrency();
+  const { store } = useStore();
+
+  // Fetch store settings for favicon
+  const { data: storeSettings } = useQuery({
+    queryKey: ['store-favicon', store?.id],
+    queryFn: async () => {
+      if (!store?.id) return null;
+      
+      const { data, error } = await supabase
+        .from('stores')
+        .select('course_favicon_url')
+        .eq('id', store.id)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!store?.id,
+  });
 
   const { data: courses, isLoading } = useQuery({
     queryKey: ['public-courses'],
@@ -68,27 +89,14 @@ const CourseLibrary = () => {
 
   return (
     <>
-      <Helmet>
-        <title>Course Library | Learn from Expert-Created Courses</title>
-        <meta 
-          name="description" 
-          content="Discover our extensive library of professional courses. Learn new skills with expert-created content and advance your career." 
-        />
-        <link rel="canonical" href={`${window.location.origin}${location.pathname}`} />
-        <meta property="og:title" content="Course Library | Learn from Expert-Created Courses" />
-        <meta property="og:description" content="Discover our extensive library of professional courses. Learn new skills with expert-created content and advance your career." />
-        <meta property="og:type" content="website" />
-        <meta property="og:url" content={`${window.location.origin}${location.pathname}`} />
-        {((filteredCourses && filteredCourses[0]?.thumbnail_url) ? (
-          <meta property="og:image" content={filteredCourses[0].thumbnail_url} />
-        ) : null)}
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Course Library | Learn from Expert-Created Courses" />
-        <meta name="twitter:description" content="Discover our extensive library of professional courses. Learn new skills with expert-created content and advance your career." />
-        {((filteredCourses && filteredCourses[0]?.thumbnail_url) ? (
-          <meta name="twitter:image" content={filteredCourses[0].thumbnail_url} />
-        ) : null)}
-      </Helmet>
+      <MetaTags
+        title="Course Library | Learn from Expert-Created Courses"
+        description="Discover our extensive library of professional courses. Learn new skills with expert-created content and advance your career."
+        image={filteredCourses && filteredCourses[0]?.thumbnail_url}
+        keywords={['courses', 'online learning', 'education', 'training', 'skills']}
+        canonical={`${window.location.origin}${location.pathname}`}
+        favicon={storeSettings?.course_favicon_url}
+      />
 
       <div className="min-h-screen bg-background">
         {/* Header */}

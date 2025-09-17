@@ -26,6 +26,8 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useCourseCurrency } from '@/hooks/useCourseCurrency';
 import { formatCoursePrice } from '@/utils/currency';
+import { MetaTags } from '@/components/MetaTags';
+import { useStore } from '@/contexts/StoreContext';
 
 interface CourseLesson {
   id: string;
@@ -65,6 +67,25 @@ const CourseDetail = () => {
   const [expandedModules, setExpandedModules] = useState<string[]>([]);
   const [selectedLesson, setSelectedLesson] = useState<CourseLesson | null>(null);
   const { currency } = useCourseCurrency();
+  const { store } = useStore();
+
+  // Fetch store settings for favicon
+  const { data: storeSettings } = useQuery({
+    queryKey: ['store-favicon', store?.id],
+    queryFn: async () => {
+      if (!store?.id) return null;
+      
+      const { data, error } = await supabase
+        .from('stores')
+        .select('course_favicon_url')
+        .eq('id', store.id)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!store?.id,
+  });
 
   const { data: course, isLoading, error } = useQuery({
     queryKey: ['course-detail', courseId],
@@ -209,23 +230,14 @@ const CourseDetail = () => {
 
   return (
     <>
-      <Helmet>
-        <title>{course.title} | Course Library</title>
-        <meta 
-          name="description" 
-          content={course.description || `Learn ${course.title} with our comprehensive course`} 
-        />
-        <link rel="canonical" href={`${window.location.origin}/courses/${course.id}`} />
-        <meta property="og:title" content={`${course.title} | Course Library`} />
-        <meta property="og:description" content={course.description || `Learn ${course.title} with our comprehensive course`} />
-        <meta property="og:type" content="article" />
-        <meta property="og:url" content={`${window.location.origin}/courses/${course.id}`} />
-        {course.thumbnail_url && <meta property="og:image" content={course.thumbnail_url} />}
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={`${course.title} | Course Library`} />
-        <meta name="twitter:description" content={course.description || `Learn ${course.title} with our comprehensive course`} />
-        {course.thumbnail_url && <meta name="twitter:image" content={course.thumbnail_url} />}
-      </Helmet>
+      <MetaTags
+        title={`${course.title} | Course Library`}
+        description={course.description || `Learn ${course.title} with our comprehensive course`}
+        image={course.thumbnail_url}
+        keywords={[course.title, 'course', 'online learning', 'education']}
+        canonical={`${window.location.origin}/courses/${course.id}`}
+        favicon={storeSettings?.course_favicon_url}
+      />
 
       <div className="min-h-screen bg-background">
         {/* Header */}
