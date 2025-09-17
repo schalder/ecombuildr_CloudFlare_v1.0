@@ -441,14 +441,14 @@ const CourseEditor = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
-            <Accordion type="single" collapsible className="space-y-4">
+            <Accordion type="multiple" className="space-y-4">
               {/* Course Information */}
               <AccordionItem value="course-information" className="border rounded-lg">
                 <Card className="border-0">
-                  <AccordionTrigger className="px-6 hover:no-underline">
-                    <CardHeader className="p-0">
-                      <CardTitle>Course Information</CardTitle>
-                      <CardDescription>
+                  <AccordionTrigger className="px-6 hover:no-underline text-left">
+                    <CardHeader className="p-0 text-left">
+                      <CardTitle className="text-left">Course Information</CardTitle>
+                      <CardDescription className="text-left">
                         Basic course details and description
                       </CardDescription>
                     </CardHeader>
@@ -479,10 +479,10 @@ const CourseEditor = () => {
               {/* Course Overview */}
               <AccordionItem value="course-overview" className="border rounded-lg">
                 <Card className="border-0">
-                  <AccordionTrigger className="px-6 hover:no-underline">
-                    <CardHeader className="p-0">
-                      <CardTitle>Course Overview</CardTitle>
-                      <CardDescription>
+                  <AccordionTrigger className="px-6 hover:no-underline text-left">
+                    <CardHeader className="p-0 text-left">
+                      <CardTitle className="text-left">Course Overview</CardTitle>
+                      <CardDescription className="text-left">
                         Write a detailed description of your course content
                       </CardDescription>
                     </CardHeader>
@@ -502,10 +502,10 @@ const CourseEditor = () => {
               {/* What This Course Includes */}
               <AccordionItem value="course-includes" className="border rounded-lg">
                 <Card className="border-0">
-                  <AccordionTrigger className="px-6 hover:no-underline">
-                    <CardHeader className="p-0">
-                      <CardTitle>What This Course Includes</CardTitle>
-                      <CardDescription>
+                  <AccordionTrigger className="px-6 hover:no-underline text-left">
+                    <CardHeader className="p-0 text-left">
+                      <CardTitle className="text-left">What This Course Includes</CardTitle>
+                      <CardDescription className="text-left">
                         Optional section to highlight what students will get with this course
                       </CardDescription>
                     </CardHeader>
@@ -571,12 +571,12 @@ const CourseEditor = () => {
               {/* Course Content */}
               <AccordionItem value="course-content" className="border rounded-lg">
                 <Card className="border-0">
-                  <AccordionTrigger className="px-6 hover:no-underline">
-                    <CardHeader className="p-0">
+                  <AccordionTrigger className="px-6 hover:no-underline text-left">
+                    <CardHeader className="p-0 text-left">
                       <div className="flex items-center justify-between w-full">
-                        <div>
-                          <CardTitle>Course Content</CardTitle>
-                          <CardDescription>Organize your course into modules and lessons</CardDescription>
+                        <div className="text-left">
+                          <CardTitle className="text-left">Course Content</CardTitle>
+                          <CardDescription className="text-left">Organize your course into modules and lessons</CardDescription>
                         </div>
                         <Button 
                           onClick={(e) => {
