@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { 
   ChevronRight, 
   ChevronDown, 
@@ -23,7 +24,8 @@ import {
   MonitorPlay,
   Smartphone,
   Award,
-  Star
+  Star,
+  Eye
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -71,6 +73,7 @@ const StorefrontCourseDetail: React.FC<StorefrontCourseDetailProps> = ({ courseS
   const [expandedModules, setExpandedModules] = useState<string[]>([]);
   const [couponCode, setCouponCode] = useState('');
   const [selectedPaymentGateway, setSelectedPaymentGateway] = useState('');
+  const [previewLesson, setPreviewLesson] = useState<CourseLesson | null>(null);
 
   const finalCourseSlug = courseSlug || paramSlug;
   const finalCourseId = courseId || paramId;
@@ -280,6 +283,46 @@ const StorefrontCourseDetail: React.FC<StorefrontCourseDetailProps> = ({ courseS
                                   </span>
                                 </div>
                                 <div className="flex items-center gap-2">
+                                  {lesson.is_preview && lesson.is_published && (
+                                    <Dialog>
+                                      <DialogTrigger asChild>
+                                        <Button variant="outline" size="sm" className="h-6 px-2">
+                                          <Eye className="h-3 w-3 mr-1" />
+                                          Preview
+                                        </Button>
+                                      </DialogTrigger>
+                                      <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto">
+                                        <DialogHeader>
+                                          <DialogTitle>{lesson.title}</DialogTitle>
+                                        </DialogHeader>
+                                        <div className="space-y-4">
+                                          {lesson.video_url && (
+                                            <div className="aspect-video bg-muted rounded-lg overflow-hidden">
+                                              <video
+                                                controls
+                                                className="w-full h-full"
+                                                poster="/placeholder.svg"
+                                              >
+                                                <source src={lesson.video_url} type="video/mp4" />
+                                                Your browser does not support the video tag.
+                                              </video>
+                                            </div>
+                                          )}
+                                          {lesson.content && (
+                                            <div className="prose prose-sm max-w-none">
+                                              <div dangerouslySetInnerHTML={{ __html: lesson.content }} />
+                                            </div>
+                                          )}
+                                          {!lesson.video_url && !lesson.content && (
+                                            <div className="text-center py-8 text-muted-foreground">
+                                              <FileText className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                                              <p>No preview content available</p>
+                                            </div>
+                                          )}
+                                        </div>
+                                      </DialogContent>
+                                    </Dialog>
+                                  )}
                                   {lesson.video_duration && (
                                     <span className="text-xs text-muted-foreground">
                                       {String(Math.floor(lesson.video_duration / 60)).padStart(2, '0')}:{String(lesson.video_duration % 60).padStart(2, '0')}
