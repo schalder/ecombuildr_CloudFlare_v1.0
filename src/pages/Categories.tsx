@@ -72,7 +72,7 @@ export default function Categories() {
     name: '',
     description: '',
     parent_category_id: 'none',
-    website_id: ''
+    website_ids: [] as string[]
   });
 
   // Filter categories by selected website and include necessary ancestors
@@ -147,8 +147,15 @@ export default function Categories() {
       parent_category_id: formData.parent_category_id === 'none' ? undefined : formData.parent_category_id || undefined
     };
 
-    // Create category with website assignment based on current filter
-    const websiteIds = selectedWebsiteId !== 'all' ? [selectedWebsiteId] : [];
+    // Create category with selected websites
+    const websiteIds = formData.website_ids.length > 0 ? formData.website_ids : 
+      (selectedWebsiteId !== 'all' ? [selectedWebsiteId] : []);
+    
+    if (websiteIds.length === 0) {
+      alert('Please select at least one website for this category.');
+      return;
+    }
+    
     createCategory.mutate({ ...categoryData, websiteIds });
 
     // Reset form and close modal
@@ -156,7 +163,7 @@ export default function Categories() {
       name: '', 
       description: '', 
       parent_category_id: 'none',
-      website_id: ''
+      website_ids: []
     });
     setIsAddModalOpen(false);
   };
@@ -172,23 +179,11 @@ export default function Categories() {
       parent_category_id: addingSubcategoryTo
     };
 
-    // Inherit website(s) from parent if available, else use current filter
-    const parent = categoriesWithWebsites.find(c => c.id === addingSubcategoryTo);
-    const parentVisibility = Array.isArray((parent as any)?.category_website_visibility) ? (parent as any).category_website_visibility : [];
-    const parentWebsiteIds = parentVisibility.map((v: any) => v.website_id);
-    
-    // When a specific website is selected, ensure subcategory is assigned to that website
-    let websiteIds: string[];
-    if (selectedWebsiteId !== 'all') {
-      // If a specific website is selected, assign subcategory to that website
-      websiteIds = [selectedWebsiteId];
-    } else {
-      // If "All Websites" is selected, inherit from parent
-      websiteIds = parentWebsiteIds;
-    }
+    // Use selected websites from form
+    const websiteIds = formData.website_ids;
     
     if (websiteIds.length === 0) {
-      alert('Cannot create subcategory: Parent category has no website assignment and no website is selected. Please select a website or assign the parent category to a website first.');
+      alert('Please select at least one website for this subcategory.');
       return;
     }
     
@@ -199,7 +194,7 @@ export default function Categories() {
       name: '', 
       description: '', 
       parent_category_id: 'none',
-      website_id: ''
+      website_ids: []
     });
     setIsAddSubcategoryModalOpen(false);
     setAddingSubcategoryTo(null);
@@ -210,6 +205,12 @@ export default function Categories() {
     e.preventDefault();
     if (!editingCategory || !formData.name.trim()) return;
 
+    if (formData.website_ids.length === 0) {
+      alert('Please select at least one website for this category.');
+      return;
+    }
+
+    // Update category details
     updateCategory.mutate({
       id: editingCategory.id,
       name: formData.name.trim(),
@@ -217,12 +218,18 @@ export default function Categories() {
       parent_category_id: formData.parent_category_id === 'none' ? undefined : formData.parent_category_id || undefined
     });
 
+    // Update website visibility
+    updateCategoryVisibility.mutate({
+      categoryId: editingCategory.id,
+      websiteIds: formData.website_ids
+    });
+
     // Reset form and close modal
     setFormData({ 
       name: '', 
       description: '', 
       parent_category_id: 'none',
-      website_id: ''
+      website_ids: []
     });
     setIsEditModalOpen(false);
     setEditingCategory(null);
@@ -240,11 +247,16 @@ export default function Categories() {
   // Handle edit button click
   const handleEditClick = (category: any) => {
     setEditingCategory(category);
+    // Get current website assignments for this category
+    const visibility = Array.isArray((category as any)?.category_website_visibility) ? 
+      (category as any).category_website_visibility : [];
+    const websiteIds = visibility.map((v: any) => v.website_id);
+    
     setFormData({
       name: category.name,
       description: category.description || '',
       parent_category_id: category.parent_category_id || 'none',
-      website_id: ''
+      website_ids: websiteIds
     });
     setIsEditModalOpen(true);
   };
@@ -252,11 +264,17 @@ export default function Categories() {
   // Handle add subcategory click
   const handleAddSubcategory = (parentId: string) => {
     setAddingSubcategoryTo(parentId);
+    // Inherit parent's website assignments
+    const parent = categoriesWithWebsites.find(c => c.id === parentId);
+    const parentVisibility = Array.isArray((parent as any)?.category_website_visibility) ? 
+      (parent as any).category_website_visibility : [];
+    const parentWebsiteIds = parentVisibility.map((v: any) => v.website_id);
+    
     setFormData({
       name: '',
       description: '',
       parent_category_id: parentId,
-      website_id: ''
+      website_ids: parentWebsiteIds
     });
     setIsAddSubcategoryModalOpen(true);
   };
@@ -343,7 +361,7 @@ export default function Categories() {
           
           <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
             <DialogTrigger asChild>
-              <Button disabled={selectedWebsiteId === 'all'}>
+              <Button>
                 <Plus className="mr-2 h-4 w-4" />
                 Add Category
               </Button>
@@ -352,7 +370,7 @@ export default function Categories() {
               <DialogHeader>
                 <DialogTitle>Create New Category</DialogTitle>
                 <DialogDescription>
-                  Add a new category for {getCurrentWebsiteName()}.
+                  Add a new category and assign it to website(s).
                 </DialogDescription>
               </DialogHeader>
               <form onSubmit={handleCreateCategory} className="space-y-4">
@@ -377,6 +395,39 @@ export default function Categories() {
                   />
                 </div>
                 
+                <div className="space-y-2">
+                  <Label htmlFor="websites">Websites *</Label>
+                  <div className="space-y-2">
+                    {websites.map((website) => (
+                      <div key={website.id} className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          id={`website-${website.id}`}
+                          checked={formData.website_ids.includes(website.id)}
+                          onChange={(e) => {
+                            const isChecked = e.target.checked;
+                            setFormData(prev => ({
+                              ...prev,
+                              website_ids: isChecked 
+                                ? [...prev.website_ids, website.id]
+                                : prev.website_ids.filter(id => id !== website.id)
+                            }));
+                          }}
+                          className="rounded border-gray-300"
+                        />
+                        <Label htmlFor={`website-${website.id}`} className="text-sm font-normal">
+                          {website.name}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                  {formData.website_ids.length === 0 && (
+                    <p className="text-sm text-muted-foreground">
+                      Select at least one website for this category
+                    </p>
+                  )}
+                </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="parent_category">Parent Category (Optional)</Label>
                   <Select 
@@ -600,6 +651,39 @@ export default function Categories() {
                   onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                 />
               </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="sub-websites">Websites *</Label>
+                <div className="space-y-2">
+                  {websites.map((website) => (
+                    <div key={website.id} className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        id={`sub-website-${website.id}`}
+                        checked={formData.website_ids.includes(website.id)}
+                        onChange={(e) => {
+                          const isChecked = e.target.checked;
+                          setFormData(prev => ({
+                            ...prev,
+                            website_ids: isChecked 
+                              ? [...prev.website_ids, website.id]
+                              : prev.website_ids.filter(id => id !== website.id)
+                          }));
+                        }}
+                        className="rounded border-gray-300"
+                      />
+                      <Label htmlFor={`sub-website-${website.id}`} className="text-sm font-normal">
+                        {website.name}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+                {formData.website_ids.length === 0 && (
+                  <p className="text-sm text-muted-foreground">
+                    Select at least one website for this subcategory
+                  </p>
+                )}
+              </div>
               
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={() => setIsAddSubcategoryModalOpen(false)}>
@@ -642,6 +726,39 @@ export default function Categories() {
                   value={formData.description}
                   onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                 />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-websites">Websites *</Label>
+                <div className="space-y-2">
+                  {websites.map((website) => (
+                    <div key={website.id} className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        id={`edit-website-${website.id}`}
+                        checked={formData.website_ids.includes(website.id)}
+                        onChange={(e) => {
+                          const isChecked = e.target.checked;
+                          setFormData(prev => ({
+                            ...prev,
+                            website_ids: isChecked 
+                              ? [...prev.website_ids, website.id]
+                              : prev.website_ids.filter(id => id !== website.id)
+                          }));
+                        }}
+                        className="rounded border-gray-300"
+                      />
+                      <Label htmlFor={`edit-website-${website.id}`} className="text-sm font-normal">
+                        {website.name}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+                {formData.website_ids.length === 0 && (
+                  <p className="text-sm text-muted-foreground">
+                    Select at least one website for this category
+                  </p>
+                )}
               </div>
               
               <div className="space-y-2">
