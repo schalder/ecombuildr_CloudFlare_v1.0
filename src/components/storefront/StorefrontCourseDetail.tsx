@@ -29,6 +29,8 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { parseVideoUrl, buildEmbedUrl, sanitizeEmbedCode } from '@/components/page-builder/utils/videoUtils';
+import { useCourseCurrency } from '@/hooks/useCourseCurrency';
+import { formatCoursePrice } from '@/utils/currency';
 
 interface CourseLesson {
   id: string;
@@ -77,6 +79,7 @@ const StorefrontCourseDetail: React.FC<StorefrontCourseDetailProps> = ({ courseS
   const [couponCode, setCouponCode] = useState('');
   const [selectedPaymentGateway, setSelectedPaymentGateway] = useState('');
   const [previewLesson, setPreviewLesson] = useState<CourseLesson | null>(null);
+  const { currency } = useCourseCurrency();
 
   const finalCourseSlug = courseSlug || paramSlug;
   const finalCourseId = courseId || paramId;
@@ -412,11 +415,11 @@ const StorefrontCourseDetail: React.FC<StorefrontCourseDetailProps> = ({ courseS
                       <div className="space-y-2">
                         <div className="flex items-center justify-center gap-2">
                           <span className="text-3xl font-bold text-orange-600">
-                            ${course.price}
+                            {formatCoursePrice(course.price, currency)}
                           </span>
                           {course.compare_price && course.compare_price > course.price && (
                             <span className="text-lg text-muted-foreground line-through">
-                              ${course.compare_price}
+                              {formatCoursePrice(course.compare_price, currency)}
                             </span>
                           )}
                         </div>
