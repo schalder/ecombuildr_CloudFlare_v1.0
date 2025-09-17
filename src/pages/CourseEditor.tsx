@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { MediaSelector } from '@/components/page-builder/components/MediaSelector';
+import { CompactMediaSelector } from '@/components/page-builder/components/CompactMediaSelector';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
 import { 
   Dialog,
@@ -46,6 +46,7 @@ interface Course {
   id: string;
   title: string;
   description: string;
+  content?: string;
   price: number;
   compare_price?: number;
   thumbnail_url?: string;
@@ -166,11 +167,14 @@ const CourseEditor = () => {
         .update({
           title: course.title,
           description: course.description,
+          content: course.content,
           price: course.price,
           compare_price: course.compare_price,
           thumbnail_url: course.thumbnail_url,
           is_published: course.is_published,
           is_active: course.is_active,
+          includes_title: course.includes_title,
+          includes_items: course.includes_items,
           updated_at: new Date().toISOString()
         })
         .eq('id', course.id);
@@ -462,6 +466,23 @@ const CourseEditor = () => {
               </CardContent>
             </Card>
 
+            {/* Course Overview */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Course Overview</CardTitle>
+                <CardDescription>
+                  Write a detailed description of your course content
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <RichTextEditor
+                  content={course.content || ''}
+                  onChange={(content) => setCourse(prev => prev ? {...prev, content} : null)}
+                  placeholder="Describe what students will learn, course objectives, prerequisites, etc..."
+                />
+              </CardContent>
+            </Card>
+
             {/* What it includes Section */}
             <Card>
               <CardHeader>
@@ -698,44 +719,12 @@ const CourseEditor = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label>Select Course Thumbnail</Label>
-                  <div className="grid grid-cols-3 gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {/* Open library */}}
-                      className="flex items-center gap-1 text-xs"
-                    >
-                      <Upload className="h-3 w-3" />
-                      Library
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {/* Upload */}}
-                      className="flex items-center gap-1 text-xs"
-                    >
-                      <Upload className="h-3 w-3" />
-                      Upload
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {/* URL */}}
-                      className="text-xs"
-                    >
-                      URL
-                    </Button>
-                  </div>
-                  {course.thumbnail_url && (
-                    <div className="mt-2">
-                      <img 
-                        src={course.thumbnail_url} 
-                        alt="Course thumbnail"
-                        className="w-full h-24 object-cover rounded-md border"
-                      />
-                    </div>
-                  )}
+                  <Label>Course Thumbnail</Label>
+                  <CompactMediaSelector
+                    value={course.thumbnail_url || ''}
+                    onChange={(url) => setCourse(prev => prev ? {...prev, thumbnail_url: url} : null)}
+                    label="Select Course Thumbnail"
+                  />
                 </div>
               </CardContent>
             </Card>

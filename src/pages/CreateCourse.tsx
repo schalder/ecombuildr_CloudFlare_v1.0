@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
 import { Loader2, Save, ArrowLeft, Upload, Image, DollarSign, Plus, Trash2 } from 'lucide-react';
-import { MediaSelector } from '@/components/page-builder/components/MediaSelector';
+import { CompactMediaSelector } from '@/components/page-builder/components/CompactMediaSelector';
 import { useUserStore } from '@/hooks/useUserStore';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -69,11 +69,14 @@ const CreateCourse = () => {
         store_id: store.id,
         title: formData.title.trim(),
         description: formData.description.trim() || null,
+        content: formData.content.trim() || null,
         price: formData.price,
         compare_price: formData.compare_price,
         thumbnail_url: formData.thumbnail_url.trim() || null,
         is_published: formData.is_published,
-        is_active: formData.is_active
+        is_active: formData.is_active,
+        includes_title: formData.includes_title.trim() || null,
+        includes_items: formData.includes_items.filter(item => item.trim()).length > 0 ? formData.includes_items.filter(item => item.trim()) : null
       };
 
       const { data, error } = await supabase
@@ -96,7 +99,7 @@ const CreateCourse = () => {
 
   return (
     <DashboardLayout title="Create Course" description="Create a new online course">
-      <div className="max-w-4xl mx-auto space-y-6">
+      <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center gap-4">
           <Button 
@@ -149,43 +152,11 @@ const CreateCourse = () => {
 
                 <div className="space-y-2">
                   <Label htmlFor="thumbnail">Course Thumbnail</Label>
-                  <div className="grid grid-cols-3 gap-2 items-center">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {/* Open library */}}
-                      className="flex items-center gap-2"
-                    >
-                      <Upload className="h-4 w-4" />
-                      Library
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {/* Upload */}}
-                      className="flex items-center gap-2"
-                    >
-                      <Upload className="h-4 w-4" />
-                      Upload
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {/* URL */}}
-                      className="flex items-center gap-2"
-                    >
-                      URL
-                    </Button>
-                  </div>
-                  {formData.thumbnail_url && (
-                    <div className="mt-2">
-                      <img 
-                        src={formData.thumbnail_url} 
-                        alt="Course thumbnail"
-                        className="w-full h-32 object-cover rounded-md border"
-                      />
-                    </div>
-                  )}
+                  <CompactMediaSelector
+                    value={formData.thumbnail_url}
+                    onChange={(url) => handleInputChange('thumbnail_url', url)}
+                    label="Select Course Thumbnail"
+                  />
                 </div>
               </CardContent>
             </Card>

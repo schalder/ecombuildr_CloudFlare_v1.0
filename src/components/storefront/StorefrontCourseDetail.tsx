@@ -54,14 +54,16 @@ interface CourseDetail {
   id: string;
   title: string;
   description?: string;
+  content?: string;
   thumbnail_url?: string;
   price: number;
   compare_price?: number;
   is_published: boolean;
   is_active: boolean;
   created_at: string;
+  includes_title?: string;
+  includes_items?: string[];
   course_modules: CourseModule[];
-  
 }
 
 interface StorefrontCourseDetailProps {
@@ -85,7 +87,7 @@ const StorefrontCourseDetail: React.FC<StorefrontCourseDetailProps> = ({ courseS
       let query = supabase
         .from('courses')
         .select(`
-          id, title, description, thumbnail_url, price, compare_price, is_published, is_active, created_at,
+          id, title, description, content, thumbnail_url, price, compare_price, is_published, is_active, created_at, includes_title, includes_items,
           course_modules(
             id, title, description, sort_order, is_published,
             course_lessons(
@@ -219,6 +221,12 @@ const StorefrontCourseDetail: React.FC<StorefrontCourseDetailProps> = ({ courseS
                   <p className="text-lg text-muted-foreground">
                     {course.description}
                   </p>
+                 )}
+
+                {course.content && (
+                  <div className="prose prose-lg max-w-none">
+                    <div dangerouslySetInnerHTML={{ __html: course.content }} />
+                  </div>
                 )}
 
                 <div className="flex items-center gap-6 text-sm text-muted-foreground">
@@ -459,32 +467,45 @@ const StorefrontCourseDetail: React.FC<StorefrontCourseDetailProps> = ({ courseS
 
                   {/* Course Includes */}
                   <div className="border-t pt-6">
-                    <h3 className="font-semibold mb-4">This Course Includes</h3>
+                    <h3 className="font-semibold mb-4">
+                      {course.includes_title || "This Course Includes"}
+                    </h3>
                     <div className="space-y-3 text-sm">
-                      <div className="flex items-center gap-2">
-                        <CheckCircle className="h-4 w-4 text-green-600" />
-                        <span>{Math.floor(totalDuration / 60)}.{Math.floor((totalDuration % 60) * 10 / 60)} hours on-demand video</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <CheckCircle className="h-4 w-4 text-green-600" />
-                        <span>{publishedLessons} articles</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <CheckCircle className="h-4 w-4 text-green-600" />
-                        <span>{totalResources} downloadable resources</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <CheckCircle className="h-4 w-4 text-green-600" />
-                        <span>Full lifetime access</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <CheckCircle className="h-4 w-4 text-green-600" />
-                        <span>Access on mobile and TV</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <CheckCircle className="h-4 w-4 text-green-600" />
-                        <span>Certificate of completion</span>
-                      </div>
+                      {course.includes_items && course.includes_items.length > 0 ? (
+                        course.includes_items.map((item, index) => (
+                          <div key={index} className="flex items-center gap-2">
+                            <CheckCircle className="h-4 w-4 text-green-600" />
+                            <span>{item}</span>
+                          </div>
+                        ))
+                      ) : (
+                        <>
+                          <div className="flex items-center gap-2">
+                            <CheckCircle className="h-4 w-4 text-green-600" />
+                            <span>{Math.floor(totalDuration / 60)}.{Math.floor((totalDuration % 60) * 10 / 60)} hours on-demand video</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <CheckCircle className="h-4 w-4 text-green-600" />
+                            <span>{publishedLessons} articles</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <CheckCircle className="h-4 w-4 text-green-600" />
+                            <span>{totalResources} downloadable resources</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <CheckCircle className="h-4 w-4 text-green-600" />
+                            <span>Full lifetime access</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <CheckCircle className="h-4 w-4 text-green-600" />
+                            <span>Access on mobile and TV</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <CheckCircle className="h-4 w-4 text-green-600" />
+                            <span>Certificate of completion</span>
+                          </div>
+                        </>
+                      )}
                     </div>
                   </div>
                 </CardContent>
