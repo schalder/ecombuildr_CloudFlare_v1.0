@@ -217,18 +217,6 @@ const StorefrontCourseDetail: React.FC<StorefrontCourseDetailProps> = ({ courseS
                 <h1 className="text-3xl lg:text-4xl font-bold text-foreground">
                   {course.title}
                 </h1>
-                
-                {course.description && (
-                  <p className="text-lg text-muted-foreground">
-                    {course.description}
-                  </p>
-                 )}
-
-                {course.content && (
-                  <div className="prose prose-lg max-w-none">
-                    <div dangerouslySetInnerHTML={{ __html: course.content }} />
-                  </div>
-                )}
 
                 <div className="flex items-center gap-6 text-sm text-muted-foreground">
                   <div className="flex items-center gap-2">
@@ -247,6 +235,21 @@ const StorefrontCourseDetail: React.FC<StorefrontCourseDetailProps> = ({ courseS
                   </div>
                 </div>
               </div>
+
+              {/* Course Description */}
+              {course.description && (
+                <div className="space-y-4">
+                  <p className="text-lg text-muted-foreground">
+                    {course.description}
+                  </p>
+                </div>
+              )}
+
+              {course.content && (
+                <div className="prose prose-lg max-w-none">
+                  <div dangerouslySetInnerHTML={{ __html: course.content }} />
+                </div>
+              )}
 
               {/* Course Modules */}
               <div className="space-y-4">
