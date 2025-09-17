@@ -134,24 +134,54 @@ const CreateCourse = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="description">Short Description</Label>
-                  <Textarea
-                    id="description"
-                    value={formData.description}
-                    onChange={(e) => handleInputChange('description', e.target.value)}
-                    placeholder="Brief description of what students will learn..."
-                    rows={3}
+                  <Label htmlFor="description">Course Description</Label>
+                  <RichTextEditor
+                    content={formData.description}
+                    onChange={(content) => handleInputChange('description', content)}
+                    placeholder="Write a detailed description of your course, what students will learn, prerequisites, etc..."
+                    className="min-h-[150px]"
                   />
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="thumbnail">Course Thumbnail</Label>
-                  <MediaSelector
-                    value={formData.thumbnail_url}
-                    onChange={(url) => handleInputChange('thumbnail_url', url)}
-                    label="Select Course Thumbnail"
-                    maxSize={10}
-                  />
+                  <div className="grid grid-cols-3 gap-2 items-center">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {/* Open library */}}
+                      className="flex items-center gap-2"
+                    >
+                      <Upload className="h-4 w-4" />
+                      Library
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {/* Upload */}}
+                      className="flex items-center gap-2"
+                    >
+                      <Upload className="h-4 w-4" />
+                      Upload
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {/* URL */}}
+                      className="flex items-center gap-2"
+                    >
+                      URL
+                    </Button>
+                  </div>
+                  {formData.thumbnail_url && (
+                    <div className="mt-2">
+                      <img 
+                        src={formData.thumbnail_url} 
+                        alt="Course thumbnail"
+                        className="w-full h-32 object-cover rounded-md border"
+                      />
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>

@@ -391,7 +391,7 @@ const CourseEditor = () => {
     <DashboardLayout title={course.title} description="Edit course content and structure">
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="space-y-4">
           <div className="flex items-center gap-4">
             <Button 
               variant="ghost" 
@@ -401,9 +401,12 @@ const CourseEditor = () => {
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Courses
             </Button>
+          </div>
+          
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold">{course.title}</h1>
-              <div className="flex items-center gap-2 mt-1">
+              <h1 className="text-2xl font-bold break-words">{course.title}</h1>
+              <div className="flex items-center gap-2 mt-2">
                 <Badge variant={course.is_published ? "default" : "secondary"}>
                   {course.is_published ? 'Published' : 'Draft'}
                 </Badge>
@@ -412,20 +415,21 @@ const CourseEditor = () => {
                 </Badge>
               </div>
             </div>
+            
+            <Button onClick={saveCourse} disabled={saving} className="shrink-0">
+              {saving ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4 mr-2" />
+                  Save Course
+                </>
+              )}
+            </Button>
           </div>
-          <Button onClick={saveCourse} disabled={saving}>
-            {saving ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Saving...
-              </>
-            ) : (
-              <>
-                <Save className="h-4 w-4 mr-2" />
-                Save Course
-              </>
-            )}
-          </Button>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -445,11 +449,12 @@ const CourseEditor = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Description</Label>
-                  <Textarea
-                    value={course.description || ''}
-                    onChange={(e) => setCourse(prev => prev ? {...prev, description: e.target.value} : null)}
-                    rows={3}
+                  <Label>Course Description</Label>
+                  <RichTextEditor
+                    content={course.description || ''}
+                    onChange={(content) => setCourse(prev => prev ? {...prev, description: content} : null)}
+                    placeholder="Write a detailed description of your course content, objectives, prerequisites, etc..."
+                    className="min-h-[150px]"
                   />
                 </div>
               </CardContent>
@@ -628,13 +633,44 @@ const CourseEditor = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label>Course Thumbnail</Label>
-                  <MediaSelector
-                    value={course.thumbnail_url || ''}
-                    onChange={(url) => setCourse(prev => prev ? {...prev, thumbnail_url: url} : null)}
-                    label="Select Course Thumbnail"
-                    maxSize={10}
-                  />
+                  <Label>Select Course Thumbnail</Label>
+                  <div className="grid grid-cols-3 gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {/* Open library */}}
+                      className="flex items-center gap-1 text-xs"
+                    >
+                      <Upload className="h-3 w-3" />
+                      Library
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {/* Upload */}}
+                      className="flex items-center gap-1 text-xs"
+                    >
+                      <Upload className="h-3 w-3" />
+                      Upload
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {/* URL */}}
+                      className="text-xs"
+                    >
+                      URL
+                    </Button>
+                  </div>
+                  {course.thumbnail_url && (
+                    <div className="mt-2">
+                      <img 
+                        src={course.thumbnail_url} 
+                        alt="Course thumbnail"
+                        className="w-full h-24 object-cover rounded-md border"
+                      />
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
