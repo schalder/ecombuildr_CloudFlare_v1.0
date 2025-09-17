@@ -152,7 +152,7 @@ export const ProductDetail: React.FC = () => {
         .select('*')
         .eq('store_id', store.id)
         .eq('is_active', true)
-        .or(`slug.eq.${productSlug},id.eq.${productSlug}`)
+        .eq('slug', productSlug)
         .maybeSingle();
 
       if (error) throw error;
