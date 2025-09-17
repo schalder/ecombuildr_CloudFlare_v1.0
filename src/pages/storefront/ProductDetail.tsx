@@ -360,9 +360,11 @@ export const ProductDetail: React.FC = () => {
                     alt={product.name}
                     className="w-full h-full object-cover transition-opacity duration-300"
                     enableMagnifier={true}
-                    zoomLevel={3}
-                    magnifierSize={180}
+                    zoomLevel={8}
+                    magnifierSize={350}
                     priority={selectedImage === 0}
+                    enhancedMagnifier={true}
+                    enableFullscreen={true}
                   />
                 )}
                 {discountPercentage > 0 && (

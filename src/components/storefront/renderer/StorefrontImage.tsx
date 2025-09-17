@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { AdvancedImageOptimizer } from '../optimized/AdvancedImageOptimizer';
 import { ImageMagnifier } from '../optimized/ImageMagnifier';
+import { EnhancedImageMagnifier } from '../optimized/EnhancedImageMagnifier';
 import { useCriticalImage } from '../optimized/CriticalImageManager';
 
 // Hook to safely use CriticalImageManager (returns null if not available)
@@ -32,6 +33,9 @@ interface StorefrontImageProps {
   magnifierSize?: number; // Size of the magnifier lens
   zoomLevel?: number; // Magnification level
   responsiveMagnifier?: boolean; // Enable responsive magnifier sizing
+  enhancedMagnifier?: boolean; // Use enhanced professional magnifier
+  highResolutionSrc?: string; // High-resolution image for enhanced zoom
+  enableFullscreen?: boolean; // Enable fullscreen zoom modal
 }
 
 export const StorefrontImage: React.FC<StorefrontImageProps> = ({
@@ -47,9 +51,12 @@ export const StorefrontImage: React.FC<StorefrontImageProps> = ({
   style,
   preserveOriginal = true, // Default to preserving original dimensions
   enableMagnifier = false,
-  magnifierSize = 280, // Enhanced default size
-  zoomLevel = 4.5, // Enhanced default zoom
-  responsiveMagnifier = true
+  magnifierSize = 300, // Enhanced default size for professional look
+  zoomLevel = 6, // Enhanced default zoom for better detail
+  responsiveMagnifier = true,
+  enhancedMagnifier = true, // Default to enhanced magnifier
+  highResolutionSrc,
+  enableFullscreen = true
 }) => {
   const { addCriticalImage, isCriticalImage } = useSafeCriticalImage();
   const [autoDetectedCritical, setAutoDetectedCritical] = useState(false);
@@ -64,21 +71,39 @@ export const StorefrontImage: React.FC<StorefrontImageProps> = ({
 
   const isImageCritical = isCritical ?? autoDetectedCritical ?? isCriticalImage(src);
 
-  // Use ImageMagnifier for magnification, otherwise use AdvancedImageOptimizer
+  // Use Enhanced Magnifier for the best experience, fallback to regular magnifier
   if (enableMagnifier) {
-    return (
-      <ImageMagnifier
-        src={src}
-        alt={alt}
-        width={width}
-        height={height}
-        className={className}
-        style={style}
-        zoomLevel={zoomLevel}
-        magnifierSize={magnifierSize}
-        responsive={responsiveMagnifier}
-      />
-    );
+    if (enhancedMagnifier) {
+      return (
+        <EnhancedImageMagnifier
+          src={src}
+          alt={alt}
+          width={width}
+          height={height}
+          className={className}
+          style={style}
+          zoomLevel={zoomLevel}
+          magnifierSize={magnifierSize}
+          responsive={responsiveMagnifier}
+          highResolutionSrc={highResolutionSrc}
+          enableFullscreen={enableFullscreen}
+        />
+      );
+    } else {
+      return (
+        <ImageMagnifier
+          src={src}
+          alt={alt}
+          width={width}
+          height={height}
+          className={className}
+          style={style}
+          zoomLevel={zoomLevel}
+          magnifierSize={magnifierSize}
+          responsive={responsiveMagnifier}
+        />
+      );
+    }
   }
 
   return (
