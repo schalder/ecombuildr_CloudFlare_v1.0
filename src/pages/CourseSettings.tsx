@@ -113,7 +113,7 @@ const CourseSettings = () => {
   }
 
   return (
-    <DashboardLayout title="Course Settings" description="Manage your course library and member settings">
+    <DashboardLayout title="Course Settings" description="Manage course library, bundles, member access, and branding settings">
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center gap-4">
@@ -121,6 +121,12 @@ const CourseSettings = () => {
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Courses
           </Button>
+          <div className="flex-1">
+            <h1 className="text-2xl font-bold">Course Settings</h1>
+            <p className="text-muted-foreground">
+              Configure course library, manage member access, and customize branding
+            </p>
+          </div>
         </div>
 
         <Tabs defaultValue="library" className="space-y-6">

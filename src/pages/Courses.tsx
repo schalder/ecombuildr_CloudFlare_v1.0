@@ -150,14 +150,14 @@ const Courses = () => {
   );
 
   return (
-    <DashboardLayout title="Courses" description="Manage your online courses and lessons">
+    <DashboardLayout title="Courses" description="Create, edit and manage your online courses and lessons">
       <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-2xl font-bold">Courses</h1>
+            <h1 className="text-2xl font-bold">All Courses</h1>
             <p className="text-muted-foreground">
-              Create and manage your online courses with modules and lessons
+              Manage your course content, pricing, and publication status
             </p>
           </div>
         <div className="flex gap-2">
@@ -282,7 +282,7 @@ const Courses = () => {
                           <div>
                             <div className="font-medium">{course.title}</div>
                             <div className="text-sm text-muted-foreground line-clamp-1">
-                              {course.description || 'No description'}
+                              {course.description ? course.description.replace(/<[^>]*>/g, '') : 'No description'}
                             </div>
                           </div>
                         </div>
