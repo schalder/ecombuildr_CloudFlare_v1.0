@@ -163,7 +163,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       </div>
 
       {/* Product Image */}
-      <Link to={paths.productDetail(product.slug)} className="block aspect-square relative overflow-hidden bg-muted">
+      <Link to={paths.productDetail(product.slug || product.id)} className="block aspect-square relative overflow-hidden bg-muted">
         <img
           src={(Array.isArray(product.images) ? product.images[0] : product.images?.[0]) || '/placeholder.svg'}
           alt={product.name}
@@ -190,7 +190,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         )}
 
         {/* Product Name */}
-        <Link to={paths.productDetail(product.slug)}>
+        <Link to={paths.productDetail(product.slug || product.id)}>
           <h3 className="font-semibold text-sm leading-tight line-clamp-2 hover:text-primary transition-colors">
             {product.name}
           </h3>

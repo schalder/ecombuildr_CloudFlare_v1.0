@@ -685,11 +685,11 @@ export const ProductsPageElement: React.FC<{
                   ) : (
                     <Card key={product.id} className="p-4">
                       <div className="flex gap-4 items-start">
-                        <Link to={paths.productDetail(product.slug)} className="w-28 sm:w-40 h-28 sm:h-40 rounded-md overflow-hidden bg-muted flex-shrink-0">
+                        <Link to={paths.productDetail(product.slug || product.id)} className="w-28 sm:w-40 h-28 sm:h-40 rounded-md overflow-hidden bg-muted flex-shrink-0">
                            <StorefrontImage src={product.images[0] || '/placeholder.svg'} alt={product.name} className="w-full h-full object-cover" aspectRatio="1" />
                         </Link>
                         <div className="flex-1 min-w-0 space-y-2">
-                          <Link to={paths.productDetail(product.slug)} className="hover:text-primary transition-colors">
+                          <Link to={paths.productDetail(product.slug || product.id)} className="hover:text-primary transition-colors">
                             <h3 className="font-semibold text-base sm:text-lg leading-snug truncate">{product.name}</h3>
                           </Link>
                           <div className="flex items-center gap-1">

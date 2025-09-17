@@ -112,8 +112,8 @@ export function SimpleCategorySelect({
       // No subcategories, select the main category
       onValueChange(categoryId);
     } else {
-      // Has subcategories, wait for subcategory selection
-      onValueChange('');
+      // Has subcategories: default to main category selection (subcategory optional)
+      onValueChange(categoryId);
     }
   };
 

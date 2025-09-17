@@ -148,11 +148,15 @@ export const ProductDetail: React.FC = () => {
         .from('products')
         .select('*')
         .eq('store_id', store.id)
-        .eq('slug', productSlug)
         .eq('is_active', true)
-        .single();
+        .or(`slug.eq.${productSlug},id.eq.${productSlug}`)
+        .maybeSingle();
 
       if (error) throw error;
+      if (!data) {
+        setProduct(null);
+        return;
+      }
       const product = {
         ...data,
         images: Array.isArray(data.images) ? data.images.filter((img: any) => typeof img === 'string') as string[] : [],
