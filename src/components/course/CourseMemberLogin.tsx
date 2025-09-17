@@ -83,7 +83,7 @@ const CourseMemberLogin = () => {
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
             {storeSettings?.course_login_logo_url ? (
-              <div className="inline-flex items-center justify-center w-20 h-20 mb-4">
+              <div className="inline-flex items-center justify-center w-32 h-32 mb-4">
                 <img 
                   src={storeSettings.course_login_logo_url} 
                   alt={`${store.name} Logo`}
@@ -96,17 +96,11 @@ const CourseMemberLogin = () => {
               </div>
             )}
             <h1 className="text-2xl font-bold">Course Members Area</h1>
-            <p className="text-muted-foreground">Access your purchased courses from {store.name}</p>
+            <p className="text-muted-foreground">Access your purchased courses</p>
           </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Sign In</CardTitle>
-            <CardDescription>
-              Access your purchased courses
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+          <Card>
+            <CardContent className="p-6">
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
