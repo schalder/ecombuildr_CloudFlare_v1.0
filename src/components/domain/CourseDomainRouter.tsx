@@ -6,8 +6,12 @@ import { MemberAuthProvider } from '@/hooks/useMemberAuth';
 import CourseLibrary from '@/pages/CourseLibrary';
 import CourseDetail from '@/pages/CourseDetail';
 import StorefrontCourseDetail from '@/components/storefront/StorefrontCourseDetail';
+import StorefrontCourseLibrary from '@/components/storefront/StorefrontCourseLibrary';
 import CourseMemberLogin from '@/components/course/CourseMemberLogin';
 import CourseMemberDashboard from '@/components/course/CourseMemberDashboard';
+import { WebsiteHeader } from '@/components/storefront/WebsiteHeader';
+import { WebsiteFooter } from '@/components/storefront/WebsiteFooter';
+import { WebsiteProvider } from '@/contexts/WebsiteContext';
 import { Loader2 } from 'lucide-react';
 
 interface CourseDomainRouterProps {
@@ -29,6 +33,7 @@ const CourseDomainRouter = ({ customDomain, storeSlug }: CourseDomainRouterProps
   const { loadStoreById, store: currentStore } = useStore();
   const [loading, setLoading] = useState(true);
   const [courseConnection, setCourseConnection] = useState<CourseConnection | null>(null);
+  const [website, setWebsite] = useState<any>(null);
 
   useEffect(() => {
     const initializeCourseArea = async () => {
@@ -78,6 +83,19 @@ const CourseDomainRouter = ({ customDomain, storeSlug }: CourseDomainRouterProps
         }
 
         await loadStoreById(domainData.store_id);
+
+        // Also fetch website data for layout components
+        const { data: websiteData, error: websiteError } = await supabase
+          .from('websites')
+          .select('*')
+          .eq('store_id', domainData.store_id)
+          .eq('is_active', true)
+          .limit(1)
+          .single();
+
+        if (!websiteError && websiteData) {
+          setWebsite(websiteData);
+        }
       } catch (error) {
         console.error('Error initializing course area:', error);
       } finally {
@@ -112,9 +130,24 @@ const CourseDomainRouter = ({ customDomain, storeSlug }: CourseDomainRouterProps
   const basePath = courseConnection.path || '';
   const coursePath = location.pathname;
 
+  const renderWithLayout = (children: React.ReactNode) => {
+    if (website) {
+      return (
+        <WebsiteProvider websiteId={website.id} websiteSlug={website.slug}>
+          {(website.settings?.header?.enabled !== false) && <WebsiteHeader website={website} />}
+          <main className="flex-1">
+            {children}
+          </main>
+          {(website.settings?.footer?.enabled !== false) && <WebsiteFooter website={website} />}
+        </WebsiteProvider>
+      );
+    }
+    return children;
+  };
+
   // Determine which page to show based on the path
   if (coursePath === basePath || coursePath === `${basePath}/`) {
-    return <CourseLibrary />;
+    return renderWithLayout(<StorefrontCourseLibrary />);
   }
 
   if (coursePath.includes('/members')) {
@@ -129,12 +162,12 @@ const CourseDomainRouter = ({ customDomain, storeSlug }: CourseDomainRouterProps
     const courseSlugMatch = coursePath.match(/\/courses\/([^/]+)/);
     if (courseSlugMatch) {
       const courseIdOrSlug = courseSlugMatch[1];
-      return <StorefrontCourseDetail courseId={courseIdOrSlug} />;
+      return renderWithLayout(<StorefrontCourseDetail courseId={courseIdOrSlug} />);
     }
   }
 
   // Default to course library
-  return <CourseLibrary />;
+  return renderWithLayout(<StorefrontCourseLibrary />);
 };
 
 const CourseDetailWrapper = ({ courseSlug }: { courseSlug: string }) => {
