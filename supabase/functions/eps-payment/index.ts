@@ -143,7 +143,7 @@ serve(async (req) => {
       totalAmount: amount,
       ipAddress: "127.0.0.1", // Default IP
       version: "1",
-      successUrl: `${req.headers.get('origin')}/payment-processing?orderId=${orderId}${orderToken ? `&ot=${orderToken}` : ''}&status=success`,
+      successUrl: `${req.headers.get('origin')}/order-confirmation?orderId=${orderId}${orderToken ? `&ot=${orderToken}` : ''}&status=success`,
       failUrl: `${req.headers.get('origin')}/payment-processing?orderId=${orderId}${orderToken ? `&ot=${orderToken}` : ''}&status=failed`,
       cancelUrl: `${req.headers.get('origin')}/payment-processing?orderId=${orderId}${orderToken ? `&ot=${orderToken}` : ''}&status=cancelled`,
       customerName: customerData.name,
