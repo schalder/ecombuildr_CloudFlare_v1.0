@@ -171,7 +171,8 @@ export default function AddProduct() {
 
       // Generate a unique, URL-safe slug per store
       const baseSlug = formData.name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
-      let slug = baseSlug;
+      // Create fallback slug if baseSlug is empty
+      let slug = baseSlug || `p-${Date.now().toString(36)}`;
       const { data: existingSlugs } = await supabase
         .from('products')
         .select('slug')

@@ -333,7 +333,7 @@ const RelatedProductsElement: React.FC<{ element: PageBuilderElement; deviceType
                </div>
               <div className="text-sm font-medium" style={{ color: elementStyles.color, fontSize: elementStyles.fontSize, textAlign: elementStyles.textAlign, lineHeight: elementStyles.lineHeight, fontWeight: elementStyles.fontWeight }}>{p.name}</div>
               <div className="text-sm">{formatCurrency(Number(p.price))}</div>
-              <Button variant="outline" size="sm" className="mt-2 w-full" style={buttonStyles as React.CSSProperties} onClick={() => (window.location.href = paths.productDetail(p.slug))}>{element.content?.ctaText || 'View'}</Button>
+              <Button variant="outline" size="sm" className="mt-2 w-full" style={buttonStyles as React.CSSProperties} onClick={() => (window.location.href = paths.productDetail(p.slug || p.id))}>{element.content?.ctaText || 'View'}</Button>
             </CardContent>
           </Card>
         ))}

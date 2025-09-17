@@ -73,14 +73,23 @@ export function SimpleCategorySelect({
 
   // Update selected categories when value changes
   useEffect(() => {
-    if (!value || !filteredCategories.length) {
+    // Wait for categories to load before processing value
+    if (!flatCategories.length) {
+      return;
+    }
+
+    if (!value) {
       setSelectedMainCategory('');
       setSelectedSubCategory('');
       return;
     }
 
-    const selectedCategory = filteredCategories.find(cat => cat.id === value);
-    if (!selectedCategory) return;
+    // Use flatCategories instead of filteredCategories to avoid timing issues
+    const selectedCategory = flatCategories.find(cat => cat.id === value);
+    if (!selectedCategory) {
+      console.log('Category not found:', value);
+      return;
+    }
 
     if (selectedCategory.parent_category_id) {
       // This is a subcategory
@@ -91,7 +100,7 @@ export function SimpleCategorySelect({
       setSelectedMainCategory(value);
       setSelectedSubCategory('');
     }
-  }, [value, filteredCategories]);
+  }, [value, flatCategories]); // Use flatCategories instead of filteredCategories
 
   const handleMainCategoryChange = (categoryId: string) => {
     if (categoryId === 'none') {

@@ -128,7 +128,7 @@ const ProductGridElement: React.FC<{
           <Card key={product.id} className="group/card hover:shadow-lg transition-shadow">
             <CardContent className="p-3">
               <div className="aspect-square overflow-hidden rounded-lg mb-3 relative">
-                <Link to={paths.productDetail(product.slug)} aria-label={product.name}>
+                <Link to={paths.productDetail(product.slug || product.id)} aria-label={product.name}>
                   <img
                     src={(Array.isArray(product.images) ? product.images[0] : product.images) || '/placeholder.svg'}
                     alt={product.name}
@@ -152,7 +152,7 @@ const ProductGridElement: React.FC<{
                 )}
               </div>
               <h4 style={{ color: elementStyles.color, fontSize: elementStyles.fontSize, textAlign: elementStyles.textAlign, lineHeight: elementStyles.lineHeight, fontWeight: elementStyles.fontWeight }} className="font-medium mb-2 line-clamp-2">
-                <Link to={paths.productDetail(product.slug)} className="hover:underline">{product.name}</Link>
+                <Link to={paths.productDetail(product.slug || product.id)} className="hover:underline">{product.name}</Link>
               </h4>
               
               {showRating && reviewStats[product.id] && reviewStats[product.id].rating_count > 0 && (
@@ -306,7 +306,7 @@ const FeaturedProductsElement: React.FC<{
             <Card key={p.id} className="group/card hover:shadow-lg transition-shadow">
               <CardContent className="p-3">
                 <div className="aspect-square overflow-hidden rounded-lg mb-3">
-                  <Link to={paths.productDetail(p.slug)} aria-label={p.name}>
+                  <Link to={paths.productDetail(p.slug || p.id)} aria-label={p.name}>
                     <img
                       src={(Array.isArray(p.images) ? p.images[0] : p.images) || '/placeholder.svg'}
                       alt={p.name}
@@ -316,7 +316,7 @@ const FeaturedProductsElement: React.FC<{
                 </div>
                  <div className="flex items-start justify-between gap-2">
                    <h4 style={{ color: elementStyles.color, fontSize: elementStyles.fontSize, textAlign: elementStyles.textAlign, lineHeight: elementStyles.lineHeight, fontWeight: elementStyles.fontWeight }} className="font-medium line-clamp-2">
-                     <Link to={paths.productDetail(p.slug)} className="hover:underline">{p.name}</Link>
+                     <Link to={paths.productDetail(p.slug || p.id)} className="hover:underline">{p.name}</Link>
                    </h4>
                   <Star className="h-4 w-4 text-primary shrink-0" aria-label="Featured" />
                 </div>

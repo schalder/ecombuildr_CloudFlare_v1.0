@@ -193,14 +193,13 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
 
         setFilteredCategories(filtered);
 
-        // Clear category if current selection is not valid for this website
-        if (formData.category_id && formData.category_id !== 'none' && !visibleCategoryIds.includes(formData.category_id)) {
-          console.log('❌ EditProduct - Clearing invalid category:', {
-            invalidCategoryId: formData.category_id,
-            validCategoryIds: visibleCategoryIds
-          });
-          handleInputChange('category_id', '');
-        }
+        // Don't clear category_id - let user see their original selection
+        // This preserves the product's original category on edit page load
+        console.log('📂 EditProduct - Keeping original category selection:', {
+          currentCategoryId: formData.category_id,
+          validCategoryIds: visibleCategoryIds,
+          categoryVisible: visibleCategoryIds.includes(formData.category_id)
+        });
       } catch (error) {
         console.error('📂 EditProduct - Error filtering categories:', error);
         setFilteredCategories([]);

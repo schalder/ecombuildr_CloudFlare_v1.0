@@ -198,7 +198,7 @@ const WeeklyFeaturedElement: React.FC<{
           </div>
 
           <CardContent className="p-2 sm:p-3 md:p-4" style={getCardStyles()}>
-            <Link to={paths.productDetail(product.slug)}>
+            <Link to={paths.productDetail(product.slug || product.id)}>
               <h3 className="font-medium text-xs sm:text-sm mb-1 sm:mb-2 line-clamp-2 hover:text-primary transition-colors cursor-pointer leading-tight" style={getTypographyStyles('productTitleStyles')}>{product.name}</h3>
             </Link>
             
