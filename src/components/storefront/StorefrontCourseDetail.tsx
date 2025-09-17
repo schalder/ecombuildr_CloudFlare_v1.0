@@ -112,6 +112,7 @@ const StorefrontCourseDetail: React.FC<StorefrontCourseDetailProps> = ({ courseS
       const { data, error } = await query.maybeSingle();
 
       if (error) throw error;
+      if (!data) throw new Error('Course not found');
       return data as CourseDetail;
     },
     enabled: !!(finalCourseSlug || finalCourseId)

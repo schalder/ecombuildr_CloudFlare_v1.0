@@ -599,9 +599,12 @@ export type Database = {
       courses: {
         Row: {
           compare_price: number | null
+          content: string | null
           created_at: string
           description: string | null
           id: string
+          includes_items: string[] | null
+          includes_title: string | null
           is_active: boolean
           is_published: boolean
           price: number
@@ -612,9 +615,12 @@ export type Database = {
         }
         Insert: {
           compare_price?: number | null
+          content?: string | null
           created_at?: string
           description?: string | null
           id?: string
+          includes_items?: string[] | null
+          includes_title?: string | null
           is_active?: boolean
           is_published?: boolean
           price?: number
@@ -625,9 +631,12 @@ export type Database = {
         }
         Update: {
           compare_price?: number | null
+          content?: string | null
           created_at?: string
           description?: string | null
           id?: string
+          includes_items?: string[] | null
+          includes_title?: string | null
           is_active?: boolean
           is_published?: boolean
           price?: number
