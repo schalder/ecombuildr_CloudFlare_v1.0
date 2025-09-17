@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Menu, Search, ShoppingCart } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
@@ -79,11 +79,11 @@ export const FunnelHeader: React.FC<{ funnel: FunnelData; }> = ({ funnel }) => {
           </a>
         );
       } else {
-        // Internal URL - use React Router Link for SPA navigation
+        // Internal URL - force full page reload
         return (
-          <Link to={item.url} className={`${fontSizeClass} transition-colors`} style={{ color: cfg?.style?.text_color || undefined }}>
+          <a href={item.url} target={item.new_tab ? '_blank' : undefined} rel={item.new_tab ? 'noopener' : undefined} className={`${fontSizeClass} transition-colors`} style={{ color: cfg?.style?.text_color || undefined }}>
             {item.label}
-          </Link>
+          </a>
         );
       }
     }
@@ -91,7 +91,7 @@ export const FunnelHeader: React.FC<{ funnel: FunnelData; }> = ({ funnel }) => {
     // Use clean URL for custom domains, fallback to full funnel path
     const to = stepSlug ? `/${stepSlug}` : paths.home;
     return (
-      <Link to={to} className={`${fontSizeClass} transition-colors`} style={{ color: cfg?.style?.text_color || undefined }}>{item.label}</Link>
+      <a href={to} className={`${fontSizeClass} transition-colors`} style={{ color: cfg?.style?.text_color || undefined }}>{item.label}</a>
     );
   };
 
@@ -114,13 +114,13 @@ export const FunnelHeader: React.FC<{ funnel: FunnelData; }> = ({ funnel }) => {
         `}</style>
       )}
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-        <Link to={paths.home} className="flex items-center gap-3">
+        <a href={paths.home} className="flex items-center gap-3">
            {cfg?.logo_url ? (
              <StorefrontImage src={cfg.logo_url} alt={`${funnel.name} logo`} className="h-8 w-auto object-contain" priority={true} />
            ) : (
             <span className="font-semibold">{funnel.name}</span>
           )}
-        </Link>
+        </a>
         <div className="hidden md:flex items-center gap-6 ml-auto">
           <nav className="flex items-center gap-6">
             {cfg?.nav_items?.map((item) => (

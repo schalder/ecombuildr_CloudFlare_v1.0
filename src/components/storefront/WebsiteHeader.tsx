@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Menu, Search, ShoppingCart } from 'lucide-react';
 import { useEcomPaths } from '@/lib/pathResolver';
 import { Sheet, SheetContent, SheetHeader, SheetTrigger } from '@/components/ui/sheet';
@@ -78,18 +78,18 @@ export const WebsiteHeader: React.FC<{ website: WebsiteData; }> = ({ website }) 
           </a>
         );
       } else {
-        // Internal URL - use React Router Link for SPA navigation
+        // Internal URL - force full page reload
         return (
-          <Link to={item.url} className={`${fontSizeClass} transition-colors`} style={{ color: cfg?.style?.text_color || undefined }}>
+          <a href={item.url} target={item.new_tab ? '_blank' : undefined} rel={item.new_tab ? 'noopener' : undefined} className={`${fontSizeClass} transition-colors`} style={{ color: cfg?.style?.text_color || undefined }}>
             {item.label}
-          </Link>
+          </a>
         );
       }
     }
     const slug = item.page_slug || '';
     const to = slug ? `${paths.base}/${slug}` : paths.home;
     return (
-      <Link to={to} className={`${fontSizeClass} transition-colors`} style={{ color: cfg?.style?.text_color || undefined }}>{item.label}</Link>
+      <a href={to} className={`${fontSizeClass} transition-colors`} style={{ color: cfg?.style?.text_color || undefined }}>{item.label}</a>
     );
   };
 
@@ -105,13 +105,13 @@ export const WebsiteHeader: React.FC<{ website: WebsiteData; }> = ({ website }) 
         `}</style>
       )}
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-        <Link to={paths.home} className="flex items-center gap-3">
+        <a href={paths.home} className="flex items-center gap-3">
           {cfg?.logo_url ? (
             <img src={cfg.logo_url} alt={`${website.name} logo`} className="h-8 w-auto object-contain" />
           ) : (
             <span className="font-semibold">{website.name}</span>
           )}
-        </Link>
+        </a>
         <div className="hidden md:flex items-center gap-6 ml-auto">
           <nav className="flex items-center gap-6">
             {cfg?.nav_items?.map((item) => (

@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Link } from 'react-router-dom';
+// Removed SPA Link in favor of full reload anchors
 import { useEcomPaths } from '@/lib/pathResolver';
 
 interface WebsiteData {
@@ -90,13 +90,13 @@ export const WebsiteFooter: React.FC<{ website: WebsiteData; }> = ({ website }) 
       <div className="container mx-auto px-4 py-10">
         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
           <div className="max-w-md space-y-3">
-            <Link to={paths.home} className="flex items-center gap-3">
+            <a href={paths.home} className="flex items-center gap-3">
               {cfg?.logo_url ? (
                 <img src={cfg.logo_url} alt={`${website.name} logo`} className="h-8 w-auto object-contain" />
               ) : (
                 <span className="font-semibold">{website.name}</span>
               )}
-            </Link>
+            </a>
             {cfg?.description && (
               <p className="text-sm opacity-80">{cfg.description}</p>
             )}
@@ -123,22 +123,24 @@ export const WebsiteFooter: React.FC<{ website: WebsiteData; }> = ({ website }) 
                             {link.label}
                           </a>
                         ) : (
-                          <Link 
-                            to={link.url} 
+                          <a 
+                            href={link.url} 
+                            target={link.new_tab ? '_blank' : undefined}
+                            rel={link.new_tab ? 'noopener' : undefined}
                             className="text-sm transition-colors" 
                             style={{ color: cfg?.style?.text_color || undefined }}
                           >
                             {link.label}
-                          </Link>
+                          </a>
                         )
                       ) : (
-                        <Link 
-                          to={link.page_slug ? `${paths.base}/${link.page_slug}` : paths.home} 
+                        <a 
+                          href={link.page_slug ? `${paths.base}/${link.page_slug}` : paths.home} 
                           className="text-sm transition-colors" 
                           style={{ color: cfg?.style?.text_color || undefined }}
                         >
                           {link.label}
-                        </Link>
+                        </a>
                       )}
                     </li>
                   ))}
