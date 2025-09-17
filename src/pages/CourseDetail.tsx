@@ -64,6 +64,7 @@ const CourseDetail = () => {
   const { courseId } = useParams<{ courseId: string }>();
   const [expandedModules, setExpandedModules] = useState<string[]>([]);
   const [selectedLesson, setSelectedLesson] = useState<CourseLesson | null>(null);
+  const { currency } = useCourseCurrency();
 
   const { data: course, isLoading, error } = useQuery({
     queryKey: ['course-detail', courseId],
