@@ -31,7 +31,7 @@ interface CheckoutForm {
   shipping_address: string;
   shipping_city: string;
   shipping_area: string;
-  payment_method: 'cod' | 'bkash' | 'nagad' | 'sslcommerz';
+  payment_method: 'cod' | 'bkash' | 'nagad' | 'eps';
   payment_transaction_number: string;
   notes: string;
   discount_code: string;
@@ -60,7 +60,7 @@ export const CheckoutPage: React.FC = () => {
   const [shippingCost, setShippingCost] = useState(0); // Default shipping cost
   const { websiteShipping } = useWebsiteShipping();
 
-  const [allowedMethods, setAllowedMethods] = useState<Array<'cod' | 'bkash' | 'nagad' | 'sslcommerz'>>(['cod','bkash','nagad','sslcommerz']);
+  const [allowedMethods, setAllowedMethods] = useState<Array<'cod' | 'bkash' | 'nagad' | 'eps'>>(['cod','bkash','nagad','eps']);
 
   const [form, setForm] = useState<CheckoutForm>({
     customer_name: '',
@@ -123,12 +123,12 @@ useEffect(() => {
         cod: true,
         bkash: !!store?.settings?.bkash?.enabled,
         nagad: !!store?.settings?.nagad?.enabled,
-        sslcommerz: !!store?.settings?.sslcommerz?.enabled,
+        eps: !!store?.settings?.eps?.enabled,
       };
 
       // Empty cart: fall back to store-level enabled list
       if (!items.length) {
-        let base = ['cod','bkash','nagad','sslcommerz'].filter((m) => (storeAllowed as any)[m]);
+        let base = ['cod','bkash','nagad','eps'].filter((m) => (storeAllowed as any)[m]);
         if (base.length === 0) base = ['cod'];
         setAllowedMethods(base as any);
         if (!base.includes(form.payment_method)) {
@@ -142,7 +142,7 @@ useEffect(() => {
         .from('products')
         .select('id, allowed_payment_methods')
         .in('id', ids);
-      let acc: string[] = ['cod','bkash','nagad','sslcommerz'];
+      let acc: string[] = ['cod','bkash','nagad','eps'];
       (data || []).forEach((p: any) => {
         const arr: string[] | null = p.allowed_payment_methods;
         if (arr && arr.length > 0) {
@@ -418,8 +418,8 @@ useEffect(() => {
             body: { orderId, amount, storeId: store!.id }
           });
           break;
-        case 'sslcommerz':
-          response = await supabase.functions.invoke('sslcommerz-payment', {
+        case 'eps':
+          response = await supabase.functions.invoke('eps-payment', {
             body: { 
               orderId, 
               amount, 
@@ -702,8 +702,8 @@ useEffect(() => {
                     {allowedMethods.includes('nagad') && (
                       <SelectItem value="nagad">Nagad</SelectItem>
                     )}
-                    {allowedMethods.includes('sslcommerz') && (
-                      <SelectItem value="sslcommerz">Credit/Debit Card (SSLCommerz)</SelectItem>
+                    {allowedMethods.includes('eps') && (
+                      <SelectItem value="eps">Bank/Card/MFS (EPS)</SelectItem>
                     )}
                   </SelectContent>
                 </Select>
@@ -776,7 +776,7 @@ useEffect(() => {
                     {form.payment_method === 'cod' && 'Cash on Delivery (COD)'}
                     {form.payment_method === 'bkash' && 'bKash'}
                     {form.payment_method === 'nagad' && 'Nagad'}
-                    {form.payment_method === 'sslcommerz' && 'Credit/Debit Card (SSLCommerz)'}
+                    {form.payment_method === 'eps' && 'Bank/Card/MFS (EPS)'}
                   </p>
                 </div>
                 {form.notes && (

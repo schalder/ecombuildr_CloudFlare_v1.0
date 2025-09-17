@@ -206,7 +206,7 @@ useEffect(() => {
                   <span className="font-medium">
                     {order.payment_method === 'bkash' && 'bKash'}
                     {order.payment_method === 'nagad' && 'Nagad'}
-                    {order.payment_method === 'sslcommerz' && 'Credit/Debit Card'}
+                    {order.payment_method === 'eps' && 'Bank/Card/MFS'}
                   </span>
                 </div>
                 <div className="flex justify-between">

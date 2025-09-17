@@ -998,13 +998,13 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
                         <p className="text-sm text-muted-foreground mt-1">Select which payment methods customers can use for this product</p>
                       </div>
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
-                        {['cod','bkash','nagad','sslcommerz'].map((method) => (
+                        {['cod','bkash','nagad','eps'].map((method) => (
                           <label key={method} className="flex items-center gap-3 p-3 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors">
                             <Checkbox
                               checked={allowedPayments.includes(method)}
                               onCheckedChange={(v) => setAllowedPayments(prev => v ? [...prev, method] : prev.filter(x => x !== method))}
                             />
-                            <span className="capitalize text-sm font-medium">{method === 'sslcommerz' ? 'SSLCommerz' : method}</span>
+                            <span className="capitalize text-sm font-medium">{method === 'eps' ? 'EPS' : method}</span>
                           </label>
                         ))}
                       </div>

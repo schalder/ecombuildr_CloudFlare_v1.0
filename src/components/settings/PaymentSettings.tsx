@@ -16,25 +16,21 @@ type Props = {
 interface PaymentSettings {
   bkash?: {
     enabled: boolean;
-    mode: 'number' | 'api';
+    mode: 'number';
     number?: string;
-    app_key?: string;
-    app_secret?: string;
-    username?: string;
-    password?: string;
   };
   nagad?: {
     enabled: boolean;
-    mode: 'number' | 'api';
+    mode: 'number';
     number?: string;
-    merchant_id?: string;
-    public_key?: string;
-    private_key?: string;
   };
-  sslcommerz?: {
+  eps?: {
     enabled: boolean;
+    merchant_id?: string;
     store_id?: string;
-    store_password?: string;
+    username?: string;
+    password?: string;
+    hash_key?: string;
     is_live?: boolean;
   };
 }
@@ -46,7 +42,7 @@ export default function PaymentSettings({ storeId }: Props) {
   const [settings, setSettings] = useState<PaymentSettings>({
     bkash: { enabled: false, mode: 'number' },
     nagad: { enabled: false, mode: 'number' },
-    sslcommerz: { enabled: false, is_live: false },
+    eps: { enabled: false, is_live: false },
   });
 
   useEffect(() => {
@@ -66,7 +62,7 @@ export default function PaymentSettings({ storeId }: Props) {
           setSettings({
             bkash: paymentSettings.bkash || { enabled: false, mode: 'number' },
             nagad: paymentSettings.nagad || { enabled: false, mode: 'number' },
-            sslcommerz: paymentSettings.sslcommerz || { enabled: false, is_live: false },
+            eps: paymentSettings.eps || { enabled: false, is_live: false },
           });
         }
       } catch (error) {
@@ -108,7 +104,7 @@ export default function PaymentSettings({ storeId }: Props) {
         // Also maintain backward compatibility with old structure
         bkash: settings.bkash,
         nagad: settings.nagad,
-        sslcommerz: settings.sslcommerz,
+        eps: settings.eps,
       } as any;
 
       const { error } = await supabase
@@ -161,13 +157,13 @@ export default function PaymentSettings({ storeId }: Props) {
     }));
   };
 
-  const updateSSLCommerzSettings = (updates: Partial<NonNullable<PaymentSettings['sslcommerz']>>) => {
+  const updateEPSSettings = (updates: Partial<NonNullable<PaymentSettings['eps']>>) => {
     setSettings(prev => ({
       ...prev,
-      sslcommerz: { 
+      eps: { 
         enabled: false,
         is_live: false,
-        ...(prev.sslcommerz || {}), 
+        ...(prev.eps || {}), 
         ...updates 
       }
     }));
@@ -197,75 +193,14 @@ export default function PaymentSettings({ storeId }: Props) {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label>Integration Mode</Label>
-            <Select
-              value={settings.bkash?.mode || 'number'}
-              onValueChange={(mode: 'number' | 'api') => updateBkashSettings({ mode })}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="number">Manual (Phone Number)</SelectItem>
-                <SelectItem value="api">API Integration</SelectItem>
-              </SelectContent>
-            </Select>
+            <Label htmlFor="bkash-number">bKash Number</Label>
+            <Input
+              id="bkash-number"
+              value={settings.bkash?.number || ''}
+              onChange={(e) => updateBkashSettings({ number: e.target.value })}
+              placeholder="Enter bKash number for manual payments"
+            />
           </div>
-
-          {settings.bkash?.mode === 'number' && (
-            <div className="space-y-2">
-              <Label htmlFor="bkash-number">bKash Number</Label>
-              <Input
-                id="bkash-number"
-                value={settings.bkash?.number || ''}
-                onChange={(e) => updateBkashSettings({ number: e.target.value })}
-                placeholder="Enter bKash number"
-              />
-            </div>
-          )}
-
-          {settings.bkash?.mode === 'api' && (
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="bkash-app-key">App Key</Label>
-                <Input
-                  id="bkash-app-key"
-                  value={settings.bkash?.app_key || ''}
-                  onChange={(e) => updateBkashSettings({ app_key: e.target.value })}
-                  placeholder="Enter App Key"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="bkash-app-secret">App Secret</Label>
-                <Input
-                  id="bkash-app-secret"
-                  type="password"
-                  value={settings.bkash?.app_secret || ''}
-                  onChange={(e) => updateBkashSettings({ app_secret: e.target.value })}
-                  placeholder="Enter App Secret"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="bkash-username">Username</Label>
-                <Input
-                  id="bkash-username"
-                  value={settings.bkash?.username || ''}
-                  onChange={(e) => updateBkashSettings({ username: e.target.value })}
-                  placeholder="Enter Username"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="bkash-password">Password</Label>
-                <Input
-                  id="bkash-password"
-                  type="password"
-                  value={settings.bkash?.password || ''}
-                  onChange={(e) => updateBkashSettings({ password: e.target.value })}
-                  placeholder="Enter Password"
-                />
-              </div>
-            </div>
-          )}
         </CardContent>
       </Card>
 
@@ -282,109 +217,86 @@ export default function PaymentSettings({ storeId }: Props) {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label>Integration Mode</Label>
-            <Select
-              value={settings.nagad?.mode || 'number'}
-              onValueChange={(mode: 'number' | 'api') => updateNagadSettings({ mode })}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="number">Manual (Phone Number)</SelectItem>
-                <SelectItem value="api">API Integration</SelectItem>
-              </SelectContent>
-            </Select>
+            <Label htmlFor="nagad-number">Nagad Number</Label>
+            <Input
+              id="nagad-number"
+              value={settings.nagad?.number || ''}
+              onChange={(e) => updateNagadSettings({ number: e.target.value })}
+              placeholder="Enter Nagad number for manual payments"
+            />
           </div>
-
-          {settings.nagad?.mode === 'number' && (
-            <div className="space-y-2">
-              <Label htmlFor="nagad-number">Nagad Number</Label>
-              <Input
-                id="nagad-number"
-                value={settings.nagad?.number || ''}
-                onChange={(e) => updateNagadSettings({ number: e.target.value })}
-                placeholder="Enter Nagad number"
-              />
-            </div>
-          )}
-
-          {settings.nagad?.mode === 'api' && (
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="nagad-merchant-id">Merchant ID</Label>
-                <Input
-                  id="nagad-merchant-id"
-                  value={settings.nagad?.merchant_id || ''}
-                  onChange={(e) => updateNagadSettings({ merchant_id: e.target.value })}
-                  placeholder="Enter Merchant ID"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="nagad-public-key">Public Key</Label>
-                <Input
-                  id="nagad-public-key"
-                  value={settings.nagad?.public_key || ''}
-                  onChange={(e) => updateNagadSettings({ public_key: e.target.value })}
-                  placeholder="Enter Public Key"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="nagad-private-key">Private Key</Label>
-                <Input
-                  id="nagad-private-key"
-                  type="password"
-                  value={settings.nagad?.private_key || ''}
-                  onChange={(e) => updateNagadSettings({ private_key: e.target.value })}
-                  placeholder="Enter Private Key"
-                />
-              </div>
-            </div>
-          )}
         </CardContent>
       </Card>
 
-      {/* SSLCommerz Settings */}
+      {/* EPS Payment Gateway Settings */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
-            SSLCommerz Payment Gateway
+            EPS Payment Gateway
             <Switch
-              checked={settings.sslcommerz?.enabled || false}
-              onCheckedChange={(enabled) => updateSSLCommerzSettings({ enabled })}
+              checked={settings.eps?.enabled || false}
+              onCheckedChange={(enabled) => updateEPSSettings({ enabled })}
             />
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="ssl-store-id">Store ID</Label>
+              <Label htmlFor="eps-merchant-id">Merchant ID</Label>
               <Input
-                id="ssl-store-id"
-                value={settings.sslcommerz?.store_id || ''}
-                onChange={(e) => updateSSLCommerzSettings({ store_id: e.target.value })}
-                placeholder="Enter Store ID"
+                id="eps-merchant-id"
+                value={settings.eps?.merchant_id || ''}
+                onChange={(e) => updateEPSSettings({ merchant_id: e.target.value })}
+                placeholder="Enter EPS Merchant ID"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="ssl-store-password">Store Password</Label>
+              <Label htmlFor="eps-store-id">Store ID</Label>
               <Input
-                id="ssl-store-password"
+                id="eps-store-id"
+                value={settings.eps?.store_id || ''}
+                onChange={(e) => updateEPSSettings({ store_id: e.target.value })}
+                placeholder="Enter EPS Store ID"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="eps-username">Username</Label>
+              <Input
+                id="eps-username"
+                value={settings.eps?.username || ''}
+                onChange={(e) => updateEPSSettings({ username: e.target.value })}
+                placeholder="Enter EPS Username"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="eps-password">Password</Label>
+              <Input
+                id="eps-password"
                 type="password"
-                value={settings.sslcommerz?.store_password || ''}
-                onChange={(e) => updateSSLCommerzSettings({ store_password: e.target.value })}
-                placeholder="Enter Store Password"
+                value={settings.eps?.password || ''}
+                onChange={(e) => updateEPSSettings({ password: e.target.value })}
+                placeholder="Enter EPS Password"
+              />
+            </div>
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="eps-hash-key">Hash Key</Label>
+              <Input
+                id="eps-hash-key"
+                type="password"
+                value={settings.eps?.hash_key || ''}
+                onChange={(e) => updateEPSSettings({ hash_key: e.target.value })}
+                placeholder="Enter EPS Hash Key"
               />
             </div>
           </div>
           
           <div className="flex items-center space-x-2">
             <Switch
-              id="ssl-live-mode"
-              checked={settings.sslcommerz?.is_live || false}
-              onCheckedChange={(is_live) => updateSSLCommerzSettings({ is_live })}
+              id="eps-live-mode"
+              checked={settings.eps?.is_live || false}
+              onCheckedChange={(is_live) => updateEPSSettings({ is_live })}
             />
-            <Label htmlFor="ssl-live-mode">Live Mode (Uncheck for Sandbox)</Label>
+            <Label htmlFor="eps-live-mode">Live Mode (Uncheck for Sandbox)</Label>
           </div>
         </CardContent>
       </Card>

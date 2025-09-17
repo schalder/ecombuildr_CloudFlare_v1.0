@@ -9,7 +9,7 @@ const corsHeaders = {
 interface VerifyPaymentRequest {
   orderId: string;
   paymentId: string;
-  method: 'bkash' | 'nagad' | 'sslcommerz';
+  method: 'bkash' | 'nagad' | 'eps';
 }
 
 serve(async (req) => {
@@ -47,8 +47,8 @@ serve(async (req) => {
       case 'nagad':
         paymentStatus = await verifyNagadPayment(paymentId, order.store_id, supabase);
         break;
-      case 'sslcommerz':
-        paymentStatus = await verifySSLCommerzPayment(paymentId, order.store_id, supabase);
+      case 'eps':
+        paymentStatus = await verifyEPSPayment(paymentId, order.store_id, supabase);
         break;
     }
 
@@ -188,40 +188,106 @@ async function verifyNagadPayment(paymentId: string, storeId: string, supabase: 
   }
 }
 
-async function verifySSLCommerzPayment(transactionId: string, storeId: string, supabase: any): Promise<string> {
+async function verifyEPSPayment(transactionId: string, storeId: string, supabase: any): Promise<string> {
   try {
-    // Get store settings for SSLCommerz configuration
+    // Get store settings for EPS configuration
     const { data: store, error: storeError } = await supabase
       .from('stores')
       .select('settings')
       .eq('id', storeId)
       .single();
 
-    if (storeError || !store?.settings?.sslcommerz) {
-      console.error('SSLCommerz configuration not found for store:', storeId);
+    if (storeError || !store?.settings?.eps) {
+      console.error('EPS configuration not found for store:', storeId);
       return 'failed';
     }
 
-    const sslConfig = {
-      store_id: store.settings.sslcommerz.store_id,
-      store_passwd: store.settings.sslcommerz.store_password,
-      base_url: store.settings.sslcommerz.base_url || 'https://sandbox.sslcommerz.com',
+    const epsConfig = {
+      merchant_id: store.settings.eps.merchant_id,
+      store_id: store.settings.eps.store_id,
+      username: store.settings.eps.username,
+      password: store.settings.eps.password,
+      hash_key: store.settings.eps.hash_key,
+      base_url: store.settings.eps.is_live ? 'https://www.eps.com.bd' : 'https://demo.epsbd.com',
     };
 
-    const formData = new URLSearchParams();
-    formData.append('store_id', sslConfig.store_id!);
-    formData.append('store_passwd', sslConfig.store_passwd!);
-    formData.append('format', 'json');
+    // Helper function to generate HMAC-SHA512 hash
+    function generateHash(data: string, key: string): string {
+      const encoder = new TextEncoder();
+      const keyBytes = encoder.encode(key);
+      const dataBytes = encoder.encode(data);
+      
+      // Simple HMAC implementation for Deno
+      const hmac = crypto.subtle.importKey(
+        'raw',
+        keyBytes,
+        { name: 'HMAC', hash: 'SHA-512' },
+        false,
+        ['sign']
+      );
+      
+      return hmac.then(key => 
+        crypto.subtle.sign('HMAC', key, dataBytes)
+      ).then(signature => 
+        Array.from(new Uint8Array(signature))
+          .map(b => b.toString(16).padStart(2, '0'))
+          .join('')
+      );
+    }
 
-    const response = await fetch(`${sslConfig.base_url}/validator/api/merchantTransIDvalidationAPI.php?tran_id=${transactionId}&store_id=${sslConfig.store_id}&store_passwd=${sslConfig.store_passwd}&format=json`, {
-      method: 'GET',
+    // Get authentication token
+    const timestamp = Math.floor(Date.now() / 1000).toString();
+    const tokenData = `${epsConfig.merchant_id}${epsConfig.store_id}${timestamp}`;
+    const tokenHash = await generateHash(tokenData, epsConfig.hash_key);
+
+    const tokenResponse = await fetch(`${epsConfig.base_url}/api/v1/get-token`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify({
+        merchant_id: epsConfig.merchant_id,
+        store_id: epsConfig.store_id,
+        username: epsConfig.username,
+        password: epsConfig.password,
+        timestamp: timestamp,
+        hash: tokenHash,
+      }),
     });
 
-    const data = await response.json();
+    const tokenResult = await tokenResponse.json();
     
-    return data.status === 'VALID' || data.status === 'VALIDATED' ? 'success' : 'failed';
+    if (tokenResult.status !== 'SUCCESS') {
+      console.error('Failed to get EPS token:', tokenResult);
+      return 'failed';
+    }
+
+    // Verify payment
+    const verifyTimestamp = Math.floor(Date.now() / 1000).toString();
+    const verifyHashData = `${epsConfig.merchant_id}${transactionId}${verifyTimestamp}`;
+    const verifyHash = await generateHash(verifyHashData, epsConfig.hash_key);
+
+    const verifyResponse = await fetch(`${epsConfig.base_url}/api/v1/payment/verify`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${tokenResult.token}`,
+      },
+      body: JSON.stringify({
+        merchant_id: epsConfig.merchant_id,
+        tran_id: transactionId,
+        timestamp: verifyTimestamp,
+        hash: verifyHash,
+      }),
+    });
+
+    const verifyResult = await verifyResponse.json();
+    
+    return verifyResult.status === 'SUCCESS' && verifyResult.data?.payment_status === 'PAID' ? 'success' : 'failed';
   } catch (error) {
-    console.error('SSLCommerz verification error:', error);
+    console.error('EPS verification error:', error);
     return 'failed';
   }
 }

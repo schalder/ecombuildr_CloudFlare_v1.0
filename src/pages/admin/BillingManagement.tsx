@@ -565,7 +565,7 @@ export default function BillingManagement() {
                           <SelectContent>
                             <SelectItem value="bkash">bKash</SelectItem>
                             <SelectItem value="nagad">Nagad</SelectItem>
-                            <SelectItem value="sslcommerz">SSL Commerz</SelectItem>
+                            <SelectItem value="eps">EPS Payment Gateway</SelectItem>
                             <SelectItem value="manual">Manual Transfer</SelectItem>
                           </SelectContent>
                         </Select>
@@ -655,7 +655,7 @@ export default function BillingManagement() {
                     <SelectContent>
                       <SelectItem value="bkash">bKash</SelectItem>
                       <SelectItem value="nagad">Nagad</SelectItem>
-                      <SelectItem value="sslcommerz">SSL Commerz</SelectItem>
+                      <SelectItem value="eps">EPS Payment Gateway</SelectItem>
                       <SelectItem value="manual">Manual Transfer</SelectItem>
                     </SelectContent>
                   </Select>
@@ -793,7 +793,7 @@ export default function BillingManagement() {
                             <Badge variant={
                               subscriber.payment_method === 'bkash' ? 'default' :
                               subscriber.payment_method === 'nagad' ? 'secondary' :
-                              subscriber.payment_method === 'sslcommerz' ? 'outline' : 'default'
+                              subscriber.payment_method === 'eps' ? 'outline' : 'default'
                             }>
                               {subscriber.payment_method}
                             </Badge>

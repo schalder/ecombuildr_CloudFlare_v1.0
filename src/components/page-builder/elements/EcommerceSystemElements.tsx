@@ -827,7 +827,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
     customer_name: '', customer_email: '', customer_phone: '',
     shipping_address: '', shipping_city: '', shipping_area: '',
     shipping_country: '', shipping_state: '', shipping_postal_code: '',
-    payment_method: 'cod' as 'cod' | 'bkash' | 'nagad' | 'sslcommerz', payment_transaction_number: '', notes: '',
+    payment_method: 'cod' as 'cod' | 'bkash' | 'nagad' | 'eps', payment_transaction_number: '', notes: '',
     accept_terms: false,
     custom_fields: {} as Record<string, any>,
     selectedShippingOption: '',
@@ -835,7 +835,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
   const [shippingCost, setShippingCost] = useState(0);
   const { websiteShipping } = useWebsiteShipping();
   const [loading, setLoading] = useState(false);
-  const [allowedMethods, setAllowedMethods] = useState<Array<'cod' | 'bkash' | 'nagad' | 'sslcommerz'>>(['cod','bkash','nagad','sslcommerz']);
+  const [allowedMethods, setAllowedMethods] = useState<Array<'cod' | 'bkash' | 'nagad' | 'eps'>>(['cod','bkash','nagad','eps']);
   const [productShippingData, setProductShippingData] = useState<Map<string, { weight_grams?: number; shipping_config?: any }>>(new Map());
   
   // Tracking state
@@ -857,9 +857,9 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
         cod: true,
         bkash: !!store?.settings?.bkash?.enabled,
         nagad: !!store?.settings?.nagad?.enabled,
-        sslcommerz: !!store?.settings?.sslcommerz?.enabled,
+        eps: !!store?.settings?.eps?.enabled,
       };
-      let base = ['cod','bkash','nagad','sslcommerz'].filter((m) => (storeAllowed as any)[m]);
+      let base = ['cod','bkash','nagad','eps'].filter((m) => (storeAllowed as any)[m]);
       if (base.length === 0) base = ['cod'];
       setAllowedMethods(base as any);
       if (!base.includes(form.payment_method)) setForm(prev => ({ ...prev, payment_method: base[0] as any }));
@@ -871,7 +871,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
         .from('products')
         .select('id, allowed_payment_methods')
         .in('id', ids);
-      let acc: string[] = ['cod','bkash','nagad','sslcommerz'];
+      let acc: string[] = ['cod','bkash','nagad','eps'];
       (data || []).forEach((p: any) => {
         const arr: string[] | null = p.allowed_payment_methods;
         if (arr && arr.length > 0) {
@@ -882,7 +882,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
         cod: true,
         bkash: !!store?.settings?.bkash?.enabled,
         nagad: !!store?.settings?.nagad?.enabled,
-        sslcommerz: !!store?.settings?.sslcommerz?.enabled,
+        eps: !!store?.settings?.eps?.enabled,
       };
       acc = acc.filter((m) => (storeAllowed as any)[m]);
       if (acc.length === 0) acc = ['cod'];
@@ -1173,8 +1173,8 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
         case 'nagad':
           response = await supabase.functions.invoke('nagad-payment', { body: { orderId, amount, storeId: store!.id } });
           break;
-        case 'sslcommerz':
-          response = await supabase.functions.invoke('sslcommerz-payment', { body: { orderId, amount, storeId: store!.id, customerData: { name: form.customer_name, email: form.customer_email, phone: form.customer_phone, address: form.shipping_address, city: form.shipping_city, country: form.shipping_country, state: form.shipping_state, postal_code: form.shipping_postal_code } } });
+        case 'eps':
+          response = await supabase.functions.invoke('eps-payment', { body: { orderId, amount, storeId: store!.id, customerData: { name: form.customer_name, email: form.customer_email, phone: form.customer_phone, address: form.shipping_address, city: form.shipping_city, country: form.shipping_country, state: form.shipping_state, postal_code: form.shipping_postal_code } } });
           break;
         default:
           throw new Error('Invalid payment method');
@@ -1315,7 +1315,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
                     {allowedMethods.includes('cod') && (<SelectItem value="cod">Cash on Delivery</SelectItem>)}
                     {allowedMethods.includes('bkash') && (<SelectItem value="bkash">bKash</SelectItem>)}
                     {allowedMethods.includes('nagad') && (<SelectItem value="nagad">Nagad</SelectItem>)}
-                    {allowedMethods.includes('sslcommerz') && (<SelectItem value="sslcommerz">Credit/Debit Card (SSLCommerz)</SelectItem>)}
+                    {allowedMethods.includes('eps') && (<SelectItem value="eps">Bank/Card/MFS (EPS)</SelectItem>)}
                   </SelectContent>
                 </Select>
                 {form.payment_method === 'bkash' && store?.settings?.bkash?.mode === 'number' && store?.settings?.bkash?.number && (
