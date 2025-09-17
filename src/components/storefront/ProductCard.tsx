@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -162,13 +163,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       </div>
 
       {/* Product Image */}
-      <a href={paths.productDetail(product.slug)} className="block aspect-square relative overflow-hidden bg-muted">
+      <Link to={paths.productDetail(product.slug)} className="block aspect-square relative overflow-hidden bg-muted">
         <img
           src={(Array.isArray(product.images) ? product.images[0] : product.images?.[0]) || '/placeholder.svg'}
           alt={product.name}
           className="w-full h-full object-cover transition-transform duration-500 group-hover/card:scale-110"
         />
-      </a>
+      </Link>
 
       {/* Product Info */}
       <CardContent className="p-4 space-y-3">
@@ -189,11 +190,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         )}
 
         {/* Product Name */}
-        <a href={paths.productDetail(product.slug)}>
+        <Link to={paths.productDetail(product.slug)}>
           <h3 className="font-semibold text-sm leading-tight line-clamp-2 hover:text-primary transition-colors">
             {product.name}
           </h3>
-        </a>
+        </Link>
 
         {/* Product Description */}
         {product.short_description && (
