@@ -23,7 +23,7 @@ interface EPSPaymentRequest {
   };
 }
 
-// Helper function to generate HMAC-SHA512 hash
+// Helper function to generate HMAC-SHA512 hash for EPS API
 async function generateHash(data: string, key: string): Promise<string> {
   const encoder = new TextEncoder();
   const keyData = encoder.encode(key);
@@ -52,6 +52,7 @@ serve(async (req) => {
 
   try {
     const { orderId, amount, storeId, customerData }: EPSPaymentRequest = await req.json();
+    console.log('EPS Payment Request:', { orderId, amount, storeId, customerData });
 
     // Create Supabase client
     const supabase = createClient(
@@ -67,6 +68,7 @@ serve(async (req) => {
       .single();
 
     if (storeError || !store?.settings?.eps) {
+      console.error('Store error:', storeError);
       throw new Error('EPS configuration not found for this store');
     }
 
@@ -76,78 +78,107 @@ serve(async (req) => {
       username: store.settings.eps.username,
       password: store.settings.eps.password,
       hash_key: store.settings.eps.hash_key,
-      base_url: store.settings.eps.is_live ? 'https://www.eps.com.bd' : 'https://demo.epsbd.com',
+      base_url: store.settings.eps.is_live ? 'https://pgapi.eps.com.bd' : 'https://sandboxpgapi.eps.com.bd',
     };
 
-    // Step 1: Get authentication token
-    const timestamp = Math.floor(Date.now() / 1000).toString();
-    const tokenData = `${epsConfig.merchant_id}${epsConfig.store_id}${timestamp}`;
-    const tokenHash = await generateHash(tokenData, epsConfig.hash_key);
+    console.log('EPS Config:', { ...epsConfig, password: '[HIDDEN]', hash_key: '[HIDDEN]' });
 
-    const tokenResponse = await fetch(`${epsConfig.base_url}/api/v1/get-token`, {
+    // Step 1: Get authentication token
+    const userNameHash = await generateHash(epsConfig.username, epsConfig.hash_key);
+    console.log('Generated userName hash for token request');
+
+    const tokenResponse = await fetch(`${epsConfig.base_url}/v1/Auth/GetToken`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
+        'x-hash': userNameHash,
       },
       body: JSON.stringify({
-        merchant_id: epsConfig.merchant_id,
-        store_id: epsConfig.store_id,
-        username: epsConfig.username,
+        userName: epsConfig.username,
         password: epsConfig.password,
-        timestamp: timestamp,
-        hash: tokenHash,
       }),
     });
 
     const tokenResult = await tokenResponse.json();
-    console.log('EPS Token Response:', tokenResult);
+    console.log('EPS Token Response:', { 
+      status: tokenResponse.status, 
+      hasToken: !!tokenResult.token,
+      error: tokenResult.errorMessage 
+    });
 
-    if (tokenResult.status !== 'SUCCESS') {
-      throw new Error(tokenResult.message || 'Failed to get EPS authentication token');
+    if (!tokenResult.token) {
+      throw new Error(tokenResult.errorMessage || 'Failed to get EPS authentication token');
     }
 
     // Step 2: Initialize payment
-    const transactionId = `TXN-${orderId}-${Date.now()}`;
-    const paymentTimestamp = Math.floor(Date.now() / 1000).toString();
-    const paymentHashData = `${epsConfig.merchant_id}${transactionId}${amount}BDT${paymentTimestamp}`;
-    const paymentHash = await generateHash(paymentHashData, epsConfig.hash_key);
+    const merchantTransactionId = `TXN-${orderId}-${Date.now()}`;
+    const transactionHash = await generateHash(merchantTransactionId, epsConfig.hash_key);
+    console.log('Generated transaction hash for payment initialization');
 
     const paymentData = {
-      merchant_id: epsConfig.merchant_id,
-      store_id: epsConfig.store_id,
-      tran_id: transactionId,
-      amount: amount,
-      currency: 'BDT',
-      success_url: `${req.headers.get('origin')}/store/payment/eps/success`,
-      fail_url: `${req.headers.get('origin')}/store/payment/eps/fail`,
-      cancel_url: `${req.headers.get('origin')}/store/payment/eps/cancel`,
-      ipn_url: `${req.headers.get('origin')}/store/payment/eps/ipn`,
-      cus_name: customerData.name,
-      cus_email: customerData.email,
-      cus_phone: customerData.phone,
-      desc: `Order #${orderId}`,
-      timestamp: paymentTimestamp,
-      hash: paymentHash,
-      opt_a: orderId, // Pass order ID for reference
-      opt_b: storeId, // Pass store ID for reference
+      storeId: epsConfig.store_id,
+      CustomerOrderId: orderId,
+      merchantTransactionId: merchantTransactionId,
+      transactionTypeId: 1, // Web
+      financialEntityId: 0,
+      transitionStatusId: 0,
+      totalAmount: amount,
+      ipAddress: "127.0.0.1", // Default IP
+      version: "1",
+      successUrl: `${req.headers.get('origin')}/payment-processing?orderId=${orderId}&status=success`,
+      failUrl: `${req.headers.get('origin')}/payment-processing?orderId=${orderId}&status=failed`,
+      cancelUrl: `${req.headers.get('origin')}/payment-processing?orderId=${orderId}&status=cancelled`,
+      customerName: customerData.name,
+      customerEmail: customerData.email,
+      CustomerAddress: customerData.address,
+      CustomerAddress2: "",
+      CustomerCity: customerData.city,
+      CustomerState: customerData.city, // Using city as state
+      CustomerPostcode: "1000", // Default postcode
+      CustomerCountry: customerData.country || "BD",
+      CustomerPhone: customerData.phone,
+      ShipmentName: customerData.name,
+      ShipmentAddress: customerData.address,
+      ShipmentAddress2: "",
+      ShipmentCity: customerData.city,
+      ShipmentState: customerData.city,
+      ShipmentPostcode: "1000",
+      ShipmentCountry: customerData.country || "BD",
+      ValueA: "",
+      ValueB: "",
+      ValueC: "",
+      ValueD: "",
+      ShippingMethod: "NO",
+      NoOfItem: "1",
+      ProductName: `Order #${orderId}`,
+      ProductProfile: "general",
+      ProductCategory: "E-commerce"
     };
 
-    const paymentResponse = await fetch(`${epsConfig.base_url}/api/v1/payment/init`, {
+    console.log('Payment initialization request data prepared');
+
+    const paymentResponse = await fetch(`${epsConfig.base_url}/v1/EPSEngine/InitializeEPS`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
         'Authorization': `Bearer ${tokenResult.token}`,
+        'x-hash': transactionHash,
       },
       body: JSON.stringify(paymentData),
     });
 
     const paymentResult = await paymentResponse.json();
-    console.log('EPS Payment Response:', paymentResult);
+    console.log('EPS Payment Response:', { 
+      status: paymentResponse.status,
+      hasTransactionId: !!paymentResult.TransactionId,
+      hasRedirectUrl: !!paymentResult.RedirectUrl,
+      error: paymentResult.ErrorMessage 
+    });
 
-    if (paymentResult.status !== 'SUCCESS') {
-      throw new Error(paymentResult.failedreason || 'Payment session creation failed');
+    if (paymentResult.ErrorCode || !paymentResult.TransactionId) {
+      throw new Error(paymentResult.ErrorMessage || 'Payment session creation failed');
     }
 
     // Update order with payment details
@@ -160,12 +191,14 @@ serve(async (req) => {
       })
       .eq('id', orderId);
 
+    console.log('Order updated successfully');
+
     return new Response(
       JSON.stringify({
         success: true,
-        paymentURL: paymentResult.GatewayPageURL,
-        sessionKey: paymentResult.sessionkey,
-        transactionId: transactionId,
+        paymentURL: paymentResult.RedirectUrl,
+        transactionId: paymentResult.TransactionId,
+        merchantTransactionId: merchantTransactionId,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

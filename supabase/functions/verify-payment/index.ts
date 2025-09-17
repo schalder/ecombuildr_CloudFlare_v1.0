@@ -211,7 +211,7 @@ async function verifyEPSPayment(transactionId: string, storeId: string, supabase
       username: store.settings.eps.username,
       password: store.settings.eps.password,
       hash_key: store.settings.eps.hash_key,
-      base_url: store.settings.eps.is_live ? 'https://www.eps.com.bd' : 'https://demo.epsbd.com',
+      base_url: store.settings.eps.is_live ? 'https://pgapi.eps.com.bd' : 'https://sandboxpgapi.eps.com.bd',
     };
 
     // Helper function to generate HMAC-SHA512 hash
@@ -232,57 +232,47 @@ async function verifyEPSPayment(transactionId: string, storeId: string, supabase
       return encodeBase64(new Uint8Array(signature));
     }
 
-    // Get authentication token
-    const timestamp = Math.floor(Date.now() / 1000).toString();
-    const tokenData = `${epsConfig.merchant_id}${epsConfig.store_id}${timestamp}`;
-    const tokenHash = await generateHash(tokenData, epsConfig.hash_key);
+    // Get authentication token using new EPS API structure
+    const userNameHash = await generateHash(epsConfig.username, epsConfig.hash_key);
 
-    const tokenResponse = await fetch(`${epsConfig.base_url}/api/v1/get-token`, {
+    const tokenResponse = await fetch(`${epsConfig.base_url}/v1/Auth/GetToken`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
+        'x-hash': userNameHash,
       },
       body: JSON.stringify({
-        merchant_id: epsConfig.merchant_id,
-        store_id: epsConfig.store_id,
-        username: epsConfig.username,
+        userName: epsConfig.username,
         password: epsConfig.password,
-        timestamp: timestamp,
-        hash: tokenHash,
       }),
     });
 
     const tokenResult = await tokenResponse.json();
     
-    if (tokenResult.status !== 'SUCCESS') {
-      console.error('Failed to get EPS token:', tokenResult);
+    if (!tokenResult.token) {
+      console.error('Failed to get EPS token:', tokenResult.errorMessage);
       return 'failed';
     }
 
-    // Verify payment
-    const verifyTimestamp = Math.floor(Date.now() / 1000).toString();
-    const verifyHashData = `${epsConfig.merchant_id}${transactionId}${verifyTimestamp}`;
-    const verifyHash = await generateHash(verifyHashData, epsConfig.hash_key);
+    // Verify payment using the merchant transaction ID
+    const merchantTransactionHash = await generateHash(transactionId, epsConfig.hash_key);
 
-    const verifyResponse = await fetch(`${epsConfig.base_url}/api/v1/payment/verify`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'Authorization': `Bearer ${tokenResult.token}`,
-      },
-      body: JSON.stringify({
-        merchant_id: epsConfig.merchant_id,
-        tran_id: transactionId,
-        timestamp: verifyTimestamp,
-        hash: verifyHash,
-      }),
-    });
+    const verifyResponse = await fetch(
+      `${epsConfig.base_url}/v1/EPSEngine/CheckMerchantTransactionStatus?merchantTransactionId=${transactionId}`,
+      {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${tokenResult.token}`,
+          'x-hash': merchantTransactionHash,
+        },
+      }
+    );
 
     const verifyResult = await verifyResponse.json();
     
-    return verifyResult.status === 'SUCCESS' && verifyResult.data?.payment_status === 'PAID' ? 'success' : 'failed';
+    return verifyResult.Status === 'Success' ? 'success' : 'failed';
   } catch (error) {
     console.error('EPS verification error:', error);
     return 'failed';
