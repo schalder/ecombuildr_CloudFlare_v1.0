@@ -13,7 +13,8 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Upload, Eye, Users, Package, Settings as SettingsIcon } from 'lucide-react';
+import { CompactMediaSelector } from '@/components/page-builder/components/CompactMediaSelector';
+import { ArrowLeft, Eye, Users, Package, Settings as SettingsIcon } from 'lucide-react';
 import { useUserStore } from '@/hooks/useUserStore';
 import { useToast } from '@/hooks/use-toast';
 
@@ -139,15 +140,12 @@ const CourseSettings = () => {
     }
   };
 
-  const handleLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      // Handle logo upload logic here
-      toast({
-        title: "Logo uploaded",
-        description: "Course login logo has been updated successfully.",
-      });
-    }
+  const handleLogoChange = (url: string) => {
+    setCourseLoginLogo(url);
+    toast({
+      title: "Logo updated",
+      description: "Course login logo has been updated successfully.",
+    });
   };
 
   if (isLoading) {
@@ -243,25 +241,15 @@ const CourseSettings = () => {
 
                   <div className="space-y-2">
                     <Label htmlFor="course-logo">Course Login Page Logo</Label>
-                    <div className="flex items-center gap-4">
-                      <Input
-                        id="course-logo"
-                        type="file"
-                        accept="image/*"
-                        onChange={handleLogoUpload}
-                        className="hidden"
-                      />
-                      <Button
-                        variant="outline"
-                        onClick={() => document.getElementById('course-logo')?.click()}
-                      >
-                        <Upload className="h-4 w-4 mr-2" />
-                        Upload Logo
-                      </Button>
-                      {courseLoginLogo && (
-                        <img src={courseLoginLogo} alt="Course Logo" className="h-12 w-12 object-contain" />
-                      )}
-                    </div>
+                    <CompactMediaSelector
+                      value={courseLoginLogo}
+                      onChange={handleLogoChange}
+                      label="Upload Logo"
+                      maxSize={3}
+                    />
+                    <p className="text-sm text-muted-foreground">
+                      This logo will appear on the course login page for member authentication
+                    </p>
                   </div>
                 </div>
 

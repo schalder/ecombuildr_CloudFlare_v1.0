@@ -11,7 +11,8 @@ import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { useUserStore } from '@/hooks/useUserStore';
 import { useDomainManagement } from '@/hooks/useDomainManagement';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, ExternalLink, Globe, Settings, Upload, Image, Copy, Check, Plus } from 'lucide-react';
+import { CompactMediaSelector } from '@/components/page-builder/components/CompactMediaSelector';
+import { ArrowLeft, ExternalLink, Globe, Settings, Image, Copy, Check, Plus } from 'lucide-react';
 
 const CourseDomainSettings = () => {
   const navigate = useNavigate();
@@ -349,40 +350,18 @@ const CourseDomainSettings = () => {
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="course-favicon">Favicon for All Course Pages</Label>
-                <div className="flex items-center gap-4">
-                  <Input
-                    id="course-favicon"
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) {
-                        const url = URL.createObjectURL(file);
-                        setCourseFavicon(url);
-                        toast({
-                          title: "Favicon uploaded",
-                          description: "Course favicon has been updated for all pages.",
-                        });
-                      }
-                    }}
-                    className="hidden"
-                  />
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => document.getElementById('course-favicon')?.click()}
-                  >
-                    <Upload className="h-4 w-4 mr-2" />
-                    Upload Favicon
-                  </Button>
-                  {courseFavicon && (
-                    <img 
-                      src={courseFavicon} 
-                      alt="Course Favicon" 
-                      className="h-8 w-8 object-contain border rounded" 
-                    />
-                  )}
-                </div>
+                <CompactMediaSelector
+                  value={courseFavicon}
+                  onChange={(url) => {
+                    setCourseFavicon(url);
+                    toast({
+                      title: "Favicon updated",
+                      description: "Course favicon has been updated for all pages.",
+                    });
+                  }}
+                  label="Upload Favicon"
+                  maxSize={2}
+                />
                 <p className="text-sm text-muted-foreground">
                   This favicon will be used for:
                 </p>
