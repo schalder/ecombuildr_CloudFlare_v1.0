@@ -9,6 +9,8 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Clock, Users, Star, BookOpen, Search, DollarSign } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { useCourseCurrency } from '@/hooks/useCourseCurrency';
+import { formatCoursePrice } from '@/utils/currency';
 
 interface Course {
   id: string;
@@ -27,6 +29,7 @@ interface Course {
 const CourseLibrary = () => {
   const [searchQuery, setSearchQuery] = React.useState('');
   const location = useLocation();
+  const { currency } = useCourseCurrency();
 
   const { data: courses, isLoading } = useQuery({
     queryKey: ['public-courses'],
@@ -154,7 +157,7 @@ const CourseLibrary = () => {
                         {course.price > 0 ? (
                           <div className="flex items-center gap-1">
                             <DollarSign className="h-3 w-3" />
-                            ৳{course.price}
+                            {formatCoursePrice(course.price, currency, false)}
                           </div>
                         ) : (
                           'Free'
@@ -192,10 +195,10 @@ const CourseLibrary = () => {
                     {/* Price Display */}
                     {course.price > 0 && (
                       <div className="flex items-center gap-2 mb-4">
-                        <span className="text-2xl font-bold">৳{course.price}</span>
+                        <span className="text-2xl font-bold">{formatCoursePrice(course.price, currency)}</span>
                         {course.compare_price && course.compare_price > course.price && (
                           <span className="text-sm text-muted-foreground line-through">
-                            ৳{course.compare_price}
+                            {formatCoursePrice(course.compare_price, currency)}
                           </span>
                         )}
                       </div>

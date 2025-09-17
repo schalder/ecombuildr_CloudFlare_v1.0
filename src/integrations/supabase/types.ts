@@ -2716,6 +2716,7 @@ export type Database = {
       }
       stores: {
         Row: {
+          course_currency: string | null
           created_at: string | null
           description: string | null
           domain: string | null
@@ -2733,6 +2734,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          course_currency?: string | null
           created_at?: string | null
           description?: string | null
           domain?: string | null
@@ -2750,6 +2752,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          course_currency?: string | null
           created_at?: string | null
           description?: string | null
           domain?: string | null

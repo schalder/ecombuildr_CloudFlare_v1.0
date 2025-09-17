@@ -20,6 +20,8 @@ import {
 import { useUserStore } from '@/hooks/useUserStore';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useCourseCurrency } from '@/hooks/useCourseCurrency';
+import { formatCoursePrice } from '@/utils/currency';
 
 interface Course {
   id: string;
@@ -58,6 +60,7 @@ const CourseView = () => {
   const { courseId } = useParams();
   const navigate = useNavigate();
   const { store } = useUserStore();
+  const { currency } = useCourseCurrency();
   
   const [loading, setLoading] = useState(true);
   const [course, setCourse] = useState<Course | null>(null);
@@ -253,7 +256,7 @@ const CourseView = () => {
               <Card>
                 <CardContent className="p-4 text-center">
                   <DollarSign className="h-8 w-8 mx-auto mb-2 text-primary" />
-                  <div className="text-2xl font-bold">৳{course.price}</div>
+                  <div className="text-2xl font-bold">{formatCoursePrice(course.price, currency)}</div>
                   <div className="text-sm text-muted-foreground">Price</div>
                 </CardContent>
               </Card>
@@ -354,10 +357,10 @@ const CourseView = () => {
                 <div>
                   <Label className="text-sm font-medium">Price</Label>
                   <div className="flex items-center gap-2">
-                    <span className="text-lg font-bold">৳{course.price}</span>
+                    <span className="text-lg font-bold">{formatCoursePrice(course.price, currency)}</span>
                     {course.compare_price && course.compare_price > course.price && (
                       <span className="text-sm text-muted-foreground line-through">
-                        ৳{course.compare_price}
+                        {formatCoursePrice(course.compare_price, currency)}
                       </span>
                     )}
                   </div>

@@ -24,6 +24,8 @@ import {
   Star
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { useCourseCurrency } from '@/hooks/useCourseCurrency';
+import { formatCoursePrice } from '@/utils/currency';
 
 interface CourseLesson {
   id: string;
@@ -270,10 +272,10 @@ const CourseDetail = () => {
                       {course.price > 0 ? (
                         <div>
                           <div className="flex items-center justify-center gap-2 mb-2">
-                            <span className="text-3xl font-bold">৳{course.price}</span>
+                            <span className="text-3xl font-bold">{formatCoursePrice(course.price, currency)}</span>
                             {course.compare_price && course.compare_price > course.price && (
                               <span className="text-lg text-muted-foreground line-through">
-                                ৳{course.compare_price}
+                                {formatCoursePrice(course.compare_price, currency)}
                               </span>
                             )}
                           </div>

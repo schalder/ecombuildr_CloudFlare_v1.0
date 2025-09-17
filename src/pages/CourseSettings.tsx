@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -25,6 +25,32 @@ const CourseSettings = () => {
   const [libraryHeadline, setLibraryHeadline] = useState('Course Library');
   const [librarySubheadline, setLibrarySubheadline] = useState('Discover our comprehensive collection of courses and start your learning journey today.');
   const [courseLoginLogo, setCourseLoginLogo] = useState('');
+  const [courseCurrency, setCourseCurrency] = useState('USD');
+
+  // Fetch store settings including currency
+  const { data: storeSettings } = useQuery({
+    queryKey: ['store-settings', userStore?.id],
+    queryFn: async () => {
+      if (!userStore?.id) return null;
+      
+      const { data, error } = await supabase
+        .from('stores')
+        .select('course_currency')
+        .eq('id', userStore.id)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!userStore?.id,
+  });
+
+  // Update currency when store settings change
+  useEffect(() => {
+    if (storeSettings?.course_currency) {
+      setCourseCurrency(storeSettings.course_currency);
+    }
+  }, [storeSettings]);
 
   // Fetch courses for management
   const { data: courses = [], isLoading } = useQuery({
@@ -84,11 +110,28 @@ const CourseSettings = () => {
   });
 
   const handleSaveLibrarySettings = async () => {
-    // Save library settings to store or separate table
-    toast({
-      title: "Settings saved",
-      description: "Course library settings have been updated successfully.",
-    });
+    try {
+      if (!userStore?.id) return;
+
+      // Save currency setting to the store
+      const { error } = await supabase
+        .from('stores')
+        .update({ course_currency: courseCurrency })
+        .eq('id', userStore.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Settings saved",
+        description: "Course library settings have been updated successfully.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to save settings. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -170,6 +213,27 @@ const CourseSettings = () => {
                       placeholder="Discover our comprehensive collection of courses..."
                       rows={3}
                     />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="course-currency">Course Price Currency</Label>
+                    <Select value={courseCurrency} onValueChange={setCourseCurrency}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select currency" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="USD">USD ($) - US Dollar</SelectItem>
+                        <SelectItem value="BDT">BDT (৳) - Bangladeshi Taka</SelectItem>
+                        <SelectItem value="EUR">EUR (€) - Euro</SelectItem>
+                        <SelectItem value="GBP">GBP (£) - British Pound</SelectItem>
+                        <SelectItem value="INR">INR (₹) - Indian Rupee</SelectItem>
+                        <SelectItem value="CAD">CAD (C$) - Canadian Dollar</SelectItem>
+                        <SelectItem value="AUD">AUD (A$) - Australian Dollar</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-sm text-muted-foreground">
+                      This currency will be used for all course pricing across your course library
+                    </p>
                   </div>
 
                   <div className="space-y-2">

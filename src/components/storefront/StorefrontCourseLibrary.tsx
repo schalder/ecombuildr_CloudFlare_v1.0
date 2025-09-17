@@ -20,6 +20,8 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useStore } from '@/contexts/StoreContext';
+import { useCourseCurrency } from '@/hooks/useCourseCurrency';
+import { formatCoursePrice } from '@/utils/currency';
 
 interface Course {
   id: string;
@@ -46,6 +48,7 @@ const StorefrontCourseLibrary: React.FC = () => {
   const [priceFilter, setPriceFilter] = useState('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const { store } = useStore();
+  const { currency } = useCourseCurrency();
 
   const { data: courses, isLoading, error } = useQuery({
     queryKey: ['storefront-courses', store?.id, searchTerm, selectedCategory, priceFilter],
@@ -267,11 +270,11 @@ const StorefrontCourseLibrary: React.FC = () => {
                           {course.price > 0 ? (
                             <div className="flex items-center gap-2">
                               <span className="text-2xl font-bold text-orange-600">
-                                ${course.price}
+                                {formatCoursePrice(course.price, currency)}
                               </span>
                               {course.compare_price && course.compare_price > course.price && (
                                 <span className="text-lg text-muted-foreground line-through">
-                                  ${course.compare_price}
+                                  {formatCoursePrice(course.compare_price, currency)}
                                 </span>
                               )}
                             </div>
