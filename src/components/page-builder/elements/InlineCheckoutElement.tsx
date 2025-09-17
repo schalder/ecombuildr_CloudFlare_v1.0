@@ -652,7 +652,7 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
       if (response.error) throw new Error(response.error.message);
       const { paymentURL } = response.data;
       if (paymentURL) {
-        window.open(paymentURL, '_blank');
+        window.location.href = paymentURL;
         navigate(paths.paymentProcessing(orderId) + (accessToken ? `&ot=${accessToken}` : ''));
       } else throw new Error('Payment URL not received');
     } catch (error) {

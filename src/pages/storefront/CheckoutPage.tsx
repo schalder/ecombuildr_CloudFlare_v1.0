@@ -445,7 +445,7 @@ useEffect(() => {
       const { paymentURL } = response.data;
       if (paymentURL) {
         // Redirect to payment gateway
-        window.open(paymentURL, '_blank');
+        window.location.href = paymentURL;
         toast.success('Redirecting to payment gateway...');
         
         // Clear cart after initiating payment

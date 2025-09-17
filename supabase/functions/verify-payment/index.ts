@@ -64,7 +64,7 @@ serve(async (req) => {
     }
 
     // Update order status
-    const orderStatus = paymentStatus === 'success' ? 'paid' : 'payment_failed';
+    const orderStatus = paymentStatus === 'success' ? 'processing' : 'payment_failed';
     
     const { error } = await supabase
       .from('orders')

@@ -1182,7 +1182,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
       if (response.error) throw new Error(response.error.message);
       const { paymentURL } = response.data;
       if (paymentURL) {
-        window.open(paymentURL, '_blank');
+        window.location.href = paymentURL;
         clearCart();
         // We need to get the order access token from somewhere - let's fetch it from the order
         const { data: orderData } = await supabase.functions.invoke('get-order-admin', { body: { orderId } });
