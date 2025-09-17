@@ -41,6 +41,15 @@ async function generateHash(data: string, key: string): Promise<string> {
   return encodeBase64(new Uint8Array(signature));
 }
 
+// Generate a merchantTransactionId that meets EPS 30-char limit
+function generateMerchantTxnId(orderId: string) {
+  const ts = Date.now().toString().slice(-10); // 10 digits
+  const compact = orderId.replace(/-/g, '');
+  // Prefix T, then ts, then first 19 chars of uuid to stay <=30
+  const id = `T${ts}${compact.slice(0, 19)}`; // length <= 30
+  return id.slice(0, 30);
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -112,9 +121,17 @@ serve(async (req) => {
     }
 
     // Step 2: Initialize payment
-    const merchantTransactionId = `TXN-${orderId}-${Date.now()}`;
+    const merchantTransactionId = generateMerchantTxnId(orderId);
     const transactionHash = await generateHash(merchantTransactionId, epsConfig.hash_key);
     console.log('Generated transaction hash for payment initialization');
+
+    // Fetch order access token to attach in redirect URLs
+    const { data: orderRow } = await supabase
+      .from('orders')
+      .select('custom_fields')
+      .eq('id', orderId)
+      .maybeSingle();
+    const orderToken = orderRow?.custom_fields?.order_access_token || '';
 
     const paymentData = {
       storeId: epsConfig.store_id,
@@ -126,9 +143,9 @@ serve(async (req) => {
       totalAmount: amount,
       ipAddress: "127.0.0.1", // Default IP
       version: "1",
-      successUrl: `${req.headers.get('origin')}/payment-processing?orderId=${orderId}&status=success`,
-      failUrl: `${req.headers.get('origin')}/payment-processing?orderId=${orderId}&status=failed`,
-      cancelUrl: `${req.headers.get('origin')}/payment-processing?orderId=${orderId}&status=cancelled`,
+      successUrl: `${req.headers.get('origin')}/payment-processing?orderId=${orderId}${orderToken ? `&ot=${orderToken}` : ''}&status=success`,
+      failUrl: `${req.headers.get('origin')}/payment-processing?orderId=${orderId}${orderToken ? `&ot=${orderToken}` : ''}&status=failed`,
+      cancelUrl: `${req.headers.get('origin')}/payment-processing?orderId=${orderId}${orderToken ? `&ot=${orderToken}` : ''}&status=cancelled`,
       customerName: customerData.name,
       customerEmail: customerData.email,
       CustomerAddress: customerData.address,
