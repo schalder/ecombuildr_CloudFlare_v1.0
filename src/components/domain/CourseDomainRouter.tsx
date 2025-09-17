@@ -13,6 +13,7 @@ import { WebsiteHeader } from '@/components/storefront/WebsiteHeader';
 import { WebsiteFooter } from '@/components/storefront/WebsiteFooter';
 import { WebsiteProvider } from '@/contexts/WebsiteContext';
 import { Loader2 } from 'lucide-react';
+import { setSEO } from '@/lib/seo';
 
 interface CourseDomainRouterProps {
   customDomain: string;
@@ -83,6 +84,19 @@ const CourseDomainRouter = ({ customDomain, storeSlug }: CourseDomainRouterProps
         }
 
         await loadStoreById(domainData.store_id);
+
+        // Set favicon for all course pages
+        const { data: storeSettings } = await supabase
+          .from('stores')
+          .select('course_favicon_url')
+          .eq('id', domainData.store_id)
+          .single();
+
+        if (storeSettings?.course_favicon_url) {
+          setSEO({
+            favicon: storeSettings.course_favicon_url
+          });
+        }
 
         // Also fetch website data for layout components
         const { data: websiteData, error: websiteError } = await supabase

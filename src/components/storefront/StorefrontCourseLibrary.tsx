@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Helmet } from 'react-helmet-async';
@@ -23,6 +23,7 @@ import { useStore } from '@/contexts/StoreContext';
 import { useCourseCurrency } from '@/hooks/useCourseCurrency';
 import { formatCoursePrice } from '@/utils/currency';
 import { MetaTags } from '@/components/MetaTags';
+import { setSEO } from '@/lib/seo';
 
 interface Course {
   id: string;
@@ -68,6 +69,15 @@ const StorefrontCourseLibrary: React.FC = () => {
     },
     enabled: !!store?.id,
   });
+
+  // Set favicon when store settings are loaded
+  useEffect(() => {
+    if (storeSettings?.course_favicon_url) {
+      setSEO({
+        favicon: storeSettings.course_favicon_url
+      });
+    }
+  }, [storeSettings?.course_favicon_url]);
 
   const { data: courses, isLoading, error } = useQuery({
     queryKey: ['storefront-courses', store?.id, searchTerm, selectedCategory, priceFilter],

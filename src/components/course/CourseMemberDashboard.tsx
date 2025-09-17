@@ -7,6 +7,8 @@ import { Loader2, LogOut, BookOpen, Play, Clock } from 'lucide-react';
 import { useMemberAuth } from '@/hooks/useMemberAuth';
 import { useStore } from '@/contexts/StoreContext';
 import { supabase } from '@/integrations/supabase/client';
+import { setSEO } from '@/lib/seo';
+import { useQuery } from '@tanstack/react-query';
 
 interface Course {
   id: string;
@@ -30,6 +32,33 @@ const CourseMemberDashboard = () => {
   const navigate = useNavigate();
   const { member, signOut, loading: authLoading } = useMemberAuth();
   const { store } = useStore();
+  
+  // Fetch store settings for favicon
+  const { data: storeSettings } = useQuery({
+    queryKey: ['store-favicon', store?.id],
+    queryFn: async () => {
+      if (!store?.id) return null;
+      
+      const { data, error } = await supabase
+        .from('stores')
+        .select('course_favicon_url')
+        .eq('id', store.id)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!store?.id,
+  });
+
+  // Set favicon when store settings are loaded
+  useEffect(() => {
+    if (storeSettings?.course_favicon_url) {
+      setSEO({
+        favicon: storeSettings.course_favicon_url
+      });
+    }
+  }, [storeSettings?.course_favicon_url]);
   
   const [courses, setCourses] = useState<Course[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
