@@ -70,25 +70,24 @@ export const DomainWebsiteProductDetailRoute: React.FC<DomainWebsiteProductDetai
 
         const settings: any = currentWebsite?.settings || {};
         const templateId: string | undefined = settings?.system_pages?.product_detail_page_id || undefined;
+
         if (!templateId) {
           setPage(null);
-          setLoading(false);
-          return;
+        } else {
+          let query = supabase
+            .from('website_pages')
+            .select('*')
+            .eq('id', templateId)
+            .eq('website_id', websiteId);
+
+          if (!isPreview) {
+            query = query.eq('is_published', true);
+          }
+
+          const { data: pageData, error: pErr } = await query.maybeSingle();
+          if (pErr) throw pErr;
+          setPage(pageData);
         }
-
-        let query = supabase
-          .from('website_pages')
-          .select('*')
-          .eq('id', templateId)
-          .eq('website_id', websiteId);
-
-        if (!isPreview) {
-          query = query.eq('is_published', true);
-        }
-
-        const { data: pageData, error: pErr } = await query.maybeSingle();
-        if (pErr) throw pErr;
-        setPage(pageData);
       } catch (e) {
         console.warn('DomainWebsiteProductDetailRoute: failed to fetch template page', e);
         setPage(null);
