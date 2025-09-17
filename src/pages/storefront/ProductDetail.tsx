@@ -6,6 +6,7 @@ import { useAddToCart } from '@/contexts/AddToCartProvider';
 import { usePixelTracking } from '@/hooks/usePixelTracking';
 import { usePixelContext } from '@/components/pixel/PixelManager';
 import { useChannelContext } from '@/hooks/useChannelContext';
+import { useWebsiteContext } from '@/contexts/WebsiteContext';
 import { StorefrontLayout } from '@/components/storefront/StorefrontLayout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -63,6 +64,7 @@ interface ActionButtons {
 
 export const ProductDetail: React.FC = () => {
   const { slug, websiteId, websiteSlug, productSlug } = useParams<{ slug?: string; websiteId?: string; websiteSlug?: string; productSlug: string }>();
+  const { websiteId: contextWebsiteId } = useWebsiteContext();
   const { store, loadStore, loadStoreById } = useStore();
   const { addToCart } = useAddToCart();
   const navigate = useNavigate();
@@ -119,11 +121,12 @@ export const ProductDetail: React.FC = () => {
     const init = async () => {
       if (slug) {
         loadStore(slug);
-      } else if (websiteId) {
+      } else if (websiteId || contextWebsiteId) {
+        const targetWebsiteId = websiteId || contextWebsiteId;
         const { data: website } = await supabase
           .from('websites')
           .select('store_id')
-          .eq('id', websiteId)
+          .eq('id', targetWebsiteId)
           .single();
         if (website?.store_id) {
           await loadStoreById(website.store_id);
@@ -131,7 +134,7 @@ export const ProductDetail: React.FC = () => {
       }
     };
     init();
-  }, [slug, websiteId, loadStore, loadStoreById]);
+  }, [slug, websiteId, contextWebsiteId, loadStore, loadStoreById]);
 
   useEffect(() => {
     if (store && productSlug) {
