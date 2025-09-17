@@ -140,13 +140,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
       {/* Quick Action Buttons */}
       <div className={cn(
-        "absolute top-3 right-3 z-10 flex flex-col gap-2 transition-all duration-300",
+        "absolute top-3 right-3 z-10 flex flex-col gap-2 transition-all duration-300 pointer-events-none",
         isHovered ? "opacity-100 translate-x-0" : "opacity-0 translate-x-4"
       )}>
         <WishlistButton
           product={product}
           storeSlug={storeSlug}
-          className="bg-background/80 backdrop-blur-sm hover:bg-background"
+          className="bg-background/80 backdrop-blur-sm hover:bg-background pointer-events-auto"
         />
         
         
@@ -154,7 +154,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           <Button
             size="sm"
             variant="secondary"
-            className="h-8 w-8 p-0 rounded-full bg-background/80 backdrop-blur-sm hover:bg-background"
+            className="h-8 w-8 p-0 rounded-full bg-background/80 backdrop-blur-sm hover:bg-background pointer-events-auto"
             onClick={() => onQuickView(product)}
           >
             <Eye className="h-4 w-4" />
