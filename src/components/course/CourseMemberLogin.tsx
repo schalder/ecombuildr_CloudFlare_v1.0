@@ -83,7 +83,7 @@ const CourseMemberLogin = () => {
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
             {storeSettings?.course_login_logo_url ? (
-              <div className="inline-flex items-center justify-center w-32 h-32 mb-4">
+              <div className="inline-flex items-center justify-center w-40 h-20 mb-4">
                 <img 
                   src={storeSettings.course_login_logo_url} 
                   alt={`${store.name} Logo`}
