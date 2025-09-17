@@ -123,62 +123,6 @@ const CourseDomainSettings = () => {
           </Button>
         </div>
 
-        {/* Current Course Domains */}
-        {connections && connections.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Settings className="h-5 w-5" />
-                Current Course Domains
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {connections.map((connection, index) => {
-                  const domain = verifiedDomains.find(d => d.id === connection.domain_id);
-                  const fullUrl = `https://${domain?.domain}${connection.path || '/courses'}`;
-                  
-                  return (
-                    <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <Badge variant="secondary">Active</Badge>
-                          <span className="font-medium">
-                            {domain?.domain}{connection.path || '/courses'}
-                          </span>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleCopyUrl(fullUrl)}
-                            className="h-6 w-6 p-0"
-                          >
-                            {copiedUrl === fullUrl ? (
-                              <Check className="h-3 w-3 text-green-500" />
-                            ) : (
-                              <Copy className="h-3 w-3" />
-                            )}
-                          </Button>
-                        </div>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          Course marketplace and member portal
-                        </p>
-                      </div>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="flex items-center gap-2"
-                        onClick={() => handleVisitDomain(fullUrl)}
-                      >
-                        <ExternalLink className="h-4 w-4" />
-                        Visit
-                      </Button>
-                    </div>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
-        )}
 
         {/* Set Up Course Domain */}
         <Card>
