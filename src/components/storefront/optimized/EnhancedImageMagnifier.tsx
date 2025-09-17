@@ -50,7 +50,7 @@ export const EnhancedImageMagnifier: React.FC<EnhancedImageMagnifierProps> = ({
     }
   }, []);
 
-  // Enhanced responsive sizing
+  // Optimized responsive sizing with reduced debounce
   const handleResize = useCallback(() => {
     if (resizeTimeoutRef.current) {
       clearTimeout(resizeTimeoutRef.current);
@@ -69,7 +69,7 @@ export const EnhancedImageMagnifier: React.FC<EnhancedImageMagnifierProps> = ({
           setActualMagnifierSize(Math.max(magnifierSize * 0.6, 180));
         }
       }
-    }, 100);
+    }, 50); // Reduced debounce for faster responsiveness
   }, [magnifierSize, responsive, updateContainerRect]);
 
   useEffect(() => {
@@ -94,27 +94,33 @@ export const EnhancedImageMagnifier: React.FC<EnhancedImageMagnifierProps> = ({
     };
   }, [handleResize, updateContainerRect]);
 
-  // Enhanced mouse move handler with smooth following
+  // Optimized mouse move handler for ultra-smooth following
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    if (!containerRect || !supportsHover) return;
+    if (!supportsHover) return;
 
+    // Use current rect to avoid stale closure issues
+    const rect = containerRef.current?.getBoundingClientRect();
+    if (!rect) return;
+
+    // Cancel previous frame for smoother performance
     if (rafRef.current) {
       cancelAnimationFrame(rafRef.current);
     }
 
-    rafRef.current = requestAnimationFrame(() => {
-      const rect = containerRef.current?.getBoundingClientRect();
-      if (!rect) return;
+    // Immediate position calculation for responsiveness
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    
+    const clampedPosition = { 
+      x: Math.max(0, Math.min(100, x)), 
+      y: Math.max(0, Math.min(100, y)) 
+    };
 
-      const x = ((e.clientX - rect.left) / rect.width) * 100;
-      const y = ((e.clientY - rect.top) / rect.height) * 100;
-      
-      setMousePosition({ 
-        x: Math.max(0, Math.min(100, x)), 
-        y: Math.max(0, Math.min(100, y)) 
-      });
+    // Use RAF only for DOM updates, not position calculation
+    rafRef.current = requestAnimationFrame(() => {
+      setMousePosition(clampedPosition);
     });
-  }, [containerRect, supportsHover]);
+  }, [supportsHover]);
 
   const handleMouseEnter = useCallback(() => {
     if (supportsHover && imageLoaded) {
@@ -166,7 +172,7 @@ export const EnhancedImageMagnifier: React.FC<EnhancedImageMagnifierProps> = ({
     return { x: adjustedX, y: adjustedY };
   }, [mousePosition, actualMagnifierSize, containerRect]);
 
-  // Enhanced magnifier styles with professional appearance
+  // Ultra-smooth magnifier styles optimized for performance
   const magnifierStyle = useMemo((): React.CSSProperties => {
     const zoomSrc = highResolutionSrc || src;
     
@@ -181,7 +187,8 @@ export const EnhancedImageMagnifier: React.FC<EnhancedImageMagnifierProps> = ({
       backgroundPosition: `${mousePosition.x}% ${mousePosition.y}%`,
       pointerEvents: 'none',
       opacity: isHovered ? 1 : 0,
-      transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+      // Removed transform transition for smoother cursor following
+      transition: 'opacity 0.15s ease-out, transform 0.15s ease-out',
       transform: `translate(-50%, -50%) scale(${isHovered ? 1 : 0.8})`,
       zIndex: 100,
       boxShadow: `
@@ -190,10 +197,13 @@ export const EnhancedImageMagnifier: React.FC<EnhancedImageMagnifierProps> = ({
         0 10px 20px -5px hsl(var(--foreground) / 0.1),
         inset 0 0 0 1px hsl(var(--background) / 0.8)
       `,
-      willChange: 'transform, opacity',
+      // Optimized for smooth movement
+      willChange: 'transform, opacity, background-position',
       left: `${magnifierPosition.x}%`,
       top: `${magnifierPosition.y}%`,
       backdropFilter: 'blur(1px)',
+      // Hardware acceleration for smoother performance
+      backfaceVisibility: 'hidden',
     };
   }, [mousePosition, magnifierPosition, actualMagnifierSize, isHovered, src, highResolutionSrc, zoomLevel]);
 
