@@ -207,16 +207,14 @@ const StorefrontCourseDetail: React.FC<StorefrontCourseDetailProps> = ({ courseS
             <div className="lg:col-span-2 space-y-6">
               {/* Course Header */}
               <div className="space-y-4">
-                <h1 className="text-3xl lg:text-4xl font-bold text-foreground border-2 border-primary p-4 rounded-lg">
+                <h1 className="text-3xl lg:text-4xl font-bold text-foreground">
                   {course.title}
                 </h1>
                 
                 {course.description && (
-                  <div className="border-2 border-primary p-4 rounded-lg">
-                    <p className="text-lg text-primary font-medium">
-                      {course.description}
-                    </p>
-                  </div>
+                  <p className="text-lg text-muted-foreground">
+                    {course.description}
+                  </p>
                 )}
 
                 <div className="flex items-center gap-6 text-sm text-muted-foreground">
