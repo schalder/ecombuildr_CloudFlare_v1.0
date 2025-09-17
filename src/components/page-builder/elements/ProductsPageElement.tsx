@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { PageBuilderElement } from '../types';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -685,13 +685,13 @@ export const ProductsPageElement: React.FC<{
                   ) : (
                     <Card key={product.id} className="p-4">
                       <div className="flex gap-4 items-start">
-                        <a href={paths.productDetail(product.slug)} className="w-28 sm:w-40 h-28 sm:h-40 rounded-md overflow-hidden bg-muted flex-shrink-0">
+                        <Link to={paths.productDetail(product.slug)} className="w-28 sm:w-40 h-28 sm:h-40 rounded-md overflow-hidden bg-muted flex-shrink-0">
                            <StorefrontImage src={product.images[0] || '/placeholder.svg'} alt={product.name} className="w-full h-full object-cover" aspectRatio="1" />
-                        </a>
+                        </Link>
                         <div className="flex-1 min-w-0 space-y-2">
-                          <a href={paths.productDetail(product.slug)} className="hover:text-primary transition-colors">
+                          <Link to={paths.productDetail(product.slug)} className="hover:text-primary transition-colors">
                             <h3 className="font-semibold text-base sm:text-lg leading-snug truncate">{product.name}</h3>
-                          </a>
+                          </Link>
                           <div className="flex items-center gap-1">
                             {[...Array(5)].map((_, i) => (
                               <Star key={i} className={`h-4 w-4 ${i < 4 ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground'}`} />
