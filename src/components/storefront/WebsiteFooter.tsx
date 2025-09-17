@@ -111,15 +111,26 @@ export const WebsiteFooter: React.FC<{ website: WebsiteData; }> = ({ website }) 
                   {section.links.map((link) => (
                     <li key={link.id}>
                       {link.type === 'custom' && link.url ? (
-                        <a 
-                          href={link.url} 
-                          target={link.new_tab ? '_blank' : undefined} 
-                          rel={link.new_tab ? 'noopener' : undefined} 
-                          className="text-sm transition-colors" 
-                          style={{ color: cfg?.style?.text_color || undefined }}
-                        >
-                          {link.label}
-                        </a>
+                        // Check if it's an external URL or internal
+                        link.url.startsWith('http://') || link.url.startsWith('https://') ? (
+                          <a 
+                            href={link.url} 
+                            target={link.new_tab ? '_blank' : undefined} 
+                            rel={link.new_tab ? 'noopener' : undefined} 
+                            className="text-sm transition-colors" 
+                            style={{ color: cfg?.style?.text_color || undefined }}
+                          >
+                            {link.label}
+                          </a>
+                        ) : (
+                          <Link 
+                            to={link.url} 
+                            className="text-sm transition-colors" 
+                            style={{ color: cfg?.style?.text_color || undefined }}
+                          >
+                            {link.label}
+                          </Link>
+                        )
                       ) : (
                         <Link 
                           to={link.page_slug ? `${paths.base}/${link.page_slug}` : paths.home} 

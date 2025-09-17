@@ -69,11 +69,23 @@ export const FunnelHeader: React.FC<{ funnel: FunnelData; }> = ({ funnel }) => {
 
   const renderLink = (item: HeaderNavItem) => {
     if (item.type === 'custom' && item.url) {
-      return (
-        <a href={item.url} target={item.new_tab ? '_blank' : undefined} rel={item.new_tab ? 'noopener' : undefined} className={`${fontSizeClass} transition-colors`} style={{ color: cfg?.style?.text_color || undefined }}>
-          {item.label}
-        </a>
-      );
+      // Check if it's an external URL (starts with http/https) or internal
+      const isExternalUrl = item.url.startsWith('http://') || item.url.startsWith('https://');
+      
+      if (isExternalUrl) {
+        return (
+          <a href={item.url} target={item.new_tab ? '_blank' : undefined} rel={item.new_tab ? 'noopener' : undefined} className={`${fontSizeClass} transition-colors`} style={{ color: cfg?.style?.text_color || undefined }}>
+            {item.label}
+          </a>
+        );
+      } else {
+        // Internal URL - use React Router Link for SPA navigation
+        return (
+          <Link to={item.url} className={`${fontSizeClass} transition-colors`} style={{ color: cfg?.style?.text_color || undefined }}>
+            {item.label}
+          </Link>
+        );
+      }
     }
     const stepSlug = item.step_slug || '';
     // Use clean URL for custom domains, fallback to full funnel path
