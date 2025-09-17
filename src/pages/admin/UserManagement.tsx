@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { 
   Search, 
@@ -16,7 +17,8 @@ import {
   UserX,
   Crown,
   Eye,
-  Calendar
+  Calendar,
+  Plus
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -26,14 +28,25 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 const UserManagement = () => {
-  const { users, loading, fetchUsers, updateUserPlan, updateUserStatus, extendTrial, loginAsUser, usersTotalCount } = useAdminData();
+  const { users, loading, fetchUsers, updateUserPlan, updateUserStatus, extendTrial, loginAsUser, usersTotalCount, createCustomSubscription } = useAdminData();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [planFilter, setPlanFilter] = useState('all');
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [showUserModal, setShowUserModal] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 20;
+
+  // Upgrade form state
+  const [upgradeForm, setUpgradeForm] = useState({
+    plan: '',
+    duration: '1',
+    durationType: 'month',
+    paymentMethod: 'manual',
+    paymentReference: '',
+    notes: ''
+  });
 
   useEffect(() => {
     fetchUsers(searchTerm, planFilter, currentPage, itemsPerPage);
@@ -103,6 +116,72 @@ const UserManagement = () => {
       toast({
         title: 'Trial Extension Failed',
         description: 'There was an error extending the trial.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleCustomUpgrade = async () => {
+    if (!selectedUser || !upgradeForm.plan) {
+      toast({
+        title: 'Missing Information',
+        description: 'Please select a plan for the upgrade.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Calculate duration in days
+    let durationInDays = parseInt(upgradeForm.duration);
+    if (upgradeForm.durationType === 'month') {
+      durationInDays *= 30;
+    } else if (upgradeForm.durationType === 'year') {
+      durationInDays *= 365;
+    }
+
+    // Calculate price based on plan and duration
+    const planPrices = {
+      starter: 500,
+      professional: 1000,
+      enterprise: 2999
+    };
+    
+    let totalPrice = planPrices[upgradeForm.plan as keyof typeof planPrices] || 0;
+    if (upgradeForm.durationType === 'year') {
+      totalPrice *= 10; // 10 months worth for yearly
+    } else if (upgradeForm.durationType === 'month') {
+      totalPrice *= parseInt(upgradeForm.duration);
+    }
+
+    const success = await createCustomSubscription({
+      user_id: selectedUser.id,
+      plan_name: upgradeForm.plan,
+      plan_price_bdt: totalPrice,
+      payment_method: upgradeForm.paymentMethod,
+      payment_reference: upgradeForm.paymentReference,
+      notes: upgradeForm.notes || `Manual upgrade by admin for ${upgradeForm.duration} ${upgradeForm.durationType}(s)`,
+      duration_days: durationInDays
+    });
+
+    if (success) {
+      toast({
+        title: 'User Upgraded Successfully',
+        description: `${selectedUser.full_name || selectedUser.email} has been upgraded to ${upgradeForm.plan} for ${upgradeForm.duration} ${upgradeForm.durationType}(s).`,
+      });
+      setShowUpgradeModal(false);
+      setUpgradeForm({
+        plan: '',
+        duration: '1',
+        durationType: 'month',
+        paymentMethod: 'manual',
+        paymentReference: '',
+        notes: ''
+      });
+      fetchUsers(searchTerm, planFilter, currentPage, itemsPerPage);
+    } else {
+      toast({
+        title: 'Upgrade Failed',
+        description: 'There was an error upgrading the user.',
         variant: 'destructive',
       });
     }
@@ -358,30 +437,151 @@ const UserManagement = () => {
                   )}
                 </div>
 
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
                   <Button onClick={() => handleLoginAsUser(selectedUser.id)}>
                     Login as User
                   </Button>
-                  <Select onValueChange={(value) => {
-                    if (value === 'extend_trial') {
-                      handleExtendTrial(selectedUser.id);
-                    } else {
-                      handlePlanUpdate(selectedUser.id, value);
-                    }
-                  }}>
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="Change Plan" />
+                  <Button 
+                    onClick={() => handleExtendTrial(selectedUser.id)}
+                    variant="outline"
+                  >
+                    <Calendar className="h-4 w-4 mr-2" />
+                    Extend Trial
+                  </Button>
+                  <Button 
+                    onClick={() => setShowUpgradeModal(true)}
+                    variant="default"
+                  >
+                    <Crown className="h-4 w-4 mr-2" />
+                    Manual Upgrade
+                  </Button>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Manual Upgrade Modal */}
+        <Dialog open={showUpgradeModal} onOpenChange={setShowUpgradeModal}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Manual User Upgrade</DialogTitle>
+              <DialogDescription>
+                Manually upgrade {selectedUser?.full_name || selectedUser?.email} to a paid plan
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="plan">Plan</Label>
+                <Select value={upgradeForm.plan} onValueChange={(value) => setUpgradeForm(prev => ({ ...prev, plan: value }))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select plan" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="starter">Starter (৳500/month)</SelectItem>
+                    <SelectItem value="professional">Professional (৳1,000/month)</SelectItem>
+                    <SelectItem value="enterprise">Enterprise (৳2,999/month)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label htmlFor="duration">Duration</Label>
+                  <Input
+                    id="duration"
+                    type="number"
+                    min="1"
+                    max="36"
+                    value={upgradeForm.duration}
+                    onChange={(e) => setUpgradeForm(prev => ({ ...prev, duration: e.target.value }))}
+                    placeholder="1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="durationType">Period</Label>
+                  <Select value={upgradeForm.durationType} onValueChange={(value) => setUpgradeForm(prev => ({ ...prev, durationType: value }))}>
+                    <SelectTrigger>
+                      <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="extend_trial">Extend Trial (7 days)</SelectItem>
-                      <SelectItem value="starter">Starter</SelectItem>
-                      <SelectItem value="professional">Professional</SelectItem>
-                      <SelectItem value="enterprise">Enterprise</SelectItem>
+                      <SelectItem value="day">Days</SelectItem>
+                      <SelectItem value="month">Months</SelectItem>
+                      <SelectItem value="year">Years</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
-            )}
+
+              <div>
+                <Label htmlFor="paymentMethod">Payment Method</Label>
+                <Select value={upgradeForm.paymentMethod} onValueChange={(value) => setUpgradeForm(prev => ({ ...prev, paymentMethod: value }))}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="manual">Manual/Admin</SelectItem>
+                    <SelectItem value="bkash">bKash</SelectItem>
+                    <SelectItem value="nagad">Nagad</SelectItem>
+                    <SelectItem value="rocket">Rocket</SelectItem>
+                    <SelectItem value="bank">Bank Transfer</SelectItem>
+                    <SelectItem value="complimentary">Complimentary</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="paymentReference">Payment Reference (Optional)</Label>
+                <Input
+                  id="paymentReference"
+                  value={upgradeForm.paymentReference}
+                  onChange={(e) => setUpgradeForm(prev => ({ ...prev, paymentReference: e.target.value }))}
+                  placeholder="Transaction ID or reference"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="notes">Notes (Optional)</Label>
+                <Input
+                  id="notes"
+                  value={upgradeForm.notes}
+                  onChange={(e) => setUpgradeForm(prev => ({ ...prev, notes: e.target.value }))}
+                  placeholder="Additional notes"
+                />
+              </div>
+
+              {upgradeForm.plan && (
+                <div className="p-3 bg-muted rounded-lg">
+                  <div className="text-sm font-medium">Upgrade Summary:</div>
+                  <div className="text-sm text-muted-foreground">
+                    Plan: {upgradeForm.plan} for {upgradeForm.duration} {upgradeForm.durationType}(s)
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    Total: ৳{(() => {
+                      const planPrices = { starter: 500, professional: 1000, enterprise: 2999 };
+                      let totalPrice = planPrices[upgradeForm.plan as keyof typeof planPrices] || 0;
+                      if (upgradeForm.durationType === 'year') {
+                        totalPrice *= 10; // 10 months worth for yearly
+                      } else if (upgradeForm.durationType === 'month') {
+                        totalPrice *= parseInt(upgradeForm.duration);
+                      }
+                      return totalPrice.toLocaleString();
+                    })()}
+                  </div>
+                </div>
+              )}
+
+              <div className="flex gap-2 pt-4">
+                <Button onClick={handleCustomUpgrade} disabled={!upgradeForm.plan} className="flex-1">
+                  <Crown className="h-4 w-4 mr-2" />
+                  Upgrade User
+                </Button>
+                <Button onClick={() => setShowUpgradeModal(false)} variant="outline">
+                  Cancel
+                </Button>
+              </div>
+            </div>
           </DialogContent>
         </Dialog>
       </div>

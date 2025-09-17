@@ -482,6 +482,70 @@ export const useAdminData = () => {
     }
   };
 
+  // Create custom subscription with specific duration
+  const createCustomSubscription = async (subscriptionData: {
+    user_id: string;
+    plan_name: string;
+    plan_price_bdt: number;
+    payment_method: string;
+    payment_reference?: string;
+    notes?: string;
+    duration_days: number;
+  }) => {
+    if (!isAdmin) return false;
+
+    try {
+      const startsAt = new Date();
+      const expiresAt = new Date(startsAt.getTime() + (subscriptionData.duration_days * 24 * 60 * 60 * 1000));
+
+      const { error } = await supabase
+        .from('saas_subscriptions')
+        .insert({
+          user_id: subscriptionData.user_id,
+          plan_name: subscriptionData.plan_name,
+          plan_price_bdt: subscriptionData.plan_price_bdt,
+          payment_method: subscriptionData.payment_method,
+          payment_reference: subscriptionData.payment_reference || `Manual-${Date.now()}`,
+          notes: subscriptionData.notes,
+          subscription_status: 'active',
+          starts_at: startsAt.toISOString(),
+          expires_at: expiresAt.toISOString(),
+        });
+
+      if (error) throw error;
+
+      // Update user profile
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({
+          subscription_plan: subscriptionData.plan_name as any,
+          account_status: 'active',
+          trial_expires_at: null,
+          trial_started_at: null,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', subscriptionData.user_id);
+
+      if (profileError) throw profileError;
+
+      // Update local state
+      setUsers(prev => prev.map(user => 
+        user.id === subscriptionData.user_id ? { 
+          ...user, 
+          subscription_plan: subscriptionData.plan_name,
+          account_status: 'active',
+          trial_expires_at: null
+        } : user
+      ));
+
+      fetchSaasSubscribers();
+      return true;
+    } catch (err) {
+      console.error('Error creating custom subscription:', err);
+      return false;
+    }
+  };
+
   useEffect(() => {
     checkAdminStatus();
   }, [user]);
@@ -541,6 +605,7 @@ export const useAdminData = () => {
     extendTrial,
     loginAsUser,
     createSubscription,
+    createCustomSubscription,
     updateSubscription,
     deleteSubscription,
     refetch: () => {
