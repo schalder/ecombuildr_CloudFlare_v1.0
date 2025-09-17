@@ -24,6 +24,7 @@ export const useCourseCurrency = () => {
         return 'USD';
       }
       
+      console.log('Course currency fetched:', data?.course_currency || 'USD');
       return data?.course_currency || 'USD';
     },
     enabled: !!userStore?.id,

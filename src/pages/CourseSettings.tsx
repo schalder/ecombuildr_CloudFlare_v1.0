@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,6 +19,7 @@ import { useToast } from '@/hooks/use-toast';
 
 const CourseSettings = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { store: userStore } = useUserStore();
   const { toast } = useToast();
   
@@ -120,6 +121,10 @@ const CourseSettings = () => {
         .eq('id', userStore.id);
 
       if (error) throw error;
+
+      // Invalidate the course currency cache to refresh the currency across the app
+      queryClient.invalidateQueries({ queryKey: ['course-currency'] });
+      queryClient.invalidateQueries({ queryKey: ['store-settings'] });
 
       toast({
         title: "Settings saved",
