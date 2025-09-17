@@ -809,9 +809,8 @@ const CourseEditor = () => {
             </CardHeader>
             <CardContent>
               <CompactMediaSelector
-                selectedUrl={course.thumbnail_url}
-                onSelect={(url) => setCourse(prev => prev ? {...prev, thumbnail_url: url} : null)}
-                className="w-full"
+                value={course.thumbnail_url}
+                onChange={(url) => setCourse(prev => prev ? {...prev, thumbnail_url: url} : null)}
               />
             </CardContent>
           </Card>
