@@ -8,6 +8,12 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
+import { 
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 import { Loader2, Save, ArrowLeft, Upload, Image, DollarSign, Plus, Trash2 } from 'lucide-react';
 import { CompactMediaSelector } from '@/components/page-builder/components/CompactMediaSelector';
 import { useUserStore } from '@/hooks/useUserStore';
@@ -121,125 +127,145 @@ const CreateCourse = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Basic Information */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Course Information</CardTitle>
-                <CardDescription>
-                  Enter the basic details about your course
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="title">Course Title *</Label>
-                  <Input
-                    id="title"
-                    value={formData.title}
-                    onChange={(e) => handleInputChange('title', e.target.value)}
-                    placeholder="e.g., Complete Web Development Bootcamp"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="description">Course Description</Label>
-                  <RichTextEditor
-                    content={formData.description}
-                    onChange={(content) => handleInputChange('description', content)}
-                    placeholder="Write a detailed description of your course, what students will learn, prerequisites, etc..."
-                    className="min-h-[150px]"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="thumbnail">Course Thumbnail</Label>
-                  <CompactMediaSelector
-                    value={formData.thumbnail_url}
-                    onChange={(url) => handleInputChange('thumbnail_url', url)}
-                    label="Select Course Thumbnail"
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Course Description */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Course Overview</CardTitle>
-                <CardDescription>
-                  Write a detailed description of your course content
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <RichTextEditor
-                  content={formData.content}
-                  onChange={(content) => handleInputChange('content', content)}
-                  placeholder="Describe what students will learn, course objectives, prerequisites, etc..."
-                />
-              </CardContent>
-            </Card>
-
-            {/* What it includes Section */}
-            <Card>
-              <CardHeader>
-                <CardTitle>What This Course Includes</CardTitle>
-                <CardDescription>
-                  Optional section to highlight what students will get with this course
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="includes-title">Section Title (Optional)</Label>
-                  <Input
-                    id="includes-title"
-                    value={formData.includes_title}
-                    onChange={(e) => handleInputChange('includes_title', e.target.value)}
-                    placeholder="e.g., This Course Includes"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Course Features (Optional)</Label>
-                  <div className="space-y-2">
-                    {formData.includes_items.map((item, index) => (
-                      <div key={index} className="flex gap-2">
+            <Accordion type="single" collapsible className="space-y-4">
+              {/* Course Information */}
+              <AccordionItem value="course-information" className="border rounded-lg">
+                <Card className="border-0">
+                  <AccordionTrigger className="px-6 hover:no-underline">
+                    <CardHeader className="p-0">
+                      <CardTitle>Course Information</CardTitle>
+                      <CardDescription>
+                        Enter the basic details about your course
+                      </CardDescription>
+                    </CardHeader>
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <CardContent className="space-y-4 pt-0">
+                      <div className="space-y-2">
+                        <Label htmlFor="title">Course Title *</Label>
                         <Input
-                          value={item}
-                          onChange={(e) => {
-                            const newItems = [...formData.includes_items];
-                            newItems[index] = e.target.value;
-                            handleInputChange('includes_items', newItems);
-                          }}
-                          placeholder="e.g., 5.4 hours on-demand video"
-                          className="flex-1"
+                          id="title"
+                          value={formData.title}
+                          onChange={(e) => handleInputChange('title', e.target.value)}
+                          placeholder="e.g., Complete Web Development Bootcamp"
                         />
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="icon"
-                          onClick={() => {
-                            const newItems = formData.includes_items.filter((_, i) => i !== index);
-                            handleInputChange('includes_items', newItems);
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
                       </div>
-                    ))}
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => {
-                        handleInputChange('includes_items', [...formData.includes_items, '']);
-                      }}
-                      className="w-full"
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add Feature
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="description">Course Description</Label>
+                        <RichTextEditor
+                          content={formData.description}
+                          onChange={(content) => handleInputChange('description', content)}
+                          placeholder="Write a detailed description of your course, what students will learn, prerequisites, etc..."
+                          className="min-h-[150px]"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="thumbnail">Course Thumbnail</Label>
+                        <CompactMediaSelector
+                          value={formData.thumbnail_url}
+                          onChange={(url) => handleInputChange('thumbnail_url', url)}
+                          label="Select Course Thumbnail"
+                        />
+                      </div>
+                    </CardContent>
+                  </AccordionContent>
+                </Card>
+              </AccordionItem>
+
+              {/* Course Overview */}
+              <AccordionItem value="course-overview" className="border rounded-lg">
+                <Card className="border-0">
+                  <AccordionTrigger className="px-6 hover:no-underline">
+                    <CardHeader className="p-0">
+                      <CardTitle>Course Overview</CardTitle>
+                      <CardDescription>
+                        Write a detailed description of your course content
+                      </CardDescription>
+                    </CardHeader>
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <CardContent className="pt-0">
+                      <RichTextEditor
+                        content={formData.content}
+                        onChange={(content) => handleInputChange('content', content)}
+                        placeholder="Describe what students will learn, course objectives, prerequisites, etc..."
+                      />
+                    </CardContent>
+                  </AccordionContent>
+                </Card>
+              </AccordionItem>
+
+              {/* What This Course Includes */}
+              <AccordionItem value="course-includes" className="border rounded-lg">
+                <Card className="border-0">
+                  <AccordionTrigger className="px-6 hover:no-underline">
+                    <CardHeader className="p-0">
+                      <CardTitle>What This Course Includes</CardTitle>
+                      <CardDescription>
+                        Optional section to highlight what students will get with this course
+                      </CardDescription>
+                    </CardHeader>
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <CardContent className="space-y-4 pt-0">
+                      <div className="space-y-2">
+                        <Label htmlFor="includes-title">Section Title (Optional)</Label>
+                        <Input
+                          id="includes-title"
+                          value={formData.includes_title}
+                          onChange={(e) => handleInputChange('includes_title', e.target.value)}
+                          placeholder="e.g., This Course Includes"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Course Features (Optional)</Label>
+                        <div className="space-y-2">
+                          {formData.includes_items.map((item, index) => (
+                            <div key={index} className="flex gap-2">
+                              <Input
+                                value={item}
+                                onChange={(e) => {
+                                  const newItems = [...formData.includes_items];
+                                  newItems[index] = e.target.value;
+                                  handleInputChange('includes_items', newItems);
+                                }}
+                                placeholder="e.g., 5.4 hours on-demand video"
+                                className="flex-1"
+                              />
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="icon"
+                                onClick={() => {
+                                  const newItems = formData.includes_items.filter((_, i) => i !== index);
+                                  handleInputChange('includes_items', newItems);
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          ))}
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => {
+                              handleInputChange('includes_items', [...formData.includes_items, '']);
+                            }}
+                            className="w-full"
+                          >
+                            <Plus className="h-4 w-4 mr-2" />
+                            Add Feature
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </AccordionContent>
+                </Card>
+              </AccordionItem>
+            </Accordion>
           </div>
 
           {/* Sidebar */}

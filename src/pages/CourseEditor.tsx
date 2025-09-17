@@ -441,225 +441,260 @@ const CourseEditor = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Course Info */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Course Information</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Course Title</Label>
-                  <Input
-                    value={course.title}
-                    onChange={(e) => setCourse(prev => prev ? {...prev, title: e.target.value} : null)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Course Description</Label>
-                  <RichTextEditor
-                    content={course.description || ''}
-                    onChange={(content) => setCourse(prev => prev ? {...prev, description: content} : null)}
-                    placeholder="Write a detailed description of your course content, objectives, prerequisites, etc..."
-                    className="min-h-[150px]"
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Course Overview */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Course Overview</CardTitle>
-                <CardDescription>
-                  Write a detailed description of your course content
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <RichTextEditor
-                  content={course.content || ''}
-                  onChange={(content) => setCourse(prev => prev ? {...prev, content} : null)}
-                  placeholder="Describe what students will learn, course objectives, prerequisites, etc..."
-                />
-              </CardContent>
-            </Card>
-
-            {/* What it includes Section */}
-            <Card>
-              <CardHeader>
-                <CardTitle>What This Course Includes</CardTitle>
-                <CardDescription>
-                  Optional section to highlight what students will get with this course
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="includes-title">Section Title (Optional)</Label>
-                  <Input
-                    id="includes-title"
-                    value={course.includes_title || ''}
-                    onChange={(e) => setCourse(prev => prev ? {...prev, includes_title: e.target.value} : null)}
-                    placeholder="e.g., This Course Includes"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Course Features (Optional)</Label>
-                  <div className="space-y-2">
-                    {(course.includes_items || []).map((item, index) => (
-                      <div key={index} className="flex gap-2">
+            <Accordion type="single" collapsible className="space-y-4">
+              {/* Course Information */}
+              <AccordionItem value="course-information" className="border rounded-lg">
+                <Card className="border-0">
+                  <AccordionTrigger className="px-6 hover:no-underline">
+                    <CardHeader className="p-0">
+                      <CardTitle>Course Information</CardTitle>
+                      <CardDescription>
+                        Basic course details and description
+                      </CardDescription>
+                    </CardHeader>
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <CardContent className="space-y-4 pt-0">
+                      <div className="space-y-2">
+                        <Label>Course Title</Label>
                         <Input
-                          value={item}
-                          onChange={(e) => {
-                            const newItems = [...(course.includes_items || [])];
-                            newItems[index] = e.target.value;
-                            setCourse(prev => prev ? {...prev, includes_items: newItems} : null);
-                          }}
-                          placeholder="e.g., 5.4 hours on-demand video"
-                          className="flex-1"
+                          value={course.title}
+                          onChange={(e) => setCourse(prev => prev ? {...prev, title: e.target.value} : null)}
                         />
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="icon"
-                          onClick={() => {
-                            const newItems = (course.includes_items || []).filter((_, i) => i !== index);
-                            setCourse(prev => prev ? {...prev, includes_items: newItems} : null);
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Course Description</Label>
+                        <RichTextEditor
+                          content={course.description || ''}
+                          onChange={(content) => setCourse(prev => prev ? {...prev, description: content} : null)}
+                          placeholder="Write a detailed description of your course content, objectives, prerequisites, etc..."
+                          className="min-h-[150px]"
+                        />
+                      </div>
+                    </CardContent>
+                  </AccordionContent>
+                </Card>
+              </AccordionItem>
+
+              {/* Course Overview */}
+              <AccordionItem value="course-overview" className="border rounded-lg">
+                <Card className="border-0">
+                  <AccordionTrigger className="px-6 hover:no-underline">
+                    <CardHeader className="p-0">
+                      <CardTitle>Course Overview</CardTitle>
+                      <CardDescription>
+                        Write a detailed description of your course content
+                      </CardDescription>
+                    </CardHeader>
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <CardContent className="pt-0">
+                      <RichTextEditor
+                        content={course.content || ''}
+                        onChange={(content) => setCourse(prev => prev ? {...prev, content} : null)}
+                        placeholder="Describe what students will learn, course objectives, prerequisites, etc..."
+                      />
+                    </CardContent>
+                  </AccordionContent>
+                </Card>
+              </AccordionItem>
+
+              {/* What This Course Includes */}
+              <AccordionItem value="course-includes" className="border rounded-lg">
+                <Card className="border-0">
+                  <AccordionTrigger className="px-6 hover:no-underline">
+                    <CardHeader className="p-0">
+                      <CardTitle>What This Course Includes</CardTitle>
+                      <CardDescription>
+                        Optional section to highlight what students will get with this course
+                      </CardDescription>
+                    </CardHeader>
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <CardContent className="space-y-4 pt-0">
+                      <div className="space-y-2">
+                        <Label htmlFor="includes-title">Section Title (Optional)</Label>
+                        <Input
+                          id="includes-title"
+                          value={course.includes_title || ''}
+                          onChange={(e) => setCourse(prev => prev ? {...prev, includes_title: e.target.value} : null)}
+                          placeholder="e.g., This Course Includes"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Course Features (Optional)</Label>
+                        <div className="space-y-2">
+                          {(course.includes_items || []).map((item, index) => (
+                            <div key={index} className="flex gap-2">
+                              <Input
+                                value={item}
+                                onChange={(e) => {
+                                  const newItems = [...(course.includes_items || [])];
+                                  newItems[index] = e.target.value;
+                                  setCourse(prev => prev ? {...prev, includes_items: newItems} : null);
+                                }}
+                                placeholder="e.g., 5.4 hours on-demand video"
+                                className="flex-1"
+                              />
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="icon"
+                                onClick={() => {
+                                  const newItems = (course.includes_items || []).filter((_, i) => i !== index);
+                                  setCourse(prev => prev ? {...prev, includes_items: newItems} : null);
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          ))}
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => {
+                              setCourse(prev => prev ? {...prev, includes_items: [...(prev.includes_items || []), '']} : null);
+                            }}
+                            className="w-full"
+                          >
+                            <Plus className="h-4 w-4 mr-2" />
+                            Add Feature
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </AccordionContent>
+                </Card>
+              </AccordionItem>
+
+              {/* Course Content */}
+              <AccordionItem value="course-content" className="border rounded-lg">
+                <Card className="border-0">
+                  <AccordionTrigger className="px-6 hover:no-underline">
+                    <CardHeader className="p-0">
+                      <div className="flex items-center justify-between w-full">
+                        <div>
+                          <CardTitle>Course Content</CardTitle>
+                          <CardDescription>Organize your course into modules and lessons</CardDescription>
+                        </div>
+                        <Button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openModuleDialog();
                           }}
+                          size="sm"
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Plus className="h-4 w-4 mr-2" />
+                          Add Module
                         </Button>
                       </div>
-                    ))}
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => {
-                        setCourse(prev => prev ? {...prev, includes_items: [...(prev.includes_items || []), '']} : null);
-                      }}
-                      className="w-full"
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add Feature
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Course Content */}
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle>Course Content</CardTitle>
-                    <CardDescription>Organize your course into modules and lessons</CardDescription>
-                  </div>
-                  <Button onClick={() => openModuleDialog()}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Module
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {modules.length === 0 ? (
-                  <div className="text-center py-8">
-                    <BookOpen className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                    <h3 className="text-lg font-medium mb-2">No modules yet</h3>
-                    <p className="text-muted-foreground mb-4">
-                      Create your first module to start building course content
-                    </p>
-                    <Button onClick={() => openModuleDialog()}>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Create First Module
-                    </Button>
-                  </div>
-                ) : (
-                  <Accordion type="single" collapsible className="w-full">
-                    {modules.map((module, moduleIndex) => (
-                      <AccordionItem key={module.id} value={module.id}>
-                        <AccordionTrigger>
-                          <div className="flex items-center gap-3 w-full">
-                            <GripVertical className="h-4 w-4 text-muted-foreground" />
-                            <div className="flex-1 text-left">
-                              <div className="flex items-center gap-2">
-                                <span className="font-medium">{module.title}</span>
-                                <Badge variant={module.is_published ? "default" : "secondary"} className="text-xs">
-                                  {module.is_published ? 'Published' : 'Draft'}
-                                </Badge>
-                              </div>
-                              <p className="text-sm text-muted-foreground">
-                                {module.course_lessons.length} lessons
-                              </p>
-                            </div>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                openModuleDialog(module);
-                              }}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </AccordionTrigger>
-                        <AccordionContent>
-                          <div className="space-y-4 pt-4">
-                            {module.description && (
-                              <p className="text-sm text-muted-foreground">{module.description}</p>
-                            )}
-                            
-                            <div className="space-y-2">
-                              {module.course_lessons.map((lesson, lessonIndex) => (
-                                <div key={lesson.id} className="flex items-center gap-3 p-3 border rounded-lg">
+                    </CardHeader>
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <CardContent className="pt-0">
+                      {modules.length === 0 ? (
+                        <div className="text-center py-8">
+                          <BookOpen className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                          <h3 className="text-lg font-medium mb-2">No modules yet</h3>
+                          <p className="text-muted-foreground mb-4">
+                            Create your first module to start building course content
+                          </p>
+                          <Button onClick={() => openModuleDialog()}>
+                            <Plus className="h-4 w-4 mr-2" />
+                            Create First Module
+                          </Button>
+                        </div>
+                      ) : (
+                        <Accordion type="single" collapsible className="w-full">
+                          {modules.map((module, moduleIndex) => (
+                            <AccordionItem key={module.id} value={module.id}>
+                              <AccordionTrigger>
+                                <div className="flex items-center gap-3 w-full">
                                   <GripVertical className="h-4 w-4 text-muted-foreground" />
-                                  <div className="flex-1">
+                                  <div className="flex-1 text-left">
                                     <div className="flex items-center gap-2">
-                                      <PlayCircle className="h-4 w-4 text-muted-foreground" />
-                                      <span className="font-medium">{lesson.title}</span>
-                                      <Badge variant={lesson.is_published ? "default" : "secondary"} className="text-xs">
-                                        {lesson.is_published ? 'Published' : 'Draft'}
+                                      <span className="font-medium">{module.title}</span>
+                                      <Badge variant={module.is_published ? "default" : "secondary"} className="text-xs">
+                                        {module.is_published ? 'Published' : 'Draft'}
                                       </Badge>
-                                      {lesson.is_preview && (
-                                        <Badge variant="outline" className="text-xs">
-                                          Preview
-                                        </Badge>
-                                      )}
                                     </div>
-                                    {lesson.video_url && (
-                                      <p className="text-xs text-muted-foreground">
-                                        Video • {lesson.video_duration ? `${Math.floor(lesson.video_duration / 60)}:${(lesson.video_duration % 60).toString().padStart(2, '0')}` : 'No duration'}
-                                      </p>
-                                    )}
+                                    <p className="text-sm text-muted-foreground">
+                                      {module.course_lessons.length} lessons
+                                    </p>
                                   </div>
                                   <Button
                                     variant="ghost"
                                     size="sm"
-                                    onClick={() => openLessonDialog(module.id, lesson)}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      openModuleDialog(module);
+                                    }}
                                   >
                                     <Edit className="h-4 w-4" />
                                   </Button>
                                 </div>
-                              ))}
-                              
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => openLessonDialog(module.id)}
-                                className="w-full"
-                              >
-                                <Plus className="h-4 w-4 mr-2" />
-                                Add Lesson
-                              </Button>
-                            </div>
-                          </div>
-                        </AccordionContent>
-                      </AccordionItem>
-                    ))}
-                  </Accordion>
-                )}
-              </CardContent>
-            </Card>
+                              </AccordionTrigger>
+                              <AccordionContent>
+                                <div className="space-y-4 pt-4">
+                                  {module.description && (
+                                    <p className="text-sm text-muted-foreground">{module.description}</p>
+                                  )}
+                                  
+                                  <div className="space-y-2">
+                                    {module.course_lessons.map((lesson, lessonIndex) => (
+                                      <div key={lesson.id} className="flex items-center gap-3 p-3 border rounded-lg">
+                                        <GripVertical className="h-4 w-4 text-muted-foreground" />
+                                        <div className="flex-1">
+                                          <div className="flex items-center gap-2">
+                                            <PlayCircle className="h-4 w-4 text-muted-foreground" />
+                                            <span className="font-medium">{lesson.title}</span>
+                                            <Badge variant={lesson.is_published ? "default" : "secondary"} className="text-xs">
+                                              {lesson.is_published ? 'Published' : 'Draft'}
+                                            </Badge>
+                                            {lesson.is_preview && (
+                                              <Badge variant="outline" className="text-xs">
+                                                Preview
+                                              </Badge>
+                                            )}
+                                          </div>
+                                          {lesson.video_url && (
+                                            <p className="text-xs text-muted-foreground">
+                                              Video • {lesson.video_duration ? `${Math.floor(lesson.video_duration / 60)}:${(lesson.video_duration % 60).toString().padStart(2, '0')}` : 'No duration'}
+                                            </p>
+                                          )}
+                                        </div>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() => openLessonDialog(module.id, lesson)}
+                                        >
+                                          <Edit className="h-4 w-4" />
+                                        </Button>
+                                      </div>
+                                    ))}
+                                    
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => openLessonDialog(module.id)}
+                                      className="w-full"
+                                    >
+                                      <Plus className="h-4 w-4 mr-2" />
+                                      Add Lesson
+                                    </Button>
+                                  </div>
+                                </div>
+                              </AccordionContent>
+                            </AccordionItem>
+                          ))}
+                        </Accordion>
+                      )}
+                    </CardContent>
+                  </AccordionContent>
+                </Card>
+              </AccordionItem>
+            </Accordion>
           </div>
 
           {/* Sidebar */}
