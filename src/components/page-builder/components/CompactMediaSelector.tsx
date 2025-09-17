@@ -30,7 +30,7 @@ export const CompactMediaSelector: React.FC<CompactMediaSelectorProps> = ({
   };
 
   const handleUrlSubmit = () => {
-    if (urlInput.trim()) {
+    if (urlInput && urlInput.trim()) {
       onChange(urlInput.trim());
       setIsUrlDialogOpen(false);
     }
@@ -140,7 +140,7 @@ export const CompactMediaSelector: React.FC<CompactMediaSelectorProps> = ({
                 <Button variant="outline" onClick={() => setIsUrlDialogOpen(false)}>
                   Cancel
                 </Button>
-                <Button onClick={handleUrlSubmit} disabled={!urlInput.trim()}>
+                <Button onClick={handleUrlSubmit} disabled={!urlInput || !urlInput.trim()}>
                   Use URL
                 </Button>
               </div>
@@ -217,7 +217,7 @@ export const CompactMediaSelector: React.FC<CompactMediaSelectorProps> = ({
               <Button variant="outline" onClick={() => setIsUrlDialogOpen(false)}>
                 Cancel
               </Button>
-              <Button onClick={handleUrlSubmit} disabled={!urlInput.trim()}>
+              <Button onClick={handleUrlSubmit} disabled={!urlInput || !urlInput.trim()}>
                 Use URL
               </Button>
             </div>
