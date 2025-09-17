@@ -110,6 +110,7 @@ import CourseEditor from "@/pages/CourseEditor";
 import CourseView from "@/pages/CourseView";
 import CourseLibrary from "@/pages/CourseLibrary";
 import CourseDetail from "@/pages/CourseDetail";
+import CourseCheckout from "@/pages/CourseCheckout";
 import CourseDomainSettings from "@/pages/CourseDomainSettings";
 import CourseSettings from "@/pages/CourseSettings";
 
@@ -212,6 +213,7 @@ const App = () => (
                 {/* Public Course Library Routes */}
                 <Route path="/courses" element={<CourseLibrary />} />
                 <Route path="/courses/:courseId" element={<CourseDetail />} />
+                <Route path="/courses/:courseId/checkout" element={<CourseCheckout />} />
                 
                 
                 {/* Admin Routes - Protected by SuperAdmin Guard */}

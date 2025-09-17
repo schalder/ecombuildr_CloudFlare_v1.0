@@ -27,6 +27,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useCourseCurrency } from '@/hooks/useCourseCurrency';
 import { formatCoursePrice } from '@/utils/currency';
 import { MetaTags } from '@/components/MetaTags';
+import { CourseEnrollmentCard } from '@/components/course/CourseEnrollmentCard';
 import { useStore } from '@/contexts/StoreContext';
 import { setSEO } from '@/lib/seo';
 
@@ -61,6 +62,11 @@ interface CourseDetail {
   is_active: boolean;
   created_at: string;
   course_modules: CourseModule[];
+  payment_methods: {
+    bkash: boolean;
+    nagad: boolean;
+    eps: boolean;
+  };
 }
 
 const CourseDetail = () => {
@@ -105,7 +111,7 @@ const CourseDetail = () => {
       const { data, error } = await supabase
         .from('courses')
         .select(`
-          id, title, description, thumbnail_url, price, compare_price, is_published, is_active, created_at,
+          id, title, description, thumbnail_url, price, compare_price, is_published, is_active, created_at, payment_methods,
           course_modules(
             id, title, description, sort_order, is_published,
             course_lessons(
@@ -289,39 +295,10 @@ const CourseDetail = () => {
               </div>
 
               <div className="lg:col-span-1">
-                <Card>
-                  <CardContent className="p-6">
-                    <div className="text-center mb-6">
-                      {course.price > 0 ? (
-                        <div>
-                          <div className="flex items-center justify-center gap-2 mb-2">
-                            <span className="text-3xl font-bold">{formatCoursePrice(course.price, currency)}</span>
-                            {course.compare_price && course.compare_price > course.price && (
-                              <span className="text-lg text-muted-foreground line-through">
-                                {formatCoursePrice(course.compare_price, currency)}
-                              </span>
-                            )}
-                          </div>
-                          <Badge variant="secondary">Premium Course</Badge>
-                        </div>
-                      ) : (
-                        <div>
-                          <span className="text-3xl font-bold text-green-600">Free</span>
-                          <Badge variant="secondary" className="ml-2">Free Course</Badge>
-                        </div>
-                      )}
-                    </div>
-                    
-                    <Button className="w-full mb-4" size="lg">
-                      <CheckCircle className="h-5 w-5 mr-2" />
-                      Enroll Now
-                    </Button>
-                    
-                    <div className="text-center text-sm text-muted-foreground">
-                      <p>30-day money-back guarantee</p>
-                    </div>
-                  </CardContent>
-                </Card>
+                <CourseEnrollmentCard 
+                  course={course} 
+                  storeId={store?.id || ''} 
+                />
               </div>
             </div>
           </div>

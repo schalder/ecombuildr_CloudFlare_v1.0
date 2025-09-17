@@ -555,6 +555,67 @@ export type Database = {
           },
         ]
       }
+      course_member_access: {
+        Row: {
+          access_status: string
+          course_id: string
+          course_order_id: string | null
+          created_at: string
+          expires_at: string | null
+          granted_at: string
+          id: string
+          is_active: boolean
+          member_account_id: string
+          updated_at: string
+        }
+        Insert: {
+          access_status?: string
+          course_id: string
+          course_order_id?: string | null
+          created_at?: string
+          expires_at?: string | null
+          granted_at?: string
+          id?: string
+          is_active?: boolean
+          member_account_id: string
+          updated_at?: string
+        }
+        Update: {
+          access_status?: string
+          course_id?: string
+          course_order_id?: string | null
+          created_at?: string
+          expires_at?: string | null
+          granted_at?: string
+          id?: string
+          is_active?: boolean
+          member_account_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_member_access_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "course_member_access_course_order_id_fkey"
+            columns: ["course_order_id"]
+            isOneToOne: false
+            referencedRelation: "course_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "course_member_access_member_account_id_fkey"
+            columns: ["member_account_id"]
+            isOneToOne: false
+            referencedRelation: "member_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       course_modules: {
         Row: {
           course_id: string
@@ -596,6 +657,69 @@ export type Database = {
           },
         ]
       }
+      course_orders: {
+        Row: {
+          course_id: string
+          created_at: string
+          customer_email: string
+          customer_name: string
+          customer_phone: string | null
+          id: string
+          metadata: Json | null
+          order_number: string
+          payment_method: string
+          payment_status: string
+          store_id: string
+          total: number
+          updated_at: string
+        }
+        Insert: {
+          course_id: string
+          created_at?: string
+          customer_email: string
+          customer_name: string
+          customer_phone?: string | null
+          id?: string
+          metadata?: Json | null
+          order_number: string
+          payment_method: string
+          payment_status?: string
+          store_id: string
+          total?: number
+          updated_at?: string
+        }
+        Update: {
+          course_id?: string
+          created_at?: string
+          customer_email?: string
+          customer_name?: string
+          customer_phone?: string | null
+          id?: string
+          metadata?: Json | null
+          order_number?: string
+          payment_method?: string
+          payment_status?: string
+          store_id?: string
+          total?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_orders_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "course_orders_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       courses: {
         Row: {
           compare_price: number | null
@@ -607,6 +731,7 @@ export type Database = {
           includes_title: string | null
           is_active: boolean
           is_published: boolean
+          payment_methods: Json | null
           price: number
           store_id: string
           thumbnail_url: string | null
@@ -623,6 +748,7 @@ export type Database = {
           includes_title?: string | null
           is_active?: boolean
           is_published?: boolean
+          payment_methods?: Json | null
           price?: number
           store_id: string
           thumbnail_url?: string | null
@@ -639,6 +765,7 @@ export type Database = {
           includes_title?: string | null
           is_active?: boolean
           is_published?: boolean
+          payment_methods?: Json | null
           price?: number
           store_id?: string
           thumbnail_url?: string | null

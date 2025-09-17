@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/accordion';
 import { Loader2, Save, ArrowLeft, Upload, Image, DollarSign, Plus, Trash2 } from 'lucide-react';
 import { CompactMediaSelector } from '@/components/page-builder/components/CompactMediaSelector';
+import { CoursePaymentMethods } from '@/components/course/CoursePaymentMethods';
 import { useUserStore } from '@/hooks/useUserStore';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -31,6 +32,11 @@ interface CourseFormData {
   is_active: boolean;
   includes_title: string;
   includes_items: string[];
+  payment_methods: {
+    bkash: boolean;
+    nagad: boolean;
+    eps: boolean;
+  };
 }
 
 const CreateCourse = () => {
@@ -48,7 +54,12 @@ const CreateCourse = () => {
     is_published: false,
     is_active: true,
     includes_title: '',
-    includes_items: []
+    includes_items: [],
+    payment_methods: {
+      bkash: false,
+      nagad: false,
+      eps: false
+    }
   });
 
   const handleInputChange = (field: keyof CourseFormData, value: any) => {
@@ -82,7 +93,8 @@ const CreateCourse = () => {
         is_published: formData.is_published,
         is_active: formData.is_active,
         includes_title: formData.includes_title.trim() || null,
-        includes_items: formData.includes_items.filter(item => item.trim()).length > 0 ? formData.includes_items.filter(item => item.trim()) : null
+        includes_items: formData.includes_items.filter(item => item.trim()).length > 0 ? formData.includes_items.filter(item => item.trim()) : null,
+        payment_methods: formData.payment_methods
       };
 
       const { data, error } = await supabase
@@ -344,6 +356,15 @@ const CreateCourse = () => {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Payment Methods */}
+            {store?.id && (
+              <CoursePaymentMethods
+                storeId={store.id}
+                value={formData.payment_methods}
+                onChange={(methods) => handleInputChange('payment_methods', methods)}
+              />
+            )}
 
             {/* Actions */}
             <Card>
