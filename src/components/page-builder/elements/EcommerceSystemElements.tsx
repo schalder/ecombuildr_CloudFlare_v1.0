@@ -1091,7 +1091,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
         shipping_cost: shippingCost,
         discount_amount: 0,
         total: total + shippingCost,
-        status: form.payment_method === 'cod' ? 'pending' as const : (isManual ? 'pending' as const : 'processing' as const),
+        status: form.payment_method === 'cod' ? 'pending' as const : (isManual ? 'pending' as const : 'pending' as const),
         // Persist custom fields with labels for better display later
         custom_fields: (customFields || [])
           .filter((cf: any) => cf.enabled)

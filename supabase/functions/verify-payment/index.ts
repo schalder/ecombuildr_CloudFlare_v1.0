@@ -35,7 +35,7 @@ serve(async (req) => {
     // Get order details to find store ID and website ID
     const { data: order, error: orderError } = await supabase
       .from('orders')
-      .select('store_id, website_id')
+      .select('store_id, website_id, custom_fields')
       .eq('id', orderId)
       .single();
 
@@ -50,13 +50,21 @@ serve(async (req) => {
       case 'nagad':
         paymentStatus = await verifyNagadPayment(paymentId, order.store_id, supabase);
         break;
-      case 'eps':
-        paymentStatus = await verifyEPSPayment(paymentId, order.store_id, supabase);
+      case 'eps': {
+        const storedMTID = order.custom_fields?.eps?.merchantTransactionId || order.custom_fields?.eps?.merchant_transaction_id;
+        const merchantTxnId = paymentId && paymentId !== orderId ? paymentId : storedMTID;
+        if (!merchantTxnId) {
+          console.error('EPS verify: missing merchantTransactionId');
+          paymentStatus = 'failed';
+        } else {
+          paymentStatus = await verifyEPSPayment(merchantTxnId, order.store_id, supabase);
+        }
         break;
+      }
     }
 
     // Update order status
-    const orderStatus = paymentStatus === 'success' ? 'processing' : 'pending';
+    const orderStatus = paymentStatus === 'success' ? 'paid' : 'payment_failed';
     
     const { error } = await supabase
       .from('orders')

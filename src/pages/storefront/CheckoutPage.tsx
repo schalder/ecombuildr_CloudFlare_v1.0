@@ -325,7 +325,7 @@ useEffect(() => {
         discount_amount: discountAmount,
         discount_code: form.discount_code || null,
         total: total + shippingCost - discountAmount,
-        status: form.payment_method === 'cod' ? 'pending' as const : (isManual ? 'pending' as const : 'processing' as const),
+        status: form.payment_method === 'cod' ? 'pending' as const : (isManual ? 'pending' as const : 'pending' as const),
         order_number: `ORD-${Date.now()}`,
         idempotency_key: idempotencyKey,
       };

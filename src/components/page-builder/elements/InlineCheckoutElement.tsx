@@ -501,7 +501,7 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
         shipping_cost: shippingCost,
         discount_amount: 0,
         total: total,
-        status: form.payment_method === 'cod' ? 'pending' : ( isManual ? 'pending' : 'processing' ),
+        status: form.payment_method === 'cod' ? 'pending' : ( isManual ? 'pending' : 'pending' ),
         custom_fields: (customFields || []).filter((cf:any)=>cf.enabled).map((cf:any)=>{ const value=(form.custom_fields as any)[cf.id]; if (value===undefined||value===null||value==='') return null; return { id: cf.id, label: cf.label || cf.id, value }; }).filter(Boolean),
         idempotency_key: idempotencyKey,
         // Save shipping method for custom options

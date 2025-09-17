@@ -80,10 +80,20 @@ useEffect(() => {
 
     setVerifying(true);
     try {
+      // Determine correct payment reference for provider
+      const epsMerchantTxnId = order?.custom_fields?.eps?.merchantTransactionId || order?.custom_fields?.eps?.merchant_transaction_id;
+      const paymentRef = order.payment_method === 'eps' ? epsMerchantTxnId : order.id;
+
+      if (order.payment_method === 'eps' && !paymentRef) {
+        toast.error('Missing EPS transaction reference. Please try again.');
+        setVerifying(false);
+        return;
+      }
+
       const { data, error } = await supabase.functions.invoke('verify-payment', {
         body: {
           orderId: order.id,
-          paymentId: order.id, // Using order ID as payment reference
+          paymentId: paymentRef,
           method: order.payment_method,
         }
       });

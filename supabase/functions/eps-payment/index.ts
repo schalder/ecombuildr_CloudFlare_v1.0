@@ -187,10 +187,18 @@ serve(async (req) => {
     });
 
     const paymentResult = await paymentResponse.json();
+
+    // EPS sometimes returns RedirectURL (uppercase URL). Normalize here and fallback-build if missing.
+    let redirectUrl: string | undefined = paymentResult.RedirectUrl || paymentResult.RedirectURL;
+    if (!redirectUrl && paymentResult.TransactionId) {
+      const pgBase = epsConfig.base_url.includes('sandbox') ? 'https://sandboxpg.eps.com.bd' : 'https://pg.eps.com.bd';
+      redirectUrl = `${pgBase}/PG?data=${paymentResult.TransactionId}`;
+    }
+
     console.log('EPS Payment Response:', { 
       status: paymentResponse.status,
       hasTransactionId: !!paymentResult.TransactionId,
-      hasRedirectUrl: !!paymentResult.RedirectUrl,
+      hasRedirectUrl: !!redirectUrl,
       error: paymentResult.ErrorMessage 
     });
 
@@ -198,13 +206,20 @@ serve(async (req) => {
       throw new Error(paymentResult.ErrorMessage || 'Payment session creation failed');
     }
 
-    // Update order with payment details
+    // Update order with EPS details but keep status pending until verification
     await supabase
       .from('orders')
       .update({
         payment_method: 'eps',
-        status: 'processing',
+        status: 'pending',
         updated_at: new Date().toISOString(),
+        custom_fields: {
+          ...(orderRow?.custom_fields || {}),
+          eps: {
+            merchantTransactionId,
+            transactionId: paymentResult.TransactionId,
+          }
+        }
       })
       .eq('id', orderId);
 
@@ -213,7 +228,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: true,
-        paymentURL: paymentResult.RedirectUrl,
+        paymentURL: redirectUrl,
         transactionId: paymentResult.TransactionId,
         merchantTransactionId: merchantTransactionId,
       }),
