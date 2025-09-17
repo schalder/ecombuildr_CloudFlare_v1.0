@@ -111,6 +111,7 @@ import CourseView from "@/pages/CourseView";
 import CourseLibrary from "@/pages/CourseLibrary";
 import CourseDetail from "@/pages/CourseDetail";
 import CourseDomainSettings from "@/pages/CourseDomainSettings";
+import CourseSettings from "@/pages/CourseSettings";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -191,6 +192,7 @@ const App = () => (
                     <Route path="domains" element={<Domains />} />
                     <Route path="courses" element={<Courses />} />
                     <Route path="courses/create" element={<CreateCourse />} />
+                    <Route path="courses/settings" element={<CourseSettings />} />
                     <Route path="courses/analytics" element={<Analytics />} />
                     <Route path="courses/domains" element={<CourseDomainSettings />} />
                     <Route path="courses/:courseId/edit" element={<CourseEditor />} />

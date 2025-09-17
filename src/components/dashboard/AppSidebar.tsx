@@ -42,6 +42,9 @@ const navigationItems = [{
     title: "Create Course",
     url: "/dashboard/courses/create"
   }, {
+    title: "Course Settings",
+    url: "/dashboard/courses/settings"
+  }, {
     title: "Course Analytics",
     url: "/dashboard/courses/analytics"
   }]

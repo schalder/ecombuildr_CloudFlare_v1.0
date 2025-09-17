@@ -11,7 +11,7 @@ import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { useUserStore } from '@/hooks/useUserStore';
 import { useDomainManagement } from '@/hooks/useDomainManagement';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, ExternalLink, Globe, Settings } from 'lucide-react';
+import { ArrowLeft, ExternalLink, Globe, Settings, Upload, Image } from 'lucide-react';
 
 const CourseDomainSettings = () => {
   const navigate = useNavigate();
@@ -25,6 +25,12 @@ const CourseDomainSettings = () => {
   const [isCheckingSlug, setIsCheckingSlug] = useState(false);
   const [slugAvailable, setSlugAvailable] = useState<boolean | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
+  
+  // Favicon states
+  const [courseLibraryFavicon, setCourseLibraryFavicon] = useState('');
+  const [courseDetailsFavicon, setCourseDetailsFavicon] = useState('');
+  const [membersAreaFavicon, setMembersAreaFavicon] = useState('');
+  const [courseLoginFavicon, setCourseLoginFavicon] = useState('');
 
   const verifiedDomains = domains?.filter(d => d.is_verified && d.dns_configured) || [];
 
@@ -284,6 +290,185 @@ const CourseDomainSettings = () => {
             </CardContent>
           </Card>
         )}
+
+        {/* Favicon Management Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Image className="h-5 w-5" />
+              Course Pages Favicon Settings
+            </CardTitle>
+            <CardDescription>
+              Upload custom favicons for different course-related pages
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="grid gap-6 md:grid-cols-2">
+              {/* Course Library Favicon */}
+              <div className="space-y-2">
+                <Label htmlFor="library-favicon">Course Library Page</Label>
+                <div className="flex items-center gap-4">
+                  <Input
+                    id="library-favicon"
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        const url = URL.createObjectURL(file);
+                        setCourseLibraryFavicon(url);
+                        toast({
+                          title: "Favicon uploaded",
+                          description: "Course library favicon has been updated.",
+                        });
+                      }
+                    }}
+                    className="hidden"
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => document.getElementById('library-favicon')?.click()}
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    Upload
+                  </Button>
+                  {courseLibraryFavicon && (
+                    <img 
+                      src={courseLibraryFavicon} 
+                      alt="Library Favicon" 
+                      className="h-6 w-6 object-contain" 
+                    />
+                  )}
+                </div>
+              </div>
+
+              {/* Course Details Favicon */}
+              <div className="space-y-2">
+                <Label htmlFor="details-favicon">Course Details Page</Label>
+                <div className="flex items-center gap-4">
+                  <Input
+                    id="details-favicon"
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        const url = URL.createObjectURL(file);
+                        setCourseDetailsFavicon(url);
+                        toast({
+                          title: "Favicon uploaded",
+                          description: "Course details favicon has been updated.",
+                        });
+                      }
+                    }}
+                    className="hidden"
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => document.getElementById('details-favicon')?.click()}
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    Upload
+                  </Button>
+                  {courseDetailsFavicon && (
+                    <img 
+                      src={courseDetailsFavicon} 
+                      alt="Details Favicon" 
+                      className="h-6 w-6 object-contain" 
+                    />
+                  )}
+                </div>
+              </div>
+
+              {/* Members Area Favicon */}
+              <div className="space-y-2">
+                <Label htmlFor="members-favicon">Members Area</Label>
+                <div className="flex items-center gap-4">
+                  <Input
+                    id="members-favicon"
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        const url = URL.createObjectURL(file);
+                        setMembersAreaFavicon(url);
+                        toast({
+                          title: "Favicon uploaded",
+                          description: "Members area favicon has been updated.",
+                        });
+                      }
+                    }}
+                    className="hidden"
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => document.getElementById('members-favicon')?.click()}
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    Upload
+                  </Button>
+                  {membersAreaFavicon && (
+                    <img 
+                      src={membersAreaFavicon} 
+                      alt="Members Favicon" 
+                      className="h-6 w-6 object-contain" 
+                    />
+                  )}
+                </div>
+              </div>
+
+              {/* Course Login Favicon */}
+              <div className="space-y-2">
+                <Label htmlFor="login-favicon">Course Login Page</Label>
+                <div className="flex items-center gap-4">
+                  <Input
+                    id="login-favicon"
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        const url = URL.createObjectURL(file);
+                        setCourseLoginFavicon(url);
+                        toast({
+                          title: "Favicon uploaded",
+                          description: "Course login favicon has been updated.",
+                        });
+                      }
+                    }}
+                    className="hidden"
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => document.getElementById('login-favicon')?.click()}
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    Upload
+                  </Button>
+                  {courseLoginFavicon && (
+                    <img 
+                      src={courseLoginFavicon} 
+                      alt="Login Favicon" 
+                      className="h-6 w-6 object-contain" 
+                    />
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-muted/30 p-4 rounded-lg">
+              <p className="text-sm text-muted-foreground">
+                <strong>Note:</strong> Favicons should be square images (preferably 32x32 or 16x16 pixels) 
+                in PNG or ICO format for best compatibility across browsers.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </DashboardLayout>
   );
