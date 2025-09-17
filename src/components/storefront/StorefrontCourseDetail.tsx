@@ -28,6 +28,7 @@ import {
   Eye
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { parseVideoUrl, buildEmbedUrl, sanitizeEmbedCode } from '@/components/page-builder/utils/videoUtils';
 
 interface CourseLesson {
   id: string;
@@ -296,18 +297,51 @@ const StorefrontCourseDetail: React.FC<StorefrontCourseDetailProps> = ({ courseS
                                           <DialogTitle>{lesson.title}</DialogTitle>
                                         </DialogHeader>
                                         <div className="space-y-4">
-                                          {lesson.video_url && (
-                                            <div className="aspect-video bg-muted rounded-lg overflow-hidden">
-                                              <video
-                                                controls
-                                                className="w-full h-full"
-                                                poster="/placeholder.svg"
-                                              >
-                                                <source src={lesson.video_url} type="video/mp4" />
-                                                Your browser does not support the video tag.
-                                              </video>
-                                            </div>
-                                          )}
+                                          {lesson.video_url && (() => {
+                                            const videoInfo = parseVideoUrl(lesson.video_url);
+                                            
+                                            if (videoInfo.type === 'youtube' || videoInfo.type === 'vimeo' || videoInfo.type === 'wistia') {
+                                              const embedUrl = buildEmbedUrl(videoInfo.embedUrl!, videoInfo.type, {
+                                                controls: true,
+                                                autoplay: false
+                                              });
+                                              
+                                              return (
+                                                <div className="aspect-video bg-muted rounded-lg overflow-hidden">
+                                                  <iframe
+                                                    src={embedUrl}
+                                                    className="w-full h-full"
+                                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                                    allowFullScreen
+                                                  />
+                                                </div>
+                                              );
+                                            } else if (videoInfo.type === 'hosted') {
+                                              return (
+                                                <div className="aspect-video bg-muted rounded-lg overflow-hidden">
+                                                  <video
+                                                    controls
+                                                    className="w-full h-full"
+                                                    poster="/placeholder.svg"
+                                                  >
+                                                    <source src={lesson.video_url} type="video/mp4" />
+                                                    Your browser does not support the video tag.
+                                                  </video>
+                                                </div>
+                                              );
+                                            } else {
+                                              // Handle custom embed codes (iframe)
+                                              const sanitizedCode = sanitizeEmbedCode(lesson.video_url);
+                                              return (
+                                                <div className="aspect-video bg-muted rounded-lg overflow-hidden">
+                                                  <div 
+                                                    className="w-full h-full"
+                                                    dangerouslySetInnerHTML={{ __html: sanitizedCode }}
+                                                  />
+                                                </div>
+                                              );
+                                            }
+                                          })()}
                                           {lesson.content && (
                                             <div className="prose prose-sm max-w-none">
                                               <div dangerouslySetInnerHTML={{ __html: lesson.content }} />
