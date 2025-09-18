@@ -92,7 +92,12 @@ export const CoursePaymentProcessing: React.FC = () => {
             return;
           }
           verificationFunction = 'eps-verify-payment';
-          verificationBody = { orderId, paymentId: epsRef, method: 'eps' };
+          verificationBody = { 
+            orderId, 
+            paymentId: epsRef, 
+            method: 'eps',
+            password: localStorage.getItem('courseCheckoutPassword') // Get stored password
+          };
           break;
         }
         case 'bkash':
@@ -120,6 +125,8 @@ export const CoursePaymentProcessing: React.FC = () => {
       if (data?.success) {
         toast.success('Payment verified successfully!');
         console.log('[CoursePaymentProcessing] verifyPayment:success-redirect');
+        // Clear stored password
+        localStorage.removeItem('courseCheckoutPassword');
         navigate(`/courses/order-confirmation?orderId=${orderId}&status=success`);
       } else {
         console.warn('[CoursePaymentProcessing] verifyPayment:failed', { message: data?.message });

@@ -3422,6 +3422,16 @@ export type Database = {
         Args: { retention_days?: number }
         Returns: number
       }
+      create_member_account_with_password: {
+        Args: {
+          p_email: string
+          p_full_name?: string
+          p_password: string
+          p_phone?: string
+          p_store_id: string
+        }
+        Returns: string
+      }
       decrement_usage: {
         Args: { _resource_type: string; _user_id: string }
         Returns: undefined
@@ -3503,6 +3513,14 @@ export type Database = {
           rating_average: number
           rating_count: number
         }[]
+      }
+      grant_course_access: {
+        Args: {
+          p_course_id: string
+          p_course_order_id?: string
+          p_member_account_id: string
+        }
+        Returns: string
       }
       increment_usage: {
         Args: { _resource_type: string; _user_id: string }

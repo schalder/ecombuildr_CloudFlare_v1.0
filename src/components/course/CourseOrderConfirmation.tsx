@@ -255,12 +255,12 @@ export const CourseOrderConfirmation: React.FC = () => {
                         {order.customer_email}
                       </span>
                     </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium">Password:</span>
-                      <span className="text-sm font-mono bg-gray-100 px-2 py-1 rounded">
-                        {order.memberCredentials?.password || order.metadata?.member_password || 'Check email for credentials'}
-                      </span>
-                    </div>
+                     <div className="flex justify-between items-center">
+                       <span className="text-sm font-medium">Password:</span>
+                       <span className="text-sm font-mono bg-gray-100 px-2 py-1 rounded">
+                         Use the password you provided during enrollment
+                       </span>
+                     </div>
                   </div>
                   <div className="mt-3">
                     <Button 

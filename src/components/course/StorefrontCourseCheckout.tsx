@@ -39,6 +39,12 @@ interface CheckoutForm {
   customer_name: string;
   customer_email: string;
   customer_phone: string;
+  password: string;
+}
+
+interface MemberLoginForm {
+  email: string;
+  password: string;
 }
 
 interface StorefrontCourseCheckoutProps {
@@ -52,10 +58,16 @@ const StorefrontCourseCheckout: React.FC<StorefrontCourseCheckoutProps> = ({ cou
   const { currency } = useCourseCurrency();
   
   const [loading, setLoading] = useState(false);
+  const [isNewStudent, setIsNewStudent] = useState(true);
+  const [loginForm, setLoginForm] = useState<MemberLoginForm>({
+    email: '',
+    password: ''
+  });
   const [form, setForm] = useState<CheckoutForm>({
     customer_name: '',
     customer_email: '',
-    customer_phone: ''
+    customer_phone: '',
+    password: ''
   });
 
   const paymentMethod = searchParams.get('payment_method') || '';
@@ -116,24 +128,43 @@ const StorefrontCourseCheckout: React.FC<StorefrontCourseCheckoutProps> = ({ cou
   };
 
   const validateForm = (): boolean => {
-    if (!form.customer_name.trim()) {
-      toast.error('Please enter your full name');
-      return false;
-    }
-    if (!form.customer_email.trim()) {
-      toast.error('Please enter your email address');
-      return false;
-    }
-    if (!form.customer_phone.trim()) {
-      toast.error('Please enter your phone number');
-      return false;
-    }
-    
-    // Basic email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(form.customer_email)) {
-      toast.error('Please enter a valid email address');
-      return false;
+    if (isNewStudent) {
+      if (!form.customer_name.trim()) {
+        toast.error('Please enter your full name');
+        return false;
+      }
+      if (!form.customer_email.trim()) {
+        toast.error('Please enter your email address');
+        return false;
+      }
+      if (!form.customer_phone.trim()) {
+        toast.error('Please enter your phone number');
+        return false;
+      }
+      if (!form.password.trim()) {
+        toast.error('Please create a password for your account');
+        return false;
+      }
+      if (form.password.length < 6) {
+        toast.error('Password must be at least 6 characters long');
+        return false;
+      }
+      
+      // Basic email validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(form.customer_email)) {
+        toast.error('Please enter a valid email address');
+        return false;
+      }
+    } else {
+      if (!loginForm.email.trim()) {
+        toast.error('Please enter your email address');
+        return false;
+      }
+      if (!loginForm.password.trim()) {
+        toast.error('Please enter your password');
+        return false;
+      }
     }
 
     return true;
@@ -144,18 +175,32 @@ const StorefrontCourseCheckout: React.FC<StorefrontCourseCheckoutProps> = ({ cou
 
     setLoading(true);
     try {
+      const customerData = isNewStudent ? {
+        name: form.customer_name.trim(),
+        email: form.customer_email.trim(),
+        phone: form.customer_phone.trim(),
+        password: form.password.trim()
+      } : {
+        name: '',
+        email: loginForm.email.trim(),
+        phone: '',
+        password: loginForm.password.trim()
+      };
+
+      // Store password temporarily for EPS payments
+      if (paymentMethod === 'eps' && isNewStudent) {
+        localStorage.setItem('courseCheckoutPassword', form.password.trim());
+      }
+
       // Call course checkout edge function
       const { data: paymentResponse, error: paymentError } = await supabase.functions.invoke('course-checkout', {
         body: {
           courseId: course.id,
           storeId: store.id,
           paymentMethod: paymentMethod,
-          customerData: {
-            name: form.customer_name.trim(),
-            email: form.customer_email.trim(),
-            phone: form.customer_phone.trim()
-          },
-          amount: course.price
+          customerData,
+          amount: course.price,
+          isNewStudent
         }
       });
 
@@ -238,40 +283,114 @@ const StorefrontCourseCheckout: React.FC<StorefrontCourseCheckoutProps> = ({ cou
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Full Name *</Label>
-                <Input
-                  id="name"
-                  value={form.customer_name}
-                  onChange={(e) => handleInputChange('customer_name', e.target.value)}
-                  placeholder="Enter your full name"
-                />
+              {/* Account Type Selection */}
+              <div className="space-y-3">
+                <h3 className="font-semibold">Account Status</h3>
+                <div className="flex gap-4">
+                  <label className="flex items-center space-x-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      checked={isNewStudent}
+                      onChange={() => setIsNewStudent(true)}
+                      className="text-primary"
+                    />
+                    <span>New Student</span>
+                  </label>
+                  <label className="flex items-center space-x-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      checked={!isNewStudent}
+                      onChange={() => setIsNewStudent(false)}
+                      className="text-primary"
+                    />
+                    <span>Returning Student</span>
+                  </label>
+                </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="email">Email Address *</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={form.customer_email}
-                  onChange={(e) => handleInputChange('customer_email', e.target.value)}
-                  placeholder="Enter your email address"
-                />
-                <p className="text-xs text-muted-foreground">
-                  Course access details will be sent to this email
-                </p>
-              </div>
+              <Separator />
 
-              <div className="space-y-2">
-                <Label htmlFor="phone">Phone Number *</Label>
-                <Input
-                  id="phone"
-                  type="tel"
-                  value={form.customer_phone}
-                  onChange={(e) => handleInputChange('customer_phone', e.target.value)}
-                  placeholder="Enter your phone number"
-                />
-              </div>
+              {isNewStudent ? (
+                // New Student Form
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Full Name *</Label>
+                    <Input
+                      id="name"
+                      value={form.customer_name}
+                      onChange={(e) => handleInputChange('customer_name', e.target.value)}
+                      placeholder="Enter your full name"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email Address *</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={form.customer_email}
+                      onChange={(e) => handleInputChange('customer_email', e.target.value)}
+                      placeholder="Enter your email address"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="phone">Phone Number *</Label>
+                    <Input
+                      id="phone"
+                      type="tel"
+                      value={form.customer_phone}
+                      onChange={(e) => handleInputChange('customer_phone', e.target.value)}
+                      placeholder="Enter your phone number"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="password">Create Password *</Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      value={form.password}
+                      onChange={(e) => handleInputChange('password', e.target.value)}
+                      placeholder="Create a password for your account"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      You'll use this to access your courses later
+                    </p>
+                  </div>
+                </>
+              ) : (
+                // Returning Student Login
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="login-email">Email Address *</Label>
+                    <Input
+                      id="login-email"
+                      type="email"
+                      value={loginForm.email}
+                      onChange={(e) => setLoginForm(prev => ({ ...prev, email: e.target.value }))}
+                      placeholder="Enter your email"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="login-password">Password *</Label>
+                    <Input
+                      id="login-password"
+                      type="password"
+                      value={loginForm.password}
+                      onChange={(e) => setLoginForm(prev => ({ ...prev, password: e.target.value }))}
+                      placeholder="Enter your password"
+                    />
+                  </div>
+
+                  <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p className="text-blue-800 text-sm">
+                      Login with your existing account to purchase additional courses
+                    </p>
+                  </div>
+                </>
+              )}
 
               <Separator />
 

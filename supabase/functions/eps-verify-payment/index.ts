@@ -13,6 +13,7 @@ interface VerifyPaymentRequest {
   orderId: string;
   paymentId: string;
   method: 'eps';
+  password?: string;
 }
 
 serve(async (req) => {
@@ -21,8 +22,8 @@ serve(async (req) => {
   }
 
   try {
-    const { orderId, paymentId, method }: VerifyPaymentRequest = await req.json();
-    console.log('EPS Course Verification Request:', { orderId, paymentId, method });
+    const { orderId, paymentId, method, password }: VerifyPaymentRequest = await req.json();
+    console.log('EPS Course Verification Request:', { orderId, paymentId, method, hasPassword: !!password });
 
     // Create Supabase client
     const supabase = createClient(
@@ -76,11 +77,55 @@ serve(async (req) => {
     
     console.log('EPS verify: course order updated successfully', { orderId, orderStatus });
 
+    // Create member account and grant course access for successful payments
+    if (paymentStatus === 'success') {
+      try {
+        const { data: orderDetails, error: orderFetchError } = await supabase
+          .from('course_orders')
+          .select('store_id, course_id, customer_name, customer_email, customer_phone')
+          .eq('id', orderId)
+          .single();
+
+        if (orderFetchError) {
+          console.error('Error fetching order details:', orderFetchError);
+        } else if (password && orderDetails) {
+          // Create member account with provided password
+          const { data: memberId, error: memberError } = await supabase.rpc('create_member_account_with_password', {
+            p_store_id: orderDetails.store_id,
+            p_email: orderDetails.customer_email,
+            p_password: password,
+            p_full_name: orderDetails.customer_name,
+            p_phone: orderDetails.customer_phone
+          });
+
+          if (memberError) {
+            console.error('Error creating member account:', memberError);
+          } else {
+            console.log('Member account created for EPS payment:', memberId);
+            
+            // Grant course access
+            const { error: accessError } = await supabase.rpc('grant_course_access', {
+              p_member_account_id: memberId,
+              p_course_id: orderDetails.course_id,
+              p_course_order_id: orderId
+            });
+
+            if (accessError) {
+              console.error('Error granting course access:', accessError);
+            } else {
+              console.log('Course access granted for EPS payment');
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Member account creation error for EPS:', error);
+      }
+    }
+
     return new Response(
       JSON.stringify({
-        success: true,
-        paymentStatus,
-        orderStatus,
+        success: paymentStatus === 'success',
+        message: paymentStatus === 'success' ? 'Payment verified successfully' : 'Payment verification failed'
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

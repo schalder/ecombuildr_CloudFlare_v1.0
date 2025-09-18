@@ -14,8 +14,10 @@ interface CourseCheckoutRequest {
     name: string;
     email: string;
     phone: string;
+    password: string;
   };
   amount: number;
+  isNewStudent: boolean;
 }
 
 const supabase = createClient(
@@ -30,9 +32,9 @@ serve(async (req) => {
   }
 
   try {
-    const { courseId, storeId, paymentMethod, customerData, amount }: CourseCheckoutRequest = await req.json();
+    const { courseId, storeId, paymentMethod, customerData, amount, isNewStudent }: CourseCheckoutRequest = await req.json();
 
-    console.log('Course checkout request:', { courseId, storeId, paymentMethod, amount });
+    console.log('Course checkout request:', { courseId, storeId, paymentMethod, amount, isNewStudent });
 
     // Validate input
     if (!courseId || !storeId || !paymentMethod || !customerData || amount === undefined) {
@@ -117,6 +119,40 @@ serve(async (req) => {
 
     // For manual payment methods (bKash, Nagad) or EPS fallback
     let message = '';
+    
+    // Create member account for manual payments if new student
+    if (paymentMethod !== 'eps' && isNewStudent && customerData.password) {
+      try {
+        const { data: memberId, error: memberError } = await supabase.rpc('create_member_account_with_password', {
+          p_store_id: storeId,
+          p_email: customerData.email,
+          p_password: customerData.password,
+          p_full_name: customerData.name,
+          p_phone: customerData.phone
+        });
+
+        if (memberError) {
+          console.error('Error creating member account:', memberError);
+        } else {
+          console.log('Member account created:', memberId);
+          
+          // Grant course access for completed manual payments
+          const { error: accessError } = await supabase.rpc('grant_course_access', {
+            p_member_account_id: memberId,
+            p_course_id: courseId,
+            p_course_order_id: orderData.id
+          });
+
+          if (accessError) {
+            console.error('Error granting course access:', accessError);
+          } else {
+            console.log('Course access granted for manual payment');
+          }
+        }
+      } catch (error) {
+        console.error('Member account creation error:', error);
+      }
+    }
     
     if (paymentMethod === 'bkash') {
       message = 'Order created! Please complete payment via bKash and wait for approval.';
