@@ -73,7 +73,12 @@ const Courses = () => {
             id,
             course_lessons (id)
           ),
-          course_enrollments (id)
+          course_member_access (
+            id,
+            member_account_id,
+            is_active,
+            access_status
+          )
         `)
         .eq('store_id', store.id)
         .order('created_at', { ascending: false });
@@ -87,15 +92,22 @@ const Courses = () => {
       if (error) throw error;
 
       // Transform data to include counts
-      const coursesWithCounts = data?.map(course => ({
-        ...course,
-        _count: {
-          modules: course.course_modules?.length || 0,
-          lessons: course.course_modules?.reduce((total: number, module: any) => 
-            total + (module.course_lessons?.length || 0), 0) || 0,
-          enrollments: course.course_enrollments?.length || 0
-        }
-      })) || [];
+      const coursesWithCounts = data?.map(course => {
+        // Count active students with access to the course
+        const activeStudents = course.course_member_access?.filter((access: any) => 
+          access.is_active && access.access_status !== 'revoked'
+        ).length || 0;
+
+        return {
+          ...course,
+          _count: {
+            modules: course.course_modules?.length || 0,
+            lessons: course.course_modules?.reduce((total: number, module: any) => 
+              total + (module.course_lessons?.length || 0), 0) || 0,
+            enrollments: activeStudents
+          }
+        };
+      }) || [];
 
       setCourses(coursesWithCounts);
     } catch (error) {
