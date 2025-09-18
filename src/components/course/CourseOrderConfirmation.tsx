@@ -43,6 +43,7 @@ export const CourseOrderConfirmation: React.FC = () => {
   const { currency } = useCourseCurrency();
   const [order, setOrder] = useState<CourseOrder | null>(null);
   const [loading, setLoading] = useState(true);
+  const [autoVerified, setAutoVerified] = useState(false);
 
   const orderId = searchParams.get('orderId');
   const status = searchParams.get('status');

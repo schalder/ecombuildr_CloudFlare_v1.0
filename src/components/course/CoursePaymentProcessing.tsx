@@ -50,6 +50,12 @@ export const CoursePaymentProcessing: React.FC = () => {
         return;
       }
 
+      // Auto-verify EPS on successful return if still pending
+      if (status === 'success' && fetched?.payment_method === 'eps' && fetched?.payment_status !== 'completed') {
+        console.log('[CoursePaymentProcessing] auto-verify:eps', { orderId });
+        setTimeout(() => verifyPayment(), 0);
+      }
+
       // Handle specific payment statuses
       if (status === 'failed' || fetched?.payment_status === 'failed') {
         console.warn('[CoursePaymentProcessing] payment failed', { status, payment_status: fetched?.payment_status });
@@ -73,28 +79,29 @@ export const CoursePaymentProcessing: React.FC = () => {
     setVerifying(true);
     try {
       console.log('[CoursePaymentProcessing] verifyPayment:start', { orderId, payment_method: order.payment_method, paymentRef });
-      if (order.payment_method === 'eps' && !paymentRef) {
-        toast.error('Missing EPS transaction reference. Please try again.');
-        console.warn('[CoursePaymentProcessing] verifyPayment:missing-eps-ref');
-        return;
-      }
 
-      // Call verification function based on payment method
       let verificationFunction = '';
-      let verificationBody: any = { orderId, storeId: order?.store_id };
+      let verificationBody: any = { orderId };
 
       switch (order.payment_method) {
-        case 'eps':
+        case 'eps': {
+          const epsRef = paymentRef || order?.metadata?.eps?.merchantTransactionId || order?.metadata?.merchantTransactionId;
+          if (!epsRef) {
+            toast.error('Missing EPS transaction reference. Please try again.');
+            console.warn('[CoursePaymentProcessing] verifyPayment:missing-eps-ref');
+            return;
+          }
           verificationFunction = 'eps-verify-payment';
-          verificationBody.transactionRef = paymentRef;
+          verificationBody = { orderId, paymentId: epsRef, method: 'eps' };
           break;
+        }
         case 'bkash':
           verificationFunction = 'bkash-verify-payment';
-          verificationBody.paymentID = paymentRef;
+          verificationBody = { orderId, paymentID: paymentRef };
           break;
         case 'nagad':
           verificationFunction = 'nagad-verify-payment';
-          verificationBody.transactionId = paymentRef;
+          verificationBody = { orderId, transactionId: paymentRef };
           break;
         default:
           console.warn('[CoursePaymentProcessing] verifyPayment:unsupported-method', { method: order.payment_method });
@@ -110,13 +117,13 @@ export const CoursePaymentProcessing: React.FC = () => {
       if (error) throw error;
 
       console.log('[CoursePaymentProcessing] verifyPayment:response', { data });
-      if (data.success) {
+      if (data?.success) {
         toast.success('Payment verified successfully!');
         console.log('[CoursePaymentProcessing] verifyPayment:success-redirect');
         navigate(`/order-confirmation?orderId=${orderId}&status=success`);
       } else {
-        console.warn('[CoursePaymentProcessing] verifyPayment:failed', { message: data.message });
-        toast.error(data.message || 'Payment verification failed');
+        console.warn('[CoursePaymentProcessing] verifyPayment:failed', { message: data?.message });
+        toast.error(data?.message || 'Payment verification failed');
       }
 
     } catch (error) {

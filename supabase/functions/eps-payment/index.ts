@@ -186,7 +186,7 @@ serve(async (req) => {
       ipAddress: "127.0.0.1", // Default IP
       version: "1",
       successUrl: isCourseOrder 
-        ? `${originBase}/order-confirmation?orderId=${orderId}&status=success`
+        ? `${originBase}/payment-processing?orderId=${orderId}&status=success`
         : `${originBase}/order-confirmation?orderId=${orderId}${orderToken ? `&ot=${orderToken}` : ''}&status=success`,
       failUrl: isCourseOrder
         ? `${originBase}/payment-processing?orderId=${orderId}&status=failed`
