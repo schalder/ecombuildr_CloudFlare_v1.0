@@ -128,8 +128,13 @@ export const DomainRouter: React.FC<DomainRouterProps> = ({ children }) => {
           
           // If no funnel step matches, check if path matches course paths
           if (!selectedConnection) {
-            // Check for course paths (/courses, /courses/members, etc)
-            if (currentPath.startsWith('/courses') || currentPath.startsWith('/members')) {
+            // Check for course-related paths
+            if (
+              currentPath.startsWith('/courses') ||
+              currentPath.startsWith('/members') ||
+              currentPath.startsWith('/payment-processing') ||
+              currentPath.startsWith('/order-confirmation')
+            ) {
               selectedConnection = connectionsArray.find(c => c.content_type === 'course_area') || null;
             }
             

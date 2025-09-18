@@ -46,7 +46,7 @@ export const CoursePaymentProcessing: React.FC = () => {
       // Auto-redirect to confirmation if payment is completed
       if (fetched?.payment_status === 'completed') {
         console.log('[CoursePaymentProcessing] payment completed, redirecting to confirmation', { orderId });
-        navigate(`/order-confirmation?orderId=${orderId}&status=success`);
+        navigate(`/courses/order-confirmation?orderId=${orderId}&status=success`);
         return;
       }
 
@@ -120,7 +120,7 @@ export const CoursePaymentProcessing: React.FC = () => {
       if (data?.success) {
         toast.success('Payment verified successfully!');
         console.log('[CoursePaymentProcessing] verifyPayment:success-redirect');
-        navigate(`/order-confirmation?orderId=${orderId}&status=success`);
+        navigate(`/courses/order-confirmation?orderId=${orderId}&status=success`);
       } else {
         console.warn('[CoursePaymentProcessing] verifyPayment:failed', { message: data?.message });
         toast.error(data?.message || 'Payment verification failed');
