@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.208.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { crypto } from "https://deno.land/std@0.208.0/crypto/crypto.ts";
 import { encodeBase64 } from "https://deno.land/std@0.208.0/encoding/base64.ts";
+import { hash } from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -88,12 +89,26 @@ serve(async (req) => {
 
         if (orderFetchError) {
           console.error('Error fetching order details:', orderFetchError);
-        } else if (password && orderDetails) {
-          // Create member account with provided password
+        } else if (orderDetails) {
+          // Generate secure password if not provided
+          let memberPassword = password;
+          if (!memberPassword) {
+            // Generate random secure password: 8 chars with mix of letters/numbers
+            const chars = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+            memberPassword = Array.from({ length: 8 }, () => 
+              chars.charAt(Math.floor(Math.random() * chars.length))
+            ).join('');
+            console.log('Generated password for member account (length:', memberPassword.length, ')');
+          }
+
+          // Hash the password using bcrypt
+          const hashedPassword = await hash(memberPassword);
+
+          // Create member account with hashed password
           const { data: memberId, error: memberError } = await supabase.rpc('create_member_account_with_password', {
             p_store_id: orderDetails.store_id,
             p_email: orderDetails.customer_email,
-            p_password: password,
+            p_password: hashedPassword,
             p_full_name: orderDetails.customer_name,
             p_phone: orderDetails.customer_phone
           });

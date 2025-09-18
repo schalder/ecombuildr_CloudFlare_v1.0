@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.4";
+import { compare } from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -45,16 +46,24 @@ const handler = async (req: Request): Promise<Response> => {
     if (fetchError || !memberAccount) {
       return new Response(
         JSON.stringify({ error: 'Invalid email or password' }),
-        { status: 401, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+        { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
       );
     }
 
-    // Simple password verification (in production, use proper hashing)
-    // For now, we'll use a simple comparison - this should be improved with proper bcrypt
-    if (password !== memberAccount.password_hash) {
+    // Verify password using bcrypt
+    let passwordValid = false;
+    try {
+      passwordValid = await compare(password, memberAccount.password_hash);
+    } catch (error) {
+      console.error('Password verification error:', error);
+      // Fall back to plain text comparison for legacy accounts
+      passwordValid = password === memberAccount.password_hash;
+    }
+
+    if (!passwordValid) {
       return new Response(
         JSON.stringify({ error: 'Invalid email or password' }),
-        { status: 401, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+        { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
       );
     }
 
