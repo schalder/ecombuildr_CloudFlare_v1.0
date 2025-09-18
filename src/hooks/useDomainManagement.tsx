@@ -366,8 +366,6 @@ export const useDomainManagement = () => {
         data = inserted;
       }
 
-      if (error) throw error;
-
       refetch();
       return data;
     } catch (error) {

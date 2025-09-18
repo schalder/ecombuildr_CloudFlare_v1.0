@@ -104,9 +104,17 @@ export default function Domains() {
     if (contentType === 'website') {
       const website = websites.find(w => w.id === contentId);
       return website?.name || 'Unknown Website';
-    } else {
+    } else if (contentType === 'funnel') {
       const funnel = funnels.find(f => f.id === contentId);
       return funnel?.name || 'Unknown Funnel';
+    } else if (contentType === 'course_area') {
+      return 'Course Area';
+    } else if (contentType === 'course_library') {
+      return 'Course Library';
+    } else if (contentType === 'course_detail') {
+      return 'Course Detail';
+    } else {
+      return 'Unknown Content';
     }
   };
 
@@ -382,6 +390,7 @@ export default function Domains() {
                             <div className="text-sm text-muted-foreground">
                               {connection.path} • {connection.content_type}
                               {connection.is_homepage && <Badge variant="secondary" className="ml-2">Homepage</Badge>}
+                              {connection.content_type.startsWith('course') && <Badge variant="outline" className="ml-2">Course</Badge>}
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
