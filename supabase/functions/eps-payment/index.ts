@@ -254,14 +254,20 @@ serve(async (req) => {
       throw new Error(paymentResult.ErrorMessage || 'Payment session creation failed');
     }
 
-    // Update order with EPS details but keep status pending until verification
+    // Update order with EPS details - for course orders, set to completed immediately on success
     if (isCourseOrder) {
       await supabase
         .from('course_orders')
         .update({
           payment_method: 'eps',
-          payment_status: 'pending',
+          payment_status: 'completed', // Set as completed for course orders on successful EPS initiation
           updated_at: new Date().toISOString(),
+          metadata: {
+            eps: {
+              merchantTransactionId,
+              transactionId: paymentResult.TransactionId,
+            }
+          }
         })
         .eq('id', orderId);
     } else {

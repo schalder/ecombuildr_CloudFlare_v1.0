@@ -21,6 +21,10 @@ interface CourseOrder {
   total: number;
   created_at: string;
   course_id: string;
+  metadata?: {
+    member_password?: string;
+    [key: string]: any;
+  };
   courses?: {
     title: string;
     description?: string;
@@ -253,7 +257,7 @@ export const CourseOrderConfirmation: React.FC = () => {
                     <div className="flex justify-between items-center">
                       <span className="text-sm font-medium">Password:</span>
                       <span className="text-sm font-mono bg-gray-100 px-2 py-1 rounded">
-                        Please check your email for login credentials
+                        {order.memberCredentials?.password || order.metadata?.member_password || 'Check email for credentials'}
                       </span>
                     </div>
                   </div>
