@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { formatDuration } from "@/lib/utils";
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Helmet } from 'react-helmet-async';
@@ -273,7 +274,7 @@ const StorefrontCourseDetail: React.FC<StorefrontCourseDetailProps> = ({ courseS
                   
                   <div className="flex items-center gap-2">
                     <Clock className="h-4 w-4" />
-                    <span>{Math.floor(totalDuration / 60)}h {totalDuration % 60}m</span>
+                    <span>{formatDuration(totalDuration)}</span>
                   </div>
                 </div>
               </div>
@@ -287,7 +288,7 @@ const StorefrontCourseDetail: React.FC<StorefrontCourseDetailProps> = ({ courseS
 
               {/* Course Modules */}
               <div className="space-y-4">
-                <h2 className="text-xl font-semibold text-primary">Course module goes here</h2>
+                <h2 className="text-xl font-semibold text-primary">Course Content</h2>
                 
                 <div className="border-2 border-dashed border-border rounded-lg p-6 space-y-4">
                   {course.course_modules.map((module, moduleIndex) => (
@@ -305,7 +306,7 @@ const StorefrontCourseDetail: React.FC<StorefrontCourseDetailProps> = ({ courseS
                             </div>
                             <div className="flex items-center gap-2">
                               <Badge variant="secondary" className="bg-yellow-500 text-yellow-900">
-                                {Math.floor(module.course_lessons.reduce((total, lesson) => total + (lesson.video_duration || 15), 0) / 60)}m
+                                {formatDuration(module.course_lessons.reduce((total, lesson) => total + (lesson.video_duration || 15), 0))}
                               </Badge>
                               {expandedModules.includes(module.id) ? (
                                 <ChevronDown className="h-4 w-4" />
@@ -466,7 +467,7 @@ const StorefrontCourseDetail: React.FC<StorefrontCourseDetailProps> = ({ courseS
                         <>
                           <div className="flex items-center gap-2">
                             <CheckCircle className="h-4 w-4 text-green-600" />
-                            <span>{Math.floor(totalDuration / 60)}.{Math.floor((totalDuration % 60) * 10 / 60)} hours on-demand video</span>
+                            <span>{formatDuration(totalDuration)} on-demand video</span>
                           </div>
                           <div className="flex items-center gap-2">
                             <CheckCircle className="h-4 w-4 text-green-600" />
