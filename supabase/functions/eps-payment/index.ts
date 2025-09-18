@@ -126,12 +126,34 @@ serve(async (req) => {
     console.log('Generated transaction hash for payment initialization');
 
     // Fetch order access token to attach in redirect URLs
-    const { data: orderRow } = await supabase
-      .from('orders')
-      .select('custom_fields')
+    // Check if this is a course order or regular order
+    let orderRow: any = null;
+    let orderToken = '';
+    let isCourseOrder = false;
+
+    // Try course_orders first
+    const { data: courseOrderRow } = await supabase
+      .from('course_orders')
+      .select('order_number')
       .eq('id', orderId)
       .maybeSingle();
-    const orderToken = orderRow?.custom_fields?.order_access_token || '';
+
+    if (courseOrderRow) {
+      isCourseOrder = true;
+      orderRow = courseOrderRow;
+    } else {
+      // Try regular orders
+      const { data: regularOrderRow } = await supabase
+        .from('orders')
+        .select('custom_fields')
+        .eq('id', orderId)
+        .maybeSingle();
+      
+      if (regularOrderRow) {
+        orderRow = regularOrderRow;
+        orderToken = regularOrderRow?.custom_fields?.order_access_token || '';
+      }
+    }
 
     const paymentData = {
       storeId: epsConfig.store_id,
@@ -143,9 +165,15 @@ serve(async (req) => {
       totalAmount: amount,
       ipAddress: "127.0.0.1", // Default IP
       version: "1",
-      successUrl: `${req.headers.get('origin')}/order-confirmation?orderId=${orderId}${orderToken ? `&ot=${orderToken}` : ''}&status=success`,
-      failUrl: `${req.headers.get('origin')}/payment-processing?orderId=${orderId}${orderToken ? `&ot=${orderToken}` : ''}&status=failed`,
-      cancelUrl: `${req.headers.get('origin')}/payment-processing?orderId=${orderId}${orderToken ? `&ot=${orderToken}` : ''}&status=cancelled`,
+      successUrl: isCourseOrder 
+        ? `${req.headers.get('origin')}/order-confirmation?orderId=${orderId}&status=success`
+        : `${req.headers.get('origin')}/order-confirmation?orderId=${orderId}${orderToken ? `&ot=${orderToken}` : ''}&status=success`,
+      failUrl: isCourseOrder
+        ? `${req.headers.get('origin')}/payment-processing?orderId=${orderId}&status=failed`
+        : `${req.headers.get('origin')}/payment-processing?orderId=${orderId}${orderToken ? `&ot=${orderToken}` : ''}&status=failed`,
+      cancelUrl: isCourseOrder
+        ? `${req.headers.get('origin')}/payment-processing?orderId=${orderId}&status=cancelled`
+        : `${req.headers.get('origin')}/payment-processing?orderId=${orderId}${orderToken ? `&ot=${orderToken}` : ''}&status=cancelled`,
       customerName: customerData.name,
       customerEmail: customerData.email,
       CustomerAddress: customerData.address,
@@ -207,21 +235,32 @@ serve(async (req) => {
     }
 
     // Update order with EPS details but keep status pending until verification
-    await supabase
-      .from('orders')
-      .update({
-        payment_method: 'eps',
-        status: 'pending',
-        updated_at: new Date().toISOString(),
-        custom_fields: {
-          ...(orderRow?.custom_fields || {}),
-          eps: {
-            merchantTransactionId,
-            transactionId: paymentResult.TransactionId,
+    if (isCourseOrder) {
+      await supabase
+        .from('course_orders')
+        .update({
+          payment_method: 'eps',
+          payment_status: 'pending',
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', orderId);
+    } else {
+      await supabase
+        .from('orders')
+        .update({
+          payment_method: 'eps',
+          status: 'pending',
+          updated_at: new Date().toISOString(),
+          custom_fields: {
+            ...(orderRow?.custom_fields || {}),
+            eps: {
+              merchantTransactionId,
+              transactionId: paymentResult.TransactionId,
+            }
           }
-        }
-      })
-      .eq('id', orderId);
+        })
+        .eq('id', orderId);
+    }
 
     console.log('Order updated successfully');
 

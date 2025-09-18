@@ -8,6 +8,8 @@ import CourseDetail from '@/pages/CourseDetail';
 import StorefrontCourseDetail from '@/components/storefront/StorefrontCourseDetail';
 import StorefrontCourseLibrary from '@/components/storefront/StorefrontCourseLibrary';
 import StorefrontCourseCheckout from '@/components/course/StorefrontCourseCheckout';
+import CourseOrderConfirmation from '@/components/course/CourseOrderConfirmation';
+import CoursePaymentProcessing from '@/components/course/CoursePaymentProcessing';
 import CourseMemberLogin from '@/components/course/CourseMemberLogin';
 import CourseMemberDashboard from '@/components/course/CourseMemberDashboard';
 import { WebsiteHeader } from '@/components/storefront/WebsiteHeader';
@@ -171,6 +173,16 @@ const CourseDomainRouter = ({ customDomain, storeSlug }: CourseDomainRouterProps
         {coursePath.includes('/login') ? <CourseMemberLogin /> : <CourseMemberDashboard />}
       </MemberAuthProvider>
     );
+  }
+
+  // Handle order confirmation
+  if (coursePath.includes('/order-confirmation')) {
+    return renderWithLayout(<CourseOrderConfirmation />);
+  }
+
+  // Handle payment processing
+  if (coursePath.includes('/payment-processing')) {
+    return renderWithLayout(<CoursePaymentProcessing />);
   }
 
   if (coursePath.startsWith(`${basePath}/courses/`) || coursePath.startsWith('/courses/')) {
