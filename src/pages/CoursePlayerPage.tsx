@@ -490,7 +490,7 @@ const CoursePlayerPage = ({ courseId: propCourseId }: CoursePlayerPageProps = {}
                   
                   {course.description && (
                     <div className="prose prose-sm max-w-none">
-                      <p>{course.description}</p>
+                      <div dangerouslySetInnerHTML={{ __html: course.description }} />
                     </div>
                   )}
 

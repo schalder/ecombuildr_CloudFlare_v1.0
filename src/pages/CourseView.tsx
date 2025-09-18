@@ -208,7 +208,7 @@ const CourseView = () => {
                 </div>
                 {course.description && (
                   <CardDescription className="text-base">
-                    {course.description}
+                    <div dangerouslySetInnerHTML={{ __html: course.description }} />
                   </CardDescription>
                 )}
               </CardHeader>

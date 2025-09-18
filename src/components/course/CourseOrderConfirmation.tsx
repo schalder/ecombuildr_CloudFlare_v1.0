@@ -242,9 +242,10 @@ export const CourseOrderConfirmation: React.FC = () => {
                   <div className="flex-1">
                     <h3 className="font-semibold">{order.courses.title}</h3>
                     {order.courses.description && (
-                      <p className="text-sm text-muted-foreground line-clamp-2">
-                        {order.courses.description}
-                      </p>
+                      <div 
+                        className="text-sm text-muted-foreground line-clamp-2"
+                        dangerouslySetInnerHTML={{ __html: order.courses.description }}
+                      />
                     )}
                   </div>
                 </div>

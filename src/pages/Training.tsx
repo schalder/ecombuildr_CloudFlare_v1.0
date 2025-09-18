@@ -142,9 +142,10 @@ export default function Training() {
                   
                   <CardContent className="space-y-4">
                     {course.short_description && (
-                      <p className="text-sm text-muted-foreground line-clamp-3">
-                        {course.short_description}
-                      </p>
+                      <div 
+                        className="text-sm text-muted-foreground line-clamp-3"
+                        dangerouslySetInnerHTML={{ __html: course.short_description }}
+                      />
                     )}
                     
                     <div className="flex justify-between items-center text-xs text-muted-foreground">

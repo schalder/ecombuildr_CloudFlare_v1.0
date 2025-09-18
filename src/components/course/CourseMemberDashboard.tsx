@@ -225,7 +225,7 @@ const CourseMemberDashboard = () => {
                     <CardHeader>
                       <CardTitle className="line-clamp-2">{course.title}</CardTitle>
                       <CardDescription className="line-clamp-3">
-                        {course.description}
+                        <div dangerouslySetInnerHTML={{ __html: course.description || '' }} />
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="pt-0">

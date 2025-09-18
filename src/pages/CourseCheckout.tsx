@@ -368,9 +368,10 @@ const CourseCheckout = () => {
                 <div className="flex-1">
                   <h3 className="font-semibold">{course.title}</h3>
                   {course.description && (
-                    <p className="text-sm text-muted-foreground line-clamp-2">
-                      {course.description}
-                    </p>
+                    <div 
+                      className="text-sm text-muted-foreground line-clamp-2"
+                      dangerouslySetInnerHTML={{ __html: course.description }}
+                    />
                   )}
                 </div>
               </div>

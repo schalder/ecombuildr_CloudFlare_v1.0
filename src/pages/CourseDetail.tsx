@@ -271,9 +271,10 @@ const CourseDetail = () => {
                 <h1 className="text-3xl font-bold mb-4">{course.title}</h1>
                 
                 {course.description && (
-                  <p className="text-lg text-muted-foreground mb-6">
-                    {course.description}
-                  </p>
+                  <div 
+                    className="text-lg text-muted-foreground mb-6"
+                    dangerouslySetInnerHTML={{ __html: course.description }}
+                  />
                 )}
 
                 <div className="flex items-center gap-6 text-sm text-muted-foreground">

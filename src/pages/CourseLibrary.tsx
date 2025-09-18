@@ -183,9 +183,10 @@ const CourseLibrary = () => {
                     </h3>
                     
                     {course.description && (
-                      <p className="text-sm text-muted-foreground line-clamp-3">
-                        {course.description}
-                      </p>
+                      <div 
+                        className="text-sm text-muted-foreground line-clamp-3"
+                        dangerouslySetInnerHTML={{ __html: course.description }}
+                      />
                     )}
                   </CardHeader>
 

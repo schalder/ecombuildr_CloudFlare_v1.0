@@ -175,3 +175,22 @@ function openWebWhatsApp(url: string): void {
   }
 }
 
+// Utility function to strip HTML tags for plain text display
+export function stripHtml(html: string): string {
+  if (!html) return '';
+  return html.replace(/<[^>]*>/g, '');
+}
+
+// Utility function to safely render HTML content
+export function createMarkup(html: string) {
+  return { __html: html || '' };
+}
+
+// Utility function to truncate HTML content while preserving basic formatting
+export function truncateHtml(html: string, maxLength: number = 150): string {
+  if (!html) return '';
+  const stripped = stripHtml(html);
+  if (stripped.length <= maxLength) return html;
+  return stripped.substring(0, maxLength) + '...';
+}
+

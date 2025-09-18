@@ -273,9 +273,10 @@ const StorefrontCourseLibrary: React.FC = () => {
                           {course.title}
                         </h3>
                         {course.description && (
-                          <p className="text-muted-foreground text-sm line-clamp-3">
-                            {course.description}
-                          </p>
+                          <div 
+                            className="text-muted-foreground text-sm line-clamp-3"
+                            dangerouslySetInnerHTML={{ __html: course.description }}
+                          />
                         )}
                       </div>
 
