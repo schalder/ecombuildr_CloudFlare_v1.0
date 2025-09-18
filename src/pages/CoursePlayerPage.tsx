@@ -180,14 +180,32 @@ const CoursePlayerPage = ({ courseId: propCourseId }: CoursePlayerPageProps = {}
   const renderVideoContent = (lesson: CourseLesson) => {
     if (!lesson.video_url) return null;
 
-    const isYoutube = lesson.video_url.includes('youtube.com') || lesson.video_url.includes('youtu.be');
+    const videoUrl = lesson.video_url.trim();
     
+    // Check if it's an iframe/embed code
+    if (videoUrl.includes('<iframe') || videoUrl.includes('<embed')) {
+      return (
+        <AspectRatio ratio={16 / 9}>
+          <div 
+            className="w-full h-full rounded-lg"
+            dangerouslySetInnerHTML={{ __html: videoUrl }}
+          />
+        </AspectRatio>
+      );
+    }
+
+    // YouTube URL handling
+    const isYoutube = videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be');
     if (isYoutube) {
-      let embedUrl = lesson.video_url;
-      if (lesson.video_url.includes('youtube.com/watch?v=')) {
-        embedUrl = lesson.video_url.replace('youtube.com/watch?v=', 'youtube.com/embed/');
-      } else if (lesson.video_url.includes('youtu.be/')) {
-        embedUrl = lesson.video_url.replace('youtu.be/', 'youtube.com/embed/');
+      let embedUrl = videoUrl;
+      if (videoUrl.includes('youtube.com/watch?v=')) {
+        const videoId = videoUrl.split('v=')[1]?.split('&')[0];
+        embedUrl = `https://www.youtube.com/embed/${videoId}`;
+      } else if (videoUrl.includes('youtu.be/')) {
+        const videoId = videoUrl.split('youtu.be/')[1]?.split('?')[0];
+        embedUrl = `https://www.youtube.com/embed/${videoId}`;
+      } else if (videoUrl.includes('youtube.com/embed/')) {
+        embedUrl = videoUrl;
       }
       
       return (
@@ -197,15 +215,64 @@ const CoursePlayerPage = ({ courseId: propCourseId }: CoursePlayerPageProps = {}
             className="w-full h-full rounded-lg"
             allowFullScreen
             title={lesson.title}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          />
+        </AspectRatio>
+      );
+    }
+
+    // Vimeo URL handling
+    const isVimeo = videoUrl.includes('vimeo.com');
+    if (isVimeo) {
+      let embedUrl = videoUrl;
+      if (videoUrl.includes('vimeo.com/')) {
+        const videoId = videoUrl.split('vimeo.com/')[1]?.split('?')[0]?.split('/')[0];
+        embedUrl = `https://player.vimeo.com/video/${videoId}`;
+      }
+      
+      return (
+        <AspectRatio ratio={16 / 9}>
+          <iframe
+            src={embedUrl}
+            className="w-full h-full rounded-lg"
+            allowFullScreen
+            title={lesson.title}
+            allow="autoplay; fullscreen; picture-in-picture"
+          />
+        </AspectRatio>
+      );
+    }
+
+    // Wistia URL handling
+    const isWistia = videoUrl.includes('wistia.com') || videoUrl.includes('wi.st');
+    if (isWistia) {
+      let embedUrl = videoUrl;
+      if (videoUrl.includes('wistia.com/medias/')) {
+        const videoId = videoUrl.split('medias/')[1]?.split('?')[0];
+        embedUrl = `https://fast.wistia.net/embed/iframe/${videoId}`;
+      } else if (videoUrl.includes('wi.st/medias/')) {
+        const videoId = videoUrl.split('medias/')[1]?.split('?')[0];
+        embedUrl = `https://fast.wistia.net/embed/iframe/${videoId}`;
+      }
+      
+      return (
+        <AspectRatio ratio={16 / 9}>
+          <iframe
+            src={embedUrl}
+            className="w-full h-full rounded-lg"
+            allowFullScreen
+            title={lesson.title}
+            allow="autoplay; fullscreen"
           />
         </AspectRatio>
       );
     }
     
+    // Default to regular video element for direct video URLs
     return (
       <AspectRatio ratio={16 / 9}>
         <video
-          src={lesson.video_url}
+          src={videoUrl}
           controls
           className="w-full h-full rounded-lg"
           title={lesson.title}
@@ -279,12 +346,12 @@ const CoursePlayerPage = ({ courseId: propCourseId }: CoursePlayerPageProps = {}
       </div>
 
       <div className="container mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Course Navigation Sidebar */}
-          <div className="space-y-4">
+          <div className="lg:col-span-1 space-y-4">
             <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Course Content</CardTitle>
+                <CardHeader>
+                <CardTitle className="text-lg">{course.title}</CardTitle>
                 <div className="flex items-center gap-4 text-sm text-muted-foreground">
                   <span>{course.modules.length} modules</span>
                   <div className="flex items-center gap-1">
@@ -329,7 +396,7 @@ const CoursePlayerPage = ({ courseId: propCourseId }: CoursePlayerPageProps = {}
                             <Circle className="h-4 w-4 text-muted-foreground" />
                           )}
                           <Play className="h-3 w-3" />
-                          <span className="flex-1 text-left">{lesson.title}</span>
+                          <span className="flex-1 text-left text-xs leading-tight">{lesson.title}</span>
                           {lesson.video_duration && (
                             <span className="text-xs text-muted-foreground">
                               {lesson.video_duration}min
@@ -345,7 +412,7 @@ const CoursePlayerPage = ({ courseId: propCourseId }: CoursePlayerPageProps = {}
           </div>
 
           {/* Main Content Area */}
-          <div className="lg:col-span-3">
+          <div className="lg:col-span-2">
             {selectedLesson ? (
               <Card>
                 <CardHeader>
@@ -403,24 +470,6 @@ const CoursePlayerPage = ({ courseId: propCourseId }: CoursePlayerPageProps = {}
                     </>
                   )}
 
-                  {/* Resources Section */}
-                  <Separator />
-                  <div className="space-y-4">
-                    <h4 className="font-medium flex items-center gap-2">
-                      <Download className="h-4 w-4" />
-                      Resources
-                    </h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      <Button variant="outline" className="justify-start">
-                        <FileText className="h-4 w-4 mr-2" />
-                        Lesson Notes
-                      </Button>
-                      <Button variant="outline" className="justify-start">
-                        <Download className="h-4 w-4 mr-2" />
-                        Downloadable Files
-                      </Button>
-                    </div>
-                  </div>
                 </CardContent>
               </Card>
             ) : (
