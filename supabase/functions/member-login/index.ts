@@ -9,7 +9,7 @@ const corsHeaders = {
 interface MemberLoginRequest {
   email: string;
   password: string;
-  store_id: string;
+  store_id?: string;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -20,9 +20,9 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     const { email, password, store_id }: MemberLoginRequest = await req.json();
 
-    if (!email || !password || !store_id) {
+    if (!email || !password) {
       return new Response(
-        JSON.stringify({ error: 'Email, password, and store ID are required' }),
+        JSON.stringify({ error: 'Email and password are required' }),
         { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
       );
     }
@@ -34,11 +34,16 @@ const handler = async (req: Request): Promise<Response> => {
     );
 
     // Use secure database function to verify credentials
-    const { data: memberData, error: verifyError } = await supabase.rpc('verify_member_credentials', {
-      p_email: email,
-      p_password: password,
-      p_store_id: store_id
-    });
+    const { data: memberData, error: verifyError } = store_id 
+      ? await supabase.rpc('verify_member_credentials', {
+          p_email: email,
+          p_password: password,
+          p_store_id: store_id
+        })
+      : await supabase.rpc('verify_member_credentials_any_store', {
+          p_email: email,
+          p_password: password
+        });
 
     if (verifyError) {
       console.error('Member credential verification error:', verifyError);

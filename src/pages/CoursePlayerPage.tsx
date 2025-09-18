@@ -20,7 +20,6 @@ import {
   CheckCircle,
   Circle
 } from 'lucide-react';
-import { useMemberAuth } from '@/hooks/useMemberAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -55,11 +54,20 @@ interface CourseDetail {
   modules: CourseModule[];
 }
 
+interface MemberAccount {
+  id: string;
+  store_id: string;
+  email: string;
+  full_name: string | null;
+  phone: string | null;
+  is_active: boolean;
+}
+
 const CoursePlayerPage = () => {
   const { courseId } = useParams<{ courseId: string }>();
   const navigate = useNavigate();
-  const { member, loading: authLoading } = useMemberAuth();
   
+  const [member, setMember] = useState<MemberAccount | null>(null);
   const [course, setCourse] = useState<CourseDetail | null>(null);
   const [selectedLesson, setSelectedLesson] = useState<CourseLesson | null>(null);
   const [expandedModules, setExpandedModules] = useState<string[]>([]);
@@ -67,24 +75,28 @@ const CoursePlayerPage = () => {
   const [loading, setLoading] = useState(true);
   const [hasAccess, setHasAccess] = useState(false);
 
-  // Redirect if not logged in
+  // Check member authentication and access
   useEffect(() => {
-    if (!authLoading && !member) {
-      navigate('/courses/members/login');
-    }
-  }, [member, authLoading, navigate]);
-
-  // Verify access and fetch course data
-  useEffect(() => {
-    const fetchCourseData = async () => {
-      if (!member || !courseId) return;
-
+    const checkMemberAccess = async () => {
       try {
-        setLoading(true);
+        // Check for member session in localStorage
+        const memberData = localStorage.getItem('member_session');
+        if (!memberData) {
+          navigate('/courses/members/login');
+          return;
+        }
 
-        // Verify access first
+        const memberAccount = JSON.parse(memberData);
+        setMember(memberAccount);
+
+        if (!courseId) {
+          navigate('/courses/members');
+          return;
+        }
+
+        // Verify access to the course
         const { data: accessCheck } = await supabase.rpc('verify_member_course_access', {
-          p_member_account_id: member.id,
+          p_member_account_id: memberAccount.id,
           p_course_id: courseId
         });
 
@@ -138,16 +150,15 @@ const CoursePlayerPage = () => {
         }
 
       } catch (error) {
-        console.error('Error fetching course data:', error);
-        toast.error('Failed to load course');
-        navigate('/courses/members');
+        console.error('Error checking member access:', error);
+        navigate('/courses/members/login');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchCourseData();
-  }, [member, courseId, navigate]);
+    checkMemberAccess();
+  }, [courseId, navigate]);
 
   const toggleModule = (moduleId: string) => {
     setExpandedModules(prev =>
@@ -218,7 +229,7 @@ const CoursePlayerPage = () => {
     }, 0);
   };
 
-  if (authLoading || loading) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
