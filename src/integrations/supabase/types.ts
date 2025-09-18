@@ -3423,13 +3423,22 @@ export type Database = {
         Returns: number
       }
       create_member_account_with_password: {
-        Args: {
-          p_email: string
-          p_full_name?: string
-          p_password: string
-          p_phone?: string
-          p_store_id: string
-        }
+        Args:
+          | {
+              p_course_order_id?: string
+              p_email: string
+              p_full_name?: string
+              p_password: string
+              p_phone?: string
+              p_store_id: string
+            }
+          | {
+              p_email: string
+              p_full_name?: string
+              p_password: string
+              p_phone?: string
+              p_store_id: string
+            }
         Returns: string
       }
       crypt: {
@@ -3582,13 +3591,15 @@ export type Database = {
         Args: { p_email: string; p_password: string; p_store_id: string }
         Returns: {
           access_status: string
+          created_at: string
           email: string
           full_name: string
+          id: string
           is_active: boolean
           last_login_at: string
-          member_id: string
           phone: string
           store_id: string
+          updated_at: string
         }[]
       }
       verify_member_password: {

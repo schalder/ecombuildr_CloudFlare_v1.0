@@ -117,13 +117,14 @@ serve(async (req) => {
           } else {
             console.log('EPS verify: member account created successfully', { memberId, email: orderDetails.customer_email });
             
-            // Update order metadata with member password only if it was generated
+            // Update order metadata with member password only if it was generated (not from checkout)
             if (isGeneratedPassword) {
+              const currentMetadata = order.metadata || {};
               const { error: updateError } = await supabase
                 .from('course_orders')
                 .update({ 
                   metadata: { 
-                    ...orderDetails.metadata, 
+                    ...currentMetadata, 
                     member_password: memberPassword 
                   } 
                 })
