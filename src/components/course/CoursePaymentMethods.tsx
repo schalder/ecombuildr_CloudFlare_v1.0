@@ -103,7 +103,7 @@ export const CoursePaymentMethods: React.FC<CoursePaymentMethodsProps> = ({
       case 'nagad':
         return 'Nagad';
       case 'eps':
-        return 'EPS Gateway';
+        return 'EPS Payment Gateway';
       default:
         return method;
     }

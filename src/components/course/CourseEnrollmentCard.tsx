@@ -93,9 +93,9 @@ export const CourseEnrollmentCard: React.FC<CourseEnrollmentCardProps> = ({
         if (paymentSettings.eps?.enabled && course.payment_methods.eps) {
           methods.push({
             id: 'eps',
-            name: 'EPS Gateway',
-            icon: <Building2 className="h-4 w-4 text-blue-500" />,
-            description: 'Online card payment',
+            name: 'EPS Payment Gateway',
+            icon: <img src="/src/assets/eps-logo.png" alt="EPS" className="h-4 w-6 object-contain" />,
+            description: 'Secure payment via eps.com.bd',
             enabled: true
           });
         }
