@@ -20,14 +20,18 @@ export const CoursePaymentProcessing: React.FC = () => {
   const paymentRef = searchParams.get('payment_ref') || searchParams.get('trxID') || searchParams.get('MerchantTransactionId');
 
   useEffect(() => {
+    console.log('[CoursePaymentProcessing] init', { orderId, status, paymentRef, search: typeof window !== 'undefined' ? window.location.search : '' });
     if (orderId) {
       fetchOrder();
+    } else {
+      console.warn('[CoursePaymentProcessing] Missing orderId in URL');
     }
   }, [orderId]);
 
   const fetchOrder = async () => {
     if (!orderId) return;
 
+    console.log('[CoursePaymentProcessing] fetchOrder:start', { orderId });
     try {
       const { data, error } = await supabase.functions.invoke('get-course-order-public', {
         body: { orderId }
@@ -36,42 +40,48 @@ export const CoursePaymentProcessing: React.FC = () => {
       if (error) throw error;
       
       const fetched = data?.order ?? null;
+      console.log('[CoursePaymentProcessing] fetchOrder:response', { hasOrder: !!fetched, payment_status: fetched?.payment_status });
       setOrder(fetched);
 
       // Auto-redirect to confirmation if payment is completed
       if (fetched?.payment_status === 'completed') {
+        console.log('[CoursePaymentProcessing] payment completed, redirecting to confirmation', { orderId });
         navigate(`/order-confirmation?orderId=${orderId}&status=success`);
         return;
       }
 
       // Handle specific payment statuses
       if (status === 'failed' || fetched?.payment_status === 'failed') {
+        console.warn('[CoursePaymentProcessing] payment failed', { status, payment_status: fetched?.payment_status });
         toast.error('Payment failed. Please try again.');
       } else if (status === 'cancelled') {
+        console.warn('[CoursePaymentProcessing] payment cancelled');
         toast.error('Payment was cancelled.');
       }
 
     } catch (error) {
-      console.error('Error fetching course order:', error);
+      console.error('[CoursePaymentProcessing] fetchOrder:error', error);
       toast.error('Failed to load order details');
     } finally {
       setLoading(false);
+      console.log('[CoursePaymentProcessing] fetchOrder:end');
     }
   };
-
   const verifyPayment = async () => {
     if (!orderId || !order) return;
 
     setVerifying(true);
     try {
+      console.log('[CoursePaymentProcessing] verifyPayment:start', { orderId, payment_method: order.payment_method, paymentRef });
       if (order.payment_method === 'eps' && !paymentRef) {
         toast.error('Missing EPS transaction reference. Please try again.');
+        console.warn('[CoursePaymentProcessing] verifyPayment:missing-eps-ref');
         return;
       }
 
       // Call verification function based on payment method
       let verificationFunction = '';
-      let verificationBody: any = { orderId, storeId: store?.id };
+      let verificationBody: any = { orderId, storeId: order?.store_id };
 
       switch (order.payment_method) {
         case 'eps':
@@ -87,28 +97,34 @@ export const CoursePaymentProcessing: React.FC = () => {
           verificationBody.transactionId = paymentRef;
           break;
         default:
+          console.warn('[CoursePaymentProcessing] verifyPayment:unsupported-method', { method: order.payment_method });
           toast.error('Payment method not supported for verification');
           return;
       }
 
+      console.log('[CoursePaymentProcessing] verifyPayment:invoke', { verificationFunction, verificationBody });
       const { data, error } = await supabase.functions.invoke(verificationFunction, {
         body: verificationBody
       });
 
       if (error) throw error;
 
+      console.log('[CoursePaymentProcessing] verifyPayment:response', { data });
       if (data.success) {
         toast.success('Payment verified successfully!');
+        console.log('[CoursePaymentProcessing] verifyPayment:success-redirect');
         navigate(`/order-confirmation?orderId=${orderId}&status=success`);
       } else {
+        console.warn('[CoursePaymentProcessing] verifyPayment:failed', { message: data.message });
         toast.error(data.message || 'Payment verification failed');
       }
 
     } catch (error) {
-      console.error('Payment verification error:', error);
+      console.error('[CoursePaymentProcessing] verifyPayment:error', error);
       toast.error('Failed to verify payment');
     } finally {
       setVerifying(false);
+      console.log('[CoursePaymentProcessing] verifyPayment:end');
     }
   };
 

@@ -14,7 +14,9 @@ serve(async (req) => {
 
   try {
     const { orderId } = await req.json();
+    console.log('[get-course-order-public] request', { orderId });
     if (!orderId) {
+      console.warn('[get-course-order-public] missing-orderId');
       return new Response(JSON.stringify({ error: 'orderId is required' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -48,6 +50,7 @@ serve(async (req) => {
     }
 
     if (!data) {
+      console.warn('[get-course-order-public] order-not-found', { orderId });
       return new Response(JSON.stringify({ order: null }), {
         status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

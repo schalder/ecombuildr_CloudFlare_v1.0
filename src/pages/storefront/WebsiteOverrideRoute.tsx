@@ -10,6 +10,7 @@ import { setSEO, buildCanonical } from '@/lib/seo';
 import { optimizedWebsitePageQuery } from '@/components/storefront/optimized/DataOptimizer';
 import { PerformanceMonitor } from '@/components/storefront/optimized/PerformanceMonitor';
 import { FontOptimizer } from '@/components/storefront/optimized/FontOptimizer';
+import { CourseOrderConfirmation } from '@/components/course/CourseOrderConfirmation';
 
 interface WebsitePageData {
   id: string;
@@ -42,6 +43,12 @@ export const WebsiteOverrideRoute: React.FC<WebsiteOverrideRouteProps> = ({ slug
   const isPreview = searchParams.get('preview') === '1';
   const sf = searchParams.get('sf');
   const useStorefront = sf === '0' ? false : true;
+  const orderIdParam = searchParams.get('orderId');
+  const tokenParam = searchParams.get('ot') || searchParams.get('token');
+  const isCourseOrderOverride = slug === 'order-confirmation' && !!orderIdParam && !tokenParam;
+  if (isCourseOrderOverride) {
+    console.log('[WebsiteOverrideRoute] course-order-override active', { slug, orderId: orderIdParam, tokenPresent: !!tokenParam });
+  }
   const [page, setPage] = React.useState<WebsitePageData | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [resolvedWebsiteId, setResolvedWebsiteId] = React.useState<string | null>(null);
@@ -176,6 +183,19 @@ export const WebsiteOverrideRoute: React.FC<WebsiteOverrideRouteProps> = ({ slug
       };
     }
   }, [page, websiteMeta, isPreview]);
+
+  if (isCourseOrderOverride) {
+    console.log('[WebsiteOverrideRoute] rendering CourseOrderConfirmation override');
+    return (
+      <>
+        <FontOptimizer />
+        <PerformanceMonitor page={`course-order-confirmation`} />
+        <main>
+          <CourseOrderConfirmation />
+        </main>
+      </>
+    );
+  }
 
   if (loading) {
     return (

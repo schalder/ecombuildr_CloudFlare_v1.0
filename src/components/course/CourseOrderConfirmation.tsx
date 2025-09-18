@@ -44,14 +44,18 @@ export const CourseOrderConfirmation: React.FC = () => {
   const status = searchParams.get('status');
 
   useEffect(() => {
+    console.log('[CourseOrderConfirmation] init', { orderId, status, search: typeof window !== 'undefined' ? window.location.search : '' });
     if (orderId) {
       fetchOrder();
+    } else {
+      console.warn('[CourseOrderConfirmation] Missing orderId in URL');
     }
   }, [orderId]);
 
   const fetchOrder = async () => {
     if (!orderId) return;
 
+    console.log('[CourseOrderConfirmation] fetchOrder:start', { orderId });
     try {
       const { data, error } = await supabase.functions.invoke('get-course-order-public', {
         body: { orderId }
@@ -59,14 +63,20 @@ export const CourseOrderConfirmation: React.FC = () => {
 
       if (error) throw error;
 
-      setOrder(data?.order ?? null);
+      const fetched = data?.order ?? null;
+      console.log('[CourseOrderConfirmation] fetchOrder:response', { hasOrder: !!fetched, payment_status: fetched?.payment_status });
+      setOrder(fetched);
+
+      if (!fetched) {
+        console.warn('[CourseOrderConfirmation] fetchOrder:not-found', { orderId });
+      }
     } catch (error) {
-      console.error('Error fetching course order:', error);
+      console.error('[CourseOrderConfirmation] fetchOrder:error', error);
     } finally {
       setLoading(false);
+      console.log('[CourseOrderConfirmation] fetchOrder:end');
     }
   };
-
   const getStatusInfo = () => {
     if (status === 'success' || order?.payment_status === 'completed') {
       return {
@@ -109,6 +119,7 @@ export const CourseOrderConfirmation: React.FC = () => {
   }
 
   if (!order) {
+    console.warn('[CourseOrderConfirmation] render:not-found', { orderId, status });
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
