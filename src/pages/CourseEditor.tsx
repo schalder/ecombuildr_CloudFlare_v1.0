@@ -110,7 +110,9 @@ const CourseEditor = () => {
     content: '', 
     video_url: '', 
     video_duration: 0, 
-    video_duration_display: '0:00:00',
+    duration_hours: 0,
+    duration_minutes: 0,
+    duration_seconds: 0,
     is_published: false, 
     is_preview: false 
   });
@@ -312,12 +314,19 @@ const CourseEditor = () => {
     setSelectedModuleId(moduleId);
     if (lesson) {
       setEditingLesson(lesson);
+      const totalMinutes = lesson.video_duration || 0;
+      const hours = Math.floor(totalMinutes / 60);
+      const minutes = Math.floor(totalMinutes % 60);
+      const seconds = Math.round((totalMinutes % 1) * 60);
+      
       setLessonForm({
         title: lesson.title,
         content: lesson.content,
         video_url: lesson.video_url || '',
-        video_duration: lesson.video_duration || 0,
-        video_duration_display: formatDurationForInput(lesson.video_duration || 0),
+        video_duration: totalMinutes,
+        duration_hours: hours,
+        duration_minutes: minutes,
+        duration_seconds: seconds,
         is_published: lesson.is_published,
         is_preview: lesson.is_preview
       });
@@ -328,7 +337,9 @@ const CourseEditor = () => {
         content: '',
         video_url: '',
         video_duration: 0,
-        video_duration_display: '0:00:00',
+        duration_hours: 0,
+        duration_minutes: 0,
+        duration_seconds: 0,
         is_published: false,
         is_preview: false
       });
@@ -431,7 +442,9 @@ const CourseEditor = () => {
         content: '',
         video_url: '',
         video_duration: 0,
-        video_duration_display: '0:00:00',
+        duration_hours: 0,
+        duration_minutes: 0,
+        duration_seconds: 0,
         is_published: false,
         is_preview: false
       });
@@ -477,7 +490,9 @@ const CourseEditor = () => {
         content: '',
         video_url: '',
         video_duration: 0,
-        video_duration_display: '0:00:00',
+        duration_hours: 0,
+        duration_minutes: 0,
+        duration_seconds: 0,
         is_published: false,
         is_preview: false
       });
@@ -922,23 +937,66 @@ const CourseEditor = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Video Duration (H:MM:SS)</Label>
-                <Input
-                  value={lessonForm.video_duration_display}
-                  onChange={(e) => {
-                    const displayValue = e.target.value;
-                    const totalMinutes = parseDurationInput(displayValue);
-                    setLessonForm(prev => ({
-                      ...prev, 
-                      video_duration_display: displayValue,
-                      video_duration: totalMinutes
-                    }));
-                  }}
-                  placeholder="0:15:30"
-                />
-                <p className="text-xs text-muted-foreground">
-                  Format: Hours:Minutes:Seconds (e.g., 1:30:45 for 1 hour 30 minutes 45 seconds)
-                </p>
+                <Label>Video Duration</Label>
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="space-y-1">
+                    <Label className="text-xs">Hours</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      max="23"
+                      value={lessonForm.duration_hours}
+                      onChange={(e) => {
+                        const hours = parseInt(e.target.value) || 0;
+                        const totalMinutes = hours * 60 + lessonForm.duration_minutes + Math.floor(lessonForm.duration_seconds / 60);
+                        setLessonForm(prev => ({
+                          ...prev, 
+                          duration_hours: hours,
+                          video_duration: totalMinutes
+                        }));
+                      }}
+                      placeholder="0"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Minutes</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      max="59"
+                      value={lessonForm.duration_minutes}
+                      onChange={(e) => {
+                        const minutes = parseInt(e.target.value) || 0;
+                        const totalMinutes = lessonForm.duration_hours * 60 + minutes + Math.floor(lessonForm.duration_seconds / 60);
+                        setLessonForm(prev => ({
+                          ...prev, 
+                          duration_minutes: minutes,
+                          video_duration: totalMinutes
+                        }));
+                      }}
+                      placeholder="0"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Seconds</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      max="59"
+                      value={lessonForm.duration_seconds}
+                      onChange={(e) => {
+                        const seconds = parseInt(e.target.value) || 0;
+                        const totalMinutes = lessonForm.duration_hours * 60 + lessonForm.duration_minutes + Math.floor(seconds / 60);
+                        setLessonForm(prev => ({
+                          ...prev, 
+                          duration_seconds: seconds,
+                          video_duration: totalMinutes
+                        }));
+                      }}
+                      placeholder="0"
+                    />
+                  </div>
+                </div>
               </div>
               <div className="flex items-center justify-between">
                 <Label>Published</Label>
