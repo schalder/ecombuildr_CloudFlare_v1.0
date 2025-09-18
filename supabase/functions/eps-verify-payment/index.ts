@@ -109,7 +109,8 @@ serve(async (req) => {
             p_email: orderDetails.customer_email,
             p_password: memberPassword,
             p_full_name: orderDetails.customer_name,
-            p_phone: orderDetails.customer_phone
+            p_phone: orderDetails.customer_phone,
+            p_course_order_id: orderId
           });
 
           if (memberError) {
