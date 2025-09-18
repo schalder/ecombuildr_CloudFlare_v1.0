@@ -81,10 +81,10 @@ useEffect(() => {
 
 
   useEffect(() => {
-    if (store && orderId) {
+    if (orderId) {
       fetchOrder();
     }
-  }, [store, orderId, orderToken]);
+  }, [orderId, orderToken, store]);
 
   // If this is a course order, delegate to the dedicated component
   if (isCourseOrder) {
@@ -257,7 +257,7 @@ useEffect(() => {
     pdf.save(`order-${order?.order_number}.pdf`);
   };
 
-  if (!store) {
+  if (!store && !loading) {
     return (
       <StorefrontLayout>
         <div className="container mx-auto px-4 py-8">

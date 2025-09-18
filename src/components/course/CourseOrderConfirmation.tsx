@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { useStore } from '@/contexts/StoreContext';
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -35,7 +35,7 @@ interface CourseOrder {
 export const CourseOrderConfirmation: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { store } = useStore();
+  
   const { currency } = useCourseCurrency();
   const [order, setOrder] = useState<CourseOrder | null>(null);
   const [loading, setLoading] = useState(true);
@@ -44,10 +44,10 @@ export const CourseOrderConfirmation: React.FC = () => {
   const status = searchParams.get('status');
 
   useEffect(() => {
-    if (orderId && store) {
+    if (orderId) {
       fetchOrder();
     }
-  }, [orderId, store]);
+  }, [orderId]);
 
   const fetchOrder = async () => {
     if (!orderId) return;

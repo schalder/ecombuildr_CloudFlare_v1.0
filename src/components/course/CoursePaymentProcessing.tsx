@@ -20,10 +20,10 @@ export const CoursePaymentProcessing: React.FC = () => {
   const paymentRef = searchParams.get('payment_ref') || searchParams.get('trxID') || searchParams.get('MerchantTransactionId');
 
   useEffect(() => {
-    if (orderId && store) {
+    if (orderId) {
       fetchOrder();
     }
-  }, [orderId, store]);
+  }, [orderId]);
 
   const fetchOrder = async () => {
     if (!orderId) return;
@@ -39,13 +39,13 @@ export const CoursePaymentProcessing: React.FC = () => {
       setOrder(fetched);
 
       // Auto-redirect to confirmation if payment is completed
-      if (data.payment_status === 'completed') {
+      if (fetched?.payment_status === 'completed') {
         navigate(`/order-confirmation?orderId=${orderId}&status=success`);
         return;
       }
 
       // Handle specific payment statuses
-      if (status === 'failed' || data.payment_status === 'failed') {
+      if (status === 'failed' || fetched?.payment_status === 'failed') {
         toast.error('Payment failed. Please try again.');
       } else if (status === 'cancelled') {
         toast.error('Payment was cancelled.');
