@@ -441,37 +441,11 @@ const StorefrontCourseDetail: React.FC<StorefrontCourseDetailProps> = ({ courseS
                     )}
                   </div>
 
-                  {/* Pricing Section */}
-                  <div className="text-center">
-                    {course.price > 0 ? (
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-center gap-2">
-                          <span className="text-3xl font-bold text-orange-600">
-                            {formatCoursePrice(course.price, currency)}
-                          </span>
-                          {course.compare_price && course.compare_price > course.price && (
-                            <span className="text-lg text-muted-foreground line-through">
-                              {formatCoursePrice(course.compare_price, currency)}
-                            </span>
-                          )}
-                        </div>
-                        <Badge variant="outline">Premium Course</Badge>
-                      </div>
-                    ) : (
-                      <div>
-                        <span className="text-3xl font-bold text-green-600">Free</span>
-                        <Badge variant="outline" className="ml-2">Free Course</Badge>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Payment Options */}
-                  {course.price > 0 && (
-                    <CourseEnrollmentCard 
-                      course={course} 
-                      storeId={store?.id || ''} 
-                    />
-                  )}
+                  {/* Enrollment Card */}
+                  <CourseEnrollmentCard 
+                    course={course} 
+                    storeId={store?.id || ''} 
+                  />
 
 
 

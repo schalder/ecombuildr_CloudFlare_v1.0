@@ -210,13 +210,6 @@ export const CourseEnrollmentCard: React.FC<CourseEnrollmentCardProps> = ({
           )}
         </Button>
         
-        <div className="text-center text-sm text-muted-foreground">
-          {course.price > 0 ? (
-            <p>Secure payment • 30-day money-back guarantee</p>
-          ) : (
-            <p>No payment required • Start learning immediately</p>
-          )}
-        </div>
       </CardContent>
     </Card>
   );
