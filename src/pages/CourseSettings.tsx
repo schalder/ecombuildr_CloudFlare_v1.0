@@ -27,6 +27,8 @@ const CourseSettings = () => {
   
   const [libraryHeadline, setLibraryHeadline] = useState('Course Library');
   const [librarySubheadline, setLibrarySubheadline] = useState('Discover our comprehensive collection of courses and start your learning journey today.');
+  const [memberAreaWelcomeHeadline, setMemberAreaWelcomeHeadline] = useState('Welcome to Your Learning Hub');
+  const [memberAreaWelcomeSubheadline, setMemberAreaWelcomeSubheadline] = useState('Access your purchased courses and membership content below');
   const [courseLoginLogo, setCourseLoginLogo] = useState('');
   const [courseFavicon, setCourseFavicon] = useState('');
   const [courseCurrency, setCourseCurrency] = useState('USD');
@@ -39,7 +41,7 @@ const CourseSettings = () => {
       
       const { data, error } = await supabase
         .from('stores')
-        .select('course_currency, course_login_logo_url, course_favicon_url')
+        .select('course_currency, course_login_logo_url, course_favicon_url, member_area_welcome_headline, member_area_welcome_subheadline')
         .eq('id', userStore.id)
         .single();
 
@@ -59,6 +61,12 @@ const CourseSettings = () => {
     }
     if (storeSettings?.course_favicon_url) {
       setCourseFavicon(storeSettings.course_favicon_url);
+    }
+    if (storeSettings?.member_area_welcome_headline) {
+      setMemberAreaWelcomeHeadline(storeSettings.member_area_welcome_headline);
+    }
+    if (storeSettings?.member_area_welcome_subheadline) {
+      setMemberAreaWelcomeSubheadline(storeSettings.member_area_welcome_subheadline);
     }
   }, [storeSettings]);
 
@@ -122,7 +130,9 @@ const CourseSettings = () => {
         .update({ 
           course_currency: courseCurrency,
           course_login_logo_url: courseLoginLogo,
-          course_favicon_url: courseFavicon
+          course_favicon_url: courseFavicon,
+          member_area_welcome_headline: memberAreaWelcomeHeadline,
+          member_area_welcome_subheadline: memberAreaWelcomeSubheadline
         })
         .eq('id', userStore.id);
 
@@ -214,6 +224,33 @@ const CourseSettings = () => {
                       placeholder="Discover our comprehensive collection of courses..."
                       rows={3}
                     />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="member-area-headline">Member Area Welcome Headline</Label>
+                    <Input
+                      id="member-area-headline"
+                      value={memberAreaWelcomeHeadline}
+                      onChange={(e) => setMemberAreaWelcomeHeadline(e.target.value)}
+                      placeholder="Welcome to Your Learning Hub"
+                    />
+                    <p className="text-sm text-muted-foreground">
+                      This headline will appear at the top of the course members area
+                    </p>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="member-area-subheadline">Member Area Welcome Subheadline</Label>
+                    <Textarea
+                      id="member-area-subheadline"
+                      value={memberAreaWelcomeSubheadline}
+                      onChange={(e) => setMemberAreaWelcomeSubheadline(e.target.value)}
+                      placeholder="Access your purchased courses and membership content below"
+                      rows={2}
+                    />
+                    <p className="text-sm text-muted-foreground">
+                      This subheadline will appear below the welcome headline in the course members area
+                    </p>
                   </div>
 
                   <div className="space-y-2">

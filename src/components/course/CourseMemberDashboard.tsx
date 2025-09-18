@@ -33,15 +33,15 @@ const CourseMemberDashboard = () => {
   const { member, signOut, loading: authLoading } = useMemberAuth();
   const { store } = useStore();
   
-  // Fetch store settings for favicon
+  // Fetch store settings for favicon and member area content
   const { data: storeSettings } = useQuery({
-    queryKey: ['store-favicon', store?.id],
+    queryKey: ['store-settings', store?.id],
     queryFn: async () => {
       if (!store?.id) return null;
       
       const { data, error } = await supabase
         .from('stores')
-        .select('course_favicon_url')
+        .select('course_favicon_url, course_login_logo_url, member_area_welcome_headline, member_area_welcome_subheadline')
         .eq('id', store.id)
         .single();
 
@@ -159,9 +159,19 @@ const CourseMemberDashboard = () => {
       <div className="border-b">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold">{store.name}</h1>
-              <p className="text-muted-foreground">Course Members Area</p>
+            <div className="flex items-center gap-4">
+              {storeSettings?.course_login_logo_url ? (
+                <img 
+                  src={storeSettings.course_login_logo_url} 
+                  alt={store.name} 
+                  className="h-10 w-auto"
+                />
+              ) : (
+                <div>
+                  <h1 className="text-2xl font-bold">{store.name}</h1>
+                  <p className="text-muted-foreground">Course Members Area</p>
+                </div>
+              )}
             </div>
             <div className="flex items-center gap-4">
               <div className="text-right">
@@ -181,9 +191,11 @@ const CourseMemberDashboard = () => {
         <div className="space-y-8">
           {/* Welcome Section */}
           <div className="text-center">
-            <h2 className="text-3xl font-bold mb-2">Welcome to Your Learning Hub</h2>
+            <h2 className="text-3xl font-bold mb-2">
+              {storeSettings?.member_area_welcome_headline || 'Welcome to Your Learning Hub'}
+            </h2>
             <p className="text-muted-foreground">
-              Access your purchased courses and membership content below
+              {storeSettings?.member_area_welcome_subheadline || 'Access your purchased courses and membership content below'}
             </p>
           </div>
 
@@ -222,7 +234,7 @@ const CourseMemberDashboard = () => {
                         onClick={() => navigate(`/courses/learn/${course.id}`)}
                       >
                         <Play className="h-4 w-4 mr-2" />
-                        Start Learning
+                        Access Content
                       </Button>
                     </CardContent>
                   </Card>

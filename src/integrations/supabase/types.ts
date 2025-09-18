@@ -2867,6 +2867,8 @@ export type Database = {
           id: string
           is_active: boolean | null
           logo_url: string | null
+          member_area_welcome_headline: string | null
+          member_area_welcome_subheadline: string | null
           name: string
           owner_id: string
           primary_color: string | null
@@ -2887,6 +2889,8 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           logo_url?: string | null
+          member_area_welcome_headline?: string | null
+          member_area_welcome_subheadline?: string | null
           name: string
           owner_id: string
           primary_color?: string | null
@@ -2907,6 +2911,8 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           logo_url?: string | null
+          member_area_welcome_headline?: string | null
+          member_area_welcome_subheadline?: string | null
           name?: string
           owner_id?: string
           primary_color?: string | null
