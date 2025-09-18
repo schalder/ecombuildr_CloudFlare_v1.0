@@ -63,8 +63,13 @@ interface MemberAccount {
   is_active: boolean;
 }
 
-const CoursePlayerPage = () => {
-  const { courseId } = useParams<{ courseId: string }>();
+interface CoursePlayerPageProps {
+  courseId?: string;
+}
+
+const CoursePlayerPage = ({ courseId: propCourseId }: CoursePlayerPageProps = {}) => {
+  const { courseId: paramCourseId } = useParams<{ courseId: string }>();
+  const courseId = propCourseId || paramCourseId;
   const navigate = useNavigate();
   
   const [member, setMember] = useState<MemberAccount | null>(null);

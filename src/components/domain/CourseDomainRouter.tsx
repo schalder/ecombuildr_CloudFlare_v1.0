@@ -181,7 +181,7 @@ const CourseDomainRouter = ({ customDomain, storeSlug }: CourseDomainRouterProps
     const learnMatch = coursePath.match(/\/learn\/([a-f0-9-]+)/);
     if (learnMatch) {
       const courseId = learnMatch[1];
-      return <CoursePlayerPage />;
+      return <CoursePlayerPage courseId={courseId} />;
     }
   }
 
