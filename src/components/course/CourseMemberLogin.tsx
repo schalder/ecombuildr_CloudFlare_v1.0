@@ -83,7 +83,7 @@ const CourseMemberLogin = () => {
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
             {storeSettings?.course_login_logo_url ? (
-              <div className="inline-flex items-center justify-center w-60 h-20 mb-4">
+              <div className="inline-flex items-center justify-center w-60 h-20 mb-2">
                 <img 
                   src={storeSettings.course_login_logo_url} 
                   alt={`${store.name} Logo`}
@@ -91,12 +91,11 @@ const CourseMemberLogin = () => {
                 />
               </div>
             ) : (
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-primary/10 rounded-full mb-4">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-primary/10 rounded-full mb-2">
                 <Lock className="h-8 w-8 text-primary" />
               </div>
             )}
-            <h1 className="text-2xl font-bold">Course Members Area</h1>
-            <p className="text-muted-foreground">Access your purchased courses</p>
+            <h1 className="text-2xl font-bold">Login Into the Members Area</h1>
           </div>
 
           <Card>
