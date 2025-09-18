@@ -154,7 +154,7 @@ serve(async (req) => {
     // Try course_orders first
     const { data: courseOrderRow } = await supabase
       .from('course_orders')
-      .select('order_number')
+      .select('order_number, metadata')
       .eq('id', orderId)
       .maybeSingle();
 
@@ -254,24 +254,23 @@ serve(async (req) => {
       throw new Error(paymentResult.ErrorMessage || 'Payment session creation failed');
     }
 
-    // Update order with EPS details - for course orders, set to completed immediately on success
+    // Update order with EPS details - keep as pending; verification will complete it
     if (isCourseOrder) {
-      await supabase
+      const newMeta = { ...(orderRow?.metadata || {}), eps: { merchantTransactionId, transactionId: paymentResult.TransactionId } };
+      const { error: updateErr } = await supabase
         .from('course_orders')
         .update({
           payment_method: 'eps',
-          payment_status: 'completed', // Set as completed for course orders on successful EPS initiation
+          payment_status: 'pending',
           updated_at: new Date().toISOString(),
-          metadata: {
-            eps: {
-              merchantTransactionId,
-              transactionId: paymentResult.TransactionId,
-            }
-          }
+          metadata: newMeta
         })
         .eq('id', orderId);
+      if (updateErr) {
+        console.error('EPS init: failed to update course order', updateErr);
+      }
     } else {
-      await supabase
+      const { error: updateErr } = await supabase
         .from('orders')
         .update({
           payment_method: 'eps',
@@ -286,9 +285,12 @@ serve(async (req) => {
           }
         })
         .eq('id', orderId);
+      if (updateErr) {
+        console.error('EPS init: failed to update order', updateErr);
+      }
     }
 
-    console.log('Order updated successfully');
+    console.log('EPS init: order updated with EPS metadata', { isCourseOrder, orderId });
 
     return new Response(
       JSON.stringify({
