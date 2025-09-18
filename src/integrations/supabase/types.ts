@@ -3618,6 +3618,19 @@ export type Database = {
           updated_at: string
         }[]
       }
+      verify_member_credentials_any_store: {
+        Args: { p_email: string; p_password: string }
+        Returns: {
+          access_status: string
+          email: string
+          full_name: string
+          id: string
+          is_active: boolean
+          last_login_at: string
+          phone: string
+          store_id: string
+        }[]
+      }
       verify_member_password: {
         Args: { input_password: string; stored_hash: string }
         Returns: boolean
