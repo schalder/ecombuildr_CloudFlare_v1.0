@@ -43,6 +43,7 @@ interface CheckoutForm {
   customer_name: string;
   customer_email: string;
   customer_phone: string;
+  transaction_id: string;
 }
 
 const CourseCheckout = () => {
@@ -56,7 +57,8 @@ const CourseCheckout = () => {
   const [form, setForm] = useState<CheckoutForm>({
     customer_name: '',
     customer_email: '',
-    customer_phone: ''
+    customer_phone: '',
+    transaction_id: ''
   });
 
   const paymentMethod = searchParams.get('payment_method') || '';
@@ -137,6 +139,12 @@ const CourseCheckout = () => {
       return false;
     }
 
+    // Validate transaction ID for manual payment methods
+    if ((paymentMethod === 'bkash' || paymentMethod === 'nagad') && !form.transaction_id.trim()) {
+      toast.error('Please enter your transaction ID for manual payment verification');
+      return false;
+    }
+
     return true;
   };
 
@@ -159,7 +167,8 @@ const CourseCheckout = () => {
           customer_phone: form.customer_phone.trim(),
           total: course.price,
           payment_method: paymentMethod,
-          payment_status: 'pending'
+          payment_status: 'pending',
+          metadata: form.transaction_id.trim() ? { transaction_id: form.transaction_id.trim() } : null
         })
         .select()
         .single();
@@ -330,6 +339,21 @@ const CourseCheckout = () => {
                 </div>
               </div>
 
+              {/* Transaction ID field for manual payment methods */}
+              {(paymentMethod === 'bkash' || paymentMethod === 'nagad') && (
+                <div className="space-y-2">
+                  <Label htmlFor="transaction_id">Transaction ID *</Label>
+                  <Input
+                    id="transaction_id"
+                    value={form.transaction_id}
+                    onChange={(e) => handleInputChange('transaction_id', e.target.value)}
+                    placeholder="Enter your transaction ID"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Please enter the transaction ID from your {paymentMethod === 'bkash' ? 'bKash' : 'Nagad'} payment
+                  </p>
+                </div>
+              )}
               <Button
                 onClick={handleCheckout}
                 disabled={loading}

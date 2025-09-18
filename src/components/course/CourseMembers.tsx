@@ -331,6 +331,11 @@ export const CourseMembers = () => {
                         <div className="space-y-1">
                           <div className="font-medium">৳{order.total}</div>
                           <div className="text-sm">{order.payment_method.toUpperCase()}</div>
+                          {(order.metadata as any)?.transaction_id && (
+                            <div className="text-xs text-muted-foreground">
+                              TXN: {(order.metadata as any).transaction_id}
+                            </div>
+                          )}
                           {getPaymentStatusBadge(order.payment_status)}
                         </div>
                       </TableCell>

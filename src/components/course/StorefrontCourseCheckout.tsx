@@ -40,6 +40,7 @@ interface CheckoutForm {
   customer_email: string;
   customer_phone: string;
   password: string;
+  transaction_id: string;
 }
 
 interface MemberLoginForm {
@@ -67,7 +68,8 @@ const StorefrontCourseCheckout: React.FC<StorefrontCourseCheckoutProps> = ({ cou
     customer_name: '',
     customer_email: '',
     customer_phone: '',
-    password: ''
+    password: '',
+    transaction_id: ''
   });
 
   const paymentMethod = searchParams.get('payment_method') || '';
@@ -167,6 +169,12 @@ const StorefrontCourseCheckout: React.FC<StorefrontCourseCheckoutProps> = ({ cou
       }
     }
 
+    // Validate transaction ID for manual payment methods
+    if ((paymentMethod === 'bkash' || paymentMethod === 'nagad') && !form.transaction_id.trim()) {
+      toast.error('Please enter your transaction ID for manual payment verification');
+      return false;
+    }
+
     return true;
   };
 
@@ -179,12 +187,14 @@ const StorefrontCourseCheckout: React.FC<StorefrontCourseCheckoutProps> = ({ cou
         name: form.customer_name.trim(),
         email: form.customer_email.trim(),
         phone: form.customer_phone.trim(),
-        password: form.password.trim()
+        password: form.password.trim(),
+        transaction_id: form.transaction_id.trim()
       } : {
         name: '',
         email: loginForm.email.trim(),
         phone: '',
-        password: loginForm.password.trim()
+        password: loginForm.password.trim(),
+        transaction_id: form.transaction_id.trim()
       };
 
       // Store password temporarily for EPS payments
@@ -404,6 +414,22 @@ const StorefrontCourseCheckout: React.FC<StorefrontCourseCheckoutProps> = ({ cou
                   </div>
                 </div>
               </div>
+
+              {/* Transaction ID field for manual payment methods */}
+              {(paymentMethod === 'bkash' || paymentMethod === 'nagad') && (
+                <div className="space-y-2">
+                  <Label htmlFor="transaction_id">Transaction ID *</Label>
+                  <Input
+                    id="transaction_id"
+                    value={form.transaction_id}
+                    onChange={(e) => handleInputChange('transaction_id', e.target.value)}
+                    placeholder="Enter your transaction ID"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Please enter the transaction ID from your {paymentMethod === 'bkash' ? 'bKash' : 'Nagad'} payment
+                  </p>
+                </div>
+              )}
 
               <Button
                 onClick={handleCheckout}
