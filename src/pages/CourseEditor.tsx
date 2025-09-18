@@ -42,6 +42,7 @@ import {
 import { useUserStore } from '@/hooks/useUserStore';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { CoursePaymentMethods } from '@/components/course/CoursePaymentMethods';
 
 interface Course {
   id: string;
@@ -55,6 +56,11 @@ interface Course {
   is_active: boolean;
   includes_title?: string;
   includes_items?: string[];
+  payment_methods?: {
+    bkash: boolean;
+    nagad: boolean;
+    eps: boolean;
+  };
 }
 
 interface Module {
@@ -223,7 +229,10 @@ const CourseEditor = () => {
 
       if (moduleError) throw moduleError;
 
-      setCourse(courseData);
+      setCourse({
+        ...courseData,
+        payment_methods: courseData.payment_methods as Course['payment_methods'] || { bkash: false, nagad: false, eps: false }
+      });
       
       // Sort lessons within each module
       const sortedModules = moduleData.map(module => ({
@@ -266,6 +275,7 @@ const CourseEditor = () => {
           is_active: course.is_active,
           includes_title: course.includes_title,
           includes_items: course.includes_items,
+          payment_methods: course.payment_methods,
           updated_at: new Date().toISOString()
         })
         .eq('id', course.id);
@@ -801,6 +811,15 @@ const CourseEditor = () => {
               </div>
             </CardContent>
           </Card>
+
+          {/* Payment Methods */}
+          {store && (
+            <CoursePaymentMethods
+              storeId={store.id}
+              value={course.payment_methods || { bkash: false, nagad: false, eps: false }}
+              onChange={(methods) => setCourse(prev => prev ? {...prev, payment_methods: methods} : null)}
+            />
+          )}
 
           {/* Course Thumbnail */}
           <Card>
