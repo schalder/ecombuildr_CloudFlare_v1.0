@@ -51,15 +51,22 @@ export const CoursePaymentProcessing: React.FC = () => {
         return;
       }
 
-      // Auto-verify EPS on successful return if still pending
+      // Auto-verify EPS on successful return if still pending (guard to avoid loops)
       if (status === 'success' && fetched?.payment_method === 'eps' && fetched?.payment_status !== 'completed') {
-        console.log('[CoursePaymentProcessing] auto-verify:eps', { orderId });
-        setAutoVerifying(true);
-        setTimeout(() => verifyPayment(), 1000); // Small delay for better UX
+        const guardKey = `course_auto_verify_${orderId}`;
+        if (!sessionStorage.getItem(guardKey)) {
+          sessionStorage.setItem(guardKey, '1');
+          console.log('[CoursePaymentProcessing] auto-verify:eps', { orderId });
+          setAutoVerifying(true);
+          setTimeout(() => verifyPayment(), 1000); // Small delay for better UX
+        } else {
+          console.log('[CoursePaymentProcessing] auto-verify skipped (already attempted)', { orderId });
+        }
       }
 
       // Handle specific payment statuses
-      if (status === 'failed' || fetched?.payment_status === 'failed') {
+      const isFailed = status === 'failed' || fetched?.payment_status === 'failed' || fetched?.payment_status === 'payment_failed';
+      if (isFailed) {
         console.warn('[CoursePaymentProcessing] payment failed', { status, payment_status: fetched?.payment_status });
         toast.error('Payment failed. Please try again.');
       } else if (status === 'cancelled') {
@@ -146,7 +153,7 @@ export const CoursePaymentProcessing: React.FC = () => {
   };
 
   const getStatusDisplay = () => {
-    if (status === 'failed' || order?.payment_status === 'failed') {
+    if (status === 'failed' || order?.payment_status === 'failed' || order?.payment_status === 'payment_failed') {
       return {
         icon: <XCircle className="h-12 w-12 text-red-500" />,
         title: 'Payment Failed',

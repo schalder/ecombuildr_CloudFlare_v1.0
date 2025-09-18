@@ -90,7 +90,7 @@ export const CourseOrderConfirmation: React.FC = () => {
         description: 'Your course enrollment has been confirmed.',
         color: 'green'
       };
-    } else if (status === 'failed') {
+    } else if (status === 'failed' || order?.payment_status === 'failed' || order?.payment_status === 'payment_failed') {
       return {
         icon: <CreditCard className="h-12 w-12 text-red-500" />,
         title: 'Payment Failed',
