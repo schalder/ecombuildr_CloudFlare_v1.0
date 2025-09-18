@@ -17,18 +17,21 @@ export const useEcomPaths = () => {
   const { store } = useStore();
   const slug = store?.slug;
   
-  // Get websiteId and websiteSlug from params, or parse from current pathname if params are empty
+  // Get websiteId, websiteSlug, and funnelId from params, or parse from current pathname if params are empty
   let websiteId = (params as any).websiteId as string | undefined;
   let websiteSlug = (params as any).websiteSlug as string | undefined;
+  let funnelId = (params as any).funnelId as string | undefined;
   
   // If params are empty (e.g., when AddToCartProvider is mounted higher in tree), 
   // parse from current pathname
-  if (!websiteId && !websiteSlug) {
+  if (!websiteId && !websiteSlug && !funnelId) {
     const pathname = location.pathname;
     if (pathname.includes('/website/')) {
       websiteId = pathname.split('/website/')[1]?.split('/')[0];
     } else if (pathname.includes('/site/')) {
       websiteSlug = pathname.split('/site/')[1]?.split('/')[0];
+    } else if (pathname.includes('/funnel/')) {
+      funnelId = pathname.split('/funnel/')[1]?.split('/')[0];
     }
   }
 
@@ -49,7 +52,9 @@ export const useEcomPaths = () => {
     };
   }
 
-  const base = websiteSlug
+  const base = funnelId
+    ? `/funnel/${funnelId}`
+    : websiteSlug
     ? `/site/${websiteSlug}`
     : websiteId
     ? `/website/${websiteId}`
