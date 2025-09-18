@@ -75,7 +75,14 @@ serve(async (req) => {
             orderId: orderData.id,
             amount: amount,
             storeId: storeId,
-            orderType: 'course'
+            customerData: {
+              name: customerData.name,
+              email: customerData.email,
+              phone: customerData.phone,
+              address: customerData.phone, // Use phone as address fallback for courses
+              city: 'Dhaka', // Default city for courses
+              country: 'BD'
+            }
           }
         });
 
