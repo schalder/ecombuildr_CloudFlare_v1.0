@@ -21,6 +21,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useStore } from '@/contexts/StoreContext';
 import { useCourseCurrency } from '@/hooks/useCourseCurrency';
+import { useCategories } from '@/hooks/useCategories';
 import { formatCoursePrice } from '@/utils/currency';
 import { MetaTags } from '@/components/MetaTags';
 import { setSEO } from '@/lib/seo';
@@ -32,6 +33,7 @@ interface Course {
   thumbnail_url?: string;
   price: number;
   compare_price?: number;
+  category_id?: string;
   is_published: boolean;
   is_active: boolean;
   created_at: string;
@@ -42,6 +44,10 @@ interface Course {
       video_duration?: number;
     }>;
   }>;
+  categories?: {
+    id: string;
+    name: string;
+  };
 }
 
 const StorefrontCourseLibrary: React.FC = () => {
@@ -51,16 +57,17 @@ const StorefrontCourseLibrary: React.FC = () => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const { store } = useStore();
   const { currency } = useCourseCurrency();
+  const { flatCategories } = useCategories();
 
-  // Fetch store settings for favicon
+  // Fetch store settings for favicon, headline, and subheadline
   const { data: storeSettings } = useQuery({
-    queryKey: ['store-favicon', store?.id],
+    queryKey: ['store-settings', store?.id],
     queryFn: async () => {
       if (!store?.id) return null;
       
       const { data, error } = await supabase
         .from('stores')
-        .select('course_favicon_url')
+        .select('course_favicon_url, course_library_headline, course_library_subheadline')
         .eq('id', store.id)
         .single();
 
@@ -87,7 +94,8 @@ const StorefrontCourseLibrary: React.FC = () => {
       let query = supabase
         .from('courses')
         .select(`
-          id, title, description, thumbnail_url, price, compare_price, is_published, is_active, created_at,
+          id, title, description, thumbnail_url, price, compare_price, category_id, is_published, is_active, created_at,
+          categories(id, name),
           course_modules(
             id,
             course_lessons(
@@ -102,6 +110,10 @@ const StorefrontCourseLibrary: React.FC = () => {
 
       if (searchTerm) {
         query = query.ilike('title', `%${searchTerm}%`);
+      }
+
+      if (selectedCategory !== 'all') {
+        query = query.eq('category_id', selectedCategory);
       }
 
       if (priceFilter === 'free') {
@@ -180,9 +192,11 @@ const StorefrontCourseLibrary: React.FC = () => {
         <div className="container mx-auto px-4 py-8">
           {/* Header */}
           <div className="mb-8">
-            <h1 className="text-4xl font-bold mb-4">Course Library</h1>
+            <h1 className="text-4xl font-bold mb-4">
+              {storeSettings?.course_library_headline || 'Course Library'}
+            </h1>
             <p className="text-lg text-muted-foreground">
-              Discover our comprehensive collection of courses and start your learning journey today.
+              {storeSettings?.course_library_subheadline || 'Discover our comprehensive collection of courses and start your learning journey today.'}
             </p>
           </div>
 
@@ -204,12 +218,13 @@ const StorefrontCourseLibrary: React.FC = () => {
               <SelectTrigger className="w-full md:w-48">
                 <SelectValue placeholder="All Categories" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-background z-50">
                 <SelectItem value="all">All Categories</SelectItem>
-                <SelectItem value="programming">Programming</SelectItem>
-                <SelectItem value="design">Design</SelectItem>
-                <SelectItem value="business">Business</SelectItem>
-                <SelectItem value="marketing">Marketing</SelectItem>
+                {flatCategories?.map((category) => (
+                  <SelectItem key={category.id} value={category.id}>
+                    {category.name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
 

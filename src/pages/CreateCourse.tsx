@@ -18,6 +18,8 @@ import { Loader2, Save, ArrowLeft, Upload, Image, DollarSign, Plus, Trash2 } fro
 import { CompactMediaSelector } from '@/components/page-builder/components/CompactMediaSelector';
 import { CoursePaymentMethods } from '@/components/course/CoursePaymentMethods';
 import { useUserStore } from '@/hooks/useUserStore';
+import { useCategories } from '@/hooks/useCategories';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -28,6 +30,7 @@ interface CourseFormData {
   price: number;
   compare_price: number | null;
   thumbnail_url: string;
+  category_id: string | null;
   is_published: boolean;
   is_active: boolean;
   includes_title: string;
@@ -42,6 +45,7 @@ interface CourseFormData {
 const CreateCourse = () => {
   const navigate = useNavigate();
   const { store } = useUserStore();
+  const { flatCategories } = useCategories();
   
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<CourseFormData>({
@@ -51,6 +55,7 @@ const CreateCourse = () => {
     price: 0,
     compare_price: null,
     thumbnail_url: '',
+    category_id: null,
     is_published: false,
     is_active: true,
     includes_title: '',
@@ -90,6 +95,7 @@ const CreateCourse = () => {
         price: formData.price,
         compare_price: formData.compare_price,
         thumbnail_url: formData.thumbnail_url.trim() || null,
+        category_id: formData.category_id || null,
         is_published: formData.is_published,
         is_active: formData.is_active,
         includes_title: formData.includes_title.trim() || null,
@@ -172,6 +178,23 @@ const CreateCourse = () => {
                           placeholder="Write a detailed description of your course, what students will learn, prerequisites, etc..."
                           className="min-h-[150px]"
                         />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="category">Course Category</Label>
+                        <Select value={formData.category_id || ''} onValueChange={(value) => handleInputChange('category_id', value || null)}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a category (optional)" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-background z-50">
+                            <SelectItem value="">No Category</SelectItem>
+                            {flatCategories?.map((category) => (
+                              <SelectItem key={category.id} value={category.id}>
+                                {category.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
 
                       <div className="space-y-2">

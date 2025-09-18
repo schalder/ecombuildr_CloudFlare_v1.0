@@ -7,9 +7,11 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Clock, Users, Star, BookOpen, Search } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Clock, Users, Star, BookOpen, Search, Filter } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useCourseCurrency } from '@/hooks/useCourseCurrency';
+import { useCategories } from '@/hooks/useCategories';
 import { formatCoursePrice } from '@/utils/currency';
 import { MetaTags } from '@/components/MetaTags';
 import { useStore } from '@/contexts/StoreContext';
@@ -22,28 +24,35 @@ interface Course {
   thumbnail_url: string;
   price: number;
   compare_price: number | null;
+  category_id: string | null;
   created_at: string;
   updated_at: string;
   modules_count?: number;
   lessons_count?: number;
   estimated_duration?: number;
+  categories?: {
+    id: string;
+    name: string;
+  };
 }
 
 const CourseLibrary = () => {
   const [searchQuery, setSearchQuery] = React.useState('');
+  const [selectedCategory, setSelectedCategory] = React.useState('all');
   const location = useLocation();
   const { currency } = useCourseCurrency();
   const { store } = useStore();
+  const { flatCategories } = useCategories();
 
-  // Fetch store settings for favicon
+  // Fetch store settings for favicon, headline, and subheadline
   const { data: storeSettings } = useQuery({
-    queryKey: ['store-favicon', store?.id],
+    queryKey: ['store-settings', store?.id],
     queryFn: async () => {
       if (!store?.id) return null;
       
       const { data, error } = await supabase
         .from('stores')
-        .select('course_favicon_url')
+        .select('course_favicon_url, course_library_headline, course_library_subheadline')
         .eq('id', store.id)
         .single();
 
@@ -63,12 +72,13 @@ const CourseLibrary = () => {
   }, [storeSettings?.course_favicon_url]);
 
   const { data: courses, isLoading } = useQuery({
-    queryKey: ['public-courses'],
+    queryKey: ['public-courses', selectedCategory],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('courses')
         .select(`
-          id, title, description, thumbnail_url, price, compare_price, created_at, updated_at,
+          id, title, description, thumbnail_url, price, compare_price, category_id, created_at, updated_at,
+          categories(id, name),
           course_modules(
             id,
             course_lessons(id)
@@ -77,6 +87,12 @@ const CourseLibrary = () => {
         .eq('is_published', true)
         .eq('is_active', true)
         .order('created_at', { ascending: false });
+
+      if (selectedCategory !== 'all') {
+        query = query.eq('category_id', selectedCategory);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
 
@@ -113,21 +129,42 @@ const CourseLibrary = () => {
         <header className="bg-card border-b">
           <div className="container mx-auto px-4 py-12">
             <div className="max-w-3xl mx-auto text-center">
-              <h1 className="text-4xl font-bold mb-4">Course Library</h1>
+              <h1 className="text-4xl font-bold mb-4">
+                {storeSettings?.course_library_headline || 'Course Library'}
+              </h1>
               <p className="text-xl text-muted-foreground mb-8">
-                Discover professional courses designed to help you master new skills and advance your career
+                {storeSettings?.course_library_subheadline || 'Discover professional courses designed to help you master new skills and advance your career'}
               </p>
               
-              {/* Search */}
-              <div className="relative max-w-md mx-auto">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  type="text"
-                  placeholder="Search courses..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
-                />
+              {/* Search and Filters */}
+              <div className="max-w-2xl mx-auto space-y-4">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    type="text"
+                    placeholder="Search courses..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                
+                <div className="flex justify-center">
+                  <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                    <SelectTrigger className="w-48">
+                      <Filter className="h-4 w-4 mr-2" />
+                      <SelectValue placeholder="All Categories" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-background z-50">
+                      <SelectItem value="all">All Categories</SelectItem>
+                      {flatCategories?.map((category) => (
+                        <SelectItem key={category.id} value={category.id}>
+                          {category.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
           </div>

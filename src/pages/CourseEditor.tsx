@@ -40,6 +40,8 @@ import {
   Upload
 } from 'lucide-react';
 import { useUserStore } from '@/hooks/useUserStore';
+import { useCategories } from '@/hooks/useCategories';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { formatDurationForInput, parseDurationInput } from '@/lib/utils';
@@ -53,6 +55,7 @@ interface Course {
   price: number;
   compare_price?: number;
   thumbnail_url?: string;
+  category_id?: string;
   is_published: boolean;
   is_active: boolean;
   includes_title?: string;
@@ -90,6 +93,7 @@ const CourseEditor = () => {
   const { courseId } = useParams();
   const navigate = useNavigate();
   const { store } = useUserStore();
+  const { flatCategories } = useCategories();
   
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -275,6 +279,7 @@ const CourseEditor = () => {
           price: course.price,
           compare_price: course.compare_price,
           thumbnail_url: course.thumbnail_url,
+          category_id: course.category_id,
           is_published: course.is_published,
           is_active: course.is_active,
           includes_title: course.includes_title,
@@ -574,6 +579,24 @@ const CourseEditor = () => {
                         onChange={(e) => setCourse(prev => prev ? {...prev, title: e.target.value} : null)}
                       />
                     </div>
+                    
+                    <div className="space-y-2">
+                      <Label>Course Category</Label>
+                      <Select value={course.category_id || ''} onValueChange={(value) => setCourse(prev => prev ? {...prev, category_id: value || null} : null)}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a category (optional)" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-background z-50">
+                          <SelectItem value="">No Category</SelectItem>
+                          {flatCategories?.map((category) => (
+                            <SelectItem key={category.id} value={category.id}>
+                              {category.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
                     <div className="space-y-2">
                       <Label>Short Description</Label>
                       <RichTextEditor

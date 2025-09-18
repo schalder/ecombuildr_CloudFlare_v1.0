@@ -722,6 +722,7 @@ export type Database = {
       }
       courses: {
         Row: {
+          category_id: string | null
           compare_price: number | null
           content: string | null
           created_at: string
@@ -739,6 +740,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          category_id?: string | null
           compare_price?: number | null
           content?: string | null
           created_at?: string
@@ -756,6 +758,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          category_id?: string | null
           compare_price?: number | null
           content?: string | null
           created_at?: string
@@ -772,7 +775,15 @@ export type Database = {
           title?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "courses_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       custom_domains: {
         Row: {
@@ -2859,6 +2870,8 @@ export type Database = {
         Row: {
           course_currency: string | null
           course_favicon_url: string | null
+          course_library_headline: string | null
+          course_library_subheadline: string | null
           course_login_logo_url: string | null
           created_at: string | null
           description: string | null
@@ -2881,6 +2894,8 @@ export type Database = {
         Insert: {
           course_currency?: string | null
           course_favicon_url?: string | null
+          course_library_headline?: string | null
+          course_library_subheadline?: string | null
           course_login_logo_url?: string | null
           created_at?: string | null
           description?: string | null
@@ -2903,6 +2918,8 @@ export type Database = {
         Update: {
           course_currency?: string | null
           course_favicon_url?: string | null
+          course_library_headline?: string | null
+          course_library_subheadline?: string | null
           course_login_logo_url?: string | null
           created_at?: string | null
           description?: string | null

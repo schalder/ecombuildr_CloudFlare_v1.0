@@ -41,7 +41,7 @@ const CourseSettings = () => {
       
       const { data, error } = await supabase
         .from('stores')
-        .select('course_currency, course_login_logo_url, course_favicon_url, member_area_welcome_headline, member_area_welcome_subheadline')
+        .select('course_currency, course_login_logo_url, course_favicon_url, course_library_headline, course_library_subheadline, member_area_welcome_headline, member_area_welcome_subheadline')
         .eq('id', userStore.id)
         .single();
 
@@ -61,6 +61,12 @@ const CourseSettings = () => {
     }
     if (storeSettings?.course_favicon_url) {
       setCourseFavicon(storeSettings.course_favicon_url);
+    }
+    if (storeSettings?.course_library_headline) {
+      setLibraryHeadline(storeSettings.course_library_headline);
+    }
+    if (storeSettings?.course_library_subheadline) {
+      setLibrarySubheadline(storeSettings.course_library_subheadline);
     }
     if (storeSettings?.member_area_welcome_headline) {
       setMemberAreaWelcomeHeadline(storeSettings.member_area_welcome_headline);
@@ -131,6 +137,8 @@ const CourseSettings = () => {
           course_currency: courseCurrency,
           course_login_logo_url: courseLoginLogo,
           course_favicon_url: courseFavicon,
+          course_library_headline: libraryHeadline,
+          course_library_subheadline: librarySubheadline,
           member_area_welcome_headline: memberAreaWelcomeHeadline,
           member_area_welcome_subheadline: memberAreaWelcomeSubheadline
         })
