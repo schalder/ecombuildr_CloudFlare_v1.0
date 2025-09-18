@@ -3432,6 +3432,10 @@ export type Database = {
         }
         Returns: string
       }
+      crypt: {
+        Args: { pw: string; salt: string }
+        Returns: string
+      }
       decrement_usage: {
         Args: { _resource_type: string; _user_id: string }
         Returns: undefined
@@ -3447,6 +3451,10 @@ export type Database = {
       enforce_plan_limits: {
         Args: { _resource_type: string; _user_id: string }
         Returns: boolean
+      }
+      gen_salt: {
+        Args: { alg: string } | { alg: string; rounds: number }
+        Returns: string
       }
       get_category_hierarchy: {
         Args: { store_uuid: string }
@@ -3569,6 +3577,10 @@ export type Database = {
           title_param?: string
         }
         Returns: string
+      }
+      verify_member_password: {
+        Args: { input_password: string; stored_hash: string }
+        Returns: boolean
       }
     }
     Enums: {
