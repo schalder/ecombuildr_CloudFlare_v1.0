@@ -59,6 +59,8 @@ serve(async (req) => {
     // Update course order status
     const orderStatus = paymentStatus === 'success' ? 'completed' : 'payment_failed';
     
+    console.log('EPS verify: updating course order status', { orderId, orderStatus, paymentStatus });
+    
     const { error } = await supabase
       .from('course_orders')
       .update({
@@ -68,8 +70,11 @@ serve(async (req) => {
       .eq('id', orderId);
 
     if (error) {
+      console.error('EPS verify: failed to update course order', { error: error.message, orderId });
       throw new Error(`Failed to update course order: ${error.message}`);
     }
+    
+    console.log('EPS verify: course order updated successfully', { orderId, orderStatus });
 
     return new Response(
       JSON.stringify({
