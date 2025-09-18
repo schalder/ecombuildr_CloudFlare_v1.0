@@ -26,6 +26,10 @@ interface CourseOrder {
     description?: string;
     thumbnail_url?: string;
   };
+  memberCredentials?: {
+    email: string;
+    password: string | null;
+  } | null;
 }
 
 export const CourseOrderConfirmation: React.FC = () => {
@@ -213,6 +217,46 @@ export const CourseOrderConfirmation: React.FC = () => {
               </div>
             </CardContent>
           </Card>
+
+          {/* Member Login Credentials - Only show for completed orders */}
+          {order.payment_status === 'completed' && order.memberCredentials && (
+            <Card className="border-green-200 bg-green-50">
+              <CardHeader>
+                <CardTitle className="text-green-700 flex items-center gap-2">
+                  <CheckCircle className="h-5 w-5" />
+                  Your Course Access Details
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="bg-white p-4 rounded-lg border">
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Use these credentials to access your course content:
+                  </p>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium">Email:</span>
+                      <span className="text-sm font-mono bg-gray-100 px-2 py-1 rounded">
+                        {order.memberCredentials.email}
+                      </span>
+                    </div>
+                    {order.memberCredentials.password && (
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium">Password:</span>
+                        <span className="text-sm font-mono bg-gray-100 px-2 py-1 rounded">
+                          {order.memberCredentials.password}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="mt-3 p-3 bg-blue-50 rounded-lg">
+                    <p className="text-xs text-blue-700">
+                      💡 Please save these credentials safely. You can use them to access your course dashboard.
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Next Steps */}
           <Card>

@@ -54,7 +54,30 @@ serve(async (req) => {
       });
     }
 
-    return new Response(JSON.stringify({ order: data }), {
+    // For completed orders, get member account details if they exist
+    let memberCredentials = null;
+    if (data.payment_status === 'completed') {
+      const { data: memberData } = await supabase
+        .from('member_accounts')
+        .select('email')
+        .eq('store_id', data.store_id)
+        .eq('email', data.customer_email)
+        .maybeSingle();
+
+      if (memberData) {
+        memberCredentials = {
+          email: data.customer_email,
+          password: data.metadata?.member_password || null
+        };
+      }
+    }
+
+    const orderWithCredentials = {
+      ...data,
+      memberCredentials
+    };
+
+    return new Response(JSON.stringify({ order: orderWithCredentials }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
