@@ -99,7 +99,7 @@ const CourseCheckout = () => {
       case 'eps':
         return {
           name: 'EPS Payment Gateway',
-          icon: <img src="/src/assets/eps-logo.png" alt="EPS" className="h-5 w-6 object-contain" />,
+          icon: <img src="https://www.eps.com.bd/images/logo.png" alt="EPS" className="h-5 w-6 object-contain" />,
           description: 'Secure payment via eps.com.bd'
         };
       default:
