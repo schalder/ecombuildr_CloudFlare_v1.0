@@ -14,6 +14,7 @@ import { nameWithVariant } from '@/lib/utils';
 import { usePixelTracking } from '@/hooks/usePixelTracking';
 import { usePixelContext } from '@/components/pixel/PixelManager';
 import jsPDF from 'jspdf';
+import CourseOrderConfirmation from '@/components/course/CourseOrderConfirmation';
 
 interface Order {
   id: string;
@@ -54,6 +55,7 @@ export const OrderConfirmation: React.FC = () => {
   const [order, setOrder] = useState<Order | null>(null);
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isCourseOrder, setIsCourseOrder] = useState(false);
   const paths = useEcomPaths();
   const orderId = orderIdParam || searchParams.get('orderId') || '';
   const orderToken = searchParams.get('ot') || '';
@@ -84,11 +86,31 @@ useEffect(() => {
     }
   }, [store, orderId, orderToken]);
 
+  // If this is a course order, delegate to the dedicated component
+  if (isCourseOrder) {
+    return <CourseOrderConfirmation />;
+  }
+
+
   const fetchOrder = async () => {
-    if (!store || !orderId) return;
+    if (!orderId) return;
 
     try {
-      // Use public order access with token
+      // If no token is present, this is likely a course order. Try course lookup first.
+      if (!orderToken) {
+        const { data: courseData, error: courseError } = await supabase.functions.invoke('get-course-order-public', {
+          body: { orderId }
+        });
+        if (!courseError && courseData?.order) {
+          setIsCourseOrder(true);
+          setLoading(false);
+          return;
+        }
+      }
+
+      if (!store) return;
+
+      // Use public order access with token for storefront orders
       const { data, error } = await supabase.functions.invoke('get-order-public', {
         body: { 
           orderId,
@@ -98,6 +120,16 @@ useEffect(() => {
       });
       if (error) throw error;
       if (!data || !data.order) {
+        // As a fallback, try course order lookup even if token exists
+        const { data: courseData } = await supabase.functions.invoke('get-course-order-public', {
+          body: { orderId }
+        });
+        if (courseData?.order) {
+          setIsCourseOrder(true);
+          setLoading(false);
+          return;
+        }
+
         setOrder(null);
         setOrderItems([]);
       } else {
