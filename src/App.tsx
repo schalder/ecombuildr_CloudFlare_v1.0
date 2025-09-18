@@ -113,6 +113,10 @@ import CourseDetail from "@/pages/CourseDetail";
 import CourseCheckout from "@/pages/CourseCheckout";
 import CourseDomainSettings from "@/pages/CourseDomainSettings";
 import CourseSettings from "@/pages/CourseSettings";
+import CourseMemberLoginPage from "@/pages/CourseMemberLoginPage";
+import CourseMemberDashboard from "@/components/course/CourseMemberDashboard";
+import { MemberAuthProvider } from "@/hooks/useMemberAuth";
+import CoursePlayerPage from "@/pages/CoursePlayerPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -211,6 +215,9 @@ const App = () => (
                 <Route path="/training/:courseSlug" element={<TrainingCourse />} />
                 
                 {/* Public Course Library Routes */}
+                <Route path="/courses/members/login" element={<CourseMemberLoginPage />} />
+                <Route path="/courses/members" element={<MemberAuthProvider><CourseMemberDashboard /></MemberAuthProvider>} />
+                <Route path="/courses/learn/:courseId" element={<CoursePlayerPage />} />
                 <Route path="/courses" element={<CourseLibrary />} />
                 <Route path="/courses/:courseId" element={<CourseDetail />} />
                 <Route path="/courses/:courseId/checkout" element={<CourseCheckout />} />
