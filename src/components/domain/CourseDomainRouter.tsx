@@ -15,6 +15,7 @@ import CourseMemberDashboard from '@/components/course/CourseMemberDashboard';
 import { WebsiteHeader } from '@/components/storefront/WebsiteHeader';
 import { WebsiteFooter } from '@/components/storefront/WebsiteFooter';
 import { WebsiteProvider } from '@/contexts/WebsiteContext';
+import CoursePlayerPage from '@/pages/CoursePlayerPage';
 import { Loader2 } from 'lucide-react';
 import { setSEO } from '@/lib/seo';
 
@@ -173,6 +174,15 @@ const CourseDomainRouter = ({ customDomain, storeSlug }: CourseDomainRouterProps
         {coursePath.includes('/login') ? <CourseMemberLogin /> : <CourseMemberDashboard />}
       </MemberAuthProvider>
     );
+  }
+
+  // Handle course learning (member course player)
+  if (coursePath.includes('/learn/')) {
+    const learnMatch = coursePath.match(/\/learn\/([a-f0-9-]+)/);
+    if (learnMatch) {
+      const courseId = learnMatch[1];
+      return <CoursePlayerPage />;
+    }
   }
 
   // Handle order confirmation
