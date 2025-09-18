@@ -229,41 +229,57 @@ export const CourseOrderConfirmation: React.FC = () => {
             </CardContent>
           </Card>
 
-          {/* Member Login Credentials - Only show for completed orders */}
-          {order.payment_status === 'completed' && order.memberCredentials && (
-            <Card className="border-green-200 bg-green-50">
+          {/* Member Access Information - Show for completed and pending orders */}
+          {(order.payment_status === 'completed' || order.payment_status === 'pending') && (
+            <Card className={order.payment_status === 'completed' ? 'border-green-200 bg-green-50' : 'border-blue-200 bg-blue-50'}>
               <CardHeader>
-                <CardTitle className="text-green-700 flex items-center gap-2">
+                <CardTitle className={`${order.payment_status === 'completed' ? 'text-green-700' : 'text-blue-700'} flex items-center gap-2`}>
                   <CheckCircle className="h-5 w-5" />
-                  Your Course Access Details
+                  Course Access Information
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="bg-white p-4 rounded-lg border">
                   <p className="text-sm text-muted-foreground mb-3">
-                    Use these credentials to access your course content:
+                    Use these credentials to access your course member dashboard:
                   </p>
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium">Email:</span>
+                      <span className="text-sm font-medium">Login Email:</span>
                       <span className="text-sm font-mono bg-gray-100 px-2 py-1 rounded">
-                        {order.memberCredentials.email}
+                        {order.customer_email}
                       </span>
                     </div>
-                    {order.memberCredentials.password && (
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm font-medium">Password:</span>
-                        <span className="text-sm font-mono bg-gray-100 px-2 py-1 rounded">
-                          {order.memberCredentials.password}
-                        </span>
-                      </div>
-                    )}
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium">Password:</span>
+                      <span className="text-sm font-mono bg-gray-100 px-2 py-1 rounded">
+                        Please check your email for login credentials
+                      </span>
+                    </div>
                   </div>
-                  <div className="mt-3 p-3 bg-blue-50 rounded-lg">
-                    <p className="text-xs text-blue-700">
-                      💡 Please save these credentials safely. You can use them to access your course dashboard.
-                    </p>
+                  <div className="mt-3">
+                    <Button 
+                      onClick={() => window.open('/courses/members', '_blank')}
+                      className="w-full"
+                      variant={order.payment_status === 'completed' ? 'default' : 'outline'}
+                    >
+                      Access Member Dashboard
+                    </Button>
                   </div>
+                  {order.payment_status === 'pending' && (
+                    <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded">
+                      <p className="text-yellow-800 text-sm">
+                        <strong>Note:</strong> Your payment is being verified. You can log in, but course access will be activated once payment is confirmed.
+                      </p>
+                    </div>
+                  )}
+                  {order.payment_status === 'completed' && (
+                    <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded">
+                      <p className="text-green-800 text-sm">
+                        <strong>Congratulations!</strong> Your payment has been confirmed and you now have full access to the course.
+                      </p>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>

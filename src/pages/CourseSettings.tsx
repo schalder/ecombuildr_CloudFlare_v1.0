@@ -17,6 +17,7 @@ import { CompactMediaSelector } from '@/components/page-builder/components/Compa
 import { ArrowLeft, Eye, Users, Package, Settings as SettingsIcon } from 'lucide-react';
 import { useUserStore } from '@/hooks/useUserStore';
 import { useToast } from '@/hooks/use-toast';
+import { CourseMembers } from '@/components/course/CourseMembers';
 
 const CourseSettings = () => {
   const navigate = useNavigate();
@@ -346,78 +347,7 @@ const CourseSettings = () => {
 
           {/* Members & Access Tab */}
           <TabsContent value="members" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="h-5 w-5" />
-                  Course Members & Purchases
-                </CardTitle>
-                <CardDescription>
-                  View and manage customers who have purchased your courses
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {coursePurchases.length > 0 ? (
-                    coursePurchases.map((purchase) => (
-                      <div key={purchase.id} className="p-4 border rounded-lg">
-                        <div className="flex justify-between items-start">
-                          <div className="flex gap-3">
-                            {purchase.courses?.thumbnail_url && (
-                              <img
-                                src={purchase.courses.thumbnail_url}
-                                alt={purchase.courses.title}
-                                className="w-12 h-12 object-cover rounded-lg"
-                              />
-                            )}
-                            <div>
-                              <h4 className="font-medium">{purchase.customer_name}</h4>
-                              <p className="text-sm text-muted-foreground">{purchase.customer_email}</p>
-                              {purchase.customer_phone && (
-                                <p className="text-sm text-muted-foreground">{purchase.customer_phone}</p>
-                              )}
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <Badge 
-                              variant={purchase.payment_status === 'completed' ? 'default' : 'secondary'}
-                            >
-                              {purchase.payment_status === 'completed' ? 'Paid' : 'Pending'}
-                            </Badge>
-                            <p className="text-sm text-muted-foreground mt-1">
-                              {new Date(purchase.created_at).toLocaleDateString()}
-                            </p>
-                          </div>
-                        </div>
-                        <Separator className="my-3" />
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <p className="text-sm font-medium">Course: {purchase.courses?.title}</p>
-                            <p className="text-sm text-muted-foreground">
-                              Order #{purchase.order_number}
-                            </p>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-sm font-medium">${purchase.total}</p>
-                            <p className="text-sm text-muted-foreground capitalize">
-                              {purchase.payment_method}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="text-center py-8">
-                      <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                      <h3 className="text-lg font-medium mb-2">No Course Purchases Yet</h3>
-                      <p className="text-muted-foreground">
-                        When customers purchase your courses, their information will appear here.
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+            <CourseMembers />
           </TabsContent>
         </Tabs>
       </div>

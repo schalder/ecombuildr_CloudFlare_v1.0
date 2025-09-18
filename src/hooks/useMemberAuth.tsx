@@ -65,6 +65,16 @@ export const MemberAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       }
 
       const memberAccount = data.member;
+      
+      // Check access status
+      if (memberAccount.access_status === 'pending') {
+        return { error: 'Your account is pending approval. Please contact support or wait for verification.' };
+      }
+      
+      if (memberAccount.access_status === 'suspended') {
+        return { error: 'Your account has been suspended. Please contact support.' };
+      }
+
       setMember(memberAccount);
       localStorage.setItem('member_session', JSON.stringify(memberAccount));
       

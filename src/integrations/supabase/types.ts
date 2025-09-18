@@ -1277,6 +1277,7 @@ export type Database = {
       }
       member_accounts: {
         Row: {
+          access_status: string
           created_at: string
           email: string
           full_name: string | null
@@ -1289,6 +1290,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          access_status?: string
           created_at?: string
           email: string
           full_name?: string | null
@@ -1301,6 +1303,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          access_status?: string
           created_at?: string
           email?: string
           full_name?: string | null
@@ -1316,6 +1319,7 @@ export type Database = {
       }
       member_content_access: {
         Row: {
+          course_order_id: string | null
           created_at: string
           expires_at: string | null
           granted_at: string
@@ -1326,6 +1330,7 @@ export type Database = {
           product_id: string
         }
         Insert: {
+          course_order_id?: string | null
           created_at?: string
           expires_at?: string | null
           granted_at?: string
@@ -1336,6 +1341,7 @@ export type Database = {
           product_id: string
         }
         Update: {
+          course_order_id?: string | null
           created_at?: string
           expires_at?: string | null
           granted_at?: string
@@ -1345,7 +1351,15 @@ export type Database = {
           order_id?: string
           product_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "member_content_access_course_order_id_fkey"
+            columns: ["course_order_id"]
+            isOneToOne: false
+            referencedRelation: "course_orders"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       navigation_menus: {
         Row: {
