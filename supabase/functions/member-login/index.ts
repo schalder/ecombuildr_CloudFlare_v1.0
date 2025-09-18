@@ -1,6 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.4";
-import { compare } from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -34,44 +33,32 @@ const handler = async (req: Request): Promise<Response> => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Get member account
-    const { data: memberAccount, error: fetchError } = await supabase
-      .from('member_accounts')
-      .select('*')
-      .eq('email', email.toLowerCase())
-      .eq('store_id', store_id)
-      .eq('is_active', true)
-      .single();
+    // Use secure database function to verify credentials
+    const { data: memberData, error: verifyError } = await supabase.rpc('verify_member_credentials', {
+      p_email: email,
+      p_password: password,
+      p_store_id: store_id
+    });
 
-    if (fetchError || !memberAccount) {
+    if (verifyError) {
+      console.error('Member credential verification error:', verifyError);
       return new Response(
         JSON.stringify({ error: 'Invalid email or password' }),
         { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
       );
     }
 
-    // Verify password using bcrypt
-    let passwordValid = false;
-    try {
-      passwordValid = await compare(password, memberAccount.password_hash);
-    } catch (error) {
-      console.error('Password verification error:', error);
-      // Fall back to plain text comparison for legacy accounts
-      passwordValid = password === memberAccount.password_hash;
-    }
-
-    if (!passwordValid) {
+    if (!memberData || memberData.length === 0) {
       return new Response(
         JSON.stringify({ error: 'Invalid email or password' }),
         { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
       );
     }
 
-    // Return member data (without password hash)
-    const { password_hash, ...memberData } = memberAccount;
+    const memberAccount = memberData[0];
     
     return new Response(
-      JSON.stringify({ member: memberData }),
+      JSON.stringify({ member: memberAccount }),
       { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
     );
 

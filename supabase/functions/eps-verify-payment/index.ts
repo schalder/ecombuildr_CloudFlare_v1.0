@@ -2,7 +2,6 @@ import { serve } from "https://deno.land/std@0.208.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { crypto } from "https://deno.land/std@0.208.0/crypto/crypto.ts";
 import { encodeBase64 } from "https://deno.land/std@0.208.0/encoding/base64.ts";
-import { hash } from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -90,33 +89,50 @@ serve(async (req) => {
         if (orderFetchError) {
           console.error('Error fetching order details:', orderFetchError);
         } else if (orderDetails) {
-          // Generate secure password if not provided
+          // Use provided password or generate secure one if missing
           let memberPassword = password;
+          let isGeneratedPassword = false;
+          
           if (!memberPassword) {
             // Generate random secure password: 8 chars with mix of letters/numbers
             const chars = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
             memberPassword = Array.from({ length: 8 }, () => 
               chars.charAt(Math.floor(Math.random() * chars.length))
             ).join('');
+            isGeneratedPassword = true;
             console.log('Generated password for member account (length:', memberPassword.length, ')');
           }
 
-          // Hash the password using bcrypt
-          const hashedPassword = await hash(memberPassword);
-
-          // Create member account with hashed password
+          // Create member account with plaintext password (DB function handles hashing)
           const { data: memberId, error: memberError } = await supabase.rpc('create_member_account_with_password', {
             p_store_id: orderDetails.store_id,
             p_email: orderDetails.customer_email,
-            p_password: hashedPassword,
+            p_password: memberPassword,
             p_full_name: orderDetails.customer_name,
             p_phone: orderDetails.customer_phone
           });
 
           if (memberError) {
-            console.error('Error creating member account:', memberError);
+            console.error('Member account creation error for EPS:', memberError);
           } else {
-            console.log('Member account created for EPS payment:', memberId);
+            console.log('EPS verify: member account created successfully', { memberId, email: orderDetails.customer_email });
+            
+            // Update order metadata with member password only if it was generated
+            if (isGeneratedPassword) {
+              const { error: updateError } = await supabase
+                .from('course_orders')
+                .update({ 
+                  metadata: { 
+                    ...orderDetails.metadata, 
+                    member_password: memberPassword 
+                  } 
+                })
+                .eq('id', orderId);
+                
+              if (updateError) {
+                console.error('Error updating order with generated password:', updateError);
+              }
+            }
             
             // Grant course access
             const { error: accessError } = await supabase.rpc('grant_course_access', {
@@ -126,9 +142,9 @@ serve(async (req) => {
             });
 
             if (accessError) {
-              console.error('Error granting course access:', accessError);
+              console.error('Course access grant error for EPS:', accessError);
             } else {
-              console.log('Course access granted for EPS payment');
+              console.log('EPS verify: course access granted successfully', { memberId, courseId: orderDetails.course_id });
             }
           }
         }
