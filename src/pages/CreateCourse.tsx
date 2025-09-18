@@ -182,12 +182,12 @@ const CreateCourse = () => {
 
                       <div className="space-y-2">
                         <Label htmlFor="category">Course Category</Label>
-                        <Select value={formData.category_id || ''} onValueChange={(value) => handleInputChange('category_id', value || null)}>
+                        <Select value={formData.category_id || 'no-category'} onValueChange={(value) => handleInputChange('category_id', value === 'no-category' ? null : value)}>
                           <SelectTrigger>
                             <SelectValue placeholder="Select a category (optional)" />
                           </SelectTrigger>
                           <SelectContent className="bg-background z-50">
-                            <SelectItem value="">No Category</SelectItem>
+                            <SelectItem value="no-category">No Category</SelectItem>
                             {flatCategories?.map((category) => (
                               <SelectItem key={category.id} value={category.id}>
                                 {category.name}

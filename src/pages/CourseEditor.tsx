@@ -582,12 +582,12 @@ const CourseEditor = () => {
                     
                     <div className="space-y-2">
                       <Label>Course Category</Label>
-                      <Select value={course.category_id || ''} onValueChange={(value) => setCourse(prev => prev ? {...prev, category_id: value || null} : null)}>
+                      <Select value={course.category_id || 'no-category'} onValueChange={(value) => setCourse(prev => prev ? {...prev, category_id: value === 'no-category' ? null : value} : null)}>
                         <SelectTrigger>
                           <SelectValue placeholder="Select a category (optional)" />
                         </SelectTrigger>
                         <SelectContent className="bg-background z-50">
-                          <SelectItem value="">No Category</SelectItem>
+                          <SelectItem value="no-category">No Category</SelectItem>
                           {flatCategories?.map((category) => (
                             <SelectItem key={category.id} value={category.id}>
                               {category.name}
