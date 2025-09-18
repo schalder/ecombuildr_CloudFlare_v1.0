@@ -186,13 +186,13 @@ serve(async (req) => {
       ipAddress: "127.0.0.1", // Default IP
       version: "1",
       successUrl: isCourseOrder 
-        ? `${originBase}/courses/payment-processing?orderId=${orderId}&status=success`
+        ? `${originBase}/courses/order-confirmation?orderId=${orderId}&status=success`
         : `${originBase}/order-confirmation?orderId=${orderId}${orderToken ? `&ot=${orderToken}` : ''}&status=success`,
       failUrl: isCourseOrder
-        ? `${originBase}/courses/payment-processing?orderId=${orderId}&status=failed`
+        ? `${originBase}/courses/order-confirmation?orderId=${orderId}&status=failed`
         : `${originBase}/payment-processing?orderId=${orderId}${orderToken ? `&ot=${orderToken}` : ''}&status=failed`,
       cancelUrl: isCourseOrder
-        ? `${originBase}/courses/payment-processing?orderId=${orderId}&status=cancelled`
+        ? `${originBase}/courses/order-confirmation?orderId=${orderId}&status=cancelled`
         : `${originBase}/payment-processing?orderId=${orderId}${orderToken ? `&ot=${orderToken}` : ''}&status=cancelled`,
       customerName: customerData.name,
       customerEmail: customerData.email,

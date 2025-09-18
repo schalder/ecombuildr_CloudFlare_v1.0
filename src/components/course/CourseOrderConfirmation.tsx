@@ -47,6 +47,7 @@ export const CourseOrderConfirmation: React.FC = () => {
 
   const orderId = searchParams.get('orderId');
   const status = searchParams.get('status');
+  const paymentRef = searchParams.get('payment_ref') || searchParams.get('trxID') || searchParams.get('MerchantTransactionId');
 
   useEffect(() => {
     console.log('[CourseOrderConfirmation] init', { orderId, status, search: typeof window !== 'undefined' ? window.location.search : '' });
@@ -82,6 +83,55 @@ export const CourseOrderConfirmation: React.FC = () => {
       console.log('[CourseOrderConfirmation] fetchOrder:end');
     }
   };
+
+  // Auto-verify EPS on the confirmation page to avoid loops
+  useEffect(() => {
+    if (!orderId || !order) return;
+    try {
+      if (order.payment_method !== 'eps') return;
+      if (order.payment_status === 'completed') return;
+      if (status === 'failed' || status === 'cancelled') return;
+
+      const guardKey = `course_confirm_verify_${orderId}`;
+      if (sessionStorage.getItem(guardKey)) return;
+
+      const epsRef = paymentRef || order?.metadata?.eps?.merchantTransactionId || order?.metadata?.merchantTransactionId;
+      if (!epsRef) {
+        console.warn('[CourseOrderConfirmation] Missing EPS reference for verification');
+        return;
+      }
+
+      sessionStorage.setItem(guardKey, '1');
+      console.log('[CourseOrderConfirmation] Auto verifying EPS payment', { orderId, epsRef });
+
+      supabase.functions.invoke('eps-verify-payment', {
+        body: {
+          orderId,
+          paymentId: epsRef,
+          method: 'eps',
+          password: localStorage.getItem('courseCheckoutPassword') || undefined,
+        },
+      }).then(({ data, error }) => {
+        if (error) {
+          console.error('[CourseOrderConfirmation] eps-verify-payment:error', error);
+          return;
+        }
+        if (data?.success) {
+          console.log('[CourseOrderConfirmation] EPS verification success');
+          localStorage.removeItem('courseCheckoutPassword');
+          setAutoVerified(true);
+          fetchOrder();
+        } else {
+          console.warn('[CourseOrderConfirmation] EPS verification failed', data);
+        }
+      }).catch((err) => {
+        console.error('[CourseOrderConfirmation] eps-verify-payment:catch', err);
+      });
+    } catch (e) {
+      console.error('[CourseOrderConfirmation] auto-verify:error', e);
+    }
+  }, [order, orderId, status, paymentRef]);
+
   const getStatusInfo = () => {
     if (status === 'success' || order?.payment_status === 'completed') {
       return {

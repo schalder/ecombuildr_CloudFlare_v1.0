@@ -51,17 +51,11 @@ export const CoursePaymentProcessing: React.FC = () => {
         return;
       }
 
-      // Auto-verify EPS on successful return if still pending (guard to avoid loops)
-      if (status === 'success' && fetched?.payment_method === 'eps' && fetched?.payment_status !== 'completed') {
-        const guardKey = `course_auto_verify_${orderId}`;
-        if (!sessionStorage.getItem(guardKey)) {
-          sessionStorage.setItem(guardKey, '1');
-          console.log('[CoursePaymentProcessing] auto-verify:eps', { orderId });
-          setAutoVerifying(true);
-          setTimeout(() => verifyPayment(), 1000); // Small delay for better UX
-        } else {
-          console.log('[CoursePaymentProcessing] auto-verify skipped (already attempted)', { orderId });
-        }
+      // For EPS, skip this page entirely — go straight to confirmation
+      if (fetched?.payment_method === 'eps') {
+        console.log('[CoursePaymentProcessing] EPS flow: redirecting to confirmation');
+        navigate(`/courses/order-confirmation?orderId=${orderId}&status=${status || 'success'}`);
+        return;
       }
 
       // Handle specific payment statuses
@@ -257,8 +251,8 @@ export const CoursePaymentProcessing: React.FC = () => {
               )}
 
               <div className="space-y-3">
-                {/* Only show manual verify button if not auto-verifying and payment needs verification */}
-                {!autoVerifying && (status === 'success' || order.payment_status === 'pending') && (
+                {/* Only show manual verify button for non-EPS methods */}
+                {!autoVerifying && (status === 'success' || order.payment_status === 'pending') && order.payment_method !== 'eps' && (
                   <Button
                     onClick={verifyPayment}
                     disabled={verifying}
