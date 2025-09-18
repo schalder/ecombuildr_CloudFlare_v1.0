@@ -52,6 +52,45 @@ export function buildWhatsAppUrl(phoneNumber: string, message?: string): string 
   return `https://wa.me/?text=${encodedMessage}`;
 }
 
+export function formatDuration(totalMinutes: number): string {
+  if (!totalMinutes || totalMinutes <= 0) return '0:00:00';
+  
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = Math.floor(totalMinutes % 60);
+  const seconds = Math.floor((totalMinutes % 1) * 60);
+  
+  return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+}
+
+export function parseDurationInput(input: string): number {
+  if (!input || typeof input !== 'string') return 0;
+  
+  const parts = input.split(':').map(part => parseInt(part.trim(), 10) || 0);
+  
+  if (parts.length === 1) {
+    // Just minutes
+    return parts[0];
+  } else if (parts.length === 2) {
+    // Minutes:seconds
+    return parts[0] + (parts[1] / 60);
+  } else if (parts.length === 3) {
+    // Hours:minutes:seconds
+    return parts[0] * 60 + parts[1] + (parts[2] / 60);
+  }
+  
+  return 0;
+}
+
+export function formatDurationForInput(totalMinutes: number): string {
+  if (!totalMinutes || totalMinutes <= 0) return '0:00:00';
+  
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = Math.floor(totalMinutes % 60);
+  const seconds = Math.floor((totalMinutes % 1) * 60);
+  
+  return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+}
+
 export function openWhatsApp(phoneNumber: string, message?: string, webOnly = false): void {
   const sanitizedNumber = phoneNumber.replace(/\D/g, '');
   const encodedMessage = message ? encodeURIComponent(message) : '';

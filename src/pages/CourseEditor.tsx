@@ -42,6 +42,7 @@ import {
 import { useUserStore } from '@/hooks/useUserStore';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { formatDurationForInput, parseDurationInput } from '@/lib/utils';
 import { CoursePaymentMethods } from '@/components/course/CoursePaymentMethods';
 
 interface Course {
@@ -109,6 +110,7 @@ const CourseEditor = () => {
     content: '', 
     video_url: '', 
     video_duration: 0, 
+    video_duration_display: '0:00:00',
     is_published: false, 
     is_preview: false 
   });
@@ -315,6 +317,7 @@ const CourseEditor = () => {
         content: lesson.content,
         video_url: lesson.video_url || '',
         video_duration: lesson.video_duration || 0,
+        video_duration_display: formatDurationForInput(lesson.video_duration || 0),
         is_published: lesson.is_published,
         is_preview: lesson.is_preview
       });
@@ -325,6 +328,7 @@ const CourseEditor = () => {
         content: '',
         video_url: '',
         video_duration: 0,
+        video_duration_display: '0:00:00',
         is_published: false,
         is_preview: false
       });
@@ -427,6 +431,7 @@ const CourseEditor = () => {
         content: '',
         video_url: '',
         video_duration: 0,
+        video_duration_display: '0:00:00',
         is_published: false,
         is_preview: false
       });
@@ -472,6 +477,7 @@ const CourseEditor = () => {
         content: '',
         video_url: '',
         video_duration: 0,
+        video_duration_display: '0:00:00',
         is_published: false,
         is_preview: false
       });
@@ -715,7 +721,7 @@ const CourseEditor = () => {
                                                         </div>
                                                         {lesson.video_url && (
                                                           <p className="text-xs text-muted-foreground">
-                                                            Video • {lesson.video_duration ? `${Math.floor(lesson.video_duration / 60)}:${(lesson.video_duration % 60).toString().padStart(2, '0')}` : 'No duration'}
+                                                            Video • {lesson.video_duration ? formatDurationForInput(lesson.video_duration) : 'No duration'}
                                                           </p>
                                                         )}
                                                       </div>
@@ -882,7 +888,7 @@ const CourseEditor = () => {
 
         {/* Lesson Dialog */}
         <Dialog open={showLessonDialog} onOpenChange={setShowLessonDialog}>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{editingLesson ? 'Edit Lesson' : 'Create New Lesson'}</DialogTitle>
               <DialogDescription>
@@ -916,13 +922,23 @@ const CourseEditor = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Video Duration (minutes)</Label>
+                <Label>Video Duration (H:MM:SS)</Label>
                 <Input
-                  type="number"
-                  value={lessonForm.video_duration}
-                  onChange={(e) => setLessonForm(prev => ({...prev, video_duration: parseInt(e.target.value) || 0}))}
-                  placeholder="0"
+                  value={lessonForm.video_duration_display}
+                  onChange={(e) => {
+                    const displayValue = e.target.value;
+                    const totalMinutes = parseDurationInput(displayValue);
+                    setLessonForm(prev => ({
+                      ...prev, 
+                      video_duration_display: displayValue,
+                      video_duration: totalMinutes
+                    }));
+                  }}
+                  placeholder="0:15:30"
                 />
+                <p className="text-xs text-muted-foreground">
+                  Format: Hours:Minutes:Seconds (e.g., 1:30:45 for 1 hour 30 minutes 45 seconds)
+                </p>
               </div>
               <div className="flex items-center justify-between">
                 <Label>Published</Label>

@@ -21,7 +21,7 @@ import {
   Circle
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { cn } from '@/lib/utils';
+import { cn, formatDuration } from '@/lib/utils';
 import { toast } from 'sonner';
 
 interface CourseLesson {
@@ -331,7 +331,7 @@ const CoursePlayerPage = ({ courseId: propCourseId }: CoursePlayerPageProps = {}
               <div>
                 <h1 className="text-xl font-bold">{course.title}</h1>
                 <p className="text-sm text-muted-foreground">
-                  {course.modules.length} modules • {getTotalDuration()} min total
+                  {course.modules.length} modules • {formatDuration(getTotalDuration())}
                 </p>
               </div>
             </div>
@@ -356,7 +356,7 @@ const CoursePlayerPage = ({ courseId: propCourseId }: CoursePlayerPageProps = {}
                   <span>{course.modules.length} modules</span>
                   <div className="flex items-center gap-1">
                     <Clock className="h-3 w-3" />
-                    <span>{getTotalDuration()} min</span>
+                    <span>{formatDuration(getTotalDuration())}</span>
                   </div>
                 </div>
               </CardHeader>
@@ -399,7 +399,7 @@ const CoursePlayerPage = ({ courseId: propCourseId }: CoursePlayerPageProps = {}
                           <span className="flex-1 text-left text-xs leading-tight">{lesson.title}</span>
                           {lesson.video_duration && (
                             <span className="text-xs text-muted-foreground">
-                              {lesson.video_duration}min
+                              {formatDuration(lesson.video_duration)}
                             </span>
                           )}
                         </button>
@@ -427,7 +427,7 @@ const CoursePlayerPage = ({ courseId: propCourseId }: CoursePlayerPageProps = {}
                         {selectedLesson.video_duration && (
                           <Badge variant="outline">
                             <Clock className="h-3 w-3 mr-1" />
-                            {selectedLesson.video_duration} min
+                            {formatDuration(selectedLesson.video_duration)}
                           </Badge>
                         )}
                       </div>
