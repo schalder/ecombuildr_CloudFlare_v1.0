@@ -92,24 +92,17 @@ const CourseSettings = () => {
       if (!userStore?.id) return [];
       
       const { data, error } = await supabase
-        .from('order_items')
+        .from('course_orders')
         .select(`
           *,
-          orders!inner(
-            customer_name,
-            customer_email,
-            customer_phone,
-            created_at,
-            status
-          ),
-          products!inner(
-            name,
-            is_membership
+          courses!inner(
+            title,
+            price,
+            thumbnail_url
           )
         `)
-        .eq('orders.store_id', userStore.id)
-        .eq('products.is_membership', true)
-        .eq('orders.status', 'delivered')
+        .eq('store_id', userStore.id)
+        .in('payment_status', ['completed', 'pending'])
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -369,27 +362,47 @@ const CourseSettings = () => {
                     coursePurchases.map((purchase) => (
                       <div key={purchase.id} className="p-4 border rounded-lg">
                         <div className="flex justify-between items-start">
-                          <div>
-                            <h4 className="font-medium">{purchase.orders.customer_name}</h4>
-                            <p className="text-sm text-muted-foreground">{purchase.orders.customer_email}</p>
-                            {purchase.orders.customer_phone && (
-                              <p className="text-sm text-muted-foreground">{purchase.orders.customer_phone}</p>
+                          <div className="flex gap-3">
+                            {purchase.courses?.thumbnail_url && (
+                              <img
+                                src={purchase.courses.thumbnail_url}
+                                alt={purchase.courses.title}
+                                className="w-12 h-12 object-cover rounded-lg"
+                              />
                             )}
+                            <div>
+                              <h4 className="font-medium">{purchase.customer_name}</h4>
+                              <p className="text-sm text-muted-foreground">{purchase.customer_email}</p>
+                              {purchase.customer_phone && (
+                                <p className="text-sm text-muted-foreground">{purchase.customer_phone}</p>
+                              )}
+                            </div>
                           </div>
                           <div className="text-right">
-                            <Badge variant="default">{purchase.orders.status}</Badge>
+                            <Badge 
+                              variant={purchase.payment_status === 'completed' ? 'default' : 'secondary'}
+                            >
+                              {purchase.payment_status === 'completed' ? 'Paid' : 'Pending'}
+                            </Badge>
                             <p className="text-sm text-muted-foreground mt-1">
-                              {new Date(purchase.orders.created_at).toLocaleDateString()}
+                              {new Date(purchase.created_at).toLocaleDateString()}
                             </p>
                           </div>
                         </div>
                         <Separator className="my-3" />
-                        <div>
-                          <p className="text-sm font-medium">Purchased Course:</p>
-                          <p className="text-sm text-muted-foreground">{purchase.products.name}</p>
-                          <p className="text-sm text-muted-foreground">
-                            Quantity: {purchase.quantity} • Price: ${purchase.price}
-                          </p>
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <p className="text-sm font-medium">Course: {purchase.courses?.title}</p>
+                            <p className="text-sm text-muted-foreground">
+                              Order #{purchase.order_number}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm font-medium">${purchase.total}</p>
+                            <p className="text-sm text-muted-foreground capitalize">
+                              {purchase.payment_method}
+                            </p>
+                          </div>
                         </div>
                       </div>
                     ))
