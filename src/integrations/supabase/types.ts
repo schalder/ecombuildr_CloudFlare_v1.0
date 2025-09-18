@@ -3510,6 +3510,18 @@ export type Database = {
           total: number
         }[]
       }
+      get_member_accessible_courses: {
+        Args: { p_member_account_id: string }
+        Returns: {
+          access_expires_at: string
+          access_granted_at: string
+          course_description: string
+          course_id: string
+          course_price: number
+          course_thumbnail_url: string
+          course_title: string
+        }[]
+      }
       get_public_reviews: {
         Args: { product_uuid?: string }
         Returns: {
@@ -3586,6 +3598,10 @@ export type Database = {
           title_param?: string
         }
         Returns: string
+      }
+      verify_member_course_access: {
+        Args: { p_course_id: string; p_member_account_id: string }
+        Returns: boolean
       }
       verify_member_credentials: {
         Args: { p_email: string; p_password: string; p_store_id: string }

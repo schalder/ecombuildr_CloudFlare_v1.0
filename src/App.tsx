@@ -366,8 +366,9 @@ const App = () => (
                   <Route path=":pageSlug" element={<WebsitePage />} />
                 </Route>
 
-                {/* Member Routes */}
+                {/* Member and Course Routes */}
                 <Route path="/members/*" element={<MemberRoutes />} />
+                <Route path="/courses/*" element={<MemberRoutes />} />
 
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />

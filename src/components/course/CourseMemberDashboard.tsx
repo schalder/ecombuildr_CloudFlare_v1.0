@@ -108,18 +108,23 @@ const CourseMemberDashboard = () => {
           }
         }
 
-        // Fetch accessible courses (from the store)
-        const { data: coursesData, error: coursesError } = await supabase
-          .from('courses')
-          .select('*')
-          .eq('store_id', store.id)
-          .eq('is_published', true)
-          .eq('is_active', true);
+        // Fetch accessible courses (only ones the member has access to)
+        const { data: accessibleCoursesData, error: coursesError } = await supabase.rpc('get_member_accessible_courses', {
+          p_member_account_id: member.id
+        });
 
         if (coursesError) {
           console.error('Error fetching courses:', coursesError);
         } else {
-          setCourses(coursesData || []);
+          const coursesWithAccess = (accessibleCoursesData || []).map(courseAccess => ({
+            id: courseAccess.course_id,
+            title: courseAccess.course_title,
+            description: courseAccess.course_description,
+            thumbnail_url: courseAccess.course_thumbnail_url,
+            price: courseAccess.course_price,
+            is_published: true
+          }));
+          setCourses(coursesWithAccess);
         }
 
       } catch (error) {
@@ -214,7 +219,7 @@ const CourseMemberDashboard = () => {
                     <CardContent className="pt-0">
                       <Button 
                         className="w-full" 
-                        onClick={() => navigate(`/courses/${course.id}`)}
+                        onClick={() => navigate(`/courses/learn/${course.id}`)}
                       >
                         <Play className="h-4 w-4 mr-2" />
                         Start Learning
