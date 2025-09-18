@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useCart } from '@/contexts/CartContext';
 import { useEcomPaths } from '@/lib/pathResolver';
-import { StorefrontImage } from '@/components/storefront/renderer/StorefrontImage';
+
 
 interface FunnelData {
   id: string;
@@ -116,7 +116,7 @@ export const FunnelHeader: React.FC<{ funnel: FunnelData; }> = ({ funnel }) => {
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         <a href={paths.home} className="flex items-center gap-3">
            {cfg?.logo_url ? (
-             <StorefrontImage src={cfg.logo_url} alt={`${funnel.name} logo`} className="h-8 w-auto object-contain" priority={true} />
+             <img src={cfg.logo_url} alt={`${funnel.name} logo`} className="h-8 w-auto object-contain" />
            ) : (
             <span className="font-semibold">{funnel.name}</span>
           )}
@@ -155,8 +155,8 @@ export const FunnelHeader: React.FC<{ funnel: FunnelData; }> = ({ funnel }) => {
             <SheetContent side="left" className="w-72">
               <SheetHeader>
                 <div className="flex items-center gap-3 py-2">
-                  {cfg?.logo_url ? (
-                     <StorefrontImage src={cfg.logo_url} alt={`${funnel.name} logo`} className="h-8 w-auto object-contain" priority={true} />
+                   {cfg?.logo_url ? (
+                     <img src={cfg.logo_url} alt={`${funnel.name} logo`} className="h-8 w-auto object-contain" />
                    ) : (
                     <span className="font-semibold">{funnel.name}</span>
                   )}
