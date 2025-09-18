@@ -14,6 +14,7 @@ export const CoursePaymentProcessing: React.FC = () => {
   const [order, setOrder] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [verifying, setVerifying] = useState(false);
+  const [autoVerifying, setAutoVerifying] = useState(false);
 
   const orderId = searchParams.get('orderId');
   const status = searchParams.get('status');
@@ -53,7 +54,8 @@ export const CoursePaymentProcessing: React.FC = () => {
       // Auto-verify EPS on successful return if still pending
       if (status === 'success' && fetched?.payment_method === 'eps' && fetched?.payment_status !== 'completed') {
         console.log('[CoursePaymentProcessing] auto-verify:eps', { orderId });
-        setTimeout(() => verifyPayment(), 0);
+        setAutoVerifying(true);
+        setTimeout(() => verifyPayment(), 1000); // Small delay for better UX
       }
 
       // Handle specific payment statuses
@@ -138,6 +140,7 @@ export const CoursePaymentProcessing: React.FC = () => {
       toast.error('Failed to verify payment');
     } finally {
       setVerifying(false);
+      setAutoVerifying(false);
       console.log('[CoursePaymentProcessing] verifyPayment:end');
     }
   };
@@ -158,6 +161,15 @@ export const CoursePaymentProcessing: React.FC = () => {
         title: 'Payment Cancelled',
         message: 'You cancelled the payment process. You can try again anytime.',
         color: 'gray'
+      };
+    }
+
+    if (autoVerifying || verifying) {
+      return {
+        icon: <RefreshCw className="h-12 w-12 text-blue-500 animate-spin" />,
+        title: 'Verifying Payment',
+        message: 'Please wait while we verify your payment with the bank...',
+        color: 'blue'
       };
     }
 
@@ -238,7 +250,8 @@ export const CoursePaymentProcessing: React.FC = () => {
               )}
 
               <div className="space-y-3">
-                {(status === 'success' || order.payment_status === 'pending') && (
+                {/* Only show manual verify button if not auto-verifying and payment needs verification */}
+                {!autoVerifying && (status === 'success' || order.payment_status === 'pending') && (
                   <Button
                     onClick={verifyPayment}
                     disabled={verifying}
@@ -256,6 +269,14 @@ export const CoursePaymentProcessing: React.FC = () => {
                       </>
                     )}
                   </Button>
+                )}
+
+                {/* Show auto-verification message */}
+                {autoVerifying && (
+                  <div className="text-center text-muted-foreground">
+                    <RefreshCw className="h-4 w-4 animate-spin mx-auto mb-2" />
+                    <p className="text-sm">Automatically verifying your payment...</p>
+                  </div>
                 )}
 
                 <Button
