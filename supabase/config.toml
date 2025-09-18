@@ -11,3 +11,9 @@ verify_jwt = false
 
 [functions.verify-payment]
 verify_jwt = false
+
+[functions.course-payment]
+verify_jwt = false
+
+[functions.course-checkout]
+verify_jwt = false

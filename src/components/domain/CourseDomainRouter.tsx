@@ -7,6 +7,7 @@ import CourseLibrary from '@/pages/CourseLibrary';
 import CourseDetail from '@/pages/CourseDetail';
 import StorefrontCourseDetail from '@/components/storefront/StorefrontCourseDetail';
 import StorefrontCourseLibrary from '@/components/storefront/StorefrontCourseLibrary';
+import StorefrontCourseCheckout from '@/components/course/StorefrontCourseCheckout';
 import CourseMemberLogin from '@/components/course/CourseMemberLogin';
 import CourseMemberDashboard from '@/components/course/CourseMemberDashboard';
 import { WebsiteHeader } from '@/components/storefront/WebsiteHeader';
@@ -176,6 +177,12 @@ const CourseDomainRouter = ({ customDomain, storeSlug }: CourseDomainRouterProps
     const courseSlugMatch = coursePath.match(/\/courses\/([^/]+)/);
     if (courseSlugMatch) {
       const courseIdOrSlug = courseSlugMatch[1];
+      
+      // Check if this is a checkout path
+      if (coursePath.includes('/checkout')) {
+        return renderWithLayout(<StorefrontCourseCheckout courseId={courseIdOrSlug} />);
+      }
+      
       return renderWithLayout(<StorefrontCourseDetail courseId={courseIdOrSlug} />);
     }
   }

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -44,6 +45,7 @@ export const CourseEnrollmentCard: React.FC<CourseEnrollmentCardProps> = ({
   course,
   storeId
 }) => {
+  const navigate = useNavigate();
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('');
   const [loading, setLoading] = useState(false);
   const [availablePaymentMethods, setAvailablePaymentMethods] = useState<PaymentMethod[]>([]);
@@ -129,7 +131,7 @@ export const CourseEnrollmentCard: React.FC<CourseEnrollmentCardProps> = ({
     try {
       // Navigate to course checkout page with selected payment method
       const checkoutUrl = `/courses/${course.id}/checkout?payment_method=${selectedPaymentMethod}`;
-      window.location.href = checkoutUrl;
+      navigate(checkoutUrl);
     } catch (error) {
       console.error('Error initiating enrollment:', error);
       toast.error('Failed to initiate enrollment');
