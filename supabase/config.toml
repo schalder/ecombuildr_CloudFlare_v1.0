@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.course-checkout]
 verify_jwt = false
+
+[functions.get-course-order-public]
+verify_jwt = false

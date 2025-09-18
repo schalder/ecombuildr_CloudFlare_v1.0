@@ -49,22 +49,13 @@ export const CourseOrderConfirmation: React.FC = () => {
     if (!orderId) return;
 
     try {
-      const { data, error } = await supabase
-        .from('course_orders')
-        .select(`
-          *,
-          courses (
-            title,
-            description,
-            thumbnail_url
-          )
-        `)
-        .eq('id', orderId)
-        .single();
+      const { data, error } = await supabase.functions.invoke('get-course-order-public', {
+        body: { orderId }
+      });
 
       if (error) throw error;
-      
-      setOrder(data);
+
+      setOrder(data?.order ?? null);
     } catch (error) {
       console.error('Error fetching course order:', error);
     } finally {

@@ -29,21 +29,14 @@ export const CoursePaymentProcessing: React.FC = () => {
     if (!orderId) return;
 
     try {
-      const { data, error } = await supabase
-        .from('course_orders')
-        .select(`
-          *,
-          courses (
-            title,
-            thumbnail_url
-          )
-        `)
-        .eq('id', orderId)
-        .single();
+      const { data, error } = await supabase.functions.invoke('get-course-order-public', {
+        body: { orderId }
+      });
 
       if (error) throw error;
       
-      setOrder(data);
+      const fetched = data?.order ?? null;
+      setOrder(fetched);
 
       // Auto-redirect to confirmation if payment is completed
       if (data.payment_status === 'completed') {
