@@ -33,6 +33,7 @@ import { useCourseCurrency } from '@/hooks/useCourseCurrency';
 import { formatCoursePrice } from '@/utils/currency';
 import { MetaTags } from '@/components/MetaTags';
 import { useStore } from '@/contexts/StoreContext';
+import { CourseEnrollmentCard } from '@/components/course/CourseEnrollmentCard';
 import { setSEO } from '@/lib/seo';
 
 interface CourseLesson {
@@ -69,6 +70,11 @@ interface CourseDetail {
   includes_title?: string;
   includes_items?: string[];
   course_modules: CourseModule[];
+  payment_methods: {
+    bkash: boolean;
+    nagad: boolean;
+    eps: boolean;
+  };
 }
 
 interface StorefrontCourseDetailProps {
@@ -121,7 +127,7 @@ const StorefrontCourseDetail: React.FC<StorefrontCourseDetailProps> = ({ courseS
       let query = supabase
         .from('courses')
         .select(`
-          id, title, description, content, thumbnail_url, price, compare_price, is_published, is_active, created_at, includes_title, includes_items,
+          id, title, description, content, thumbnail_url, price, compare_price, is_published, is_active, created_at, includes_title, includes_items, payment_methods,
           course_modules(
             id, title, description, sort_order, is_published,
             course_lessons(
@@ -147,7 +153,11 @@ const StorefrontCourseDetail: React.FC<StorefrontCourseDetailProps> = ({ courseS
 
       if (error) throw error;
       if (!data) throw new Error('Course not found');
-      return data as CourseDetail;
+      
+      return {
+        ...data,
+        payment_methods: data.payment_methods as CourseDetail['payment_methods'] || { bkash: false, nagad: false, eps: false }
+      } as CourseDetail;
     },
     enabled: !!(finalCourseSlug || finalCourseId)
   });
@@ -457,41 +467,13 @@ const StorefrontCourseDetail: React.FC<StorefrontCourseDetailProps> = ({ courseS
 
                   {/* Payment Options */}
                   {course.price > 0 && (
-                    <div className="space-y-3">
-                      <Select value={selectedPaymentGateway} onValueChange={setSelectedPaymentGateway}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select Payment Gateway" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="stripe">Credit Card (Stripe)</SelectItem>
-                          <SelectItem value="paypal">PayPal</SelectItem>
-                          <SelectItem value="bank">Bank Transfer</SelectItem>
-                        </SelectContent>
-                      </Select>
-
-                      <div className="flex gap-2">
-                        <Input
-                          placeholder="Enter Your Coupon"
-                          value={couponCode}
-                          onChange={(e) => setCouponCode(e.target.value)}
-                          className="flex-1"
-                        />
-                        <Button variant="outline">
-                          Apply
-                        </Button>
-                      </div>
-                    </div>
+                    <CourseEnrollmentCard 
+                      course={course} 
+                      storeId={store?.id || ''} 
+                    />
                   )}
 
-                  {/* Enroll Button */}
-                  <Button className="w-full" size="lg">
-                    <Star className="h-5 w-5 mr-2" />
-                    Enrol Now
-                  </Button>
 
-                  <div className="text-center text-sm text-muted-foreground">
-                    <p>30-day money-back guarantee</p>
-                  </div>
 
                   {/* Course Includes */}
                   <div className="border-t pt-6">
