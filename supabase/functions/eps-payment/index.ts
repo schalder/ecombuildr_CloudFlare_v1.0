@@ -21,6 +21,7 @@ interface EPSPaymentRequest {
     city: string;
     country?: string;
   };
+  redirectOrigin?: string; // Explicit origin from client for proper redirects when called server-to-server
 }
 
 // Helper function to generate HMAC-SHA512 hash for EPS API
@@ -60,8 +61,8 @@ serve(async (req) => {
   }
 
   try {
-    const { orderId, amount, storeId, customerData }: EPSPaymentRequest = await req.json();
-    console.log('EPS Payment Request:', { orderId, amount, storeId, customerData });
+    const { orderId, amount, storeId, customerData, redirectOrigin }: EPSPaymentRequest = await req.json();
+    console.log('EPS Payment Request:', { orderId, amount, storeId, hasCustomerData: !!customerData, redirectOrigin });
 
     // Create Supabase client
     const supabase = createClient(
@@ -92,11 +93,30 @@ serve(async (req) => {
 
     console.log('EPS Config:', { ...epsConfig, password: '[HIDDEN]', hash_key: '[HIDDEN]' });
 
-    // Step 1: Get authentication token
-    const userNameHash = await generateHash(epsConfig.username, epsConfig.hash_key);
-    console.log('Generated userName hash for token request');
+  // Step 1: Get authentication token
+  const userNameHash = await generateHash(epsConfig.username, epsConfig.hash_key);
+  console.log('Generated userName hash for token request');
 
-    const tokenResponse = await fetch(`${epsConfig.base_url}/v1/Auth/GetToken`, {
+  // Determine origin for redirects (explicit from client preferred)
+  const ref = req.headers.get('referer') || '';
+  let originBase = redirectOrigin || req.headers.get('origin') || '';
+  if (!originBase && ref) {
+    try { originBase = new URL(ref).origin; } catch { /* ignore */ }
+  }
+  if (!originBase) {
+    // Fallback: use first verified custom domain for this store
+    const { data: domainRow } = await supabase
+      .from('custom_domains')
+      .select('domain')
+      .eq('store_id', storeId)
+      .eq('is_verified', true)
+      .eq('dns_configured', true)
+      .limit(1)
+      .maybeSingle();
+    if (domainRow?.domain) originBase = `https://${domainRow.domain}`;
+  }
+
+  const tokenResponse = await fetch(`${epsConfig.base_url}/v1/Auth/GetToken`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -166,14 +186,14 @@ serve(async (req) => {
       ipAddress: "127.0.0.1", // Default IP
       version: "1",
       successUrl: isCourseOrder 
-        ? `${req.headers.get('origin')}/order-confirmation?orderId=${orderId}&status=success`
-        : `${req.headers.get('origin')}/order-confirmation?orderId=${orderId}${orderToken ? `&ot=${orderToken}` : ''}&status=success`,
+        ? `${originBase}/order-confirmation?orderId=${orderId}&status=success`
+        : `${originBase}/order-confirmation?orderId=${orderId}${orderToken ? `&ot=${orderToken}` : ''}&status=success`,
       failUrl: isCourseOrder
-        ? `${req.headers.get('origin')}/payment-processing?orderId=${orderId}&status=failed`
-        : `${req.headers.get('origin')}/payment-processing?orderId=${orderId}${orderToken ? `&ot=${orderToken}` : ''}&status=failed`,
+        ? `${originBase}/payment-processing?orderId=${orderId}&status=failed`
+        : `${originBase}/payment-processing?orderId=${orderId}${orderToken ? `&ot=${orderToken}` : ''}&status=failed`,
       cancelUrl: isCourseOrder
-        ? `${req.headers.get('origin')}/payment-processing?orderId=${orderId}&status=cancelled`
-        : `${req.headers.get('origin')}/payment-processing?orderId=${orderId}${orderToken ? `&ot=${orderToken}` : ''}&status=cancelled`,
+        ? `${originBase}/payment-processing?orderId=${orderId}&status=cancelled`
+        : `${originBase}/payment-processing?orderId=${orderId}${orderToken ? `&ot=${orderToken}` : ''}&status=cancelled`,
       customerName: customerData.name,
       customerEmail: customerData.email,
       CustomerAddress: customerData.address,

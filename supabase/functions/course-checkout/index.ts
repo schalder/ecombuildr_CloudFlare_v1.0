@@ -70,6 +70,13 @@ serve(async (req) => {
     if (paymentMethod === 'eps') {
       // Call EPS payment
       try {
+        const originHeader = req.headers.get('origin');
+        const referer = req.headers.get('referer');
+        let redirectOrigin = originHeader || '';
+        if (!redirectOrigin && referer) {
+          try { redirectOrigin = new URL(referer).origin; } catch { /* ignore */ }
+        }
+
         const { data: epsResponse, error: epsError } = await supabase.functions.invoke('eps-payment', {
           body: {
             orderId: orderData.id,
@@ -79,10 +86,11 @@ serve(async (req) => {
               name: customerData.name,
               email: customerData.email,
               phone: customerData.phone,
-              address: customerData.phone, // Use phone as address fallback for courses
-              city: 'Dhaka', // Default city for courses
+              address: customerData.phone, // Fallback address for courses
+              city: 'Dhaka', // Default city
               country: 'BD'
-            }
+            },
+            redirectOrigin
           }
         });
 
