@@ -3425,6 +3425,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      bulk_delete_customer_records: {
+        Args: { customer_email_param: string }
+        Returns: Json
+      }
       can_create_resource: {
         Args: { _resource_type: string; _user_id: string }
         Returns: boolean
