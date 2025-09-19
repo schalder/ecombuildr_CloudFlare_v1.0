@@ -496,7 +496,7 @@ export default function PageBuilder() {
                 <div className="max-w-7xl mx-auto">
                   <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
                     <div className="bg-muted/10 p-4 flex justify-center">
-                      <div style={getDevicePreviewStyles(previewDeviceType)}>
+                      <div style={getDevicePreviewStyles(previewDeviceType)} className={previewDeviceType === 'mobile' ? 'pb-mobile' : previewDeviceType === 'tablet' ? 'pb-tablet' : ''}>
                         <PageBuilderRenderer data={builderData} deviceType={previewDeviceType} />
                       </div>
                     </div>
