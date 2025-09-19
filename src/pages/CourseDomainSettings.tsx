@@ -21,7 +21,7 @@ const CourseDomainSettings = () => {
   const { toast } = useToast();
   
   const [setupType, setSetupType] = useState<'integrated' | 'custom'>('integrated');
-  const [selectedDomain, setSelectedDomain] = useState<string>('');
+  const [selectedDomain, setSelectedDomain] = useState<string>('none');
   const [customSlug, setCustomSlug] = useState('');
   const [isCheckingSlug, setIsCheckingSlug] = useState(false);
   const [slugAvailable, setSlugAvailable] = useState<boolean | null>(null);
@@ -30,15 +30,8 @@ const CourseDomainSettings = () => {
 
   const verifiedDomains = domains?.filter(d => d.is_verified && d.dns_configured) || [];
 
-  // Auto-select first verified domain only if no explicit choice has been made
-  useEffect(() => {
-    if (selectedDomain === '' && verifiedDomains.length > 0) {
-      setSelectedDomain(verifiedDomains[0].id);
-    }
-  }, [verifiedDomains, selectedDomain]);
-
   const handleSlugCheck = async () => {
-    if (!customSlug || !selectedDomain) return;
+    if (!customSlug || selectedDomain === 'none') return;
     
     setIsCheckingSlug(true);
     try {
@@ -60,12 +53,12 @@ const CourseDomainSettings = () => {
   };
 
   const handleSetupCourse = async () => {
-    if (setupType === 'custom' && selectedDomain && !customSlug) return;
+    if (setupType === 'custom' && selectedDomain !== 'none' && !customSlug) return;
     
     setIsConnecting(true);
     try {
       // If "none" is selected, don't create any domain connection
-      if (!selectedDomain) {
+      if (selectedDomain === 'none') {
         toast({
           title: "Success!",
           description: "Course will use the system domain.",
@@ -167,7 +160,7 @@ const CourseDomainSettings = () => {
                     onChange={(e) => setSelectedDomain(e.target.value)}
                     className="w-full p-2 border rounded-md"
                   >
-                    <option value="">None (Use System Domain)</option>
+                    <option value="none">None (Use System Domain)</option>
                     {verifiedDomains.map((domain) => (
                       <option key={domain.id} value={domain.id}>
                         {domain.domain}
@@ -191,25 +184,25 @@ const CourseDomainSettings = () => {
                           <div className="mt-3 space-y-2">
                              <div className="flex items-center gap-2">
                                <Label className="text-sm">Course Library:</Label>
-                               <code className="bg-muted px-2 py-1 rounded text-sm">
-                                 {selectedDomain 
-                                   ? `${verifiedDomains.find(d => d.id === selectedDomain)?.domain}/courses`
-                                   : `ecombuildr.com/course/${userStore?.id}`
-                                 }
-                               </code>
+                                <code className="bg-muted px-2 py-1 rounded text-sm">
+                                  {selectedDomain !== 'none'
+                                    ? `${verifiedDomains.find(d => d.id === selectedDomain)?.domain}/courses`
+                                    : `ecombuildr.com/course/${userStore?.id}`
+                                  }
+                                </code>
                                <Button
                                  variant="ghost"
                                  size="sm"
-                                 onClick={() => handleCopyUrl(selectedDomain 
-                                   ? `https://${verifiedDomains.find(d => d.id === selectedDomain)?.domain}/courses`
-                                   : `https://ecombuildr.com/course/${userStore?.id}`
-                                 )}
+                                  onClick={() => handleCopyUrl(selectedDomain !== 'none'
+                                    ? `https://${verifiedDomains.find(d => d.id === selectedDomain)?.domain}/courses`
+                                    : `https://ecombuildr.com/course/${userStore?.id}`
+                                  )}
                                  className="h-6 w-6 p-0"
                                >
-                                 {copiedUrl === (selectedDomain 
-                                   ? `https://${verifiedDomains.find(d => d.id === selectedDomain)?.domain}/courses`
-                                   : `https://ecombuildr.com/course/${userStore?.id}`
-                                 ) ? (
+                                  {copiedUrl === (selectedDomain !== 'none'
+                                    ? `https://${verifiedDomains.find(d => d.id === selectedDomain)?.domain}/courses`
+                                    : `https://ecombuildr.com/course/${userStore?.id}`
+                                  ) ? (
                                    <Check className="h-3 w-3 text-green-500" />
                                  ) : (
                                    <Copy className="h-3 w-3" />
@@ -218,25 +211,25 @@ const CourseDomainSettings = () => {
                              </div>
                              <div className="flex items-center gap-2">
                                <Label className="text-sm">Member Portal:</Label>
-                               <code className="bg-muted px-2 py-1 rounded text-sm">
-                                 {selectedDomain 
-                                   ? `${verifiedDomains.find(d => d.id === selectedDomain)?.domain}/courses/members`
-                                   : `ecombuildr.com/course/${userStore?.id}/members`
-                                 }
-                               </code>
+                                <code className="bg-muted px-2 py-1 rounded text-sm">
+                                  {selectedDomain !== 'none'
+                                    ? `${verifiedDomains.find(d => d.id === selectedDomain)?.domain}/courses/members`
+                                    : `ecombuildr.com/course/${userStore?.id}/members`
+                                  }
+                                </code>
                                <Button
                                  variant="ghost"
                                  size="sm"
-                                 onClick={() => handleCopyUrl(selectedDomain 
-                                   ? `https://${verifiedDomains.find(d => d.id === selectedDomain)?.domain}/courses/members`
-                                   : `https://ecombuildr.com/course/${userStore?.id}/members`
-                                 )}
+                                  onClick={() => handleCopyUrl(selectedDomain !== 'none'
+                                    ? `https://${verifiedDomains.find(d => d.id === selectedDomain)?.domain}/courses/members`
+                                    : `https://ecombuildr.com/course/${userStore?.id}/members`
+                                  )}
                                  className="h-6 w-6 p-0"
                                >
-                                 {copiedUrl === (selectedDomain 
-                                   ? `https://${verifiedDomains.find(d => d.id === selectedDomain)?.domain}/courses/members`
-                                   : `https://ecombuildr.com/course/${userStore?.id}/members`
-                                 ) ? (
+                                  {copiedUrl === (selectedDomain !== 'none'
+                                    ? `https://${verifiedDomains.find(d => d.id === selectedDomain)?.domain}/courses/members`
+                                    : `https://ecombuildr.com/course/${userStore?.id}/members`
+                                  ) ? (
                                    <Check className="h-3 w-3 text-green-500" />
                                  ) : (
                                    <Copy className="h-3 w-3" />
@@ -270,7 +263,7 @@ const CourseDomainSettings = () => {
                               <Button 
                                 variant="outline" 
                                 onClick={handleSlugCheck}
-                                disabled={!customSlug || isCheckingSlug}
+                                disabled={!customSlug || isCheckingSlug || selectedDomain === 'none'}
                               >
                                 {isCheckingSlug ? 'Checking...' : 'Check'}
                               </Button>
@@ -290,13 +283,13 @@ const CourseDomainSettings = () => {
                 <div className="flex gap-4">
                    <Button 
                      onClick={handleSetupCourse}
-                     disabled={
-                       isConnecting ||
-                       (setupType === 'custom' && selectedDomain && customSlug && slugAvailable !== true)
-                     }
+                      disabled={
+                        isConnecting ||
+                        (setupType === 'custom' && selectedDomain !== 'none' && customSlug && slugAvailable !== true)
+                      }
                      className="flex-1"
                    >
-                     {isConnecting ? 'Setting Up...' : (selectedDomain ? 'Set Up Course Domain' : 'Use System Domain')}
+                     {isConnecting ? 'Setting Up...' : (selectedDomain !== 'none' ? 'Set Up Course Domain' : 'Use System Domain')}
                    </Button>
                   <Button variant="outline" onClick={() => navigate('/dashboard/courses')}>
                     Cancel
