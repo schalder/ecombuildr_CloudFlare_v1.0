@@ -17,7 +17,7 @@ import { ArrowLeft, ExternalLink, Globe, Settings, Image, Copy, Check, Plus } fr
 const CourseDomainSettings = () => {
   const navigate = useNavigate();
   const { store: userStore } = useUserStore();
-  const { domains, connections, connectCourseContent, checkCourseSlugAvailability } = useDomainManagement();
+  const { domains, connections, connectCourseContent, checkCourseSlugAvailability, clearCourseConnections } = useDomainManagement();
   const { toast } = useToast();
   
   const [setupType, setSetupType] = useState<'integrated' | 'custom'>('integrated');
@@ -29,6 +29,31 @@ const CourseDomainSettings = () => {
   const [copiedUrl, setCopiedUrl] = useState<string>('');
 
   const verifiedDomains = domains?.filter(d => d.is_verified && d.dns_configured) || [];
+
+  // Load existing course connections on mount/connections change
+  useEffect(() => {
+    if (!connections || !userStore?.id) return;
+
+    const courseConnection = connections.find(conn => 
+      conn.content_type === 'course_area' && 
+      conn.content_id === userStore.id
+    );
+
+    if (courseConnection) {
+      setSelectedDomain(courseConnection.domain_id);
+      
+      if (courseConnection.path === '/courses') {
+        setSetupType('integrated');
+      } else if (courseConnection.path && courseConnection.path !== '/') {
+        setSetupType('custom');
+        setCustomSlug(courseConnection.path.slice(1)); // Remove leading slash
+      }
+    } else {
+      setSelectedDomain('');
+      setSetupType('integrated');
+      setCustomSlug('');
+    }
+  }, [connections, userStore?.id]);
 
   const handleSlugCheck = async () => {
     if (!customSlug || !selectedDomain) return;
@@ -57,7 +82,10 @@ const CourseDomainSettings = () => {
     
     setIsConnecting(true);
     try {
-      // If no domain selected, use system domain
+      // Clear existing course connections first
+      await clearCourseConnections();
+
+      // If no domain selected, use system domain (just clear connections)
       if (!selectedDomain) {
         toast({
           title: "Success!",

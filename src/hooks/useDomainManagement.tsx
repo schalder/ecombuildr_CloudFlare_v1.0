@@ -427,6 +427,25 @@ export const useDomainManagement = () => {
     }
   };
 
+  const clearCourseConnections = async (): Promise<void> => {
+    if (!store?.id) throw new Error('No store found');
+    
+    try {
+      const { error } = await supabase
+        .from('domain_connections')
+        .delete()
+        .eq('store_id', store.id)
+        .in('content_type', ['course_area', 'course_library', 'course_detail']);
+
+      if (error) throw error;
+      
+      refetch();
+    } catch (error) {
+      console.error('Error clearing course connections:', error);
+      throw error;
+    }
+  };
+
   return {
     domains,
     connections,
@@ -444,6 +463,7 @@ export const useDomainManagement = () => {
     checkSSL,
     connectCourseContent,
     checkCourseSlugAvailability,
+    clearCourseConnections,
     refetch
   };
 };
