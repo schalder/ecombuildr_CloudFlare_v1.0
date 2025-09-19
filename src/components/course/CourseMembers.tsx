@@ -198,7 +198,7 @@ export const CourseMembers = () => {
         }
         console.log('Deleted course member access records');
 
-        // Step 4: Delete member accounts if they exist
+        // Step 4: Delete member accounts if they exist (CRITICAL - this deletes the actual student)
         if (memberAccountIds.length > 0) {
           const { error: memberAccountError } = await supabase
             .from('member_accounts')
