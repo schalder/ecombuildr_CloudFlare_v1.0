@@ -3476,6 +3476,10 @@ export type Database = {
         Args: { _resource_type: string; _user_id: string }
         Returns: undefined
       }
+      delete_course_order_cascade: {
+        Args: { p_order_id: string }
+        Returns: undefined
+      }
       delete_funnel_admin: {
         Args: { p_funnel_id: string }
         Returns: undefined
