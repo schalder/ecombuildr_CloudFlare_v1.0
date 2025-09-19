@@ -30,9 +30,9 @@ const CourseDomainSettings = () => {
 
   const verifiedDomains = domains?.filter(d => d.is_verified && d.dns_configured) || [];
 
-  // Auto-select first verified domain if none selected
+  // Auto-select first verified domain only if no explicit choice has been made
   useEffect(() => {
-    if (!selectedDomain && verifiedDomains.length > 0) {
+    if (selectedDomain === '' && verifiedDomains.length > 0) {
       setSelectedDomain(verifiedDomains[0].id);
     }
   }, [verifiedDomains, selectedDomain]);
@@ -60,24 +60,31 @@ const CourseDomainSettings = () => {
   };
 
   const handleSetupCourse = async () => {
-    if (setupType === 'custom' && !customSlug) return;
+    if (setupType === 'custom' && selectedDomain && !customSlug) return;
     
     setIsConnecting(true);
     try {
-      if (selectedDomain) {
-        // Connect to custom domain
-        const domain = verifiedDomains.find(d => d.id === selectedDomain);
-        if (!domain) throw new Error('Domain not found');
-
-        const path = setupType === 'integrated' ? '/courses' : `/${customSlug}`;
-        
-        await connectCourseContent(domain.id, 'course_area', userStore?.id || '', path);
+      // If "none" is selected, don't create any domain connection
+      if (!selectedDomain) {
+        toast({
+          title: "Success!",
+          description: "Course will use the system domain.",
+        });
+        navigate('/dashboard/courses');
+        return;
       }
-      // If no domain selected, course will use system domain - no connection needed
+
+      // Connect to custom domain
+      const domain = verifiedDomains.find(d => d.id === selectedDomain);
+      if (!domain) throw new Error('Domain not found');
+
+      const path = setupType === 'integrated' ? '/courses' : `/${customSlug}`;
+      
+      await connectCourseContent(domain.id, 'course_area', userStore?.id || '', path);
       
       toast({
         title: "Success",
-        description: selectedDomain ? "Course domain setup completed successfully!" : "Course will use system domain",
+        description: "Course domain setup completed successfully!",
       });
       
       navigate('/dashboard/courses');
@@ -182,60 +189,60 @@ const CourseDomainSettings = () => {
                         </p>
                         {setupType === 'integrated' && (
                           <div className="mt-3 space-y-2">
-                            <div className="flex items-center gap-2">
-                              <Label className="text-sm">Course Library:</Label>
-                              <code className="bg-muted px-2 py-1 rounded text-sm">
-                                {selectedDomain 
-                                  ? `${verifiedDomains.find(d => d.id === selectedDomain)?.domain}/courses`
-                                  : `ecombuildr.com/store/${userStore?.slug}/courses`
-                                }
-                              </code>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleCopyUrl(selectedDomain 
-                                  ? `https://${verifiedDomains.find(d => d.id === selectedDomain)?.domain}/courses`
-                                  : `https://ecombuildr.com/store/${userStore?.slug}/courses`
-                                )}
-                                className="h-6 w-6 p-0"
-                              >
-                                {copiedUrl === (selectedDomain 
-                                  ? `https://${verifiedDomains.find(d => d.id === selectedDomain)?.domain}/courses`
-                                  : `https://ecombuildr.com/store/${userStore?.slug}/courses`
-                                ) ? (
-                                  <Check className="h-3 w-3 text-green-500" />
-                                ) : (
-                                  <Copy className="h-3 w-3" />
-                                )}
-                              </Button>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <Label className="text-sm">Member Portal:</Label>
-                              <code className="bg-muted px-2 py-1 rounded text-sm">
-                                {selectedDomain 
-                                  ? `${verifiedDomains.find(d => d.id === selectedDomain)?.domain}/courses/members`
-                                  : `ecombuildr.com/store/${userStore?.slug}/courses/members`
-                                }
-                              </code>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleCopyUrl(selectedDomain 
-                                  ? `https://${verifiedDomains.find(d => d.id === selectedDomain)?.domain}/courses/members`
-                                  : `https://ecombuildr.com/store/${userStore?.slug}/courses/members`
-                                )}
-                                className="h-6 w-6 p-0"
-                              >
-                                {copiedUrl === (selectedDomain 
-                                  ? `https://${verifiedDomains.find(d => d.id === selectedDomain)?.domain}/courses/members`
-                                  : `https://ecombuildr.com/store/${userStore?.slug}/courses/members`
-                                ) ? (
-                                  <Check className="h-3 w-3 text-green-500" />
-                                ) : (
-                                  <Copy className="h-3 w-3" />
-                                )}
-                              </Button>
-                            </div>
+                             <div className="flex items-center gap-2">
+                               <Label className="text-sm">Course Library:</Label>
+                               <code className="bg-muted px-2 py-1 rounded text-sm">
+                                 {selectedDomain 
+                                   ? `${verifiedDomains.find(d => d.id === selectedDomain)?.domain}/courses`
+                                   : `ecombuildr.com/course/${userStore?.id}`
+                                 }
+                               </code>
+                               <Button
+                                 variant="ghost"
+                                 size="sm"
+                                 onClick={() => handleCopyUrl(selectedDomain 
+                                   ? `https://${verifiedDomains.find(d => d.id === selectedDomain)?.domain}/courses`
+                                   : `https://ecombuildr.com/course/${userStore?.id}`
+                                 )}
+                                 className="h-6 w-6 p-0"
+                               >
+                                 {copiedUrl === (selectedDomain 
+                                   ? `https://${verifiedDomains.find(d => d.id === selectedDomain)?.domain}/courses`
+                                   : `https://ecombuildr.com/course/${userStore?.id}`
+                                 ) ? (
+                                   <Check className="h-3 w-3 text-green-500" />
+                                 ) : (
+                                   <Copy className="h-3 w-3" />
+                                 )}
+                               </Button>
+                             </div>
+                             <div className="flex items-center gap-2">
+                               <Label className="text-sm">Member Portal:</Label>
+                               <code className="bg-muted px-2 py-1 rounded text-sm">
+                                 {selectedDomain 
+                                   ? `${verifiedDomains.find(d => d.id === selectedDomain)?.domain}/courses/members`
+                                   : `ecombuildr.com/course/${userStore?.id}/members`
+                                 }
+                               </code>
+                               <Button
+                                 variant="ghost"
+                                 size="sm"
+                                 onClick={() => handleCopyUrl(selectedDomain 
+                                   ? `https://${verifiedDomains.find(d => d.id === selectedDomain)?.domain}/courses/members`
+                                   : `https://ecombuildr.com/course/${userStore?.id}/members`
+                                 )}
+                                 className="h-6 w-6 p-0"
+                               >
+                                 {copiedUrl === (selectedDomain 
+                                   ? `https://${verifiedDomains.find(d => d.id === selectedDomain)?.domain}/courses/members`
+                                   : `https://ecombuildr.com/course/${userStore?.id}/members`
+                                 ) ? (
+                                   <Check className="h-3 w-3 text-green-500" />
+                                 ) : (
+                                   <Copy className="h-3 w-3" />
+                                 )}
+                               </Button>
+                             </div>
                           </div>
                         )}
                       </div>
@@ -281,16 +288,16 @@ const CourseDomainSettings = () => {
                 </RadioGroup>
 
                 <div className="flex gap-4">
-                  <Button 
-                    onClick={handleSetupCourse}
-                    disabled={
-                      isConnecting ||
-                      (setupType === 'custom' && customSlug && slugAvailable !== true)
-                    }
-                    className="flex-1"
-                  >
-                    {isConnecting ? 'Setting Up...' : 'Set Up Course Domain'}
-                  </Button>
+                   <Button 
+                     onClick={handleSetupCourse}
+                     disabled={
+                       isConnecting ||
+                       (setupType === 'custom' && selectedDomain && customSlug && slugAvailable !== true)
+                     }
+                     className="flex-1"
+                   >
+                     {isConnecting ? 'Setting Up...' : (selectedDomain ? 'Set Up Course Domain' : 'Use System Domain')}
+                   </Button>
                   <Button variant="outline" onClick={() => navigate('/dashboard/courses')}>
                     Cancel
                   </Button>

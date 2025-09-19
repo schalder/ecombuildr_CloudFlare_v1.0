@@ -214,7 +214,15 @@ const App = () => (
                 <Route path="/training" element={<Training />} />
                 <Route path="/training/:courseSlug" element={<TrainingCourse />} />
                 
-                {/* Public Course Library Routes */}
+                {/* Store-Specific Course Routes */}
+                <Route path="/course/:storeId/members/login" element={<CourseMemberLoginPage />} />
+                <Route path="/course/:storeId/members" element={<MemberAuthProvider><CourseMemberDashboard /></MemberAuthProvider>} />
+                <Route path="/course/:storeId/learn/:courseId" element={<CoursePlayerPage />} />
+                <Route path="/course/:storeId" element={<CourseLibrary />} />
+                <Route path="/course/:storeId/:courseId" element={<CourseDetail />} />
+                <Route path="/course/:storeId/:courseId/checkout" element={<CourseCheckout />} />
+
+                {/* Legacy Course Library Routes (fallback) */}
                 <Route path="/courses/members/login" element={<CourseMemberLoginPage />} />
                 <Route path="/courses/members" element={<MemberAuthProvider><CourseMemberDashboard /></MemberAuthProvider>} />
                 <Route path="/courses/learn/:courseId" element={<CoursePlayerPage />} />
