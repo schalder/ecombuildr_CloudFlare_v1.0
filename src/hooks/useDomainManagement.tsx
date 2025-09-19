@@ -144,7 +144,8 @@ export const useDomainManagement = () => {
     if (!store?.id) throw new Error('No store found');
 
     try {
-      const { data, error } = await supabase.functions.invoke(
+      // Step 1: Add domain to database via dns-domain-manager
+      const { data: dnsData, error: dnsError } = await supabase.functions.invoke(
         'dns-domain-manager',
         {
           body: {
@@ -156,10 +157,42 @@ export const useDomainManagement = () => {
         }
       );
 
-      if (error) throw error;
+      if (dnsError) throw dnsError;
+
+      // Step 2: Add domain to Netlify as alias via netlify-domain-manager
+      try {
+        const { data: netlifyData, error: netlifyError } = await supabase.functions.invoke(
+          'netlify-domain-manager',
+          {
+            body: {
+              action: 'add',
+              domain: domain,
+              storeId: store.id
+            }
+          }
+        );
+
+        if (netlifyError) {
+          console.error('Netlify domain addition failed:', netlifyError);
+          // Don't throw here - domain was added to DB successfully
+          toast({
+            title: "Domain added with warning",
+            description: "Domain added to database but Netlify setup failed. Please check status.",
+            variant: "default"
+          });
+        }
+      } catch (netlifyError) {
+        console.error('Netlify domain addition failed:', netlifyError);
+        // Don't throw here - domain was added to DB successfully
+        toast({
+          title: "Domain added with warning", 
+          description: "Domain added to database but Netlify setup failed. Please check status.",
+          variant: "default"
+        });
+      }
 
       refetch();
-      return data;
+      return dnsData;
     } catch (error) {
       console.error('Add domain failed:', error);
       throw error;
