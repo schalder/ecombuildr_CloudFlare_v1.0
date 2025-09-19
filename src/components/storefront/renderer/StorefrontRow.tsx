@@ -4,6 +4,25 @@ import { StorefrontColumn } from './StorefrontColumn';
 import { cn } from '@/lib/utils';
 import { renderRowStyles } from '@/components/page-builder/utils/styleRenderer';
 
+// Helper function to get responsive grid classes based on device type
+function getResponsiveGridClasses(columnLayout: string, deviceType: 'desktop' | 'tablet' | 'mobile'): string {
+  if (deviceType === 'mobile') {
+    return 'grid-cols-1';
+  }
+  
+  if (deviceType === 'tablet') {
+    // For tablet, limit to max 2 columns
+    const layout = RESPONSIVE_LAYOUTS[columnLayout] || 'grid-cols-1';
+    if (layout.includes('grid-cols-3') || layout.includes('grid-cols-4')) {
+      return 'grid-cols-2';
+    }
+    return layout;
+  }
+  
+  // Desktop uses the original responsive layouts
+  return RESPONSIVE_LAYOUTS[columnLayout] || 'grid-cols-1';
+}
+
 interface StorefrontRowProps {
   row: PageBuilderRow;
   deviceType?: 'desktop' | 'tablet' | 'mobile';
@@ -14,7 +33,7 @@ export const StorefrontRow: React.FC<StorefrontRowProps> = ({
   deviceType = 'desktop'
 }) => {
   const rowStyles = renderRowStyles(row, deviceType);
-  const responsiveLayoutClass = RESPONSIVE_LAYOUTS[row.columnLayout] || 'grid-cols-1';
+  const responsiveLayoutClass = getResponsiveGridClasses(row.columnLayout, deviceType);
   
   return (
     <div 
