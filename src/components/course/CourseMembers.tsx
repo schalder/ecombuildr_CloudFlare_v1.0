@@ -231,14 +231,10 @@ export const CourseMembers = () => {
       }
     },
     onSuccess: (_data, orderId) => {
-      // Optimistically update cache for snappy UI
-      queryClient.setQueryData<any[]>(['course-orders', store?.id], (old) => {
-        if (!old) return old;
-        return old.filter((o: any) => o.id !== orderId);
-      });
-      // Invalidate to ensure server state is in sync
+      // Force immediate cache invalidation and refetch
+      queryClient.removeQueries({ queryKey: ['course-orders', store?.id] });
       queryClient.invalidateQueries({ queryKey: ['course-orders', store?.id] });
-      queryClient.invalidateQueries({ queryKey: ['course-orders'] });
+      queryClient.refetchQueries({ queryKey: ['course-orders', store?.id] });
       toast.success('Student record deleted successfully');
     },
     onError: (error: any) => {
