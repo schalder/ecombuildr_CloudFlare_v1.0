@@ -75,17 +75,19 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
     // Get user-defined column gap for current device
     const userColumnGap = row.responsive?.[deviceType]?.columnGap || 
                           row.responsive?.desktop?.columnGap || 
-                          '0px';
+                          '16px'; // Default gap for better mobile spacing
     
-    // Force grid layout based on selected device type
-    if (deviceType === 'mobile' && stackOnMobile) {
+    // Force mobile to always stack columns vertically
+    if (deviceType === 'mobile') {
       return {
         display: 'grid',
         gridTemplateColumns: '1fr',
-        gap: userColumnGap
+        gap: userColumnGap,
+        width: '100%'
       };
     }
     
+    // Force tablet to stack columns for better responsive behavior
     if (deviceType === 'tablet') {
       if (row.columnLayout === '1') {
         // True single column - center content
@@ -96,7 +98,7 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
           justifyItems: 'center'
         };
       } else {
-        // Multi-column that should stack - keep left align
+        // Multi-column that should stack on tablet
         return {
           display: 'grid',
           gridTemplateColumns: '1fr',

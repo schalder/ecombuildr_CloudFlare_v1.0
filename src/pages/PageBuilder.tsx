@@ -478,20 +478,27 @@ export default function PageBuilder() {
         {/* Page Builder */}
         <div className="flex-1 min-h-0">
           {showPreview ? (
-            <div className="h-full overflow-auto bg-muted/30 p-6">
-              <div className="max-w-7xl mx-auto">
-                <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
-                  <div className="bg-muted/50 px-4 py-2 text-sm text-muted-foreground border-b flex items-center justify-between">
-                    <span>Page Preview</span>
-                    <ResponsiveControls
-                      deviceType={previewDeviceType}
-                      onDeviceChange={setPreviewDeviceType}
-                      className="bg-transparent border-0 p-0"
-                    />
-                  </div>
-                  <div className="bg-muted/10 p-4 flex justify-center">
-                    <div style={getDevicePreviewStyles(previewDeviceType)}>
-                      <PageBuilderRenderer data={builderData} deviceType={previewDeviceType} />
+            <div className="h-full flex flex-col">
+              {/* Sticky Preview Header */}
+              <div className="sticky top-0 z-10 bg-white border-b">
+                <div className="bg-muted/50 px-4 py-2 text-sm text-muted-foreground flex items-center justify-between">
+                  <span>Page Preview</span>
+                  <ResponsiveControls
+                    deviceType={previewDeviceType}
+                    onDeviceChange={setPreviewDeviceType}
+                    className="bg-transparent border-0 p-0"
+                  />
+                </div>
+              </div>
+              
+              {/* Scrollable Preview Content */}
+              <div className="flex-1 overflow-auto bg-muted/30 p-6">
+                <div className="max-w-7xl mx-auto">
+                  <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
+                    <div className="bg-muted/10 p-4 flex justify-center">
+                      <div style={getDevicePreviewStyles(previewDeviceType)}>
+                        <PageBuilderRenderer data={builderData} deviceType={previewDeviceType} />
+                      </div>
                     </div>
                   </div>
                 </div>
