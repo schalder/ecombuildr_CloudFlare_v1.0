@@ -118,51 +118,89 @@ export const CourseMembers = () => {
   // Delete course order and all related data
   const deleteMutation = useMutation({
     mutationFn: async (orderId: string) => {
-      // Get member account IDs associated with this order first
-      const { data: memberAccessData } = await supabase
-        .from('course_member_access')
-        .select('member_account_id')
-        .eq('course_order_id', orderId);
+      try {
+        console.log('Starting deletion process for order:', orderId);
 
-      const memberAccountIds = memberAccessData?.map(access => access.member_account_id) || [];
+        // Step 1: Get member account IDs associated with this order
+        const { data: memberAccessData, error: memberAccessError } = await supabase
+          .from('course_member_access')
+          .select('member_account_id')
+          .eq('course_order_id', orderId);
 
-      // Delete member content access records
-      if (memberAccountIds.length > 0) {
-        await supabase
+        if (memberAccessError) {
+          console.error('Error fetching member access data:', memberAccessError);
+          throw new Error(`Failed to fetch member access data: ${memberAccessError.message}`);
+        }
+
+        const memberAccountIds = memberAccessData?.map(access => access.member_account_id).filter(Boolean) || [];
+        console.log('Found member account IDs:', memberAccountIds);
+
+        // Step 2: Delete member content access records
+        const { error: contentAccessError } = await supabase
           .from('member_content_access')
           .delete()
           .eq('course_order_id', orderId);
-      }
 
-      // Delete course member access records
-      await supabase
-        .from('course_member_access')
-        .delete()
-        .eq('course_order_id', orderId);
+        if (contentAccessError) {
+          console.error('Error deleting member content access:', contentAccessError);
+          throw new Error(`Failed to delete member content access: ${contentAccessError.message}`);
+        }
+        console.log('Deleted member content access records');
 
-      // Delete member accounts if they exist and are tied to this order
-      if (memberAccountIds.length > 0) {
-        await supabase
-          .from('member_accounts')
+        // Step 3: Delete course member access records
+        const { error: memberAccessDeleteError } = await supabase
+          .from('course_member_access')
           .delete()
-          .in('id', memberAccountIds);
+          .eq('course_order_id', orderId);
+
+        if (memberAccessDeleteError) {
+          console.error('Error deleting course member access:', memberAccessDeleteError);
+          throw new Error(`Failed to delete course member access: ${memberAccessDeleteError.message}`);
+        }
+        console.log('Deleted course member access records');
+
+        // Step 4: Delete member accounts if they exist
+        if (memberAccountIds.length > 0) {
+          const { error: memberAccountError } = await supabase
+            .from('member_accounts')
+            .delete()
+            .in('id', memberAccountIds);
+
+          if (memberAccountError) {
+            console.error('Error deleting member accounts:', memberAccountError);
+            throw new Error(`Failed to delete member accounts: ${memberAccountError.message}`);
+          }
+          console.log('Deleted member accounts');
+        }
+
+        // Step 5: Finally delete the course order
+        const { error: orderDeleteError } = await supabase
+          .from('course_orders')
+          .delete()
+          .eq('id', orderId);
+
+        if (orderDeleteError) {
+          console.error('Error deleting course order:', orderDeleteError);
+          throw new Error(`Failed to delete course order: ${orderDeleteError.message}`);
+        }
+        console.log('Deleted course order');
+
+        return { success: true };
+      } catch (error) {
+        console.error('Deletion process failed:', error);
+        throw error;
       }
-
-      // Finally delete the course order
-      const { error } = await supabase
-        .from('course_orders')
-        .delete()
-        .eq('id', orderId);
-
-      if (error) throw error;
     },
     onSuccess: () => {
+      // Invalidate multiple related queries to ensure UI updates
+      queryClient.invalidateQueries({ queryKey: ['course-orders', store?.id] });
       queryClient.invalidateQueries({ queryKey: ['course-orders'] });
       toast.success('Student record deleted successfully');
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error('Error deleting student record:', error);
-      toast.error('Failed to delete student record');
+      const errorMessage = error?.message || 'Failed to delete student record';
+      toast.error(errorMessage);
     },
   });
 
@@ -415,9 +453,10 @@ export const CourseMembers = () => {
                                   <AlertDialogCancel>Cancel</AlertDialogCancel>
                                   <AlertDialogAction
                                     onClick={() => deleteMutation.mutate(order.id)}
-                                     className="bg-red-600 hover:bg-red-700"
-                                   >
-                                     Delete Student
+                                    disabled={deleteMutation.isPending}
+                                    className="bg-red-600 hover:bg-red-700 disabled:opacity-50"
+                                  >
+                                    {deleteMutation.isPending ? 'Deleting...' : 'Delete Student'}
                                   </AlertDialogAction>
                                 </AlertDialogFooter>
                               </AlertDialogContent>
