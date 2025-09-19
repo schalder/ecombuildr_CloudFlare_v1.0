@@ -259,9 +259,10 @@ export const useDomainManagement = () => {
     if (!domain) throw new Error('Domain not found');
 
     try {
-      const { data, error } = await supabase.functions.invoke('verify-domain', {
+      const { data, error } = await supabase.functions.invoke('dns-domain-manager', {
         body: { 
-          domainId,
+          action: 'verify',
+          domain: domain.domain,
           storeId: store.id 
         }
       });
