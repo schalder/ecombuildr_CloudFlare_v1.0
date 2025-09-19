@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Search, Filter, MoreHorizontal, CheckCircle, Clock, XCircle, Mail, RotateCcw, Trash2, User } from 'lucide-react';
+import { Search, Filter, MoreHorizontal, CheckCircle, Clock, XCircle, RotateCcw, Trash2, User } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -115,16 +115,40 @@ export const CourseMembers = () => {
     },
   });
 
-  // Delete course order
+  // Delete course order and all related data
   const deleteMutation = useMutation({
     mutationFn: async (orderId: string) => {
-      // First delete related course_member_access records
+      // Get member account IDs associated with this order first
+      const { data: memberAccessData } = await supabase
+        .from('course_member_access')
+        .select('member_account_id')
+        .eq('course_order_id', orderId);
+
+      const memberAccountIds = memberAccessData?.map(access => access.member_account_id) || [];
+
+      // Delete member content access records
+      if (memberAccountIds.length > 0) {
+        await supabase
+          .from('member_content_access')
+          .delete()
+          .eq('course_order_id', orderId);
+      }
+
+      // Delete course member access records
       await supabase
         .from('course_member_access')
         .delete()
         .eq('course_order_id', orderId);
 
-      // Then delete the course order
+      // Delete member accounts if they exist and are tied to this order
+      if (memberAccountIds.length > 0) {
+        await supabase
+          .from('member_accounts')
+          .delete()
+          .in('id', memberAccountIds);
+      }
+
+      // Finally delete the course order
       const { error } = await supabase
         .from('course_orders')
         .delete()
@@ -134,27 +158,14 @@ export const CourseMembers = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['course-orders'] });
-      toast.success('Course order deleted successfully');
+      toast.success('Student record deleted successfully');
     },
     onError: (error) => {
-      console.error('Error deleting course order:', error);
-      toast.error('Failed to delete course order');
+      console.error('Error deleting student record:', error);
+      toast.error('Failed to delete student record');
     },
   });
 
-  // Resend credentials
-  const resendCredentialsMutation = useMutation({
-    mutationFn: async (order: CourseOrder) => {
-      // In a real implementation, this would send an email
-      // For now, we'll just show the credentials in a toast
-      const password = order.metadata?.member_password;
-      if (password) {
-        toast.success(`Credentials for ${order.customer_email}: Password is ${password}`);
-      } else {
-        toast.error('No credentials found for this order');
-      }
-    },
-  });
 
   // Filter orders
   const filteredOrders = courseOrders.filter(order => {
@@ -382,37 +393,31 @@ export const CourseMembers = () => {
                               </DropdownMenuItem>
                             )}
 
-                            <DropdownMenuItem
-                              onClick={() => resendCredentialsMutation.mutate(order)}
-                            >
-                              <Mail className="h-4 w-4 mr-2" />
-                              Show Credentials
-                            </DropdownMenuItem>
 
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
                                 <DropdownMenuItem
                                   onSelect={(e) => e.preventDefault()}
                                   className="text-red-600"
-                                >
-                                  <Trash2 className="h-4 w-4 mr-2" />
-                                  Delete Order
+                                 >
+                                   <Trash2 className="h-4 w-4 mr-2" />
+                                   Delete Student
                                 </DropdownMenuItem>
                               </AlertDialogTrigger>
                               <AlertDialogContent>
                                 <AlertDialogHeader>
-                                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    This will permanently delete the course order for {order.customer_name} and remove their access to the course. This action cannot be undone.
+                                   <AlertDialogTitle>Delete Student Record?</AlertDialogTitle>
+                                   <AlertDialogDescription>
+                                     This will permanently delete {order.customer_name}'s enrollment record, course access, and account data. This action cannot be undone.
                                   </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
                                   <AlertDialogCancel>Cancel</AlertDialogCancel>
                                   <AlertDialogAction
                                     onClick={() => deleteMutation.mutate(order.id)}
-                                    className="bg-red-600 hover:bg-red-700"
-                                  >
-                                    Delete Order
+                                     className="bg-red-600 hover:bg-red-700"
+                                   >
+                                     Delete Student
                                   </AlertDialogAction>
                                 </AlertDialogFooter>
                               </AlertDialogContent>
