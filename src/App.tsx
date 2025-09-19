@@ -108,9 +108,9 @@ import Courses from "@/pages/Courses";
 import CreateCourse from "@/pages/CreateCourse";
 import CourseEditor from "@/pages/CourseEditor";
 import CourseView from "@/pages/CourseView";
-import CourseLibrary from "@/pages/CourseLibrary";
-import CourseDetail from "@/pages/CourseDetail";
-import CourseCheckout from "@/pages/CourseCheckout";
+import StorefrontCourseLibrary from "@/components/storefront/StorefrontCourseLibrary";
+import { StorefrontCourseDetailWrapper, StorefrontCourseCheckoutWrapper } from "@/components/course/CourseRouteWrappers";
+import { CourseStorefrontLayout } from "@/components/course/CourseStorefrontLayout";
 import CourseDomainSettings from "@/pages/CourseDomainSettings";
 import CourseSettings from "@/pages/CourseSettings";
 import CourseMemberLoginPage from "@/pages/CourseMemberLoginPage";
@@ -218,17 +218,17 @@ const App = () => (
                 <Route path="/course/:storeId/members/login" element={<CourseMemberLoginPage />} />
                 <Route path="/course/:storeId/members" element={<MemberAuthProvider><CourseMemberDashboard /></MemberAuthProvider>} />
                 <Route path="/course/:storeId/learn/:courseId" element={<CoursePlayerPage />} />
-                <Route path="/course/:storeId" element={<CourseLibrary />} />
-                <Route path="/course/:storeId/:courseId" element={<CourseDetail />} />
-                <Route path="/course/:storeId/:courseId/checkout" element={<CourseCheckout />} />
+                <Route path="/course/:storeId" element={<CourseStorefrontLayout><StorefrontCourseLibrary /></CourseStorefrontLayout>} />
+                <Route path="/course/:storeId/:courseId" element={<CourseStorefrontLayout><StorefrontCourseDetailWrapper /></CourseStorefrontLayout>} />
+                <Route path="/course/:storeId/:courseId/checkout" element={<CourseStorefrontLayout><StorefrontCourseCheckoutWrapper /></CourseStorefrontLayout>} />
 
                 {/* Legacy Course Library Routes (fallback) */}
                 <Route path="/courses/members/login" element={<CourseMemberLoginPage />} />
                 <Route path="/courses/members" element={<MemberAuthProvider><CourseMemberDashboard /></MemberAuthProvider>} />
                 <Route path="/courses/learn/:courseId" element={<CoursePlayerPage />} />
-                <Route path="/courses" element={<CourseLibrary />} />
-                <Route path="/courses/:courseId" element={<CourseDetail />} />
-                <Route path="/courses/:courseId/checkout" element={<CourseCheckout />} />
+                <Route path="/courses" element={<CourseStorefrontLayout><StorefrontCourseLibrary /></CourseStorefrontLayout>} />
+                <Route path="/courses/:courseId" element={<CourseStorefrontLayout><StorefrontCourseDetailWrapper /></CourseStorefrontLayout>} />
+                <Route path="/courses/:courseId/checkout" element={<CourseStorefrontLayout><StorefrontCourseCheckoutWrapper /></CourseStorefrontLayout>} />
                 
                 
                 {/* Admin Routes - Protected by SuperAdmin Guard */}
