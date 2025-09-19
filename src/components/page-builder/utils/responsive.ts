@@ -51,7 +51,11 @@ export function getDevicePreviewStyles(deviceType: DeviceType): React.CSSPropert
     border: '1px solid hsl(var(--border))',
     borderRadius: '8px',
     overflow: 'hidden',
-    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)'
+    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
+    // Force proper mobile layout
+    ...(deviceType === 'mobile' && {
+      container: 'mobile / inline-size'
+    })
   };
 }
 

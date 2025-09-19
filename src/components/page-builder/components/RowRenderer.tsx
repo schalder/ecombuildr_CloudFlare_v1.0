@@ -242,7 +242,12 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
         </div>
       )}
 
-      <div style={getDeviceSpecificGridStyle()}>
+      <div 
+        style={getDeviceSpecificGridStyle()}
+        className={cn(
+          deviceType === 'mobile' && isPreviewMode && 'force-mobile-single-column'
+        )}
+      >
         {displayedColumns.map((column) => (
             <ColumnRenderer
               key={column.id}

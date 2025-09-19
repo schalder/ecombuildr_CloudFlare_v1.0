@@ -422,6 +422,21 @@ All colors MUST be HSL. Designed for trust, energy, and conversion.
   }
 }
 
+/* Page Builder Mobile Preview Force Single Column */
+.force-mobile-single-column {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: inherit;
+  width: 100% !important;
+}
+
+/* Additional specificity for mobile preview mode */
+[data-device="mobile"] .force-mobile-single-column,
+.mobile-force-single-column {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+}
+
 /* Page Builder - Remove default gaps between elements */
 [data-pb-element-id] > :first-child {
   margin-top: 0 !important;
