@@ -84,34 +84,73 @@ export const CourseMembers = () => {
   // Update member access status
   const updateAccessMutation = useMutation({
     mutationFn: async ({ orderId, accessStatus }: { orderId: string; accessStatus: string }) => {
-      // Update course order payment status if activating
+      // 1) Fetch the course order to get store_id, course_id, and email
+      const { data: order, error: orderError } = await supabase
+        .from('course_orders')
+        .select('id, store_id, course_id, customer_email')
+        .eq('id', orderId)
+        .maybeSingle();
+
+      if (orderError) throw orderError;
+      if (!order) throw new Error('Order not found');
+
+      // 2) Update course order payment status based on access status
       if (accessStatus === 'active') {
-        await supabase
-          .from('course_orders')
-          .update({ payment_status: 'completed' })
-          .eq('id', orderId);
+        await supabase.from('course_orders').update({ payment_status: 'completed' }).eq('id', orderId);
       } else if (accessStatus === 'suspended') {
-        await supabase
-          .from('course_orders')
-          .update({ payment_status: 'cancelled' })
-          .eq('id', orderId);
+        await supabase.from('course_orders').update({ payment_status: 'cancelled' }).eq('id', orderId);
       }
 
-      // Update member access status
-      const { error } = await supabase
+      // 3) Try to update existing course_member_access for this order
+      const { data: updatedAccess, error: updateAccessError } = await supabase
         .from('course_member_access')
-        .update({ access_status: accessStatus })
-        .eq('course_order_id', orderId);
+        .update({ access_status: accessStatus, is_active: accessStatus === 'active' })
+        .eq('course_order_id', orderId)
+        .select('id');
 
-      if (error) throw error;
+      if (updateAccessError) throw updateAccessError;
+
+      // 4) If none updated (no existing link), attempt to create it
+      if (!updatedAccess || updatedAccess.length === 0) {
+        // Find member account by store and email
+        const { data: member, error: memberError } = await supabase
+          .from('member_accounts')
+          .select('id')
+          .eq('store_id', order.store_id)
+          .eq('email', order.customer_email)
+          .maybeSingle();
+
+        if (memberError) throw memberError;
+        if (!member?.id) {
+          throw new Error('No member account found for this email. Please create a member account first.');
+        }
+
+        const { error: insertAccessError } = await supabase
+          .from('course_member_access')
+          .insert({
+            member_account_id: member.id,
+            course_id: order.course_id,
+            course_order_id: orderId,
+            access_status: accessStatus,
+            is_active: accessStatus === 'active',
+          });
+        if (insertAccessError) throw insertAccessError;
+      }
+
+      // 5) Sync content access activation state for any related rows
+      const { error: contentAccessToggleError } = await supabase
+        .from('member_content_access')
+        .update({ is_active: accessStatus === 'active' })
+        .eq('course_order_id', orderId);
+      if (contentAccessToggleError) throw contentAccessToggleError;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['course-orders'] });
+      queryClient.invalidateQueries({ queryKey: ['course-orders', store?.id] });
       toast.success('Member access updated successfully');
     },
     onError: (error) => {
       console.error('Error updating member access:', error);
-      toast.error('Failed to update member access');
+      toast.error(error instanceof Error ? error.message : 'Failed to update member access');
     },
   });
 
@@ -191,8 +230,13 @@ export const CourseMembers = () => {
         throw error;
       }
     },
-    onSuccess: () => {
-      // Invalidate multiple related queries to ensure UI updates
+    onSuccess: (_data, orderId) => {
+      // Optimistically update cache for snappy UI
+      queryClient.setQueryData<any[]>(['course-orders', store?.id], (old) => {
+        if (!old) return old;
+        return old.filter((o: any) => o.id !== orderId);
+      });
+      // Invalidate to ensure server state is in sync
       queryClient.invalidateQueries({ queryKey: ['course-orders', store?.id] });
       queryClient.invalidateQueries({ queryKey: ['course-orders'] });
       toast.success('Student record deleted successfully');
