@@ -6,9 +6,10 @@ const corsHeaders = {
 }
 
 interface DomainRequest {
-  action: 'verify' | 'check_ssl' | 'pre_verify'
+  action: 'verify' | 'check_ssl' | 'pre_verify' | 'add_domain'
   domain: string
   storeId: string
+  isDnsVerified?: boolean
 }
 
 Deno.serve(async (req) => {
@@ -37,7 +38,7 @@ Deno.serve(async (req) => {
       throw new Error('Invalid authentication')
     }
 
-    const { action, domain, storeId }: DomainRequest = await req.json()
+    const { action, domain, storeId, isDnsVerified }: DomainRequest = await req.json()
 
     // Verify user owns the store
     const { data: store, error: storeError } = await supabase
@@ -237,6 +238,49 @@ Deno.serve(async (req) => {
           sslStatus: currentSslStatus,
           isAccessible: accessibilityCheck
         }
+        break
+
+      case 'add_domain':
+        // Add domain to database
+        const verificationToken = crypto.randomUUID()
+        
+        // Check if domain already exists
+        const { data: existingDomain } = await supabase
+          .from('custom_domains')
+          .select('id')
+          .eq('domain', domain)
+          .single()
+        
+        if (existingDomain) {
+          throw new Error('Domain already exists')
+        }
+        
+        // Insert new domain
+        const { data: newDomain, error: insertError } = await supabase
+          .from('custom_domains')
+          .insert({
+            store_id: storeId,
+            domain: domain,
+            dns_configured: isDnsVerified || false,
+            is_verified: false,
+            ssl_status: 'pending',
+            verification_token: verificationToken,
+            verification_attempts: 0
+          })
+          .select()
+          .single()
+        
+        if (insertError) {
+          console.error('Failed to insert domain:', insertError)
+          throw new Error('Failed to add domain')
+        }
+        
+        result = {
+          success: true,
+          domain: newDomain,
+          verificationToken
+        }
+        console.log(`Domain ${domain} added successfully with ID: ${newDomain.id}`)
         break
 
       default:
