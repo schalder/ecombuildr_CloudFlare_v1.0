@@ -118,13 +118,16 @@ export const useDomainManagement = () => {
   };
 
   const verifyDomainDNS = async (domain: string): Promise<any> => {
+    if (!store?.id) throw new Error('No store found');
+
     try {
       const { data, error } = await supabase.functions.invoke(
         'dns-domain-manager',
         {
           body: {
-            action: 'pre_verification',
-            domain: domain
+            action: 'pre_verify',
+            domain: domain,
+            storeId: store.id
           }
         }
       );
