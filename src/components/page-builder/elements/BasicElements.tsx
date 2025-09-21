@@ -14,7 +14,6 @@ import { useEcomPaths } from '@/lib/pathResolver';
 import { getEffectiveResponsiveValue } from '../utils/responsiveHelpers';
 import { useHeadStyle } from '@/hooks/useHeadStyle';
 import { StorefrontImage } from '@/components/storefront/renderer/StorefrontImage';
-import { parseVideoUrl, getVideoWidthClasses, buildEmbedUrl, sanitizeEmbedCode } from '../utils/videoUtils';
 
 // Heading Element
 const HeadingElement: React.FC<{
@@ -799,7 +798,101 @@ const VideoElement: React.FC<{
   };
   
   const effectiveWidth = getEffectiveWidth();
-  // Video utilities are now imported at the top of the file
+  // Import video utilities
+  const { parseVideoUrl, getVideoWidthClasses, buildEmbedUrl, sanitizeEmbedCode } = React.useMemo(() => {
+    return {
+      parseVideoUrl: (url: string) => {
+        if (!url) return { type: 'unknown' as const };
+        
+        // YouTube patterns - includes support for Shorts
+        const youtubeRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|shorts\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+        const youtubeMatch = url.match(youtubeRegex);
+        if (youtubeMatch) {
+          const id = youtubeMatch[1];
+          return {
+            type: 'youtube' as const,
+            id,
+            embedUrl: `https://www.youtube.com/embed/${id}`
+          };
+        }
+
+        // Vimeo patterns
+        const vimeoRegex = /(?:vimeo\.com\/)(?:.*\/)?(\d+)(?:\?.*)?/;
+        const vimeoMatch = url.match(vimeoRegex);
+        if (vimeoMatch) {
+          const id = vimeoMatch[1];
+          return {
+            type: 'vimeo' as const,
+            id,
+            embedUrl: `https://player.vimeo.com/video/${id}`
+          };
+        }
+
+        // Wistia patterns
+        const wistiaRegex = /(?:wistia\.(?:com|net)\/(?:medias|embed)\/|wi\.st\/)([a-zA-Z0-9]+)/;
+        const wistiaMatch = url.match(wistiaRegex);
+        if (wistiaMatch) {
+          const id = wistiaMatch[1];
+          return {
+            type: 'wistia' as const,
+            id,
+            embedUrl: `https://fast.wistia.net/embed/iframe/${id}`
+          };
+        }
+
+        // Check if it's a direct video file
+        const videoFileRegex = /\.(mp4|webm|ogg|mov|avi)(\?.*)?$/i;
+        if (videoFileRegex.test(url)) {
+          return {
+            type: 'hosted' as const,
+            embedUrl: url
+          };
+        }
+
+        return { type: 'unknown' as const };
+      },
+      getVideoWidthClasses: (width: string) => {
+        switch (width) {
+          case 'full': return 'w-full';
+          case 'three-quarters': return 'w-3/4 mx-auto';
+          case 'half': return 'w-1/2 mx-auto';
+          default: return 'w-full';
+        }
+      },
+      buildEmbedUrl: (baseUrl: string, type: string, options: any = {}) => {
+        const urlObj = new URL(baseUrl);
+        
+        switch (type) {
+          case 'youtube':
+            if (options.autoplay) urlObj.searchParams.set('autoplay', '1');
+            if (!options.controls) urlObj.searchParams.set('controls', '0');
+            if (options.muted) urlObj.searchParams.set('mute', '1');
+            urlObj.searchParams.set('rel', '0');
+            break;
+            
+          case 'vimeo':
+            if (options.autoplay) urlObj.searchParams.set('autoplay', '1');
+            if (!options.controls) urlObj.searchParams.set('controls', '0');
+            if (options.muted) urlObj.searchParams.set('muted', '1');
+            break;
+            
+          case 'wistia':
+            if (options.autoplay) urlObj.searchParams.set('autoPlay', 'true');
+            if (!options.controls) urlObj.searchParams.set('playbar', 'false');
+            if (options.muted) urlObj.searchParams.set('volume', '0');
+            break;
+        }
+        
+        return urlObj.toString();
+      },
+      sanitizeEmbedCode: (embedCode: string) => {
+        return embedCode
+          .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+          .replace(/javascript:/gi, '')
+          .replace(/on\w+\s*=/gi, '');
+      }
+    };
+  }, []);
 
   if (isEditing && videoType === 'url' && !url) {
     return (
@@ -823,7 +916,7 @@ const VideoElement: React.FC<{
     );
   }
 
-  const widthClasses = getVideoWidthClasses(effectiveWidth);
+  const widthClasses = getVideoWidthClasses(String(effectiveWidth));
 
   // Handle custom embed code
   if (videoType === 'embed' && embedCode) {
