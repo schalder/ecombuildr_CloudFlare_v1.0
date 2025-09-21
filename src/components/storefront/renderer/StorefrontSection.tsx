@@ -30,12 +30,36 @@ export const StorefrontSection: React.FC<StorefrontSectionProps> = ({
     }
   };
   
+  const getSectionStyles = (): React.CSSProperties => {
+    const baseStyles = sectionStyles;
+    
+    // Add flex styles for vertical alignment - device aware
+    const verticalAlignment = section.styles?.responsive?.[deviceType]?.contentVerticalAlignment || 
+                             section.styles?.contentVerticalAlignment;
+    
+    // Apply vertical alignment if section has height or minHeight
+    const hasHeight = baseStyles.height && baseStyles.height !== 'auto';
+    const hasMinHeight = baseStyles.minHeight && baseStyles.minHeight !== 'auto';
+    
+    if (verticalAlignment && (hasHeight || hasMinHeight)) {
+      return {
+        ...baseStyles,
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: verticalAlignment === 'center' ? 'center' : 
+                       verticalAlignment === 'bottom' ? 'flex-end' : 'flex-start'
+      };
+    }
+    
+    return baseStyles;
+  };
+
   return (
     <div 
       id={section.anchor}
       data-pb-section-id={section.id}
       className={cn("relative")}
-      style={sectionStyles}
+      style={getSectionStyles()}
     >
       <div className={getSectionWidthClasses()}>
         {section.rows?.map((row) => (
