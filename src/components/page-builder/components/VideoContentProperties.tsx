@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { PageBuilderElement } from '../types';
+import { useDevicePreview } from '../contexts/DevicePreviewContext';
 import { Button } from '@/components/ui/button';
 import { Monitor, Smartphone, Tablet } from 'lucide-react';
 
@@ -27,7 +28,7 @@ export const VideoContentProperties: React.FC<VideoContentPropertiesProps> = ({
     muted = false
   } = element.content;
 
-  const [responsiveTab, setResponsiveTab] = React.useState<'desktop' | 'tablet' | 'mobile'>('desktop');
+  const { deviceType: responsiveTab, setDeviceType: setResponsiveTab } = useDevicePreview();
   const widthByDevice = (element.content as any).widthByDevice || { desktop: width, tablet: width, mobile: 'full' };
   const handleWidthByDeviceChange = (device: 'desktop' | 'tablet' | 'mobile', value: string) => {
     const updated = { ...widthByDevice, [device]: value };
