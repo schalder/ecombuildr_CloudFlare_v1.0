@@ -5,6 +5,7 @@ import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -114,6 +115,33 @@ export default function Websites() {
     },
   });
 
+  const togglePublishMutation = useMutation({
+    mutationFn: async ({ websiteId, isPublished }: { websiteId: string; isPublished: boolean }) => {
+      const { error } = await supabase
+        .from('websites')
+        .update({ is_published: isPublished })
+        .eq('id', websiteId);
+
+      if (error) throw error;
+    },
+    onSuccess: (_, { isPublished }) => {
+      queryClient.invalidateQueries({ queryKey: ['websites'] });
+      toast({
+        title: isPublished ? "Website published" : "Website unpublished",
+        description: isPublished 
+          ? "Your website is now live and accessible to visitors." 
+          : "Your website is now hidden from public access.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update website status. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleCreateWebsite = () => {
     navigate('/dashboard/websites/create');
   };
@@ -139,6 +167,10 @@ export default function Websites() {
       deleteWebsiteMutation.mutate(deleteConfirm.websiteId);
     }
     setDeleteConfirm({ open: false, websiteId: '', websiteName: '' });
+  };
+
+  const handleTogglePublish = (websiteId: string, currentStatus: boolean) => {
+    togglePublishMutation.mutate({ websiteId, isPublished: !currentStatus });
   };
 
   return (
@@ -201,6 +233,26 @@ export default function Websites() {
                     <div className="flex items-center text-sm text-muted-foreground">
                       <Globe className="mr-2 h-4 w-4" />
                       {website.connected_domain || website.canonical_domain || `site/${website.slug}`}
+                    </div>
+
+                    {/* Publish Status */}
+                    <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                      <div className="flex-1">
+                        <div className="text-sm font-medium">
+                          {website.is_published ? "Website is Live" : "Website is Hidden"}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {website.is_published 
+                            ? "Visitors can access your website" 
+                            : "Publish to make it accessible to visitors"
+                          }
+                        </div>
+                      </div>
+                      <Switch
+                        checked={website.is_published}
+                        onCheckedChange={() => handleTogglePublish(website.id, website.is_published)}
+                        disabled={togglePublishMutation.isPending}
+                      />
                     </div>
                     
                     <div className="flex space-x-2">

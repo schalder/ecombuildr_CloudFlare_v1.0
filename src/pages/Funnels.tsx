@@ -5,6 +5,7 @@ import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -88,6 +89,33 @@ export default function Funnels() {
     },
   });
 
+  const togglePublishMutation = useMutation({
+    mutationFn: async ({ funnelId, isPublished }: { funnelId: string; isPublished: boolean }) => {
+      const { error } = await supabase
+        .from('funnels')
+        .update({ is_published: isPublished })
+        .eq('id', funnelId);
+
+      if (error) throw error;
+    },
+    onSuccess: (_, { isPublished }) => {
+      queryClient.invalidateQueries({ queryKey: ['funnels'] });
+      toast({
+        title: isPublished ? "Funnel published" : "Funnel unpublished",
+        description: isPublished 
+          ? "Your funnel is now live and ready to convert visitors." 
+          : "Your funnel is now hidden from public access.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update funnel status. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleCreateFunnel = () => {
     navigate('/dashboard/funnels/create');
   };
@@ -114,6 +142,10 @@ export default function Funnels() {
       deleteFunnelMutation.mutate(deleteConfirm.funnelId);
     }
     setDeleteConfirm({ open: false, funnelId: '', funnelName: '' });
+  };
+
+  const handleTogglePublish = (funnelId: string, currentStatus: boolean) => {
+    togglePublishMutation.mutate({ funnelId, isPublished: !currentStatus });
   };
 
   return (
@@ -176,6 +208,26 @@ export default function Funnels() {
                     <div className="flex items-center text-sm text-muted-foreground">
                       <TrendingUp className="mr-2 h-4 w-4" />
                       {funnel.canonical_domain || funnel.domain || `funnel/${funnel.id}`}
+                    </div>
+
+                    {/* Publish Status */}
+                    <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                      <div className="flex-1">
+                        <div className="text-sm font-medium">
+                          {funnel.is_published ? "Funnel is Live" : "Funnel is Hidden"}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {funnel.is_published 
+                            ? "Ready to convert visitors into customers" 
+                            : "Publish to start collecting leads and sales"
+                          }
+                        </div>
+                      </div>
+                      <Switch
+                        checked={funnel.is_published}
+                        onCheckedChange={() => handleTogglePublish(funnel.id, funnel.is_published)}
+                        disabled={togglePublishMutation.isPending}
+                      />
                     </div>
                     
                     <div className="grid grid-cols-2 gap-2">
