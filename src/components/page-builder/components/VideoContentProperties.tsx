@@ -30,23 +30,30 @@ export const VideoContentProperties: React.FC<VideoContentPropertiesProps> = ({
 
   const { deviceType: responsiveTab, setDeviceType: setResponsiveTab } = useDevicePreview();
   
-  // Initialize widthByDevice with proper defaults for each device
-  const widthByDevice = React.useMemo(() => {
-    const existingWidthByDevice = (element.content as any).widthByDevice;
+  // Get current widthByDevice with proper defaults
+  const currentWidthByDevice = React.useMemo(() => {
+    const existing = (element.content as any).widthByDevice || {};
     return {
-      desktop: existingWidthByDevice?.desktop || width || 'full',
-      tablet: existingWidthByDevice?.tablet || 'full',
-      mobile: existingWidthByDevice?.mobile || 'full'
+      desktop: existing.desktop || width || 'full',
+      tablet: existing.tablet || 'full',
+      mobile: existing.mobile || 'full'
     };
   }, [(element.content as any).widthByDevice, width]);
 
   const handleWidthByDeviceChange = (device: 'desktop' | 'tablet' | 'mobile', value: string) => {
-    const updated = { ...widthByDevice, [device]: value };
+    const updated = { ...currentWidthByDevice, [device]: value };
+    
+    // Update the widthByDevice property
     onUpdate('widthByDevice', updated);
     
-    // Always update the legacy width property to match desktop for backward compatibility
-    onUpdate('width', updated.desktop);
+    // Keep legacy width property in sync with desktop for backward compatibility
+    if (device === 'desktop') {
+      onUpdate('width', value);
+    }
   };
+
+  // Get the current width for the selected device
+  const currentDeviceWidth = currentWidthByDevice[responsiveTab] || 'full';
 
   return (
     <div className="space-y-4">
@@ -109,7 +116,7 @@ export const VideoContentProperties: React.FC<VideoContentPropertiesProps> = ({
             </Button>
           </div>
         </div>
-        <Select value={String(widthByDevice[responsiveTab] || 'full')} onValueChange={(value) => handleWidthByDeviceChange(responsiveTab, value)}>
+        <Select value={currentDeviceWidth} onValueChange={(value) => handleWidthByDeviceChange(responsiveTab, value)}>
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>
