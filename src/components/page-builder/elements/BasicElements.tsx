@@ -776,13 +776,15 @@ const VideoElement: React.FC<{
   // Strip width-related properties to prevent conflicts with widthByDevice
   const { width: _, maxWidth: __, minWidth: ___, ...cleanContainerStyles } = containerStyles;
   
-  // Normalize widthByDevice for older content that may not have all device types
-  const normalizedWidthByDevice = {
-    desktop: width,
-    tablet: width,
-    mobile: 'full',
-    ...widthByDevice
-  };
+  // Normalize widthByDevice with proper fallbacks for each device independently
+  const normalizedWidthByDevice = React.useMemo(() => {
+    const existingWidthByDevice = widthByDevice || {};
+    return {
+      desktop: existingWidthByDevice.desktop || width || 'full',
+      tablet: existingWidthByDevice.tablet || 'full', // Default for tablet
+      mobile: existingWidthByDevice.mobile || 'full'  // Default for mobile
+    };
+  }, [widthByDevice, width]);
   
   // Get effective width with proper inheritance: mobile -> tablet -> desktop
   const getEffectiveWidth = () => {

@@ -29,13 +29,23 @@ export const VideoContentProperties: React.FC<VideoContentPropertiesProps> = ({
   } = element.content;
 
   const { deviceType: responsiveTab, setDeviceType: setResponsiveTab } = useDevicePreview();
-  const widthByDevice = (element.content as any).widthByDevice || { desktop: width, tablet: width, mobile: 'full' };
+  
+  // Initialize widthByDevice with proper defaults for each device
+  const widthByDevice = React.useMemo(() => {
+    const existingWidthByDevice = (element.content as any).widthByDevice;
+    return {
+      desktop: existingWidthByDevice?.desktop || width || 'full',
+      tablet: existingWidthByDevice?.tablet || 'full',
+      mobile: existingWidthByDevice?.mobile || 'full'
+    };
+  }, [(element.content as any).widthByDevice, width]);
+
   const handleWidthByDeviceChange = (device: 'desktop' | 'tablet' | 'mobile', value: string) => {
     const updated = { ...widthByDevice, [device]: value };
     onUpdate('widthByDevice', updated);
-    if (device === 'desktop') {
-      onUpdate('width', value);
-    }
+    
+    // Always update the legacy width property to match desktop for backward compatibility
+    onUpdate('width', updated.desktop);
   };
 
   return (
