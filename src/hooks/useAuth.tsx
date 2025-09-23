@@ -53,6 +53,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         const timeSinceLastToast = now - lastToastTime.current;
         
         if (event === 'SIGNED_IN' && !isInitialLoad && timeSinceLastToast > 5000) {
+          // Reset logging out state on successful sign-in
+          setIsLoggingOut(false);
+          
           // Only show welcome toast for genuine sign-ins, not tab switches or refreshes
           const isGenuineSignIn = !previousSession || previousSession.user?.id !== session?.user?.id;
           
@@ -74,6 +77,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           lastToastTime.current = now;
         }
         
+        // Always reset logging out state on any auth state change
+        if (event === 'SIGNED_IN') {
+          setIsLoggingOut(false);
+        }
+        
         // Mark initial load as complete after first auth state change
         if (isInitialLoad) {
           setIsInitialLoad(false);
@@ -92,6 +100,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
+        
+        // Reset logging out state during initial session check
+        setIsLoggingOut(false);
         
         // Set initial load to false after getting session
         setTimeout(() => {
@@ -163,7 +174,17 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const signOut = async () => {
     try {
       setIsLoggingOut(true);
+      
+      // Add fail-safe timeout to reset logging out state
+      const timeoutId = setTimeout(() => {
+        setIsLoggingOut(false);
+      }, 5000); // Reset after 5 seconds if logout doesn't complete
+      
       const { error } = await supabase.auth.signOut();
+      
+      // Clear timeout if logout completes normally
+      clearTimeout(timeoutId);
+      
       if (error) {
         setIsLoggingOut(false);
         toast({
