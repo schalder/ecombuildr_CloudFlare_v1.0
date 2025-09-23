@@ -37,7 +37,6 @@ export default function CreateWebsite() {
     name: '',
     slug: '',
     description: '',
-    domain: '',
   });
   
   // Slug validation state
@@ -107,7 +106,6 @@ export default function CreateWebsite() {
           name: data.name,
           slug: data.slug,
           description: data.description,
-          domain: data.domain || null,
         })
         .select()
         .single();
@@ -316,18 +314,6 @@ export default function CreateWebsite() {
                 />
               </div>
 
-              <div>
-                <Label htmlFor="domain">Custom Domain (Optional)</Label>
-                <Input
-                  id="domain"
-                  placeholder="e.g., yourdomain.com"
-                  value={formData.domain}
-                  onChange={(e) => setFormData(prev => ({ ...prev, domain: e.target.value }))}
-                />
-                <p className="text-sm text-muted-foreground mt-1">
-                  Leave empty to use the default URL
-                </p>
-              </div>
 
               <div className="flex space-x-3 pt-4">
                 <Button
