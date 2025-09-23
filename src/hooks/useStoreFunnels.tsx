@@ -41,11 +41,15 @@ export const useStoreFunnels = (storeId: string) => {
     retry: 1,
   });
 
+  // If query is disabled, show loading
+  const isQueryDisabled = !(user && storeId);
+  const actualLoading = loading || isQueryDisabled;
+
   const error = queryError ? (queryError instanceof Error ? queryError.message : 'Unknown error') : null;
 
   return {
     funnels,
-    loading,
+    loading: actualLoading,
     error,
     refetch
   };

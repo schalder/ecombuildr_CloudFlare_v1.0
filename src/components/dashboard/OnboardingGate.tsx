@@ -18,11 +18,12 @@ export function OnboardingGate() {
 
   // Show welcome dialog for new users (no websites)
   useEffect(() => {
-    if (!websitesLoading && websites.length === 0 && 
-        userProfile?.account_status !== 'read_only') {
+    // Only check after we have a valid store and all data has loaded
+    if (store?.id && !websitesLoading && !profileLoading && 
+        websites.length === 0 && userProfile?.account_status !== 'read_only') {
       setShowWelcome(true);
     }
-  }, [websites.length, websitesLoading, userProfile?.account_status]);
+  }, [store?.id, websites.length, websitesLoading, profileLoading, userProfile?.account_status]);
 
 
   // Redirect if not authenticated
