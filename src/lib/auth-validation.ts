@@ -80,7 +80,29 @@ export function validateEmailWithTypoDetection(email: string): EmailValidationRe
 // Normalize phone number for consistent storage and comparison
 export function normalizePhoneNumber(phone: string): string {
   // Remove all non-numeric characters except +
-  return phone.replace(/[^\d+]/g, '');
+  let normalized = phone.replace(/[^\d+]/g, '');
+  
+  // Handle Bangladesh country code variations
+  if (normalized.startsWith('880')) {
+    // Already has country code
+    return '+' + normalized;
+  } else if (normalized.startsWith('0')) {
+    // Remove leading 0 and add Bangladesh country code
+    return '+880' + normalized.substring(1);
+  } else if (normalized.length === 11 && !normalized.startsWith('+')) {
+    // Assume it's a Bangladesh number without leading 0
+    return '+880' + normalized;
+  } else if (normalized.length === 10 && !normalized.startsWith('+')) {
+    // Assume it's a Bangladesh number without country code and leading 0
+    return '+880' + normalized;
+  }
+  
+  // Add + if missing but has country code
+  if (!normalized.startsWith('+') && normalized.length > 10) {
+    return '+' + normalized;
+  }
+  
+  return normalized;
 }
 
 // Check if email already exists in the system
@@ -109,20 +131,17 @@ export async function checkPhoneExists(phone: string): Promise<boolean> {
   try {
     const normalizedPhone = normalizePhoneNumber(phone);
     
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('id, phone')
-      .not('phone', 'is', null);
+    // Use database function to check for normalized phone matches
+    const { data, error } = await supabase.rpc('check_phone_exists', {
+      normalized_phone: normalizedPhone
+    });
 
     if (error) {
       console.error('Error checking phone existence:', error);
       return false;
     }
 
-    // Check if any existing phone matches when normalized
-    return data?.some(profile => 
-      profile.phone && normalizePhoneNumber(profile.phone) === normalizedPhone
-    ) || false;
+    return data || false;
   } catch (error) {
     console.error('Error in checkPhoneExists:', error);
     return false;
