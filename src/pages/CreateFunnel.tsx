@@ -40,7 +40,6 @@ export default function CreateFunnel() {
     name: '',
     slug: '',
     description: '',
-    domain: '',
     website_id: '',
   });
 
@@ -114,7 +113,6 @@ export default function CreateFunnel() {
           name: data.name,
           slug: data.slug,
           description: data.description,
-          domain: data.domain || null,
           website_id: data.website_id || null,
         })
         .select()
@@ -144,10 +142,10 @@ export default function CreateFunnel() {
     
     const slugToUse = finalSlug || formData.slug;
     
-    if (!formData.name.trim() || !slugToUse.trim()) {
+    if (!formData.name.trim() || !slugToUse.trim() || !formData.website_id.trim()) {
       toast({
         title: "Error",
-        description: "Please fill in all required fields.",
+        description: "Please fill in all required fields including website selection.",
         variant: "destructive",
       });
       return;
@@ -324,7 +322,7 @@ export default function CreateFunnel() {
               </div>
 
               <div>
-                <Label htmlFor="website">Website</Label>
+                <Label htmlFor="website">Website *</Label>
                 <Select value={formData.website_id} onValueChange={(value) => setFormData(prev => ({ ...prev, website_id: value }))}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select a website for this funnel" />
@@ -339,19 +337,6 @@ export default function CreateFunnel() {
                 </Select>
                 <p className="text-sm text-muted-foreground mt-1">
                   Choose which website this funnel belongs to for consistent branding
-                </p>
-              </div>
-
-              <div>
-                <Label htmlFor="domain">Custom Domain (Optional)</Label>
-                <Input
-                  id="domain"
-                  placeholder="e.g., offers.yourdomain.com"
-                  value={formData.domain}
-                  onChange={(e) => setFormData(prev => ({ ...prev, domain: e.target.value }))}
-                />
-                <p className="text-sm text-muted-foreground mt-1">
-                  Leave empty to use the default URL
                 </p>
               </div>
 
