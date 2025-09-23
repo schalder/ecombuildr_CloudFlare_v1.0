@@ -20,12 +20,10 @@ export function OnboardingGate() {
   useEffect(() => {
     if (!websitesLoading && !funnelsLoading && 
         websites.length === 0 && funnels.length === 0 && 
-        userProfile?.account_status !== 'read_only' &&
-        location.pathname !== '/dashboard/websites/create' && 
-        location.pathname !== '/dashboard/funnels/create') {
+        userProfile?.account_status !== 'read_only') {
       setShowWelcome(true);
     }
-  }, [websites.length, funnels.length, websitesLoading, funnelsLoading, userProfile?.account_status, location.pathname]);
+  }, [websites.length, funnels.length, websitesLoading, funnelsLoading, userProfile?.account_status]);
 
 
   // Redirect if not authenticated
@@ -44,7 +42,15 @@ export function OnboardingGate() {
 
   // Don't interfere with create pages
   if (location.pathname === '/dashboard/websites/create' || location.pathname === '/dashboard/funnels/create') {
-    return <Outlet />;
+    return (
+      <>
+        <WelcomeDialog 
+          open={showWelcome} 
+          onOpenChange={setShowWelcome} 
+        />
+        <Outlet />
+      </>
+    );
   }
 
   // Ensure we have a store first
