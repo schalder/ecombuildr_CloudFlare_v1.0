@@ -3441,10 +3441,6 @@ export type Database = {
         }
         Returns: boolean
       }
-      check_phone_exists: {
-        Args: { normalized_phone: string }
-        Returns: boolean
-      }
       cleanup_expired_cart_sessions: {
         Args: Record<PropertyKey, never>
         Returns: number

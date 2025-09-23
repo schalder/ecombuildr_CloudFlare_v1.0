@@ -35,8 +35,8 @@ const Dashboard = () => {
     return <Outlet />;
   }
 
-  // Allow new users to access overview page, but redirect non-overview routes if no store
-  if (!store && !location.pathname.includes('/create') && location.pathname !== '/dashboard/overview') {
+  // Ensure we have a store first (only for routes that need it)
+  if (!store && !location.pathname.includes('/create')) {
     return <Navigate to="/dashboard/websites/create" replace />;
   }
 
@@ -46,9 +46,9 @@ const Dashboard = () => {
     return <Outlet />;
   }
 
-  // Only redirect if user genuinely has no websites AND no funnels, and not on overview page
+  // Only redirect if user genuinely has no websites AND no funnels
   // Make sure loading is complete before checking
-  if (!websitesLoading && !funnelsLoading && websites.length === 0 && funnels.length === 0 && location.pathname !== '/dashboard/overview') {
+  if (!websitesLoading && !funnelsLoading && websites.length === 0 && funnels.length === 0) {
     return <Navigate to="/dashboard/websites/create" replace />;
   }
 

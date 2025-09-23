@@ -8,10 +8,8 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { toast } from '@/hooks/use-toast';
-import { Loader2, AlertTriangle, CheckCircle } from 'lucide-react';
-import { validateSignupData, checkPhoneExists, type EmailValidationResult, type DuplicateCheckResult } from '@/lib/auth-validation';
+import { Loader2, Store } from 'lucide-react';
 
 const Auth = () => {
   const { user, signIn, signUp, loading } = useAuth();
@@ -22,10 +20,6 @@ const Auth = () => {
   const [signUpData, setSignUpData] = useState({ email: '', password: '', fullName: '', phone: '', confirmPassword: '' });
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [defaultTab, setDefaultTab] = useState("signin");
-  const [emailValidation, setEmailValidation] = useState<EmailValidationResult | null>(null);
-  const [duplicateCheck, setDuplicateCheck] = useState<DuplicateCheckResult | null>(null);
-  const [validationErrors, setValidationErrors] = useState<string[]>([]);
-  const [phoneValidation, setPhoneValidation] = useState<{ isChecking: boolean; isDuplicate: boolean } | null>(null);
 
   useEffect(() => {
     const plan = searchParams.get('plan');
@@ -66,111 +60,45 @@ const Auth = () => {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    setValidationErrors([]);
-    setEmailValidation(null);
-    setDuplicateCheck(null);
-
-    try {
-      // Comprehensive validation
-      const validationResult = await validateSignupData(
-        signUpData.email,
-        signUpData.phone,
-        signUpData.password,
-        signUpData.confirmPassword,
-        signUpData.fullName
-      );
-
-      setEmailValidation(validationResult.emailValidation || null);
-      setDuplicateCheck(validationResult.duplicateCheck || null);
-      setValidationErrors(validationResult.errors);
-
-      if (!validationResult.isValid) {
-        if (validationResult.duplicateCheck?.isDuplicate) {
-          // Handle duplicate account case
-          if (validationResult.duplicateCheck.action === 'LOGIN') {
-            toast({
-              title: "Account Already Exists",
-              description: validationResult.duplicateCheck.message,
-              variant: "destructive",
-            });
-          } else {
-            toast({
-              title: "Duplicate Information",
-              description: validationResult.duplicateCheck.message,
-              variant: "destructive",
-            });
-          }
-        } else if (validationResult.errors.length > 0) {
-          toast({
-            title: "Validation Error",
-            description: validationResult.errors[0],
-            variant: "destructive",
-          });
-        }
-        setIsLoading(false);
-        return;
-      }
-
-      // Use corrected email if suggested
-      const emailToUse = validationResult.emailValidation?.correctedEmail || signUpData.email;
-      
-      // Proceed with signup
-      const { error } = await signUp(emailToUse, signUpData.password, signUpData.fullName, signUpData.phone, selectedPlan);
-      
-      if (error) {
-        toast({
-          title: "Sign up failed",
-          description: error.message,
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
-      console.error('Signup validation error:', error);
+    if (!signUpData.email || !signUpData.password || !signUpData.fullName || !signUpData.phone) {
       toast({
         title: "Error",
-        description: "An unexpected error occurred. Please try again.",
+        description: "Please fill in all fields.",
         variant: "destructive",
       });
-    }
-    
-    setIsLoading(false);
-  };
-
-  const handleEmailCorrection = (correctedEmail: string) => {
-    setSignUpData({ ...signUpData, email: correctedEmail });
-    setEmailValidation(null);
-  };
-
-  const switchToLogin = () => {
-    setDefaultTab("signin");
-    setSignInData({ ...signInData, email: signUpData.email });
-    setValidationErrors([]);
-    setEmailValidation(null);
-    setDuplicateCheck(null);
-  };
-
-  // Real-time phone validation with debouncing
-  useEffect(() => {
-    if (!signUpData.phone || signUpData.phone.length < 10) {
-      setPhoneValidation(null);
       return;
     }
 
-    const timeoutId = setTimeout(async () => {
-      setPhoneValidation({ isChecking: true, isDuplicate: false });
-      
-      try {
-        const exists = await checkPhoneExists(signUpData.phone);
-        setPhoneValidation({ isChecking: false, isDuplicate: exists });
-      } catch (error) {
-        console.error('Error checking phone:', error);
-        setPhoneValidation({ isChecking: false, isDuplicate: false });
-      }
-    }, 1000);
+    if (signUpData.password !== signUpData.confirmPassword) {
+      toast({
+        title: "Error",
+        description: "Passwords do not match.",
+        variant: "destructive",
+      });
+      return;
+    }
 
-    return () => clearTimeout(timeoutId);
-  }, [signUpData.phone]);
+    if (signUpData.password.length < 6) {
+      toast({
+        title: "Error",
+        description: "Password must be at least 6 characters long.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    const { error } = await signUp(signUpData.email, signUpData.password, signUpData.fullName, signUpData.phone, selectedPlan);
+    
+    if (error) {
+      toast({
+        title: "Sign up failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+    setIsLoading(false);
+  };
 
   if (loading) {
     return (
@@ -256,63 +184,6 @@ const Auth = () => {
 
               <TabsContent value="signup">
                 <form onSubmit={handleSignUp} className="space-y-4">
-                  {/* Validation Alerts */}
-                  {emailValidation?.suggestedCorrection && (
-                    <Alert variant="warning">
-                      <AlertTriangle className="h-4 w-4" />
-                      <AlertDescription>
-                        Did you mean <strong>{emailValidation.correctedEmail}</strong>?{' '}
-                        <Button
-                          type="button"
-                          variant="link"
-                          className="p-0 h-auto text-yellow-700 underline"
-                          onClick={() => handleEmailCorrection(emailValidation.correctedEmail!)}
-                        >
-                          Use this instead
-                        </Button>
-                      </AlertDescription>
-                    </Alert>
-                  )}
-
-                  {duplicateCheck?.isDuplicate && duplicateCheck.action === 'LOGIN' && (
-                    <Alert variant="info">
-                      <AlertTriangle className="h-4 w-4" />
-                      <AlertDescription>
-                        {duplicateCheck.message}{' '}
-                        <Button
-                          type="button"
-                          variant="link"
-                          className="p-0 h-auto text-blue-700 underline"
-                          onClick={switchToLogin}
-                        >
-                          Sign in here
-                        </Button>
-                      </AlertDescription>
-                    </Alert>
-                  )}
-
-                  {duplicateCheck?.isDuplicate && duplicateCheck.action === 'USE_DIFFERENT_PHONE' && (
-                    <Alert variant="warning">
-                      <AlertTriangle className="h-4 w-4" />
-                      <AlertDescription>
-                        {duplicateCheck.message}
-                      </AlertDescription>
-                    </Alert>
-                  )}
-
-                  {validationErrors.length > 0 && (
-                    <Alert variant="destructive">
-                      <AlertTriangle className="h-4 w-4" />
-                      <AlertDescription>
-                        <ul className="list-disc list-inside space-y-1">
-                          {validationErrors.map((error, index) => (
-                            <li key={index}>{error}</li>
-                          ))}
-                        </ul>
-                      </AlertDescription>
-                    </Alert>
-                  )}
-
                   <div className="space-y-2">
                     <Label htmlFor="signup-name">Full Name</Label>
                     <Input
@@ -331,52 +202,28 @@ const Auth = () => {
                       type="email"
                       placeholder="Enter your email"
                       value={signUpData.email}
-                      onChange={(e) => {
-                        setSignUpData({ ...signUpData, email: e.target.value });
-                        // Clear validation states when user modifies email
-                        if (emailValidation || duplicateCheck) {
-                          setEmailValidation(null);
-                          setDuplicateCheck(null);
-                          setValidationErrors([]);
-                        }
-                      }}
+                      onChange={(e) => setSignUpData({ ...signUpData, email: e.target.value })}
                       disabled={isLoading}
-                      className={emailValidation?.suggestedCorrection ? 'border-yellow-500' : ''}
                     />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="signup-phone">Phone Number</Label>
-                    <div className="relative">
-                      <Input
-                        id="signup-phone"
-                        type="tel"
-                        placeholder="Phone Number (01xxxxxxxxx)"
-                        value={signUpData.phone}
-                        onChange={(e) => {
-                          setSignUpData({ ...signUpData, phone: e.target.value });
-                          // Clear validation states when user modifies phone
-                          if (duplicateCheck?.type === 'phone') {
-                            setDuplicateCheck(null);
-                            setValidationErrors([]);
-                          }
-                        }}
-                        disabled={isLoading}
-                        required
-                        className={phoneValidation?.isDuplicate ? "border-destructive" : ""}
-                      />
-                      {phoneValidation?.isChecking && (
-                        <div className="absolute right-3 top-3">
-                          <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
-                        </div>
-                      )}
-                    </div>
+                    <Input
+                      id="signup-phone"
+                      type="tel"
+                      placeholder="Enter your phone number"
+                      value={signUpData.phone}
+                      onChange={(e) => setSignUpData({ ...signUpData, phone: e.target.value })}
+                      disabled={isLoading}
+                      required
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="signup-password">Password</Label>
                     <Input
                       id="signup-password"
                       type="password"
-                      placeholder="Create a password (min 6 characters)"
+                      placeholder="Create a password"
                       value={signUpData.password}
                       onChange={(e) => setSignUpData({ ...signUpData, password: e.target.value })}
                       disabled={isLoading}
@@ -393,44 +240,7 @@ const Auth = () => {
                       disabled={isLoading}
                     />
                   </div>
-
-                  {/* Real-time phone validation alert */}
-                  {phoneValidation?.isDuplicate && (
-                    <Alert variant="destructive">
-                      <AlertTriangle className="h-4 w-4" />
-                      <AlertDescription className="space-y-2">
-                        <p>This phone number is already registered with another account.</p>
-                        <div className="flex gap-2 mt-2">
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            onClick={() => {
-                              setDefaultTab("signin");
-                              setSignInData(prev => ({ ...prev, email: signUpData.email }));
-                            }}
-                          >
-                            Sign In Instead
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            onClick={() => {
-                              setSignUpData(prev => ({ ...prev, phone: '' }));
-                              setPhoneValidation(null);
-                            }}
-                          >
-                            Use Different Phone
-                          </Button>
-                        </div>
-                      </AlertDescription>
-                    </Alert>
-                  )}
-
-                  <Button 
-                    type="submit" 
-                    className="w-full" 
-                    disabled={isLoading || phoneValidation?.isDuplicate || phoneValidation?.isChecking}
-                  >
+                  <Button type="submit" className="w-full" disabled={isLoading}>
                     {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     Create Account
                   </Button>

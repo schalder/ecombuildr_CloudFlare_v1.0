@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { DndProvider } from 'react-dnd';
-import { HTML5Backend } from 'react-dnd-html5-backend';
 import { toast } from 'sonner';
 import { ArrowLeft, Save, Eye, Settings, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -404,8 +402,7 @@ export default function PageBuilder() {
       </Helmet>
       <WebsiteProvider websiteId={resolvedWebsiteId}>
         <FunnelStepProvider stepId={stepId || null} funnelId={funnelId || null}>
-          <DndProvider backend={HTML5Backend}>
-            <div className="h-screen bg-background flex flex-col">
+          <div className="h-screen bg-background flex flex-col">
       {/* Top Navigation */}
       <div className="border-b bg-card px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-4">
@@ -542,8 +539,7 @@ export default function PageBuilder() {
         >
           <PageBuilderRenderer data={builderData} deviceType="desktop" />
         </div>
-            </div>
-          </DndProvider>
+          </div>
         </FunnelStepProvider>
       </WebsiteProvider>
     </>

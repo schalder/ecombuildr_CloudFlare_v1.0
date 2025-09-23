@@ -2,7 +2,6 @@ import { createContext, useContext, useEffect, useState, ReactNode, useRef } fro
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
-import { normalizePhoneNumber } from '@/lib/auth-validation';
 
 interface AuthContextType {
   user: User | null;
@@ -64,18 +63,15 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             });
             lastToastTime.current = now;
           }
-        } else if (event === 'SIGNED_OUT' && !isInitialLoad) {
-          // Always reset logging out state when signed out, regardless of toast timing
+        } else if (event === 'SIGNED_OUT' && !isInitialLoad && timeSinceLastToast > 2000) {
+          // Reset logging out state when signed out
           setIsLoggingOut(false);
           
-          // Only show toast if enough time has passed
-          if (timeSinceLastToast > 2000) {
-            toast({
-              title: "Signed out",
-              description: "You have been signed out successfully.",
-            });
-            lastToastTime.current = now;
-          }
+          toast({
+            title: "Signed out",
+            description: "You have been signed out successfully.",
+          });
+          lastToastTime.current = now;
         }
         
         // Mark initial load as complete after first auth state change
@@ -124,16 +120,15 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const signUp = async (email: string, password: string, fullName?: string, phone?: string, planName?: string | null) => {
     try {
       const redirectUrl = `${window.location.origin}/`;
-      const normalizedPhone = phone ? normalizePhoneNumber(phone) : null;
       
       const { error } = await supabase.auth.signUp({
-        email: email.toLowerCase().trim(),
+        email,
         password,
         options: {
           emailRedirectTo: redirectUrl,
           data: {
             full_name: fullName || email.split('@')[0],
-            phone: normalizedPhone,
+            phone: phone || null,
             selected_plan: planName || 'starter'
           },
         },
