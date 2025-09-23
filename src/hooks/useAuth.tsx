@@ -64,15 +64,18 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             });
             lastToastTime.current = now;
           }
-        } else if (event === 'SIGNED_OUT' && !isInitialLoad && timeSinceLastToast > 2000) {
-          // Reset logging out state when signed out
+        } else if (event === 'SIGNED_OUT' && !isInitialLoad) {
+          // Always reset logging out state when signed out, regardless of toast timing
           setIsLoggingOut(false);
           
-          toast({
-            title: "Signed out",
-            description: "You have been signed out successfully.",
-          });
-          lastToastTime.current = now;
+          // Only show toast if enough time has passed
+          if (timeSinceLastToast > 2000) {
+            toast({
+              title: "Signed out",
+              description: "You have been signed out successfully.",
+            });
+            lastToastTime.current = now;
+          }
         }
         
         // Mark initial load as complete after first auth state change
