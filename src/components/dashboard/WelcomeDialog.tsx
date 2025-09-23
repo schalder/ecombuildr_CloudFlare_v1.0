@@ -10,7 +10,7 @@ interface WelcomeDialogProps {
 }
 
 export function WelcomeDialog({ open, onOpenChange }: WelcomeDialogProps) {
-  const videoUrl = 'https://youtu.be/o8yhgN2LKWs';
+  const videoUrl = 'https://youtu.be/4xX8Ppy12DU';
   const videoInfo = parseVideoUrl(videoUrl);
   const embedUrl = videoInfo.embedUrl ? buildEmbedUrl(videoInfo.embedUrl, videoInfo.type) : '';
 
