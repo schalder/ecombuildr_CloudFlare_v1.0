@@ -131,17 +131,21 @@ export async function checkPhoneExists(phone: string): Promise<boolean> {
   try {
     const normalizedPhone = normalizePhoneNumber(phone);
     
-    // Use database function to check for normalized phone matches
-    const { data, error } = await supabase.rpc('check_phone_exists', {
-      normalized_phone: normalizedPhone
-    });
+    // Query all profiles and check normalized phone numbers client-side
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('phone')
+      .not('phone', 'is', null);
 
     if (error) {
       console.error('Error checking phone existence:', error);
       return false;
     }
 
-    return data || false;
+    // Check if any existing phone matches when normalized
+    return data?.some(profile => 
+      profile.phone && normalizePhoneNumber(profile.phone) === normalizedPhone
+    ) || false;
   } catch (error) {
     console.error('Error in checkPhoneExists:', error);
     return false;

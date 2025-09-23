@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { toast } from '@/hooks/use-toast';
 import { Loader2, AlertTriangle, CheckCircle } from 'lucide-react';
-import { validateSignupData, type EmailValidationResult, type DuplicateCheckResult } from '@/lib/auth-validation';
+import { validateSignupData, checkPhoneExists, type EmailValidationResult, type DuplicateCheckResult } from '@/lib/auth-validation';
 
 const Auth = () => {
   const { user, signIn, signUp, loading } = useAuth();
@@ -25,6 +25,7 @@ const Auth = () => {
   const [emailValidation, setEmailValidation] = useState<EmailValidationResult | null>(null);
   const [duplicateCheck, setDuplicateCheck] = useState<DuplicateCheckResult | null>(null);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const [phoneValidation, setPhoneValidation] = useState<{ isChecking: boolean; isDuplicate: boolean } | null>(null);
 
   useEffect(() => {
     const plan = searchParams.get('plan');
@@ -148,6 +149,28 @@ const Auth = () => {
     setEmailValidation(null);
     setDuplicateCheck(null);
   };
+
+  // Real-time phone validation with debouncing
+  useEffect(() => {
+    if (!signUpData.phone || signUpData.phone.length < 10) {
+      setPhoneValidation(null);
+      return;
+    }
+
+    const timeoutId = setTimeout(async () => {
+      setPhoneValidation({ isChecking: true, isDuplicate: false });
+      
+      try {
+        const exists = await checkPhoneExists(signUpData.phone);
+        setPhoneValidation({ isChecking: false, isDuplicate: exists });
+      } catch (error) {
+        console.error('Error checking phone:', error);
+        setPhoneValidation({ isChecking: false, isDuplicate: false });
+      }
+    }, 1000);
+
+    return () => clearTimeout(timeoutId);
+  }, [signUpData.phone]);
 
   if (loading) {
     return (
@@ -323,23 +346,30 @@ const Auth = () => {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="signup-phone">Phone Number</Label>
-                    <Input
-                      id="signup-phone"
-                      type="tel"
-                      placeholder="Enter your phone number"
-                      value={signUpData.phone}
-                      onChange={(e) => {
-                        setSignUpData({ ...signUpData, phone: e.target.value });
-                        // Clear validation states when user modifies phone
-                        if (duplicateCheck?.type === 'phone') {
-                          setDuplicateCheck(null);
-                          setValidationErrors([]);
-                        }
-                      }}
-                      disabled={isLoading}
-                      required
-                      className={duplicateCheck?.type === 'phone' ? 'border-yellow-500' : ''}
-                    />
+                    <div className="relative">
+                      <Input
+                        id="signup-phone"
+                        type="tel"
+                        placeholder="Phone Number (01xxxxxxxxx)"
+                        value={signUpData.phone}
+                        onChange={(e) => {
+                          setSignUpData({ ...signUpData, phone: e.target.value });
+                          // Clear validation states when user modifies phone
+                          if (duplicateCheck?.type === 'phone') {
+                            setDuplicateCheck(null);
+                            setValidationErrors([]);
+                          }
+                        }}
+                        disabled={isLoading}
+                        required
+                        className={phoneValidation?.isDuplicate ? "border-destructive" : ""}
+                      />
+                      {phoneValidation?.isChecking && (
+                        <div className="absolute right-3 top-3">
+                          <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="signup-password">Password</Label>
@@ -363,7 +393,44 @@ const Auth = () => {
                       disabled={isLoading}
                     />
                   </div>
-                  <Button type="submit" className="w-full" disabled={isLoading}>
+
+                  {/* Real-time phone validation alert */}
+                  {phoneValidation?.isDuplicate && (
+                    <Alert variant="destructive">
+                      <AlertTriangle className="h-4 w-4" />
+                      <AlertDescription className="space-y-2">
+                        <p>This phone number is already registered with another account.</p>
+                        <div className="flex gap-2 mt-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => {
+                              setDefaultTab("signin");
+                              setSignInData(prev => ({ ...prev, email: signUpData.email }));
+                            }}
+                          >
+                            Sign In Instead
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => {
+                              setSignUpData(prev => ({ ...prev, phone: '' }));
+                              setPhoneValidation(null);
+                            }}
+                          >
+                            Use Different Phone
+                          </Button>
+                        </div>
+                      </AlertDescription>
+                    </Alert>
+                  )}
+
+                  <Button 
+                    type="submit" 
+                    className="w-full" 
+                    disabled={isLoading || phoneValidation?.isDuplicate || phoneValidation?.isChecking}
+                  >
                     {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     Create Account
                   </Button>
