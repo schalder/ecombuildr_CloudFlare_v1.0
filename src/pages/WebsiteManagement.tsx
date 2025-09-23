@@ -397,12 +397,12 @@ const WebsiteManagement = () => {
                   </Button>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
                   {pages.map((page) => (
                     <div key={page.id} className="group relative">
                       <div className="border rounded-lg overflow-hidden hover:shadow-md transition-shadow">
                         {/* Page Preview */}
-                        <div className="aspect-[4/3] bg-muted/30 relative overflow-hidden">
+                        <div className="aspect-[3/2] sm:aspect-[4/3] bg-muted/30 relative overflow-hidden">
                           {page.preview_image_url ? (
                             <img 
                               src={page.preview_image_url} 
@@ -452,7 +452,7 @@ const WebsiteManagement = () => {
                         </div>
 
                         {/* Page Info */}
-                        <div className="p-3 sm:p-4">
+                        <div className="p-2 sm:p-4">
                           <div className="flex items-start justify-between mb-2">
                             <div className="flex-1 min-w-0 pr-2">
                               <h3 className="font-medium truncate text-sm sm:text-base">{page.title}</h3>
@@ -476,7 +476,7 @@ const WebsiteManagement = () => {
                             <Button 
                               variant="default" 
                               size="sm" 
-                              className="flex-1 text-xs sm:text-sm"
+                              className="flex-1 text-xs sm:text-sm py-1.5 sm:py-2"
                               onClick={() => handleEditPage(page.id)}
                             >
                               <Edit className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-1" />
@@ -485,7 +485,7 @@ const WebsiteManagement = () => {
                             <Button
                               variant="outline"
                               size="sm"
-                              className="px-2 sm:px-3"
+                              className="px-1.5 sm:px-3 py-1.5 sm:py-2"
                               aria-label="Visit page"
                               onClick={() => {
                                 const connectedDomain = website?.connected_domain || website?.canonical_domain;
