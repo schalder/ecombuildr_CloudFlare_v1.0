@@ -1,9 +1,11 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserStore } from '@/hooks/useUserStore';
 import { useStoreWebsites } from '@/hooks/useStoreWebsites';
 import { useStoreFunnels } from '@/hooks/useStoreFunnels';
 import { usePlanLimits } from '@/hooks/usePlanLimits';
+import { WelcomeDialog } from './WelcomeDialog';
 
 export function OnboardingGate() {
   const { user, loading: authLoading } = useAuth();
@@ -12,6 +14,18 @@ export function OnboardingGate() {
   const { funnels, loading: funnelsLoading } = useStoreFunnels(store?.id || '');
   const { userProfile, loading: profileLoading } = usePlanLimits();
   const location = useLocation();
+  const [showWelcome, setShowWelcome] = useState(false);
+
+  // Show welcome dialog for new users (no websites and no funnels)
+  useEffect(() => {
+    if (!websitesLoading && !funnelsLoading && 
+        websites.length === 0 && funnels.length === 0 && 
+        userProfile?.account_status !== 'read_only' &&
+        location.pathname !== '/dashboard/websites/create' && 
+        location.pathname !== '/dashboard/funnels/create') {
+      setShowWelcome(true);
+    }
+  }, [websites.length, funnels.length, websitesLoading, funnelsLoading, userProfile?.account_status, location.pathname]);
 
 
   // Redirect if not authenticated
@@ -51,5 +65,13 @@ export function OnboardingGate() {
   }
 
   // User is authenticated and has websites or funnels, proceed normally
-  return <Outlet />;
+  return (
+    <>
+      <WelcomeDialog 
+        open={showWelcome} 
+        onOpenChange={setShowWelcome} 
+      />
+      <Outlet />
+    </>
+  );
 }
