@@ -162,50 +162,48 @@ const App = () => (
                 
                 {/* Single Store Dashboard Routes - Protected */}
                 <Route path="/dashboard" element={<OnboardingGate />}>
-                  <Route element={<Dashboard />}>
-                    <Route index element={<Navigate to="/dashboard/overview" replace />} />
-                    <Route path="overview" element={<DashboardOverview />} />
-                    <Route path="products" element={<Products />} />
-                    <Route path="products/add" element={<AddProduct />} />
-                    <Route path="products/:id" element={<ProductView />} />
-                    <Route path="products/:id/edit" element={<EditProduct />} />
-                    <Route path="categories" element={<Categories />} />
-                    <Route path="collections" element={<Collections />} />
-                    <Route path="collections/:id" element={<CollectionEdit />} />
-                    <Route path="product-library" element={<ProductLibrary />} />
-                    <Route path="orders" element={<Orders />} />
-                    <Route path="orders/:orderId" element={<Orders />} />
-                    <Route path="customers" element={<Customers />} />
-                    <Route path="analytics" element={<Analytics />} />
-                    <Route path="reviews" element={<Reviews />} />
-                    <Route path="media" element={<MediaStorage />} />
-                    <Route path="websites" element={<Websites />} />
-                    <Route path="funnels" element={<Funnels />} />
-                    <Route path="funnels/:id" element={<FunnelManagement />} />
-                    {/* Context-aware page builder routes */}
-                    <Route path="websites/:websiteId/pages/:pageId/builder" element={<PageBuilder />} />
-                    <Route path="funnels/:funnelId/steps/:stepId/builder" element={<PageBuilder />} />
-                    <Route path="marketing" element={<Marketing />} />
-                    <Route path="marketing/facebook" element={<FacebookAds />} />
-                    <Route path="marketing/email" element={<EmailCampaigns />} />
-                    <Route path="marketing/discounts" element={<Discounts />} />
-                    <Route path="settings" element={<StoreSettings />} />
-                    <Route path="settings/store" element={<StoreSettings />} />
-                    <Route path="settings/profile" element={<ProfileSettings />} />
-                    <Route path="settings/billing" element={<BillingSettings />} />
-                    <Route path="domains" element={<Domains />} />
-                    <Route path="courses" element={<Courses />} />
-                    <Route path="courses/create" element={<CreateCourse />} />
-                    <Route path="courses/settings" element={<CourseSettings />} />
-                    <Route path="courses/analytics" element={<Analytics />} />
-                    <Route path="courses/domains" element={<CourseDomainSettings />} />
-                    <Route path="courses/:courseId/edit" element={<CourseEditor />} />
-                    <Route path="courses/:courseId" element={<CourseView />} />
-                    {/* Create and management routes included to ensure OnboardingGate mounts here too */}
-                    <Route path="websites/create" element={<CreateWebsite />} />
-                    <Route path="websites/:id" element={<WebsiteManagement />} />
-                    <Route path="funnels/create" element={<CreateFunnel />} />
-                  </Route>
+                  <Route index element={<Navigate to="/dashboard/overview" replace />} />
+                  <Route path="overview" element={<DashboardOverview />} />
+                  <Route path="products" element={<Products />} />
+                  <Route path="products/add" element={<AddProduct />} />
+                  <Route path="products/:id" element={<ProductView />} />
+                  <Route path="products/:id/edit" element={<EditProduct />} />
+                  <Route path="categories" element={<Categories />} />
+                  <Route path="collections" element={<Collections />} />
+                  <Route path="collections/:id" element={<CollectionEdit />} />
+                  <Route path="product-library" element={<ProductLibrary />} />
+                  <Route path="orders" element={<Orders />} />
+                  <Route path="orders/:orderId" element={<Orders />} />
+                  <Route path="customers" element={<Customers />} />
+                  <Route path="analytics" element={<Analytics />} />
+                  <Route path="reviews" element={<Reviews />} />
+                  <Route path="media" element={<MediaStorage />} />
+                  <Route path="websites" element={<Websites />} />
+                  <Route path="funnels" element={<Funnels />} />
+                  <Route path="funnels/:id" element={<FunnelManagement />} />
+                  {/* Context-aware page builder routes */}
+                  <Route path="websites/:websiteId/pages/:pageId/builder" element={<PageBuilder />} />
+                  <Route path="funnels/:funnelId/steps/:stepId/builder" element={<PageBuilder />} />
+                  <Route path="marketing" element={<Marketing />} />
+                  <Route path="marketing/facebook" element={<FacebookAds />} />
+                  <Route path="marketing/email" element={<EmailCampaigns />} />
+                  <Route path="marketing/discounts" element={<Discounts />} />
+                  <Route path="settings" element={<StoreSettings />} />
+                  <Route path="settings/store" element={<StoreSettings />} />
+                  <Route path="settings/profile" element={<ProfileSettings />} />
+                  <Route path="settings/billing" element={<BillingSettings />} />
+                  <Route path="domains" element={<Domains />} />
+                  <Route path="courses" element={<Courses />} />
+                  <Route path="courses/create" element={<CreateCourse />} />
+                  <Route path="courses/settings" element={<CourseSettings />} />
+                  <Route path="courses/analytics" element={<Analytics />} />
+                  <Route path="courses/domains" element={<CourseDomainSettings />} />
+                  <Route path="courses/:courseId/edit" element={<CourseEditor />} />
+                  <Route path="courses/:courseId" element={<CourseView />} />
+                  {/* Create and management routes included to ensure OnboardingGate mounts here too */}
+                  <Route path="websites/create" element={<CreateWebsite />} />
+                  <Route path="websites/:id" element={<WebsiteManagement />} />
+                  <Route path="funnels/create" element={<CreateFunnel />} />
                 </Route>
 
                 {/* Training Routes - Protected */}
