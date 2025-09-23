@@ -35,6 +35,11 @@ const Dashboard = () => {
     return <Outlet />;
   }
 
+  // For dashboard/overview, always allow access even without store/websites/funnels
+  if (location.pathname === '/dashboard/overview' || location.pathname === '/dashboard') {
+    return <Outlet />;
+  }
+
   // Ensure we have a store first (only for routes that need it)
   if (!store && !location.pathname.includes('/create')) {
     return <Navigate to="/dashboard/websites/create" replace />;
@@ -48,7 +53,9 @@ const Dashboard = () => {
 
   // Only redirect if user genuinely has no websites AND no funnels
   // Make sure loading is complete before checking
-  if (!websitesLoading && !funnelsLoading && websites.length === 0 && funnels.length === 0) {
+  // But NOT for overview page - let users see the overview even without content
+  if (!websitesLoading && !funnelsLoading && websites.length === 0 && funnels.length === 0 && 
+      !location.pathname.startsWith('/dashboard/overview')) {
     return <Navigate to="/dashboard/websites/create" replace />;
   }
 
