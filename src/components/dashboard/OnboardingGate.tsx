@@ -16,14 +16,13 @@ export function OnboardingGate() {
   const location = useLocation();
   const [showWelcome, setShowWelcome] = useState(false);
 
-  // Show welcome dialog for new users (no websites and no funnels)
+  // Show welcome dialog for new users (no websites)
   useEffect(() => {
-    if (!websitesLoading && !funnelsLoading && 
-        websites.length === 0 && funnels.length === 0 && 
+    if (!websitesLoading && websites.length === 0 && 
         userProfile?.account_status !== 'read_only') {
       setShowWelcome(true);
     }
-  }, [websites.length, funnels.length, websitesLoading, funnelsLoading, userProfile?.account_status]);
+  }, [websites.length, websitesLoading, userProfile?.account_status]);
 
 
   // Redirect if not authenticated
