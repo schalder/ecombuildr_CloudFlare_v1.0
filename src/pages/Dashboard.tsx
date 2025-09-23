@@ -2,10 +2,10 @@ import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 
 const Dashboard = () => {
-  const { user, loading } = useAuth();
+  const { user, loading, isLoggingOut } = useAuth();
 
-  // Redirect if not authenticated
-  if (!user && !loading) {
+  // Redirect if not authenticated (but not during logout process)
+  if (!user && !loading && !isLoggingOut) {
     return <Navigate to="/auth" replace />;
   }
 

@@ -10,6 +10,7 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   loading: boolean;
+  isLoggingOut: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -31,6 +32,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const lastToastTime = useRef<number>(0);
 
   useEffect(() => {
@@ -62,6 +64,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             lastToastTime.current = now;
           }
         } else if (event === 'SIGNED_OUT' && !isInitialLoad && timeSinceLastToast > 2000) {
+          // Reset logging out state when signed out
+          setIsLoggingOut(false);
+          
           toast({
             title: "Signed out",
             description: "You have been signed out successfully.",
@@ -157,18 +162,19 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const signOut = async () => {
     try {
+      setIsLoggingOut(true);
       const { error } = await supabase.auth.signOut();
       if (error) {
+        setIsLoggingOut(false);
         toast({
           title: "Error",
           description: "Failed to sign out. Please try again.",
           variant: "destructive",
         });
-      } else {
-        // Redirect to home page after successful signout
-        window.location.href = '/';
       }
+      // Don't redirect here - let the auth state change handle it
     } catch (error) {
+      setIsLoggingOut(false);
       toast({
         title: "Error",
         description: "Failed to sign out. Please try again.",
@@ -184,6 +190,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     signIn,
     signOut,
     loading,
+    isLoggingOut,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
