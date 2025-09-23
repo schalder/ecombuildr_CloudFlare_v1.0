@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Navigate, useSearchParams, Link } from 'react-router-dom';
+import { Navigate, useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useSEO } from '@/hooks/useSEO';
 import { SEOHead } from '@/components/SEOHead';
@@ -17,6 +17,7 @@ const Auth = () => {
   const { user, signIn, signUp, loading } = useAuth();
   const { seoData } = useSEO('auth');
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [signInData, setSignInData] = useState({ email: '', password: '' });
   const [signUpData, setSignUpData] = useState({ email: '', password: '', fullName: '', phone: '', confirmPassword: '' });
@@ -35,6 +36,13 @@ const Auth = () => {
       setDefaultTab("signup");
     }
   }, [searchParams]);
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (user && !loading) {
+      navigate('/dashboard/overview', { replace: true });
+    }
+  }, [user, loading, navigate]);
 
   // Redirect if already authenticated
   if (user && !loading) {
@@ -61,6 +69,8 @@ const Auth = () => {
         description: error.message,
         variant: "destructive",
       });
+    } else {
+      navigate('/dashboard/overview', { replace: true });
     }
     setIsLoading(false);
   };
@@ -195,6 +205,8 @@ const Auth = () => {
         description: error.message,
         variant: "destructive",
       });
+    } else {
+      navigate('/dashboard/overview', { replace: true });
     }
     setIsLoading(false);
   };
