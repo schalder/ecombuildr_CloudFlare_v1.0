@@ -443,11 +443,11 @@ const WebsiteManagement = () => {
 
                           {/* Mobile Settings Button - Always Visible */}
                           <button
-                            className="absolute top-2 right-8 sm:hidden bg-background/80 backdrop-blur-sm rounded p-1.5 shadow-sm border"
+                            className="absolute top-2 right-8 sm:hidden bg-background/90 backdrop-blur-sm rounded-md p-1.5 shadow-md border hover:bg-background transition-colors"
                             aria-label="Page settings"
                             onClick={() => { setSelectedPage(page); setIsSettingsOpen(true); }}
                           >
-                            <Settings className="h-3 w-3 text-muted-foreground" />
+                            <Settings className="h-3.5 w-3.5 text-foreground" />
                           </button>
                         </div>
 
@@ -464,11 +464,11 @@ const WebsiteManagement = () => {
                               </p>
                             </div>
                             <button
-                              className="hidden sm:block ml-2 opacity-0 group-hover:opacity-100 transition-opacity p-1"
+                              className="hidden sm:flex ml-2 p-1.5 rounded-md bg-muted/40 hover:bg-muted transition-colors items-center justify-center"
                               aria-label="Page settings"
                               onClick={() => { setSelectedPage(page); setIsSettingsOpen(true); }}
                             >
-                              <Settings className="h-4 w-4 text-muted-foreground" />
+                              <Settings className="h-4 w-4 text-muted-foreground hover:text-foreground transition-colors" />
                             </button>
                           </div>
 
