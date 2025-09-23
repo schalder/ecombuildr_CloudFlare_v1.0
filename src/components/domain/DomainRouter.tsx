@@ -172,57 +172,33 @@ export const DomainRouter: React.FC<DomainRouterProps> = ({ children }) => {
   
   // Render content based on type with proper provider context
   if (selectedConnection.content_type === 'website') {
-    // Render the entire website with all its routes wrapped in providers
+    // Render the entire website with all its routes - providers are already available from App.tsx
     return (
-      <AuthProvider>
-        <StoreProvider>
-           <PixelManager>
-              <CartDrawerProvider>
-                <DomainCartProvider storeId={selectedConnection.store_id} websiteId={selectedConnection.content_id}>
-                 <AddToCartProvider>
-                  <CartDrawer />
-                  <DomainWebsiteRenderer 
-                    websiteId={selectedConnection.content_id}
-                    customDomain={customDomain.domain}
-                  />
-                  </AddToCartProvider>
-                </DomainCartProvider>
-              </CartDrawerProvider>
-          </PixelManager>
-        </StoreProvider>
-      </AuthProvider>
+      <DomainCartProvider storeId={selectedConnection.store_id} websiteId={selectedConnection.content_id}>
+        <DomainWebsiteRenderer 
+          websiteId={selectedConnection.content_id}
+          customDomain={customDomain.domain}
+        />
+      </DomainCartProvider>
     );
   }
   
   if (selectedConnection.content_type === 'funnel') {
     return (
-        <AuthProvider>
-          <StoreProvider>
-            <CartDrawerProvider>
-              <DomainCartProvider storeId={selectedConnection.store_id}>
-              <AddToCartProvider>
-                <CartDrawer />
-                <DomainFunnelRenderer 
-                  funnelId={selectedConnection.content_id}
-                  customDomain={customDomain.domain}
-                />
-                </AddToCartProvider>
-              </DomainCartProvider>
-            </CartDrawerProvider>
-        </StoreProvider>
-      </AuthProvider>
+      <DomainCartProvider storeId={selectedConnection.store_id}>
+        <DomainFunnelRenderer 
+          funnelId={selectedConnection.content_id}
+          customDomain={customDomain.domain}
+        />
+      </DomainCartProvider>
     );
   }
 
   if (selectedConnection.content_type === 'course_area') {
     return (
-      <AuthProvider>
-        <StoreProvider>
-          <CourseDomainRouter 
-            customDomain={customDomain.domain}
-          />
-        </StoreProvider>
-      </AuthProvider>
+      <CourseDomainRouter 
+        customDomain={customDomain.domain}
+      />
     );
   }
   

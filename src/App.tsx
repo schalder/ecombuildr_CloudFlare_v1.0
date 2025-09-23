@@ -142,19 +142,19 @@ const CartProviderWrapper: React.FC<{ children: React.ReactNode }> = ({ children
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <HelmetProvider>
-      <AuthProvider>
-        <StoreProvider>
-          <PixelManager>
-            <CartDrawerProvider>
-              <CartProviderWrapper>
-                <TooltipProvider>
-                  <Toaster />
-                  <Sonner />
-              <BrowserRouter>
-                <ScrollToHash />
-                <AddToCartProvider>
-                  <CartDrawer />
-              <DomainRouter>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <ScrollToHash />
+          <AuthProvider>
+            <StoreProvider>
+              <PixelManager>
+                <CartDrawerProvider>
+                  <CartProviderWrapper>
+                    <AddToCartProvider>
+                      <CartDrawer />
+                      <DomainRouter>
                 <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/auth" element={<Auth />} />
@@ -385,15 +385,15 @@ const App = () => (
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
                 </Routes>
-              </DomainRouter>
-                </AddToCartProvider>
-                </BrowserRouter>
-                </TooltipProvider>
-              </CartProviderWrapper>
-            </CartDrawerProvider>
-          </PixelManager>
-        </StoreProvider>
-      </AuthProvider>
+                      </DomainRouter>
+                    </AddToCartProvider>
+                  </CartProviderWrapper>
+                </CartDrawerProvider>
+              </PixelManager>
+            </StoreProvider>
+          </AuthProvider>
+        </BrowserRouter>
+      </TooltipProvider>
     </HelmetProvider>
   </QueryClientProvider>
 );
