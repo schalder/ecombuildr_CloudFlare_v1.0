@@ -44,11 +44,40 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       (event, session) => {
         if (!isMounted || abortController.signal.aborted) return;
         
+        const previousSession = session;
         setSession(session);
         setUser(session?.user ?? null);
-        setLoading(false);
         
-        // Reset logging out state on sign in
+        // Only show toasts for actual user actions, not session refreshes
+        const now = Date.now();
+        const timeSinceLastToast = now - lastToastTime.current;
+        
+        if (event === 'SIGNED_IN' && !isInitialLoad && timeSinceLastToast > 5000) {
+          // Reset logging out state on successful sign-in
+          setIsLoggingOut(false);
+          
+          // Only show welcome toast for genuine sign-ins, not tab switches or refreshes
+          const isGenuineSignIn = !previousSession || previousSession.user?.id !== session?.user?.id;
+          
+          if (isGenuineSignIn) {
+            toast({
+              title: "Welcome back!",
+              description: "You have been signed in successfully.",
+            });
+            lastToastTime.current = now;
+          }
+        } else if (event === 'SIGNED_OUT' && !isInitialLoad && timeSinceLastToast > 2000) {
+          // Reset logging out state when signed out
+          setIsLoggingOut(false);
+          
+          toast({
+            title: "Signed out",
+            description: "You have been signed out successfully.",
+          });
+          lastToastTime.current = now;
+        }
+        
+        // Always reset logging out state on any auth state change
         if (event === 'SIGNED_IN') {
           setIsLoggingOut(false);
         }
@@ -57,6 +86,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         if (isInitialLoad) {
           setIsInitialLoad(false);
         }
+        
+        setLoading(false);
       }
     );
 
@@ -117,7 +148,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       if (!error) {
         toast({
           title: "Account created!",
-          description: "Welcome to your new account!",
+          description: "Please check your email to verify your account.",
         });
       }
 
