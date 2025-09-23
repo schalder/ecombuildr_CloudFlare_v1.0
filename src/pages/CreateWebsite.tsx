@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAutoStore } from '@/hooks/useAutoStore';
 import { debounce } from '@/lib/utils';
 import { usePlanLimits } from '@/hooks/usePlanLimits';
@@ -21,6 +21,7 @@ export default function CreateWebsite() {
   const { toast } = useToast();
   const { store, getOrCreateStore } = useAutoStore();
   const { userProfile } = usePlanLimits();
+  const queryClient = useQueryClient();
 
   // Redirect read-only users back to dashboard
   useEffect(() => {
@@ -114,6 +115,9 @@ export default function CreateWebsite() {
       return website;
     },
     onSuccess: (website) => {
+      // Invalidate websites cache so the new website appears immediately
+      queryClient.invalidateQueries({ queryKey: ['websites'] });
+      
       toast({
         title: "Website created",
         description: "Your website has been created successfully.",
