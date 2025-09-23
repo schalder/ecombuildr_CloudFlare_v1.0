@@ -1,8 +1,7 @@
 // Page builder with floating elements panel
 import React, { useState, useCallback, memo, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
-import { DndProvider, useDrag, useDrop } from 'react-dnd';
-import { HTML5Backend } from 'react-dnd-html5-backend';
+import { useDrag, useDrop } from 'react-dnd';
 import { 
   Plus, 
   Grip, 
@@ -1108,14 +1107,13 @@ const ElementorPageBuilderContent: React.FC<ElementorPageBuilderProps> = memo(({
     .filter(category => category.elements.length > 0);
 
   return (
-    <DndProvider backend={HTML5Backend}>
-      <div className="flex h-full min-h-0 bg-background relative">
-        {/* Floating Elements Panel */}
-        <div 
-          className={`fixed top-0 left-0 w-80 h-full bg-card border-r shadow-lg z-50 overflow-hidden transition-transform duration-300 ease-out ${
-            isElementsPanelOpen ? 'translate-x-0' : '-translate-x-full'
-          }`}
-          ref={elementsPanelRef}
+    <div className="flex h-full min-h-0 bg-background relative">
+      {/* Floating Elements Panel */}
+      <div 
+        className={`fixed top-0 left-0 w-80 h-full bg-card border-r shadow-lg z-50 overflow-hidden transition-transform duration-300 ease-out ${
+          isElementsPanelOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+        ref={elementsPanelRef}
         >
           <div className="p-4 border-b">
               <div className="flex items-center justify-between">
@@ -1374,7 +1372,7 @@ const ElementorPageBuilderContent: React.FC<ElementorPageBuilderProps> = memo(({
           }
         }}
       />
-    </DndProvider>
+    </div>
   );
 });
 

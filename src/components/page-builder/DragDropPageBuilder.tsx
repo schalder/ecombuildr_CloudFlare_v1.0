@@ -1,6 +1,4 @@
 import React from 'react';
-import { DndProvider } from 'react-dnd';
-import { HTML5Backend } from 'react-dnd-html5-backend';
 import { PageBuilderData } from './types';
 import { usePageBuilderState } from './hooks/usePageBuilderState';
 import { CanvasArea } from './components/CanvasArea';
@@ -89,14 +87,13 @@ export const DragDropPageBuilder: React.FC<DragDropPageBuilderProps> = ({
   };
 
   return (
-    <DndProvider backend={HTML5Backend}>
-      <div className="flex h-screen bg-background relative">
-        {/* Floating Elements Panel */}
-        {isElementsPanelOpen && (
-          <div className="fixed top-0 left-0 w-80 h-full bg-card border-r shadow-lg z-50 overflow-hidden">
-            <div className="flex items-center justify-between p-4 border-b">
-              <h3 className="font-semibold">Elements</h3>
-              <button
+    <div className="flex h-screen bg-background relative">
+      {/* Floating Elements Panel */}
+      {isElementsPanelOpen && (
+        <div className="fixed top-0 left-0 w-80 h-full bg-card border-r shadow-lg z-50 overflow-hidden">
+          <div className="flex items-center justify-between p-4 border-b">
+            <h3 className="font-semibold">Elements</h3>
+            <button
                 onClick={() => setIsElementsPanelOpen(false)}
                 className="p-1 hover:bg-muted rounded"
               >
@@ -198,7 +195,6 @@ export const DragDropPageBuilder: React.FC<DragDropPageBuilderProps> = ({
             </div>
           </div>
         )}
-      </div>
-    </DndProvider>
+    </div>
   );
 };
