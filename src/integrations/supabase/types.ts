@@ -2571,9 +2571,12 @@ export type Database = {
           account_status: string | null
           created_at: string | null
           email: string
+          email_normalized: string | null
           full_name: string | null
           id: string
           phone: string | null
+          phone_duplicate_marker: string | null
+          phone_normalized: string | null
           role: Database["public"]["Enums"]["user_role"] | null
           subscription_expires_at: string | null
           subscription_plan:
@@ -2587,9 +2590,12 @@ export type Database = {
           account_status?: string | null
           created_at?: string | null
           email: string
+          email_normalized?: string | null
           full_name?: string | null
           id: string
           phone?: string | null
+          phone_duplicate_marker?: string | null
+          phone_normalized?: string | null
           role?: Database["public"]["Enums"]["user_role"] | null
           subscription_expires_at?: string | null
           subscription_plan?:
@@ -2603,9 +2609,12 @@ export type Database = {
           account_status?: string | null
           created_at?: string | null
           email?: string
+          email_normalized?: string | null
           full_name?: string | null
           id?: string
           phone?: string | null
+          phone_duplicate_marker?: string | null
+          phone_normalized?: string | null
           role?: Database["public"]["Enums"]["user_role"] | null
           subscription_expires_at?: string | null
           subscription_plan?:
@@ -3600,6 +3609,10 @@ export type Database = {
       }
       normalize_phone: {
         Args: { p: string }
+        Returns: string
+      }
+      normalize_phone_bd: {
+        Args: { phone_input: string }
         Returns: string
       }
       record_product_import: {
