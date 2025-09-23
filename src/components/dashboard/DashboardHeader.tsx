@@ -40,7 +40,7 @@ const getNotificationIcon = (type: string) => {
 };
 
 export function DashboardHeader({ title, description }: DashboardHeaderProps) {
-  const { user, signOut, isLoggingOut } = useAuth();
+  const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const [showMobileSearch, setShowMobileSearch] = useState(false);
   const [searchFocused, setSearchFocused] = useState(false);
@@ -93,12 +93,6 @@ export function DashboardHeader({ title, description }: DashboardHeaderProps) {
   const handleSearchClear = () => {
     clearSearch();
     setSearchFocused(false);
-  };
-
-  const handleSignOut = async () => {
-    await signOut();
-    // Navigate to home page after logout
-    navigate('/');
   };
 
   return (
@@ -269,9 +263,9 @@ export function DashboardHeader({ title, description }: DashboardHeaderProps) {
                   </NavLink>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleSignOut} className="text-destructive" disabled={isLoggingOut}>
+                <DropdownMenuItem onClick={signOut} className="text-destructive">
                   <LogOut className="mr-2 h-4 w-4" />
-                  {isLoggingOut ? 'Logging out...' : 'Log out'}
+                  Log out
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
