@@ -84,7 +84,6 @@ export default function DashboardOverview() {
       fetchDashboardData();
       fetchOperationalData();
     } else if (!storeLoading) {
-      // For users without stores, just show the UI without data
       setLoading(false);
       setOperationalLoading(false);
     }
@@ -289,100 +288,6 @@ export default function DashboardOverview() {
         return 'bg-muted text-muted-foreground';
     }
   };
-
-  // Show onboarding for new users without stores
-  if (!store && !storeLoading) {
-    return (
-      <DashboardLayout 
-        title="Welcome to Your Dashboard" 
-        description="Let's get your business up and running"
-      >
-        <div className="space-y-6">
-          <PlanStatusBanner onUpgrade={() => setShowUpgradeModal(true)} />
-          
-          {/* Welcome Card for New Users */}
-          <Card className="bg-gradient-card border-border shadow-soft">
-            <CardHeader className="text-center">
-              <div className="mx-auto mb-4 p-3 rounded-full bg-primary/10 w-fit">
-                <Store className="h-8 w-8 text-primary" />
-              </div>
-              <CardTitle className="text-2xl">Welcome to Your Dashboard!</CardTitle>
-              <CardDescription className="text-base">
-                You're all set up and ready to start building your online business. Let's create your first website or funnel.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid gap-4 md:grid-cols-2">
-                <Card className="border-2 border-dashed border-primary/20 hover:border-primary/40 transition-colors">
-                  <CardHeader className="text-center pb-4">
-                    <Globe className="mx-auto h-12 w-12 text-primary mb-2" />
-                    <CardTitle className="text-lg">Create Your First Website</CardTitle>
-                    <CardDescription>
-                      Build a complete e-commerce website with products, checkout, and more
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="text-center">
-                    <Button asChild size="lg" className="w-full">
-                      <NavLink to="/dashboard/websites/create">
-                        <Plus className="mr-2 h-4 w-4" />
-                        Create Website
-                      </NavLink>
-                    </Button>
-                  </CardContent>
-                </Card>
-
-                <Card className="border-2 border-dashed border-secondary/20 hover:border-secondary/40 transition-colors">
-                  <CardHeader className="text-center pb-4">
-                    <Zap className="mx-auto h-12 w-12 text-secondary mb-2" />
-                    <CardTitle className="text-lg">Create Your First Funnel</CardTitle>
-                    <CardDescription>
-                      Build a high-converting sales funnel to capture leads and drive sales
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="text-center">
-                    <Button asChild size="lg" variant="secondary" className="w-full">
-                      <NavLink to="/dashboard/funnels/create">
-                        <Plus className="mr-2 h-4 w-4" />
-                        Create Funnel
-                      </NavLink>
-                    </Button>
-                  </CardContent>
-                </Card>
-              </div>
-
-              <div className="bg-muted/50 rounded-lg p-4 text-center">
-                <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground mb-2">
-                  <BarChart3 className="h-4 w-4" />
-                  <span>What you can expect once you get started:</span>
-                </div>
-                <div className="grid gap-2 md:grid-cols-3 text-sm">
-                  <div className="flex items-center gap-2">
-                    <Users className="h-4 w-4 text-primary" />
-                    <span>Track customers & orders</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <BarChart3 className="h-4 w-4 text-primary" />
-                    <span>View revenue analytics</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <FileText className="h-4 w-4 text-primary" />
-                    <span>Manage your business</span>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {showUpgradeModal && (
-            <PlanUpgradeModal2 
-              open={showUpgradeModal} 
-              onOpenChange={setShowUpgradeModal} 
-            />
-          )}
-        </div>
-      </DashboardLayout>
-    );
-  }
 
   return (
     <DashboardLayout 

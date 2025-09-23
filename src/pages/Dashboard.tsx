@@ -35,20 +35,21 @@ const Dashboard = () => {
     return <Outlet />;
   }
 
-  // Always allow access to dashboard overview
-  if (location.pathname === '/dashboard/overview' || location.pathname === '/dashboard') {
-    return <Outlet />;
-  }
-
-  // Ensure we have a store for other dashboard routes
-  if (!store) {
-    return <Navigate to="/dashboard/overview" replace />;
+  // Ensure we have a store first (only for routes that need it)
+  if (!store && !location.pathname.includes('/create')) {
+    return <Navigate to="/dashboard/websites/create" replace />;
   }
 
   // For read-only users (expired trial/subscription), always show dashboard
   // Don't redirect them to create pages since they can't create anything
   if (userProfile?.account_status === 'read_only') {
     return <Outlet />;
+  }
+
+  // Only redirect if user genuinely has no websites AND no funnels
+  // Make sure loading is complete before checking
+  if (!websitesLoading && !funnelsLoading && websites.length === 0 && funnels.length === 0) {
+    return <Navigate to="/dashboard/websites/create" replace />;
   }
 
   // User is authenticated and has websites or funnels, proceed normally
