@@ -53,66 +53,39 @@ export default function CreateFunnel() {
   // Get websites for store
   const { websites: storeWebsites } = useStoreWebsitesForSelection(store?.id || '');
 
-  // Generate unique slug by appending random numbers
+  // Generate unique slug by appending random characters
   const generateUniqueSlug = async (baseSlug: string): Promise<string> => {
-    let attempts = 0;
-    let uniqueSlug = baseSlug;
-    
-    while (attempts < 10) {
-      if (!store?.id) {
-        return uniqueSlug;
-      }
-      
-      const { data, error } = await supabase
-        .from('funnels')
-        .select('slug')
-        .eq('store_id', store.id)
-        .eq('slug', uniqueSlug)
-        .maybeSingle();
-      
-      if (error || !data) {
-        return uniqueSlug;
-      }
-      
-      const randomNum = Math.floor(1000 + Math.random() * 9000);
-      uniqueSlug = `${baseSlug}-${randomNum}`;
-      attempts++;
-    }
-    
-    return uniqueSlug;
+    const randomSuffix = Math.random().toString(36).substring(2, 8);
+    return `${baseSlug}-${randomSuffix}`;
   };
 
-  // Check slug availability
+  // Check slug availability globally
   const checkSlugAvailability = async (slug: string) => {
     if (!slug.trim()) return;
     
     setSlugStatus('checking');
     
     try {
-      if (store?.id) {
-        const { data, error } = await supabase
-          .from('funnels')
-          .select('slug')
-          .eq('store_id', store.id)
-          .eq('slug', slug)
-          .maybeSingle();
-        
-        if (error) {
-          setSlugStatus('error');
-          return;
-        }
-        
-        if (data) {
-          const uniqueSlug = await generateUniqueSlug(slug);
-          setSuggestedSlug(uniqueSlug);
-          setFinalSlug(uniqueSlug);
-          setSlugStatus('taken');
-        } else {
-          setFinalSlug(slug);
-          setSuggestedSlug('');
-          setSlugStatus('available');
-        }
+      // Check globally across all funnels
+      const { data, error } = await supabase
+        .from('funnels')
+        .select('slug')
+        .eq('slug', slug)
+        .maybeSingle();
+      
+      if (error) {
+        setSlugStatus('error');
+        return;
+      }
+      
+      if (data) {
+        // Slug is taken globally, generate unique one
+        const uniqueSlug = await generateUniqueSlug(slug);
+        setSuggestedSlug(uniqueSlug);
+        setFinalSlug(uniqueSlug);
+        setSlugStatus('taken');
       } else {
+        // Slug is available globally
         setFinalSlug(slug);
         setSuggestedSlug('');
         setSlugStatus('available');
@@ -324,7 +297,7 @@ export default function CreateFunnel() {
                 {slugStatus === 'taken' && suggestedSlug && (
                   <p className="text-sm text-yellow-600 mt-1 flex items-center gap-1">
                     <AlertCircle className="h-3 w-3" />
-                    Slug already exists. Using "{suggestedSlug}" instead
+                    Slug already exists globally. Using "{suggestedSlug}" instead
                   </p>
                 )}
                 {slugStatus === 'error' && (
@@ -335,7 +308,7 @@ export default function CreateFunnel() {
                 )}
                 
                 <p className="text-sm text-muted-foreground mt-1">
-                  URL identifier: funnel/{finalSlug || formData.slug || 'your-slug'}
+                  System URL: site/{finalSlug || formData.slug || 'your-slug'}
                 </p>
               </div>
 
