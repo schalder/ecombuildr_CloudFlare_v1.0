@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Navigate, useSearchParams, Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useSEO } from '@/hooks/useSEO';
@@ -9,7 +9,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
-import { Loader2, Store } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Loader2, Store, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { validateSignupData, checkEmailTypo, normalizePhoneNumber } from '@/utils/authValidation';
 
 const Auth = () => {
   const { user, signIn, signUp, loading } = useAuth();
@@ -20,6 +22,11 @@ const Auth = () => {
   const [signUpData, setSignUpData] = useState({ email: '', password: '', fullName: '', phone: '', confirmPassword: '' });
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [defaultTab, setDefaultTab] = useState("signin");
+  const [emailSuggestion, setEmailSuggestion] = useState<string | null>(null);
+  const [showEmailSuggestion, setShowEmailSuggestion] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const [emailValidated, setEmailValidated] = useState(false);
+  const [phoneValidated, setPhoneValidated] = useState(false);
 
   useEffect(() => {
     const plan = searchParams.get('plan');
@@ -58,8 +65,80 @@ const Auth = () => {
     setIsLoading(false);
   };
 
+  // Debounced email validation
+  const debouncedEmailValidation = useCallback(
+    async (email: string) => {
+      if (!email || !email.includes('@')) {
+        setEmailValidated(false);
+        return;
+      }
+
+      const { hasTypo, suggestion } = checkEmailTypo(email);
+      if (hasTypo && suggestion) {
+        setEmailSuggestion(suggestion);
+        setShowEmailSuggestion(true);
+        setEmailValidated(false);
+      } else {
+        setEmailSuggestion(null);
+        setShowEmailSuggestion(false);
+        setEmailValidated(true);
+      }
+    },
+    []
+  );
+
+  // Debounced phone validation
+  const debouncedPhoneValidation = useCallback(
+    async (phone: string) => {
+      if (!phone) {
+        setPhoneValidated(false);
+        return;
+      }
+
+      const normalized = normalizePhoneNumber(phone);
+      setPhoneValidated(!!normalized);
+    },
+    []
+  );
+
+  // Handle email change with validation
+  const handleEmailChange = (email: string) => {
+    setSignUpData(prev => ({ ...prev, email }));
+    setValidationErrors([]);
+    
+    const timeoutId = setTimeout(() => {
+      debouncedEmailValidation(email);
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  };
+
+  // Handle phone change with validation
+  const handlePhoneChange = (phone: string) => {
+    setSignUpData(prev => ({ ...prev, phone }));
+    setValidationErrors([]);
+    
+    const timeoutId = setTimeout(() => {
+      debouncedPhoneValidation(phone);
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  };
+
+  // Accept email suggestion
+  const acceptEmailSuggestion = () => {
+    if (emailSuggestion) {
+      setSignUpData(prev => ({ ...prev, email: emailSuggestion }));
+      setEmailSuggestion(null);
+      setShowEmailSuggestion(false);
+      setEmailValidated(true);
+    }
+  };
+
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    setValidationErrors([]);
+
     if (!signUpData.email || !signUpData.password || !signUpData.fullName || !signUpData.phone) {
       toast({
         title: "Error",
@@ -88,7 +167,27 @@ const Auth = () => {
     }
 
     setIsLoading(true);
-    const { error } = await signUp(signUpData.email, signUpData.password, signUpData.fullName, signUpData.phone, selectedPlan);
+
+    // Validate for duplicate accounts
+    const validation = await validateSignupData(signUpData.email, signUpData.phone);
+    
+    if (!validation.valid) {
+      setValidationErrors(validation.errors);
+      setIsLoading(false);
+      
+      // If there's an email suggestion, show it
+      if (validation.emailSuggestion) {
+        setEmailSuggestion(validation.emailSuggestion);
+        setShowEmailSuggestion(true);
+      }
+      
+      return;
+    }
+
+    // Normalize phone number before signup
+    const normalizedPhone = normalizePhoneNumber(signUpData.phone);
+    
+    const { error } = await signUp(signUpData.email, signUpData.password, signUpData.fullName, normalizedPhone, selectedPlan);
     
     if (error) {
       toast({
@@ -183,6 +282,50 @@ const Auth = () => {
               </TabsContent>
 
               <TabsContent value="signup">
+                {validationErrors.length > 0 && (
+                  <div className="mb-4 p-3 bg-destructive/10 border border-destructive/20 rounded-md">
+                    <div className="flex items-center gap-2 mb-2">
+                      <AlertTriangle className="h-4 w-4 text-destructive" />
+                      <span className="font-medium text-destructive">Account Already Exists</span>
+                    </div>
+                    <ul className="space-y-1 text-sm text-destructive">
+                      {validationErrors.map((error, index) => (
+                        <li key={index}>• {error}</li>
+                      ))}
+                    </ul>
+                    <div className="mt-3">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => setDefaultTab("signin")}
+                        className="text-xs"
+                      >
+                        Sign In Instead
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                <AlertDialog open={showEmailSuggestion} onOpenChange={setShowEmailSuggestion}>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Did you mean a different email?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        We noticed you entered <strong>{signUpData.email}</strong>. 
+                        Did you mean <strong>{emailSuggestion}</strong> instead?
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <div className="flex gap-2">
+                      <AlertDialogCancel onClick={() => setShowEmailSuggestion(false)}>
+                        Keep Original
+                      </AlertDialogCancel>
+                      <AlertDialogAction onClick={acceptEmailSuggestion}>
+                        Use Suggestion
+                      </AlertDialogAction>
+                    </div>
+                  </AlertDialogContent>
+                </AlertDialog>
+
                 <form onSubmit={handleSignUp} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="signup-name">Full Name</Label>
@@ -196,27 +339,42 @@ const Auth = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="signup-email">Email</Label>
+                    <Label htmlFor="signup-email" className="flex items-center gap-2">
+                      Email
+                      {emailValidated && (
+                        <CheckCircle2 className="h-4 w-4 text-green-500" />
+                      )}
+                    </Label>
                     <Input
                       id="signup-email"
                       type="email"
                       placeholder="Enter your email"
                       value={signUpData.email}
-                      onChange={(e) => setSignUpData({ ...signUpData, email: e.target.value })}
+                      onChange={(e) => handleEmailChange(e.target.value)}
                       disabled={isLoading}
+                      className={emailValidated ? "border-green-500" : ""}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="signup-phone">Phone Number</Label>
+                    <Label htmlFor="signup-phone" className="flex items-center gap-2">
+                      Phone Number
+                      {phoneValidated && (
+                        <CheckCircle2 className="h-4 w-4 text-green-500" />
+                      )}
+                    </Label>
                     <Input
                       id="signup-phone"
                       type="tel"
-                      placeholder="Enter your phone number"
+                      placeholder="Enter your phone number (e.g., 01XXXXXXXXX)"
                       value={signUpData.phone}
-                      onChange={(e) => setSignUpData({ ...signUpData, phone: e.target.value })}
+                      onChange={(e) => handlePhoneChange(e.target.value)}
                       disabled={isLoading}
                       required
+                      className={phoneValidated ? "border-green-500" : ""}
                     />
+                    <p className="text-xs text-muted-foreground">
+                      Supported formats: 01XXXXXXXXX, +8801XXXXXXXXX
+                    </p>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="signup-password">Password</Label>
