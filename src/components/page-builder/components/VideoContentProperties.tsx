@@ -45,11 +45,6 @@ export const VideoContentProperties: React.FC<VideoContentPropertiesProps> = ({
     
     // Update the widthByDevice property
     onUpdate('widthByDevice', updated);
-    
-    // Keep legacy width property in sync with desktop for backward compatibility
-    if (device === 'desktop') {
-      onUpdate('width', value);
-    }
   };
 
   // Get the current width for the selected device
