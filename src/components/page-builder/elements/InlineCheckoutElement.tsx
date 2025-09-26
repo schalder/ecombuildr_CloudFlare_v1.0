@@ -797,7 +797,7 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
 
             </section>
 
-            {(sections.info || sections.shipping || sections.payment || sections.summary) && <Separator />}
+            {(sections.info || (sections.shipping && !isDigitalOnlyCart) || sections.payment || sections.summary) && <Separator />}
 
             {/* Info */}
             {sections.info && (
@@ -847,7 +847,7 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
             
 
             {/* Shipping */}
-            {sections.shipping && (
+            {sections.shipping && !isDigitalOnlyCart && (
               <section className="space-y-4">
                 <h3 className={`mb-3 font-semibold element-${element.id}-section-header`} style={headerInline as React.CSSProperties}>{headings.shipping}</h3>
                 {fields.address?.enabled && (
@@ -944,7 +944,8 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
               </section>
             )}
 
-            {sections.shipping && sections.payment && <Separator className="my-4" />}
+            {/* Separator between sections */}
+            {((sections.info && sections.payment && isDigitalOnlyCart) || (sections.shipping && !isDigitalOnlyCart && sections.payment)) && <Separator className="my-4" />}
 
             {/* Payment */}
             {sections.payment && (
