@@ -114,15 +114,18 @@ export const Pricing = () => {
                 </div>
 
                 {/* Features List */}
-                <div className="space-y-3 mb-8">
-                  {plan.features.map((feature, featureIndex) => <div key={featureIndex} className="flex items-start gap-3">
-                      <div className="flex-shrink-0 w-5 h-5 rounded-full bg-success/20 flex items-center justify-center mt-0.5">
-                        <Check className="h-3 w-3 text-success" />
-                      </div>
-                      <span className="text-foreground">
-                        {feature}
-                      </span>
-                    </div>)}
+                <div className="space-y-2 mb-8">
+                  {plan.features.slice(0, 6).map((feature, featureIndex) => (
+                    <div key={featureIndex} className="flex items-center gap-2 text-sm">
+                      <Check className="h-4 w-4 text-success flex-shrink-0" />
+                      <span className="text-foreground">{feature}</span>
+                    </div>
+                  ))}
+                  {plan.features.length > 6 && (
+                    <div className="text-xs text-muted-foreground">
+                      +{plan.features.length - 6} আরো ফিচার
+                    </div>
+                  )}
                 </div>
 
                 {/* CTA Button */}
