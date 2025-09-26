@@ -1505,7 +1505,15 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
               { id: '1', product_name: 'Sample Product A', quantity: 1, total: 99.99 },
               { id: '2', product_name: 'Sample Product B', quantity: 1, total: 49.99 },
             ]);
-            setDownloadLinks([]);
+            setDownloadLinks([
+              { 
+                id: '1', 
+                digital_file_path: 'sample-ebook.pdf', 
+                download_count: 0, 
+                max_downloads: 5, 
+                expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() 
+              }
+            ]);
           }
           setLoading(false);
           return;
@@ -1524,6 +1532,7 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
         if (error) throw error;
         setOrder(data?.order || null);
         setItems(data?.items || []);
+        setDownloadLinks(data?.downloadLinks || []);
       } catch (e) {
         // Error fetching order
       } finally {
