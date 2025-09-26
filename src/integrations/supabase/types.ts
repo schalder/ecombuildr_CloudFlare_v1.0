@@ -3976,6 +3976,19 @@ export type Database = {
           slug: string
         }[]
       }
+      get_digital_files_library: {
+        Args: { store_id_param: string }
+        Returns: {
+          created_at: string
+          id: string
+          name: string
+          product_id: string
+          product_name: string
+          size: number
+          type: string
+          url: string
+        }[]
+      }
       get_imported_products: {
         Args: { store_id_param: string }
         Returns: string[]
