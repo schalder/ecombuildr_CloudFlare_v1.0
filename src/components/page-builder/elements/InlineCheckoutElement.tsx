@@ -258,9 +258,31 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
     }
   }, [websiteShipping, selectedShippingOption]);
 
+  // Check if we have digital-only products
+  const isDigitalOnlyCart = useMemo(() => {
+    const isSelectedDigital = (selectedProduct as any)?.product_type === 'digital';
+    const isBumpDigital = !orderBump.enabled || !bumpChecked || !bumpProduct || (bumpProduct as any)?.product_type === 'digital';
+    return isSelectedDigital && isBumpDigital;
+  }, [selectedProduct, orderBump.enabled, bumpChecked, bumpProduct]);
+
   // Calculate shipping cost using enhanced shipping calculation or custom options
   const shippingCalculation = useMemo(() => {
     if (!selectedProduct) {
+      return {
+        shippingCost: 0,
+        isFreeShipping: true,
+        breakdown: {
+          baseFee: 0,
+          weightFee: 0,
+          productSpecificFees: 0,
+          totalBeforeDiscount: 0,
+          discount: 0,
+        },
+      };
+    }
+
+    // Skip shipping for digital-only carts
+    if (isDigitalOnlyCart) {
       return {
         shippingCost: 0,
         isFreeShipping: true,
@@ -758,8 +780,20 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
                     <span className="px-3 py-1 border rounded min-w-[50px] text-center">{quantity}</span>
                     <Button variant="outline" size="sm" onClick={() => setQuantity((q)=>Math.max(1, (q||1)+1))} disabled={isSelectedOut}>+</Button>
                   </div>
+              </div>
+            )}
+
+            {/* Digital Product Info */}
+            {sections.shipping && isDigitalOnlyCart && (
+              <div className="space-y-4">
+                <h3 className="font-semibold" style={headerInline}>Digital Delivery</h3>
+                <div className="bg-blue-50 p-4 rounded-lg">
+                  <p className="text-sm text-blue-700">
+                    📧 Your digital products will be delivered instantly via email after payment confirmation.
+                  </p>
                 </div>
-              )}
+              </div>
+            )}
 
             </section>
 

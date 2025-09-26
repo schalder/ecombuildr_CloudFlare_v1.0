@@ -32,6 +32,7 @@ import { useChannelContext } from '@/hooks/useChannelContext';
 import { getAvailableShippingOptions, type ShippingOption } from '@/lib/shipping-enhanced';
 import { ShippingOptionsPicker } from '@/components/storefront/ShippingOptionsPicker';
 import { useHeadStyle } from '@/hooks/useHeadStyle';
+import { DigitalDownloadSection } from '../components/DigitalDownloadSection';
 
 const CartSummaryElement: React.FC<{ element: PageBuilderElement }> = () => {
   const { items, total, updateQuantity, removeItem } = useCart();
@@ -1403,6 +1404,7 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
   const paths = useEcomPaths();
   const [order, setOrder] = useState<any | null>(null);
   const [items, setItems] = useState<any[]>([]);
+  const [downloadLinks, setDownloadLinks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const orderContentRef = useRef<HTMLDivElement>(null);
   const query = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
@@ -1489,6 +1491,7 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
               { id: '1', product_name: 'Sample Product A', quantity: 1, total: 99.99 },
               { id: '2', product_name: 'Sample Product B', quantity: 1, total: 49.99 },
             ]);
+            setDownloadLinks([]);
           }
           setLoading(false);
           return;
@@ -1624,6 +1627,14 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
           Download PDF
         </Button>
       </div>
+      
+      
+      {/* Digital Downloads Section */}
+      <DigitalDownloadSection
+        downloadLinks={downloadLinks}
+        orderId={order.id}
+        orderToken={orderToken}
+      />
     </div>
   );
 };

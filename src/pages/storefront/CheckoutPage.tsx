@@ -75,9 +75,24 @@ export const CheckoutPage: React.FC = () => {
     discount_code: '',
   });
 
+  // Check if cart contains only digital products
+  const isDigitalOnlyCart = items.every(item => {
+    // We'll check the product type from the database when needed
+    return false; // For now, assume all are physical
+  });
+
+  const [hasDigitalProducts, setHasDigitalProducts] = useState(false);
+  const [hasPhysicalProducts, setHasPhysicalProducts] = useState(false);
+
 // Recompute shipping cost when address details or settings change
 useEffect(() => {
   const computeShipping = async () => {
+    // Skip shipping calculation for digital-only orders
+    if (hasDigitalProducts && !hasPhysicalProducts) {
+      setShippingCost(0);
+      return;
+    }
+    
     if (!websiteShipping || !websiteShipping.enabled) {
       setShippingCost(0);
       return;
@@ -114,11 +129,11 @@ useEffect(() => {
   };
 
   computeShipping();
-}, [websiteShipping, form.shipping_city, form.shipping_area, form.shipping_address, items, total]);
+}, [websiteShipping, form.shipping_city, form.shipping_area, form.shipping_address, items, total, hasDigitalProducts, hasPhysicalProducts]);
 
-  // Derive allowed payment methods based on products in cart AND enabled gateways
+  // Check product types and derive allowed payment methods
   useEffect(() => {
-    const loadAllowed = async () => {
+    const loadProductData = async () => {
       const storeAllowed: Record<string, boolean> = {
         cod: true,
         bkash: !!store?.settings?.bkash?.enabled,
@@ -134,21 +149,38 @@ useEffect(() => {
         if (!base.includes(form.payment_method)) {
           setForm(prev => ({ ...prev, payment_method: (base[0] as any) }));
         }
+        setHasDigitalProducts(false);
+        setHasPhysicalProducts(false);
         return;
       }
 
       const ids = Array.from(new Set(items.map(i => i.productId)));
       const { data } = await supabase
         .from('products')
-        .select('id, allowed_payment_methods')
+        .select('id, allowed_payment_methods, product_type')
         .in('id', ids);
+      
+      // Check product types
+      let hasDigital = false;
+      let hasPhysical = false;
+      
       let acc: string[] = ['cod','bkash','nagad','eps'];
       (data || []).forEach((p: any) => {
+        if (p.product_type === 'digital') {
+          hasDigital = true;
+        } else {
+          hasPhysical = true;
+        }
+        
         const arr: string[] | null = p.allowed_payment_methods;
         if (arr && arr.length > 0) {
           acc = acc.filter(m => arr.includes(m));
         }
       });
+      
+      setHasDigitalProducts(hasDigital);
+      setHasPhysicalProducts(hasPhysical);
+      
       // Intersect with store-level enabled methods
       acc = acc.filter((m) => (storeAllowed as any)[m]);
       if (acc.length === 0) acc = ['cod'];
@@ -157,7 +189,7 @@ useEffect(() => {
         setForm(prev => ({ ...prev, payment_method: acc[0] as any }));
       }
     };
-    loadAllowed();
+    loadProductData();
   }, [items, store]);
 
   const handleInputChange = (field: keyof CheckoutForm, value: string) => {
@@ -196,6 +228,8 @@ useEffect(() => {
         const normalizedPhone = normalizeBdPhone(form.customer_phone);
         return normalizedPhone.length >= 11;
       case 2:
+        // Skip shipping validation for digital-only orders
+        if (hasDigitalProducts && !hasPhysicalProducts) return true;
         return !!(form.shipping_address && form.shipping_city);
       case 3:
         if (!form.payment_method) return false;

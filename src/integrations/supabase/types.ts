@@ -1840,6 +1840,47 @@ export type Database = {
         }
         Relationships: []
       }
+      order_download_links: {
+        Row: {
+          created_at: string
+          digital_file_path: string
+          download_count: number
+          expires_at: string
+          id: string
+          max_downloads: number
+          order_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          digital_file_path: string
+          download_count?: number
+          expires_at: string
+          id?: string
+          max_downloads?: number
+          order_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          digital_file_path?: string
+          download_count?: number
+          expires_at?: string
+          id?: string
+          max_downloads?: number
+          order_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_download_links_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       order_items: {
         Row: {
           created_at: string | null
@@ -3916,6 +3957,10 @@ export type Database = {
       gen_salt: {
         Args: { alg: string } | { alg: string; rounds: number }
         Returns: string
+      }
+      generate_order_download_links: {
+        Args: { p_order_id: string }
+        Returns: undefined
       }
       get_category_hierarchy: {
         Args: { store_uuid: string }

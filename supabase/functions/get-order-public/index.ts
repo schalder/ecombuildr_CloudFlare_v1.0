@@ -103,7 +103,17 @@ serve(async (req: Request) => {
       notes: order.notes,
     };
 
-    return new Response(JSON.stringify({ order: safeOrder, items: items || [] }), {
+    // Get download links for digital products
+    const { data: downloadLinks } = await supabase
+      .from('order_download_links')
+      .select('*')
+      .eq('order_id', orderId);
+
+    return new Response(JSON.stringify({ 
+      order: safeOrder, 
+      items: items || [],
+      downloadLinks: downloadLinks || []
+    }), {
       status: 200,
       headers: { "Content-Type": "application/json", ...corsHeaders },
     });
