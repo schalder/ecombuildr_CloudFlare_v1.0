@@ -469,6 +469,7 @@ export default function AddProduct() {
                             files={formData.digital_files}
                             onChange={(files) => setFormData(prev => ({ ...prev, digital_files: files }))}
                             label="Digital Files"
+                            storeId={storeId}
                           />
                           
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

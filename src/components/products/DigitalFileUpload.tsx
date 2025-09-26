@@ -20,6 +20,7 @@ interface DigitalFileUploadProps {
   files: DigitalFile[];
   onChange: (files: DigitalFile[]) => void;
   label?: string;
+  storeId?: string;
 }
 
 const ALLOWED_FILE_TYPES = {
@@ -43,7 +44,8 @@ const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 export const DigitalFileUpload: React.FC<DigitalFileUploadProps> = ({
   files,
   onChange,
-  label = "Digital Files"
+  label = "Digital Files",
+  storeId
 }) => {
   const [isUploading, setIsUploading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
@@ -78,21 +80,23 @@ export const DigitalFileUpload: React.FC<DigitalFileUploadProps> = ({
       // Get current user
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
+      
+      if (!storeId) throw new Error('Store ID is required');
 
-      // Upload to digital-products bucket
+      // Upload to digital-products bucket using store ID
       const fileExt = file.name.split('.').pop();
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
       
       const { data, error } = await supabase.storage
         .from('digital-products')
-        .upload(`${user.id}/${fileName}`, file);
+        .upload(`${storeId}/${fileName}`, file);
 
       if (error) throw error;
 
       // Get public URL
       const { data: { publicUrl } } = supabase.storage
         .from('digital-products')
-        .getPublicUrl(`${user.id}/${fileName}`);
+        .getPublicUrl(`${storeId}/${fileName}`);
 
       const newFile: DigitalFile = {
         id: Date.now().toString(),
@@ -109,9 +113,10 @@ export const DigitalFileUpload: React.FC<DigitalFileUploadProps> = ({
         description: "Your digital file has been uploaded successfully"
       });
     } catch (error) {
+      console.error('File upload error:', error);
       toast({
         title: "Upload failed",
-        description: "Failed to upload file. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to upload file. Please try again.",
         variant: "destructive"
       });
     } finally {
