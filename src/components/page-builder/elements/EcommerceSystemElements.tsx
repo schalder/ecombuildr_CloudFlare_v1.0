@@ -837,7 +837,8 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
   const { websiteShipping } = useWebsiteShipping();
   const [loading, setLoading] = useState(false);
   const [allowedMethods, setAllowedMethods] = useState<Array<'cod' | 'bkash' | 'nagad' | 'eps'>>(['cod','bkash','nagad','eps']);
-  const [productShippingData, setProductShippingData] = useState<Map<string, { weight_grams?: number; shipping_config?: any }>>(new Map());
+  const [productShippingData, setProductShippingData] = useState<Map<string, { weight_grams?: number; shipping_config?: any; product_type?: string }>>(new Map());
+  const [productTypes, setProductTypes] = useState<{ hasPhysical: boolean; hasDigital: boolean }>({ hasPhysical: false, hasDigital: false });
   
   // Tracking state
   const [hasTrackedInitiateCheckout, setHasTrackedInitiateCheckout] = useState<boolean>(false);
@@ -957,7 +958,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
       
       const { data, error } = await supabase
         .from('products')
-        .select('id, weight_grams, shipping_config')
+        .select('id, weight_grams, shipping_config, product_type')
         .in('id', productIds);
         
       if (error) {
@@ -965,13 +966,26 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
       }
       
       const dataMap = new Map();
+      let hasPhysical = false;
+      let hasDigital = false;
+      
       data?.forEach(product => {
+        const isDigital = product.product_type === 'digital';
+        if (isDigital) {
+          hasDigital = true;
+        } else {
+          hasPhysical = true;
+        }
+        
         dataMap.set(product.id, {
           weight_grams: product.weight_grams,
-          shipping_config: product.shipping_config
+          shipping_config: product.shipping_config,
+          product_type: product.product_type
         });
       });
+      
       setProductShippingData(dataMap);
+      setProductTypes({ hasPhysical, hasDigital });
     };
     
     fetchProductShippingData();
@@ -980,7 +994,8 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
   // Compute enhanced shipping when form fields or product data changes
   useEffect(() => {
     const computeShipping = async () => {
-      if (!websiteShipping || !websiteShipping.enabled) {
+      // Skip shipping calculation for digital-only orders
+      if (!productTypes.hasPhysical || !websiteShipping || !websiteShipping.enabled) {
         setShippingCost(0);
         return;
       }
@@ -1013,7 +1028,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
     if (items.length > 0 || !isEditing) {
       computeShipping();
     }
-  }, [websiteShipping, form.shipping_city, form.shipping_area, form.shipping_postal_code, form.shipping_address, items, total, productShippingData]);
+  }, [websiteShipping, form.shipping_city, form.shipping_area, form.shipping_postal_code, form.shipping_address, items, total, productShippingData, productTypes.hasPhysical]);
 
   const handleSubmit = async () => {
     if (!store || items.length === 0) return;
@@ -1033,12 +1048,15 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
       const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
       if (isEmpty(email) || !emailOk) missing.push('Valid Email');
     }
-    if (fields.address?.enabled && (fields.address?.required ?? true) && isEmpty(form.shipping_address)) missing.push('Address');
-    if (fields.city?.enabled && (fields.city?.required ?? true) && isEmpty(form.shipping_city)) missing.push('City');
-    if (fields.area?.enabled && (fields.area?.required ?? false) && isEmpty(form.shipping_area)) missing.push('Area');
-    if (fields.country?.enabled && (fields.country?.required ?? false) && isEmpty(form.shipping_country)) missing.push('Country');
-    if (fields.state?.enabled && (fields.state?.required ?? false) && isEmpty(form.shipping_state)) missing.push('State/Province');
-    if (fields.postalCode?.enabled && (fields.postalCode?.required ?? false) && isEmpty(form.shipping_postal_code)) missing.push('ZIP / Postal code');
+    // Skip shipping field validation for digital-only orders
+    if (productTypes.hasPhysical) {
+      if (fields.address?.enabled && (fields.address?.required ?? true) && isEmpty(form.shipping_address)) missing.push('Address');
+      if (fields.city?.enabled && (fields.city?.required ?? true) && isEmpty(form.shipping_city)) missing.push('City');
+      if (fields.area?.enabled && (fields.area?.required ?? false) && isEmpty(form.shipping_area)) missing.push('Area');
+      if (fields.country?.enabled && (fields.country?.required ?? false) && isEmpty(form.shipping_country)) missing.push('Country');
+      if (fields.state?.enabled && (fields.state?.required ?? false) && isEmpty(form.shipping_state)) missing.push('State/Province');
+      if (fields.postalCode?.enabled && (fields.postalCode?.required ?? false) && isEmpty(form.shipping_postal_code)) missing.push('ZIP / Postal code');
+    }
 
     (customFields || [])
       .filter((cf:any) => cf.enabled && cf.required)
@@ -1089,9 +1107,9 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
         payment_transaction_number: form.payment_transaction_number,
         notes: form.notes,
         subtotal: total,
-        shipping_cost: shippingCost,
+        shipping_cost: productTypes.hasPhysical ? shippingCost : 0,
         discount_amount: 0,
-        total: total + shippingCost,
+        total: total + (productTypes.hasPhysical ? shippingCost : 0),
         status: form.payment_method === 'cod' ? 'pending' as const : (isManual ? 'pending' as const : 'pending' as const),
         // Persist custom fields with labels for better display later
         custom_fields: (customFields || [])
@@ -1248,8 +1266,8 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
 
               
 
-              {/* Always show shipping section if any shipping-related fields are enabled */}
-              {(fields.address?.enabled || fields.city?.enabled || fields.area?.enabled || fields.country?.enabled || fields.state?.enabled || fields.postalCode?.enabled || (websiteShipping?.enabled && (websiteShipping as any)?.showOptionsAtCheckout) || customFields?.length > 0) && (
+              {/* Show shipping section only if there are physical products and shipping fields are enabled */}
+              {productTypes.hasPhysical && (fields.address?.enabled || fields.city?.enabled || fields.area?.enabled || fields.country?.enabled || fields.state?.enabled || fields.postalCode?.enabled || (websiteShipping?.enabled && (websiteShipping as any)?.showOptionsAtCheckout)) && (
                 <section className="space-y-4">
                   <h3 className={`mb-3 font-semibold element-${element.id}-section-header`} style={headerInline as React.CSSProperties}>{headings.shipping}</h3>
                   {fields.address?.enabled && (
@@ -1275,33 +1293,24 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
                     )}
                    </div>
 
-                   {/* Custom fields */}
-                  {customFields?.length > 0 && customFields.filter((cf:any)=>cf.enabled).length > 0 && (
-                    <div className="space-y-4">
-                      <h3 className={`mb-3 font-semibold element-${element.id}-section-header`} style={headerInline as React.CSSProperties}>{headings.customFields}</h3>
-                      <div className="space-y-2">
-                        {customFields.filter((cf:any)=>cf.enabled).map((cf:any) => (
-                          <div key={cf.id}>
-                            {cf.type === 'textarea' ? (
-                              <Textarea placeholder={cf.placeholder || cf.label} value={(form.custom_fields as any)[cf.id] || ''} onChange={(e)=>setForm(f=>({...f, custom_fields: { ...f.custom_fields, [cf.id]: e.target.value }}))} required={!!cf.required} aria-required={!!cf.required} />
-                            ) : (
-                              <Input type={cf.type || 'text'} placeholder={cf.placeholder || cf.label} value={(form.custom_fields as any)[cf.id] || ''} onChange={(e)=>setForm(f=>({...f, custom_fields: { ...f.custom_fields, [cf.id]: e.target.value }}))} required={!!cf.required} aria-required={!!cf.required} />
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                </section>
+              )}
 
-                   {/* Shipping Options */}
-                   {websiteShipping?.enabled && (websiteShipping as any)?.showOptionsAtCheckout && (
-                     <ShippingOptionsPicker
-                       settings={websiteShipping}
-                       selectedOptionId={form.selectedShippingOption}
-                       onOptionSelect={(option) => setForm(prev => ({ ...prev, selectedShippingOption: option.id }))}
-                       setForm={setForm}
-                     />
-                   )}
+              {/* Custom fields section - show independently of shipping */}
+              {customFields?.length > 0 && customFields.filter((cf:any)=>cf.enabled).length > 0 && (
+                <section className="space-y-4">
+                  <h3 className={`mb-3 font-semibold element-${element.id}-section-header`} style={headerInline as React.CSSProperties}>{headings.customFields}</h3>
+                  <div className="space-y-2">
+                    {customFields.filter((cf:any)=>cf.enabled).map((cf:any) => (
+                      <div key={cf.id}>
+                        {cf.type === 'textarea' ? (
+                          <Textarea placeholder={cf.placeholder || cf.label} value={(form.custom_fields as any)[cf.id] || ''} onChange={(e)=>setForm(f=>({...f, custom_fields: { ...f.custom_fields, [cf.id]: e.target.value }}))} required={!!cf.required} aria-required={!!cf.required} />
+                        ) : (
+                          <Input type={cf.type || 'text'} placeholder={cf.placeholder || cf.label} value={(form.custom_fields as any)[cf.id] || ''} onChange={(e)=>setForm(f=>({...f, custom_fields: { ...f.custom_fields, [cf.id]: e.target.value }}))} required={!!cf.required} aria-required={!!cf.required} />
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </section>
               )}
 
@@ -1367,8 +1376,13 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
                     </div>
                     <Separator className="my-3" />
                     <div className="flex flex-wrap items-center justify-between gap-2 min-w-0"><span className="truncate">Subtotal</span><span className="font-semibold shrink-0 whitespace-nowrap text-right">{formatCurrency(displayTotal)}</span></div>
-                    <div className="flex flex-wrap items-center justify-between gap-2 min-w-0"><span className="truncate">Shipping</span><span className="font-semibold shrink-0 whitespace-nowrap text-right">{formatCurrency(displayShippingCost)}</span></div>
-                    <div className="flex flex-wrap items-center justify-between gap-2 min-w-0 font-bold"><span className="truncate">Total</span><span className="shrink-0 whitespace-nowrap text-right">{formatCurrency(displayTotal+displayShippingCost)}</span></div>
+                    {(productTypes.hasPhysical || shouldShowMockData) && (
+                      <div className="flex flex-wrap items-center justify-between gap-2 min-w-0"><span className="truncate">Shipping</span><span className="font-semibold shrink-0 whitespace-nowrap text-right">{formatCurrency(displayShippingCost)}</span></div>
+                    )}
+                    {!productTypes.hasPhysical && !shouldShowMockData && productTypes.hasDigital && (
+                      <div className="flex flex-wrap items-center justify-between gap-2 min-w-0 text-sm text-muted-foreground"><span className="truncate">Digital Delivery</span><span className="font-semibold shrink-0 whitespace-nowrap text-right">Free</span></div>
+                    )}
+                    <div className="flex flex-wrap items-center justify-between gap-2 min-w-0 font-bold"><span className="truncate">Total</span><span className="shrink-0 whitespace-nowrap text-right">{formatCurrency(displayTotal+(productTypes.hasPhysical || shouldShowMockData ? displayShippingCost : 0))}</span></div>
 
                     <Button size={buttonSize as any} className={`w-full mt-4 element-${element.id}`} style={buttonInline as React.CSSProperties} onClick={handleSubmit} disabled={loading || (isEditing && items.length === 0)}>
                       {isEditing && items.length === 0 ? 'Preview Mode - Add items to cart' : (loading? 'Placing Order...' : buttonLabel)}
