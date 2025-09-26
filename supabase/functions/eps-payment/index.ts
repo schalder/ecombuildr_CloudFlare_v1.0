@@ -51,6 +51,16 @@ function generateMerchantTxnId(orderId: string) {
   return id.slice(0, 30);
 }
 
+// Helper function to get store slug for system domain URLs
+async function getStoreSlug(supabase: any, storeId: string): Promise<string> {
+  const { data: store } = await supabase
+    .from('stores')
+    .select('slug')
+    .eq('id', storeId)
+    .maybeSingle();
+  return store?.slug || 'store';
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -97,23 +107,41 @@ serve(async (req) => {
   const userNameHash = await generateHash(epsConfig.username, epsConfig.hash_key);
   console.log('Generated userName hash for token request');
 
-  // Determine origin for redirects (explicit from client preferred)
+  // Determine origin for redirects - preserve user's current domain
   const ref = req.headers.get('referer') || '';
   let originBase = redirectOrigin || req.headers.get('origin') || '';
+  
+  // Extract domain from referer if origin not available
   if (!originBase && ref) {
-    try { originBase = new URL(ref).origin; } catch { /* ignore */ }
+    try { 
+      const refUrl = new URL(ref);
+      originBase = refUrl.origin;
+    } catch { /* ignore malformed referer */ }
   }
+  
+  // Verify the detected domain belongs to this store (security check)
+  if (originBase && !originBase.includes('localhost') && !originBase.includes('127.0.0.1')) {
+    const hostname = new URL(originBase).hostname;
+    if (hostname !== 'ecombuildr.com') { // Not system domain
+      const { data: domainRow } = await supabase
+        .from('custom_domains')
+        .select('domain')
+        .eq('store_id', storeId)
+        .eq('domain', hostname)
+        .eq('is_verified', true)
+        .eq('dns_configured', true)
+        .maybeSingle();
+      
+      // If custom domain not verified for this store, fallback to system domain
+      if (!domainRow) {
+        originBase = '';
+      }
+    }
+  }
+  
+  // Final fallback to system domain only if no custom domain detected
   if (!originBase) {
-    // Fallback: use first verified custom domain for this store
-    const { data: domainRow } = await supabase
-      .from('custom_domains')
-      .select('domain')
-      .eq('store_id', storeId)
-      .eq('is_verified', true)
-      .eq('dns_configured', true)
-      .limit(1)
-      .maybeSingle();
-    if (domainRow?.domain) originBase = `https://${domainRow.domain}`;
+    originBase = 'https://ecombuildr.com';
   }
 
   const tokenResponse = await fetch(`${epsConfig.base_url}/v1/Auth/GetToken`, {
@@ -187,13 +215,19 @@ serve(async (req) => {
       version: "1",
       successUrl: isCourseOrder 
         ? `${originBase}/courses/order-confirmation?orderId=${orderId}&status=success`
-        : `${originBase}/order-confirmation?orderId=${orderId}${orderToken ? `&ot=${orderToken}` : ''}&status=success`,
+        : originBase.includes('ecombuildr.com') 
+          ? `${originBase}/store/${await getStoreSlug(supabase, storeId)}/order-confirmation?orderId=${orderId}${orderToken ? `&ot=${orderToken}` : ''}&status=success`
+          : `${originBase}/order-confirmation?orderId=${orderId}${orderToken ? `&ot=${orderToken}` : ''}&status=success`,
       failUrl: isCourseOrder
         ? `${originBase}/courses/order-confirmation?orderId=${orderId}&status=failed`
-        : `${originBase}/payment-processing?orderId=${orderId}${orderToken ? `&ot=${orderToken}` : ''}&status=failed`,
+        : originBase.includes('ecombuildr.com')
+          ? `${originBase}/store/${await getStoreSlug(supabase, storeId)}/payment-processing?orderId=${orderId}${orderToken ? `&ot=${orderToken}` : ''}&status=failed`
+          : `${originBase}/payment-processing?orderId=${orderId}${orderToken ? `&ot=${orderToken}` : ''}&status=failed`,
       cancelUrl: isCourseOrder
         ? `${originBase}/courses/order-confirmation?orderId=${orderId}&status=cancelled`
-        : `${originBase}/payment-processing?orderId=${orderId}${orderToken ? `&ot=${orderToken}` : ''}&status=cancelled`,
+        : originBase.includes('ecombuildr.com')
+          ? `${originBase}/store/${await getStoreSlug(supabase, storeId)}/payment-processing?orderId=${orderId}${orderToken ? `&ot=${orderToken}` : ''}&status=cancelled`
+          : `${originBase}/payment-processing?orderId=${orderId}${orderToken ? `&ot=${orderToken}` : ''}&status=cancelled`,
       customerName: customerData.name,
       customerEmail: customerData.email,
       CustomerAddress: customerData.address,

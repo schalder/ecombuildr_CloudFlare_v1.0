@@ -12,6 +12,52 @@ interface NagadPaymentRequest {
   storeId: string;
 }
 
+// Helper function to determine proper domain for Nagad redirects
+async function getCurrentDomain(req: Request, supabase: any, storeId: string): Promise<string> {
+  // Extract current domain from referer or origin
+  const ref = req.headers.get('referer') || '';
+  let originBase = req.headers.get('origin') || '';
+  
+  if (!originBase && ref) {
+    try { 
+      const refUrl = new URL(ref);
+      originBase = refUrl.origin;
+    } catch { /* ignore malformed referer */ }
+  }
+  
+  // Verify custom domain belongs to this store
+  if (originBase && !originBase.includes('localhost') && !originBase.includes('127.0.0.1')) {
+    const hostname = new URL(originBase).hostname;
+    if (hostname !== 'ecombuildr.com') {
+      const { data: domainRow } = await supabase
+        .from('custom_domains')
+        .select('domain')
+        .eq('store_id', storeId)
+        .eq('domain', hostname)
+        .eq('is_verified', true)
+        .eq('dns_configured', true)
+        .maybeSingle();
+      
+      if (!domainRow) {
+        originBase = '';
+      }
+    }
+  }
+  
+  // Fallback to system domain with store slug
+  if (!originBase) {
+    const { data: store } = await supabase
+      .from('stores')
+      .select('slug')
+      .eq('id', storeId)
+      .maybeSingle();
+    const storeSlug = store?.slug || 'store';
+    return `https://ecombuildr.com/store/${storeSlug}`;
+  }
+  
+  return originBase;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
