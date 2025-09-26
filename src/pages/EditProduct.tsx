@@ -704,6 +704,20 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
 
                       <Separator className="my-6" />
 
+                      {/* Digital Files for Digital Products */}
+                      {formData.product_type === 'digital' && (
+                        <div className="space-y-4">
+                          <DigitalFileUpload
+                            files={formData.digital_files}
+                            onChange={(files) => setFormData(prev => ({ ...prev, digital_files: files }))}
+                            label="Digital Files"
+                            storeId={storeId}
+                          />
+                        </div>
+                      )}
+
+                      <Separator className="my-6" />
+
                       <div className="space-y-4">
                         <div className="flex items-center gap-3">
                           <Switch
@@ -1189,27 +1203,6 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
                 </AccordionContent>
               </Card>
             </AccordionItem>
-
-            {/* Digital Files */}
-            {formData.product_type === 'digital' && (
-              <AccordionItem value="digital-files" className="border rounded-lg">
-                <Card>
-                  <AccordionTrigger className="hover:no-underline px-6 py-4">
-                    <CardTitle className="text-base font-semibold">Digital Files</CardTitle>
-                  </AccordionTrigger>
-                  <AccordionContent>
-                    <CardContent className="space-y-4">
-                      <DigitalFileUpload
-                        files={formData.digital_files}
-                        onChange={(files) => setFormData(prev => ({ ...prev, digital_files: files }))}
-                        label="Upload digital files that customers will receive after purchase"
-                        storeId={storeId}
-                      />
-                    </CardContent>
-                  </AccordionContent>
-                </Card>
-              </AccordionItem>
-            )}
 
             {/* SEO */}
             <AccordionItem value="seo" className="border rounded-lg">
