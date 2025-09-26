@@ -26,6 +26,7 @@ import { useStoreWebsitesForSelection, useProductWebsiteVisibility } from '@/hoo
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { SimpleCategorySelect } from "@/components/products/SimpleCategorySelect";
+import { DigitalFileUpload } from '@/components/products/DigitalFileUpload';
 
 interface Product {
   id: string;
@@ -40,6 +41,10 @@ interface Product {
   short_description?: string;
   category_id?: string;
   store_id: string;
+  product_type: 'physical' | 'digital';
+  digital_files: any[];
+  download_limit: number;
+  download_expiry_hours: number;
 }
 
 interface Category {
@@ -80,6 +85,10 @@ export default function EditProduct() {
     urgency_timer_text: 'Limited Time Offer!',
     urgency_timer_color: '#ef4444',
     urgency_timer_text_color: '#ffffff',
+    product_type: 'physical' as 'physical' | 'digital',
+    digital_files: [] as any[],
+    download_limit: 5,
+    download_expiry_hours: 168, // 7 days
   });
 
   // Collapsible sections state
@@ -264,6 +273,10 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
           urgency_timer_text: (product as any).urgency_timer_text || 'Limited Time Offer!',
           urgency_timer_color: (product as any).urgency_timer_color || '#ef4444',
           urgency_timer_text_color: (product as any).urgency_timer_text_color || '#ffffff',
+          product_type: (product as any).product_type || 'physical',
+          digital_files: (product as any).digital_files || [],
+          download_limit: (product as any).download_limit || 5,
+          download_expiry_hours: (product as any).download_expiry_hours || 168,
         });
 
         // Shipping configuration
@@ -400,6 +413,10 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
         allowed_payment_methods: allowedPayments.length ? allowedPayments : null,
         description_mode: descriptionMode,
         description_builder: descriptionBuilder as any,
+        product_type: formData.product_type,
+        digital_files: formData.digital_files,
+        download_limit: formData.download_limit,
+        download_expiry_hours: formData.download_expiry_hours,
       } as any;
 
       const { error } = await supabase
@@ -574,6 +591,25 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
                 <AccordionContent>
                   <CardContent className="space-y-6">
                     <div className="space-y-4">
+                      {/* Product Type Selector */}
+                      <div>
+                        <Label htmlFor="product_type">Product Type *</Label>
+                        <Select
+                          value={formData.product_type}
+                          onValueChange={(value: 'physical' | 'digital') => 
+                            setFormData(prev => ({ ...prev, product_type: value }))
+                          }
+                        >
+                          <SelectTrigger className="mt-2">
+                            <SelectValue placeholder="Select product type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="physical">Physical Product</SelectItem>
+                            <SelectItem value="digital">Digital Product</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
                       <div>
                         <Label htmlFor="name">Product Name *</Label>
                         <Input
@@ -597,22 +633,74 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
                         />
                       </div>
 
-                      <div>
-                        <Label htmlFor="weight_kg">Weight (kg)</Label>
-                        <Input
-                          id="weight_kg"
-                          type="number"
-                          value={formData.weight_kg}
-                          onChange={(e) => handleInputChange('weight_kg', e.target.value)}
-                          placeholder="e.g. 0.5 for 500g, 2 for 2kg"
-                          step="0.01"
-                          min="0"
-                          className="mt-2 max-w-xs"
-                        />
-                        <p className="text-sm text-muted-foreground mt-2">
-                          Used for shipping calculations. Enter in kilograms (e.g., 0.2 for 200g, 1.5 for 1.5kg)
-                        </p>
-                      </div>
+                      {formData.product_type === 'physical' && (
+                        <div>
+                          <Label htmlFor="weight_kg">Weight (kg)</Label>
+                          <Input
+                            id="weight_kg"
+                            type="number"
+                            value={formData.weight_kg}
+                            onChange={(e) => handleInputChange('weight_kg', e.target.value)}
+                            placeholder="e.g. 0.5 for 500g, 2 for 2kg"
+                            step="0.01"
+                            min="0"
+                            className="mt-2 max-w-xs"
+                          />
+                          <p className="text-sm text-muted-foreground mt-2">
+                            Used for shipping calculations. Enter in kilograms (e.g., 0.2 for 200g, 1.5 for 1.5kg)
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Digital Product Settings */}
+                      {formData.product_type === 'digital' && (
+                        <div className="space-y-4 p-4 border rounded-lg bg-muted/30">
+                          <div className="flex items-center gap-2">
+                            <Package className="h-4 w-4" />
+                            <Label className="text-sm font-medium">Digital Product Settings</Label>
+                          </div>
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <Label htmlFor="download_limit">Download Limit</Label>
+                              <Input
+                                id="download_limit"
+                                type="number"
+                                value={formData.download_limit}
+                                onChange={(e) => setFormData(prev => ({ 
+                                  ...prev, 
+                                  download_limit: parseInt(e.target.value) || 5 
+                                }))}
+                                min="1"
+                                max="100"
+                                className="mt-2"
+                              />
+                              <p className="text-xs text-muted-foreground mt-1">
+                                Maximum number of downloads per purchase
+                              </p>
+                            </div>
+                            
+                            <div>
+                              <Label htmlFor="download_expiry_hours">Download Expiry (hours)</Label>
+                              <Input
+                                id="download_expiry_hours"
+                                type="number"
+                                value={formData.download_expiry_hours}
+                                onChange={(e) => setFormData(prev => ({ 
+                                  ...prev, 
+                                  download_expiry_hours: parseInt(e.target.value) || 168 
+                                }))}
+                                min="1"
+                                max="8760"
+                                className="mt-2"
+                              />
+                              <p className="text-xs text-muted-foreground mt-1">
+                                Hours after purchase when downloads expire (168 = 7 days)
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
 
                       <Separator className="my-6" />
 
@@ -729,8 +817,9 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
                         <div className="flex items-center gap-3">
                           <Switch
                             id="track_inventory"
-                            checked={!!formData.track_inventory}
+                            checked={formData.product_type === 'physical' ? !!formData.track_inventory : false}
                             onCheckedChange={(checked) => handleInputChange('track_inventory', checked)}
+                            disabled={formData.product_type === 'digital'}
                           />
                           <Label htmlFor="track_inventory" className="text-sm font-medium">Track inventory</Label>
                         </div>
@@ -1101,6 +1190,27 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
               </Card>
             </AccordionItem>
 
+            {/* Digital Files */}
+            {formData.product_type === 'digital' && (
+              <AccordionItem value="digital-files" className="border rounded-lg">
+                <Card>
+                  <AccordionTrigger className="hover:no-underline px-6 py-4">
+                    <CardTitle className="text-base font-semibold">Digital Files</CardTitle>
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <CardContent className="space-y-4">
+                      <DigitalFileUpload
+                        files={formData.digital_files}
+                        onChange={(files) => setFormData(prev => ({ ...prev, digital_files: files }))}
+                        label="Upload digital files that customers will receive after purchase"
+                        storeId={storeId}
+                      />
+                    </CardContent>
+                  </AccordionContent>
+                </Card>
+              </AccordionItem>
+            )}
+
             {/* SEO */}
             <AccordionItem value="seo" className="border rounded-lg">
               <Card>
@@ -1135,7 +1245,8 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
             </AccordionItem>
 
             {/* Shipping & Returns */}
-            <AccordionItem value="shipping" className="border rounded-lg">
+            {formData.product_type === 'physical' && (
+              <AccordionItem value="shipping" className="border rounded-lg">
               <Card>
                 <AccordionTrigger className="hover:no-underline px-6 py-4">
                   <CardTitle className="text-base font-semibold">Shipping & Returns</CardTitle>
@@ -1369,6 +1480,7 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
                 </AccordionContent>
               </Card>
             </AccordionItem>
+            )}
           </Accordion>
 
           {/* Actions */}
