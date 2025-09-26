@@ -950,8 +950,6 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
     const fetchProductShippingData = async () => {
       if (items.length === 0) {
         setProductShippingData(new Map());
-        // For page builder preview when cart is empty, default to digital-only to hide shipping
-        setProductTypes({ hasPhysical: false, hasDigital: true });
         return;
       }
       
@@ -1316,8 +1314,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
                 </section>
               )}
 
-              {/* Separator between sections */}
-              {((sections.info && sections.payment && !productTypes.hasPhysical) || (productTypes.hasPhysical && (fields.address?.enabled || fields.city?.enabled || fields.area?.enabled || fields.country?.enabled || fields.state?.enabled || fields.postalCode?.enabled || (websiteShipping?.enabled && (websiteShipping as any)?.showOptionsAtCheckout)) && sections.payment)) && <Separator className="my-4" />}
+              {sections.shipping && sections.payment && <Separator className="my-4" />}
 
               {/* Always show payment section */}
               <section className="space-y-4">
