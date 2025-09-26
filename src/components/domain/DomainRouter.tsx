@@ -8,9 +8,18 @@ import { StoreProvider } from '@/contexts/StoreContext';
 import { CartProvider } from '@/contexts/CartContext';
 import { CartDrawerProvider } from '@/contexts/CartDrawerContext';
 
-// Domain-specific CartProvider wrapper
+// Domain-specific CartProvider wrapper with all necessary providers
 const DomainCartProvider: React.FC<{ children: React.ReactNode; storeId?: string; websiteId?: string }> = ({ children, storeId, websiteId }) => {
-  return <CartProvider storeId={storeId} websiteIdOverride={websiteId}>{children}</CartProvider>;
+  return (
+    <CartDrawerProvider>
+      <CartProvider storeId={storeId} websiteIdOverride={websiteId}>
+        <AddToCartProvider>
+          <CartDrawer />
+          {children}
+        </AddToCartProvider>
+      </CartProvider>
+    </CartDrawerProvider>
+  );
 };
 import { AddToCartProvider } from '@/contexts/AddToCartProvider';
 import { AuthProvider } from '@/hooks/useAuth';
