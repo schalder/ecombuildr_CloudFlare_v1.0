@@ -2,11 +2,13 @@ import React, { useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Upload, X, File, Link, Plus } from 'lucide-react';
+import { Upload, X, File, Link, Plus, Archive } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useDigitalFilesLibrary, LibraryDigitalFile } from '@/hooks/useDigitalFilesLibrary';
+import { DigitalFilesLibrary } from './DigitalFilesLibrary';
 
 interface DigitalFile {
   id: string;
@@ -53,6 +55,14 @@ export const DigitalFileUpload: React.FC<DigitalFileUploadProps> = ({
   const [urlName, setUrlName] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+  
+  // Library functionality
+  const {
+    files: libraryFiles,
+    loading: libraryLoading,
+    searchTerm,
+    setSearchTerm
+  } = useDigitalFilesLibrary(storeId);
 
   const handleFile = async (file: File) => {
     // Check file type
@@ -194,6 +204,34 @@ export const DigitalFileUpload: React.FC<DigitalFileUploadProps> = ({
     onChange(files.filter(f => f.id !== fileId));
   };
 
+  const handleSelectLibraryFile = (libraryFile: LibraryDigitalFile) => {
+    // Check if file is already added
+    const isAlreadyAdded = files.some(f => f.url === libraryFile.url);
+    if (isAlreadyAdded) {
+      toast({
+        title: "File already added",
+        description: "This file is already in your list",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const newFile: DigitalFile = {
+      id: Date.now().toString(),
+      name: libraryFile.name,
+      url: libraryFile.url,
+      type: 'upload',
+      size: libraryFile.size
+    };
+
+    onChange([...files, newFile]);
+    
+    toast({
+      title: "File added",
+      description: "File has been added from your library"
+    });
+  };
+
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
@@ -209,8 +247,12 @@ export const DigitalFileUpload: React.FC<DigitalFileUploadProps> = ({
       <Label>{label}</Label>
       
       <Tabs defaultValue="upload" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="upload">Upload Files</TabsTrigger>
+          <TabsTrigger value="library">
+            <Archive className="w-4 h-4 mr-2" />
+            Library
+          </TabsTrigger>
           <TabsTrigger value="url">Add URLs</TabsTrigger>
         </TabsList>
         
@@ -254,6 +296,16 @@ export const DigitalFileUpload: React.FC<DigitalFileUploadProps> = ({
           <p className="text-xs text-muted-foreground">
             Maximum file size: 50MB. Supported formats: PDF, JPG, PNG, GIF, DOC, DOCX, XLS, XLSX, PPT, PPTX, TXT, ZIP, RAR
           </p>
+        </TabsContent>
+        
+        <TabsContent value="library" className="space-y-4">
+          <DigitalFilesLibrary
+            files={libraryFiles}
+            loading={libraryLoading}
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            onSelectFile={handleSelectLibraryFile}
+          />
         </TabsContent>
         
         <TabsContent value="url" className="space-y-4">
