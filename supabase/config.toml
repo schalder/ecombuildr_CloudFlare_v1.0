@@ -21,6 +21,15 @@ verify_jwt = false
 [functions.get-course-order-public]
 verify_jwt = false
 
+[functions.get-order-public]
+verify_jwt = false
+
+[functions.download-digital-file]
+verify_jwt = false
+
+[functions.ensure-download-links]
+verify_jwt = false
+
 [functions.eps-verify-payment]
 verify_jwt = false
 

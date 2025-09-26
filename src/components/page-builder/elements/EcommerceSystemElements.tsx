@@ -1533,6 +1533,20 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
         setOrder(data?.order || null);
         setItems(data?.items || []);
         setDownloadLinks(data?.downloadLinks || []);
+
+        // Fallback: if no download links yet, try to generate them (service-side)
+        if ((!data?.downloadLinks || data.downloadLinks.length === 0) && id) {
+          try {
+            const { data: ensureData } = await supabase.functions.invoke('ensure-download-links', {
+              body: { orderId: id }
+            });
+            if (ensureData?.downloadLinks?.length) {
+              setDownloadLinks(ensureData.downloadLinks);
+            }
+          } catch (genErr) {
+            // ignore and keep empty
+          }
+        }
       } catch (e) {
         // Error fetching order
       } finally {
