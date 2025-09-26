@@ -89,12 +89,12 @@ serve(async (req) => {
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Payment verification error:', error);
     return new Response(
       JSON.stringify({ 
         success: false, 
-        error: error.message || 'Payment verification failed' 
+        error: error?.message || 'Payment verification failed' 
       }),
       { 
         status: 500,

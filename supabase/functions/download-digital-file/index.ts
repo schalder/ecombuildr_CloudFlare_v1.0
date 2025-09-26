@@ -75,10 +75,21 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error('Download link has expired');
     }
 
+    // Extract actual file path from URL if needed
+    let actualFilePath = filePath;
+    
+    // Check if filePath is a full URL and extract the path portion
+    if (filePath.includes('/storage/v1/object/public/digital-products/')) {
+      const urlParts = filePath.split('/storage/v1/object/public/digital-products/');
+      if (urlParts.length > 1) {
+        actualFilePath = urlParts[1];
+      }
+    }
+
     // Get the file from storage
     const { data: fileData, error: storageError } = await supabase.storage
       .from('digital-products')
-      .download(filePath);
+      .download(actualFilePath);
 
     if (storageError || !fileData) {
       throw new Error('File not found or inaccessible');
@@ -94,7 +105,7 @@ const handler = async (req: Request): Promise<Response> => {
       .eq('id', downloadLink.id);
 
     // Get file metadata
-    const fileName = filePath.split('/').pop() || 'download';
+    const fileName = actualFilePath.split('/').pop() || 'download';
     
     // Return the file with proper headers
     return new Response(fileData, {
