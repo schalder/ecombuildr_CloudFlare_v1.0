@@ -934,6 +934,324 @@ export type Database = {
           },
         ]
       }
+      design_asset_categories: {
+        Row: {
+          asset_type: Database["public"]["Enums"]["design_asset_type"]
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          slug: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          asset_type: Database["public"]["Enums"]["design_asset_type"]
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          slug: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          asset_type?: Database["public"]["Enums"]["design_asset_type"]
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          slug?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      design_assets: {
+        Row: {
+          category_id: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          file_size: number | null
+          file_type: string
+          file_url: string
+          id: string
+          is_active: boolean
+          metadata: Json | null
+          name: string
+          tags: string[] | null
+          thumbnail_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          category_id: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          file_size?: number | null
+          file_type: string
+          file_url: string
+          id?: string
+          is_active?: boolean
+          metadata?: Json | null
+          name: string
+          tags?: string[] | null
+          thumbnail_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          category_id?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          file_size?: number | null
+          file_type?: string
+          file_url?: string
+          id?: string
+          is_active?: boolean
+          metadata?: Json | null
+          name?: string
+          tags?: string[] | null
+          thumbnail_url?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "design_assets_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "design_asset_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      design_editor_project_objects: {
+        Row: {
+          created_at: string | null
+          id: string
+          layer_index: number | null
+          object_data: Json
+          object_id: string
+          object_type: string
+          project_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          layer_index?: number | null
+          object_data: Json
+          object_id: string
+          object_type: string
+          project_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          layer_index?: number | null
+          object_data?: Json
+          object_id?: string
+          object_type?: string
+          project_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "design_editor_project_objects_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "design_editor_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      design_editor_projects: {
+        Row: {
+          canvas_data: Json | null
+          canvas_height: number | null
+          canvas_width: number | null
+          created_at: string | null
+          id: string
+          is_public: boolean | null
+          is_template: boolean | null
+          name: string
+          thumbnail_url: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          canvas_data?: Json | null
+          canvas_height?: number | null
+          canvas_width?: number | null
+          created_at?: string | null
+          id?: string
+          is_public?: boolean | null
+          is_template?: boolean | null
+          name: string
+          thumbnail_url?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          canvas_data?: Json | null
+          canvas_height?: number | null
+          canvas_width?: number | null
+          created_at?: string | null
+          id?: string
+          is_public?: boolean | null
+          is_template?: boolean | null
+          name?: string
+          thumbnail_url?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      design_editor_user_images: {
+        Row: {
+          created_at: string | null
+          file_size: number
+          filename: string
+          height: number | null
+          id: string
+          is_deleted: boolean | null
+          is_svg_multicolor: boolean | null
+          mime_type: string
+          original_name: string
+          storage_path: string
+          svg_color_count: number | null
+          svg_colors: Json | null
+          thumbnail_path: string | null
+          updated_at: string | null
+          user_id: string | null
+          width: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          file_size: number
+          filename: string
+          height?: number | null
+          id?: string
+          is_deleted?: boolean | null
+          is_svg_multicolor?: boolean | null
+          mime_type: string
+          original_name: string
+          storage_path: string
+          svg_color_count?: number | null
+          svg_colors?: Json | null
+          thumbnail_path?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          width?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          file_size?: number
+          filename?: string
+          height?: number | null
+          id?: string
+          is_deleted?: boolean | null
+          is_svg_multicolor?: boolean | null
+          mime_type?: string
+          original_name?: string
+          storage_path?: string
+          svg_color_count?: number | null
+          svg_colors?: Json | null
+          thumbnail_path?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          width?: number | null
+        }
+        Relationships: []
+      }
+      design_editor_user_profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          display_name: string | null
+          id: string
+          max_storage: number | null
+          storage_used: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          id: string
+          max_storage?: number | null
+          storage_used?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          id?: string
+          max_storage?: number | null
+          storage_used?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      design_templates: {
+        Row: {
+          canvas_data: Json
+          canvas_height: number
+          canvas_width: number
+          category_id: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          thumbnail_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          canvas_data?: Json
+          canvas_height?: number
+          canvas_width?: number
+          category_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          thumbnail_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          canvas_data?: Json
+          canvas_height?: number
+          canvas_width?: number
+          category_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          thumbnail_url?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "design_templates_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "template_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       discount_codes: {
         Row: {
           code: string
@@ -1473,6 +1791,51 @@ export type Database = {
           store_id?: string
           title?: string
           type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      order_digital_downloads: {
+        Row: {
+          created_at: string
+          download_count: number
+          download_token: string
+          downloads_remaining: number
+          expires_at: string
+          first_downloaded_at: string | null
+          id: string
+          is_active: boolean
+          last_downloaded_at: string | null
+          order_id: string
+          product_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          download_count?: number
+          download_token: string
+          downloads_remaining?: number
+          expires_at: string
+          first_downloaded_at?: string | null
+          id?: string
+          is_active?: boolean
+          last_downloaded_at?: string | null
+          order_id: string
+          product_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          download_count?: number
+          download_token?: string
+          downloads_remaining?: number
+          expires_at?: string
+          first_downloaded_at?: string | null
+          id?: string
+          is_active?: boolean
+          last_downloaded_at?: string | null
+          order_id?: string
+          product_id?: string
           updated_at?: string
         }
         Relationships: []
@@ -2426,6 +2789,9 @@ export type Database = {
           description: string | null
           description_builder: Json | null
           description_mode: string
+          digital_files: Json | null
+          download_expiry_hours: number | null
+          download_limit: number | null
           easy_returns_days: number | null
           easy_returns_enabled: boolean
           free_shipping_min_amount: number | null
@@ -2439,6 +2805,7 @@ export type Database = {
           membership_content: Json | null
           name: string
           price: number
+          product_type: Database["public"]["Enums"]["product_type"]
           seo_description: string | null
           seo_title: string | null
           shipping_config: Json | null
@@ -2468,6 +2835,9 @@ export type Database = {
           description?: string | null
           description_builder?: Json | null
           description_mode?: string
+          digital_files?: Json | null
+          download_expiry_hours?: number | null
+          download_limit?: number | null
           easy_returns_days?: number | null
           easy_returns_enabled?: boolean
           free_shipping_min_amount?: number | null
@@ -2481,6 +2851,7 @@ export type Database = {
           membership_content?: Json | null
           name: string
           price?: number
+          product_type?: Database["public"]["Enums"]["product_type"]
           seo_description?: string | null
           seo_title?: string | null
           shipping_config?: Json | null
@@ -2510,6 +2881,9 @@ export type Database = {
           description?: string | null
           description_builder?: Json | null
           description_mode?: string
+          digital_files?: Json | null
+          download_expiry_hours?: number | null
+          download_limit?: number | null
           easy_returns_days?: number | null
           easy_returns_enabled?: boolean
           free_shipping_min_amount?: number | null
@@ -2523,6 +2897,7 @@ export type Database = {
           membership_content?: Json | null
           name?: string
           price?: number
+          product_type?: Database["public"]["Enums"]["product_type"]
           seo_description?: string | null
           seo_title?: string | null
           shipping_config?: Json | null
@@ -2976,6 +3351,39 @@ export type Database = {
           details?: Json | null
           id?: string
           operation?: string
+        }
+        Relationships: []
+      }
+      template_categories: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          slug: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          slug: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          slug?: string
+          sort_order?: number
+          updated_at?: string
         }
         Relationships: []
       }
@@ -3685,6 +4093,7 @@ export type Database = {
       }
     }
     Enums: {
+      design_asset_type: "shapes" | "elements" | "icons" | "illustrations"
       feedback_status:
         | "new"
         | "under_review"
@@ -3700,6 +4109,7 @@ export type Database = {
         | "cancelled"
       payment_method: "cod" | "bkash" | "nagad" | "eps"
       product_library_status: "draft" | "published" | "archived"
+      product_type: "physical" | "digital"
       roadmap_status: "planned" | "in_progress" | "shipped" | "backlog"
       subscription_plan:
         | "free"
@@ -3838,6 +4248,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      design_asset_type: ["shapes", "elements", "icons", "illustrations"],
       feedback_status: [
         "new",
         "under_review",
@@ -3855,6 +4266,7 @@ export const Constants = {
       ],
       payment_method: ["cod", "bkash", "nagad", "eps"],
       product_library_status: ["draft", "published", "archived"],
+      product_type: ["physical", "digital"],
       roadmap_status: ["planned", "in_progress", "shipped", "backlog"],
       subscription_plan: [
         "free",
