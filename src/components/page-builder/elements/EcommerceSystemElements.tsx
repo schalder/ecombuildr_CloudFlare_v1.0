@@ -22,15 +22,14 @@ import { useStoreProducts } from '@/hooks/useStoreData';
 import { formatVariant } from '@/lib/utils';
 import { generateResponsiveCSS, mergeResponsiveStyles } from '@/components/page-builder/utils/responsiveStyles';
 import { formatCurrency } from '@/lib/currency';
-import { computeOrderShipping, type CartItem, type ShippingAddress, type ShippingSettings } from '@/lib/shipping-enhanced';
+import { computeOrderShipping, getAvailableShippingOptions, applyShippingOptionToForm, type CartItem, type ShippingAddress, type ShippingSettings, type ShippingOption } from '@/lib/shipping-enhanced';
 import { nameWithVariant } from '@/lib/utils';
 import { useWebsiteShipping } from '@/hooks/useWebsiteShipping';
+import { ShippingOptionsPicker } from '@/components/storefront/ShippingOptionsPicker';
 import { renderElementStyles } from '@/components/page-builder/utils/styleRenderer';
 import { usePixelTracking } from '@/hooks/usePixelTracking';
 import { usePixelContext } from '@/components/pixel/PixelManager';
 import { useChannelContext } from '@/hooks/useChannelContext';
-import { getAvailableShippingOptions, type ShippingOption } from '@/lib/shipping-enhanced';
-import { ShippingOptionsPicker } from '@/components/storefront/ShippingOptionsPicker';
 import { useHeadStyle } from '@/hooks/useHeadStyle';
 import { DigitalDownloadSection } from '../components/DigitalDownloadSection';
 
@@ -834,7 +833,23 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
     selectedShippingOption: '',
   });
   const [shippingCost, setShippingCost] = useState(0);
+  
+  // Track selected shipping option for website shipping
+  const [selectedShippingOption, setSelectedShippingOption] = useState<ShippingOption | null>(null);
   const { websiteShipping } = useWebsiteShipping();
+
+  // Set default shipping option when website shipping is available
+  useEffect(() => {
+    if (websiteShipping?.enabled && !selectedShippingOption) {
+      const options = getAvailableShippingOptions(websiteShipping);
+      if (options.length > 0) {
+        const defaultOption = options.find(opt => opt.type === 'rest_of_country') || options[0];
+        setSelectedShippingOption(defaultOption);
+        // Apply the default option to form fields
+        applyShippingOptionToForm(defaultOption, websiteShipping, setForm);
+      }
+    }
+  }, [websiteShipping, selectedShippingOption]);
   const [loading, setLoading] = useState(false);
   const [allowedMethods, setAllowedMethods] = useState<Array<'cod' | 'bkash' | 'nagad' | 'eps'>>(['cod','bkash','nagad','eps']);
   const [productShippingData, setProductShippingData] = useState<Map<string, { weight_grams?: number; shipping_config?: any; product_type?: string }>>(new Map());
@@ -1288,10 +1303,21 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
                     {fields.state?.enabled && (
                       <Input placeholder={fields.state.placeholder} value={form.shipping_state} onChange={e=>setForm(f=>({...f,shipping_state:e.target.value}))} required={!!(fields.state?.enabled && (fields.state?.required ?? false))} aria-required={!!(fields.state?.enabled && (fields.state?.required ?? false))} />
                     )}
-                    {fields.postalCode?.enabled && (
-                      <Input placeholder={fields.postalCode.placeholder} value={form.shipping_postal_code} onChange={e=>setForm(f=>({...f,shipping_postal_code:e.target.value}))} required={!!(fields.postalCode?.enabled && (fields.postalCode?.required ?? false))} aria-required={!!(fields.postalCode?.enabled && (fields.postalCode?.required ?? false))} />
-                    )}
-                   </div>
+                     {fields.postalCode?.enabled && (
+                       <Input placeholder={fields.postalCode.placeholder} value={form.shipping_postal_code} onChange={e=>setForm(f=>({...f,shipping_postal_code:e.target.value}))} required={!!(fields.postalCode?.enabled && (fields.postalCode?.required ?? false))} aria-required={!!(fields.postalCode?.enabled && (fields.postalCode?.required ?? false))} />
+                     )}
+                    </div>
+
+                   {/* Show website shipping options if enabled */}
+                   {websiteShipping?.enabled && (websiteShipping as any)?.showOptionsAtCheckout && (
+                     <ShippingOptionsPicker
+                       settings={websiteShipping}
+                       selectedOptionId={selectedShippingOption?.id}
+                       onOptionSelect={(option) => setSelectedShippingOption(option)}
+                       setForm={setForm}
+                       className="mt-4"
+                     />
+                   )}
 
                 </section>
               )}
@@ -1314,7 +1340,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
                 </section>
               )}
 
-              {sections.shipping && sections.payment && <Separator className="my-4" />}
+              {productTypes.hasPhysical && sections.shipping && sections.payment && <Separator className="my-4" />}
 
               {/* Always show payment section */}
               <section className="space-y-4">
