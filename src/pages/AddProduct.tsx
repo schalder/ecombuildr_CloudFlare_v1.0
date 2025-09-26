@@ -15,6 +15,7 @@ import { Separator } from "@/components/ui/separator";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, Save, Package, Upload, X, Plus, ChevronUp, ChevronDown } from "lucide-react";
 import { CompactMediaSelector } from "@/components/page-builder/components/CompactMediaSelector";
 import { toast } from "@/hooks/use-toast";
@@ -27,6 +28,7 @@ import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { parseVideoUrl, buildEmbedUrl } from "@/components/page-builder/utils/videoUtils";
 import { useStoreWebsitesForSelection } from '@/hooks/useWebsiteVisibility';
 import { SimpleCategorySelect } from '@/components/products/SimpleCategorySelect';
+import { DigitalFileUpload } from '@/components/products/DigitalFileUpload';
 
 export default function AddProduct() {
   const navigate = useNavigate();
@@ -59,6 +61,10 @@ export default function AddProduct() {
     images: [] as string[],
     video_url: '',
     weight_kg: '',
+    product_type: 'physical' as 'physical' | 'digital',
+    digital_files: [] as any[],
+    download_limit: 5,
+    download_expiry_hours: 168, // 7 days
   });
 
   // New local states
@@ -214,8 +220,8 @@ export default function AddProduct() {
         compare_price: formData.compare_price ? parseFloat(formData.compare_price) : null,
         cost_price: formData.cost_price ? parseFloat(formData.cost_price) : null,
         sku: formData.sku || null,
-        track_inventory: formData.track_inventory,
-        inventory_quantity: parseInt(formData.inventory_quantity) || 0,
+        track_inventory: formData.product_type === 'physical' ? formData.track_inventory : false,
+        inventory_quantity: formData.product_type === 'physical' ? parseInt(formData.inventory_quantity) || 0 : 0,
         is_active: formData.is_active,
         category_id: formData.category_id || null,
         seo_title: formData.seo_title || null,
@@ -225,20 +231,24 @@ export default function AddProduct() {
         weight_grams: Math.round((parseFloat(formData.weight_kg) || 0) * 1000),
         // New fields
         variations: hasVariants ? { options: variations, variants: variantEntries } : [],
-        shipping_config: {
+        shipping_config: formData.product_type === 'physical' ? {
           type: shippingType,
           fixedFee: shippingType === 'fixed' && fixedShippingFee ? parseFloat(fixedShippingFee) : undefined,
           weightSurcharge: shippingType === 'weight_surcharge' && weightSurcharge ? parseFloat(weightSurcharge) : undefined,
           freeShippingEnabled: shippingType === 'free',
           customOptions: shippingType === 'custom_options' ? customShippingOptions : undefined,
-        },
-        free_shipping_min_amount: enableFreeShipping && freeShippingMin ? parseFloat(freeShippingMin) : null,
+        } : null,
+        free_shipping_min_amount: formData.product_type === 'physical' && enableFreeShipping && freeShippingMin ? parseFloat(freeShippingMin) : null,
         easy_returns_enabled: easyReturnsEnabled,
         easy_returns_days: easyReturnsEnabled && easyReturnsDays ? parseInt(easyReturnsDays) : null,
         action_buttons: actionButtons as any,
         allowed_payment_methods: allowedPayments.length ? allowedPayments : null,
         description_mode: descriptionMode,
         description_builder: descriptionBuilder as any,
+        product_type: formData.product_type,
+        digital_files: formData.digital_files,
+        download_limit: formData.download_limit,
+        download_expiry_hours: formData.download_expiry_hours,
       };
 
       const { data: newProduct, error: insertError } = await supabase
@@ -391,6 +401,25 @@ export default function AddProduct() {
                 <AccordionContent>
                   <CardContent className="space-y-6">
                     <div className="space-y-4">
+                      {/* Product Type Selector */}
+                      <div>
+                        <Label htmlFor="product_type">Product Type *</Label>
+                        <Select
+                          value={formData.product_type}
+                          onValueChange={(value: 'physical' | 'digital') => 
+                            setFormData(prev => ({ ...prev, product_type: value }))
+                          }
+                        >
+                          <SelectTrigger className="mt-2">
+                            <SelectValue placeholder="Select product type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="physical">Physical Product</SelectItem>
+                            <SelectItem value="digital">Digital Product</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
                       <div>
                         <Label htmlFor="name">Product Name *</Label>
                         <Input
@@ -414,22 +443,77 @@ export default function AddProduct() {
                         />
                       </div>
 
-                      <div>
-                        <Label htmlFor="weight_kg">Weight (kg)</Label>
-                        <Input
-                          id="weight_kg"
-                          type="number"
-                          value={formData.weight_kg}
-                          onChange={(e) => setFormData(prev => ({ ...prev, weight_kg: e.target.value }))}
-                          placeholder="e.g. 0.5 for 500g, 2 for 2kg"
-                          step="0.01"
-                          min="0"
-                          className="mt-2 max-w-xs"
-                        />
-                        <p className="text-sm text-muted-foreground mt-2">
-                          Used for shipping calculations. Enter in kilograms (e.g., 0.2 for 200g, 1.5 for 1.5kg)
-                        </p>
-                      </div>
+                      {formData.product_type === 'physical' && (
+                        <div>
+                          <Label htmlFor="weight_kg">Weight (kg)</Label>
+                          <Input
+                            id="weight_kg"
+                            type="number"
+                            value={formData.weight_kg}
+                            onChange={(e) => setFormData(prev => ({ ...prev, weight_kg: e.target.value }))}
+                            placeholder="e.g. 0.5 for 500g, 2 for 2kg"
+                            step="0.01"
+                            min="0"
+                            className="mt-2 max-w-xs"
+                          />
+                          <p className="text-sm text-muted-foreground mt-2">
+                            Used for shipping calculations. Enter in kilograms (e.g., 0.2 for 200g, 1.5 for 1.5kg)
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Digital Product Settings */}
+                      {formData.product_type === 'digital' && (
+                        <div className="space-y-4">
+                          <DigitalFileUpload
+                            files={formData.digital_files}
+                            onChange={(files) => setFormData(prev => ({ ...prev, digital_files: files }))}
+                            label="Digital Files"
+                          />
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <Label htmlFor="download_limit">Download Limit</Label>
+                              <Input
+                                id="download_limit"
+                                type="number"
+                                value={formData.download_limit}
+                                onChange={(e) => setFormData(prev => ({ ...prev, download_limit: parseInt(e.target.value) || 5 }))}
+                                placeholder="5"
+                                min="1"
+                                max="100"
+                                className="mt-2"
+                              />
+                              <p className="text-sm text-muted-foreground mt-1">
+                                Maximum number of downloads per customer
+                              </p>
+                            </div>
+                            
+                            <div>
+                              <Label htmlFor="download_expiry_hours">Download Expiry (Hours)</Label>
+                              <Select
+                                value={formData.download_expiry_hours.toString()}
+                                onValueChange={(value) => setFormData(prev => ({ ...prev, download_expiry_hours: parseInt(value) }))}
+                              >
+                                <SelectTrigger className="mt-2">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="24">24 Hours (1 Day)</SelectItem>
+                                  <SelectItem value="72">72 Hours (3 Days)</SelectItem>
+                                  <SelectItem value="168">168 Hours (7 Days)</SelectItem>
+                                  <SelectItem value="336">336 Hours (14 Days)</SelectItem>
+                                  <SelectItem value="720">720 Hours (30 Days)</SelectItem>
+                                  <SelectItem value="0">Never Expire</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <p className="text-sm text-muted-foreground mt-1">
+                                How long download links remain active
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
 
                       <Separator className="my-6" />
 
@@ -521,8 +605,9 @@ export default function AddProduct() {
               </Card>
             </AccordionItem>
 
-            {/* Inventory */}
-            <AccordionItem value="inventory" className="border rounded-lg">
+            {/* Inventory - Only for physical products */}
+            {formData.product_type === 'physical' && (
+              <AccordionItem value="inventory" className="border rounded-lg">
               <Card>
                 <AccordionTrigger className="hover:no-underline px-6 py-4">
                   <CardTitle className="text-base font-semibold">Inventory</CardTitle>
@@ -572,6 +657,7 @@ export default function AddProduct() {
                 </AccordionContent>
               </Card>
             </AccordionItem>
+            )}
 
             {/* Status */}
             <AccordionItem value="status" className="border rounded-lg">
@@ -860,8 +946,9 @@ export default function AddProduct() {
               </Card>
             </AccordionItem>
 
-            {/* Shipping & Returns */}
-            <AccordionItem value="shipping" className="border rounded-lg">
+            {/* Shipping & Returns - Only for physical products */}
+            {formData.product_type === 'physical' && (
+              <AccordionItem value="shipping" className="border rounded-lg">
               <Card>
                 <AccordionTrigger className="hover:no-underline px-6 py-4">
                   <CardTitle className="text-base font-semibold">Shipping & Returns</CardTitle>
@@ -1098,6 +1185,7 @@ export default function AddProduct() {
                 </AccordionContent>
               </Card>
             </AccordionItem>
+            )}
           </Accordion>
 
           {/* Submit Button */}
