@@ -34,7 +34,7 @@ export const VideoContentProperties: React.FC<VideoContentPropertiesProps> = ({
   const currentWidthByDevice = React.useMemo(() => {
     const existing = (element.content as any).widthByDevice || {};
     return {
-      desktop: existing.desktop !== undefined ? existing.desktop : (width || 'full'),
+      desktop: existing.desktop || width || 'full',
       tablet: existing.tablet || 'full',
       mobile: existing.mobile || 'full'
     };
