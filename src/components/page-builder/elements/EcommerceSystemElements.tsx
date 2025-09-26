@@ -1314,7 +1314,8 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
                 </section>
               )}
 
-              {sections.shipping && sections.payment && <Separator className="my-4" />}
+              {/* Separator between sections */}
+              {((sections.info && sections.payment && !productTypes.hasPhysical) || (productTypes.hasPhysical && (fields.address?.enabled || fields.city?.enabled || fields.area?.enabled || fields.country?.enabled || fields.state?.enabled || fields.postalCode?.enabled || (websiteShipping?.enabled && (websiteShipping as any)?.showOptionsAtCheckout)) && sections.payment)) && <Separator className="my-4" />}
 
               {/* Always show payment section */}
               <section className="space-y-4">
