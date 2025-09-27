@@ -163,6 +163,38 @@ useEffect(() => {
     }
   };
 
+  // Auto-verify EPS payments for digital orders (runs once per order)
+  useEffect(() => {
+    if (!orderId || !order) return;
+    if (order.payment_method !== 'eps' || order.status !== 'pending') return;
+
+    const guardKey = `epsVerify:${orderId}`;
+    if (sessionStorage.getItem(guardKey)) return;
+
+    const statusParam = searchParams.get('status');
+    if (statusParam && statusParam !== 'success') return;
+
+    const mtid =
+      searchParams.get('merchantTransactionId') ||
+      searchParams.get('merchantTxnId') ||
+      searchParams.get('mtid') ||
+      (order.custom_fields?.eps?.merchantTransactionId ?? order.custom_fields?.eps?.merchant_transaction_id) ||
+      '';
+
+    (async () => {
+      try {
+        sessionStorage.setItem(guardKey, '1');
+        await supabase.functions.invoke('verify-payment', {
+          body: { orderId, paymentId: mtid || orderId, method: 'eps' },
+        });
+        await fetchOrder();
+      } catch (e) {
+        console.error('Auto EPS verify failed', e);
+        sessionStorage.removeItem(guardKey);
+      }
+    })();
+  }, [orderId, order]);
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'pending':

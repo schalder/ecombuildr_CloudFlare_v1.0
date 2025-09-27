@@ -63,8 +63,45 @@ serve(async (req) => {
       }
     }
 
-    // Update order status
-    const orderStatus = paymentStatus === 'success' ? 'processing' : 'payment_failed';
+    // Update order status with digital-delivery handling
+    let orderStatus = 'payment_failed';
+
+    if (paymentStatus === 'success') {
+      orderStatus = 'processing';
+      try {
+        // Determine if this order is digital-only (all products have digital_files)
+        const { data: items } = await supabase
+          .from('order_items')
+          .select('product_id')
+          .eq('order_id', orderId);
+        const productIds = Array.from(new Set((items || []).map((i: any) => i.product_id))).filter(Boolean);
+        if (productIds.length > 0) {
+          const { data: products } = await supabase
+            .from('products')
+            .select('id, digital_files')
+            .in('id', productIds);
+          const allDigital = Array.isArray(products) && products.length > 0 &&
+            products.every((p: any) => Array.isArray(p.digital_files) && p.digital_files.length > 0);
+
+          if (allDigital) {
+            orderStatus = 'delivered';
+            // Ensure download links are created for digital orders
+            try {
+              const { error: ensureErr } = await supabase.functions.invoke('ensure-download-links', {
+                body: { orderId }
+              });
+              if (ensureErr) console.error('ensure-download-links invocation error', ensureErr);
+            } catch (e) {
+              console.error('Failed to invoke ensure-download-links', e);
+            }
+          }
+        }
+      } catch (e) {
+        console.error('Digital-only check failed', e);
+      }
+    } else {
+      orderStatus = 'payment_failed';
+    }
     
     const { error } = await supabase
       .from('orders')
