@@ -16,7 +16,7 @@ export function OnboardingGate() {
   const location = useLocation();
   const [showWelcome, setShowWelcome] = useState(false);
 
-  // Show welcome dialog for users with no websites (including users without a store yet)
+  // Show welcome dialog for users with no websites AND no funnels (including users without a store yet)
   useEffect(() => {
     // Wait until profile and store finished loading
     if (profileLoading || storeLoading) return;
@@ -24,17 +24,17 @@ export function OnboardingGate() {
     // Don't show for read-only accounts
     if (userProfile?.account_status === 'read_only') return;
 
-    // If there's no store yet, user clearly has no websites
+    // If there's no store yet, user clearly has no websites or funnels
     if (!store?.id) {
       setShowWelcome(true);
       return;
     }
 
-    // If store exists, check websites once loaded
-    if (!websitesLoading && websites.length === 0) {
+    // If store exists, check both websites and funnels once loaded
+    if (!websitesLoading && !funnelsLoading && websites.length === 0 && funnels.length === 0) {
       setShowWelcome(true);
     }
-  }, [store?.id, storeLoading, websites.length, websitesLoading, profileLoading, userProfile?.account_status]);
+  }, [store?.id, storeLoading, websites.length, funnels.length, websitesLoading, funnelsLoading, profileLoading, userProfile?.account_status]);
 
 
   // Redirect if not authenticated
