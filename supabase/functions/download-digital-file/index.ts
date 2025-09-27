@@ -104,6 +104,29 @@ const handler = async (req: Request): Promise<Response> => {
       })
       .eq('id', downloadLink.id);
 
+    // Check if this is the first download for this order and update status to delivered
+    const { data: downloadedFiles } = await supabase
+      .from('order_download_links')
+      .select('download_count')
+      .eq('order_id', orderId)
+      .gt('download_count', 0);
+
+    // If this is the first download for any file in this order, mark as delivered
+    if (downloadedFiles && downloadedFiles.length === 1 && downloadedFiles[0].download_count === 1) {
+      const { error: orderUpdateError } = await supabase
+        .from('orders')
+        .update({ 
+          status: 'delivered',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', orderId)
+        .eq('status', 'pending');
+
+      if (!orderUpdateError) {
+        console.log(`Order ${orderId} status updated to delivered after first download`);
+      }
+    }
+
     // Get file metadata
     const fileName = actualFilePath.split('/').pop() || 'download';
     
