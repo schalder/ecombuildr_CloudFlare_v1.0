@@ -122,7 +122,7 @@ Deno.serve(async (req) => {
         fomoData.push({
           id: order.id,
           customer_name: order.customer_name?.trim() || 'Someone',
-          customer_city: location || 'Unknown location',
+          customer_city: location || '',
           customer_area: '',
           customer_address: '',
           created_at: order.created_at,

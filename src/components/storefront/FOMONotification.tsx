@@ -166,7 +166,7 @@ export const FOMONotification: React.FC<FOMONotificationProps> = ({
         {/* Content */}
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium truncate">
-            {order.customer_name} from {order.customer_city}
+            {order.customer_name}{order.customer_city ? ` from ${order.customer_city}` : ''}
           </p>
           <p className="text-xs opacity-90 truncate">
             purchased {order.product_name}
