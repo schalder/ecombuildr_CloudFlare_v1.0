@@ -163,40 +163,6 @@ useEffect(() => {
     }
   };
 
-  // Auto-verify EPS payments on confirmation page (EPS redirects here directly)
-  useEffect(() => {
-    if (!order) return;
-
-    const isEPSPending = order.payment_method === 'eps' && order.status === 'pending';
-    if (!isEPSPending) return;
-
-    const guardKey = `eps_autoverified_${order.id}`;
-    if (sessionStorage.getItem(guardKey)) return;
-
-    const epsMerchantTxnId = order?.custom_fields?.eps?.merchantTransactionId || order?.custom_fields?.eps?.merchant_transaction_id;
-    if (!epsMerchantTxnId) return;
-
-    sessionStorage.setItem(guardKey, 'true');
-
-    supabase.functions.invoke('verify-payment', {
-      body: {
-        orderId: order.id,
-        paymentId: epsMerchantTxnId,
-        method: 'eps',
-      },
-    }).then(({ data, error }) => {
-      if (!error && data?.paymentStatus === 'success') {
-        // Refresh order to reflect delivered status for digital-only orders
-        fetchOrder();
-      } else {
-        // Allow manual retry if verification failed
-        sessionStorage.removeItem(guardKey);
-      }
-    }).catch(() => {
-      sessionStorage.removeItem(guardKey);
-    });
-  }, [order]);
-
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'pending':

@@ -63,29 +63,8 @@ serve(async (req) => {
       }
     }
 
-    // Determine final order status based on payment and product types
-    let orderStatus = 'payment_failed';
-    
-    if (paymentStatus === 'success') {
-      // Check if this order contains only digital products
-      const isDigitalOnly = await checkIfDigitalOnlyOrder(orderId, supabase);
-      
-      if (isDigitalOnly) {
-        orderStatus = 'delivered'; // Digital products are delivered instantly
-        
-        // Ensure download links are created for digital products
-        try {
-          await supabase.functions.invoke('ensure-download-links', {
-            body: { orderId }
-          });
-        } catch (downloadError) {
-          console.error('Failed to create download links:', downloadError);
-          // Don't fail the entire process, but log the error
-        }
-      } else {
-        orderStatus = 'processing'; // Physical or mixed products need fulfillment
-      }
-    }
+    // Update order status
+    const orderStatus = paymentStatus === 'success' ? 'processing' : 'payment_failed';
     
     const { error } = await supabase
       .from('orders')
@@ -217,44 +196,6 @@ async function verifyNagadPayment(paymentId: string, storeId: string, supabase: 
   } catch (error) {
     console.error('Nagad verification error:', error);
     return 'failed';
-  }
-}
-
-// Helper function to check if an order contains only digital products
-async function checkIfDigitalOnlyOrder(orderId: string, supabase: any): Promise<boolean> {
-  try {
-    // Get all products in this order
-    const { data: orderItems, error } = await supabase
-      .from('order_items')
-      .select(`
-        product_id,
-        products (
-          product_type
-        )
-      `)
-      .eq('order_id', orderId);
-
-    if (error || !orderItems || orderItems.length === 0) {
-      console.error('Failed to fetch order items:', error);
-      return false;
-    }
-
-    // Check if all products are digital
-    const allDigital = orderItems.every((item: any) => 
-      item.products?.product_type === 'digital'
-    );
-
-    console.log(`Order ${orderId} - Digital only: ${allDigital}, Products:`, 
-      orderItems.map((item: any) => ({ 
-        id: item.product_id, 
-        type: item.products?.product_type 
-      }))
-    );
-
-    return allDigital;
-  } catch (error) {
-    console.error('Error checking if order is digital-only:', error);
-    return false;
   }
 }
 

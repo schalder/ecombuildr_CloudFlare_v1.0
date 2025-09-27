@@ -44,43 +44,6 @@ useEffect(() => {
     }
   }, [orderId, store]);
 
-  // Auto-verify EPS payments on page load
-  useEffect(() => {
-    if (order && order.payment_method === 'eps' && order.status === 'pending') {
-      const guardKey = `eps_autoverified_${order.id}`;
-      
-      // Check if we've already attempted auto-verification
-      if (!sessionStorage.getItem(guardKey)) {
-        sessionStorage.setItem(guardKey, 'true');
-        
-        const epsMerchantTxnId = order?.custom_fields?.eps?.merchantTransactionId || order?.custom_fields?.eps?.merchant_transaction_id;
-        
-        if (epsMerchantTxnId) {
-          // Auto-verify the EPS payment
-          supabase.functions.invoke('verify-payment', {
-            body: {
-              orderId: order.id,
-              paymentId: epsMerchantTxnId,
-              method: 'eps',
-            }
-          }).then(({ data, error }) => {
-            if (!error && data?.paymentStatus === 'success') {
-              // Navigate to order confirmation on successful verification
-              const orderToken = searchParams.get('ot') || '';
-              navigate(paths.orderConfirmation(order.id, orderToken));
-            } else {
-              // Clear guard on failure to allow manual retry
-              sessionStorage.removeItem(guardKey);
-            }
-          }).catch(() => {
-            // Clear guard on error to allow manual retry
-            sessionStorage.removeItem(guardKey);
-          });
-        }
-      }
-    }
-  }, [order, navigate, paths, searchParams]);
-
   const fetchOrder = async () => {
     if (!orderId || !store) return;
 
