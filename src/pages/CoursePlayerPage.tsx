@@ -62,6 +62,8 @@ interface CourseDetail {
         url: string;
         new_tab: boolean;
       }>;
+      fontSize?: string;
+      fontWeight?: string;
     };
   };
 }
@@ -348,7 +350,9 @@ const CoursePlayerPage = ({ courseId: propCourseId }: CoursePlayerPageProps = {}
             </div>
             {course?.theme_settings?.navigation_menu?.enabled && (
               <CourseNavigationMenu 
-                items={course.theme_settings.navigation_menu.items || []} 
+                items={course.theme_settings.navigation_menu.items || []}
+                fontSize={course.theme_settings.navigation_menu.fontSize || 'text-sm'}
+                fontWeight={course.theme_settings.navigation_menu.fontWeight || 'font-normal'}
               />
             )}
           </div>

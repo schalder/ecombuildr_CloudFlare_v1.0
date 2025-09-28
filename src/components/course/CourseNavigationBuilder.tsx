@@ -25,6 +25,8 @@ export type NavigationItem = {
 export interface NavigationMenuConfig {
   enabled: boolean;
   items: NavigationItem[];
+  fontSize?: string;
+  fontWeight?: string;
 }
 
 interface Props {
@@ -39,6 +41,8 @@ export const CourseNavigationBuilder: React.FC<Props> = ({ course, onSettingsUpd
   const initialConfig: NavigationMenuConfig = {
     enabled: course.theme_settings?.navigation_menu?.enabled || false,
     items: course.theme_settings?.navigation_menu?.items || [],
+    fontSize: course.theme_settings?.navigation_menu?.fontSize || 'text-sm',
+    fontWeight: course.theme_settings?.navigation_menu?.fontWeight || 'font-normal',
   };
 
   const [config, setConfig] = useState<NavigationMenuConfig>(initialConfig);
@@ -213,6 +217,53 @@ export const CourseNavigationBuilder: React.FC<Props> = ({ course, onSettingsUpd
                   ))}
                 </div>
               )}
+            </div>
+
+            <Separator />
+
+            {/* Font Styling Options */}
+            <div className="space-y-4">
+              <Label className="text-sm font-medium">Font Styling</Label>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-sm">Font Size</Label>
+                  <Select
+                    value={config.fontSize}
+                    onValueChange={(fontSize) => setField({ fontSize })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select font size" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="text-xs">Extra Small</SelectItem>
+                      <SelectItem value="text-sm">Small</SelectItem>
+                      <SelectItem value="text-base">Medium</SelectItem>
+                      <SelectItem value="text-lg">Large</SelectItem>
+                      <SelectItem value="text-xl">Extra Large</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-sm">Font Weight</Label>
+                  <Select
+                    value={config.fontWeight}
+                    onValueChange={(fontWeight) => setField({ fontWeight })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select font weight" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="font-light">Light</SelectItem>
+                      <SelectItem value="font-normal">Normal</SelectItem>
+                      <SelectItem value="font-medium">Medium</SelectItem>
+                      <SelectItem value="font-semibold">Semi Bold</SelectItem>
+                      <SelectItem value="font-bold">Bold</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
             </div>
           </>
         )}

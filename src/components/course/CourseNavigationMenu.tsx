@@ -3,9 +3,11 @@ import { NavigationItem } from './CourseNavigationBuilder';
 
 interface Props {
   items: NavigationItem[];
+  fontSize?: string;
+  fontWeight?: string;
 }
 
-export const CourseNavigationMenu: React.FC<Props> = ({ items }) => {
+export const CourseNavigationMenu: React.FC<Props> = ({ items, fontSize = 'text-sm', fontWeight = 'font-normal' }) => {
   if (!items || items.length === 0) return null;
 
   const handleLinkClick = (item: NavigationItem) => {
@@ -24,7 +26,7 @@ export const CourseNavigationMenu: React.FC<Props> = ({ items }) => {
         <button
           key={item.id}
           onClick={() => handleLinkClick(item)}
-          className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+          className={`${fontSize} ${fontWeight} text-muted-foreground hover:text-foreground transition-colors`}
         >
           {item.label}
         </button>
