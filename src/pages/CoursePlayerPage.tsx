@@ -18,11 +18,14 @@ import {
   ArrowLeft,
   BookOpen,
   CheckCircle,
-  Circle
+  Circle,
+  Lock
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { LessonCountdown } from '@/components/drip-content/LessonCountdown';
+import { isLessonAvailable } from '@/utils/dripContentUtils';
 
 interface CourseLesson {
   id: string;
@@ -33,6 +36,11 @@ interface CourseLesson {
   sort_order: number;
   is_published: boolean;
   is_preview: boolean;
+  drip_enabled?: boolean;
+  drip_type?: 'days_after_purchase' | 'specific_date';
+  drip_days?: number;
+  drip_release_date?: string;
+  drip_lock_message?: string;
 }
 
 interface CourseModule {
@@ -93,6 +101,7 @@ const CoursePlayerPage = ({ courseId: propCourseId }: CoursePlayerPageProps = {}
   const [completedLessons, setCompletedLessons] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [hasAccess, setHasAccess] = useState(false);
+  const [courseOrder, setCourseOrder] = useState<any>(null);
 
   // Check member authentication and access
   useEffect(() => {
@@ -136,6 +145,20 @@ const CoursePlayerPage = ({ courseId: propCourseId }: CoursePlayerPageProps = {}
 
         if (courseError) throw courseError;
 
+        // Fetch member's course order for drip content
+        (async () => {
+          try {
+            const { data } = await (supabase as any).from('course_orders')
+              .select('id, created_at, course_id')
+              .eq('course_id', courseId)
+              .eq('member_account_id', memberAccount.id)
+              .maybeSingle();
+            if (data) setCourseOrder(data);
+          } catch (error) {
+            console.error('Error fetching course order:', error);
+          }
+        })();
+
         const { data: modulesData, error: modulesError } = await supabase
           .from('course_modules')
           .select(`
@@ -148,12 +171,12 @@ const CoursePlayerPage = ({ courseId: propCourseId }: CoursePlayerPageProps = {}
 
         if (modulesError) throw modulesError;
 
-        const modules = modulesData.map(module => ({
+        const modules = modulesData?.map((module: any) => ({
           ...module,
-          lessons: (module.lessons as CourseLesson[])
-            .filter(lesson => lesson.is_published)
-            .sort((a, b) => a.sort_order - b.sort_order)
-        }));
+          lessons: (module.lessons || [])
+            .filter((lesson: any) => lesson.is_published)
+            .sort((a: any, b: any) => a.sort_order - b.sort_order)
+        })) || [];
 
         const themeSettings = courseData.theme_settings as any;
         setCourse({
@@ -298,6 +321,82 @@ const CoursePlayerPage = ({ courseId: propCourseId }: CoursePlayerPageProps = {}
           onEnded={() => markLessonComplete(lesson.id)}
         />
       </AspectRatio>
+    );
+  };
+
+  const renderLessonContent = (lesson: CourseLesson) => {
+    if (!lesson.drip_enabled) {
+      return (
+        <>
+          {/* Video Content */}
+          {lesson.video_url && (
+            <div className="w-full">
+              {renderVideoContent(lesson)}
+            </div>
+          )}
+
+          {/* Lesson Text Content */}
+          {lesson.content && (
+            <>
+              <Separator />
+              <div className="prose prose-sm max-w-none">
+                <div dangerouslySetInnerHTML={{ __html: lesson.content }} />
+              </div>
+            </>
+          )}
+        </>
+      );
+    }
+
+    const { available, releaseDate } = isLessonAvailable(lesson as any, courseOrder);
+
+    if (!available && releaseDate) {
+      return (
+        <LessonCountdown
+          releaseDate={releaseDate}
+          lockMessage={lesson.drip_lock_message || 'This lesson will be available after you complete the prerequisites.'}
+          lessonTitle={lesson.title}
+        />
+      );
+    }
+
+    if (!courseOrder) {
+      return (
+        <Card>
+          <CardHeader className="text-center">
+            <div className="w-16 h-16 mx-auto mb-4 bg-muted rounded-full flex items-center justify-center">
+              <Lock className="h-8 w-8 text-muted-foreground" />
+            </div>
+            <CardTitle>Purchase Required</CardTitle>
+          </CardHeader>
+          <CardContent className="text-center">
+            <p className="text-muted-foreground">
+              You need to purchase this course to access this lesson.
+            </p>
+          </CardContent>
+        </Card>
+      );
+    }
+
+    return (
+      <>
+        {/* Video Content */}
+        {lesson.video_url && (
+          <div className="w-full">
+            {renderVideoContent(lesson)}
+          </div>
+        )}
+
+        {/* Lesson Text Content */}
+        {lesson.content && (
+          <>
+            <Separator />
+            <div className="prose prose-sm max-w-none">
+              <div dangerouslySetInnerHTML={{ __html: lesson.content }} />
+            </div>
+          </>
+        )}
+      </>
     );
   };
 
@@ -515,23 +614,7 @@ const CoursePlayerPage = ({ courseId: propCourseId }: CoursePlayerPageProps = {}
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  {/* Video Content */}
-                  {selectedLesson.video_url && (
-                    <div className="w-full">
-                      {renderVideoContent(selectedLesson)}
-                    </div>
-                  )}
-
-                  {/* Lesson Text Content */}
-                  {selectedLesson.content && (
-                    <>
-                      <Separator />
-                      <div className="prose prose-sm max-w-none">
-                        <div dangerouslySetInnerHTML={{ __html: selectedLesson.content }} />
-                      </div>
-                    </>
-                  )}
-
+                  {renderLessonContent(selectedLesson)}
                 </CardContent>
               </Card>
             ) : (
