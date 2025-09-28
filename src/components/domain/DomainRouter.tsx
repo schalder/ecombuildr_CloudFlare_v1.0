@@ -112,48 +112,54 @@ export const DomainRouter: React.FC<DomainRouterProps> = ({ children }) => {
             connectionsArray.find(c => c.content_type === 'funnel') ||
             null;
         } else {
-          // For specific paths, check funnel step slugs
-          const pathSegments = currentPath.split('/').filter(Boolean);
-          const potentialSlug = pathSegments[pathSegments.length - 1];
-          
-          // Check if this path matches a funnel step slug
-          const funnelConnections = connectionsArray.filter(c => c.content_type === 'funnel');
-          
-          for (const funnelConnection of funnelConnections) {
-            // Check if the current path contains a funnel step slug
-            const { data: stepExists } = await supabase
-              .from('funnel_steps')
-              .select('id')
-              .eq('funnel_id', funnelConnection.content_id)
-              .eq('slug', potentialSlug)
-              .eq('is_published', true)
-              .maybeSingle();
-              
-            if (stepExists) {
-              selectedConnection = funnelConnection;
-              break;
-            }
-          }
-          
-          // If no funnel step matches, check if path matches course paths
-          if (!selectedConnection) {
-            // Check for course-related paths
-            if (
-              currentPath.startsWith('/courses') ||
-              currentPath.startsWith('/members') ||
-              currentPath.startsWith('/payment-processing') ||
-              currentPath.startsWith('/order-confirmation')
-            ) {
-              selectedConnection = connectionsArray.find(c => c.content_type === 'course_area') || null;
+          // First, check if this is a course-related path - prioritize over funnel routing
+          if (
+            currentPath.startsWith('/courses') ||
+            currentPath.startsWith('/members') ||
+            currentPath.startsWith('/payment-processing') ||
+            currentPath.startsWith('/order-confirmation')
+          ) {
+            console.debug('DomainRouter: Course path detected:', currentPath);
+            selectedConnection = connectionsArray.find(c => c.content_type === 'course_area') || {
+              id: 'synthetic-course',
+              content_type: 'course_area',
+              content_id: '',
+              path: '',
+              is_homepage: false,
+              store_id: domain.store_id
+            } as DomainConnection;
+          } else {
+            // For non-course paths, check funnel step slugs
+            const pathSegments = currentPath.split('/').filter(Boolean);
+            const potentialSlug = pathSegments[pathSegments.length - 1];
+            
+            // Check if this path matches a funnel step slug
+            const funnelConnections = connectionsArray.filter(c => c.content_type === 'funnel');
+            
+            for (const funnelConnection of funnelConnections) {
+              // Check if the current path contains a funnel step slug
+              const { data: stepExists } = await supabase
+                .from('funnel_steps')
+                .select('id')
+                .eq('funnel_id', funnelConnection.content_id)
+                .eq('slug', potentialSlug)
+                .eq('is_published', true)
+                .maybeSingle();
+                
+              if (stepExists) {
+                selectedConnection = funnelConnection;
+                break;
+              }
             }
             
-            // Otherwise use website for all other paths
+            // If no funnel step matches, use website for all other paths
             if (!selectedConnection) {
               selectedConnection = connectionsArray.find(c => c.content_type === 'website') || null;
             }
           }
         }
         
+        console.debug('DomainRouter: Selected connection type:', selectedConnection?.content_type, 'for path:', currentPath);
         setSelectedConnection(selectedConnection);
       } catch (error) {
         console.error('Error in domain router:', error);

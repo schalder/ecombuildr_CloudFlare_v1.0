@@ -24,6 +24,7 @@ import CourseMemberLoginPage from '@/pages/CourseMemberLoginPage';
 import CourseMemberDashboard from '@/components/course/CourseMemberDashboard';
 import { MemberAuthProvider } from '@/hooks/useMemberAuth';
 import CoursePlayerPage from '@/pages/CoursePlayerPage';
+import { StorefrontCourseCheckoutWrapper } from '@/components/course/CourseRouteWrappers';
 
 const DynamicWebsiteRoute: React.FC<{ fallback: React.ReactElement; websiteId: string }> = ({ fallback, websiteId }) => {
   const { slug } = useParams<{ slug: string }>();
@@ -120,6 +121,7 @@ export const DomainWebsiteRouter: React.FC<DomainWebsiteRouterProps> = ({
       <Route path="/courses/members/login" element={<CourseMemberLoginPage />} />
       <Route path="/courses/members" element={<MemberAuthProvider><CourseMemberDashboard /></MemberAuthProvider>} />
       <Route path="/courses/learn/:courseId" element={<CoursePlayerPage />} />
+      <Route path="/courses/:courseId/checkout" element={<StorefrontCourseCheckoutWrapper />} />
       <Route path="/courses/:courseId" element={<StorefrontCourseDetail />} />
       
       {/* Website Pages - catch all other routes */}
