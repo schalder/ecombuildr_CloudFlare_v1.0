@@ -509,6 +509,11 @@ export type Database = {
         Row: {
           content: string | null
           created_at: string
+          drip_days: number | null
+          drip_enabled: boolean
+          drip_lock_message: string | null
+          drip_release_date: string | null
+          drip_type: string | null
           id: string
           is_preview: boolean
           is_published: boolean
@@ -522,6 +527,11 @@ export type Database = {
         Insert: {
           content?: string | null
           created_at?: string
+          drip_days?: number | null
+          drip_enabled?: boolean
+          drip_lock_message?: string | null
+          drip_release_date?: string | null
+          drip_type?: string | null
           id?: string
           is_preview?: boolean
           is_published?: boolean
@@ -535,6 +545,11 @@ export type Database = {
         Update: {
           content?: string | null
           created_at?: string
+          drip_days?: number | null
+          drip_enabled?: boolean
+          drip_lock_message?: string | null
+          drip_release_date?: string | null
+          drip_type?: string | null
           id?: string
           is_preview?: boolean
           is_published?: boolean

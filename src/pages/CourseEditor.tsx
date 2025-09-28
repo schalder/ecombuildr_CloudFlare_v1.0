@@ -53,6 +53,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { formatDurationForInput, parseDurationInput } from '@/lib/utils';
 import { CoursePaymentMethods } from '@/components/course/CoursePaymentMethods';
+import { DripContentSettings, type DripContentData } from "@/components/drip-content/DripContentSettings";
 
 interface Course {
   id: string;
@@ -97,6 +98,11 @@ interface Lesson {
   sort_order: number;
   is_published: boolean;
   is_preview: boolean;
+  drip_enabled?: boolean;
+  drip_type?: 'days_after_purchase' | 'specific_date';
+  drip_days?: number;
+  drip_release_date?: string;
+  drip_lock_message?: string;
 }
 
 const CourseEditor = () => {
@@ -120,15 +126,20 @@ const CourseEditor = () => {
   // Form states
   const [moduleForm, setModuleForm] = useState({ title: '', description: '', is_published: false });
   const [lessonForm, setLessonForm] = useState({ 
-    title: '', 
-    content: '', 
-    video_url: '', 
-    video_duration: 0, 
+    title: '',
+    content: '',
+    video_url: '',
+    video_duration: 0,
     duration_hours: 0,
     duration_minutes: 0,
     duration_seconds: 0,
-    is_published: false, 
-    is_preview: false 
+    is_published: false,
+    is_preview: false,
+    drip_enabled: false,
+        drip_type: 'days_after_purchase' as 'days_after_purchase' | 'specific_date',
+    drip_days: 0,
+    drip_release_date: null as string | null,
+    drip_lock_message: 'This lesson will be available after you complete the prerequisites.'
   });
 
   // Collapsible section states (default collapsed)
@@ -256,7 +267,12 @@ const CourseEditor = () => {
             video_duration,
             sort_order,
             is_published,
-            is_preview
+            is_preview,
+            drip_enabled,
+            drip_type,
+            drip_days,
+            drip_release_date,
+            drip_lock_message
           )
         `)
         .eq('course_id', courseId)
@@ -275,7 +291,8 @@ const CourseEditor = () => {
         ...module,
         course_lessons: (module.course_lessons || []).map(lesson => ({
           ...lesson,
-          module_id: module.id
+          module_id: module.id,
+          drip_type: (lesson.drip_type as 'days_after_purchase' | 'specific_date') || 'days_after_purchase'
         })).sort((a, b) => a.sort_order - b.sort_order)
       }));
       
@@ -362,7 +379,12 @@ const CourseEditor = () => {
         duration_minutes: minutes,
         duration_seconds: seconds,
         is_published: lesson.is_published,
-        is_preview: lesson.is_preview
+        is_preview: lesson.is_preview,
+        drip_enabled: lesson.drip_enabled || false,
+        drip_type: lesson.drip_type || 'days_after_purchase',
+        drip_days: lesson.drip_days || 0,
+        drip_release_date: lesson.drip_release_date || null,
+        drip_lock_message: lesson.drip_lock_message || 'This lesson will be available after you complete the prerequisites.'
       });
     } else {
       setEditingLesson(null);
@@ -375,7 +397,12 @@ const CourseEditor = () => {
         duration_minutes: 0,
         duration_seconds: 0,
         is_published: false,
-        is_preview: false
+        is_preview: false,
+        drip_enabled: false,
+        drip_type: 'days_after_purchase' as 'days_after_purchase' | 'specific_date',
+        drip_days: 0,
+        drip_release_date: null as string | null,
+        drip_lock_message: 'This lesson will be available after you complete the prerequisites.'
       });
     }
     setShowLessonDialog(true);
@@ -458,7 +485,12 @@ const CourseEditor = () => {
           video_duration: lessonForm.video_duration || null,
           sort_order: module.course_lessons.length,
           is_published: lessonForm.is_published,
-          is_preview: lessonForm.is_preview
+          is_preview: lessonForm.is_preview,
+          drip_enabled: lessonForm.drip_enabled,
+          drip_type: lessonForm.drip_type,
+          drip_days: lessonForm.drip_days,
+          drip_release_date: lessonForm.drip_release_date,
+          drip_lock_message: lessonForm.drip_lock_message
         })
         .select()
         .single();
@@ -467,7 +499,10 @@ const CourseEditor = () => {
 
       setModules(prev => prev.map(module => 
         module.id === selectedModuleId 
-          ? { ...module, course_lessons: [...module.course_lessons, data] }
+          ? { ...module, course_lessons: [...module.course_lessons, { 
+              ...data, 
+              drip_type: data.drip_type as 'days_after_purchase' | 'specific_date' 
+            }] }
           : module
       ));
       
@@ -480,7 +515,12 @@ const CourseEditor = () => {
         duration_minutes: 0,
         duration_seconds: 0,
         is_published: false,
-        is_preview: false
+        is_preview: false,
+        drip_enabled: false,
+        drip_type: 'days_after_purchase' as 'days_after_purchase' | 'specific_date',
+        drip_days: 0,
+        drip_release_date: null as string | null,
+        drip_lock_message: 'This lesson will be available after you complete the prerequisites.'
       });
       setShowLessonDialog(false);
       toast.success('Lesson created successfully!');
@@ -503,6 +543,11 @@ const CourseEditor = () => {
           video_duration: lessonForm.video_duration || null,
           is_published: lessonForm.is_published,
           is_preview: lessonForm.is_preview,
+          drip_enabled: lessonForm.drip_enabled,
+          drip_type: lessonForm.drip_type,
+          drip_days: lessonForm.drip_days,
+          drip_release_date: lessonForm.drip_release_date,
+          drip_lock_message: lessonForm.drip_lock_message,
           updated_at: new Date().toISOString()
         })
         .eq('id', editingLesson.id);
@@ -528,7 +573,12 @@ const CourseEditor = () => {
         duration_minutes: 0,
         duration_seconds: 0,
         is_published: false,
-        is_preview: false
+        is_preview: false,
+        drip_enabled: false,
+        drip_type: 'days_after_purchase' as 'days_after_purchase' | 'specific_date',
+        drip_days: 0,
+        drip_release_date: null as string | null,
+        drip_lock_message: 'This lesson will be available after you complete the prerequisites.'
       });
       setShowLessonDialog(false);
       toast.success('Lesson updated successfully!');
@@ -1165,6 +1215,27 @@ const CourseEditor = () => {
                 />
               </div>
             </div>
+
+            <DripContentSettings
+              value={{
+                drip_enabled: lessonForm.drip_enabled,
+                drip_type: lessonForm.drip_type,
+                drip_days: lessonForm.drip_days,
+                drip_release_date: lessonForm.drip_release_date,
+                drip_lock_message: lessonForm.drip_lock_message
+              }}
+              onChange={(dripData: DripContentData) => {
+                setLessonForm(prev => ({
+                  ...prev,
+                  drip_enabled: dripData.drip_enabled,
+                  drip_type: dripData.drip_type,
+                  drip_days: dripData.drip_days,
+                  drip_release_date: dripData.drip_release_date,
+                  drip_lock_message: dripData.drip_lock_message
+                }));
+              }}
+            />
+
             <DialogFooter>
               <Button variant="outline" onClick={() => setShowLessonDialog(false)}>
                 Cancel
