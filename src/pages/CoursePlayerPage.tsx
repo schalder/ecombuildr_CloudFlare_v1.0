@@ -3,7 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -333,16 +332,9 @@ const CoursePlayerPage = ({ courseId: propCourseId }: CoursePlayerPageProps = {}
                 Back to Library
               </Button>
               <div>
-                <h1 className="text-xl font-bold">{course.title}</h1>
                 <p className="text-sm text-muted-foreground">
                   {course.modules.length} modules • {getTotalDuration()} min total
                 </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="text-right">
-                <p className="text-sm font-medium">Progress: {calculateProgress()}%</p>
-                <Progress value={calculateProgress()} className="w-32" />
               </div>
             </div>
           </div>
@@ -366,21 +358,11 @@ const CoursePlayerPage = ({ courseId: propCourseId }: CoursePlayerPageProps = {}
                     <span>{getTotalDuration()} min</span>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 mt-2">
-                  <div className="flex-1 bg-muted rounded-full h-2">
-                    <div 
-                      className="bg-primary h-2 rounded-full transition-all duration-300" 
-                      style={{ width: `${calculateProgress()}%` }}
-                    />
-                  </div>
-                  <span className="text-xs font-medium">{Math.round(calculateProgress())}%</span>
-                </div>
               </CardHeader>
               <CardContent className="p-4 space-y-3">
                 {course.modules.map((module, moduleIndex) => {
                   const moduleColor = course.theme_settings?.module_color || "#3b82f6";
                   const completedLessonsInModule = module.lessons.filter(lesson => completedLessons.has(lesson.id)).length;
-                  const moduleProgress = (completedLessonsInModule / module.lessons.length) * 100;
                   
                   return (
                     <div key={module.id} className="group">
@@ -410,18 +392,6 @@ const CoursePlayerPage = ({ courseId: propCourseId }: CoursePlayerPageProps = {}
                                     <span className="text-xs text-muted-foreground">
                                       {module.lessons.length} lessons
                                     </span>
-                                    <div className="flex items-center gap-1 text-xs">
-                                      <div className="w-12 bg-muted rounded-full h-1.5">
-                                        <div 
-                                          className="h-1.5 rounded-full transition-all duration-300"
-                                          style={{ 
-                                            width: `${moduleProgress}%`,
-                                            backgroundColor: moduleColor
-                                          }}
-                                        />
-                                      </div>
-                                      <span className="text-xs font-medium">{Math.round(moduleProgress)}%</span>
-                                    </div>
                                   </div>
                                 </div>
                                 <div className="flex items-center gap-2">
