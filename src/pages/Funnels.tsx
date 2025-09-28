@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, TrendingUp, Settings, ExternalLink, Eye, Edit, Trash2 } from 'lucide-react';
+import { Plus, TrendingUp, Settings, ExternalLink, Eye, Edit, Trash2, Search } from 'lucide-react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
+import { Input } from '@/components/ui/input';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -32,6 +33,7 @@ export default function Funnels() {
   const { store } = useUserStore();
   const queryClient = useQueryClient();
   const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; funnelId: string; funnelName: string }>({ open: false, funnelId: '', funnelName: '' });
+  const [searchQuery, setSearchQuery] = useState('');
 
   const { data: funnels, isLoading } = useQuery({
     queryKey: ['funnels', store?.id],
@@ -148,6 +150,16 @@ export default function Funnels() {
     togglePublishMutation.mutate({ funnelId, isPublished: !currentStatus });
   };
 
+  // Filter funnels based on search query
+  const filteredFunnels = useMemo(() => {
+    if (!funnels) return [];
+    if (!searchQuery.trim()) return funnels;
+    
+    return funnels.filter(funnel =>
+      funnel.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [funnels, searchQuery]);
+
   return (
     <DashboardLayout>
       <div className="flex flex-col space-y-6">
@@ -164,54 +176,70 @@ export default function Funnels() {
           </Button>
         </div>
 
+        {/* Bengali Message */}
+        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-md">
+          <p className="text-sm text-yellow-800 leading-relaxed">
+            বাংলাদেশে পেমেন্ট গেটওয়ের সীমাবদ্ধতার কারণে ইনস্ট্যান্ট পেমেন্টের সাথে ওয়ান-ক্লিক আপসেল/ডাউনসেল কাজ করে না। তাই, শুধুমাত্র ক্যাশ অন ডেলিভারি (COD) সাপোর্ট করে এমন ফানেলই এখানে কার্যকর। ব্যবহারকারীদের জন্য ক্যাশ অন ডেলিভারি (COD) দিয়েই ই-কমার্স ফানেল তৈরি করবেন।
+          </p>
+        </div>
+
+        {/* Search Bar */}
+        <div className="relative max-w-md">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+          <Input
+            placeholder="Search funnels by name..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+
         {isLoading ? (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {[...Array(6)].map((_, i) => (
-              <Card key={i} className="animate-pulse">
-                <CardHeader>
-                  <div className="h-4 bg-muted rounded w-3/4"></div>
-                  <div className="h-3 bg-muted rounded w-1/2"></div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <div className="h-3 bg-muted rounded"></div>
-                    <div className="h-3 bg-muted rounded w-2/3"></div>
+          <div className="space-y-4">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="border rounded-lg p-4 animate-pulse">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <div className="h-5 bg-muted rounded w-1/4 mb-2"></div>
+                    <div className="h-4 bg-muted rounded w-1/3"></div>
                   </div>
-                </CardContent>
-              </Card>
+                  <div className="flex space-x-2">
+                    <div className="h-6 bg-muted rounded w-16"></div>
+                    <div className="h-6 bg-muted rounded w-16"></div>
+                  </div>
+                </div>
+              </div>
             ))}
           </div>
-        ) : funnels && funnels.length > 0 ? (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {funnels.map((funnel) => (
-              <Card key={funnel.id} className="hover:shadow-md transition-shadow">
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <CardTitle className="text-lg">{funnel.name}</CardTitle>
-                      <CardDescription className="text-sm text-muted-foreground">
-                        {funnel.description || 'No description'}
-                      </CardDescription>
+        ) : filteredFunnels && filteredFunnels.length > 0 ? (
+          <div className="space-y-4">
+            {filteredFunnels.map((funnel) => (
+              <div key={funnel.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow bg-card">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1 space-y-2">
+                    <div className="flex items-center space-x-3">
+                      <h3 className="text-lg font-semibold">{funnel.name}</h3>
+                      <div className="flex space-x-2">
+                        <Badge variant={funnel.is_published ? "default" : "secondary"}>
+                          {funnel.is_published ? "Live" : "Draft"}
+                        </Badge>
+                        <Badge variant={funnel.is_active ? "outline" : "destructive"}>
+                          {funnel.is_active ? "Active" : "Paused"}
+                        </Badge>
+                      </div>
                     </div>
-                    <div className="flex space-x-1">
-                      <Badge variant={funnel.is_published ? "default" : "secondary"}>
-                        {funnel.is_published ? "Live" : "Draft"}
-                      </Badge>
-                      <Badge variant={funnel.is_active ? "outline" : "destructive"}>
-                        {funnel.is_active ? "Active" : "Paused"}
-                      </Badge>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
+                    
+                    <p className="text-sm text-muted-foreground">
+                      {funnel.description || 'No description'}
+                    </p>
+                    
                     <div className="flex items-center text-sm text-muted-foreground">
                       <TrendingUp className="mr-2 h-4 w-4" />
                       {funnel.canonical_domain || funnel.domain || `funnel/${funnel.id}`}
                     </div>
 
                     {/* Publish Status */}
-                    <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                    <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg max-w-sm">
                       <div className="flex-1">
                         <div className="text-sm font-medium">
                           {funnel.is_published ? "Funnel is Live" : "Funnel is Hidden"}
@@ -229,38 +257,46 @@ export default function Funnels() {
                         disabled={togglePublishMutation.isPending}
                       />
                     </div>
-                    
-                    <div className="grid grid-cols-2 gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleEditFunnel(funnel.id)}
-                      >
-                        <Edit className="mr-2 h-3 w-3" />
-                        Manage
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handlePreviewFunnel(funnel)}
-                      >
-                        <Eye className="mr-2 h-3 w-3" />
-                        Preview
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDeleteFunnel(funnel.id, funnel.name)}
-                        className="text-destructive hover:text-destructive col-span-2"
-                        disabled={deleteFunnelMutation.isPending}
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
-                    </div>
                   </div>
-                </CardContent>
-              </Card>
+                  
+                  <div className="flex items-center space-x-2 ml-4">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleEditFunnel(funnel.id)}
+                    >
+                      <Edit className="mr-2 h-3 w-3" />
+                      Manage
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handlePreviewFunnel(funnel)}
+                    >
+                      <Eye className="mr-2 h-3 w-3" />
+                      Preview
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDeleteFunnel(funnel.id, funnel.name)}
+                      className="text-destructive hover:text-destructive"
+                      disabled={deleteFunnelMutation.isPending}
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
             ))}
+          </div>
+        ) : searchQuery.trim() && funnels && funnels.length > 0 ? (
+          <div className="text-center py-12">
+            <Search className="mx-auto h-12 w-12 text-muted-foreground" />
+            <h3 className="mt-2 text-sm font-semibold">No funnels found</h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              No funnels match your search query "{searchQuery}".
+            </p>
           </div>
         ) : (
           <div className="text-center py-12">
