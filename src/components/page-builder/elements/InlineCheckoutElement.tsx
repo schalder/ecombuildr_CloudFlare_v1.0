@@ -741,7 +741,7 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
           <CardContent className="p-4 md:p-6 space-y-6 w-full overflow-x-hidden" dir="auto">
             {/* Product chooser */}
             <section className="space-y-4">
-              <h3 className={`mb-3 font-semibold element-${element.id}-section-header`} style={headerInline as React.CSSProperties}>Select Product</h3>
+              <h3 className={`mb-3 font-semibold text-xl element-${element.id}-section-header`} style={headerInline as React.CSSProperties}>Select Product</h3>
               {allowSwitching && products.length > 1 ? (
                 <div className="space-y-2">
                   {products.filter((p)=>productIds.includes(p.id)).map((p) => {
@@ -802,13 +802,20 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
             {/* Info */}
             {sections.info && (
               <section className="space-y-4">
-                <h3 className={`mb-3 font-semibold element-${element.id}-section-header`} style={headerInline as React.CSSProperties}>{headings.info}</h3>
+                <h3 className={`mb-3 font-semibold text-xl element-${element.id}-section-header`} style={headerInline as React.CSSProperties}>{headings.info}</h3>
                 <div className={`grid ${infoGridCols} gap-4`}>
                   {fields.fullName?.enabled && (
-                    <Input placeholder={fields.fullName.placeholder} value={form.customer_name} onChange={e=>setForm(f=>({...f,customer_name:e.target.value}))} required={!!(fields.fullName?.enabled && (fields.fullName?.required ?? true))} aria-required={!!(fields.fullName?.enabled && (fields.fullName?.required ?? true))} />
+                    <Input 
+                      placeholder={fields.fullName.placeholder} 
+                      value={form.customer_name} 
+                      onChange={e=>setForm(f=>({...f,customer_name:e.target.value}))} 
+                      required={!!(fields.fullName?.enabled && (fields.fullName?.required ?? true))} 
+                      aria-required={!!(fields.fullName?.enabled && (fields.fullName?.required ?? true))}
+                      className="h-12 rounded-lg border-border bg-background px-4 py-3 text-base font-medium text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200"
+                    />
                   )}
                   {fields.phone?.enabled && (
-                    <div className="space-y-1">
+                    <div className="space-y-2">
                       <Input 
                         placeholder={fields.phone.placeholder} 
                         value={form.customer_phone} 
@@ -828,10 +835,10 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
                         aria-required={!!(fields.phone?.enabled && (fields.phone?.required ?? true))}
                         aria-invalid={!!phoneError}
                         aria-describedby={phoneError ? `phone-error-${element.id}` : undefined}
-                        className={phoneError ? 'border-destructive focus-visible:ring-destructive' : undefined}
+                        className={`h-12 rounded-lg border-border bg-background px-4 py-3 text-base font-medium text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200 ${phoneError ? 'border-destructive focus:border-destructive focus:ring-destructive/20' : ''}`}
                       />
                       {phoneError && (
-                        <p id={`phone-error-${element.id}`} className="text-sm text-destructive" role="alert">
+                        <p id={`phone-error-${element.id}`} className="text-sm font-medium text-destructive" role="alert">
                           {phoneError}
                         </p>
                       )}
@@ -839,7 +846,15 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
                   )}
                 </div>
                 {fields.email?.enabled && (
-                  <Input type="email" placeholder={fields.email.placeholder} value={form.customer_email} onChange={e=>setForm(f=>({...f,customer_email:e.target.value}))} required={!!(fields.email?.enabled && (fields.email?.required ?? false))} aria-required={!!(fields.email?.enabled && (fields.email?.required ?? false))} />
+                  <Input 
+                    type="email" 
+                    placeholder={fields.email.placeholder} 
+                    value={form.customer_email} 
+                    onChange={e=>setForm(f=>({...f,customer_email:e.target.value}))} 
+                    required={!!(fields.email?.enabled && (fields.email?.required ?? false))} 
+                    aria-required={!!(fields.email?.enabled && (fields.email?.required ?? false))}
+                    className="h-12 rounded-lg border-border bg-background px-4 py-3 text-base font-medium text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200"
+                  />
                 )}
               </section>
             )}
@@ -849,27 +864,70 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
             {/* Shipping */}
             {sections.shipping && !isDigitalOnlyCart && (
               <section className="space-y-4">
-                <h3 className={`mb-3 font-semibold element-${element.id}-section-header`} style={headerInline as React.CSSProperties}>{headings.shipping}</h3>
+                <h3 className={`mb-3 font-semibold text-xl element-${element.id}-section-header`} style={headerInline as React.CSSProperties}>{headings.shipping}</h3>
                 {fields.address?.enabled && (
-                  <Textarea placeholder={fields.address.placeholder} value={form.shipping_address} onChange={e=>setForm(f=>({...f,shipping_address:e.target.value}))} rows={3} required={!!(fields.address?.enabled && (fields.address?.required ?? true))} aria-required={!!(fields.address?.enabled && (fields.address?.required ?? true))} />
+                  <Textarea 
+                    placeholder={fields.address.placeholder} 
+                    value={form.shipping_address} 
+                    onChange={e=>setForm(f=>({...f,shipping_address:e.target.value}))} 
+                    rows={3} 
+                    required={!!(fields.address?.enabled && (fields.address?.required ?? true))} 
+                    aria-required={!!(fields.address?.enabled && (fields.address?.required ?? true))}
+                    className="min-h-[90px] rounded-lg border-border bg-background px-4 py-3 text-base font-medium text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200 resize-none"
+                  />
                 )}
                 <div className={`grid ${ship2GridCols} gap-4`}>
                   {fields.city?.enabled && (
-                    <Input placeholder={fields.city.placeholder} value={form.shipping_city} onChange={e=>setForm(f=>({...f,shipping_city:e.target.value}))} required={!!(fields.city?.enabled && (fields.city?.required ?? true))} aria-required={!!(fields.city?.enabled && (fields.city?.required ?? true))} />
+                    <Input 
+                      placeholder={fields.city.placeholder} 
+                      value={form.shipping_city} 
+                      onChange={e=>setForm(f=>({...f,shipping_city:e.target.value}))} 
+                      required={!!(fields.city?.enabled && (fields.city?.required ?? true))} 
+                      aria-required={!!(fields.city?.enabled && (fields.city?.required ?? true))}
+                      className="h-12 rounded-lg border-border bg-background px-4 py-3 text-base font-medium text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200"
+                    />
                   )}
                   {fields.area?.enabled && (
-                    <Input placeholder={fields.area.placeholder} value={form.shipping_area} onChange={e=>setForm(f=>({...f,shipping_area:e.target.value}))} required={!!(fields.area?.enabled && (fields.area?.required ?? false))} aria-required={!!(fields.area?.enabled && (fields.area?.required ?? false))} />
+                    <Input 
+                      placeholder={fields.area.placeholder} 
+                      value={form.shipping_area} 
+                      onChange={e=>setForm(f=>({...f,shipping_area:e.target.value}))} 
+                      required={!!(fields.area?.enabled && (fields.area?.required ?? false))} 
+                      aria-required={!!(fields.area?.enabled && (fields.area?.required ?? false))}
+                      className="h-12 rounded-lg border-border bg-background px-4 py-3 text-base font-medium text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200"
+                    />
                   )}
                 </div>
                 <div className={`grid ${ship3GridCols} gap-4`}>
                   {fields.country?.enabled && (
-                    <Input placeholder={fields.country.placeholder} value={form.shipping_country} onChange={e=>setForm(f=>({...f,shipping_country:e.target.value}))} required={!!(fields.country?.enabled && (fields.country?.required ?? false))} aria-required={!!(fields.country?.enabled && (fields.country?.required ?? false))} />
+                    <Input 
+                      placeholder={fields.country.placeholder} 
+                      value={form.shipping_country} 
+                      onChange={e=>setForm(f=>({...f,shipping_country:e.target.value}))} 
+                      required={!!(fields.country?.enabled && (fields.country?.required ?? false))} 
+                      aria-required={!!(fields.country?.enabled && (fields.country?.required ?? false))}
+                      className="h-12 rounded-lg border-border bg-background px-4 py-3 text-base font-medium text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200"
+                    />
                   )}
                   {fields.state?.enabled && (
-                    <Input placeholder={fields.state.placeholder} value={form.shipping_state} onChange={e=>setForm(f=>({...f,shipping_state:e.target.value}))} required={!!(fields.state?.enabled && (fields.state?.required ?? false))} aria-required={!!(fields.state?.enabled && (fields.state?.required ?? false))} />
+                    <Input 
+                      placeholder={fields.state.placeholder} 
+                      value={form.shipping_state} 
+                      onChange={e=>setForm(f=>({...f,shipping_state:e.target.value}))} 
+                      required={!!(fields.state?.enabled && (fields.state?.required ?? false))} 
+                      aria-required={!!(fields.state?.enabled && (fields.state?.required ?? false))}
+                      className="h-12 rounded-lg border-border bg-background px-4 py-3 text-base font-medium text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200"
+                    />
                   )}
                   {fields.postalCode?.enabled && (
-                    <Input placeholder={fields.postalCode.placeholder} value={form.shipping_postal_code} onChange={e=>setForm(f=>({...f,shipping_postal_code:e.target.value}))} required={!!(fields.postalCode?.enabled && (fields.postalCode?.required ?? false))} aria-required={!!(fields.postalCode?.enabled && (fields.postalCode?.required ?? false))} />
+                    <Input 
+                      placeholder={fields.postalCode.placeholder} 
+                      value={form.shipping_postal_code} 
+                      onChange={e=>setForm(f=>({...f,shipping_postal_code:e.target.value}))} 
+                      required={!!(fields.postalCode?.enabled && (fields.postalCode?.required ?? false))} 
+                      aria-required={!!(fields.postalCode?.enabled && (fields.postalCode?.required ?? false))}
+                      className="h-12 rounded-lg border-border bg-background px-4 py-3 text-base font-medium text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200"
+                    />
                   )}
                 </div>
 
