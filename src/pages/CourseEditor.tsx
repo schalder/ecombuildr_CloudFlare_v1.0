@@ -290,6 +290,7 @@ const CourseEditor = () => {
           includes_title: course.includes_title,
           includes_items: course.includes_items,
           payment_methods: course.payment_methods,
+          theme_settings: course.theme_settings,
           updated_at: new Date().toISOString()
         })
         .eq('id', course.id);

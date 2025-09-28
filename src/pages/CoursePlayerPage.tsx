@@ -331,11 +331,6 @@ const CoursePlayerPage = ({ courseId: propCourseId }: CoursePlayerPageProps = {}
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Library
               </Button>
-              <div>
-                <p className="text-sm text-muted-foreground">
-                  {course.modules.length} modules • {getTotalDuration()} min total
-                </p>
-              </div>
             </div>
           </div>
         </div>
