@@ -153,11 +153,7 @@ const CoursePlayerPage = ({ courseId: propCourseId }: CoursePlayerPageProps = {}
             .sort((a, b) => a.sort_order - b.sort_order)
         }));
 
-        // Debug logging for navigation menu
         const themeSettings = courseData.theme_settings as any;
-        console.log('Course theme_settings:', themeSettings);
-        console.log('Navigation menu config:', themeSettings?.navigation_menu);
-
         setCourse({
           ...courseData,
           modules,
@@ -340,7 +336,7 @@ const CoursePlayerPage = ({ courseId: propCourseId }: CoursePlayerPageProps = {}
       <div className="border-b bg-card">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
               <Button 
                 variant="ghost" 
                 size="sm"
@@ -349,16 +345,12 @@ const CoursePlayerPage = ({ courseId: propCourseId }: CoursePlayerPageProps = {}
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Library
               </Button>
-              
-              {course?.theme_settings?.navigation_menu?.enabled && (
-                <>
-                  {console.log('Rendering navigation menu with items:', course.theme_settings.navigation_menu.items)}
-                  <CourseNavigationMenu 
-                    items={course.theme_settings.navigation_menu.items || []} 
-                  />
-                </>
-              )}
             </div>
+            {course?.theme_settings?.navigation_menu?.enabled && (
+              <CourseNavigationMenu 
+                items={course.theme_settings.navigation_menu.items || []} 
+              />
+            )}
           </div>
         </div>
       </div>
