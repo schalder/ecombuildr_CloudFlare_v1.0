@@ -1261,20 +1261,42 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
     <div className="max-w-5xl mx-auto" style={{ backgroundColor: backgrounds.containerBg || undefined, ...checkoutPadding }}>
         {(sections.info || sections.shipping || sections.payment || sections.summary) && (
           <Card className={formBorderWidth > 0 ? undefined : 'border-0'} style={{ backgroundColor: backgrounds.formBg || undefined, borderColor: (backgrounds as any).formBorderColor || undefined, borderWidth: formBorderWidth || 0 }}>
-            <CardContent className="p-4 md:p-6 space-y-6 w-full overflow-x-hidden">
+            <CardContent className="p-6 md:p-8 space-y-8 w-full overflow-x-hidden">
               {sections.info && (
-                <section className="space-y-4">
-                  <h3 className={`mb-3 font-semibold element-${element.id}-section-header`} style={headerInline as React.CSSProperties}>{headings.info}</h3>
+                <section className="space-y-6">
+                  <h3 className={`text-lg font-semibold text-gray-900 element-${element.id}-section-header`} style={headerInline as React.CSSProperties}>{headings.info}</h3>
                   <div className={`grid ${infoGridCols} gap-4`}>
                     {fields.fullName?.enabled && (
-                      <Input placeholder={fields.fullName.placeholder} value={form.customer_name} onChange={e=>setForm(f=>({...f,customer_name:e.target.value}))} required={!!(fields.fullName?.enabled && (fields.fullName?.required ?? true))} aria-required={!!(fields.fullName?.enabled && (fields.fullName?.required ?? true))} />
+                      <Input 
+                        placeholder={fields.fullName.placeholder} 
+                        value={form.customer_name} 
+                        onChange={e=>setForm(f=>({...f,customer_name:e.target.value}))} 
+                        required={!!(fields.fullName?.enabled && (fields.fullName?.required ?? true))} 
+                        aria-required={!!(fields.fullName?.enabled && (fields.fullName?.required ?? true))}
+                        className="h-12 px-4 border border-gray-200 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                      />
                     )}
                     {fields.phone?.enabled && (
-                      <Input placeholder={fields.phone.placeholder} value={form.customer_phone} onChange={e=>setForm(f=>({...f,customer_phone:e.target.value}))} required={!!(fields.phone?.enabled && (fields.phone?.required ?? true))} aria-required={!!(fields.phone?.enabled && (fields.phone?.required ?? true))} />
+                      <Input 
+                        placeholder={fields.phone.placeholder} 
+                        value={form.customer_phone} 
+                        onChange={e=>setForm(f=>({...f,customer_phone:e.target.value}))} 
+                        required={!!(fields.phone?.enabled && (fields.phone?.required ?? true))} 
+                        aria-required={!!(fields.phone?.enabled && (fields.phone?.required ?? true))}
+                        className="h-12 px-4 border border-gray-200 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                      />
                     )}
                   </div>
                   {fields.email?.enabled && (
-                    <Input type="email" placeholder={fields.email.placeholder} value={form.customer_email} onChange={e=>setForm(f=>({...f,customer_email:e.target.value}))} required={!!(fields.email?.enabled && (fields.email?.required ?? false))} aria-required={!!(fields.email?.enabled && (fields.email?.required ?? false))} />
+                    <Input 
+                      type="email" 
+                      placeholder={fields.email.placeholder} 
+                      value={form.customer_email} 
+                      onChange={e=>setForm(f=>({...f,customer_email:e.target.value}))} 
+                      required={!!(fields.email?.enabled && (fields.email?.required ?? false))} 
+                      aria-required={!!(fields.email?.enabled && (fields.email?.required ?? false))}
+                      className="h-12 px-4 border border-gray-200 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                    />
                   )}
                 </section>
               )}
@@ -1283,28 +1305,71 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
 
               {/* Show shipping section only if there are physical products and shipping fields are enabled */}
               {productTypes.hasPhysical && (fields.address?.enabled || fields.city?.enabled || fields.area?.enabled || fields.country?.enabled || fields.state?.enabled || fields.postalCode?.enabled || (websiteShipping?.enabled && (websiteShipping as any)?.showOptionsAtCheckout)) && (
-                <section className="space-y-4">
-                  <h3 className={`mb-3 font-semibold element-${element.id}-section-header`} style={headerInline as React.CSSProperties}>{headings.shipping}</h3>
+                <section className="space-y-6">
+                  <h3 className={`text-lg font-semibold text-gray-900 element-${element.id}-section-header`} style={headerInline as React.CSSProperties}>{headings.shipping}</h3>
                   {fields.address?.enabled && (
-                    <Textarea placeholder={fields.address.placeholder} value={form.shipping_address} onChange={e=>setForm(f=>({...f,shipping_address:e.target.value}))} rows={3} required={!!(fields.address?.enabled && (fields.address?.required ?? true))} aria-required={!!(fields.address?.enabled && (fields.address?.required ?? true))} />
+                    <Textarea 
+                      placeholder={fields.address.placeholder} 
+                      value={form.shipping_address} 
+                      onChange={e=>setForm(f=>({...f,shipping_address:e.target.value}))} 
+                      rows={3} 
+                      required={!!(fields.address?.enabled && (fields.address?.required ?? true))} 
+                      aria-required={!!(fields.address?.enabled && (fields.address?.required ?? true))}
+                      className="px-4 py-3 border border-gray-200 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors resize-none"
+                    />
                   )}
                   <div className={`grid ${ship2GridCols} gap-4`}>
                     {fields.city?.enabled && (
-                      <Input placeholder={fields.city.placeholder} value={form.shipping_city} onChange={e=>setForm(f=>({...f,shipping_city:e.target.value}))} required={!!(fields.city?.enabled && (fields.city?.required ?? true))} aria-required={!!(fields.city?.enabled && (fields.city?.required ?? true))} />
+                      <Input 
+                        placeholder={fields.city.placeholder} 
+                        value={form.shipping_city} 
+                        onChange={e=>setForm(f=>({...f,shipping_city:e.target.value}))} 
+                        required={!!(fields.city?.enabled && (fields.city?.required ?? true))} 
+                        aria-required={!!(fields.city?.enabled && (fields.city?.required ?? true))}
+                        className="h-12 px-4 border border-gray-200 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                      />
                     )}
                     {fields.area?.enabled && (
-                      <Input placeholder={fields.area.placeholder} value={form.shipping_area} onChange={e=>setForm(f=>({...f,shipping_area:e.target.value}))} required={!!(fields.area?.enabled && (fields.area?.required ?? false))} aria-required={!!(fields.area?.enabled && (fields.area?.required ?? false))} />
+                      <Input 
+                        placeholder={fields.area.placeholder} 
+                        value={form.shipping_area} 
+                        onChange={e=>setForm(f=>({...f,shipping_area:e.target.value}))} 
+                        required={!!(fields.area?.enabled && (fields.area?.required ?? false))} 
+                        aria-required={!!(fields.area?.enabled && (fields.area?.required ?? false))}
+                        className="h-12 px-4 border border-gray-200 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                      />
                     )}
                   </div>
                   <div className={`grid ${ship3GridCols} gap-4`}>
                     {fields.country?.enabled && (
-                      <Input placeholder={fields.country.placeholder} value={form.shipping_country} onChange={e=>setForm(f=>({...f,shipping_country:e.target.value}))} required={!!(fields.country?.enabled && (fields.country?.required ?? false))} aria-required={!!(fields.country?.enabled && (fields.country?.required ?? false))} />
+                      <Input 
+                        placeholder={fields.country.placeholder} 
+                        value={form.shipping_country} 
+                        onChange={e=>setForm(f=>({...f,shipping_country:e.target.value}))} 
+                        required={!!(fields.country?.enabled && (fields.country?.required ?? false))} 
+                        aria-required={!!(fields.country?.enabled && (fields.country?.required ?? false))}
+                        className="h-12 px-4 border border-gray-200 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                      />
                     )}
                     {fields.state?.enabled && (
-                      <Input placeholder={fields.state.placeholder} value={form.shipping_state} onChange={e=>setForm(f=>({...f,shipping_state:e.target.value}))} required={!!(fields.state?.enabled && (fields.state?.required ?? false))} aria-required={!!(fields.state?.enabled && (fields.state?.required ?? false))} />
+                      <Input 
+                        placeholder={fields.state.placeholder} 
+                        value={form.shipping_state} 
+                        onChange={e=>setForm(f=>({...f,shipping_state:e.target.value}))} 
+                        required={!!(fields.state?.enabled && (fields.state?.required ?? false))} 
+                        aria-required={!!(fields.state?.enabled && (fields.state?.required ?? false))}
+                        className="h-12 px-4 border border-gray-200 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                      />
                     )}
                      {fields.postalCode?.enabled && (
-                       <Input placeholder={fields.postalCode.placeholder} value={form.shipping_postal_code} onChange={e=>setForm(f=>({...f,shipping_postal_code:e.target.value}))} required={!!(fields.postalCode?.enabled && (fields.postalCode?.required ?? false))} aria-required={!!(fields.postalCode?.enabled && (fields.postalCode?.required ?? false))} />
+                       <Input 
+                        placeholder={fields.postalCode.placeholder} 
+                        value={form.shipping_postal_code} 
+                        onChange={e=>setForm(f=>({...f,shipping_postal_code:e.target.value}))} 
+                        required={!!(fields.postalCode?.enabled && (fields.postalCode?.required ?? false))} 
+                        aria-required={!!(fields.postalCode?.enabled && (fields.postalCode?.required ?? false))}
+                        className="h-12 px-4 border border-gray-200 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                       />
                      )}
                     </div>
 
@@ -1324,15 +1389,30 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
 
               {/* Custom fields section - show independently of shipping */}
               {customFields?.length > 0 && customFields.filter((cf:any)=>cf.enabled).length > 0 && (
-                <section className="space-y-4">
-                  <h3 className={`mb-3 font-semibold element-${element.id}-section-header`} style={headerInline as React.CSSProperties}>{headings.customFields}</h3>
-                  <div className="space-y-2">
+                <section className="space-y-6">
+                  <h3 className={`text-lg font-semibold text-gray-900 element-${element.id}-section-header`} style={headerInline as React.CSSProperties}>{headings.customFields}</h3>
+                  <div className="space-y-4">
                     {customFields.filter((cf:any)=>cf.enabled).map((cf:any) => (
                       <div key={cf.id}>
                         {cf.type === 'textarea' ? (
-                          <Textarea placeholder={cf.placeholder || cf.label} value={(form.custom_fields as any)[cf.id] || ''} onChange={(e)=>setForm(f=>({...f, custom_fields: { ...f.custom_fields, [cf.id]: e.target.value }}))} required={!!cf.required} aria-required={!!cf.required} />
+                          <Textarea 
+                            placeholder={cf.placeholder || cf.label} 
+                            value={(form.custom_fields as any)[cf.id] || ''} 
+                            onChange={(e)=>setForm(f=>({...f, custom_fields: { ...f.custom_fields, [cf.id]: e.target.value }}))} 
+                            required={!!cf.required} 
+                            aria-required={!!cf.required}
+                            className="px-4 py-3 border border-gray-200 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors resize-none"
+                          />
                         ) : (
-                          <Input type={cf.type || 'text'} placeholder={cf.placeholder || cf.label} value={(form.custom_fields as any)[cf.id] || ''} onChange={(e)=>setForm(f=>({...f, custom_fields: { ...f.custom_fields, [cf.id]: e.target.value }}))} required={!!cf.required} aria-required={!!cf.required} />
+                          <Input 
+                            type={cf.type || 'text'} 
+                            placeholder={cf.placeholder || cf.label} 
+                            value={(form.custom_fields as any)[cf.id] || ''} 
+                            onChange={(e)=>setForm(f=>({...f, custom_fields: { ...f.custom_fields, [cf.id]: e.target.value }}))} 
+                            required={!!cf.required} 
+                            aria-required={!!cf.required}
+                            className="h-12 px-4 border border-gray-200 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                          />
                         )}
                       </div>
                     ))}
@@ -1343,10 +1423,12 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
               {productTypes.hasPhysical && sections.shipping && sections.payment && <Separator className="my-4" />}
 
               {/* Always show payment section */}
-              <section className="space-y-4">
-                <h3 className={`mb-3 font-semibold element-${element.id}-section-header`} style={headerInline as React.CSSProperties}>{headings.payment}</h3>
+              <section className="space-y-6">
+                <h3 className={`text-lg font-semibold text-gray-900 element-${element.id}-section-header`} style={headerInline as React.CSSProperties}>{headings.payment}</h3>
                 <Select value={form.payment_method} onValueChange={(v:any)=>setForm(f=>({...f,payment_method:v}))}>
-                  <SelectTrigger className="w-full"><SelectValue placeholder="Select method" /></SelectTrigger>
+                  <SelectTrigger className="w-full h-12 px-4 border border-gray-200 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors">
+                    <SelectValue placeholder="Select payment method" />
+                  </SelectTrigger>
                   <SelectContent>
                     {allowedMethods.includes('cod') && (<SelectItem value="cod">Cash on Delivery</SelectItem>)}
                     {allowedMethods.includes('bkash') && (<SelectItem value="bkash">bKash</SelectItem>)}
@@ -1355,25 +1437,25 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
                   </SelectContent>
                 </Select>
                 {form.payment_method === 'bkash' && store?.settings?.bkash?.mode === 'number' && store?.settings?.bkash?.number && (
-                  <div className="space-y-2">
-                    <p className="text-sm text-muted-foreground">Pay to bKash number: {store.settings.bkash.number}</p>
+                  <div className="space-y-3">
+                    <p className="text-sm text-gray-600">Pay to bKash number: <span className="font-medium">{store.settings.bkash.number}</span></p>
                     <Input
                       placeholder="Enter transaction ID (e.g., 8M5HA84D5K)"
                       value={form.payment_transaction_number}
                       onChange={(e) => setForm(f => ({ ...f, payment_transaction_number: e.target.value }))}
-                      className="w-full"
+                      className="h-12 px-4 border border-gray-200 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
                       required
                     />
                   </div>
                 )}
                 {form.payment_method === 'nagad' && store?.settings?.nagad?.mode === 'number' && store?.settings?.nagad?.number && (
-                  <div className="space-y-2">
-                    <p className="text-sm text-muted-foreground">Pay to Nagad number: {store.settings.nagad.number}</p>
+                  <div className="space-y-3">
+                    <p className="text-sm text-gray-600">Pay to Nagad number: <span className="font-medium">{store.settings.nagad.number}</span></p>
                     <Input
                       placeholder="Enter transaction ID (e.g., NG8M5HA84D5K)"
                       value={form.payment_transaction_number}
                       onChange={(e) => setForm(f => ({ ...f, payment_transaction_number: e.target.value }))}
-                      className="w-full"
+                      className="h-12 px-4 border border-gray-200 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
                       required
                     />
                   </div>
@@ -1382,49 +1464,73 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
               </section>
 
               {/* Always show order summary section */}
-              <section className="space-y-3">
-                <h3 className={`mb-3 font-semibold element-${element.id}-section-header`} style={headerInline as React.CSSProperties}>{headings.summary}</h3>
-                  <div className="rounded-md p-6" style={{ backgroundColor: backgrounds.summaryBg || undefined, borderColor: (backgrounds as any).summaryBorderColor || undefined, borderWidth: summaryBorderWidth || 0, borderStyle: summaryBorderWidth ? 'solid' as any : undefined }}>
+              <section className="space-y-6">
+                <h3 className={`text-lg font-semibold text-gray-900 element-${element.id}-section-header`} style={headerInline as React.CSSProperties}>{headings.summary}</h3>
+                  <div className="rounded-lg p-6 bg-gray-50 border border-gray-100" style={{ backgroundColor: backgrounds.summaryBg || undefined, borderColor: (backgrounds as any).summaryBorderColor || undefined, borderWidth: summaryBorderWidth || 0, borderStyle: summaryBorderWidth ? 'solid' as any : undefined }}>
                     {/* Items */}
-                    <div className="space-y-2">
+                    <div className="space-y-4">
                       {displayItems.map((it)=> (
-                        <div key={it.id} className={`grid items-center gap-3 ${showItemImages && it.image ? 'grid-cols-[auto_1fr_auto]' : 'grid-cols-[1fr_auto]'}`}>
+                        <div key={it.id} className={`grid items-center gap-4 ${showItemImages && it.image ? 'grid-cols-[auto_1fr_auto]' : 'grid-cols-[1fr_auto]'}`}>
                           {showItemImages && it.image && (
-                            <img src={it.image} alt={it.name} className="w-10 h-10 object-cover rounded border shrink-0" />
+                            <img src={it.image} alt={it.name} className="w-12 h-12 object-cover rounded-lg border border-gray-200 shrink-0" />
                           )}
                           <div className="min-w-0">
-                            <div className="text-sm font-medium break-words">{nameWithVariant(it.name, (it as any).variation)}</div>
-                            <div className="text-xs text-muted-foreground">× {it.quantity}</div>
+                            <div className="text-sm font-medium text-gray-900 break-words">{nameWithVariant(it.name, (it as any).variation)}</div>
+                            <div className="text-xs text-gray-500">Qty: {it.quantity}</div>
                           </div>
-                          <div className="text-sm font-medium shrink-0 whitespace-nowrap text-right">{formatCurrency(it.price * it.quantity)}</div>
+                          <div className="text-sm font-semibold text-gray-900 shrink-0 whitespace-nowrap text-right">{formatCurrency(it.price * it.quantity)}</div>
                         </div>
                       ))}
                     </div>
-                    <Separator className="my-3" />
-                    <div className="flex flex-wrap items-center justify-between gap-2 min-w-0"><span className="truncate">Subtotal</span><span className="font-semibold shrink-0 whitespace-nowrap text-right">{formatCurrency(displayTotal)}</span></div>
-                    {(productTypes.hasPhysical || shouldShowMockData) && (
-                      <div className="flex flex-wrap items-center justify-between gap-2 min-w-0"><span className="truncate">Shipping</span><span className="font-semibold shrink-0 whitespace-nowrap text-right">{formatCurrency(displayShippingCost)}</span></div>
-                    )}
-                    {!productTypes.hasPhysical && !shouldShowMockData && productTypes.hasDigital && (
-                      <div className="flex flex-wrap items-center justify-between gap-2 min-w-0 text-sm text-muted-foreground"><span className="truncate">Digital Delivery</span><span className="font-semibold shrink-0 whitespace-nowrap text-right">Free</span></div>
-                    )}
-                    <div className="flex flex-wrap items-center justify-between gap-2 min-w-0 font-bold"><span className="truncate">Total</span><span className="shrink-0 whitespace-nowrap text-right">{formatCurrency(displayTotal+(productTypes.hasPhysical || shouldShowMockData ? displayShippingCost : 0))}</span></div>
+                    <div className="border-t border-gray-200 my-4 pt-4 space-y-3">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-600">Subtotal</span>
+                        <span className="font-medium text-gray-900">{formatCurrency(displayTotal)}</span>
+                      </div>
+                      {(productTypes.hasPhysical || shouldShowMockData) && (
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-gray-600">Shipping</span>
+                          <span className="font-medium text-gray-900">{formatCurrency(displayShippingCost)}</span>
+                        </div>
+                      )}
+                      {!productTypes.hasPhysical && !shouldShowMockData && productTypes.hasDigital && (
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-gray-600">Digital Delivery</span>
+                          <span className="font-medium text-green-600">Free</span>
+                        </div>
+                      )}
+                      <div className="flex items-center justify-between text-base font-bold text-gray-900 pt-2 border-t border-gray-200">
+                        <span>Total</span>
+                        <span>{formatCurrency(displayTotal+(productTypes.hasPhysical || shouldShowMockData ? displayShippingCost : 0))}</span>
+                      </div>
+                    </div>
 
-                    <Button size={buttonSize as any} className={`w-full mt-4 element-${element.id}`} style={buttonInline as React.CSSProperties} onClick={handleSubmit} disabled={loading || (isEditing && items.length === 0)}>
+                    <Button 
+                      size={buttonSize as any} 
+                      className={`w-full h-12 text-base font-semibold element-${element.id} bg-blue-600 hover:bg-blue-700 text-white border-0 rounded-lg transition-colors`} 
+                      style={buttonInline as React.CSSProperties} 
+                      onClick={handleSubmit} 
+                      disabled={loading || (isEditing && items.length === 0)}
+                    >
                       {isEditing && items.length === 0 ? 'Preview Mode - Add items to cart' : (loading? 'Placing Order...' : buttonLabel)}
                     </Button>
 
                     {terms.enabled && (
-                      <label className="flex items-center gap-2 text-sm mt-2">
-                        <input type="checkbox" checked={form.accept_terms} onChange={(e)=>setForm(f=>({...f, accept_terms: e.target.checked}))} />
-                        <span>
-                          {terms.label} {terms.url && (<a href={terms.url} target="_blank" rel="noreferrer" className="underline">Read</a>)}
+                      <label className="flex items-start gap-3 text-sm mt-4 cursor-pointer">
+                        <input 
+                          type="checkbox" 
+                          checked={form.accept_terms} 
+                          onChange={(e)=>setForm(f=>({...f, accept_terms: e.target.checked}))}
+                          className="mt-0.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 focus:ring-2"
+                        />
+                        <span className="text-gray-600 leading-relaxed">
+                          {terms.label} {terms.url && (<a href={terms.url} target="_blank" rel="noreferrer" className="text-blue-600 underline hover:text-blue-700">Read</a>)}
                         </span>
                       </label>
                     )}
 
                     {trust.enabled && trust.imageUrl && (
-                      <div className="pt-2">
+                      <div className="pt-4 border-t border-gray-200 mt-4">
                         <img src={trust.imageUrl} alt={trust.alt || 'Secure checkout'} className="w-full h-auto object-contain" loading="lazy" />
                       </div>
                     )}
