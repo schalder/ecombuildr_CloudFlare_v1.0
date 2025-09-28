@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Routes, Route, useLocation, useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { useStore } from '@/contexts/StoreContext';
+import { useStore, StoreProvider } from '@/contexts/StoreContext';
 import { MemberAuthProvider } from '@/hooks/useMemberAuth';
+import { ErrorBoundary } from '@/components/ui/error-boundary';
 import CourseLibrary from '@/pages/CourseLibrary';
 import CourseDetail from '@/pages/CourseDetail';
 import StorefrontCourseDetail from '@/components/storefront/StorefrontCourseDetail';
@@ -149,18 +150,35 @@ const CourseDomainRouter = ({ customDomain, storeSlug }: CourseDomainRouterProps
   const coursePath = location.pathname;
 
   const renderWithLayout = (children: React.ReactNode) => {
-    if (website) {
-      return (
-        <WebsiteProvider websiteId={website.id} websiteSlug={website.slug}>
-          {(website.settings?.header?.enabled !== false) && <WebsiteHeader website={website} />}
-          <main className="flex-1">
+    console.debug('CourseDomainRouter: renderWithLayout', { 
+      path: coursePath, 
+      website: !!website, 
+      store: !!currentStore 
+    });
+    
+    const content = (
+      <ErrorBoundary>
+        {website ? (
+          <WebsiteProvider websiteId={website.id} websiteSlug={website.slug}>
+            {(website.settings?.header?.enabled !== false) && <WebsiteHeader website={website} />}
+            <main className="flex-1">
+              {children}
+            </main>
+            {(website.settings?.footer?.enabled !== false) && <WebsiteFooter website={website} />}
+          </WebsiteProvider>
+        ) : (
+          <main className="min-h-screen bg-background">
             {children}
           </main>
-          {(website.settings?.footer?.enabled !== false) && <WebsiteFooter website={website} />}
-        </WebsiteProvider>
-      );
-    }
-    return children;
+        )}
+      </ErrorBoundary>
+    );
+
+    return (
+      <StoreProvider>
+        {content}
+      </StoreProvider>
+    );
   };
 
   // Determine which page to show based on the path
@@ -202,6 +220,10 @@ const CourseDomainRouter = ({ customDomain, storeSlug }: CourseDomainRouterProps
       
       // Check if this is a checkout path
       if (coursePath.includes('/checkout')) {
+        console.debug('CourseDomainRouter: Rendering checkout', { 
+          courseId: courseIdOrSlug, 
+          path: coursePath 
+        });
         return renderWithLayout(<StorefrontCourseCheckout courseId={courseIdOrSlug} />);
       }
       
