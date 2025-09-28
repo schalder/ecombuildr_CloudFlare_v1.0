@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
@@ -17,9 +17,12 @@ import {
   Redo,
   Heading1,
   Heading2,
-  Heading3
+  Heading3,
+  Video as VideoIcon
 } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
+import { Video } from '@/components/ui/tiptap-video-extension';
+import { VideoEmbedDialog } from '@/components/ui/video-embed-dialog';
 
 interface RichTextEditorProps {
   content: string;
@@ -34,6 +37,8 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
   placeholder = "Start writing...",
   className = ""
 }) => {
+  const [isVideoDialogOpen, setIsVideoDialogOpen] = useState(false);
+
   const editor = useEditor({
     extensions: [
       StarterKit,
@@ -44,6 +49,11 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
         openOnClick: false,
         HTMLAttributes: {
           class: 'text-primary underline hover:text-primary-glow cursor-pointer',
+        },
+      }),
+      Video.configure({
+        HTMLAttributes: {
+          class: 'my-4',
         },
       }),
     ],
@@ -71,6 +81,12 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
 
   const removeLink = () => {
     editor.chain().focus().unsetLink().run();
+  };
+
+  const handleVideoInsert = (options: { src?: string; width: string; embedCode?: string }) => {
+    if (editor) {
+      editor.chain().focus().setVideo(options).run();
+    }
   };
 
   const ToolbarButton = ({ 
@@ -208,6 +224,16 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
           >
             <LinkIcon className="h-4 w-4" />
           </ToolbarButton>
+
+          <Separator orientation="vertical" className="h-6 mx-1" />
+
+          {/* Video */}
+          <ToolbarButton
+            onClick={() => setIsVideoDialogOpen(true)}
+            title="Insert Video"
+          >
+            <VideoIcon className="h-4 w-4" />
+          </ToolbarButton>
         </div>
       </div>
 
@@ -215,6 +241,13 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
       <div className="min-h-[200px]">
         <EditorContent editor={editor} />
       </div>
+
+      {/* Video Embed Dialog */}
+      <VideoEmbedDialog
+        open={isVideoDialogOpen}
+        onClose={() => setIsVideoDialogOpen(false)}
+        onInsert={handleVideoInsert}
+      />
     </div>
   );
 };
