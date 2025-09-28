@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
+import { CourseNavigationMenu } from '@/components/course/CourseNavigationMenu';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { 
   ChevronDown, 
@@ -53,6 +54,15 @@ interface CourseDetail {
   modules: CourseModule[];
   theme_settings?: {
     module_color?: string;
+    navigation_menu?: {
+      enabled: boolean;
+      items: Array<{
+        id: string;
+        label: string;
+        url: string;
+        new_tab: boolean;
+      }>;
+    };
   };
 }
 
@@ -322,7 +332,7 @@ const CoursePlayerPage = ({ courseId: propCourseId }: CoursePlayerPageProps = {}
       <div className="border-b bg-card">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center justify-between">
               <Button 
                 variant="ghost" 
                 size="sm"
@@ -331,6 +341,12 @@ const CoursePlayerPage = ({ courseId: propCourseId }: CoursePlayerPageProps = {}
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Library
               </Button>
+              
+              {course?.theme_settings?.navigation_menu?.enabled && (
+                <CourseNavigationMenu 
+                  items={course.theme_settings.navigation_menu.items || []} 
+                />
+              )}
             </div>
           </div>
         </div>

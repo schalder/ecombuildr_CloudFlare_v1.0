@@ -4,6 +4,7 @@ import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { CourseNavigationBuilder } from '@/components/course/CourseNavigationBuilder';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -887,6 +888,12 @@ const CourseEditor = () => {
               </div>
             </CardContent>
           </Card>
+
+          {/* Navigation Menu */}
+          <CourseNavigationBuilder 
+            course={course} 
+            onSettingsUpdate={(settings) => setCourse(prev => prev ? {...prev, theme_settings: settings} : null)}
+          />
 
           {/* Payment Methods */}
           {store && (
