@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Routes, Route, useLocation, useParams } from 'react-router-dom';
+import { Routes, Route, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useStore } from '@/contexts/StoreContext';
 import { MemberAuthProvider } from '@/hooks/useMemberAuth';
@@ -18,6 +18,8 @@ import { WebsiteProvider } from '@/contexts/WebsiteContext';
 import CoursePlayerPage from '@/pages/CoursePlayerPage';
 import { Loader2 } from 'lucide-react';
 import { setSEO } from '@/lib/seo';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
+
 
 interface CourseDomainRouterProps {
   customDomain: string;
@@ -151,16 +153,18 @@ const CourseDomainRouter = ({ customDomain, storeSlug }: CourseDomainRouterProps
   const renderWithLayout = (children: React.ReactNode) => {
     if (website) {
       return (
-        <WebsiteProvider websiteId={website.id} websiteSlug={website.slug}>
-          {(website.settings?.header?.enabled !== false) && <WebsiteHeader website={website} />}
-          <main className="flex-1">
-            {children}
-          </main>
-          {(website.settings?.footer?.enabled !== false) && <WebsiteFooter website={website} />}
-        </WebsiteProvider>
+        <ErrorBoundary>
+          <WebsiteProvider websiteId={website.id} websiteSlug={website.slug}>
+            {(website.settings?.header?.enabled !== false) && <WebsiteHeader website={website} />}
+            <main className="flex-1">
+              {children}
+            </main>
+            {(website.settings?.footer?.enabled !== false) && <WebsiteFooter website={website} />}
+          </WebsiteProvider>
+        </ErrorBoundary>
       );
     }
-    return children;
+    return <ErrorBoundary>{children}</ErrorBoundary>;
   };
 
   // Determine which page to show based on the path
@@ -199,9 +203,11 @@ const CourseDomainRouter = ({ customDomain, storeSlug }: CourseDomainRouterProps
     const courseSlugMatch = coursePath.match(/\/courses\/([^/]+)/);
     if (courseSlugMatch) {
       const courseIdOrSlug = courseSlugMatch[1];
+      console.log('CourseDomainRouter route match:', { coursePath, basePath, courseIdOrSlug });
       
       // Check if this is a checkout path
       if (coursePath.includes('/checkout')) {
+        console.log('Navigating to checkout for course:', courseIdOrSlug);
         return renderWithLayout(<StorefrontCourseCheckout courseId={courseIdOrSlug} />);
       }
       
