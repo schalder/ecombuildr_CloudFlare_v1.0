@@ -842,7 +842,7 @@ const CourseEditor = () => {
             <Card>
               <CollapsibleTrigger asChild>
                 <CardHeader className="cursor-pointer hover:bg-accent/50 transition-colors">
-                  <CardTitle className="flex items-center justify-between">
+                  <CardTitle className="flex items-center justify-between text-base">
                     Pricing
                     <Plus className={`w-4 h-4 transition-transform ${!collapsedSections.pricing ? 'rotate-45' : ''}`} />
                   </CardTitle>
@@ -876,7 +876,7 @@ const CourseEditor = () => {
             <Card>
               <CollapsibleTrigger asChild>
                 <CardHeader className="cursor-pointer hover:bg-accent/50 transition-colors">
-                  <CardTitle className="flex items-center justify-between">
+                  <CardTitle className="flex items-center justify-between text-base">
                     Settings
                     <Plus className={`w-4 h-4 transition-transform ${!collapsedSections.settings ? 'rotate-45' : ''}`} />
                   </CardTitle>
@@ -908,7 +908,7 @@ const CourseEditor = () => {
             <Card>
               <CollapsibleTrigger asChild>
                 <CardHeader className="cursor-pointer hover:bg-accent/50 transition-colors">
-                  <CardTitle className="flex items-center justify-between">
+                  <CardTitle className="flex items-center justify-between text-base">
                     Theme Settings
                     <Plus className={`w-4 h-4 transition-transform ${!collapsedSections.theme ? 'rotate-45' : ''}`} />
                   </CardTitle>
@@ -943,7 +943,7 @@ const CourseEditor = () => {
             <Card>
               <CollapsibleTrigger asChild>
                 <CardHeader className="cursor-pointer hover:bg-accent/50 transition-colors">
-                  <CardTitle className="flex items-center justify-between">
+                  <CardTitle className="flex items-center justify-between text-base">
                     Navigation Menu
                     <Plus className={`w-4 h-4 transition-transform ${!collapsedSections.navigation ? 'rotate-45' : ''}`} />
                   </CardTitle>
@@ -966,7 +966,7 @@ const CourseEditor = () => {
               <Card>
                 <CollapsibleTrigger asChild>
                   <CardHeader className="cursor-pointer hover:bg-accent/50 transition-colors">
-                    <CardTitle className="flex items-center justify-between">
+                    <CardTitle className="flex items-center justify-between text-base">
                       Payment Methods
                       <Plus className={`w-4 h-4 transition-transform ${!collapsedSections.payment ? 'rotate-45' : ''}`} />
                     </CardTitle>
@@ -990,7 +990,7 @@ const CourseEditor = () => {
             <Card>
               <CollapsibleTrigger asChild>
                 <CardHeader className="cursor-pointer hover:bg-accent/50 transition-colors">
-                  <CardTitle className="flex items-center justify-between">
+                  <CardTitle className="flex items-center justify-between text-base">
                     Course Thumbnail
                     <Plus className={`w-4 h-4 transition-transform ${!collapsedSections.thumbnail ? 'rotate-45' : ''}`} />
                   </CardTitle>
