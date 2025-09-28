@@ -47,6 +47,46 @@ export const Video = Node.create<VideoOptions>({
     return [
       {
         tag: 'div[data-video]',
+        getAttrs: (element) => {
+          if (typeof element === 'string') return false;
+          const iframe = element.querySelector('iframe');
+          const errorDiv = element.querySelector('.border-destructive');
+          
+          // If it's an error div, extract src from the error message
+          if (errorDiv) {
+            const errorText = errorDiv.textContent || '';
+            const srcMatch = errorText.match(/Invalid video URL: (.+)/);
+            if (srcMatch && srcMatch[1] !== 'null') {
+              return { src: srcMatch[1] };
+            }
+            return {};
+          }
+          
+          // Extract attributes from data attributes or iframe src
+          const src = element.getAttribute('data-video-src') || iframe?.getAttribute('src');
+          const embedCode = element.getAttribute('data-video-embed');
+          const width = element.getAttribute('data-video-width') || 'full';
+          
+          // If we find an iframe src, determine if it's a known video service or embed code
+          if (src) {
+            const videoInfo = parseVideoUrl(src);
+            if (videoInfo.type !== 'unknown') {
+              return { src, width, videoInfo };
+            } else {
+              // It's likely a custom embed, reconstruct the embed code
+              return { 
+                embedCode: iframe?.outerHTML || `<iframe src="${src}" frameborder="0" allowfullscreen></iframe>`,
+                width 
+              };
+            }
+          }
+          
+          if (embedCode) {
+            return { embedCode, width };
+          }
+          
+          return {};
+        },
       },
     ];
   },
@@ -65,8 +105,6 @@ export const Video = Node.create<VideoOptions>({
       
       // Parse the iframe from the sanitized code
       const iframeSrcMatch = sanitizedCode.match(/src=["']([^"']+)["']/i);
-      const iframeWidthMatch = sanitizedCode.match(/width=["']([^"']+)["']/i);
-      const iframeHeightMatch = sanitizedCode.match(/height=["']([^"']+)["']/i);
       
       if (iframeSrcMatch) {
         return [
@@ -74,6 +112,8 @@ export const Video = Node.create<VideoOptions>({
           mergeAttributes(
             {
               'data-video': '',
+              'data-video-embed': embedCode,
+              'data-video-width': width,
               class: getVideoWidthClasses(width),
             },
             this.options.HTMLAttributes
@@ -102,6 +142,8 @@ export const Video = Node.create<VideoOptions>({
           mergeAttributes(
             {
               'data-video': '',
+              'data-video-embed': embedCode,
+              'data-video-width': width,
               class: getVideoWidthClasses(width),
             },
             this.options.HTMLAttributes
@@ -152,6 +194,8 @@ export const Video = Node.create<VideoOptions>({
       mergeAttributes(
         {
           'data-video': '',
+          'data-video-src': src,
+          'data-video-width': width,
           class: getVideoWidthClasses(width),
         },
         this.options.HTMLAttributes
