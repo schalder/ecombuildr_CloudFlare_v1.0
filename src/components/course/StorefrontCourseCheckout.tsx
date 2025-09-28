@@ -57,13 +57,6 @@ const StorefrontCourseCheckout: React.FC<StorefrontCourseCheckoutProps> = ({ cou
   const navigate = useNavigate();
   const { store } = useStore();
   const { currency } = useCourseCurrency();
-
-  console.log('StorefrontCourseCheckout Debug:', { 
-    courseId, 
-    store: store?.id, 
-    currency,
-    searchParams: Object.fromEntries(searchParams.entries())
-  });
   
   const [loading, setLoading] = useState(false);
   const [isNewStudent, setIsNewStudent] = useState(true);
@@ -81,10 +74,9 @@ const StorefrontCourseCheckout: React.FC<StorefrontCourseCheckoutProps> = ({ cou
 
   const paymentMethod = searchParams.get('payment_method') || '';
 
-  const { data: course, isLoading: courseLoading, error: courseError } = useQuery({
+  const { data: course, isLoading: courseLoading } = useQuery({
     queryKey: ['course-checkout', courseId],
     queryFn: async () => {
-      console.log('Fetching course data for:', courseId);
       if (!courseId) throw new Error('Course ID is required');
       
       const { data, error } = await supabase
@@ -93,18 +85,13 @@ const StorefrontCourseCheckout: React.FC<StorefrontCourseCheckoutProps> = ({ cou
         .eq('id', courseId)
         .eq('is_published', true)
         .eq('is_active', true)
-        .maybeSingle();
+        .single();
 
-      console.log('Course query result:', { data, error });
       if (error) throw error;
-      if (!data) throw new Error('Course not found or not published');
       return data as CourseCheckoutData;
     },
-    enabled: !!courseId,
-    retry: 1
+    enabled: !!courseId
   });
-
-  console.log('Course loading state:', { courseLoading, courseError, course });
 
   const getPaymentMethodInfo = (method: string) => {
     switch (method) {
@@ -192,7 +179,6 @@ const StorefrontCourseCheckout: React.FC<StorefrontCourseCheckoutProps> = ({ cou
   };
 
   const handleCheckout = async () => {
-    console.log('Checkout attempt:', { course: !!course, store: store?.id, form });
     if (!course || !store?.id || !validateForm()) return;
 
     setLoading(true);
@@ -268,52 +254,15 @@ const StorefrontCourseCheckout: React.FC<StorefrontCourseCheckoutProps> = ({ cou
     );
   }
 
-  if (courseError) {
-    console.error('Course error:', courseError);
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Course Error</h1>
-          <p className="text-muted-foreground mb-4">{courseError.message}</p>
-          <Button onClick={handleGoBack}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Course
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
   if (!course) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-4">Course Not Found</h1>
-          <p className="text-muted-foreground mb-4">The course you're looking for is not available or has been removed.</p>
           <Button onClick={handleGoBack}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Course
           </Button>
-        </div>
-      </div>
-    );
-  }
-
-  if (!store) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Store Not Available</h1>
-          <p className="text-muted-foreground mb-4">The store information is not available. Please try refreshing the page.</p>
-          <div className="space-y-2">
-            <Button onClick={() => window.location.reload()} className="w-full">
-              Refresh Page
-            </Button>
-            <Button variant="outline" onClick={handleGoBack} className="w-full">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Course
-            </Button>
-          </div>
         </div>
       </div>
     );
