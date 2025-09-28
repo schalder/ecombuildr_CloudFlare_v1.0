@@ -54,26 +54,67 @@ export const Video = Node.create<VideoOptions>({
   renderHTML({ HTMLAttributes }) {
     const { src, width = 'full', embedCode, videoInfo } = HTMLAttributes;
     
+    // Add debugging
+    console.log('Video renderHTML called with:', { src, width, embedCode, videoInfo });
+    
     // If custom embed code is provided, use it (sanitized)
     if (embedCode) {
       const sanitizedCode = sanitizeEmbedCode(embedCode);
-      return [
-        'div',
-        mergeAttributes(
-          {
-            'data-video': '',
-            class: getVideoWidthClasses(width),
-          },
-          this.options.HTMLAttributes
-        ),
-        [
+      console.log('Original embed code:', embedCode);
+      console.log('Sanitized embed code:', sanitizedCode);
+      
+      // Parse the iframe from the sanitized code
+      const iframeSrcMatch = sanitizedCode.match(/src=["']([^"']+)["']/i);
+      const iframeWidthMatch = sanitizedCode.match(/width=["']([^"']+)["']/i);
+      const iframeHeightMatch = sanitizedCode.match(/height=["']([^"']+)["']/i);
+      
+      if (iframeSrcMatch) {
+        return [
           'div',
-          {
-            class: 'relative w-full aspect-video',
-            innerHTML: sanitizedCode,
-          },
-        ],
-      ];
+          mergeAttributes(
+            {
+              'data-video': '',
+              class: getVideoWidthClasses(width),
+            },
+            this.options.HTMLAttributes
+          ),
+          [
+            'div',
+            {
+              class: 'relative w-full aspect-video',
+            },
+            [
+              'iframe',
+              {
+                src: iframeSrcMatch[1],
+                class: 'w-full h-full rounded-lg',
+                frameborder: '0',
+                allowfullscreen: 'true',
+                allow: 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture',
+              },
+            ],
+          ],
+        ];
+      } else {
+        console.error('Could not extract iframe src from embed code');
+        return [
+          'div',
+          mergeAttributes(
+            {
+              'data-video': '',
+              class: getVideoWidthClasses(width),
+            },
+            this.options.HTMLAttributes
+          ),
+          [
+            'div',
+            {
+              class: 'border border-destructive bg-destructive/10 text-destructive p-4 rounded text-center',
+            },
+            'Invalid embed code - could not extract iframe source',
+          ],
+        ];
+      }
     }
 
     // Parse video URL and create responsive embed
