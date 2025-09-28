@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
@@ -120,160 +119,155 @@ export const CourseNavigationBuilder: React.FC<Props> = ({ course, onSettingsUpd
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Navigation Menu</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <Label className="text-sm">Enable Navigation Menu</Label>
-            <p className="text-xs text-muted-foreground">
-              Add custom links to the course header
-            </p>
-          </div>
-          <Switch 
-            checked={config.enabled} 
-            onCheckedChange={(enabled) => setField({ enabled })} 
-          />
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <Label className="text-sm">Enable Navigation Menu</Label>
+          <p className="text-xs text-muted-foreground">
+            Add custom links to the course header
+          </p>
         </div>
+        <Switch 
+          checked={config.enabled} 
+          onCheckedChange={(enabled) => setField({ enabled })} 
+        />
+      </div>
 
-        {config.enabled && (
-          <>
-            <Separator />
-            
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <Label>Menu Items</Label>
-                <Button size="sm" onClick={addMenuItem}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Link
-                </Button>
-              </div>
+      {config.enabled && (
+        <>
+          <Separator />
+          
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <Label>Menu Items</Label>
+              <Button size="sm" onClick={addMenuItem}>
+                <Plus className="w-4 h-4 mr-2" />
+                Add Link
+              </Button>
+            </div>
 
-              {config.items.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  No menu items yet. Add links to get started.
-                </p>
-              ) : (
-                <div className="space-y-3">
-                  {config.items.map((item, idx) => (
-                    <div key={item.id} className="border rounded-md p-3 space-y-3">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div>
-                          <Label className="text-sm">Label</Label>
-                          <Input 
-                            value={item.label} 
-                            onChange={(e) => updateMenuItem(item.id, { label: e.target.value })}
-                            placeholder="Menu item name"
-                          />
-                        </div>
-                        <div>
-                          <Label className="text-sm">URL</Label>
-                          <Input 
-                            value={item.url} 
-                            onChange={(e) => updateMenuItem(item.id, { url: e.target.value })}
-                            placeholder="https://example.com"
-                          />
-                        </div>
+            {config.items.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                No menu items yet. Add links to get started.
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {config.items.map((item, idx) => (
+                  <div key={item.id} className="border rounded-md p-3 space-y-3">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div>
+                        <Label className="text-sm">Label</Label>
+                        <Input 
+                          value={item.label} 
+                          onChange={(e) => updateMenuItem(item.id, { label: e.target.value })}
+                          placeholder="Menu item name"
+                        />
                       </div>
-                      
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Label className="text-sm">Open in new tab</Label>
-                          <Switch 
-                            checked={item.new_tab} 
-                            onCheckedChange={(new_tab) => updateMenuItem(item.id, { new_tab })}
-                          />
-                        </div>
-                        
-                        <div className="flex items-center gap-2">
-                          <Button 
-                            variant="outline" 
-                            size="icon" 
-                            onClick={() => moveItem(idx, -1)} 
-                            disabled={idx === 0}
-                          >
-                            <ArrowUp className="w-4 h-4" />
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            size="icon" 
-                            onClick={() => moveItem(idx, 1)} 
-                            disabled={idx === config.items.length - 1}
-                          >
-                            <ArrowDown className="w-4 h-4" />
-                          </Button>
-                          <Button 
-                            variant="destructive" 
-                            size="icon" 
-                            onClick={() => removeMenuItem(item.id)}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
+                      <div>
+                        <Label className="text-sm">URL</Label>
+                        <Input 
+                          value={item.url} 
+                          onChange={(e) => updateMenuItem(item.id, { url: e.target.value })}
+                          placeholder="https://example.com"
+                        />
                       </div>
                     </div>
-                  ))}
-                </div>
-              )}
-            </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Label className="text-sm">Open in new tab</Label>
+                        <Switch 
+                          checked={item.new_tab} 
+                          onCheckedChange={(new_tab) => updateMenuItem(item.id, { new_tab })}
+                        />
+                      </div>
+                      
+                      <div className="flex items-center gap-2">
+                        <Button 
+                          variant="outline" 
+                          size="icon" 
+                          onClick={() => moveItem(idx, -1)} 
+                          disabled={idx === 0}
+                        >
+                          <ArrowUp className="w-4 h-4" />
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="icon" 
+                          onClick={() => moveItem(idx, 1)} 
+                          disabled={idx === config.items.length - 1}
+                        >
+                          <ArrowDown className="w-4 h-4" />
+                        </Button>
+                        <Button 
+                          variant="destructive" 
+                          size="icon" 
+                          onClick={() => removeMenuItem(item.id)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
 
-            <Separator />
+          <Separator />
 
-            {/* Font Styling Options */}
-            <div className="space-y-4">
-              <Label className="text-sm font-medium">Font Styling</Label>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label className="text-sm">Font Size</Label>
-                  <Select
-                    value={config.fontSize}
-                    onValueChange={(fontSize) => setField({ fontSize })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select font size" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="text-xs">Extra Small</SelectItem>
-                      <SelectItem value="text-sm">Small</SelectItem>
-                      <SelectItem value="text-base">Medium</SelectItem>
-                      <SelectItem value="text-lg">Large</SelectItem>
-                      <SelectItem value="text-xl">Extra Large</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+          {/* Font Styling Options */}
+          <div className="space-y-4">
+            <Label className="text-sm font-medium">Font Styling</Label>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-sm">Font Size</Label>
+                <Select
+                  value={config.fontSize}
+                  onValueChange={(fontSize) => setField({ fontSize })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select font size" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="text-xs">Extra Small</SelectItem>
+                    <SelectItem value="text-sm">Small</SelectItem>
+                    <SelectItem value="text-base">Medium</SelectItem>
+                    <SelectItem value="text-lg">Large</SelectItem>
+                    <SelectItem value="text-xl">Extra Large</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-                <div className="space-y-2">
-                  <Label className="text-sm">Font Weight</Label>
-                  <Select
-                    value={config.fontWeight}
-                    onValueChange={(fontWeight) => setField({ fontWeight })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select font weight" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="font-light">Light</SelectItem>
-                      <SelectItem value="font-normal">Normal</SelectItem>
-                      <SelectItem value="font-medium">Medium</SelectItem>
-                      <SelectItem value="font-semibold">Semi Bold</SelectItem>
-                      <SelectItem value="font-bold">Bold</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+              <div className="space-y-2">
+                <Label className="text-sm">Font Weight</Label>
+                <Select
+                  value={config.fontWeight}
+                  onValueChange={(fontWeight) => setField({ fontWeight })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select font weight" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="font-light">Light</SelectItem>
+                    <SelectItem value="font-normal">Normal</SelectItem>
+                    <SelectItem value="font-medium">Medium</SelectItem>
+                    <SelectItem value="font-semibold">Semi Bold</SelectItem>
+                    <SelectItem value="font-bold">Bold</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
-          </>
-        )}
+          </div>
+        </>
+      )}
 
-        <div className="flex justify-end">
-          <Button onClick={save} disabled={saving}>
-            {saving ? 'Saving...' : 'Save Navigation'}
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+      <div className="flex justify-end">
+        <Button onClick={save} disabled={saving}>
+          {saving ? 'Saving...' : 'Save Navigation'}
+        </Button>
+      </div>
+    </div>
   );
 };

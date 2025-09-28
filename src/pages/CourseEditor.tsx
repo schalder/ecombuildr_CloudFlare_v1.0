@@ -28,6 +28,11 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { 
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
+import { 
   Loader2, 
   Save, 
   ArrowLeft, 
@@ -125,6 +130,23 @@ const CourseEditor = () => {
     is_published: false, 
     is_preview: false 
   });
+
+  // Collapsible section states (default collapsed)
+  const [collapsedSections, setCollapsedSections] = useState({
+    pricing: true,
+    settings: true,
+    theme: true,
+    navigation: true,
+    payment: true,
+    thumbnail: true,
+  });
+
+  const toggleSection = (section: keyof typeof collapsedSections) => {
+    setCollapsedSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
+  };
 
   // Drag and drop reordering functions
   const handleDragEnd = async (result: DropResult) => {
@@ -816,106 +838,174 @@ const CourseEditor = () => {
         {/* Sidebar */}
         <div className="space-y-6">
           {/* Pricing */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Pricing</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label>Price ($)</Label>
-                <Input
-                  type="number"
-                  value={course.price}
-                  onChange={(e) => setCourse(prev => prev ? {...prev, price: parseFloat(e.target.value) || 0} : null)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Compare Price ($)</Label>
-                <Input
-                  type="number"
-                  value={course.compare_price || ''}
-                  onChange={(e) => setCourse(prev => prev ? {...prev, compare_price: parseFloat(e.target.value) || undefined} : null)}
-                />
-              </div>
-            </CardContent>
-          </Card>
+          <Collapsible open={!collapsedSections.pricing} onOpenChange={() => toggleSection('pricing')}>
+            <Card>
+              <CollapsibleTrigger asChild>
+                <CardHeader className="cursor-pointer hover:bg-accent/50 transition-colors">
+                  <CardTitle className="flex items-center justify-between">
+                    Pricing
+                    <Plus className={`w-4 h-4 transition-transform ${!collapsedSections.pricing ? 'rotate-45' : ''}`} />
+                  </CardTitle>
+                </CardHeader>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Price ($)</Label>
+                    <Input
+                      type="number"
+                      value={course.price}
+                      onChange={(e) => setCourse(prev => prev ? {...prev, price: parseFloat(e.target.value) || 0} : null)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Compare Price ($)</Label>
+                    <Input
+                      type="number"
+                      value={course.compare_price || ''}
+                      onChange={(e) => setCourse(prev => prev ? {...prev, compare_price: parseFloat(e.target.value) || undefined} : null)}
+                    />
+                  </div>
+                </CardContent>
+              </CollapsibleContent>
+            </Card>
+          </Collapsible>
 
           {/* Settings */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Settings</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <Label>Published</Label>
-                <Switch
-                  checked={course.is_published}
-                  onCheckedChange={(checked) => setCourse(prev => prev ? {...prev, is_published: checked} : null)}
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <Label>Active</Label>
-                <Switch
-                  checked={course.is_active}
-                  onCheckedChange={(checked) => setCourse(prev => prev ? {...prev, is_active: checked} : null)}
-                />
-              </div>
-            </CardContent>
-          </Card>
+          <Collapsible open={!collapsedSections.settings} onOpenChange={() => toggleSection('settings')}>
+            <Card>
+              <CollapsibleTrigger asChild>
+                <CardHeader className="cursor-pointer hover:bg-accent/50 transition-colors">
+                  <CardTitle className="flex items-center justify-between">
+                    Settings
+                    <Plus className={`w-4 h-4 transition-transform ${!collapsedSections.settings ? 'rotate-45' : ''}`} />
+                  </CardTitle>
+                </CardHeader>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <Label>Published</Label>
+                    <Switch
+                      checked={course.is_published}
+                      onCheckedChange={(checked) => setCourse(prev => prev ? {...prev, is_published: checked} : null)}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <Label>Active</Label>
+                    <Switch
+                      checked={course.is_active}
+                      onCheckedChange={(checked) => setCourse(prev => prev ? {...prev, is_active: checked} : null)}
+                    />
+                  </div>
+                </CardContent>
+              </CollapsibleContent>
+            </Card>
+          </Collapsible>
 
           {/* Theme Settings */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Theme Settings</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label>Module Color</Label>
-                <ColorPicker
-                  color={course?.theme_settings?.module_color || "#3b82f6"}
-                  onChange={(color) => setCourse(prev => prev ? {
-                    ...prev, 
-                    theme_settings: {
-                      ...prev.theme_settings,
-                      module_color: color
-                    }
-                  } : null)}
-                  label="Choose module background color"
-                />
-                <p className="text-xs text-muted-foreground">
-                  This color will be used as the background for module cards in the course player
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+          <Collapsible open={!collapsedSections.theme} onOpenChange={() => toggleSection('theme')}>
+            <Card>
+              <CollapsibleTrigger asChild>
+                <CardHeader className="cursor-pointer hover:bg-accent/50 transition-colors">
+                  <CardTitle className="flex items-center justify-between">
+                    Theme Settings
+                    <Plus className={`w-4 h-4 transition-transform ${!collapsedSections.theme ? 'rotate-45' : ''}`} />
+                  </CardTitle>
+                </CardHeader>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Module Color</Label>
+                    <ColorPicker
+                      color={course?.theme_settings?.module_color || "#3b82f6"}
+                      onChange={(color) => setCourse(prev => prev ? {
+                        ...prev, 
+                        theme_settings: {
+                          ...prev.theme_settings,
+                          module_color: color
+                        }
+                      } : null)}
+                      label="Choose module background color"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      This color will be used as the background for module cards in the course player
+                    </p>
+                  </div>
+                </CardContent>
+              </CollapsibleContent>
+            </Card>
+          </Collapsible>
 
           {/* Navigation Menu */}
-          <CourseNavigationBuilder 
-            course={course} 
-            onSettingsUpdate={(settings) => setCourse(prev => prev ? {...prev, theme_settings: settings} : null)}
-          />
+          <Collapsible open={!collapsedSections.navigation} onOpenChange={() => toggleSection('navigation')}>
+            <Card>
+              <CollapsibleTrigger asChild>
+                <CardHeader className="cursor-pointer hover:bg-accent/50 transition-colors">
+                  <CardTitle className="flex items-center justify-between">
+                    Navigation Menu
+                    <Plus className={`w-4 h-4 transition-transform ${!collapsedSections.navigation ? 'rotate-45' : ''}`} />
+                  </CardTitle>
+                </CardHeader>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <CardContent className="space-y-6">
+                  <CourseNavigationBuilder 
+                    course={course} 
+                    onSettingsUpdate={(settings) => setCourse(prev => prev ? {...prev, theme_settings: settings} : null)}
+                  />
+                </CardContent>
+              </CollapsibleContent>
+            </Card>
+          </Collapsible>
 
           {/* Payment Methods */}
           {store && (
-            <CoursePaymentMethods
-              storeId={store.id}
-              value={course.payment_methods || { bkash: false, nagad: false, eps: false }}
-              onChange={(methods) => setCourse(prev => prev ? {...prev, payment_methods: methods} : null)}
-            />
+            <Collapsible open={!collapsedSections.payment} onOpenChange={() => toggleSection('payment')}>
+              <Card>
+                <CollapsibleTrigger asChild>
+                  <CardHeader className="cursor-pointer hover:bg-accent/50 transition-colors">
+                    <CardTitle className="flex items-center justify-between">
+                      Payment Methods
+                      <Plus className={`w-4 h-4 transition-transform ${!collapsedSections.payment ? 'rotate-45' : ''}`} />
+                    </CardTitle>
+                  </CardHeader>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <CardContent className="space-y-6">
+                    <CoursePaymentMethods
+                      storeId={store.id}
+                      value={course.payment_methods || { bkash: false, nagad: false, eps: false }}
+                      onChange={(methods) => setCourse(prev => prev ? {...prev, payment_methods: methods} : null)}
+                    />
+                  </CardContent>
+                </CollapsibleContent>
+              </Card>
+            </Collapsible>
           )}
 
           {/* Course Thumbnail */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Course Thumbnail</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <CompactMediaSelector
-                value={course.thumbnail_url}
-                onChange={(url) => setCourse(prev => prev ? {...prev, thumbnail_url: url} : null)}
-              />
-            </CardContent>
-          </Card>
+          <Collapsible open={!collapsedSections.thumbnail} onOpenChange={() => toggleSection('thumbnail')}>
+            <Card>
+              <CollapsibleTrigger asChild>
+                <CardHeader className="cursor-pointer hover:bg-accent/50 transition-colors">
+                  <CardTitle className="flex items-center justify-between">
+                    Course Thumbnail
+                    <Plus className={`w-4 h-4 transition-transform ${!collapsedSections.thumbnail ? 'rotate-45' : ''}`} />
+                  </CardTitle>
+                </CardHeader>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <CardContent>
+                  <CompactMediaSelector
+                    value={course.thumbnail_url}
+                    onChange={(url) => setCourse(prev => prev ? {...prev, thumbnail_url: url} : null)}
+                  />
+                </CardContent>
+              </CollapsibleContent>
+            </Card>
+          </Collapsible>
         </div>
 
         {/* Module Dialog */}

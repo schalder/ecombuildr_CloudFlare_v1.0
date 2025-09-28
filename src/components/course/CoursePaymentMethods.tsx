@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Loader2, CreditCard, Smartphone, Building2 } from 'lucide-react';
@@ -124,36 +123,32 @@ export const CoursePaymentMethods: React.FC<CoursePaymentMethodsProps> = ({
 
   if (loading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <CreditCard className="h-5 w-5" />
-            Payment Methods
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-6 w-6 animate-spin" />
-          </div>
-        </CardContent>
-      </Card>
+      <div className="space-y-6">
+        <div>
+          <Label className="text-sm">Payment Methods</Label>
+          <p className="text-xs text-muted-foreground">
+            Select which payment methods students can use to enroll
+          </p>
+        </div>
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="h-6 w-6 animate-spin" />
+        </div>
+      </div>
     );
   }
 
   const hasAnyAvailableMethods = Object.values(availableMethods).some(enabled => enabled);
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <CreditCard className="h-5 w-5" />
-          Payment Methods
-        </CardTitle>
-        <p className="text-sm text-muted-foreground">
+    <div className="space-y-6">
+      <div>
+        <Label className="text-sm">Payment Methods</Label>
+        <p className="text-xs text-muted-foreground">
           Select which payment methods students can use to enroll
         </p>
-      </CardHeader>
-      <CardContent className="space-y-4">
+      </div>
+      
+      <div className="space-y-4">
         {!hasAnyAvailableMethods ? (
           <div className="text-center py-6">
             <CreditCard className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
@@ -205,7 +200,7 @@ export const CoursePaymentMethods: React.FC<CoursePaymentMethodsProps> = ({
             </div>
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };
