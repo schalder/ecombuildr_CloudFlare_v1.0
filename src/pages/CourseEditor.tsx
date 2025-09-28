@@ -870,7 +870,7 @@ const CourseEditor = () => {
               <div className="space-y-2">
                 <Label>Module Color</Label>
                 <ColorPicker
-                  color={course.theme_settings?.module_color || "#3b82f6"}
+                  color={course?.theme_settings?.module_color || "#3b82f6"}
                   onChange={(color) => setCourse(prev => prev ? {
                     ...prev, 
                     theme_settings: {
