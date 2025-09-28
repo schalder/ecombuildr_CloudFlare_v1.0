@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Routes, Route, useLocation, useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { useStore, StoreProvider } from '@/contexts/StoreContext';
+import { useStore } from '@/contexts/StoreContext';
 import { MemberAuthProvider } from '@/hooks/useMemberAuth';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
 import CourseLibrary from '@/pages/CourseLibrary';
@@ -156,7 +156,7 @@ const CourseDomainRouter = ({ customDomain, storeSlug }: CourseDomainRouterProps
       store: !!currentStore 
     });
     
-    const content = (
+    return (
       <ErrorBoundary>
         {website ? (
           <WebsiteProvider websiteId={website.id} websiteSlug={website.slug}>
@@ -172,12 +172,6 @@ const CourseDomainRouter = ({ customDomain, storeSlug }: CourseDomainRouterProps
           </main>
         )}
       </ErrorBoundary>
-    );
-
-    return (
-      <StoreProvider>
-        {content}
-      </StoreProvider>
     );
   };
 
