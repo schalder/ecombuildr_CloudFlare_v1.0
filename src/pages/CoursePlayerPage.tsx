@@ -153,10 +153,18 @@ const CoursePlayerPage = ({ courseId: propCourseId }: CoursePlayerPageProps = {}
             .sort((a, b) => a.sort_order - b.sort_order)
         }));
 
+        // Debug logging for navigation menu
+        const themeSettings = courseData.theme_settings as any;
+        console.log('Course theme_settings:', themeSettings);
+        console.log('Navigation menu config:', themeSettings?.navigation_menu);
+
         setCourse({
           ...courseData,
           modules,
-          theme_settings: courseData.theme_settings as CourseDetail['theme_settings'] || { module_color: "#3b82f6" }
+          theme_settings: {
+            module_color: "#3b82f6",
+            ...(themeSettings || {})
+          }
         });
 
         // Auto-expand first module and select first lesson
@@ -343,9 +351,12 @@ const CoursePlayerPage = ({ courseId: propCourseId }: CoursePlayerPageProps = {}
               </Button>
               
               {course?.theme_settings?.navigation_menu?.enabled && (
-                <CourseNavigationMenu 
-                  items={course.theme_settings.navigation_menu.items || []} 
-                />
+                <>
+                  {console.log('Rendering navigation menu with items:', course.theme_settings.navigation_menu.items)}
+                  <CourseNavigationMenu 
+                    items={course.theme_settings.navigation_menu.items || []} 
+                  />
+                </>
               )}
             </div>
           </div>
