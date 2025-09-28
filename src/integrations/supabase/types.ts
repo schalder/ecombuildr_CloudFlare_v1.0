@@ -735,6 +735,7 @@ export type Database = {
           payment_methods: Json | null
           price: number
           store_id: string
+          theme_settings: Json | null
           thumbnail_url: string | null
           title: string
           updated_at: string
@@ -753,6 +754,7 @@ export type Database = {
           payment_methods?: Json | null
           price?: number
           store_id: string
+          theme_settings?: Json | null
           thumbnail_url?: string | null
           title: string
           updated_at?: string
@@ -771,6 +773,7 @@ export type Database = {
           payment_methods?: Json | null
           price?: number
           store_id?: string
+          theme_settings?: Json | null
           thumbnail_url?: string | null
           title?: string
           updated_at?: string

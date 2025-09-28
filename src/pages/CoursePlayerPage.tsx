@@ -52,6 +52,9 @@ interface CourseDetail {
   thumbnail_url: string | null;
   content: string | null;
   modules: CourseModule[];
+  theme_settings?: {
+    module_color?: string;
+  };
 }
 
 interface MemberAccount {
@@ -143,7 +146,8 @@ const CoursePlayerPage = ({ courseId: propCourseId }: CoursePlayerPageProps = {}
 
         setCourse({
           ...courseData,
-          modules
+          modules,
+          theme_settings: courseData.theme_settings as CourseDetail['theme_settings'] || { module_color: "#3b82f6" }
         });
 
         // Auto-expand first module and select first lesson
@@ -349,64 +353,134 @@ const CoursePlayerPage = ({ courseId: propCourseId }: CoursePlayerPageProps = {}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Course Navigation Sidebar */}
           <div className="lg:col-span-1 space-y-4">
-            <Card>
-                <CardHeader>
-                <CardTitle className="text-lg">{course.title}</CardTitle>
+            <Card className="overflow-hidden">
+              <CardHeader className="bg-gradient-to-r from-background to-muted/50">
+                <CardTitle className="text-xl font-bold">{course.title}</CardTitle>
                 <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                  <span>{course.modules.length} modules</span>
+                  <span className="flex items-center gap-1">
+                    <BookOpen className="h-4 w-4" />
+                    {course.modules.length} modules
+                  </span>
                   <div className="flex items-center gap-1">
-                    <Clock className="h-3 w-3" />
+                    <Clock className="h-4 w-4" />
                     <span>{getTotalDuration()} min</span>
                   </div>
                 </div>
+                <div className="flex items-center gap-2 mt-2">
+                  <div className="flex-1 bg-muted rounded-full h-2">
+                    <div 
+                      className="bg-primary h-2 rounded-full transition-all duration-300" 
+                      style={{ width: `${calculateProgress()}%` }}
+                    />
+                  </div>
+                  <span className="text-xs font-medium">{Math.round(calculateProgress())}%</span>
+                </div>
               </CardHeader>
-              <CardContent className="space-y-2">
-                {course.modules.map((module) => (
-                  <Collapsible
-                    key={module.id}
-                    open={expandedModules.includes(module.id)}
-                    onOpenChange={() => toggleModule(module.id)}
-                  >
-                    <CollapsibleTrigger className="flex items-center gap-2 w-full p-2 hover:bg-muted rounded-lg text-left">
-                      {expandedModules.includes(module.id) ? (
-                        <ChevronDown className="h-4 w-4" />
-                      ) : (
-                        <ChevronRight className="h-4 w-4" />
-                      )}
-                      <div className="flex-1">
-                        <div className="font-medium">{module.title}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {module.lessons.length} lessons
-                        </div>
-                      </div>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent className="ml-6 space-y-1">
-                      {module.lessons.map((lesson, index) => (
-                        <button
-                          key={lesson.id}
-                          onClick={() => setSelectedLesson(lesson)}
-                          className={cn(
-                            "flex items-center gap-2 w-full p-2 rounded text-left text-sm hover:bg-muted transition-colors",
-                            selectedLesson?.id === lesson.id && "bg-primary/10 text-primary"
-                          )}
-                        >
-                          {completedLessons.has(lesson.id) ? (
-                            <CheckCircle className="h-4 w-4 text-green-500" />
-                          ) : (
-                            <Circle className="h-4 w-4 text-muted-foreground" />
-                          )}
-                          <Play className="h-3 w-3" />
-                          <span className="flex-1 text-left text-base leading-tight">{lesson.title}</span>
-                          {lesson.video_duration && (
-                            <span className="text-xs text-muted-foreground">
-                              {lesson.video_duration}min
-                            </span>
-                          )}
-                        </button>
-                      ))}
-                    </CollapsibleContent>
-                  </Collapsible>
-                ))}
+              <CardContent className="p-4 space-y-3">
+                {course.modules.map((module, moduleIndex) => {
+                  const moduleColor = course.theme_settings?.module_color || "#3b82f6";
+                  const completedLessonsInModule = module.lessons.filter(lesson => completedLessons.has(lesson.id)).length;
+                  const moduleProgress = (completedLessonsInModule / module.lessons.length) * 100;
+                  
+                  return (
+                    <div key={module.id} className="group">
+                      <Collapsible
+                        open={expandedModules.includes(module.id)}
+                        onOpenChange={() => toggleModule(module.id)}
+                      >
+                        <CollapsibleTrigger asChild>
+                          <Card 
+                            className="cursor-pointer transition-all duration-200 hover:shadow-lg hover:scale-[1.02] border-2 hover:border-primary/20"
+                            style={{ 
+                              background: `linear-gradient(135deg, ${moduleColor}15 0%, ${moduleColor}08 100%)`,
+                              borderColor: `${moduleColor}20`
+                            }}
+                          >
+                            <CardContent className="p-4">
+                              <div className="flex items-center gap-3">
+                                <div 
+                                  className="flex items-center justify-center w-10 h-10 rounded-lg text-white font-bold text-sm"
+                                  style={{ backgroundColor: moduleColor }}
+                                >
+                                  {moduleIndex + 1}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <h3 className="font-semibold text-base truncate">{module.title}</h3>
+                                  <div className="flex items-center gap-3 mt-1">
+                                    <span className="text-xs text-muted-foreground">
+                                      {module.lessons.length} lessons
+                                    </span>
+                                    <div className="flex items-center gap-1 text-xs">
+                                      <div className="w-12 bg-muted rounded-full h-1.5">
+                                        <div 
+                                          className="h-1.5 rounded-full transition-all duration-300"
+                                          style={{ 
+                                            width: `${moduleProgress}%`,
+                                            backgroundColor: moduleColor
+                                          }}
+                                        />
+                                      </div>
+                                      <span className="text-xs font-medium">{Math.round(moduleProgress)}%</span>
+                                    </div>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  {completedLessonsInModule === module.lessons.length && module.lessons.length > 0 && (
+                                    <CheckCircle className="h-5 w-5 text-green-500" />
+                                  )}
+                                  {expandedModules.includes(module.id) ? (
+                                    <ChevronDown className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+                                  ) : (
+                                    <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+                                  )}
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent className="mt-2 ml-4 space-y-2">
+                          {module.lessons.map((lesson, lessonIndex) => (
+                            <button
+                              key={lesson.id}
+                              onClick={() => setSelectedLesson(lesson)}
+                              className={cn(
+                                "flex items-center gap-3 w-full p-3 rounded-lg text-left transition-all duration-200 hover:shadow-md border",
+                                selectedLesson?.id === lesson.id 
+                                  ? "bg-primary/10 border-primary/30 shadow-sm" 
+                                  : "hover:bg-muted/50 border-transparent hover:border-muted-foreground/20"
+                              )}
+                            >
+                              <div className="flex items-center gap-2">
+                                {completedLessons.has(lesson.id) ? (
+                                  <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
+                                ) : (
+                                  <div 
+                                    className="w-4 h-4 rounded-full border-2 flex-shrink-0"
+                                    style={{ borderColor: selectedLesson?.id === lesson.id ? moduleColor : '#94a3b8' }}
+                                  />
+                                )}
+                                <Play className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs font-medium text-muted-foreground">
+                                    {lessonIndex + 1}.
+                                  </span>
+                                  <span className="font-medium text-sm truncate">{lesson.title}</span>
+                                </div>
+                              </div>
+                              {lesson.video_duration && (
+                                <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded-full flex-shrink-0">
+                                  {lesson.video_duration}min
+                                </span>
+                              )}
+                            </button>
+                          ))}
+                        </CollapsibleContent>
+                      </Collapsible>
+                    </div>
+                  );
+                })}
               </CardContent>
             </Card>
           </div>

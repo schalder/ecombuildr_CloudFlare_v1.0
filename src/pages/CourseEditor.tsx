@@ -39,6 +39,7 @@ import {
   Eye,
   Upload
 } from 'lucide-react';
+import { ColorPicker } from '@/components/ui/color-picker';
 import { useUserStore } from '@/hooks/useUserStore';
 import { useCategories } from '@/hooks/useCategories';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -64,6 +65,9 @@ interface Course {
     bkash: boolean;
     nagad: boolean;
     eps: boolean;
+  };
+  theme_settings?: {
+    module_color?: string;
   };
 }
 
@@ -239,7 +243,8 @@ const CourseEditor = () => {
 
       setCourse({
         ...courseData,
-        payment_methods: courseData.payment_methods as Course['payment_methods'] || { bkash: false, nagad: false, eps: false }
+        payment_methods: courseData.payment_methods as Course['payment_methods'] || { bkash: false, nagad: false, eps: false },
+        theme_settings: courseData.theme_settings as Course['theme_settings'] || { module_color: "#3b82f6" }
       });
       
       // Sort lessons within each module
@@ -852,6 +857,32 @@ const CourseEditor = () => {
                   checked={course.is_active}
                   onCheckedChange={(checked) => setCourse(prev => prev ? {...prev, is_active: checked} : null)}
                 />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Theme Settings */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Theme Settings</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label>Module Color</Label>
+                <ColorPicker
+                  color={course.theme_settings?.module_color || "#3b82f6"}
+                  onChange={(color) => setCourse(prev => prev ? {
+                    ...prev, 
+                    theme_settings: {
+                      ...prev.theme_settings,
+                      module_color: color
+                    }
+                  } : null)}
+                  label="Choose module background color"
+                />
+                <p className="text-xs text-muted-foreground">
+                  This color will be used as the background for module cards in the course player
+                </p>
               </div>
             </CardContent>
           </Card>
