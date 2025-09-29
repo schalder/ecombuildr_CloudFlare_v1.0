@@ -44,7 +44,7 @@ export function LessonViewer({ lesson, courseOrder }: LessonViewerProps) {
     );
   }
 
-  if (!courseOrder) {
+  if (lesson.drip_type === 'days_after_purchase' && !courseOrder) {
     return (
       <Card>
         <CardHeader className="text-center">

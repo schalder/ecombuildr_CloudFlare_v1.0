@@ -167,7 +167,38 @@ const CoursePlayerPage = ({ courseId: propCourseId }: CoursePlayerPageProps = {}
                 course_id: orderData.course_id
               });
             } else {
-              console.log('❌ No course order found for member');
+              console.log('❌ No course order found by email; trying member access mapping');
+              // Fallback: look up via course_member_access mapping
+              const { data: accessRows } = await supabase
+                .from('course_member_access')
+                .select('course_order_id')
+                .eq('member_account_id', memberAccount.id)
+                .not('course_order_id', 'is', null)
+                .limit(10);
+
+              const orderIds = (accessRows || [])
+                .map((r: any) => r.course_order_id)
+                .filter(Boolean);
+
+              if (orderIds.length > 0) {
+                const { data: mappedOrder } = await supabase
+                  .from('course_orders')
+                  .select('id, created_at, course_id')
+                  .in('id', orderIds)
+                  .eq('course_id', courseId)
+                  .order('created_at', { ascending: false })
+                  .limit(1)
+                  .maybeSingle();
+
+                if (mappedOrder) {
+                  console.log('📦 Found course order via member mapping:', mappedOrder);
+                  setCourseOrder({
+                    id: mappedOrder.id,
+                    created_at: mappedOrder.created_at,
+                    course_id: mappedOrder.course_id
+                  });
+                }
+              }
             }
           } catch (error) {
             console.error('Error fetching course order:', error);
