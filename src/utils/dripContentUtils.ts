@@ -59,14 +59,33 @@ export function isLessonAvailable(
       console.log('❌ Lesson not available - specific_date but no release date set');
       return { available: false, releaseDate: null };
     }
-    // Parse the date properly, treating it as UTC to avoid timezone issues
-    releaseDate = new Date(lesson.drip_release_date + 'T00:00:00.000Z');
-    console.log('📅 Specific date calculation:', {
-      dripReleaseDate: lesson.drip_release_date,
-      releaseDate: releaseDate.toISOString(),
-      now: now.toISOString(),
-      comparison: now >= releaseDate ? 'available' : 'locked'
-    });
+    
+    // Safe date parsing - handle both timestamp and date-only formats
+    try {
+      if (lesson.drip_release_date.includes('T')) {
+        // Already has time component
+        releaseDate = new Date(lesson.drip_release_date);
+      } else {
+        // Date-only format, add UTC time
+        releaseDate = new Date(lesson.drip_release_date + 'T00:00:00.000Z');
+      }
+      
+      // Check if date is valid
+      if (isNaN(releaseDate.getTime())) {
+        console.log('❌ Invalid release date format:', lesson.drip_release_date);
+        return { available: false, releaseDate: null };
+      }
+      
+      console.log('📅 Specific date calculation:', {
+        dripReleaseDate: lesson.drip_release_date,
+        releaseDate: releaseDate.toISOString(),
+        now: now.toISOString(),
+        comparison: now >= releaseDate ? 'available' : 'locked'
+      });
+    } catch (error) {
+      console.log('❌ Error parsing release date:', error);
+      return { available: false, releaseDate: null };
+    }
   }
 
   const available = now >= releaseDate;

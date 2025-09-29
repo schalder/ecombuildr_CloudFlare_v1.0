@@ -152,10 +152,9 @@ const CoursePlayerPage = ({ courseId: propCourseId }: CoursePlayerPageProps = {}
             console.log('🔍 Fetching course order for member:', memberAccount.email);
             const { data: orderData } = await supabase
               .from('course_orders')
-              .select('id, created_at, course_id, customer_email, payment_status')
+              .select('id, created_at, course_id, customer_email')
               .eq('course_id', courseId)
-              .eq('customer_email', memberAccount.email)
-              .in('payment_status', ['completed', 'paid', 'confirmed'])
+              .ilike('customer_email', memberAccount.email)
               .order('created_at', { ascending: false })
               .limit(1)
               .maybeSingle();
