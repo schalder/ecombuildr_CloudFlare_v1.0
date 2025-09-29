@@ -77,7 +77,8 @@ serve(async (req) => {
           p_email: customerData.email,
           p_password: customerData.password,
           p_full_name: customerData.name,
-          p_phone: customerData.phone
+          p_phone: customerData.phone,
+          p_course_order_id: orderData.id
         });
 
         if (memberError) {
@@ -125,7 +126,7 @@ serve(async (req) => {
           headers: { 'Content-Type': 'application/json', ...corsHeaders },
         });
 
-      } catch (error) {
+      } catch (error: any) {
         console.error('Free course enrollment error:', error);
         throw new Error(`Free course enrollment failed: ${error.message}`);
       }
@@ -191,7 +192,8 @@ serve(async (req) => {
           p_email: customerData.email,
           p_password: customerData.password,
           p_full_name: customerData.name,
-          p_phone: customerData.phone
+          p_phone: customerData.phone,
+          p_course_order_id: orderData.id
         });
 
         if (memberError) {
