@@ -75,6 +75,7 @@ interface Course {
   };
   theme_settings?: {
     module_color?: string;
+    enroll_button_color?: string;
   };
 }
 
@@ -283,7 +284,7 @@ const CourseEditor = () => {
       setCourse({
         ...courseData,
         payment_methods: courseData.payment_methods as Course['payment_methods'] || { bkash: false, nagad: false, eps: false },
-        theme_settings: courseData.theme_settings as Course['theme_settings'] || { module_color: "#3b82f6" }
+        theme_settings: courseData.theme_settings as Course['theme_settings'] || { module_color: "#3b82f6", enroll_button_color: "#10b981" }
       });
       
       // Sort lessons within each module
@@ -981,6 +982,24 @@ const CourseEditor = () => {
                     />
                     <p className="text-xs text-muted-foreground">
                       This color will be used as the background for module cards in the course player
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Enroll Button Color</Label>
+                    <ColorPicker
+                      color={course?.theme_settings?.enroll_button_color || "#10b981"}
+                      onChange={(color) => setCourse(prev => prev ? {
+                        ...prev, 
+                        theme_settings: {
+                          ...prev.theme_settings,
+                          enroll_button_color: color
+                        }
+                      } : null)}
+                      label="Choose enroll button color"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      This color will be used for the "Enroll Now" button on the course detail page
                     </p>
                   </div>
                 </CardContent>

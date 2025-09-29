@@ -128,7 +128,7 @@ const StorefrontCourseDetail: React.FC<StorefrontCourseDetailProps> = ({ courseS
       let query = supabase
         .from('courses')
         .select(`
-          id, title, description, content, thumbnail_url, price, compare_price, is_published, is_active, created_at, includes_title, includes_items, payment_methods,
+          id, title, description, content, thumbnail_url, price, compare_price, is_published, is_active, created_at, includes_title, includes_items, payment_methods, theme_settings,
           course_modules(
             id, title, description, sort_order, is_published,
             course_lessons(
@@ -298,7 +298,10 @@ const StorefrontCourseDetail: React.FC<StorefrontCourseDetailProps> = ({ courseS
                         onOpenChange={() => toggleModule(module.id)}
                       >
                         <CollapsibleTrigger className="w-full">
-                          <div className="bg-primary text-primary-foreground p-3 rounded-lg flex items-center justify-between hover:bg-primary/90 transition-colors">
+                          <div 
+                            className="text-primary-foreground p-3 rounded-lg flex items-center justify-between hover:opacity-90 transition-colors"
+                            style={{ backgroundColor: (course as any)?.theme_settings?.module_color || '#3b82f6' }}
+                          >
                             <div className="text-left">
                               <h3 className="font-semibold">
                                 {module.title}
@@ -443,10 +446,11 @@ const StorefrontCourseDetail: React.FC<StorefrontCourseDetailProps> = ({ courseS
                   </div>
 
                   {/* Enrollment Card */}
-                  <CourseEnrollmentCard 
-                    course={course} 
-                    storeId={store?.id || ''} 
-                  />
+              <CourseEnrollmentCard 
+                course={course} 
+                storeId={store?.id || ''}
+                themeSettings={(course as any)?.theme_settings}
+              />
 
 
 

@@ -31,6 +31,10 @@ interface Course {
 interface CourseEnrollmentCardProps {
   course: Course;
   storeId: string;
+  themeSettings?: {
+    module_color?: string;
+    enroll_button_color?: string;
+  };
 }
 
 interface PaymentMethod {
@@ -43,7 +47,8 @@ interface PaymentMethod {
 
 export const CourseEnrollmentCard: React.FC<CourseEnrollmentCardProps> = ({
   course,
-  storeId
+  storeId,
+  themeSettings
 }) => {
   const navigate = useNavigate();
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('');
@@ -198,6 +203,10 @@ export const CourseEnrollmentCard: React.FC<CourseEnrollmentCardProps> = ({
           size="lg"
           onClick={handleEnrollment}
           disabled={loading || (course.price > 0 && (!selectedPaymentMethod || availablePaymentMethods.length === 0))}
+          style={{ 
+            backgroundColor: themeSettings?.enroll_button_color || '#10b981',
+            borderColor: themeSettings?.enroll_button_color || '#10b981'
+          }}
         >
           {loading ? (
             <>
