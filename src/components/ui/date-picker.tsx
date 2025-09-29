@@ -1,11 +1,9 @@
 import * as React from "react";
 import { format } from "date-fns";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface DatePickerProps {
   date?: Date;
@@ -16,15 +14,13 @@ interface DatePickerProps {
 
 export function DatePicker({ date, onDateChange, placeholder = "Pick a date", className }: DatePickerProps) {
   const [isOpen, setIsOpen] = React.useState(false);
-  const [selectedMonth, setSelectedMonth] = React.useState(date?.getMonth() || new Date().getMonth());
-  const [selectedYear, setSelectedYear] = React.useState(date?.getFullYear() || new Date().getFullYear());
+  const [currentMonth, setCurrentMonth] = React.useState(date?.getMonth() || new Date().getMonth());
+  const [currentYear, setCurrentYear] = React.useState(date?.getFullYear() || new Date().getFullYear());
 
   const months = [
     "January", "February", "March", "April", "May", "June",
     "July", "August", "September", "October", "November", "December"
   ];
-
-  const years = Array.from({ length: 10 }, (_, i) => new Date().getFullYear() + i);
 
   const getDaysInMonth = (month: number, year: number) => {
     return new Date(year, month + 1, 0).getDate();
@@ -35,14 +31,32 @@ export function DatePicker({ date, onDateChange, placeholder = "Pick a date", cl
   };
 
   const handleDateSelect = (day: number) => {
-    const newDate = new Date(selectedYear, selectedMonth, day);
+    const newDate = new Date(currentYear, currentMonth, day);
     onDateChange?.(newDate);
     setIsOpen(false);
   };
 
+  const handlePrevMonth = () => {
+    if (currentMonth === 0) {
+      setCurrentMonth(11);
+      setCurrentYear(currentYear - 1);
+    } else {
+      setCurrentMonth(currentMonth - 1);
+    }
+  };
+
+  const handleNextMonth = () => {
+    if (currentMonth === 11) {
+      setCurrentMonth(0);
+      setCurrentYear(currentYear + 1);
+    } else {
+      setCurrentMonth(currentMonth + 1);
+    }
+  };
+
   const renderCalendarGrid = () => {
-    const daysInMonth = getDaysInMonth(selectedMonth, selectedYear);
-    const firstDay = getFirstDayOfMonth(selectedMonth, selectedYear);
+    const daysInMonth = getDaysInMonth(currentMonth, currentYear);
+    const firstDay = getFirstDayOfMonth(currentMonth, currentYear);
     const days = [];
 
     // Add empty cells for days before the first day of the month
@@ -54,12 +68,12 @@ export function DatePicker({ date, onDateChange, placeholder = "Pick a date", cl
     for (let day = 1; day <= daysInMonth; day++) {
       const isSelected = date && 
         date.getDate() === day && 
-        date.getMonth() === selectedMonth && 
-        date.getFullYear() === selectedYear;
+        date.getMonth() === currentMonth && 
+        date.getFullYear() === currentYear;
       
       const isToday = new Date().getDate() === day && 
-        new Date().getMonth() === selectedMonth && 
-        new Date().getFullYear() === selectedYear;
+        new Date().getMonth() === currentMonth && 
+        new Date().getFullYear() === currentYear;
 
       days.push(
         <Button
@@ -98,33 +112,19 @@ export function DatePicker({ date, onDateChange, placeholder = "Pick a date", cl
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0 bg-background border border-border shadow-lg rounded-lg" align="start">
         <div className="p-4 space-y-4">
-          {/* Month and Year Selectors */}
-          <div className="flex gap-2">
-            <Select value={selectedMonth.toString()} onValueChange={(value) => setSelectedMonth(parseInt(value))}>
-              <SelectTrigger className="flex-1">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {months.map((month, index) => (
-                  <SelectItem key={index} value={index.toString()}>
-                    {month}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          {/* Month and Year Navigation */}
+          <div className="flex items-center justify-between">
+            <Button variant="outline" size="sm" onClick={handlePrevMonth}>
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
             
-            <Select value={selectedYear.toString()} onValueChange={(value) => setSelectedYear(parseInt(value))}>
-              <SelectTrigger className="w-24">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {years.map((year) => (
-                  <SelectItem key={year} value={year.toString()}>
-                    {year}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="font-semibold">
+              {months[currentMonth]} {currentYear}
+            </div>
+            
+            <Button variant="outline" size="sm" onClick={handleNextMonth}>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
           </div>
 
           {/* Calendar Grid */}
@@ -152,8 +152,8 @@ export function DatePicker({ date, onDateChange, placeholder = "Pick a date", cl
               className="flex-1"
               onClick={() => {
                 const today = new Date();
-                setSelectedMonth(today.getMonth());
-                setSelectedYear(today.getFullYear());
+                setCurrentMonth(today.getMonth());
+                setCurrentYear(today.getFullYear());
                 onDateChange?.(today);
                 setIsOpen(false);
               }}
