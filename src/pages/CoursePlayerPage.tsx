@@ -146,63 +146,30 @@ const CoursePlayerPage = ({ courseId: propCourseId }: CoursePlayerPageProps = {}
 
         if (courseError) throw courseError;
 
-        // Fetch member's course order for drip content through course_member_access
+        // Fetch member's course "purchase" date via RPC (simple, RLS-safe)
         (async () => {
           try {
-            // Simplified: directly fetch course order by email and course_id
-            console.log('🔍 Fetching course order for member:', memberAccount.email);
-            const { data: orderData } = await supabase
-              .from('course_orders')
-              .select('id, created_at, course_id, customer_email')
-              .eq('course_id', courseId)
-              .ilike('customer_email', memberAccount.email)
-              .order('created_at', { ascending: false })
-              .limit(1)
-              .maybeSingle();
+            console.log('🔍 Fetching member course access via RPC');
+            const { data: accessible, error: rpcError } = await supabase.rpc('get_member_accessible_courses', {
+              p_member_account_id: memberAccount.id,
+            });
+            if (rpcError) throw rpcError;
 
-            console.log('📦 Course order found:', orderData);
-            if (orderData) {
+            const record = (accessible || []).find((r: any) => r.course_id === courseId);
+            console.log('📦 Access record for course:', record);
+
+            if (record?.access_granted_at) {
+              // Use access_granted_at as the start date for drip calculations
               setCourseOrder({
-                id: orderData.id,
-                created_at: orderData.created_at,
-                course_id: orderData.course_id
+                id: `access_${record.course_id}`,
+                created_at: record.access_granted_at,
+                course_id: record.course_id,
               });
             } else {
-              console.log('❌ No course order found by email; trying member access mapping');
-              // Fallback: look up via course_member_access mapping
-              const { data: accessRows } = await supabase
-                .from('course_member_access')
-                .select('course_order_id')
-                .eq('member_account_id', memberAccount.id)
-                .not('course_order_id', 'is', null)
-                .limit(10);
-
-              const orderIds = (accessRows || [])
-                .map((r: any) => r.course_order_id)
-                .filter(Boolean);
-
-              if (orderIds.length > 0) {
-                const { data: mappedOrder } = await supabase
-                  .from('course_orders')
-                  .select('id, created_at, course_id')
-                  .in('id', orderIds)
-                  .eq('course_id', courseId)
-                  .order('created_at', { ascending: false })
-                  .limit(1)
-                  .maybeSingle();
-
-                if (mappedOrder) {
-                  console.log('📦 Found course order via member mapping:', mappedOrder);
-                  setCourseOrder({
-                    id: mappedOrder.id,
-                    created_at: mappedOrder.created_at,
-                    course_id: mappedOrder.course_id
-                  });
-                }
-              }
+              console.log('❌ No access record found for this course');
             }
           } catch (error) {
-            console.error('Error fetching course order:', error);
+            console.error('Error fetching member access:', error);
           } finally {
             setCourseOrderLoading(false);
           }
