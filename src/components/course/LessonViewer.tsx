@@ -1,6 +1,8 @@
 import React from 'react';
 import { LessonCountdown } from '@/components/drip-content/LessonCountdown';
 import { isLessonAvailable } from '@/utils/dripContentUtils';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Lock } from 'lucide-react';
 interface LessonViewerProps {
   lesson: {
     id: string;
@@ -32,6 +34,15 @@ export function LessonViewer({ lesson, courseOrder, courseOrderLoading = false }
 
   const { available, releaseDate } = isLessonAvailable(lesson as any, courseOrder);
 
+  if (available) {
+    return (
+      <div className="space-y-4">
+        <h1 className="text-2xl font-bold">{lesson.title}</h1>
+        <div dangerouslySetInnerHTML={{ __html: lesson.content }} />
+      </div>
+    );
+  }
+
   if (!available && releaseDate) {
     return (
       <LessonCountdown
@@ -51,19 +62,19 @@ export function LessonViewer({ lesson, courseOrder, courseOrderLoading = false }
     );
   }
 
-  if (lesson.drip_type === 'days_after_purchase' && !courseOrder) {
-    return (
-      <div className="space-y-4">
-        <h1 className="text-2xl font-bold">{lesson.title}</h1>
-        <div dangerouslySetInnerHTML={{ __html: lesson.content }} />
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-4">
-      <h1 className="text-2xl font-bold">{lesson.title}</h1>
-      <div dangerouslySetInnerHTML={{ __html: lesson.content }} />
-    </div>
+    <Card>
+      <CardHeader className="text-center">
+        <div className="w-16 h-16 mx-auto mb-4 bg-muted rounded-full flex items-center justify-center">
+          <Lock className="h-8 w-8 text-muted-foreground" />
+        </div>
+        <CardTitle>Locked</CardTitle>
+      </CardHeader>
+      <CardContent className="text-center">
+        <p className="text-muted-foreground">
+          {lesson.drip_lock_message || 'This lesson is not yet available.'}
+        </p>
+      </CardContent>
+    </Card>
   );
 }

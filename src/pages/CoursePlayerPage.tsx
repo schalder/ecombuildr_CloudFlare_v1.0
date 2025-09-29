@@ -437,30 +437,6 @@ const CoursePlayerPage = ({ courseId: propCourseId }: CoursePlayerPageProps = {}
 
     // For days_after_purchase without course order, show purchase required
     // Only show this if we're done loading the course order
-    if (lesson.drip_type === 'days_after_purchase' && !courseOrderLoading && !courseOrder) {
-      // No order found but user has access — do not block; show content
-      return (
-        <>
-          {/* Video Content */}
-          {lesson.video_url && (
-            <div className="w-full">
-              {renderVideoContent(lesson)}
-            </div>
-          )}
-
-          {/* Lesson Text Content */}
-          {lesson.content && (
-            <>
-              <Separator />
-              <div className="prose prose-sm max-w-none">
-                <div dangerouslySetInnerHTML={{ __html: lesson.content }} />
-              </div>
-            </>
-          )}
-        </>
-      );
-    }
-
     // Show loading state while fetching course order for drip content
     if (courseOrderLoading) {
       return (
