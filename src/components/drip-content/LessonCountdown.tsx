@@ -84,9 +84,6 @@ export function LessonCountdown({ releaseDate, lockMessage, lessonTitle }: Lesso
             <Calendar className="h-4 w-4" />
             <span>Available on {releaseDate.toLocaleDateString()}</span>
           </div>
-          <div className="text-xs text-muted-foreground">
-            Available in {timeRemaining.days > 0 ? `${timeRemaining.days} day${timeRemaining.days === 1 ? '' : 's'}` : timeRemaining.hours > 0 ? `${timeRemaining.hours} hour${timeRemaining.hours === 1 ? '' : 's'}` : timeRemaining.minutes > 0 ? `${timeRemaining.minutes} minute${timeRemaining.minutes === 1 ? '' : 's'}` : `${timeRemaining.seconds} second${timeRemaining.seconds === 1 ? '' : 's'}`}
-          </div>
 
           <div className="grid grid-cols-4 gap-4">
             <div className="bg-muted rounded-lg p-3">
@@ -124,10 +121,6 @@ export function LessonCountdown({ releaseDate, lockMessage, lessonTitle }: Lesso
           </div>
         </div>
 
-        <Badge variant="outline" className="border-orange-200 text-orange-800">
-          <Clock className="w-3 h-3 mr-1" />
-          Countdown Active
-        </Badge>
       </CardContent>
     </Card>
   );
