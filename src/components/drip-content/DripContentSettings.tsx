@@ -141,13 +141,13 @@ export function DripContentSettings({ value, onChange }: DripContentSettingsProp
                     )}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
+                <PopoverContent className="w-auto p-0 bg-background border border-border shadow-lg rounded-lg" align="start">
                   <Calendar
                     mode="single"
                     selected={value.drip_release_date ? new Date(value.drip_release_date) : undefined}
                     onSelect={handleDripDateChange}
                     initialFocus
-                    className="pointer-events-auto"
+                    className="pointer-events-auto rounded-lg"
                   />
                 </PopoverContent>
               </Popover>
