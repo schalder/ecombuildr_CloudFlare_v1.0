@@ -62,6 +62,7 @@ interface CourseDetail {
   modules: CourseModule[];
   theme_settings?: {
     module_color?: string;
+    module_text_color?: string;
     navigation_menu?: {
       enabled: boolean;
       items: Array<{
@@ -510,6 +511,7 @@ const CoursePlayerPage = ({ courseId: propCourseId }: CoursePlayerPageProps = {}
               <CardContent className="p-4 space-y-3">
                 {course.modules.map((module, moduleIndex) => {
                   const moduleColor = course.theme_settings?.module_color || "#3b82f6";
+                  const moduleTextColor = course.theme_settings?.module_text_color || "#ffffff";
                   const completedLessonsInModule = module.lessons.filter(lesson => completedLessons.has(lesson.id)).length;
                   
                   return (
@@ -529,15 +531,26 @@ const CoursePlayerPage = ({ courseId: propCourseId }: CoursePlayerPageProps = {}
                             <CardContent className="p-4">
                               <div className="flex items-center gap-3">
                                 <div 
-                                  className="flex items-center justify-center w-10 h-10 rounded-lg text-white font-bold text-sm"
-                                  style={{ backgroundColor: moduleColor }}
+                                  className="flex items-center justify-center w-10 h-10 rounded-lg font-bold text-sm"
+                                  style={{ 
+                                    backgroundColor: moduleColor,
+                                    color: moduleTextColor
+                                  }}
                                 >
                                   {moduleIndex + 1}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                  <h3 className="font-semibold text-base truncate">{module.title}</h3>
+                                  <h3 
+                                    className="font-semibold text-base truncate"
+                                    style={{ color: moduleTextColor }}
+                                  >
+                                    {module.title}
+                                  </h3>
                                   <div className="flex items-center gap-3 mt-1">
-                                    <span className="text-xs text-muted-foreground">
+                                    <span 
+                                      className="text-xs"
+                                      style={{ color: `${moduleTextColor}80` }}
+                                    >
                                       {module.lessons.length} lessons
                                     </span>
                                   </div>
@@ -547,9 +560,15 @@ const CoursePlayerPage = ({ courseId: propCourseId }: CoursePlayerPageProps = {}
                                     <CheckCircle className="h-5 w-5 text-green-500" />
                                   )}
                                   {expandedModules.includes(module.id) ? (
-                                    <ChevronDown className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+                                    <ChevronDown 
+                                      className="h-5 w-5 transition-colors" 
+                                      style={{ color: moduleTextColor }}
+                                    />
                                   ) : (
-                                    <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+                                    <ChevronRight 
+                                      className="h-5 w-5 transition-colors" 
+                                      style={{ color: moduleTextColor }}
+                                    />
                                   )}
                                 </div>
                               </div>
