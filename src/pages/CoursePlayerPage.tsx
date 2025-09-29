@@ -145,15 +145,31 @@ const CoursePlayerPage = ({ courseId: propCourseId }: CoursePlayerPageProps = {}
 
         if (courseError) throw courseError;
 
-        // Fetch member's course order for drip content
+        // Fetch member's course order for drip content through course_member_access
         (async () => {
           try {
-            const { data } = await (supabase as any).from('course_orders')
-              .select('id, created_at, course_id')
+            const { data } = await (supabase as any)
+              .from('course_member_access')
+              .select(`
+                course_order_id,
+                course_orders!inner(
+                  id,
+                  created_at,
+                  course_id
+                )
+              `)
               .eq('course_id', courseId)
               .eq('member_account_id', memberAccount.id)
+              .eq('is_active', true)
               .maybeSingle();
-            if (data) setCourseOrder(data);
+
+            if (data?.course_orders) {
+              setCourseOrder({
+                id: data.course_orders.id,
+                created_at: data.course_orders.created_at,
+                course_id: data.course_orders.course_id
+              });
+            }
           } catch (error) {
             console.error('Error fetching course order:', error);
           }
