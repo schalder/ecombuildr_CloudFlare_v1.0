@@ -4,7 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar } from "@/components/ui/calendar";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { CalendarIcon, Clock, Lock } from "lucide-react";
@@ -124,33 +124,12 @@ export function DripContentSettings({ value, onChange }: DripContentSettingsProp
           {value.drip_type === 'specific_date' && (
             <div className="space-y-2">
               <Label className="text-sm">Release Date</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !value.drip_release_date && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {value.drip_release_date ? (
-                      format(new Date(value.drip_release_date), "PPP")
-                    ) : (
-                      <span>Pick a date</span>
-                    )}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0 bg-background border border-border shadow-lg rounded-lg" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={value.drip_release_date ? new Date(value.drip_release_date) : undefined}
-                    onSelect={handleDripDateChange}
-                    initialFocus
-                    className="pointer-events-auto rounded-lg"
-                  />
-                </PopoverContent>
-              </Popover>
+              <DatePicker
+                date={value.drip_release_date ? new Date(value.drip_release_date) : undefined}
+                onDateChange={handleDripDateChange}
+                placeholder="Pick a date"
+                className="w-full"
+              />
             </div>
           )}
 
