@@ -158,7 +158,7 @@ const CoursePlayerPage = ({ courseId: propCourseId }: CoursePlayerPageProps = {}
                   course_id
                 )
               `)
-              .eq('course_id', courseId)
+              .eq('course_orders.course_id', courseId)
               .eq('member_account_id', memberAccount.id)
               .eq('is_active', true)
               .maybeSingle();

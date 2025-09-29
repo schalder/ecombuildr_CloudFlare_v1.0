@@ -24,8 +24,8 @@ export function isLessonAvailable(
     return { available: true, releaseDate: null };
   }
 
-  // If no course order (not purchased), lesson is not available
-  if (!courseOrder) {
+  // For days_after_purchase, purchase date is required to compute release
+  if (lesson.drip_type === 'days_after_purchase' && !courseOrder) {
     return { available: false, releaseDate: null };
   }
 
