@@ -299,8 +299,11 @@ const StorefrontCourseDetail: React.FC<StorefrontCourseDetailProps> = ({ courseS
                       >
                         <CollapsibleTrigger className="w-full">
                           <div 
-                            className="text-primary-foreground p-3 rounded-lg flex items-center justify-between hover:opacity-90 transition-colors"
-                            style={{ backgroundColor: (course as any)?.theme_settings?.module_color || '#3b82f6' }}
+                            className="p-3 rounded-lg flex items-center justify-between hover:opacity-90 transition-colors"
+                            style={{ 
+                              backgroundColor: (course as any)?.theme_settings?.module_color || '#3b82f6',
+                              color: (course as any)?.theme_settings?.module_text_color || '#ffffff'
+                            }}
                           >
                             <div className="text-left">
                               <h3 className="font-semibold">

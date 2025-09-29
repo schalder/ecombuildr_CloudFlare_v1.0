@@ -75,7 +75,9 @@ interface Course {
   };
   theme_settings?: {
     module_color?: string;
+    module_text_color?: string;
     enroll_button_color?: string;
+    enroll_button_text_color?: string;
   };
 }
 
@@ -284,7 +286,12 @@ const CourseEditor = () => {
       setCourse({
         ...courseData,
         payment_methods: courseData.payment_methods as Course['payment_methods'] || { bkash: false, nagad: false, eps: false },
-        theme_settings: courseData.theme_settings as Course['theme_settings'] || { module_color: "#3b82f6", enroll_button_color: "#10b981" }
+        theme_settings: courseData.theme_settings as Course['theme_settings'] || { 
+          module_color: "#3b82f6", 
+          module_text_color: "#ffffff",
+          enroll_button_color: "#10b981",
+          enroll_button_text_color: "#ffffff"
+        }
       });
       
       // Sort lessons within each module
@@ -968,7 +975,7 @@ const CourseEditor = () => {
               <CollapsibleContent>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    <Label>Module Color</Label>
+                    <Label>Module Background Color</Label>
                     <ColorPicker
                       color={course?.theme_settings?.module_color || "#3b82f6"}
                       onChange={(color) => setCourse(prev => prev ? {
@@ -981,12 +988,30 @@ const CourseEditor = () => {
                       label="Choose module background color"
                     />
                     <p className="text-xs text-muted-foreground">
-                      This color will be used as the background for module cards in the course player
+                      This color will be used as the background for module cards
                     </p>
                   </div>
 
                   <div className="space-y-2">
-                    <Label>Enroll Button Color</Label>
+                    <Label>Module Text Color</Label>
+                    <ColorPicker
+                      color={course?.theme_settings?.module_text_color || "#ffffff"}
+                      onChange={(color) => setCourse(prev => prev ? {
+                        ...prev, 
+                        theme_settings: {
+                          ...prev.theme_settings,
+                          module_text_color: color
+                        }
+                      } : null)}
+                      label="Choose module text color"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      This color will be used for text inside module cards
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Enroll Button Background Color</Label>
                     <ColorPicker
                       color={course?.theme_settings?.enroll_button_color || "#10b981"}
                       onChange={(color) => setCourse(prev => prev ? {
@@ -996,10 +1021,28 @@ const CourseEditor = () => {
                           enroll_button_color: color
                         }
                       } : null)}
-                      label="Choose enroll button color"
+                      label="Choose enroll button background color"
                     />
                     <p className="text-xs text-muted-foreground">
-                      This color will be used for the "Enroll Now" button on the course detail page
+                      This color will be used as the background for the "Enroll Now" button
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Enroll Button Text Color</Label>
+                    <ColorPicker
+                      color={course?.theme_settings?.enroll_button_text_color || "#ffffff"}
+                      onChange={(color) => setCourse(prev => prev ? {
+                        ...prev, 
+                        theme_settings: {
+                          ...prev.theme_settings,
+                          enroll_button_text_color: color
+                        }
+                      } : null)}
+                      label="Choose enroll button text color"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      This color will be used for text inside the "Enroll Now" button
                     </p>
                   </div>
                 </CardContent>

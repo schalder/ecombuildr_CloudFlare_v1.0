@@ -33,7 +33,9 @@ interface CourseEnrollmentCardProps {
   storeId: string;
   themeSettings?: {
     module_color?: string;
+    module_text_color?: string;
     enroll_button_color?: string;
+    enroll_button_text_color?: string;
   };
 }
 
@@ -205,7 +207,8 @@ export const CourseEnrollmentCard: React.FC<CourseEnrollmentCardProps> = ({
           disabled={loading || (course.price > 0 && (!selectedPaymentMethod || availablePaymentMethods.length === 0))}
           style={{ 
             backgroundColor: themeSettings?.enroll_button_color || '#10b981',
-            borderColor: themeSettings?.enroll_button_color || '#10b981'
+            borderColor: themeSettings?.enroll_button_color || '#10b981',
+            color: themeSettings?.enroll_button_text_color || '#ffffff'
           }}
         >
           {loading ? (
