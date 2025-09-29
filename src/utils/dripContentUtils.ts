@@ -19,13 +19,24 @@ export function isLessonAvailable(
   lesson: DripContentLesson,
   courseOrder: CourseOrder | null
 ): { available: boolean; releaseDate: Date | null } {
+  console.log('🔍 Checking lesson availability:', {
+    lessonId: lesson.id,
+    dripEnabled: lesson.drip_enabled,
+    dripType: lesson.drip_type,
+    dripDays: lesson.drip_days,
+    dripReleaseDate: lesson.drip_release_date,
+    courseOrder: courseOrder ? { id: courseOrder.id, created_at: courseOrder.created_at } : null
+  });
+
   // If drip content is not enabled, lesson is always available
   if (!lesson.drip_enabled) {
+    console.log('✅ Lesson available - drip not enabled');
     return { available: true, releaseDate: null };
   }
 
   // For days_after_purchase, purchase date is required to compute release
   if (lesson.drip_type === 'days_after_purchase' && !courseOrder) {
+    console.log('❌ Lesson not available - days_after_purchase but no course order');
     return { available: false, releaseDate: null };
   }
 
@@ -34,17 +45,32 @@ export function isLessonAvailable(
 
   if (lesson.drip_type === 'days_after_purchase') {
     // Calculate release date based on purchase date + drip days
-    const purchaseDate = new Date(courseOrder.created_at);
+    const purchaseDate = new Date(courseOrder!.created_at);
     releaseDate = addDays(purchaseDate, lesson.drip_days);
+    console.log('📅 Days after purchase calculation:', {
+      purchaseDate: purchaseDate.toISOString(),
+      dripDays: lesson.drip_days,
+      releaseDate: releaseDate.toISOString(),
+      now: now.toISOString()
+    });
   } else {
     // Use specific release date
     if (!lesson.drip_release_date) {
+      console.log('❌ Lesson not available - specific_date but no release date set');
       return { available: false, releaseDate: null };
     }
-    releaseDate = new Date(lesson.drip_release_date);
+    // Parse the date properly, treating it as UTC to avoid timezone issues
+    releaseDate = new Date(lesson.drip_release_date + 'T00:00:00.000Z');
+    console.log('📅 Specific date calculation:', {
+      dripReleaseDate: lesson.drip_release_date,
+      releaseDate: releaseDate.toISOString(),
+      now: now.toISOString(),
+      comparison: now >= releaseDate ? 'available' : 'locked'
+    });
   }
 
   const available = now >= releaseDate;
+  console.log(available ? '✅ Lesson available' : '⏰ Lesson locked until release date');
   return { available, releaseDate };
 }
 

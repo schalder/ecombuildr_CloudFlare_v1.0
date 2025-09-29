@@ -148,46 +148,27 @@ const CoursePlayerPage = ({ courseId: propCourseId }: CoursePlayerPageProps = {}
         // Fetch member's course order for drip content through course_member_access
         (async () => {
           try {
-            const { data } = await (supabase as any)
-              .from('course_member_access')
-              .select(`
-                course_order_id,
-                course_orders!inner(
-                  id,
-                  created_at,
-                  course_id
-                )
-              `)
-              .eq('course_orders.course_id', courseId)
-              .eq('member_account_id', memberAccount.id)
-              .eq('is_active', true)
+            // Simplified: directly fetch course order by email and course_id
+            console.log('🔍 Fetching course order for member:', memberAccount.email);
+            const { data: orderData } = await supabase
+              .from('course_orders')
+              .select('id, created_at, course_id, customer_email, payment_status')
+              .eq('course_id', courseId)
+              .eq('customer_email', memberAccount.email)
+              .in('payment_status', ['completed', 'paid', 'confirmed'])
+              .order('created_at', { ascending: false })
+              .limit(1)
               .maybeSingle();
 
-            if (data?.course_orders) {
+            console.log('📦 Course order found:', orderData);
+            if (orderData) {
               setCourseOrder({
-                id: data.course_orders.id,
-                created_at: data.course_orders.created_at,
-                course_id: data.course_orders.course_id
+                id: orderData.id,
+                created_at: orderData.created_at,
+                course_id: orderData.course_id
               });
             } else {
-              // Fallback: find latest course order by member email (in case access link wasn't created)
-              const { data: fallbackOrder } = await (supabase as any)
-                .from('course_orders')
-                .select('id, created_at, course_id, customer_email, payment_status')
-                .eq('course_id', courseId)
-                .eq('customer_email', memberAccount.email)
-                .in('payment_status', ['completed', 'paid', 'confirmed'])
-                .order('created_at', { ascending: false })
-                .limit(1)
-                .maybeSingle();
-
-              if (fallbackOrder) {
-                setCourseOrder({
-                  id: fallbackOrder.id,
-                  created_at: fallbackOrder.created_at,
-                  course_id: fallbackOrder.course_id
-                });
-              }
+              console.log('❌ No course order found for member');
             }
           } catch (error) {
             console.error('Error fetching course order:', error);
@@ -383,9 +364,35 @@ const CoursePlayerPage = ({ courseId: propCourseId }: CoursePlayerPageProps = {}
       );
     }
 
+    // Always check lesson availability first
     const { available, releaseDate } = isLessonAvailable(lesson as any, courseOrder);
 
-    if (!available && releaseDate) {
+    // If lesson is available, show content regardless of other conditions
+    if (available) {
+      return (
+        <>
+          {/* Video Content */}
+          {lesson.video_url && (
+            <div className="w-full">
+              {renderVideoContent(lesson)}
+            </div>
+          )}
+
+          {/* Lesson Text Content */}
+          {lesson.content && (
+            <>
+              <Separator />
+              <div className="prose prose-sm max-w-none">
+                <div dangerouslySetInnerHTML={{ __html: lesson.content }} />
+              </div>
+            </>
+          )}
+        </>
+      );
+    }
+
+    // If not available but has a release date (countdown scenario)
+    if (releaseDate) {
       return (
         <LessonCountdown
           releaseDate={releaseDate}
@@ -395,46 +402,40 @@ const CoursePlayerPage = ({ courseId: propCourseId }: CoursePlayerPageProps = {}
       );
     }
 
-    if (!courseOrder) {
+    // For days_after_purchase without course order, show purchase required
+    if (lesson.drip_type === 'days_after_purchase' && !courseOrder) {
       return (
         <Card>
           <CardHeader className="text-center">
             <div className="w-16 h-16 mx-auto mb-4 bg-muted rounded-full flex items-center justify-center">
               <Lock className="h-8 w-8 text-muted-foreground" />
             </div>
-            <CardTitle>Locked</CardTitle>
+            <CardTitle>Purchase Required</CardTitle>
           </CardHeader>
-          <CardContent className="text-center space-y-2">
+          <CardContent className="text-center">
             <p className="text-muted-foreground">
-              {lesson.drip_lock_message || 'This lesson is locked until its scheduled release.'}
+              You need to purchase this course to access this lesson.
             </p>
-            {lesson.drip_type === 'days_after_purchase' && typeof lesson.drip_days === 'number' && (
-              <p className="text-sm text-muted-foreground">Available {lesson.drip_days} day{lesson.drip_days === 1 ? '' : 's'} after purchase.</p>
-            )}
           </CardContent>
         </Card>
       );
     }
 
+    // Fallback: Generic locked state
     return (
-      <>
-        {/* Video Content */}
-        {lesson.video_url && (
-          <div className="w-full">
-            {renderVideoContent(lesson)}
+      <Card>
+        <CardHeader className="text-center">
+          <div className="w-16 h-16 mx-auto mb-4 bg-muted rounded-full flex items-center justify-center">
+            <Lock className="h-8 w-8 text-muted-foreground" />
           </div>
-        )}
-
-        {/* Lesson Text Content */}
-        {lesson.content && (
-          <>
-            <Separator />
-            <div className="prose prose-sm max-w-none">
-              <div dangerouslySetInnerHTML={{ __html: lesson.content }} />
-            </div>
-          </>
-        )}
-      </>
+          <CardTitle>Locked</CardTitle>
+        </CardHeader>
+        <CardContent className="text-center">
+          <p className="text-muted-foreground">
+            {lesson.drip_lock_message || 'This lesson is not yet available.'}
+          </p>
+        </CardContent>
+      </Card>
     );
   };
 
