@@ -383,12 +383,15 @@ const CoursePlayerPage = ({ courseId: propCourseId }: CoursePlayerPageProps = {}
             <div className="w-16 h-16 mx-auto mb-4 bg-muted rounded-full flex items-center justify-center">
               <Lock className="h-8 w-8 text-muted-foreground" />
             </div>
-            <CardTitle>Purchase Required</CardTitle>
+            <CardTitle>Locked</CardTitle>
           </CardHeader>
-          <CardContent className="text-center">
+          <CardContent className="text-center space-y-2">
             <p className="text-muted-foreground">
-              You need to purchase this course to access this lesson.
+              {lesson.drip_lock_message || 'This lesson is locked until its scheduled release.'}
             </p>
+            {lesson.drip_type === 'days_after_purchase' && typeof lesson.drip_days === 'number' && (
+              <p className="text-sm text-muted-foreground">Available {lesson.drip_days} day{lesson.drip_days === 1 ? '' : 's'} after purchase.</p>
+            )}
           </CardContent>
         </Card>
       );
