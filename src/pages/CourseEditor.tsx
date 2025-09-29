@@ -652,9 +652,9 @@ const CourseEditor = () => {
             <AccordionItem value="course-info" className="border rounded-lg">
               <Card className="border-0">
                 <AccordionTrigger className="px-6 hover:no-underline">
-                  <CardHeader className="p-0">
-                    <CardTitle>Course Information</CardTitle>
-                    <CardDescription>Basic course details and description</CardDescription>
+                  <CardHeader className="p-0 text-left">
+                    <CardTitle className="text-left">Course Information</CardTitle>
+                    <CardDescription className="text-left">Basic course details and description</CardDescription>
                   </CardHeader>
                 </AccordionTrigger>
                 <AccordionContent>
@@ -702,9 +702,9 @@ const CourseEditor = () => {
             <AccordionItem value="course-overview" className="border rounded-lg">
               <Card className="border-0">
                 <AccordionTrigger className="px-6 hover:no-underline">
-                  <CardHeader className="p-0">
-                    <CardTitle>Course Overview</CardTitle>
-                    <CardDescription>Write a detailed description of your course content</CardDescription>
+                  <CardHeader className="p-0 text-left">
+                    <CardTitle className="text-left">Course Overview</CardTitle>
+                    <CardDescription className="text-left">Write a detailed description of your course content</CardDescription>
                   </CardHeader>
                 </AccordionTrigger>
                 <AccordionContent>
@@ -727,9 +727,9 @@ const CourseEditor = () => {
             <AccordionItem value="course-content" className="border rounded-lg">
               <Card className="border-0">
                 <AccordionTrigger className="px-6 hover:no-underline">
-                  <CardHeader className="p-0 flex-1">
-                    <CardTitle>Course Content</CardTitle>
-                    <CardDescription>Organize your course into modules and lessons</CardDescription>
+                  <CardHeader className="p-0 flex-1 text-left">
+                    <CardTitle className="text-left">Course Content</CardTitle>
+                    <CardDescription className="text-left">Organize your course into modules and lessons</CardDescription>
                   </CardHeader>
                 </AccordionTrigger>
                 <AccordionContent>
