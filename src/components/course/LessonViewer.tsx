@@ -20,9 +20,10 @@ interface LessonViewerProps {
     created_at: string;
     course_id: string;
   } | null;
+  courseOrderLoading?: boolean;
 }
 
-export function LessonViewer({ lesson, courseOrder }: LessonViewerProps) {
+export function LessonViewer({ lesson, courseOrder, courseOrderLoading = false }: LessonViewerProps) {
   if (!lesson.drip_enabled) {
     return (
       <div className="space-y-4">
@@ -41,6 +42,15 @@ export function LessonViewer({ lesson, courseOrder }: LessonViewerProps) {
         lockMessage={lesson.drip_lock_message || 'This lesson will be available after you complete the prerequisites.'}
         lessonTitle={lesson.title}
       />
+    );
+  }
+
+  // Show loading state while fetching course order for drip content
+  if (courseOrderLoading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
     );
   }
 

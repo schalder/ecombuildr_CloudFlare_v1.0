@@ -102,6 +102,7 @@ const CoursePlayerPage = ({ courseId: propCourseId }: CoursePlayerPageProps = {}
   const [loading, setLoading] = useState(true);
   const [hasAccess, setHasAccess] = useState(false);
   const [courseOrder, setCourseOrder] = useState<any>(null);
+  const [courseOrderLoading, setCourseOrderLoading] = useState(true);
 
   // Check member authentication and access
   useEffect(() => {
@@ -202,6 +203,8 @@ const CoursePlayerPage = ({ courseId: propCourseId }: CoursePlayerPageProps = {}
             }
           } catch (error) {
             console.error('Error fetching course order:', error);
+          } finally {
+            setCourseOrderLoading(false);
           }
         })();
 
@@ -433,7 +436,8 @@ const CoursePlayerPage = ({ courseId: propCourseId }: CoursePlayerPageProps = {}
     }
 
     // For days_after_purchase without course order, show purchase required
-    if (lesson.drip_type === 'days_after_purchase' && !courseOrder) {
+    // Only show this if we're done loading the course order
+    if (lesson.drip_type === 'days_after_purchase' && !courseOrderLoading && !courseOrder) {
       return (
         <Card>
           <CardHeader className="text-center">
@@ -448,6 +452,15 @@ const CoursePlayerPage = ({ courseId: propCourseId }: CoursePlayerPageProps = {}
             </p>
           </CardContent>
         </Card>
+      );
+    }
+
+    // Show loading state while fetching course order for drip content
+    if (courseOrderLoading) {
+      return (
+        <div className="flex items-center justify-center p-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
       );
     }
 
