@@ -169,6 +169,25 @@ const CoursePlayerPage = ({ courseId: propCourseId }: CoursePlayerPageProps = {}
                 created_at: data.course_orders.created_at,
                 course_id: data.course_orders.course_id
               });
+            } else {
+              // Fallback: find latest course order by member email (in case access link wasn't created)
+              const { data: fallbackOrder } = await (supabase as any)
+                .from('course_orders')
+                .select('id, created_at, course_id, customer_email, payment_status')
+                .eq('course_id', courseId)
+                .eq('customer_email', memberAccount.email)
+                .in('payment_status', ['completed', 'paid', 'confirmed'])
+                .order('created_at', { ascending: false })
+                .limit(1)
+                .maybeSingle();
+
+              if (fallbackOrder) {
+                setCourseOrder({
+                  id: fallbackOrder.id,
+                  created_at: fallbackOrder.created_at,
+                  course_id: fallbackOrder.course_id
+                });
+              }
             }
           } catch (error) {
             console.error('Error fetching course order:', error);
