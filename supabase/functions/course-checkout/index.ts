@@ -68,6 +68,69 @@ serve(async (req) => {
 
     console.log('Course order created:', orderData.id);
 
+    // Handle free courses
+    if (amount === 0 || paymentMethod === 'free') {
+      try {
+        // Create member account for free course
+        const { data: memberId, error: memberError } = await supabase.rpc('create_member_account_with_password', {
+          p_store_id: storeId,
+          p_email: customerData.email,
+          p_password: customerData.password,
+          p_full_name: customerData.name,
+          p_phone: customerData.phone
+        });
+
+        if (memberError) {
+          console.error('Error creating member account for free course:', memberError);
+          throw new Error('Failed to create account');
+        }
+
+        console.log('Member account created for free course:', memberId);
+        
+        // Grant course access immediately for free courses
+        const { error: accessError } = await supabase.rpc('grant_course_access', {
+          p_member_account_id: memberId,
+          p_course_id: courseId,
+          p_course_order_id: orderData.id
+        });
+
+        if (accessError) {
+          console.error('Error granting course access for free course:', accessError);
+          throw new Error('Failed to grant course access');
+        }
+
+        console.log('Course access granted for free course');
+
+        // Update order status to completed for free courses
+        const { error: updateError } = await supabase
+          .from('course_orders')
+          .update({ 
+            payment_status: 'completed',
+            status: 'completed'
+          })
+          .eq('id', orderData.id);
+
+        if (updateError) {
+          console.error('Error updating free course order status:', updateError);
+        }
+
+        return new Response(JSON.stringify({
+          success: true,
+          message: 'Successfully enrolled in the free course!',
+          orderId: orderData.id,
+          orderNumber: orderData.order_number,
+          memberAccountId: memberId
+        }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        });
+
+      } catch (error) {
+        console.error('Free course enrollment error:', error);
+        throw new Error(`Free course enrollment failed: ${error.message}`);
+      }
+    }
+
     // Handle different payment methods
     if (paymentMethod === 'eps') {
       // Call EPS payment
