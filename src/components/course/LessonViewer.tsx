@@ -1,9 +1,6 @@
 import React from 'react';
 import { LessonCountdown } from '@/components/drip-content/LessonCountdown';
 import { isLessonAvailable } from '@/utils/dripContentUtils';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Lock } from 'lucide-react';
-
 interface LessonViewerProps {
   lesson: {
     id: string;
@@ -56,19 +53,10 @@ export function LessonViewer({ lesson, courseOrder, courseOrderLoading = false }
 
   if (lesson.drip_type === 'days_after_purchase' && !courseOrder) {
     return (
-      <Card>
-        <CardHeader className="text-center">
-          <div className="w-16 h-16 mx-auto mb-4 bg-muted rounded-full flex items-center justify-center">
-            <Lock className="h-8 w-8 text-muted-foreground" />
-          </div>
-          <CardTitle>Purchase Required</CardTitle>
-        </CardHeader>
-        <CardContent className="text-center">
-          <p className="text-muted-foreground">
-            You need to purchase this course to access this lesson.
-          </p>
-        </CardContent>
-      </Card>
+      <div className="space-y-4">
+        <h1 className="text-2xl font-bold">{lesson.title}</h1>
+        <div dangerouslySetInnerHTML={{ __html: lesson.content }} />
+      </div>
     );
   }
 

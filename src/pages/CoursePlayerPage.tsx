@@ -438,20 +438,26 @@ const CoursePlayerPage = ({ courseId: propCourseId }: CoursePlayerPageProps = {}
     // For days_after_purchase without course order, show purchase required
     // Only show this if we're done loading the course order
     if (lesson.drip_type === 'days_after_purchase' && !courseOrderLoading && !courseOrder) {
+      // No order found but user has access — do not block; show content
       return (
-        <Card>
-          <CardHeader className="text-center">
-            <div className="w-16 h-16 mx-auto mb-4 bg-muted rounded-full flex items-center justify-center">
-              <Lock className="h-8 w-8 text-muted-foreground" />
+        <>
+          {/* Video Content */}
+          {lesson.video_url && (
+            <div className="w-full">
+              {renderVideoContent(lesson)}
             </div>
-            <CardTitle>Purchase Required</CardTitle>
-          </CardHeader>
-          <CardContent className="text-center">
-            <p className="text-muted-foreground">
-              You need to purchase this course to access this lesson.
-            </p>
-          </CardContent>
-        </Card>
+          )}
+
+          {/* Lesson Text Content */}
+          {lesson.content && (
+            <>
+              <Separator />
+              <div className="prose prose-sm max-w-none">
+                <div dangerouslySetInnerHTML={{ __html: lesson.content }} />
+              </div>
+            </>
+          )}
+        </>
       );
     }
 
