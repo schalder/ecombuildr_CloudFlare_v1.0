@@ -24,7 +24,9 @@ export const PaymentProcessing: React.FC = () => {
   const orderId = orderIdParam || searchParams.get('orderId') || '';
   const tempId = searchParams.get('tempId') || '';
   const paymentMethod = searchParams.get('pm') || '';
-  const isWebsiteContext = Boolean(websiteId || websiteSlug);
+  
+  // Improved website context detection - check URL params or if we're on a custom domain route
+  const isWebsiteContext = Boolean(websiteId || websiteSlug || window.location.hostname !== 'localhost' && !window.location.hostname.includes('lovableproject.com'));
   
   // Get status from URL - this takes priority over database status
   const urlStatus = searchParams.get('status');
@@ -51,8 +53,14 @@ useEffect(() => {
     if (store) {
       if (tempId && urlStatus === 'success') {
         handleDeferredOrderCreation();
+      } else if (tempId && (urlStatus === 'failed' || urlStatus === 'cancelled')) {
+        // Handle failed/cancelled deferred payments immediately
+        handleFailedDeferredPayment();
       } else if (orderId) {
         fetchOrder();
+      } else if (tempId) {
+        // If we have tempId but no status yet, show loading
+        setLoading(false);
       }
     }
   }, [orderId, tempId, urlStatus, store]);
@@ -63,6 +71,25 @@ useEffect(() => {
       updateOrderStatusToCancelled();
     }
   }, [order, urlStatus, statusUpdated]);
+
+  const handleFailedDeferredPayment = () => {
+    // Clear any stored checkout data since payment failed
+    sessionStorage.removeItem('pending_checkout');
+    
+    // Create a mock order object for display purposes from URL params
+    const mockOrder = {
+      id: tempId,
+      order_number: searchParams.get('transactionId') || tempId,
+      payment_method: paymentMethod,
+      total: parseFloat(searchParams.get('paymentAmount') || '0'),
+      status: urlStatus === 'cancelled' ? 'cancelled' : 'payment_failed',
+      customer_name: '',
+      created_at: new Date().toISOString()
+    };
+    
+    setOrder(mockOrder);
+    setLoading(false);
+  };
 
   const handleDeferredOrderCreation = async () => {
     if (!tempId || !store) return;
