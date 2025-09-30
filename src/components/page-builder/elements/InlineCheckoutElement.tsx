@@ -669,6 +669,9 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
         case 'eps':
           response = await supabase.functions.invoke('eps-payment', { body: { orderId, amount, storeId: store!.id, customerData: { name: form.customer_name, email: form.customer_email, phone: form.customer_phone, address: form.shipping_address, city: form.shipping_city, country: form.shipping_country, state: form.shipping_state, postal_code: form.shipping_postal_code } } });
           break;
+        case 'ebpay':
+          response = await supabase.functions.invoke('ebpay-payment', { body: { orderId, amount, storeId: store!.id, customerData: { name: form.customer_name, email: form.customer_email, phone: form.customer_phone, address: form.shipping_address, city: form.shipping_city, country: form.shipping_country, state: form.shipping_state, postal_code: form.shipping_postal_code } } });
+          break;
         default:
           throw new Error('Invalid payment method');
       }
@@ -1017,6 +1020,7 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
                     {allowedMethods.includes('bkash') && (<SelectItem value="bkash">bKash</SelectItem>)}
                     {allowedMethods.includes('nagad') && (<SelectItem value="nagad">Nagad</SelectItem>)}
                     {allowedMethods.includes('eps') && (<SelectItem value="eps">Bank/Card/MFS (EPS)</SelectItem>)}
+                    {allowedMethods.includes('ebpay') && (<SelectItem value="ebpay">EB Pay Gateway</SelectItem>)}
                   </SelectContent>
                 </Select>
 
