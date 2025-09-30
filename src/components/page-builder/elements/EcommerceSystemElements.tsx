@@ -827,7 +827,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
     customer_name: '', customer_email: '', customer_phone: '',
     shipping_address: '', shipping_city: '', shipping_area: '',
     shipping_country: '', shipping_state: '', shipping_postal_code: '',
-    payment_method: 'cod' as 'cod' | 'bkash' | 'nagad' | 'eps', payment_transaction_number: '', notes: '',
+    payment_method: 'cod' as 'cod' | 'bkash' | 'nagad' | 'eps' | 'ebpay', payment_transaction_number: '', notes: '',
     accept_terms: false,
     custom_fields: {} as Record<string, any>,
     selectedShippingOption: '',
@@ -851,7 +851,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
     }
   }, [websiteShipping, selectedShippingOption]);
   const [loading, setLoading] = useState(false);
-  const [allowedMethods, setAllowedMethods] = useState<Array<'cod' | 'bkash' | 'nagad' | 'eps'>>(['cod','bkash','nagad','eps']);
+  const [allowedMethods, setAllowedMethods] = useState<Array<'cod' | 'bkash' | 'nagad' | 'eps' | 'ebpay'>>(['cod','bkash','nagad','eps','ebpay']);
   const [productShippingData, setProductShippingData] = useState<Map<string, { weight_grams?: number; shipping_config?: any; product_type?: string }>>(new Map());
   const [productTypes, setProductTypes] = useState<{ hasPhysical: boolean; hasDigital: boolean }>({ hasPhysical: false, hasDigital: false });
   
@@ -875,8 +875,9 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
         bkash: !!store?.settings?.bkash?.enabled,
         nagad: !!store?.settings?.nagad?.enabled,
         eps: !!store?.settings?.eps?.enabled,
+        ebpay: !!store?.settings?.ebpay?.enabled,
       };
-      let base = ['cod','bkash','nagad','eps'].filter((m) => (storeAllowed as any)[m]);
+      let base = ['cod','bkash','nagad','eps','ebpay'].filter((m) => (storeAllowed as any)[m]);
       if (base.length === 0) base = ['cod'];
       setAllowedMethods(base as any);
       if (!base.includes(form.payment_method)) setForm(prev => ({ ...prev, payment_method: base[0] as any }));
@@ -888,7 +889,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
         .from('products')
         .select('id, allowed_payment_methods')
         .in('id', ids);
-      let acc: string[] = ['cod','bkash','nagad','eps'];
+      let acc: string[] = ['cod','bkash','nagad','eps','ebpay'];
       (data || []).forEach((p: any) => {
         const arr: string[] | null = p.allowed_payment_methods;
         if (arr && arr.length > 0) {
@@ -900,6 +901,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
         bkash: !!store?.settings?.bkash?.enabled,
         nagad: !!store?.settings?.nagad?.enabled,
         eps: !!store?.settings?.eps?.enabled,
+        ebpay: !!store?.settings?.ebpay?.enabled,
       };
       acc = acc.filter((m) => (storeAllowed as any)[m]);
       if (acc.length === 0) acc = ['cod'];
@@ -1210,6 +1212,9 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
         case 'eps':
           response = await supabase.functions.invoke('eps-payment', { body: { orderId, amount, storeId: store!.id, customerData: { name: form.customer_name, email: form.customer_email, phone: form.customer_phone, address: form.shipping_address, city: form.shipping_city, country: form.shipping_country, state: form.shipping_state, postal_code: form.shipping_postal_code } } });
           break;
+        case 'ebpay':
+          response = await supabase.functions.invoke('ebpay-payment', { body: { orderId, amount, storeId: store!.id, customerData: { name: form.customer_name, email: form.customer_email, phone: form.customer_phone, address: form.shipping_address, city: form.shipping_city, country: form.shipping_country, state: form.shipping_state, postal_code: form.shipping_postal_code } } });
+          break;
         default:
           throw new Error('Invalid payment method');
       }
@@ -1434,6 +1439,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
                     {allowedMethods.includes('bkash') && (<SelectItem value="bkash">bKash</SelectItem>)}
                     {allowedMethods.includes('nagad') && (<SelectItem value="nagad">Nagad</SelectItem>)}
                     {allowedMethods.includes('eps') && (<SelectItem value="eps">Bank/Card/MFS (EPS)</SelectItem>)}
+                    {allowedMethods.includes('ebpay') && (<SelectItem value="ebpay">EB Pay</SelectItem>)}
                   </SelectContent>
                 </Select>
                 {form.payment_method === 'bkash' && store?.settings?.bkash?.mode === 'number' && store?.settings?.bkash?.number && (
