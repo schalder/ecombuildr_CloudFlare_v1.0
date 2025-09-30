@@ -169,7 +169,7 @@ const CourseDomainRouter = ({ customDomain, storeSlug }: CourseDomainRouterProps
   }
 
   if (coursePath.includes('/members')) {
-    return renderWithLayout(
+    return (
       <MemberAuthProvider>
         {coursePath.includes('/login') ? <CourseMemberLogin /> : <CourseMemberDashboard />}
       </MemberAuthProvider>
@@ -181,7 +181,7 @@ const CourseDomainRouter = ({ customDomain, storeSlug }: CourseDomainRouterProps
     const learnMatch = coursePath.match(/\/learn\/([a-f0-9-]+)/);
     if (learnMatch) {
       const courseId = learnMatch[1];
-      return renderWithLayout(<CoursePlayerPage courseId={courseId} />);
+      return <CoursePlayerPage courseId={courseId} />;
     }
   }
 
