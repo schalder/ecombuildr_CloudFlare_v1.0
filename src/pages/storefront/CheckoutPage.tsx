@@ -139,11 +139,12 @@ useEffect(() => {
         bkash: !!store?.settings?.bkash?.enabled,
         nagad: !!store?.settings?.nagad?.enabled,
         eps: !!store?.settings?.eps?.enabled,
+        ebpay: !!store?.settings?.ebpay?.enabled,
       };
 
       // Empty cart: fall back to store-level enabled list
       if (!items.length) {
-        let base = ['cod','bkash','nagad','eps'].filter((m) => (storeAllowed as any)[m]);
+        let base = ['cod','bkash','nagad','eps','ebpay'].filter((m) => (storeAllowed as any)[m]);
         if (base.length === 0) base = ['cod'];
         setAllowedMethods(base as any);
         if (!base.includes(form.payment_method)) {
@@ -164,7 +165,7 @@ useEffect(() => {
       let hasDigital = false;
       let hasPhysical = false;
       
-      let acc: string[] = ['cod','bkash','nagad','eps'];
+      let acc: string[] = ['cod','bkash','nagad','eps','ebpay'];
       (data || []).forEach((p: any) => {
         if (p.product_type === 'digital') {
           hasDigital = true;
@@ -468,6 +469,22 @@ useEffect(() => {
             }
           });
           break;
+        case 'ebpay':
+          response = await supabase.functions.invoke('ebpay-payment', {
+            body: { 
+              orderId, 
+              amount, 
+              storeId: store!.id,
+              customerData: {
+                name: form.customer_name,
+                email: form.customer_email,
+                phone: form.customer_phone,
+                address: form.shipping_address,
+                city: form.shipping_city,
+              }
+            }
+          });
+          break;
         default:
           throw new Error('Invalid payment method');
       }
@@ -739,6 +756,9 @@ useEffect(() => {
                     {allowedMethods.includes('eps') && (
                       <SelectItem value="eps">Bank/Card/MFS (EPS)</SelectItem>
                     )}
+                    {allowedMethods.includes('ebpay') && (
+                      <SelectItem value="ebpay">EB Pay</SelectItem>
+                    )}
                   </SelectContent>
                 </Select>
 
@@ -811,6 +831,7 @@ useEffect(() => {
                     {form.payment_method === 'bkash' && 'bKash'}
                     {form.payment_method === 'nagad' && 'Nagad'}
                     {form.payment_method === 'eps' && 'Bank/Card/MFS (EPS)'}
+                    {form.payment_method === 'ebpay' && 'EB Pay'}
                   </p>
                 </div>
                 {form.notes && (

@@ -82,10 +82,17 @@ useEffect(() => {
     try {
       // Determine correct payment reference for provider
       const epsMerchantTxnId = order?.custom_fields?.eps?.merchantTransactionId || order?.custom_fields?.eps?.merchant_transaction_id;
-      const paymentRef = order.payment_method === 'eps' ? epsMerchantTxnId : order.id;
+      const ebpayTransactionId = order?.custom_fields?.ebpay?.transaction_id;
+      let paymentRef = order.id;
+      
+      if (order.payment_method === 'eps') {
+        paymentRef = epsMerchantTxnId;
+      } else if (order.payment_method === 'ebpay') {
+        paymentRef = ebpayTransactionId;
+      }
 
-      if (order.payment_method === 'eps' && !paymentRef) {
-        toast.error('Missing EPS transaction reference. Please try again.');
+      if ((order.payment_method === 'eps' && !epsMerchantTxnId) || (order.payment_method === 'ebpay' && !ebpayTransactionId)) {
+        toast.error(`Missing ${order.payment_method.toUpperCase()} transaction reference. Please try again.`);
         setVerifying(false);
         return;
       }
@@ -217,6 +224,7 @@ useEffect(() => {
                     {order.payment_method === 'bkash' && 'bKash'}
                     {order.payment_method === 'nagad' && 'Nagad'}
                     {order.payment_method === 'eps' && 'Bank/Card/MFS'}
+                    {order.payment_method === 'ebpay' && 'EB Pay'}
                   </span>
                 </div>
                 <div className="flex justify-between">

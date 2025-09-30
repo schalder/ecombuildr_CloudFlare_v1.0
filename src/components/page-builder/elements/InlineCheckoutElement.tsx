@@ -134,7 +134,7 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
     customer_name: '', customer_email: '', customer_phone: '',
     shipping_address: '', shipping_city: '', shipping_area: '',
     shipping_country: '', shipping_state: '', shipping_postal_code: '',
-    payment_method: 'cod' as 'cod' | 'bkash' | 'nagad' | 'eps', 
+    payment_method: 'cod' as 'cod' | 'bkash' | 'nagad' | 'eps' | 'ebpay', 
     payment_transaction_number: '',
     notes: '',
     accept_terms: false,
@@ -157,9 +157,9 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
   }, [selectedProduct?.id]);
 
   // Allowed payment methods derived from selected product (and optional order bump when checked)
-  const [allowedMethods, setAllowedMethods] = useState<Array<'cod' | 'bkash' | 'nagad' | 'eps'>>(['cod','bkash','nagad','eps']);
+  const [allowedMethods, setAllowedMethods] = useState<Array<'cod' | 'bkash' | 'nagad' | 'eps' | 'ebpay'>>(['cod','bkash','nagad','eps','ebpay']);
   useEffect(() => {
-    let methods: string[] = ['cod','bkash','nagad','eps'];
+    let methods: string[] = ['cod','bkash','nagad','eps','ebpay'];
     if (selectedProduct?.allowed_payment_methods && selectedProduct.allowed_payment_methods.length > 0) {
       methods = methods.filter(m => (selectedProduct.allowed_payment_methods as string[]).includes(m));
     }
@@ -172,6 +172,7 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
       bkash: !!store?.settings?.bkash?.enabled,
       nagad: !!store?.settings?.nagad?.enabled,
       eps: !!store?.settings?.eps?.enabled,
+      ebpay: !!store?.settings?.ebpay?.enabled,
     };
     methods = methods.filter((m) => (storeAllowed as any)[m]);
     if (methods.length === 0) methods = ['cod'];
