@@ -13,6 +13,7 @@ import {
   Smartphone,
   Building2,
   CheckCircle,
+  CreditCard,
   Loader2
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -112,6 +113,12 @@ const StorefrontCourseCheckout: React.FC<StorefrontCourseCheckoutProps> = ({ cou
           name: 'EPS Payment Gateway',
           icon: <img src="https://www.eps.com.bd/images/logo.png" alt="EPS" className="h-5 w-6 object-contain" />,
           description: 'Secure payment via eps.com.bd'
+        };
+      case 'ebpay':
+        return {
+          name: 'EB Pay Gateway',
+          icon: <CreditCard className="h-5 w-5 text-green-500" />,
+          description: 'Secure payment via EB Pay'
         };
       default:
         return {
