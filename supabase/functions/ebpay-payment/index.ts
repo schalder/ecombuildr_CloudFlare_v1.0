@@ -159,6 +159,11 @@ serve(async (req) => {
     };
 
     console.log('EB Pay payment request data prepared');
+    console.log('EB Pay request payload:', JSON.stringify(paymentData, null, 2));
+    console.log('EB Pay request headers:', {
+      'BRAND-KEY': ebpayConfig.brand_key ? '[SET]' : '[NOT SET]',
+      'Content-Type': 'application/json'
+    });
 
     // Make payment creation request to EB Pay
     const paymentResponse = await fetch('https://pay.ecombuildr.com/verify/api/payment/create', {
@@ -176,8 +181,19 @@ serve(async (req) => {
       status: paymentResponse.status,
       hasPaymentUrl: !!paymentResult.payment_url,
       resultStatus: paymentResult.status,
-      message: paymentResult.message 
+      message: paymentResult.message,
+      fullResponse: paymentResult
     });
+
+    // Log detailed error information for debugging
+    if (paymentResponse.status !== 200) {
+      console.error('EB Pay API Error Details:', {
+        httpStatus: paymentResponse.status,
+        httpStatusText: paymentResponse.statusText,
+        responseHeaders: Object.fromEntries(paymentResponse.headers.entries()),
+        responseBody: paymentResult
+      });
+    }
 
     if (!paymentResult.status || !paymentResult.payment_url) {
       throw new Error(paymentResult.message || 'Payment session creation failed');
