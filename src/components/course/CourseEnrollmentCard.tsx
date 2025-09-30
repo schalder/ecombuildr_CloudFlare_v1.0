@@ -31,6 +31,7 @@ interface Course {
     bkash: boolean;
     nagad: boolean;
     eps: boolean;
+    ebpay: boolean;
   };
 }
 
@@ -116,6 +117,16 @@ export const CourseEnrollmentCard: React.FC<CourseEnrollmentCardProps> = ({
             name: 'EPS Payment Gateway',
             icon: <img src="https://www.eps.com.bd/images/logo.png" alt="EPS" className="h-4 w-6 object-contain" />,
             description: 'Secure payment via eps.com.bd',
+            enabled: true
+          });
+        }
+
+        if (paymentSettings.ebpay?.enabled && course.payment_methods.ebpay) {
+          methods.push({
+            id: 'ebpay',
+            name: 'EB Pay',
+            icon: <Smartphone className="h-4 w-4 text-blue-600" />,
+            description: 'Secure payment via EB Pay',
             enabled: true
           });
         }

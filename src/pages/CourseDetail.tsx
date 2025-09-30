@@ -66,6 +66,7 @@ interface CourseDetail {
     bkash: boolean;
     nagad: boolean;
     eps: boolean;
+    ebpay: boolean;
   };
 }
 
