@@ -1,5 +1,4 @@
 import React from 'react';
-import { StorefrontHeader } from '@/components/storefront/StorefrontHeader';
 import { StorefrontFooter } from '@/components/storefront/StorefrontFooter';
 
 interface CourseStorefrontLayoutProps {
@@ -9,7 +8,6 @@ interface CourseStorefrontLayoutProps {
 export const CourseStorefrontLayout: React.FC<CourseStorefrontLayoutProps> = ({ children }) => {
   return (
     <div className="min-h-screen bg-background">
-      <StorefrontHeader />
       <main>
         {children}
       </main>
