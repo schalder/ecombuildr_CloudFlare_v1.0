@@ -341,7 +341,6 @@ useEffect(() => {
       const isNagadManual = !!(store?.settings?.nagad?.enabled && (store?.settings?.nagad?.mode === 'number' || !hasNagadApi) && store?.settings?.nagad?.number);
       const isManual = (form.payment_method === 'bkash' && isBkashManual) || (form.payment_method === 'nagad' && isNagadManual);
 
-      // Create order via secure Edge Function to respect RLS
       const orderData = {
         store_id: store.id,
         website_id: resolvedWebsiteId,
@@ -375,19 +374,40 @@ useEffect(() => {
         image: item.image || null,
       }));
 
-      const { data, error: createErr } = await supabase.functions.invoke('create-order', {
-        body: {
-          order: orderData,
-          items: itemsPayload,
+      // For EPS/EB Pay, defer order creation until after payment success
+      const isLivePayment = form.payment_method === 'eps' || form.payment_method === 'ebpay';
+      
+      let createdOrderId: string | undefined;
+      let accessToken: string | undefined;
+
+      if (isLivePayment) {
+        // Store checkout data temporarily for order creation after payment
+        sessionStorage.setItem('pending_checkout', JSON.stringify({
+          orderData,
+          itemsPayload,
           storeId: store.id,
-        }
-      });
-      if (createErr) throw createErr;
-      const createdOrderId: string | undefined = data?.order?.id;
-      if (!createdOrderId) throw new Error('Order was not created');
+          timestamp: Date.now()
+        }));
+        
+        // Generate temporary ID for tracking
+        createdOrderId = crypto.randomUUID();
+      } else {
+        // Create order immediately for COD and manual payments
+        const { data, error: createErr } = await supabase.functions.invoke('create-order', {
+          body: {
+            order: orderData,
+            items: itemsPayload,
+            storeId: store.id,
+          }
+        });
+        if (createErr) throw createErr;
+        createdOrderId = data?.order?.id;
+        if (!createdOrderId) throw new Error('Order was not created');
+        accessToken = data?.order?.access_token;
+      }
       
 
-      // Track purchase event
+      // Track purchase event for COD orders
       if (form.payment_method === 'cod') {
         trackPurchase({
           transaction_id: createdOrderId,
@@ -402,8 +422,8 @@ useEffect(() => {
         });
       }
 
-      // Update discount code usage if applied (best-effort; ignored if RLS blocks)
-      if (discountAmount > 0 && form.discount_code) {
+      // Update discount code usage if applied (only for non-live payments)
+      if (!isLivePayment && discountAmount > 0 && form.discount_code) {
         const { data: currentDiscount } = await supabase
           .from('discount_codes' as any)
           .select('used_count')
@@ -418,9 +438,6 @@ useEffect(() => {
             .eq('code', form.discount_code.toUpperCase());
         }
       }
-
-      // Get access token from response
-      const accessToken = data?.order?.access_token;
 
       // Handle payment processing
       if (form.payment_method === 'cod' || isManual) {
@@ -442,6 +459,10 @@ useEffect(() => {
     try {
       let response;
       
+      // Get stored checkout data for live payments
+      const pendingCheckout = sessionStorage.getItem('pending_checkout');
+      const checkoutData = pendingCheckout ? JSON.parse(pendingCheckout) : null;
+      
       switch (method) {
         case 'bkash':
           response = await supabase.functions.invoke('bkash-payment', {
@@ -456,9 +477,11 @@ useEffect(() => {
         case 'eps':
           response = await supabase.functions.invoke('eps-payment', {
             body: { 
-              orderId, 
+              tempOrderId: orderId,
               amount, 
               storeId: store!.id,
+              orderData: checkoutData?.orderData,
+              itemsData: checkoutData?.itemsPayload,
               customerData: {
                 name: form.customer_name,
                 email: form.customer_email,
@@ -472,9 +495,11 @@ useEffect(() => {
         case 'ebpay':
           response = await supabase.functions.invoke('ebpay-payment', {
             body: { 
-              orderId, 
+              tempOrderId: orderId,
               amount, 
               storeId: store!.id,
+              orderData: checkoutData?.orderData,
+              itemsData: checkoutData?.itemsPayload,
               redirectOrigin: window.location.origin,
               customerData: {
                 name: form.customer_name,

@@ -11,9 +11,12 @@ const corsHeaders = {
 };
 
 interface EPSPaymentRequest {
-  orderId: string;
+  tempOrderId: string; // Temporary ID for tracking before order creation
+  orderId?: string; // Real order ID (for backward compatibility)
   amount: number;
   storeId: string;
+  orderData?: any; // Full order data for deferred creation
+  itemsData?: any[]; // Order items data
   customerData: {
     name: string;
     email: string;
@@ -22,7 +25,7 @@ interface EPSPaymentRequest {
     city: string;
     country?: string;
   };
-  redirectOrigin?: string; // Explicit origin from client for proper redirects when called server-to-server
+  redirectOrigin?: string;
 }
 
 // Helper function to generate HMAC-SHA512 hash for EPS API
@@ -72,8 +75,16 @@ serve(async (req) => {
   }
 
   try {
-    const { orderId, amount, storeId, customerData, redirectOrigin }: EPSPaymentRequest = await req.json();
-    console.log('EPS Payment Request:', { orderId, amount, storeId, hasCustomerData: !!customerData, redirectOrigin });
+    const { tempOrderId, orderId, amount, storeId, orderData, itemsData, customerData, redirectOrigin }: EPSPaymentRequest = await req.json();
+    const trackingId = tempOrderId || orderId;
+    console.log('EPS Payment Request:', { 
+      trackingId, 
+      amount, 
+      storeId, 
+      hasCustomerData: !!customerData, 
+      hasOrderData: !!orderData,
+      redirectOrigin 
+    });
 
     // Create Supabase client
     const supabase = createClient(
@@ -170,43 +181,17 @@ serve(async (req) => {
     }
 
     // Step 2: Initialize payment
-    const merchantTransactionId = generateMerchantTxnId(orderId);
+    const merchantTransactionId = generateMerchantTxnId(trackingId);
     const transactionHash = await generateHash(merchantTransactionId, epsConfig.hash_key);
     console.log('Generated transaction hash for payment initialization');
 
-    // Fetch order access token to attach in redirect URLs
-    // Check if this is a course order or regular order
-    let orderRow: any = null;
-    let orderToken = '';
-    let isCourseOrder = false;
-
-    // Try course_orders first
-    const { data: courseOrderRow } = await supabase
-      .from('course_orders')
-      .select('order_number, metadata')
-      .eq('id', orderId)
-      .maybeSingle();
-
-    if (courseOrderRow) {
-      isCourseOrder = true;
-      orderRow = courseOrderRow;
-    } else {
-      // Try regular orders
-      const { data: regularOrderRow } = await supabase
-        .from('orders')
-        .select('custom_fields')
-        .eq('id', orderId)
-        .maybeSingle();
-      
-      if (regularOrderRow) {
-        orderRow = regularOrderRow;
-        orderToken = regularOrderRow?.custom_fields?.order_access_token || '';
-      }
-    }
+    // For deferred order creation, store order data in payment metadata
+    // Success URL will trigger order creation after verification
+    const isCourseOrder = false; // Regular orders only for now
 
     const paymentData = {
       storeId: epsConfig.store_id,
-      CustomerOrderId: orderId,
+      CustomerOrderId: trackingId,
       merchantTransactionId: merchantTransactionId,
       transactionTypeId: 1, // Web
       financialEntityId: 0,
@@ -214,28 +199,23 @@ serve(async (req) => {
       totalAmount: amount,
       ipAddress: "127.0.0.1", // Default IP
       version: "1",
-      successUrl: isCourseOrder 
-        ? `${originBase}/courses/order-confirmation?orderId=${orderId}&status=success`
-        : originBase.includes('ecombuildr.com') 
-          ? `${originBase}/store/${await getStoreSlug(supabase, storeId)}/order-confirmation?orderId=${orderId}${orderToken ? `&ot=${orderToken}` : ''}&status=success`
-          : `${originBase}/order-confirmation?orderId=${orderId}${orderToken ? `&ot=${orderToken}` : ''}&status=success`,
-      failUrl: isCourseOrder
-        ? `${originBase}/courses/order-confirmation?orderId=${orderId}&status=failed`
-        : originBase.includes('ecombuildr.com')
-          ? `${originBase}/store/${await getStoreSlug(supabase, storeId)}/payment-processing?orderId=${orderId}${orderToken ? `&ot=${orderToken}` : ''}&status=failed`
-          : `${originBase}/payment-processing?orderId=${orderId}${orderToken ? `&ot=${orderToken}` : ''}&status=failed`,
-      cancelUrl: isCourseOrder
-        ? `${originBase}/courses/order-confirmation?orderId=${orderId}&status=cancelled`
-        : originBase.includes('ecombuildr.com')
-          ? `${originBase}/store/${await getStoreSlug(supabase, storeId)}/payment-processing?orderId=${orderId}${orderToken ? `&ot=${orderToken}` : ''}&status=cancelled`
-          : `${originBase}/payment-processing?orderId=${orderId}${orderToken ? `&ot=${orderToken}` : ''}&status=cancelled`,
+      // Pass tracking ID in URLs for payment processing
+      successUrl: originBase.includes('ecombuildr.com') 
+        ? `${originBase}/store/${await getStoreSlug(supabase, storeId)}/payment-processing?tempId=${trackingId}&status=success&pm=eps`
+        : `${originBase}/payment-processing?tempId=${trackingId}&status=success&pm=eps`,
+      failUrl: originBase.includes('ecombuildr.com')
+        ? `${originBase}/store/${await getStoreSlug(supabase, storeId)}/payment-processing?tempId=${trackingId}&status=failed&pm=eps`
+        : `${originBase}/payment-processing?tempId=${trackingId}&status=failed&pm=eps`,
+      cancelUrl: originBase.includes('ecombuildr.com')
+        ? `${originBase}/store/${await getStoreSlug(supabase, storeId)}/payment-processing?tempId=${trackingId}&status=cancelled&pm=eps`
+        : `${originBase}/payment-processing?tempId=${trackingId}&status=cancelled&pm=eps`,
       customerName: customerData.name,
       customerEmail: customerData.email,
       CustomerAddress: customerData.address,
       CustomerAddress2: "",
       CustomerCity: customerData.city,
-      CustomerState: customerData.city, // Using city as state
-      CustomerPostcode: "1000", // Default postcode
+      CustomerState: customerData.city,
+      CustomerPostcode: "1000",
       CustomerCountry: customerData.country || "BD",
       CustomerPhone: customerData.phone,
       ShipmentName: customerData.name,
@@ -245,13 +225,13 @@ serve(async (req) => {
       ShipmentState: customerData.city,
       ShipmentPostcode: "1000",
       ShipmentCountry: customerData.country || "BD",
-      ValueA: "",
+      ValueA: orderData ? JSON.stringify({ orderData, itemsData }) : "", // Store order data
       ValueB: "",
       ValueC: "",
       ValueD: "",
       ShippingMethod: "NO",
       NoOfItem: "1",
-      ProductName: `Order #${orderId}`,
+      ProductName: `Order #${trackingId}`,
       ProductProfile: "general",
       ProductCategory: "E-commerce"
     };
@@ -289,43 +269,9 @@ serve(async (req) => {
       throw new Error(paymentResult.ErrorMessage || 'Payment session creation failed');
     }
 
-    // Update order with EPS details - keep as pending; verification will complete it
-    if (isCourseOrder) {
-      const newMeta = { ...(orderRow?.metadata || {}), eps: { merchantTransactionId, transactionId: paymentResult.TransactionId } };
-      const { error: updateErr } = await supabase
-        .from('course_orders')
-        .update({
-          payment_method: 'eps',
-          payment_status: 'pending',
-          updated_at: new Date().toISOString(),
-          metadata: newMeta
-        })
-        .eq('id', orderId);
-      if (updateErr) {
-        console.error('EPS init: failed to update course order', updateErr);
-      }
-    } else {
-      const { error: updateErr } = await supabase
-        .from('orders')
-        .update({
-          payment_method: 'eps',
-          status: 'pending',
-          updated_at: new Date().toISOString(),
-          custom_fields: {
-            ...(orderRow?.custom_fields || {}),
-            eps: {
-              merchantTransactionId,
-              transactionId: paymentResult.TransactionId,
-            }
-          }
-        })
-        .eq('id', orderId);
-      if (updateErr) {
-        console.error('EPS init: failed to update order', updateErr);
-      }
-    }
-
-    console.log('EPS init: order updated with EPS metadata', { isCourseOrder, orderId });
+    // For deferred orders, we store the payment tracking info in a temporary way
+    // The actual order will be created after successful payment verification
+    console.log('EPS payment initiated (deferred order creation)', { trackingId, merchantTransactionId });
 
     return new Response(
       JSON.stringify({

@@ -9,9 +9,12 @@ const corsHeaders = {
 };
 
 interface EBPayPaymentRequest {
-  orderId: string;
+  tempOrderId: string; // Temporary ID for tracking before order creation
+  orderId?: string; // Real order ID (for backward compatibility)
   amount: number;
   storeId: string;
+  orderData?: any; // Full order data for deferred creation
+  itemsData?: any[]; // Order items data
   customerData: {
     name: string;
     email: string;
@@ -43,8 +46,16 @@ serve(async (req) => {
   }
 
   try {
-    const { orderId, amount, storeId, customerData, redirectOrigin }: EBPayPaymentRequest = await req.json();
-    console.log('EB Pay Payment Request:', { orderId, amount, storeId, hasCustomerData: !!customerData, redirectOrigin });
+    const { tempOrderId, orderId, amount, storeId, orderData, itemsData, customerData, redirectOrigin }: EBPayPaymentRequest = await req.json();
+    const trackingId = tempOrderId || orderId;
+    console.log('EB Pay Payment Request:', { 
+      trackingId, 
+      amount, 
+      storeId, 
+      hasCustomerData: !!customerData,
+      hasOrderData: !!orderData,
+      redirectOrigin 
+    });
 
     // Create Supabase client
     const supabase = createClient(
@@ -129,56 +140,30 @@ serve(async (req) => {
       originBase = 'https://ecombuildr.com';
     }
 
-    // Fetch order details to determine order type and create redirect URLs
-    let orderRow: any = null;
-    let orderToken = '';
-    let isCourseOrder = false;
-
-    // Try course_orders first
-    const { data: courseOrderRow } = await supabase
-      .from('course_orders')
-      .select('order_number, metadata')
-      .eq('id', orderId)
-      .maybeSingle();
-
-    if (courseOrderRow) {
-      isCourseOrder = true;
-      orderRow = courseOrderRow;
-    } else {
-      // Try regular orders
-      const { data: regularOrderRow } = await supabase
-        .from('orders')
-        .select('custom_fields')
-        .eq('id', orderId)
-        .maybeSingle();
-      
-      if (regularOrderRow) {
-        orderRow = regularOrderRow;
-        orderToken = regularOrderRow?.custom_fields?.order_access_token || '';
-      }
-    }
+    // For deferred order creation, store order data in payment metadata
+    const isCourseOrder = false; // Regular orders only for now
 
     // Prepare EB Pay payment request data with correct format
     const paymentData = {
-      success_url: isCourseOrder 
-        ? `${originBase}/courses/order-confirmation?orderId=${orderId}&status=success`
-        : originBase.includes('ecombuildr.com') 
-          ? `${originBase}/store/${await getStoreSlug(supabase, storeId)}/order-confirmation?orderId=${orderId}${orderToken ? `&ot=${orderToken}` : ''}&status=success`
-          : `${originBase}/order-confirmation?orderId=${orderId}${orderToken ? `&ot=${orderToken}` : ''}&status=success`,
-      cancel_url: isCourseOrder
-        ? `${originBase}/courses/payment-processing?orderId=${orderId}&status=failed`
-        : originBase.includes('ecombuildr.com')
-          ? `${originBase}/store/${await getStoreSlug(supabase, storeId)}/payment-processing?orderId=${orderId}${orderToken ? `&ot=${orderToken}` : ''}&status=failed`
-          : `${originBase}/payment-processing?orderId=${orderId}${orderToken ? `&ot=${orderToken}` : ''}&status=failed`,
+      success_url: originBase.includes('ecombuildr.com') 
+        ? `${originBase}/store/${await getStoreSlug(supabase, storeId)}/payment-processing?tempId=${trackingId}&status=success&pm=ebpay`
+        : `${originBase}/payment-processing?tempId=${trackingId}&status=success&pm=ebpay`,
+      cancel_url: originBase.includes('ecombuildr.com')
+        ? `${originBase}/store/${await getStoreSlug(supabase, storeId)}/payment-processing?tempId=${trackingId}&status=failed&pm=ebpay`
+        : `${originBase}/payment-processing?tempId=${trackingId}&status=failed&pm=ebpay`,
       amount: amount.toString(),
       cus_name: customerData.name || '',
       cus_email: customerData.email || '',
       cus_phone: customerData.phone || '',
       meta_data: { 
-        order_id: orderId,
+        tracking_id: trackingId,
+        store_id: storeId,
         customer_name: customerData.name,
         customer_email: customerData.email,
-        phone: customerData.phone
+        phone: customerData.phone,
+        // Store order data for deferred creation
+        ...(orderData && { order_data: orderData }),
+        ...(itemsData && { items_data: itemsData })
       }
     };
 
@@ -227,52 +212,9 @@ serve(async (req) => {
       throw new Error(paymentResult.message || 'Payment session creation failed');
     }
 
-    // Store transaction ID if provided by EB Pay
-    const transactionId = paymentResult.transaction_id || paymentResult.id;
-
-    // Update order with EB Pay details - keep as pending; verification will complete it
-    if (isCourseOrder) {
-      const newMeta = { 
-        ...(orderRow?.metadata || {}), 
-        ebpay: { 
-          payment_request: paymentData,
-          ...(transactionId && { transactionId })
-        } 
-      };
-      const { error: updateErr } = await supabase
-        .from('course_orders')
-        .update({
-          payment_method: 'ebpay',
-          payment_status: 'pending',
-          updated_at: new Date().toISOString(),
-          metadata: newMeta
-        })
-        .eq('id', orderId);
-      if (updateErr) {
-        console.error('EB Pay init: failed to update course order', updateErr);
-      }
-    } else {
-      const { error: updateErr } = await supabase
-        .from('orders')
-        .update({
-          payment_method: 'ebpay',
-          status: 'pending',
-          updated_at: new Date().toISOString(),
-          custom_fields: {
-            ...(orderRow?.custom_fields || {}),
-            ebpay: {
-              payment_request: paymentData,
-              ...(transactionId && { transactionId })
-            }
-          }
-        })
-        .eq('id', orderId);
-      if (updateErr) {
-        console.error('EB Pay init: failed to update order', updateErr);
-      }
-    }
-
-    console.log('EB Pay init: order updated with EB Pay metadata', { isCourseOrder, orderId });
+    // For deferred orders, we store the payment tracking info in metadata
+    // The actual order will be created after successful payment verification
+    console.log('EB Pay payment initiated (deferred order creation)', { trackingId });
 
     return new Response(
       JSON.stringify({

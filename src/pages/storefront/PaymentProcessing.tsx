@@ -19,8 +19,11 @@ export const PaymentProcessing: React.FC = () => {
   const [order, setOrder] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [verifying, setVerifying] = useState(false);
+  const [creatingOrder, setCreatingOrder] = useState(false);
   const paths = useEcomPaths();
   const orderId = orderIdParam || searchParams.get('orderId') || '';
+  const tempId = searchParams.get('tempId') || '';
+  const paymentMethod = searchParams.get('pm') || '';
   const isWebsiteContext = Boolean(websiteId || websiteSlug);
   
   // Get status from URL - this takes priority over database status
@@ -45,10 +48,14 @@ useEffect(() => {
 
 
   useEffect(() => {
-    if (orderId && store) {
-      fetchOrder();
+    if (store) {
+      if (tempId && urlStatus === 'success') {
+        handleDeferredOrderCreation();
+      } else if (orderId) {
+        fetchOrder();
+      }
     }
-  }, [orderId, store]);
+  }, [orderId, tempId, urlStatus, store]);
 
   // Auto-update order status if URL indicates failure/cancellation
   useEffect(() => {
@@ -56,6 +63,61 @@ useEffect(() => {
       updateOrderStatusToCancelled();
     }
   }, [order, urlStatus, statusUpdated]);
+
+  const handleDeferredOrderCreation = async () => {
+    if (!tempId || !store) return;
+
+    setCreatingOrder(true);
+    try {
+      // Get stored checkout data
+      const pendingCheckout = sessionStorage.getItem('pending_checkout');
+      if (!pendingCheckout) {
+        toast.error('Checkout data not found. Please try again.');
+        setLoading(false);
+        return;
+      }
+
+      const checkoutData = JSON.parse(pendingCheckout);
+      
+      // Create order now that payment is successful
+      const { data, error } = await supabase.functions.invoke('create-order-on-payment-success', {
+        body: {
+          orderData: checkoutData.orderData,
+          itemsData: checkoutData.itemsPayload,
+          storeId: store.id,
+          paymentVerified: true,
+          paymentDetails: {
+            method: paymentMethod,
+            tempId: tempId,
+            verifiedAt: new Date().toISOString()
+          }
+        }
+      });
+
+      if (error) throw error;
+
+      if (data?.success && data?.order) {
+        // Clear stored checkout data
+        sessionStorage.removeItem('pending_checkout');
+        
+        // Clear cart after successful order creation
+        clearCart();
+        
+        // Navigate to order confirmation
+        const newOrderToken = data.order.access_token;
+        toast.success('Order created successfully!');
+        navigate(paths.orderConfirmation(data.order.id, newOrderToken));
+      } else {
+        throw new Error('Failed to create order');
+      }
+    } catch (error) {
+      console.error('Error creating deferred order:', error);
+      toast.error('Failed to create order. Please contact support.');
+    } finally {
+      setCreatingOrder(false);
+      setLoading(false);
+    }
+  };
 
   const updateOrderStatusToCancelled = async () => {
     if (!order || !orderId) return;

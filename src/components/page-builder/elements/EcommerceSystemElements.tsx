@@ -1149,17 +1149,37 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
         variation: (i as any).variation ?? null,
       }));
 
-
-      const { data, error } = await supabase.functions.invoke('create-order', {
-        body: {
-          order: orderData,
-          items: itemsPayload,
+      // For EPS/EB Pay, defer order creation until after payment success
+      const isLivePayment = form.payment_method === 'eps' || form.payment_method === 'ebpay';
+      
+      let orderId: string | undefined;
+      let orderResponse: any = null;
+      
+      if (isLivePayment) {
+        // Store checkout data temporarily for order creation after payment
+        sessionStorage.setItem('pending_checkout', JSON.stringify({
+          orderData,
+          itemsPayload,
           storeId: store.id,
-        }
-      });
-      if (error) throw error;
-      const orderId: string | undefined = data?.order?.id;
-      if (!orderId) throw new Error('Order was not created');
+          timestamp: Date.now()
+        }));
+        
+        // Generate temporary ID for tracking
+        orderId = crypto.randomUUID();
+      } else {
+        // Create order immediately for COD and manual payments
+        const { data, error } = await supabase.functions.invoke('create-order', {
+          body: {
+            order: orderData,
+            items: itemsPayload,
+            storeId: store.id,
+          }
+        });
+        if (error) throw error;
+        orderId = data?.order?.id;
+        if (!orderId) throw new Error('Order was not created');
+        orderResponse = data;
+      }
       
       
 
@@ -1187,7 +1207,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
         clearCart();
         toast.success(isManual ? 'Order placed! Please complete payment to the provided number.' : 'Order placed!');
         // Get order access token from the response
-        const orderToken = data?.order?.custom_fields?.order_access_token;
+        const orderToken = orderResponse?.order?.custom_fields?.order_access_token;
         navigate(paths.orderConfirmation(orderId, orderToken));
       } else {
         await initiatePayment(orderId, orderData.total, form.payment_method);
@@ -1201,6 +1221,10 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
 
   const initiatePayment = async (orderId: string, amount: number, method: string) => {
     try {
+      // Get stored checkout data for live payments
+      const pendingCheckout = sessionStorage.getItem('pending_checkout');
+      const checkoutData = pendingCheckout ? JSON.parse(pendingCheckout) : null;
+      
       let response;
       switch (method) {
         case 'bkash':
@@ -1210,14 +1234,34 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
           response = await supabase.functions.invoke('nagad-payment', { body: { orderId, amount, storeId: store!.id } });
           break;
         case 'eps':
-          response = await supabase.functions.invoke('eps-payment', { body: { orderId, amount, storeId: store!.id, customerData: { name: form.customer_name, email: form.customer_email, phone: form.customer_phone, address: form.shipping_address, city: form.shipping_city, country: form.shipping_country, state: form.shipping_state, postal_code: form.shipping_postal_code } } });
+          response = await supabase.functions.invoke('eps-payment', { 
+            body: { 
+              tempOrderId: orderId,
+              amount, 
+              storeId: store!.id, 
+              orderData: checkoutData?.orderData,
+              itemsData: checkoutData?.itemsPayload,
+              customerData: { 
+                name: form.customer_name, 
+                email: form.customer_email, 
+                phone: form.customer_phone, 
+                address: form.shipping_address, 
+                city: form.shipping_city, 
+                country: form.shipping_country, 
+                state: form.shipping_state, 
+                postal_code: form.shipping_postal_code 
+              } 
+            } 
+          });
           break;
         case 'ebpay':
           response = await supabase.functions.invoke('ebpay-payment', { 
             body: { 
-              orderId, 
+              tempOrderId: orderId,
               amount, 
               storeId: store!.id, 
+              orderData: checkoutData?.orderData,
+              itemsData: checkoutData?.itemsPayload,
               redirectOrigin: window.location.origin,
               customerData: { 
                 name: form.customer_name, 
