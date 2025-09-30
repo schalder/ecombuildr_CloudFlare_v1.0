@@ -214,6 +214,8 @@ const App = () => (
                 <Route path="/course/:storeId/members/login" element={<CourseMemberLoginPage />} />
                 <Route path="/course/:storeId/members" element={<MemberAuthProvider><CourseMemberDashboard /></MemberAuthProvider>} />
                 <Route path="/course/:storeId/learn/:courseId" element={<CoursePlayerPage />} />
+                <Route path="/course/:storeId/cart" element={<CartPage />} />
+                <Route path="/course/:storeId/search" element={<SearchResults />} />
                 <Route path="/course/:storeId" element={<CourseStorefrontLayout><StorefrontCourseLibrary /></CourseStorefrontLayout>} />
                 <Route path="/course/:storeId/:courseId" element={<CourseStorefrontLayout><StorefrontCourseDetailWrapper /></CourseStorefrontLayout>} />
                 <Route path="/course/:storeId/:courseId/checkout" element={<CourseStorefrontLayout><StorefrontCourseCheckoutWrapper /></CourseStorefrontLayout>} />
@@ -222,6 +224,8 @@ const App = () => (
                 <Route path="/courses/members/login" element={<CourseMemberLoginPage />} />
                 <Route path="/courses/members" element={<MemberAuthProvider><CourseMemberDashboard /></MemberAuthProvider>} />
                 <Route path="/courses/learn/:courseId" element={<CoursePlayerPage />} />
+                <Route path="/courses/cart" element={<CartPage />} />
+                <Route path="/courses/search" element={<SearchResults />} />
                 <Route path="/courses" element={<CourseStorefrontLayout><StorefrontCourseLibrary /></CourseStorefrontLayout>} />
                 <Route path="/courses/:courseId" element={<CourseStorefrontLayout><StorefrontCourseDetailWrapper /></CourseStorefrontLayout>} />
                 <Route path="/courses/:courseId/checkout" element={<CourseStorefrontLayout><StorefrontCourseCheckoutWrapper /></CourseStorefrontLayout>} />

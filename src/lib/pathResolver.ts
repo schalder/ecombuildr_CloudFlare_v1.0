@@ -22,9 +22,12 @@ export const useEcomPaths = () => {
   let websiteSlug = (params as any).websiteSlug as string | undefined;
   let funnelId = (params as any).funnelId as string | undefined;
   
+  // Parse storeId for course routes
+  let storeId = (params as any).storeId as string | undefined;
+
   // If params are empty (e.g., when AddToCartProvider is mounted higher in tree), 
   // parse from current pathname
-  if (!websiteId && !websiteSlug && !funnelId) {
+  if (!websiteId && !websiteSlug && !funnelId && !storeId) {
     const pathname = location.pathname;
     if (pathname.includes('/website/')) {
       websiteId = pathname.split('/website/')[1]?.split('/')[0];
@@ -32,6 +35,8 @@ export const useEcomPaths = () => {
       websiteSlug = pathname.split('/site/')[1]?.split('/')[0];
     } else if (pathname.includes('/funnel/')) {
       funnelId = pathname.split('/funnel/')[1]?.split('/')[0];
+    } else if (pathname.includes('/course/') && !pathname.includes('/courses')) {
+      storeId = pathname.split('/course/')[1]?.split('/')[0];
     }
   }
 
@@ -49,6 +54,40 @@ export const useEcomPaths = () => {
       paymentProcessing: (orderId: string) => `/payment-processing?orderId=${orderId}`,
       orderConfirmation: (orderId: string, token?: string) => 
         `/order-confirmation?orderId=${orderId}${token ? `&ot=${token}` : ''}`,
+    };
+  }
+
+  // Handle course routes
+  if (storeId) {
+    return {
+      base: `/course/${storeId}`,
+      home: `/course/${storeId}`,
+      products: `/course/${storeId}/products`,
+      productDetail: (productSlug: string) => `/course/${storeId}/products/${productSlug}`,
+      collections: `/course/${storeId}/collections`,
+      collectionDetail: (collectionSlug: string) => `/course/${storeId}/collections/${collectionSlug}`,
+      checkout: `/course/${storeId}/checkout`,
+      cart: `/course/${storeId}/cart`,
+      paymentProcessing: (orderId: string) => `/course/${storeId}/payment-processing?orderId=${orderId}`,
+      orderConfirmation: (orderId: string, token?: string) => 
+        `/course/${storeId}/order-confirmation?orderId=${orderId}${token ? `&ot=${token}` : ''}`,
+    };
+  }
+
+  // Handle legacy /courses routes
+  if (location.pathname.startsWith('/courses')) {
+    return {
+      base: '/courses',
+      home: '/courses',
+      products: '/courses/products',
+      productDetail: (productSlug: string) => `/courses/products/${productSlug}`,
+      collections: '/courses/collections',
+      collectionDetail: (collectionSlug: string) => `/courses/collections/${collectionSlug}`,
+      checkout: '/courses/checkout',
+      cart: '/courses/cart',
+      paymentProcessing: (orderId: string) => `/courses/payment-processing?orderId=${orderId}`,
+      orderConfirmation: (orderId: string, token?: string) => 
+        `/courses/order-confirmation?orderId=${orderId}${token ? `&ot=${token}` : ''}`,
     };
   }
 
