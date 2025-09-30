@@ -58,8 +58,8 @@ serve(async (req) => {
       ...(paymentDetails && { payment_details: paymentDetails })
     };
 
-    // Set status to completed for successful payments
-    orderData.status = 'completed';
+    // Set status to confirmed for successful payments
+    orderData.status = 'confirmed';
 
     // Insert order
     const { data: order, error: orderError } = await supabase
