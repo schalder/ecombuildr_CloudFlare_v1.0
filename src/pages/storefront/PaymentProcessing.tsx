@@ -20,6 +20,10 @@ export const PaymentProcessing: React.FC = () => {
   const paths = useEcomPaths();
   const orderId = orderIdParam || searchParams.get('orderId') || '';
   const isWebsiteContext = Boolean(websiteId || websiteSlug);
+  
+  // Get status from URL - this takes priority over database status
+  const urlStatus = searchParams.get('status');
+  const [statusUpdated, setStatusUpdated] = useState(false);
 useEffect(() => {
   if (slug) {
     loadStore(slug);
@@ -43,6 +47,34 @@ useEffect(() => {
       fetchOrder();
     }
   }, [orderId, store]);
+
+  // Auto-update order status if URL indicates failure/cancellation
+  useEffect(() => {
+    if (order && (urlStatus === 'failed' || urlStatus === 'cancelled') && !statusUpdated) {
+      updateOrderStatusToCancelled();
+    }
+  }, [order, urlStatus, statusUpdated]);
+
+  const updateOrderStatusToCancelled = async () => {
+    if (!order || !orderId) return;
+    
+    setStatusUpdated(true);
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .update({ 
+          status: 'cancelled',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', orderId);
+      
+      if (!error) {
+        setOrder(prev => ({ ...prev, status: 'cancelled' }));
+      }
+    } catch (error) {
+      console.error('Error updating order status:', error);
+    }
+  };
 
   const fetchOrder = async () => {
     if (!orderId || !store) return;
@@ -130,12 +162,17 @@ useEffect(() => {
   const getStatusIcon = () => {
     if (!order) return <Clock className="h-8 w-8 text-muted-foreground" />;
     
-    switch (order.status) {
+    // Prioritize URL status over database status
+    const currentStatus = (urlStatus === 'failed' || urlStatus === 'cancelled') ? 'cancelled' : order.status;
+    
+    switch (currentStatus) {
       case 'paid':
         return <CheckCircle className="h-8 w-8 text-green-500" />;
+      case 'cancelled':
       case 'payment_failed':
         return <XCircle className="h-8 w-8 text-red-500" />;
       case 'processing':
+      case 'pending':
       default:
         return <Clock className="h-8 w-8 text-blue-500" />;
     }
@@ -144,12 +181,19 @@ useEffect(() => {
   const getStatusText = () => {
     if (!order) return 'Loading...';
     
+    // Prioritize URL status over database status
+    if (urlStatus === 'failed') return 'Payment Failed';
+    if (urlStatus === 'cancelled') return 'Payment Cancelled';
+    
     switch (order.status) {
       case 'paid':
         return 'Payment Successful';
+      case 'cancelled':
+        return 'Payment Cancelled';
       case 'payment_failed':
         return 'Payment Failed';
       case 'processing':
+      case 'pending':
       default:
         return 'Payment Processing';
     }
@@ -158,46 +202,54 @@ useEffect(() => {
   const getStatusDescription = () => {
     if (!order) return 'Please wait while we load your order details.';
     
+    // Prioritize URL status over database status
+    if (urlStatus === 'failed' || urlStatus === 'cancelled') {
+      return 'Your payment was not completed. The order has been cancelled. Please try again or contact support if you need assistance.';
+    }
+    
     switch (order.status) {
       case 'paid':
         return 'Your payment has been confirmed and your order is being processed.';
+      case 'cancelled':
+        return 'This order has been cancelled. Please contact support if you have any questions.';
       case 'payment_failed':
         return 'Your payment could not be processed. Please try again or contact support.';
       case 'processing':
+      case 'pending':
       default:
         return 'Please complete your payment in the opened window and return here to verify your payment status.';
     }
   };
 
   if (loading) {
-    return (
-      <StorefrontLayout>
-        <div className="container mx-auto px-4 py-8">
-          <div className="flex items-center justify-center min-h-[400px]">
-            <div className="text-center">
-              <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4" />
-              <p>Loading order details...</p>
-            </div>
+    const loadingContent = (
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4" />
+            <p>Loading order details...</p>
           </div>
         </div>
-      </StorefrontLayout>
+      </div>
     );
+    
+    return isWebsiteContext ? loadingContent : <StorefrontLayout>{loadingContent}</StorefrontLayout>;
   }
 
   if (!order) {
-    return (
-      <StorefrontLayout>
-        <div className="container mx-auto px-4 py-8">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold text-destructive mb-2">Order Not Found</h1>
-            <p className="text-muted-foreground mb-4">The requested order could not be found.</p>
-            <Button onClick={() => navigate(paths.home)}>
-              Continue Shopping
-            </Button>
-          </div>
+    const notFoundContent = (
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-destructive mb-2">Order Not Found</h1>
+          <p className="text-muted-foreground mb-4">The requested order could not be found.</p>
+          <Button onClick={() => navigate(paths.home)}>
+            Continue Shopping
+          </Button>
         </div>
-      </StorefrontLayout>
+      </div>
     );
+    
+    return isWebsiteContext ? notFoundContent : <StorefrontLayout>{notFoundContent}</StorefrontLayout>;
   }
 
   const content = (
@@ -239,7 +291,8 @@ useEffect(() => {
             </div>
 
             <div className="flex flex-col gap-3">
-              {order.status === 'processing' && (
+              {/* Show verify button only for processing/pending status without URL failure indication */}
+              {(order.status === 'processing' || order.status === 'pending') && urlStatus !== 'failed' && urlStatus !== 'cancelled' && (
                 <Button 
                   onClick={verifyPayment} 
                   disabled={verifying}
@@ -268,7 +321,7 @@ useEffect(() => {
                 </Button>
               )}
 
-              {order.status === 'payment_failed' && (
+              {(order.status === 'payment_failed' || order.status === 'cancelled' || urlStatus === 'failed' || urlStatus === 'cancelled') && (
                 <Button 
                   onClick={() => navigate(paths.checkout)}
                   className="w-full"
