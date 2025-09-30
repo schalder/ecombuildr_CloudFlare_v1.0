@@ -262,7 +262,20 @@ const CourseCheckout = () => {
 
     } catch (error) {
       console.error('Checkout error:', error);
-      toast.error('Failed to process checkout. Please try again.');
+      
+      // Show specific error message if available
+      let errorMessage = 'Failed to process checkout. Please try again.';
+      if (error instanceof Error) {
+        if (error.message.includes('EB Pay credentials not configured')) {
+          errorMessage = 'Payment gateway not configured. Please contact support.';
+        } else if (error.message.includes('Invalid API Request')) {
+          errorMessage = 'Payment gateway error. Please try again or contact support.';
+        } else if (error.message) {
+          errorMessage = error.message;
+        }
+      }
+      
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }

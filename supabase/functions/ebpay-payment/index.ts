@@ -162,6 +162,8 @@ serve(async (req) => {
     console.log('EB Pay request payload:', JSON.stringify(paymentData, null, 2));
     console.log('EB Pay request headers:', {
       'BRAND-KEY': ebpayConfig.brand_key ? '[SET]' : '[NOT SET]',
+      'API-KEY': ebpayConfig.api_key ? '[SET]' : '[NOT SET]',
+      'SECRET-KEY': ebpayConfig.secret_key ? '[SET]' : '[NOT SET]',
       'Content-Type': 'application/json'
     });
 
@@ -170,6 +172,8 @@ serve(async (req) => {
       method: 'POST',
       headers: {
         'BRAND-KEY': ebpayConfig.brand_key,
+        'API-KEY': ebpayConfig.api_key,
+        'SECRET-KEY': ebpayConfig.secret_key,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(paymentData),

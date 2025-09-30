@@ -36,6 +36,8 @@ interface PaymentSettings {
   ebpay?: {
     enabled: boolean;
     brand_key?: string;
+    api_key?: string;
+    secret_key?: string;
     is_live?: boolean;
   };
 }
@@ -333,15 +335,37 @@ export default function PaymentSettings({ storeId }: Props) {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="ebpay-brand-key">Brand Key</Label>
-            <Input
-              id="ebpay-brand-key"
-              type="password"
-              value={settings.ebpay?.brand_key || ''}
-              onChange={(e) => updateEBPaySettings({ brand_key: e.target.value })}
-              placeholder="Enter EB Pay Brand Key"
-            />
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="ebpay-brand-key">Brand Key</Label>
+              <Input
+                id="ebpay-brand-key"
+                type="password"
+                value={settings.ebpay?.brand_key || ''}
+                onChange={(e) => updateEBPaySettings({ brand_key: e.target.value })}
+                placeholder="Enter EB Pay Brand Key"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="ebpay-api-key">API Key</Label>
+              <Input
+                id="ebpay-api-key"
+                type="password"
+                value={settings.ebpay?.api_key || ''}
+                onChange={(e) => updateEBPaySettings({ api_key: e.target.value })}
+                placeholder="Enter EB Pay API Key"
+              />
+            </div>
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="ebpay-secret-key">Secret Key</Label>
+              <Input
+                id="ebpay-secret-key"
+                type="password"
+                value={settings.ebpay?.secret_key || ''}
+                onChange={(e) => updateEBPaySettings({ secret_key: e.target.value })}
+                placeholder="Enter EB Pay Secret Key"
+              />
+            </div>
           </div>
           
           <div className="flex items-center space-x-2">

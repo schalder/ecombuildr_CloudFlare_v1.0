@@ -162,6 +162,17 @@ async function verifyEBPayPayment(transactionId: string, storeId: string, supaba
     }
 
     const ebpayConfig = store.settings.ebpay;
+    
+    // Validate required configuration for verification
+    if (!ebpayConfig.brand_key || !ebpayConfig.api_key || !ebpayConfig.secret_key) {
+      console.error('Missing EB Pay credentials for verification:', {
+        hasBrandKey: !!ebpayConfig.brand_key,
+        hasApiKey: !!ebpayConfig.api_key,
+        hasSecretKey: !!ebpayConfig.secret_key
+      });
+      throw new Error('EB Pay credentials not configured for verification');
+    }
+    
     console.log('Using EB Pay config for verification');
 
     // Verify payment with EB Pay API
@@ -169,6 +180,8 @@ async function verifyEBPayPayment(transactionId: string, storeId: string, supaba
       method: 'POST',
       headers: {
         'BRAND-KEY': ebpayConfig.brand_key,
+        'API-KEY': ebpayConfig.api_key,
+        'SECRET-KEY': ebpayConfig.secret_key,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
