@@ -36,6 +36,7 @@ interface CourseCheckoutData {
     bkash: boolean;
     nagad: boolean;
     eps: boolean;
+    ebpay: boolean;
   };
 }
 
@@ -101,6 +102,12 @@ const CourseCheckout = () => {
           name: 'EPS Payment Gateway',
           icon: <img src="https://www.eps.com.bd/images/logo.png" alt="EPS" className="h-5 w-6 object-contain" />,
           description: 'Secure payment via eps.com.bd'
+        };
+      case 'ebpay':
+        return {
+          name: 'EB Pay Gateway',
+          icon: <CreditCard className="h-5 w-5 text-green-500" />,
+          description: 'Secure payment via EB Pay'
         };
       default:
         return {
@@ -190,6 +197,29 @@ const CourseCheckout = () => {
 
         if (epsResponse.paymentURL) {
           window.location.href = epsResponse.paymentURL;
+          return;
+        }
+      } else if (paymentMethod === 'ebpay') {
+        // Call EB Pay payment edge function
+        const { data: ebpayResponse, error: ebpayError } = await supabase.functions.invoke('ebpay-payment', {
+          body: {
+            orderId: orderData.id,
+            amount: course.price,
+            storeId: store.id,
+            customerData: {
+              name: form.customer_name.trim(),
+              email: form.customer_email.trim(),
+              phone: form.customer_phone.trim(),
+              address: '',
+              city: ''
+            }
+          }
+        });
+
+        if (ebpayError) throw ebpayError;
+
+        if (ebpayResponse.paymentURL) {
+          window.location.href = ebpayResponse.paymentURL;
           return;
         }
       } else if (paymentMethod === 'bkash') {
@@ -426,7 +456,7 @@ const CourseCheckout = () => {
                 <p>Secure payment • 30-day money-back guarantee</p>
               </div>
 
-              {paymentMethod !== 'eps' && (
+              {paymentMethod !== 'eps' && paymentMethod !== 'ebpay' && (
                 <div className="p-3 bg-muted rounded-lg">
                   <p className="text-sm text-center">
                     <strong>Note:</strong> Manual payment methods require approval. 

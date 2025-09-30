@@ -51,9 +51,9 @@ export const CoursePaymentProcessing: React.FC = () => {
         return;
       }
 
-      // For EPS, skip this page entirely — go straight to confirmation
-      if (fetched?.payment_method === 'eps') {
-        console.log('[CoursePaymentProcessing] EPS flow: redirecting to confirmation');
+      // For EPS and EB Pay, skip this page entirely — go straight to confirmation
+      if (fetched?.payment_method === 'eps' || fetched?.payment_method === 'ebpay') {
+        console.log('[CoursePaymentProcessing] EPS/EB Pay flow: redirecting to confirmation');
         navigate(`/courses/order-confirmation?orderId=${orderId}&status=${status || 'success'}`);
         return;
       }
@@ -99,6 +99,22 @@ export const CoursePaymentProcessing: React.FC = () => {
             orderId, 
             paymentId: epsRef, 
             method: 'eps',
+            password: localStorage.getItem('courseCheckoutPassword') // Get stored password
+          };
+          break;
+        }
+        case 'ebpay': {
+          const ebpayRef = paymentRef || order?.metadata?.ebpay?.transactionId || order?.metadata?.transactionId;
+          if (!ebpayRef) {
+            toast.error('Missing EB Pay transaction reference. Please try again.');
+            console.warn('[CoursePaymentProcessing] verifyPayment:missing-ebpay-ref');
+            return;
+          }
+          verificationFunction = 'ebpay-verify-payment';
+          verificationBody = { 
+            orderId, 
+            transactionId: ebpayRef, 
+            method: 'ebpay',
             password: localStorage.getItem('courseCheckoutPassword') // Get stored password
           };
           break;
@@ -251,8 +267,8 @@ export const CoursePaymentProcessing: React.FC = () => {
               )}
 
               <div className="space-y-3">
-                {/* Only show manual verify button for non-EPS methods */}
-                {!autoVerifying && (status === 'success' || order.payment_status === 'pending') && order.payment_method !== 'eps' && (
+                {/* Only show manual verify button for non-EPS/non-EB Pay methods */}
+                {!autoVerifying && (status === 'success' || order.payment_status === 'pending') && order.payment_method !== 'eps' && order.payment_method !== 'ebpay' && (
                   <Button
                     onClick={verifyPayment}
                     disabled={verifying}

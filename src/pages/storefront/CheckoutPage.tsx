@@ -31,7 +31,7 @@ interface CheckoutForm {
   shipping_address: string;
   shipping_city: string;
   shipping_area: string;
-  payment_method: 'cod' | 'bkash' | 'nagad' | 'eps';
+  payment_method: 'cod' | 'bkash' | 'nagad' | 'eps' | 'ebpay';
   payment_transaction_number: string;
   notes: string;
   discount_code: string;
@@ -60,7 +60,7 @@ export const CheckoutPage: React.FC = () => {
   const [shippingCost, setShippingCost] = useState(0); // Default shipping cost
   const { websiteShipping } = useWebsiteShipping();
 
-  const [allowedMethods, setAllowedMethods] = useState<Array<'cod' | 'bkash' | 'nagad' | 'eps'>>(['cod','bkash','nagad','eps']);
+  const [allowedMethods, setAllowedMethods] = useState<Array<'cod' | 'bkash' | 'nagad' | 'eps' | 'ebpay'>>(['cod','bkash','nagad','eps','ebpay']);
 
   const [form, setForm] = useState<CheckoutForm>({
     customer_name: '',

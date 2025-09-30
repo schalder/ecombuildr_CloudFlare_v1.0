@@ -72,6 +72,7 @@ interface Course {
     bkash: boolean;
     nagad: boolean;
     eps: boolean;
+    ebpay: boolean;
   };
   theme_settings?: {
     module_color?: string;
@@ -285,7 +286,7 @@ const CourseEditor = () => {
 
       setCourse({
         ...courseData,
-        payment_methods: courseData.payment_methods as Course['payment_methods'] || { bkash: false, nagad: false, eps: false },
+        payment_methods: courseData.payment_methods as Course['payment_methods'] || { bkash: false, nagad: false, eps: false, ebpay: false },
         theme_settings: courseData.theme_settings as Course['theme_settings'] || { 
           module_color: "#3b82f6", 
           module_text_color: "#ffffff",
@@ -1088,7 +1089,7 @@ const CourseEditor = () => {
                   <CardContent className="space-y-6">
                     <CoursePaymentMethods
                       storeId={store.id}
-                      value={course.payment_methods || { bkash: false, nagad: false, eps: false }}
+                      value={course.payment_methods || { bkash: false, nagad: false, eps: false, ebpay: false }}
                       onChange={(methods) => setCourse(prev => prev ? {...prev, payment_methods: methods} : null)}
                     />
                   </CardContent>

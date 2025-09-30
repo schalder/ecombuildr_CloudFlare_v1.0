@@ -39,6 +39,7 @@ interface CourseFormData {
     bkash: boolean;
     nagad: boolean;
     eps: boolean;
+    ebpay: boolean;
   };
 }
 
@@ -63,7 +64,8 @@ const CreateCourse = () => {
     payment_methods: {
       bkash: false,
       nagad: false,
-      eps: false
+      eps: false,
+      ebpay: false
     }
   });
 

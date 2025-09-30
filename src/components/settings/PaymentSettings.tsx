@@ -33,6 +33,13 @@ interface PaymentSettings {
     hash_key?: string;
     is_live?: boolean;
   };
+  ebpay?: {
+    enabled: boolean;
+    api_key?: string;
+    secret_key?: string;
+    brand_key?: string;
+    is_live?: boolean;
+  };
 }
 
 export default function PaymentSettings({ storeId }: Props) {
@@ -43,6 +50,7 @@ export default function PaymentSettings({ storeId }: Props) {
     bkash: { enabled: false, mode: 'number' },
     nagad: { enabled: false, mode: 'number' },
     eps: { enabled: false, is_live: false },
+    ebpay: { enabled: false, is_live: false },
   });
 
   useEffect(() => {
@@ -63,6 +71,7 @@ export default function PaymentSettings({ storeId }: Props) {
             bkash: paymentSettings.bkash || { enabled: false, mode: 'number' },
             nagad: paymentSettings.nagad || { enabled: false, mode: 'number' },
             eps: paymentSettings.eps || { enabled: false, is_live: false },
+            ebpay: paymentSettings.ebpay || { enabled: false, is_live: false },
           });
         }
       } catch (error) {
@@ -105,6 +114,7 @@ export default function PaymentSettings({ storeId }: Props) {
         bkash: settings.bkash,
         nagad: settings.nagad,
         eps: settings.eps,
+        ebpay: settings.ebpay,
       } as any;
 
       const { error } = await supabase
@@ -164,6 +174,18 @@ export default function PaymentSettings({ storeId }: Props) {
         enabled: false,
         is_live: false,
         ...(prev.eps || {}), 
+        ...updates 
+      }
+    }));
+  };
+
+  const updateEBPaySettings = (updates: Partial<NonNullable<PaymentSettings['ebpay']>>) => {
+    setSettings(prev => ({
+      ...prev,
+      ebpay: { 
+        enabled: false,
+        is_live: false,
+        ...(prev.ebpay || {}), 
         ...updates 
       }
     }));
@@ -297,6 +319,61 @@ export default function PaymentSettings({ storeId }: Props) {
               onCheckedChange={(is_live) => updateEPSSettings({ is_live })}
             />
             <Label htmlFor="eps-live-mode">Live Mode (Uncheck for Sandbox)</Label>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* EB Pay Payment Gateway Settings */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between">
+            EB Pay Payment Gateway
+            <Switch
+              checked={settings.ebpay?.enabled || false}
+              onCheckedChange={(enabled) => updateEBPaySettings({ enabled })}
+            />
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="ebpay-api-key">API Key</Label>
+              <Input
+                id="ebpay-api-key"
+                value={settings.ebpay?.api_key || ''}
+                onChange={(e) => updateEBPaySettings({ api_key: e.target.value })}
+                placeholder="Enter EB Pay API Key"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="ebpay-secret-key">Secret Key</Label>
+              <Input
+                id="ebpay-secret-key"
+                type="password"
+                value={settings.ebpay?.secret_key || ''}
+                onChange={(e) => updateEBPaySettings({ secret_key: e.target.value })}
+                placeholder="Enter EB Pay Secret Key"
+              />
+            </div>
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="ebpay-brand-key">Brand Key</Label>
+              <Input
+                id="ebpay-brand-key"
+                type="password"
+                value={settings.ebpay?.brand_key || ''}
+                onChange={(e) => updateEBPaySettings({ brand_key: e.target.value })}
+                placeholder="Enter EB Pay Brand Key"
+              />
+            </div>
+          </div>
+          
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="ebpay-live-mode"
+              checked={settings.ebpay?.is_live || false}
+              onCheckedChange={(is_live) => updateEBPaySettings({ is_live })}
+            />
+            <Label htmlFor="ebpay-live-mode">Live Mode (Uncheck for Sandbox)</Label>
           </div>
         </CardContent>
       </Card>
