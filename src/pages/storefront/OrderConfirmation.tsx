@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { useStore } from '@/contexts/StoreContext';
+import { useCart } from '@/contexts/CartContext';
 import { StorefrontLayout } from '@/components/storefront/StorefrontLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -52,6 +53,7 @@ export const OrderConfirmation: React.FC = () => {
   const { slug, websiteId, websiteSlug, orderId: orderIdParam } = useParams<{ slug?: string; websiteId?: string; websiteSlug?: string; orderId?: string }>();
   const [searchParams] = useSearchParams();
   const { store, loadStore, loadStoreById } = useStore();
+  const { clearCart } = useCart();
   const [order, setOrder] = useState<Order | null>(null);
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -138,6 +140,9 @@ useEffect(() => {
         
         setOrder(orderData);
         setOrderItems(itemsData);
+        
+        // Clear cart when order confirmation is successfully loaded
+        clearCart();
         
         // Track Purchase event when order confirmation page loads (for online payments)
         if (orderData && itemsData.length > 0) {

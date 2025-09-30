@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useStore } from '@/contexts/StoreContext';
+import { useCart } from '@/contexts/CartContext';
 import { StorefrontLayout } from '@/components/storefront/StorefrontLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,6 +15,7 @@ export const PaymentProcessing: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { store, loadStore, loadStoreById } = useStore();
+  const { clearCart } = useCart();
   const [order, setOrder] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [verifying, setVerifying] = useState(false);
@@ -145,6 +147,8 @@ useEffect(() => {
 
       if (data.paymentStatus === 'success') {
         toast.success('Payment verified successfully!');
+        // Clear cart after successful payment
+        clearCart();
         const orderToken = searchParams.get('ot') || '';
         navigate(paths.orderConfirmation(order.id, orderToken));
       } else {

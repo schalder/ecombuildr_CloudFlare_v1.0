@@ -496,15 +496,10 @@ useEffect(() => {
 
       const { paymentURL } = response.data;
       if (paymentURL) {
-        // Redirect to payment gateway
-        window.location.href = paymentURL;
+        // Show loading message and redirect to payment gateway
         toast.success('Redirecting to payment gateway...');
-        
-        // Clear cart after initiating payment
-        clearCart();
-        
-        // Redirect to a payment processing page with token
-        navigate(paths.paymentProcessing(orderId) + (accessToken ? `&ot=${accessToken}` : ''));
+        // Cart will be cleared after successful payment verification
+        window.location.href = paymentURL;
       } else {
         throw new Error('Payment URL not received');
       }

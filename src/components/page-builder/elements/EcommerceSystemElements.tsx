@@ -1238,13 +1238,8 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
       if (response.error) throw new Error(response.error.message);
       const { paymentURL } = response.data;
       if (paymentURL) {
+        // Cart will be cleared after successful payment verification
         window.location.href = paymentURL;
-        clearCart();
-        // We need to get the order access token from somewhere - let's fetch it from the order
-        const { data: orderData } = await supabase.functions.invoke('get-order-admin', { body: { orderId } });
-        const orderToken = orderData?.order?.custom_fields?.order_access_token;
-        const processingUrl = `${paths.paymentProcessing(orderId)}${orderToken ? `&ot=${orderToken}` : ''}`;
-        navigate(processingUrl);
       } else {
         throw new Error('Payment URL not received');
       }
