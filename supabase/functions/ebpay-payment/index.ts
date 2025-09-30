@@ -166,10 +166,10 @@ serve(async (req) => {
           ? `${originBase}/store/${await getStoreSlug(supabase, storeId)}/order-confirmation?orderId=${orderId}${orderToken ? `&ot=${orderToken}` : ''}&status=success`
           : `${originBase}/order-confirmation?orderId=${orderId}${orderToken ? `&ot=${orderToken}` : ''}&status=success`,
       cancel_url: isCourseOrder
-        ? `${originBase}/courses/order-confirmation?orderId=${orderId}&status=cancelled`
+        ? `${originBase}/courses/payment-processing?orderId=${orderId}&status=failed`
         : originBase.includes('ecombuildr.com')
-          ? `${originBase}/store/${await getStoreSlug(supabase, storeId)}/payment-processing?orderId=${orderId}${orderToken ? `&ot=${orderToken}` : ''}&status=cancelled`
-          : `${originBase}/payment-processing?orderId=${orderId}${orderToken ? `&ot=${orderToken}` : ''}&status=cancelled`,
+          ? `${originBase}/store/${await getStoreSlug(supabase, storeId)}/payment-processing?orderId=${orderId}${orderToken ? `&ot=${orderToken}` : ''}&status=failed`
+          : `${originBase}/payment-processing?orderId=${orderId}${orderToken ? `&ot=${orderToken}` : ''}&status=failed`,
       amount: amount.toString(),
       cus_name: customerData.name || '',
       cus_email: customerData.email || '',

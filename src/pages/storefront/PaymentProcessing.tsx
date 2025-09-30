@@ -50,26 +50,30 @@ useEffect(() => {
     try {
       // Get order token from URL params for secure access
       const orderToken = searchParams.get('ot') || '';
-      if (!orderToken) {
-        console.error('Order access token missing');
-        toast.error('Invalid order access');
-        setLoading(false);
+      
+      // Try public access first with token
+      if (orderToken) {
+        const { data, error } = await supabase.functions.invoke('get-order-public', {
+          body: { 
+            orderId: orderId, 
+            storeId: store.id,
+            token: orderToken 
+          }
+        });
+
+        if (error) throw error;
+        setOrder(data?.order || null);
         return;
       }
 
-      const { data, error } = await supabase.functions.invoke('get-order-public', {
-        body: { 
-          orderId: orderId, 
-          storeId: store.id,
-          token: orderToken 
-        }
-      });
+      // If no token, show error - payment processing requires order token
+      console.error('Order access token missing');
+      setLoading(false);
+      setOrder(null);
 
-      if (error) throw error;
-      setOrder(data?.order || null);
     } catch (error) {
       console.error('Error fetching order:', error);
-      toast.error('Failed to load order details');
+      setOrder(null);
     } finally {
       setLoading(false);
     }

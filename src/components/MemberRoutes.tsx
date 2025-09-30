@@ -5,6 +5,7 @@ import MemberDashboard from '@/pages/MemberDashboard';
 import CourseMemberDashboard from '@/components/course/CourseMemberDashboard';
 import CoursePlayerPage from '@/pages/CoursePlayerPage';
 import CourseMemberLoginPage from '@/pages/CourseMemberLoginPage';
+import CoursePaymentProcessing from '@/components/course/CoursePaymentProcessing';
 
 const MemberRoutes = () => {
   return (
@@ -29,6 +30,7 @@ const MemberRoutes = () => {
         </MemberAuthProvider>
       } />
       <Route path="/courses/learn/:courseId" element={<CoursePlayerPage />} />
+      <Route path="/courses/payment-processing" element={<CoursePaymentProcessing />} />
     </Routes>
   );
 };
