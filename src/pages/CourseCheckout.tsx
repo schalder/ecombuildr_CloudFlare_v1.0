@@ -206,6 +206,7 @@ const CourseCheckout = () => {
             orderId: orderData.id,
             amount: course.price,
             storeId: store.id,
+            redirectOrigin: window.location.origin,
             customerData: {
               name: form.customer_name.trim(),
               email: form.customer_email.trim(),
@@ -221,6 +222,8 @@ const CourseCheckout = () => {
         if (ebpayResponse.paymentURL) {
           window.location.href = ebpayResponse.paymentURL;
           return;
+        } else {
+          throw new Error('Payment gateway error. Please try again.');
         }
       } else if (paymentMethod === 'bkash') {
         // Call bKash payment edge function

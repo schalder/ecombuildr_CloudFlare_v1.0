@@ -475,6 +475,7 @@ useEffect(() => {
               orderId, 
               amount, 
               storeId: store!.id,
+              redirectOrigin: window.location.origin,
               customerData: {
                 name: form.customer_name,
                 email: form.customer_email,
@@ -509,7 +510,8 @@ useEffect(() => {
       }
     } catch (error) {
       console.error('Payment initiation error:', error);
-      toast.error('Failed to initiate payment. Please try again.');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to initiate payment. Please try again.';
+      toast.error(errorMessage);
     }
   };
 

@@ -66,8 +66,29 @@ serve(async (req) => {
 
     const ebpayConfig = {
       brand_key: store.settings.ebpay.brand_key,
+      api_key: store.settings.ebpay.api_key,
+      secret_key: store.settings.ebpay.secret_key,
       is_live: store.settings.ebpay.is_live,
     };
+
+    // Validate required credentials
+    if (!ebpayConfig.brand_key || !ebpayConfig.api_key || !ebpayConfig.secret_key) {
+      console.error('EB Pay credentials missing:', {
+        hasBrandKey: !!ebpayConfig.brand_key,
+        hasApiKey: !!ebpayConfig.api_key,
+        hasSecretKey: !!ebpayConfig.secret_key
+      });
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: 'EB Pay credentials not configured' 
+        }),
+        { 
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
 
     console.log('EB Pay Config:', { ...ebpayConfig, brand_key: '[HIDDEN]' });
 
@@ -137,7 +158,7 @@ serve(async (req) => {
       }
     }
 
-    // Prepare EB Pay payment request data
+    // Prepare EB Pay payment request data with correct format
     const paymentData = {
       success_url: isCourseOrder 
         ? `${originBase}/courses/order-confirmation?orderId=${orderId}&status=success`
@@ -149,13 +170,16 @@ serve(async (req) => {
         : originBase.includes('ecombuildr.com')
           ? `${originBase}/store/${await getStoreSlug(supabase, storeId)}/payment-processing?orderId=${orderId}${orderToken ? `&ot=${orderToken}` : ''}&status=cancelled`
           : `${originBase}/payment-processing?orderId=${orderId}${orderToken ? `&ot=${orderToken}` : ''}&status=cancelled`,
-      metadata: { 
-        phone: customerData.phone,
+      amount: amount.toString(),
+      cus_name: customerData.name || '',
+      cus_email: customerData.email || '',
+      cus_phone: customerData.phone || '',
+      meta_data: { 
         order_id: orderId,
         customer_name: customerData.name,
-        customer_email: customerData.email
-      },
-      amount: amount.toString()
+        customer_email: customerData.email,
+        phone: customerData.phone
+      }
     };
 
     console.log('EB Pay payment request data prepared');
@@ -203,9 +227,18 @@ serve(async (req) => {
       throw new Error(paymentResult.message || 'Payment session creation failed');
     }
 
+    // Store transaction ID if provided by EB Pay
+    const transactionId = paymentResult.transaction_id || paymentResult.id;
+
     // Update order with EB Pay details - keep as pending; verification will complete it
     if (isCourseOrder) {
-      const newMeta = { ...(orderRow?.metadata || {}), ebpay: { payment_request: paymentData } };
+      const newMeta = { 
+        ...(orderRow?.metadata || {}), 
+        ebpay: { 
+          payment_request: paymentData,
+          ...(transactionId && { transactionId })
+        } 
+      };
       const { error: updateErr } = await supabase
         .from('course_orders')
         .update({
@@ -229,6 +262,7 @@ serve(async (req) => {
             ...(orderRow?.custom_fields || {}),
             ebpay: {
               payment_request: paymentData,
+              ...(transactionId && { transactionId })
             }
           }
         })
