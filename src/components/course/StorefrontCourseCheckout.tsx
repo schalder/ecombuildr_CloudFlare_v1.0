@@ -204,8 +204,8 @@ const StorefrontCourseCheckout: React.FC<StorefrontCourseCheckoutProps> = ({ cou
         transaction_id: form.transaction_id.trim()
       };
 
-      // Store password temporarily for EPS payments
-      if (paymentMethod === 'eps' && isNewStudent) {
+      // Store password temporarily for EPS and EB Pay payments
+      if ((paymentMethod === 'eps' || paymentMethod === 'ebpay') && isNewStudent) {
         localStorage.setItem('courseCheckoutPassword', form.password.trim());
       }
 

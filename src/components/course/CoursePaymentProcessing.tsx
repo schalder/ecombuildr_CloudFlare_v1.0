@@ -18,7 +18,7 @@ export const CoursePaymentProcessing: React.FC = () => {
 
   const orderId = searchParams.get('orderId');
   const status = searchParams.get('status');
-  const paymentRef = searchParams.get('payment_ref') || searchParams.get('trxID') || searchParams.get('MerchantTransactionId');
+  const paymentRef = searchParams.get('payment_ref') || searchParams.get('trxID') || searchParams.get('MerchantTransactionId') || searchParams.get('transaction_id');
 
   useEffect(() => {
     console.log('[CoursePaymentProcessing] init', { orderId, status, paymentRef, search: typeof window !== 'undefined' ? window.location.search : '' });

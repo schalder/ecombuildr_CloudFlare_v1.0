@@ -56,7 +56,7 @@ serve(async (req) => {
         customer_phone: customerData.phone,
         total: amount,
         payment_method: paymentMethod,
-        payment_status: paymentMethod === 'eps' ? 'pending' : 'pending_manual'
+        payment_status: (paymentMethod === 'eps' || paymentMethod === 'ebpay') ? 'pending' : 'pending_manual'
       })
       .select()
       .single();
@@ -179,13 +179,59 @@ serve(async (req) => {
         console.error('EPS integration error:', epsError);
         // Continue with manual flow as fallback
       }
+    } else if (paymentMethod === 'ebpay') {
+      // Call EB Pay payment
+      try {
+        const originHeader = req.headers.get('origin');
+        const referer = req.headers.get('referer');
+        let redirectOrigin = originHeader || '';
+        if (!redirectOrigin && referer) {
+          try { redirectOrigin = new URL(referer).origin; } catch { /* ignore */ }
+        }
+
+        const { data: ebpayResponse, error: ebpayError } = await supabase.functions.invoke('ebpay-payment', {
+          body: {
+            orderId: orderData.id,
+            amount: amount,
+            storeId: storeId,
+            customerData: {
+              name: customerData.name,
+              email: customerData.email,
+              phone: customerData.phone,
+              address: customerData.phone, // Fallback address for courses
+              city: 'Dhaka', // Default city
+              country: 'BD'
+            },
+            redirectOrigin
+          }
+        });
+
+        if (ebpayError) {
+          console.error('EB Pay payment error:', ebpayError);
+          throw new Error('EB Pay payment failed');
+        }
+
+        if (ebpayResponse && ebpayResponse.paymentURL) {
+          return new Response(JSON.stringify({
+            success: true,
+            paymentURL: ebpayResponse.paymentURL,
+            orderId: orderData.id
+          }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json', ...corsHeaders },
+          });
+        }
+      } catch (ebpayError) {
+        console.error('EB Pay integration error:', ebpayError);
+        // Continue with manual flow as fallback
+      }
     }
 
     // For manual payment methods (bKash, Nagad) or EPS fallback
     let message = '';
     
     // Create member account for manual payments if new student
-    if (paymentMethod !== 'eps' && isNewStudent && customerData.password) {
+    if (paymentMethod !== 'eps' && paymentMethod !== 'ebpay' && isNewStudent && customerData.password) {
       try {
         const { data: memberId, error: memberError } = await supabase.rpc('create_member_account_with_password', {
           p_store_id: storeId,
