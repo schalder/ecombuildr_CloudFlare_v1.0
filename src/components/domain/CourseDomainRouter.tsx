@@ -161,7 +161,7 @@ const CourseDomainRouter = ({ customDomain, storeSlug }: CourseDomainRouterProps
     if (website) {
       return (
         <CartDrawerProvider>
-          <CartProvider>
+          <CartProvider storeId={currentStore.id} websiteIdOverride={website.id}>
             <AddToCartProvider>
               <CartDrawer />
               <WebsiteProvider websiteId={website.id} websiteSlug={website.slug}>
@@ -178,6 +178,21 @@ const CourseDomainRouter = ({ customDomain, storeSlug }: CourseDomainRouterProps
     }
     return children;
   };
+
+  // Handle products page
+  if (coursePath.startsWith(`${basePath}/products`) || coursePath === '/products') {
+    return renderWithLayout(<StorefrontProducts />);
+  }
+
+  // Handle cart page
+  if (coursePath.startsWith(`${basePath}/cart`) || coursePath === '/cart') {
+    return renderWithLayout(<CartPage />);
+  }
+
+  // Handle search page
+  if (coursePath.startsWith(`${basePath}/search`) || coursePath === '/search') {
+    return renderWithLayout(<SearchResults />);
+  }
 
   // Determine which page to show based on the path
   if (coursePath === basePath || coursePath === `${basePath}/`) {
