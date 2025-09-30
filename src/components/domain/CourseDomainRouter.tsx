@@ -18,6 +18,14 @@ import { WebsiteProvider } from '@/contexts/WebsiteContext';
 import CoursePlayerPage from '@/pages/CoursePlayerPage';
 import { Loader2 } from 'lucide-react';
 import { setSEO } from '@/lib/seo';
+// Added imports to support cart/search pages and correct cart context
+import { StorefrontProducts } from '@/pages/storefront/StorefrontProducts';
+import { SearchResults } from '@/pages/storefront/SearchResults';
+import { CartPage } from '@/pages/storefront/CartPage';
+import { CartProvider } from '@/contexts/CartContext';
+import { AddToCartProvider } from '@/contexts/AddToCartProvider';
+import { CartDrawerProvider } from '@/contexts/CartDrawerContext';
+import { CartDrawer } from '@/components/storefront/CartDrawer';
 
 interface CourseDomainRouterProps {
   customDomain: string;
@@ -148,16 +156,24 @@ const CourseDomainRouter = ({ customDomain, storeSlug }: CourseDomainRouterProps
   const basePath = courseConnection.path || '';
   const coursePath = location.pathname;
 
+
   const renderWithLayout = (children: React.ReactNode) => {
     if (website) {
       return (
-        <WebsiteProvider websiteId={website.id} websiteSlug={website.slug}>
-          {(website.settings?.header?.enabled !== false) && <WebsiteHeader website={website} />}
-          <main className="flex-1">
-            {children}
-          </main>
-          {(website.settings?.footer?.enabled !== false) && <WebsiteFooter website={website} />}
-        </WebsiteProvider>
+        <CartDrawerProvider>
+          <CartProvider>
+            <AddToCartProvider>
+              <CartDrawer />
+              <WebsiteProvider websiteId={website.id} websiteSlug={website.slug}>
+                {(website.settings?.header?.enabled !== false) && <WebsiteHeader website={website} />}
+                <main className="flex-1">
+                  {children}
+                </main>
+                {(website.settings?.footer?.enabled !== false) && <WebsiteFooter website={website} />}
+              </WebsiteProvider>
+            </AddToCartProvider>
+          </CartProvider>
+        </CartDrawerProvider>
       );
     }
     return children;
