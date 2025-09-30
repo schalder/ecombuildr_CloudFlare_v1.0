@@ -32,14 +32,6 @@ export const CoursePaymentProcessing: React.FC = () => {
   const fetchOrder = async () => {
     if (!orderId) return;
 
-    // Check if this is a product order (has order token 'ot' param) - if so, redirect to storefront payment processing
-    const orderToken = searchParams.get('ot');
-    if (orderToken) {
-      console.log('[CoursePaymentProcessing] detected product order token, redirecting to storefront');
-      navigate(`/payment-processing?${searchParams.toString()}`);
-      return;
-    }
-
     console.log('[CoursePaymentProcessing] fetchOrder:start', { orderId });
     try {
       const { data, error } = await supabase.functions.invoke('get-course-order-public', {
@@ -229,7 +221,7 @@ export const CoursePaymentProcessing: React.FC = () => {
           <h1 className="text-2xl font-bold mb-4">Order Not Found</h1>
           <Button onClick={() => navigate('/')}>
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Continue Shopping
+            Back to Courses
           </Button>
         </div>
       </div>
