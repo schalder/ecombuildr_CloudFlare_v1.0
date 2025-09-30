@@ -115,9 +115,7 @@ export const DomainRouter: React.FC<DomainRouterProps> = ({ children }) => {
           // First, check if this is a course-related path - prioritize over funnel routing
           if (
             currentPath.startsWith('/courses') ||
-            currentPath.startsWith('/members') ||
-            currentPath.startsWith('/payment-processing') ||
-            currentPath.startsWith('/order-confirmation')
+            currentPath.startsWith('/members')
           ) {
             console.debug('DomainRouter: Course path detected:', currentPath);
             selectedConnection = connectionsArray.find(c => c.content_type === 'course_area') || {
