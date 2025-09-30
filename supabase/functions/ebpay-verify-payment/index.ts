@@ -168,8 +168,6 @@ async function verifyEBPayPayment(transactionId: string, storeId: string, supaba
     const verifyResponse = await fetch('https://pay.ecombuildr.com/verify/api/payment/verify', {
       method: 'POST',
       headers: {
-        'API-KEY': ebpayConfig.api_key,
-        'SECRET-KEY': ebpayConfig.secret_key,
         'BRAND-KEY': ebpayConfig.brand_key,
         'Content-Type': 'application/json',
       },

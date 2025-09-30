@@ -65,13 +65,11 @@ serve(async (req) => {
     }
 
     const ebpayConfig = {
-      api_key: store.settings.ebpay.api_key,
-      secret_key: store.settings.ebpay.secret_key,
       brand_key: store.settings.ebpay.brand_key,
       is_live: store.settings.ebpay.is_live,
     };
 
-    console.log('EB Pay Config:', { ...ebpayConfig, secret_key: '[HIDDEN]', brand_key: '[HIDDEN]' });
+    console.log('EB Pay Config:', { ...ebpayConfig, brand_key: '[HIDDEN]' });
 
     // Determine origin for redirects - preserve user's current domain
     const ref = req.headers.get('referer') || '';
@@ -166,8 +164,6 @@ serve(async (req) => {
     const paymentResponse = await fetch('https://pay.ecombuildr.com/verify/api/payment/create', {
       method: 'POST',
       headers: {
-        'API-KEY': ebpayConfig.api_key,
-        'SECRET-KEY': ebpayConfig.secret_key,
         'BRAND-KEY': ebpayConfig.brand_key,
         'Content-Type': 'application/json',
       },

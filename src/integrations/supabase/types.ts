@@ -4186,7 +4186,7 @@ export type Database = {
         | "shipped"
         | "delivered"
         | "cancelled"
-      payment_method: "cod" | "bkash" | "nagad" | "eps"
+      payment_method: "cod" | "bkash" | "nagad" | "eps" | "ebpay"
       product_library_status: "draft" | "published" | "archived"
       product_type: "physical" | "digital"
       roadmap_status: "planned" | "in_progress" | "shipped" | "backlog"
@@ -4343,7 +4343,7 @@ export const Constants = {
         "delivered",
         "cancelled",
       ],
-      payment_method: ["cod", "bkash", "nagad", "eps"],
+      payment_method: ["cod", "bkash", "nagad", "eps", "ebpay"],
       product_library_status: ["draft", "published", "archived"],
       product_type: ["physical", "digital"],
       roadmap_status: ["planned", "in_progress", "shipped", "backlog"],
