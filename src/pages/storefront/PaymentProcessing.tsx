@@ -51,7 +51,7 @@ useEffect(() => {
 
   useEffect(() => {
     if (store) {
-      if (tempId && urlStatus === 'success') {
+      if (tempId && (urlStatus === 'success' || urlStatus === 'completed')) {
         handleDeferredOrderCreation();
       } else if (tempId && (urlStatus === 'failed' || urlStatus === 'cancelled')) {
         // Handle failed/cancelled deferred payments immediately
@@ -116,7 +116,11 @@ useEffect(() => {
           paymentDetails: {
             method: paymentMethod,
             tempId: tempId,
-            verifiedAt: new Date().toISOString()
+            verifiedAt: new Date().toISOString(),
+            transactionId: searchParams.get('transactionId') || undefined,
+            paymentMethod: searchParams.get('paymentMethod') || undefined,
+            paymentAmount: searchParams.get('paymentAmount') || undefined,
+            paymentFee: searchParams.get('paymentFee') || undefined
           }
         }
       });
