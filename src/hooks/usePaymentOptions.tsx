@@ -32,7 +32,20 @@ export const usePaymentOptions = (options: { enabled?: boolean } = { enabled: fa
         .order('provider');
 
       if (error) throw error;
-      setPaymentOptions(data || []);
+      
+      // Parse account_number for ebpay from JSON string to object
+      const processedData = (data || []).map(row => {
+        if (row.provider === 'ebpay' && typeof row.account_number === 'string') {
+          try {
+            return { ...row, account_number: JSON.parse(row.account_number) };
+          } catch {
+            return row;
+          }
+        }
+        return row;
+      });
+      
+      setPaymentOptions(processedData);
     } catch (err) {
       console.error('Error fetching payment options:', err);
       setError(err instanceof Error ? err.message : 'Unknown error');
@@ -43,12 +56,25 @@ export const usePaymentOptions = (options: { enabled?: boolean } = { enabled: fa
 
   const updatePaymentOption = async (provider: string, updates: Partial<PaymentOption>) => {
     try {
+      // Strip id, created_at, updated_at from payload
+      const { id, created_at, updated_at, ...cleanUpdates } = updates as any;
+      
+      const payload: any = {
+        provider,
+        updated_by: user?.id,
+        ...cleanUpdates,
+      };
+      
+      // For ebpay, stringify account_number if it's an object
+      if (provider === 'ebpay' && payload.account_number && typeof payload.account_number === 'object') {
+        payload.account_number = JSON.stringify(payload.account_number);
+      }
+
       const { error } = await supabase
         .from('platform_payment_options')
-        .upsert({
-          provider,
-          updated_by: user?.id,
-          ...updates,
+        .upsert(payload, { 
+          onConflict: 'provider',
+          ignoreDuplicates: false 
         });
 
       if (error) throw error;

@@ -59,10 +59,21 @@ export default function BillingManagement() {
     // Initialize payment config data
     const configData: Record<string, any> = {};
     paymentOptions.forEach(option => {
+      let accountNumber = option.account_number;
+      
+      // For ebpay, ensure account_number is parsed as object if it's a JSON string
+      if (option.provider === 'ebpay' && typeof accountNumber === 'string') {
+        try {
+          accountNumber = JSON.parse(accountNumber);
+        } catch {
+          // If parsing fails, keep as is
+        }
+      }
+      
       configData[option.provider] = {
         is_enabled: option.is_enabled,
         display_name: option.display_name,
-        account_number: option.account_number,
+        account_number: accountNumber,
         instructions: option.instructions
       };
     });
@@ -159,6 +170,17 @@ export default function BillingManagement() {
   const handleSavePaymentConfig = async () => {
     try {
       setLoading(true);
+
+      // Validate EB Pay if enabled
+      const ebpayConfig = paymentConfigData['ebpay'];
+      if (ebpayConfig?.is_enabled) {
+        const accountNumber = ebpayConfig.account_number || {};
+        if (!accountNumber.brand_key || !accountNumber.api_key || !accountNumber.secret_key) {
+          toast.error('EB Pay requires Brand Key, API Key, and Secret Key to be enabled');
+          setLoading(false);
+          return;
+        }
+      }
 
       for (const [provider, config] of Object.entries(paymentConfigData)) {
         await updatePaymentOption(provider, config);
@@ -535,7 +557,12 @@ export default function BillingManagement() {
                 <div key={option.provider} className="flex items-center justify-between p-3 border rounded-lg">
                   <div>
                     <h4 className="font-medium">{option.display_name}</h4>
-                    <p className="text-sm text-muted-foreground">{option.account_number}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {option.provider === 'ebpay' 
+                        ? (option.account_number ? 'Configured (credentials hidden)' : 'Not configured')
+                        : (option.account_number || 'Not configured')
+                      }
+                    </p>
                   </div>
                   <Badge variant={option.is_enabled ? 'default' : 'secondary'}>
                     {option.is_enabled ? 'Enabled' : 'Disabled'}
