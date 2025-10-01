@@ -26,6 +26,8 @@ import { CartProvider } from '@/contexts/CartContext';
 import { AddToCartProvider } from '@/contexts/AddToCartProvider';
 import { CartDrawerProvider } from '@/contexts/CartDrawerContext';
 import { CartDrawer } from '@/components/storefront/CartDrawer';
+import { WebsiteOverrideRoute } from '@/pages/storefront/WebsiteOverrideRoute';
+import { DomainWebsiteProductDetailRoute } from '@/pages/storefront/DomainWebsiteProductDetailRoute';
 
 interface CourseDomainRouterProps {
   customDomain: string;
@@ -179,19 +181,35 @@ const CourseDomainRouter = ({ customDomain, storeSlug }: CourseDomainRouterProps
     return children;
   };
 
-  // Handle products page
+  // Handle products page (respect website override)
   if (coursePath.startsWith(`${basePath}/products`) || coursePath === '/products') {
-    return renderWithLayout(<StorefrontProducts />);
+    return renderWithLayout(
+      <WebsiteOverrideRoute slug="products" fallback={<StorefrontProducts />} websiteId={website?.id} />
+    );
   }
 
-  // Handle cart page
+  // Handle cart page (respect website override)
   if (coursePath.startsWith(`${basePath}/cart`) || coursePath === '/cart') {
-    return renderWithLayout(<CartPage />);
+    return renderWithLayout(
+      <WebsiteOverrideRoute slug="cart" fallback={<CartPage />} websiteId={website?.id} />
+    );
   }
 
-  // Handle search page
+  // Handle search page (respect website override)
   if (coursePath.startsWith(`${basePath}/search`) || coursePath === '/search') {
-    return renderWithLayout(<SearchResults />);
+    return renderWithLayout(
+      <WebsiteOverrideRoute slug="search" fallback={<SearchResults />} websiteId={website?.id} />
+    );
+  }
+
+  // Handle product detail page
+  if (
+    coursePath.match(new RegExp(`^${basePath}/products/[^/]+$`)) ||
+    /^\/products\/[^/]+$/.test(coursePath)
+  ) {
+    return renderWithLayout(
+      <DomainWebsiteProductDetailRoute websiteId={website?.id} website={website} />
+    );
   }
 
   // Determine which page to show based on the path
