@@ -49,9 +49,6 @@ export const usePaymentOptions = (options: { enabled?: boolean } = { enabled: fa
           provider,
           updated_by: user?.id,
           ...updates,
-        }, { 
-          onConflict: 'provider',
-          ignoreDuplicates: false 
         });
 
       if (error) throw error;
