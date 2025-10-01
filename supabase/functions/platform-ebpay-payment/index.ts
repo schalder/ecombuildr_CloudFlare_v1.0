@@ -84,6 +84,16 @@ serve(async (req) => {
 
     console.log('EB Pay Config loaded for platform payments');
 
+    // Fetch user's current plan expiry date
+    const { data: userProfile } = await supabase
+      .from('profiles')
+      .select('trial_expires_at, subscription_expires_at')
+      .eq('id', userId)
+      .single();
+
+    // Use current expiry date for pending subscription
+    const currentExpiryDate = userProfile?.subscription_expires_at || userProfile?.trial_expires_at;
+
     // Create subscription record first
     const subscriptionData = {
       user_id: userId,
@@ -92,6 +102,7 @@ serve(async (req) => {
       payment_method: 'ebpay',
       subscription_status: 'pending',
       payment_reference: '', // Will be updated after verification
+      expires_at: currentExpiryDate,
     };
 
     const { data: subscription, error: subError } = await supabase

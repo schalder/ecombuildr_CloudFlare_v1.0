@@ -184,6 +184,16 @@ export const PlanUpgradeModal2: React.FC<PlanUpgradeModal2Props> = ({ open, onOp
       const selectedPlanData = plans.find(p => p.plan_name === selectedPlan);
       if (!selectedPlanData) throw new Error('Plan not found');
 
+      // Fetch user's current plan expiry date
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('trial_expires_at, subscription_expires_at')
+        .eq('id', user?.id)
+        .single();
+
+      // Use current expiry date for pending subscription
+      const currentExpiryDate = profile?.subscription_expires_at || profile?.trial_expires_at;
+
       const { error } = await supabase
         .from('saas_subscriptions')
         .insert({
@@ -193,6 +203,7 @@ export const PlanUpgradeModal2: React.FC<PlanUpgradeModal2Props> = ({ open, onOp
           payment_method: selectedPaymentMethod,
           payment_reference: transactionId,
           subscription_status: 'pending',
+          expires_at: currentExpiryDate,
           notes: `User submitted upgrade request to ${selectedPlanData.display_name}`
         });
 
