@@ -113,7 +113,7 @@ serve(async (req) => {
 
     // Update subscription status
     const updateData: any = {
-      subscription_status: paymentStatus === 'completed' ? 'active' : 'pending',
+      subscription_status: paymentStatus === 'completed' ? 'active' : 'cancelled',
       payment_reference: txnId,
       updated_at: new Date().toISOString(),
     };
@@ -122,6 +122,9 @@ serve(async (req) => {
     if (paymentStatus === 'completed') {
       updateData.starts_at = new Date().toISOString();
       updateData.expires_at = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(); // 30 days
+    } else {
+      // For failed/cancelled payments, mark as cancelled so it doesn't affect user profile
+      console.log('Payment failed/cancelled, marking subscription as cancelled');
     }
 
     const { error: updateError } = await supabase
