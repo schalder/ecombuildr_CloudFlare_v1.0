@@ -80,45 +80,25 @@ export const usePaymentOptions = (options: { enabled?: boolean } = { enabled: fa
       await fetchPaymentOptions();
       return true;
     } catch (err: any) {
-      // Fallback path: try UPDATE by provider first, then INSERT if no row
-      const sanitized: any = { ...updates, updated_by: user?.id };
-      delete sanitized.id;
-      delete sanitized.created_at;
-      delete sanitized.updated_at;
-      if (provider === 'ebpay' && sanitized.account_number && typeof sanitized.account_number === 'object') {
-        sanitized.account_number = JSON.stringify(sanitized.account_number);
-      }
-
-      const { data: updData, error: updErr } = await supabase
-        .from('platform_payment_options')
-        .update(sanitized)
-        .eq('provider', provider)
-        .select('id');
-
-      if (updErr) {
-        console.error('Direct UPDATE failed:', updErr);
-      }
-
-      if (!updErr && updData && updData.length > 0) {
+      // Fallback: if upsert conflicts (409/23505), perform explicit UPDATE by provider
+      if (err?.code === '23505') {
+        const updateData: any = { ...updates, updated_by: user?.id };
+        if (provider === 'ebpay' && updateData.account_number && typeof updateData.account_number === 'object') {
+          updateData.account_number = JSON.stringify(updateData.account_number);
+        }
+        const { error: updErr } = await supabase
+          .from('platform_payment_options')
+          .update(updateData)
+          .eq('provider', provider);
+        if (updErr) {
+          console.error('Error updating payment option after conflict:', updErr);
+          throw updErr;
+        }
         await fetchPaymentOptions();
         return true;
       }
-
-      // If no rows updated, try INSERT (will fail only if true duplicate race)
-      const insertPayload: any = {
-        provider,
-        updated_by: user?.id,
-        ...sanitized,
-      };
-      const { error: insErr } = await supabase
-        .from('platform_payment_options')
-        .insert(insertPayload);
-      if (insErr) {
-        console.error('Insert after update fallback failed:', insErr);
-        throw insErr;
-      }
-      await fetchPaymentOptions();
-      return true;
+      console.error('Error updating payment option:', err);
+      throw err;
     }
   };
 

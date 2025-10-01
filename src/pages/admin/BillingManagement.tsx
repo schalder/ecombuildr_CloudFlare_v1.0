@@ -60,7 +60,7 @@ export default function BillingManagement() {
     const configData: Record<string, any> = {};
     paymentOptions.forEach(option => {
       let accountNumber = option.account_number;
-
+      
       // Parse JSON string for ebpay to populate form fields
       if (option.provider === 'ebpay' && accountNumber && typeof accountNumber === 'string') {
         try {
@@ -69,9 +69,9 @@ export default function BillingManagement() {
           // Keep as is if parse fails
         }
       }
-
-      // Do not include id/created_at/updated_at in the config we send to the hook
+      
       configData[option.provider] = {
+        id: option.id,
         is_enabled: option.is_enabled,
         display_name: option.display_name,
         account_number: accountNumber,
