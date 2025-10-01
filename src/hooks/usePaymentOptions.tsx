@@ -61,42 +61,25 @@ export const usePaymentOptions = (options: { enabled?: boolean } = { enabled: fa
         updated_by: user?.id,
         ...updates,
       };
-
+      
       // Stringify account_number object for ebpay as DB expects text
       if (provider === 'ebpay' && payload.account_number && typeof payload.account_number === 'object') {
         payload.account_number = JSON.stringify(payload.account_number);
       }
-
+      
       const { error } = await supabase
         .from('platform_payment_options')
         .upsert(payload, {
           onConflict: 'provider',
-          ignoreDuplicates: false,
+          ignoreDuplicates: false
         });
 
       if (error) throw error;
-
+      
       // Refresh the list
       await fetchPaymentOptions();
       return true;
-    } catch (err: any) {
-      // Fallback: if upsert conflicts (409/23505), perform explicit UPDATE by provider
-      if (err?.code === '23505') {
-        const updateData: any = { ...updates, updated_by: user?.id };
-        if (provider === 'ebpay' && updateData.account_number && typeof updateData.account_number === 'object') {
-          updateData.account_number = JSON.stringify(updateData.account_number);
-        }
-        const { error: updErr } = await supabase
-          .from('platform_payment_options')
-          .update(updateData)
-          .eq('provider', provider);
-        if (updErr) {
-          console.error('Error updating payment option after conflict:', updErr);
-          throw updErr;
-        }
-        await fetchPaymentOptions();
-        return true;
-      }
+    } catch (err) {
       console.error('Error updating payment option:', err);
       throw err;
     }
