@@ -9,7 +9,8 @@ import { CourseNavigationMenu } from '@/components/course/CourseNavigationMenu';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { 
   ChevronDown, 
-  ChevronRight, 
+  ChevronRight,
+  ChevronLeft, 
   Play, 
   FileText, 
   Download, 
@@ -234,6 +235,57 @@ const CoursePlayerPage = ({ courseId: propCourseId }: CoursePlayerPageProps = {}
 
   const markLessonComplete = (lessonId: string) => {
     setCompletedLessons(prev => new Set([...prev, lessonId]));
+  };
+
+  // Flatten all lessons across modules for navigation
+  const getAllLessonsFlat = (): CourseLesson[] => {
+    if (!course) return [];
+    return course.modules.flatMap(module => module.lessons);
+  };
+
+  // Get current lesson index in the flat array
+  const getCurrentLessonIndex = (): number => {
+    if (!selectedLesson) return -1;
+    const allLessons = getAllLessonsFlat();
+    return allLessons.findIndex(lesson => lesson.id === selectedLesson.id);
+  };
+
+  // Navigate to previous lesson
+  const navigateToPrevious = () => {
+    const allLessons = getAllLessonsFlat();
+    const currentIndex = getCurrentLessonIndex();
+    
+    if (currentIndex > 0) {
+      const previousLesson = allLessons[currentIndex - 1];
+      setSelectedLesson(previousLesson);
+      
+      // Find and expand the module containing this lesson
+      const moduleWithLesson = course?.modules.find(module =>
+        module.lessons.some(lesson => lesson.id === previousLesson.id)
+      );
+      if (moduleWithLesson && !expandedModules.includes(moduleWithLesson.id)) {
+        setExpandedModules(prev => [...prev, moduleWithLesson.id]);
+      }
+    }
+  };
+
+  // Navigate to next lesson
+  const navigateToNext = () => {
+    const allLessons = getAllLessonsFlat();
+    const currentIndex = getCurrentLessonIndex();
+    
+    if (currentIndex < allLessons.length - 1) {
+      const nextLesson = allLessons[currentIndex + 1];
+      setSelectedLesson(nextLesson);
+      
+      // Find and expand the module containing this lesson
+      const moduleWithLesson = course?.modules.find(module =>
+        module.lessons.some(lesson => lesson.id === nextLesson.id)
+      );
+      if (moduleWithLesson && !expandedModules.includes(moduleWithLesson.id)) {
+        setExpandedModules(prev => [...prev, moduleWithLesson.id]);
+      }
+    }
   };
 
   const renderVideoContent = (lesson: CourseLesson) => {
@@ -643,24 +695,29 @@ const CoursePlayerPage = ({ courseId: propCourseId }: CoursePlayerPageProps = {}
                         )}
                       </div>
                     </div>
-                    <Button
-                      variant={completedLessons.has(selectedLesson.id) ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => markLessonComplete(selectedLesson.id)}
-                      disabled={completedLessons.has(selectedLesson.id)}
-                    >
-                      {completedLessons.has(selectedLesson.id) ? (
-                        <>
-                          <CheckCircle className="h-4 w-4 mr-2" />
-                          Completed
-                        </>
-                      ) : (
-                        <>
-                          <Circle className="h-4 w-4 mr-2" />
-                          Mark Complete
-                        </>
-                      )}
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-muted-foreground mr-2">
+                        Lesson {getCurrentLessonIndex() + 1} of {getAllLessonsFlat().length}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={navigateToPrevious}
+                        disabled={getCurrentLessonIndex() === 0}
+                      >
+                        <ChevronLeft className="h-4 w-4 mr-1" />
+                        Previous
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={navigateToNext}
+                        disabled={getCurrentLessonIndex() === getAllLessonsFlat().length - 1}
+                      >
+                        Next
+                        <ChevronRight className="h-4 w-4 ml-1" />
+                      </Button>
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-6">
