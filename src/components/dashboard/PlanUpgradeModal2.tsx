@@ -50,6 +50,13 @@ export const PlanUpgradeModal2: React.FC<PlanUpgradeModal2Props> = ({ open, onOp
 
   const enabledPaymentOptions = paymentOptions.filter(option => option.is_enabled);
 
+  // Auto-select payment method if only one is enabled
+  useEffect(() => {
+    if (step === 2 && enabledPaymentOptions.length === 1 && !selectedPaymentMethod) {
+      setSelectedPaymentMethod(enabledPaymentOptions[0].provider);
+    }
+  }, [step, enabledPaymentOptions, selectedPaymentMethod]);
+
   useEffect(() => {
     if (open) {
       fetchPlansWithLimits();
@@ -318,7 +325,13 @@ export const PlanUpgradeModal2: React.FC<PlanUpgradeModal2Props> = ({ open, onOp
               <CardHeader>
                 <CardTitle>পেমেন্ট পদ্ধতি নির্বাচন করুন</CardTitle>
                 <CardDescription>
-                  নিচের পেমেন্ট পদ্ধতি ব্যবহার করে টাকা পাঠান এবং Transaction ID প্রদান করুন
+                  {enabledPaymentOptions.length === 1 ? (
+                    enabledPaymentOptions[0].provider === 'ebpay' ? 
+                      'EB Pay গেটওয়েতে পেমেন্ট সম্পূর্ণ করুন' :
+                      'নিচের পেমেন্ট পদ্ধতি ব্যবহার করে টাকা পাঠান এবং Transaction ID প্রদান করুন'
+                  ) : (
+                    'আপনার পছন্দের পেমেন্ট পদ্ধতি নির্বাচন করুন'
+                  )}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -340,9 +353,15 @@ export const PlanUpgradeModal2: React.FC<PlanUpgradeModal2Props> = ({ open, onOp
                             <CheckCircle className="h-5 w-5 text-green-500" />
                           )}
                         </div>
-                        {option.account_number && (
+                        {/* Show account number for manual methods (bKash/Nagad), hide for EB Pay */}
+                        {option.account_number && option.provider !== 'ebpay' && (
                           <p className="text-sm text-muted-foreground mb-2">
                             নম্বর: <span className="font-mono font-semibold">{option.account_number}</span>
+                          </p>
+                        )}
+                        {option.provider === 'ebpay' && (
+                          <p className="text-sm text-muted-foreground mb-2">
+                            স্বয়ংক্রিয় পেমেন্ট গেটওয়ে
                           </p>
                         )}
                         {option.instructions && (
