@@ -274,7 +274,7 @@ export const CourseOrderConfirmation: React.FC = () => {
           {/* Customer Information */}
           <Card>
             <CardHeader>
-              <CardTitle>Student Information</CardTitle>
+              <CardTitle>Your Information</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
               <div className="flex justify-between">
@@ -352,47 +352,6 @@ export const CourseOrderConfirmation: React.FC = () => {
             </Card>
           )}
 
-          {/* Next Steps */}
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-center space-y-4">
-                {order.payment_status === 'completed' ? (
-                  <div>
-                    <h3 className="font-semibold text-green-600">What's Next?</h3>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      You'll receive course access details via email within 24 hours.
-                    </p>
-                    <Button onClick={handleBackToCourse} className="w-full">
-                      <BookOpen className="h-4 w-4 mr-2" />
-                      View Course Details
-                    </Button>
-                  </div>
-                ) : order.payment_status === 'failed' ? (
-                  <div>
-                    <h3 className="font-semibold text-red-600">Payment Failed</h3>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      Please try enrolling again or contact support.
-                    </p>
-                    <Button onClick={handleBackToCourse} variant="outline" className="w-full">
-                      <ArrowLeft className="h-4 w-4 mr-2" />
-                      Back to Course
-                    </Button>
-                  </div>
-                ) : (
-                  <div>
-                    <h3 className="font-semibold text-yellow-600">Payment Pending</h3>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      Your enrollment is being processed. You'll receive confirmation once payment is verified.
-                    </p>
-                    <Button onClick={handleBackToCourse} variant="outline" className="w-full">
-                      <ArrowLeft className="h-4 w-4 mr-2" />
-                      Back to Course
-                    </Button>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
         </div>
       </div>
     </div>
