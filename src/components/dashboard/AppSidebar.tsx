@@ -223,12 +223,6 @@ export function AppSidebar() {
         {!collapsed && <div className="p-4 border-b border-sidebar-border">
             <div className="space-y-2">
               <Button asChild size="sm" className="w-full justify-start bg-primary hover:bg-primary-glow min-h-[44px] touch-manipulation">
-                <NavLink to="/dashboard/courses/create">
-                  <GraduationCap className="mr-2 h-4 w-4" />
-                  Create Course
-                </NavLink>
-              </Button>
-              <Button asChild size="sm" variant="outline" className="w-full justify-start min-h-[44px] touch-manipulation">
                 <NavLink to="/dashboard/products/add">
                   <Plus className="mr-2 h-4 w-4" />
                   Add Product
