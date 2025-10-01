@@ -6,11 +6,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { CheckCircle, Clock, XCircle, RefreshCw, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
+import { useEcomPaths } from '@/lib/pathResolver';
 
 export const CoursePaymentProcessing: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { store } = useStore();
+  const paths = useEcomPaths();
   const [order, setOrder] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [verifying, setVerifying] = useState(false);
@@ -56,14 +58,14 @@ export const CoursePaymentProcessing: React.FC = () => {
       const normalizedStatus = status === 'completed' ? 'success' : (status || 'success');
       if (fetched.payment_method === 'eps' || fetched.payment_method === 'ebpay') {
         console.log('[CoursePaymentProcessing] EPS/EB Pay flow: redirecting to confirmation', { normalizedStatus });
-        navigate(`/courses/order-confirmation?orderId=${tempId}&status=${normalizedStatus}`);
+        navigate(`${paths.orderConfirmation(tempId)}&status=${normalizedStatus}`);
         return;
       }
 
       // Auto-redirect to confirmation if payment is marked completed
       if (fetched.payment_status === 'completed') {
         console.log('[CoursePaymentProcessing] payment completed, redirecting to confirmation', { tempId });
-        navigate(`/courses/order-confirmation?orderId=${tempId}&status=success`);
+        navigate(`${paths.orderConfirmation(tempId)}&status=success`);
         return;
       }
 
@@ -104,14 +106,16 @@ export const CoursePaymentProcessing: React.FC = () => {
       // Auto-redirect to confirmation if payment is completed
       if (fetched?.payment_status === 'completed') {
         console.log('[CoursePaymentProcessing] payment completed, redirecting to confirmation', { orderId });
-        navigate(`/courses/order-confirmation?orderId=${orderId}&status=success`);
+        const normalizedStatus = status === 'completed' ? 'success' : (status || 'success');
+        navigate(`${paths.orderConfirmation(orderId)}&status=${normalizedStatus}`);
         return;
       }
 
       // For EPS and EB Pay, skip this page entirely — go straight to confirmation
       if (fetched?.payment_method === 'eps' || fetched?.payment_method === 'ebpay') {
         console.log('[CoursePaymentProcessing] EPS/EB Pay flow: redirecting to confirmation');
-        navigate(`/courses/order-confirmation?orderId=${orderId}&status=${status || 'success'}`);
+        const normalizedStatus = status === 'completed' ? 'success' : (status || 'success');
+        navigate(`${paths.orderConfirmation(orderId)}&status=${normalizedStatus}`);
         return;
       }
 
@@ -204,7 +208,7 @@ export const CoursePaymentProcessing: React.FC = () => {
         console.log('[CoursePaymentProcessing] verifyPayment:success-redirect');
         // Clear stored password
         localStorage.removeItem('courseCheckoutPassword');
-        navigate(`/courses/order-confirmation?orderId=${currentOrderId}&status=success`);
+        navigate(`${paths.orderConfirmation(currentOrderId)}&status=success`);
       } else {
         console.warn('[CoursePaymentProcessing] verifyPayment:failed', { message: data?.message });
         toast.error(data?.message || 'Payment verification failed');

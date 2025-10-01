@@ -118,6 +118,14 @@ export const DomainWebsiteRouter: React.FC<DomainWebsiteRouterProps> = ({
           fallback={<StorefrontCourseLibrary />} 
         />
       } />
+      <Route path="/courses/order-confirmation" element={
+        <WebsiteOverrideRoute 
+          slug="order-confirmation" 
+          websiteId={websiteId}
+          fallback={<OrderConfirmation />} 
+        />
+      } />
+      <Route path="/courses/payment-processing" element={<PaymentProcessing />} />
       <Route path="/courses/members/login" element={<CourseMemberLoginPage />} />
       <Route path="/courses/members" element={<MemberAuthProvider><CourseMemberDashboard /></MemberAuthProvider>} />
       <Route path="/courses/learn/:courseId" element={<CoursePlayerPage />} />
