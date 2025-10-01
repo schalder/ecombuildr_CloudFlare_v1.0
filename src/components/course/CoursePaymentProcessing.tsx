@@ -37,29 +37,40 @@ export const CoursePaymentProcessing: React.FC = () => {
 
     console.log('[CoursePaymentProcessing] fetchOrderByTempId:start', { tempId });
     try {
-      // Query course_orders using tempId
-      const { data: orders, error } = await supabase
-        .from('course_orders')
-        .select('*, courses(*)')
-        .eq('id', tempId)
-        .maybeSingle();
+      // Use edge function to bypass RLS and fetch order by tempId (order id)
+      const { data, error } = await supabase.functions.invoke('get-course-order-public', {
+        body: { orderId: tempId }
+      });
 
       if (error) throw error;
-      
-      console.log('[CoursePaymentProcessing] fetchOrderByTempId:response', { hasOrder: !!orders, payment_status: orders?.payment_status });
-      setOrder(orders);
 
-      // Auto-redirect to confirmation if payment is completed
-      if (orders?.payment_status === 'completed') {
+      const fetched = data?.order ?? null;
+      console.log('[CoursePaymentProcessing] fetchOrderByTempId:response', { hasOrder: !!fetched, payment_status: fetched?.payment_status, payment_method: fetched?.payment_method });
+      setOrder(fetched);
+
+      if (!fetched) {
+        return;
+      }
+
+      // For EPS/EB Pay, skip this page and go to confirmation immediately
+      const normalizedStatus = status === 'completed' ? 'success' : (status || 'success');
+      if (fetched.payment_method === 'eps' || fetched.payment_method === 'ebpay') {
+        console.log('[CoursePaymentProcessing] EPS/EB Pay flow: redirecting to confirmation', { normalizedStatus });
+        navigate(`/courses/order-confirmation?orderId=${tempId}&status=${normalizedStatus}`);
+        return;
+      }
+
+      // Auto-redirect to confirmation if payment is marked completed
+      if (fetched.payment_status === 'completed') {
         console.log('[CoursePaymentProcessing] payment completed, redirecting to confirmation', { tempId });
         navigate(`/courses/order-confirmation?orderId=${tempId}&status=success`);
         return;
       }
 
       // Handle specific payment statuses
-      const isFailed = status === 'failed' || orders?.payment_status === 'failed' || orders?.payment_status === 'payment_failed';
+      const isFailed = status === 'failed' || fetched.payment_status === 'failed' || fetched.payment_status === 'payment_failed';
       if (isFailed) {
-        console.warn('[CoursePaymentProcessing] payment failed', { status, payment_status: orders?.payment_status });
+        console.warn('[CoursePaymentProcessing] payment failed', { status, payment_status: fetched.payment_status });
         toast.error('Payment failed. Please try again.');
       } else if (status === 'cancelled') {
         console.warn('[CoursePaymentProcessing] payment cancelled');

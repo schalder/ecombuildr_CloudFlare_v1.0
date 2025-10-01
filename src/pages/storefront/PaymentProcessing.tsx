@@ -51,28 +51,28 @@ useEffect(() => {
 }, [slug, websiteId, loadStore, loadStoreById]);
 
 
-  // Check if this is a course payment
   useEffect(() => {
     const checkIfCoursePayment = async () => {
-      if (tempId || (orderId && !order)) {
-        try {
-          const checkId = tempId || orderId;
-          const { data, error } = await supabase
-            .from('course_orders')
-            .select('id')
-            .eq('id', checkId)
-            .maybeSingle();
-          
-          if (!error && data) {
-            setIsCoursePayment(true);
-          } else {
-            setIsCoursePayment(false);
-          }
-        } catch (error) {
-          console.error('Error checking course payment:', error);
+      const checkId = tempId || orderId;
+      if (!checkId) {
+        setIsCoursePayment(false);
+        return;
+      }
+      try {
+        console.log('[PaymentProcessing] checking course payment via edge function', { checkId });
+        const { data, error } = await supabase.functions.invoke('get-course-order-public', {
+          body: { orderId: checkId }
+        });
+        if (error) {
+          console.warn('[PaymentProcessing] get-course-order-public error', error);
           setIsCoursePayment(false);
+          return;
         }
-      } else {
+        const hasCourseOrder = Boolean(data?.order);
+        console.log('[PaymentProcessing] course payment detected?', { hasCourseOrder });
+        setIsCoursePayment(hasCourseOrder);
+      } catch (err) {
+        console.error('Error checking course payment:', err);
         setIsCoursePayment(false);
       }
     };
