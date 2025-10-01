@@ -32,7 +32,20 @@ export const usePaymentOptions = (options: { enabled?: boolean } = { enabled: fa
         .order('provider');
 
       if (error) throw error;
-      setPaymentOptions(data || []);
+      
+      // Parse JSON account_number for ebpay to populate form fields
+      const normalized = (data || []).map((row: any) => {
+        if (row.provider === 'ebpay' && row.account_number && typeof row.account_number === 'string') {
+          try {
+            return { ...row, account_number: JSON.parse(row.account_number) };
+          } catch {
+            return row;
+          }
+        }
+        return row;
+      });
+      
+      setPaymentOptions(normalized);
     } catch (err) {
       console.error('Error fetching payment options:', err);
       setError(err instanceof Error ? err.message : 'Unknown error');
@@ -43,12 +56,22 @@ export const usePaymentOptions = (options: { enabled?: boolean } = { enabled: fa
 
   const updatePaymentOption = async (provider: string, updates: Partial<PaymentOption>) => {
     try {
+      const payload: any = {
+        provider,
+        updated_by: user?.id,
+        ...updates,
+      };
+      
+      // Stringify account_number object for ebpay as DB expects text
+      if (provider === 'ebpay' && payload.account_number && typeof payload.account_number === 'object') {
+        payload.account_number = JSON.stringify(payload.account_number);
+      }
+      
       const { error } = await supabase
         .from('platform_payment_options')
-        .upsert({
-          provider,
-          updated_by: user?.id,
-          ...updates,
+        .upsert(payload, {
+          onConflict: 'provider',
+          ignoreDuplicates: false
         });
 
       if (error) throw error;
