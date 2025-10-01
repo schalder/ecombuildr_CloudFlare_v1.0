@@ -118,8 +118,57 @@ export const PlanUpgradeModal2: React.FC<PlanUpgradeModal2Props> = ({ open, onOp
   };
 
   const handlePaymentSubmit = async () => {
-    if (!selectedPlan || !selectedPaymentMethod || !transactionId.trim()) {
+    if (!selectedPlan || !selectedPaymentMethod) {
       toast.error('সব ফিল্ড পূরণ করুন');
+      return;
+    }
+
+    // EB Pay automated flow
+    if (selectedPaymentMethod === 'ebpay') {
+      setSubmitting(true);
+      try {
+        const selectedPlanData = plans.find(p => p.plan_name === selectedPlan);
+        if (!selectedPlanData) throw new Error('Plan not found');
+
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('email, full_name, phone')
+          .eq('id', user?.id)
+          .single();
+
+        const { data, error } = await supabase.functions.invoke('platform-ebpay-payment', {
+          body: {
+            userId: user?.id,
+            planName: selectedPlan,
+            planPrice: selectedPlanData.price_bdt,
+            customerData: {
+              name: profile?.full_name || user?.email || 'Customer',
+              email: profile?.email || user?.email || '',
+              phone: profile?.phone || ''
+            }
+          }
+        });
+
+        if (error) throw error;
+
+        if (data?.success && data?.paymentURL) {
+          toast.success('EB Pay গেটওয়েতে রিডাইরেক্ট করা হচ্ছে...');
+          // Redirect to EB Pay payment page
+          window.location.href = data.paymentURL;
+        } else {
+          throw new Error('পেমেন্ট সেশন তৈরি করতে ব্যর্থ');
+        }
+      } catch (error: any) {
+        console.error('Error initiating EB Pay payment:', error);
+        toast.error('পেমেন্ট শুরু করতে ব্যর্থ। আবার চেষ্টা করুন।');
+        setSubmitting(false);
+      }
+      return;
+    }
+
+    // Manual payment flow (bKash/Nagad)
+    if (!transactionId.trim()) {
+      toast.error('Transaction ID প্রদান করুন');
       return;
     }
 
@@ -304,7 +353,26 @@ export const PlanUpgradeModal2: React.FC<PlanUpgradeModal2Props> = ({ open, onOp
                   ))
                 )}
 
-                {selectedPaymentMethod && (
+                {selectedPaymentMethod === 'ebpay' ? (
+                  <div className="space-y-4 mt-6 p-4 border rounded-lg bg-muted/50">
+                    <div className="text-center">
+                      <h4 className="font-medium mb-2">EB Pay দিয়ে পেমেন্ট করুন</h4>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        আপনি EB Pay গেটওয়েতে রিডাইরেক্ট হবেন যেখানে আপনি নিরাপদে পেমেন্ট সম্পূর্ণ করতে পারবেন। 
+                        সফল পেমেন্টের পর আপনার অ্যাকাউন্ট স্বয়ংক্রিয়ভাবে আপগ্রেড হবে।
+                      </p>
+                    </div>
+                    <Button
+                      onClick={handlePaymentSubmit}
+                      disabled={submitting}
+                      className="w-full"
+                      size="lg"
+                    >
+                      {submitting ? 'রিডাইরেক্ট করা হচ্ছে...' : 'EB Pay এ যান'}
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : selectedPaymentMethod ? (
                   <div className="space-y-4 mt-6">
                     <div>
                       <Label htmlFor="transaction-id">Transaction ID</Label>
@@ -324,7 +392,7 @@ export const PlanUpgradeModal2: React.FC<PlanUpgradeModal2Props> = ({ open, onOp
                       {submitting ? 'জমা দিচ্ছি...' : 'পেমেন্ট জমা দিন'}
                     </Button>
                   </div>
-                )}
+                ) : null}
               </CardContent>
             </Card>
           </div>
