@@ -76,7 +76,7 @@ export const CoursePaymentMethods: React.FC<CoursePaymentMethodsProps> = ({
 
   const handleMethodToggle = (method: keyof PaymentMethodSettings, enabled: boolean) => {
     if (!availableMethods[method] && enabled) {
-      toast.error(`${method.toUpperCase()} is not enabled in your store settings`);
+      toast.error(`${getMethodLabel(method)} is not enabled in your store settings`);
       return;
     }
 
@@ -167,7 +167,7 @@ export const CoursePaymentMethods: React.FC<CoursePaymentMethodsProps> = ({
               You need to set up payment methods in your store settings first.
             </p>
             <p className="text-xs text-muted-foreground">
-              Go to Store Settings → Payment to configure bKash, Nagad, or EPS
+              Go to Store Settings → Payment to configure bKash, Nagad, EPS, or EB Pay
             </p>
           </div>
         ) : (
