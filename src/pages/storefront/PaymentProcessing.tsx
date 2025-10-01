@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { CheckCircle, Clock, XCircle, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { useEcomPaths } from '@/lib/pathResolver';
+import { CoursePaymentProcessing } from '@/components/course/CoursePaymentProcessing';
 
 export const PaymentProcessing: React.FC = () => {
   const { slug, websiteId, websiteSlug, orderId: orderIdParam } = useParams<{ slug?: string; websiteId?: string; websiteSlug?: string; orderId?: string }>();
@@ -20,6 +21,7 @@ export const PaymentProcessing: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [verifying, setVerifying] = useState(false);
   const [creatingOrder, setCreatingOrder] = useState(false);
+  const [isCoursePayment, setIsCoursePayment] = useState<boolean | null>(null);
   const paths = useEcomPaths();
   const orderId = orderIdParam || searchParams.get('orderId') || '';
   const tempId = searchParams.get('tempId') || '';
@@ -49,8 +51,37 @@ useEffect(() => {
 }, [slug, websiteId, loadStore, loadStoreById]);
 
 
+  // Check if this is a course payment
   useEffect(() => {
-    if (store) {
+    const checkIfCoursePayment = async () => {
+      if (tempId || (orderId && !order)) {
+        try {
+          const checkId = tempId || orderId;
+          const { data, error } = await supabase
+            .from('course_orders')
+            .select('id')
+            .eq('id', checkId)
+            .maybeSingle();
+          
+          if (!error && data) {
+            setIsCoursePayment(true);
+          } else {
+            setIsCoursePayment(false);
+          }
+        } catch (error) {
+          console.error('Error checking course payment:', error);
+          setIsCoursePayment(false);
+        }
+      } else {
+        setIsCoursePayment(false);
+      }
+    };
+
+    checkIfCoursePayment();
+  }, [tempId, orderId]);
+
+  useEffect(() => {
+    if (store && isCoursePayment === false) {
       if (tempId && (urlStatus === 'success' || urlStatus === 'completed')) {
         handleDeferredOrderCreation();
       } else if (tempId && (urlStatus === 'failed' || urlStatus === 'cancelled')) {
@@ -63,7 +94,7 @@ useEffect(() => {
         setLoading(false);
       }
     }
-  }, [orderId, tempId, urlStatus, store]);
+  }, [orderId, tempId, urlStatus, store, isCoursePayment]);
 
   // Auto-update order status if URL indicates failure/cancellation
   useEffect(() => {
@@ -318,7 +349,12 @@ useEffect(() => {
     }
   };
 
-  if (loading) {
+  // Delegate to CoursePaymentProcessing if this is a course order
+  if (isCoursePayment === true) {
+    return <CoursePaymentProcessing />;
+  }
+
+  if (loading || isCoursePayment === null) {
     const loadingContent = (
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-center min-h-[400px]">

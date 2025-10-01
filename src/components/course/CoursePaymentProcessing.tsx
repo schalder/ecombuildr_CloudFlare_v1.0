@@ -17,17 +17,63 @@ export const CoursePaymentProcessing: React.FC = () => {
   const [autoVerifying, setAutoVerifying] = useState(false);
 
   const orderId = searchParams.get('orderId');
+  const tempId = searchParams.get('tempId');
   const status = searchParams.get('status');
-  const paymentRef = searchParams.get('payment_ref') || searchParams.get('trxID') || searchParams.get('MerchantTransactionId') || searchParams.get('transaction_id');
+  const paymentRef = searchParams.get('payment_ref') || searchParams.get('trxID') || searchParams.get('MerchantTransactionId') || searchParams.get('transaction_id') || searchParams.get('transactionId');
 
   useEffect(() => {
-    console.log('[CoursePaymentProcessing] init', { orderId, status, paymentRef, search: typeof window !== 'undefined' ? window.location.search : '' });
+    console.log('[CoursePaymentProcessing] init', { orderId, tempId, status, paymentRef, search: typeof window !== 'undefined' ? window.location.search : '' });
     if (orderId) {
       fetchOrder();
+    } else if (tempId) {
+      fetchOrderByTempId();
     } else {
-      console.warn('[CoursePaymentProcessing] Missing orderId in URL');
+      console.warn('[CoursePaymentProcessing] Missing orderId or tempId in URL');
     }
-  }, [orderId]);
+  }, [orderId, tempId]);
+
+  const fetchOrderByTempId = async () => {
+    if (!tempId) return;
+
+    console.log('[CoursePaymentProcessing] fetchOrderByTempId:start', { tempId });
+    try {
+      // Query course_orders using tempId
+      const { data: orders, error } = await supabase
+        .from('course_orders')
+        .select('*, courses(*)')
+        .eq('id', tempId)
+        .maybeSingle();
+
+      if (error) throw error;
+      
+      console.log('[CoursePaymentProcessing] fetchOrderByTempId:response', { hasOrder: !!orders, payment_status: orders?.payment_status });
+      setOrder(orders);
+
+      // Auto-redirect to confirmation if payment is completed
+      if (orders?.payment_status === 'completed') {
+        console.log('[CoursePaymentProcessing] payment completed, redirecting to confirmation', { tempId });
+        navigate(`/courses/order-confirmation?orderId=${tempId}&status=success`);
+        return;
+      }
+
+      // Handle specific payment statuses
+      const isFailed = status === 'failed' || orders?.payment_status === 'failed' || orders?.payment_status === 'payment_failed';
+      if (isFailed) {
+        console.warn('[CoursePaymentProcessing] payment failed', { status, payment_status: orders?.payment_status });
+        toast.error('Payment failed. Please try again.');
+      } else if (status === 'cancelled') {
+        console.warn('[CoursePaymentProcessing] payment cancelled');
+        toast.error('Payment was cancelled.');
+      }
+
+    } catch (error) {
+      console.error('[CoursePaymentProcessing] fetchOrderByTempId:error', error);
+      toast.error('Failed to load order details');
+    } finally {
+      setLoading(false);
+      console.log('[CoursePaymentProcessing] fetchOrderByTempId:end');
+    }
+  };
 
   const fetchOrder = async () => {
     if (!orderId) return;
@@ -77,14 +123,15 @@ export const CoursePaymentProcessing: React.FC = () => {
     }
   };
   const verifyPayment = async () => {
-    if (!orderId || !order) return;
+    const currentOrderId = orderId || tempId;
+    if (!currentOrderId || !order) return;
 
     setVerifying(true);
     try {
-      console.log('[CoursePaymentProcessing] verifyPayment:start', { orderId, payment_method: order.payment_method, paymentRef });
+      console.log('[CoursePaymentProcessing] verifyPayment:start', { currentOrderId, payment_method: order.payment_method, paymentRef });
 
       let verificationFunction = '';
-      let verificationBody: any = { orderId };
+      let verificationBody: any = { orderId: currentOrderId };
 
       switch (order.payment_method) {
         case 'eps': {
@@ -96,7 +143,7 @@ export const CoursePaymentProcessing: React.FC = () => {
           }
           verificationFunction = 'eps-verify-payment';
           verificationBody = { 
-            orderId, 
+            orderId: currentOrderId, 
             paymentId: epsRef, 
             method: 'eps',
             password: localStorage.getItem('courseCheckoutPassword') // Get stored password
@@ -112,7 +159,7 @@ export const CoursePaymentProcessing: React.FC = () => {
           }
           verificationFunction = 'ebpay-verify-payment';
           verificationBody = { 
-            orderId, 
+            orderId: currentOrderId, 
             transactionId: ebpayRef, 
             method: 'ebpay',
             password: localStorage.getItem('courseCheckoutPassword') // Get stored password
@@ -121,11 +168,11 @@ export const CoursePaymentProcessing: React.FC = () => {
         }
         case 'bkash':
           verificationFunction = 'bkash-verify-payment';
-          verificationBody = { orderId, paymentID: paymentRef };
+          verificationBody = { orderId: currentOrderId, paymentID: paymentRef };
           break;
         case 'nagad':
           verificationFunction = 'nagad-verify-payment';
-          verificationBody = { orderId, transactionId: paymentRef };
+          verificationBody = { orderId: currentOrderId, transactionId: paymentRef };
           break;
         default:
           console.warn('[CoursePaymentProcessing] verifyPayment:unsupported-method', { method: order.payment_method });
@@ -146,7 +193,7 @@ export const CoursePaymentProcessing: React.FC = () => {
         console.log('[CoursePaymentProcessing] verifyPayment:success-redirect');
         // Clear stored password
         localStorage.removeItem('courseCheckoutPassword');
-        navigate(`/courses/order-confirmation?orderId=${orderId}&status=success`);
+        navigate(`/courses/order-confirmation?orderId=${currentOrderId}&status=success`);
       } else {
         console.warn('[CoursePaymentProcessing] verifyPayment:failed', { message: data?.message });
         toast.error(data?.message || 'Payment verification failed');
