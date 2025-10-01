@@ -71,17 +71,21 @@ export const usePaymentOptions = (options: { enabled?: boolean } = { enabled: fa
       }
 
       // Use UPSERT with onConflict to handle both insert and update
+      console.debug('[PaymentOptions] Upsert start', { provider, basePayload, usingArrayPayload: true });
       const { error } = await supabase
         .from('platform_payment_options')
         .upsert(
-          { provider, ...basePayload },
+          [{ provider, ...basePayload }],
           { 
             onConflict: 'provider',
             ignoreDuplicates: false 
           }
         );
 
-      if (error) throw error;
+      if (error) {
+        console.error('[PaymentOptions] Upsert failed', { provider, error });
+        throw error;
+      }
 
       // Refresh the list
       await fetchPaymentOptions();
