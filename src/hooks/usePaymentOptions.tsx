@@ -59,27 +59,58 @@ export const usePaymentOptions = (options: { enabled?: boolean } = { enabled: fa
       // Build clean payload - strip id, created_at, updated_at
       const { id, created_at, updated_at, ...cleanUpdates } = updates as any;
       
-      const payload: any = {
+      // Prepare payload for updates (do not include provider in UPDATE to avoid constraint noise)
+      const updatePayload: any = {
+        updated_by: user?.id,
+        ...cleanUpdates,
+      };
+
+      // For ebpay, stringify account_number if it's an object
+      if (provider === 'ebpay' && updatePayload.account_number && typeof updatePayload.account_number === 'object') {
+        updatePayload.account_number = JSON.stringify(updatePayload.account_number);
+      }
+
+      // 1) Try UPDATE first (idempotent, avoids 409s)
+      const { data: updatedRows, error: updateError } = await supabase
+        .from('platform_payment_options')
+        .update(updatePayload)
+        .eq('provider', provider)
+        .select('provider');
+
+      if (updateError) throw updateError;
+
+      if (Array.isArray(updatedRows) && updatedRows.length > 0) {
+        await fetchPaymentOptions();
+        return true;
+      }
+
+      // 2) If no row was updated, INSERT new
+      const insertPayload: any = {
         provider,
         updated_by: user?.id,
         ...cleanUpdates,
       };
-      
-      // For ebpay, stringify account_number if it's an object
-      if (provider === 'ebpay' && payload.account_number && typeof payload.account_number === 'object') {
-        payload.account_number = JSON.stringify(payload.account_number);
+      if (provider === 'ebpay' && insertPayload.account_number && typeof insertPayload.account_number === 'object') {
+        insertPayload.account_number = JSON.stringify(insertPayload.account_number);
       }
 
-      const { error } = await supabase
+      const { error: insertError } = await supabase
         .from('platform_payment_options')
-        .upsert(payload, { 
-          onConflict: 'provider',
-          ignoreDuplicates: false 
-        });
+        .insert(insertPayload);
 
-      if (error) throw error;
-      
-      // Refresh the list
+      if (insertError) {
+        // Handle race: if someone else inserted meanwhile, retry UPDATE once
+        if ((insertError as any).code === '23505') {
+          const { error: retryError } = await supabase
+            .from('platform_payment_options')
+            .update(updatePayload)
+            .eq('provider', provider);
+          if (retryError) throw retryError;
+        } else {
+          throw insertError;
+        }
+      }
+
       await fetchPaymentOptions();
       return true;
     } catch (err) {
@@ -87,7 +118,6 @@ export const usePaymentOptions = (options: { enabled?: boolean } = { enabled: fa
       throw err;
     }
   };
-
   useEffect(() => {
     if (options.enabled) {
       fetchPaymentOptions();
