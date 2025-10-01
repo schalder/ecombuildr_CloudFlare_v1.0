@@ -59,21 +59,10 @@ export default function BillingManagement() {
     // Initialize payment config data
     const configData: Record<string, any> = {};
     paymentOptions.forEach(option => {
-      let accountNumber = option.account_number;
-      
-      // For ebpay, ensure account_number is parsed as object if it's a JSON string
-      if (option.provider === 'ebpay' && typeof accountNumber === 'string') {
-        try {
-          accountNumber = JSON.parse(accountNumber);
-        } catch {
-          // If parsing fails, keep as is
-        }
-      }
-      
       configData[option.provider] = {
         is_enabled: option.is_enabled,
         display_name: option.display_name,
-        account_number: accountNumber,
+        account_number: option.account_number,
         instructions: option.instructions
       };
     });
