@@ -58,27 +58,49 @@ export const usePaymentOptions = (options: { enabled?: boolean } = { enabled: fa
     try {
       // Strip id, created_at, updated_at from payload
       const { id, created_at, updated_at, ...cleanUpdates } = updates as any;
-      
-      const payload: any = {
-        provider,
+
+      // Normalize payload
+      const basePayload: any = {
         updated_by: user?.id,
         ...cleanUpdates,
       };
-      
+
       // For ebpay, stringify account_number if it's an object
-      if (provider === 'ebpay' && payload.account_number && typeof payload.account_number === 'object') {
-        payload.account_number = JSON.stringify(payload.account_number);
+      if (provider === 'ebpay' && basePayload.account_number && typeof basePayload.account_number === 'object') {
+        basePayload.account_number = JSON.stringify(basePayload.account_number);
       }
 
-      const { error } = await supabase
+      // 1) Try UPDATE first
+      const { data: updatedRows, error: updateError } = await supabase
         .from('platform_payment_options')
-        .upsert(payload, { 
-          onConflict: 'provider',
-          ignoreDuplicates: false 
-        });
+        .update(basePayload)
+        .eq('provider', provider)
+        .select('*');
 
-      if (error) throw error;
-      
+      if (updateError) throw updateError;
+
+      if (!updatedRows || updatedRows.length === 0) {
+        // 2) If nothing updated, INSERT (first time setup)
+        const insertPayload = { provider, ...basePayload };
+        const { error: insertError } = await supabase
+          .from('platform_payment_options')
+          .insert(insertPayload);
+
+        if (insertError) {
+          // 3) Handle race: if duplicate, retry UPDATE once
+          // @ts-ignore code property exists on PostgREST error
+          if ((insertError as any).code === '23505') {
+            const { error: retryError } = await supabase
+              .from('platform_payment_options')
+              .update(basePayload)
+              .eq('provider', provider);
+            if (retryError) throw retryError;
+          } else {
+            throw insertError;
+          }
+        }
+      }
+
       // Refresh the list
       await fetchPaymentOptions();
       return true;
@@ -87,7 +109,6 @@ export const usePaymentOptions = (options: { enabled?: boolean } = { enabled: fa
       throw err;
     }
   };
-
   useEffect(() => {
     if (options.enabled) {
       fetchPaymentOptions();
