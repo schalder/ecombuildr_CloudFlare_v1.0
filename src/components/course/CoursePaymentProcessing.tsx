@@ -34,6 +34,20 @@ export const CoursePaymentProcessing: React.FC = () => {
     }
   }, [orderId, tempId]);
 
+  // Auto-verify EB Pay payments when they return with status=completed
+  useEffect(() => {
+    if (!order || loading || autoVerifying || verifying) return;
+    
+    if ((order.payment_method === 'ebpay' || order.payment_method === 'eps') && 
+        status === 'completed' && 
+        order.payment_status !== 'completed' && 
+        paymentRef) {
+      console.log('[CoursePaymentProcessing] Auto-verifying EB Pay/EPS payment', { payment_method: order.payment_method, paymentRef });
+      setAutoVerifying(true);
+      verifyPayment();
+    }
+  }, [order, loading, status, paymentRef]);
+
   const fetchOrderByTempId = async () => {
     if (!tempId) return;
 
@@ -51,14 +65,6 @@ export const CoursePaymentProcessing: React.FC = () => {
       setOrder(fetched);
 
       if (!fetched) {
-        return;
-      }
-
-      // For EPS/EB Pay, skip this page and go to confirmation immediately
-      const normalizedStatus = status === 'completed' ? 'success' : (status || 'success');
-      if (fetched.payment_method === 'eps' || fetched.payment_method === 'ebpay') {
-        console.log('[CoursePaymentProcessing] EPS/EB Pay flow: redirecting to confirmation', { normalizedStatus });
-        navigate(`${paths.orderConfirmation(tempId)}&status=${normalizedStatus}`);
         return;
       }
 
@@ -106,14 +112,6 @@ export const CoursePaymentProcessing: React.FC = () => {
       // Auto-redirect to confirmation if payment is completed
       if (fetched?.payment_status === 'completed') {
         console.log('[CoursePaymentProcessing] payment completed, redirecting to confirmation', { orderId });
-        const normalizedStatus = status === 'completed' ? 'success' : (status || 'success');
-        navigate(`${paths.orderConfirmation(orderId)}&status=${normalizedStatus}`);
-        return;
-      }
-
-      // For EPS and EB Pay, skip this page entirely — go straight to confirmation
-      if (fetched?.payment_method === 'eps' || fetched?.payment_method === 'ebpay') {
-        console.log('[CoursePaymentProcessing] EPS/EB Pay flow: redirecting to confirmation');
         const normalizedStatus = status === 'completed' ? 'success' : (status || 'success');
         navigate(`${paths.orderConfirmation(orderId)}&status=${normalizedStatus}`);
         return;
