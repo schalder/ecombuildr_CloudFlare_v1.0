@@ -59,7 +59,7 @@ export const usePaymentOptions = (options: { enabled?: boolean } = { enabled: fa
       // Strip id, created_at, updated_at from payload
       const { id, created_at, updated_at, ...cleanUpdates } = updates as any;
 
-      // Normalize payload
+      // Build clean payload
       const basePayload: any = {
         updated_by: user?.id,
         ...cleanUpdates,
@@ -70,36 +70,18 @@ export const usePaymentOptions = (options: { enabled?: boolean } = { enabled: fa
         basePayload.account_number = JSON.stringify(basePayload.account_number);
       }
 
-      // 1) Try UPDATE first
-      const { data: updatedRows, error: updateError } = await supabase
+      // Use UPSERT with onConflict to handle both insert and update
+      const { error } = await supabase
         .from('platform_payment_options')
-        .update(basePayload)
-        .eq('provider', provider)
-        .select('*');
-
-      if (updateError) throw updateError;
-
-      if (!updatedRows || updatedRows.length === 0) {
-        // 2) If nothing updated, INSERT (first time setup)
-        const insertPayload = { provider, ...basePayload };
-        const { error: insertError } = await supabase
-          .from('platform_payment_options')
-          .insert(insertPayload);
-
-        if (insertError) {
-          // 3) Handle race: if duplicate, retry UPDATE once
-          // @ts-ignore code property exists on PostgREST error
-          if ((insertError as any).code === '23505') {
-            const { error: retryError } = await supabase
-              .from('platform_payment_options')
-              .update(basePayload)
-              .eq('provider', provider);
-            if (retryError) throw retryError;
-          } else {
-            throw insertError;
+        .upsert(
+          { provider, ...basePayload },
+          { 
+            onConflict: 'provider',
+            ignoreDuplicates: false 
           }
-        }
-      }
+        );
+
+      if (error) throw error;
 
       // Refresh the list
       await fetchPaymentOptions();
