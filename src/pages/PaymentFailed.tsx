@@ -24,11 +24,11 @@ export default function PaymentFailed() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
-          <Button onClick={() => navigate('/billing')} className="w-full">
+          <Button onClick={() => navigate('/dashboard/settings/billing')} className="w-full">
             Return to Billing
           </Button>
           <Button 
-            onClick={() => navigate('/billing')} 
+            onClick={() => navigate('/dashboard/settings/billing')} 
             variant="outline" 
             className="w-full"
           >

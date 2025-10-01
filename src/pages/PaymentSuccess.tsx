@@ -39,7 +39,7 @@ export default function PaymentSuccess() {
           
           // Redirect to billing settings after 3 seconds
           setTimeout(() => {
-            navigate('/billing');
+            navigate('/dashboard/settings/billing');
           }, 3000);
         } else {
           throw new Error(data?.error || 'Payment verification failed');
@@ -83,7 +83,7 @@ export default function PaymentSuccess() {
             <CardDescription>{error}</CardDescription>
           </CardHeader>
           <CardContent>
-            <Button onClick={() => navigate('/billing')} className="w-full">
+            <Button onClick={() => navigate('/dashboard/settings/billing')} className="w-full">
               Return to Billing
             </Button>
           </CardContent>
@@ -105,7 +105,7 @@ export default function PaymentSuccess() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Button onClick={() => navigate('/billing')} className="w-full">
+          <Button onClick={() => navigate('/dashboard/settings/billing')} className="w-full">
             Go to Billing
           </Button>
         </CardContent>
