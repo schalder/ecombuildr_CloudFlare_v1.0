@@ -52,26 +52,27 @@ export default function CreateWebsite() {
     return `${baseSlug}-${randomSuffix}`;
   };
 
-  // Check slug availability globally
+  // Check slug availability globally using RPC
   const checkSlugAvailability = async (slug: string) => {
     if (!slug.trim()) return;
     
     setSlugStatus('checking');
     
     try {
-      // Check globally across all websites
-      const { data, error } = await supabase
-        .from('websites')
-        .select('slug')
-        .eq('slug', slug)
-        .maybeSingle();
+      // Use RPC to check globally (bypasses RLS)
+      const { data: isAvailable, error } = await supabase
+        .rpc('slug_is_available', {
+          content_type: 'website',
+          slug_value: slug.toLowerCase()
+        });
       
       if (error) {
+        console.error('Slug check error:', error);
         setSlugStatus('error');
         return;
       }
       
-      if (data) {
+      if (!isAvailable) {
         // Slug is taken globally, generate unique one
         const uniqueSlug = await generateUniqueSlug(slug);
         setSuggestedSlug(uniqueSlug);
@@ -100,18 +101,48 @@ export default function CreateWebsite() {
       // Ensure store exists, create if necessary
       const currentStore = await getOrCreateStore();
 
+      // Ensure slug is lowercase
+      const slug = data.slug.toLowerCase();
+
       const { data: website, error } = await supabase
         .from('websites')
         .insert({
           store_id: currentStore.id,
           name: data.name,
-          slug: data.slug,
+          slug: slug,
           description: data.description,
         })
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        // Handle duplicate slug error (23505 = unique constraint violation)
+        if (error.code === '23505' && error.message.includes('websites_slug_key')) {
+          // Generate unique slug and retry once
+          const uniqueSlug = await generateUniqueSlug(slug);
+          const { data: retryWebsite, error: retryError } = await supabase
+            .from('websites')
+            .insert({
+              store_id: currentStore.id,
+              name: data.name,
+              slug: uniqueSlug,
+              description: data.description,
+            })
+            .select()
+            .single();
+          
+          if (retryError) throw retryError;
+          
+          // Show toast that slug was adjusted
+          toast({
+            title: "Slug adjusted",
+            description: `The slug "${slug}" was taken. Using "${uniqueSlug}" instead.`,
+          });
+          
+          return retryWebsite;
+        }
+        throw error;
+      }
       return website;
     },
     onSuccess: async (website) => {

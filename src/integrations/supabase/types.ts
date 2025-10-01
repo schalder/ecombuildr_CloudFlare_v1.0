@@ -4122,6 +4122,10 @@ export type Database = {
         Args: { page_uuid: string }
         Returns: undefined
       }
+      slug_is_available: {
+        Args: { content_type: string; slug_value: string }
+        Returns: boolean
+      }
       submit_product_review: {
         Args: {
           comment_param?: string
