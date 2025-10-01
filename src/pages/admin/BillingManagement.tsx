@@ -60,6 +60,7 @@ export default function BillingManagement() {
     const configData: Record<string, any> = {};
     paymentOptions.forEach(option => {
       configData[option.provider] = {
+        id: option.id,
         is_enabled: option.is_enabled,
         display_name: option.display_name,
         account_number: option.account_number,
