@@ -114,9 +114,12 @@ export default function CreateWebsite() {
       if (error) throw error;
       return website;
     },
-    onSuccess: (website) => {
-      // Invalidate websites cache so the new website appears immediately
-      queryClient.invalidateQueries({ queryKey: ['websites'] });
+    onSuccess: async (website) => {
+      // Get the current store to invalidate the correct cache
+      const currentStore = await getOrCreateStore();
+      
+      // Invalidate storeWebsites cache so the new website appears immediately
+      queryClient.invalidateQueries({ queryKey: ['storeWebsites', currentStore.id] });
       
       toast({
         title: "Website created",

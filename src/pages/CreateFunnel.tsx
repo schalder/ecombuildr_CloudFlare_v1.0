@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAutoStore } from '@/hooks/useAutoStore';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useStoreWebsitesForSelection } from '@/hooks/useWebsiteVisibility';
@@ -24,6 +24,7 @@ export default function CreateFunnel() {
   const { toast } = useToast();
   const { store, getOrCreateStore } = useAutoStore();
   const { userProfile } = usePlanLimits();
+  const queryClient = useQueryClient();
 
   // Redirect read-only users back to dashboard
   useEffect(() => {
@@ -121,7 +122,13 @@ export default function CreateFunnel() {
       if (error) throw error;
       return funnel;
     },
-    onSuccess: (funnel) => {
+    onSuccess: async (funnel) => {
+      // Get the current store to invalidate the correct cache
+      const currentStore = await getOrCreateStore();
+      
+      // Invalidate storeFunnels cache so the new funnel appears immediately
+      queryClient.invalidateQueries({ queryKey: ['storeFunnels', currentStore.id] });
+      
       toast({
         title: "Funnel created",
         description: "Your funnel has been created successfully.",
