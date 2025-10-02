@@ -16,6 +16,7 @@ export default function PaymentSuccess() {
   const subscriptionId = searchParams.get('subscriptionId');
   const status = searchParams.get('status');
   const paymentMethod = searchParams.get('pm');
+  const transactionId = searchParams.get('transactionId') || searchParams.get('transaction_id') || searchParams.get('txn_id');
 
   useEffect(() => {
     const verifyPayment = async () => {
@@ -28,7 +29,7 @@ export default function PaymentSuccess() {
       try {
         // Call verification edge function
         const { data, error } = await supabase.functions.invoke('platform-ebpay-verify-payment', {
-          body: { subscriptionId }
+          body: { subscriptionId, transactionId }
         });
 
         if (error) throw error;
