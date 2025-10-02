@@ -4,9 +4,10 @@ import { ArrowRight, Play, Star, Users, TrendingUp } from "lucide-react";
 import { useMarketingContent } from "@/hooks/useMarketingContent";
 import { parseVideoUrl, buildEmbedUrl } from "@/components/page-builder/utils/videoUtils";
 import heroImage from "@/assets/hero-ecommerce.jpg";
-
 export const Hero = () => {
-  const { content: marketingContent } = useMarketingContent();
+  const {
+    content: marketingContent
+  } = useMarketingContent();
 
   // Determine what media to show
   const getHeroMedia = () => {
@@ -14,16 +15,19 @@ export const Hero = () => {
       const videoInfo = parseVideoUrl(marketingContent.youtube_url);
       if (videoInfo.type === 'youtube' && videoInfo.id) {
         const embedUrl = `https://www.youtube-nocookie.com/embed/${videoInfo.id}?rel=0`;
-        return { type: 'video', url: embedUrl };
+        return {
+          type: 'video',
+          url: embedUrl
+        };
       }
     }
-    
     const imageUrl = marketingContent?.hero_image_url || heroImage;
-    return { type: 'image', url: imageUrl };
+    return {
+      type: 'image',
+      url: imageUrl
+    };
   };
-
   const heroMedia = getHeroMedia();
-
   return <div className="relative min-h-screen bg-gradient-hero overflow-hidden">
       {/* Background Pattern */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_40%,rgba(120,219,226,0.1)_0%,transparent_50%)] pointer-events-none" />
@@ -35,9 +39,9 @@ export const Hero = () => {
           {/* Left Content */}
           <div className="space-y-8 text-center lg:text-left">
             {/* Social Proof Badge */}
-            <div className="inline-flex items-center gap-2 bg-success-light/50 backdrop-blur-sm border border-success/20 rounded-full px-4 py-2 text-sm font-medium text-success">
+            <div className="inline-flex items-center gap-2 backdrop-blur-sm border border-success/20 rounded-full px-4 py-2 text-sm font-medium text-success bg-cyan-700">
               <Star className="h-4 w-4 fill-current" />
-              <span className="text-slate-50">10,000+ Entrepreneurs Trust Us</span>
+              <span className="text-slate-50">দ্রুত সেল শুরু করতে না পেরে কাস্টমার হারাচ্ছেন?</span>
             </div>
 
             {/* Main Heading */}
@@ -59,23 +63,9 @@ export const Hero = () => {
             {/* Mobile Media - Show below headline on mobile only */}
             <div className="lg:hidden">
               <div className="relative rounded-2xl overflow-hidden shadow-glow">
-                {heroMedia.type === 'video' ? (
-                  <AspectRatio ratio={16 / 9} className="rounded-2xl overflow-hidden">
-                    <iframe
-                      src={heroMedia.url}
-                      title="Hero Video"
-                      className="w-full h-full rounded-2xl"
-                      allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                    />
-                  </AspectRatio>
-                ) : (
-                  <img 
-                    src={heroMedia.url} 
-                    alt="F-Commerce Platform Dashboard" 
-                    className="w-full h-auto rounded-2xl" 
-                  />
-                )}
+                {heroMedia.type === 'video' ? <AspectRatio ratio={16 / 9} className="rounded-2xl overflow-hidden">
+                    <iframe src={heroMedia.url} title="Hero Video" className="w-full h-full rounded-2xl" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
+                  </AspectRatio> : <img src={heroMedia.url} alt="F-Commerce Platform Dashboard" className="w-full h-auto rounded-2xl" />}
               </div>
             </div>
 
@@ -97,14 +87,9 @@ export const Hero = () => {
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-              <Button 
-                variant="accent" 
-                size="lg" 
-                className="group"
-                onClick={() => {
-                  window.location.href = '/#pricing';
-                }}
-              >
+              <Button variant="accent" size="lg" className="group" onClick={() => {
+              window.location.href = '/#pricing';
+            }}>
                 Start Building Free
                 <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
               </Button>
@@ -128,23 +113,9 @@ export const Hero = () => {
           {/* Right Content - Hero Media - Hidden on mobile */}
           <div className="relative hidden lg:block">
             <div className="relative z-10 rounded-2xl overflow-hidden shadow-glow">
-              {heroMedia.type === 'video' ? (
-                <AspectRatio ratio={16 / 9} className="rounded-2xl overflow-hidden">
-                  <iframe
-                    src={heroMedia.url}
-                    title="Hero Video"
-                    className="w-full h-full rounded-2xl"
-                    allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                  />
-                </AspectRatio>
-              ) : (
-                <img 
-                  src={heroMedia.url} 
-                  alt="F-Commerce Platform Dashboard" 
-                  className="w-full h-auto rounded-2xl" 
-                />
-              )}
+              {heroMedia.type === 'video' ? <AspectRatio ratio={16 / 9} className="rounded-2xl overflow-hidden">
+                  <iframe src={heroMedia.url} title="Hero Video" className="w-full h-full rounded-2xl" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
+                </AspectRatio> : <img src={heroMedia.url} alt="F-Commerce Platform Dashboard" className="w-full h-auto rounded-2xl" />}
             </div>
             
             {/* Floating Elements */}
