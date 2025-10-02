@@ -19,7 +19,7 @@ export default function PaymentSuccess() {
 
   useEffect(() => {
     const verifyPayment = async () => {
-      if (!subscriptionId || status !== 'success' || paymentMethod !== 'ebpay') {
+      if (!subscriptionId || !['success', 'completed'].includes(status || '') || paymentMethod !== 'ebpay') {
         setError('Invalid payment parameters');
         setVerifying(false);
         return;
