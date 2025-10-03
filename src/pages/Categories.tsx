@@ -14,6 +14,7 @@ import { MoreHorizontal, Plus, Search, Edit, Trash2, ChevronRight, Eye, Filter }
 import { useStoreWebsitesForSelection } from '@/hooks/useWebsiteVisibility';
 import { useCategories } from '@/hooks/useCategories';
 import { CategoryWebsiteVisibilityDialog } from '@/components/categories/CategoryWebsiteVisibilityDialog';
+import { ImageUpload } from '@/components/ui/image-upload';
 import { supabase } from '@/integrations/supabase/client';
 
 // Data interfaces
@@ -72,7 +73,8 @@ export default function Categories() {
     name: '',
     description: '',
     parent_category_id: 'none',
-    website_ids: [] as string[]
+    website_ids: [] as string[],
+    image_url: ''
   });
 
   // Filter categories by selected website and include necessary ancestors
@@ -144,7 +146,8 @@ export default function Categories() {
     const categoryData = {
       name: formData.name.trim(),
       description: formData.description.trim() || undefined,
-      parent_category_id: formData.parent_category_id === 'none' ? undefined : formData.parent_category_id || undefined
+      parent_category_id: formData.parent_category_id === 'none' ? undefined : formData.parent_category_id || undefined,
+      image_url: formData.image_url || undefined
     };
 
     // Create category with selected websites
@@ -163,7 +166,8 @@ export default function Categories() {
       name: '', 
       description: '', 
       parent_category_id: 'none',
-      website_ids: []
+      website_ids: [],
+      image_url: ''
     });
     setIsAddModalOpen(false);
   };
@@ -176,7 +180,8 @@ export default function Categories() {
     const categoryData = {
       name: formData.name.trim(),
       description: formData.description.trim() || undefined,
-      parent_category_id: addingSubcategoryTo
+      parent_category_id: addingSubcategoryTo,
+      image_url: formData.image_url || undefined
     };
 
     // Use selected websites from form
@@ -194,7 +199,8 @@ export default function Categories() {
       name: '', 
       description: '', 
       parent_category_id: 'none',
-      website_ids: []
+      website_ids: [],
+      image_url: ''
     });
     setIsAddSubcategoryModalOpen(false);
     setAddingSubcategoryTo(null);
@@ -215,7 +221,8 @@ export default function Categories() {
       id: editingCategory.id,
       name: formData.name.trim(),
       description: formData.description.trim() || undefined,
-      parent_category_id: formData.parent_category_id === 'none' ? undefined : formData.parent_category_id || undefined
+      parent_category_id: formData.parent_category_id === 'none' ? undefined : formData.parent_category_id || undefined,
+      image_url: formData.image_url || undefined
     });
 
     // Update website visibility
@@ -229,7 +236,8 @@ export default function Categories() {
       name: '', 
       description: '', 
       parent_category_id: 'none',
-      website_ids: []
+      website_ids: [],
+      image_url: ''
     });
     setIsEditModalOpen(false);
     setEditingCategory(null);
@@ -256,7 +264,8 @@ export default function Categories() {
       name: category.name,
       description: category.description || '',
       parent_category_id: category.parent_category_id || 'none',
-      website_ids: websiteIds
+      website_ids: websiteIds,
+      image_url: category.image_url || ''
     });
     setIsEditModalOpen(true);
   };
@@ -274,7 +283,8 @@ export default function Categories() {
       name: '',
       description: '',
       parent_category_id: parentId,
-      website_ids: parentWebsiteIds
+      website_ids: parentWebsiteIds,
+      image_url: ''
     });
     setIsAddSubcategoryModalOpen(true);
   };
@@ -394,6 +404,14 @@ export default function Categories() {
                     onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                   />
                 </div>
+
+                <ImageUpload
+                  label="Category Image (Optional)"
+                  value={formData.image_url}
+                  onChange={(url) => setFormData(prev => ({ ...prev, image_url: url }))}
+                  accept="image/*"
+                  maxSize={5}
+                />
                 
                 <div className="space-y-2">
                   <Label htmlFor="websites">Websites *</Label>
@@ -652,6 +670,14 @@ export default function Categories() {
                 />
               </div>
 
+              <ImageUpload
+                label="Category Image (Optional)"
+                value={formData.image_url}
+                onChange={(url) => setFormData(prev => ({ ...prev, image_url: url }))}
+                accept="image/*"
+                maxSize={5}
+              />
+
               <div className="space-y-2">
                 <Label htmlFor="sub-websites">Websites *</Label>
                 <div className="space-y-2">
@@ -727,6 +753,14 @@ export default function Categories() {
                   onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                 />
               </div>
+
+              <ImageUpload
+                label="Category Image (Optional)"
+                value={formData.image_url}
+                onChange={(url) => setFormData(prev => ({ ...prev, image_url: url }))}
+                accept="image/*"
+                maxSize={5}
+              />
 
               <div className="space-y-2">
                 <Label htmlFor="edit-websites">Websites *</Label>

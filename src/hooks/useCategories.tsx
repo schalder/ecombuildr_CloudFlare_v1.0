@@ -112,10 +112,11 @@ export const useCategories = (storeId?: string) => {
   });
 
   const createCategory = useMutation({
-    mutationFn: async ({ name, description, parent_category_id, websiteIds = [] }: { 
+    mutationFn: async ({ name, description, parent_category_id, image_url, websiteIds = [] }: { 
       name: string; 
       description?: string; 
       parent_category_id?: string;
+      image_url?: string;
       websiteIds?: string[];
     }) => {
       if (!storeId) throw new Error('Store ID is required');
@@ -134,7 +135,8 @@ export const useCategories = (storeId?: string) => {
           name,
           slug,
           description: description || null,
-          parent_category_id: parent_category_id || null
+          parent_category_id: parent_category_id || null,
+          image_url: image_url || null
         })
         .select()
         .single();
@@ -186,12 +188,14 @@ export const useCategories = (storeId?: string) => {
       id, 
       name, 
       description, 
-      parent_category_id 
+      parent_category_id,
+      image_url
     }: { 
       id: string; 
       name: string; 
       description?: string; 
       parent_category_id?: string;
+      image_url?: string;
     }) => {
       const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
       
@@ -201,7 +205,8 @@ export const useCategories = (storeId?: string) => {
           name,
           slug,
           description: description || null,
-          parent_category_id: parent_category_id || null
+          parent_category_id: parent_category_id || null,
+          image_url: image_url || null
         })
         .eq('id', id)
         .select()
