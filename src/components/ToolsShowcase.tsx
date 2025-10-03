@@ -20,7 +20,12 @@ import {
   PieChart,
   GraduationCap,
   TrendingUp,
-  ShoppingCart
+  ShoppingCart,
+  Plus,
+  Package,
+  FileText,
+  Video,
+  Clock
 } from "lucide-react";
 
 const tools = [
@@ -143,6 +148,46 @@ const tools = [
     features: ["Automated upsell triggers", "Smart product recommendations", "One-click purchase flow", "Revenue optimization analytics"],
     color: "text-accent",
     bgColor: "bg-accent-light"
+  },
+  {
+    icon: Plus,
+    title: "Order Bump",
+    description: "Boost average order value with strategic product add-ons at checkout.",
+    features: ["One-click add to order", "Strategic product pairing", "Increase AOV instantly", "Customizable bump offers"],
+    color: "text-primary",
+    bgColor: "bg-primary-light"
+  },
+  {
+    icon: Package,
+    title: "Sell Physical Product",
+    description: "Complete solution for selling and shipping physical goods worldwide.",
+    features: ["Inventory tracking", "Shipping integration", "Product variants & SKUs", "Weight-based pricing"],
+    color: "text-success",
+    bgColor: "bg-success-light"
+  },
+  {
+    icon: FileText,
+    title: "Sell Digital Product",
+    description: "Deliver digital downloads instantly after purchase with secure links.",
+    features: ["Instant delivery", "Secure download links", "File access control", "Automated fulfillment"],
+    color: "text-accent",
+    bgColor: "bg-accent-light"
+  },
+  {
+    icon: Video,
+    title: "Sell Online Course",
+    description: "Create and sell comprehensive online courses with video lessons.",
+    features: ["Video lesson hosting", "Module organization", "Student progress tracking", "Course certificates"],
+    color: "text-primary",
+    bgColor: "bg-primary-light"
+  },
+  {
+    icon: Clock,
+    title: "Set Drip Content",
+    description: "Schedule content release to keep students engaged over time.",
+    features: ["Time-based release", "Sequential unlocking", "Custom schedule", "Completion-based access"],
+    color: "text-success",
+    bgColor: "bg-success-light"
   }
 ];
 
