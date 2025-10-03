@@ -22,6 +22,7 @@ export const Footer = () => {
         { label: "Pricing", href: "#pricing" },
         { label: "Templates", href: "/templates" },
         { label: "Integrations", href: "#integrations" }
+        { label: "Image Prompt Generator", href: "https://tools.ecombuildr.com/" }
       ]
     },
     {
