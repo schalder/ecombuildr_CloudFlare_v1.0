@@ -988,17 +988,17 @@ export const ProductsPageContentProperties: React.FC<EcommerceContentPropertiesP
       </div>
 
       <div>
-        <Label className="text-xs">Default Price Range</Label>
+        <Label className="text-xs">Minimum Price Filter (Optional)</Label>
         <div className="space-y-2">
           <Slider
-            value={element.content.priceRange || [0, 10000]}
-            onValueChange={(value) => onUpdate('priceRange', value as [number, number])}
-            max={10000}
+            value={[element.content.minPriceFilter || 0]}
+            onValueChange={(value) => onUpdate('minPriceFilter', value[0])}
+            max={100000}
             min={0}
-            step={100}
+            step={500}
           />
           <span className="text-xs text-muted-foreground">
-            ৳{(element.content.priceRange || [0, 10000])[0]} - ৳{(element.content.priceRange || [0, 10000])[1]}
+            Show products from ৳{element.content.minPriceFilter || 0} and above
           </span>
         </div>
       </div>

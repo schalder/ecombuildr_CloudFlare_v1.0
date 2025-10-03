@@ -86,13 +86,14 @@ export const ProductsPageElement: React.FC<{
   const [sortBy, setSortBy] = useState<string>(element.content.defaultSortBy || 'name');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>(element.content.defaultViewMode || 'grid');
   
-  // Determine max price for slider - priceRange sets the limit, not the filter
-  const maxPriceLimit = element.content.priceRange?.[1] || 10000;
+  // Get minimum price filter from element content (shows products >= this price)
+  const minPriceFilter = element.content.minPriceFilter || 0;
+  const maxPriceLimit = 999999999; // Large number to represent "no upper limit"
   
   const [filters, setFilters] = useState<FilterState>({
     categories: [],
     collections: [],
-    priceRange: [0, maxPriceLimit], // Start with full range to show all products
+    priceRange: [minPriceFilter, maxPriceLimit], // Start from minimum price upward
     rating: 0,
     inStock: false,
     onSale: false,
@@ -477,9 +478,12 @@ export const ProductsPageElement: React.FC<{
           }
         }
 
-        // Only filter by price if user has actively changed it from the default max range
-        if (filters.priceRange[0] > 0 || filters.priceRange[1] < maxPriceLimit) {
-          query = query.gte('price', filters.priceRange[0]).lte('price', filters.priceRange[1]);
+        // Apply price filter (always apply minimum, only apply max if user changed it)
+        if (filters.priceRange[0] > 0) {
+          query = query.gte('price', filters.priceRange[0]);
+        }
+        if (filters.priceRange[1] < maxPriceLimit) {
+          query = query.lte('price', filters.priceRange[1]);
         }
 
         if (filters.onSale) {
@@ -545,7 +549,7 @@ export const ProductsPageElement: React.FC<{
   };
 
   const handleClearFilters = () => {
-    setFilters({ categories: [], collections: [], priceRange: [0, maxPriceLimit], rating: 0, inStock: false, onSale: false, freeShipping: false });
+    setFilters({ categories: [], collections: [], priceRange: [minPriceFilter, maxPriceLimit], rating: 0, inStock: false, onSale: false, freeShipping: false });
     setSearchQuery('');
   };
 
