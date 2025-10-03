@@ -86,10 +86,13 @@ export const ProductsPageElement: React.FC<{
   const [sortBy, setSortBy] = useState<string>(element.content.defaultSortBy || 'name');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>(element.content.defaultViewMode || 'grid');
   
+  // Determine max price for slider - priceRange sets the limit, not the filter
+  const maxPriceLimit = element.content.priceRange?.[1] || 10000;
+  
   const [filters, setFilters] = useState<FilterState>({
     categories: [],
     collections: [],
-    priceRange: element.content.priceRange || [0, 10000],
+    priceRange: [0, maxPriceLimit], // Start with full range to show all products
     rating: 0,
     inStock: false,
     onSale: false,
@@ -101,6 +104,13 @@ export const ProductsPageElement: React.FC<{
   const showSort = element.content.showSort !== false;
   const showViewToggle = element.content.showViewToggle !== false;
   const showRecentlyViewed = element.content.showRecentlyViewed !== false;
+
+  // Sync sortBy with element.content.defaultSortBy changes (for editor/preview)
+  useEffect(() => {
+    if (element.content.defaultSortBy && element.content.defaultSortBy !== sortBy) {
+      setSortBy(element.content.defaultSortBy);
+    }
+  }, [element.content.defaultSortBy]);
 
   const elementStyles = renderElementStyles(element, deviceType);
   const buttonStyles = useMemo(() => {
@@ -188,13 +198,11 @@ export const ProductsPageElement: React.FC<{
   }, [(element as any).styles?.buttonStyles, elementId]);
 
   const getGridClasses = () => {
-    // Always emit responsive classes so CSS handles breakpoints on live pages
+    // Get the configured columns, ensuring proper number handling
     const desktopColsRaw = Number(element.content.columns ?? 4);
     const desktop = Math.max(1, Math.min(6, isNaN(desktopColsRaw) ? 4 : desktopColsRaw));
 
-    // Enhanced debugging for tablet columns
     const tabletConfigured = element.content.tabletColumns;
-
     let tablet = tabletConfigured && !isNaN(Number(tabletConfigured))
       ? Math.max(1, Math.min(4, Number(tabletConfigured)))
       : (desktop >= 4 ? 3 : Math.max(1, desktop - 1));
@@ -202,7 +210,7 @@ export const ProductsPageElement: React.FC<{
     const mobileConfigured = (element.content as any).mobileColumns as number | undefined;
     const mobile = typeof mobileConfigured === 'number' ? Math.max(1, Math.min(3, mobileConfigured)) : 2;
 
-    // Use explicit mappings so Tailwind includes these classes in production
+    // Explicit mapping to ensure Tailwind classes are included
     const map = (n: number) => {
       switch (n) {
         case 1: return 'grid-cols-1';
@@ -215,14 +223,13 @@ export const ProductsPageElement: React.FC<{
       }
     };
 
-    // Device-aware responsive classes: md for tablet, lg continues tablet, xl for desktop
+    // Build responsive classes with proper breakpoints
+    // Base (mobile) -> md (tablet 768px+) -> lg (desktop 1024px+)
     const mobileClass = map(mobile);
     const tabletClass = `md:${map(tablet)}`;
-    const tabletContinueClass = `lg:${map(tablet)}`;  // Keep tablet layout on lg screens
-    const desktopClass = `xl:${map(desktop)}`;        // Desktop only starts at xl (1280px)
+    const desktopClass = `lg:${map(desktop)}`;
 
-
-    return `${mobileClass} ${tabletClass} ${tabletContinueClass} ${desktopClass}`;
+    return `${mobileClass} ${tabletClass} ${desktopClass}`;
   };
 
   useEffect(() => {
@@ -470,7 +477,8 @@ export const ProductsPageElement: React.FC<{
           }
         }
 
-        if (filters.priceRange[0] > 0 || filters.priceRange[1] < 10000) {
+        // Only filter by price if user has actively changed it from the default max range
+        if (filters.priceRange[0] > 0 || filters.priceRange[1] < maxPriceLimit) {
           query = query.gte('price', filters.priceRange[0]).lte('price', filters.priceRange[1]);
         }
 
@@ -537,7 +545,7 @@ export const ProductsPageElement: React.FC<{
   };
 
   const handleClearFilters = () => {
-    setFilters({ categories: [], collections: [], priceRange: [0, 10000], rating: 0, inStock: false, onSale: false, freeShipping: false });
+    setFilters({ categories: [], collections: [], priceRange: [0, maxPriceLimit], rating: 0, inStock: false, onSale: false, freeShipping: false });
     setSearchQuery('');
   };
 
