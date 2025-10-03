@@ -177,7 +177,7 @@ const tools = [
     icon: Video,
     title: "Sell Online Course",
     description: "Create and sell comprehensive online courses with video lessons.",
-    features: ["Video lesson hosting", "Module organization", "Student progress tracking", "Course certificates"],
+    features: ["Module organization", "Embed video content", "Course access control", "Lesson structure management"],
     color: "text-primary",
     bgColor: "bg-primary-light"
   },
@@ -185,7 +185,7 @@ const tools = [
     icon: Clock,
     title: "Set Drip Content",
     description: "Schedule content release to keep students engaged over time.",
-    features: ["Time-based release", "Sequential unlocking", "Custom schedule", "Completion-based access"],
+    features: ["Time-based release", "Sequential unlocking", "Custom schedule"],
     color: "text-success",
     bgColor: "bg-success-light"
   }
