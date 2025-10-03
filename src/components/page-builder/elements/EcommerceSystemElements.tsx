@@ -1367,7 +1367,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
               
 
               {/* Show shipping section only if there are physical products and shipping fields are enabled */}
-              {productTypes.hasPhysical && (fields.address?.enabled || fields.city?.enabled || fields.area?.enabled || fields.country?.enabled || fields.state?.enabled || fields.postalCode?.enabled || (websiteShipping?.enabled && (websiteShipping as any)?.showOptionsAtCheckout)) && (
+              {(isEditing || productTypes.hasPhysical) && (fields.address?.enabled || fields.city?.enabled || fields.area?.enabled || fields.country?.enabled || fields.state?.enabled || fields.postalCode?.enabled || (websiteShipping?.enabled && (websiteShipping as any)?.showOptionsAtCheckout)) && (
                 <section className="space-y-6">
                   <h3 className={`text-lg font-semibold text-gray-900 element-${element.id}-section-header`} style={headerInline as React.CSSProperties}>{headings.shipping}</h3>
                   {fields.address?.enabled && (
