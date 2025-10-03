@@ -21,8 +21,8 @@ export const Footer = () => {
         { label: "Features", href: "/#tools" },
         { label: "Pricing", href: "#pricing" },
         { label: "Templates", href: "/templates" },
-        { label: "Integrations", href: "#integrations" }
-       
+        { label: "Integrations", href: "#integrations" },
+        { label: "Image Prompt Generator", href: "https://tools.ecombuildr.com/", external: true }
       ]
     },
     {
@@ -149,10 +149,19 @@ export const Footer = () => {
           {footerSections.map((section, index) => (
             <div key={index} className="space-y-4">
               <h4 className="text-lg font-semibold">{section.title}</h4>
-              <ul className="space-y-3">
+               <ul className="space-y-3">
                  {section.links.map((link, linkIndex) => (
                    <li key={linkIndex}>
-                     {link.href.startsWith('#') ? (
+                     {link.href.startsWith('http') ? (
+                       <a 
+                         href={link.href}
+                         target="_blank"
+                         rel="noopener noreferrer"
+                         className="text-primary-light hover:text-white transition-colors duration-200"
+                       >
+                         {link.label}
+                       </a>
+                     ) : link.href.startsWith('#') ? (
                        <a 
                          href={link.href}
                          className="text-primary-light hover:text-white transition-colors duration-200"
