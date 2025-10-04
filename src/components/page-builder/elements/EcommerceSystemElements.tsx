@@ -1698,8 +1698,8 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
               status: 'pending',
             });
             setItems([
-              { id: '1', product_name: 'Sample Product A', quantity: 1, total: 99.99 },
-              { id: '2', product_name: 'Sample Product B', quantity: 1, total: 49.99 },
+              { id: '1', product_name: 'Sample Physical Product', quantity: 1, total: 99.99, product_type: 'physical' },
+              { id: '2', product_name: 'Sample Digital Product', quantity: 1, total: 49.99, product_type: 'digital' },
             ]);
             setDownloadLinks([
               { 
@@ -1758,6 +1758,9 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
     const subtotal = Number(order.subtotal ?? items.reduce((s, it) => s + Number(it.total || 0), 0));
     const shipping = Number(order.shipping_cost ?? 0);
     const discount = Number(order.discount_amount ?? 0);
+    
+    // Check if order has digital products
+    const hasDigitalProducts = items.some(item => item.product_type === 'digital');
 
     // Styles
     const oc = (element.styles as any)?.orderConfirmation || {};
@@ -1838,7 +1841,15 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
         <CardContent className="space-y-2">
           {items.map((it) => (
             <div key={it.id} className="flex justify-between text-sm">
-              <span>{nameWithVariant(it.product_name, (it as any).variation)} × {it.quantity}</span>
+              <div className="flex-1">
+                <span className="font-medium">{nameWithVariant(it.product_name, (it as any).variation)}</span>
+                {it.product_type === 'digital' && (
+                  <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">Digital</span>
+                )}
+                {it.product_sku && (
+                  <div className="text-xs text-muted-foreground">SKU: {it.product_sku}</div>
+                )}
+              </div>
               <span>{formatCurrency(Number(it.total))}</span>
             </div>
           ))}
@@ -1862,12 +1873,14 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
       </div>
       
       
-      {/* Digital Downloads Section */}
-      <DigitalDownloadSection
-        downloadLinks={downloadLinks}
-        orderId={order.id}
-        orderToken={orderToken}
-      />
+      {/* Digital Downloads Section - Only show if order has digital products */}
+      {hasDigitalProducts && (
+        <DigitalDownloadSection
+          downloadLinks={downloadLinks}
+          orderId={order.id}
+          orderToken={orderToken}
+        />
+      )}
     </div>
   );
 };

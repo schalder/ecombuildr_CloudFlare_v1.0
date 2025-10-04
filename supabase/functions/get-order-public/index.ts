@@ -68,10 +68,19 @@ serve(async (req: Request) => {
       });
     }
 
-    // Fetch items
+    // Fetch items with product type information
     const { data: items, error: itemsError } = await supabase
       .from("order_items")
-      .select("id, product_name, product_sku, price, quantity, total, variation")
+      .select(`
+        id, 
+        product_name, 
+        product_sku, 
+        price, 
+        quantity, 
+        total, 
+        variation,
+        products!inner(product_type)
+      `)
       .eq("order_id", orderId);
 
     if (itemsError) {
@@ -109,9 +118,15 @@ serve(async (req: Request) => {
       .select('*')
       .eq('order_id', orderId);
 
+    // Process items to include product type
+    const processedItems = (items || []).map(item => ({
+      ...item,
+      product_type: item.products?.product_type || 'physical'
+    }));
+
     return new Response(JSON.stringify({ 
       order: safeOrder, 
-      items: items || [],
+      items: processedItems,
       downloadLinks: downloadLinks || []
     }), {
       status: 200,
