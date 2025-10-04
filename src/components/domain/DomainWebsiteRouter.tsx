@@ -56,19 +56,20 @@ const FunnelAwarePaymentProcessing: React.FC = () => {
         if (pendingCheckout) {
           const checkoutData = JSON.parse(pendingCheckout);
           const orderFunnelId = checkoutData.orderData?.funnel_id;
+          const currentStepId = checkoutData.orderData?.currentStepId;
           
-          if (orderFunnelId) {
-            console.log('FunnelAwarePaymentProcessing: Funnel order detected', { funnelId: orderFunnelId });
+          if (orderFunnelId && currentStepId) {
+            console.log('FunnelAwarePaymentProcessing: Funnel order detected', { 
+              funnelId: orderFunnelId, 
+              currentStepId: currentStepId 
+            });
             
-            // Find the current funnel step and next step
+            // Find the current funnel step using the stored currentStepId
             const { data: currentStep, error: stepError } = await supabase
               .from('funnel_steps')
               .select('id, on_success_step_id, funnel_id')
-              .eq('funnel_id', orderFunnelId)
-              .eq('is_published', true)
-              .order('step_order', { ascending: true })
-              .limit(1)
-              .maybeSingle();
+              .eq('id', currentStepId)
+              .single();
             
             if (!stepError && currentStep?.on_success_step_id) {
               // Get the next step details
@@ -86,10 +87,26 @@ const FunnelAwarePaymentProcessing: React.FC = () => {
                 });
                 console.log('FunnelAwarePaymentProcessing: Next funnel step found', { 
                   nextStepSlug: nextStep.slug, 
-                  funnelId: orderFunnelId 
+                  funnelId: orderFunnelId,
+                  currentStepId: currentStep.id
+                });
+              } else {
+                console.log('FunnelAwarePaymentProcessing: Next step not found for current step', { 
+                  currentStepId: currentStep.id,
+                  onSuccessStepId: currentStep.on_success_step_id
                 });
               }
+            } else {
+              console.log('FunnelAwarePaymentProcessing: Current step not found or no next step configured', { 
+                currentStepId: currentStepId,
+                error: stepError?.message
+              });
             }
+          } else {
+            console.log('FunnelAwarePaymentProcessing: Missing funnel context', { 
+              hasFunnelId: !!orderFunnelId, 
+              hasCurrentStepId: !!currentStepId 
+            });
           }
         }
         
