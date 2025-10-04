@@ -142,15 +142,26 @@ serve(async (req) => {
 
     // For deferred order creation, store order data in payment metadata
     const isCourseOrder = false; // Regular orders only for now
+    
+    // Check if this is a funnel order
+    const isFunnelOrder = orderData?.funnel_id ? true : false;
 
     // Prepare EB Pay payment request data with correct format
     const paymentData = {
-      success_url: originBase.includes('ecombuildr.com') 
-        ? `${originBase}/store/${await getStoreSlug(supabase, storeId)}/payment-processing?tempId=${trackingId}&status=success&pm=ebpay`
-        : `${originBase}/payment-processing?tempId=${trackingId}&status=success&pm=ebpay`,
-      cancel_url: originBase.includes('ecombuildr.com')
-        ? `${originBase}/store/${await getStoreSlug(supabase, storeId)}/payment-processing?tempId=${trackingId}&status=failed&pm=ebpay`
-        : `${originBase}/payment-processing?tempId=${trackingId}&status=failed&pm=ebpay`,
+      success_url: isFunnelOrder
+        ? (originBase.includes('ecombuildr.com') 
+          ? `${originBase}/funnel/${orderData.funnel_id}/payment-processing?tempId=${trackingId}&status=success&pm=ebpay`
+          : `${originBase}/payment-processing?tempId=${trackingId}&status=success&pm=ebpay`)
+        : (originBase.includes('ecombuildr.com') 
+          ? `${originBase}/store/${await getStoreSlug(supabase, storeId)}/payment-processing?tempId=${trackingId}&status=success&pm=ebpay`
+          : `${originBase}/payment-processing?tempId=${trackingId}&status=success&pm=ebpay`),
+      cancel_url: isFunnelOrder
+        ? (originBase.includes('ecombuildr.com')
+          ? `${originBase}/funnel/${orderData.funnel_id}/payment-processing?tempId=${trackingId}&status=failed&pm=ebpay`
+          : `${originBase}/payment-processing?tempId=${trackingId}&status=failed&pm=ebpay`)
+        : (originBase.includes('ecombuildr.com')
+          ? `${originBase}/store/${await getStoreSlug(supabase, storeId)}/payment-processing?tempId=${trackingId}&status=failed&pm=ebpay`
+          : `${originBase}/payment-processing?tempId=${trackingId}&status=failed&pm=ebpay`),
       amount: amount.toString(),
       cus_name: customerData.name || '',
       cus_email: customerData.email || '',

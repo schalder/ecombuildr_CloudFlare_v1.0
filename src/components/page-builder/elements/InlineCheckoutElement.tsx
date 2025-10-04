@@ -667,14 +667,32 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
           response = await supabase.functions.invoke('nagad-payment', { body: { orderId, amount, storeId: store!.id } });
           break;
         case 'eps':
-          response = await supabase.functions.invoke('eps-payment', { body: { orderId, amount, storeId: store!.id, customerData: { name: form.customer_name, email: form.customer_email, phone: form.customer_phone, address: form.shipping_address, city: form.shipping_city, country: form.shipping_country, state: form.shipping_state, postal_code: form.shipping_postal_code } } });
+          response = await supabase.functions.invoke('eps-payment', { 
+            body: { 
+              orderId, 
+              amount, 
+              storeId: store!.id,
+              funnelId: funnelStepData?.funnel_id,
+              customerData: { 
+                name: form.customer_name, 
+                email: form.customer_email, 
+                phone: form.customer_phone, 
+                address: form.shipping_address, 
+                city: form.shipping_city, 
+                country: form.shipping_country, 
+                state: form.shipping_state, 
+                postal_code: form.shipping_postal_code 
+              } 
+            } 
+          });
           break;
         case 'ebpay':
           response = await supabase.functions.invoke('ebpay-payment', { 
             body: { 
               orderId, 
               amount, 
-              storeId: store!.id, 
+              storeId: store!.id,
+              funnelId: funnelStepData?.funnel_id,
               redirectOrigin: window.location.origin,
               customerData: { 
                 name: form.customer_name, 

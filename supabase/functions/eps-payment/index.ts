@@ -188,6 +188,9 @@ serve(async (req) => {
     // For deferred order creation, store order data in payment metadata
     // Success URL will trigger order creation after verification
     const isCourseOrder = false; // Regular orders only for now
+    
+    // Check if this is a funnel order
+    const isFunnelOrder = orderData?.funnel_id ? true : false;
 
     const paymentData = {
       storeId: epsConfig.store_id,
@@ -200,15 +203,27 @@ serve(async (req) => {
       ipAddress: "127.0.0.1", // Default IP
       version: "1",
       // Pass tracking ID in URLs for payment processing
-      successUrl: originBase.includes('ecombuildr.com') 
-        ? `${originBase}/store/${await getStoreSlug(supabase, storeId)}/payment-processing?tempId=${trackingId}&status=success&pm=eps`
-        : `${originBase}/payment-processing?tempId=${trackingId}&status=success&pm=eps`,
-      failUrl: originBase.includes('ecombuildr.com')
-        ? `${originBase}/store/${await getStoreSlug(supabase, storeId)}/payment-processing?tempId=${trackingId}&status=failed&pm=eps`
-        : `${originBase}/payment-processing?tempId=${trackingId}&status=failed&pm=eps`,
-      cancelUrl: originBase.includes('ecombuildr.com')
-        ? `${originBase}/store/${await getStoreSlug(supabase, storeId)}/payment-processing?tempId=${trackingId}&status=cancelled&pm=eps`
-        : `${originBase}/payment-processing?tempId=${trackingId}&status=cancelled&pm=eps`,
+      successUrl: isFunnelOrder
+        ? (originBase.includes('ecombuildr.com') 
+          ? `${originBase}/funnel/${orderData.funnel_id}/payment-processing?tempId=${trackingId}&status=success&pm=eps`
+          : `${originBase}/payment-processing?tempId=${trackingId}&status=success&pm=eps`)
+        : (originBase.includes('ecombuildr.com') 
+          ? `${originBase}/store/${await getStoreSlug(supabase, storeId)}/payment-processing?tempId=${trackingId}&status=success&pm=eps`
+          : `${originBase}/payment-processing?tempId=${trackingId}&status=success&pm=eps`),
+      failUrl: isFunnelOrder
+        ? (originBase.includes('ecombuildr.com')
+          ? `${originBase}/funnel/${orderData.funnel_id}/payment-processing?tempId=${trackingId}&status=failed&pm=eps`
+          : `${originBase}/payment-processing?tempId=${trackingId}&status=failed&pm=eps`)
+        : (originBase.includes('ecombuildr.com')
+          ? `${originBase}/store/${await getStoreSlug(supabase, storeId)}/payment-processing?tempId=${trackingId}&status=failed&pm=eps`
+          : `${originBase}/payment-processing?tempId=${trackingId}&status=failed&pm=eps`),
+      cancelUrl: isFunnelOrder
+        ? (originBase.includes('ecombuildr.com')
+          ? `${originBase}/funnel/${orderData.funnel_id}/payment-processing?tempId=${trackingId}&status=cancelled&pm=eps`
+          : `${originBase}/payment-processing?tempId=${trackingId}&status=cancelled&pm=eps`)
+        : (originBase.includes('ecombuildr.com')
+          ? `${originBase}/store/${await getStoreSlug(supabase, storeId)}/payment-processing?tempId=${trackingId}&status=cancelled&pm=eps`
+          : `${originBase}/payment-processing?tempId=${trackingId}&status=cancelled&pm=eps`),
       customerName: customerData.name,
       customerEmail: customerData.email,
       CustomerAddress: customerData.address,

@@ -14,6 +14,7 @@ import { optimizedFunnelStepQuery } from '@/components/storefront/optimized/Data
 import { PerformanceMonitor } from '@/components/storefront/optimized/PerformanceMonitor';
 import { FontOptimizer } from '@/components/storefront/optimized/FontOptimizer';
 import { TrackingCodeManager } from '@/components/tracking/TrackingCodeManager';
+import { PaymentProcessing } from '@/pages/storefront/PaymentProcessing';
 
 interface FunnelData {
   id: string;
@@ -59,6 +60,11 @@ export const DomainFunnelRouter: React.FC<DomainFunnelRouterProps> = ({ funnel }
   const isPreview = searchParams.get('preview') === '1';
   const sf = searchParams.get('sf');
   const useStorefront = sf === '0' ? false : true;
+
+  // Check if path is payment-processing
+  if (location.pathname.includes('/payment-processing')) {
+    return <PaymentProcessing />;
+  }
 
   // Extract step slug from pathname
   const pathSegments = location.pathname.split('/').filter(Boolean);

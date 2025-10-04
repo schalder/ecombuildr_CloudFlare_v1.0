@@ -303,6 +303,7 @@ const App = () => (
                 
                 {/* Funnel Routes */}
                 <Route path="/funnel/:funnelId/:stepSlug" element={<FunnelStepPage />} />
+                <Route path="/funnel/:funnelId/payment-processing" element={<PaymentProcessing />} />
                 <Route path="/funnel/:funnelId" element={<FunnelStepPage />} />
 
                 {/* Website Routes */}
