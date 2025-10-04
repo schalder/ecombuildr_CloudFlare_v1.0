@@ -34,15 +34,15 @@ export const CoursePaymentProcessing: React.FC = () => {
     }
   }, [orderId, tempId]);
 
-  // Auto-verify EB Pay payments when they return with status=completed
+  // Auto-verify EB Pay/EPS payments when they return with status=completed or status=success
   useEffect(() => {
     if (!order || loading || autoVerifying || verifying) return;
     
     if ((order.payment_method === 'ebpay' || order.payment_method === 'eps') && 
-        status === 'completed' && 
+        (status === 'completed' || status === 'success') && 
         order.payment_status !== 'completed' && 
         paymentRef) {
-      console.log('[CoursePaymentProcessing] Auto-verifying EB Pay/EPS payment', { payment_method: order.payment_method, paymentRef });
+      console.log('[CoursePaymentProcessing] Auto-verifying EB Pay/EPS payment', { payment_method: order.payment_method, status, paymentRef });
       setAutoVerifying(true);
       verifyPayment();
     }
@@ -327,7 +327,7 @@ export const CoursePaymentProcessing: React.FC = () => {
               )}
 
               <div className="space-y-3">
-                {/* Only show manual verify button for non-EPS/non-EB Pay methods */}
+                {/* Only show manual verify button for non-EPS/non-EB Pay methods or when auto-verification fails */}
                 {!autoVerifying && (status === 'success' || order.payment_status === 'pending') && order.payment_method !== 'eps' && order.payment_method !== 'ebpay' && (
                   <Button
                     onClick={verifyPayment}
