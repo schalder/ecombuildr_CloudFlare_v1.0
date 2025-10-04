@@ -165,10 +165,67 @@ useEffect(() => {
         // Clear cart after successful order creation
         clearCart();
         
-        // Check if this is a funnel order and redirect to next funnel step
+        // Navigate to order confirmation or funnel step
         const newOrderToken = data.order.access_token;
         toast.success('Order created successfully!');
-        await handleFunnelRedirect(data.order.id, newOrderToken);
+        
+        // Check if this order is from a funnel and handle funnel redirect
+        if (checkoutData.orderData?.funnel_id) {
+          try {
+            // Fetch the funnel step data to get the next step
+            const { data: funnelStep, error: stepError } = await supabase
+              .from('funnel_steps')
+              .select('on_success_step_id, funnel_id')
+              .eq('funnel_id', checkoutData.orderData.funnel_id)
+              .eq('is_published', true)
+              .order('step_order', { ascending: true })
+              .limit(1)
+              .single();
+              
+            if (!stepError && funnelStep?.on_success_step_id) {
+              // Fetch the next step details
+              const { data: nextStep, error: nextStepError } = await supabase
+                .from('funnel_steps')
+                .select('slug, funnel_id')
+                .eq('id', funnelStep.on_success_step_id)
+                .single();
+                
+              if (!nextStepError && nextStep?.slug) {
+                // Environment-aware redirect to next funnel step
+                const isAppEnvironment = (
+                  window.location.hostname === 'localhost' || 
+                  window.location.hostname.includes('lovable.dev') ||
+                  window.location.hostname.includes('lovable.app') ||
+                  window.location.hostname.includes('lovableproject.com')
+                );
+                
+                if (isAppEnvironment) {
+                  // App/sandbox: use funnel-aware paths
+                  const nextUrl = `/funnel/${nextStep.funnel_id}/${nextStep.slug}?orderId=${data.order.id}&ot=${newOrderToken}`;
+                  console.log(`Redirecting to funnel success step (app): ${nextUrl}`);
+                  window.location.href = nextUrl;
+                  return;
+                } else {
+                  // Custom domain: use clean paths
+                  const nextUrl = `/${nextStep.slug}?orderId=${data.order.id}&ot=${newOrderToken}`;
+                  console.log(`Redirecting to funnel success step (custom domain): ${nextUrl}`);
+                  window.location.href = nextUrl;
+                  return;
+                }
+              } else {
+                console.log('Next funnel step not found, falling back to order confirmation');
+              }
+            } else {
+              console.log('No funnel success step configured, falling back to order confirmation');
+            }
+          } catch (error) {
+            console.error('Error fetching funnel step:', error);
+            console.log('Funnel redirect failed, falling back to order confirmation');
+          }
+        }
+        
+        // Fallback to standard order confirmation
+        navigate(paths.orderConfirmation(data.order.id, newOrderToken));
       } else {
         throw new Error('Failed to create order');
       }
@@ -199,86 +256,6 @@ useEffect(() => {
       }
     } catch (error) {
       console.error('Error updating order status:', error);
-    }
-  };
-
-  const handleFunnelRedirect = async (orderId: string, orderToken: string) => {
-    try {
-      // Check if this order was created from a funnel step
-      const { data: orderData, error: orderError } = await supabase
-        .from('orders')
-        .select('custom_fields')
-        .eq('id', orderId)
-        .single();
-
-      if (orderError || !orderData) {
-        console.log('Order not found or no custom fields, using standard redirect');
-        navigate(paths.orderConfirmation(orderId, orderToken));
-        return;
-      }
-
-      const funnelContext = orderData.custom_fields?.funnel_context;
-      if (!funnelContext?.step_id || !funnelContext?.funnel_id) {
-        console.log('No funnel context found, using standard redirect');
-        navigate(paths.orderConfirmation(orderId, orderToken));
-        return;
-      }
-
-      console.log('Funnel context found:', funnelContext);
-
-      // Get the funnel step data to find the next step
-      const { data: stepData, error: stepError } = await supabase
-        .from('funnel_steps')
-        .select('on_success_step_id, funnel_id')
-        .eq('id', funnelContext.step_id)
-        .single();
-
-      if (stepError || !stepData) {
-        console.log('Funnel step not found, using standard redirect');
-        navigate(paths.orderConfirmation(orderId, orderToken));
-        return;
-      }
-
-      // If there's a next step, redirect to it
-      if (stepData.on_success_step_id) {
-        const { data: nextStep, error: nextStepError } = await supabase
-          .from('funnel_steps')
-          .select('slug')
-          .eq('id', stepData.on_success_step_id)
-          .single();
-
-        if (!nextStepError && nextStep) {
-          // Environment-aware redirect to next step
-          const isAppEnvironment = (
-            window.location.hostname === 'localhost' || 
-            window.location.hostname.includes('lovable.dev') ||
-            window.location.hostname.includes('lovable.app') ||
-            window.location.hostname.includes('lovableproject.com')
-          );
-          
-          if (isAppEnvironment) {
-            // App/sandbox: use funnel-aware paths
-            const nextUrl = `/funnel/${stepData.funnel_id}/${nextStep.slug}?orderId=${orderId}&ot=${orderToken}`;
-            console.log(`Redirecting to next funnel step (app): ${nextUrl}`);
-            window.location.href = nextUrl;
-            return;
-          } else {
-            // Custom domain: use clean paths
-            const nextUrl = `/${nextStep.slug}?orderId=${orderId}&ot=${orderToken}`;
-            console.log(`Redirecting to next funnel step (custom domain): ${nextUrl}`);
-            window.location.href = nextUrl;
-            return;
-          }
-        }
-      }
-
-      // No next step or error getting next step, use standard order confirmation
-      console.log('No next step found, using standard order confirmation');
-      navigate(paths.orderConfirmation(orderId, orderToken));
-    } catch (error) {
-      console.error('Error handling funnel redirect:', error);
-      // Fallback to standard redirect
-      navigate(paths.orderConfirmation(orderId, orderToken));
     }
   };
 
@@ -355,8 +332,63 @@ useEffect(() => {
         clearCart();
         const orderToken = searchParams.get('ot') || '';
         
-        // Check if this is a funnel order and redirect to next funnel step
-        await handleFunnelRedirect(order.id, orderToken);
+        // Check if this order is from a funnel and handle funnel redirect
+        if (order.funnel_id) {
+          try {
+            // Fetch the funnel step data to get the next step
+            const { data: funnelStep, error: stepError } = await supabase
+              .from('funnel_steps')
+              .select('on_success_step_id, funnel_id')
+              .eq('funnel_id', order.funnel_id)
+              .eq('is_published', true)
+              .order('step_order', { ascending: true })
+              .limit(1)
+              .single();
+              
+            if (!stepError && funnelStep?.on_success_step_id) {
+              // Fetch the next step details
+              const { data: nextStep, error: nextStepError } = await supabase
+                .from('funnel_steps')
+                .select('slug, funnel_id')
+                .eq('id', funnelStep.on_success_step_id)
+                .single();
+                
+              if (!nextStepError && nextStep?.slug) {
+                // Environment-aware redirect to next funnel step
+                const isAppEnvironment = (
+                  window.location.hostname === 'localhost' || 
+                  window.location.hostname.includes('lovable.dev') ||
+                  window.location.hostname.includes('lovable.app') ||
+                  window.location.hostname.includes('lovableproject.com')
+                );
+                
+                if (isAppEnvironment) {
+                  // App/sandbox: use funnel-aware paths
+                  const nextUrl = `/funnel/${nextStep.funnel_id}/${nextStep.slug}?orderId=${order.id}&ot=${orderToken}`;
+                  console.log(`Redirecting to funnel success step (app): ${nextUrl}`);
+                  window.location.href = nextUrl;
+                  return;
+                } else {
+                  // Custom domain: use clean paths
+                  const nextUrl = `/${nextStep.slug}?orderId=${order.id}&ot=${orderToken}`;
+                  console.log(`Redirecting to funnel success step (custom domain): ${nextUrl}`);
+                  window.location.href = nextUrl;
+                  return;
+                }
+              } else {
+                console.log('Next funnel step not found, falling back to order confirmation');
+              }
+            } else {
+              console.log('No funnel success step configured, falling back to order confirmation');
+            }
+          } catch (error) {
+            console.error('Error fetching funnel step:', error);
+            console.log('Funnel redirect failed, falling back to order confirmation');
+          }
+        }
+        
+        // Fallback to standard order confirmation
+        navigate(paths.orderConfirmation(order.id, orderToken));
       } else {
         toast.error('Payment verification failed. Please contact support.');
         setOrder(prev => ({ ...prev, status: 'payment_failed' }));
@@ -526,9 +558,9 @@ useEffect(() => {
               
               {order.status === 'paid' && (
                 <Button 
-                  onClick={async () => {
+                  onClick={() => {
                     const orderToken = searchParams.get('ot') || '';
-                    await handleFunnelRedirect(order.id, orderToken);
+                    navigate(paths.orderConfirmation(order.id, orderToken));
                   }}
                   className="w-full"
                 >
