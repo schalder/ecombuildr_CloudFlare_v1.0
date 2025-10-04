@@ -58,10 +58,11 @@ export const OrderConfirmation: React.FC = () => {
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCourseOrder, setIsCourseOrder] = useState(false);
+  const [detectedWebsiteId, setDetectedWebsiteId] = useState<string | null>(null);
   const paths = useEcomPaths();
   const orderId = orderIdParam || searchParams.get('orderId') || '';
   const orderToken = searchParams.get('ot') || '';
-  const isWebsiteContext = Boolean(websiteId || websiteSlug);
+  const isWebsiteContext = Boolean(websiteId || websiteSlug || detectedWebsiteId);
   const { pixels } = usePixelContext();
   const { trackPurchase } = usePixelTracking(pixels, store?.id);
 useEffect(() => {
@@ -80,6 +81,61 @@ useEffect(() => {
     })();
   }
 }, [slug, websiteId, loadStore, loadStoreById]);
+
+// Detect website context for custom domains
+useEffect(() => {
+  const detectWebsiteContext = async () => {
+    const currentHost = window.location.hostname;
+    
+    // Skip detection for system domains
+    if (currentHost === 'localhost' || 
+        currentHost.includes('lovable.dev') ||
+        currentHost.includes('lovable.app') ||
+        currentHost.includes('lovableproject.com') ||
+        currentHost === 'ecombuildr.com') {
+      return;
+    }
+    
+    try {
+      // Check if this is a custom domain
+      const { data: domain } = await supabase
+        .from('custom_domains')
+        .select(`
+          id,
+          store_id,
+          domain_connections!inner (
+            content_type,
+            content_id
+          )
+        `)
+        .eq('domain', currentHost)
+        .eq('is_verified', true)
+        .eq('dns_configured', true)
+        .eq('domain_connections.content_type', 'website')
+        .maybeSingle();
+        
+      if (domain && domain.domain_connections && domain.domain_connections.length > 0) {
+        const websiteId = domain.domain_connections[0].content_id;
+        setDetectedWebsiteId(websiteId);
+        
+        // Load the store for this website
+        const { data: website } = await supabase
+          .from('websites')
+          .select('store_id')
+          .eq('id', websiteId)
+          .single();
+          
+        if (website?.store_id) {
+          await loadStoreById(website.store_id);
+        }
+      }
+    } catch (error) {
+      console.error('Error detecting website context:', error);
+    }
+  };
+  
+  detectWebsiteContext();
+}, [loadStoreById]);
 
 
   useEffect(() => {
@@ -469,6 +525,9 @@ useEffect(() => {
     </div>
   );
 
+  // Always return content - let the parent layout handle header/footer
+  // For website context, DomainWebsiteRouter provides WebsiteHeader/WebsiteFooter
+  // For store context, StorefrontLayout provides the layout
   if (isWebsiteContext) {
     return content;
   }
