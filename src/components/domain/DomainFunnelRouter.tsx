@@ -171,24 +171,8 @@ export const DomainFunnelRouter: React.FC<DomainFunnelRouterProps> = ({ funnel }
       <Routes>
         <Route path="/payment-processing" element={<PaymentProcessing />} />
         <Route path="/payment-processing/:orderId" element={<PaymentProcessing />} />
-        <Route path="/order-confirmation" element={
-          <div className="w-full min-h-screen flex flex-col">
-            <FunnelHeader funnel={funnel} />
-            <main className="flex-1">
-              <OrderConfirmation />
-            </main>
-            <FunnelFooter funnel={funnel} />
-          </div>
-        } />
-        <Route path="/order-confirmation/:orderId" element={
-          <div className="w-full min-h-screen flex flex-col">
-            <FunnelHeader funnel={funnel} />
-            <main className="flex-1">
-              <OrderConfirmation />
-            </main>
-            <FunnelFooter funnel={funnel} />
-          </div>
-        } />
+        <Route path="/order-confirmation" element={<OrderConfirmation />} />
+        <Route path="/order-confirmation/:orderId" element={<OrderConfirmation />} />
         <Route path="*" element={
           <div className="min-h-screen flex items-center justify-center">
             <div className="text-center">
