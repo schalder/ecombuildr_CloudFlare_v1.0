@@ -188,36 +188,6 @@ serve(async (req) => {
     // For deferred order creation, store order data in payment metadata
     // Success URL will trigger order creation after verification
     const isCourseOrder = false; // Regular orders only for now
-    
-    // Check if this is a funnel order - prioritize requestBody.funnelId
-    const funnelId = requestBody.funnelId || orderData?.funnel_id;
-    const isFunnelOrder = !!funnelId;
-
-    // Get store slug for system domain routing
-    const storeSlug = await getStoreSlug(supabase, storeId);
-
-    // Construct redirect URLs
-    let successUrl: string;
-    let failUrl: string;
-    let cancelUrl: string;
-
-    if (originBase.includes('ecombuildr.com')) {
-      // System domain
-      if (isFunnelOrder) {
-        successUrl = `${originBase}/funnel/${funnelId}/payment-processing?tempId=${trackingId}&status=success&pm=eps`;
-        failUrl = `${originBase}/funnel/${funnelId}/payment-processing?tempId=${trackingId}&status=failed&pm=eps`;
-        cancelUrl = `${originBase}/funnel/${funnelId}/payment-processing?tempId=${trackingId}&status=cancelled&pm=eps`;
-      } else {
-        successUrl = `${originBase}/store/${storeSlug}/payment-processing?tempId=${trackingId}&status=success&pm=eps`;
-        failUrl = `${originBase}/store/${storeSlug}/payment-processing?tempId=${trackingId}&status=failed&pm=eps`;
-        cancelUrl = `${originBase}/store/${storeSlug}/payment-processing?tempId=${trackingId}&status=cancelled&pm=eps`;
-      }
-    } else {
-      // Custom domain
-      successUrl = `${originBase}/payment-processing?tempId=${trackingId}&status=success&pm=eps`;
-      failUrl = `${originBase}/payment-processing?tempId=${trackingId}&status=failed&pm=eps`;
-      cancelUrl = `${originBase}/payment-processing?tempId=${trackingId}&status=cancelled&pm=eps`;
-    }
 
     const paymentData = {
       storeId: epsConfig.store_id,
@@ -229,9 +199,16 @@ serve(async (req) => {
       totalAmount: amount,
       ipAddress: "127.0.0.1", // Default IP
       version: "1",
-      successUrl: successUrl,
-      failUrl: failUrl,
-      cancelUrl: cancelUrl,
+      // Pass tracking ID in URLs for payment processing
+      successUrl: originBase.includes('ecombuildr.com') 
+        ? `${originBase}/store/${await getStoreSlug(supabase, storeId)}/payment-processing?tempId=${trackingId}&status=success&pm=eps`
+        : `${originBase}/payment-processing?tempId=${trackingId}&status=success&pm=eps`,
+      failUrl: originBase.includes('ecombuildr.com')
+        ? `${originBase}/store/${await getStoreSlug(supabase, storeId)}/payment-processing?tempId=${trackingId}&status=failed&pm=eps`
+        : `${originBase}/payment-processing?tempId=${trackingId}&status=failed&pm=eps`,
+      cancelUrl: originBase.includes('ecombuildr.com')
+        ? `${originBase}/store/${await getStoreSlug(supabase, storeId)}/payment-processing?tempId=${trackingId}&status=cancelled&pm=eps`
+        : `${originBase}/payment-processing?tempId=${trackingId}&status=cancelled&pm=eps`,
       customerName: customerData.name,
       customerEmail: customerData.email,
       CustomerAddress: customerData.address,

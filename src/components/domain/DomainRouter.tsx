@@ -126,13 +126,6 @@ export const DomainRouter: React.FC<DomainRouterProps> = ({ children }) => {
               is_homepage: false,
               store_id: domain.store_id
             } as DomainConnection;
-          } else if (currentPath.startsWith('/payment-processing') || currentPath.startsWith('/order-confirmation')) {
-            // For payment processing and order confirmation, prioritize funnel > website
-            console.debug('DomainRouter: Payment/Order path detected:', currentPath);
-            selectedConnection = 
-              connectionsArray.find(c => c.content_type === 'funnel') ||
-              connectionsArray.find(c => c.content_type === 'website') ||
-              null;
           } else {
             // For non-course paths, check funnel step slugs
             const pathSegments = currentPath.split('/').filter(Boolean);
