@@ -137,6 +137,14 @@ useEffect(() => {
 
       const checkoutData = JSON.parse(pendingCheckout);
       
+      console.log('PaymentProcessing: About to create order with data:', {
+        orderData: checkoutData.orderData,
+        itemsPayload: checkoutData.itemsPayload,
+        storeId: store.id,
+        tempId: tempId,
+        paymentMethod: paymentMethod
+      });
+      
       // Create order now that payment is successful
       const { data, error } = await supabase.functions.invoke('create-order-on-payment-success', {
         body: {
@@ -156,7 +164,10 @@ useEffect(() => {
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('PaymentProcessing: create-order-on-payment-success error:', error);
+        throw error;
+      }
 
       if (data?.success && data?.order) {
         // Clear stored checkout data
