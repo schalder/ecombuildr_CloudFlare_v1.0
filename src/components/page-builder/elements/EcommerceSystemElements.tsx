@@ -1715,15 +1715,12 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
           return;
         }
         
-        // ✅ WAIT FOR STORE TO LOAD BEFORE FETCHING ORDER
+        // ✅ Wait for store to be loaded before making API call
         if (!store) {
-          console.log('OrderConfirmationElement: Waiting for store to load...');
-          return; // Don't set loading to false yet - keep showing loading state
+          // Don't set loading to false here - keep loading state until store is ready
+          return;
         }
         
-        console.log('OrderConfirmationElement: Store loaded, fetching order:', { orderId: id, storeId: store.id });
-        
-        // Use secure public order access with token
         const { data, error } = await supabase.functions.invoke('get-order-public', {
           body: { 
             orderId: id, 
@@ -1749,10 +1746,12 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
             // ignore and keep empty
           }
         }
+        
+        // ✅ Only set loading to false after successful API call
+        setLoading(false);
       } catch (e) {
-        console.error('OrderConfirmationElement: Error fetching order:', e);
-        // Error fetching order - order will remain null
-      } finally {
+        // Error fetching order - set loading to false only after error handling
+        console.error('Error fetching order:', e);
         setLoading(false);
       }
     })();
