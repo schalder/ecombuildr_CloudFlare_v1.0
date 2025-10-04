@@ -326,9 +326,11 @@ export const FunnelStepSettingsPanel: React.FC<FunnelStepSettingsPanelProps> = (
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {step.step_type === 'landing' && (
+          {(step.step_type === 'landing' || step.step_type === 'checkout') && (
             <div className="space-y-2">
-              <Label htmlFor="success-step">On Success (After Checkout)</Label>
+              <Label htmlFor="success-step">
+                {step.step_type === 'landing' ? 'On Success (After Checkout)' : 'On Success (After Payment)'}
+              </Label>
               <Select
                 value={step.on_success_step_id || 'order-confirmation'}
                 onValueChange={(value) => setStep({ ...step, on_success_step_id: value === 'order-confirmation' ? null : value })}
