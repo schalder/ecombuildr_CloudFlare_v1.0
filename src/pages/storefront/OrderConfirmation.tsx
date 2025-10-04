@@ -528,13 +528,5 @@ useEffect(() => {
   // Always return content - let the parent layout handle header/footer
   // For website context, DomainWebsiteRouter provides WebsiteHeader/WebsiteFooter
   // For store context, StorefrontLayout provides the layout
-  if (isWebsiteContext) {
-    return content;
-  }
-
-  return (
-    <StorefrontLayout>
-      {content}
-    </StorefrontLayout>
-  );
+  return content;
 };
