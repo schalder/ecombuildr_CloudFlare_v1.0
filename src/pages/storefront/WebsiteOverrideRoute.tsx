@@ -205,7 +205,10 @@ export const WebsiteOverrideRoute: React.FC<WebsiteOverrideRouteProps> = ({ slug
     );
   }
 
-  if (!page) return fallback;
+  if (!page) {
+    // Clone the fallback element and pass websiteId as prop
+    return React.cloneElement(fallback, { websiteId });
+  }
 
   return (
     <>

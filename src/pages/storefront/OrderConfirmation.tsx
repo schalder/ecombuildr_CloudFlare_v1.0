@@ -49,8 +49,13 @@ interface OrderItem {
   variation?: any;
 }
 
-export const OrderConfirmation: React.FC = () => {
-  const { slug, websiteId, websiteSlug, orderId: orderIdParam } = useParams<{ slug?: string; websiteId?: string; websiteSlug?: string; orderId?: string }>();
+interface OrderConfirmationProps {
+  websiteId?: string;
+}
+
+export const OrderConfirmation: React.FC<OrderConfirmationProps> = ({ websiteId: propWebsiteId }) => {
+  const { slug, websiteId: paramWebsiteId, websiteSlug, orderId: orderIdParam } = useParams<{ slug?: string; websiteId?: string; websiteSlug?: string; orderId?: string }>();
+  const websiteId = propWebsiteId || paramWebsiteId;
   const [searchParams] = useSearchParams();
   const { store, loadStore, loadStoreById } = useStore();
   const { clearCart } = useCart();
