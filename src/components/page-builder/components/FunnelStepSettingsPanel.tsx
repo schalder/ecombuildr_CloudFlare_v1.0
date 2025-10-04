@@ -251,6 +251,7 @@ export const FunnelStepSettingsPanel: React.FC<FunnelStepSettingsPanelProps> = (
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="landing">Landing Page</SelectItem>
+                <SelectItem value="checkout">Checkout Page</SelectItem>
                 <SelectItem value="upsell">Upsell Offer</SelectItem>
                 <SelectItem value="downsell">Downsell Offer</SelectItem>
                 <SelectItem value="thank_you">Thank You Page</SelectItem>
