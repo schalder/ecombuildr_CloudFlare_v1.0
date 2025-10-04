@@ -549,6 +549,8 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
           variation: null,
         }
       ];
+      
+      console.log('InlineCheckoutElement: itemsPayload constructed:', itemsPayload);
       if (orderBump.enabled && bumpChecked && bumpProduct) {
         itemsPayload.push({
           product_id: bumpProduct.id,
@@ -648,7 +650,7 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
       } else {
         // Store checkout data temporarily for live payments (EPS/EB Pay)
         // Include funnel context for proper redirect after payment
-        sessionStorage.setItem('pending_checkout', JSON.stringify({
+        const checkoutDataToStore = {
           orderData: {
             ...orderData,
             funnelId: funnelStepData?.funnel_id,        // ✅ Add funnel ID
@@ -658,7 +660,10 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
           itemsPayload,
           storeId: store.id,
           timestamp: Date.now()
-        }));
+        };
+        
+        console.log('InlineCheckoutElement: Storing checkout data:', checkoutDataToStore);
+        sessionStorage.setItem('pending_checkout', JSON.stringify(checkoutDataToStore));
         
         await initiatePayment(orderId, orderData.total, form.payment_method, accessToken);
       }
