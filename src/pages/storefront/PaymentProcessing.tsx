@@ -136,13 +136,75 @@ useEffect(() => {
     try {
       // Get stored checkout data
       const pendingCheckout = sessionStorage.getItem('pending_checkout');
-      if (!pendingCheckout) {
-        toast.error('Checkout data not found. Please try again.');
-        setLoading(false);
-        return;
-      }
+      let checkoutData = null;
 
-      const checkoutData = JSON.parse(pendingCheckout);
+      if (pendingCheckout) {
+        checkoutData = JSON.parse(pendingCheckout);
+      } else {
+        // If sessionStorage data is not available, try to retrieve from payment gateway
+        console.log('SessionStorage data not found, attempting to retrieve from payment gateway...');
+        
+        const merchantTransactionId = searchParams.get('MerchantTransactionId');
+        const epsTransactionId = searchParams.get('EPSTransactionId');
+        
+        if (paymentMethod === 'eps' && merchantTransactionId) {
+          try {
+            const { data, error } = await supabase.functions.invoke('get-eps-order-data', {
+              body: {
+                merchantTransactionId,
+                storeId: store.id
+              }
+            });
+            
+            if (error) throw error;
+            
+            if (data?.success && data?.orderData && data?.itemsData) {
+              checkoutData = {
+                orderData: data.orderData,
+                itemsPayload: data.itemsData
+              };
+              console.log('Successfully retrieved order data from EPS payment gateway');
+            } else {
+              throw new Error('Order data not found in payment gateway');
+            }
+          } catch (error) {
+            console.error('Failed to retrieve order data from EPS:', error);
+            toast.error('Unable to retrieve order data. Please contact support.');
+            setLoading(false);
+            return;
+          }
+        } else if (paymentMethod === 'ebpay' && epsTransactionId) {
+          try {
+            const { data, error } = await supabase.functions.invoke('get-ebpay-order-data', {
+              body: {
+                transactionId: epsTransactionId,
+                storeId: store.id
+              }
+            });
+            
+            if (error) throw error;
+            
+            if (data?.success && data?.orderData && data?.itemsData) {
+              checkoutData = {
+                orderData: data.orderData,
+                itemsPayload: data.itemsData
+              };
+              console.log('Successfully retrieved order data from EB Pay payment gateway');
+            } else {
+              throw new Error('Order data not found in payment gateway');
+            }
+          } catch (error) {
+            console.error('Failed to retrieve order data from EB Pay:', error);
+            toast.error('Unable to retrieve order data. Please contact support.');
+            setLoading(false);
+            return;
+          }
+        } else {
+          toast.error('Checkout data not found. Please try again.');
+          setLoading(false);
+          return;
+        }
+      }
       
       // Create order now that payment is successful
       const { data, error } = await supabase.functions.invoke('create-order-on-payment-success', {
@@ -166,8 +228,10 @@ useEffect(() => {
       if (error) throw error;
 
       if (data?.success && data?.order) {
-        // Clear stored checkout data
-        sessionStorage.removeItem('pending_checkout');
+        // Clear stored checkout data if it exists
+        if (sessionStorage.getItem('pending_checkout')) {
+          sessionStorage.removeItem('pending_checkout');
+        }
         
         // Clear cart after successful order creation
         clearCart();
