@@ -11,7 +11,6 @@ import { useToast } from '@/hooks/use-toast';
 import { debounce } from '@/lib/utils';
 import { TemplateSelectionModal } from '@/components/templates/TemplateSelectionModal';
 import type { PageBuilderData } from '@/components/page-builder/types';
-import { validateFunnelStepSlug } from '@/lib/slugUtils';
 
 type SlugStatus = 'idle' | 'checking' | 'available' | 'taken' | 'error';
 
@@ -80,24 +79,32 @@ export const CreateStepModal: React.FC<CreateStepModalProps> = ({
     return uniqueSlug;
   };
 
-  // Check slug availability with domain-wide validation (NON-BLOCKING)
+  // Check slug availability
   const checkSlugAvailability = async (slug: string) => {
     if (!slug.trim()) return;
     
     setSlugStatus('checking');
     
     try {
-      // Use domain-wide slug validation
-      const validation = await validateFunnelStepSlug(slug, funnelId);
+      const { data, error } = await supabase
+        .from('funnel_steps')
+        .select('slug')
+        .eq('funnel_id', funnelId)
+        .eq('slug', slug)
+        .maybeSingle();
       
-      if (validation.hasConflict) {
-        // Auto-populate the suggested slug in the input field
-        setFormData(prev => ({ ...prev, slug: validation.uniqueSlug }));
-        setSuggestedSlug(validation.uniqueSlug);
-        setFinalSlug(validation.uniqueSlug);
+      if (error) {
+        setSlugStatus('error');
+        return;
+      }
+      
+      if (data) {
+        const uniqueSlug = await generateUniqueSlug(slug);
+        setSuggestedSlug(uniqueSlug);
+        setFinalSlug(uniqueSlug);
         setSlugStatus('taken');
       } else {
-        setFinalSlug(validation.uniqueSlug);
+        setFinalSlug(slug);
         setSuggestedSlug('');
         setSlugStatus('available');
       }
@@ -199,7 +206,14 @@ export const CreateStepModal: React.FC<CreateStepModalProps> = ({
       return;
     }
 
-    // Always allow creation - never block due to slug conflicts
+    if (slugStatus === 'taken' && !finalSlug) {
+      toast({
+        title: "Please wait for slug validation to complete.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     createStepMutation.mutate({
       ...formData,
       slug: slugToUse,
@@ -322,9 +336,9 @@ export const CreateStepModal: React.FC<CreateStepModalProps> = ({
               </p>
             )}
             {slugStatus === 'taken' && suggestedSlug && (
-              <p className="text-sm text-blue-600 mt-1 flex items-center gap-1">
+              <p className="text-sm text-yellow-600 mt-1 flex items-center gap-1">
                 <AlertCircle className="h-3 w-3" />
-                Slug auto-corrected to "{suggestedSlug}" to avoid conflicts
+                Slug already exists. Using "{suggestedSlug}" instead
               </p>
             )}
             {slugStatus === 'error' && (
