@@ -1616,8 +1616,6 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
   const [items, setItems] = useState<any[]>([]);
   const [downloadLinks, setDownloadLinks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [retryCount, setRetryCount] = useState(0);
-  const [error, setError] = useState<string | null>(null);
   const orderContentRef = useRef<HTMLDivElement>(null);
   const query = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
   const id = orderId || query.get('orderId') || '';
@@ -1716,16 +1714,16 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
           setLoading(false);
           return;
         }
-        // Use secure public order access with token
+        
+        // ✅ WAIT FOR STORE TO LOAD BEFORE FETCHING ORDER
         if (!store) {
-          return;
+          console.log('OrderConfirmationElement: Waiting for store to load...');
+          return; // Don't set loading to false yet - keep showing loading state
         }
         
-        // Add initial delay for race condition handling
-        if (retryCount === 0) {
-          await new Promise(resolve => setTimeout(resolve, 200));
-        }
+        console.log('OrderConfirmationElement: Store loaded, fetching order:', { orderId: id, storeId: store.id });
         
+        // Use secure public order access with token
         const { data, error } = await supabase.functions.invoke('get-order-public', {
           body: { 
             orderId: id, 
@@ -1733,41 +1731,10 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
             token: orderToken 
           }
         });
-        
-        if (error) {
-          console.error('OrderConfirmationElement: get-order-public error:', error);
-          
-          // Retry logic for temporary errors (race conditions)
-          if (retryCount < 3 && (
-            error.message?.includes('Order not found') || 
-            error.message?.includes('Invalid access token') ||
-            error.message?.includes('Failed to fetch order')
-          )) {
-            console.log(`OrderConfirmationElement: Retrying order fetch (attempt ${retryCount + 1})`);
-            setRetryCount(prev => prev + 1);
-            // Exponential backoff: 200ms, 400ms, 800ms
-            await new Promise(resolve => setTimeout(resolve, 200 * Math.pow(2, retryCount)));
-            return; // Don't set loading to false, retry
-          }
-          
-          // Permanent error after retries
-          setError(error.message || 'Failed to fetch order');
-          setLoading(false);
-          return;
-        }
-        
-        if (!data?.order) {
-          // Order not found after all retries
-          setError('Order not found');
-          setLoading(false);
-          return;
-        }
-        
-        // Success - set order data
-        setOrder(data.order);
-        setItems(data.items || []);
-        setDownloadLinks(data.downloadLinks || []);
-        setError(null);
+        if (error) throw error;
+        setOrder(data?.order || null);
+        setItems(data?.items || []);
+        setDownloadLinks(data?.downloadLinks || []);
 
         // Fallback: if no download links yet, try to generate them (service-side)
         if ((!data?.downloadLinks || data.downloadLinks.length === 0) && id) {
@@ -1782,18 +1749,16 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
             // ignore and keep empty
           }
         }
-        
-        setLoading(false);
       } catch (e) {
-        console.error('OrderConfirmationElement: Unexpected error:', e);
-        setError('An unexpected error occurred');
+        console.error('OrderConfirmationElement: Error fetching order:', e);
+        // Error fetching order - order will remain null
+      } finally {
         setLoading(false);
       }
     })();
-  }, [id, store, orderToken, retryCount]);
+  }, [id, store, orderToken]);
 
   if (loading) return <div className="text-center">Loading...</div>;
-  if (error) return <div className="text-center text-destructive">{error}</div>;
   if (!order) return <div className="text-center">Order not found</div>;
 
   // Derived totals
