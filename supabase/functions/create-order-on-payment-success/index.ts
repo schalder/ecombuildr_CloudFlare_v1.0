@@ -55,9 +55,7 @@ serve(async (req) => {
     orderData.custom_fields = {
       ...(orderData.custom_fields || {}),
       order_access_token: orderAccessToken,
-      ...(paymentDetails && { payment_details: paymentDetails }),
-      // Preserve funnel context if it exists in the order data
-      ...(orderData.funnel_context && { funnel_context: orderData.funnel_context })
+      ...(paymentDetails && { payment_details: paymentDetails })
     };
 
     // Set status to confirmed for successful payments

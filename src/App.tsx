@@ -303,8 +303,6 @@ const App = () => (
                 
                 {/* Funnel Routes */}
                 <Route path="/funnel/:funnelId/:stepSlug" element={<FunnelStepPage />} />
-                <Route path="/funnel/:funnelId/payment-processing" element={<PaymentProcessing />} />
-                <Route path="/funnel/:funnelId/order-confirmation" element={<OrderConfirmation />} />
                 <Route path="/funnel/:funnelId" element={<FunnelStepPage />} />
 
                 {/* Website Routes */}
@@ -392,10 +390,6 @@ const App = () => (
                 {/* Member and Course Routes */}
                 <Route path="/members/*" element={<MemberRoutes />} />
                 <Route path="/courses/*" element={<MemberRoutes />} />
-
-                {/* Custom Domain Routes - for custom domain funnels */}
-                <Route path="/payment-processing" element={<PaymentProcessing />} />
-                <Route path="/order-confirmation" element={<OrderConfirmation />} />
 
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />

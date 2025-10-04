@@ -68,30 +68,19 @@ serve(async (req: Request) => {
       });
     }
 
-    // Fetch items with product type information (using LEFT JOIN to handle missing products)
+    // Fetch items
     const { data: items, error: itemsError } = await supabase
       .from("order_items")
-      .select(`
-        id, 
-        product_name, 
-        product_sku, 
-        price, 
-        quantity, 
-        total, 
-        variation,
-        product_id,
-        products(product_type, digital_files)
-      `)
+      .select("id, product_name, product_sku, price, quantity, total, variation")
       .eq("order_id", orderId);
 
     if (itemsError) {
       console.error("get-order-public: itemsError", itemsError);
-      // Don't fail the entire request if items can't be fetched, return empty array
-      console.warn("get-order-public: Continuing without items due to error");
+      return new Response(JSON.stringify({ error: "Items fetch failed" }), {
+        status: 500,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
     }
-
-    // Ensure items is always an array
-    const safeItems = items || [];
 
     // Return safe subset of order data (no PII exposed in logs)
     const safeOrder = {
@@ -122,7 +111,7 @@ serve(async (req: Request) => {
 
     return new Response(JSON.stringify({ 
       order: safeOrder, 
-      items: safeItems,
+      items: items || [],
       downloadLinks: downloadLinks || []
     }), {
       status: 200,

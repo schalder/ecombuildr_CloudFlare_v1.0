@@ -65,50 +65,6 @@ async function getStoreSlug(supabase: any, storeId: string): Promise<string> {
   return store?.slug || 'store';
 }
 
-// Helper function to get next step slug for funnel custom domain redirects
-async function getNextStepSlugForFunnel(supabase: any, funnelId: string, stepId?: string): Promise<string | null> {
-  try {
-    if (!stepId) {
-      // If no stepId provided, get the first step of the funnel
-      const { data: firstStep } = await supabase
-        .from('funnel_steps')
-        .select('slug')
-        .eq('funnel_id', funnelId)
-        .eq('is_published', true)
-        .order('step_order', { ascending: true })
-        .limit(1)
-        .maybeSingle();
-      return firstStep?.slug || null;
-    }
-
-    // Get the current step and its on_success_step_id
-    const { data: currentStep } = await supabase
-      .from('funnel_steps')
-      .select('on_success_step_id')
-      .eq('id', stepId)
-      .eq('funnel_id', funnelId)
-      .maybeSingle();
-
-    if (!currentStep?.on_success_step_id) {
-      // No next step configured, return null to use fallback
-      return null;
-    }
-
-    // Get the next step slug
-    const { data: nextStep } = await supabase
-      .from('funnel_steps')
-      .select('slug')
-      .eq('id', currentStep.on_success_step_id)
-      .eq('is_published', true)
-      .maybeSingle();
-
-    return nextStep?.slug || null;
-  } catch (error) {
-    console.error('Error fetching next step slug for funnel:', error);
-    return null;
-  }
-}
-
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -233,51 +189,6 @@ serve(async (req) => {
     // Success URL will trigger order creation after verification
     const isCourseOrder = false; // Regular orders only for now
 
-    // Detect funnel context from order data
-    const isFunnelOrder = orderData?.funnel_id;
-
-    // Construct appropriate redirect URLs based on context
-    let successUrl: string;
-    let failUrl: string;
-    let cancelUrl: string;
-
-    if (isFunnelOrder) {
-      // Funnel context: determine if this is a custom domain funnel
-      const isCustomDomainFunnel = !originBase.includes('ecombuildr.com');
-      
-      if (isCustomDomainFunnel) {
-        // Custom domain funnel: get the next step slug from the funnel step
-        const nextStepSlug = await getNextStepSlugForFunnel(supabase, orderData.funnel_id, orderData.step_id);
-        
-        if (nextStepSlug) {
-          // Redirect to the actual next step (e.g., /thank-you, /confirmation, etc.)
-          successUrl = `${originBase}/${nextStepSlug}?tempId=${trackingId}&status=success&pm=eps`;
-          failUrl = `${originBase}/${nextStepSlug}?tempId=${trackingId}&status=failed&pm=eps`;
-          cancelUrl = `${originBase}/${nextStepSlug}?tempId=${trackingId}&status=cancelled&pm=eps`;
-        } else {
-          // Fallback to generic payment processing
-          successUrl = `${originBase}/payment-processing?tempId=${trackingId}&status=success&pm=eps`;
-          failUrl = `${originBase}/payment-processing?tempId=${trackingId}&status=failed&pm=eps`;
-          cancelUrl = `${originBase}/payment-processing?tempId=${trackingId}&status=cancelled&pm=eps`;
-        }
-      } else {
-        // System domain funnel: use funnel-specific route
-        successUrl = `${originBase}/funnel/${orderData.funnel_id}/payment-processing?tempId=${trackingId}&status=success&pm=eps`;
-        failUrl = `${originBase}/funnel/${orderData.funnel_id}/payment-processing?tempId=${trackingId}&status=failed&pm=eps`;
-        cancelUrl = `${originBase}/funnel/${orderData.funnel_id}/payment-processing?tempId=${trackingId}&status=cancelled&pm=eps`;
-      }
-    } else if (originBase.includes('ecombuildr.com')) {
-      // System domain: use store-specific route
-      successUrl = `${originBase}/store/${await getStoreSlug(supabase, storeId)}/payment-processing?tempId=${trackingId}&status=success&pm=eps`;
-      failUrl = `${originBase}/store/${await getStoreSlug(supabase, storeId)}/payment-processing?tempId=${trackingId}&status=failed&pm=eps`;
-      cancelUrl = `${originBase}/store/${await getStoreSlug(supabase, storeId)}/payment-processing?tempId=${trackingId}&status=cancelled&pm=eps`;
-    } else {
-      // Custom domain: use generic route (for websites)
-      successUrl = `${originBase}/payment-processing?tempId=${trackingId}&status=success&pm=eps`;
-      failUrl = `${originBase}/payment-processing?tempId=${trackingId}&status=failed&pm=eps`;
-      cancelUrl = `${originBase}/payment-processing?tempId=${trackingId}&status=cancelled&pm=eps`;
-    }
-
     const paymentData = {
       storeId: epsConfig.store_id,
       CustomerOrderId: trackingId,
@@ -289,9 +200,15 @@ serve(async (req) => {
       ipAddress: "127.0.0.1", // Default IP
       version: "1",
       // Pass tracking ID in URLs for payment processing
-      successUrl: successUrl,
-      failUrl: failUrl,
-      cancelUrl: cancelUrl,
+      successUrl: originBase.includes('ecombuildr.com') 
+        ? `${originBase}/store/${await getStoreSlug(supabase, storeId)}/payment-processing?tempId=${trackingId}&status=success&pm=eps`
+        : `${originBase}/payment-processing?tempId=${trackingId}&status=success&pm=eps`,
+      failUrl: originBase.includes('ecombuildr.com')
+        ? `${originBase}/store/${await getStoreSlug(supabase, storeId)}/payment-processing?tempId=${trackingId}&status=failed&pm=eps`
+        : `${originBase}/payment-processing?tempId=${trackingId}&status=failed&pm=eps`,
+      cancelUrl: originBase.includes('ecombuildr.com')
+        ? `${originBase}/store/${await getStoreSlug(supabase, storeId)}/payment-processing?tempId=${trackingId}&status=cancelled&pm=eps`
+        : `${originBase}/payment-processing?tempId=${trackingId}&status=cancelled&pm=eps`,
       customerName: customerData.name,
       customerEmail: customerData.email,
       CustomerAddress: customerData.address,

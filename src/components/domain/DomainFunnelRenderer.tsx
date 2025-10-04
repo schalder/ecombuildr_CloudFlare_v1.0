@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useStore } from '@/contexts/StoreContext';
 import { setSEO, buildCanonical } from '@/lib/seo';
@@ -7,8 +6,6 @@ import { Loader2 } from 'lucide-react';
 import { DomainFunnelRouter } from './DomainFunnelRouter';
 import { PixelManager } from '@/components/pixel/PixelManager';
 import { TrackingCodeManager } from '@/components/tracking/TrackingCodeManager';
-import { PaymentProcessing } from '@/pages/storefront/PaymentProcessing';
-import { OrderConfirmation } from '@/pages/storefront/OrderConfirmation';
 
 interface DomainFunnelRendererProps {
   funnelId: string;
@@ -45,10 +42,6 @@ export const DomainFunnelRenderer: React.FC<DomainFunnelRendererProps> = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { loadStoreById, store } = useStore();
-  const location = useLocation();
-
-  // Check if current path is a system path that needs special handling
-  const isSystemPath = location.pathname === '/payment-processing' || location.pathname === '/order-confirmation';
 
   useEffect(() => {
     const fetchFunnelData = async () => {
@@ -145,33 +138,6 @@ export const DomainFunnelRenderer: React.FC<DomainFunnelRendererProps> = ({
     );
   }
 
-  // For system paths, render the appropriate component directly
-  if (isSystemPath) {
-    return (
-      <PixelManager 
-        websitePixels={{
-          facebook_pixel_id: funnel.settings?.facebook_pixel_id,
-          google_analytics_id: funnel.settings?.google_analytics_id,
-          google_ads_id: funnel.settings?.google_ads_id,
-        }}
-        storeId={funnel.store_id}
-        funnelId={funnel.id}
-      >
-        <TrackingCodeManager 
-          headerCode={funnel.settings?.header_tracking_code}
-          footerCode={funnel.settings?.footer_tracking_code}
-          priority="funnel"
-        />
-        {location.pathname === '/payment-processing' ? (
-          <PaymentProcessing />
-        ) : (
-          <OrderConfirmation />
-        )}
-      </PixelManager>
-    );
-  }
-
-  // For regular funnel steps, use DomainFunnelRouter
   return (
     <PixelManager 
       websitePixels={{

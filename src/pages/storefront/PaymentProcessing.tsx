@@ -165,66 +165,9 @@ useEffect(() => {
         // Clear cart after successful order creation
         clearCart();
         
-        // Navigate to order confirmation or funnel step
+        // Navigate to order confirmation
         const newOrderToken = data.order.access_token;
         toast.success('Order created successfully!');
-        
-        // Check if this order is from a funnel and handle funnel redirect
-        if (checkoutData.orderData?.funnel_id) {
-          try {
-            // Fetch the funnel step data to get the next step
-            const { data: funnelStep, error: stepError } = await supabase
-              .from('funnel_steps')
-              .select('on_success_step_id, funnel_id')
-              .eq('funnel_id', checkoutData.orderData.funnel_id)
-              .eq('is_published', true)
-              .order('step_order', { ascending: true })
-              .limit(1)
-              .single();
-              
-            if (!stepError && funnelStep?.on_success_step_id) {
-              // Fetch the next step details
-              const { data: nextStep, error: nextStepError } = await supabase
-                .from('funnel_steps')
-                .select('slug, funnel_id')
-                .eq('id', funnelStep.on_success_step_id)
-                .single();
-                
-              if (!nextStepError && nextStep?.slug) {
-                // Environment-aware redirect to next funnel step
-                const isAppEnvironment = (
-                  window.location.hostname === 'localhost' || 
-                  window.location.hostname.includes('lovable.dev') ||
-                  window.location.hostname.includes('lovable.app') ||
-                  window.location.hostname.includes('lovableproject.com')
-                );
-                
-                if (isAppEnvironment) {
-                  // App/sandbox: use funnel-aware paths
-                  const nextUrl = `/funnel/${nextStep.funnel_id}/${nextStep.slug}?orderId=${data.order.id}&ot=${newOrderToken}`;
-                  console.log(`Redirecting to funnel success step (app): ${nextUrl}`);
-                  window.location.href = nextUrl;
-                  return;
-                } else {
-                  // Custom domain: use clean paths
-                  const nextUrl = `/${nextStep.slug}?orderId=${data.order.id}&ot=${newOrderToken}`;
-                  console.log(`Redirecting to funnel success step (custom domain): ${nextUrl}`);
-                  window.location.href = nextUrl;
-                  return;
-                }
-              } else {
-                console.log('Next funnel step not found, falling back to order confirmation');
-              }
-            } else {
-              console.log('No funnel success step configured, falling back to order confirmation');
-            }
-          } catch (error) {
-            console.error('Error fetching funnel step:', error);
-            console.log('Funnel redirect failed, falling back to order confirmation');
-          }
-        }
-        
-        // Fallback to standard order confirmation
         navigate(paths.orderConfirmation(data.order.id, newOrderToken));
       } else {
         throw new Error('Failed to create order');
@@ -331,63 +274,6 @@ useEffect(() => {
         // Clear cart after successful payment
         clearCart();
         const orderToken = searchParams.get('ot') || '';
-        
-        // Check if this order is from a funnel and handle funnel redirect
-        if (order.funnel_id) {
-          try {
-            // Fetch the funnel step data to get the next step
-            const { data: funnelStep, error: stepError } = await supabase
-              .from('funnel_steps')
-              .select('on_success_step_id, funnel_id')
-              .eq('funnel_id', order.funnel_id)
-              .eq('is_published', true)
-              .order('step_order', { ascending: true })
-              .limit(1)
-              .single();
-              
-            if (!stepError && funnelStep?.on_success_step_id) {
-              // Fetch the next step details
-              const { data: nextStep, error: nextStepError } = await supabase
-                .from('funnel_steps')
-                .select('slug, funnel_id')
-                .eq('id', funnelStep.on_success_step_id)
-                .single();
-                
-              if (!nextStepError && nextStep?.slug) {
-                // Environment-aware redirect to next funnel step
-                const isAppEnvironment = (
-                  window.location.hostname === 'localhost' || 
-                  window.location.hostname.includes('lovable.dev') ||
-                  window.location.hostname.includes('lovable.app') ||
-                  window.location.hostname.includes('lovableproject.com')
-                );
-                
-                if (isAppEnvironment) {
-                  // App/sandbox: use funnel-aware paths
-                  const nextUrl = `/funnel/${nextStep.funnel_id}/${nextStep.slug}?orderId=${order.id}&ot=${orderToken}`;
-                  console.log(`Redirecting to funnel success step (app): ${nextUrl}`);
-                  window.location.href = nextUrl;
-                  return;
-                } else {
-                  // Custom domain: use clean paths
-                  const nextUrl = `/${nextStep.slug}?orderId=${order.id}&ot=${orderToken}`;
-                  console.log(`Redirecting to funnel success step (custom domain): ${nextUrl}`);
-                  window.location.href = nextUrl;
-                  return;
-                }
-              } else {
-                console.log('Next funnel step not found, falling back to order confirmation');
-              }
-            } else {
-              console.log('No funnel success step configured, falling back to order confirmation');
-            }
-          } catch (error) {
-            console.error('Error fetching funnel step:', error);
-            console.log('Funnel redirect failed, falling back to order confirmation');
-          }
-        }
-        
-        // Fallback to standard order confirmation
         navigate(paths.orderConfirmation(order.id, orderToken));
       } else {
         toast.error('Payment verification failed. Please contact support.');

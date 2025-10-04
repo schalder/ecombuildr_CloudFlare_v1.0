@@ -1157,23 +1157,12 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
       
       if (isLivePayment) {
         // Store checkout data temporarily for order creation after payment
-        const checkoutData = {
+        sessionStorage.setItem('pending_checkout', JSON.stringify({
           orderData,
           itemsPayload,
           storeId: store.id,
           timestamp: Date.now()
-        };
-
-        // Add funnel context if we're in a funnel
-        const { funnelId, stepId } = useChannelContext();
-        if (funnelId && stepId) {
-          checkoutData.orderData.funnel_context = {
-            funnel_id: funnelId,
-            step_id: stepId
-          };
-        }
-
-        sessionStorage.setItem('pending_checkout', JSON.stringify(checkoutData));
+        }));
         
         // Generate temporary ID for tracking
         orderId = crypto.randomUUID();
