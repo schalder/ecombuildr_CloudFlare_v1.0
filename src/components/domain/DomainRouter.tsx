@@ -126,6 +126,10 @@ export const DomainRouter: React.FC<DomainRouterProps> = ({ children }) => {
               is_homepage: false,
               store_id: domain.store_id
             } as DomainConnection;
+          } else if (currentPath === '/payment-processing' || currentPath === '/order-confirmation') {
+            // System paths for funnels - inherit funnel context from domain
+            console.debug('DomainRouter: System path detected:', currentPath);
+            selectedConnection = connectionsArray.find(c => c.content_type === 'funnel') || null;
           } else {
             // For non-course paths, check funnel step slugs
             const pathSegments = currentPath.split('/').filter(Boolean);
