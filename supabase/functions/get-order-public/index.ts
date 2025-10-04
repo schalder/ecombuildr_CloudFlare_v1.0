@@ -76,7 +76,7 @@ serve(async (req: Request) => {
 
     console.log('get-order-public: raw order_items:', { rawItems, rawItemsError, orderId });
 
-    // Fetch items with product type information
+    // Fetch items without join first to see if basic data works
     const { data: items, error: itemsError } = await supabase
       .from("order_items")
       .select(`
@@ -87,7 +87,7 @@ serve(async (req: Request) => {
         quantity, 
         total, 
         variation,
-        products(product_type)
+        product_id
       `)
       .eq("order_id", orderId);
 
@@ -99,6 +99,26 @@ serve(async (req: Request) => {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },
       });
+    }
+
+    // Get product types separately
+    const productIds = (items || []).map(item => item.product_id).filter(Boolean);
+    let productTypes: Record<string, string> = {};
+    
+    if (productIds.length > 0) {
+      const { data: products, error: productsError } = await supabase
+        .from("products")
+        .select("id, product_type")
+        .in("id", productIds);
+      
+      console.log('get-order-public: products query result:', { products, productsError });
+      
+      if (!productsError && products) {
+        productTypes = products.reduce((acc, product) => {
+          acc[product.id] = product.product_type || 'physical';
+          return acc;
+        }, {} as Record<string, string>);
+      }
     }
 
     // Return safe subset of order data (no PII exposed in logs)
@@ -131,10 +151,11 @@ serve(async (req: Request) => {
     // Process items to include product type
     const processedItems = (items || []).map(item => ({
       ...item,
-      product_type: item.products?.product_type || 'physical'
+      product_type: productTypes[item.product_id] || 'physical'
     }));
 
     console.log('get-order-public: processed items:', processedItems);
+    console.log('get-order-public: productTypes lookup:', productTypes);
 
     return new Response(JSON.stringify({ 
       order: safeOrder, 
