@@ -673,6 +673,7 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
               amount, 
               storeId: store!.id,
               funnelId: funnelStepData?.funnel_id,
+              redirectOrigin: window.location.origin,
               customerData: { 
                 name: form.customer_name, 
                 email: form.customer_email, 

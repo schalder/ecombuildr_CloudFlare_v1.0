@@ -143,25 +143,36 @@ serve(async (req) => {
     // For deferred order creation, store order data in payment metadata
     const isCourseOrder = false; // Regular orders only for now
     
-    // Check if this is a funnel order
-    const isFunnelOrder = orderData?.funnel_id ? true : false;
+    // Check if this is a funnel order - prioritize requestBody.funnelId
+    const funnelId = requestBody.funnelId || orderData?.funnel_id;
+    const isFunnelOrder = !!funnelId;
+
+    // Get store slug for system domain routing
+    const storeSlug = await getStoreSlug(supabase, storeId);
+
+    // Construct redirect URLs
+    let successUrl: string;
+    let cancelUrl: string;
+
+    if (originBase.includes('ecombuildr.com')) {
+      // System domain
+      if (isFunnelOrder) {
+        successUrl = `${originBase}/funnel/${funnelId}/payment-processing?tempId=${trackingId}&status=success&pm=ebpay`;
+        cancelUrl = `${originBase}/funnel/${funnelId}/payment-processing?tempId=${trackingId}&status=cancelled&pm=ebpay`;
+      } else {
+        successUrl = `${originBase}/store/${storeSlug}/payment-processing?tempId=${trackingId}&status=success&pm=ebpay`;
+        cancelUrl = `${originBase}/store/${storeSlug}/payment-processing?tempId=${trackingId}&status=cancelled&pm=ebpay`;
+      }
+    } else {
+      // Custom domain
+      successUrl = `${originBase}/payment-processing?tempId=${trackingId}&status=success&pm=ebpay`;
+      cancelUrl = `${originBase}/payment-processing?tempId=${trackingId}&status=cancelled&pm=ebpay`;
+    }
 
     // Prepare EB Pay payment request data with correct format
     const paymentData = {
-      success_url: isFunnelOrder
-        ? (originBase.includes('ecombuildr.com') 
-          ? `${originBase}/funnel/${orderData.funnel_id}/payment-processing?tempId=${trackingId}&status=success&pm=ebpay`
-          : `${originBase}/payment-processing?tempId=${trackingId}&status=success&pm=ebpay`)
-        : (originBase.includes('ecombuildr.com') 
-          ? `${originBase}/store/${await getStoreSlug(supabase, storeId)}/payment-processing?tempId=${trackingId}&status=success&pm=ebpay`
-          : `${originBase}/payment-processing?tempId=${trackingId}&status=success&pm=ebpay`),
-      cancel_url: isFunnelOrder
-        ? (originBase.includes('ecombuildr.com')
-          ? `${originBase}/funnel/${orderData.funnel_id}/payment-processing?tempId=${trackingId}&status=failed&pm=ebpay`
-          : `${originBase}/payment-processing?tempId=${trackingId}&status=failed&pm=ebpay`)
-        : (originBase.includes('ecombuildr.com')
-          ? `${originBase}/store/${await getStoreSlug(supabase, storeId)}/payment-processing?tempId=${trackingId}&status=failed&pm=ebpay`
-          : `${originBase}/payment-processing?tempId=${trackingId}&status=failed&pm=ebpay`),
+      success_url: successUrl,
+      cancel_url: cancelUrl,
       amount: amount.toString(),
       cus_name: customerData.name || '',
       cus_email: customerData.email || '',
