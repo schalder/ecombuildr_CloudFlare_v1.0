@@ -248,7 +248,8 @@ useEffect(() => {
                   window.location.hostname === 'localhost' || 
                   window.location.hostname.includes('lovable.dev') ||
                   window.location.hostname.includes('lovable.app') ||
-                  window.location.hostname.includes('lovableproject.com')
+                  window.location.hostname.includes('lovableproject.com') ||
+                  window.location.hostname === 'ecombuildr.com'
                 );
                 
                 const newOrderToken = data.order.access_token;
