@@ -1719,12 +1719,12 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
           return;
         }
 
-        // ✅ RETRY LOGIC: Try to fetch order with exponential backoff
+        // ✅ Add retry logic for order fetching to handle temporary unavailability
         let retryCount = 0;
         const maxRetries = 3;
-        const baseDelay = 200; // Start with 200ms delay
+        let lastError = null;
 
-        while (retryCount <= maxRetries) {
+        while (retryCount < maxRetries) {
           try {
             const { data, error } = await supabase.functions.invoke('get-order-public', {
               body: { 
@@ -1735,12 +1735,16 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
             });
             
             if (error) {
-              // If it's a 404 or 403 error and we haven't exceeded retries, retry
-              if ((error.message?.includes('not found') || error.message?.includes('Invalid access token')) && retryCount < maxRetries) {
-                retryCount++;
-                const delay = baseDelay * Math.pow(2, retryCount - 1); // Exponential backoff
-                console.log(`OrderConfirmationElement: Retry ${retryCount}/${maxRetries} after ${delay}ms delay`);
-                await new Promise(resolve => setTimeout(resolve, delay));
+              lastError = error;
+              // If it's a 404 or 403 error, don't retry (order doesn't exist or invalid token)
+              if (error.message?.includes('not found') || error.message?.includes('Invalid access token')) {
+                throw error;
+              }
+              // For other errors, retry
+              retryCount++;
+              if (retryCount < maxRetries) {
+                console.log(`OrderConfirmationElement: Retry ${retryCount}/${maxRetries} for order ${id}`);
+                await new Promise(resolve => setTimeout(resolve, 500 * retryCount)); // Exponential backoff
                 continue;
               }
               throw error;
@@ -1767,15 +1771,16 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
             
             // Success - break out of retry loop
             break;
-          } catch (retryError) {
-            if (retryCount >= maxRetries) {
-              // Final attempt failed
-              throw retryError;
-            }
+          } catch (e) {
+            lastError = e;
             retryCount++;
-            const delay = baseDelay * Math.pow(2, retryCount - 1);
-            console.log(`OrderConfirmationElement: Retry ${retryCount}/${maxRetries} after ${delay}ms delay`);
-            await new Promise(resolve => setTimeout(resolve, delay));
+            if (retryCount < maxRetries) {
+              console.log(`OrderConfirmationElement: Retry ${retryCount}/${maxRetries} for order ${id}, error:`, e);
+              await new Promise(resolve => setTimeout(resolve, 500 * retryCount)); // Exponential backoff
+            } else {
+              // Final attempt failed
+              throw e;
+            }
           }
         }
       } catch (e) {

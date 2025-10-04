@@ -77,9 +77,9 @@ serve(async (req) => {
 
     // Generate order access token
     const orderAccessToken = crypto.randomUUID();
-    orderData.access_token = orderAccessToken;
     orderData.custom_fields = {
       ...(orderData.custom_fields || {}),
+      order_access_token: orderAccessToken,
       ...(paymentDetails && { payment_details: paymentDetails })
     };
 

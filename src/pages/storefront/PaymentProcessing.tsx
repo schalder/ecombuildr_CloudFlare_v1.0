@@ -253,23 +253,21 @@ useEffect(() => {
                 
                 const newOrderToken = data.order.access_token;
                 
+                // ✅ Add small delay to ensure database consistency before redirect
+                console.log('PaymentProcessing: Adding delay before redirect to ensure order availability...');
+                await new Promise(resolve => setTimeout(resolve, 200));
+                
                 if (isAppEnvironment) {
                   // App/sandbox: use funnel-aware paths
                   const nextUrl = `/funnel/${funnelId}/${nextStep.slug}?orderId=${data.order.id}&ot=${newOrderToken}`;
                   console.log(`Funnel redirect (app): ${nextUrl}`);
-                  // ✅ Add small delay to ensure database consistency
-                  setTimeout(() => {
-                    window.location.href = nextUrl;
-                  }, 150);
+                  window.location.href = nextUrl;
                   return;
                 } else {
                   // Custom domain: use clean paths
                   const nextUrl = `/${nextStep.slug}?orderId=${data.order.id}&ot=${newOrderToken}`;
                   console.log(`Funnel redirect (custom domain): ${nextUrl}`);
-                  // ✅ Add small delay to ensure database consistency
-                  setTimeout(() => {
-                    window.location.href = nextUrl;
-                  }, 150);
+                  window.location.href = nextUrl;
                   return;
                 }
               } else {
