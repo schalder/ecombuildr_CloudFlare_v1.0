@@ -646,18 +646,6 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
           navigate(confirmUrl);
         }
       } else {
-        // Store checkout data temporarily for live payments (EPS/EB Pay)
-        // Include current step ID for funnel context
-        sessionStorage.setItem('pending_checkout', JSON.stringify({
-          orderData: {
-            ...orderData,
-            currentStepId: stepId  // ✅ Add current step ID for funnel context
-          },
-          itemsPayload,
-          storeId: store.id,
-          timestamp: Date.now()
-        }));
-        
         await initiatePayment(orderId, orderData.total, form.payment_method, accessToken);
       }
     } catch (e) {
