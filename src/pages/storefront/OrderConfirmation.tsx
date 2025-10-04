@@ -16,6 +16,7 @@ import { usePixelTracking } from '@/hooks/usePixelTracking';
 import { usePixelContext } from '@/components/pixel/PixelManager';
 import jsPDF from 'jspdf';
 import CourseOrderConfirmation from '@/components/course/CourseOrderConfirmation';
+import { DigitalDownloadSection } from '@/components/page-builder/components/DigitalDownloadSection';
 
 interface Order {
   id: string;
@@ -56,6 +57,7 @@ export const OrderConfirmation: React.FC = () => {
   const { clearCart } = useCart();
   const [order, setOrder] = useState<Order | null>(null);
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
+  const [downloadLinks, setDownloadLinks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCourseOrder, setIsCourseOrder] = useState(false);
   const paths = useEcomPaths();
@@ -138,8 +140,14 @@ useEffect(() => {
         const orderData = data.order as Order;
         const itemsData = (data.items || []) as OrderItem[];
         
+        // Debug logging
+        console.log('OrderConfirmation - Order data:', orderData);
+        console.log('OrderConfirmation - Items data:', itemsData);
+        console.log('OrderConfirmation - Download links:', data.downloadLinks);
+        
         setOrder(orderData);
         setOrderItems(itemsData);
+        setDownloadLinks(data.downloadLinks || []);
         
         // Clear cart when order confirmation is successfully loaded
         clearCart();
@@ -398,7 +406,12 @@ useEffect(() => {
               {orderItems.map((item) => (
                 <div key={item.id} className="flex justify-between items-center py-2">
                   <div className="flex-1">
-                    <p className="font-medium text-sm">{nameWithVariant(item.product_name, (item as any).variation)}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium text-sm">{nameWithVariant(item.product_name, (item as any).variation)}</p>
+                      {(item as any).product_type === 'digital' && (
+                        <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">Digital</span>
+                      )}
+                    </div>
                     {item.product_sku && (
                       <p className="text-xs text-muted-foreground">SKU: {item.product_sku}</p>
                     )}
@@ -448,6 +461,15 @@ useEffect(() => {
             minute: '2-digit'
           })}
         </div>
+
+        {/* Digital Downloads Section - Only show if order has digital products */}
+        {downloadLinks && downloadLinks.length > 0 && (
+          <DigitalDownloadSection
+            downloadLinks={downloadLinks}
+            orderId={order.id}
+            orderToken={orderToken}
+          />
+        )}
 
         {/* Action Buttons */}
         <div className="flex space-x-2">
