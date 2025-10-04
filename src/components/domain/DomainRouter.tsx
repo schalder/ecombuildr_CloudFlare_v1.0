@@ -150,23 +150,9 @@ export const DomainRouter: React.FC<DomainRouterProps> = ({ children }) => {
               }
             }
             
-            // If no funnel step matches, check if we have a funnel connection
-            // System routes like /payment-processing should be handled by funnel router
+            // If no funnel step matches, use website for all other paths
             if (!selectedConnection) {
-              const funnelConnection = connectionsArray.find(c => c.content_type === 'funnel');
-              if (funnelConnection) {
-                // If we have a funnel connection, use it for system routes
-                const systemRoutes = ['payment-processing', 'order-confirmation', 'cart', 'checkout'];
-                if (systemRoutes.some(route => currentPath.includes(route))) {
-                  selectedConnection = funnelConnection;
-                } else {
-                  // For other paths, try website connection
-                  selectedConnection = connectionsArray.find(c => c.content_type === 'website') || funnelConnection;
-                }
-              } else {
-                // No funnel connection, use website connection
-                selectedConnection = connectionsArray.find(c => c.content_type === 'website') || null;
-              }
+              selectedConnection = connectionsArray.find(c => c.content_type === 'website') || null;
             }
           }
         }

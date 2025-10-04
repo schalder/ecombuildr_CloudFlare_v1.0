@@ -51,57 +51,16 @@ serve(async (req) => {
       throw new Error('Missing required order data');
     }
 
-    // Validate orderData structure
-    console.log('Validating orderData:', {
-      hasOrderData: !!orderData,
-      customer_name: orderData?.customer_name,
-      customer_email: orderData?.customer_email,
-      total: orderData?.total,
-      payment_method: orderData?.payment_method,
-      hasCustomerName: !!orderData?.customer_name,
-      hasCustomerEmail: !!orderData?.customer_email,
-      hasTotal: !!orderData?.total,
-      hasPaymentMethod: !!orderData?.payment_method
-    });
-
-    // Check for required orderData fields
-    if (!orderData.customer_name || !orderData.customer_email || !orderData.total || !orderData.payment_method) {
-      console.error('Invalid orderData:', orderData);
-      throw new Error(`Order data missing required fields. Missing: ${[
-        !orderData.customer_name && 'customer_name',
-        !orderData.customer_email && 'customer_email',
-        !orderData.total && 'total',
-        !orderData.payment_method && 'payment_method'
-      ].filter(Boolean).join(', ')}`);
-    }
-
     // Validate items data structure
     if (!Array.isArray(itemsData) || itemsData.length === 0) {
       throw new Error('Invalid items data: must be non-empty array');
     }
 
     // Validate required fields in items
-    for (let i = 0; i < itemsData.length; i++) {
-      const item = itemsData[i];
-      console.log(`Validating item ${i}:`, {
-        product_id: item.product_id,
-        product_name: item.product_name,
-        price: item.price,
-        quantity: item.quantity,
-        hasProductId: !!item.product_id,
-        hasProductName: !!item.product_name,
-        hasPrice: !!item.price,
-        hasQuantity: !!item.quantity
-      });
-      
+    for (const item of itemsData) {
       if (!item.product_id || !item.product_name || !item.price || !item.quantity) {
-        console.error(`Invalid item data at index ${i}:`, item);
-        throw new Error(`Item ${i} must have product_id, product_name, price, and quantity. Missing: ${[
-          !item.product_id && 'product_id',
-          !item.product_name && 'product_name', 
-          !item.price && 'price',
-          !item.quantity && 'quantity'
-        ].filter(Boolean).join(', ')}`);
+        console.error('Invalid item data:', item);
+        throw new Error('Items must have product_id, product_name, price, and quantity');
       }
     }
 
@@ -205,17 +164,10 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Create order on payment success error:', error);
-    console.error('Error stack:', error.stack);
-    console.error('Error details:', {
-      message: error.message,
-      name: error.name,
-      cause: error.cause
-    });
     return new Response(
       JSON.stringify({ 
         success: false, 
-        error: error.message || 'Failed to create order',
-        details: error.stack || 'No stack trace available'
+        error: error.message || 'Failed to create order' 
       }),
       { 
         status: 500,

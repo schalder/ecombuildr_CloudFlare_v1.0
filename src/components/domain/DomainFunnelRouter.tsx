@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useLocation, useSearchParams, Routes, Route } from 'react-router-dom';
+import { useLocation, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
 import { PageBuilderRenderer } from '@/components/storefront/PageBuilderRenderer';
@@ -14,8 +14,6 @@ import { optimizedFunnelStepQuery } from '@/components/storefront/optimized/Data
 import { PerformanceMonitor } from '@/components/storefront/optimized/PerformanceMonitor';
 import { FontOptimizer } from '@/components/storefront/optimized/FontOptimizer';
 import { TrackingCodeManager } from '@/components/tracking/TrackingCodeManager';
-import { PaymentProcessing } from '@/pages/storefront/PaymentProcessing';
-import { OrderConfirmation } from '@/pages/storefront/OrderConfirmation';
 
 interface FunnelData {
   id: string;
@@ -71,15 +69,6 @@ export const DomainFunnelRouter: React.FC<DomainFunnelRouterProps> = ({ funnel }
       try {
         setLoading(true);
         setError(null);
-
-        // ✅ Handle system routes first (payment-processing, order-confirmation, etc.)
-        const systemRoutes = ['payment-processing', 'order-confirmation', 'cart', 'checkout'];
-        if (systemRoutes.includes(stepSlug)) {
-          // For system routes, we need to render the appropriate component
-          // This will be handled by the Routes component below
-          setLoading(false);
-          return;
-        }
 
         let query = supabase
           .from('funnel_steps')
@@ -161,27 +150,6 @@ export const DomainFunnelRouter: React.FC<DomainFunnelRouterProps> = ({ funnel }
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin" />
       </div>
-    );
-  }
-
-  // ✅ Handle system routes (payment-processing, order-confirmation, etc.)
-  const systemRoutes = ['payment-processing', 'order-confirmation', 'cart', 'checkout'];
-  if (systemRoutes.includes(stepSlug)) {
-    return (
-      <Routes>
-        <Route path="/payment-processing" element={<PaymentProcessing />} />
-        <Route path="/payment-processing/:orderId" element={<PaymentProcessing />} />
-        <Route path="/order-confirmation" element={<OrderConfirmation />} />
-        <Route path="/order-confirmation/:orderId" element={<OrderConfirmation />} />
-        <Route path="*" element={
-          <div className="min-h-screen flex items-center justify-center">
-            <div className="text-center">
-              <h1 className="text-2xl font-bold text-destructive mb-2">Page Not Found</h1>
-              <p className="text-muted-foreground">The requested system route could not be found.</p>
-            </div>
-          </div>
-        } />
-      </Routes>
     );
   }
 
