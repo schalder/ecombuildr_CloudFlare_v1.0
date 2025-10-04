@@ -1759,6 +1759,11 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
     const shipping = Number(order.shipping_cost ?? 0);
     const discount = Number(order.discount_amount ?? 0);
 
+    // Determine if order contains digital products
+    const hasDigitalProducts = items.some((item: any) => item.products?.product_type === 'digital');
+    const hasPhysicalProducts = items.some((item: any) => item.products?.product_type === 'physical');
+    const isDigitalOnlyOrder = hasDigitalProducts && !hasPhysicalProducts;
+
     // Styles
     const oc = (element.styles as any)?.orderConfirmation || {};
     const css = [
@@ -1790,12 +1795,16 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
                 <p className="text-sm text-muted-foreground">{order.customer_email}</p>
               )}
             </div>
-          <Separator />
-          <div>
-            <h3 className={`font-semibold mb-2 element-${element.id}-oc-section-title`}>{texts.shippingTitle}</h3>
-            <p className="text-sm">{order.shipping_address}</p>
-            <p className="text-sm">{order.shipping_city}{order.shipping_area && `, ${order.shipping_area}`}</p>
-          </div>
+          {!isDigitalOnlyOrder && (
+            <>
+              <Separator />
+              <div>
+                <h3 className={`font-semibold mb-2 element-${element.id}-oc-section-title`}>{texts.shippingTitle}</h3>
+                <p className="text-sm">{order.shipping_address}</p>
+                <p className="text-sm">{order.shipping_city}{order.shipping_area && `, ${order.shipping_area}`}</p>
+              </div>
+            </>
+          )}
           {Array.isArray(order.custom_fields) && order.custom_fields.length > 0 && (
             <>
               <Separator />
@@ -1844,7 +1853,9 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
           ))}
           <Separator className="my-2" />
           <div className="flex justify-between text-sm"><span>Subtotal</span><span>{formatCurrency(subtotal)}</span></div>
-          <div className="flex justify-between text-sm"><span>Shipping</span><span>{formatCurrency(shipping)}</span></div>
+          {!isDigitalOnlyOrder && (
+            <div className="flex justify-between text-sm"><span>Shipping</span><span>{formatCurrency(shipping)}</span></div>
+          )}
           {discount > 0 && (
             <div className="flex justify-between text-sm"><span>Discount</span><span>- {formatCurrency(discount)}</span></div>
           )}

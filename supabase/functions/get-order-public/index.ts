@@ -68,10 +68,20 @@ serve(async (req: Request) => {
       });
     }
 
-    // Fetch items
+    // Fetch items with product type information
     const { data: items, error: itemsError } = await supabase
       .from("order_items")
-      .select("id, product_name, product_sku, price, quantity, total, variation")
+      .select(`
+        id, 
+        product_name, 
+        product_sku, 
+        price, 
+        quantity, 
+        total, 
+        variation,
+        product_id,
+        products!inner(product_type)
+      `)
       .eq("order_id", orderId);
 
     if (itemsError) {
