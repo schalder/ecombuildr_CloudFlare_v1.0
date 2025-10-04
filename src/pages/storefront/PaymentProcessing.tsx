@@ -31,6 +31,12 @@ export const PaymentProcessing: React.FC = () => {
   const isFunnelContext = Boolean(funnelId) || window.location.pathname.includes('/funnel/');
   const isWebsiteContext = Boolean(websiteId || websiteSlug || window.location.hostname !== 'localhost' && !window.location.hostname.includes('lovableproject.com'));
   
+  // Detect if we're on a custom domain funnel by checking if we're redirected to a step slug
+  const isCustomDomainFunnel = !isFunnelContext && !isWebsiteContext && 
+    window.location.hostname !== 'localhost' && 
+    !window.location.hostname.includes('lovableproject.com') &&
+    !window.location.hostname.includes('ecombuildr.com');
+  
   // Get status from URL - this takes priority over database status
   const urlStatus = searchParams.get('status');
   const [statusUpdated, setStatusUpdated] = useState(false);
@@ -171,8 +177,12 @@ useEffect(() => {
         toast.success('Order created successfully!');
         
         if (isFunnelContext && funnelId) {
-          // Funnel context: redirect to funnel order confirmation
+          // System domain funnel: redirect to funnel order confirmation
           navigate(`/funnel/${funnelId}/order-confirmation?orderId=${data.order.id}&ot=${newOrderToken}`);
+        } else if (isCustomDomainFunnel) {
+          // Custom domain funnel: redirect to the current step (which should be the confirmation step)
+          const currentPath = window.location.pathname;
+          navigate(`${currentPath}?orderId=${data.order.id}&ot=${newOrderToken}`);
         } else {
           // Website/store context: use existing logic
           navigate(paths.orderConfirmation(data.order.id, newOrderToken));
@@ -284,8 +294,12 @@ useEffect(() => {
         const orderToken = searchParams.get('ot') || '';
         
         if (isFunnelContext && funnelId) {
-          // Funnel context: redirect to funnel order confirmation
+          // System domain funnel: redirect to funnel order confirmation
           navigate(`/funnel/${funnelId}/order-confirmation?orderId=${order.id}&ot=${orderToken}`);
+        } else if (isCustomDomainFunnel) {
+          // Custom domain funnel: redirect to the current step (which should be the confirmation step)
+          const currentPath = window.location.pathname;
+          navigate(`${currentPath}?orderId=${order.id}&ot=${orderToken}`);
         } else {
           // Website/store context: use existing logic
           navigate(paths.orderConfirmation(order.id, orderToken));

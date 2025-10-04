@@ -393,6 +393,10 @@ const App = () => (
                 <Route path="/members/*" element={<MemberRoutes />} />
                 <Route path="/courses/*" element={<MemberRoutes />} />
 
+                {/* Custom Domain Routes - for custom domain funnels */}
+                <Route path="/payment-processing" element={<PaymentProcessing />} />
+                <Route path="/order-confirmation" element={<OrderConfirmation />} />
+
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
                 </Routes>
