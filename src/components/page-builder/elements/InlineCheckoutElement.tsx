@@ -561,13 +561,33 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
         });
       }
 
-      const { data, error } = await supabase.functions.invoke('create-order', {
-        body: { order: orderData, items: itemsPayload, storeId: store.id }
-      });
-      if (error) throw error;
-      const orderId: string | undefined = data?.order?.id;
-      const accessToken = data?.order?.access_token;
-      if (!orderId) throw new Error('Order was not created');
+      // For EPS/EB Pay, defer order creation until after payment success
+      const isLivePayment = form.payment_method === 'eps' || form.payment_method === 'ebpay';
+      
+      let orderId: string | undefined;
+      let accessToken: string | undefined;
+      
+      if (isLivePayment) {
+        // Store checkout data temporarily for order creation after payment
+        sessionStorage.setItem('pending_checkout', JSON.stringify({
+          orderData,
+          itemsPayload,
+          storeId: store.id,
+          timestamp: Date.now()
+        }));
+        
+        // Generate temporary ID for tracking
+        orderId = crypto.randomUUID();
+      } else {
+        // Create order immediately for COD and manual payments
+        const { data, error } = await supabase.functions.invoke('create-order', {
+          body: { order: orderData, items: itemsPayload, storeId: store.id }
+        });
+        if (error) throw error;
+        orderId = data?.order?.id;
+        accessToken = data?.order?.access_token;
+        if (!orderId) throw new Error('Order was not created');
+      }
 
       if (form.payment_method === 'cod' || isManual) {
         // Track Purchase event for COD orders
@@ -655,7 +675,7 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
             timestamp: Date.now()
           }));
         }
-        await initiatePayment(orderId, orderData.total, form.payment_method, accessToken);
+        await initiatePayment(orderId, orderData.total, form.payment_method, accessToken, isLivePayment);
       }
     } catch (e) {
       console.error(e);
@@ -665,7 +685,7 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
     }
   };
 
-  const initiatePayment = async (orderId: string, amount: number, method: string, accessToken?: string) => {
+  const initiatePayment = async (orderId: string, amount: number, method: string, accessToken?: string, isLivePayment?: boolean) => {
     try {
       let response;
       switch (method) {
@@ -676,12 +696,29 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
           response = await supabase.functions.invoke('nagad-payment', { body: { orderId, amount, storeId: store!.id } });
           break;
         case 'eps':
-          response = await supabase.functions.invoke('eps-payment', { body: { orderId, amount, storeId: store!.id, customerData: { name: form.customer_name, email: form.customer_email, phone: form.customer_phone, address: form.shipping_address, city: form.shipping_city, country: form.shipping_country, state: form.shipping_state, postal_code: form.shipping_postal_code } } });
+          response = await supabase.functions.invoke('eps-payment', { 
+            body: { 
+              tempOrderId: orderId, 
+              amount, 
+              storeId: store!.id, 
+              customerData: { 
+                name: form.customer_name, 
+                email: form.customer_email, 
+                phone: form.customer_phone, 
+                address: form.shipping_address, 
+                city: form.shipping_city, 
+                country: form.shipping_country, 
+                state: form.shipping_state, 
+                postal_code: form.shipping_postal_code 
+              },
+              redirectOrigin: window.location.origin
+            } 
+          });
           break;
         case 'ebpay':
           response = await supabase.functions.invoke('ebpay-payment', { 
             body: { 
-              orderId, 
+              tempOrderId: orderId, 
               amount, 
               storeId: store!.id, 
               redirectOrigin: window.location.origin,
@@ -705,7 +742,12 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
       const { paymentURL } = response.data;
       if (paymentURL) {
         window.location.href = paymentURL;
-        navigate(paths.paymentProcessing(orderId) + (accessToken ? `&ot=${accessToken}` : ''));
+        // For live payments, redirect to payment processing with tempId
+        if (isLivePayment) {
+          navigate(paths.paymentProcessing('') + `?tempId=${orderId}&pm=${method}`);
+        } else {
+          navigate(paths.paymentProcessing(orderId) + (accessToken ? `&ot=${accessToken}` : ''));
+        }
       } else throw new Error('Payment URL not received');
     } catch (error) {
       console.error('Payment initiation error:', error);
