@@ -7,6 +7,7 @@ interface FunnelStepSettingsModalProps {
   onClose: () => void;
   stepId: string;
   funnelId: string;
+  domainId?: string;
 }
 
 export const FunnelStepSettingsModal: React.FC<FunnelStepSettingsModalProps> = ({
@@ -14,6 +15,7 @@ export const FunnelStepSettingsModal: React.FC<FunnelStepSettingsModalProps> = (
   onClose,
   stepId,
   funnelId,
+  domainId
 }) => {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -26,6 +28,7 @@ export const FunnelStepSettingsModal: React.FC<FunnelStepSettingsModalProps> = (
           stepId={stepId}
           funnelId={funnelId}
           onClose={onClose}
+          domainId={domainId}
         />
       </DialogContent>
     </Dialog>

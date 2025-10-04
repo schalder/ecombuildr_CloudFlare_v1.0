@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { debounce } from '@/lib/utils';
 import { TemplateSelectionModal } from '@/components/templates/TemplateSelectionModal';
 import type { PageBuilderData } from '@/components/page-builder/types';
+import { validateFunnelStepSlug, ensureUniqueSlug } from '@/lib/slugUtils';
 
 type SlugStatus = 'idle' | 'checking' | 'available' | 'taken' | 'error';
 
@@ -29,12 +30,14 @@ interface CreateStepModalProps {
   isOpen: boolean;
   onClose: () => void;
   funnelId: string;
+  domainId?: string;
 }
 
 export const CreateStepModal: React.FC<CreateStepModalProps> = ({
   isOpen,
   onClose,
-  funnelId
+  funnelId,
+  domainId
 }) => {
   const [formData, setFormData] = useState({
     title: '',
@@ -54,57 +57,26 @@ export const CreateStepModal: React.FC<CreateStepModalProps> = ({
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Generate unique slug by appending random numbers
-  const generateUniqueSlug = async (baseSlug: string): Promise<string> => {
-    let attempts = 0;
-    let uniqueSlug = baseSlug;
-    
-    while (attempts < 10) {
-      const { data, error } = await supabase
-        .from('funnel_steps')
-        .select('slug')
-        .eq('funnel_id', funnelId)
-        .eq('slug', uniqueSlug)
-        .maybeSingle();
-      
-      if (error || !data) {
-        return uniqueSlug;
-      }
-      
-      const randomNum = Math.floor(1000 + Math.random() * 9000);
-      uniqueSlug = `${baseSlug}-${randomNum}`;
-      attempts++;
-    }
-    
-    return uniqueSlug;
-  };
-
-  // Check slug availability
+  // Check slug availability with domain-wide validation
   const checkSlugAvailability = async (slug: string) => {
-    if (!slug.trim()) return;
+    if (!slug.trim()) {
+      setSlugStatus('idle');
+      setFinalSlug(slug);
+      setSuggestedSlug('');
+      return;
+    }
     
     setSlugStatus('checking');
     
     try {
-      const { data, error } = await supabase
-        .from('funnel_steps')
-        .select('slug')
-        .eq('funnel_id', funnelId)
-        .eq('slug', slug)
-        .maybeSingle();
+      const validation = await validateFunnelStepSlug(slug, funnelId, undefined, domainId);
       
-      if (error) {
-        setSlugStatus('error');
-        return;
-      }
-      
-      if (data) {
-        const uniqueSlug = await generateUniqueSlug(slug);
-        setSuggestedSlug(uniqueSlug);
-        setFinalSlug(uniqueSlug);
+      if (validation.hasConflict) {
+        setSuggestedSlug(validation.uniqueSlug);
+        setFinalSlug(validation.uniqueSlug);
         setSlugStatus('taken');
       } else {
-        setFinalSlug(slug);
+        setFinalSlug(validation.uniqueSlug);
         setSuggestedSlug('');
         setSlugStatus('available');
       }
@@ -142,11 +114,14 @@ export const CreateStepModal: React.FC<CreateStepModalProps> = ({
         content = { sections: [] };
       }
 
+      // Ensure slug is unique before creating
+      const uniqueSlug = await ensureUniqueSlug(finalSlug || data.slug, funnelId, undefined, domainId);
+      
       const { data: result, error } = await supabase
         .from('funnel_steps')
         .insert({
           title: data.title,
-          slug: finalSlug || data.slug,
+          slug: uniqueSlug,
           funnel_id: funnelId,
           step_type: data.stepType,
           step_order: nextOrder,
@@ -338,7 +313,7 @@ export const CreateStepModal: React.FC<CreateStepModalProps> = ({
             {slugStatus === 'taken' && suggestedSlug && (
               <p className="text-sm text-yellow-600 mt-1 flex items-center gap-1">
                 <AlertCircle className="h-3 w-3" />
-                Slug already exists. Using "{suggestedSlug}" instead
+                Slug already exists on this domain. Using "{suggestedSlug}" instead
               </p>
             )}
             {slugStatus === 'error' && (
