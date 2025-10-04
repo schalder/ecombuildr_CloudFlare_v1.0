@@ -68,30 +68,11 @@ serve(async (req: Request) => {
       });
     }
 
-    // First, let's check if order_items exist at all
-    const { data: rawItems, error: rawItemsError } = await supabase
-      .from("order_items")
-      .select("*")
-      .eq("order_id", orderId);
-
-    console.log('get-order-public: raw order_items:', { rawItems, rawItemsError, orderId });
-
-    // Fetch items without join first to see if basic data works
+    // Fetch items
     const { data: items, error: itemsError } = await supabase
       .from("order_items")
-      .select(`
-        id, 
-        product_name, 
-        product_sku, 
-        price, 
-        quantity, 
-        total, 
-        variation,
-        product_id
-      `)
+      .select("id, product_name, product_sku, price, quantity, total, variation")
       .eq("order_id", orderId);
-
-    console.log('get-order-public: items query result:', { items, itemsError, orderId });
 
     if (itemsError) {
       console.error("get-order-public: itemsError", itemsError);
@@ -99,26 +80,6 @@ serve(async (req: Request) => {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },
       });
-    }
-
-    // Get product types separately
-    const productIds = (items || []).map(item => item.product_id).filter(Boolean);
-    let productTypes: Record<string, string> = {};
-    
-    if (productIds.length > 0) {
-      const { data: products, error: productsError } = await supabase
-        .from("products")
-        .select("id, product_type")
-        .in("id", productIds);
-      
-      console.log('get-order-public: products query result:', { products, productsError });
-      
-      if (!productsError && products) {
-        productTypes = products.reduce((acc, product) => {
-          acc[product.id] = product.product_type || 'physical';
-          return acc;
-        }, {} as Record<string, string>);
-      }
     }
 
     // Return safe subset of order data (no PII exposed in logs)
@@ -148,18 +109,9 @@ serve(async (req: Request) => {
       .select('*')
       .eq('order_id', orderId);
 
-    // Process items to include product type
-    const processedItems = (items || []).map(item => ({
-      ...item,
-      product_type: productTypes[item.product_id] || 'physical'
-    }));
-
-    console.log('get-order-public: processed items:', processedItems);
-    console.log('get-order-public: productTypes lookup:', productTypes);
-
     return new Response(JSON.stringify({ 
       order: safeOrder, 
-      items: processedItems,
+      items: items || [],
       downloadLinks: downloadLinks || []
     }), {
       status: 200,
