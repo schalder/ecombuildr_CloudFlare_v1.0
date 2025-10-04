@@ -37,7 +37,7 @@ serve(async (req: Request) => {
     // Fetch order with access token validation
     const { data: order, error: orderError } = await supabase
       .from("orders")
-      .select("*")
+      .select("*, access_token")
       .eq("id", orderId)
       .eq("store_id", storeId)
       .maybeSingle();
@@ -57,7 +57,7 @@ serve(async (req: Request) => {
       });
     }
 
-    // Validate access token - check against the access_token column directly
+    // Validate access token against the access_token column
     if (!order.access_token || order.access_token !== token) {
       return new Response(JSON.stringify({ error: "Invalid access token" }), {
         status: 403,

@@ -1718,13 +1718,13 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
         if (!store) {
           return;
         }
-        // Retry logic for order fetching to handle race conditions
+
+        // ✅ RETRY LOGIC: Try to fetch order with exponential backoff
         let retryCount = 0;
         const maxRetries = 3;
-        let lastError = null;
-        let orderData = null;
+        const baseDelay = 200; // Start with 200ms delay
 
-        while (retryCount < maxRetries) {
+        while (retryCount <= maxRetries) {
           try {
             const { data, error } = await supabase.functions.invoke('get-order-public', {
               body: { 
@@ -1735,55 +1735,52 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
             });
             
             if (error) {
-              lastError = error;
+              // If it's a 404 or 403 error and we haven't exceeded retries, retry
+              if ((error.message?.includes('not found') || error.message?.includes('Invalid access token')) && retryCount < maxRetries) {
+                retryCount++;
+                const delay = baseDelay * Math.pow(2, retryCount - 1); // Exponential backoff
+                console.log(`OrderConfirmationElement: Retry ${retryCount}/${maxRetries} after ${delay}ms delay`);
+                await new Promise(resolve => setTimeout(resolve, delay));
+                continue;
+              }
               throw error;
             }
-            
-            if (data?.order) {
-              orderData = data;
-              setOrder(data.order);
-              setItems(data.items || []);
-              setDownloadLinks(data.downloadLinks || []);
-              break; // Success, exit retry loop
-            }
-            
-            // If no order found, retry after a short delay
-            retryCount++;
-            if (retryCount < maxRetries) {
-              await new Promise(resolve => setTimeout(resolve, 200 * retryCount)); // Exponential backoff
-            }
-          } catch (error) {
-            lastError = error;
-            retryCount++;
-            if (retryCount < maxRetries) {
-              await new Promise(resolve => setTimeout(resolve, 200 * retryCount)); // Exponential backoff
-            }
-          }
-        }
-        
-        // If all retries failed, set error state
-        if (!orderData) {
-          console.error('Error loading order after retries:', lastError);
-          setOrder(null);
-          setItems([]);
-          setDownloadLinks([]);
-        } else {
-          // Fallback: if no download links yet, try to generate them (service-side)
-          if ((!orderData?.downloadLinks || orderData.downloadLinks.length === 0) && id) {
-            try {
-              const { data: ensureData } = await supabase.functions.invoke('ensure-download-links', {
-                body: { orderId: id }
-              });
-              if (ensureData?.downloadLinks?.length) {
-                setDownloadLinks(ensureData.downloadLinks);
+
+            // Success - set the data
+            setOrder(data?.order || null);
+            setItems(data?.items || []);
+            setDownloadLinks(data?.downloadLinks || []);
+
+            // Fallback: if no download links yet, try to generate them (service-side)
+            if ((!data?.downloadLinks || data.downloadLinks.length === 0) && id) {
+              try {
+                const { data: ensureData } = await supabase.functions.invoke('ensure-download-links', {
+                  body: { orderId: id }
+                });
+                if (ensureData?.downloadLinks?.length) {
+                  setDownloadLinks(ensureData.downloadLinks);
+                }
+              } catch (genErr) {
+                // ignore and keep empty
               }
-            } catch (genErr) {
-              // ignore and keep empty
             }
+            
+            // Success - break out of retry loop
+            break;
+          } catch (retryError) {
+            if (retryCount >= maxRetries) {
+              // Final attempt failed
+              throw retryError;
+            }
+            retryCount++;
+            const delay = baseDelay * Math.pow(2, retryCount - 1);
+            console.log(`OrderConfirmationElement: Retry ${retryCount}/${maxRetries} after ${delay}ms delay`);
+            await new Promise(resolve => setTimeout(resolve, delay));
           }
         }
       } catch (e) {
-        // Error fetching order
+        console.error('OrderConfirmationElement: Failed to fetch order after retries:', e);
+        // Error fetching order - will show "Order not found" message
       } finally {
         setLoading(false);
       }

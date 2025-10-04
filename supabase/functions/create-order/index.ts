@@ -113,9 +113,7 @@ serve(async (req) => {
       payment_transaction_number: order.payment_transaction_number ?? null,
       idempotency_key: order.idempotency_key ?? null,
       access_token: accessToken,
-      custom_fields: {
-        ...(order.custom_fields || {}),
-      },
+      custom_fields: order.custom_fields || {},
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
