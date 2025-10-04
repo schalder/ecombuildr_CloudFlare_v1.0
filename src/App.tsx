@@ -296,6 +296,7 @@ const App = () => (
                 <Route path="/store/:slug/search" element={<SearchResults />} />
                 <Route path="/store/:slug/cart" element={<CartPage />} />
                 <Route path="/store/:slug/checkout" element={<CheckoutPage />} />
+                <Route path="/store/:slug/payment-processing" element={<PaymentProcessing />} />
                 <Route path="/store/:slug/payment-processing/:orderId" element={<PaymentProcessing />} />
                 <Route path="/store/:slug/order-confirmation/:orderId" element={<OrderConfirmation />} />
                 <Route path="/store/:slug/:pageSlug" element={<StorefrontPage />} />
