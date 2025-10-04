@@ -165,7 +165,74 @@ useEffect(() => {
         // Clear cart after successful order creation
         clearCart();
         
-        // Navigate to order confirmation
+        // ✅ NEW: Check if this is a funnel checkout
+        const checkoutData = JSON.parse(pendingCheckout);
+        const isFunnelCheckout = checkoutData.orderData?.isFunnelCheckout;
+        const funnelId = checkoutData.orderData?.funnelId;
+        const currentStepId = checkoutData.orderData?.currentStepId;
+        
+        console.log('PaymentProcessing: Detected checkout context', {
+          isFunnelCheckout,
+          funnelId,
+          currentStepId,
+          orderId: data.order.id
+        });
+        
+        if (isFunnelCheckout && funnelId && currentStepId) {
+          // ✅ FUNNEL CHECKOUT: Redirect to next funnel step (same logic as COD)
+          try {
+            // Find the current funnel step
+            const { data: currentStep, error: stepError } = await supabase
+              .from('funnel_steps')
+              .select('id, on_success_step_id, funnel_id')
+              .eq('id', currentStepId)
+              .single();
+            
+            if (!stepError && currentStep?.on_success_step_id) {
+              // Get the next step details
+              const { data: nextStep, error: nextStepError } = await supabase
+                .from('funnel_steps')
+                .select('slug, funnel_id')
+                .eq('id', currentStep.on_success_step_id)
+                .single();
+              
+              if (!nextStepError && nextStep?.slug) {
+                // Environment-aware redirect to next step (same as COD)
+                const isAppEnvironment = (
+                  window.location.hostname === 'localhost' || 
+                  window.location.hostname.includes('lovable.dev') ||
+                  window.location.hostname.includes('lovable.app') ||
+                  window.location.hostname.includes('lovableproject.com')
+                );
+                
+                const newOrderToken = data.order.access_token;
+                
+                if (isAppEnvironment) {
+                  // App/sandbox: use funnel-aware paths
+                  const nextUrl = `/funnel/${funnelId}/${nextStep.slug}?orderId=${data.order.id}&ot=${newOrderToken}`;
+                  console.log(`Funnel redirect (app): ${nextUrl}`);
+                  window.location.href = nextUrl;
+                  return;
+                } else {
+                  // Custom domain: use clean paths
+                  const nextUrl = `/${nextStep.slug}?orderId=${data.order.id}&ot=${newOrderToken}`;
+                  console.log(`Funnel redirect (custom domain): ${nextUrl}`);
+                  window.location.href = nextUrl;
+                  return;
+                }
+              } else {
+                console.log('PaymentProcessing: Next step not found for funnel checkout');
+              }
+            } else {
+              console.log('PaymentProcessing: Current step not found or no next step configured');
+            }
+          } catch (error) {
+            console.error('PaymentProcessing: Error in funnel redirect:', error);
+            // Fall through to generic order confirmation
+          }
+        }
+        
+        // ✅ WEBSITE CHECKOUT: Navigate to order confirmation (existing behavior)
         const newOrderToken = data.order.access_token;
         toast.success('Order created successfully!');
         navigate(paths.orderConfirmation(data.order.id, newOrderToken));
