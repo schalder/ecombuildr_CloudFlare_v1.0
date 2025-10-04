@@ -85,7 +85,7 @@ serve(async (req) => {
 
       if (!existingError && existingOrder) {
         console.log('create-order: returning existing order for idempotency key', order.idempotency_key);
-        const accessToken = existingOrder.custom_fields?.order_access_token || generateAccessToken();
+        const accessToken = existingOrder.access_token || generateAccessToken();
         return new Response(
           JSON.stringify({ success: true, order: { ...existingOrder, access_token: accessToken } }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -112,9 +112,9 @@ serve(async (req) => {
       total: order.total ?? ((order.subtotal ?? 0) + (order.shipping_cost ?? 0) - (order.discount_amount ?? 0)),
       payment_transaction_number: order.payment_transaction_number ?? null,
       idempotency_key: order.idempotency_key ?? null,
+      access_token: accessToken,
       custom_fields: {
         ...(order.custom_fields || {}),
-        order_access_token: accessToken,
       },
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),

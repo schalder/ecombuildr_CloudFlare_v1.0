@@ -257,19 +257,19 @@ useEffect(() => {
                   // App/sandbox: use funnel-aware paths
                   const nextUrl = `/funnel/${funnelId}/${nextStep.slug}?orderId=${data.order.id}&ot=${newOrderToken}`;
                   console.log(`Funnel redirect (app): ${nextUrl}`);
-                  // Add small delay to ensure database consistency
+                  // Small delay to ensure database consistency
                   setTimeout(() => {
                     window.location.href = nextUrl;
-                  }, 150);
+                  }, 100);
                   return;
                 } else {
                   // Custom domain: use clean paths
                   const nextUrl = `/${nextStep.slug}?orderId=${data.order.id}&ot=${newOrderToken}`;
                   console.log(`Funnel redirect (custom domain): ${nextUrl}`);
-                  // Add small delay to ensure database consistency
+                  // Small delay to ensure database consistency
                   setTimeout(() => {
                     window.location.href = nextUrl;
-                  }, 150);
+                  }, 100);
                   return;
                 }
               } else {

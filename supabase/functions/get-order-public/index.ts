@@ -34,55 +34,31 @@ serve(async (req: Request) => {
 
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-    // Fetch order with retry logic for timing issues
-    let order = null;
-    let orderError = null;
-    let retryCount = 0;
-    const maxRetries = 3;
-    const retryDelay = 100; // Start with 100ms delay
+    // Fetch order with access token validation
+    const { data: order, error: orderError } = await supabase
+      .from("orders")
+      .select("*")
+      .eq("id", orderId)
+      .eq("store_id", storeId)
+      .maybeSingle();
 
-    while (retryCount <= maxRetries) {
-      const { data: orderData, error: errorData } = await supabase
-        .from("orders")
-        .select("*")
-        .eq("id", orderId)
-        .eq("store_id", storeId)
-        .maybeSingle();
-
-      orderError = errorData;
-      order = orderData;
-
-      if (orderError) {
-        console.error(`get-order-public: orderError (attempt ${retryCount + 1})`, orderError);
-        if (retryCount === maxRetries) {
-          return new Response(JSON.stringify({ error: "Order fetch failed" }), {
-            status: 500,
-            headers: { "Content-Type": "application/json", ...corsHeaders },
-          });
-        }
-      } else if (order) {
-        // Order found, break out of retry loop
-        break;
-      } else if (retryCount === maxRetries) {
-        // Order not found after all retries
-        return new Response(JSON.stringify({ error: "Order not found" }), {
-          status: 404,
-          headers: { "Content-Type": "application/json", ...corsHeaders },
-        });
-      }
-
-      // Wait before retry with exponential backoff
-      if (retryCount < maxRetries) {
-        await new Promise(resolve => setTimeout(resolve, retryDelay * Math.pow(2, retryCount)));
-        retryCount++;
-      }
+    if (orderError) {
+      console.error("get-order-public: orderError", orderError);
+      return new Response(JSON.stringify({ error: "Order fetch failed" }), {
+        status: 500,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
     }
 
-    // Validate access token
-    const customFields = order.custom_fields || {};
-    const orderAccessToken = customFields.order_access_token;
-    
-    if (!orderAccessToken || orderAccessToken !== token) {
+    if (!order) {
+      return new Response(JSON.stringify({ error: "Order not found" }), {
+        status: 404,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
+    // Validate access token - check against the access_token column directly
+    if (!order.access_token || order.access_token !== token) {
       return new Response(JSON.stringify({ error: "Invalid access token" }), {
         status: 403,
         headers: { "Content-Type": "application/json", ...corsHeaders },

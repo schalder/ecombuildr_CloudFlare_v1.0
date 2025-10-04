@@ -1616,7 +1616,6 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
   const [items, setItems] = useState<any[]>([]);
   const [downloadLinks, setDownloadLinks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [retryCount, setRetryCount] = useState(0);
   const orderContentRef = useRef<HTMLDivElement>(null);
   const query = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
   const id = orderId || query.get('orderId') || '';
@@ -1719,11 +1718,13 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
         if (!store) {
           return;
         }
-        // Retry logic for order fetching to prevent "Order Not Found" flash
+        // Retry logic for order fetching to handle race conditions
+        let retryCount = 0;
         const maxRetries = 3;
         let lastError = null;
-        
-        for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        let orderData = null;
+
+        while (retryCount < maxRetries) {
           try {
             const { data, error } = await supabase.functions.invoke('get-order-public', {
               body: { 
@@ -1735,54 +1736,49 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
             
             if (error) {
               lastError = error;
-              if (attempt === maxRetries) {
-                throw error;
-              }
-              // Wait before retry with exponential backoff
-              await new Promise(resolve => setTimeout(resolve, 200 * Math.pow(2, attempt)));
-              continue;
+              throw error;
             }
             
             if (data?.order) {
+              orderData = data;
               setOrder(data.order);
               setItems(data.items || []);
               setDownloadLinks(data.downloadLinks || []);
-              setRetryCount(attempt);
-
-              // Fallback: if no download links yet, try to generate them (service-side)
-              if ((!data?.downloadLinks || data.downloadLinks.length === 0) && id) {
-                try {
-                  const { data: ensureData } = await supabase.functions.invoke('ensure-download-links', {
-                    body: { orderId: id }
-                  });
-                  if (ensureData?.downloadLinks?.length) {
-                    setDownloadLinks(ensureData.downloadLinks);
-                  }
-                } catch (genErr) {
-                  // ignore and keep empty
-                }
-              }
-              
               break; // Success, exit retry loop
-            } else if (attempt === maxRetries) {
-              // Order not found after all retries
-              setOrder(null);
-              setItems([]);
-              setDownloadLinks([]);
-            } else {
-              // Order not found, retry
-              await new Promise(resolve => setTimeout(resolve, 200 * Math.pow(2, attempt)));
+            }
+            
+            // If no order found, retry after a short delay
+            retryCount++;
+            if (retryCount < maxRetries) {
+              await new Promise(resolve => setTimeout(resolve, 200 * retryCount)); // Exponential backoff
             }
           } catch (error) {
             lastError = error;
-            if (attempt === maxRetries) {
-              console.error('Error loading order after retries:', error);
-              setOrder(null);
-              setItems([]);
-              setDownloadLinks([]);
-            } else {
-              // Wait before retry
-              await new Promise(resolve => setTimeout(resolve, 200 * Math.pow(2, attempt)));
+            retryCount++;
+            if (retryCount < maxRetries) {
+              await new Promise(resolve => setTimeout(resolve, 200 * retryCount)); // Exponential backoff
+            }
+          }
+        }
+        
+        // If all retries failed, set error state
+        if (!orderData) {
+          console.error('Error loading order after retries:', lastError);
+          setOrder(null);
+          setItems([]);
+          setDownloadLinks([]);
+        } else {
+          // Fallback: if no download links yet, try to generate them (service-side)
+          if ((!orderData?.downloadLinks || orderData.downloadLinks.length === 0) && id) {
+            try {
+              const { data: ensureData } = await supabase.functions.invoke('ensure-download-links', {
+                body: { orderId: id }
+              });
+              if (ensureData?.downloadLinks?.length) {
+                setDownloadLinks(ensureData.downloadLinks);
+              }
+            } catch (genErr) {
+              // ignore and keep empty
             }
           }
         }
@@ -1794,21 +1790,7 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
     })();
   }, [id, store, orderToken]);
 
-  if (loading) {
-    return (
-      <div className="text-center">
-        <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-muted rounded w-1/2 mx-auto" />
-          <div className="h-64 bg-muted rounded" />
-        </div>
-        {retryCount > 0 && (
-          <p className="text-sm text-muted-foreground mt-2">
-            Retrying... (attempt {retryCount + 1})
-          </p>
-        )}
-      </div>
-    );
-  }
+  if (loading) return <div className="text-center">Loading...</div>;
   if (!order) return <div className="text-center">Order not found</div>;
 
   // Derived totals
