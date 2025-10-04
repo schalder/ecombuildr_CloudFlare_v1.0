@@ -137,8 +137,39 @@ useEffect(() => {
 
       const checkoutData = JSON.parse(pendingCheckout);
       
+      // Clean orderData to remove funnel-specific fields that might cause database constraint violations
+      const cleanOrderData = {
+        store_id: checkoutData.orderData.store_id,
+        customer_name: checkoutData.orderData.customer_name,
+        customer_email: checkoutData.orderData.customer_email,
+        customer_phone: checkoutData.orderData.customer_phone,
+        shipping_address: checkoutData.orderData.shipping_address,
+        shipping_city: checkoutData.orderData.shipping_city,
+        shipping_state: checkoutData.orderData.shipping_state,
+        shipping_postal_code: checkoutData.orderData.shipping_postal_code,
+        shipping_country: checkoutData.orderData.shipping_country,
+        shipping_method: checkoutData.orderData.shipping_method,
+        shipping_cost: checkoutData.orderData.shipping_cost,
+        subtotal: checkoutData.orderData.subtotal,
+        discount_amount: checkoutData.orderData.discount_amount,
+        total: checkoutData.orderData.total,
+        payment_method: checkoutData.orderData.payment_method,
+        status: checkoutData.orderData.status,
+        notes: checkoutData.orderData.notes,
+        payment_transaction_number: checkoutData.orderData.payment_transaction_number,
+        website_id: checkoutData.orderData.website_id,
+        idempotency_key: checkoutData.orderData.idempotency_key,
+        // Store funnel context in custom_fields instead of direct fields
+        custom_fields: {
+          funnelId: checkoutData.orderData.funnelId,
+          currentStepId: checkoutData.orderData.currentStepId,
+          isFunnelCheckout: checkoutData.orderData.isFunnelCheckout
+        }
+      };
+      
       console.log('PaymentProcessing: About to create order with data:', {
-        orderData: checkoutData.orderData,
+        originalOrderData: checkoutData.orderData,
+        cleanOrderData: cleanOrderData,
         itemsPayload: checkoutData.itemsPayload,
         storeId: store.id,
         tempId: tempId,
@@ -148,7 +179,7 @@ useEffect(() => {
       // Create order now that payment is successful
       const { data, error } = await supabase.functions.invoke('create-order-on-payment-success', {
         body: {
-          orderData: checkoutData.orderData,
+          orderData: cleanOrderData,
           itemsData: checkoutData.itemsPayload,
           storeId: store.id,
           paymentVerified: true,
