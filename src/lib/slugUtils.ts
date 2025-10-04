@@ -2,161 +2,175 @@ import { supabase } from '@/integrations/supabase/client';
 
 export interface SlugValidationResult {
   isAvailable: boolean;
+  suggestedSlug: string;
   hasConflict: boolean;
-  uniqueSlug: string;
-  conflictingFunnel?: string;
-  conflictingStep?: string;
+  conflictMessage?: string;
 }
 
 /**
- * Generate a random suffix for slug uniqueness
+ * Generate a random string for slug uniqueness
  */
-export function generateRandomSuffix(): string {
+export const generateRandomSuffix = (): string => {
   const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
   let result = '';
   for (let i = 0; i < 6; i++) {
     result += chars.charAt(Math.floor(Math.random() * chars.length));
   }
   return result;
-}
+};
 
 /**
- * Generate a unique slug by adding random suffix
+ * Generate a unique slug by adding random characters
  */
-export function generateUniqueSlug(baseSlug: string): string {
+export const generateUniqueSlug = (baseSlug: string): string => {
   const randomSuffix = generateRandomSuffix();
   return `${baseSlug}-${randomSuffix}`;
-}
+};
 
 /**
- * Validate funnel step slug across all funnels on the same domain
+ * Validate if a funnel step slug is available across all funnels on the same domain
  * This prevents conflicts when multiple funnels use the same custom domain
  */
-export async function validateFunnelStepSlug(
-  slug: string,
-  currentFunnelId: string,
-  currentStepId?: string,
-  domainId?: string
-): Promise<SlugValidationResult> {
+export const validateFunnelStepSlug = async (
+  slug: string, 
+  funnelId: string, 
+  stepId?: string
+): Promise<SlugValidationResult> => {
+  if (!slug.trim()) {
+    return {
+      isAvailable: true,
+      suggestedSlug: slug,
+      hasConflict: false
+    };
+  }
+
   try {
-    if (!slug.trim()) {
-      return {
-        isAvailable: true,
-        hasConflict: false,
-        uniqueSlug: slug
-      };
+    // Get the funnel to find its connected domain
+    const { data: funnel, error: funnelError } = await supabase
+      .from('funnels')
+      .select('id, store_id')
+      .eq('id', funnelId)
+      .single();
+
+    if (funnelError || !funnel) {
+      throw new Error('Funnel not found');
     }
 
-    // If we have a domainId, check for conflicts across all funnels on this domain
-    if (domainId) {
-      const { data: domainConnections, error: domainError } = await supabase
-        .from('domain_connections')
-        .select(`
-          funnel_id,
-          funnels!inner(
-            id,
-            title,
-            funnel_steps!inner(
-              id,
-              slug,
-              title
-            )
-          )
-        `)
-        .eq('domain_id', domainId)
-        .eq('content_type', 'funnel');
+    // Get all custom domains connected to this store
+    const { data: domains, error: domainsError } = await supabase
+      .from('custom_domains')
+      .select('id, domain')
+      .eq('store_id', funnel.store_id);
 
-      if (domainError) {
-        console.error('Error fetching domain connections:', domainError);
-        return {
-          isAvailable: true,
-          hasConflict: false,
-          uniqueSlug: slug
-        };
-      }
-
-      // Check for slug conflicts across all funnels on this domain
-      for (const connection of domainConnections || []) {
-        const funnel = connection.funnels;
-        if (!funnel || !funnel.funnel_steps) continue;
-
-        for (const step of funnel.funnel_steps) {
-          // Skip current step if we're editing
-          if (currentStepId && step.id === currentStepId) continue;
-          
-          // Skip steps from current funnel if we're creating a new step
-          if (!currentStepId && funnel.id === currentFunnelId) continue;
-
-          if (step.slug === slug) {
-            const uniqueSlug = generateUniqueSlug(slug);
-            return {
-              isAvailable: false,
-              hasConflict: true,
-              uniqueSlug,
-              conflictingFunnel: funnel.title,
-              conflictingStep: step.title
-            };
-          }
-        }
-      }
+    if (domainsError || !domains?.length) {
+      // No custom domains, check within funnel only
+      return await validateSlugWithinFunnel(slug, funnelId, stepId);
     }
 
-    // If no domain conflicts found, check within the current funnel
-    const { data: existingSteps, error: stepError } = await supabase
+    // Get all domain connections for these domains
+    const domainIds = domains.map(d => d.id);
+    const { data: connections, error: connectionsError } = await supabase
+      .from('domain_connections')
+      .select('content_id, content_type')
+      .in('domain_id', domainIds)
+      .eq('content_type', 'funnel');
+
+    if (connectionsError || !connections?.length) {
+      return await validateSlugWithinFunnel(slug, funnelId, stepId);
+    }
+
+    // Get all funnel IDs connected to these domains
+    const connectedFunnelIds = connections.map(c => c.content_id);
+    
+    // Check if slug exists in any of these funnels
+    const { data: existingSteps, error: stepsError } = await supabase
       .from('funnel_steps')
-      .select('id, slug, title')
-      .eq('funnel_id', currentFunnelId)
+      .select('id, slug, funnel_id')
+      .in('funnel_id', connectedFunnelIds)
       .eq('slug', slug);
 
-    if (stepError) {
-      console.error('Error checking funnel steps:', stepError);
-      return {
-        isAvailable: true,
-        hasConflict: false,
-        uniqueSlug: slug
-      };
+    if (stepsError) {
+      throw new Error('Error checking slug availability');
     }
 
     // Filter out current step if editing
-    const conflictingSteps = existingSteps?.filter(step => step.id !== currentStepId) || [];
-    
+    const conflictingSteps = existingSteps?.filter(step => 
+      step.id !== stepId
+    ) || [];
+
     if (conflictingSteps.length > 0) {
-      const uniqueSlug = generateUniqueSlug(slug);
+      const suggestedSlug = generateUniqueSlug(slug);
       return {
         isAvailable: false,
+        suggestedSlug,
         hasConflict: true,
-        uniqueSlug,
-        conflictingFunnel: 'Current Funnel',
-        conflictingStep: conflictingSteps[0].title
+        conflictMessage: `Slug already exists. Using "${suggestedSlug}" instead`
       };
     }
 
     return {
       isAvailable: true,
-      hasConflict: false,
-      uniqueSlug: slug
+      suggestedSlug: slug,
+      hasConflict: false
     };
 
   } catch (error) {
     console.error('Slug validation error:', error);
     return {
-      isAvailable: true,
-      hasConflict: false,
-      uniqueSlug: slug
+      isAvailable: false,
+      suggestedSlug: generateUniqueSlug(slug),
+      hasConflict: true,
+      conflictMessage: 'Error checking slug. Using unique slug instead'
     };
   }
-}
+};
 
 /**
- * Ensure slug is unique by auto-resolving conflicts
- * This is used when we want to silently fix conflicts
+ * Fallback validation within a single funnel
  */
-export async function ensureUniqueSlug(
-  slug: string,
-  currentFunnelId: string,
-  currentStepId?: string,
-  domainId?: string
-): Promise<string> {
-  const validation = await validateFunnelStepSlug(slug, currentFunnelId, currentStepId, domainId);
-  return validation.uniqueSlug;
-}
+const validateSlugWithinFunnel = async (
+  slug: string, 
+  funnelId: string, 
+  stepId?: string
+): Promise<SlugValidationResult> => {
+  try {
+    const { data: existingSteps, error } = await supabase
+      .from('funnel_steps')
+      .select('id, slug')
+      .eq('funnel_id', funnelId)
+      .eq('slug', slug);
+
+    if (error) {
+      throw new Error('Error checking slug availability');
+    }
+
+    const conflictingSteps = existingSteps?.filter(step => 
+      step.id !== stepId
+    ) || [];
+
+    if (conflictingSteps.length > 0) {
+      const suggestedSlug = generateUniqueSlug(slug);
+      return {
+        isAvailable: false,
+        suggestedSlug,
+        hasConflict: true,
+        conflictMessage: `Slug already exists in this funnel. Using "${suggestedSlug}" instead`
+      };
+    }
+
+    return {
+      isAvailable: true,
+      suggestedSlug: slug,
+      hasConflict: false
+    };
+
+  } catch (error) {
+    console.error('Funnel slug validation error:', error);
+    return {
+      isAvailable: false,
+      suggestedSlug: generateUniqueSlug(slug),
+      hasConflict: true,
+      conflictMessage: 'Error checking slug. Using unique slug instead'
+    };
+  }
+};

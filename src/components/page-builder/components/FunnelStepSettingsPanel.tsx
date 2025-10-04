@@ -10,7 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Loader2, Search, Check, AlertCircle, X } from 'lucide-react';
 import { SEOSettingsCard } from '@/components/seo/SEOSettingsCard';
 import { usePageSEO } from '@/hooks/usePageSEO';
-import { validateFunnelStepSlug, ensureUniqueSlug } from '@/lib/slugUtils';
+import { validateFunnelStepSlug } from '@/lib/slugUtils';
 import { debounce } from '@/lib/utils';
 
 type SlugStatus = 'idle' | 'checking' | 'available' | 'taken' | 'error';
@@ -19,7 +19,6 @@ interface FunnelStepSettingsPanelProps {
   stepId: string;
   funnelId: string;
   onClose: () => void;
-  domainId?: string;
 }
 
 interface FunnelStep {
@@ -46,7 +45,6 @@ export const FunnelStepSettingsPanel: React.FC<FunnelStepSettingsPanelProps> = (
   stepId,
   funnelId,
   onClose,
-  domainId
 }) => {
   const [step, setStep] = useState<FunnelStep | null>(null);
   const [funnelSteps, setFunnelSteps] = useState<FunnelStep[]>([]);
@@ -130,8 +128,8 @@ export const FunnelStepSettingsPanel: React.FC<FunnelStepSettingsPanelProps> = (
     return title
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
-      .replace(/(^-|-$)/g, '');
-  };
+        .replace(/(^-|-$)/g, '');
+    };
 
   // Check slug availability with domain-wide validation
   const checkSlugAvailability = async (slug: string) => {
@@ -145,16 +143,17 @@ export const FunnelStepSettingsPanel: React.FC<FunnelStepSettingsPanelProps> = (
     setSlugStatus('checking');
     
     try {
-      const validation = await validateFunnelStepSlug(slug, funnelId, stepId, domainId);
+      // Use domain-wide slug validation
+      const validation = await validateFunnelStepSlug(slug, funnelId, stepId);
       
       if (validation.hasConflict) {
         // Auto-populate the suggested slug in the input field
-        setStep(prev => prev ? { ...prev, slug: validation.uniqueSlug } : null);
-        setSuggestedSlug(validation.uniqueSlug);
-        setFinalSlug(validation.uniqueSlug);
+        setStep(prev => prev ? { ...prev, slug: validation.suggestedSlug } : null);
+        setSuggestedSlug(validation.suggestedSlug);
+        setFinalSlug(validation.suggestedSlug);
         setSlugStatus('taken');
       } else {
-        setFinalSlug(validation.uniqueSlug);
+        setFinalSlug(validation.suggestedSlug);
         setSuggestedSlug('');
         setSlugStatus('available');
       }
@@ -266,93 +265,93 @@ export const FunnelStepSettingsPanel: React.FC<FunnelStepSettingsPanelProps> = (
             />
           </div>
           
-          <div className="space-y-2">
-            <Label htmlFor="step-slug">URL Slug</Label>
-            <div className="relative">
-              <div className="flex gap-2">
-                <Input
-                  id="step-slug"
-                  value={step.slug}
-                  onChange={(e) => {
-                    const slug = generateSlug(e.target.value);
-                    setStep({ ...step, slug });
-                    // Reset validation state and trigger new validation
-                    setSlugStatus('idle');
-                    setSuggestedSlug('');
-                    setFinalSlug('');
-                    if (slug.trim()) {
-                      debouncedCheckSlug(slug);
-                    }
-                  }}
-                  placeholder="url-slug"
-                  className={`${
-                    slugStatus === 'available' ? 'border-green-500' : 
-                    slugStatus === 'taken' ? 'border-yellow-500' :
-                    slugStatus === 'error' ? 'border-red-500' : ''
-                  }`}
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    const slug = generateSlug(step.title);
-                    setStep({ ...step, slug });
-                    setSlugStatus('idle');
-                    setSuggestedSlug('');
-                    setFinalSlug('');
-                    if (slug.trim()) {
-                      debouncedCheckSlug(slug);
-                    }
-                  }}
-                >
-                  Generate from Title
-                </Button>
-              </div>
-              <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                {slugStatus === 'checking' && (
-                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                )}
-                {slugStatus === 'available' && (
-                  <Check className="h-4 w-4 text-green-600" />
-                )}
-                {slugStatus === 'taken' && (
-                  <AlertCircle className="h-4 w-4 text-yellow-600" />
-                )}
-                {slugStatus === 'error' && (
-                  <X className="h-4 w-4 text-red-600" />
-                )}
-              </div>
-            </div>
-            
-            {/* Status Messages */}
-            {slugStatus === 'checking' && (
-              <p className="text-sm text-muted-foreground mt-1 flex items-center gap-1">
-                <Loader2 className="h-3 w-3 animate-spin" />
-                Checking availability...
-              </p>
-            )}
-            {slugStatus === 'available' && (
-              <p className="text-sm text-green-600 mt-1 flex items-center gap-1">
-                <Check className="h-3 w-3" />
-                Slug is available
-              </p>
-            )}
-            {slugStatus === 'taken' && suggestedSlug && (
-              <p className="text-sm text-blue-600 mt-1 flex items-center gap-1">
-                <AlertCircle className="h-3 w-3" />
-                Slug auto-corrected to "{suggestedSlug}" to avoid conflicts
-              </p>
-            )}
-            {slugStatus === 'error' && (
-              <p className="text-sm text-red-600 mt-1 flex items-center gap-1">
-                <X className="h-3 w-3" />
-                Error checking slug availability
-              </p>
-            )}
-            
-            <p className="text-sm text-muted-foreground">
-              This will be used in the URL: /funnel-name/{step.slug}
+            <div className="space-y-2">
+              <Label htmlFor="step-slug">URL Slug</Label>
+             <div className="relative">
+               <div className="flex gap-2">
+                 <Input
+                   id="step-slug"
+                   value={step.slug}
+                   onChange={(e) => {
+                     const slug = generateSlug(e.target.value);
+                     setStep({ ...step, slug });
+                     // Reset validation state and trigger new validation
+                     setSlugStatus('idle');
+                     setSuggestedSlug('');
+                     setFinalSlug('');
+                     if (slug.trim()) {
+                       debouncedCheckSlug(slug);
+                     }
+                   }}
+                   placeholder="url-slug"
+                   className={`${
+                     slugStatus === 'available' ? 'border-green-500' : 
+                     slugStatus === 'taken' ? 'border-yellow-500' :
+                     slugStatus === 'error' ? 'border-red-500' : ''
+                   }`}
+                 />
+                 <Button
+                   type="button"
+                   variant="outline"
+                   size="sm"
+                   onClick={() => {
+                     const slug = generateSlug(step.title);
+                     setStep({ ...step, slug });
+                     setSlugStatus('idle');
+                     setSuggestedSlug('');
+                     setFinalSlug('');
+                     if (slug.trim()) {
+                       debouncedCheckSlug(slug);
+                     }
+                   }}
+                 >
+                   Generate from Title
+                 </Button>
+               </div>
+               <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                 {slugStatus === 'checking' && (
+                   <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                 )}
+                 {slugStatus === 'available' && (
+                   <Check className="h-4 w-4 text-green-600" />
+                 )}
+                 {slugStatus === 'taken' && (
+                   <AlertCircle className="h-4 w-4 text-yellow-600" />
+                 )}
+                 {slugStatus === 'error' && (
+                   <X className="h-4 w-4 text-red-600" />
+                 )}
+               </div>
+             </div>
+             
+             {/* Status Messages */}
+             {slugStatus === 'checking' && (
+               <p className="text-sm text-muted-foreground mt-1 flex items-center gap-1">
+                 <Loader2 className="h-3 w-3 animate-spin" />
+                 Checking availability...
+               </p>
+             )}
+             {slugStatus === 'available' && (
+               <p className="text-sm text-green-600 mt-1 flex items-center gap-1">
+                 <Check className="h-3 w-3" />
+                 Slug is available
+               </p>
+             )}
+             {slugStatus === 'taken' && suggestedSlug && (
+               <p className="text-sm text-blue-600 mt-1 flex items-center gap-1">
+                 <AlertCircle className="h-3 w-3" />
+                 Slug already exists. Using "{suggestedSlug}" instead
+               </p>
+             )}
+             {slugStatus === 'error' && (
+               <p className="text-sm text-red-600 mt-1 flex items-center gap-1">
+                 <X className="h-3 w-3" />
+                 Error checking slug availability
+               </p>
+             )}
+             
+              <p className="text-sm text-muted-foreground">
+                This will be used in the URL: /funnel-name/{step.slug}
             </p>
           </div>
 

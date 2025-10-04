@@ -572,7 +572,6 @@ const FunnelManagement = () => {
         funnelId={id!}
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
-        domainId={undefined} // TODO: Get domain ID from funnel's connected domain
       />
 
       {/* Step Settings Modal */}
@@ -582,7 +581,6 @@ const FunnelManagement = () => {
           onClose={() => setIsSettingsOpen(false)}
           stepId={selectedStepId}
           funnelId={id!}
-          domainId={undefined} // TODO: Get domain ID from funnel's connected domain
         />
       )}
 

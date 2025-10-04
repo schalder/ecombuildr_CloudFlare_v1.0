@@ -9,9 +9,9 @@ import { Check, X, Loader2, AlertCircle, FileText } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { debounce } from '@/lib/utils';
+import { validateFunnelStepSlug } from '@/lib/slugUtils';
 import { TemplateSelectionModal } from '@/components/templates/TemplateSelectionModal';
 import type { PageBuilderData } from '@/components/page-builder/types';
-import { validateFunnelStepSlug, ensureUniqueSlug } from '@/lib/slugUtils';
 
 type SlugStatus = 'idle' | 'checking' | 'available' | 'taken' | 'error';
 
@@ -30,14 +30,12 @@ interface CreateStepModalProps {
   isOpen: boolean;
   onClose: () => void;
   funnelId: string;
-  domainId?: string;
 }
 
 export const CreateStepModal: React.FC<CreateStepModalProps> = ({
   isOpen,
   onClose,
-  funnelId,
-  domainId
+  funnelId
 }) => {
   const [formData, setFormData] = useState({
     title: '',
@@ -59,24 +57,20 @@ export const CreateStepModal: React.FC<CreateStepModalProps> = ({
 
   // Check slug availability with domain-wide validation
   const checkSlugAvailability = async (slug: string) => {
-    if (!slug.trim()) {
-      setSlugStatus('idle');
-      setFinalSlug(slug);
-      setSuggestedSlug('');
-      return;
-    }
+    if (!slug.trim()) return;
     
     setSlugStatus('checking');
     
     try {
-      const validation = await validateFunnelStepSlug(slug, funnelId, undefined, domainId);
+      // Use domain-wide slug validation
+      const validation = await validateFunnelStepSlug(slug, funnelId);
       
       if (validation.hasConflict) {
-        setSuggestedSlug(validation.uniqueSlug);
-        setFinalSlug(validation.uniqueSlug);
+        setSuggestedSlug(validation.suggestedSlug);
+        setFinalSlug(validation.suggestedSlug);
         setSlugStatus('taken');
       } else {
-        setFinalSlug(validation.uniqueSlug);
+        setFinalSlug(validation.suggestedSlug);
         setSuggestedSlug('');
         setSlugStatus('available');
       }
@@ -114,14 +108,11 @@ export const CreateStepModal: React.FC<CreateStepModalProps> = ({
         content = { sections: [] };
       }
 
-      // Ensure slug is unique before creating
-      const uniqueSlug = await ensureUniqueSlug(finalSlug || data.slug, funnelId, undefined, domainId);
-      
       const { data: result, error } = await supabase
         .from('funnel_steps')
         .insert({
           title: data.title,
-          slug: uniqueSlug,
+          slug: finalSlug || data.slug,
           funnel_id: funnelId,
           step_type: data.stepType,
           step_order: nextOrder,
@@ -311,9 +302,9 @@ export const CreateStepModal: React.FC<CreateStepModalProps> = ({
               </p>
             )}
             {slugStatus === 'taken' && suggestedSlug && (
-              <p className="text-sm text-yellow-600 mt-1 flex items-center gap-1">
+              <p className="text-sm text-blue-600 mt-1 flex items-center gap-1">
                 <AlertCircle className="h-3 w-3" />
-                Slug already exists on this domain. Using "{suggestedSlug}" instead
+                Slug already exists. Using "{suggestedSlug}" instead
               </p>
             )}
             {slugStatus === 'error' && (
