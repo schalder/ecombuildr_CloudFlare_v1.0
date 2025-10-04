@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { debounce } from '@/lib/utils';
 import { TemplateSelectionModal } from '@/components/templates/TemplateSelectionModal';
 import type { PageBuilderData } from '@/components/page-builder/types';
+import { validateFunnelStepSlug } from '@/lib/slugUtils';
 
 type SlugStatus = 'idle' | 'checking' | 'available' | 'taken' | 'error';
 
@@ -79,32 +80,22 @@ export const CreateStepModal: React.FC<CreateStepModalProps> = ({
     return uniqueSlug;
   };
 
-  // Check slug availability
+  // Check slug availability with domain-wide validation
   const checkSlugAvailability = async (slug: string) => {
     if (!slug.trim()) return;
     
     setSlugStatus('checking');
     
     try {
-      const { data, error } = await supabase
-        .from('funnel_steps')
-        .select('slug')
-        .eq('funnel_id', funnelId)
-        .eq('slug', slug)
-        .maybeSingle();
+      // Use domain-wide slug validation
+      const validation = await validateFunnelStepSlug(slug, funnelId);
       
-      if (error) {
-        setSlugStatus('error');
-        return;
-      }
-      
-      if (data) {
-        const uniqueSlug = await generateUniqueSlug(slug);
-        setSuggestedSlug(uniqueSlug);
-        setFinalSlug(uniqueSlug);
+      if (validation.hasConflict) {
+        setSuggestedSlug(validation.uniqueSlug);
+        setFinalSlug(validation.uniqueSlug);
         setSlugStatus('taken');
       } else {
-        setFinalSlug(slug);
+        setFinalSlug(validation.uniqueSlug);
         setSuggestedSlug('');
         setSlugStatus('available');
       }
@@ -338,7 +329,7 @@ export const CreateStepModal: React.FC<CreateStepModalProps> = ({
             {slugStatus === 'taken' && suggestedSlug && (
               <p className="text-sm text-yellow-600 mt-1 flex items-center gap-1">
                 <AlertCircle className="h-3 w-3" />
-                Slug already exists. Using "{suggestedSlug}" instead
+                Slug conflicts with another funnel on this domain. Using "{suggestedSlug}" instead
               </p>
             )}
             {slugStatus === 'error' && (
