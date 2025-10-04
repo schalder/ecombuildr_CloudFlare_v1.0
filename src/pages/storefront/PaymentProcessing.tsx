@@ -137,10 +137,62 @@ useEffect(() => {
 
       const checkoutData = JSON.parse(pendingCheckout);
       
+      // ✅ DETECT FUNNEL CONTEXT
+      const isFunnelCheckout = checkoutData.orderData?.isFunnelCheckout;
+      const funnelId = checkoutData.orderData?.funnelId;
+      const currentStepId = checkoutData.orderData?.currentStepId;
+      
+      console.log('PaymentProcessing: Detected checkout context', {
+        isFunnelCheckout,
+        funnelId,
+        currentStepId,
+        isWebsiteContext,
+        tempId
+      });
+      
+      // Clean orderData to remove funnel-specific fields that might cause database constraint violations
+      const cleanOrderData = {
+        store_id: checkoutData.orderData.store_id,
+        customer_name: checkoutData.orderData.customer_name || 'N/A',
+        customer_email: checkoutData.orderData.customer_email,
+        customer_phone: checkoutData.orderData.customer_phone || 'N/A',
+        shipping_address: checkoutData.orderData.shipping_address || 'N/A',
+        shipping_city: checkoutData.orderData.shipping_city,
+        shipping_state: checkoutData.orderData.shipping_state,
+        shipping_postal_code: checkoutData.orderData.shipping_postal_code,
+        shipping_country: checkoutData.orderData.shipping_country,
+        shipping_method: checkoutData.orderData.shipping_method || 'standard',
+        shipping_cost: checkoutData.orderData.shipping_cost || 0,
+        subtotal: checkoutData.orderData.subtotal,
+        discount_amount: checkoutData.orderData.discount_amount || 0,
+        total: checkoutData.orderData.total,
+        payment_method: checkoutData.orderData.payment_method,
+        status: checkoutData.orderData.status || 'pending',
+        notes: checkoutData.orderData.notes || '',
+        payment_transaction_number: checkoutData.orderData.payment_transaction_number || '',
+        website_id: checkoutData.orderData.website_id,
+        idempotency_key: checkoutData.orderData.idempotency_key,
+        // Store funnel context in custom_fields instead of direct fields
+        custom_fields: {
+          funnelId: checkoutData.orderData.funnelId,
+          currentStepId: checkoutData.orderData.currentStepId,
+          isFunnelCheckout: checkoutData.orderData.isFunnelCheckout
+        }
+      };
+      
+      console.log('PaymentProcessing: About to create order with data:', {
+        originalOrderData: checkoutData.orderData,
+        cleanOrderData: cleanOrderData,
+        itemsPayload: checkoutData.itemsPayload,
+        storeId: store.id,
+        tempId: tempId,
+        paymentMethod: paymentMethod
+      });
+      
       // Create order now that payment is successful
       const { data, error } = await supabase.functions.invoke('create-order-on-payment-success', {
         body: {
-          orderData: checkoutData.orderData,
+          orderData: cleanOrderData,
           itemsData: checkoutData.itemsPayload,
           storeId: store.id,
           paymentVerified: true,
@@ -156,7 +208,10 @@ useEffect(() => {
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('PaymentProcessing: create-order-on-payment-success error:', error);
+        throw error;
+      }
 
       if (data?.success && data?.order) {
         // Clear stored checkout data
@@ -165,7 +220,64 @@ useEffect(() => {
         // Clear cart after successful order creation
         clearCart();
         
-        // Navigate to order confirmation
+        // ✅ CONDITIONAL REDIRECT LOGIC
+        if (isFunnelCheckout && funnelId && currentStepId) {
+          // ✅ FUNNEL CHECKOUT: Redirect to next funnel step
+          try {
+            console.log('PaymentProcessing: Attempting funnel redirect...');
+            
+            // Find the current funnel step
+            const { data: currentStep, error: stepError } = await supabase
+              .from('funnel_steps')
+              .select('id, on_success_step_id, funnel_id')
+              .eq('id', currentStepId)
+              .single();
+            
+            if (!stepError && currentStep?.on_success_step_id) {
+              // Get the next step details
+              const { data: nextStep, error: nextStepError } = await supabase
+                .from('funnel_steps')
+                .select('slug, funnel_id')
+                .eq('id', currentStep.on_success_step_id)
+                .single();
+              
+              if (!nextStepError && nextStep?.slug) {
+                // Environment-aware redirect to next step
+                const isAppEnvironment = (
+                  window.location.hostname === 'localhost' || 
+                  window.location.hostname.includes('lovable.dev') ||
+                  window.location.hostname.includes('lovable.app') ||
+                  window.location.hostname.includes('lovableproject.com')
+                );
+                
+                const newOrderToken = data.order.access_token;
+                
+                if (isAppEnvironment) {
+                  // App/sandbox: use funnel-aware paths
+                  const nextUrl = `/funnel/${funnelId}/${nextStep.slug}?orderId=${data.order.id}&ot=${newOrderToken}`;
+                  console.log(`Funnel redirect (app): ${nextUrl}`);
+                  window.location.href = nextUrl;
+                  return;
+                } else {
+                  // Custom domain: use clean paths
+                  const nextUrl = `/${nextStep.slug}?orderId=${data.order.id}&ot=${newOrderToken}`;
+                  console.log(`Funnel redirect (custom domain): ${nextUrl}`);
+                  window.location.href = nextUrl;
+                  return;
+                }
+              } else {
+                console.log('PaymentProcessing: Next step not found for funnel checkout');
+              }
+            } else {
+              console.log('PaymentProcessing: Current step not found or no next step configured');
+            }
+          } catch (error) {
+            console.error('PaymentProcessing: Error in funnel redirect:', error);
+            // Fall through to generic order confirmation
+          }
+        }
+        
+        // ✅ WEBSITE CHECKOUT: Navigate to order confirmation (existing behavior)
         const newOrderToken = data.order.access_token;
         toast.success('Order created successfully!');
         navigate(paths.orderConfirmation(data.order.id, newOrderToken));
