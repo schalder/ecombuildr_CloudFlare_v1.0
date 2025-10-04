@@ -143,14 +143,31 @@ serve(async (req) => {
     // For deferred order creation, store order data in payment metadata
     const isCourseOrder = false; // Regular orders only for now
 
+    // Detect funnel context from order data
+    const isFunnelOrder = orderData?.funnel_id;
+
+    // Construct appropriate redirect URLs based on context
+    let successUrl: string;
+    let cancelUrl: string;
+
+    if (isFunnelOrder) {
+      // Funnel context: redirect to funnel payment processing
+      successUrl = `${originBase}/funnel/${orderData.funnel_id}/payment-processing?tempId=${trackingId}&status=success&pm=ebpay`;
+      cancelUrl = `${originBase}/funnel/${orderData.funnel_id}/payment-processing?tempId=${trackingId}&status=failed&pm=ebpay`;
+    } else if (originBase.includes('ecombuildr.com')) {
+      // System domain: use store-specific route
+      successUrl = `${originBase}/store/${await getStoreSlug(supabase, storeId)}/payment-processing?tempId=${trackingId}&status=success&pm=ebpay`;
+      cancelUrl = `${originBase}/store/${await getStoreSlug(supabase, storeId)}/payment-processing?tempId=${trackingId}&status=failed&pm=ebpay`;
+    } else {
+      // Custom domain: use generic route (for websites)
+      successUrl = `${originBase}/payment-processing?tempId=${trackingId}&status=success&pm=ebpay`;
+      cancelUrl = `${originBase}/payment-processing?tempId=${trackingId}&status=failed&pm=ebpay`;
+    }
+
     // Prepare EB Pay payment request data with correct format
     const paymentData = {
-      success_url: originBase.includes('ecombuildr.com') 
-        ? `${originBase}/store/${await getStoreSlug(supabase, storeId)}/payment-processing?tempId=${trackingId}&status=success&pm=ebpay`
-        : `${originBase}/payment-processing?tempId=${trackingId}&status=success&pm=ebpay`,
-      cancel_url: originBase.includes('ecombuildr.com')
-        ? `${originBase}/store/${await getStoreSlug(supabase, storeId)}/payment-processing?tempId=${trackingId}&status=failed&pm=ebpay`
-        : `${originBase}/payment-processing?tempId=${trackingId}&status=failed&pm=ebpay`,
+      success_url: successUrl,
+      cancel_url: cancelUrl,
       amount: amount.toString(),
       cus_name: customerData.name || '',
       cus_email: customerData.email || '',

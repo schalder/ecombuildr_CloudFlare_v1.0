@@ -189,6 +189,31 @@ serve(async (req) => {
     // Success URL will trigger order creation after verification
     const isCourseOrder = false; // Regular orders only for now
 
+    // Detect funnel context from order data
+    const isFunnelOrder = orderData?.funnel_id;
+
+    // Construct appropriate redirect URLs based on context
+    let successUrl: string;
+    let failUrl: string;
+    let cancelUrl: string;
+
+    if (isFunnelOrder) {
+      // Funnel context: redirect to funnel payment processing
+      successUrl = `${originBase}/funnel/${orderData.funnel_id}/payment-processing?tempId=${trackingId}&status=success&pm=eps`;
+      failUrl = `${originBase}/funnel/${orderData.funnel_id}/payment-processing?tempId=${trackingId}&status=failed&pm=eps`;
+      cancelUrl = `${originBase}/funnel/${orderData.funnel_id}/payment-processing?tempId=${trackingId}&status=cancelled&pm=eps`;
+    } else if (originBase.includes('ecombuildr.com')) {
+      // System domain: use store-specific route
+      successUrl = `${originBase}/store/${await getStoreSlug(supabase, storeId)}/payment-processing?tempId=${trackingId}&status=success&pm=eps`;
+      failUrl = `${originBase}/store/${await getStoreSlug(supabase, storeId)}/payment-processing?tempId=${trackingId}&status=failed&pm=eps`;
+      cancelUrl = `${originBase}/store/${await getStoreSlug(supabase, storeId)}/payment-processing?tempId=${trackingId}&status=cancelled&pm=eps`;
+    } else {
+      // Custom domain: use generic route (for websites)
+      successUrl = `${originBase}/payment-processing?tempId=${trackingId}&status=success&pm=eps`;
+      failUrl = `${originBase}/payment-processing?tempId=${trackingId}&status=failed&pm=eps`;
+      cancelUrl = `${originBase}/payment-processing?tempId=${trackingId}&status=cancelled&pm=eps`;
+    }
+
     const paymentData = {
       storeId: epsConfig.store_id,
       CustomerOrderId: trackingId,
@@ -200,15 +225,9 @@ serve(async (req) => {
       ipAddress: "127.0.0.1", // Default IP
       version: "1",
       // Pass tracking ID in URLs for payment processing
-      successUrl: originBase.includes('ecombuildr.com') 
-        ? `${originBase}/store/${await getStoreSlug(supabase, storeId)}/payment-processing?tempId=${trackingId}&status=success&pm=eps`
-        : `${originBase}/payment-processing?tempId=${trackingId}&status=success&pm=eps`,
-      failUrl: originBase.includes('ecombuildr.com')
-        ? `${originBase}/store/${await getStoreSlug(supabase, storeId)}/payment-processing?tempId=${trackingId}&status=failed&pm=eps`
-        : `${originBase}/payment-processing?tempId=${trackingId}&status=failed&pm=eps`,
-      cancelUrl: originBase.includes('ecombuildr.com')
-        ? `${originBase}/store/${await getStoreSlug(supabase, storeId)}/payment-processing?tempId=${trackingId}&status=cancelled&pm=eps`
-        : `${originBase}/payment-processing?tempId=${trackingId}&status=cancelled&pm=eps`,
+      successUrl: successUrl,
+      failUrl: failUrl,
+      cancelUrl: cancelUrl,
       customerName: customerData.name,
       customerEmail: customerData.email,
       CustomerAddress: customerData.address,

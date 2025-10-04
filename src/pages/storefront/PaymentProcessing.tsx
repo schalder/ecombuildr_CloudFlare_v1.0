@@ -12,7 +12,7 @@ import { useEcomPaths } from '@/lib/pathResolver';
 import { CoursePaymentProcessing } from '@/components/course/CoursePaymentProcessing';
 
 export const PaymentProcessing: React.FC = () => {
-  const { slug, websiteId, websiteSlug, orderId: orderIdParam } = useParams<{ slug?: string; websiteId?: string; websiteSlug?: string; orderId?: string }>();
+  const { slug, websiteId, websiteSlug, funnelId, orderId: orderIdParam } = useParams<{ slug?: string; websiteId?: string; websiteSlug?: string; funnelId?: string; orderId?: string }>();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { store, loadStore, loadStoreById } = useStore();
@@ -27,7 +27,8 @@ export const PaymentProcessing: React.FC = () => {
   const tempId = searchParams.get('tempId') || '';
   const paymentMethod = searchParams.get('pm') || '';
   
-  // Improved website context detection - check URL params or if we're on a custom domain route
+  // Detect context - funnel, website, or store
+  const isFunnelContext = Boolean(funnelId) || window.location.pathname.includes('/funnel/');
   const isWebsiteContext = Boolean(websiteId || websiteSlug || window.location.hostname !== 'localhost' && !window.location.hostname.includes('lovableproject.com'));
   
   // Get status from URL - this takes priority over database status
@@ -165,10 +166,17 @@ useEffect(() => {
         // Clear cart after successful order creation
         clearCart();
         
-        // Navigate to order confirmation
+        // Navigate to order confirmation based on context
         const newOrderToken = data.order.access_token;
         toast.success('Order created successfully!');
-        navigate(paths.orderConfirmation(data.order.id, newOrderToken));
+        
+        if (isFunnelContext && funnelId) {
+          // Funnel context: redirect to funnel order confirmation
+          navigate(`/funnel/${funnelId}/order-confirmation?orderId=${data.order.id}&ot=${newOrderToken}`);
+        } else {
+          // Website/store context: use existing logic
+          navigate(paths.orderConfirmation(data.order.id, newOrderToken));
+        }
       } else {
         throw new Error('Failed to create order');
       }
@@ -274,7 +282,14 @@ useEffect(() => {
         // Clear cart after successful payment
         clearCart();
         const orderToken = searchParams.get('ot') || '';
-        navigate(paths.orderConfirmation(order.id, orderToken));
+        
+        if (isFunnelContext && funnelId) {
+          // Funnel context: redirect to funnel order confirmation
+          navigate(`/funnel/${funnelId}/order-confirmation?orderId=${order.id}&ot=${orderToken}`);
+        } else {
+          // Website/store context: use existing logic
+          navigate(paths.orderConfirmation(order.id, orderToken));
+        }
       } else {
         toast.error('Payment verification failed. Please contact support.');
         setOrder(prev => ({ ...prev, status: 'payment_failed' }));
