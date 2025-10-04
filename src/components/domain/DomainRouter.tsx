@@ -127,32 +127,49 @@ export const DomainRouter: React.FC<DomainRouterProps> = ({ children }) => {
               store_id: domain.store_id
             } as DomainConnection;
           } else {
-            // For non-course paths, check funnel step slugs
+            // For non-course paths, check for system routes first
+            const systemRoutes = ['payment-processing', 'order-confirmation', 'cart', 'checkout'];
             const pathSegments = currentPath.split('/').filter(Boolean);
             const potentialSlug = pathSegments[pathSegments.length - 1];
             
-            // Check if this path matches a funnel step slug
-            const funnelConnections = connectionsArray.filter(c => c.content_type === 'funnel');
-            
-            for (const funnelConnection of funnelConnections) {
-              // Check if the current path contains a funnel step slug
-              const { data: stepExists } = await supabase
-                .from('funnel_steps')
-                .select('id')
-                .eq('funnel_id', funnelConnection.content_id)
-                .eq('slug', potentialSlug)
-                .eq('is_published', true)
-                .maybeSingle();
-                
-              if (stepExists) {
+            // Check if this is a system route
+            if (systemRoutes.includes(potentialSlug)) {
+              console.debug('DomainRouter: System route detected:', potentialSlug);
+              
+              // For system routes, prioritize funnel connection if it exists
+              const funnelConnection = connectionsArray.find(c => c.content_type === 'funnel');
+              if (funnelConnection) {
                 selectedConnection = funnelConnection;
-                break;
+                console.debug('DomainRouter: Routing system route to funnel:', potentialSlug);
+              } else {
+                // Fallback to website connection for system routes
+                selectedConnection = connectionsArray.find(c => c.content_type === 'website') || null;
+                console.debug('DomainRouter: Routing system route to website:', potentialSlug);
               }
-            }
-            
-            // If no funnel step matches, use website for all other paths
-            if (!selectedConnection) {
-              selectedConnection = connectionsArray.find(c => c.content_type === 'website') || null;
+            } else {
+              // For non-system paths, check funnel step slugs
+              const funnelConnections = connectionsArray.filter(c => c.content_type === 'funnel');
+              
+              for (const funnelConnection of funnelConnections) {
+                // Check if the current path contains a funnel step slug
+                const { data: stepExists } = await supabase
+                  .from('funnel_steps')
+                  .select('id')
+                  .eq('funnel_id', funnelConnection.content_id)
+                  .eq('slug', potentialSlug)
+                  .eq('is_published', true)
+                  .maybeSingle();
+                  
+                if (stepExists) {
+                  selectedConnection = funnelConnection;
+                  break;
+                }
+              }
+              
+              // If no funnel step matches, use website for all other paths
+              if (!selectedConnection) {
+                selectedConnection = connectionsArray.find(c => c.content_type === 'website') || null;
+              }
             }
           }
         }
