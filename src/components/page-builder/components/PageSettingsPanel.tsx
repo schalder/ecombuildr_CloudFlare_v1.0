@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { X } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { X, Loader2, Check, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -15,6 +15,10 @@ import { SEOAdvancedSection } from '@/components/seo/SEOAdvancedSection';
 import { SEOLanguageSection } from '@/components/seo/SEOLanguageSection';
 import { SEOAnalysisSection } from '@/components/seo/SEOAnalysisSection';
 import { PageBuilderData } from '../types';
+import { validateFunnelStepSlug } from '@/lib/slugUtils';
+import { debounce } from '@/lib/utils';
+
+type SlugStatus = 'idle' | 'checking' | 'available' | 'taken' | 'error';
 
 interface PageSettingsPanelProps {
   isOpen: boolean;
@@ -52,6 +56,8 @@ interface PageSettingsPanelProps {
   builderData: PageBuilderData;
   setBuilderData: React.Dispatch<React.SetStateAction<PageBuilderData>>;
   context: string;
+  funnelId?: string;
+  stepId?: string;
 }
 
 export const PageSettingsPanel: React.FC<PageSettingsPanelProps> = ({
@@ -61,8 +67,57 @@ export const PageSettingsPanel: React.FC<PageSettingsPanelProps> = ({
   setPageData,
   builderData,
   setBuilderData,
-  context
+  context,
+  funnelId,
+  stepId
 }) => {
+  // Slug validation state (only for funnel context)
+  const [slugStatus, setSlugStatus] = useState<SlugStatus>('idle');
+  const [suggestedSlug, setSuggestedSlug] = useState('');
+  const [finalSlug, setFinalSlug] = useState('');
+
+  // Generate slug from title
+  const generateSlug = (title: string) => {
+    return title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '');
+  };
+
+  // Check slug availability with domain-wide validation (only for funnel context)
+  const checkSlugAvailability = async (slug: string) => {
+    if (!slug.trim() || context !== 'funnel' || !funnelId) {
+      setSlugStatus('idle');
+      setFinalSlug(slug);
+      setSuggestedSlug('');
+      return;
+    }
+    
+    setSlugStatus('checking');
+    
+    try {
+      // Use domain-wide slug validation
+      const validation = await validateFunnelStepSlug(slug, funnelId, stepId);
+      
+      if (validation.hasConflict) {
+        // Auto-populate the suggested slug in the input field
+        setPageData(prev => ({ ...prev, slug: validation.suggestedSlug }));
+        setSuggestedSlug(validation.suggestedSlug);
+        setFinalSlug(validation.suggestedSlug);
+        setSlugStatus('taken');
+      } else {
+        setFinalSlug(validation.suggestedSlug);
+        setSuggestedSlug('');
+        setSlugStatus('available');
+      }
+    } catch (error) {
+      console.error('Slug check error:', error);
+      setSlugStatus('error');
+    }
+  };
+
+  // Debounced slug validation
+  const debouncedCheckSlug = debounce((slug: string) => checkSlugAvailability(slug), 500);
   // Close on Escape key
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -125,12 +180,82 @@ export const PageSettingsPanel: React.FC<PageSettingsPanelProps> = ({
               
               <div>
                 <Label htmlFor="page-slug">URL Slug</Label>
-                <Input
-                  id="page-slug"
-                  value={pageData.slug}
-                  onChange={(e) => setPageData(prev => ({ ...prev, slug: e.target.value }))}
-                  placeholder="page-url-slug"
-                />
+                {context === 'funnel' ? (
+                  <div className="relative">
+                    <Input
+                      id="page-slug"
+                      value={pageData.slug}
+                      onChange={(e) => {
+                        const slug = generateSlug(e.target.value);
+                        setPageData(prev => ({ ...prev, slug }));
+                        // Reset validation state and trigger new validation
+                        setSlugStatus('idle');
+                        setSuggestedSlug('');
+                        setFinalSlug('');
+                        if (slug.trim()) {
+                          debouncedCheckSlug(slug);
+                        }
+                      }}
+                      placeholder="page-url-slug"
+                      className={`pr-10 ${
+                        slugStatus === 'available' ? 'border-green-500' : 
+                        slugStatus === 'taken' ? 'border-yellow-500' :
+                        slugStatus === 'error' ? 'border-red-500' : ''
+                      }`}
+                    />
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                      {slugStatus === 'checking' && (
+                        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                      )}
+                      {slugStatus === 'available' && (
+                        <Check className="h-4 w-4 text-green-600" />
+                      )}
+                      {slugStatus === 'taken' && (
+                        <AlertCircle className="h-4 w-4 text-yellow-600" />
+                      )}
+                      {slugStatus === 'error' && (
+                        <AlertCircle className="h-4 w-4 text-red-600" />
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <Input
+                    id="page-slug"
+                    value={pageData.slug}
+                    onChange={(e) => setPageData(prev => ({ ...prev, slug: e.target.value }))}
+                    placeholder="page-url-slug"
+                  />
+                )}
+                
+                {/* Status Messages for funnel context */}
+                {context === 'funnel' && (
+                  <>
+                    {slugStatus === 'checking' && (
+                      <p className="text-sm text-muted-foreground mt-1 flex items-center gap-1">
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                        Checking availability...
+                      </p>
+                    )}
+                    {slugStatus === 'available' && (
+                      <p className="text-sm text-green-600 mt-1 flex items-center gap-1">
+                        <Check className="h-3 w-3" />
+                        Slug is available
+                      </p>
+                    )}
+                    {slugStatus === 'taken' && suggestedSlug && (
+                      <p className="text-sm text-blue-600 mt-1 flex items-center gap-1">
+                        <AlertCircle className="h-3 w-3" />
+                        Slug already exists. Using "{suggestedSlug}" instead
+                      </p>
+                    )}
+                    {slugStatus === 'error' && (
+                      <p className="text-sm text-red-600 mt-1 flex items-center gap-1">
+                        <AlertCircle className="h-3 w-3" />
+                        Error checking slug availability
+                      </p>
+                    )}
+                  </>
+                )}
               </div>
               
               <div className="flex items-center justify-between">

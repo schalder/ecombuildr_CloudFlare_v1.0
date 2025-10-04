@@ -525,6 +525,8 @@ export default function PageBuilder() {
         builderData={builderData}
         setBuilderData={setBuilderData}
         context={context}
+        funnelId={funnelId}
+        stepId={stepId}
       />
 
         {/* Hidden Preview for Screenshot Generation - Same approach as AdminTemplateEditor */}
