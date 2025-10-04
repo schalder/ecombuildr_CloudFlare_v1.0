@@ -49,13 +49,8 @@ interface OrderItem {
   variation?: any;
 }
 
-interface OrderConfirmationProps {
-  websiteId?: string;
-}
-
-export const OrderConfirmation: React.FC<OrderConfirmationProps> = ({ websiteId: propWebsiteId }) => {
-  const { slug, websiteId: paramWebsiteId, websiteSlug, orderId: orderIdParam } = useParams<{ slug?: string; websiteId?: string; websiteSlug?: string; orderId?: string }>();
-  const websiteId = propWebsiteId || paramWebsiteId;
+export const OrderConfirmation: React.FC = () => {
+  const { slug, websiteId, websiteSlug, orderId: orderIdParam } = useParams<{ slug?: string; websiteId?: string; websiteSlug?: string; orderId?: string }>();
   const [searchParams] = useSearchParams();
   const { store, loadStore, loadStoreById } = useStore();
   const { clearCart } = useCart();
@@ -66,17 +61,7 @@ export const OrderConfirmation: React.FC<OrderConfirmationProps> = ({ websiteId:
   const paths = useEcomPaths();
   const orderId = orderIdParam || searchParams.get('orderId') || '';
   const orderToken = searchParams.get('ot') || '';
-  // Improved website context detection - check URL params, path patterns, or custom domains
-  const isWebsiteContext = Boolean(
-    websiteId || 
-    websiteSlug || 
-    window.location.pathname.includes('/website/') ||
-    window.location.pathname.includes('/site/') ||
-    (window.location.hostname !== 'localhost' && 
-     !window.location.hostname.includes('lovableproject.com') && 
-     !window.location.hostname.includes('lovable.dev') &&
-     !window.location.hostname.includes('lovable.app'))
-  );
+  const isWebsiteContext = Boolean(websiteId || websiteSlug);
   const { pixels } = usePixelContext();
   const { trackPurchase } = usePixelTracking(pixels, store?.id);
 useEffect(() => {
