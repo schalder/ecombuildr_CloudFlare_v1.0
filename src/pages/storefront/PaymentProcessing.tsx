@@ -12,7 +12,7 @@ import { useEcomPaths } from '@/lib/pathResolver';
 import { CoursePaymentProcessing } from '@/components/course/CoursePaymentProcessing';
 
 export const PaymentProcessing: React.FC = () => {
-  const { slug, websiteId, websiteSlug, funnelId, orderId: orderIdParam } = useParams<{ slug?: string; websiteId?: string; websiteSlug?: string; funnelId?: string; orderId?: string }>();
+  const { slug, websiteId, websiteSlug, orderId: orderIdParam } = useParams<{ slug?: string; websiteId?: string; websiteSlug?: string; orderId?: string }>();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { store, loadStore, loadStoreById } = useStore();
@@ -27,15 +27,8 @@ export const PaymentProcessing: React.FC = () => {
   const tempId = searchParams.get('tempId') || '';
   const paymentMethod = searchParams.get('pm') || '';
   
-  // Detect context - funnel, website, or store
-  const isFunnelContext = Boolean(funnelId) || window.location.pathname.includes('/funnel/');
+  // Improved website context detection - check URL params or if we're on a custom domain route
   const isWebsiteContext = Boolean(websiteId || websiteSlug || window.location.hostname !== 'localhost' && !window.location.hostname.includes('lovableproject.com'));
-  
-  // Detect if we're on a custom domain funnel by checking if we're redirected to a step slug
-  const isCustomDomainFunnel = !isFunnelContext && !isWebsiteContext && 
-    window.location.hostname !== 'localhost' && 
-    !window.location.hostname.includes('lovableproject.com') &&
-    !window.location.hostname.includes('ecombuildr.com');
   
   // Get status from URL - this takes priority over database status
   const urlStatus = searchParams.get('status');
@@ -136,75 +129,13 @@ useEffect(() => {
     try {
       // Get stored checkout data
       const pendingCheckout = sessionStorage.getItem('pending_checkout');
-      let checkoutData = null;
-
-      if (pendingCheckout) {
-        checkoutData = JSON.parse(pendingCheckout);
-      } else {
-        // If sessionStorage data is not available, try to retrieve from payment gateway
-        console.log('SessionStorage data not found, attempting to retrieve from payment gateway...');
-        
-        const merchantTransactionId = searchParams.get('MerchantTransactionId');
-        const epsTransactionId = searchParams.get('EPSTransactionId');
-        
-        if (paymentMethod === 'eps' && merchantTransactionId) {
-          try {
-            const { data, error } = await supabase.functions.invoke('get-eps-order-data', {
-              body: {
-                merchantTransactionId,
-                storeId: store.id
-              }
-            });
-            
-            if (error) throw error;
-            
-            if (data?.success && data?.orderData && data?.itemsData) {
-              checkoutData = {
-                orderData: data.orderData,
-                itemsPayload: data.itemsData
-              };
-              console.log('Successfully retrieved order data from EPS payment gateway');
-            } else {
-              throw new Error('Order data not found in payment gateway');
-            }
-          } catch (error) {
-            console.error('Failed to retrieve order data from EPS:', error);
-            toast.error('Unable to retrieve order data. Please contact support.');
-            setLoading(false);
-            return;
-          }
-        } else if (paymentMethod === 'ebpay' && epsTransactionId) {
-          try {
-            const { data, error } = await supabase.functions.invoke('get-ebpay-order-data', {
-              body: {
-                transactionId: epsTransactionId,
-                storeId: store.id
-              }
-            });
-            
-            if (error) throw error;
-            
-            if (data?.success && data?.orderData && data?.itemsData) {
-              checkoutData = {
-                orderData: data.orderData,
-                itemsPayload: data.itemsData
-              };
-              console.log('Successfully retrieved order data from EB Pay payment gateway');
-            } else {
-              throw new Error('Order data not found in payment gateway');
-            }
-          } catch (error) {
-            console.error('Failed to retrieve order data from EB Pay:', error);
-            toast.error('Unable to retrieve order data. Please contact support.');
-            setLoading(false);
-            return;
-          }
-        } else {
-          toast.error('Checkout data not found. Please try again.');
-          setLoading(false);
-          return;
-        }
+      if (!pendingCheckout) {
+        toast.error('Checkout data not found. Please try again.');
+        setLoading(false);
+        return;
       }
+
+      const checkoutData = JSON.parse(pendingCheckout);
       
       // Create order now that payment is successful
       const { data, error } = await supabase.functions.invoke('create-order-on-payment-success', {
@@ -228,29 +159,66 @@ useEffect(() => {
       if (error) throw error;
 
       if (data?.success && data?.order) {
-        // Clear stored checkout data if it exists
-        if (sessionStorage.getItem('pending_checkout')) {
-          sessionStorage.removeItem('pending_checkout');
-        }
+        // Clear stored checkout data
+        sessionStorage.removeItem('pending_checkout');
         
         // Clear cart after successful order creation
         clearCart();
         
-        // Navigate to order confirmation based on context
+        // Check for funnel context and redirect accordingly
+        const funnelContext = sessionStorage.getItem('pending_funnel_context');
+        if (funnelContext) {
+          try {
+            const { funnelId, nextStepId } = JSON.parse(funnelContext);
+            
+            // Clear funnel context
+            sessionStorage.removeItem('pending_funnel_context');
+            
+            // Fetch next step details for funnel redirect
+            const { data: nextStep, error } = await supabase
+              .from('funnel_steps')
+              .select('slug, funnel_id')
+              .eq('id', nextStepId)
+              .single();
+              
+            if (!error && nextStep?.slug) {
+              // Environment-aware redirect to next funnel step
+              const isAppEnvironment = (
+                window.location.hostname === 'localhost' || 
+                window.location.hostname.includes('lovable.dev') ||
+                window.location.hostname.includes('lovable.app') ||
+                window.location.hostname.includes('lovableproject.com')
+              );
+              
+              const newOrderToken = data.order.access_token;
+              
+              if (isAppEnvironment) {
+                // App/sandbox: use funnel-aware paths
+                const nextUrl = `/funnel/${funnelId}/${nextStep.slug}?orderId=${data.order.id}&ot=${newOrderToken}`;
+                console.log(`Redirecting to funnel success step (app): ${nextUrl}`);
+                window.location.href = nextUrl;
+                return;
+              } else {
+                // Custom domain: use clean paths
+                const nextUrl = `/${nextStep.slug}?orderId=${data.order.id}&ot=${newOrderToken}`;
+                console.log(`Redirecting to funnel success step (custom domain): ${nextUrl}`);
+                window.location.href = nextUrl;
+                return;
+              }
+            } else {
+              console.log('Next funnel step not found, falling back to order confirmation');
+            }
+          } catch (error) {
+            console.error('Error processing funnel redirect:', error);
+            // Clear invalid funnel context
+            sessionStorage.removeItem('pending_funnel_context');
+          }
+        }
+        
+        // Fallback: Navigate to order confirmation
         const newOrderToken = data.order.access_token;
         toast.success('Order created successfully!');
-        
-        if (isFunnelContext && funnelId) {
-          // System domain funnel: redirect to funnel order confirmation
-          navigate(`/funnel/${funnelId}/order-confirmation?orderId=${data.order.id}&ot=${newOrderToken}`);
-        } else if (isCustomDomainFunnel) {
-          // Custom domain funnel: redirect to the current step (which should be the confirmation step)
-          const currentPath = window.location.pathname;
-          navigate(`${currentPath}?orderId=${data.order.id}&ot=${newOrderToken}`);
-        } else {
-          // Website/store context: use existing logic
-          navigate(paths.orderConfirmation(data.order.id, newOrderToken));
-        }
+        navigate(paths.orderConfirmation(data.order.id, newOrderToken));
       } else {
         throw new Error('Failed to create order');
       }
@@ -355,19 +323,60 @@ useEffect(() => {
         toast.success('Payment verified successfully!');
         // Clear cart after successful payment
         clearCart();
-        const orderToken = searchParams.get('ot') || '';
         
-        if (isFunnelContext && funnelId) {
-          // System domain funnel: redirect to funnel order confirmation
-          navigate(`/funnel/${funnelId}/order-confirmation?orderId=${order.id}&ot=${orderToken}`);
-        } else if (isCustomDomainFunnel) {
-          // Custom domain funnel: redirect to the current step (which should be the confirmation step)
-          const currentPath = window.location.pathname;
-          navigate(`${currentPath}?orderId=${order.id}&ot=${orderToken}`);
-        } else {
-          // Website/store context: use existing logic
-          navigate(paths.orderConfirmation(order.id, orderToken));
+        // Check for funnel context and redirect accordingly
+        const funnelContext = sessionStorage.getItem('pending_funnel_context');
+        if (funnelContext) {
+          try {
+            const { funnelId, nextStepId } = JSON.parse(funnelContext);
+            
+            // Clear funnel context
+            sessionStorage.removeItem('pending_funnel_context');
+            
+            // Fetch next step details for funnel redirect
+            const { data: nextStep, error } = await supabase
+              .from('funnel_steps')
+              .select('slug, funnel_id')
+              .eq('id', nextStepId)
+              .single();
+              
+            if (!error && nextStep?.slug) {
+              // Environment-aware redirect to next funnel step
+              const isAppEnvironment = (
+                window.location.hostname === 'localhost' || 
+                window.location.hostname.includes('lovable.dev') ||
+                window.location.hostname.includes('lovable.app') ||
+                window.location.hostname.includes('lovableproject.com')
+              );
+              
+              const orderToken = searchParams.get('ot') || '';
+              
+              if (isAppEnvironment) {
+                // App/sandbox: use funnel-aware paths
+                const nextUrl = `/funnel/${funnelId}/${nextStep.slug}?orderId=${order.id}&ot=${orderToken}`;
+                console.log(`Redirecting to funnel success step (app): ${nextUrl}`);
+                window.location.href = nextUrl;
+                return;
+              } else {
+                // Custom domain: use clean paths
+                const nextUrl = `/${nextStep.slug}?orderId=${order.id}&ot=${orderToken}`;
+                console.log(`Redirecting to funnel success step (custom domain): ${nextUrl}`);
+                window.location.href = nextUrl;
+                return;
+              }
+            } else {
+              console.log('Next funnel step not found, falling back to order confirmation');
+            }
+          } catch (error) {
+            console.error('Error processing funnel redirect:', error);
+            // Clear invalid funnel context
+            sessionStorage.removeItem('pending_funnel_context');
+          }
         }
+        
+        // Fallback: Navigate to order confirmation
+        const orderToken = searchParams.get('ot') || '';
+        navigate(paths.orderConfirmation(order.id, orderToken));
       } else {
         toast.error('Payment verification failed. Please contact support.');
         setOrder(prev => ({ ...prev, status: 'payment_failed' }));

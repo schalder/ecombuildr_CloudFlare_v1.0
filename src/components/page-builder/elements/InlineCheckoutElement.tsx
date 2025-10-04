@@ -646,6 +646,15 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
           navigate(confirmUrl);
         }
       } else {
+        // Store funnel context for deferred order creation (EPS/EB Pay)
+        if (funnelStepData?.on_success_step_id) {
+          sessionStorage.setItem('pending_funnel_context', JSON.stringify({
+            funnelId: funnelStepData.funnel_id,
+            currentStepId: funnelStepData.id,
+            nextStepId: funnelStepData.on_success_step_id,
+            timestamp: Date.now()
+          }));
+        }
         await initiatePayment(orderId, orderData.total, form.payment_method, accessToken);
       }
     } catch (e) {
